@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "5H4429Z686.app.bitblik",
+        "paths": ["*"]
+      }
+    ]
+  }
+}

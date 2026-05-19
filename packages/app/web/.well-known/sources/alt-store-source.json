@@ -1,0 +1,53 @@
+{
+  "name": "Bitblik",
+  "subtitle": "All app offerings from bitblik",
+  "description": "Here you'll find all bitblik apps.",
+  "iconURL": "https://bitblik.app/assets/assets/logo.png",
+  "headerURL": "https://bitblik.app/assets/assets/logo.png",
+  "website": "https://bitblik.app",
+  "tintColor": "#1da1f2",
+  "featuredApps": [
+    "app.bitblik"
+  ],
+  "apps": [
+    {
+      "name": "Bitblik",
+      "bundleIdentifier": "app.bitblik",
+      "marketplaceID": "6737702056",
+      "developerName": "Lox UG",
+      "subtitle": "Your BLIK ⇄ bitcoin Bridge",
+      "localizedDescription": "Pay for or sell your BLIK code with bitcoin",
+      "iconURL": "https://bitblik.app/assets/assets/logo.png",
+      "tintColor": "#ffE0ED",
+      "category": "bitcoin",
+      "screenshots": [
+      ],
+      "imageURL": "https://bitblik.app/assets/assets/logo.png",
+      "versions": [
+        {
+          "version": "0.4.5",
+          "versionCode": "66",
+          "localizedDescription": "- inbox/outbox improvments",
+          "minSdkVersion": "23",
+          "targetSdkVersion": "35",
+          "artifacts": [
+            {
+              "downloadURL": "https://artifacts.camelus.app/android/66/app-arm64-v8a-release.apk",
+              "size": 31413299,
+              "artifactHash": "c4c1cf07a032726c12fc202a5d583f81a4c053c32cbf064e4b30db6bd23f635c",
+              "signatureHash": "a456fd1228f42725ae6d7994234ea0ba8b594a7ee7f9afaf2b6de2e053f0574f",
+              "platform": "android-arm64-v8a"
+            }
+          ]
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSCameraUsageDescription": "Camera access is used to add account profile, include pictures in posts"
+        }
+      }
+    }
+  ],
+  "news": []
+}

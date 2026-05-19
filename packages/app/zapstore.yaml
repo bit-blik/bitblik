@@ -1,0 +1,10 @@
+repository: https://github.com/bit-blik/client
+name: BitBlik
+description: Pay with Bitcoin using Blik codes. Buy Bitcoin selling Blik codes.
+summary: Bitcoin Blik codes exchange app
+license: MIT
+website: https://bitblik.app
+release_notes: CHANGELOG.md
+changelog: CHANGELOG.md
+metadata_sources:
+    - github

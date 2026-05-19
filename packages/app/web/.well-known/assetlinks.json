@@ -1,0 +1,23 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.bitblik",
+      "sha256_cert_fingerprints": [
+        "C8:39:10:57:8A:7B:A4:20:43:25:43:F5:35:90:BA:AB:76:40:5C:57:A2:A9:AC:53:5F:CD:F0:1E:35:F9:4E:88"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.bitblik.dev",
+      "sha256_cert_fingerprints": [
+        "C8:39:10:57:8A:7B:A4:20:43:25:43:F5:35:90:BA:AB:76:40:5C:57:A2:A9:AC:53:5F:CD:F0:1E:35:F9:4E:88"
+      ]
+    }
+  }
+
+] 

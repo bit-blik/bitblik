@@ -1,0 +1,10 @@
+name: bitblik_monorepos
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+workspace:
+  - packages/app
+  - packages/coordinator
+  - packages/core

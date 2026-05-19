@@ -1,0 +1,11 @@
+name: bitblik_core
+description: Shared core models and utilities for BitBlik.
+version: 0.1.0
+resolution: workspace
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  ndk: any

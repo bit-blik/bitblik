@@ -1,0 +1,800 @@
+# =============================================================================
+# GLOBAL APPLICATION ELEMENTS
+# =============================================================================
+app:
+  title: BitBlik
+  greeting: Cześć!
+  changelog: Historia zmian
+
+# =============================================================================
+# COMMON UI ELEMENTS
+# =============================================================================
+common:
+  buttons:
+    cancel: Anuluj
+    save: Zapisz
+    done: Gotowe
+    retry: Spróbuj ponownie
+    goHome: Wróć do strony głównej
+    saveAndContinue: Zapisz i kontynuuj
+    reveal: Pokaż
+    hide: Ukryj
+    copy: Kopiuj
+    close: Zamknij
+    restore: Przywróć
+    faq: FAQ
+  
+  labels:
+    amount: "Kwota (PLN)"
+    status: "Status: ${status}" # Używane przez taker.waitConfirmation
+    role: "Rola: ${role}"
+  
+  notifications:
+    success: Sukces
+    error: Błąd
+    loading: Ładowanie...
+  
+  clipboard:
+    copyToClipboard: Kopiuj do schowka
+    pasteFromClipboard: Wklej ze schowka
+    copied: Skopiowano do schowka!
+  
+  actions:
+    cancelAndReturnToOffers: Anuluj i wróć do ofert
+    cancelAndReturnHome: Anuluj i wróć do strony głównej
+
+# =============================================================================
+# LIGHTNING ADDRESS MANAGEMENT
+# =============================================================================
+lightningAddress:
+  labels:
+    address: Adres Lightning (LNURL)
+    hint: uzytkownik@domena.com
+    short: "Adres Lightning: ${address}"
+    receivingAddress: "Twój adres odbiorczy:"
+  
+  prompts:
+    enter: Wprowadź swój adres Lightning, aby kontynuować
+    edit: Edytuj
+    invalid: Wprowadź prawidłowy adres Lightning
+    required: Adres Lightning jest wymagany.
+    enterToTakeOffer: Musisz ustawić adres Lightning, aby przyjąć ofertę.
+    missing: Brak adresu Lightning. Dodaj go, aby móc przyjmować oferty.
+    add: Dodaj
+    delete: Usuń
+    confirmDelete: Czy na pewno chcesz usunąć swój adres Lightning?
+    howToGet: "Nie masz jeszcze adresu Lightning? Dowiedz się, jak go zdobyć!"
+    learnMore: Dowiedz się więcej o adresach Lightning
+  
+  feedback:
+    saved: Adres Lightning zapisany!
+    updated: Adres Lightning zaktualizowany!
+    valid: Prawidłowy adres Lightning
+  
+  errors:
+    saving: "Błąd podczas zapisywania adresu: ${details}"
+    loading: "Błąd podczas ładowania adresu Lightning: ${details}"
+
+# =============================================================================
+# OFFERS AND TRANSACTIONS
+# =============================================================================
+offers:
+  details:
+    yourOffer: "Twoja oferta:"
+    selectedOffer: "Oferta:"
+    activeOffer: "Masz aktywną ofertę:"
+    finishedOffers: Zakończone oferty
+    finishedOffersWithTime: "Zakończone oferty (ostatnie 24h):"
+    noAvailable: Brak dostępnych ofert.
+    noAvailableTip: "Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik."
+    noSuccessfulTrades: Brak udanych transakcji.
+    loadingDetails: "Ładowanie szczegółów oferty..." # Używane przez taker.paymentProcess & taker.waitConfirmation
+  
+    amount: "Kwota: ${amount} satoshi"
+    amountWithCurrency: "${amount} ${currency}"
+    makerFee: "Opłata: ${fee} sats"
+    takerFee: "Opłata: ${fee} sats"
+    subtitle: "${sats} + ${fee} (opłata) satoshi\nStatus: ${status}"
+    subtitleWithDate: "${sats} + ${fee} (opłata) satoshi\nStatus: ${status}\nZapłacono: ${date}"
+    activeSubtitle: "Status: ${status}\nKwota: ${amount} satoshi"
+    id: "ID Oferty: ${id}..."
+    created: "Utworzono: ${dateTime}"
+    takenAfter: "Przyjęto po: ${duration}"
+    paidAfter: "Zapłacono po: ${duration}"
+    exchangeRate: "Kurs wymiany"
+    takerFeeLabel: "Opłata"
+    amountLabel: "Kwota"
+    feeLabel: "Opłata"
+    statusLabel: "Status"
+    youllReceive: "Otrzymasz"
+    coordinator: "Koordynator"
+  
+  tooltips:
+    takerFeeInfo: "Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz."
+  
+  actions:
+    take: WEŹ
+    takeOffer: Weź ofertę
+    resume: Wprowadź BLIK
+    cancel: Anuluj ofertę
+    view: Zobacz
+  
+  status:
+    created: "Utworzona"
+    funded: "Sfinansowana"
+    expired: "Wygasła"
+    cancelled: "Anulowana"
+    reserved: "Zarezerwowana"
+    blikReceived: "BLIK wysłany"
+    blikSentToMaker: "Otrzymano BLIK"
+    invalidBlik: "Nieprawidłowy BLIK"
+    conflict: "Konflikt"
+    dispute: "Spór"
+    makerConfirmed: "Potwierdzona"
+    settled: "Rozliczona"
+    payingTaker: "Płacenie Takera"
+    takerPaymentFailed: "Płatność Takera nieudana"
+    takerPaid: "Zapłacony"
+    
+  statusMessages:
+    reserved: Oferta zarezerwowana przez Takera!
+    cancelled: Oferta anulowana pomyślnie.
+    cancelledOrExpired: Oferta została anulowana lub wygasła. # Używane przez taker.waitConfirmation
+    noLongerAvailable: "Oferta nie jest już dostępna (Status: ${status})."
+  
+  progress:
+    waitingForTaker: "Oczekiwanie na takera: ${time}"
+    reserved: "Zarezerwowano: ${seconds} s pozostało"
+    confirming: "Potwierdzanie: ${seconds} s pozostało"
+  
+  errors:
+    loading: "Błąd ładowania ofert: ${details}"
+    loadingDetails: "Błąd ładowania szczegółów oferty: ${details}"
+    detailsMissing: "Błąd: Brakujące lub nieprawidłowe szczegóły oferty."
+    detailsNotLoaded: Nie udało się załadować szczegółów oferty.
+    notFound: "Błąd: Oferta nie znaleziona."
+    unexpectedState: "Błąd: Oferta jest w nieoczekiwanym stanie."
+    unexpectedStateWithStatus: "Oferta jest w nieoczekiwanym stanie (${status}). Spróbuj ponownie lub skontaktuj się z pomocą." # Używane przez taker.waitConfirmation
+    invalidStatus: Oferta ma nieprawidłowy status.
+    couldNotIdentify: "Błąd: Nie można zidentyfikować oferty do anulowania."
+    cannotBeCancelled: "Oferty nie można anulować w obecnym stanie (${status})."
+    failedToCancel: "Nie udało się anulować oferty: ${details}"
+    activeDetailsLost: "Błąd: Utracono szczegóły aktywnej oferty."
+    checkingActive: "Błąd sprawdzania aktywnych ofert: ${details}"
+    loadingFinished: "Błąd ładowania zakończonych ofert: ${details}"
+    cannotResume: "Nie można wznowić oferty w stanie: ${status}"
+    cannotResumeTaker: "Nie można wznowić oferty takera w stanie: ${status}"
+    resuming: "Błąd wznawiania oferty: ${details}"
+    makerPublicKeyNotFound: Nie znaleziono klucza publicznego Makera
+    takerPublicKeyNotFound: Nie znaleziono klucza publicznego Takera.
+
+  success:
+    title: Oferta zakończona
+    headline: Płatność potwierdzona!
+    subtitle: Osoba przyjmująca ofertę otrzyma teraz zapłatę.
+    detailsTitle: "Szczegóły oferty:"
+    duration: "Realizacja oferty zajęła ${time}."
+
+# =============================================================================
+# RESERVATIONS
+# =============================================================================
+reservations:
+  actions:
+    cancel: Anuluj rezerwację
+  
+  feedback:
+    cancelled: Rezerwacja anulowana.
+  
+  errors:
+    cancelling: "Nie udało się anulować rezerwacji: ${error}"
+    failedToReserve: "Nie udało się zarezerwować oferty: ${details}"
+    failedNoTimestamp: Nie udało się zarezerwować oferty (brak znacznika czasu).
+    timestampMissing: Brak znacznika czasu rezerwacji oferty.
+    notReserved: "Oferta nie jest już w stanie zarezerwowanym (${status})."
+
+# =============================================================================
+# EXCHANGE RATES AND AMOUNTS
+# =============================================================================
+exchange:
+  labels:
+    enterAmount: "Wprowadź kwotę (PLN) do zapłaty:"
+    equivalent: "≈ ${sats} satoshi"
+    rate: "Kurs wymiany ≈ ${rate} PLN/BTC"
+
+  feedback:
+    fetching: Pobieranie kursu wymiany...
+  
+  errors:
+    fetchingRate: Nie udało się pobrać kursu wymiany.
+    invalidFormat: Nieprawidłowy format liczby
+    mustBePositive: Kwota musi być dodatnia
+    invalidFeePercentage: Nieprawidłowy procent opłaty
+    tooLowFiat: "Kwota jest za niska. Minimum to ${minAmount} ${currency}."
+    tooHighFiat: "Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}."
+
+# =============================================================================
+# COORDINATOR INFORMATION
+# =============================================================================
+coordinator:
+  title: "Koordynatorzy"
+  info:
+    fee: opłata
+    rangeDisplay: "Kwota: ${minAmount}-${maxAmount} ${currency}"
+    feeDisplay: "${fee}% opłata"
+  
+  selector:
+    loading: "Ładowanie koordynatorów..."
+    errorLoading: "Błąd ładowania koordynatorów"
+    choose: "Wybierz koordynatora"
+    viewNostrProfile: "Zobacz profil Nostr"
+    unresponsive: "Ten koordynator nie odpowiada"
+    waitingResponse: "Oczekiwanie na odpowiedź koordynatora"
+    termsAccept: "Akceptuję "
+    termsOfUsage: "Warunki użytkowania"
+  
+  dialog:
+    makerFee: "Opłata twórcy"
+    takerFee: "Opłata odbiorcy"
+    amountRange: "Zakres kwoty"
+    reservationTime: "Czas rezerwacji"
+    currencies: "Waluty"
+    viewTerms: "Zobacz warunki"
+  
+  management:
+    title: "Zarządzanie Koordynatorami"
+    availableCoordinators: "Dostępni Koordynatorzy"
+    noCoordinators: "Nie odkryto jeszcze żadnych koordynatorów."
+    online: "Online"
+    unknownOffline: "Nieznany/Offline"
+    openNostrProfile: "Otwórz profil Nostr"
+    enable: "Włącz"
+    remove: "Usuń"
+    addCustomWhitelist: "Dodaj koordynatora"
+    addCustomWhitelistHint: "npub1..."
+    add: "Dodaj"
+    coordinatorBlacklisted: "Koordynator zablokowany"
+    coordinatorUnblacklisted: "Koordynator odblokowany"
+    coordinatorAdded: "Koordynator dodany do niestandardowej białej listy"
+    coordinatorRemoved: "Koordynator usunięty z niestandardowej białej listy"
+    pleaseEnterNpub: "Proszę wprowadzić npub"
+    error: "Błąd"
+
+# =============================================================================
+# MAKER FLOW
+# =============================================================================
+maker:
+  roleSelection:
+    button: ZAPŁAĆ przez Lightning
+  
+  amountForm:
+    progress:
+      step1: "1. Utwórz Ofertę"
+      step2: "2. Czekaj na zabranie"
+      step3: "3. Użyj BLIK"
+    labels:
+      coordinator: Koordynator
+      exchangeRate: Kurs wymiany
+      fee: Opłata
+      satoshisToPay: Do zapłaty
+      enterAmount: Wprowadź kwotę
+      tapToSelect: Kliknij, aby wybrać
+    actions:
+      generateInvoice: Wygeneruj Fakturę
+    
+    tooltips:
+      feeInfo: "Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning."
+      payInfo: "Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty."
+    
+    errors:
+      initiating: "Błąd inicjowania oferty: ${details}"
+      publicKeyNotLoaded: "Błąd: Klucz publiczny nie został jeszcze załadowany."
+  
+  payInvoice:
+    title: "Zapłać tę fakturę Hold:"
+    actions:
+      copy: Kopiuj Fakturę
+      payInWallet: Otwórz w portfelu zewnętrznym
+      connectWallet: Połącz portfel
+      payWithNwc: "Zapłać"
+      paying: Płacenie...
+
+    feedback:
+      copied: Faktura skopiowana do schowka!
+      waitingConfirmation: Oczekiwanie na potwierdzenie płatności...
+      nwcConnected: Portfel NWC połączony!
+      nwcPaymentSuccess: Płatność udana!
+    
+    errors:
+      couldNotOpenApp: Nie można otworzyć aplikacji Lightning dla faktury.
+      openingApp: "Błąd otwierania aplikacji Lightning: ${details}"
+      publicKeyNotAvailable: Klucz publiczny nie jest dostępny.
+      couldNotFetchActive: Nie udało się pobrać szczegółów aktywnej oferty. Mogła wygasnąć.
+      nwcPaymentFailed: "Płatność nie powiodła się: ${details}"
+      nwcNotConnected: Portfel NWC nie jest połączony
+      insufficientBalance: "Niewystarczające środki. Potrzeba ${required} sats, dostępne ${available} sats"
+  
+  waitTaker:
+    message: "Oczekiwanie na rezerwację przez Kupującego..."
+#    progressLabel: "Oczekiwanie na takera: ${time}"
+    errorActiveOfferDetailsLost: "Błąd: Utracono szczegóły aktywnej oferty."
+    errorFailedToRetrieveBlik: "Błąd: Nie udało się pobrać kodu BLIK."
+    errorRetrievingBlik: "Błąd pobierania kodu BLIK: ${details}"
+    offerNoLongerAvailable: "Oferta nie jest już dostępna (Status: ${status})."
+    errorCouldNotIdentifyOffer: "Błąd: Nie można zidentyfikować oferty do anulowania."
+    offerCannotBeCancelled: "Oferty nie można anulować w obecnym stanie (${status})."
+    offerCancelledSuccessfully: "Oferta anulowana pomyślnie."
+    failedToCancelOffer: "Nie udało się anulować oferty: ${details}"
+  
+  waitForBlik:
+    title: Oczekiwanie na BLIK
+    messageInfo: Ktoś zarezerwował twoją ofertę!
+    messageWaiting: Oczekiwanie na kod BLIK...
+    #timeLimitWithSeconds: "Taker ma ${seconds} sekund na podanie kodu BLIK."
+    progressLabel: "Zarezerwowano: ${seconds} s pozostało"
+  
+  confirmPayment:
+    title: Otrzymano kod BLIK!
+    retrieving: Pobieranie kodu BLIK...
+    #instructions: Wprowadź ten kod do terminala płatniczego. Gdy Taker potwierdzi w swojej aplikacji bankowej i płatność zakończy się sukcesem, naciśnij Potwierdź poniżej.
+    instruction1: Wprowadź kod do systemu płatności BLIK.
+    instruction2: Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.
+    instruction3: "Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:"
+    
+    takerChargedWarning: "Pobierający zgłosił, że płatność BLIK została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt."
+    
+    expiredTitle: Kod BLIK wygasł
+    expiredWarning: "Kod BLIK wygasł. Musisz ręcznie potwierdzić status płatności:"
+    expiredInstruction1: "Jeśli płatność BLIK zakończyła się sukcesem i zrealizowałeś zakup, kliknij \"Potwierdź udaną płatność\" poniżej."
+    expiredInstruction2: "Jeśli płatność BLIK nie powiodła się lub nie została zrealizowana, kliknij \"Nieprawidłowy kod BLIK\" poniżej."
+    
+    actions:
+      confirm: Potwierdź udaną płatność
+      markInvalid: Nieprawidłowy kod BLIK
+      copyBlik: Kopiuj BLIK
+    
+    confirmDialog:
+      title: Potwierdzić płatność?
+      content: "Ta akcja jest nieodwracalna. Po potwierdzeniu:\n\n• Kupujący otrzyma środki natychmiast\n• Koordynator nie będzie mógł zakwestionować środków\n• Nie możesz cofnąć tej akcji\n\nPotwierdź tylko wtedy, gdy płatność BLIK zakończyła się sukcesem."
+      cancel: Anuluj
+      confirmButton: Tak, potwierdź płatność
+    
+    invalidBlikDisputeDialog:
+      title: Otworzyć spór?
+      content: "Kupujący zgłosił, że płatność BLIK została pobrana z jego konta.\n\nOznaczenie tego jako nieprawidłowe natychmiast otworzy SPÓR wymagający interwencji koordynatora.\n\n• Opłata za spór może zostać naliczona, jeśli zostanie rozstrzygnięty na Twoją niekorzyść\n• Faktura hold zostanie rozliczona natychmiast\n• Wymagana będzie ręczna weryfikacja\n\nKontynuuj tylko wtedy, gdy masz pewność, że płatność BLIK NIE powiodła się."
+      cancel: Anuluj
+      confirmButton: Tak, otwórz spór
+    
+    feedback:
+      confirmed: Maker potwierdził płatność.
+      confirmedTakerPaid: Płatność potwierdzona! Taker otrzyma środki.
+      progressLabel: "Potwierdzanie: ${seconds} s pozostało"
+    
+    errors:
+      failedToRetrieve: "Błąd: Nie udało się pobrać kodu BLIK."
+      retrieving: "Błąd pobierania kodu BLIK: ${details}"
+      missingHashOrKey: "Błąd: Brakujący hash płatności lub klucz publiczny."
+      incorrectState: "Oferta nie jest w prawidłowym stanie do potwierdzenia (Status: ${status})"
+      confirming: "Błąd potwierdzania płatności: ${details}"
+      invalidState: "Błąd: Otrzymano nieprawidłowy stan oferty."
+      internalIncomplete: "Błąd wewnętrzny: Niekompletne szczegóły oferty."
+      notAwaitingConfirmation: "Oferta nie oczekuje już na potwierdzenie (Status: ${status})."
+      unexpectedStatus: Otrzymano nieoczekiwany status oferty z serwera.
+  
+  invalidBlik:
+    title: Nieprawidłowy kod BLIK
+    info: Oznaczyłeś kod BLIK jako nieprawidłowy. Oczekiwanie na podanie nowego kodu przez takera lub rozpoczęcie sporu.
+  
+  conflict:
+    title: Konflikt Oferty
+    headline: Zgłoszono Konflikt Oferty
+    body: Oznaczyłeś kod BLIK jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.
+    instructions: Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.
+    
+    actions:
+      back: Powrót do strony głównej
+      confirmPayment: Mój błąd, potwierdź sukces płatności BLIK
+      openDispute: Płatność BLIK NIE powiodła się, OTWÓRZ SPÓR
+      submitDispute: Zgłoś Spór
+    
+    disputeDialog:
+      title: Otworzyć spór?
+      content: Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) na Twój adres Lightning.
+      contentDetailed: "Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona na Twój adres Lightning (pomniejszona o opłaty). Upewnij się, że masz skonfigurowany adres Lightning."
+      actions:
+        confirm: Otwórz Spór
+        cancel: Anuluj
+    
+    feedback:
+      disputeOpenedSuccess: Spór pomyślnie otwarty. Koordynator rozpatrzy sprawę. # Poprawione
+    
+    errors:
+      openingDispute: "Błąd otwierania sporu: ${error}"
+  
+  success:
+    title: Oferta zakończona
+    headline: Płatność potwierdzona!
+    subtitle: Osoba przyjmująca ofertę otrzyma teraz zapłatę.
+    detailsTitle: "Szczegóły oferty:"
+    duration: "Oferta zajęła ${time}!"
+
+# =============================================================================
+# TAKER FLOW
+# =============================================================================
+taker:
+  roleSelection:
+    button: SPRZEDAJ kod BLIK za satoshi
+  
+  progress:
+    step1: Wyślij BLIK
+    step2: Potwierdź BLIK
+    step3: Otrzymaj płatność
+  
+  submitBlik:
+    title: "Wpisz 6-cyfr BLIK"
+    label: Kod BLIK
+    instruction: "Wprowadź BLIK zanim upłynie czas..."
+    
+    timeLimit: "Wprowadź BLIK w ciągu: ${seconds} s"
+    timeExpired: Czas na wprowadzenie kodu BLIK minął.
+    
+    actions:
+      submit: Wyślij BLIK
+    
+    feedback:
+      pasted: Wklejono kod BLIK.
+    
+    validation:
+      invalidFormat: Wprowadź prawidłowy 6-cyfrowy kod BLIK.
+    
+    errors:
+      submitting: "Błąd wysyłania kodu BLIK: ${details}"
+      clipboardInvalid: Schowek nie zawiera prawidłowego 6-cyfrowego kodu BLIK.
+      stateChanged: "Błąd: Stan oferty uległ zmianie."
+      stateNotValid: "Błąd: Stan oferty nie jest już ważny."
+      fetchedIdMismatch: "Pobrane ID aktywnej oferty (${fetchedId}) nie pasuje do początkowego ID oferty (${initialId}). Niezgodność stanu?"
+      paymentHashMissing: Brak hasha płatności oferty po pobraniu.
+    
+    details:
+      requestedAmount: "Żądana kwota BLIK"
+      exchangeRate: "Kurs wymiany"
+      takerFee: "Opłata Taker"
+      status: "Status"
+      youllReceive: "Otrzymasz"
+  
+  waitConfirmation:
+    title: "Oczekiwanie na Makera"
+    statusLabel: "Status oferty: ${status}"
+    waitingMaker: "Oczekiwanie na potwierdzenie Makera: ${seconds} s"
+    waitingMakerConfirmation: "Oczekiwanie na potwierdzenie płatności BLIK przez Makera w jego aplikacji bankowej. Pozostały czas: ${seconds}s"
+    importantNotice: "BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie BLIK tylko na kwotę ${amount} ${currency}"
+    importantBlikAmountConfirmation: "BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność BLIK na kwotę dokładnie ${amount} ${currency}."
+    instructions: "Osoba wystawiająca ofertę musi teraz wpisać kod BLIK w ciągu 2 minut. Następnie musisz zaakceptować kod BLIK w swojej aplikacji bankowej."
+    waitingForMakerToReceive: "Czekamy, aż twórca oferty otrzyma Twój kod BLIK..."
+    makerReceivedBlik: "Twórca oferty otrzymał Twój kod BLIK"
+    timerExpiredMessage: "Minął termin ważności kodu BLIK 2m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty."
+    timerExpiredActions: "Minął termin ważności kodu BLIK 2m, ale wystawca nie otrzymał kodu BLIK. Możesz wysłać nowy kod BLIK lub anulować."
+    resendBlikButton: "Wyślij nowy kod BLIK"
+    navigatedHome: "Przeniesiono na stronę główną."
+    
+    expiredTitle: "Kod BLIK wygasł"
+    expiredWarning: "Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć."
+    expiredSentWarning: "Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?"
+    expiredInstruction1: "Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację."
+    expiredInstruction2: "Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację."
+    expiredInstruction3: "Jeśli płatność BLIK została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora."
+
+    takerCharged:
+      title: "Oznaczyłeś BLIK jako opłacony"
+      message: "Twórca oferty musi potwierdzić płatność lub ją zakwestionować. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny."
+
+    expiredActions:
+      reportConflict: "BLIK został pobrany z mojego konta"
+      renewReservation: "Spróbuj ponownie z nowym kodem BLIK"
+      cancelReservation: "Anuluj rezerwację"
+    
+    feedback:
+      makerConfirmed: Maker potwierdził płatność.
+      paymentSuccessful: Płatność udana! Wkrótce otrzymasz środki.
+      conflictReported: Konflikt zgłoszony. Koordynator rozpatrzy sytuację.
+
+    errors:
+      invalidOfferStateReceived: "Otrzymano ofertę o nieprawidłowym stanie dla tego ekranu. Resetowanie."
+      reportingConflict: "Błąd zgłaszania konfliktu: ${details}"
+
+  paymentProcess:
+    title: Proces Płatności
+    waitingForOfferUpdate: "Oczekiwanie na aktualizację statusu oferty..."
+    
+    states:
+      preparing: Przygotowywanie do wysłania płatności...
+      sending: Wysyłanie płatności...
+      received: Płatność otrzymana!
+      failed: Płatność nie powiodła się
+      waitingUpdate: Oczekiwanie na aktualizację oferty...
+    
+    steps:
+      makerConfirmedBlik: "Maker potwierdził płatność BLIK"
+      makerInvoiceSettled: "Faktura hold Makera rozliczona"
+      payingTakerInvoice: "Opłacanie Twojej faktury Lightning"
+      takerInvoicePaid: "Twoja faktura Lightning opłacona"
+      takerPaymentFailed: "Płatność na Twoją fakturę nie powiodła się"
+
+    errors:
+      sending: "Błąd wysyłania płatności: ${details}"
+      notConfirmed: Oferta niepotwierdzona przez Makera.
+      expired: Oferta wygasła.
+      cancelled: Oferta anulowana.
+      paymentFailed: Płatność oferty nie powiodła się.
+      unknown: Nieznany błąd oferty.
+      takerPaymentFailed: "Płatność na Twoją fakturę Lightning nie powiodła się."
+      noPublicKey: "Błąd: Nie można pobrać Twojego klucza publicznego."
+      loadingPublicKey: Błąd ładowania Twoich danych
+      missingPaymentHash: "Błąd: Brakujące szczegóły płatności."
+    
+    loading:
+      publicKey: Ładowanie Twoich danych...
+    
+    actions:
+      goToFailureDetails: "Wprowadź nową fakturę Lightning"
+  
+  paymentFailed:
+    title: Płatność Nie Powiodła Się
+    instructions: "Proszę podać nową fakturę Lightning na kwotę ${netAmount} satoshi"
+    form:
+      newInvoiceLabel: "Nowa faktura Lightning"
+      newInvoiceHint: "Wprowadź swoją fakturę BOLT11"
+    actions:
+      retryPayment: "Wyślij nową fakturę"
+    errors:
+      enterValidInvoice: "Proszę wprowadzić prawidłową fakturę"
+      updatingInvoice: "Błąd aktualizacji faktury: ${details}"
+      paymentRetryFailed: "Ponowna próba płatności nie powiodła się. Sprawdź fakturę lub spróbuj ponownie później."
+      takerPublicKeyNotFound: "Nie znaleziono klucza publicznego Kupującego."
+    loading:
+      processingPayment: "Przetwarzanie ponownej płatności..."
+    success:
+      title: "Płatność udana"
+      message: "Twoja płatność została przetworzona pomyślnie."
+
+  paymentSuccess:
+    title: Płatność Udana
+    message: Twoja płatność została przetworzona pomyślnie.
+    actions:
+      goHome: Przejdź do strony głównej
+  
+  invalidBlik:
+    title: Nieprawidłowy Kod BLIK
+    message: Maker Odrzucił Kod BLIK
+    explanation: Maker oferty wskazał, że podany przez Ciebie kod BLIK był nieprawidłowy lub nie zadziałał.\n\nCo chcesz zrobić?
+
+    werentCharged: "Jeśli Twoje konto NIE zostało obciążone:"
+    wereCharged: "Jeśli Twoje konto zostało obciążone:"
+
+    actions:
+      retry: Wyślij nowy kod BLIK
+      cancelReservation: Anuluj Transakcję
+      reportConflict: Rozpocząć Spór
+      returnHome: Wróć do strony głównej
+    
+    feedback:
+      conflictReportedSuccess: Konflikt zgłoszony. Koordynator rozpatrzy sprawę.
+    
+    errors:
+      reservationFailed: Nie udało się ponownie zarezerwować oferty
+      conflictReport: "Błąd zgłaszania konfliktu: ${details}"
+  
+  conflict:
+    title: Konflikt Oferty
+    headline: Zgłoszono Konflikt Oferty
+    body: Maker oznaczył kod BLIK jako nieprawidłowy, ale Ty zgłosiłeś konflikt, wskazując, że uważasz, iż płatność zakończyła się sukcesem.
+    instructions: Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.
+    
+    actions:
+      back: Powrót do strony głównej
+    
+    feedback:
+      reported: Konflikt zgłoszony. Koordynator rozpatrzy sprawę.
+    
+    errors:
+      reporting: "Błąd zgłaszania konfliktu: ${details}"
+
+# =============================================================================
+# BLIK (General)
+# =============================================================================
+blik:
+  instructions:
+    taker: "Gdy Maker wprowadzi kod BLIK, będziesz musiał potwierdzić płatność w swojej aplikacji bankowej. Upewnij się, że kwota jest poprawna przed potwierdzeniem."
+
+# =============================================================================
+# KEY MANAGEMENT
+# =============================================================================
+nekoInfo:
+  title: Czym jest Neko?
+  description: "Twoje Neko to Twoja tożsamość do korzystania z BitBlik. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków."
+  backupWarning: "Pamiętaj, aby zarchiwizować swoje Neko"
+
+generateNewKey:
+  title: Nowy
+  description: Czy na pewno chcesz wygenerować nowe Neko? Twoje obecne zostanie utracone na zawsze, jeśli go nie zarchiwizowałeś.
+  buttons:
+    generate: Generuj
+  errors:
+    activeOffer: Nie możesz wygenerować nowego Neko, gdy masz aktywną ofertę.
+    failed: "Nie udało się wygenerować nowego Neko"
+  feedback:
+    success: Nowe Neko wygenerowane pomyślnie!
+  tooltips:
+    generate: Wygeneruj nowe Neko
+
+# =============================================================================
+# BACKUP AND RESTORE
+# =============================================================================
+backup:
+  title: Zarchiwizuj
+  description: To jest Twój klucz prywatny. Zabezpiecza on komunikację z koordynatorem. Nigdy nikomu go nie ujawniaj. Zarchiwizuj go w bezpiecznym miejscu, aby uniknąć problemów podczas sporów.
+  feedback:
+    copied: Klucz prywatny skopiowany do schowka!
+  tooltips:
+    backup: Zarchiwizuj Neko
+
+restore:
+  title: Przywróć
+  labels:
+    privateKey: Klucz prywatny
+  buttons:
+    restore: Przywróć
+  errors:
+    invalidKey: Musi to być 64-znakowy ciąg szesnastkowy.
+    failed: "Przywracanie nie powiodło się"
+  feedback:
+    success: Neko przywrócone pomyślnie! Aplikacja zostanie ponownie uruchomiona.
+  tooltips:
+    restore: Przywróć Neko
+
+# =============================================================================
+# HOME SCREEN / OFFER LIST
+# =============================================================================
+home:
+  notifications:
+    title: "Otrzymuj powiadomienia o nowych ofertach przez:"
+    telegram: Telegram
+    simplex: SimpleX
+    element: Element
+    signal: Signal
+  
+  statistics:
+    title: Zakończone oferty
+    lifetimeCompact: "Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}"
+    last7DaysCompact: "Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}"
+    last7DaysSingleLine: "Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}"
+    
+    errors:
+      loading: "Błąd ładowania statystyk: ${error}"
+
+# =============================================================================
+# SYSTEM ERRORS AND CONFIGURATIONS
+# =============================================================================
+system:
+  loadingPublicKey: "Ładowanie Twojego klucza publicznego..."
+  errors:
+    generic: Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.
+    loadingTimeoutConfig: Błąd ładowania konfiguracji limitu czasu.
+    loadingCoordinatorConfig: Błąd ładowania konfiguracji koordynatora. Proszę spróbować ponownie.
+    noPublicKey: "Twój klucz publiczny nie jest dostępny. Nie można kontynuować."
+    internalOfferIncomplete: "Błąd wewnętrzny: Szczegóły oferty są niekompletne. Spróbuj ponownie."
+    loadingPublicKey: "Błąd ładowania Twojego klucza publicznego. Uruchom ponownie aplikację."
+  
+  blik:
+    copied: Kod BLIK skopiowany do schowka
+
+# =============================================================================
+# MAIN LANDING PAGE
+# =============================================================================
+landing:
+  mainTitle: "Wymiana\n BLIK ⇄ bitcoin"
+  subtitle: "Płać lub sprzedawaj kod BLIK za bitcoin"
+  
+  actions:
+    payBlik: "Zapłać BLIK"
+    payBlikSubtitle: "używając bitcoin"
+    sellBlik: "Kup bitcoin"
+    sellBlikSubtitle: "używając BLIK"
+    howItWorks: "Jak to działa?"
+
+# =============================================================================
+# FAQ
+# =============================================================================
+faq:
+  screenTitle: FAQ
+  tooltip: FAQ
+
+# =============================================================================
+# SETTINGS
+# =============================================================================
+settings:
+  title: Ustawienia
+
+wallet:
+  title: Portfel
+  description: Zarządzaj ustawieniami portfela Lightning
+  missingReceiving:
+    title: Wymagany portfel odbiorczy
+    message: Brak skonfigurowanego portfela do odbierania. Dodaj go w ustawieniach portfela, aby przyjmować oferty.
+    openSettings: Ustawienia portfela
+
+nwc:
+  title: Nostr Wallet Connect (NWC)
+  description: Połącz swój portfel Lightning przez NWC
+  labels:
+    connectionString: Ciąg połączenia NWC
+    hint: "nostr+walletconnect://..."
+    status: Status połączenia
+    connected: Połączono
+    disconnected: Rozłączono
+    scanQrCode: Zeskanuj kod QR z połączeniem NWC
+    balance: "Saldo"
+    budget: "Budżet"
+    usedBudget: "Wykorzystano"
+    totalBudget: "Łącznie"
+    renewsIn: "Odnowienie za"
+    renewalPeriod: "Okres odnowienia"
+    relay: "Przekaźnik"
+    relays: "Przekaźniki"
+  prompts:
+    enter: Wprowadź swój ciąg połączenia NWC
+    connect: Połącz portfel
+    disconnect: Rozłącz
+    confirmDisconnect: Czy na pewno chcesz rozłączyć portfel NWC?
+    pasteConnection: Wklej ciąg połączenia
+    chooseMethod: Wybierz sposób połączenia portfela Lightning
+    howToGet: "Nie masz jeszcze połączenia NWC? Dowiedz się, jak je uzyskać!"
+    learnMore: Dowiedz się więcej o NWC
+  actions:
+    connectAlbyGo: Połącz z Alby Go
+    connectNwc: Skanuj kod QR NWC
+  feedback:
+    connected: Portfel NWC połączony pomyślnie!
+    disconnected: Portfel NWC rozłączony
+    connecting: Łączenie z portfelem NWC...
+    loadingWalletInfo: Ładowanie informacji o portfelu...
+  errors:
+    connecting: "Błąd połączenia z NWC: ${details}"
+    disconnecting: "Błąd rozłączania NWC: ${details}"
+    invalid: Nieprawidłowy ciąg połączenia NWC
+    required: Wymagany ciąg połączenia NWC
+    loadingBalance: Nie udało się załadować salda portfela
+    loadingBudget: Nie udało się załadować budżetu portfela
+  time:
+    minutes: "${count}m"
+    hours: "${count}h"
+    days: "${count}d"
+    justNow: teraz
+
+nekoManagement:
+  title: Neko
+
+# =============================================================================
+# RELAY CONNECTIVITY
+# =============================================================================
+relays:
+  title: Przekaźniki
+  status:
+    connected: Połączony
+    connecting: Łączenie
+    reconnecting: Ponowne łączenie
+    disconnected: Rozłączony
+  popup:
+    title: "Przekaźniki (${connected}/${total} połączonych)"
+    connectingMessage: Łączenie z przekaźnikami...
+
+# =============================================================================
+# ALTSTORE INSTALLATION
+# =============================================================================
+altstore:
+  dialogTitle: "AltStore Nie Zainstalowany"
+  step1Title: "Pobierz i zainstaluj AltStore PAL"
+  step1Button: "altstore.io/download"
+  step1Warning: "Potrzebujesz Safari, aby zainstalować AltStore PAL!"
+  step2Title: "Zainstaluj BitBlik"
+  step2Button: "Zainstaluj BitBlik"
+  step2Fallback: "Nie działa? Wklej źródło do AltStore"
