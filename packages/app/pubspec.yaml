@@ -1,4 +1,4 @@
-name: bitbliks
+name: bitblik
 description: "Bit Blik"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -51,8 +51,7 @@ dependencies:
   ndk_drift: ^0.1.0
 
   bitblik_core:
-    git:
-      url: https://relay.ngit.dev/bitblik.app/core.git
+    path: ../core
 
   url_launcher: ^6.3.1 # For launching URLs/Intents
   android_intent_plus: ^6.0.0
