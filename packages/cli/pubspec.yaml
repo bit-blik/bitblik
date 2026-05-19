@@ -10,7 +10,8 @@ environment:
 dependencies:
   bitblik_core:
     path: ../core
+  bip340: ^0.3.0
+  ndk: any
 
 executables:
   bitblik: bitblik_cli
-

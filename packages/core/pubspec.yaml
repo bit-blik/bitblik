@@ -8,4 +8,5 @@ environment:
   sdk: ^3.6.0
 
 dependencies:
+  meta: ^1.18.2
   ndk: any
