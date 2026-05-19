@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 
 class MakerConflictScreen extends ConsumerStatefulWidget {

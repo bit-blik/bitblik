@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
-import '../../models/offer.dart'; // For OfferStatus enum
+import 'package:bitblik_core/core.dart'; // For OfferStatus enum
 import '../../providers/providers.dart';
 import '../../widgets/progress_indicators.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
@@ -127,7 +127,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       }
       return;
     }
-    if (offer.status != OfferStatus.funded.name) {
+    if (offer.status != OfferStatus.funded) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -227,7 +227,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                 // Center: Large circular progress bar with time
                 Center(
                   child:
-                      offer.status == OfferStatus.funded.name
+                      offer.status == OfferStatus.funded
                           ? CircularCountdownTimer(
                             startTime: offer.createdAt,
                             maxDuration: const Duration(minutes: 10),
@@ -292,7 +292,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                       child: OutlinedButton(
                         onPressed:
                             _isCancelling ||
-                                    (offer.status != OfferStatus.funded.name)
+                                    (offer.status != OfferStatus.funded)
                                 ? null
                                 : _cancelOffer,
                         style: OutlinedButton.styleFrom(

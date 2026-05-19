@@ -11,8 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // import 'package:ndk_rust_verifier/ndk_rust_verifier.dart' as web_rust_verifier;
 
-import '../models/coordinator_info.dart';
-import '../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
 
@@ -565,9 +564,8 @@ class NostrService {
       fiatAmount: double.tryParse(tagMap['fa'] ?? '0') ?? 0.0,
       fiatCurrency: tagMap['f'] ?? 'PLN',
       status:
-          (_mapOfferStatusToNip69Status(tagMap['s'] ?? 'pending') ??
-                  OfferStatus.funded)
-              .name,
+          _mapOfferStatusToNip69Status(tagMap['s'] ?? 'pending') ??
+          OfferStatus.funded,
       createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt * 1000),
       makerPubkey: tagMap['maker'] ?? event.pubKey,
       coordinatorPubkey: tagMap['p'] ?? event.pubKey,

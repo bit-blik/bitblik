@@ -10,8 +10,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
-import '../../models/offer.dart';
-import '../../models/coordinator_info.dart'; // Added
+import 'package:bitblik_core/core.dart';
+import 'package:bitblik_core/core.dart'; // Added
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
 import '../../widgets/progress_indicators.dart'; // Import TakerProgressIndicator
@@ -137,7 +137,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         );
       }
       // --- Validation ---
-      if (fullOffer.status != OfferStatus.reserved.name) {
+      if (fullOffer.status != OfferStatus.reserved) {
         throw Exception(
           t.reservations.errors.notReserved(status: fullOffer.status),
         );
@@ -283,7 +283,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       _startBlikInputTimer(offer);
       return;
     }
-    if (offer.status != OfferStatus.reserved.name || offer.reservedAt == null) {
+    if (offer.status != OfferStatus.reserved || offer.reservedAt == null) {
       ref.read(errorProvider.notifier).state =
           t.taker.submitBlik.errors.stateChanged;
       _resetToOfferList(t.taker.submitBlik.errors.stateNotValid);
@@ -361,7 +361,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       );
 
       final updatedOffer = offer.copyWith(
-        status: OfferStatus.blikReceived.name,
+        status: OfferStatus.blikReceived,
         blikReceivedAt: DateTime.now(),
         blikCode: blikCode,
       );

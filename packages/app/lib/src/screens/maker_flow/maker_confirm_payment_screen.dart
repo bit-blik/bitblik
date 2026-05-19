@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import '../../../i18n/gen/strings.g.dart';
-import '../../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
 
@@ -23,9 +23,9 @@ class _MakerConfirmPaymentScreenState
   bool _isExpiredStatus() {
     final offer = ref.read(activeOfferProvider);
     if (offer == null) return false;
-    return offer.status == OfferStatus.expiredBlik.name ||
-        offer.status == OfferStatus.expiredSentBlik.name ||
-        offer.status == OfferStatus.takerCharged.name;
+    return offer.status == OfferStatus.expiredBlik ||
+        offer.status == OfferStatus.expiredSentBlik ||
+        offer.status == OfferStatus.takerCharged;
   }
 
   @override
@@ -130,8 +130,8 @@ class _MakerConfirmPaymentScreenState
       final apiService = ref.read(apiServiceProvider);
       // final offerStatus = await apiService.getOfferStatus(paymentHash, offer.coordinatorPubkey);
       // if (offerStatus == null ||
-      //     (offerStatus != OfferStatus.blikReceived.name &&
-      //         offerStatus != OfferStatus.blikSentToMaker.name)) {
+      //     (offerStatus != OfferStatus.blikReceived &&
+      //         offerStatus != OfferStatus.blikSentToMaker)) {
       //   throw Exception(
       //     t.maker.confirmPayment.errors.incorrectState(
       //       status: offerStatus ?? 'null',

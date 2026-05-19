@@ -6,8 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart';
-import '../models/coordinator_info.dart';
-import '../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../providers/providers.dart';
 import '../services/api_service_nostr.dart';
 import '../widgets/lightning_address_widget.dart';
@@ -112,10 +111,10 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
             coordinatorReservationDurationProvider(offer.coordinatorPubkey),
           );
 
-          final bool isFunded = offer.status == OfferStatus.funded.name;
-          final bool isReserved = offer.status == OfferStatus.reserved.name;
+          final bool isFunded = offer.status == OfferStatus.funded;
+          final bool isReserved = offer.status == OfferStatus.reserved;
           final bool isBlikReceived =
-              offer.status == OfferStatus.blikReceived.name;
+              offer.status == OfferStatus.blikReceived;
 
           // Get coordinator info for taker fee calculation
           final coordinatorInfoAsync = ref.watch(
@@ -227,7 +226,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
                                   if (reservationTimestamp != null) {
                                     final updatedOffer = offer.copyWith(
-                                      status: OfferStatus.reserved.name,
+                                      status: OfferStatus.reserved,
                                       takerPubkey: takerId,
                                       reservedAt: reservationTimestamp,
                                     );
@@ -343,7 +342,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                     ),
                   ),
                   onPressed: () {
-                    if (myActiveOffer.status == OfferStatus.reserved.name) {
+                    if (myActiveOffer.status == OfferStatus.reserved) {
                       router.go("/submit-blik", extra: myActiveOffer);
                     } else {
                       router.go("/wait-confirmation", extra: myActiveOffer);
@@ -418,7 +417,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
                                   // Exchange Rate row (hide for takerPaid)
                                   if (offer.status !=
-                                      OfferStatus.takerPaid.name)
+                                      OfferStatus.takerPaid)
                                     _buildInfoRow(
                                       t.offers.details.exchangeRate,
                                       '${_formatNumber(exchangeRate)} ${offer.fiatCurrency}/BTC',
@@ -430,12 +429,12 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     ),
 
                                   if (offer.status !=
-                                      OfferStatus.takerPaid.name)
+                                      OfferStatus.takerPaid)
                                     const SizedBox(height: 16),
 
                                   // Taker fee row (hide for takerPaid)
                                   if (offer.status !=
-                                      OfferStatus.takerPaid.name)
+                                      OfferStatus.takerPaid)
                                     _buildInfoRow(
                                       t.offers.details.takerFeeLabel,
                                       '$takerFeeAmount sats',
@@ -487,12 +486,12 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     ),
 
                                   if (offer.status !=
-                                      OfferStatus.takerPaid.name)
+                                      OfferStatus.takerPaid)
                                     const SizedBox(height: 24),
 
                                   // You'll receive row (highlighted) (hide for takerPaid)
                                   if (offer.status !=
-                                      OfferStatus.takerPaid.name)
+                                      OfferStatus.takerPaid)
                                     _buildInfoRow(
                                       t.offers.details.youllReceive,
                                       '$youllReceive sats',
@@ -501,7 +500,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
                                   // Timing information for completed offers (takerPaid status)
                                   if (offer.status ==
-                                          OfferStatus.takerPaid.name &&
+                                          OfferStatus.takerPaid &&
                                       offer.timeToReserveSeconds != null &&
                                       offer.totalCompletionTimeMakerSeconds !=
                                           null) ...[
@@ -707,7 +706,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                         Positioned(
                           top: 20,
                           right: -32,
-                          child: _buildStatusRibbon(offer.status),
+                          child: _buildStatusRibbon(offer.status.name),
                         ),
                       ],
                     ),
@@ -1171,7 +1170,7 @@ extension OfferCopyWith on Offer {
     int? makerFees,
     String? fiatCurrency,
     double? fiatAmount,
-    String? status,
+    OfferStatus? status,
     String? coordinatorPubkey,
     DateTime? createdAt,
     String? makerPubkey,

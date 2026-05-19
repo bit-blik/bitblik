@@ -5,8 +5,7 @@ import 'package:memory_cache/memory_cache.dart';
 import 'package:ndk/ndk.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
-import '../models/coordinator_info.dart';
-import '../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import 'key_service.dart';
 import 'nostr_service.dart';
 

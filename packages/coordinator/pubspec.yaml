@@ -9,6 +9,8 @@ environment:
 publish_to: none
 # Add regular dependencies here.
 dependencies:
+  bitblik_core:
+    path: ../core
   postgres: ^2.6.1 # Or latest version
   grpc: ^4.0.4 # Or latest version
   protobuf: ^4.0.0 # Or latest version

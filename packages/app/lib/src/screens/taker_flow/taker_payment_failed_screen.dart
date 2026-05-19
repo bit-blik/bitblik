@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:ndk/shared/logger/logger.dart';
 
-import '../../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 import '../../widgets/progress_indicators.dart';
 
@@ -117,7 +117,7 @@ class _TakerPaymentFailedScreenState
     ref.listen<Offer?>(activeOfferProvider, (previous, next) {
       if (next != null && next.id == widget.offer.id) {
         try {
-          final status = OfferStatus.values.byName(next.status);
+          final status = next.status;
           _handleStatusUpdate(status);
         } catch (e) {
           Logger.log.e(

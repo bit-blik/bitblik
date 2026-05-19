@@ -34,7 +34,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:markdown/markdown.dart' as md;
 
 import 'i18n/gen/strings.g.dart'; // Import Slang from new path
-import 'src/models/offer.dart'; // Needed for OfferStatus enum
+import 'package:bitblik_core/core.dart'; // Needed for OfferStatus enum
 import 'src/providers/providers.dart';
 import 'src/screens/coordinator_management_screen.dart';
 import 'src/screens/faq_screen.dart'; // Import the FAQ screen
@@ -455,7 +455,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   void _openPostNwcConnectionRoute() {
     final activeOffer = ref.read(activeOfferProvider);
 
-    if (activeOffer != null && activeOffer.status == OfferStatus.created.name) {
+    if (activeOffer != null && activeOffer.status == OfferStatus.created) {
       Logger.log.i(
         () =>
             '📝 Active offer found in created status, navigating to pay screen',

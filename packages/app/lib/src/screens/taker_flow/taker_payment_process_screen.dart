@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../models/offer.dart'; // Import Offer which contains OfferStatus
+import 'package:bitblik_core/core.dart'; // Import Offer which contains OfferStatus
 import '../../providers/providers.dart';
 import '../../widgets/progress_indicators.dart'; // Import for TakerProgressIndicator
 
@@ -80,7 +80,7 @@ class TakerPaymentProcessScreen extends ConsumerWidget {
     ref.listen<Offer?>(activeOfferProvider, (previous, next) {
       if (next != null && next.id == offer!.id) {
         try {
-          final status = OfferStatus.values.byName(next.status);
+          final status = next.status;
           print(status);
         } catch (e) {
           print(e);
@@ -102,7 +102,7 @@ class TakerPaymentProcessScreen extends ConsumerWidget {
 
     OfferStatus? currentStatus;
     try {
-      currentStatus = OfferStatus.values.byName(offer.status);
+      currentStatus = offer.status;
     } catch (e) {
       return _buildErrorContent(
         context,

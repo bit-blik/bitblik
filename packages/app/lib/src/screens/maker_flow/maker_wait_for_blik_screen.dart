@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import '../../providers/providers.dart';
-import '../../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../../widgets/progress_indicators.dart';
 import '../../../i18n/gen/strings.g.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator

@@ -15,8 +15,9 @@ import 'package:path/path.dart' as path;
 import 'package:process_run/process_run.dart';
 import 'package:bolt11_decoder/bolt11_decoder.dart';
 import 'package:decimal/decimal.dart';
+import 'package:uuid/uuid.dart';
 
-import '../models/offer.dart';
+import 'package:bitblik_core/src/models/offer.dart';
 import 'database_service.dart';
 import 'lnd_service.dart';
 import 'nwc_service.dart';
@@ -460,7 +461,7 @@ class CoordinatorService {
               offerId: offer.id);
           try {
             await _paymentBackend!
-                .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash);
+                .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
             AppLogger.info(
                 'Hold invoice for offer ${offer.id} cancelled via $_paymentBackendType due to startup expiration check.',
                 offerId: offer.id);
@@ -900,6 +901,9 @@ class CoordinatorService {
         'Creating offer in DB for funded payment hash: $paymentHashHex');
     try {
       final offer = Offer(
+        id: const Uuid().v4(),
+        createdAt: DateTime.now().toUtc(),
+        coordinatorPubkey: _nostrService?.coordinatorPubkey ?? '',
         amountSats: pendingData['amountSats'],
         makerFees: pendingData['makerFees'],
         takerFees: pendingData['takerFees'],
@@ -1055,13 +1059,13 @@ class CoordinatorService {
       if (_paymentBackend != null) {
         try {
           await _paymentBackend!
-              .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash);
+              .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
           AppLogger.info(
               'Hold invoice for offer ${offer.id} cancelled via $_paymentBackendType due to expiration.',
               offerId: offer.id);
           sleep(Duration(seconds: 1));
           final invoiceDetails = await _paymentBackend!
-              .lookupInvoice(paymentHashHex: offer.holdInvoicePaymentHash);
+              .lookupInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
           // TODO this will not work for NWC, we need to handle it
           if (invoiceDetails.status == InvoiceStatus.CANCELED) {
             AppLogger.info(
@@ -1770,7 +1774,7 @@ class CoordinatorService {
     try {
       if (_paymentBackend != null) {
         await _paymentBackend!
-            .settleInvoice(preimageHex: offer.holdInvoicePreimage);
+            .settleInvoice(preimageHex: offer.holdInvoicePreimage!);
         AppLogger.info(
             'Hold invoice for offer $offerId settled successfully via $_paymentBackendType.',
             offerId: offerId);
@@ -1861,7 +1865,7 @@ class CoordinatorService {
     try {
       if (_paymentBackend != null) {
         await _paymentBackend!
-            .settleInvoice(preimageHex: offer.holdInvoicePreimage);
+            .settleInvoice(preimageHex: offer.holdInvoicePreimage!);
         AppLogger.info(
             'Hold invoice for offer $offerId settled successfully via $_paymentBackendType.',
             offerId: offerId);
@@ -2001,7 +2005,7 @@ class CoordinatorService {
     if (_paymentBackend != null) {
       try {
         await _paymentBackend!
-            .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash);
+            .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
         AppLogger.info(
             'Hold invoice for offer $offerId cancelled successfully via $_paymentBackendType.',
             offerId: offerId);
@@ -2355,7 +2359,7 @@ class CoordinatorService {
     try {
       await _nostrService!.publishOfferStatusUpdate(
         offerId: offer.id,
-        paymentHash: offer.holdInvoicePaymentHash,
+        paymentHash: offer.holdInvoicePaymentHash ?? '',
         status: offer.status.name,
         timestamp: DateTime.now().toUtc(),
         createdAt: offer.createdAt,

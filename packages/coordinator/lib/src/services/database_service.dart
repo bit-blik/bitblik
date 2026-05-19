@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:postgres/postgres.dart';
 import 'package:dotenv/dotenv.dart';
-import '../models/offer.dart';
+import 'package:bitblik_core/src/models/offer.dart';
 import '../logging/app_logger.dart';
 
 class DatabaseService {
@@ -207,8 +207,7 @@ class DatabaseService {
         'fiat_currency': offer.fiatCurrency,
       },
     );
-    offer.updatedAt = now;
-    return offer;
+    return offer.copyWith(updatedAt: now);
   }
 
   Future<Offer?> getOfferById(String id) async {
@@ -401,8 +400,8 @@ class DatabaseService {
       substitutionValues: {
         'id': id,
         'makerPubkey': makerPubkey,
-        'newStatus': OfferStatus.cancelled.name, // Use cancelled status
-        'requiredStatus': OfferStatus.funded.name,
+        'newStatus': OfferStatus.cancelled, // Use cancelled status
+        'requiredStatus': OfferStatus.funded,
         'updated_at': now,
       },
     );
@@ -417,20 +416,20 @@ class DatabaseService {
           'Database not connected.'); // Should not happen after connect() but keep for safety
     // Define "active" statuses (exclude terminal/cancelled states)
     final activeStatuses = [
-      OfferStatus.created.name,
-      OfferStatus.funded.name,
-      OfferStatus.reserved.name,
-      OfferStatus.blikReceived.name,
-      OfferStatus.blikSentToMaker.name,
-      OfferStatus.expiredBlik.name,
-      OfferStatus.expiredSentBlik.name,
-      OfferStatus.takerCharged.name,
-      OfferStatus.invalidBlik.name,
-      OfferStatus.conflict.name,
-      OfferStatus.makerConfirmed.name,
-      OfferStatus.payingTaker.name,
-      OfferStatus.takerPaymentFailed.name,
-      OfferStatus.takerPaid.name
+      OfferStatus.created,
+      OfferStatus.funded,
+      OfferStatus.reserved,
+      OfferStatus.blikReceived,
+      OfferStatus.blikSentToMaker,
+      OfferStatus.expiredBlik,
+      OfferStatus.expiredSentBlik,
+      OfferStatus.takerCharged,
+      OfferStatus.invalidBlik,
+      OfferStatus.conflict,
+      OfferStatus.makerConfirmed,
+      OfferStatus.payingTaker,
+      OfferStatus.takerPaymentFailed,
+      OfferStatus.takerPaid
     ];
 
     final results = await _connection!.query(
@@ -473,26 +472,27 @@ class DatabaseService {
     return Offer(
       id: map['id'],
       amountSats: map['amount_sats'],
-      makerFees: map['maker_fees'], // Renamed field and column
+      makerFees: map['maker_fees'],
       makerPubkey: map['maker_pubkey'],
+      coordinatorPubkey: map['coordinator_pubkey'] ?? '',
       holdInvoicePaymentHash: map['hold_invoice_payment_hash'],
       holdInvoicePreimage: map['hold_invoice_preimage'],
       status: OfferStatus.values.byName(map['status']),
       createdAt: (map['created_at'] as DateTime).toLocal(),
       fiatAmount: double.parse(map['fiat_amount']),
       fiatCurrency: map['fiat_currency'] ?? '?',
-    )
-      ..takerPubkey = map['taker_pubkey']
-      ..takerLightningAddress = map['taker_lightning_address']
-      ..takerInvoice = map['taker_invoice']
-      ..takerInvoiceFees = map['taker_invoice_fees']
-      ..blikCode = map['blik_code']
-      ..updatedAt = (map['updated_at'] as DateTime?)?.toLocal()
-      ..reservedAt = (map['reserved_at'] as DateTime?)?.toLocal()
-      ..blikReceivedAt = (map['blik_received_at'] as DateTime?)?.toLocal()
-      ..makerConfirmedAt = (map['maker_confirmed_at'] as DateTime?)?.toLocal()
-      ..settledAt = (map['settled_at'] as DateTime?)?.toLocal()
-      ..takerPaidAt = (map['taker_paid_at'] as DateTime?)?.toLocal()
-      ..takerFees = map['taker_fees']; // Renamed field and column
-  }
+      takerPubkey: map['taker_pubkey'],
+      takerLightningAddress: map['taker_lightning_address'],
+      takerInvoice: map['taker_invoice'],
+            blikCode: map['blik_code'],
+      updatedAt: (map['updated_at'] as DateTime?)?.toLocal(),
+      reservedAt: (map['reserved_at'] as DateTime?)?.toLocal(),
+      blikReceivedAt: (map['blik_received_at'] as DateTime?)?.toLocal(),
+      makerConfirmedAt: (map['maker_confirmed_at'] as DateTime?)?.toLocal(),
+      settledAt: (map['settled_at'] as DateTime?)?.toLocal(),
+      takerPaidAt: (map['taker_paid_at'] as DateTime?)?.toLocal(),
+      takerFees: map['taker_fees'],
+    );
+}
+
 }

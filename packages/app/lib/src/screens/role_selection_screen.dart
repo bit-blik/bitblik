@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
-import '../models/offer.dart'; // Import Offer model
+import 'package:bitblik_core/core.dart'; // Import Offer model
 import '../providers/providers.dart'; // Import providers
 
 class RoleSelectionScreen extends ConsumerStatefulWidget {
@@ -60,7 +60,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
     }
 
     // Skip sync for offers with 'created' status - they only exist locally
-    if (activeOffer.status == OfferStatus.created.name) {
+    if (activeOffer.status == OfferStatus.created) {
       Logger.log.d(
         () =>
             '[RoleSelectionScreen] Offer has created status, skipping coordinator sync',
@@ -147,7 +147,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
 
   // Helper to navigate to the correct Maker step based on status
   void _navigateToMakerStep(BuildContext context, Offer offer) {
-    final offerStatus = OfferStatus.values.byName(offer.status);
+    final offerStatus = offer.status;
 
     switch (offerStatus) {
       case OfferStatus.created:
@@ -194,7 +194,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
 
   // Helper to navigate to the correct Taker step based on offer status
   void _navigateToTakerStep(BuildContext context, Offer offer) {
-    final offerStatus = OfferStatus.values.byName(offer.status);
+    final offerStatus = offer.status;
 
     if (offerStatus == OfferStatus.reserved) {
       // Pass the offer to the constructor using initialOffer
@@ -264,7 +264,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
         (activeOffer.statusEnum != OfferStatus.expired) &&
         (activeOffer.statusEnum != OfferStatus.cancelled);
     final isTakerPaid =
-        hasActiveOffer && activeOffer.status == OfferStatus.takerPaid.name;
+        hasActiveOffer && activeOffer.status == OfferStatus.takerPaid;
 
     return SingleChildScrollView(
       child: Column(
@@ -540,7 +540,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                   t.common.labels.status(status: activeOffer.status),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                if (activeOffer.status == OfferStatus.takerPaymentFailed.name &&
+                if (activeOffer.status == OfferStatus.takerPaymentFailed &&
                     activeOffer.takerLightningAddress != null &&
                     activeOffer.takerLightningAddress!.isNotEmpty)
                   Padding(
@@ -558,11 +558,11 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               ],
             ),
             trailing:
-                (activeOffer.status == OfferStatus.takerPaid.name)
+                (activeOffer.status == OfferStatus.takerPaid)
                     ? null
                     : const Icon(Icons.arrow_forward_ios),
             onTap:
-                (activeOffer.status == OfferStatus.takerPaid.name)
+                (activeOffer.status == OfferStatus.takerPaid)
                     ? null
                     : () {
                       _handleActiveOfferTap(
@@ -719,7 +719,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
           activeOffer.holdInvoicePaymentHash!;
     }
 
-    final offerStatus = OfferStatus.values.byName(activeOffer.status);
+    final offerStatus = activeOffer.status;
 
     if (offerStatus == OfferStatus.blikReceived ||
         offerStatus == OfferStatus.blikSentToMaker ||

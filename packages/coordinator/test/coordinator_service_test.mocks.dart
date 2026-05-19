@@ -11,10 +11,10 @@ import 'package:bitblik_coordinator/src/models/create_hold_invoice_result.dart'
     as _i3;
 import 'package:bitblik_coordinator/src/models/invoice_details.dart' as _i5;
 import 'package:bitblik_coordinator/src/models/invoice_update.dart' as _i10;
-import 'package:bitblik_coordinator/src/models/offer.dart' as _i2;
 import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart' as _i4;
 import 'package:bitblik_coordinator/src/services/database_service.dart' as _i7;
 import 'package:bitblik_coordinator/src/services/payment_service.dart' as _i9;
+import 'package:bitblik_core/src/models/offer.dart' as _i2;
 import 'package:http/http.dart' as _i6;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i12;
@@ -32,6 +32,7 @@ import 'package:mockito/src/dummies.dart' as _i12;
 // ignore_for_file: unnecessary_parenthesis
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
+// ignore_for_file: invalid_use_of_internal_member
 
 class _FakeOffer_0 extends _i1.SmartFake implements _i2.Offer {
   _FakeOffer_0(
@@ -120,6 +121,36 @@ class MockDatabaseService extends _i1.Mock implements _i7.DatabaseService {
         Invocation.method(
           #disconnect,
           [],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> insertAuditLog({
+    required String? level,
+    required String? loggerName,
+    required String? message,
+    required String? action,
+    String? offerId,
+    String? error,
+    String? stackTrace,
+    Map<String, dynamic>? metadata,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertAuditLog,
+          [],
+          {
+            #level: level,
+            #loggerName: loggerName,
+            #message: message,
+            #action: action,
+            #offerId: offerId,
+            #error: error,
+            #stackTrace: stackTrace,
+            #metadata: metadata,
+          },
         ),
         returnValue: _i8.Future<void>.value(),
         returnValueForMissingStub: _i8.Future<void>.value(),
@@ -261,6 +292,15 @@ class MockDatabaseService extends _i1.Mock implements _i7.DatabaseService {
         Invocation.method(
           #getMyActiveOffers,
           [userPubkey],
+        ),
+        returnValue: _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+      ) as _i8.Future<List<_i2.Offer>>);
+
+  @override
+  _i8.Future<List<_i2.Offer>> getOffersFromLastHours() => (super.noSuchMethod(
+        Invocation.method(
+          #getOffersFromLastHours,
+          [],
         ),
         returnValue: _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
       ) as _i8.Future<List<_i2.Offer>>);

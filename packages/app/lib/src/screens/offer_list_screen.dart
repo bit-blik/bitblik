@@ -12,8 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config/group_links.dart';
-import '../models/coordinator_info.dart'; // Added
-import '../models/offer.dart'; // Import Offer model
+import 'package:bitblik_core/core.dart'; // Added
+import 'package:bitblik_core/core.dart'; // Import Offer model
 import '../providers/providers.dart';
 import '../widgets/lightning_address_widget.dart';
 import '../widgets/progress_indicators.dart'; // Import the progress indicators
@@ -276,7 +276,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                   makerFees: offer.makerFees,
                                   fiatCurrency: offer.fiatCurrency,
                                   fiatAmount: offer.fiatAmount,
-                                  status: OfferStatus.reserved.name,
+                                  status: OfferStatus.reserved,
                                   coordinatorPubkey: offer.coordinatorPubkey,
                                   createdAt: offer.createdAt,
                                   makerPubkey: offer.makerPubkey,
@@ -583,15 +583,15 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                 }
                 // Separate finished offers
                 final finishedStatuses = [
-                  OfferStatus.settled.name,
-                  OfferStatus.takerPaid.name,
-                  OfferStatus.expired.name,
-                  OfferStatus.cancelled.name,
+                  OfferStatus.settled,
+                  OfferStatus.takerPaid,
+                  OfferStatus.expired,
+                  OfferStatus.cancelled,
                 ];
                 final conflictStatuses = [
-                  OfferStatus.conflict.name,
-                  OfferStatus.invalidBlik.name,
-                  OfferStatus.dispute.name,
+                  OfferStatus.conflict,
+                  OfferStatus.invalidBlik,
+                  OfferStatus.dispute,
                 ];
                 final finishedOffers =
                     offers
@@ -631,15 +631,15 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                   itemBuilder: (innerContext, index) {
                                     final offer = activeOffers[index];
                                     final bool isFunded =
-                                        offer.status == OfferStatus.funded.name;
+                                        offer.status == OfferStatus.funded;
                                     final bool isReserved =
                                         offer.status ==
-                                        OfferStatus.reserved.name;
+                                        OfferStatus.reserved;
                                     final bool isBlikReceived =
                                         offer.status ==
-                                        OfferStatus.blikReceived.name;
-                                    // final bool isConflict = offer.status == OfferStatus.conflict.name;
-                                    // final bool isInvalidBlik = offer.status == OfferStatus.invalidBlik.name;
+                                        OfferStatus.blikReceived;
+                                    // final bool isConflict = offer.status == OfferStatus.conflict;
+                                    // final bool isInvalidBlik = offer.status == OfferStatus.invalidBlik;
                                     final publicKey = publicKeyAsyncValue.value;
                                     Widget? trailingWidget;
 
@@ -735,9 +735,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                       fiatAmount:
                                                           offer.fiatAmount,
                                                       status:
-                                                          OfferStatus
-                                                              .reserved
-                                                              .name,
+                                                          OfferStatus.reserved,
                                                       coordinatorPubkey:
                                                           offer
                                                               .coordinatorPubkey,
@@ -868,7 +866,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                             // Determine which screen to navigate to based on status
                                             Widget destinationScreen;
                                             if (myActiveOffer.status ==
-                                                OfferStatus.reserved.name) {
+                                                OfferStatus.reserved) {
                                               destinationScreen =
                                                   TakerSubmitBlikScreen(
                                                     initialOffer: myActiveOffer,
@@ -923,7 +921,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                         );
                                       } else {
                                         trailingWidget = Text(
-                                          offer.status.toUpperCase(),
+                                          offer.status.name.toUpperCase(),
                                           style: TextStyle(
                                             color: Colors.grey[600],
                                             fontWeight: FontWeight.bold,
@@ -932,7 +930,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                       }
                                     } else {
                                       trailingWidget = Text(
-                                        offer.status.toUpperCase(),
+                                        offer.status.name.toUpperCase(),
                                         style: TextStyle(
                                           color: Colors.grey[600],
                                           fontWeight: FontWeight.bold,

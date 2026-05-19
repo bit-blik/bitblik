@@ -7,7 +7,7 @@ import 'package:ndk/ndk.dart';
 import 'package:ndk/shared/nips/nip44/nip44.dart';
 
 import 'coordinator_service.dart';
-import '../models/offer.dart';
+import 'package:bitblik_core/src/models/offer.dart';
 import '../logging/app_logger.dart';
 
 /// Service to handle Nostr communication for the coordinator

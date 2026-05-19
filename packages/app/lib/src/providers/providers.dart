@@ -6,8 +6,8 @@ import 'package:ndk/entities.dart';
 import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
-import '../models/coordinator_info.dart';
-import '../models/offer.dart'; // OfferStatus is in here
+import 'package:bitblik_core/core.dart';
+import 'package:bitblik_core/core.dart'; // OfferStatus is in here
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/nostr_service.dart'; // Import DiscoveredCoordinator
@@ -464,7 +464,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     if (state != null) {
       final updatedOffer = state!.copyWith(
         id: update.offerId,
-        status: update.status,
+        status: OfferStatus.values.byName(update.status),
         reservedAt: update.reservedAt,
       );
       // Update DB directly without going through setActiveOffer to avoid triggering listener

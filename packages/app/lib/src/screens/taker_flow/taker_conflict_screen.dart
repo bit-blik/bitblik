@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
-import '../../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 
 class TakerConflictScreen extends ConsumerStatefulWidget {

@@ -4,7 +4,7 @@ import 'package:flutter_confetti/flutter_confetti.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../i18n/gen/strings.g.dart'; // Import Slang
-import '../../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart'; // To reset state
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
 

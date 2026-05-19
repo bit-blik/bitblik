@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 
 class OfferDbService {
   static final OfferDbService _instance = OfferDbService._internal();

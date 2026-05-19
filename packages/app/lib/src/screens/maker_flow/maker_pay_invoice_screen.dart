@@ -10,7 +10,7 @@ import 'package:url_launcher/url_launcher.dart'; // For launching URLs/Intents
 import 'package:android_intent_plus/android_intent.dart'; // For Android Intents
 import 'package:android_intent_plus/flag.dart'; // Import for flags enum
 import '../../providers/providers.dart'; // Import providers
-import '../../models/offer.dart'; // Import Offer model for status enum comparison
+import 'package:bitblik_core/core.dart'; // Import Offer model for status enum comparison
 import 'package:ndk/domain_layer/entities/wallet/wallet.dart';
 // Import ApiService
 import 'package:go_router/go_router.dart';

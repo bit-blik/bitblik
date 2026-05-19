@@ -7,8 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../i18n/gen/strings.g.dart';
-import '../../models/coordinator_info.dart';
-import '../../models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
 import '../../services/nostr_service.dart'; // Import DiscoveredCoordinator
@@ -285,7 +284,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               id: "empty",
               amountSats: result['makerFees'] + result['amountSats'],
               makerFees: result['makerFees'],
-              status: OfferStatus.created.name,
+              status: OfferStatus.created,
               fiatAmount: fiatAmount,
               fiatCurrency: "PLN", // TODO
               createdAt: DateTime.now(),

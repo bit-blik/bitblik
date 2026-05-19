@@ -1,4 +1,3 @@
-import 'package:ndk/shared/logger/logger.dart';
 
 enum OfferStatus {
   created, // Initial state, invoice generated but not paid
@@ -34,7 +33,7 @@ class Offer {
   final int makerFees; // Renamed from feeSats
   final double fiatAmount;
   final String fiatCurrency;
-  final String status; // e.g., "funded", "reserved", etc. Use OfferStatus.name
+  final OfferStatus status;
   final DateTime createdAt;
   final String makerPubkey;
   final String coordinatorPubkey; // Added coordinator pubkey
@@ -192,10 +191,14 @@ class Offer {
         json['fiat_currency'],
         'UNK',
       ), // Default if 'fiat_currency' is null or not a string
-      status: safeString(
-        json['status'],
-        OfferStatus.takerPaid.name,
-      ), // Default to takerPaid for stats if missing
+      status: () {
+        final raw = safeString(json['status'], OfferStatus.takerPaid.name);
+        try {
+          return OfferStatus.values.byName(raw);
+        } catch (_) {
+          return OfferStatus.created;
+        }
+      }(),
       createdAt: () {
         final v = json['created_at'];
         if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
@@ -246,7 +249,7 @@ class Offer {
       'maker_fees': makerFees, // Renamed key and field
       'fiat_amount': fiatAmount,
       'fiat_currency': fiatCurrency,
-      'status': status,
+      'status': status.name,
       'created_at': createdAt.toIso8601String(),
       'maker_pubkey': makerPubkey,
       'coordinator_pubkey': coordinatorPubkey,
@@ -268,31 +271,25 @@ class Offer {
   }
 
   // Helper to get status as enum
-  OfferStatus get statusEnum {
-    try {
-      return OfferStatus.values.byName(status);
-    } catch (e) {
-      // Handle cases where the string doesn't match any enum value
-      Logger.log.w(
-        () => 'Warning: Unknown offer status "$status", defaulting to created.',
-      );
-      return OfferStatus
-          .created; // Or throw an error, depending on desired behavior
-    }
-  }
+  OfferStatus get statusEnum => status;
 
-  bool get isConflict => status == OfferStatus.conflict.name;
+  bool get isConflict => status == OfferStatus.conflict;
 
-  bool get isInvalidBlik => status == OfferStatus.invalidBlik.name;
+  bool get isInvalidBlik => status == OfferStatus.invalidBlik;
 
-  bool get isDispute => status == OfferStatus.dispute.name;
+  bool get isDispute => status == OfferStatus.dispute;
+
+  Map<String, dynamic> toJsonWithPubkeys() => toJson()..addAll({
+        'maker_pubkey': makerPubkey,
+        'taker_pubkey': takerPubkey,
+      });
 
   // copyWith method for updating state immutably
   Offer copyWith({
     String? id,
     int? amountSats,
     int? makerFees, // Renamed parameter
-    String? status,
+    OfferStatus? status,
     DateTime? createdAt,
     String? makerPubkey,
     String? coordinatorPubkey,
