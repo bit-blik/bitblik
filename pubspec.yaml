@@ -6,5 +6,6 @@ environment:
 
 workspace:
   - packages/app
+  - packages/cli
   - packages/coordinator
   - packages/core
