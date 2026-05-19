@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build: .
+    container_name: offers-dashboard
+    environment:
+      - DB_HOST=postgres  # or your database host
+      - DB_PORT=5432
+      - DB_NAME=bitblik
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD}
+      - PORT=3001
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    # Don't expose port directly if using nginx
+    # expose:
+    #   - "3001"
+
+  nginx:
+    image: nginx:alpine
+    container_name: dashboard-nginx
+    ports:
+      - "80:80"
+      - "443:443"  # if using HTTPS
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # For HTTPS:
+      # - ./ssl/cert.pem:/etc/nginx/ssl/cert.pem:ro
+      # - ./ssl/key.pem:/etc/nginx/ssl/key.pem:ro
+    networks:
+      - app-network
+    depends_on:
+      - dashboard
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: dashboard-postgres
+    environment:
+      - POSTGRES_DB=bitblik
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

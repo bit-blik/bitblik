@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bitblik
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  coordinator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coordinator
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - postgres
+    environment:
+      LND_HOST: <YOUR_LND_IP_HOST>
+      ##NWC_URI: <NWC CONNECTION URI WITH MAKE_HOLD_INVOICE PERMISSION>
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: user
+      DB_PASSWORD: password
+      MIN_AMOUNT_SATS: 100
+      MAX_AMOUNT_SATS: 25000
+      MAKER_FEE: 0.25
+      TAKER_FEE: 0.75
+      FRONTEND_DOMAIN: test.bitblik.app
+      NAME: Example Coordinator
+      ICON_URL: https://www.0xkishan.com/blogs/nostr/nostr.png
+      NOSTR_PRIVATE_KEY: <GENERATE A NEW NOSTR NSEC>
+      NOSTR_RELAYS: wss://relay.primal.net,wss://relay.mostro.network
+    volumes:
+      - ./tls.cert:/app/tls.cert:ro
+      - ./admin.macaroon:/app/admin.macaroon:ro
+      - ./signal/:/root/.local/share/signal-cli/
+volumes:
+  postgres_data:
+
