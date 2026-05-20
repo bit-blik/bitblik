@@ -322,7 +322,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     final takerFeeAmount =
         offer.takerFees ??
         (_coordinatorInfo != null
-            ? (offer.amountSats * _coordinatorInfo!.takerFee / 100).ceil()
+            ? OfferQuote.takerFeeSats(offer.amountSats, _coordinatorInfo!.takerFee)
             : 0);
     final amountToInvoiceSats = offer.amountSats - takerFeeAmount;
     if (amountToInvoiceSats <= 0) {
@@ -530,7 +530,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       data:
           (coordInfo) =>
               coordInfo != null
-                  ? (activeOffer.amountSats * coordInfo.takerFee / 100).ceil()
+                  ? OfferQuote.takerFeeSats(activeOffer.amountSats, coordInfo.takerFee)
                   : 0,
       orElse: () => 0,
     );

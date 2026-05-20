@@ -5,7 +5,7 @@ import 'package:bitblik_coordinator/src/models/create_hold_invoice_result.dart';
 import 'package:bitblik_coordinator/src/models/invoice_details.dart'; // Added for InvoiceDetails
 import 'package:bitblik_coordinator/src/models/invoice_status.dart';
 import 'package:bitblik_coordinator/src/models/invoice_update.dart';
-import 'package:bitblik_core/src/models/offer.dart'; // Assuming Offer and OfferStatus are here
+import 'package:bitblik_core/core.dart'; // Assuming Offer and OfferStatus are here
 import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart'; // Added
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/services/database_service.dart';

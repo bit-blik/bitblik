@@ -14,7 +14,7 @@ import 'package:bitblik_coordinator/src/models/invoice_update.dart' as _i10;
 import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart' as _i4;
 import 'package:bitblik_coordinator/src/services/database_service.dart' as _i7;
 import 'package:bitblik_coordinator/src/services/payment_service.dart' as _i9;
-import 'package:bitblik_core/src/models/offer.dart' as _i2;
+import 'package:bitblik_core/core.dart' as _i2;
 import 'package:http/http.dart' as _i6;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i12;

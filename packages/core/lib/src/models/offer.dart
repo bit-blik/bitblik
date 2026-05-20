@@ -24,6 +24,11 @@ enum OfferStatus {
   payingTaker, // Taker is being paid
   takerPaymentFailed, // Settled, but LNURL payment to taker failed
   takerPaid, // Taker successfully paid via LNURL-pay
+
+  // Sentinel: persisted status name not recognized by this client build.
+  // Append-only enum — never rename or remove existing values; this catches
+  // future statuses introduced by newer coordinators.
+  unknown,
 }
 
 // Represents an offer listed by the coordinator.
@@ -192,11 +197,14 @@ class Offer {
         'UNK',
       ), // Default if 'fiat_currency' is null or not a string
       status: () {
-        final raw = safeString(json['status'], OfferStatus.takerPaid.name);
+        final raw = safeString(json['status'], OfferStatus.unknown.name);
         try {
           return OfferStatus.values.byName(raw);
         } catch (_) {
-          return OfferStatus.created;
+          // Unknown future status — preserve as sentinel instead of silently
+          // downgrading to `created`, which could trigger duplicate actions on
+          // an already-progressed offer.
+          return OfferStatus.unknown;
         }
       }(),
       createdAt: () {

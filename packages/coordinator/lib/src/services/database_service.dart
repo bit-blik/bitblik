@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:postgres/postgres.dart';
 import 'package:dotenv/dotenv.dart';
-import 'package:bitblik_core/src/models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
 
 class DatabaseService {
