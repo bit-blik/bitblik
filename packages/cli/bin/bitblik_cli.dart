@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bitblik_cli/src/models.dart';
 import 'package:bitblik_cli/src/protocol_client.dart';
+import 'package:bitblik_cli/src/secrets_store.dart';
 
 Future<void> main(List<String> args) async {
   if (args.isEmpty || args.contains('--help') || args.contains('-h')) {
@@ -15,7 +16,8 @@ Future<void> main(List<String> args) async {
     final withHealth = args.contains('--health');
     final relays = _parseRelayArgs(args);
 
-    final client = BitblikProtocolClient(relays: relays);
+    final secrets = await SecretsStore.loadOrCreate();
+    final client = BitblikProtocolClient(secrets: secrets, relays: relays);
     try {
       await client.init();
       final coordinators = await client.discoverCoordinators();

@@ -9,6 +9,7 @@ import 'package:ndk/domain_layer/entities/cashu/cashu_user_seedphrase.dart';
 import 'package:ndk/shared/nips/nip44/nip44.dart';
 
 import 'models.dart';
+import 'secrets_store.dart';
 
 class BitblikProtocolClient {
   static const int kindCoordinatorInfo = 15125;
@@ -22,6 +23,7 @@ class BitblikProtocolClient {
 
   final List<String> relays;
   final Duration timeout;
+  final BitblikSecrets secrets;
 
   late final Ndk _ndk;
   late final Bip340EventSigner _signer;
@@ -30,23 +32,24 @@ class BitblikProtocolClient {
   final Random _random = Random();
 
   BitblikProtocolClient({
+    required this.secrets,
     List<String>? relays,
     this.timeout = const Duration(seconds: 5),
   }) : relays = relays == null || relays.isEmpty ? defaultRelays : relays;
 
   Future<void> init() async {
-    final cashuSeedPhrase = CashuSeed.generateSeedPhrase();
     _ndk = Ndk(
       NdkConfig(
         cache: MemCacheManager(),
         eventVerifier: RustEventVerifier(),
         bootstrapRelays: relays,
-        cashuUserSeedphrase: CashuUserSeedphrase(seedPhrase: cashuSeedPhrase),
+        cashuUserSeedphrase:
+            CashuUserSeedphrase(seedPhrase: secrets.cashuSeedPhrase),
         logLevel: LogLevel.warning,
       ),
     );
 
-    final privateKey = _generatePrivateKeyHex();
+    final privateKey = secrets.privateKeyHex;
     _signer = Bip340EventSigner(
       privateKey: privateKey,
       publicKey: bip340.getPublicKey(privateKey),
@@ -206,9 +209,4 @@ class BitblikProtocolClient {
 
   String _nextRequestId() =>
       _random.nextInt(9999999).toString().padLeft(6, '0');
-
-  String _generatePrivateKeyHex() {
-    final bytes = List<int>.generate(32, (_) => _random.nextInt(256));
-    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-  }
 }
