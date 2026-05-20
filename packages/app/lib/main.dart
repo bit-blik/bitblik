@@ -1614,7 +1614,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                           const SizedBox(width: 8),
                           // Android Zapstore button
                           Link(
-                            uri: Uri.parse('zapstore://app.bitblik'),
+                            uri: Uri.parse('https://zapstore.dev/apps/app.bitblik'),
                             builder:
                                 (context, followLink) => InkWell(
                                   onTap: followLink,
