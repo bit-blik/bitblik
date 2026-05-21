@@ -115,12 +115,9 @@ class NostrService {
   // Coordinator info cache by pubkey
   final Map<String, CoordinatorInfo> _coordinatorInfoCache = {};
 
-  // Default whitelist (hardcoded)
-  List<String> kWhitelistCoordinatorPubKeys = [];
-
   // Blacklist and custom whitelist (loaded from preferences)
-  List<String> _blacklistedCoordinators = [];
-  List<String> _customWhitelistedCoordinators = [];
+  List<String> _disabledCoordinators = [];
+  List<String> _customCoordinators = [];
 
   NostrService(this._keyService) {
     _offerStreamController = StreamController<Offer>.broadcast();
@@ -145,17 +142,17 @@ class NostrService {
     _relayUrls =
     // prefs.getStringList(_relayUrlsKey) ??
     List.from(_defaultRelayUrls);
-    _blacklistedCoordinators = prefs.getStringList(_blacklistKey) ?? [];
-    _customWhitelistedCoordinators =
+    _disabledCoordinators = prefs.getStringList(_blacklistKey) ?? [];
+    _customCoordinators =
         prefs.getStringList(_customWhitelistKey) ?? [];
 
     Logger.log.i(() => '📡 Using relays: $_relayUrls');
     Logger.log.i(
-      () => '🚫 Blacklisted coordinators: ${_blacklistedCoordinators.length}',
+      () => '🚫 Disabled coordinators: ${_disabledCoordinators.length}',
     );
     Logger.log.i(
       () =>
-          '✅ Custom whitelisted coordinators: ${_customWhitelistedCoordinators.length}',
+          '✅ Custom whitelisted coordinators: ${_customCoordinators.length}',
     );
   }
 
@@ -970,25 +967,18 @@ class NostrService {
     String pubkeyHex = _normalizePubkey(pubkey);
 
     // Check if blacklisted
-    if (_blacklistedCoordinators.any((b) => _normalizePubkey(b) == pubkeyHex)) {
+    if (_disabledCoordinators.any((b) => _normalizePubkey(b) == pubkeyHex)) {
       return false;
     }
 
-    // Check if in default whitelist
-    if (kWhitelistCoordinatorPubKeys.any(
-      (w) => _normalizePubkey(w) == pubkeyHex,
-    )) {
-      return true;
-    }
+    // // Check if in custom whitelist
+    // if (_customWhitelistedCoordinators.any(
+    //   (w) => _normalizePubkey(w) == pubkeyHex,
+    // )) {
+    //   return true;
+    // }
 
-    // Check if in custom whitelist
-    if (_customWhitelistedCoordinators.any(
-      (w) => _normalizePubkey(w) == pubkeyHex,
-    )) {
-      return true;
-    }
-
-    return false;
+    return true;
   }
 
   /// Normalize pubkey to hex format
@@ -1009,13 +999,7 @@ class NostrService {
       final coordinator = DiscoveredCoordinator.fromNostrEvent(event);
       final pubkey = coordinator.pubkey;
 
-      // Always add to discovered coordinators if in default whitelist (even if blacklisted)
-      // This allows users to see and unblacklist them in the UI
-      final isDefaultWhitelisted = kWhitelistCoordinatorPubKeys.any(
-        (w) => _normalizePubkey(w) == _normalizePubkey(pubkey),
-      );
-
-      if (isDefaultWhitelisted || _shouldIncludeCoordinator(pubkey)) {
+      if (_shouldIncludeCoordinator(pubkey)) {
         _discoveredCoordinators[pubkey] = coordinator;
         _discoveredCoordinators[pubkey]!.responsive = true;
         // Cache coordinator info immediately when discovered
@@ -1089,7 +1073,7 @@ class NostrService {
     coordinators.addAll(_discoveredCoordinators.values);
 
     // Add custom whitelisted coordinators that haven't been discovered yet
-    for (final pubkey in _customWhitelistedCoordinators) {
+    for (final pubkey in _customCoordinators) {
       final normalized = _normalizePubkey(pubkey);
       if (!_discoveredCoordinators.containsKey(normalized)) {
         // Create a placeholder coordinator for custom whitelisted ones
@@ -1118,28 +1102,14 @@ class NostrService {
       final aNormalized = _normalizePubkey(a.pubkey);
       final bNormalized = _normalizePubkey(b.pubkey);
 
-      final aIsDefault = kWhitelistCoordinatorPubKeys.any(
-        (w) => _normalizePubkey(w) == aNormalized,
-      );
-      final bIsDefault = kWhitelistCoordinatorPubKeys.any(
-        (w) => _normalizePubkey(w) == bNormalized,
-      );
-
       final aIsCustomOnly =
-          _customWhitelistedCoordinators.any(
+          _customCoordinators.any(
             (w) => _normalizePubkey(w) == aNormalized,
-          ) &&
-          !aIsDefault;
+          );
       final bIsCustomOnly =
-          _customWhitelistedCoordinators.any(
+          _customCoordinators.any(
             (w) => _normalizePubkey(w) == bNormalized,
-          ) &&
-          !bIsDefault;
-
-      // Default whitelisted coordinators come first
-      if (aIsDefault != bIsDefault) {
-        return aIsDefault ? -1 : 1;
-      }
+          );
 
       // Custom-only coordinators come last (after default whitelisted)
       if (aIsCustomOnly != bIsCustomOnly) {
@@ -1179,33 +1149,21 @@ class NostrService {
 
   // --- Coordinator Management Methods ---
 
-  /// Check if a coordinator is in the default whitelist
-  bool isDefaultWhitelisted(String pubkey) {
-    final normalized = _normalizePubkey(pubkey);
-    return kWhitelistCoordinatorPubKeys.any(
-      (w) => _normalizePubkey(w) == normalized,
-    );
-  }
-
   /// Check if a coordinator is blacklisted
   bool isBlacklisted(String pubkey) {
     final normalized = _normalizePubkey(pubkey);
-    return _blacklistedCoordinators.any(
+    return _disabledCoordinators.any(
       (b) => _normalizePubkey(b) == normalized,
     );
   }
 
   /// Get the list of blacklisted coordinators
   List<String> get blacklistedCoordinators =>
-      List.from(_blacklistedCoordinators);
+      List.from(_disabledCoordinators);
 
   /// Get the list of custom whitelisted coordinators
   List<String> get customWhitelistedCoordinators =>
-      List.from(_customWhitelistedCoordinators);
-
-  /// Get the list of default whitelisted coordinators
-  List<String> get defaultWhitelistedCoordinators =>
-      List.from(kWhitelistCoordinatorPubKeys);
+      List.from(_customCoordinators);
 
   /// Toggle blacklist status for a coordinator
   Future<void> toggleBlacklist(String pubkey, bool blacklist) async {
@@ -1213,19 +1171,19 @@ class NostrService {
 
     if (blacklist) {
       // Remove any existing entry (in case of format mismatch) and add normalized
-      _blacklistedCoordinators.removeWhere(
+      _disabledCoordinators.removeWhere(
         (b) => _normalizePubkey(b) == normalized,
       );
-      _blacklistedCoordinators.add(normalized);
+      _disabledCoordinators.add(normalized);
     } else {
-      _blacklistedCoordinators.removeWhere(
+      _disabledCoordinators.removeWhere(
         (b) => _normalizePubkey(b) == normalized,
       );
     }
 
     // Save to preferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_blacklistKey, _blacklistedCoordinators);
+    await prefs.setStringList(_blacklistKey, _disabledCoordinators);
 
     // Don't remove from discovered coordinators - keep them visible so users can unblacklist
     // The _shouldIncludeCoordinator check will prevent them from being used in operations
@@ -1257,19 +1215,19 @@ class NostrService {
     }
 
     // Check if already in custom whitelist
-    if (_customWhitelistedCoordinators.any(
+    if (_customCoordinators.any(
       (w) => _normalizePubkey(w) == normalized,
     )) {
       throw ArgumentError('Coordinator already in custom whitelist');
     }
 
-    _customWhitelistedCoordinators.add(normalized);
+    _customCoordinators.add(normalized);
 
     // Save to preferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(
       _customWhitelistKey,
-      _customWhitelistedCoordinators,
+      _customCoordinators,
     );
 
     Logger.log.i(() => '✅ Added coordinator $normalized to custom whitelist');
@@ -1282,25 +1240,22 @@ class NostrService {
   Future<void> removeCustomWhitelist(String pubkey) async {
     final normalized = _normalizePubkey(pubkey);
 
-    final beforeLength = _customWhitelistedCoordinators.length;
-    _customWhitelistedCoordinators.removeWhere(
+    final beforeLength = _customCoordinators.length;
+    _customCoordinators.removeWhere(
       (w) => _normalizePubkey(w) == normalized,
     );
-    final afterLength = _customWhitelistedCoordinators.length;
+    final afterLength = _customCoordinators.length;
 
     if (beforeLength > afterLength) {
       // Save to preferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList(
         _customWhitelistKey,
-        _customWhitelistedCoordinators,
+        _customCoordinators,
       );
 
-      // Remove from discovered coordinators if not in default whitelist
-      if (!isDefaultWhitelisted(normalized)) {
-        _discoveredCoordinators.remove(normalized);
-        _coordinatorInfoCache.remove(normalized);
-      }
+      _discoveredCoordinators.remove(normalized);
+      _coordinatorInfoCache.remove(normalized);
 
       Logger.log.i(
         () => '🗑️ Removed coordinator $normalized from custom whitelist',

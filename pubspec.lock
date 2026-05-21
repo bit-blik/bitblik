@@ -1039,13 +1039,14 @@ packages:
     source: hosted
     version: "0.1.0"
   ndk_drift:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: ndk_drift
-      sha256: "178afff7a78dace91e63c896430e7365aa35de25bee1996af54ecef4c576a4c3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.1"
+      path: "packages/drift"
+      ref: "469f617c02a4c2f33f98dd0b86afbdd45abf6be2"
+      resolved-ref: "469f617c02a4c2f33f98dd0b86afbdd45abf6be2"
+      url: "https://github.com/relaystr/ndk.git"
+    source: git
+    version: "0.1.1-dev.0+1"
   ndk_flutter:
     dependency: "direct overridden"
     description:

@@ -4,3 +4,4 @@
 /a.iml
 /packages/app/build/
 /packages/app/.flutter-plugins-dependencies
+/packages/cli/build/

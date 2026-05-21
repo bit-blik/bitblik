@@ -221,9 +221,6 @@ class _CoordinatorManagementScreenState
                         itemBuilder: (context, index) {
                           final c = coordinators[index];
                           final pubkey = c.pubkey;
-                          final isDefault = apiService.isDefaultWhitelisted(
-                            pubkey,
-                          );
                           final isBlack = apiService.isBlacklisted(pubkey);
 
                           // Build the main content (title and subtitle)
@@ -311,7 +308,9 @@ class _CoordinatorManagementScreenState
                           final trailingSection = Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (isDefault) ...[
+                              if (!apiService
+                                  .customWhitelistedCoordinators
+                                  .contains(pubkey)) ...[
                                 const SizedBox(width: 8),
                                 Text(
                                   t.coordinator.management.enable,
@@ -325,9 +324,7 @@ class _CoordinatorManagementScreenState
                                           ? null
                                           : (val) => _toggleEnable(pubkey, val),
                                 ),
-                              ] else if (apiService
-                                  .customWhitelistedCoordinators
-                                  .contains(pubkey)) ...[
+                              ] else ...[
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline),
                                   tooltip: t.coordinator.management.remove,
@@ -346,7 +343,7 @@ class _CoordinatorManagementScreenState
                             children: [
                               Expanded(
                                 child:
-                                    isDefault && isBlack
+                                    isBlack
                                         ? Opacity(
                                           opacity: 0.4,
                                           child: IgnorePointer(

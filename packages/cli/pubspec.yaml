@@ -15,4 +15,4 @@ dependencies:
   sembast: ^3.7.0
 
 executables:
-  bitblik: bitblik_cli
+  bitblik: bitblik
