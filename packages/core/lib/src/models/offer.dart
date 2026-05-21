@@ -1,3 +1,4 @@
+import 'package:ndk/ndk.dart';
 
 enum OfferStatus {
   created, // Initial state, invoice generated but not paid
@@ -24,6 +25,11 @@ enum OfferStatus {
   payingTaker, // Taker is being paid
   takerPaymentFailed, // Settled, but LNURL payment to taker failed
   takerPaid, // Taker successfully paid via LNURL-pay
+
+  // Sentinel: persisted status name not recognized by this client build.
+  // Append-only enum — never rename or remove existing values; this catches
+  // future statuses introduced by newer coordinators.
+  unknown,
 }
 
 // Represents an offer listed by the coordinator.
@@ -192,11 +198,14 @@ class Offer {
         'UNK',
       ), // Default if 'fiat_currency' is null or not a string
       status: () {
-        final raw = safeString(json['status'], OfferStatus.takerPaid.name);
+        final raw = safeString(json['status'], OfferStatus.unknown.name);
         try {
           return OfferStatus.values.byName(raw);
         } catch (_) {
-          return OfferStatus.created;
+          // Unknown future status — preserve as sentinel instead of silently
+          // downgrading to `created`, which could trigger duplicate actions on
+          // an already-progressed offer.
+          return OfferStatus.unknown;
         }
       }(),
       createdAt: () {
@@ -341,5 +350,58 @@ class Offer {
   @override
   String toString() {
     return 'Offer(id: $id, amountSats: $amountSats, makerFees: $makerFees, status: $status, maker: ${makerPubkey.substring(0, 6)}..., taker: ${takerPubkey?.substring(0, 6)}..., createdAt: $createdAt)'; // Renamed field
+  }
+
+  /// Parse a kind [kKindOffer] Nostr event (NIP-69-ish parameterized
+  /// replaceable order) into an [Offer]. Used by the app's live offer feed
+  /// and by the cli's `offer list` command.
+  factory Offer.fromNostrEvent(Nip01Event event) {
+    final tagMap = <String, String>{};
+    for (final t in event.tags) {
+      if (t.length >= 2) tagMap[t[0]] = t[1];
+    }
+
+    DateTime? epochSecondsOrNull(String? raw) {
+      final v = int.tryParse(raw ?? '');
+      if (v == null || v == 0) return null;
+      return DateTime.fromMillisecondsSinceEpoch(v * 1000);
+    }
+
+    final createdAtSecs = int.tryParse(tagMap['created_at'] ?? '0') ?? 0;
+
+    return Offer(
+      id: tagMap['d'] ?? event.id,
+      amountSats: int.tryParse(tagMap['amt'] ?? '0') ?? 0,
+      makerFees: int.tryParse(tagMap['maker_fees'] ?? '0') ?? 0,
+      fiatAmount: double.tryParse(tagMap['fa'] ?? '0') ?? 0.0,
+      fiatCurrency: tagMap['f'] ?? 'PLN',
+      status: _statusFromNip69(tagMap['s'] ?? 'pending') ?? OfferStatus.funded,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(createdAtSecs * 1000),
+      makerPubkey: tagMap['maker'] ?? event.pubKey,
+      coordinatorPubkey: tagMap['p'] ?? event.pubKey,
+      takerPubkey: tagMap['taker'],
+      reservedAt: epochSecondsOrNull(tagMap['reserved_at']),
+      takerPaidAt: epochSecondsOrNull(tagMap['paid_at']),
+      takerFees: int.tryParse(tagMap['taker_fees'] ?? ''),
+    );
+  }
+}
+
+/// Map NIP-69 short status string back to an [OfferStatus]. Inverse of the
+/// mapping the coordinator applies when broadcasting.
+OfferStatus? _statusFromNip69(String s) {
+  switch (s) {
+    case 'pending':
+      return OfferStatus.funded;
+    case 'in-progress':
+      return OfferStatus.reserved;
+    case 'success':
+      return OfferStatus.takerPaid;
+    case 'canceled':
+      return OfferStatus.cancelled;
+    case 'dispute':
+      return OfferStatus.conflict;
+    default:
+      return null;
   }
 }

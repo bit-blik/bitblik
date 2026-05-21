@@ -128,8 +128,10 @@ class _TakerPaymentFailedScreenState
     });
 
     // Calculate net amount (moved here for access to widget.offer)
-    final takerFees =
-        widget.offer.takerFees ?? (widget.offer.amountSats * 0.005).ceil();
+    // Fallback uses 0.5% — historical default when no offer-level fee was
+    // recorded. New offers always carry takerFees, so this branch is rare.
+    final takerFees = widget.offer.takerFees ??
+        OfferQuote.takerFeeSats(widget.offer.amountSats, 0.5);
     final netAmountSats = widget.offer.amountSats - takerFees;
 
     return Scaffold(

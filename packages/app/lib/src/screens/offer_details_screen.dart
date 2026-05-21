@@ -142,7 +142,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
             data:
                 (coordInfo) =>
                     coordInfo != null
-                        ? (offer.amountSats * coordInfo.takerFee / 100).ceil()
+                        ? OfferQuote.takerFeeSats(offer.amountSats, coordInfo.takerFee)
                         : 0,
             orElse: () => 0,
           );

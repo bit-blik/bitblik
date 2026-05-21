@@ -17,7 +17,7 @@ import 'package:bolt11_decoder/bolt11_decoder.dart';
 import 'package:decimal/decimal.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:bitblik_core/src/models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import 'database_service.dart';
 import 'lnd_service.dart';
 import 'nwc_service.dart';
@@ -756,9 +756,9 @@ class CoordinatorService {
     final btcAmount = fiatAmount * btcPerPln;
     final satsAmount = (btcAmount * 100000000).round();
     final makerFees =
-        (satsAmount * _makerFeePercentage / 100).ceil(); // Use static field
+        OfferQuote.makerFeeSats(satsAmount, _makerFeePercentage);
     final takerFees =
-        (satsAmount * _takerFeePercentage / 100).ceil(); // Use static field
+        OfferQuote.takerFeeSats(satsAmount, _takerFeePercentage);
     final totalAmountSats = satsAmount + makerFees;
     final preimage = _generatePreimage();
     final paymentHash = sha256.convert(preimage).bytes;
@@ -1238,40 +1238,34 @@ class CoordinatorService {
   }
 
   // --- Coordinator Info Endpoint ---
-  Future<Map<String, dynamic>> getCoordinatorInfo() async {
-    final Map<String, dynamic> info = {
-      'name': _coordinatorName,
-      'reservation_seconds': _reservationTimeoutSeconds,
-      'maker_fee': _makerFeePercentage,
-      'taker_fee': _takerFeePercentage,
-      'min_amount_sats': _minAmountSats,
-      'max_amount_sats': _maxAmountSats,
-      'currencies': _supportedCurrencies,
-      'terms_of_usage_naddr': _termsOfUsageNaddr,
-    };
-
-    if (_coordinatorIconUrl.isNotEmpty) {
-      info['icon'] = _coordinatorIconUrl;
-    }
-
-    // Read version from environment variable, with fallback to pubspec.yaml
-    final versionFromEnv = Platform.environment['APP_VERSION'];
-    if (versionFromEnv != null && versionFromEnv.isNotEmpty) {
-      info['version'] = versionFromEnv;
-    } else {
+  Future<CoordinatorInfo> getCoordinatorInfo() async {
+    String? version = Platform.environment['APP_VERSION'];
+    if (version == null || version.isEmpty) {
       try {
         final pubspecFile = File('pubspec.yaml');
         if (await pubspecFile.exists()) {
           final yamlContent = await pubspecFile.readAsString();
           final yamlMap = loadYaml(yamlContent);
-          final version = yamlMap['version'];
-          if (version != null) {
-            info['version'] = version.toString();
-          }
+          final v = yamlMap['version'];
+          if (v != null) version = v.toString();
         }
       } catch (_) {}
     }
-    return info;
+
+    return CoordinatorInfo(
+      name: _coordinatorName,
+      reservationSeconds: _reservationTimeoutSeconds,
+      makerFee: _makerFeePercentage,
+      takerFee: _takerFeePercentage,
+      minAmountSats: _minAmountSats,
+      maxAmountSats: _maxAmountSats,
+      currencies: List<String>.from(_supportedCurrencies),
+      nostrNpub: null,
+      icon: _coordinatorIconUrl.isNotEmpty ? _coordinatorIconUrl : null,
+      version: (version != null && version.isNotEmpty) ? version : null,
+      termsOfUsageNaddr:
+          _termsOfUsageNaddr.isNotEmpty ? _termsOfUsageNaddr : null,
+    );
   }
 
   // --- Other API Endpoint Logic ---
@@ -1491,7 +1485,7 @@ class CoordinatorService {
 
     final netAmountSats = offer.amountSats -
         (offer.takerFees ??
-            (offer.amountSats * _takerFeePercentage / 100).ceil());
+            OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage));
     AppLogger.info(
         'Calculated net amount for taker invoice: $netAmountSats sats (Original: ${offer.amountSats}, Fee: ${offer.takerFees})');
 
@@ -2061,8 +2055,8 @@ class CoordinatorService {
     }
 
     // Calculate net amount after taker fees
-    final takerFees = (offer.amountSats * _takerFeePercentage / 100)
-        .ceil(); // Use static field
+    final takerFees =
+        OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage);
     final netAmountSats = offer.amountSats - takerFees;
     String? takerInvoice = offer.takerInvoice;
 
@@ -2150,7 +2144,8 @@ class CoordinatorService {
       }
 
       // Calculate taker fees (configurable % of the original offer amount)
-      final takerFees = (offer.amountSats * _takerFeePercentage / 100).ceil();
+      final takerFees =
+          OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage);
       final netAmountSats = offer.amountSats - takerFees;
       AppLogger.info(
           'Calculated taker fees for offer $offerId: $takerFees sats. Paying net amount: $netAmountSats sats.',

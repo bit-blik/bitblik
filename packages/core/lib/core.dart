@@ -1,5 +1,11 @@
 library core;
 
-export 'src/models/offer.dart';
+export 'src/constants/kinds.dart';
+export 'src/constants/rpc_methods.dart';
 export 'src/models/coordinator_info.dart';
-
+export 'src/models/offer.dart';
+export 'src/models/offer_status_update.dart';
+export 'src/protocol/bitblik_rpc_client.dart';
+export 'src/quote/offer_quote.dart';
+export 'src/protocol/protocol_codec.dart';
+export 'src/protocol/rpc_envelope.dart';

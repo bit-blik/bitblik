@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:ndk/ndk.dart';
 import 'package:ndk/shared/isolates/isolate_manager.dart';
-import 'package:ndk/shared/nips/nip44/nip44.dart';
 import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,39 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bitblik_core/core.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
-
-/// Request/Response models for Nostr RPC communication
-class NostrRequest {
-  final String method;
-  final Map<String, dynamic> params;
-  final String? id;
-
-  NostrRequest({required this.method, required this.params, this.id});
-
-  Map<String, dynamic> toJson() => {
-    'method': method,
-    'params': params,
-    if (id != null) 'id': id,
-  };
-}
-
-class NostrResponse {
-  final String? id;
-  final Map<String, dynamic>? result;
-  final Map<String, dynamic>? error;
-
-  NostrResponse({this.id, this.result, this.error});
-
-  factory NostrResponse.fromJson(Map<String, dynamic> json) {
-    return NostrResponse(
-      id: json['id'],
-      result: json['result'],
-      error: json['error'],
-    );
-  }
-
-  bool get isSuccess => error == null;
-}
 
 /// Discovered coordinator information
 class DiscoveredCoordinator {
@@ -81,30 +45,21 @@ class DiscoveredCoordinator {
   });
 
   factory DiscoveredCoordinator.fromNostrEvent(Nip01Event event) {
-    final tags = Map<String, String>.fromEntries(
-      event.tags
-          .where((tag) => tag.length >= 2)
-          .map((tag) => MapEntry(tag[0], tag[1])),
-    );
-
+    final info = CoordinatorInfo.fromNostrEvent(event);
     return DiscoveredCoordinator(
       pubkey: event.pubKey,
-      name: tags['name'] ?? 'Unknown Coordinator',
-      icon: tags['icon'],
-      minAmountSats: int.tryParse(tags['min_amount_sats'] ?? '0') ?? 0,
-      maxAmountSats: int.tryParse(tags['max_amount_sats'] ?? '0') ?? 0,
-      makerFee: double.tryParse(tags['maker_fee'] ?? '0') ?? 0.0,
-      takerFee: double.tryParse(tags['taker_fee'] ?? '0') ?? 0.0,
-      reservationSeconds: int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
-      currencies:
-          (tags['currencies'] ?? '')
-              .split(',')
-              .where((c) => c.isNotEmpty)
-              .toList(),
-      version: tags['version'] ?? '',
+      name: info.name,
+      icon: info.icon,
+      minAmountSats: info.minAmountSats,
+      maxAmountSats: info.maxAmountSats,
+      makerFee: info.makerFee,
+      takerFee: info.takerFee,
+      reservationSeconds: info.reservationSeconds,
+      currencies: info.currencies,
+      version: info.version ?? '',
       lastSeen: DateTime.fromMillisecondsSinceEpoch(event.createdAt * 1000),
       responsive: null,
-      termsOfUsageNaddr: tags['terms_of_usage_naddr'],
+      termsOfUsageNaddr: info.termsOfUsageNaddr,
     );
   }
 
@@ -139,23 +94,13 @@ class NostrService {
     // 'wss://nos.lol',
   ];
 
-  // Event kinds (matching coordinator)
-  static const int KIND_COORDINATOR_INFO = 15125;
-  static const int KIND_COORDINATOR_REQUEST = 25195;
-  static const int KIND_COORDINATOR_RESPONSE = 25196;
-  static const int KIND_OFFER_STATUS_UPDATE = 25197;
-  static const int KIND_OFFER = 38383;
-
   final KeyService _keyService;
   Ndk? _ndk;
   Bip340EventSigner? _clientSigner;
-
-  final Map<String, Completer<NostrResponse>> _pendingRequests = {};
-  final Random _random = Random();
+  BitblikRpcClient? _rpcClient;
 
   List<String> _relayUrls = [];
 
-  NdkResponse? _responseSubscription;
   NdkResponse? _offerStatusSubscription;
   NdkResponse? _offerSubscription;
 
@@ -301,64 +246,26 @@ class NostrService {
     }
   }
 
-  /// Subscribe to response events from coordinator
+  /// Subscribe to response events from coordinator (via [BitblikRpcClient]).
   Future<void> _subscribeToResponses() async {
-    if (_keyService.publicKeyHex == null) {
+    if (_keyService.publicKeyHex == null ||
+        _keyService.privateKeyHex == null) {
       throw Exception('KeyService not initialized');
     }
 
-    int since = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final filter = Filter(
-      kinds: [KIND_COORDINATOR_RESPONSE],
-      pTags: [_keyService.publicKeyHex!], // Events tagged to our pubkey
-      since: since,
+    _clientSigner = Bip340EventSigner(
+      privateKey: _keyService.privateKeyHex!,
+      publicKey: _keyService.publicKeyHex!,
     );
 
-    _responseSubscription = _ndk!.requests.subscription(
-      name: "client-responses",
-      filters: [filter],
-      explicitRelays: _relayUrls,
+    _rpcClient = BitblikRpcClient(
+      ndk: _ndk!,
+      signer: _clientSigner!,
+      relays: _relayUrls,
+      subscriptionName: 'client-responses',
     );
-
-    _responseSubscription!.stream.listen(_handleResponseEvent);
+    await _rpcClient!.start();
     Logger.log.i(() => '👂 Subscribed to coordinator responses');
-  }
-
-  /// Handle incoming response events
-  void _handleResponseEvent(Nip01Event event) async {
-    try {
-      Logger.log.d(
-        () => '📨 Received response event: ${event.id} from ${event.pubKey}',
-      );
-
-      // Decrypt the content using NIP-44
-      final decryptedContent = await Nip44.decryptMessage(
-        event.content,
-        _keyService.privateKeyHex!,
-        event.pubKey,
-      );
-
-      Logger.log.d(() => '🔓 Decrypted response: $decryptedContent');
-
-      final responseData = jsonDecode(decryptedContent) as Map<String, dynamic>;
-      final response = NostrResponse.fromJson(responseData);
-
-      // Complete the pending request if ID matches
-      if (response.id != null && _pendingRequests.containsKey(response.id)) {
-        final completer = _pendingRequests.remove(response.id);
-        completer?.complete(response);
-        Logger.log.d(() => '✅ Completed request: ${response.id}');
-      } else {
-        Logger.log.w(
-          () =>
-              '⚠️ No matching pending request for response ID: ${response.id}',
-        );
-      }
-    } catch (e) {
-      Logger.log.e(() => '❌ Error handling response event: $e');
-      Logger.log.e(() => '🔑 Current pubkey: ${_keyService.publicKeyHex}');
-      Logger.log.e(() => '📨 Event from: ${event.pubKey}');
-    }
   }
 
   /// Send a request to the coordinator and wait for response
@@ -369,92 +276,24 @@ class NostrService {
     if (!_isInitialized) {
       await init();
     }
-    if (_keyService.privateKeyHex == null) {
-      throw Exception('KeyService not initialized');
+    if (_rpcClient == null) {
+      throw Exception('RPC client not initialized');
     }
-    // Initialize client signer with existing keys
-    _clientSigner = Bip340EventSigner(
-      privateKey: _keyService.privateKeyHex!,
-      publicKey: _keyService.publicKeyHex!,
-    );
-
-    final requestId = request.id ?? _generateRequestId();
-    final requestWithId = NostrRequest(
-      method: request.method,
-      params: request.params,
-      id: requestId,
-    );
-
-    // Create completer for response
-    final completer = Completer<NostrResponse>();
-    _pendingRequests[requestId] = completer;
 
     try {
-      // Encrypt the request content using NIP-44
-      final encryptedContent = await Nip44.encryptMessage(
-        jsonEncode(requestWithId.toJson()),
-        _keyService.privateKeyHex!,
-        coordinatorPubkey,
-      );
-
-      // Create and sign the event
-      final event = Nip01Event(
-        kind: KIND_COORDINATOR_REQUEST,
-        pubKey: _keyService.publicKeyHex!,
-        content: encryptedContent,
-        tags:
-            [
-              ['p', coordinatorPubkey], // Tag coordinator
-            ].map((tag) => tag.map((t) => t.toString()).toList()).toList(),
-        createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      );
-
-      // Publish the event
-      _ndk!.broadcast.broadcast(
-        nostrEvent: event,
-        customSigner: _clientSigner,
-        specificRelays: _relayUrls,
-      );
-
-      Logger.log.d(
-        () =>
-            '📤 Sent request: ${request.method} (ID: $requestId) to $coordinatorPubkey',
-      );
-
-      // Wait for response with timeout
-      try {
-        return await completer.future.timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            _pendingRequests.remove(requestId);
-            throw TimeoutException(
-              'Request timed out',
-              const Duration(seconds: 5),
-            );
-          },
-        );
-      } on TimeoutException {
-        // Trigger health check for this coordinator when timeout occurs
-        // Only if it's not already a health check request (to avoid infinite loops)
-        if (request.method != 'get_info') {
-          // Trigger health check asynchronously (don't await)
-          checkCoordinatorHealth(coordinatorPubkey).catchError((error) {
-            Logger.log.w(
-              () => '⚠️ Error during health check after timeout: $error',
-            );
-          });
-        }
-        rethrow;
+      return await _rpcClient!.send(request, coordinatorPubkey);
+    } on TimeoutException {
+      // Trigger a health check for this coordinator, unless this WAS the
+      // health check (avoid infinite recursion).
+      if (request.method != kRpcGetInfo) {
+        checkCoordinatorHealth(coordinatorPubkey).catchError((error) {
+          Logger.log.w(
+            () => '⚠️ Error during health check after timeout: $error',
+          );
+        });
       }
-    } catch (e) {
-      _pendingRequests.remove(requestId);
       rethrow;
     }
-  }
-
-  /// Generate a random request ID
-  String _generateRequestId() {
-    return _random.nextInt(9999999).toString().padLeft(6, '0');
   }
 
   /// Helper method to handle response and throw exceptions on error
@@ -485,7 +324,7 @@ class NostrService {
     required String coordinatorPubkey,
   }) async {
     final request = NostrRequest(
-      method: 'initiate_offer',
+      method: kRpcInitiateOffer,
       params: {'fiat_amount': fiatAmount, 'maker_id': makerId},
     );
 
@@ -516,7 +355,7 @@ class NostrService {
       await _ndk!.requests.closeSubscription(_offerSubscription!.requestId);
     }
     final filter = Filter(
-      kinds: [KIND_OFFER],
+      kinds: [kKindOffer],
       tags: {
         "#f": ["PLN"],
         "#y": ["Bitblik"],
@@ -539,76 +378,9 @@ class NostrService {
 
   void _handleOfferEvent(Nip01Event event) {
     try {
-      final offer = _mapEventToOffer(event);
-      _offerStreamController.add(offer);
+      _offerStreamController.add(Offer.fromNostrEvent(event));
     } catch (e) {
       Logger.log.e(() => '❌ Error parsing offer event: $e');
-    }
-  }
-
-  Offer _mapEventToOffer(Nip01Event event) {
-    // Map event.tags and content to Offer
-    // Most data is in tags according to your coordinator event logic
-    final tagMap = <String, String>{};
-    for (final t in event.tags) {
-      if (t.length >= 2) tagMap[t[0]] = t[1];
-    }
-    final reservedAt = int.tryParse(tagMap['reserved_at'] ?? '0') ?? 0;
-    final takerPaidAt = int.tryParse(tagMap['paid_at'] ?? '0') ?? 0;
-    final createdAt = int.tryParse(tagMap['created_at'] ?? '0') ?? 0;
-    // Build Offer (fallback/default when fields missing!)
-    final offer = Offer(
-      id: tagMap['d'] ?? event.id,
-      amountSats: int.tryParse(tagMap['amt'] ?? '0') ?? 0,
-      makerFees: int.tryParse(tagMap['maker_fees'] ?? '0') ?? 0,
-      fiatAmount: double.tryParse(tagMap['fa'] ?? '0') ?? 0.0,
-      fiatCurrency: tagMap['f'] ?? 'PLN',
-      status:
-          _mapOfferStatusToNip69Status(tagMap['s'] ?? 'pending') ??
-          OfferStatus.funded,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt * 1000),
-      makerPubkey: tagMap['maker'] ?? event.pubKey,
-      coordinatorPubkey: tagMap['p'] ?? event.pubKey,
-      // or from context
-      takerPubkey: tagMap['taker'],
-      blikReceivedAt: null,
-      blikCode: null,
-      holdInvoicePaymentHash: tagMap['pmt_hash'],
-      holdInvoice: tagMap['hold_invoice'],
-      takerLightningAddress: tagMap['taker_ln'],
-      takerInvoice: tagMap['taker_inv'],
-      holdInvoicePreimage: tagMap['preimage'],
-      updatedAt: null,
-      makerConfirmedAt: null,
-      settledAt: null,
-      reservedAt:
-          reservedAt != 0
-              ? DateTime.fromMillisecondsSinceEpoch(reservedAt * 1000)
-              : null,
-      takerPaidAt:
-          takerPaidAt != 0
-              ? DateTime.fromMillisecondsSinceEpoch(takerPaidAt * 1000)
-              : null,
-      takerFees: int.tryParse(tagMap['taker_fees'] ?? '0'),
-    );
-    return offer;
-  }
-
-  /// Map internal offer status to NIP-69 status
-  OfferStatus? _mapOfferStatusToNip69Status(String status) {
-    switch (status) {
-      case 'pending':
-        return OfferStatus.funded;
-      case 'in-progress':
-        return OfferStatus.reserved;
-      case 'success':
-        return OfferStatus.takerPaid;
-      case 'canceled':
-        return OfferStatus.cancelled;
-      case 'dispute':
-        return OfferStatus.conflict;
-      default:
-        return null;
     }
   }
 
@@ -629,7 +401,7 @@ class NostrService {
       await init();
     }
 
-    final filter = Filter(kinds: [KIND_OFFER], dTags: [offerId], limit: 1);
+    final filter = Filter(kinds: [kKindOffer], dTags: [offerId], limit: 1);
 
     // Use query for a one-time fetch.
     final response = _ndk!.requests.query(
@@ -643,7 +415,7 @@ class NostrService {
       return null;
     }
 
-    return _mapEventToOffer(events.first);
+    return Offer.fromNostrEvent(events.first);
   }
 
   /// POST /offers/{offerId}/reserve
@@ -653,7 +425,7 @@ class NostrService {
     String coordinatorPubkey,
   ) async {
     final request = NostrRequest(
-      method: 'reserve_offer',
+      method: kRpcReserveOffer,
       params: {'offer_id': offerId},
     );
 
@@ -676,7 +448,7 @@ class NostrService {
     required String coordinatorPubkey,
   }) async {
     final request = NostrRequest(
-      method: 'submit_blik',
+      method: kRpcSubmitBlik,
       params: {
         'offer_id': offerId,
         'blik_code': blikCode,
@@ -695,7 +467,7 @@ class NostrService {
     String coordinatorPubkey,
   ) async {
     final request = NostrRequest(
-      method: 'get_blik',
+      method: kRpcGetBlik,
       params: {'offer_id': offerId},
     );
 
@@ -720,7 +492,7 @@ class NostrService {
     String coordinatorPubkey,
   ) async {
     final request = NostrRequest(
-      method: 'confirm_payment',
+      method: kRpcConfirmPayment,
       params: {'offer_id': offerId},
     );
 
@@ -738,7 +510,7 @@ class NostrService {
     }
 
     try {
-      final request = NostrRequest(method: 'get_my_active_offer', params: {});
+      final request = NostrRequest(method: kRpcGetMyActiveOffer, params: {});
       final response = await sendRequest(request, coordinatorPubkey);
       final result = _handleResponse(response, (result) {
         if (result.isEmpty) return null;
@@ -797,7 +569,7 @@ class NostrService {
   ) async {
     try {
       final request = NostrRequest(
-        method: 'get_my_finished_offers',
+        method: kRpcGetMyFinishedOffers,
         params: {},
       );
       final response = await sendRequest(request, coordinatorPubkey);
@@ -820,7 +592,7 @@ class NostrService {
   /// DELETE /offers/{offerId}/cancel
   Future<void> cancelOffer(String offerId, String coordinatorPubkey) async {
     final request = NostrRequest(
-      method: 'cancel_offer',
+      method: kRpcCancelOffer,
       params: {'offer_id': offerId},
     );
 
@@ -835,7 +607,7 @@ class NostrService {
     String coordinatorPubkey,
   ) async {
     final request = NostrRequest(
-      method: 'cancel_reservation',
+      method: kRpcCancelReservation,
       params: {'offer_id': offerId},
     );
 
@@ -851,7 +623,7 @@ class NostrService {
     required String coordinatorPubkey,
   }) async {
     final request = NostrRequest(
-      method: 'update_taker_invoice',
+      method: kRpcUpdateTakerInvoice,
       params: {'offer_id': offerId, 'bolt11': newBolt11},
     );
 
@@ -866,7 +638,7 @@ class NostrService {
     required String coordinatorPubkey,
   }) async {
     final request = NostrRequest(
-      method: 'retry_taker_payment',
+      method: kRpcRetryTakerPayment,
       params: {'offer_id': offerId},
     );
 
@@ -881,7 +653,7 @@ class NostrService {
     String coordinatorPubkey,
   ) async {
     final request = NostrRequest(
-      method: 'mark_blik_invalid',
+      method: kRpcMarkBlikInvalid,
       params: {'offer_id': offerId},
     );
 
@@ -891,7 +663,7 @@ class NostrService {
 
   Future<void> markBlikCharged(String offerId, String coordinatorPubkey) async {
     final request = NostrRequest(
-      method: 'mark_blik_charged',
+      method: kRpcMarkBlikCharged,
       params: {'offer_id': offerId},
     );
 
@@ -901,7 +673,7 @@ class NostrService {
 
   Future<void> openDispute(String offerId, String coordinatorPubkey) async {
     final request = NostrRequest(
-      method: 'open_dispute',
+      method: kRpcOpenDispute,
       params: {'offer_id': offerId},
     );
 
@@ -975,7 +747,7 @@ class NostrService {
     for (final coordinator in coordinators) {
       try {
         final request = NostrRequest(
-          method: 'get_successful_offers_stats',
+          method: kRpcGetSuccessfulOffersStats,
           params: {},
         );
         final response = await sendRequest(request, coordinator.pubkey);
@@ -1102,7 +874,7 @@ class NostrService {
     }
 
     final filter = Filter(
-      kinds: [KIND_COORDINATOR_INFO],
+      kinds: [kKindCoordinatorInfo],
       // since:
       //     DateTime.now()
       //         .subtract(const Duration(hours: 24))
@@ -1136,7 +908,7 @@ class NostrService {
     }
 
     final filter = Filter(
-      kinds: [KIND_OFFER_STATUS_UPDATE],
+      kinds: [kKindOfferStatusUpdate],
       authors: [coordinatorPubKey],
       pTags: [userPubkey], // Events tagged to the user's pubkey
       since: DateTime.now().millisecondsSinceEpoch ~/ 1000,
@@ -1170,16 +942,10 @@ class NostrService {
             '📊 Received offer status update: ${event.id} from ${event.pubKey}',
       );
 
-      // Decrypt the content using NIP-44
-      final decryptedContent = await Nip44.decryptMessage(
-        event.content,
+      final content = await ProtocolCodec.decryptStatusUpdate(
+        event,
         _keyService.privateKeyHex!,
-        event.pubKey,
       );
-
-      Logger.log.d(() => '🔓 Decrypted status update: $decryptedContent');
-
-      final content = jsonDecode(decryptedContent) as Map<String, dynamic>;
       final statusUpdate = OfferStatusUpdate.fromJson(content, event.pubKey);
 
       // Emit the status update to listeners
@@ -1277,7 +1043,7 @@ class NostrService {
     }
 
     try {
-      final request = NostrRequest(method: 'get_info', params: {});
+      final request = NostrRequest(method: kRpcGetInfo, params: {});
       // Use a shorter timeout for health checks
       await sendRequest(request, coordinatorPubkey);
       // If no exception, coordinator is responsive
@@ -1544,8 +1310,9 @@ class NostrService {
 
   /// Dispose resources
   Future<void> dispose() async {
-    if (_responseSubscription != null) {
-      await _ndk!.requests.closeSubscription(_responseSubscription!.requestId);
+    if (_rpcClient != null) {
+      await _rpcClient!.stop();
+      _rpcClient = null;
     }
     if (_offerStatusSubscription != null) {
       await _ndk!.requests.closeSubscription(
@@ -1555,7 +1322,6 @@ class NostrService {
     if (_offerSubscription != null) {
       await _ndk!.requests.closeSubscription(_offerSubscription!.requestId);
     }
-    _pendingRequests.clear();
     await _offerStatusController.close();
     await _offerStreamController.close();
     if (_ndk != null) {
@@ -1570,57 +1336,6 @@ class NostrService {
 
   /// Get NDK instance (for connectivity management)
   Ndk? get ndk => _ndk;
-}
-
-/// Data class for offer status updates received via Nostr
-class OfferStatusUpdate {
-  final String offerId;
-  final String paymentHash;
-  final String status;
-  final String coordinatorPubkey;
-  DateTime? createdAt;
-  DateTime? reservedAt;
-  final DateTime timestamp;
-
-  OfferStatusUpdate({
-    required this.offerId,
-    required this.paymentHash,
-    required this.status,
-    this.createdAt,
-    this.reservedAt,
-    required this.coordinatorPubkey,
-    required this.timestamp,
-  });
-
-  factory OfferStatusUpdate.fromJson(
-    Map<String, dynamic> json,
-    String coordinatorPubkey,
-  ) {
-    var a = json['reserved_at'];
-    return OfferStatusUpdate(
-      offerId: json['offer_id'] as String,
-      paymentHash: json['payment_hash'] as String,
-      status: json['status'] as String,
-      reservedAt:
-          a != null
-              ? DateTime.fromMillisecondsSinceEpoch((a as int) * 1000)
-              : null,
-      coordinatorPubkey: coordinatorPubkey,
-      timestamp: DateTime.fromMillisecondsSinceEpoch(
-        (json['timestamp'] as int) * 1000,
-      ),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'offer_id': offerId,
-      'payment_hash': paymentHash,
-      'status': status,
-      'coordinator_pubkey': coordinatorPubkey,
-      'timestamp': timestamp.millisecondsSinceEpoch ~/ 1000,
-    };
-  }
 }
 
 /// Exception for Nostr-related errors

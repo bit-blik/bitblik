@@ -12,6 +12,7 @@ dependencies:
     path: ../core
   bip340: ^0.3.0
   ndk: any
+  sembast: ^3.7.0
 
 executables:
   bitblik: bitblik_cli

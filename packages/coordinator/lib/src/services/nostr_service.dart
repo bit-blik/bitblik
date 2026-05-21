@@ -1,13 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math';
 
 import 'package:bip340/bip340.dart' as bip340;
 import 'package:ndk/ndk.dart';
-import 'package:ndk/shared/nips/nip44/nip44.dart';
 
 import 'coordinator_service.dart';
-import 'package:bitblik_core/src/models/offer.dart';
+import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
 
 /// Service to handle Nostr communication for the coordinator
@@ -20,16 +18,6 @@ class NostrService {
 
   // Relay configuration
   final List<String> _relays;
-
-  // Event kinds
-  static const int KIND_COORDINATOR_INFO =
-      15125; // Application-specific info event (replaceable)
-  static const int KIND_COORDINATOR_REQUEST =
-      25195; // NIP-47 style request event
-  static const int KIND_COORDINATOR_RESPONSE =
-      25196; // NIP-47 style response event
-  static const int KIND_OFFER_STATUS_UPDATE =
-      25197; // Offer status update notifications
 
   // Subscription for incoming requests
   NdkResponse? _requestSubscription;
@@ -118,25 +106,11 @@ class NostrService {
     try {
       final info = await _coordinatorService.getCoordinatorInfo();
 
-      // Convert info to tags format for better discoverability
-      final tags = [
-        ['name', info['name'] ?? ''],
-        ['icon', info['icon'] ?? ''],
-        ['min_amount_sats', (info['min_amount_sats'] ?? 0).toString()],
-        ['max_amount_sats', (info['max_amount_sats'] ?? 0).toString()],
-        ['maker_fee', (info['maker_fee'] ?? 0).toString()],
-        ['taker_fee', (info['taker_fee'] ?? 0).toString()],
-        ['reservation_seconds', (info['reservation_seconds'] ?? 0).toString()],
-        ['currencies', (info['currencies'] as List<String>? ?? []).join(',')],
-        ['version', info['version'] ?? ''],
-        ['terms_of_usage_naddr', info['terms_of_usage_naddr'] ?? ''],
-      ];
-
       final event = Nip01Event(
-        kind: KIND_COORDINATOR_INFO,
+        kind: kKindCoordinatorInfo,
         pubKey: _signer.getPublicKey(),
         content: '',
-        tags: tags.map((tag) => tag.map((t) => t.toString()).toList()).toList(),
+        tags: info.toNostrTags(),
         createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
       );
 
@@ -163,8 +137,7 @@ class NostrService {
     DateTime? createdAt,
   }) async {
     try {
-      // Create the status update content
-      final statusUpdate = {
+      final payload = <String, dynamic>{
         'offer_id': offerId,
         'payment_hash': paymentHash,
         'status': status,
@@ -173,25 +146,13 @@ class NostrService {
         'reserved_at': reservedAt != null
             ? reservedAt.millisecondsSinceEpoch ~/ 1000
             : null,
-        'timestamp': timestamp.millisecondsSinceEpoch ~/
-            1000, // Unix timestamp in seconds
+        'timestamp': timestamp.millisecondsSinceEpoch ~/ 1000,
       };
 
-      final statusUpdateJson = jsonEncode(statusUpdate);
-
-      // Send encrypted update to maker
-      await _sendEncryptedStatusUpdate(
-          makerPubkey, statusUpdateJson, offerId, status, paymentHash);
-
-      // Send encrypted update to taker if available
+      await _sendEncryptedStatusUpdate(makerPubkey, payload, offerId);
       if (takerPubkey != null && takerPubkey.isNotEmpty) {
-        await _sendEncryptedStatusUpdate(
-            takerPubkey, statusUpdateJson, offerId, status, paymentHash);
+        await _sendEncryptedStatusUpdate(takerPubkey, payload, offerId);
       }
-
-      // AppLogger.info(
-      //     'Sent encrypted status updates for offer $offerId with status $status to maker and taker',
-      //     offerId: offerId);
     } catch (e) {
       AppLogger.info('Error sending encrypted offer status updates: $e',
           offerId: offerId);
@@ -201,41 +162,26 @@ class NostrService {
   /// Send encrypted status update to a specific user
   Future<void> _sendEncryptedStatusUpdate(
     String recipientPubkey,
-    String statusUpdateJson,
+    Map<String, dynamic> payload,
     String offerId,
-    String status,
-    String paymentHash,
   ) async {
     try {
-      // Encrypt using NIP-44
       final privateKey = _signer.privateKey;
       if (privateKey == null) {
         throw Exception('No private key available for encryption');
       }
 
-      final encryptedContent = await Nip44.encryptMessage(
-        statusUpdateJson,
-        privateKey,
-        recipientPubkey,
-      );
-
-      final event = Nip01Event(
-        kind: KIND_OFFER_STATUS_UPDATE,
-        pubKey: _signer.getPublicKey(),
-        content: encryptedContent,
-        tags: [
-          ['p', recipientPubkey], // Tag recipient
-          ['offer_id', offerId],
-        ].map((tag) => tag.map((t) => t.toString()).toList()).toList(),
-        createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      final event = await ProtocolCodec.encryptStatusUpdate(
+        payload: payload,
+        offerId: offerId,
+        senderPrivateKeyHex: privateKey,
+        senderPubkeyHex: _signer.getPublicKey(),
+        recipientPubkey: recipientPubkey,
       );
 
       await _signer.sign(event);
       await _ndk.broadcast
           .broadcast(nostrEvent: event, specificRelays: _relays);
-
-      // AppLogger.info(
-      //     'Sent encrypted status update to $recipientPubkey for offer $offerId', offerId: offerId);
     } catch (e) {
       AppLogger.info(
           'Error sending encrypted status update to $recipientPubkey: $e');
@@ -246,7 +192,7 @@ class NostrService {
   Future<void> _startRequestListener() async {
     try {
       final filter = Filter(
-        kinds: [KIND_COORDINATOR_REQUEST],
+        kinds: [kKindCoordinatorRequest],
         pTags: [_signer.getPublicKey()], // Events tagged with our pubkey
         since: DateTime.now().millisecondsSinceEpoch ~/ 1000,
       );
@@ -263,7 +209,7 @@ class NostrService {
       });
 
       AppLogger.info(
-          'Started listening for coordinator requests on kind $KIND_COORDINATOR_REQUEST');
+          'Started listening for coordinator requests on kind ${kKindCoordinatorRequest}');
     } catch (e) {
       AppLogger.info('Error starting request listener: $e');
     }
@@ -271,35 +217,21 @@ class NostrService {
 
   /// Handle incoming encrypted requests
   Future<void> _handleRequest(Nip01Event event) async {
-    // AppLogger.info('Received request event: ${event.id} from ${event.pubKey}');
-
-    // Decrypt the request using NIP-44
     final privateKey = _signer.privateKey;
     if (privateKey == null) {
       throw Exception('No private key available for decryption');
     }
 
-    final decryptedContent = await Nip44.decryptMessage(
-      event.content,
-      privateKey,
-      event.pubKey,
-    );
-
-    // AppLogger.info('Decrypted request: $decryptedContent');
-
-    // Parse the request
-    final request = jsonDecode(decryptedContent) as Map<String, dynamic>;
-    final method = request['method'] as String?;
-    final params = request['params'] as Map<String, dynamic>? ?? {};
-    final id = request['id'] as String?;
-
-    if (method == null || id == null) {
+    final request = await ProtocolCodec.decryptRequest(event, privateKey);
+    final id = request.id;
+    if (id == null) {
       await _sendErrorResponse(
-          event.pubKey, id, 'INVALID_REQUEST', 'Missing method or id');
+          event.pubKey, null, 'INVALID_REQUEST', 'Missing id');
       return;
     }
     try {
-      final response = await _processRequest(method, params, event.pubKey);
+      final response =
+          await _processRequest(request.method, request.params, event.pubKey);
       await _sendResponse(event.pubKey, id, response);
     } catch (e) {
       AppLogger.info('Error handling request: $e');
@@ -313,14 +245,15 @@ class NostrService {
       String method, Map<String, dynamic> params, String userPubkey) async {
     try {
       switch (method) {
-        case 'get_info':
-          return await _coordinatorService.getCoordinatorInfo();
+        case kRpcGetInfo:
+          final info = await _coordinatorService.getCoordinatorInfo();
+          return info.toJson();
 
         // case 'list_offers':
         //   final offers = await _coordinatorService.listAvailableOffers();
         //   return {'offers': offers};
 
-        case 'initiate_offer':
+        case kRpcInitiateOffer:
           final fiatAmount = (params['fiat_amount'] as num?)?.toDouble();
           final makerId = params['maker_id'] as String? ?? userPubkey;
 
@@ -333,7 +266,7 @@ class NostrService {
             makerId: makerId,
           );
 
-        case 'reserve_offer':
+        case kRpcReserveOffer:
           final offerId = params['offer_id'] as String?;
           if (offerId == null) {
             throw Exception('Missing required parameter: offer_id');
@@ -351,7 +284,7 @@ class NostrService {
                 'Failed to reserve offer. It might be unavailable or already reserved.');
           }
 
-        case 'submit_blik':
+        case kRpcSubmitBlik:
           final offerId = params['offer_id'] as String?;
           final blikCode = params['blik_code'] as String?;
           final takerLightningAddress =
@@ -375,7 +308,7 @@ class NostrService {
                 'Failed to submit BLIK code. Offer state might be invalid or taker mismatch.');
           }
 
-        case 'get_blik':
+        case kRpcGetBlik:
           final offerId = params['offer_id'] as String?;
           if (offerId == null) {
             throw Exception('Missing required parameter: offer_id');
@@ -390,7 +323,7 @@ class NostrService {
                 'BLIK code not found or not available for this offer/maker.');
           }
 
-        case 'confirm_payment':
+        case kRpcConfirmPayment:
           final offerId = params['offer_id'] as String?;
           if (offerId == null) {
             throw Exception('Missing required parameter: offer_id');
@@ -407,7 +340,7 @@ class NostrService {
                 'Failed to confirm payment. Check offer state, LND connection, or logs.');
           }
 
-        case 'get_my_active_offer':
+        case kRpcGetMyActiveOffer:
           final activeOffers =
               await _coordinatorService.getMyActiveOffers(userPubkey);
           if (activeOffers.isNotEmpty) {
@@ -417,7 +350,7 @@ class NostrService {
             return {};
           }
 
-        case 'get_my_finished_offers':
+        case kRpcGetMyFinishedOffers:
           final activeOffers =
               await _coordinatorService.getMyActiveOffers(userPubkey);
           final now = DateTime.now().toUtc();
@@ -433,7 +366,7 @@ class NostrService {
               finished.map((offer) => offer.toJsonWithPubkeys()).toList();
           return {'offers': finishedList};
 
-        case 'cancel_offer':
+        case kRpcCancelOffer:
           //PILA Error handling request: Exception: Error processing request: PostgreSQLSeverity.error 22P02: invalid input syntax for type uuid: "unknown_id"
           final offerId = params['offer_id'] as String?;
           if (offerId == null) {
@@ -449,7 +382,7 @@ class NostrService {
                 'Failed to cancel offer. It might be in the wrong state or you are not the maker.');
           }
 
-        case 'cancel_reservation':
+        case kRpcCancelReservation:
           final offerId = params['offer_id'] as String?;
           if (offerId == null) {
             throw Exception('Missing required parameter: offer_id');
@@ -464,7 +397,7 @@ class NostrService {
                 'Failed to cancel reservation. It might be in the wrong state or you are not the taker.');
           }
 
-        case 'mark_blik_invalid':
+        case kRpcMarkBlikInvalid:
           final offerId = params['offer_id'] as String?;
           if (offerId == null) {
             throw Exception('Missing required parameter: offer_id');
@@ -479,7 +412,7 @@ class NostrService {
                 'Failed to mark BLIK as invalid. Offer might be in the wrong state, not found, or maker ID mismatch.');
           }
 
-        case 'mark_blik_charged':
+        case kRpcMarkBlikCharged:
           final offerId = params['offer_id'] as String?;
           if (offerId == null) {
             throw Exception('Missing required parameter: offer_id');
@@ -494,7 +427,7 @@ class NostrService {
                 'Failed to mark offer as conflict. Offer might be in the wrong state, not found, or taker ID mismatch.');
           }
 
-        case 'open_dispute':
+        case kRpcOpenDispute:
           final offerId = params['offer_id'] as String?;
           if (offerId == null) {
             throw Exception('Missing required parameter: offer_id');
@@ -509,7 +442,7 @@ class NostrService {
                 'Failed to mark offer as dispute. Offer might be in the wrong state, not found, or taker ID mismatch.');
           }
 
-        case 'update_taker_invoice':
+        case kRpcUpdateTakerInvoice:
           final offerId = params['offer_id'] as String?;
           final bolt11 = params['bolt11'] as String?;
 
@@ -525,7 +458,7 @@ class NostrService {
             throw Exception('Failed to update taker invoice');
           }
 
-        case 'retry_taker_payment':
+        case kRpcRetryTakerPayment:
           final offerId = params['offer_id'] as String?;
           if (offerId == null) {
             throw Exception('Missing required parameter: offer_id');
@@ -539,7 +472,7 @@ class NostrService {
             throw Exception(error);
           }
 
-        case 'get_successful_offers_stats':
+        case kRpcGetSuccessfulOffersStats:
           return await _coordinatorService.getSuccessfulOffersWithStats();
 
         default:
@@ -553,62 +486,36 @@ class NostrService {
   /// Send a successful response
   Future<void> _sendResponse(String recipientPubkey, String requestId,
       Map<String, dynamic> result) async {
-    try {
-      final response = {
-        'id': requestId,
-        'result': result,
-      };
-
-      await _sendEncryptedMessage(recipientPubkey, response);
-    } catch (e) {
-      AppLogger.info('Error sending response: $e');
-    }
+    await _sendEncryptedResponse(
+        recipientPubkey, NostrResponse(id: requestId, result: result));
   }
 
   /// Send an error response
   Future<void> _sendErrorResponse(String recipientPubkey, String? requestId,
       String errorCode, String errorMessage) async {
-    try {
-      final response = {
-        'id': requestId,
-        'error': {
-          'code': errorCode,
-          'message': errorMessage,
-        },
-      };
-
-      await _sendEncryptedMessage(recipientPubkey, response);
-    } catch (e) {
-      AppLogger.info('Error sending error response: $e');
-    }
+    await _sendEncryptedResponse(
+      recipientPubkey,
+      NostrResponse(
+        id: requestId,
+        error: {'code': errorCode, 'message': errorMessage},
+      ),
+    );
   }
 
-  /// Send an encrypted message to a recipient
-  Future<void> _sendEncryptedMessage(
-      String recipientPubkey, Map<String, dynamic> message) async {
+  /// Send an encrypted [NostrResponse] to a recipient.
+  Future<void> _sendEncryptedResponse(
+      String recipientPubkey, NostrResponse response) async {
     try {
-      final messageJson = jsonEncode(message);
-
-      // Encrypt using NIP-44
       final privateKey = _signer.privateKey;
       if (privateKey == null) {
         throw Exception('No private key available for encryption');
       }
 
-      final encryptedContent = await Nip44.encryptMessage(
-        messageJson,
-        privateKey,
-        recipientPubkey,
-      );
-
-      final event = Nip01Event(
-        kind: KIND_COORDINATOR_RESPONSE,
-        pubKey: _signer.getPublicKey(),
-        content: encryptedContent,
-        tags: [
-          ['p', recipientPubkey], // Tag recipient
-        ].map((tag) => tag.map((t) => t.toString()).toList()).toList(),
-        createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      final event = await ProtocolCodec.encryptResponse(
+        response: response,
+        senderPrivateKeyHex: privateKey,
+        senderPubkeyHex: _signer.getPublicKey(),
+        recipientPubkey: recipientPubkey,
       );
 
       await _signer.sign(event);
@@ -705,7 +612,7 @@ class NostrService {
       ];
 
       final event = Nip01Event(
-        kind: 38383,
+        kind: kKindOffer,
         pubKey: _signer.getPublicKey(),
         content: '',
         tags: tags,
@@ -786,6 +693,10 @@ class NostrService {
       case OfferStatus.conflict:
       case OfferStatus.dispute:
         return 'dispute';
+      case OfferStatus.unknown:
+        // Coordinator never emits offers in `unknown` state — sentinel exists
+        // only on the client side for forward-compat decoding.
+        return 'canceled';
     }
   }
 }
