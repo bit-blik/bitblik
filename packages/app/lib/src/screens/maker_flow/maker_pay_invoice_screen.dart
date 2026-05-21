@@ -235,7 +235,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     });
 
     try {
-      await ndk.wallets.send(invoice: invoice);
+      await ndk.wallets.send(invoice: invoice, timeout: Duration(seconds: 30));
       // Note: Code below is unreachable until payment is implemented
       // Logger.log.i(() => '[MakerPayInvoiceScreen] Invoice accepted');
       // if (mounted) {
