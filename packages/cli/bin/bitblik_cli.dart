@@ -2,12 +2,38 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:bitblik_cli/src/models.dart';
+import 'package:bitblik_cli/src/offer_commands.dart';
 import 'package:bitblik_cli/src/protocol_client.dart';
 import 'package:bitblik_cli/src/secrets_store.dart';
 
 Future<void> main(List<String> args) async {
   if (args.isEmpty || args.contains('--help') || args.contains('-h')) {
     _printHelp();
+    return;
+  }
+
+  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'create') {
+    exitCode = await runOfferCreate(args.sublist(2));
+    return;
+  }
+
+  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'list') {
+    exitCode = await runOfferList(args.sublist(2));
+    return;
+  }
+
+  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'get-blik') {
+    exitCode = await runOfferGetBlik(args.sublist(2));
+    return;
+  }
+
+  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'confirm-payment') {
+    exitCode = await runOfferConfirmPayment(args.sublist(2));
+    return;
+  }
+
+  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'sync') {
+    exitCode = await runOfferSync(args.sublist(2));
     return;
   }
 
@@ -45,19 +71,85 @@ Future<void> main(List<String> args) async {
   exitCode = 64;
 }
 
+// ANSI helpers — no-op when stdout is not a terminal.
+final _ansi = stdout.hasTerminal;
+String _bold(String s)   => _ansi ? '\x1B[1m$s\x1B[0m' : s;
+String _cmd(String s)    => _ansi ? '\x1B[1;36m$s\x1B[0m' : s;   // bold cyan
+String _sub(String s)    => _ansi ? '\x1B[1;32m$s\x1B[0m' : s;   // bold green
+String _param(String s)  => _ansi ? '\x1B[90m$s\x1B[0m' : s;     // gray
+String _yellow(String s) => _ansi ? '\x1B[33m$s\x1B[0m' : s;
+String _dim(String s)    => _ansi ? '\x1B[2m$s\x1B[0m' : s;
+
 void _printHelp() {
-  stdout.writeln('BitBlik CLI');
+  stdout.writeln('${_bold('BitBlik CLI')} ${_dim('—')} peer-to-peer BLIK/Lightning exchange');
   stdout.writeln('');
-  stdout.writeln('Usage:');
-  stdout.writeln(
-      '  bitblik coordinators list [--health] [--json] [--relay <url>]');
+  stdout.writeln(_bold('Commands:'));
   stdout.writeln('');
-  stdout.writeln('Options:');
-  stdout.writeln(
-      '  --health       Probe each coordinator with get_info over Nostr');
-  stdout.writeln('  --json         Print JSON output');
-  stdout.writeln('  --relay <url>  Add relay URL (repeatable)');
-  stdout.writeln('  -h, --help     Show this help message');
+
+  void cmd(String usage, List<String> lines) {
+    stdout.writeln('  $usage');
+    for (final l in lines) {
+      stdout.writeln('    $l');
+    }
+    stdout.writeln('');
+  }
+
+  void flag(String f, String desc) =>
+      stdout.writeln('  ${_yellow(f.padRight(18))} $desc');
+
+  final p = _param;
+
+  cmd('${_cmd('coordinators')} ${_sub('list')} ${p('[--health] [--json] [--relay <url>]')}', [
+    'Discover coordinators broadcasting on Nostr.',
+    '--health probes each coordinator for liveness.',
+  ]);
+
+  cmd(
+    '${_cmd('offer')} ${_sub('create')} ${p('--fiat <amount> --coordinator <npub|hex>')}\n'
+    '               ${p('[--currency PLN] [--json] [--relay <url>]')}',
+    [
+      'Create a maker offer. Prints the hold invoice to pay.',
+      'Offer is saved locally; coordinator activates it after invoice is paid.',
+    ],
+  );
+
+  cmd('${_cmd('offer')} ${_sub('list')} ${p('[--finished] [--json]')}', [
+    'List locally stored offers. Active offers only by default.',
+    '--finished includes cancelled/expired/completed offers.',
+  ]);
+
+  cmd('${_cmd('offer')} ${_sub('list')} ${p('--coordinator <npub|hex> [--currency PLN] [--json] [--relay <url>]')}', [
+    'List live public offers fetched from relays for a given coordinator.',
+  ]);
+
+  cmd('${_cmd('offer')} ${_sub('sync')} ${p('[--relay <url>]')}', [
+    'Refresh status of active local offers from each coordinator via RPC.',
+    'Matched by payment hash; unmatched coordinator responses are ignored.',
+  ]);
+
+  cmd('${_cmd('offer')} ${_sub('get-blik')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
+    'Wait for a taker to submit a BLIK code, then retrieve it via RPC.',
+    'Syncs local state first. Uses the single active local offer automatically;',
+    '--offer required when multiple active offers exist.',
+  ]);
+
+  cmd('${_cmd('offer')} ${_sub('confirm-payment')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
+    'Confirm to the coordinator that the BLIK payment succeeded.',
+    'Coordinator settles the hold invoice and pays the taker.',
+    'Uses the single active local offer automatically; --offer required if multiple.',
+  ]);
+
+  stdout.writeln(_bold('Options:'));
+  flag('--health', 'Probe each coordinator for liveness');
+  flag('--finished', 'Include terminal offers in list output');
+  flag('--json', 'Print JSON output');
+  flag('--relay <url>', 'Override relay URL (repeatable)');
+  flag('--fiat <amt>', 'Fiat amount for the offer');
+  flag('--coordinator', 'Coordinator pubkey (hex or npub1...)');
+  flag('--currency <c>', 'Fiat currency (default PLN)');
+  flag('--offer <id>', 'Offer payment hash or coordinator UUID');
+  flag('-h, --help', 'Show this help');
+  stdout.writeln('');
 }
 
 List<String>? _parseRelayArgs(List<String> args) {
@@ -87,11 +179,8 @@ void _printCoordinatorTable(List<CoordinatorListItem> coordinators,
     final curr = c.info.currencies.isEmpty ? '-' : c.info.currencies.join(',');
     final fees =
         '${c.info.makerFee.toStringAsFixed(2)}/${c.info.takerFee.toStringAsFixed(2)}';
-    final pub = c.pubkeyHex.length > 16
-        ? '${c.pubkeyHex.substring(0, 8)}...${c.pubkeyHex.substring(c.pubkeyHex.length - 8)}'
-        : c.pubkeyHex;
     final base =
-        '${c.info.name} | $pub | $curr | ${c.info.minAmountSats}-${c.info.maxAmountSats} | $fees | ${c.info.version == null || c.info.version!.isEmpty ? '-' : c.info.version}';
+        '${c.info.name} | ${c.pubkeyHex} | $curr | ${c.info.minAmountSats}-${c.info.maxAmountSats} | $fees | ${c.info.version == null || c.info.version!.isEmpty ? '-' : c.info.version}';
     if (!showHealth) {
       stdout.writeln(base);
       continue;

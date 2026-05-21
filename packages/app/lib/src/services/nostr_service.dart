@@ -378,76 +378,9 @@ class NostrService {
 
   void _handleOfferEvent(Nip01Event event) {
     try {
-      final offer = _mapEventToOffer(event);
-      _offerStreamController.add(offer);
+      _offerStreamController.add(Offer.fromNostrEvent(event));
     } catch (e) {
       Logger.log.e(() => '❌ Error parsing offer event: $e');
-    }
-  }
-
-  Offer _mapEventToOffer(Nip01Event event) {
-    // Map event.tags and content to Offer
-    // Most data is in tags according to your coordinator event logic
-    final tagMap = <String, String>{};
-    for (final t in event.tags) {
-      if (t.length >= 2) tagMap[t[0]] = t[1];
-    }
-    final reservedAt = int.tryParse(tagMap['reserved_at'] ?? '0') ?? 0;
-    final takerPaidAt = int.tryParse(tagMap['paid_at'] ?? '0') ?? 0;
-    final createdAt = int.tryParse(tagMap['created_at'] ?? '0') ?? 0;
-    // Build Offer (fallback/default when fields missing!)
-    final offer = Offer(
-      id: tagMap['d'] ?? event.id,
-      amountSats: int.tryParse(tagMap['amt'] ?? '0') ?? 0,
-      makerFees: int.tryParse(tagMap['maker_fees'] ?? '0') ?? 0,
-      fiatAmount: double.tryParse(tagMap['fa'] ?? '0') ?? 0.0,
-      fiatCurrency: tagMap['f'] ?? 'PLN',
-      status:
-          _mapOfferStatusToNip69Status(tagMap['s'] ?? 'pending') ??
-          OfferStatus.funded,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt * 1000),
-      makerPubkey: tagMap['maker'] ?? event.pubKey,
-      coordinatorPubkey: tagMap['p'] ?? event.pubKey,
-      // or from context
-      takerPubkey: tagMap['taker'],
-      blikReceivedAt: null,
-      blikCode: null,
-      holdInvoicePaymentHash: tagMap['pmt_hash'],
-      holdInvoice: tagMap['hold_invoice'],
-      takerLightningAddress: tagMap['taker_ln'],
-      takerInvoice: tagMap['taker_inv'],
-      holdInvoicePreimage: tagMap['preimage'],
-      updatedAt: null,
-      makerConfirmedAt: null,
-      settledAt: null,
-      reservedAt:
-          reservedAt != 0
-              ? DateTime.fromMillisecondsSinceEpoch(reservedAt * 1000)
-              : null,
-      takerPaidAt:
-          takerPaidAt != 0
-              ? DateTime.fromMillisecondsSinceEpoch(takerPaidAt * 1000)
-              : null,
-      takerFees: int.tryParse(tagMap['taker_fees'] ?? '0'),
-    );
-    return offer;
-  }
-
-  /// Map internal offer status to NIP-69 status
-  OfferStatus? _mapOfferStatusToNip69Status(String status) {
-    switch (status) {
-      case 'pending':
-        return OfferStatus.funded;
-      case 'in-progress':
-        return OfferStatus.reserved;
-      case 'success':
-        return OfferStatus.takerPaid;
-      case 'canceled':
-        return OfferStatus.cancelled;
-      case 'dispute':
-        return OfferStatus.conflict;
-      default:
-        return null;
     }
   }
 
@@ -482,7 +415,7 @@ class NostrService {
       return null;
     }
 
-    return _mapEventToOffer(events.first);
+    return Offer.fromNostrEvent(events.first);
   }
 
   /// POST /offers/{offerId}/reserve
