@@ -8,8 +8,8 @@ Peer-to-peer BLIK/Lightning exchange over Nostr. Makers fund a Lightning hold in
 | ------- | ---- | ----------- |
 | **core** | [`packages/core`](packages/core) | Shared models, protocol codec, RPC client, Nostr event kinds and constants. Used by all other packages. |
 | **coordinator** | [`packages/coordinator`](packages/coordinator) | Server-side coordinator: manages offer lifecycle, hold invoices, BLIK flow, and Nostr RPC endpoints. |
-| **cli** | [`packages/cli`](packages/cli) | Command-line interface for makers. Create offers, retrieve BLIK codes, confirm payments, and sync local state. |
-| **app** | [`packages/app`](packages/app) | Flutter mobile app for takers. Browse offers, reserve, submit BLIK codes, and track payment status. |
+| **cli** | [`packages/cli`](packages/cli) | Command-line interface for interacting with the protocol. Create and manage offers, retrieve BLIK codes, confirm payments, and sync local state. |
+| **app** | [`packages/app`](packages/app) | Flutter app (mobile, web, desktop) for interacting with the protocol. Browse and manage offers, submit BLIK codes, and track payment status. |
 
 ## Protocol
 
