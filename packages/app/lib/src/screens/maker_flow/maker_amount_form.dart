@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +12,7 @@ import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
-import '../../services/nostr_service.dart'; // Import DiscoveredCoordinator
+// CoordinatorRecord comes from bitblik_core
 
 // Progress indicator widget for maker flow
 class MakerProgressIndicator extends StatelessWidget {
@@ -146,9 +148,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   void _autoSelectCoordinator() {
     if (_selectedCoordinatorPubkey != null) return; // Already selected
 
-    final coordinatorsAsync = ref.read(discoveredCoordinatorsProvider);
-    if (coordinatorsAsync is AsyncData<List<DiscoveredCoordinator>>) {
-      final coordinators = coordinatorsAsync.value;
+    final coordinatorsAsync = ref.read(enabledCoordinatorsProvider);
+    if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>>) {
+      final coordinators = _filterByAmount(coordinatorsAsync.value);
       final responsiveCoordinators =
           coordinators.where((c) => c.responsive == true).toList();
       if (responsiveCoordinators.isNotEmpty) {
@@ -158,7 +160,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     }
   }
 
-  Future<void> _selectCoordinator(DiscoveredCoordinator coordinator) async {
+  Future<void> _selectCoordinator(CoordinatorRecord coordinator) async {
     setState(() {
       _selectedCoordinatorPubkey = coordinator.pubkey;
       _selectedCoordinatorInfo = coordinator.toCoordinatorInfo();
@@ -238,6 +240,19 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         _satsEquivalent = btcAmount * 100000000;
       } else {
         _satsEquivalent = null;
+      }
+
+      // Drop the selected coordinator if it no longer accepts this amount.
+      final sats = _satsEquivalent;
+      final selectedInfo = _selectedCoordinatorInfo;
+      if (sats != null && selectedInfo != null) {
+        final satsInt = sats.round();
+        if (satsInt < selectedInfo.minAmountSats ||
+            satsInt > selectedInfo.maxAmountSats) {
+          _selectedCoordinatorPubkey = null;
+          _selectedCoordinatorInfo = null;
+          _hasTriedAutoSelect = false;
+        }
       }
     });
   }
@@ -383,10 +398,33 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
   }
 
+  /// Restrict the coordinator list by the currently entered sats amount.
+  /// When no amount is entered yet we show every coordinator so the user
+  /// can still browse.
+  List<CoordinatorRecord> _filterByAmount(List<CoordinatorRecord> source) {
+    final sats = _satsEquivalent;
+    if (sats == null) return source;
+    final satsInt = sats.round();
+    return source
+        .where((c) =>
+            satsInt >= c.minAmountSats && satsInt <= c.maxAmountSats)
+        .toList(growable: false);
+  }
+
   Future<void> _showCoordinatorPicker(BuildContext context) async {
-    final coordinatorsAsync = ref.read(discoveredCoordinatorsProvider);
-    if (coordinatorsAsync is AsyncData<List<DiscoveredCoordinator>>) {
-      final coordinators = coordinatorsAsync.value;
+    final coordinatorsAsync = ref.read(enabledCoordinatorsProvider);
+    if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>>) {
+      final coordinators = _filterByAmount(coordinatorsAsync.value);
+      if (coordinators.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              t.maker.amountForm.errors.noCoordinatorMatchesAmount,
+            ),
+          ),
+        );
+        return;
+      }
       await showModalBottomSheet(
         context: context,
         builder: (context) {
@@ -546,11 +584,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final isLoading = ref.watch(isLoadingProvider);
     final globalErrorMessage = ref.watch(errorProvider);
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
-    final coordinatorsAsync = ref.watch(discoveredCoordinatorsProvider);
+    final coordinatorsAsync = ref.watch(enabledCoordinatorsProvider);
     final t = Translations.of(context);
 
     // Auto-select coordinator when they become available (only once)
-    if (coordinatorsAsync is AsyncData<List<DiscoveredCoordinator>> &&
+    if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>> &&
         !_hasTriedAutoSelect &&
         _selectedCoordinatorPubkey == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -665,14 +703,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                   children: [
                     // Coordinator row - clickable to select/change coordinator
                     GestureDetector(
-                      onTap: () {
-                        // Show coordinator picker
+                      onTap: () async {
                         if (_selectedCoordinatorInfo == null) {
-                          ref
-                              .read(discoveredCoordinatorsProvider.notifier)
-                              .refreshDiscovery();
+                          final registry = await ref.read(
+                            coordinatorRegistryProvider.future,
+                          );
+                          unawaited(registry.discover());
                         }
-                        _showCoordinatorPicker(context);
+                        if (mounted) _showCoordinatorPicker(context);
                       },
                       child: _buildDetailRow(
                         t.maker.amountForm.labels.coordinator,
@@ -714,7 +752,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               //   constraints: const BoxConstraints(),
                               //   onPressed: () {
                               //     // Refresh coordinator list
-                              //     ref.invalidate(discoveredCoordinatorsProvider);
+                              //     ref.invalidate(enabledCoordinatorsProvider);
                               //   },
                               // ),
                             ] else

@@ -1,7 +1,7 @@
+import 'package:bitblik_core/core.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/nips/nip19/nip19.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -34,16 +34,11 @@ class _CoordinatorManagementScreenState
     setState(() => _saving = true);
     try {
       final apiService = ref.read(apiServiceProvider);
-      // Invert the logic: enabled means NOT blacklisted
-      await apiService.toggleBlacklist(pubkey, !enabled);
-      // Refresh the list without invalidating (preserves current state)
-      await ref.read(discoveredCoordinatorsProvider.notifier).refreshList();
+      await apiService.setCoordinatorEnabled(pubkey, enabled);
 
-      // Trigger health check in background if coordinator is now enabled
       if (enabled) {
-        ref
-            .read(discoveredCoordinatorsProvider.notifier)
-            .checkCoordinatorHealthAndRefresh(pubkey);
+        // Background probe; registry streams update on completion.
+        unawaitedProbe(apiService.checkCoordinatorHealth(pubkey));
       }
 
       if (mounted) {
@@ -70,7 +65,7 @@ class _CoordinatorManagementScreenState
     }
   }
 
-  Future<void> _addCustomWhitelist(String npub) async {
+  Future<void> _addCustomCoordinator(String npub) async {
     final t = Translations.of(context);
     final trimmed = npub.trim();
     if (trimmed.isEmpty) {
@@ -83,31 +78,23 @@ class _CoordinatorManagementScreenState
     setState(() => _saving = true);
     try {
       final apiService = ref.read(apiServiceProvider);
-      await apiService.addCustomWhitelist(trimmed);
+      final record = await apiService.addManualCoordinator(trimmed);
       _addNpubController.clear();
-      // Refresh the list without invalidating (preserves current state)
-      await ref.read(discoveredCoordinatorsProvider.notifier).refreshList();
-
-      // Get the normalized pubkey for health check
-      String normalizedPubkey;
-      try {
-        if (trimmed.startsWith('npub')) {
-          normalizedPubkey = Nip19.decode(trimmed);
-        } else {
-          normalizedPubkey = trimmed;
-        }
-      } catch (_) {
-        normalizedPubkey = trimmed;
-      }
-
-      // Trigger health check in background for the newly added coordinator
-      ref
-          .read(discoveredCoordinatorsProvider.notifier)
-          .checkCoordinatorHealthAndRefresh(normalizedPubkey);
+      unawaitedProbe(apiService.checkCoordinatorHealth(record.pubkeyHex));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(t.coordinator.management.coordinatorAdded)),
+        );
+      }
+    } on CoordinatorInfoUnavailable {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              t.coordinator.management.coordinatorAddInfoUnavailable,
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -123,14 +110,12 @@ class _CoordinatorManagementScreenState
     }
   }
 
-  Future<void> _removeCustomWhitelist(String pubkey) async {
+  Future<void> _removeCoordinator(String pubkey) async {
     final t = Translations.of(context);
     setState(() => _saving = true);
     try {
       final apiService = ref.read(apiServiceProvider);
-      await apiService.removeCustomWhitelist(pubkey);
-      // Refresh the list without invalidating (preserves current state)
-      await ref.read(discoveredCoordinatorsProvider.notifier).refreshList();
+      await apiService.removeCoordinator(pubkey);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(t.coordinator.management.coordinatorRemoved)),
@@ -149,19 +134,25 @@ class _CoordinatorManagementScreenState
     }
   }
 
+  static void unawaitedProbe(Future<void> future) {
+    // Fire-and-forget. Errors are surfaced to logs by the registry layer.
+    future.ignore();
+  }
+
+  Future<void> _refreshDiscovery() async {
+    final registry = await ref.read(coordinatorRegistryProvider.future);
+    await registry.discover();
+    await registry.probeAllEnabled();
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
     final coordinatorsAsync = ref.watch(discoveredCoordinatorsProvider);
-    final apiService = ref.read(apiServiceProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(t.coordinator.management.availableCoordinators),
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back),
-        //   onPressed: () => context.pop(),
-        // ),
       ),
 
       body: GestureDetector(
@@ -174,7 +165,6 @@ class _CoordinatorManagementScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Text(t.coordinator.management.availableCoordinators, style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Expanded(
                 child: coordinatorsAsync.when(
@@ -189,13 +179,7 @@ class _CoordinatorManagementScreenState
                   data: (coordinators) {
                     if (coordinators.isEmpty) {
                       return RefreshIndicator(
-                        onRefresh:
-                            () =>
-                                ref
-                                    .read(
-                                      discoveredCoordinatorsProvider.notifier,
-                                    )
-                                    .refreshDiscovery(),
+                        onRefresh: _refreshDiscovery,
                         child: SingleChildScrollView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           child: SizedBox(
@@ -210,18 +194,14 @@ class _CoordinatorManagementScreenState
                       );
                     }
                     return RefreshIndicator(
-                      onRefresh:
-                          () =>
-                              ref
-                                  .read(discoveredCoordinatorsProvider.notifier)
-                                  .refreshDiscovery(),
+                      onRefresh: _refreshDiscovery,
                       child: ListView.separated(
                         itemCount: coordinators.length,
                         separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final c = coordinators[index];
-                          final pubkey = c.pubkey;
-                          final isBlack = apiService.isBlacklisted(pubkey);
+                          final pubkey = c.pubkeyHex;
+                          final isDisabled = !c.enabled;
 
                           // Build the main content (title and subtitle)
                           final mainContent = ListTile(
@@ -260,26 +240,34 @@ class _CoordinatorManagementScreenState
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            subtitle: Row(
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  c.responsive == true
-                                      ? Icons.circle
-                                      : c.responsive == false
-                                      ? Icons.circle_outlined
-                                      : Icons.help_outline,
-                                  size: 12,
-                                  color:
+                                Row(
+                                  children: [
+                                    Icon(
                                       c.responsive == true
-                                          ? Colors.green
-                                          : Colors.grey,
+                                          ? Icons.circle
+                                          : c.responsive == false
+                                          ? Icons.circle_outlined
+                                          : Icons.help_outline,
+                                      size: 12,
+                                      color:
+                                          c.responsive == true
+                                              ? Colors.green
+                                              : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      c.responsive == true
+                                          ? t.coordinator.management.online
+                                          : t.coordinator.management
+                                              .unknownOffline,
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  c.responsive == true
-                                      ? t.coordinator.management.online
-                                      : t.coordinator.management.unknownOffline,
-                                ),
+                                const SizedBox(height: 4),
+                                _ScoreMetricsRow(record: c),
                               ],
                             ),
                             trailing: IconButton(
@@ -291,7 +279,7 @@ class _CoordinatorManagementScreenState
                                 height: 24,
                               ),
                               onPressed:
-                                  isBlack
+                                  isDisabled
                                       ? null
                                       : () async {
                                         final url =
@@ -308,33 +296,27 @@ class _CoordinatorManagementScreenState
                           final trailingSection = Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (!apiService
-                                  .customWhitelistedCoordinators
-                                  .contains(pubkey)) ...[
-                                const SizedBox(width: 8),
-                                Text(
-                                  t.coordinator.management.enable,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                Switch(
-                                  value:
-                                      !isBlack, // Inverted: true when NOT blacklisted (enabled)
-                                  onChanged:
-                                      _saving
-                                          ? null
-                                          : (val) => _toggleEnable(pubkey, val),
-                                ),
-                              ] else ...[
+                              const SizedBox(width: 8),
+                              Text(
+                                t.coordinator.management.enable,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              Switch(
+                                value: c.enabled,
+                                onChanged:
+                                    _saving
+                                        ? null
+                                        : (val) => _toggleEnable(pubkey, val),
+                              ),
+                              if (c.manualAdded)
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline),
                                   tooltip: t.coordinator.management.remove,
                                   onPressed:
                                       _saving
                                           ? null
-                                          : () =>
-                                              _removeCustomWhitelist(pubkey),
+                                          : () => _removeCoordinator(pubkey),
                                 ),
-                              ],
                             ],
                           );
 
@@ -343,7 +325,7 @@ class _CoordinatorManagementScreenState
                             children: [
                               Expanded(
                                 child:
-                                    isBlack
+                                    isDisabled
                                         ? Opacity(
                                           opacity: 0.4,
                                           child: IgnorePointer(
@@ -380,8 +362,9 @@ class _CoordinatorManagementScreenState
                     onPressed:
                         _saving
                             ? null
-                            : () =>
-                                _addCustomWhitelist(_addNpubController.text),
+                            : () => _addCustomCoordinator(
+                              _addNpubController.text,
+                            ),
                     child:
                         _saving
                             ? const SizedBox(
@@ -396,6 +379,79 @@ class _CoordinatorManagementScreenState
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Compact breakdown of the four ranking signals fed into
+/// [CoordinatorRecord.score]. Tooltips show the formula for each chip so
+/// users can reason about why one coordinator sits above another.
+class _ScoreMetricsRow extends StatelessWidget {
+  const _ScoreMetricsRow({required this.record});
+
+  final CoordinatorRecord record;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Translations.of(context);
+    final r = record;
+    return Wrap(
+      spacing: 10,
+      runSpacing: 2,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _MetricChip(
+          icon: Icons.person_outline,
+          label: t.coordinator.management.metricYourOffers,
+          value: r.localFinishedCount.toString(),
+          tooltip: t.coordinator.management.metricYourOffersTooltip,
+        ),
+        _MetricChip(
+          icon: Icons.public,
+          label: t.coordinator.management.metricNetworkOffers,
+          value: r.networkFinishedCount.toString(),
+          tooltip: t.coordinator.management.metricNetworkOffersTooltip,
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricChip extends StatelessWidget {
+  const _MetricChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.tooltip,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Tooltip(
+      message: tooltip,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.grey),
+          const SizedBox(width: 3),
+          Text(
+            '$label: ',
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

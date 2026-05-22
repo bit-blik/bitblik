@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:bitblik_cli/src/models.dart';
 import 'package:bitblik_cli/src/offer_commands.dart';
 import 'package:bitblik_cli/src/protocol_client.dart';
 import 'package:bitblik_cli/src/secrets_store.dart';
+import 'package:bitblik_core/core.dart';
 
 Future<void> main(List<String> args) async {
   if (args.isEmpty || args.contains('--help') || args.contains('-h')) {
@@ -54,8 +54,9 @@ Future<void> main(List<String> args) async {
 
       if (jsonOutput) {
         stdout.writeln(
-          const JsonEncoder.withIndent('  ')
-              .convert(coordinators.map((c) => c.toJson()).toList()),
+          const JsonEncoder.withIndent('  ').convert(
+            coordinators.map(_coordinatorToCliJson).toList(),
+          ),
         );
       } else {
         _printCoordinatorTable(coordinators, showHealth: withHealth);
@@ -163,7 +164,20 @@ List<String>? _parseRelayArgs(List<String> args) {
   return relays.isEmpty ? null : relays;
 }
 
-void _printCoordinatorTable(List<CoordinatorListItem> coordinators,
+Map<String, Object?> _coordinatorToCliJson(CoordinatorRecord r) {
+  final info = r.info;
+  return {
+    'pubkey': r.pubkeyHex,
+    if (info != null) ...info.toJson(),
+    'last_seen': r.lastSeen?.toUtc().toIso8601String(),
+    'first_seen_at': r.firstSeenAt?.toUtc().toIso8601String(),
+    'enabled': r.enabled,
+    'manual_added': r.manualAdded,
+    'responsive': r.responsive,
+  };
+}
+
+void _printCoordinatorTable(List<CoordinatorRecord> coordinators,
     {required bool showHealth}) {
   if (coordinators.isEmpty) {
     stdout.writeln('No coordinators discovered.');
@@ -176,11 +190,21 @@ void _printCoordinatorTable(List<CoordinatorListItem> coordinators,
   stdout.writeln(header);
 
   for (final c in coordinators) {
-    final curr = c.info.currencies.isEmpty ? '-' : c.info.currencies.join(',');
-    final fees =
-        '${c.info.makerFee.toStringAsFixed(2)}/${c.info.takerFee.toStringAsFixed(2)}';
+    final info = c.info;
+    final curr = info == null || info.currencies.isEmpty
+        ? '-'
+        : info.currencies.join(',');
+    final fees = info == null
+        ? '-'
+        : '${info.makerFee.toStringAsFixed(2)}/${info.takerFee.toStringAsFixed(2)}';
+    final version = info?.version;
+    final versionStr =
+        version == null || version.isEmpty ? '-' : version;
+    final range = info == null
+        ? '-'
+        : '${info.minAmountSats}-${info.maxAmountSats}';
     final base =
-        '${c.info.name} | ${c.pubkeyHex} | $curr | ${c.info.minAmountSats}-${c.info.maxAmountSats} | $fees | ${c.info.version == null || c.info.version!.isEmpty ? '-' : c.info.version}';
+        '${c.name} | ${c.pubkeyHex} | $curr | $range | $fees | $versionStr';
     if (!showHealth) {
       stdout.writeln(base);
       continue;

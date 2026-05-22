@@ -257,8 +257,13 @@ coordinator:
     coordinatorUnblacklisted: "Coordinatore rimosso dalla blacklist"
     coordinatorAdded: "Coordinatore aggiunto alla whitelist personalizzata"
     coordinatorRemoved: "Coordinatore rimosso dalla whitelist personalizzata"
+    coordinatorAddInfoUnavailable: "Nessuna informazione sul coordinatore trovata sui relay. Coordinatore non aggiunto."
     pleaseEnterNpub: "Inserisci un npub"
     error: "Errore"
+    metricYourOffers: "Le tue offerte"
+    metricYourOffersTooltip: "Numero di offerte che hai completato con successo con questo coordinatore."
+    metricNetworkOffers: "Offerte (30g)"
+    metricNetworkOffersTooltip: "Offerte risolte con successo da questo coordinatore tra tutti gli utenti negli ultimi 30 giorni."
 
 # =============================================================================
 # MAKER FLOW
@@ -289,6 +294,7 @@ maker:
     errors:
       initiating: "Errore nell'avvio dell'offerta: ${details}"
       publicKeyNotLoaded: "Errore: Chiave pubblica non ancora caricata."
+      noCoordinatorMatchesAmount: "Nessun coordinatore supporta questo importo. Prova con un valore diverso."
 
   payInvoice:
     title: "Paga questa fattura Hold:"

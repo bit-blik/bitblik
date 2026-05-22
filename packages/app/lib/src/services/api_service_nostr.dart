@@ -404,15 +404,17 @@ class ApiServiceNostr {
     await _nostrService.updateRelayConfig(relayUrls);
   }
 
-  /// Start coordinator discovery
-  Future<List<DiscoveredCoordinator>> startCoordinatorDiscovery() async {
-    return await _nostrService.startCoordinatorDiscovery();
-  }
+  /// Coordinator registry exposed for screens that need streamed updates.
+  CoordinatorRegistry get coordinatorRegistry =>
+      _nostrService.coordinatorRegistry;
 
-  /// Start coordinator discovery
-  Future<void> checkCoordinatorHealth(String pubKey) async {
-    await _nostrService.checkCoordinatorHealth(pubKey);
-  }
+  /// One-shot discovery sweep. Updates registry in place.
+  Future<void> startCoordinatorDiscovery() =>
+      _nostrService.coordinatorRegistry.discover();
+
+  /// Probe a single coordinator's responsiveness.
+  Future<void> checkCoordinatorHealth(String pubKey) =>
+      _nostrService.coordinatorRegistry.probeHealth(pubKey);
 
   /// Start listening for offer status updates
   Future<void> startOfferStatusSubscription(
@@ -434,9 +436,10 @@ class ApiServiceNostr {
   Stream<OfferStatusUpdate> get offerStatusStream =>
       _nostrService.offerStatusStream;
 
-  /// Get discovered coordinators list
-  List<DiscoveredCoordinator> get discoveredCoordinators =>
-      _nostrService.discoveredCoordinators;
+  /// Snapshot of all known coordinators (enabled + disabled). UI should
+  /// prefer the registry's `changes` stream to react to updates.
+  List<CoordinatorRecord> get discoveredCoordinators =>
+      _nostrService.coordinatorRegistry.all;
 
   /// Get current relay URLs
   List<String> get relayUrls => _nostrService.relayUrls;
@@ -461,28 +464,19 @@ class ApiServiceNostr {
     }
   }
 
-  // --- Coordinator Management Methods ---
+  // --- Coordinator Management ---
 
-  /// Check if a coordinator is blacklisted
-  bool isBlacklisted(String pubkey) => _nostrService.isBlacklisted(pubkey);
+  /// Thin wrappers over [CoordinatorRegistry]. Screens that need richer
+  /// behaviour should call into [coordinatorRegistry] directly.
+  bool isEnabled(String pubkey) =>
+      _nostrService.coordinatorRegistry.recordFor(pubkey)?.enabled ?? false;
 
-  /// Get the list of blacklisted coordinators
-  List<String> get blacklistedCoordinators =>
-      _nostrService.blacklistedCoordinators;
+  Future<void> setCoordinatorEnabled(String pubkey, bool enabled) =>
+      _nostrService.coordinatorRegistry.setEnabled(pubkey, enabled);
 
-  /// Get the list of custom whitelisted coordinators
-  List<String> get customWhitelistedCoordinators =>
-      _nostrService.customWhitelistedCoordinators;
+  Future<CoordinatorRecord> addManualCoordinator(String npubOrHex) =>
+      _nostrService.coordinatorRegistry.addManual(npubOrHex);
 
-  /// Toggle blacklist status for a coordinator
-  Future<void> toggleBlacklist(String pubkey, bool blacklist) async =>
-      await _nostrService.toggleBlacklist(pubkey, blacklist);
-
-  /// Add a coordinator to custom whitelist
-  Future<void> addCustomWhitelist(String npub) async =>
-      await _nostrService.addCustomWhitelist(npub);
-
-  /// Remove a coordinator from custom whitelist
-  Future<void> removeCustomWhitelist(String pubkey) async =>
-      await _nostrService.removeCustomWhitelist(pubkey);
+  Future<void> removeCoordinator(String pubkey) =>
+      _nostrService.coordinatorRegistry.remove(pubkey);
 }

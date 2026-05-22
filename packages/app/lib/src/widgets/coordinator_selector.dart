@@ -1,3 +1,4 @@
+import 'package:bitblik_core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ndk/shared/logger/logger.dart';
@@ -6,11 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
-import '../services/nostr_service.dart';
 
 class CoordinatorSelector extends ConsumerStatefulWidget {
-  final DiscoveredCoordinator? selectedCoordinator;
-  final Function(DiscoveredCoordinator)? onCoordinatorSelected;
+  final CoordinatorRecord? selectedCoordinator;
+  final Function(CoordinatorRecord)? onCoordinatorSelected;
   final bool showInfoOnly;
   final double? fiatExchangeRate;
   final Function(bool)? onTermsAcceptedChanged;
@@ -110,8 +110,8 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
 
   Future<void> _showCoordinatorPicker(BuildContext context) async {
     final t = Translations.of(context);
-    final coordinatorsAsync = ref.read(discoveredCoordinatorsProvider);
-    if (coordinatorsAsync is AsyncData<List<DiscoveredCoordinator>>) {
+    final coordinatorsAsync = ref.read(enabledCoordinatorsProvider);
+    if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>>) {
       final coordinators = coordinatorsAsync.value;
       await showModalBottomSheet(
         context: context,
@@ -282,7 +282,7 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
-    final coordinatorsAsync = ref.watch(discoveredCoordinatorsProvider);
+    final coordinatorsAsync = ref.watch(enabledCoordinatorsProvider);
     final selectedCoordinator = widget.selectedCoordinator;
 
     // Handle loading state
@@ -312,7 +312,7 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
     }
 
     // Handle data state
-    if (coordinatorsAsync is AsyncData<List<DiscoveredCoordinator>>) {
+    if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>>) {
       final coordinators = coordinatorsAsync.value;
 
       // Debug logging

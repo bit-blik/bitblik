@@ -256,8 +256,13 @@ coordinator:
     coordinatorUnblacklisted: "Koordynator odblokowany"
     coordinatorAdded: "Koordynator dodany do niestandardowej białej listy"
     coordinatorRemoved: "Koordynator usunięty z niestandardowej białej listy"
+    coordinatorAddInfoUnavailable: "Nie znaleziono informacji o koordynatorze w przekaźnikach. Koordynator nie został dodany."
     pleaseEnterNpub: "Proszę wprowadzić npub"
     error: "Błąd"
+    metricYourOffers: "Twoje oferty"
+    metricYourOffersTooltip: "Liczba ofert, które pomyślnie zrealizowałeś z tym koordynatorem."
+    metricNetworkOffers: "Oferty (30 dni)"
+    metricNetworkOffersTooltip: "Pomyślnie rozliczone oferty przez tego koordynatora dla wszystkich użytkowników w ciągu ostatnich 30 dni."
 
 # =============================================================================
 # MAKER FLOW
@@ -288,6 +293,7 @@ maker:
     errors:
       initiating: "Błąd inicjowania oferty: ${details}"
       publicKeyNotLoaded: "Błąd: Klucz publiczny nie został jeszcze załadowany."
+      noCoordinatorMatchesAmount: "Żaden koordynator nie obsługuje tej kwoty. Spróbuj inną wartość."
   
   payInvoice:
     title: "Zapłać tę fakturę Hold:"

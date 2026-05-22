@@ -4,89 +4,16 @@ import 'package:flutter/foundation.dart';
 import 'package:ndk/ndk.dart';
 import 'package:ndk/shared/isolates/isolate_manager.dart';
 import 'package:ndk_flutter/ndk_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // import 'package:ndk_rust_verifier/ndk_rust_verifier.dart' as web_rust_verifier;
 
 import 'package:bitblik_core/core.dart';
+import 'coordinator_prefs_store.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
 
-/// Discovered coordinator information
-class DiscoveredCoordinator {
-  final String pubkey;
-  final String name;
-  final String? icon;
-  final int minAmountSats;
-  final int maxAmountSats;
-  final double makerFee;
-  final double takerFee;
-  final int reservationSeconds;
-  final List<String> currencies;
-  final String version;
-  final DateTime lastSeen;
-  bool? responsive;
-  final String? termsOfUsageNaddr;
-
-  DiscoveredCoordinator({
-    required this.pubkey,
-    required this.name,
-    this.icon,
-    required this.minAmountSats,
-    required this.maxAmountSats,
-    required this.makerFee,
-    required this.takerFee,
-    required this.reservationSeconds,
-    required this.currencies,
-    required this.version,
-    required this.lastSeen,
-    this.responsive,
-    this.termsOfUsageNaddr,
-  });
-
-  factory DiscoveredCoordinator.fromNostrEvent(Nip01Event event) {
-    final info = CoordinatorInfo.fromNostrEvent(event);
-    return DiscoveredCoordinator(
-      pubkey: event.pubKey,
-      name: info.name,
-      icon: info.icon,
-      minAmountSats: info.minAmountSats,
-      maxAmountSats: info.maxAmountSats,
-      makerFee: info.makerFee,
-      takerFee: info.takerFee,
-      reservationSeconds: info.reservationSeconds,
-      currencies: info.currencies,
-      version: info.version ?? '',
-      lastSeen: DateTime.fromMillisecondsSinceEpoch(event.createdAt * 1000),
-      responsive: null,
-      termsOfUsageNaddr: info.termsOfUsageNaddr,
-    );
-  }
-
-  CoordinatorInfo toCoordinatorInfo() {
-    return CoordinatorInfo(
-      name: name,
-      icon: icon,
-      minAmountSats: minAmountSats,
-      maxAmountSats: maxAmountSats,
-      makerFee: makerFee,
-      takerFee: takerFee,
-      reservationSeconds: reservationSeconds,
-      currencies: currencies,
-      nostrNpub: Nip19.encodePubKey(pubkey),
-      version: version,
-      termsOfUsageNaddr: termsOfUsageNaddr,
-    );
-  }
-}
-
 /// Service for Nostr-based communication with coordinators
 class NostrService {
-  static const String _selectedCoordinatorKey = 'selected_coordinator_pubkey';
-  static const String _relayUrlsKey = 'relay_urls';
-  static const String _blacklistKey = 'coordinators.blacklist';
-  static const String _customWhitelistKey = 'coordinators.customWhitelist';
-
   static const List<String> _defaultRelayUrls = [
     'wss://relay.mostro.network',
     'wss://relay.primal.net',
@@ -98,6 +25,7 @@ class NostrService {
   Ndk? _ndk;
   Bip340EventSigner? _clientSigner;
   BitblikRpcClient? _rpcClient;
+  CoordinatorRegistry? _coordinatorRegistry;
 
   List<String> _relayUrls = [];
 
@@ -106,18 +34,9 @@ class NostrService {
 
   bool _isInitialized = false;
 
-  // Discovered coordinators
-  final Map<String, DiscoveredCoordinator> _discoveredCoordinators = {};
   final StreamController<OfferStatusUpdate> _offerStatusController =
       StreamController<OfferStatusUpdate>.broadcast();
   late StreamController<Offer> _offerStreamController;
-
-  // Coordinator info cache by pubkey
-  final Map<String, CoordinatorInfo> _coordinatorInfoCache = {};
-
-  // Blacklist and custom whitelist (loaded from preferences)
-  List<String> _disabledCoordinators = [];
-  List<String> _customCoordinators = [];
 
   NostrService(this._keyService) {
     _offerStreamController = StreamController<Offer>.broadcast();
@@ -127,33 +46,35 @@ class NostrService {
   Future<void> init() async {
     if (_isInitialized) return;
 
-    await _loadConfiguration();
+    _relayUrls = List.from(_defaultRelayUrls);
+    Logger.log.i(() => '📡 Using relays: $_relayUrls');
+
     await _initializeNdk();
     await _subscribeToResponses();
+    await _initCoordinatorRegistry();
 
     _isInitialized = true;
     Logger.log.i(() => '✅ NostrService initialized');
   }
 
-  /// Load configuration from SharedPreferences
-  Future<void> _loadConfiguration() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    _relayUrls =
-    // prefs.getStringList(_relayUrlsKey) ??
-    List.from(_defaultRelayUrls);
-    _disabledCoordinators = prefs.getStringList(_blacklistKey) ?? [];
-    _customCoordinators =
-        prefs.getStringList(_customWhitelistKey) ?? [];
-
-    Logger.log.i(() => '📡 Using relays: $_relayUrls');
-    Logger.log.i(
-      () => '🚫 Disabled coordinators: ${_disabledCoordinators.length}',
+  Future<void> _initCoordinatorRegistry() async {
+    _coordinatorRegistry = CoordinatorRegistry(
+      ndk: _ndk!,
+      rpcClient: _rpcClient!,
+      store: CoordinatorPrefsStore(),
+      relays: _relayUrls,
     );
-    Logger.log.i(
-      () =>
-          '✅ Custom whitelisted coordinators: ${_customCoordinators.length}',
-    );
+    await _coordinatorRegistry!.init();
+  }
+
+  CoordinatorRegistry get coordinatorRegistry {
+    final registry = _coordinatorRegistry;
+    if (registry == null) {
+      throw StateError(
+        'CoordinatorRegistry accessed before NostrService.init()',
+      );
+    }
+    return registry;
   }
 
   /// Initialize NDK and connect to relays
@@ -283,7 +204,9 @@ class NostrService {
       // Trigger a health check for this coordinator, unless this WAS the
       // health check (avoid infinite recursion).
       if (request.method != kRpcGetInfo) {
-        checkCoordinatorHealth(coordinatorPubkey).catchError((error) {
+        _coordinatorRegistry?.probeHealth(coordinatorPubkey).catchError((
+          error,
+        ) {
           Logger.log.w(
             () => '⚠️ Error during health check after timeout: $error',
           );
@@ -535,10 +458,10 @@ class NostrService {
     }
 
     final allOffers = <Offer>[];
-    final coordinators = _discoveredCoordinators.values.toList();
+    final coordinators = coordinatorRegistry.enabled;
     if (coordinators.isEmpty) {
       Logger.log.w(
-        () => "No coordinators discovered, cannot get finished offers.",
+        () => "No coordinators enabled, cannot get finished offers.",
       );
       return [];
     }
@@ -547,7 +470,7 @@ class NostrService {
 
     for (final coordinator in coordinators) {
       offerFutures.add(
-        _getMyFinishedOffersFromCoordinator(userPubkey, coordinator.pubkey),
+        _getMyFinishedOffersFromCoordinator(userPubkey, coordinator.pubkeyHex),
       );
     }
 
@@ -678,24 +601,9 @@ class NostrService {
     _handleResponse(response, (result) => null);
   }
 
-  /// Get coordinator info by pubkey (from cache or discovery)
-  CoordinatorInfo? getCoordinatorInfoByPubkey(String coordinatorPubkey) {
-    // Check cache first
-    if (_coordinatorInfoCache.containsKey(coordinatorPubkey)) {
-      return _coordinatorInfoCache[coordinatorPubkey];
-    }
-
-    // Check discovered coordinators
-    final discoveredCoordinator = _discoveredCoordinators[coordinatorPubkey];
-    if (discoveredCoordinator != null) {
-      final coordinatorInfo = discoveredCoordinator.toCoordinatorInfo();
-      // Cache for future use
-      _coordinatorInfoCache[coordinatorPubkey] = coordinatorInfo;
-      return coordinatorInfo;
-    }
-
-    return null;
-  }
+  /// Get coordinator info by pubkey (from registry).
+  CoordinatorInfo? getCoordinatorInfoByPubkey(String coordinatorPubkey) =>
+      _coordinatorRegistry?.infoFor(coordinatorPubkey);
 
   /// GET /stats/successful-offers - This will now query all coordinators
   Future<Map<String, dynamic>> getSuccessfulOffersStats() async {
@@ -703,9 +611,9 @@ class NostrService {
       await init();
     }
 
-    final coordinators = _discoveredCoordinators.values.toList();
+    final coordinators = coordinatorRegistry.enabled;
     if (coordinators.isEmpty) {
-      Logger.log.w(() => "No coordinators discovered, cannot get stats.");
+      Logger.log.w(() => "No coordinators enabled, cannot get stats.");
       return {
         'total_sats': 0,
         'total_offers': 0,
@@ -747,7 +655,7 @@ class NostrService {
           method: kRpcGetSuccessfulOffersStats,
           params: {},
         );
-        final response = await sendRequest(request, coordinator.pubkey);
+        final response = await sendRequest(request, coordinator.pubkeyHex);
         final stats = _handleResponse(response, (result) {
           if (result.containsKey('offers') && result['offers'] is List) {
             final List<dynamic> offersJson = result['offers'];
@@ -821,7 +729,7 @@ class NostrService {
       } catch (e) {
         Logger.log.e(
           () =>
-              "Error getting stats from coordinator ${coordinator.pubkey}: $e",
+              "Error getting stats from coordinator ${coordinator.pubkeyHex}: $e",
         );
       }
     }
@@ -860,34 +768,6 @@ class NostrService {
         },
       },
     };
-  }
-
-  // --- Coordinator Discovery Methods ---
-
-  /// Start discovering coordinators on the network
-  Future<List<DiscoveredCoordinator>> startCoordinatorDiscovery() async {
-    if (!_isInitialized) {
-      await init();
-    }
-
-    final filter = Filter(
-      kinds: [kKindCoordinatorInfo],
-      // since:
-      //     DateTime.now()
-      //         .subtract(const Duration(hours: 24))
-      //         .millisecondsSinceEpoch ~/
-      //     1000,
-    );
-
-    final response = _ndk!.requests.query(
-      name: "coordinator-discovery",
-      filters: [filter],
-      explicitRelays: _relayUrls,
-    );
-    await for (final event in response.stream) {
-      _handleCoordinatorInfoEvent(event);
-    }
-    return discoveredCoordinators;
   }
 
   /// Start listening for offer status updates
@@ -961,310 +841,21 @@ class NostrService {
   Stream<OfferStatusUpdate> get offerStatusStream =>
       _offerStatusController.stream;
 
-  /// Check if a coordinator should be included (not blacklisted, and in default or custom whitelist)
-  bool _shouldIncludeCoordinator(String pubkey) {
-    // Normalize pubkey to hex format for comparison
-    String pubkeyHex = _normalizePubkey(pubkey);
-
-    // Check if blacklisted
-    if (_disabledCoordinators.any((b) => _normalizePubkey(b) == pubkeyHex)) {
-      return false;
-    }
-
-    // // Check if in custom whitelist
-    // if (_customWhitelistedCoordinators.any(
-    //   (w) => _normalizePubkey(w) == pubkeyHex,
-    // )) {
-    //   return true;
-    // }
-
-    return true;
-  }
-
-  /// Normalize pubkey to hex format
-  String _normalizePubkey(String pubkey) {
-    try {
-      if (pubkey.startsWith('npub')) {
-        return Nip19.decode(pubkey);
-      }
-    } catch (_) {
-      // If decoding fails, use as-is
-    }
-    return pubkey;
-  }
-
-  /// Handle incoming coordinator info events
-  void _handleCoordinatorInfoEvent(Nip01Event event) {
-    try {
-      final coordinator = DiscoveredCoordinator.fromNostrEvent(event);
-      final pubkey = coordinator.pubkey;
-
-      if (_shouldIncludeCoordinator(pubkey)) {
-        _discoveredCoordinators[pubkey] = coordinator;
-        _discoveredCoordinators[pubkey]!.responsive = true;
-        // Cache coordinator info immediately when discovered
-        final coordinatorInfo = coordinator.toCoordinatorInfo();
-        _coordinatorInfoCache[pubkey] = coordinatorInfo;
-        Logger.log.i(
-          () => '🎯 Discovered coordinator: ${coordinator.name} ($pubkey)',
-        );
-        // Only check health if not blacklisted
-        if (_shouldIncludeCoordinator(pubkey)) {
-          // Check health via get_info after discovery (don't await)
-          // checkCoordinatorHealth(pubkey);
-        }
-      }
-    } catch (e) {
-      Logger.log.e(() => '❌ Error parsing coordinator info event: $e');
-    }
-  }
-
-  // Add health check
-  Future<void> checkCoordinatorHealth(String coordinatorPubkey) async {
-    // Only check health for coordinators that should be included
-    if (!_shouldIncludeCoordinator(coordinatorPubkey)) {
-      return;
-    }
-
-    try {
-      final request = NostrRequest(method: kRpcGetInfo, params: {});
-      // Use a shorter timeout for health checks
-      await sendRequest(request, coordinatorPubkey);
-      // If no exception, coordinator is responsive
-      _markCoordinatorResponsive(coordinatorPubkey, true);
-    } catch (e) {
-      Logger.log.w(
-        () =>
-            '🚨 Coordinator $coordinatorPubkey did not respond to get_info: $e',
-      );
-      _markCoordinatorResponsive(coordinatorPubkey, false);
-    }
-  }
-
-  void _markCoordinatorResponsive(String pubkey, bool responsive) {
-    if (_discoveredCoordinators.containsKey(pubkey)) {
-      _discoveredCoordinators[pubkey]!.responsive = responsive;
-      // final c = _discoveredCoordinators[pubkey]!;
-      // _discoveredCoordinators[pubkey] = DiscoveredCoordinator(
-      //   pubkey: c.pubkey,
-      //   name: c.name,
-      //   icon: c.icon,
-      //   minAmountSats: c.minAmountSats,
-      //   maxAmountSats: c.maxAmountSats,
-      //   makerFee: c.makerFee,
-      //   takerFee: c.takerFee,
-      //   reservationSeconds: c.reservationSeconds,
-      //   currencies: c.currencies,
-      //   version: c.version,
-      //   lastSeen: c.lastSeen,
-      //   responsive: responsive,
-      // );
-      // Update listeners
-      // _coordinatorsController.add(_discoveredCoordinators.values.toList());
-    }
-  }
-
-  /// Get current list of discovered coordinators
-  /// Includes both discovered coordinators and custom whitelisted ones
-  List<DiscoveredCoordinator> get discoveredCoordinators {
-    final coordinators = <DiscoveredCoordinator>[];
-
-    // Add discovered coordinators (already filtered by _shouldIncludeCoordinator)
-    coordinators.addAll(_discoveredCoordinators.values);
-
-    // Add custom whitelisted coordinators that haven't been discovered yet
-    for (final pubkey in _customCoordinators) {
-      final normalized = _normalizePubkey(pubkey);
-      if (!_discoveredCoordinators.containsKey(normalized)) {
-        // Create a placeholder coordinator for custom whitelisted ones
-        coordinators.add(
-          DiscoveredCoordinator(
-            pubkey: normalized,
-            name: pubkey, // Use pubkey as name if not discovered
-            icon: null,
-            minAmountSats: 0,
-            maxAmountSats: 0,
-            makerFee: 0.0,
-            takerFee: 0.0,
-            reservationSeconds: 0,
-            currencies: [],
-            version: '',
-            lastSeen: DateTime.now(),
-            responsive: null,
-            termsOfUsageNaddr: null,
-          ),
-        );
-      }
-    }
-
-    // Sort: default whitelisted first (by responsive status, then name), then custom whitelisted at the end
-    coordinators.sort((a, b) {
-      final aNormalized = _normalizePubkey(a.pubkey);
-      final bNormalized = _normalizePubkey(b.pubkey);
-
-      final aIsCustomOnly =
-          _customCoordinators.any(
-            (w) => _normalizePubkey(w) == aNormalized,
-          );
-      final bIsCustomOnly =
-          _customCoordinators.any(
-            (w) => _normalizePubkey(w) == bNormalized,
-          );
-
-      // Custom-only coordinators come last (after default whitelisted)
-      if (aIsCustomOnly != bIsCustomOnly) {
-        return aIsCustomOnly
-            ? 1
-            : -1; // custom-only goes to the end (positive value)
-      }
-
-      // Within each group (default or custom), sort by responsive status (true first)
-      final aResponsive = a.responsive ?? false;
-      final bResponsive = b.responsive ?? false;
-
-      if (aResponsive != bResponsive) {
-        return aResponsive ? -1 : 1; // responsive coordinators come first
-      }
-
-      // If responsive status is the same, sort by name alphabetically
-      return a.name.compareTo(b.name);
-    });
-
-    return coordinators;
-  }
-
-  /// Update relay configuration
+  /// Update relay configuration. Reinitialises NDK + registry.
   Future<void> updateRelayConfig(List<String> relayUrls) async {
-    final prefs = await SharedPreferences.getInstance();
-    _relayUrls = relayUrls;
-    await prefs.setStringList(_relayUrlsKey, relayUrls);
-
-    // Reinitialize NDK with new relays if already initialized
+    _relayUrls = List.from(relayUrls);
     if (_isInitialized) {
       await dispose();
       await init();
-      await startCoordinatorDiscovery();
-    }
-  }
-
-  // --- Coordinator Management Methods ---
-
-  /// Check if a coordinator is blacklisted
-  bool isBlacklisted(String pubkey) {
-    final normalized = _normalizePubkey(pubkey);
-    return _disabledCoordinators.any(
-      (b) => _normalizePubkey(b) == normalized,
-    );
-  }
-
-  /// Get the list of blacklisted coordinators
-  List<String> get blacklistedCoordinators =>
-      List.from(_disabledCoordinators);
-
-  /// Get the list of custom whitelisted coordinators
-  List<String> get customWhitelistedCoordinators =>
-      List.from(_customCoordinators);
-
-  /// Toggle blacklist status for a coordinator
-  Future<void> toggleBlacklist(String pubkey, bool blacklist) async {
-    final normalized = _normalizePubkey(pubkey);
-
-    if (blacklist) {
-      // Remove any existing entry (in case of format mismatch) and add normalized
-      _disabledCoordinators.removeWhere(
-        (b) => _normalizePubkey(b) == normalized,
-      );
-      _disabledCoordinators.add(normalized);
-    } else {
-      _disabledCoordinators.removeWhere(
-        (b) => _normalizePubkey(b) == normalized,
-      );
-    }
-
-    // Save to preferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_blacklistKey, _disabledCoordinators);
-
-    // Don't remove from discovered coordinators - keep them visible so users can unblacklist
-    // The _shouldIncludeCoordinator check will prevent them from being used in operations
-
-    Logger.log.i(
-      () =>
-          '${blacklist ? "🚫" : "✅"} Coordinator $normalized ${blacklist ? "blacklisted" : "unblacklisted"}',
-    );
-  }
-
-  /// Add a coordinator to custom whitelist
-  Future<void> addCustomWhitelist(String npub) async {
-    final trimmed = npub.trim();
-    if (trimmed.isEmpty) {
-      throw ArgumentError('Npub cannot be empty');
-    }
-
-    // Validate npub format
-    String normalized;
-    try {
-      if (trimmed.startsWith('npub')) {
-        normalized = Nip19.decode(trimmed);
-      } else {
-        // Assume it's already hex
-        normalized = trimmed;
-      }
-    } catch (e) {
-      throw ArgumentError('Invalid npub format: $e');
-    }
-
-    // Check if already in custom whitelist
-    if (_customCoordinators.any(
-      (w) => _normalizePubkey(w) == normalized,
-    )) {
-      throw ArgumentError('Coordinator already in custom whitelist');
-    }
-
-    _customCoordinators.add(normalized);
-
-    // Save to preferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-      _customWhitelistKey,
-      _customCoordinators,
-    );
-
-    Logger.log.i(() => '✅ Added coordinator $normalized to custom whitelist');
-
-    // Try to discover this coordinator
-    // Note: This won't immediately discover it, but it will be included if discovered later
-  }
-
-  /// Remove a coordinator from custom whitelist
-  Future<void> removeCustomWhitelist(String pubkey) async {
-    final normalized = _normalizePubkey(pubkey);
-
-    final beforeLength = _customCoordinators.length;
-    _customCoordinators.removeWhere(
-      (w) => _normalizePubkey(w) == normalized,
-    );
-    final afterLength = _customCoordinators.length;
-
-    if (beforeLength > afterLength) {
-      // Save to preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(
-        _customWhitelistKey,
-        _customCoordinators,
-      );
-
-      _discoveredCoordinators.remove(normalized);
-      _coordinatorInfoCache.remove(normalized);
-
-      Logger.log.i(
-        () => '🗑️ Removed coordinator $normalized from custom whitelist',
-      );
+      // Kick a fresh discovery in the background.
+      unawaited(_coordinatorRegistry?.discover() ?? Future<void>.value());
     }
   }
 
   /// Dispose resources
   Future<void> dispose() async {
+    await _coordinatorRegistry?.dispose();
+    _coordinatorRegistry = null;
     if (_rpcClient != null) {
       await _rpcClient!.stop();
       _rpcClient = null;

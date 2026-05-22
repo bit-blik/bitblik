@@ -7,10 +7,8 @@ import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
-import 'package:bitblik_core/core.dart'; // OfferStatus is in here
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
-import '../services/nostr_service.dart'; // Import DiscoveredCoordinator
 import '../services/key_service.dart'; // Import KeyService
 import '../services/offer_db_service.dart';
 
@@ -95,301 +93,72 @@ final initializedApiServiceProvider = FutureProvider<ApiServiceNostr>((
   return apiService;
 });
 
-final discoveredCoordinatorsProvider = StateNotifierProvider<
-  DiscoveredCoordinatorsNotifier,
-  AsyncValue<List<DiscoveredCoordinator>>
->((ref) => DiscoveredCoordinatorsNotifier(ref));
+/// Provider exposing the live [CoordinatorRegistry]. Kicks one-shot
+/// discovery + stale-only health probes in the background on first
+/// build; never blocks subscribers.
+final coordinatorRegistryProvider =
+    FutureProvider<CoordinatorRegistry>((ref) async {
+  final apiService = await ref.watch(initializedApiServiceProvider.future);
+  final registry = apiService.coordinatorRegistry;
 
-class DiscoveredCoordinatorsNotifier
-    extends StateNotifier<AsyncValue<List<DiscoveredCoordinator>>> {
-  final Ref _ref;
-  Timer? _refreshTimer;
-
-  DiscoveredCoordinatorsNotifier(this._ref)
-    : super(const AsyncValue.loading()) {
-    _startDiscovery();
-  }
-
-  void _startPeriodicRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 600), (timer) async {
-      try {
-        // Use initialized API service for periodic refresh
-        final apiService = await _ref.read(
-          initializedApiServiceProvider.future,
-        );
-        // await apiService.startCoordinatorDiscovery();
-        await _loadCoordinators();
-      } catch (e) {
-        Logger.log.e(() => 'Error during periodic coordinator refresh: $e');
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _loadCoordinators({bool skipHealthChecks = false}) async {
+  // Kick discovery + probes in background. Hydrated cache means
+  // subscribers already see the previously-known list.
+  unawaited(() async {
     try {
-      // Use initialized API service to ensure KeyService is ready
-      final apiService = await _ref.read(initializedApiServiceProvider.future);
-      final coordinators = apiService.discoveredCoordinators;
-
-      Logger.log.d(
-        () =>
-            '🔍 Provider: Loading ${coordinators.length} coordinators for health check',
-      );
-
-      // Don't set the state immediately - wait for health checks to complete
-
-      if (!skipHealthChecks) {
-        // Perform health checks for all discovered coordinators
-        final healthCheckFutures = <Future<void>>[];
-        for (final coordinator in coordinators) {
-          Logger.log.d(
-            () => '🔍 Provider: Starting health check for ${coordinator.name}',
-          );
-          healthCheckFutures.add(
-            apiService.checkCoordinatorHealth(coordinator.pubkey),
-          );
-        }
-
-        // Wait for all health checks to complete (with timeout)
-        try {
-          await Future.wait(
-            healthCheckFutures,
-          ).timeout(const Duration(seconds: 20));
-          Logger.log.d(() => '🔍 Provider: All health checks completed');
-        } catch (e) {
-          Logger.log.w(() => 'Some health checks timed out or failed: $e');
-          // Continue anyway - some coordinators may have been checked successfully
-        }
-      }
-
-      // Now get the updated list with health check results and set the state
-      final updatedCoordinators = apiService.discoveredCoordinators;
-      Logger.log.d(
-        () =>
-            '🔍 Provider: Final coordinator list (${updatedCoordinators.length}):',
-      );
-      for (final coordinator in updatedCoordinators) {
-        Logger.log.d(
-          () => '  - ${coordinator.name}: responsive=${coordinator.responsive}',
-        );
-      }
-
-      state = AsyncValue.data(updatedCoordinators);
-    } catch (e, stack) {
-      Logger.log.e(() => 'Error in _loadCoordinators: $e');
-      state = AsyncValue.error(e, stack);
-    }
-  }
-
-  /// Refresh the coordinator list without going through full discovery
-  /// This preserves the current state and just updates the list
-  Future<void> refreshList({bool runHealthChecks = false}) async {
-    // Only refresh if we have data, otherwise let the normal discovery process handle it
-    if (state.hasValue) {
-      await _loadCoordinators(skipHealthChecks: !runHealthChecks);
-    }
-  }
-
-  /// Trigger a full coordinator discovery refresh
-  /// This will restart the discovery process and reload the coordinator list
-  Future<void> refreshDiscovery() async {
-    try {
-      Logger.log.i(
-        () =>
-            '🔍 Provider: Manual refresh triggered, starting coordinator discovery...',
-      );
-
-      // Wait for API service to be fully initialized
-      final apiService = await _ref.read(initializedApiServiceProvider.future);
-
-      // Trigger discovery
-      await apiService.startCoordinatorDiscovery();
-
-      // Reload coordinators with health checks
-      await _loadCoordinators(skipHealthChecks: false);
-    } catch (e, stack) {
-      Logger.log.e(() => 'Error in refreshDiscovery: $e');
-      state = AsyncValue.error(e, stack);
-    }
-  }
-
-  /// Trigger health check for a specific coordinator and update the list when done
-  Future<void> checkCoordinatorHealthAndRefresh(
-    String coordinatorPubkey,
-  ) async {
-    if (!state.hasValue) return;
-
-    try {
-      final apiService = await _ref.read(initializedApiServiceProvider.future);
-      // Run health check in background
-      apiService
-          .checkCoordinatorHealth(coordinatorPubkey)
-          .then((_) {
-            // Update the list after health check completes
-            refreshList(runHealthChecks: false);
-          })
-          .catchError((error) {
-            Logger.log.w(
-              () =>
-                  '⚠️ Error during health check for $coordinatorPubkey: $error',
-            );
-            // Still refresh the list to update status
-            refreshList(runHealthChecks: false);
-          });
+      await registry.discover();
+      await registry.probeAllEnabled();
+      // Best-effort: refresh network usage counts to seed scoring.
+      unawaited(registry.fetchNetworkFinishedCounts());
     } catch (e) {
-      Logger.log.e(() => 'Error checking coordinator health: $e');
+      Logger.log.e(() => 'Initial coordinator discovery failed: $e');
     }
-  }
+  }());
 
-  /// Trigger health checks for multiple coordinators in background and update when done
-  Future<void> checkCoordinatorsHealthAndRefresh(
-    List<String> coordinatorPubkeys,
-  ) async {
-    if (!state.hasValue || coordinatorPubkeys.isEmpty) return;
-
+  // Periodic refresh — same 10min cadence as before.
+  final timer = Timer.periodic(const Duration(seconds: 600), (_) async {
     try {
-      final apiService = await _ref.read(initializedApiServiceProvider.future);
-      // Run health checks in parallel
-      final futures =
-          coordinatorPubkeys
-              .map(
-                (pubkey) => apiService
-                    .checkCoordinatorHealth(pubkey)
-                    .catchError((error) {
-                      Logger.log.w(
-                        () =>
-                            '⚠️ Error during health check for $pubkey: $error',
-                      );
-                    }),
-              )
-              .toList();
-
-      // Wait for all health checks to complete, then refresh
-      Future.wait(futures)
-          .then((_) {
-            // Update the list after all health checks complete
-            refreshList(runHealthChecks: false);
-          })
-          .catchError((error) {
-            Logger.log.e(() => 'Error during health checks: $error');
-            // Still refresh the list
-            refreshList(runHealthChecks: false);
-          });
+      await registry.discover();
+      await registry.probeAllEnabled();
     } catch (e) {
-      Logger.log.e(() => 'Error checking coordinators health: $e');
+      Logger.log.e(() => 'Periodic coordinator refresh failed: $e');
     }
-  }
+  });
+  ref.onDispose(timer.cancel);
 
-  Future<void> _startDiscovery() async {
-    try {
-      state = const AsyncValue.loading();
-      Logger.log.d(
-        () =>
-            '🔍 Provider: Starting coordinator discovery, waiting for API service initialization...',
-      );
+  return registry;
+});
 
-      // Wait for API service to be fully initialized (this ensures KeyService is ready)
-      final apiService = await _ref.read(initializedApiServiceProvider.future);
-      Logger.log.d(
-        () =>
-            '🔍 Provider: API service initialized, starting coordinator discovery...',
-      );
+/// Stream of coordinator records (enabled + disabled) sorted by reliability.
+/// Settings UI watches this directly.
+final discoveredCoordinatorsProvider =
+    StreamProvider<List<CoordinatorRecord>>((ref) async* {
+  final registry = await ref.watch(coordinatorRegistryProvider.future);
+  yield registry.all;
+  yield* registry.changes;
+});
 
-      await apiService.startCoordinatorDiscovery();
+/// Enabled-only view for the maker create-offer flow.
+final enabledCoordinatorsProvider =
+    Provider<AsyncValue<List<CoordinatorRecord>>>((ref) {
+  final async = ref.watch(discoveredCoordinatorsProvider);
+  return async.whenData(
+    (records) => records.where((r) => r.enabled).toList(growable: false),
+  );
+});
 
-      // After starting discovery, start periodic refresh and load coordinators
-      _startPeriodicRefresh();
-      await _loadCoordinators(skipHealthChecks: true);
-    } catch (e, stack) {
-      Logger.log.e(() => 'Error in _startDiscovery: $e');
-      state = AsyncValue.error(e, stack);
-    }
-  }
-}
-
-/// Enhanced provider for coordinator info by pubkey that ensures discovery is triggered
-/// and coordinator info is available as fast as possible.
-///
-/// This provider:
-/// 1. First checks the cache for immediate access to coordinator info
-/// 2. Ensures coordinator discovery is running by watching discoveredCoordinatorsProvider
-/// 3. Handles loading, error, and success states properly
-/// 4. Provides fallback mechanisms if coordinator is not found after discovery
-final coordinatorInfoByPubkeyProvider = AsyncNotifierProvider.family<
-  CoordinatorInfoNotifier,
-  CoordinatorInfo?,
-  String
->(CoordinatorInfoNotifier.new);
-
-/// Notifier that manages coordinator info fetching with proper discovery integration
-class CoordinatorInfoNotifier
-    extends FamilyAsyncNotifier<CoordinatorInfo?, String> {
-  @override
-  Future<CoordinatorInfo?> build(String pubkey) async {
-    // Wait for API service to be fully initialized (ensures KeyService is ready)
-    final apiService = await ref.watch(initializedApiServiceProvider.future);
-
-    // First, try to get coordinator info from cache for immediate access
-    var coordinatorInfo = apiService.getCoordinatorInfoByPubkey(pubkey);
-    if (coordinatorInfo != null) {
-      return coordinatorInfo;
-    }
-
-    // If not in cache, ensure discovery is running by watching the discoveredCoordinatorsProvider
-    // This triggers coordinator discovery if not already running
-    final coordinatorsAsync = ref.watch(discoveredCoordinatorsProvider);
-
-    await coordinatorsAsync.when(
-      data: (coordinators) async {
-        // Discovery has completed, check again for the coordinator
-        coordinatorInfo = apiService.getCoordinatorInfoByPubkey(pubkey);
-        if (coordinatorInfo == null) {
-          // If still not found, try triggering discovery again and wait briefly
-          try {
-            await apiService.startCoordinatorDiscovery();
-            await Future.delayed(const Duration(milliseconds: 500));
-            coordinatorInfo = apiService.getCoordinatorInfoByPubkey(pubkey);
-          } catch (e) {
-            Logger.log.e(
-              () => 'Error during coordinator discovery for $pubkey: $e',
-            );
-          }
-        }
-      },
-      loading: () async {
-        // Discovery is still in progress, wait a moment and try again
-        await Future.delayed(const Duration(milliseconds: 200));
-        coordinatorInfo = apiService.getCoordinatorInfoByPubkey(pubkey);
-      },
-      error: (error, stack) async {
-        Logger.log.e(() => 'Error in coordinator discovery: $error');
-        // Still try to get from cache even if discovery failed
-        coordinatorInfo = apiService.getCoordinatorInfoByPubkey(pubkey);
-      },
-    );
-
-    return coordinatorInfo;
-  }
-
-  /// Force refresh coordinator info for this pubkey
-  Future<void> refresh() async {
-    try {
-      final apiService = await ref.read(initializedApiServiceProvider.future);
-      await apiService.startCoordinatorDiscovery();
-      await Future.delayed(const Duration(milliseconds: 500));
-      final coordinatorInfo = apiService.getCoordinatorInfoByPubkey(arg);
-      state = AsyncValue.data(coordinatorInfo);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
-}
+/// Coordinator info lookup by pubkey — reads through the registry which
+/// hydrates from cache on startup, so first call returns instantly for
+/// known coordinators.
+final coordinatorInfoByPubkeyProvider =
+    FutureProvider.family<CoordinatorInfo?, String>((ref, pubkey) async {
+  final registry = await ref.watch(coordinatorRegistryProvider.future);
+  final cached = registry.infoFor(pubkey);
+  if (cached != null) return cached;
+  // Subscribing to changes will surface the info as soon as discovery
+  // populates it. We poll the snapshot after the first change.
+  await ref.watch(discoveredCoordinatorsProvider.future);
+  return registry.infoFor(pubkey);
+});
 
 /// Helper provider to get reservation duration for a coordinator.
 /// Returns Duration based on coordinator's reservationSeconds, or null if coordinator info unavailable.
@@ -523,45 +292,49 @@ final finishedOffersProvider = FutureProvider<List<Offer>>((ref) async {
   final publicKey = await ref.watch(publicKeyProvider.future);
   if (publicKey == null) return [];
 
-  // Wait for discovered coordinators to be available
-  final coordinatorsAsync = ref.watch(discoveredCoordinatorsProvider);
-  return await coordinatorsAsync.when(
-    data: (coordinators) async {
-      // Only proceed if we have discovered coordinators
-      if (coordinators.isEmpty) {
-        Logger.log.d(
-          () =>
-              'No coordinators discovered yet, returning empty finished offers list',
-        );
-        return <Offer>[];
-      }
+  // Snapshot the registry once. Do NOT subscribe to the registry's change
+  // stream here: this provider also writes to the registry below
+  // (updateLocalFinishedCounts), and a subscription would form a feedback
+  // loop that re-fans out one RPC per coordinator on every tick.
+  final registry = await ref.watch(coordinatorRegistryProvider.future);
+  final coordinators = registry.enabled;
+  if (coordinators.isEmpty) {
+    Logger.log.d(
+      () => 'No coordinators enabled yet, returning empty finished offers list',
+    );
+    return <Offer>[];
+  }
 
-      Logger.log.d(
-        () =>
-            'Found ${coordinators.length} coordinators, loading finished offers',
-      );
-      // Use initialized API service to ensure KeyService is ready
-      final apiService = await ref.read(initializedApiServiceProvider.future);
-      // final activeOfferNotifier = ref.read(activeOfferProvider.notifier);
-      final offersData = await apiService.getMyFinishedOffers(publicKey);
-      final now = DateTime.now().toUtc();
-
-      return offersData.where((offer) {
-        if (offer.status == 'takerPaid') {
-          final paidAt = offer.takerPaidAt;
-          return paidAt != null && now.difference(paidAt.toUtc()).inHours < 24;
-        }
-        return false;
-      }).toList();
-    },
-    loading: () => <Offer>[], // Return empty list while loading coordinators
-    error: (error, stack) {
-      Logger.log.e(
-        () => 'Error loading coordinators for finished offers: $error',
-      );
-      return <Offer>[]; // Return empty list on error
-    },
+  Logger.log.d(
+    () => 'Loading finished offers from ${coordinators.length} coordinators',
   );
+  final apiService = await ref.read(initializedApiServiceProvider.future);
+  final offersData = await apiService.getMyFinishedOffers(publicKey);
+
+  // Feed personal-finished counts into the registry so they influence
+  // coordinator sort order. updateLocalFinishedCounts is now a no-op
+  // when values are unchanged, so this is safe to call on every refresh.
+  final counts = <String, int>{};
+  for (final offer in offersData) {
+    if (offer.status == OfferStatus.takerPaid ||
+        offer.status == OfferStatus.settled ||
+        offer.status == OfferStatus.makerConfirmed) {
+      counts[offer.coordinatorPubkey] =
+          (counts[offer.coordinatorPubkey] ?? 0) + 1;
+    }
+  }
+  if (counts.isNotEmpty) {
+    registry.updateLocalFinishedCounts(counts);
+  }
+
+  final now = DateTime.now().toUtc();
+  return offersData.where((offer) {
+    if (offer.status == OfferStatus.takerPaid) {
+      final paidAt = offer.takerPaidAt;
+      return paidAt != null && now.difference(paidAt.toUtc()).inHours < 24;
+    }
+    return false;
+  }).toList();
 });
 
 /// This provider manages the lifecycle of the offer status subscription.
@@ -647,9 +420,9 @@ final offerDetailsProvider = FutureProvider.family<Offer?, String>((
 ) async {
   // First, ensure that the API service is fully initialized.
   final apiService = await ref.watch(initializedApiServiceProvider.future);
-  // Trigger coordinator discovery
-  ref.watch(discoveredCoordinatorsProvider);
-  // Then, fetch the specific offer.
+  // Ensure registry is built (kicks discovery in background); do not
+  // subscribe to its stream — we only need to read the offer once.
+  await ref.watch(coordinatorRegistryProvider.future);
   return apiService.getOffer(offerId);
 });
 
@@ -660,31 +433,15 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
   // Wait for API service to be fully initialized
   final apiService = await ref.watch(initializedApiServiceProvider.future);
 
-  // Wait for coordinators to be discovered before fetching stats
-  final coordinatorsAsync = ref.watch(discoveredCoordinatorsProvider);
-  await coordinatorsAsync.when(
-    data: (coordinators) async {
-      // Coordinators are loaded, we can proceed
-      Logger.log.d(
-        () =>
-            '📊 Stats Provider: Found ${coordinators.length} coordinators for stats',
-      );
-    },
-    loading: () async {
-      // Wait a bit for coordinators to load
-      Logger.log.d(
-        () => '📊 Stats Provider: Waiting for coordinators to be discovered...',
-      );
-      await Future.delayed(const Duration(seconds: 2));
-    },
-    error: (error, stack) async {
-      Logger.log.e(
-        () => '📊 Stats Provider: Error loading coordinators: $error',
-      );
-    },
+  // Snapshot the registry once — do not subscribe to its change stream
+  // here. This provider issues N RPCs per refresh; reacting to every
+  // registry tick would amplify traffic.
+  final registry = await ref.watch(coordinatorRegistryProvider.future);
+  Logger.log.d(
+    () =>
+        '📊 Stats Provider: ${registry.enabled.length} coordinators for stats',
   );
 
-  // Now fetch stats from the initialized service
   return apiService.getSuccessfulOffersStats();
 });
 

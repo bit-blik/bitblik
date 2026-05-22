@@ -257,8 +257,13 @@ coordinator:
     coordinatorUnblacklisted: "Coordinator unblacklisted"
     coordinatorAdded: "Coordinator added to custom whitelist"
     coordinatorRemoved: "Coordinator removed from custom whitelist"
+    coordinatorAddInfoUnavailable: "No coordinator info found on relays. Coordinator not added."
     pleaseEnterNpub: "Please enter an npub"
     error: "Error"
+    metricYourOffers: "Your offers"
+    metricYourOffersTooltip: "Number of offers you have successfully completed with this coordinator."
+    metricNetworkOffers: "Offers (30d)"
+    metricNetworkOffersTooltip: "Successful offers settled by this coordinator across all users in the last 30 days."
 
 # =============================================================================
 # MAKER FLOW
@@ -289,6 +294,7 @@ maker:
     errors:
       initiating: "Error initiating offer: ${details}"
       publicKeyNotLoaded: "Error: Public key not yet loaded."
+      noCoordinatorMatchesAmount: "No coordinator supports this amount. Try a different value."
   
   payInvoice:
     title: "Pay this Hold invoice:"

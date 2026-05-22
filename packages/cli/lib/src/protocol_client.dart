@@ -5,7 +5,7 @@ import 'package:bitblik_core/core.dart';
 import 'package:ndk/ndk.dart';
 import 'package:ndk/domain_layer/entities/cashu/cashu_user_seedphrase.dart';
 
-import 'models.dart';
+import 'coordinator_file_store.dart';
 import 'secrets_store.dart';
 
 
@@ -18,16 +18,20 @@ class BitblikProtocolClient {
   final List<String> relays;
   final Duration timeout;
   final BitblikSecrets secrets;
+  final CoordinatorStore coordinatorStore;
 
   late final Ndk _ndk;
   late final Bip340EventSigner _signer;
   late final BitblikRpcClient _rpc;
+  late final CoordinatorRegistry _registry;
 
   BitblikProtocolClient({
     required this.secrets,
     List<String>? relays,
     this.timeout = const Duration(seconds: 5),
-  }) : relays = relays == null || relays.isEmpty ? defaultRelays : relays;
+    CoordinatorStore? coordinatorStore,
+  })  : relays = relays == null || relays.isEmpty ? defaultRelays : relays,
+        coordinatorStore = coordinatorStore ?? CoordinatorFileStore();
 
   Future<void> init() async {
     _ndk = Ndk(
@@ -55,36 +59,28 @@ class BitblikProtocolClient {
       subscriptionName: 'cli-client-responses',
     );
     await _rpc.start();
+
+    _registry = CoordinatorRegistry(
+      ndk: _ndk,
+      rpcClient: _rpc,
+      store: coordinatorStore,
+      relays: relays,
+    );
+    await _registry.init();
   }
 
-  Future<List<CoordinatorListItem>> discoverCoordinators() async {
-    final filter = Filter(kinds: [kKindCoordinatorInfo]);
-    final response = _ndk.requests.query(
-      name: 'cli-coordinator-discovery',
-      filter: filter,
-      explicitRelays: relays,
-    );
+  CoordinatorRegistry get coordinatorRegistry => _registry;
 
-    final byPubkey = <String, CoordinatorListItem>{};
-
-    await for (final event in response.stream) {
-      final record = _fromEvent(event);
-      final current = byPubkey[record.pubkeyHex];
-      if (current == null || current.lastSeen.isBefore(record.lastSeen)) {
-        byPubkey[record.pubkeyHex] = record;
-      }
-    }
-
-    final values = byPubkey.values.toList();
-    values.sort((a, b) => a.info.name.compareTo(b.info.name));
-    return values;
+  Future<List<CoordinatorRecord>> discoverCoordinators() async {
+    await _registry.discover();
+    return _registry.all;
   }
 
   Future<void> checkCoordinatorHealth(
-      List<CoordinatorListItem> coordinators) async {
-    await Future.wait(coordinators.map((c) async {
-      c.responsive = await _probeCoordinator(c.pubkeyHex);
-    }));
+      List<CoordinatorRecord> coordinators) async {
+    await Future.wait(
+      coordinators.map((c) => _registry.probeHealth(c.pubkeyHex)),
+    );
   }
 
   /// Send any [NostrRequest] to [coordinatorPubkey] and await its response.
@@ -186,28 +182,8 @@ class BitblikProtocolClient {
   }
 
   Future<void> dispose() async {
+    await _registry.dispose();
     await _rpc.stop();
     await _ndk.destroy();
-  }
-
-  CoordinatorListItem _fromEvent(Nip01Event event) {
-    return CoordinatorListItem(
-      pubkeyHex: event.pubKey,
-      info: CoordinatorInfo.fromNostrEvent(event),
-      lastSeen: DateTime.fromMillisecondsSinceEpoch(event.createdAt * 1000),
-      responsive: null,
-    );
-  }
-
-  Future<bool> _probeCoordinator(String coordinatorPubkey) async {
-    try {
-      await _rpc.send(
-        const NostrRequest(method: kRpcGetInfo, params: {}),
-        coordinatorPubkey,
-      );
-      return true;
-    } catch (_) {
-      return false;
-    }
   }
 }
