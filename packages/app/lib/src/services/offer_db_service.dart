@@ -1,16 +1,62 @@
 import 'dart:async';
+import 'package:bitblik_core/core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:ndk/shared/logger/logger.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:bitblik_core/core.dart';
+import 'package:sqflite/sqflite.dart';
 
+/// Local SQLite store for offers.
+///
+/// History-preserving: rows are never deleted on cancel. Status updates
+/// arriving later (e.g. coordinator publishes `funded` after a local
+/// cancel race) overwrite the existing row, so a coordinator-driven
+/// revival is possible.
 class OfferDbService {
   static final OfferDbService _instance = OfferDbService._internal();
   factory OfferDbService() => _instance;
   OfferDbService._internal();
 
   static Database? _db;
+
+  static const String _table = 'offers';
+
+  /// Statuses that the maker UI no longer needs to drive. Used to find
+  /// the current "active" offer.
+  static const Set<OfferStatus> terminalStatuses = {
+    OfferStatus.cancelled,
+    OfferStatus.expired,
+    OfferStatus.expiredBlik,
+    OfferStatus.expiredSentBlik,
+    OfferStatus.takerPaid,
+  };
+
+  static const String _createTableSql = '''
+    CREATE TABLE $_table (
+      id TEXT PRIMARY KEY,
+      amount_sats INTEGER,
+      maker_fees INTEGER,
+      fiat_amount REAL,
+      fiat_currency TEXT,
+      status TEXT,
+      created_at TEXT,
+      maker_pubkey TEXT,
+      coordinator_pubkey TEXT,
+      taker_pubkey TEXT,
+      reserved_at TEXT,
+      blik_received_at TEXT,
+      blik_code TEXT,
+      hold_invoice_payment_hash TEXT,
+      hold_invoice TEXT,
+      taker_lightning_address TEXT,
+      taker_invoice TEXT,
+      hold_invoice_preimage TEXT,
+      updated_at TEXT,
+      maker_confirmed_at TEXT,
+      settled_at TEXT,
+      taker_paid_at TEXT,
+      taker_fees INTEGER
+    )
+  ''';
 
   Future<Database> get database async {
     if (_db != null) return _db!;
@@ -23,117 +69,155 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE active_offer (
-            id TEXT PRIMARY KEY,
-            amount_sats INTEGER,
-            maker_fees INTEGER,
-            fiat_amount REAL,
-            fiat_currency TEXT,
-            status TEXT,
-            created_at TEXT,
-            maker_pubkey TEXT,
-            coordinator_pubkey TEXT,
-            taker_pubkey TEXT,
-            reserved_at TEXT,
-            blik_received_at TEXT,
-            blik_code TEXT,
-            hold_invoice_payment_hash TEXT,
-            hold_invoice TEXT,
-            taker_lightning_address TEXT,
-            taker_invoice TEXT,
-            hold_invoice_preimage TEXT,
-            updated_at TEXT,
-            maker_confirmed_at TEXT,
-            settled_at TEXT,
-            taker_paid_at TEXT,
-            taker_fees INTEGER
-          )
-        ''');
+        await db.execute(_createTableSql);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 4) {
-          // Drop the old table and recreate with new schema
+        if (oldVersion < 5) {
+          // Move any in-flight active_offer row(s) into the new offers
+          // history table. If the legacy table is missing or empty,
+          // proceed with an empty offers table.
+          await db.execute(_createTableSql);
+          try {
+            await db.execute(
+              'INSERT OR REPLACE INTO $_table SELECT * FROM active_offer',
+            );
+          } catch (e) {
+            Logger.log.w(
+              () => '[OfferDbService] No legacy active_offer rows to migrate: $e',
+            );
+          }
           await db.execute('DROP TABLE IF EXISTS active_offer');
-          await db.execute('''
-            CREATE TABLE active_offer (
-              id TEXT PRIMARY KEY,
-              amount_sats INTEGER,
-              maker_fees INTEGER,
-              fiat_amount REAL,
-              fiat_currency TEXT,
-              status TEXT,
-              created_at TEXT,
-              maker_pubkey TEXT,
-              coordinator_pubkey TEXT,
-              taker_pubkey TEXT,
-              reserved_at TEXT,
-              blik_received_at TEXT,
-              blik_code TEXT,
-              hold_invoice_payment_hash TEXT,
-              hold_invoice TEXT,
-              taker_lightning_address TEXT,
-              taker_invoice TEXT,
-              hold_invoice_preimage TEXT,
-              updated_at TEXT,
-              maker_confirmed_at TEXT,
-              settled_at TEXT,
-              taker_paid_at TEXT,
-              taker_fees INTEGER
-            )
-          ''');
         }
       },
     );
   }
 
-  Future<void> upsertActiveOffer(Offer offer) async {
+  Future<void> upsertOffer(Offer offer) async {
     try {
       final db = await database;
       final jsonData = offer.toJson();
       Logger.log.d(
-        () => '[OfferDbService] Upserting offer with data: $jsonData',
+        () => '[OfferDbService] Upserting offer ${offer.id} status=${offer.status.name}',
       );
-
-      // // Debug: Check table schema
-      // final tableInfo = await db.rawQuery('PRAGMA table_info(active_offer)');
-      // Logger.log.d(() => '[OfferDbService] Table schema: $tableInfo');
-      await deleteActiveOffer();
       await db.insert(
-        'active_offer',
+        _table,
         jsonData,
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      Logger.log.d(() => '[OfferDbService] Successfully upserted offer');
     } catch (e, stackTrace) {
-      Logger.log.d(() => '[OfferDbService] Error upserting offer: $e');
+      Logger.log.e(() => '[OfferDbService] Error upserting offer: $e');
       Logger.log.d(() => '[OfferDbService] Stack trace: $stackTrace');
       rethrow;
     }
   }
 
+  /// Most-recent offer whose status is not in [terminalStatuses].
   Future<Offer?> getActiveOffer() async {
     final db = await database;
-    final maps = await db.query(
-      'active_offer',
-      limit: 1,
-      orderBy: 'created_at DESC',
+    final terminalNames =
+        terminalStatuses.map((s) => "'${s.name}'").join(',');
+    final maps = await db.rawQuery(
+      'SELECT * FROM $_table '
+      'WHERE status NOT IN ($terminalNames) '
+      'ORDER BY created_at DESC LIMIT 1',
     );
-    if (maps.isNotEmpty) {
-      try {
-        return Offer.fromJson(maps.first);
-      } catch (e) {
-        Logger.log.e(() => 'could not parse offer from json: $e');
-      }
+    if (maps.isEmpty) return null;
+    try {
+      return Offer.fromJson(maps.first);
+    } catch (e) {
+      Logger.log.e(() => 'could not parse offer from json: $e');
+      return null;
     }
-    return null;
   }
 
-  Future<void> deleteActiveOffer() async {
+  Future<Offer?> getOfferById(String id) async {
     final db = await database;
-    await db.delete('active_offer');
+    final maps = await db.query(_table, where: 'id = ?', whereArgs: [id]);
+    if (maps.isEmpty) return null;
+    try {
+      return Offer.fromJson(maps.first);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Offer?> getOfferByPaymentHash(String paymentHash) async {
+    final db = await database;
+    final maps = await db.query(
+      _table,
+      where: 'hold_invoice_payment_hash = ?',
+      whereArgs: [paymentHash],
+    );
+    if (maps.isEmpty) return null;
+    try {
+      return Offer.fromJson(maps.first);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<List<Offer>> listOffers({int? limit}) async {
+    final db = await database;
+    final maps = await db.query(
+      _table,
+      orderBy: 'created_at DESC',
+      limit: limit,
+    );
+    return maps
+        .map((m) {
+          try {
+            return Offer.fromJson(m);
+          } catch (_) {
+            return null;
+          }
+        })
+        .whereType<Offer>()
+        .toList();
+  }
+
+  /// Locally-cancelled offers created within [window]. Used by the boot-time
+  /// reconciliation sweep to recover offers a coordinator funded after the
+  /// user cancelled locally.
+  Future<List<Offer>> listRecentCancelled(Duration window) async {
+    final db = await database;
+    final maps = await db.query(
+      _table,
+      where: 'status = ?',
+      whereArgs: [OfferStatus.cancelled.name],
+    );
+    final cutoff = DateTime.now().toUtc().subtract(window);
+    final parsed = maps
+        .map((m) {
+          try {
+            return Offer.fromJson(m);
+          } catch (_) {
+            return null;
+          }
+        })
+        .whereType<Offer>()
+        .toList();
+    return parsed
+        .where((o) => o.createdAt.toUtc().isAfter(cutoff))
+        .toList();
+  }
+
+  Future<void> deleteOfferById(String id) async {
+    final db = await database;
+    await db.delete(_table, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> markCancelled(String id) async {
+    final existing = await getOfferById(id);
+    if (existing == null) return;
+    await upsertOffer(existing.copyWith(status: OfferStatus.cancelled));
+  }
+
+  /// Dev-only wipe. Removes the entire offers table.
+  Future<void> clearAll() async {
+    final db = await database;
+    await db.delete(_table);
   }
 
   /// Force a database reset by closing and reopening the database

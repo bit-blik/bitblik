@@ -128,6 +128,9 @@ offers:
     reserved: "Reserved"
     blikReceived: "BLIK Sent"
     blikSentToMaker: "BLIK Received"
+    expiredBlik: "BLIK Expired"
+    expiredSentBlik: "Confirmation Expired"
+    takerCharged: "Taker Charged"
     invalidBlik: "Invalid BLIK"
     conflict: "Conflict"
     dispute: "Dispute"
@@ -136,6 +139,7 @@ offers:
     payingTaker: "Paying Taker"
     takerPaymentFailed: "Payment Failed"
     takerPaid: "Taker Paid"
+    unknownStatus: "Unknown"
     
   statusMessages:
     reserved: Offer reserved by Taker!
@@ -319,6 +323,8 @@ maker:
       nwcPaymentFailed: "Payment failed: ${details}"
       nwcNotConnected: NWC wallet not connected
       insufficientBalance: "Insufficient balance. Need ${required} sats, have ${available} sats"
+      cancelOfferAlreadyFunded: "Coordinator reports this offer is already funded. It cannot be cancelled now."
+      cancelFailed: "Could not cancel offer: ${details}"
   
   waitTaker:
     message: Waiting for a Taker to reserve your offer...
@@ -695,6 +701,34 @@ system:
 # =============================================================================
 # MAIN LANDING PAGE
 # =============================================================================
+myOffers:
+  title: "My offers"
+  empty: "No offers yet."
+  unknownCoordinator: "Unknown coordinator"
+  menuLabel: "My offers"
+  filter:
+    all: "All"
+    active: "Active"
+    completed: "Completed"
+    failed: "Failed"
+  details:
+    title: "Offer Details"
+    notFound: "Offer not found."
+    amount: "Amount"
+    sats: "Satoshis"
+    makerFee: "Maker Fee"
+    takerFee: "Taker Fee"
+    coordinator: "Coordinator"
+    createdAt: "Created"
+    reservedAt: "Reserved"
+    blikReceivedAt: "BLIK Submitted"
+    makerConfirmedAt: "Confirmed"
+    settledAt: "Settled"
+    takerPaidAt: "Taker Paid"
+    id: "Offer ID"
+    paymentHash: "Payment Hash"
+    holdInvoice: "Hold Invoice"
+
 landing:
   mainTitle: "Your BLIK ⇄ bitcoin Bridge"
   subtitle: "Pay for or sell your BLIK code with bitcoin"

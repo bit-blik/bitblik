@@ -8,6 +8,7 @@ import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer model
 import '../providers/providers.dart'; // Import providers
+import '../widgets/offer_list_tile.dart';
 
 class RoleSelectionScreen extends ConsumerStatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -523,56 +524,18 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
         const SizedBox(height: 16),
         Card(
           elevation: 2,
-
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "${formatDouble(activeOffer.fiatAmount)} ${activeOffer.fiatCurrency}",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  t.common.labels.status(status: activeOffer.status),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                if (activeOffer.status == OfferStatus.takerPaymentFailed &&
-                    activeOffer.takerLightningAddress != null &&
-                    activeOffer.takerLightningAddress!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      t.lightningAddress.labels.short(
-                        address: activeOffer.takerLightningAddress!,
-                      ),
-                      style: TextStyle(
-                        color: Colors.blueGrey[700],
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            trailing:
-                (activeOffer.status == OfferStatus.takerPaid)
-                    ? null
-                    : const Icon(Icons.arrow_forward_ios),
+          child: OfferListTile(
+            offer: activeOffer,
             onTap:
-                (activeOffer.status == OfferStatus.takerPaid)
-                    ? null
-                    : () {
-                      _handleActiveOfferTap(
-                        context,
-                        ref,
-                        activeOffer,
-                        currentPubKey,
-                        t,
-                      );
-                    },
+                activeOffer.status == OfferStatus.takerPaid
+                    ? () {}
+                    : () => _handleActiveOfferTap(
+                      context,
+                      ref,
+                      activeOffer,
+                      currentPubKey,
+                      t,
+                    ),
           ),
         ),
       ],

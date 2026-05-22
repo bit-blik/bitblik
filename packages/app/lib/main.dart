@@ -40,6 +40,8 @@ import 'src/screens/coordinator_management_screen.dart';
 import 'src/screens/faq_screen.dart'; // Import the FAQ screen
 import 'src/screens/maker_flow/maker_amount_form.dart';
 import 'src/screens/maker_flow/maker_conflict_screen.dart'; // Import the maker conflict screen
+import 'src/screens/local_offer_details_screen.dart';
+import 'src/screens/my_offers_screen.dart';
 import 'src/screens/neko_management_screen.dart';
 import 'src/screens/offer_details_screen.dart';
 import 'src/screens/offer_list_screen.dart';
@@ -87,6 +89,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/offers',
             builder: (context, state) => const OfferListScreen(),
+          ),
+          GoRoute(
+            path: MyOffersScreen.routeName,
+            builder: (context, state) => const MyOffersScreen(),
+          ),
+          GoRoute(
+            path: LocalOfferDetailsScreen.routeName,
+            builder: (context, state) {
+              final offerId = state.pathParameters['id'];
+              if (offerId == null) {
+                return const Center(child: Text('No offer ID provided.'));
+              }
+              return LocalOfferDetailsScreen(offerId: offerId);
+            },
           ),
           GoRoute(
             path: '/offers/:id',
@@ -1030,6 +1046,19 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                     context.go("/offers");
                   } else {
                     context.push("/offers");
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.receipt_long),
+                title: Text(t.myOffers.menuLabel),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  if (kIsWeb) {
+                    context.go(MyOffersScreen.routeName);
+                  } else {
+                    context.push(MyOffersScreen.routeName);
                   }
                 },
               ),

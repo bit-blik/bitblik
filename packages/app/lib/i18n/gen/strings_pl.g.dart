@@ -54,6 +54,7 @@ class TranslationsPl extends Translations {
 	@override late final _TranslationsRestorePl restore = _TranslationsRestorePl._(_root);
 	@override late final _TranslationsHomePl home = _TranslationsHomePl._(_root);
 	@override late final _TranslationsSystemPl system = _TranslationsSystemPl._(_root);
+	@override late final _TranslationsMyOffersPl myOffers = _TranslationsMyOffersPl._(_root);
 	@override late final _TranslationsLandingPl landing = _TranslationsLandingPl._(_root);
 	@override late final _TranslationsFaqPl faq = _TranslationsFaqPl._(_root);
 	@override late final _TranslationsSettingsPl settings = _TranslationsSettingsPl._(_root);
@@ -280,6 +281,21 @@ class _TranslationsSystemPl extends TranslationsSystemEn {
 	@override String get loadingPublicKey => 'Ładowanie Twojego klucza publicznego...';
 	@override late final _TranslationsSystemErrorsPl errors = _TranslationsSystemErrorsPl._(_root);
 	@override late final _TranslationsSystemBlikPl blik = _TranslationsSystemBlikPl._(_root);
+}
+
+// Path: myOffers
+class _TranslationsMyOffersPl extends TranslationsMyOffersEn {
+	_TranslationsMyOffersPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Moje oferty';
+	@override String get empty => 'Brak ofert.';
+	@override String get unknownCoordinator => 'Nieznany koordynator';
+	@override String get menuLabel => 'Moje oferty';
+	@override late final _TranslationsMyOffersFilterPl filter = _TranslationsMyOffersFilterPl._(_root);
+	@override late final _TranslationsMyOffersDetailsPl details = _TranslationsMyOffersDetailsPl._(_root);
 }
 
 // Path: landing
@@ -580,6 +596,9 @@ class _TranslationsOffersStatusPl extends TranslationsOffersStatusEn {
 	@override String get reserved => 'Zarezerwowana';
 	@override String get blikReceived => 'BLIK wysłany';
 	@override String get blikSentToMaker => 'Otrzymano BLIK';
+	@override String get expiredBlik => 'BLIK wygasł';
+	@override String get expiredSentBlik => 'Potwierdzenie wygasło';
+	@override String get takerCharged => 'Taker obciążony';
 	@override String get invalidBlik => 'Nieprawidłowy BLIK';
 	@override String get conflict => 'Konflikt';
 	@override String get dispute => 'Spór';
@@ -588,6 +607,7 @@ class _TranslationsOffersStatusPl extends TranslationsOffersStatusEn {
 	@override String get payingTaker => 'Płacenie Takera';
 	@override String get takerPaymentFailed => 'Płatność Takera nieudana';
 	@override String get takerPaid => 'Zapłacony';
+	@override String get unknownStatus => 'Nieznany';
 }
 
 // Path: offers.statusMessages
@@ -1262,6 +1282,44 @@ class _TranslationsSystemBlikPl extends TranslationsSystemBlikEn {
 	@override String get copied => 'Kod BLIK skopiowany do schowka';
 }
 
+// Path: myOffers.filter
+class _TranslationsMyOffersFilterPl extends TranslationsMyOffersFilterEn {
+	_TranslationsMyOffersFilterPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get all => 'Wszystkie';
+	@override String get active => 'Aktywne';
+	@override String get completed => 'Zakończone';
+	@override String get failed => 'Nieudane';
+}
+
+// Path: myOffers.details
+class _TranslationsMyOffersDetailsPl extends TranslationsMyOffersDetailsEn {
+	_TranslationsMyOffersDetailsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Szczegóły oferty';
+	@override String get notFound => 'Nie znaleziono oferty.';
+	@override String get amount => 'Kwota';
+	@override String get sats => 'Satoshi';
+	@override String get makerFee => 'Opłata makera';
+	@override String get takerFee => 'Opłata takera';
+	@override String get coordinator => 'Koordynator';
+	@override String get createdAt => 'Utworzono';
+	@override String get reservedAt => 'Zarezerwowano';
+	@override String get blikReceivedAt => 'BLIK wysłany';
+	@override String get makerConfirmedAt => 'Potwierdzono';
+	@override String get settledAt => 'Rozliczono';
+	@override String get takerPaidAt => 'Taker opłacony';
+	@override String get id => 'ID oferty';
+	@override String get paymentHash => 'Hash płatności';
+	@override String get holdInvoice => 'Hold Invoice';
+}
+
 // Path: landing.actions
 class _TranslationsLandingActionsPl extends TranslationsLandingActionsEn {
 	_TranslationsLandingActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -1505,6 +1563,8 @@ class _TranslationsMakerPayInvoiceErrorsPl extends TranslationsMakerPayInvoiceEr
 	@override String nwcPaymentFailed({required Object details}) => 'Płatność nie powiodła się: ${details}';
 	@override String get nwcNotConnected => 'Portfel NWC nie jest połączony';
 	@override String insufficientBalance({required Object required, required Object available}) => 'Niewystarczające środki. Potrzeba ${required} sats, dostępne ${available} sats';
+	@override String get cancelOfferAlreadyFunded => 'Koordynator zgłasza, że ta oferta jest już opłacona. Nie można jej teraz anulować.';
+	@override String cancelFailed({required Object details}) => 'Nie można anulować oferty: ${details}';
 }
 
 // Path: maker.confirmPayment.actions
@@ -2034,6 +2094,9 @@ extension on TranslationsPl {
 			case 'offers.status.reserved': return 'Zarezerwowana';
 			case 'offers.status.blikReceived': return 'BLIK wysłany';
 			case 'offers.status.blikSentToMaker': return 'Otrzymano BLIK';
+			case 'offers.status.expiredBlik': return 'BLIK wygasł';
+			case 'offers.status.expiredSentBlik': return 'Potwierdzenie wygasło';
+			case 'offers.status.takerCharged': return 'Taker obciążony';
 			case 'offers.status.invalidBlik': return 'Nieprawidłowy BLIK';
 			case 'offers.status.conflict': return 'Konflikt';
 			case 'offers.status.dispute': return 'Spór';
@@ -2042,6 +2105,7 @@ extension on TranslationsPl {
 			case 'offers.status.payingTaker': return 'Płacenie Takera';
 			case 'offers.status.takerPaymentFailed': return 'Płatność Takera nieudana';
 			case 'offers.status.takerPaid': return 'Zapłacony';
+			case 'offers.status.unknownStatus': return 'Nieznany';
 			case 'offers.statusMessages.reserved': return 'Oferta zarezerwowana przez Takera!';
 			case 'offers.statusMessages.cancelled': return 'Oferta anulowana pomyślnie.';
 			case 'offers.statusMessages.cancelledOrExpired': return 'Oferta została anulowana lub wygasła.';
@@ -2163,6 +2227,8 @@ extension on TranslationsPl {
 			case 'maker.payInvoice.errors.nwcPaymentFailed': return ({required Object details}) => 'Płatność nie powiodła się: ${details}';
 			case 'maker.payInvoice.errors.nwcNotConnected': return 'Portfel NWC nie jest połączony';
 			case 'maker.payInvoice.errors.insufficientBalance': return ({required Object required, required Object available}) => 'Niewystarczające środki. Potrzeba ${required} sats, dostępne ${available} sats';
+			case 'maker.payInvoice.errors.cancelOfferAlreadyFunded': return 'Koordynator zgłasza, że ta oferta jest już opłacona. Nie można jej teraz anulować.';
+			case 'maker.payInvoice.errors.cancelFailed': return ({required Object details}) => 'Nie można anulować oferty: ${details}';
 			case 'maker.waitTaker.message': return 'Oczekiwanie na rezerwację przez Kupującego...';
 			case 'maker.waitTaker.errorActiveOfferDetailsLost': return 'Błąd: Utracono szczegóły aktywnej oferty.';
 			case 'maker.waitTaker.errorFailedToRetrieveBlik': return 'Błąd: Nie udało się pobrać kodu BLIK.';
@@ -2381,6 +2447,30 @@ extension on TranslationsPl {
 			case 'system.errors.internalOfferIncomplete': return 'Błąd wewnętrzny: Szczegóły oferty są niekompletne. Spróbuj ponownie.';
 			case 'system.errors.loadingPublicKey': return 'Błąd ładowania Twojego klucza publicznego. Uruchom ponownie aplikację.';
 			case 'system.blik.copied': return 'Kod BLIK skopiowany do schowka';
+			case 'myOffers.title': return 'Moje oferty';
+			case 'myOffers.empty': return 'Brak ofert.';
+			case 'myOffers.unknownCoordinator': return 'Nieznany koordynator';
+			case 'myOffers.menuLabel': return 'Moje oferty';
+			case 'myOffers.filter.all': return 'Wszystkie';
+			case 'myOffers.filter.active': return 'Aktywne';
+			case 'myOffers.filter.completed': return 'Zakończone';
+			case 'myOffers.filter.failed': return 'Nieudane';
+			case 'myOffers.details.title': return 'Szczegóły oferty';
+			case 'myOffers.details.notFound': return 'Nie znaleziono oferty.';
+			case 'myOffers.details.amount': return 'Kwota';
+			case 'myOffers.details.sats': return 'Satoshi';
+			case 'myOffers.details.makerFee': return 'Opłata makera';
+			case 'myOffers.details.takerFee': return 'Opłata takera';
+			case 'myOffers.details.coordinator': return 'Koordynator';
+			case 'myOffers.details.createdAt': return 'Utworzono';
+			case 'myOffers.details.reservedAt': return 'Zarezerwowano';
+			case 'myOffers.details.blikReceivedAt': return 'BLIK wysłany';
+			case 'myOffers.details.makerConfirmedAt': return 'Potwierdzono';
+			case 'myOffers.details.settledAt': return 'Rozliczono';
+			case 'myOffers.details.takerPaidAt': return 'Taker opłacony';
+			case 'myOffers.details.id': return 'ID oferty';
+			case 'myOffers.details.paymentHash': return 'Hash płatności';
+			case 'myOffers.details.holdInvoice': return 'Hold Invoice';
 			case 'landing.mainTitle': return 'Wymiana\n BLIK ⇄ bitcoin';
 			case 'landing.subtitle': return 'Płać lub sprzedawaj kod BLIK za bitcoin';
 			case 'landing.actions.payBlik': return 'Zapłać BLIK';

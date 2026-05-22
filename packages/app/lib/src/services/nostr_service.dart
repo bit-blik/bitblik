@@ -33,6 +33,7 @@ class NostrService {
   NdkResponse? _offerSubscription;
 
   bool _isInitialized = false;
+  Future<void>? _initInFlight;
 
   final StreamController<OfferStatusUpdate> _offerStatusController =
       StreamController<OfferStatusUpdate>.broadcast();
@@ -46,15 +47,32 @@ class NostrService {
   Future<void> init() async {
     if (_isInitialized) return;
 
-    _relayUrls = List.from(_defaultRelayUrls);
-    Logger.log.i(() => '📡 Using relays: $_relayUrls');
+    final inFlight = _initInFlight;
+    if (inFlight != null) {
+      await inFlight;
+      return;
+    }
 
-    await _initializeNdk();
-    await _subscribeToResponses();
-    await _initCoordinatorRegistry();
+    final completer = Completer<void>();
+    _initInFlight = completer.future;
 
-    _isInitialized = true;
-    Logger.log.i(() => '✅ NostrService initialized');
+    try {
+      _relayUrls = List.from(_defaultRelayUrls);
+      Logger.log.i(() => '📡 Using relays: $_relayUrls');
+
+      await _initializeNdk();
+      await _subscribeToResponses();
+      await _initCoordinatorRegistry();
+
+      _isInitialized = true;
+      Logger.log.i(() => '✅ NostrService initialized');
+      completer.complete();
+    } catch (e, st) {
+      completer.completeError(e, st);
+      rethrow;
+    } finally {
+      _initInFlight = null;
+    }
   }
 
   Future<void> _initCoordinatorRegistry() async {
@@ -854,6 +872,7 @@ class NostrService {
 
   /// Dispose resources
   Future<void> dispose() async {
+    _initInFlight = null;
     await _coordinatorRegistry?.dispose();
     _coordinatorRegistry = null;
     if (_rpcClient != null) {

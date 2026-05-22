@@ -41,14 +41,13 @@ val keystoreProperties = if (keystorePropertiesFile.exists()) {
 
 android {
     signingConfigs {
-        create("keyFile") {
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
-            storeFile =
-                keystoreProperties.getProperty("storeFile")?.let {
-                    file(it)
-                }
-            storePassword = keystoreProperties.getProperty("storePassword")
+        if (keystorePropertiesFile.exists()) {
+            create("keyFile") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
         }
     }
 }
@@ -80,7 +79,7 @@ val cfg = getSigningConfig()
 android {
     namespace = "app.bitblik"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973" // Updated NDK version
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

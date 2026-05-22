@@ -127,6 +127,9 @@ offers:
     reserved: "Zarezerwowana"
     blikReceived: "BLIK wysłany"
     blikSentToMaker: "Otrzymano BLIK"
+    expiredBlik: "BLIK wygasł"
+    expiredSentBlik: "Potwierdzenie wygasło"
+    takerCharged: "Taker obciążony"
     invalidBlik: "Nieprawidłowy BLIK"
     conflict: "Konflikt"
     dispute: "Spór"
@@ -135,6 +138,7 @@ offers:
     payingTaker: "Płacenie Takera"
     takerPaymentFailed: "Płatność Takera nieudana"
     takerPaid: "Zapłacony"
+    unknownStatus: "Nieznany"
     
   statusMessages:
     reserved: Oferta zarezerwowana przez Takera!
@@ -318,6 +322,8 @@ maker:
       nwcPaymentFailed: "Płatność nie powiodła się: ${details}"
       nwcNotConnected: Portfel NWC nie jest połączony
       insufficientBalance: "Niewystarczające środki. Potrzeba ${required} sats, dostępne ${available} sats"
+      cancelOfferAlreadyFunded: "Koordynator zgłasza, że ta oferta jest już opłacona. Nie można jej teraz anulować."
+      cancelFailed: "Nie można anulować oferty: ${details}"
   
   waitTaker:
     message: "Oczekiwanie na rezerwację przez Kupującego..."
@@ -696,6 +702,34 @@ system:
 # =============================================================================
 # MAIN LANDING PAGE
 # =============================================================================
+myOffers:
+  title: "Moje oferty"
+  empty: "Brak ofert."
+  unknownCoordinator: "Nieznany koordynator"
+  menuLabel: "Moje oferty"
+  filter:
+    all: "Wszystkie"
+    active: "Aktywne"
+    completed: "Zakończone"
+    failed: "Nieudane"
+  details:
+    title: "Szczegóły oferty"
+    notFound: "Nie znaleziono oferty."
+    amount: "Kwota"
+    sats: "Satoshi"
+    makerFee: "Opłata makera"
+    takerFee: "Opłata takera"
+    coordinator: "Koordynator"
+    createdAt: "Utworzono"
+    reservedAt: "Zarezerwowano"
+    blikReceivedAt: "BLIK wysłany"
+    makerConfirmedAt: "Potwierdzono"
+    settledAt: "Rozliczono"
+    takerPaidAt: "Taker opłacony"
+    id: "ID oferty"
+    paymentHash: "Hash płatności"
+    holdInvoice: "Hold Invoice"
+
 landing:
   mainTitle: "Wymiana\n BLIK ⇄ bitcoin"
   subtitle: "Płać lub sprzedawaj kod BLIK za bitcoin"

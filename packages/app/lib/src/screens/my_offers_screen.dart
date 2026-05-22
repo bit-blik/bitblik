@@ -1,0 +1,161 @@
+import 'package:bitblik_core/core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../i18n/gen/strings.g.dart';
+import '../providers/providers.dart';
+import '../widgets/offer_list_tile.dart';
+
+enum _OfferFilter { all, active, completed, failed }
+
+const _activeStatuses = {
+  OfferStatus.created,
+  OfferStatus.funded,
+  OfferStatus.reserved,
+  OfferStatus.blikReceived,
+  OfferStatus.blikSentToMaker,
+  OfferStatus.takerCharged,
+  OfferStatus.payingTaker,
+  OfferStatus.unknown,
+};
+
+const _completedStatuses = {
+  OfferStatus.makerConfirmed,
+  OfferStatus.settled,
+  OfferStatus.takerPaid,
+};
+
+const _failedStatuses = {
+  OfferStatus.expired,
+  OfferStatus.cancelled,
+  OfferStatus.expiredBlik,
+  OfferStatus.expiredSentBlik,
+  OfferStatus.invalidBlik,
+  OfferStatus.takerPaymentFailed,
+  OfferStatus.conflict,
+  OfferStatus.dispute,
+};
+
+class MyOffersScreen extends ConsumerStatefulWidget {
+  const MyOffersScreen({super.key});
+
+  static const routeName = '/my-offers';
+
+  @override
+  ConsumerState<MyOffersScreen> createState() => _MyOffersScreenState();
+}
+
+class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
+  _OfferFilter _filter = _OfferFilter.all;
+
+  List<Offer> _applyFilter(List<Offer> offers) {
+    switch (_filter) {
+      case _OfferFilter.all:
+        return offers;
+      case _OfferFilter.active:
+        return offers.where((o) => _activeStatuses.contains(o.status)).toList();
+      case _OfferFilter.completed:
+        return offers.where((o) => _completedStatuses.contains(o.status)).toList();
+      case _OfferFilter.failed:
+        return offers.where((o) => _failedStatuses.contains(o.status)).toList();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Translations.of(context);
+    final offersAsync = ref.watch(myOffersProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: Text(t.myOffers.title)),
+      body: offersAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(
+          child: Text('${t.coordinator.management.error}: $err'),
+        ),
+        data: (offers) {
+          final filtered = _applyFilter(offers);
+          return Column(
+            children: [
+              _FilterBar(
+                current: _filter,
+                onChanged: (f) => setState(() => _filter = f),
+              ),
+              Expanded(
+                child: filtered.isEmpty
+                    ? RefreshIndicator(
+                        onRefresh: () async => ref.invalidate(myOffersProvider),
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height - 260,
+                              child: Center(child: Text(t.myOffers.empty)),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () async => ref.invalidate(myOffersProvider),
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, _) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final offer = filtered[index];
+                            final multipleNekos =
+                                filtered.map((o) => o.makerPubkey).toSet().length > 1;
+                            return OfferListTile(
+                              offer: offer,
+                              showNeko: multipleNekos,
+                              onTap: () => context.push('/my-offers/${offer.id}'),
+                            );
+                          },
+                        ),
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({required this.current, required this.onChanged});
+
+  final _OfferFilter current;
+  final ValueChanged<_OfferFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Translations.of(context);
+    final filters = [
+      (_OfferFilter.all, t.myOffers.filter.all),
+      (_OfferFilter.active, t.myOffers.filter.active),
+      (_OfferFilter.completed, t.myOffers.filter.completed),
+      (_OfferFilter.failed, t.myOffers.filter.failed),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: filters.map((entry) {
+          final (filter, label) = entry;
+          final selected = current == filter;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(label),
+              selected: selected,
+              onSelected: (_) => onChanged(filter),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}

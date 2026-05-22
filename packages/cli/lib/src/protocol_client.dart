@@ -81,6 +81,7 @@ class BitblikProtocolClient {
     await Future.wait(
       coordinators.map((c) => _registry.probeHealth(c.pubkeyHex)),
     );
+    await _registry.flushPersist();
   }
 
   /// Send any [NostrRequest] to [coordinatorPubkey] and await its response.

@@ -31,7 +31,38 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
   bool _sentWeblnPayment = false;
   bool _isPayingWithWallet = false;
   bool _hasSendingWallet = false;
+  bool _isCancelling = false;
   StreamSubscription<List<Wallet>>? _walletsSubscription;
+
+  Future<void> _handleCancelPressed() async {
+    final t = Translations.of(context);
+    setState(() => _isCancelling = true);
+    try {
+      await ref.read(activeOfferProvider.notifier).cancelActiveOffer();
+      if (!mounted) return;
+      context.go('/');
+    } on OfferAlreadyFundedException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t.maker.payInvoice.errors.cancelOfferAlreadyFunded),
+        ),
+      );
+      // Coordinator says we're funded — surface that flow.
+      context.go('/wait-taker');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t.maker.payInvoice.errors.cancelFailed(details: e.toString()),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isCancelling = false);
+    }
+  }
 
   @override
   void initState() {
@@ -535,18 +566,26 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.cancel),
+                        icon:
+                            _isCancelling
+                                ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : const Icon(Icons.cancel),
                         label: Text(t.common.buttons.cancel),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
                         ),
-                        onPressed: () async {
-                          await ref
-                              .read(activeOfferProvider.notifier)
-                              .setActiveOffer(null);
-                          context.go('/');
-                        },
+                        onPressed:
+                            (_isCancelling || _isPayingWithWallet)
+                                ? null
+                                : _handleCancelPressed,
                       ),
                     ),
                   ],

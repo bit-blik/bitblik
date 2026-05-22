@@ -55,6 +55,7 @@ class Translations implements BaseTranslations<AppLocale, Translations> {
 	late final TranslationsBackupEn backup = TranslationsBackupEn.internal(_root);
 	late final TranslationsRestoreEn restore = TranslationsRestoreEn.internal(_root);
 	late final TranslationsSystemEn system = TranslationsSystemEn.internal(_root);
+	late final TranslationsMyOffersEn myOffers = TranslationsMyOffersEn.internal(_root);
 	late final TranslationsLandingEn landing = TranslationsLandingEn.internal(_root);
 	late final TranslationsFaqEn faq = TranslationsFaqEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
@@ -312,6 +313,30 @@ class TranslationsSystemEn {
 
 	late final TranslationsSystemErrorsEn errors = TranslationsSystemErrorsEn.internal(_root);
 	late final TranslationsSystemBlikEn blik = TranslationsSystemBlikEn.internal(_root);
+}
+
+// Path: myOffers
+class TranslationsMyOffersEn {
+	TranslationsMyOffersEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'My offers'
+	String get title => 'My offers';
+
+	/// en: 'No offers yet.'
+	String get empty => 'No offers yet.';
+
+	/// en: 'Unknown coordinator'
+	String get unknownCoordinator => 'Unknown coordinator';
+
+	/// en: 'My offers'
+	String get menuLabel => 'My offers';
+
+	late final TranslationsMyOffersFilterEn filter = TranslationsMyOffersFilterEn.internal(_root);
+	late final TranslationsMyOffersDetailsEn details = TranslationsMyOffersDetailsEn.internal(_root);
 }
 
 // Path: landing
@@ -822,6 +847,15 @@ class TranslationsOffersStatusEn {
 	/// en: 'BLIK Received'
 	String get blikSentToMaker => 'BLIK Received';
 
+	/// en: 'BLIK Expired'
+	String get expiredBlik => 'BLIK Expired';
+
+	/// en: 'Confirmation Expired'
+	String get expiredSentBlik => 'Confirmation Expired';
+
+	/// en: 'Taker Charged'
+	String get takerCharged => 'Taker Charged';
+
 	/// en: 'Invalid BLIK'
 	String get invalidBlik => 'Invalid BLIK';
 
@@ -845,6 +879,9 @@ class TranslationsOffersStatusEn {
 
 	/// en: 'Taker Paid'
 	String get takerPaid => 'Taker Paid';
+
+	/// en: 'Unknown'
+	String get unknownStatus => 'Unknown';
 }
 
 // Path: offers.statusMessages
@@ -1925,6 +1962,84 @@ class TranslationsSystemBlikEn {
 	String get copied => 'BLIK code copied to clipboard';
 }
 
+// Path: myOffers.filter
+class TranslationsMyOffersFilterEn {
+	TranslationsMyOffersFilterEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'All'
+	String get all => 'All';
+
+	/// en: 'Active'
+	String get active => 'Active';
+
+	/// en: 'Completed'
+	String get completed => 'Completed';
+
+	/// en: 'Failed'
+	String get failed => 'Failed';
+}
+
+// Path: myOffers.details
+class TranslationsMyOffersDetailsEn {
+	TranslationsMyOffersDetailsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Offer Details'
+	String get title => 'Offer Details';
+
+	/// en: 'Offer not found.'
+	String get notFound => 'Offer not found.';
+
+	/// en: 'Amount'
+	String get amount => 'Amount';
+
+	/// en: 'Satoshis'
+	String get sats => 'Satoshis';
+
+	/// en: 'Maker Fee'
+	String get makerFee => 'Maker Fee';
+
+	/// en: 'Taker Fee'
+	String get takerFee => 'Taker Fee';
+
+	/// en: 'Coordinator'
+	String get coordinator => 'Coordinator';
+
+	/// en: 'Created'
+	String get createdAt => 'Created';
+
+	/// en: 'Reserved'
+	String get reservedAt => 'Reserved';
+
+	/// en: 'BLIK Submitted'
+	String get blikReceivedAt => 'BLIK Submitted';
+
+	/// en: 'Confirmed'
+	String get makerConfirmedAt => 'Confirmed';
+
+	/// en: 'Settled'
+	String get settledAt => 'Settled';
+
+	/// en: 'Taker Paid'
+	String get takerPaidAt => 'Taker Paid';
+
+	/// en: 'Offer ID'
+	String get id => 'Offer ID';
+
+	/// en: 'Payment Hash'
+	String get paymentHash => 'Payment Hash';
+
+	/// en: 'Hold Invoice'
+	String get holdInvoice => 'Hold Invoice';
+}
+
 // Path: landing.actions
 class TranslationsLandingActionsEn {
 	TranslationsLandingActionsEn.internal(this._root);
@@ -2334,6 +2449,12 @@ class TranslationsMakerPayInvoiceErrorsEn {
 
 	/// en: 'Insufficient balance. Need ${required} sats, have ${available} sats'
 	String insufficientBalance({required Object required, required Object available}) => 'Insufficient balance. Need ${required} sats, have ${available} sats';
+
+	/// en: 'Coordinator reports this offer is already funded. It cannot be cancelled now.'
+	String get cancelOfferAlreadyFunded => 'Coordinator reports this offer is already funded. It cannot be cancelled now.';
+
+	/// en: 'Could not cancel offer: ${details}'
+	String cancelFailed({required Object details}) => 'Could not cancel offer: ${details}';
 }
 
 // Path: maker.confirmPayment.actions
@@ -3069,6 +3190,9 @@ extension on Translations {
 			case 'offers.status.reserved': return 'Reserved';
 			case 'offers.status.blikReceived': return 'BLIK Sent';
 			case 'offers.status.blikSentToMaker': return 'BLIK Received';
+			case 'offers.status.expiredBlik': return 'BLIK Expired';
+			case 'offers.status.expiredSentBlik': return 'Confirmation Expired';
+			case 'offers.status.takerCharged': return 'Taker Charged';
 			case 'offers.status.invalidBlik': return 'Invalid BLIK';
 			case 'offers.status.conflict': return 'Conflict';
 			case 'offers.status.dispute': return 'Dispute';
@@ -3077,6 +3201,7 @@ extension on Translations {
 			case 'offers.status.payingTaker': return 'Paying Taker';
 			case 'offers.status.takerPaymentFailed': return 'Payment Failed';
 			case 'offers.status.takerPaid': return 'Taker Paid';
+			case 'offers.status.unknownStatus': return 'Unknown';
 			case 'offers.statusMessages.reserved': return 'Offer reserved by Taker!';
 			case 'offers.statusMessages.cancelled': return 'Offer cancelled successfully.';
 			case 'offers.statusMessages.cancelledOrExpired': return 'Offer has been cancelled or expired.';
@@ -3198,6 +3323,8 @@ extension on Translations {
 			case 'maker.payInvoice.errors.nwcPaymentFailed': return ({required Object details}) => 'Payment failed: ${details}';
 			case 'maker.payInvoice.errors.nwcNotConnected': return 'NWC wallet not connected';
 			case 'maker.payInvoice.errors.insufficientBalance': return ({required Object required, required Object available}) => 'Insufficient balance. Need ${required} sats, have ${available} sats';
+			case 'maker.payInvoice.errors.cancelOfferAlreadyFunded': return 'Coordinator reports this offer is already funded. It cannot be cancelled now.';
+			case 'maker.payInvoice.errors.cancelFailed': return ({required Object details}) => 'Could not cancel offer: ${details}';
 			case 'maker.waitTaker.message': return 'Waiting for a Taker to reserve your offer...';
 			case 'maker.waitTaker.progressLabel': return ({required Object time}) => 'Waiting for taker: ${time}';
 			case 'maker.waitTaker.errorActiveOfferDetailsLost': return 'Error: Lost active offer details.';
@@ -3417,6 +3544,30 @@ extension on Translations {
 			case 'system.errors.internalOfferIncomplete': return 'Internal error: Offer details are incomplete. Please try again.';
 			case 'system.errors.loadingPublicKey': return 'Error loading your public key. Please restart the app.';
 			case 'system.blik.copied': return 'BLIK code copied to clipboard';
+			case 'myOffers.title': return 'My offers';
+			case 'myOffers.empty': return 'No offers yet.';
+			case 'myOffers.unknownCoordinator': return 'Unknown coordinator';
+			case 'myOffers.menuLabel': return 'My offers';
+			case 'myOffers.filter.all': return 'All';
+			case 'myOffers.filter.active': return 'Active';
+			case 'myOffers.filter.completed': return 'Completed';
+			case 'myOffers.filter.failed': return 'Failed';
+			case 'myOffers.details.title': return 'Offer Details';
+			case 'myOffers.details.notFound': return 'Offer not found.';
+			case 'myOffers.details.amount': return 'Amount';
+			case 'myOffers.details.sats': return 'Satoshis';
+			case 'myOffers.details.makerFee': return 'Maker Fee';
+			case 'myOffers.details.takerFee': return 'Taker Fee';
+			case 'myOffers.details.coordinator': return 'Coordinator';
+			case 'myOffers.details.createdAt': return 'Created';
+			case 'myOffers.details.reservedAt': return 'Reserved';
+			case 'myOffers.details.blikReceivedAt': return 'BLIK Submitted';
+			case 'myOffers.details.makerConfirmedAt': return 'Confirmed';
+			case 'myOffers.details.settledAt': return 'Settled';
+			case 'myOffers.details.takerPaidAt': return 'Taker Paid';
+			case 'myOffers.details.id': return 'Offer ID';
+			case 'myOffers.details.paymentHash': return 'Payment Hash';
+			case 'myOffers.details.holdInvoice': return 'Hold Invoice';
 			case 'landing.mainTitle': return 'Your BLIK ⇄ bitcoin Bridge';
 			case 'landing.subtitle': return 'Pay for or sell your BLIK code with bitcoin';
 			case 'landing.actions.payBlik': return 'Pay BLIK';

@@ -46,10 +46,13 @@ Future<void> main(List<String> args) async {
     final client = BitblikProtocolClient(secrets: secrets, relays: relays);
     try {
       await client.init();
-      final coordinators = await client.discoverCoordinators();
+      var coordinators = await client.discoverCoordinators();
 
       if (withHealth && coordinators.isNotEmpty) {
         await client.checkCoordinatorHealth(coordinators);
+        // Re-snapshot after probing: records were replaced in-memory via copyWith
+        // and the pre-probe list still holds the old (responsive == null) objects.
+        coordinators = client.coordinatorRegistry.all;
       }
 
       if (jsonOutput) {

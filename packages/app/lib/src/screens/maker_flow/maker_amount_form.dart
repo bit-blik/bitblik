@@ -188,70 +188,100 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final text = _fiatController.text;
     String? currentError;
     double? parsedFiat;
-    final coordinatorInfo = _selectedCoordinatorInfo;
+    double? sats;
 
+    // Parse first; compute sats independently from coordinator selection
+    // so we can match against any enabled coordinator's range.
     if (text.isEmpty) {
       parsedFiat = null;
-      currentError = null;
     } else {
       final fiatString = text.replaceAll(',', '.');
       parsedFiat = double.tryParse(fiatString);
-
       if (parsedFiat == null) {
         currentError = t.exchange.errors.invalidFormat;
       } else if (parsedFiat <= 0) {
         currentError = t.exchange.errors.mustBePositive;
-      } else {
-        if (coordinatorInfo != null && _rate != null) {
-          final minAllowedFiat =
-              (coordinatorInfo.minAmountSats / 100000000.0) * _rate!;
-          final maxAllowedFiat =
-              (coordinatorInfo.maxAmountSats / 100000000.0) * _rate!;
-          final minFiat = (minAllowedFiat * 100).ceil() / 100;
-          final maxFiat =
-              maxAllowedFiat
-                  .floor()
-                  .toDouble(); // Round down to nearest integer
-          if (parsedFiat < minFiat) {
-            currentError = t.exchange.errors.tooLowFiat(
-              minAmount: minFiat.toStringAsFixed(2),
-              currency: "PLN",
-            );
-          } else if (parsedFiat > maxFiat) {
-            currentError = t.exchange.errors.tooHighFiat(
-              maxAmount: maxFiat.toStringAsFixed(0),
-              currency: "PLN",
-            );
-          } else {
-            currentError = null;
+      } else if (_rate != null) {
+        sats = parsedFiat * (1 / _rate!) * 100000000;
+      }
+    }
+
+    // Validate against the union of all enabled coordinators' ranges.
+    // "Too low/high" only when no coordinator fits at all.
+    CoordinatorRecord? fittingCoordinator;
+    final enabledAsync = ref.read(enabledCoordinatorsProvider);
+    final enabled = enabledAsync is AsyncData<List<CoordinatorRecord>>
+        ? enabledAsync.value
+        : const <CoordinatorRecord>[];
+
+    if (currentError == null && sats != null && enabled.isNotEmpty) {
+      final satsInt = sats.round();
+      for (final c in enabled) {
+        if (c.responsive == true &&
+            satsInt >= c.minAmountSats &&
+            satsInt <= c.maxAmountSats) {
+          fittingCoordinator = c;
+          break;
+        }
+      }
+      // Fall back to any (even non-responsive) match for range messaging.
+      CoordinatorRecord? anyMatch = fittingCoordinator;
+      if (anyMatch == null) {
+        for (final c in enabled) {
+          if (satsInt >= c.minAmountSats && satsInt <= c.maxAmountSats) {
+            anyMatch = c;
+            break;
           }
+        }
+      }
+      if (anyMatch == null && _rate != null) {
+        final globalMinSats = enabled
+            .map((c) => c.minAmountSats)
+            .reduce((a, b) => a < b ? a : b);
+        final globalMaxSats = enabled
+            .map((c) => c.maxAmountSats)
+            .reduce((a, b) => a > b ? a : b);
+        final minFiat =
+            ((globalMinSats / 100000000.0) * _rate! * 100).ceil() / 100;
+        final maxFiat =
+            ((globalMaxSats / 100000000.0) * _rate!).floor().toDouble();
+        if (parsedFiat! < minFiat) {
+          currentError = t.exchange.errors.tooLowFiat(
+            minAmount: minFiat.toStringAsFixed(2),
+            currency: "PLN",
+          );
+        } else if (parsedFiat > maxFiat) {
+          currentError = t.exchange.errors.tooHighFiat(
+            maxAmount: maxFiat.toStringAsFixed(0),
+            currency: "PLN",
+          );
         }
       }
     }
 
     setState(() {
       _amountErrorText = currentError;
-      if (currentError == null &&
-          parsedFiat != null &&
-          parsedFiat > 0 &&
-          _rate != null) {
-        final btcPerPln = 1 / _rate!;
-        final btcAmount = parsedFiat * btcPerPln;
-        _satsEquivalent = btcAmount * 100000000;
-      } else {
-        _satsEquivalent = null;
-      }
+      _satsEquivalent = (currentError == null) ? sats : null;
 
-      // Drop the selected coordinator if it no longer accepts this amount.
-      final sats = _satsEquivalent;
+      // If currently-selected coordinator no longer fits the amount,
+      // switch to a fitting one when available (don't just deselect —
+      // that surprises users when another coordinator does support it).
+      final satsInt = _satsEquivalent?.round();
       final selectedInfo = _selectedCoordinatorInfo;
-      if (sats != null && selectedInfo != null) {
-        final satsInt = sats.round();
-        if (satsInt < selectedInfo.minAmountSats ||
-            satsInt > selectedInfo.maxAmountSats) {
-          _selectedCoordinatorPubkey = null;
-          _selectedCoordinatorInfo = null;
-          _hasTriedAutoSelect = false;
+      if (satsInt != null && selectedInfo != null) {
+        final outOfRange = satsInt < selectedInfo.minAmountSats ||
+            satsInt > selectedInfo.maxAmountSats;
+        if (outOfRange) {
+          if (fittingCoordinator != null) {
+            // Schedule async select; can't await inside setState.
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _selectCoordinator(fittingCoordinator!);
+            });
+          } else {
+            _selectedCoordinatorPubkey = null;
+            _selectedCoordinatorInfo = null;
+            _hasTriedAutoSelect = false;
+          }
         }
       }
     });
@@ -290,20 +320,21 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         makerId: makerId,
         coordinatorPubkey: coordinatorPubkey,
       );
+      final paymentHash = result['paymentHash'] as String;
       ref.read(holdInvoiceProvider.notifier).state = result['holdInvoice'];
-      ref.read(paymentHashProvider.notifier).state = result['paymentHash'];
+      ref.read(paymentHashProvider.notifier).state = paymentHash;
       await ref
           .read(activeOfferProvider.notifier)
           .setActiveOffer(
             Offer(
-              id: "empty",
+              id: paymentHash,
               amountSats: result['makerFees'] + result['amountSats'],
               makerFees: result['makerFees'],
               status: OfferStatus.created,
               fiatAmount: fiatAmount,
               fiatCurrency: "PLN", // TODO
               createdAt: DateTime.now(),
-              holdInvoicePaymentHash: result['paymentHash'],
+              holdInvoicePaymentHash: paymentHash,
               holdInvoice: result['holdInvoice'],
               makerPubkey: makerId,
               coordinatorPubkey: coordinatorPubkey,

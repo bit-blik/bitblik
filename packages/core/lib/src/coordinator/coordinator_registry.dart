@@ -46,7 +46,7 @@ class CoordinatorRegistry {
     required this.rpcClient,
     required this.store,
     required this.relays,
-    this.probeStaleAfter = const Duration(seconds: 600),
+    this.probeStaleAfter = const Duration(seconds: 60),
     this.manualAddTimeout = const Duration(seconds: 5),
     this.networkFinishedWindow = const Duration(days: 30),
   });
@@ -324,6 +324,14 @@ class CoordinatorRegistry {
     _saveDebouncer = Timer(const Duration(milliseconds: 200), () {
       store.save(_records.values.toList());
     });
+  }
+
+  /// Cancel any pending debounced save and persist immediately.
+  /// Call this before process exit to guarantee health probe results are written.
+  Future<void> flushPersist() async {
+    _saveDebouncer?.cancel();
+    _saveDebouncer = null;
+    await store.save(_records.values.toList());
   }
 
   List<CoordinatorRecord> _sorted(List<CoordinatorRecord> list) {

@@ -201,46 +201,274 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
 
 // Provider to hold the currently selected/active offer (if any)
 final activeOfferProvider = StateNotifierProvider<ActiveOfferNotifier, Offer?>(
-  (ref) => ActiveOfferNotifier(),
+  (ref) => ActiveOfferNotifier(ref),
 );
 
 class ActiveOfferNotifier extends StateNotifier<Offer?> {
-  ActiveOfferNotifier() : super(null) {
+  ActiveOfferNotifier(this._ref) : super(null) {
     _loadActiveOffer();
   }
+
+  final Ref _ref;
+
+  /// Window used by boot-time reconciliation. An offer older than this is
+  /// assumed to be definitively cancelled — coordinator hold invoice
+  /// would have expired by then.
+  static const Duration _cancelledLookbackWindow = Duration(hours: 24);
 
   Future<void> _loadActiveOffer() async {
     final offer = await OfferDbService().getActiveOffer();
     state = offer;
+    // Only fire reconciliation when there is actually something to
+    // reconcile. listRecentCancelled is a single indexed query — cheap.
+    unawaited(_reconcileCancelledOffersIfNeeded());
+  }
+
+  /// Boot-time recovery: for every locally-cancelled offer within
+  /// [_cancelledLookbackWindow], ask each coordinator for the user's
+  /// current active offer. If the coordinator reports the same id with a
+  /// non-terminal status, persist that status and revive the offer.
+  Future<void> _reconcileCancelledOffersIfNeeded() async {
+    try {
+      final cancelled = await OfferDbService()
+          .listRecentCancelled(_cancelledLookbackWindow);
+      if (cancelled.isEmpty) return;
+
+      final apiService =
+          await _ref.read(initializedApiServiceProvider.future);
+      final userPubkey = _ref.read(keyServiceProvider).publicKeyHex;
+      if (userPubkey == null) return;
+
+      // Group cancelled offers by coordinator for one RPC per coordinator.
+      final byCoordinator = <String, List<Offer>>{};
+      for (final offer in cancelled) {
+        byCoordinator
+            .putIfAbsent(offer.coordinatorPubkey, () => [])
+            .add(offer);
+      }
+
+      Logger.log.i(
+        () =>
+            '[ActiveOfferNotifier] reconciling ${cancelled.length} cancelled offers across ${byCoordinator.length} coordinators',
+      );
+
+      for (final entry in byCoordinator.entries) {
+        try {
+          final remote = await apiService.getMyActiveOffer(
+            userPubkey,
+            entry.key,
+          );
+          if (remote == null) continue;
+
+          final remoteId = remote['id']?.toString();
+          if (remoteId == null) continue;
+
+          final localMatch =
+              entry.value.where((o) => o.id == remoteId).toList();
+          if (localMatch.isEmpty) continue;
+
+          OfferStatus remoteStatus;
+          try {
+            remoteStatus =
+                OfferStatus.values.byName(remote['status']?.toString() ?? '');
+          } catch (_) {
+            continue;
+          }
+          if (OfferDbService.terminalStatuses.contains(remoteStatus)) {
+            continue;
+          }
+
+          final revived = localMatch.first.copyWith(
+            id: remoteId,
+            status: remoteStatus,
+          );
+          await OfferDbService().upsertOffer(revived);
+          Logger.log.i(
+            () =>
+                '[ActiveOfferNotifier] revived cancelled offer $remoteId -> ${remoteStatus.name}',
+          );
+
+          // Only promote to in-memory active offer when nothing else is
+          // active — avoids stomping on a fresh offer the user just made.
+          if (state == null) {
+            state = revived;
+          }
+        } catch (e) {
+          Logger.log.w(
+            () =>
+                '[ActiveOfferNotifier] reconciliation failed for coordinator ${entry.key}: $e',
+          );
+        }
+      }
+    } catch (e) {
+      Logger.log.e(
+        () =>
+            '[ActiveOfferNotifier] cancelled-offer reconciliation failed: $e',
+      );
+    }
   }
 
   Future<void> setActiveOffer(Offer? offer) async {
     if (offer != null) {
       Logger.log.d(
-        () => '[ActiveOfferNotifier] Setting active offer: ${offer.toJson()}',
+        () => '[ActiveOfferNotifier] Setting active offer: ${offer.id}',
       );
-      await OfferDbService().upsertActiveOffer(offer);
+      await OfferDbService().upsertOffer(offer);
     } else {
-      Logger.log.d(() => '[ActiveOfferNotifier] Clearing active offer');
-      await OfferDbService().deleteActiveOffer();
+      Logger.log.d(() => '[ActiveOfferNotifier] Clearing in-memory active offer (history preserved)');
     }
     state = offer;
   }
 
-  /// Update only the status of the current offer without triggering the subscription manager.
-  /// This method updates the database and state directly to avoid circular dependencies.
-  void updateOfferStatus(OfferStatusUpdate update) {
-    if (state != null) {
-      final updatedOffer = state!.copyWith(
-        id: update.offerId,
-        status: OfferStatus.values.byName(update.status),
-        reservedAt: update.reservedAt,
+  /// Cancel the currently active offer, with a coordinator pre-check.
+  ///
+  /// Flow:
+  ///   1. Ask the coordinator for the user's active offer.
+  ///   2. If the coordinator reports the same offer as already `funded`,
+  ///      throw [OfferAlreadyFundedException] without touching local state.
+  ///      Caller should redirect into the funded flow.
+  ///   3. Otherwise call `cancel_offer` RPC best-effort, mark the local
+  ///      row `cancelled`, and clear the in-memory active state. The
+  ///      DB row stays so a future status update can revive it.
+  Future<void> cancelActiveOffer() async {
+    final current = state;
+    if (current == null) return;
+
+    final apiService =
+        await _ref.read(initializedApiServiceProvider.future);
+    final keyService = _ref.read(keyServiceProvider);
+    final userPubkey = keyService.publicKeyHex;
+    if (userPubkey == null) {
+      throw StateError('User pubkey not available');
+    }
+
+    Map<String, dynamic>? coordinatorOffer;
+    try {
+      coordinatorOffer = await apiService.getMyActiveOffer(
+        userPubkey,
+        current.coordinatorPubkey,
       );
-      // Update DB directly without going through setActiveOffer to avoid triggering listener
-      OfferDbService().upsertActiveOffer(updatedOffer);
-      // Update state directly - this will trigger UI updates but won't retrigger
-      // the subscription manager since we check for ID changes in the listener
-      state = updatedOffer;
+    } catch (e) {
+      Logger.log.w(
+        () =>
+            '[ActiveOfferNotifier] getMyActiveOffer failed during cancel: $e',
+      );
+    }
+
+    if (coordinatorOffer != null) {
+      final remoteId = coordinatorOffer['id']?.toString();
+      final remoteStatusRaw = coordinatorOffer['status']?.toString();
+      OfferStatus? remoteStatus;
+      if (remoteStatusRaw != null) {
+        try {
+          remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
+        } catch (_) {
+          remoteStatus = OfferStatus.unknown;
+        }
+      }
+
+      final sameOffer = remoteId != null &&
+          (remoteId == current.id ||
+              current.holdInvoicePaymentHash != null &&
+                  remoteId == current.holdInvoicePaymentHash);
+
+      if (sameOffer &&
+          remoteStatus != null &&
+          remoteStatus.index >= OfferStatus.funded.index &&
+          !OfferDbService.terminalStatuses.contains(remoteStatus)) {
+        // Coordinator already funded this offer (or moved further).
+        // Persist whatever the coordinator says, but refuse to cancel locally.
+        final updated = current.copyWith(
+          id: remoteId,
+          status: remoteStatus,
+        );
+        await OfferDbService().upsertOffer(updated);
+        state = updated;
+        throw OfferAlreadyFundedException(remoteStatus);
+      }
+    }
+
+    // Best-effort cancel RPC. Swallow errors — local row still moves to
+    // `cancelled` and a later status update can revive it.
+    // Use coordinator-provided UUID when available; local id may be a payment
+    // hash or the legacy "empty" placeholder which the coordinator rejects.
+    final cancelId = coordinatorOffer?['id']?.toString() ?? current.id;
+    try {
+      await apiService.cancelOffer(cancelId, current.coordinatorPubkey);
+    } catch (e) {
+      Logger.log.w(
+        () => '[ActiveOfferNotifier] cancel_offer RPC failed: $e',
+      );
+    }
+
+    final cancelled = current.copyWith(status: OfferStatus.cancelled);
+    await OfferDbService().upsertOffer(cancelled);
+    state = null;
+  }
+
+  /// Persist a status update from the coordinator.
+  ///
+  /// Always updates the DB row matching the update's id (or payment hash).
+  /// If that row is also the in-memory active offer, the state mirrors the
+  /// change. If the in-memory state is null but the persisted row was
+  /// `cancelled` and the update revives it to a non-terminal status, the
+  /// offer is restored as the active one ("funded-after-cancel" recovery).
+  Future<void> applyStatusUpdate(OfferStatusUpdate update) async {
+    OfferStatus newStatus;
+    try {
+      newStatus = OfferStatus.values.byName(update.status);
+    } catch (_) {
+      newStatus = OfferStatus.unknown;
+    }
+
+    final db = OfferDbService();
+    Offer? existing = await db.getOfferById(update.offerId);
+    if (existing == null && update.paymentHash.isNotEmpty) {
+      existing = await db.getOfferByPaymentHash(update.paymentHash);
+    }
+
+    if (existing == null) {
+      Logger.log.d(
+        () =>
+            '[ActiveOfferNotifier] status update for unknown offer ${update.offerId}; ignoring',
+      );
+      return;
+    }
+
+    final updated = existing.copyWith(
+      id: update.offerId,
+      status: newStatus,
+      reservedAt: update.reservedAt,
+    );
+    // When matched by paymentHash the coordinator UUID differs from local id;
+    // delete the old row so upsert doesn't leave a duplicate.
+    if (existing.id != updated.id) {
+      await db.deleteOfferById(existing.id);
+    }
+    await db.upsertOffer(updated);
+
+    final currentState = state;
+    final isCurrent = currentState != null &&
+        (currentState.id == updated.id ||
+            (currentState.holdInvoicePaymentHash != null &&
+                currentState.holdInvoicePaymentHash ==
+                    updated.holdInvoicePaymentHash));
+
+    if (isCurrent) {
+      state = updated;
+      return;
+    }
+
+    // Revival: in-memory state is null/different but a previously
+    // cancelled offer just received a non-terminal update from the
+    // coordinator. Restore it as the active offer.
+    if (existing.status == OfferStatus.cancelled &&
+        !OfferDbService.terminalStatuses.contains(newStatus)) {
+      Logger.log.i(
+        () =>
+            '[ActiveOfferNotifier] reviving cancelled offer ${updated.id} -> ${newStatus.name}',
+      );
+      state = updated;
     }
   }
 
@@ -249,6 +477,23 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     await OfferDbService().resetDatabase();
     state = null;
   }
+}
+
+/// All offers in the local DB (history). Re-fetches when the active
+/// offer changes (covers create / cancel / status update) so the list
+/// stays current without manual invalidation.
+final myOffersProvider = FutureProvider<List<Offer>>((ref) async {
+  ref.watch(activeOfferProvider);
+  return OfferDbService().listOffers();
+});
+
+class OfferAlreadyFundedException implements Exception {
+  final OfferStatus status;
+  const OfferAlreadyFundedException(this.status);
+
+  @override
+  String toString() =>
+      'OfferAlreadyFundedException: coordinator reports status=${status.name}';
 }
 
 /// Provider to expose the stored Lightning Address
@@ -398,7 +643,7 @@ final offerStatusSubscriptionManagerProvider = Provider<void>((ref) {
               () =>
                   "Offer ${current.id} status updated to: $newStatus. Updating active offer provider.",
             );
-            activeOfferNotifier.updateOfferStatus(statusUpdate);
+            activeOfferNotifier.applyStatusUpdate(statusUpdate);
           }
         }
       });

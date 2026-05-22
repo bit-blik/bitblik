@@ -128,6 +128,9 @@ offers:
     reserved: "Riservata"
     blikReceived: "BLIK Inviato"
     blikSentToMaker: "BLIK Ricevuto"
+    expiredBlik: "BLIK Scaduto"
+    expiredSentBlik: "Conferma Scaduta"
+    takerCharged: "Taker Addebitato"
     invalidBlik: "BLIK Non Valido"
     conflict: "Conflitto"
     dispute: "Disputa"
@@ -136,6 +139,7 @@ offers:
     payingTaker: "Pagamento Taker"
     takerPaymentFailed: "Pagamento Fallito"
     takerPaid: "Taker Pagato"
+    unknownStatus: "Sconosciuto"
 
   statusMessages:
     reserved: Offerta riservata dal Taker!
@@ -319,6 +323,8 @@ maker:
       nwcPaymentFailed: "Pagamento fallito: ${details}"
       nwcNotConnected: Wallet NWC non connesso
       insufficientBalance: "Saldo insufficiente. Necessari ${required} sats, disponibili ${available} sats"
+      cancelOfferAlreadyFunded: "Il coordinatore segnala che questa offerta è già finanziata. Non può essere annullata ora."
+      cancelFailed: "Impossibile annullare l'offerta: ${details}"
 
   waitTaker:
     message: In attesa che un Taker riservi la tua offerta...
@@ -694,6 +700,34 @@ system:
 # =============================================================================
 # MAIN LANDING PAGE
 # =============================================================================
+myOffers:
+  title: "Le mie offerte"
+  empty: "Nessuna offerta."
+  unknownCoordinator: "Coordinatore sconosciuto"
+  menuLabel: "Le mie offerte"
+  filter:
+    all: "Tutte"
+    active: "Attive"
+    completed: "Completate"
+    failed: "Fallite"
+  details:
+    title: "Dettagli offerta"
+    notFound: "Offerta non trovata."
+    amount: "Importo"
+    sats: "Satoshi"
+    makerFee: "Commissione maker"
+    takerFee: "Commissione taker"
+    coordinator: "Coordinatore"
+    createdAt: "Creata"
+    reservedAt: "Prenotata"
+    blikReceivedAt: "BLIK inviato"
+    makerConfirmedAt: "Confermata"
+    settledAt: "Liquidata"
+    takerPaidAt: "Taker pagato"
+    id: "ID offerta"
+    paymentHash: "Hash pagamento"
+    holdInvoice: "Hold Invoice"
+
 landing:
   mainTitle: "Il tuo ponte BLIK ⇄ bitcoin"
   subtitle: "Paga o vendi il tuo codice BLIK con bitcoin"
