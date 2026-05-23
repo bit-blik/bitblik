@@ -192,7 +192,7 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   final apiService = ref.watch(apiServiceProvider);
   await for (final offer in apiService.offersStream) {
     offers.removeWhere((o) => o.id == offer.id);
-    if (offer.status == 'funded' || offer.status == 'reserved') {
+    if (offer.status == OfferStatus.funded || offer.status == OfferStatus.reserved) {
       offers.add(offer);
     }
     yield List<Offer>.from(offers.reversed);

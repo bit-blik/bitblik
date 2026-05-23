@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
+import '../../widgets/coordinator_nostr_contact.dart';
 
 class MakerConflictScreen extends ConsumerStatefulWidget {
   final Offer offer;
@@ -171,15 +172,19 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(isLoadingProvider);
+    final coordInfoAsync = ref.watch(
+      coordinatorInfoByPubkeyProvider(widget.offer.coordinatorPubkey),
+    );
+    final coordNpub = coordInfoAsync.valueOrNull?.nostrNpub;
 
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 24),
               const Icon(
                 Icons.gavel_rounded,
                 size: 80,
@@ -198,14 +203,17 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                     : t.maker.conflict.body,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
               if (isLoading)
                 const CircularProgressIndicator()
-              else if (_isDisputeOpened || widget.offer.isDispute)
+              else if (_isDisputeOpened || widget.offer.isDispute) ...[
+                CoordinatorNostrContactCard(npub: coordNpub),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => context.go('/'),
                   child: Text(t.common.buttons.goHome),
-                )
+                ),
+              ]
               else
                 Column(
                   children: [
@@ -236,7 +244,6 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 }

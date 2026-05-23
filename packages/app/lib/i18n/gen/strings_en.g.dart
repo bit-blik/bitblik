@@ -1460,6 +1460,7 @@ class TranslationsMakerConflictEn {
 	late final TranslationsMakerConflictDisputeDialogEn disputeDialog = TranslationsMakerConflictDisputeDialogEn.internal(_root);
 	late final TranslationsMakerConflictFeedbackEn feedback = TranslationsMakerConflictFeedbackEn.internal(_root);
 	late final TranslationsMakerConflictErrorsEn errors = TranslationsMakerConflictErrorsEn.internal(_root);
+	late final TranslationsMakerConflictNostrContactEn nostrContact = TranslationsMakerConflictNostrContactEn.internal(_root);
 }
 
 // Path: maker.success
@@ -1724,6 +1725,7 @@ class TranslationsTakerConflictEn {
 	late final TranslationsTakerConflictActionsEn actions = TranslationsTakerConflictActionsEn.internal(_root);
 	late final TranslationsTakerConflictFeedbackEn feedback = TranslationsTakerConflictFeedbackEn.internal(_root);
 	late final TranslationsTakerConflictErrorsEn errors = TranslationsTakerConflictErrorsEn.internal(_root);
+	late final TranslationsTakerConflictNostrContactEn nostrContact = TranslationsTakerConflictNostrContactEn.internal(_root);
 }
 
 // Path: blik.instructions
@@ -2603,11 +2605,11 @@ class TranslationsMakerConflictDisputeDialogEn {
 	/// en: 'Open dispute?'
 	String get title => 'Open dispute?';
 
-	/// en: 'Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to your Lightning address.'
-	String get content => 'Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to your Lightning address.';
+	/// en: 'Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to a wallet of your choice.'
+	String get content => 'Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to a wallet of your choice.';
 
-	/// en: 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee. The hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved. If the dispute is ruled in your favor, the satoshi amount will be refunded to your Lightning address (minus fees). Make sure you have a Lightning address configured.'
-	String get contentDetailed => 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee.\n\nThe hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved.\n\nIf the dispute is ruled in your favor, the satoshi amount will be refunded to your Lightning address (minus fees). Make sure you have a Lightning address configured.';
+	/// en: 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee. The hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved. If the dispute is ruled in your favor, the satoshi amount will be refunded to a wallet of your choice (minus fees). Make sure you have a wallet ready to receive.'
+	String get contentDetailed => 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee.\n\nThe hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved.\n\nIf the dispute is ruled in your favor, the satoshi amount will be refunded to a wallet of your choice (minus fees). Make sure you have a wallet ready to receive.';
 
 	late final TranslationsMakerConflictDisputeDialogActionsEn actions = TranslationsMakerConflictDisputeDialogActionsEn.internal(_root);
 }
@@ -2634,6 +2636,36 @@ class TranslationsMakerConflictErrorsEn {
 
 	/// en: 'Error opening dispute: ${error}'
 	String openingDispute({required Object error}) => 'Error opening dispute: ${error}';
+}
+
+// Path: maker.conflict.nostrContact
+class TranslationsMakerConflictNostrContactEn {
+	TranslationsMakerConflictNostrContactEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Contact Coordinator on Nostr'
+	String get title => 'Contact Coordinator on Nostr';
+
+	/// en: 'You can DM the coordinator directly for help with this dispute.'
+	String get description => 'You can DM the coordinator directly for help with this dispute.';
+
+	/// en: 'Copy npub'
+	String get copyNpub => 'Copy npub';
+
+	/// en: 'View Profile'
+	String get openProfile => 'View Profile';
+
+	/// en: 'Coordinator npub copied to clipboard!'
+	String get npubCopied => 'Coordinator npub copied to clipboard!';
+
+	/// en: 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.'
+	String get yourIdentityDescription => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.';
+
+	/// en: 'Manage Neko Keys'
+	String get manageNekoKeys => 'Manage Neko Keys';
 }
 
 // Path: taker.submitBlik.actions
@@ -3071,6 +3103,36 @@ class TranslationsTakerConflictErrorsEn {
 	String reporting({required Object details}) => 'Error reporting conflict: ${details}';
 }
 
+// Path: taker.conflict.nostrContact
+class TranslationsTakerConflictNostrContactEn {
+	TranslationsTakerConflictNostrContactEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Contact Coordinator on Nostr'
+	String get title => 'Contact Coordinator on Nostr';
+
+	/// en: 'You can DM the coordinator directly for help with this dispute.'
+	String get description => 'You can DM the coordinator directly for help with this dispute.';
+
+	/// en: 'Copy npub'
+	String get copyNpub => 'Copy npub';
+
+	/// en: 'View Profile'
+	String get openProfile => 'View Profile';
+
+	/// en: 'Coordinator npub copied to clipboard!'
+	String get npubCopied => 'Coordinator npub copied to clipboard!';
+
+	/// en: 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.'
+	String get yourIdentityDescription => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.';
+
+	/// en: 'Manage Neko Keys'
+	String get manageNekoKeys => 'Manage Neko Keys';
+}
+
 // Path: home.statistics.errors
 class TranslationsHomeStatisticsErrorsEn {
 	TranslationsHomeStatisticsErrorsEn.internal(this._root);
@@ -3384,12 +3446,19 @@ extension on Translations {
 			case 'maker.conflict.actions.openDispute': return 'Blik payment did NOT succeed, OPEN DISPUTE';
 			case 'maker.conflict.actions.submitDispute': return 'Submit Dispute';
 			case 'maker.conflict.disputeDialog.title': return 'Open dispute?';
-			case 'maker.conflict.disputeDialog.content': return 'Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to your Lightning address.';
-			case 'maker.conflict.disputeDialog.contentDetailed': return 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee.\n\nThe hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved.\n\nIf the dispute is ruled in your favor, the satoshi amount will be refunded to your Lightning address (minus fees). Make sure you have a Lightning address configured.';
+			case 'maker.conflict.disputeDialog.content': return 'Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to a wallet of your choice.';
+			case 'maker.conflict.disputeDialog.contentDetailed': return 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee.\n\nThe hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved.\n\nIf the dispute is ruled in your favor, the satoshi amount will be refunded to a wallet of your choice (minus fees). Make sure you have a wallet ready to receive.';
 			case 'maker.conflict.disputeDialog.actions.confirm': return 'Open Dispute';
 			case 'maker.conflict.disputeDialog.actions.cancel': return 'Cancel';
 			case 'maker.conflict.feedback.disputeOpenedSuccess': return 'Dispute successfully opened. Coordinator will review.';
 			case 'maker.conflict.errors.openingDispute': return ({required Object error}) => 'Error opening dispute: ${error}';
+			case 'maker.conflict.nostrContact.title': return 'Contact Coordinator on Nostr';
+			case 'maker.conflict.nostrContact.description': return 'You can DM the coordinator directly for help with this dispute.';
+			case 'maker.conflict.nostrContact.copyNpub': return 'Copy npub';
+			case 'maker.conflict.nostrContact.openProfile': return 'View Profile';
+			case 'maker.conflict.nostrContact.npubCopied': return 'Coordinator npub copied to clipboard!';
+			case 'maker.conflict.nostrContact.yourIdentityDescription': return 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.';
+			case 'maker.conflict.nostrContact.manageNekoKeys': return 'Manage Neko Keys';
 			case 'maker.success.title': return 'Offer completed';
 			case 'maker.success.headline': return 'Payment confirmed!';
 			case 'maker.success.subtitle': return 'Taker will now be paid.';
@@ -3504,6 +3573,13 @@ extension on Translations {
 			case 'taker.conflict.actions.back': return 'Back to Home';
 			case 'taker.conflict.feedback.reported': return 'Conflict reported. Coordinator will review.';
 			case 'taker.conflict.errors.reporting': return ({required Object details}) => 'Error reporting conflict: ${details}';
+			case 'taker.conflict.nostrContact.title': return 'Contact Coordinator on Nostr';
+			case 'taker.conflict.nostrContact.description': return 'You can DM the coordinator directly for help with this dispute.';
+			case 'taker.conflict.nostrContact.copyNpub': return 'Copy npub';
+			case 'taker.conflict.nostrContact.openProfile': return 'View Profile';
+			case 'taker.conflict.nostrContact.npubCopied': return 'Coordinator npub copied to clipboard!';
+			case 'taker.conflict.nostrContact.yourIdentityDescription': return 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.';
+			case 'taker.conflict.nostrContact.manageNekoKeys': return 'Manage Neko Keys';
 			case 'blik.instructions.taker': return 'Once the Maker enters the BLIK code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.';
 			case 'home.notifications.title': return 'Get notified about new offers via:';
 			case 'home.notifications.telegram': return 'Telegram';

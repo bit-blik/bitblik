@@ -12,8 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config/group_links.dart';
-import 'package:bitblik_core/core.dart'; // Added
-import 'package:bitblik_core/core.dart'; // Import Offer model
+import 'package:bitblik_core/core.dart';
 import '../providers/providers.dart';
 import '../widgets/lightning_address_widget.dart';
 import '../widgets/progress_indicators.dart'; // Import the progress indicators
@@ -34,6 +33,8 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
   Duration? _reservationDuration;
   bool _isLoadingCoordinatorConfig = true;
   String? _coordinatorConfigError;
+  String? _selectedFinishedCoordinatorPubkey;
+  String? _selectedStatsCoordinatorPubkey;
 
   @override
   void initState() {
@@ -377,6 +378,8 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
     final offersAsyncValue = ref.watch(availableOffersProvider);
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
     final myActiveOffer = ref.watch(activeOfferProvider);
+    final sortedAllCoordinators = ref.watch(discoveredCoordinatorsProvider)
+        .maybeWhen(data: (r) => r, orElse: () => <CoordinatorRecord>[]);
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -573,10 +576,17 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                       ),
                       SizedBox(height: 30),
                       const Divider(height: 32, thickness: 1),
-                      _buildStatsSection(
-                        context,
-                        ref.watch(successfulOffersStatsProvider),
-                        t,
+                      Expanded(
+                        child: _buildStatsSection(
+                          context,
+                          ref.watch(successfulOffersStatsProvider),
+                          t,
+                          sortedCoordinators: sortedAllCoordinators,
+                          selectedCoordinatorPubkey:
+                              _selectedStatsCoordinatorPubkey,
+                          onCoordinatorChanged: (pk) =>
+                              setState(() => _selectedStatsCoordinatorPubkey = pk),
+                        ),
                       ),
                     ],
                   );
@@ -831,8 +841,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                         offer.takerPubkey == publicKey &&
                                         offer.id == myActiveOffer.id &&
                                         (myActiveOffer.isInvalidBlik ||
-                                            myActiveOffer.isConflict)) {
-                                      // Show button for conflict or invalidBlik if it's the active offer
+                                            myActiveOffer.isConflict ||
+                                            myActiveOffer.isDispute)) {
+                                      // Show button for conflict, dispute, or invalidBlik if it's the active offer
                                       trailingWidget = ElevatedButton(
                                         child: Text(t.offers.actions.view),
                                         onPressed: () {
@@ -841,7 +852,8 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                               '/taker-invalid-blik',
                                               extra: myActiveOffer,
                                             );
-                                          } else if (myActiveOffer.isConflict) {
+                                          } else if (myActiveOffer.isConflict ||
+                                              myActiveOffer.isDispute) {
                                             router.go(
                                               '/taker-conflict',
                                               extra: myActiveOffer.id,
@@ -872,17 +884,11 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     initialOffer: myActiveOffer,
                                                   );
                                             } else if (myActiveOffer.status ==
-                                                    OfferStatus
-                                                        .blikReceived
-                                                        .name ||
+                                                    OfferStatus.blikReceived ||
                                                 myActiveOffer.status ==
-                                                    OfferStatus
-                                                        .blikSentToMaker
-                                                        .name ||
+                                                    OfferStatus.blikSentToMaker ||
                                                 myActiveOffer.status ==
-                                                    OfferStatus
-                                                        .makerConfirmed
-                                                        .name) {
+                                                    OfferStatus.makerConfirmed) {
                                               destinationScreen =
                                                   TakerWaitConfirmationScreen(
                                                     offer: myActiveOffer,
@@ -1033,98 +1039,201 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                     ),
                     // Finished offers section
                     if (finishedOffers.isNotEmpty)
-                      Padding(
-                        padding: EdgeInsets.only(
-                          top: showActiveOffersList ? 16.0 : 0,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t.offers.details.finishedOffers,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                      Builder(
+                        builder: (context) {
+                          // Coordinators present in finished offers, ordered by score
+                          final finishedPubkeys = finishedOffers
+                              .map((o) => o.coordinatorPubkey)
+                              .toSet();
+                          final sortedFinishedCoordinators =
+                              sortedAllCoordinators
+                                  .where(
+                                    (r) =>
+                                        finishedPubkeys.contains(r.pubkeyHex),
+                                  )
+                                  .toList();
+                          // Include any pubkeys not yet in registry
+                          for (final pk in finishedPubkeys) {
+                            if (!sortedFinishedCoordinators
+                                .any((r) => r.pubkeyHex == pk)) {
+                              sortedFinishedCoordinators.add(
+                                CoordinatorRecord(pubkeyHex: pk),
+                              );
+                            }
+                          }
+
+                          // Effective selection: keep if valid, else default to first
+                          final effectivePubkey =
+                              sortedFinishedCoordinators.isNotEmpty
+                                  ? (sortedFinishedCoordinators.any(
+                                          (r) =>
+                                              r.pubkeyHex ==
+                                              _selectedFinishedCoordinatorPubkey,
+                                        )
+                                        ? _selectedFinishedCoordinatorPubkey!
+                                        : sortedFinishedCoordinators
+                                            .first
+                                            .pubkeyHex)
+                                  : null;
+
+                          final filteredFinishedOffers =
+                              effectivePubkey != null
+                                  ? finishedOffers
+                                      .where(
+                                        (o) =>
+                                            o.coordinatorPubkey ==
+                                            effectivePubkey,
+                                      )
+                                      .toList()
+                                  : finishedOffers;
+
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              top: showActiveOffersList ? 16.0 : 0,
                             ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              height:
-                                  72, // further reduce height for compactness
-                              child: Scrollbar(
-                                child: ListView.builder(
-                                  shrinkWrap: !showActiveOffersList,
-                                  physics:
-                                      !showActiveOffersList
-                                          ? const NeverScrollableScrollPhysics()
-                                          : null,
-                                  itemCount: finishedOffers.length,
-                                  itemBuilder: (context, index) {
-                                    final offer = finishedOffers[index];
-                                    return Card(
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 5.0,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      t.offers.details.finishedOffers,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16.0,
-                                          vertical: 12.0,
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              t.offers.details
-                                                  .amountWithCurrency(
-                                                    amount: formatDouble(
-                                                      offer.fiatAmount ?? 0.0,
+                                    ),
+                                    if (sortedFinishedCoordinators.length >
+                                        1) ...[
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: DropdownButton<String>(
+                                          value: effectivePubkey,
+                                          isExpanded: true,
+                                          isDense: true,
+                                          underline: const SizedBox.shrink(),
+                                          items: sortedFinishedCoordinators
+                                              .map(
+                                                (c) =>
+                                                    DropdownMenuItem<String>(
+                                                      value: c.pubkeyHex,
+                                                      child: Text(
+                                                        c.name,
+                                                        overflow:
+                                                            TextOverflow
+                                                                .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
                                                     ),
-                                                    currency:
-                                                        offer.fiatCurrency,
-                                                  ),
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 14,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              t.offers.details.amount(
-                                                amount:
-                                                    offer.amountSats.toString(),
-                                              ),
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey[600],
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            Text(
-                                              t.offers.details.takerFee(
-                                                fee:
-                                                    offer.takerFees
-                                                        ?.toString() ??
-                                                    "0",
-                                              ),
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey[600],
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ],
+                                              )
+                                              .toList(),
+                                          onChanged: (value) {
+                                            if (value != null) {
+                                              setState(() {
+                                                _selectedFinishedCoordinatorPubkey =
+                                                    value;
+                                              });
+                                            }
+                                          },
                                         ),
                                       ),
-                                    );
-                                  },
+                                    ] else if (sortedFinishedCoordinators
+                                        .isNotEmpty) ...[
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        sortedFinishedCoordinators.first.name,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ],
                                 ),
-                              ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  height: 72,
+                                  child: Scrollbar(
+                                    child: ListView.builder(
+                                      shrinkWrap: !showActiveOffersList,
+                                      physics:
+                                          !showActiveOffersList
+                                              ? const NeverScrollableScrollPhysics()
+                                              : null,
+                                      itemCount: filteredFinishedOffers.length,
+                                      itemBuilder: (context, index) {
+                                        final offer =
+                                            filteredFinishedOffers[index];
+                                        return Card(
+                                          margin: const EdgeInsets.symmetric(
+                                            vertical: 5.0,
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16.0,
+                                              vertical: 12.0,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  t.offers.details
+                                                      .amountWithCurrency(
+                                                        amount: formatDouble(
+                                                          offer.fiatAmount,
+                                                        ),
+                                                        currency:
+                                                            offer.fiatCurrency,
+                                                      ),
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 14,
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  t.offers.details.amount(
+                                                    amount: offer.amountSats
+                                                        .toString(),
+                                                  ),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                Text(
+                                                  t.offers.details.takerFee(
+                                                    fee: offer.takerFees
+                                                        .toString(),
+                                                  ),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  maxLines: 1,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                   ],
                 );
@@ -1171,10 +1280,12 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                     ),
                     SizedBox(height: 30),
                     const Divider(height: 32, thickness: 1),
-                    _buildStatsSection(
-                      context,
-                      ref.watch(successfulOffersStatsProvider),
-                      t,
+                    Expanded(
+                      child: _buildStatsSection(
+                        context,
+                        ref.watch(successfulOffersStatsProvider),
+                        t,
+                      ),
                     ),
                   ],
                 );
@@ -1258,31 +1369,76 @@ String _formatTimeAgo(DateTime dateTime) {
   }
 }
 
+Widget _buildCoordinatorIcon(CoordinatorRecord c, {double size = 20}) {
+  final icon = c.icon;
+  if (icon != null && icon.isNotEmpty) {
+    if (icon.startsWith('http')) {
+      return Image.network(
+        icon,
+        width: size,
+        height: size,
+        errorBuilder: (ctx, err, st) => Icon(Icons.account_circle, size: size),
+      );
+    } else {
+      return Image.asset(
+        icon,
+        width: size,
+        height: size,
+        errorBuilder: (ctx, err, st) => Icon(Icons.account_circle, size: size),
+      );
+    }
+  }
+  return Icon(Icons.account_circle, size: size);
+}
+
 Widget _buildStatsSection(
   BuildContext context,
   AsyncValue<Map<String, dynamic>> statsAsyncValue,
-  Translations t,
-) {
+  Translations t, {
+  List<CoordinatorRecord> sortedCoordinators = const [],
+  String? selectedCoordinatorPubkey,
+  ValueChanged<String>? onCoordinatorChanged,
+}) {
   return statsAsyncValue.when(
     data: (data) {
       final statsMap = data['stats'] as Map<String, dynamic>? ?? {};
-      final lifetime = statsMap['lifetime'] as Map<String, dynamic>? ?? {};
       final last7Days = statsMap['last_7_days'] as Map<String, dynamic>? ?? {};
 
       final recentOffersData = data['offers'] as List<dynamic>? ?? [];
-      final recentOffers = recentOffersData.cast<Offer>();
+      final allRecentOffers = recentOffersData.cast<Offer>();
 
-      final numberFormat = NumberFormat(
-        "#,##0",
-        'en',
-      ); // Use 'en' locale for numbers
-      final dateFormat =
-          DateFormat.yMd('en').add_Hm(); // Use 'en' locale for dates
+      final numberFormat = NumberFormat('#,##0', 'en');
 
       final last7DaysBlikTime =
           last7Days['avg_time_blik_received_to_created_seconds'] as num?;
       final last7DaysPaidTime =
           last7Days['avg_time_taker_paid_to_created_seconds'] as num?;
+
+      // Build sorted coordinator list from offers present in the data
+      final offerPubkeys =
+          allRecentOffers.map((o) => o.coordinatorPubkey).toSet();
+      final filteredSortedCoords = sortedCoordinators
+          .where((r) => offerPubkeys.contains(r.pubkeyHex))
+          .toList();
+      for (final pk in offerPubkeys) {
+        if (!filteredSortedCoords.any((r) => r.pubkeyHex == pk)) {
+          filteredSortedCoords.add(CoordinatorRecord(pubkeyHex: pk));
+        }
+      }
+
+      // Effective selection — always non-null when offers exist
+      final effectivePubkey = filteredSortedCoords.isNotEmpty
+          ? (filteredSortedCoords.any(
+                  (r) => r.pubkeyHex == selectedCoordinatorPubkey)
+              ? selectedCoordinatorPubkey!
+              : filteredSortedCoords.first.pubkeyHex)
+          : null;
+
+      final recentOffers = effectivePubkey != null
+          ? allRecentOffers
+              .where((o) => o.coordinatorPubkey == effectivePubkey)
+              .toList()
+          : allRecentOffers;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1293,7 +1449,8 @@ Widget _buildStatsSection(
           ),
           const SizedBox(height: 8),
 
-          Padding(
+          Expanded(
+            child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1313,17 +1470,43 @@ Widget _buildStatsSection(
                 ),
 
                 const SizedBox(height: 8),
+
+                // Coordinator filter — after stats, before list
+                if (filteredSortedCoords.isNotEmpty)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: filteredSortedCoords.map((c) {
+                        final selected = c.pubkeyHex == effectivePubkey;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: FilterChip(
+                            avatar: _buildCoordinatorIcon(c, size: 16),
+                            label: Text(
+                              c.name,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            selected: selected,
+                            showCheckmark: false,
+                            onSelected: onCoordinatorChanged != null
+                                ? (_) => onCoordinatorChanged(c.pubkeyHex)
+                                : null,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+
+                const SizedBox(height: 8),
                 if (recentOffers.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Text(t.offers.details.noSuccessfulTrades),
                   )
                 else
-                  SizedBox(
-                    height: 150, // further reduce height for compactness
+                  Expanded(
                     child: Scrollbar(
                       child: ListView.builder(
-                        shrinkWrap: true,
                         physics: const AlwaysScrollableScrollPhysics(),
                         itemCount: recentOffers.length,
                         itemBuilder: (context, index) {
@@ -1352,9 +1535,7 @@ Widget _buildStatsSection(
                                     // Amount and currency
                                     Text(
                                       t.offers.details.amountWithCurrency(
-                                        amount: formatDouble(
-                                          offer.fiatAmount ?? 0.0,
-                                        ),
+                                        amount: formatDouble(offer.fiatAmount),
                                         currency: offer.fiatCurrency,
                                       ),
                                       style: const TextStyle(
@@ -1430,6 +1611,7 @@ Widget _buildStatsSection(
                   ),
               ],
             ),
+          ),
           ),
         ],
       );

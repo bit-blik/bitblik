@@ -136,6 +136,7 @@ class _TakerPaymentFailedScreenState
 
     return Scaffold(
       body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           // Dismiss keyboard when tapping outside of text field
           FocusScope.of(context).unfocus();

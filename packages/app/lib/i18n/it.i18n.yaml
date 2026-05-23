@@ -410,8 +410,8 @@ maker:
 
     disputeDialog:
       title: Aprire una disputa?
-      content: Aprire una disputa richiede una verifica manuale da parte del coordinatore, che richiederà tempo. Una commissione per disputa sarà addebitata se la disputa sarà risolta contro di te. La fattura hold verrà saldata per evitare che scada. Se la disputa sarà risolta a tuo favore, riceverai un rimborso (meno le commissioni) sul tuo indirizzo Lightning.
-      contentDetailed: "Aprire una disputa richiederà l'intervento manuale del coordinatore, che richiede tempo e comporta una commissione per disputa.\n\nLa fattura hold verrà saldata immediatamente per evitare che scada prima della risoluzione della disputa.\n\nSe la disputa sarà risolta a tuo favore, l'importo in satoshi verrà rimborsato sul tuo indirizzo Lightning (meno le commissioni). Assicurati di aver configurato un indirizzo Lightning."
+      content: Aprire una disputa richiede una verifica manuale da parte del coordinatore, che richiederà tempo. Una commissione per disputa sarà addebitata se la disputa sarà risolta contro di te. La fattura hold verrà saldata per evitare che scada. Se la disputa sarà risolta a tuo favore, riceverai un rimborso (meno le commissioni) su un portafoglio a tua scelta.
+      contentDetailed: "Aprire una disputa richiederà l'intervento manuale del coordinatore, che richiede tempo e comporta una commissione per disputa.\n\nLa fattura hold verrà saldata immediatamente per evitare che scada prima della risoluzione della disputa.\n\nSe la disputa sarà risolta a tuo favore, l'importo in satoshi verrà rimborsato su un portafoglio a tua scelta (meno le commissioni). Assicurati di avere un portafoglio pronto per ricevere."
       actions:
         confirm: Apri Disputa
         cancel: Annulla
@@ -421,6 +421,15 @@ maker:
 
     errors:
       openingDispute: "Errore nell'apertura della disputa: ${error}"
+
+    nostrContact:
+      title: Contatta il Coordinatore su Nostr
+      description: Puoi inviare un DM al coordinatore direttamente per assistenza con questa disputa.
+      copyNpub: Copia npub
+      openProfile: Visualizza Profilo
+      npubCopied: Npub del coordinatore copiato negli appunti!
+      yourIdentityDescription: "Per inviare DM, accedi con la tua chiave privata Neko (nsec) in qualsiasi client Nostr che supporta i messaggi diretti."
+      manageNekoKeys: Gestisci Chiavi Neko
 
   success:
     title: Offerta completata
@@ -607,6 +616,15 @@ taker:
 
     errors:
       reporting: "Errore nella segnalazione del conflitto: ${details}"
+
+    nostrContact:
+      title: Contatta il Coordinatore su Nostr
+      description: Puoi inviare un DM al coordinatore direttamente per assistenza con questa disputa.
+      copyNpub: Copia npub
+      openProfile: Visualizza Profilo
+      npubCopied: Npub del coordinatore copiato negli appunti!
+      yourIdentityDescription: "Per inviare DM, accedi con la tua chiave privata Neko (nsec) in qualsiasi client Nostr che supporta i messaggi diretti."
+      manageNekoKeys: Gestisci Chiavi Neko
 
 # =============================================================================
 # BLIK (General)

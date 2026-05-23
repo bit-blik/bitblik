@@ -410,8 +410,8 @@ maker:
     
     disputeDialog:
       title: Otworzyć spór?
-      content: Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) na Twój adres Lightning.
-      contentDetailed: "Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona na Twój adres Lightning (pomniejszona o opłaty). Upewnij się, że masz skonfigurowany adres Lightning."
+      content: Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) do portfela według własnego wyboru.
+      contentDetailed: "Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona do portfela według własnego wyboru (pomniejszona o opłaty). Upewnij się, że masz portfel gotowy do odbioru."
       actions:
         confirm: Otwórz Spór
         cancel: Anuluj
@@ -421,7 +421,16 @@ maker:
     
     errors:
       openingDispute: "Błąd otwierania sporu: ${error}"
-  
+
+    nostrContact:
+      title: Skontaktuj się z Koordynatorem na Nostr
+      description: Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.
+      copyNpub: Kopiuj npub
+      openProfile: Zobacz Profil
+      npubCopied: Npub koordynatora skopiowany do schowka!
+      yourIdentityDescription: "Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie."
+      manageNekoKeys: Zarządzaj Kluczami Neko
+
   success:
     title: Oferta zakończona
     headline: Płatność potwierdzona!
@@ -609,6 +618,15 @@ taker:
     
     errors:
       reporting: "Błąd zgłaszania konfliktu: ${details}"
+
+    nostrContact:
+      title: Skontaktuj się z Koordynatorem na Nostr
+      description: Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.
+      copyNpub: Kopiuj npub
+      openProfile: Zobacz Profil
+      npubCopied: Npub koordynatora skopiowany do schowka!
+      yourIdentityDescription: "Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie."
+      manageNekoKeys: Zarządzaj Kluczami Neko
 
 # =============================================================================
 # BLIK (General)

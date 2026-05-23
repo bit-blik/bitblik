@@ -6,6 +6,7 @@ import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
+import '../../widgets/coordinator_nostr_contact.dart';
 
 class TakerConflictScreen extends ConsumerStatefulWidget {
   final String offerId;
@@ -30,18 +31,26 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
       }
     });
 
+    final offer = ref.watch(activeOfferProvider);
+    final coordNpub = offer?.coordinatorPubkey != null
+        ? ref
+              .watch(coordinatorInfoByPubkeyProvider(offer!.coordinatorPubkey))
+              .valueOrNull
+              ?.nostrNpub
+        : null;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(t.taker.conflict.title),
         automaticallyImplyLeading: false,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 24),
               const Icon(
                 Icons.warning_amber_rounded,
                 size: 80,
@@ -55,13 +64,8 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
               ),
               const SizedBox(height: 16),
               Text(t.taker.conflict.body, textAlign: TextAlign.center),
+              CoordinatorNostrContactCard(npub: coordNpub),
               const SizedBox(height: 16),
-              Text(
-                t.taker.conflict.instructions,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () {
                   context.go('/');
@@ -71,7 +75,6 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 

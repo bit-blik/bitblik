@@ -677,8 +677,10 @@ class NostrService {
         final stats = _handleResponse(response, (result) {
           if (result.containsKey('offers') && result['offers'] is List) {
             final List<dynamic> offersJson = result['offers'];
-            result['offers'] =
-                offersJson.map((json) => Offer.fromJson(json)).toList();
+            result['offers'] = offersJson
+                .map((json) => Offer.fromJson(json)
+                    .copyWith(coordinatorPubkey: coordinator.pubkeyHex))
+                .toList();
           }
           return result;
         });

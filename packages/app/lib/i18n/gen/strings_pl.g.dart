@@ -941,6 +941,7 @@ class _TranslationsMakerConflictPl extends TranslationsMakerConflictEn {
 	@override late final _TranslationsMakerConflictDisputeDialogPl disputeDialog = _TranslationsMakerConflictDisputeDialogPl._(_root);
 	@override late final _TranslationsMakerConflictFeedbackPl feedback = _TranslationsMakerConflictFeedbackPl._(_root);
 	@override late final _TranslationsMakerConflictErrorsPl errors = _TranslationsMakerConflictErrorsPl._(_root);
+	@override late final _TranslationsMakerConflictNostrContactPl nostrContact = _TranslationsMakerConflictNostrContactPl._(_root);
 }
 
 // Path: maker.success
@@ -1105,6 +1106,7 @@ class _TranslationsTakerConflictPl extends TranslationsTakerConflictEn {
 	@override late final _TranslationsTakerConflictActionsPl actions = _TranslationsTakerConflictActionsPl._(_root);
 	@override late final _TranslationsTakerConflictFeedbackPl feedback = _TranslationsTakerConflictFeedbackPl._(_root);
 	@override late final _TranslationsTakerConflictErrorsPl errors = _TranslationsTakerConflictErrorsPl._(_root);
+	@override late final _TranslationsTakerConflictNostrContactPl nostrContact = _TranslationsTakerConflictNostrContactPl._(_root);
 }
 
 // Path: blik.instructions
@@ -1656,8 +1658,8 @@ class _TranslationsMakerConflictDisputeDialogPl extends TranslationsMakerConflic
 
 	// Translations
 	@override String get title => 'Otworzyć spór?';
-	@override String get content => 'Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) na Twój adres Lightning.';
-	@override String get contentDetailed => 'Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona na Twój adres Lightning (pomniejszona o opłaty). Upewnij się, że masz skonfigurowany adres Lightning.';
+	@override String get content => 'Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) do portfela według własnego wyboru.';
+	@override String get contentDetailed => 'Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona do portfela według własnego wyboru (pomniejszona o opłaty). Upewnij się, że masz portfel gotowy do odbioru.';
 	@override late final _TranslationsMakerConflictDisputeDialogActionsPl actions = _TranslationsMakerConflictDisputeDialogActionsPl._(_root);
 }
 
@@ -1679,6 +1681,22 @@ class _TranslationsMakerConflictErrorsPl extends TranslationsMakerConflictErrors
 
 	// Translations
 	@override String openingDispute({required Object error}) => 'Błąd otwierania sporu: ${error}';
+}
+
+// Path: maker.conflict.nostrContact
+class _TranslationsMakerConflictNostrContactPl extends TranslationsMakerConflictNostrContactEn {
+	_TranslationsMakerConflictNostrContactPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Skontaktuj się z Koordynatorem na Nostr';
+	@override String get description => 'Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.';
+	@override String get copyNpub => 'Kopiuj npub';
+	@override String get openProfile => 'Zobacz Profil';
+	@override String get npubCopied => 'Npub koordynatora skopiowany do schowka!';
+	@override String get yourIdentityDescription => 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.';
+	@override String get manageNekoKeys => 'Zarządzaj Kluczami Neko';
 }
 
 // Path: taker.submitBlik.actions
@@ -1980,6 +1998,22 @@ class _TranslationsTakerConflictErrorsPl extends TranslationsTakerConflictErrors
 
 	// Translations
 	@override String reporting({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}';
+}
+
+// Path: taker.conflict.nostrContact
+class _TranslationsTakerConflictNostrContactPl extends TranslationsTakerConflictNostrContactEn {
+	_TranslationsTakerConflictNostrContactPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Skontaktuj się z Koordynatorem na Nostr';
+	@override String get description => 'Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.';
+	@override String get copyNpub => 'Kopiuj npub';
+	@override String get openProfile => 'Zobacz Profil';
+	@override String get npubCopied => 'Npub koordynatora skopiowany do schowka!';
+	@override String get yourIdentityDescription => 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.';
+	@override String get manageNekoKeys => 'Zarządzaj Kluczami Neko';
 }
 
 // Path: home.statistics.errors
@@ -2286,12 +2320,19 @@ extension on TranslationsPl {
 			case 'maker.conflict.actions.openDispute': return 'Płatność BLIK NIE powiodła się, OTWÓRZ SPÓR';
 			case 'maker.conflict.actions.submitDispute': return 'Zgłoś Spór';
 			case 'maker.conflict.disputeDialog.title': return 'Otworzyć spór?';
-			case 'maker.conflict.disputeDialog.content': return 'Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) na Twój adres Lightning.';
-			case 'maker.conflict.disputeDialog.contentDetailed': return 'Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona na Twój adres Lightning (pomniejszona o opłaty). Upewnij się, że masz skonfigurowany adres Lightning.';
+			case 'maker.conflict.disputeDialog.content': return 'Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) do portfela według własnego wyboru.';
+			case 'maker.conflict.disputeDialog.contentDetailed': return 'Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona do portfela według własnego wyboru (pomniejszona o opłaty). Upewnij się, że masz portfel gotowy do odbioru.';
 			case 'maker.conflict.disputeDialog.actions.confirm': return 'Otwórz Spór';
 			case 'maker.conflict.disputeDialog.actions.cancel': return 'Anuluj';
 			case 'maker.conflict.feedback.disputeOpenedSuccess': return 'Spór pomyślnie otwarty. Koordynator rozpatrzy sprawę.';
 			case 'maker.conflict.errors.openingDispute': return ({required Object error}) => 'Błąd otwierania sporu: ${error}';
+			case 'maker.conflict.nostrContact.title': return 'Skontaktuj się z Koordynatorem na Nostr';
+			case 'maker.conflict.nostrContact.description': return 'Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.';
+			case 'maker.conflict.nostrContact.copyNpub': return 'Kopiuj npub';
+			case 'maker.conflict.nostrContact.openProfile': return 'Zobacz Profil';
+			case 'maker.conflict.nostrContact.npubCopied': return 'Npub koordynatora skopiowany do schowka!';
+			case 'maker.conflict.nostrContact.yourIdentityDescription': return 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.';
+			case 'maker.conflict.nostrContact.manageNekoKeys': return 'Zarządzaj Kluczami Neko';
 			case 'maker.success.title': return 'Oferta zakończona';
 			case 'maker.success.headline': return 'Płatność potwierdzona!';
 			case 'maker.success.subtitle': return 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.';
@@ -2407,6 +2448,13 @@ extension on TranslationsPl {
 			case 'taker.conflict.actions.back': return 'Powrót do strony głównej';
 			case 'taker.conflict.feedback.reported': return 'Konflikt zgłoszony. Koordynator rozpatrzy sprawę.';
 			case 'taker.conflict.errors.reporting': return ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}';
+			case 'taker.conflict.nostrContact.title': return 'Skontaktuj się z Koordynatorem na Nostr';
+			case 'taker.conflict.nostrContact.description': return 'Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.';
+			case 'taker.conflict.nostrContact.copyNpub': return 'Kopiuj npub';
+			case 'taker.conflict.nostrContact.openProfile': return 'Zobacz Profil';
+			case 'taker.conflict.nostrContact.npubCopied': return 'Npub koordynatora skopiowany do schowka!';
+			case 'taker.conflict.nostrContact.yourIdentityDescription': return 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.';
+			case 'taker.conflict.nostrContact.manageNekoKeys': return 'Zarządzaj Kluczami Neko';
 			case 'blik.instructions.taker': return 'Gdy Maker wprowadzi kod BLIK, będziesz musiał potwierdzić płatność w swojej aplikacji bankowej. Upewnij się, że kwota jest poprawna przed potwierdzeniem.';
 			case 'nekoInfo.title': return 'Czym jest Neko?';
 			case 'nekoInfo.description': return 'Twoje Neko to Twoja tożsamość do korzystania z BitBlik. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków.';

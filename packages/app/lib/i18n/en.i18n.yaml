@@ -411,8 +411,8 @@ maker:
     
     disputeDialog:
       title: Open dispute?
-      content: Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to your Lightning address.
-      contentDetailed: "Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee.\n\nThe hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved.\n\nIf the dispute is ruled in your favor, the satoshi amount will be refunded to your Lightning address (minus fees). Make sure you have a Lightning address configured."
+      content: Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to a wallet of your choice.
+      contentDetailed: "Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee.\n\nThe hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved.\n\nIf the dispute is ruled in your favor, the satoshi amount will be refunded to a wallet of your choice (minus fees). Make sure you have a wallet ready to receive."
       actions:
         confirm: Open Dispute
         cancel: Cancel
@@ -422,7 +422,16 @@ maker:
     
     errors:
       openingDispute: "Error opening dispute: ${error}"
-  
+
+    nostrContact:
+      title: Contact Coordinator on Nostr
+      description: You can DM the coordinator directly for help with this dispute.
+      copyNpub: Copy npub
+      openProfile: View Profile
+      npubCopied: Coordinator npub copied to clipboard!
+      yourIdentityDescription: "To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages."
+      manageNekoKeys: Manage Neko Keys
+
   success:
     title: Offer completed
     headline: Payment confirmed!
@@ -608,6 +617,15 @@ taker:
     
     errors:
       reporting: "Error reporting conflict: ${details}"
+
+    nostrContact:
+      title: Contact Coordinator on Nostr
+      description: You can DM the coordinator directly for help with this dispute.
+      copyNpub: Copy npub
+      openProfile: View Profile
+      npubCopied: Coordinator npub copied to clipboard!
+      yourIdentityDescription: "To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages."
+      manageNekoKeys: Manage Neko Keys
 
 # =============================================================================
 # BLIK (General)

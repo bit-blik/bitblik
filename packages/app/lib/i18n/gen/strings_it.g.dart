@@ -944,6 +944,7 @@ class _TranslationsMakerConflictIt extends TranslationsMakerConflictEn {
 	@override late final _TranslationsMakerConflictDisputeDialogIt disputeDialog = _TranslationsMakerConflictDisputeDialogIt._(_root);
 	@override late final _TranslationsMakerConflictFeedbackIt feedback = _TranslationsMakerConflictFeedbackIt._(_root);
 	@override late final _TranslationsMakerConflictErrorsIt errors = _TranslationsMakerConflictErrorsIt._(_root);
+	@override late final _TranslationsMakerConflictNostrContactIt nostrContact = _TranslationsMakerConflictNostrContactIt._(_root);
 }
 
 // Path: maker.success
@@ -1107,6 +1108,7 @@ class _TranslationsTakerConflictIt extends TranslationsTakerConflictEn {
 	@override late final _TranslationsTakerConflictActionsIt actions = _TranslationsTakerConflictActionsIt._(_root);
 	@override late final _TranslationsTakerConflictFeedbackIt feedback = _TranslationsTakerConflictFeedbackIt._(_root);
 	@override late final _TranslationsTakerConflictErrorsIt errors = _TranslationsTakerConflictErrorsIt._(_root);
+	@override late final _TranslationsTakerConflictNostrContactIt nostrContact = _TranslationsTakerConflictNostrContactIt._(_root);
 }
 
 // Path: blik.instructions
@@ -1658,8 +1660,8 @@ class _TranslationsMakerConflictDisputeDialogIt extends TranslationsMakerConflic
 
 	// Translations
 	@override String get title => 'Aprire una disputa?';
-	@override String get content => 'Aprire una disputa richiede una verifica manuale da parte del coordinatore, che richiederà tempo. Una commissione per disputa sarà addebitata se la disputa sarà risolta contro di te. La fattura hold verrà saldata per evitare che scada. Se la disputa sarà risolta a tuo favore, riceverai un rimborso (meno le commissioni) sul tuo indirizzo Lightning.';
-	@override String get contentDetailed => 'Aprire una disputa richiederà l\'intervento manuale del coordinatore, che richiede tempo e comporta una commissione per disputa.\n\nLa fattura hold verrà saldata immediatamente per evitare che scada prima della risoluzione della disputa.\n\nSe la disputa sarà risolta a tuo favore, l\'importo in satoshi verrà rimborsato sul tuo indirizzo Lightning (meno le commissioni). Assicurati di aver configurato un indirizzo Lightning.';
+	@override String get content => 'Aprire una disputa richiede una verifica manuale da parte del coordinatore, che richiederà tempo. Una commissione per disputa sarà addebitata se la disputa sarà risolta contro di te. La fattura hold verrà saldata per evitare che scada. Se la disputa sarà risolta a tuo favore, riceverai un rimborso (meno le commissioni) su un portafoglio a tua scelta.';
+	@override String get contentDetailed => 'Aprire una disputa richiederà l\'intervento manuale del coordinatore, che richiede tempo e comporta una commissione per disputa.\n\nLa fattura hold verrà saldata immediatamente per evitare che scada prima della risoluzione della disputa.\n\nSe la disputa sarà risolta a tuo favore, l\'importo in satoshi verrà rimborsato su un portafoglio a tua scelta (meno le commissioni). Assicurati di avere un portafoglio pronto per ricevere.';
 	@override late final _TranslationsMakerConflictDisputeDialogActionsIt actions = _TranslationsMakerConflictDisputeDialogActionsIt._(_root);
 }
 
@@ -1681,6 +1683,22 @@ class _TranslationsMakerConflictErrorsIt extends TranslationsMakerConflictErrors
 
 	// Translations
 	@override String openingDispute({required Object error}) => 'Errore nell\'apertura della disputa: ${error}';
+}
+
+// Path: maker.conflict.nostrContact
+class _TranslationsMakerConflictNostrContactIt extends TranslationsMakerConflictNostrContactEn {
+	_TranslationsMakerConflictNostrContactIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Contatta il Coordinatore su Nostr';
+	@override String get description => 'Puoi inviare un DM al coordinatore direttamente per assistenza con questa disputa.';
+	@override String get copyNpub => 'Copia npub';
+	@override String get openProfile => 'Visualizza Profilo';
+	@override String get npubCopied => 'Npub del coordinatore copiato negli appunti!';
+	@override String get yourIdentityDescription => 'Per inviare DM, accedi con la tua chiave privata Neko (nsec) in qualsiasi client Nostr che supporta i messaggi diretti.';
+	@override String get manageNekoKeys => 'Gestisci Chiavi Neko';
 }
 
 // Path: taker.submitBlik.actions
@@ -1982,6 +2000,22 @@ class _TranslationsTakerConflictErrorsIt extends TranslationsTakerConflictErrors
 
 	// Translations
 	@override String reporting({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}';
+}
+
+// Path: taker.conflict.nostrContact
+class _TranslationsTakerConflictNostrContactIt extends TranslationsTakerConflictNostrContactEn {
+	_TranslationsTakerConflictNostrContactIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Contatta il Coordinatore su Nostr';
+	@override String get description => 'Puoi inviare un DM al coordinatore direttamente per assistenza con questa disputa.';
+	@override String get copyNpub => 'Copia npub';
+	@override String get openProfile => 'Visualizza Profilo';
+	@override String get npubCopied => 'Npub del coordinatore copiato negli appunti!';
+	@override String get yourIdentityDescription => 'Per inviare DM, accedi con la tua chiave privata Neko (nsec) in qualsiasi client Nostr che supporta i messaggi diretti.';
+	@override String get manageNekoKeys => 'Gestisci Chiavi Neko';
 }
 
 // Path: home.statistics.errors
@@ -2291,12 +2325,19 @@ extension on TranslationsIt {
 			case 'maker.conflict.actions.openDispute': return 'Il pagamento BLIK NON è riuscito, APRI DISPUTA';
 			case 'maker.conflict.actions.submitDispute': return 'Invia Disputa';
 			case 'maker.conflict.disputeDialog.title': return 'Aprire una disputa?';
-			case 'maker.conflict.disputeDialog.content': return 'Aprire una disputa richiede una verifica manuale da parte del coordinatore, che richiederà tempo. Una commissione per disputa sarà addebitata se la disputa sarà risolta contro di te. La fattura hold verrà saldata per evitare che scada. Se la disputa sarà risolta a tuo favore, riceverai un rimborso (meno le commissioni) sul tuo indirizzo Lightning.';
-			case 'maker.conflict.disputeDialog.contentDetailed': return 'Aprire una disputa richiederà l\'intervento manuale del coordinatore, che richiede tempo e comporta una commissione per disputa.\n\nLa fattura hold verrà saldata immediatamente per evitare che scada prima della risoluzione della disputa.\n\nSe la disputa sarà risolta a tuo favore, l\'importo in satoshi verrà rimborsato sul tuo indirizzo Lightning (meno le commissioni). Assicurati di aver configurato un indirizzo Lightning.';
+			case 'maker.conflict.disputeDialog.content': return 'Aprire una disputa richiede una verifica manuale da parte del coordinatore, che richiederà tempo. Una commissione per disputa sarà addebitata se la disputa sarà risolta contro di te. La fattura hold verrà saldata per evitare che scada. Se la disputa sarà risolta a tuo favore, riceverai un rimborso (meno le commissioni) su un portafoglio a tua scelta.';
+			case 'maker.conflict.disputeDialog.contentDetailed': return 'Aprire una disputa richiederà l\'intervento manuale del coordinatore, che richiede tempo e comporta una commissione per disputa.\n\nLa fattura hold verrà saldata immediatamente per evitare che scada prima della risoluzione della disputa.\n\nSe la disputa sarà risolta a tuo favore, l\'importo in satoshi verrà rimborsato su un portafoglio a tua scelta (meno le commissioni). Assicurati di avere un portafoglio pronto per ricevere.';
 			case 'maker.conflict.disputeDialog.actions.confirm': return 'Apri Disputa';
 			case 'maker.conflict.disputeDialog.actions.cancel': return 'Annulla';
 			case 'maker.conflict.feedback.disputeOpenedSuccess': return 'Disputa aperta con successo. Il coordinatore esaminerà la situazione.';
 			case 'maker.conflict.errors.openingDispute': return ({required Object error}) => 'Errore nell\'apertura della disputa: ${error}';
+			case 'maker.conflict.nostrContact.title': return 'Contatta il Coordinatore su Nostr';
+			case 'maker.conflict.nostrContact.description': return 'Puoi inviare un DM al coordinatore direttamente per assistenza con questa disputa.';
+			case 'maker.conflict.nostrContact.copyNpub': return 'Copia npub';
+			case 'maker.conflict.nostrContact.openProfile': return 'Visualizza Profilo';
+			case 'maker.conflict.nostrContact.npubCopied': return 'Npub del coordinatore copiato negli appunti!';
+			case 'maker.conflict.nostrContact.yourIdentityDescription': return 'Per inviare DM, accedi con la tua chiave privata Neko (nsec) in qualsiasi client Nostr che supporta i messaggi diretti.';
+			case 'maker.conflict.nostrContact.manageNekoKeys': return 'Gestisci Chiavi Neko';
 			case 'maker.success.title': return 'Offerta completata';
 			case 'maker.success.headline': return 'Pagamento confermato!';
 			case 'maker.success.subtitle': return 'Il Taker verrà ora pagato.';
@@ -2411,6 +2452,13 @@ extension on TranslationsIt {
 			case 'taker.conflict.actions.back': return 'Torna alla Home';
 			case 'taker.conflict.feedback.reported': return 'Conflitto segnalato. Il coordinatore esaminerà.';
 			case 'taker.conflict.errors.reporting': return ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}';
+			case 'taker.conflict.nostrContact.title': return 'Contatta il Coordinatore su Nostr';
+			case 'taker.conflict.nostrContact.description': return 'Puoi inviare un DM al coordinatore direttamente per assistenza con questa disputa.';
+			case 'taker.conflict.nostrContact.copyNpub': return 'Copia npub';
+			case 'taker.conflict.nostrContact.openProfile': return 'Visualizza Profilo';
+			case 'taker.conflict.nostrContact.npubCopied': return 'Npub del coordinatore copiato negli appunti!';
+			case 'taker.conflict.nostrContact.yourIdentityDescription': return 'Per inviare DM, accedi con la tua chiave privata Neko (nsec) in qualsiasi client Nostr che supporta i messaggi diretti.';
+			case 'taker.conflict.nostrContact.manageNekoKeys': return 'Gestisci Chiavi Neko';
 			case 'blik.instructions.taker': return 'Una volta che il Maker inserisce il codice BLIK, dovrai confermare il pagamento nella tua app bancaria. Assicurati che l\'importo sia corretto prima di confermare.';
 			case 'home.notifications.title': return 'Ricevi notifiche sulle nuove offerte tramite:';
 			case 'home.notifications.telegram': return 'Telegram';
