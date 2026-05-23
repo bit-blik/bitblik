@@ -52,6 +52,9 @@ class _MakerConfirmPaymentScreenState
   Future<void> _fetchBlikCode() async {
     if (_fetchAttempted) return;
     _fetchAttempted = true;
+    // Previous screen (MakerWaitForBlik/WaitTaker) may have already fetched the code;
+    // avoid a redundant RPC call to the coordinator.
+    if (ref.read(receivedBlikCodeProvider) != null) return;
     final offer = ref.read(activeOfferProvider);
     final makerId = ref.read(publicKeyProvider).value;
     if (offer == null || makerId == null) return;
