@@ -755,6 +755,16 @@ class CoordinatorService {
     final btcPerPln = 1 / rate;
     final btcAmount = fiatAmount * btcPerPln;
     final satsAmount = (btcAmount * 100000000).round();
+
+    if (satsAmount < _minAmountSats) {
+      throw Exception(
+          'Amount $satsAmount sats is below minimum $_minAmountSats sats');
+    }
+    if (satsAmount > _maxAmountSats) {
+      throw Exception(
+          'Amount $satsAmount sats exceeds maximum $_maxAmountSats sats');
+    }
+
     final makerFees =
         OfferQuote.makerFeeSats(satsAmount, _makerFeePercentage);
     final takerFees =
