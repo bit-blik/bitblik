@@ -5,6 +5,9 @@ on:
     paths:
       - 'packages/coordinator/**'
       - 'packages/core/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.dockerignore'
       - '.github/workflows/coordinator-build.yml'
   release:
     types: [published]

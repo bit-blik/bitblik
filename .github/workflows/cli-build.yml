@@ -5,11 +5,15 @@ on:
     paths:
       - 'packages/cli/**'
       - 'packages/core/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
       - '.github/workflows/cli-build.yml'
   pull_request:
     paths:
       - 'packages/cli/**'
       - 'packages/core/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
       - '.github/workflows/cli-build.yml'
   workflow_dispatch:
 

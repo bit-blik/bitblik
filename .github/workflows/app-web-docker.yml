@@ -5,6 +5,9 @@ on:
     paths:
       - 'packages/app/**'
       - 'packages/core/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.dockerignore'
       - '.github/workflows/app-web-docker.yml'
   release:
     types: [published]

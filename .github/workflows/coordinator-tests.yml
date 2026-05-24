@@ -5,11 +5,15 @@ on:
     paths:
       - 'packages/coordinator/**'
       - 'packages/core/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
       - '.github/workflows/coordinator-tests.yml'
   pull_request:
     paths:
       - 'packages/coordinator/**'
       - 'packages/core/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
       - '.github/workflows/coordinator-tests.yml'
   workflow_dispatch:
 
