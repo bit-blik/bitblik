@@ -44,15 +44,9 @@ jobs:
           - os: ubuntu-latest
             target: linux_x64
             platform_name: linux-x64
-          - os: ubuntu-24.04-arm
-            target: linux_arm64
-            platform_name: linux-arm64
           - os: macos-latest
             target: macos_arm64
             platform_name: macos-arm64
-          - os: macos-13
-            target: macos_x64
-            platform_name: macos-x64
           - os: windows-latest
             target: windows_x64
             platform_name: windows-x64
@@ -138,7 +132,7 @@ jobs:
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.tar.gz
-          asset_name: bitblik-cli-${{ github.ref_name }}-${{ matrix.platform_name }}.tar.gz
+          asset_name: bitblik-cli-${{ matrix.platform_name }}.tar.gz
           asset_content_type: application/gzip
 
       - name: Upload CLI zip to release (Windows)
@@ -149,7 +143,7 @@ jobs:
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.zip
-          asset_name: bitblik-cli-${{ github.ref_name }}-${{ matrix.platform_name }}.zip
+          asset_name: bitblik-cli--${{ matrix.platform_name }}.zip
           asset_content_type: application/zip
 
       - name: Upload Linux DEB to release
@@ -160,7 +154,7 @@ jobs:
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: packages/cli/build/bitblik-cli-linux-x64.deb
-          asset_name: bitblik-cli-${{ github.ref_name }}-linux-x64.deb
+          asset_name: bitblik-cli-linux-x64.deb
           asset_content_type: application/vnd.debian.binary-package
 
   # ── 3. Android APK ────────────────────────────────────────────────────────
