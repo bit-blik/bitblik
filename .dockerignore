@@ -1,0 +1,33 @@
+# Git
+.git/
+.gitignore
+
+# Dart/Flutter build outputs
+**/build/
+**/.dart_tool/
+**/.pub-cache/
+**/.pub/
+
+# Flutter generated files
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+
+# Flutter platform dirs not needed for web Docker build
+packages/app/android/
+packages/app/ios/
+packages/app/linux/
+packages/app/macos/
+packages/app/windows/
+
+# IDE
+.idea/
+.vscode/
+**/*.iml
+
+# CI
+.github/
+
+# Docs / misc
+**/*.md
+README.md

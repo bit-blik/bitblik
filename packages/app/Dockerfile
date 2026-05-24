@@ -1,6 +1,6 @@
 # Build context: repo root (required for Dart workspace resolution)
 # Stage 1: Build the Flutter web application
-FROM instrumentisto/flutter:3.41.4 AS build
+FROM instrumentisto/flutter:3.41.6 AS build
 
 ARG BUILD_MODE=release
 
