@@ -22,7 +22,7 @@ Step-by-step instructions for an agent executing a complete BitBlik exchange.
 
 5. Poll: bitblik offer sync  (every 3s, up to 10 minutes)
    → Check status in output or run: bitblik offer list --json
-   → Status "funded"  = coordinator confirmed hold invoice received → proceed
+   → Status other than "created" = coordinator confirmed hold invoice received → proceed
    → Status "expired" = offer timed out (10-minute window), must start over
    → Any other status = keep polling
 
