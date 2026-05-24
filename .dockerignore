@@ -30,4 +30,4 @@ packages/app/windows/
 
 # Docs / misc
 **/*.md
-README.md
+!packages/app/CHANGELOG.md
