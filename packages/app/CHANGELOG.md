@@ -1,3 +1,12 @@
+## [0.6.0] - 2026-05-30
+
+- feat: coordinator list sorted by most used (locally & globally)
+- feat: my offers list
+- feat: check wallet balance/budget before paying
+- feat: finished orders filter by coordinator
+- feat: choose wallet for paying if default has no balance/budget
+- fix: ios keyboard during takerPaymentFailed doesn't hide on un-focus
+
 ## [0.5.1] - 2026-04-02
 
 - fix: wallet initialization

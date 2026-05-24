@@ -92,9 +92,15 @@ class OfferDbService {
           await db.execute('DROP TABLE IF EXISTS active_offer');
         }
         if (oldVersion < 6) {
-          await db.execute(
-            'ALTER TABLE $_table ADD COLUMN payment_wallet_id TEXT',
+          final columns = await db.rawQuery('PRAGMA table_info($_table)');
+          final hasColumn = columns.any(
+            (col) => col['name'] == 'payment_wallet_id',
           );
+          if (!hasColumn) {
+            await db.execute(
+              'ALTER TABLE $_table ADD COLUMN payment_wallet_id TEXT',
+            );
+          }
         }
       },
     );
