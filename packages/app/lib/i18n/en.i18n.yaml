@@ -325,6 +325,21 @@ maker:
       insufficientBalance: "Insufficient balance. Need ${required} sats, have ${available} sats"
       cancelOfferAlreadyFunded: "Coordinator reports this offer is already funded. It cannot be cancelled now."
       cancelFailed: "Could not cancel offer: ${details}"
+
+    budgetWarning:
+      title: "Payment may fail"
+      balanceTooLow: "Your default spending wallet ${name} does not have enough balance for this payment."
+      budgetTooLow: "Your default spending wallet ${name} does not have enough spending budget for this payment."
+      balanceLine: "Balance: ${available} sats"
+      budgetLine: "Remaining NWC budget: ${remaining} sats"
+      requiredLine: "Required: ${required} sats"
+      addFundsHint: "Add funds to ${name} to cover this payment amount."
+      increaseBudgetHint: "Increase the NWC spending budget for this connection in your wallet app."
+      switchWalletLabel: "Or use a different wallet:"
+      walletLowFundsTag: "May fail"
+      payAnyway: "Try anyway"
+      cancel: "Cancel"
+      readyTitle: "Pay invoice"
   
   waitTaker:
     message: Waiting for a Taker to reserve your offer...

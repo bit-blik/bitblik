@@ -60,6 +60,11 @@ class Offer {
   final DateTime? takerPaidAt;
   final int? takerFees;
 
+  /// Wallet ID used by the maker to pay the hold invoice.
+  /// Null means the default sending wallet was used (or payment not yet made).
+  /// Persisted so wallet balance/budget can be refreshed after app restart.
+  final String? paymentWalletId;
+
   // Calculated getters for processing times
   int? get timeToReserveSeconds {
     if (reservedAt != null) {
@@ -132,6 +137,7 @@ class Offer {
     this.settledAt,
     this.takerPaidAt,
     this.takerFees,
+    this.paymentWalletId,
   });
 
   // Factory constructor to create an Offer from JSON data (Map).
@@ -246,7 +252,8 @@ class Offer {
       makerConfirmedAt: parseOptionalDateTime(json['maker_confirmed_at']),
       settledAt: parseOptionalDateTime(json['settled_at']),
       takerPaidAt: parseOptionalDateTime(json['taker_paid_at']),
-      takerFees: json['taker_fees'] as int?, // Renamed key and field
+      takerFees: json['taker_fees'] as int?,
+      paymentWalletId: json['payment_wallet_id'] as String?,
     );
   }
 
@@ -275,7 +282,8 @@ class Offer {
       'maker_confirmed_at': makerConfirmedAt?.toIso8601String(),
       'settled_at': settledAt?.toIso8601String(),
       'taker_paid_at': takerPaidAt?.toIso8601String(),
-      'taker_fees': takerFees, // Renamed key and field
+      'taker_fees': takerFees,
+      'payment_wallet_id': paymentWalletId,
     };
   }
 
@@ -315,7 +323,8 @@ class Offer {
     DateTime? makerConfirmedAt,
     DateTime? settledAt,
     DateTime? takerPaidAt,
-    int? takerFees, // Renamed parameter
+    int? takerFees,
+    String? paymentWalletId,
   }) {
     return Offer(
       id: id ?? this.id,
@@ -342,8 +351,8 @@ class Offer {
       makerConfirmedAt: makerConfirmedAt ?? this.makerConfirmedAt,
       settledAt: settledAt ?? this.settledAt,
       takerPaidAt: takerPaidAt ?? this.takerPaidAt,
-      takerFees: takerFees ?? this.takerFees, // Renamed parameter and field
-      // No copyWith for getters
+      takerFees: takerFees ?? this.takerFees,
+      paymentWalletId: paymentWalletId ?? this.paymentWalletId,
     );
   }
 

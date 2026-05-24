@@ -54,7 +54,8 @@ class OfferDbService {
       maker_confirmed_at TEXT,
       settled_at TEXT,
       taker_paid_at TEXT,
-      taker_fees INTEGER
+      taker_fees INTEGER,
+      payment_wallet_id TEXT
     )
   ''';
 
@@ -69,7 +70,7 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute(_createTableSql);
       },
@@ -89,6 +90,11 @@ class OfferDbService {
             );
           }
           await db.execute('DROP TABLE IF EXISTS active_offer');
+        }
+        if (oldVersion < 6) {
+          await db.execute(
+            'ALTER TABLE $_table ADD COLUMN payment_wallet_id TEXT',
+          );
         }
       },
     );

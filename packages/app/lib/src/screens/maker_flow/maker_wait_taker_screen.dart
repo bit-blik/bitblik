@@ -5,6 +5,8 @@ import '../../../i18n/gen/strings.g.dart'; // Correct Slang import
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
+import 'package:ndk/domain_layer/entities/wallet/providers/nwc/nwc_wallet.dart';
+import 'package:ndk/domain_layer/entities/wallet/wallet_balance.dart';
 
 import 'package:bitblik_core/core.dart'; // For OfferStatus enum
 import '../../providers/providers.dart';
@@ -115,6 +117,55 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     });
   }
 
+  /// Refreshes balance (via live NWC query) for the wallet that was used to
+  /// pay the hold invoice, then re-fetches its budget if it's an NWC wallet.
+  /// Reads [Offer.paymentWalletId] so it survives app restarts.
+  Future<void> _refreshPaymentWallet() async {
+    // Capture NDK + wallet before any async gap so widget disposal doesn't
+    // prevent us from reaching the NWC object.
+    final ndk = ref.read(ndkProvider);
+    if (ndk == null) return;
+
+    final offer = ref.read(activeOfferProvider);
+    final walletId = offer?.paymentWalletId;
+
+    NwcWallet? wallet;
+    if (walletId != null) {
+      for (final w in ndk.wallets.getWalletsForUnit('sat')) {
+        if (w.id == walletId && w is NwcWallet) {
+          wallet = w;
+          break;
+        }
+      }
+    }
+    wallet ??= ndk.wallets.defaultWalletForSending is NwcWallet
+        ? ndk.wallets.defaultWalletForSending as NwcWallet
+        : null;
+
+    if (wallet == null || wallet.connection == null) return;
+
+    // Give the coordinator time to release the hold invoice before querying.
+    await Future.delayed(const Duration(seconds: 3));
+
+    try {
+      final resp = await ndk.nwc
+          .getBalance(wallet.connection!, timeout: const Duration(seconds: 10));
+      if (wallet.balanceSubject != null && !wallet.balanceSubject!.isClosed) {
+        wallet.balanceSubject!.add([
+          WalletBalance(
+            walletId: wallet.id,
+            unit: 'sat',
+            amount: resp.balanceSats,
+          ),
+        ]);
+      }
+    } catch (e) {
+      Logger.log.w(
+        () => '[MakerWaitTakerScreen] Could not refresh wallet balance: $e',
+      );
+    }
+  }
+
   Future<void> _cancelOffer() async {
     final offer = ref.read(activeOfferProvider);
     final makerPubKey = ref.read(publicKeyProvider).value;
@@ -165,6 +216,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
           _isCancelling = false;
         });
       }
+      unawaited(_refreshPaymentWallet());
     }
   }
 

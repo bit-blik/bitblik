@@ -1311,6 +1311,7 @@ class TranslationsMakerPayInvoiceEn {
 	late final TranslationsMakerPayInvoiceActionsEn actions = TranslationsMakerPayInvoiceActionsEn.internal(_root);
 	late final TranslationsMakerPayInvoiceFeedbackEn feedback = TranslationsMakerPayInvoiceFeedbackEn.internal(_root);
 	late final TranslationsMakerPayInvoiceErrorsEn errors = TranslationsMakerPayInvoiceErrorsEn.internal(_root);
+	late final TranslationsMakerPayInvoiceBudgetWarningEn budgetWarning = TranslationsMakerPayInvoiceBudgetWarningEn.internal(_root);
 }
 
 // Path: maker.waitTaker
@@ -2459,6 +2460,54 @@ class TranslationsMakerPayInvoiceErrorsEn {
 	String cancelFailed({required Object details}) => 'Could not cancel offer: ${details}';
 }
 
+// Path: maker.payInvoice.budgetWarning
+class TranslationsMakerPayInvoiceBudgetWarningEn {
+	TranslationsMakerPayInvoiceBudgetWarningEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Payment may fail'
+	String get title => 'Payment may fail';
+
+	/// en: 'Your default spending wallet ${name} does not have enough balance for this payment.'
+	String balanceTooLow({required Object name}) => 'Your default spending wallet ${name} does not have enough balance for this payment.';
+
+	/// en: 'Your default spending wallet ${name} does not have enough spending budget for this payment.'
+	String budgetTooLow({required Object name}) => 'Your default spending wallet ${name} does not have enough spending budget for this payment.';
+
+	/// en: 'Balance: ${available} sats'
+	String balanceLine({required Object available}) => 'Balance: ${available} sats';
+
+	/// en: 'Remaining NWC budget: ${remaining} sats'
+	String budgetLine({required Object remaining}) => 'Remaining NWC budget: ${remaining} sats';
+
+	/// en: 'Required: ${required} sats'
+	String requiredLine({required Object required}) => 'Required: ${required} sats';
+
+	/// en: 'Add funds to ${name} to cover this payment amount.'
+	String addFundsHint({required Object name}) => 'Add funds to ${name} to cover this payment amount.';
+
+	/// en: 'Increase the NWC spending budget for this connection in your wallet app.'
+	String get increaseBudgetHint => 'Increase the NWC spending budget for this connection in your wallet app.';
+
+	/// en: 'Or use a different wallet:'
+	String get switchWalletLabel => 'Or use a different wallet:';
+
+	/// en: 'May fail'
+	String get walletLowFundsTag => 'May fail';
+
+	/// en: 'Try anyway'
+	String get payAnyway => 'Try anyway';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Pay invoice'
+	String get readyTitle => 'Pay invoice';
+}
+
 // Path: maker.confirmPayment.actions
 class TranslationsMakerConfirmPaymentActionsEn {
 	TranslationsMakerConfirmPaymentActionsEn.internal(this._root);
@@ -3387,6 +3436,19 @@ extension on Translations {
 			case 'maker.payInvoice.errors.insufficientBalance': return ({required Object required, required Object available}) => 'Insufficient balance. Need ${required} sats, have ${available} sats';
 			case 'maker.payInvoice.errors.cancelOfferAlreadyFunded': return 'Coordinator reports this offer is already funded. It cannot be cancelled now.';
 			case 'maker.payInvoice.errors.cancelFailed': return ({required Object details}) => 'Could not cancel offer: ${details}';
+			case 'maker.payInvoice.budgetWarning.title': return 'Payment may fail';
+			case 'maker.payInvoice.budgetWarning.balanceTooLow': return ({required Object name}) => 'Your default spending wallet ${name} does not have enough balance for this payment.';
+			case 'maker.payInvoice.budgetWarning.budgetTooLow': return ({required Object name}) => 'Your default spending wallet ${name} does not have enough spending budget for this payment.';
+			case 'maker.payInvoice.budgetWarning.balanceLine': return ({required Object available}) => 'Balance: ${available} sats';
+			case 'maker.payInvoice.budgetWarning.budgetLine': return ({required Object remaining}) => 'Remaining NWC budget: ${remaining} sats';
+			case 'maker.payInvoice.budgetWarning.requiredLine': return ({required Object required}) => 'Required: ${required} sats';
+			case 'maker.payInvoice.budgetWarning.addFundsHint': return ({required Object name}) => 'Add funds to ${name} to cover this payment amount.';
+			case 'maker.payInvoice.budgetWarning.increaseBudgetHint': return 'Increase the NWC spending budget for this connection in your wallet app.';
+			case 'maker.payInvoice.budgetWarning.switchWalletLabel': return 'Or use a different wallet:';
+			case 'maker.payInvoice.budgetWarning.walletLowFundsTag': return 'May fail';
+			case 'maker.payInvoice.budgetWarning.payAnyway': return 'Try anyway';
+			case 'maker.payInvoice.budgetWarning.cancel': return 'Cancel';
+			case 'maker.payInvoice.budgetWarning.readyTitle': return 'Pay invoice';
 			case 'maker.waitTaker.message': return 'Waiting for a Taker to reserve your offer...';
 			case 'maker.waitTaker.progressLabel': return ({required Object time}) => 'Waiting for taker: ${time}';
 			case 'maker.waitTaker.errorActiveOfferDetailsLost': return 'Error: Lost active offer details.';

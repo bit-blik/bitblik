@@ -222,6 +222,112 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     // Only fire reconciliation when there is actually something to
     // reconcile. listRecentCancelled is a single indexed query — cheap.
     unawaited(_reconcileCancelledOffersIfNeeded());
+    // If a non-terminal offer is loaded, verify it against the coordinator
+    // to catch the case where we were offline when it was cancelled/expired.
+    if (offer != null && !OfferDbService.terminalStatuses.contains(offer.status)) {
+      unawaited(_reconcileActiveOfferIfNeeded(offer));
+    }
+  }
+
+  /// Boot-time sanity check for the locally-active offer.
+  ///
+  /// When the app was offline while the coordinator cancelled or expired the
+  /// offer, the local DB still holds the stale non-terminal status (e.g.
+  /// `funded`). This method fetches the coordinator's current view and
+  /// reconciles:
+  ///   - Remote is null → offer no longer exists on coordinator; mark cancelled.
+  ///   - Remote has a terminal status → update local DB and clear in-memory state.
+  ///   - Remote has a different non-terminal status → sync local to coordinator.
+  ///   - Remote matches local → no action.
+  Future<void> _reconcileActiveOfferIfNeeded(Offer localOffer) async {
+    try {
+      final apiService =
+          await _ref.read(initializedApiServiceProvider.future);
+      final userPubkey = _ref.read(keyServiceProvider).publicKeyHex;
+      if (userPubkey == null) return;
+
+      Logger.log.i(
+        () =>
+            '[ActiveOfferNotifier] reconciling active offer ${localOffer.id} (local status=${localOffer.status.name})',
+      );
+
+      Map<String, dynamic>? remote;
+      try {
+        remote = await apiService.getMyActiveOffer(
+          userPubkey,
+          localOffer.coordinatorPubkey,
+        );
+      } catch (e) {
+        Logger.log.w(
+          () =>
+              '[ActiveOfferNotifier] getMyActiveOffer failed during active-offer reconciliation: $e',
+        );
+        return;
+      }
+
+      if (remote == null) {
+        // Coordinator has no active offer for this user — treat as cancelled.
+        Logger.log.i(
+          () =>
+              '[ActiveOfferNotifier] coordinator reports no active offer; marking local ${localOffer.id} cancelled',
+        );
+        final cancelled = localOffer.copyWith(status: OfferStatus.cancelled);
+        await OfferDbService().upsertOffer(cancelled);
+        // Only clear if this offer is still the in-memory active one.
+        if (state?.id == localOffer.id) state = null;
+        return;
+      }
+
+      final remoteId = remote['id']?.toString();
+      final remoteStatusRaw = remote['status']?.toString();
+      if (remoteId == null || remoteStatusRaw == null) return;
+
+      OfferStatus remoteStatus;
+      try {
+        remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
+      } catch (_) {
+        remoteStatus = OfferStatus.unknown;
+      }
+
+      // If coordinator reports a different offer id, this local offer is stale.
+      final sameOffer = remoteId == localOffer.id ||
+          (localOffer.holdInvoicePaymentHash != null &&
+              localOffer.holdInvoicePaymentHash == remote['payment_hash']?.toString());
+
+      if (!sameOffer) {
+        Logger.log.i(
+          () =>
+              '[ActiveOfferNotifier] coordinator active offer ($remoteId) differs from local (${localOffer.id}); marking local cancelled',
+        );
+        final cancelled = localOffer.copyWith(status: OfferStatus.cancelled);
+        await OfferDbService().upsertOffer(cancelled);
+        if (state?.id == localOffer.id) state = null;
+        return;
+      }
+
+      if (remoteStatus == localOffer.status) return; // Already in sync.
+
+      Logger.log.i(
+        () =>
+            '[ActiveOfferNotifier] syncing active offer $remoteId: local=${localOffer.status.name} -> remote=${remoteStatus.name}',
+      );
+      final updated = localOffer.copyWith(
+        id: remoteId,
+        status: remoteStatus,
+      );
+      await OfferDbService().upsertOffer(updated);
+
+      if (OfferDbService.terminalStatuses.contains(remoteStatus)) {
+        if (state?.id == localOffer.id) state = null;
+      } else {
+        if (state?.id == localOffer.id) state = updated;
+      }
+    } catch (e) {
+      Logger.log.e(
+        () =>
+            '[ActiveOfferNotifier] active-offer reconciliation failed: $e',
+      );
+    }
   }
 
   /// Boot-time recovery: for every locally-cancelled offer within
@@ -702,6 +808,11 @@ final holdInvoiceProvider = StateProvider<String?>((ref) => null);
 
 // Provider to hold the payment hash for the Maker's offer
 final paymentHashProvider = StateProvider<String?>((ref) => null);
+
+// Wallet ID used to pay the most recent hold invoice.
+// Null = default wallet was used (or no payment yet).
+// Written by MakerPayInvoiceScreen, read by MakerWaitTakerScreen on cancel.
+final lastPaymentWalletIdProvider = StateProvider<String?>((ref) => null);
 
 // Provider to manage the current role (Maker/Taker) or view state
 // enum AppRole { none, maker, taker }
