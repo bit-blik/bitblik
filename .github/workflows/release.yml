@@ -300,7 +300,7 @@ jobs:
 
   # ── 5. Publish release when all builds succeed ────────────────────────────
   publish_release:
-    needs: [release, build_cli, build_android, build_ios]
+    needs: [release, build_cli, build_android]
     runs-on: ubuntu-latest
     steps:
       - uses: eregon/publish-release@v1
