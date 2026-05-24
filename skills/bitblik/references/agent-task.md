@@ -21,10 +21,9 @@ Step-by-step instructions for an agent executing a complete BitBlik exchange.
    - Do NOT retry the payment if it times out — the payment is in flight.
 
 5. Poll: bitblik offer sync  (every 3s, up to 10 minutes)
-   → Check status in output or run: bitblik offer list --json
+   → Check status: bitblik offer sync --json
    → Status other than "created" = coordinator confirmed hold invoice received → proceed
    → Status "expired" = offer timed out (10-minute window), must start over
-   → Any other status = keep polling
 
 6. Get the BLIK code: Poll every 2s: bitblik offer get-blik --no-wait --json
    → Exit 2 + {"ready": false}: not ready, keep polling
