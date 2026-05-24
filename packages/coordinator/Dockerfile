@@ -1,5 +1,5 @@
 # Build context: repo root (required for Dart workspace resolution)
-FROM dart:3.10.4-sdk AS build
+FROM dart:3.12.0-sdk AS build
 
 WORKDIR /workspace
 

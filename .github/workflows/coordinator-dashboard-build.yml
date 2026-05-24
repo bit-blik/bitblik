@@ -13,7 +13,7 @@ jobs:
   build:
     env:
       REGISTRY: ghcr.io
-      IMAGENAME: ${{ github.event.repository.name }}-dashboard
+      IMAGENAME: coordinator-dashboard
     runs-on: ubuntu-latest
     permissions:
       contents: read
