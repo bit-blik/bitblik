@@ -20,17 +20,26 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./packages/coordinator
     steps:
       - uses: actions/checkout@v4
+
       - uses: dart-lang/setup-dart@v1
+
+      # Flutter needed only to resolve workspace deps that include Flutter packages
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
       - name: Install dependencies
-        run: dart pub get
+        run: flutter pub get
+
       - name: Analyze
+        working-directory: ./packages/coordinator
         run: dart analyze --no-fatal-warnings
+
       - name: Run tests
+        working-directory: ./packages/coordinator
         run: dart test
         env:
           TERMS_OF_USAGE_NADDR: naddr1dummy_test_value_for_ci

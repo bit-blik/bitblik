@@ -1,5 +1,6 @@
 # Build context: repo root (required for Dart workspace resolution)
-FROM dart:3.12.0-sdk AS build
+# Flutter image needed: workspace includes Flutter packages, dart pub get alone can't resolve them
+FROM instrumentisto/flutter:3.41.6 AS build
 
 WORKDIR /workspace
 
@@ -19,7 +20,7 @@ COPY packages/core/pubspec.yaml packages/core/pubspec.yaml
 COPY packages/app/pubspec.yaml packages/app/pubspec.yaml
 COPY packages/cli/pubspec.yaml packages/cli/pubspec.yaml
 
-RUN dart pub get
+RUN flutter pub get
 
 # Copy source for packages used by coordinator
 COPY packages/coordinator/ packages/coordinator/
@@ -39,7 +40,6 @@ RUN apk add --no-cache zlib gmp tzdata sqlite-libs libstdc++
 RUN ln -s /usr/lib/libsqlite3.so.0 /usr/lib/libsqlite3.so
 RUN apk add signal-cli~=0.14
 
-COPY --from=build /runtime/ /
 COPY --from=build /workspace/packages/coordinator/bin/server /app/bin/
 COPY --from=build /workspace/simplex-chat /app/
 

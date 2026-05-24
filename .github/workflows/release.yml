@@ -78,8 +78,17 @@ jobs:
         if: matrix.target == 'macos_x64'
         run: softwareupdate --install-rosetta --agree-to-license
 
+      # Flutter needed for workspace dep resolution (includes Flutter packages).
+      # ARM Flutter on macos_x64 runner is fine — pub resolution is arch-independent.
+      - name: Set up Flutter (workspace dep resolution)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
       - name: Install dependencies
-        run: dart pub get
+        run: flutter pub get
+        working-directory: .
 
       - name: Build CLI (x64 via Rosetta)
         if: matrix.target == 'macos_x64'

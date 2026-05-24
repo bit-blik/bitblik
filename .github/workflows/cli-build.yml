@@ -20,19 +20,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./packages/cli
     steps:
       - uses: actions/checkout@v4
 
       - uses: dart-lang/setup-dart@v1
 
+      # Flutter needed to resolve workspace deps that include Flutter packages
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
       - name: Install dependencies
-        run: dart pub get
+        run: flutter pub get
 
       - name: Analyze
+        working-directory: ./packages/cli
         run: dart analyze --no-fatal-warnings
 
       - name: Build CLI
+        working-directory: ./packages/cli
         run: dart build cli
