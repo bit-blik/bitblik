@@ -226,11 +226,16 @@ bool _isInProgress(OfferStatus s) =>
 /// Normal path: loads persisted offers, picks the single active one (or the
 /// one selected via `--offer <id>`), waits for [OfferStatus.blikReceived] via
 /// kind 25197 subscription, then calls `get_blik` and prints the BLIK code.
+///
+/// With `--no-wait`: syncs once, returns immediately. Exit 0 = BLIK code
+/// retrieved. Exit 2 = not ready yet (use for polling loops / MCP agents).
 Future<int> runOfferGetBlik(List<String> args) async {
   final parsed = _parseFlags(args);
   final offerIdArg = parsed['offer'];
   final coordinatorArg = parsed['coordinator'];
   final relays = _collectMultiFlag(args, '--relay');
+  final noWait = parsed.containsKey('no-wait');
+  final jsonOutput = parsed.containsKey('json');
 
   // Resolve coordinator pubkey if provided.
   String? coordinatorPubkey;
@@ -252,7 +257,8 @@ Future<int> runOfferGetBlik(List<String> args) async {
     );
     try {
       await client.init();
-      return await _callGetBlikRpc(client, offerIdArg, coordinatorPubkey);
+      return await _callGetBlikRpc(client, offerIdArg, coordinatorPubkey,
+          jsonOutput: jsonOutput);
     } finally {
       await client.dispose();
     }
@@ -317,6 +323,21 @@ Future<int> runOfferGetBlik(List<String> args) async {
 
     if (offer.status != OfferStatus.blikReceived &&
         offer.status != OfferStatus.blikSentToMaker) {
+      // --no-wait: don't block, return 2 so the caller can poll.
+      if (noWait) {
+        if (jsonOutput) {
+          stdout.writeln(const JsonEncoder.withIndent('  ').convert({
+            'ready': false,
+            'status': offer.status.name,
+            'offer_id': offer.id,
+            'payment_hash': offer.holdInvoicePaymentHash,
+          }));
+        } else {
+          stdout.writeln('Not ready yet: ${_waitMessage(offer.status)}');
+        }
+        return 2;
+      }
+
       stdout.writeln(
           'Offer ${offer.holdInvoicePaymentHash}: ${_waitMessage(offer.status)} (Ctrl+C to abort)');
 
@@ -352,7 +373,8 @@ Future<int> runOfferGetBlik(List<String> args) async {
     }
 
     return await _callGetBlikRpc(
-        client, currentOffer.id, offer.coordinatorPubkey, localOffer: currentOffer);
+        client, currentOffer.id, offer.coordinatorPubkey,
+        localOffer: currentOffer, jsonOutput: jsonOutput);
   } finally {
     await client.dispose();
   }
@@ -363,8 +385,9 @@ Future<int> _callGetBlikRpc(
   String offerId,
   String coordinatorPubkey, {
   Offer? localOffer,
+  bool jsonOutput = false,
 }) async {
-  stdout.writeln('Requesting BLIK code…');
+  if (!jsonOutput) stdout.writeln('Requesting BLIK code…');
   final response = await client.sendRequest(
     NostrRequest(
       method: kRpcGetBlik,
@@ -374,8 +397,13 @@ Future<int> _callGetBlikRpc(
   );
 
   if (!response.isSuccess) {
-    stderr.writeln(
-        'Coordinator error: ${response.error?['message'] ?? response.error}');
+    final msg = response.error?['message'] ?? response.error;
+    if (jsonOutput) {
+      stdout.writeln(const JsonEncoder.withIndent('  ')
+          .convert({'error': msg.toString()}));
+    } else {
+      stderr.writeln('Coordinator error: $msg');
+    }
     return 1;
   }
 
@@ -383,7 +411,13 @@ Future<int> _callGetBlikRpc(
   final blikCode =
       result['blik_code']?.toString() ?? result['blikCode']?.toString();
 
-  if (blikCode != null) {
+  if (jsonOutput) {
+    stdout.writeln(const JsonEncoder.withIndent('  ').convert({
+      'ready': true,
+      'blik_code': blikCode,
+      ...result,
+    }));
+  } else if (blikCode != null) {
     stdout.writeln('\nBLIK code : $blikCode');
     stdout.writeln('Enter this code in your banking app within 120 seconds.');
   } else {

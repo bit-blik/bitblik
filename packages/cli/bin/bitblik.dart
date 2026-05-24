@@ -131,10 +131,12 @@ void _printHelp() {
     'Matched by payment hash; unmatched coordinator responses are ignored.',
   ]);
 
-  cmd('${_cmd('offer')} ${_sub('get-blik')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
+  cmd('${_cmd('offer')} ${_sub('get-blik')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--no-wait] [--json] [--relay <url>]')}', [
     'Wait for a taker to submit a BLIK code, then retrieve it via RPC.',
     'Syncs local state first. Uses the single active local offer automatically;',
     '--offer required when multiple active offers exist.',
+    '--no-wait: return immediately. Exit 0 = BLIK code in output.',
+    '          Exit 2 = not ready yet (poll again later).',
   ]);
 
   cmd('${_cmd('offer')} ${_sub('confirm-payment')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
