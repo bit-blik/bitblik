@@ -23,7 +23,7 @@ WORKDIR /workspace/packages/app
 
 RUN flutter config --enable-web
 
-RUN flutter build web --${BUILD_MODE} --no-web-resources-cdn  \
+RUN flutter build web --${BUILD_MODE} --no-web-resources-cdn
 #--wasm
 
 # Stage 2: Serve via Nginx
