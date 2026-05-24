@@ -1,46 +1,41 @@
+# Build context: repo root (required for Dart workspace resolution)
 # Stage 1: Build the Flutter web application
-# Use an official Flutter image that includes the SDK
 FROM instrumentisto/flutter:3.41.4 AS build
 
-# Build mode argument: can be "release" or "debug"
 ARG BUILD_MODE=release
 
-# Set working directory INSIDE the client directory structure for the build
-WORKDIR /app
+WORKDIR /workspace
 
-# Copy client pubspec files and get dependencies first to leverage Docker cache
-#COPY pubspec.* ./
-
-# Copy the rest of the client source code
-# Since WORKDIR is /app, copy current dir (.) which contains client code
-COPY . ./
+# Copy workspace pubspec files first for layer caching
+COPY pubspec.yaml pubspec.lock ./
+COPY packages/app/pubspec.yaml packages/app/pubspec.yaml
+COPY packages/core/pubspec.yaml packages/core/pubspec.yaml
+COPY packages/cli/pubspec.yaml packages/cli/pubspec.yaml
+COPY packages/coordinator/pubspec.yaml packages/coordinator/pubspec.yaml
 
 RUN flutter pub get
 
-# Ensure web support is enabled (might be redundant if already enabled)
+# Copy source for packages used by app
+COPY packages/app/ packages/app/
+COPY packages/core/ packages/core/
+
+WORKDIR /workspace/packages/app
+
 RUN flutter config --enable-web
 
-# Build the web application with the specified build mode
 RUN flutter build web --${BUILD_MODE} --no-web-resources-cdn --wasm
 
-# Stage 2: Serve the built web application using Nginx
+# Stage 2: Serve via Nginx
 FROM nginx:stable-alpine
 
-# Copy the built web application from the build stage to Nginx html directory
-# The output directory for flutter build web is build/web relative to WORKDIR
-COPY --from=build /app/build/web /usr/share/nginx/html
+COPY --from=build /workspace/packages/app/build/web /usr/share/nginx/html
+COPY --from=build /workspace/packages/app/web/config.js /usr/share/nginx/html/config.js
 
-# Copy the default config.js (can be overridden by mounting a volume or using entrypoint)
-COPY --from=build /app/web/config.js /usr/share/nginx/html/config.js
-
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY robots.txt /usr/share/nginx/html/robots.txt
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY packages/app/nginx.conf /etc/nginx/conf.d/default.conf
+COPY packages/app/robots.txt /usr/share/nginx/html/robots.txt
+COPY packages/app/docker-entrypoint.sh /docker-entrypoint.sh
 
 RUN chmod +x /docker-entrypoint.sh
 
-# Expose port 80
 EXPOSE 80
-
-# Use entrypoint script to generate config.js from env vars, then start Nginx
 ENTRYPOINT ["/docker-entrypoint.sh"]
