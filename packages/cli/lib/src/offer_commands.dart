@@ -1176,8 +1176,28 @@ Future<int> runOfferSync(List<String> args) async {
 
       final result = response.result;
       if (result == null || result.isEmpty) {
-        stdout.writeln(
-            'Coordinator ${coordinatorPubkey.substring(0, 12)}…: no active offer.');
+        // Coordinator has no active offer. This means every local in-progress
+        // offer for this coordinator has reached a terminal state (cancelled,
+        // expired, settled, etc.) that the coordinator's active-offer query
+        // excludes. Mark UUID-identified offers as expired locally so they
+        // stop appearing as in-progress and don't block new offer creation.
+        final stale = offers.where((o) => _looksLikeUuid(o.id)).toList();
+        if (stale.isEmpty) {
+          stdout.writeln(
+              'Coordinator ${coordinatorPubkey.substring(0, 12)}…: no active offer.');
+        }
+        for (final s in stale) {
+          final s2 = await OfferStore.open();
+          try {
+            await s2.upsert(s.copyWith(status: OfferStatus.expired));
+          } finally {
+            await s2.close();
+          }
+          stdout.writeln(
+              '  ${s.id}: ${s.status.name} → expired '
+              '(coordinator has no active offer)');
+          changed++;
+        }
         continue;
       }
 
@@ -1277,7 +1297,18 @@ Future<void> _syncActiveOffers(BitblikProtocolClient client) async {
       continue;
     }
 
-    if (!response.isSuccess || response.result == null || response.result!.isEmpty) {
+    if (!response.isSuccess) continue;
+
+    if (response.result == null || response.result!.isEmpty) {
+      // No active offer on coordinator — mark stale UUID offers as expired.
+      for (final o in offers.where((o) => _looksLikeUuid(o.id))) {
+        final s2 = await OfferStore.open();
+        try {
+          await s2.upsert(o.copyWith(status: OfferStatus.expired));
+        } finally {
+          await s2.close();
+        }
+      }
       continue;
     }
 
