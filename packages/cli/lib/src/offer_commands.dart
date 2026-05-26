@@ -1175,85 +1175,81 @@ Future<int> runOfferSync(List<String> args) async {
       }
 
       final result = response.result;
-      if (result == null || result.isEmpty) {
-        // Coordinator has no active offer. This means every local in-progress
-        // offer for this coordinator has reached a terminal state (cancelled,
-        // expired, settled, etc.) that the coordinator's active-offer query
-        // excludes. Mark UUID-identified offers as expired locally so they
-        // stop appearing as in-progress and don't block new offer creation.
-        final stale = offers.where((o) => _looksLikeUuid(o.id)).toList();
-        if (stale.isEmpty) {
-          stdout.writeln(
-              'Coordinator ${coordinatorPubkey.substring(0, 12)}…: no active offer.');
-        }
-        for (final s in stale) {
-          final s2 = await OfferStore.open();
-          try {
-            await s2.upsert(s.copyWith(status: OfferStatus.expired));
-          } finally {
-            await s2.close();
+
+      // Payment hash of the local offer matched by coordinator response.
+      // Null = no match (empty response or coordinator returned a different offer).
+      String? matchedPaymentHash;
+
+      if (result != null && result.isNotEmpty) {
+        final remoteId =
+            result['id']?.toString() ?? result['offer_id']?.toString();
+        final remoteStatusStr = result['status']?.toString();
+        final remoteHash = result['hold_invoice_payment_hash']?.toString() ??
+            result['paymentHash']?.toString();
+
+        if (remoteId == null || remoteStatusStr == null) {
+          stderr.writeln(
+              'Coordinator ${coordinatorPubkey.substring(0, 12)}…: malformed response.');
+        } else if (remoteHash == null) {
+          stderr.writeln(
+              'Coordinator ${coordinatorPubkey.substring(0, 12)}…: '
+              'response missing payment hash.');
+        } else {
+          final local = offers
+              .where((o) => o.holdInvoicePaymentHash == remoteHash)
+              .firstOrNull;
+
+          if (local != null) {
+            matchedPaymentHash = remoteHash;
+
+            OfferStatus status;
+            try {
+              status = OfferStatus.values.byName(remoteStatusStr);
+            } catch (_) {
+              status = OfferStatus.unknown;
+            }
+
+            if (local.id == remoteId && local.status == status) {
+              stdout.writeln(
+                  '  ${local.holdInvoicePaymentHash}: unchanged (${status.name})');
+            } else {
+              final prevStatus = local.status;
+              final s2 = await OfferStore.open();
+              try {
+                await s2.upsert(local.copyWith(id: remoteId, status: status));
+              } finally {
+                await s2.close();
+              }
+              stdout.writeln(
+                  '  ${local.holdInvoicePaymentHash}: ${prevStatus.name} → '
+                  '${status.name} (id: $remoteId)');
+              changed++;
+            }
           }
-          stdout.writeln(
-              '  ${s.id}: ${s.status.name} → expired '
-              '(coordinator has no active offer)');
-          changed++;
+          // else: coordinator returned an offer we don't have locally — fall through
+          // to the unmatched-UUID cleanup below.
         }
-        continue;
       }
 
-      final remoteId =
-          result['id']?.toString() ?? result['offer_id']?.toString();
-      final remoteStatusStr = result['status']?.toString();
-      final remoteHash = result['hold_invoice_payment_hash']?.toString() ??
-          result['paymentHash']?.toString();
-
-      if (remoteId == null || remoteStatusStr == null) {
-        stderr.writeln(
-            'Coordinator ${coordinatorPubkey.substring(0, 12)}…: malformed response.');
-        continue;
+      // Any UUID-identified local offer not matched by the coordinator response
+      // has reached a terminal state on the coordinator (cancelled, expired,
+      // settled, etc.) that the coordinator's active-offer query excludes.
+      // Mark them expired locally so they stop blocking new offer creation.
+      for (final o in offers) {
+        if (!_looksLikeUuid(o.id)) continue;
+        if (o.holdInvoicePaymentHash != null &&
+            o.holdInvoicePaymentHash == matchedPaymentHash) continue;
+        final s2 = await OfferStore.open();
+        try {
+          await s2.upsert(o.copyWith(status: OfferStatus.expired));
+        } finally {
+          await s2.close();
+        }
+        stdout.writeln(
+            '  ${o.id}: ${o.status.name} → expired '
+            '(not active on coordinator)');
+        changed++;
       }
-
-      // Match by payment hash only — UUID alone is unsafe (coordinator may
-      // return a stale/different offer if no funded offer exists yet).
-      if (remoteHash == null) {
-        stderr.writeln(
-            'Coordinator ${coordinatorPubkey.substring(0, 12)}…: '
-            'response missing payment hash, skipping.');
-        continue;
-      }
-      final local = offers
-          .where((o) => o.holdInvoicePaymentHash == remoteHash)
-          .firstOrNull;
-
-      if (local == null) {
-        // Remote offer doesn't match any local record — ignore.
-        continue;
-      }
-
-      OfferStatus status;
-      try {
-        status = OfferStatus.values.byName(remoteStatusStr);
-      } catch (_) {
-        status = OfferStatus.unknown;
-      }
-
-      if (local.id == remoteId && local.status == status) {
-        stdout.writeln('  ${local.holdInvoicePaymentHash}: unchanged (${status.name})');
-        continue;
-      }
-
-      final prevStatus = local.status;
-      // Store key (paymentHash) never changes — just upsert with updated id+status.
-      final s2 = await OfferStore.open();
-      try {
-        await s2.upsert(local.copyWith(id: remoteId, status: status));
-      } finally {
-        await s2.close();
-      }
-
-      stdout.writeln(
-          '  ${local.holdInvoicePaymentHash}: ${prevStatus.name} → ${status.name} (id: $remoteId)');
-      changed++;
     }
   } finally {
     await client.dispose();
@@ -1299,48 +1295,52 @@ Future<void> _syncActiveOffers(BitblikProtocolClient client) async {
 
     if (!response.isSuccess) continue;
 
-    if (response.result == null || response.result!.isEmpty) {
-      // No active offer on coordinator — mark stale UUID offers as expired.
-      for (final o in offers.where((o) => _looksLikeUuid(o.id))) {
-        final s2 = await OfferStore.open();
-        try {
-          await s2.upsert(o.copyWith(status: OfferStatus.expired));
-        } finally {
-          await s2.close();
+    String? matchedPaymentHash;
+
+    final result = response.result;
+    if (result != null && result.isNotEmpty) {
+      final remoteId =
+          result['id']?.toString() ?? result['offer_id']?.toString();
+      final remoteStatusStr = result['status']?.toString();
+      final remoteHash = result['hold_invoice_payment_hash']?.toString() ??
+          result['paymentHash']?.toString();
+
+      if (remoteId != null && remoteStatusStr != null && remoteHash != null) {
+        final local = offers
+            .where((o) => o.holdInvoicePaymentHash == remoteHash)
+            .firstOrNull;
+
+        if (local != null) {
+          matchedPaymentHash = remoteHash;
+          OfferStatus status;
+          try {
+            status = OfferStatus.values.byName(remoteStatusStr);
+          } catch (_) {
+            status = OfferStatus.unknown;
+          }
+          if (local.id != remoteId || local.status != status) {
+            final s2 = await OfferStore.open();
+            try {
+              await s2.upsert(local.copyWith(id: remoteId, status: status));
+            } finally {
+              await s2.close();
+            }
+          }
         }
       }
-      continue;
     }
 
-    final result = response.result!;
-    final remoteId = result['id']?.toString() ?? result['offer_id']?.toString();
-    final remoteStatusStr = result['status']?.toString();
-    final remoteHash = result['hold_invoice_payment_hash']?.toString() ??
-        result['paymentHash']?.toString();
-
-    if (remoteId == null || remoteStatusStr == null) continue;
-
-    if (remoteHash == null) continue;
-    final local = offers
-        .where((o) => o.holdInvoicePaymentHash == remoteHash)
-        .firstOrNull;
-    if (local == null) continue;
-
-    OfferStatus status;
-    try {
-      status = OfferStatus.values.byName(remoteStatusStr);
-    } catch (_) {
-      status = OfferStatus.unknown;
-    }
-
-    if (local.id == remoteId && local.status == status) continue;
-
-    // Store key (paymentHash) never changes — just upsert.
-    final s2 = await OfferStore.open();
-    try {
-      await s2.upsert(local.copyWith(id: remoteId, status: status));
-    } finally {
-      await s2.close();
+    // UUID-identified local offers not matched → terminal on coordinator.
+    for (final o in offers) {
+      if (!_looksLikeUuid(o.id)) continue;
+      if (o.holdInvoicePaymentHash != null &&
+          o.holdInvoicePaymentHash == matchedPaymentHash) continue;
+      final s2 = await OfferStore.open();
+      try {
+        await s2.upsert(o.copyWith(status: OfferStatus.expired));
+      } finally {
+        await s2.close();
+      }
     }
   }
 }
