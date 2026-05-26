@@ -555,16 +555,110 @@ Future<int> runOfferCancel(List<String> args) async {
   );
   try {
     await client.init();
+
+    // Offer already has a coordinator UUID — RPC cancel directly.
+    if (_looksLikeUuid(offer.id)) {
+      return await _callCancelOfferRpc(
+          client, offer.id, offer.coordinatorPubkey,
+          localOffer: offer);
+    }
+
+    // Offer is local-only (ID is a payment hash, not a coordinator UUID).
+    // Sync with coordinator first: get its current view and real UUID.
+    final paymentHash = offer.holdInvoicePaymentHash;
+    if (paymentHash == null) {
+      stdout.writeln('No payment hash — cancelling locally only.');
+      return await _cancelLocalOnly(offer);
+    }
+
+    stdout.writeln('Offer has no coordinator UUID — syncing before cancel…');
+    final response = await client.sendRequest(
+      const NostrRequest(method: kRpcGetMyActiveOffer, params: {}),
+      offer.coordinatorPubkey,
+    );
+
+    if (!response.isSuccess ||
+        response.result == null ||
+        response.result!.isEmpty) {
+      // Coordinator has no active offer for our key — safe local-only cancel.
+      stdout.writeln('Coordinator reports no active offer — cancelling locally.');
+      return await _cancelLocalOnly(offer);
+    }
+
+    final result = response.result!;
+    final remoteHash = result['hold_invoice_payment_hash']?.toString() ??
+        result['paymentHash']?.toString();
+
+    if (remoteHash != paymentHash) {
+      // Coordinator's active offer is a different one — not ours.
+      stdout.writeln('No matching offer on coordinator — cancelling locally.');
+      return await _cancelLocalOnly(offer);
+    }
+
+    // Coordinator matched. Extract UUID and current status.
+    final remoteId =
+        result['id']?.toString() ?? result['offer_id']?.toString();
+    final remoteStatusStr = result['status']?.toString();
+
+    OfferStatus remoteStatus = offer.status;
+    if (remoteStatusStr != null) {
+      try {
+        remoteStatus = OfferStatus.values.byName(remoteStatusStr);
+      } catch (_) {
+        remoteStatus = OfferStatus.unknown;
+      }
+    }
+
+    // Persist updated UUID + status before we do anything else.
+    var updatedOffer = offer;
+    if (remoteId != null) {
+      updatedOffer = offer.copyWith(id: remoteId, status: remoteStatus);
+      final s2 = await OfferStore.open();
+      try {
+        await s2.upsert(updatedOffer);
+      } finally {
+        await s2.close();
+      }
+      stdout.writeln(
+          'Synced: ${offer.id} → id=$remoteId  status=${remoteStatus.name}');
+    }
+
+    if (!_isCancellable(remoteStatus)) {
+      stderr.writeln(
+          'Coordinator reports offer in "${remoteStatus.name}" — cannot cancel.');
+      return 1;
+    }
+
+    // RPC cancel with the real coordinator UUID.
     return await _callCancelOfferRpc(
-        client, offer.id, offer.coordinatorPubkey,
-        localOffer: offer);
+        client, updatedOffer.id, updatedOffer.coordinatorPubkey,
+        localOffer: updatedOffer);
   } finally {
     await client.dispose();
   }
 }
 
+/// Mark an offer as cancelled in the local store only — no coordinator RPC.
+Future<int> _cancelLocalOnly(Offer offer) async {
+  final store = await OfferStore.open();
+  try {
+    await store.upsert(offer.copyWith(status: OfferStatus.cancelled));
+  } finally {
+    await store.close();
+  }
+  stdout.writeln('Offer marked as cancelled locally (no coordinator RPC sent).');
+  return 0;
+}
+
 bool _isCancellable(OfferStatus s) =>
     s == OfferStatus.created || s == OfferStatus.funded;
+
+/// True when [s] looks like a coordinator UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).
+/// False = still a payment hash — offer has not been correlated with the coordinator yet.
+bool _looksLikeUuid(String s) => RegExp(
+      r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+      caseSensitive: false,
+    ).hasMatch(s);
 
 Future<int> _callCancelOfferRpc(
   BitblikProtocolClient client,
@@ -657,10 +751,14 @@ Future<int> runOfferMarkBlikInvalid(List<String> args) async {
   try {
     final all = await store.all();
     // Maker can mark invalid after receiving the BLIK code.
+    // Allow all BLIK-related and expired-BLIK states — coordinator is the
+    // final authority on whether mark_blik_invalid is accepted.
     final eligible = all
         .where((o) =>
             o.status == OfferStatus.blikSentToMaker ||
-            o.status == OfferStatus.blikReceived)
+            o.status == OfferStatus.blikReceived ||
+            o.status == OfferStatus.expiredSentBlik ||
+            o.status == OfferStatus.expiredBlik)
         .toList();
 
     if (eligible.isEmpty) {

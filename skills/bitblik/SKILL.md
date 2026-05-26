@@ -27,3 +27,16 @@ P2P exchange: Lightning sats → BLIK fiat code. Maker-side CLI over Nostr.
 ```
 coordinators list → offer create → pay hold invoice → get-blik (poll) → confirm-payment
 ```
+
+## Maker Commands at a Glance
+
+| Command | When to use |
+|---------|-------------|
+| `offer create` | Start exchange — returns hold invoice to pay |
+| `offer cancel` | Abort before taker takes (created/funded) |
+| `offer get-blik` | Poll for BLIK code after taker reserves |
+| `offer confirm-payment` | After entering BLIK in payment terminal |
+| `offer mark-blik-invalid` | BLIK code didn't work at terminal |
+| `offer open-dispute` | Taker raised conflict after invalid-BLIK report |
+| `offer sync` | Refresh local status from coordinator |
+| `offer list` | Show local offers |
