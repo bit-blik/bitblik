@@ -27,6 +27,21 @@ Future<void> main(List<String> args) async {
     return;
   }
 
+  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'cancel') {
+    exitCode = await runOfferCancel(args.sublist(2));
+    return;
+  }
+
+  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'mark-blik-invalid') {
+    exitCode = await runOfferMarkBlikInvalid(args.sublist(2));
+    return;
+  }
+
+  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'open-dispute') {
+    exitCode = await runOfferOpenDispute(args.sublist(2));
+    return;
+  }
+
   if (args.length >= 2 && args[0] == 'offer' && args[1] == 'confirm-payment') {
     exitCode = await runOfferConfirmPayment(args.sublist(2));
     return;
@@ -124,6 +139,24 @@ void _printHelp() {
 
   cmd('${_cmd('offer')} ${_sub('list')} ${p('--coordinator <npub|hex> [--currency PLN] [--json] [--relay <url>]')}', [
     'List live public offers fetched from relays for a given coordinator.',
+  ]);
+
+  cmd('${_cmd('offer')} ${_sub('cancel')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
+    'Cancel an active (created/funded) offer.',
+    'Coordinator voids the hold invoice.',
+    'Uses the single cancellable local offer automatically; --offer required if multiple.',
+  ]);
+
+  cmd('${_cmd('offer')} ${_sub('mark-blik-invalid')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
+    'Report that the received BLIK code was invalid / did not charge.',
+    'Coordinator notifies the taker and relists the offer for a new taker.',
+    'Use after get-blik when the code fails at the bank terminal.',
+  ]);
+
+  cmd('${_cmd('offer')} ${_sub('open-dispute')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
+    'Open a dispute after the taker raised a conflict.',
+    'Taker raises conflict when they believe the BLIK charged but maker marked it invalid.',
+    'Coordinator mediates and contacts both parties.',
   ]);
 
   cmd('${_cmd('offer')} ${_sub('sync')} ${p('[--relay <url>]')}', [

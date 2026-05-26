@@ -126,6 +126,29 @@ Future<int> runOfferCreate(List<String> args) async {
     return 64;
   }
 
+  // Guard: reject if there's already an active offer for this coordinator.
+  {
+    final store = await OfferStore.open();
+    try {
+      final all = await store.all();
+      final active = all
+          .where((o) =>
+              o.coordinatorPubkey == coordinatorPubkey &&
+              _isInProgress(o.status))
+          .toList();
+      if (active.isNotEmpty) {
+        stderr.writeln(
+            'Active offer already exists for this coordinator:\n'
+            '  ${active.first.id}  status=${active.first.status.name}  '
+            '${active.first.fiatAmount} ${active.first.fiatCurrency}\n'
+            'Cancel or finish it first, or run: bitblik offer cancel');
+        return 1;
+      }
+    } finally {
+      await store.close();
+    }
+  }
+
   final secrets = await SecretsStore.loadOrCreate();
   final client = BitblikProtocolClient(
     secrets: secrets,
@@ -446,6 +469,425 @@ Future<int> _callGetBlikRpc(
     }
   }
 
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// CLI command: `bitblik offer cancel`
+// ---------------------------------------------------------------------------
+
+/// CLI command: `bitblik offer cancel`.
+///
+/// Cancels an active (created/funded) offer. Coordinator voids the hold invoice.
+/// Fast path: `--offer <id> --coordinator <npub|hex>` skips local store.
+Future<int> runOfferCancel(List<String> args) async {
+  final parsed = _parseFlags(args);
+  final offerIdArg = parsed['offer'];
+  final coordinatorArg = parsed['coordinator'];
+  final relays = _collectMultiFlag(args, '--relay');
+
+  String? coordinatorPubkey;
+  if (coordinatorArg != null) {
+    try {
+      coordinatorPubkey = _resolvePubkey(coordinatorArg);
+    } on FormatException catch (e) {
+      stderr.writeln('Invalid --coordinator: ${e.message}');
+      return 64;
+    }
+  }
+
+  // ---- Fast path ----
+  if (offerIdArg != null && coordinatorPubkey != null) {
+    final secrets = await SecretsStore.loadOrCreate();
+    final client = BitblikProtocolClient(
+      secrets: secrets,
+      relays: relays.isEmpty ? null : relays,
+    );
+    try {
+      await client.init();
+      return await _callCancelOfferRpc(client, offerIdArg, coordinatorPubkey);
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  // ---- Normal path: load from local store ----
+  final store = await OfferStore.open();
+  final Offer offer;
+  try {
+    final all = await store.all();
+    final cancellable = all.where((o) => _isCancellable(o.status)).toList();
+
+    if (cancellable.isEmpty) {
+      stderr.writeln(
+          'No cancellable offers found locally.\n'
+          'Or pass --offer <id> --coordinator <npub|hex> to skip local lookup.');
+      return 1;
+    }
+
+    if (offerIdArg != null) {
+      final found = cancellable.where((o) => o.id == offerIdArg).firstOrNull;
+      if (found == null) {
+        stderr.writeln(
+            'Offer "$offerIdArg" not found or not in a cancellable status.');
+        return 64;
+      }
+      offer = found;
+    } else if (cancellable.length > 1) {
+      stderr.writeln('Multiple cancellable offers. Pass --offer <id>:');
+      for (final o in cancellable) {
+        stderr.writeln(
+            '  ${o.id}  status=${o.status.name}  '
+            '${o.fiatAmount} ${o.fiatCurrency}');
+      }
+      return 64;
+    } else {
+      offer = cancellable.first;
+    }
+  } finally {
+    await store.close();
+  }
+
+  final secrets = await SecretsStore.loadOrCreate();
+  final client = BitblikProtocolClient(
+    secrets: secrets,
+    relays: relays.isEmpty ? null : relays,
+  );
+  try {
+    await client.init();
+    return await _callCancelOfferRpc(
+        client, offer.id, offer.coordinatorPubkey,
+        localOffer: offer);
+  } finally {
+    await client.dispose();
+  }
+}
+
+bool _isCancellable(OfferStatus s) =>
+    s == OfferStatus.created || s == OfferStatus.funded;
+
+Future<int> _callCancelOfferRpc(
+  BitblikProtocolClient client,
+  String offerId,
+  String coordinatorPubkey, {
+  Offer? localOffer,
+}) async {
+  stdout.writeln('Cancelling offer…');
+  final response = await client.sendRequest(
+    NostrRequest(
+      method: kRpcCancelOffer,
+      params: {'offer_id': offerId},
+    ),
+    coordinatorPubkey,
+  );
+
+  if (!response.isSuccess) {
+    stderr.writeln(
+        'Coordinator error: ${response.error?['message'] ?? response.error}');
+    return 1;
+  }
+
+  if (localOffer != null) {
+    final store = await OfferStore.open();
+    try {
+      await store.upsert(localOffer.copyWith(status: OfferStatus.cancelled));
+    } finally {
+      await store.close();
+    }
+  } else {
+    final store = await OfferStore.open();
+    try {
+      final stored = await store.get(offerId);
+      if (stored != null) {
+        await store.upsert(stored.copyWith(status: OfferStatus.cancelled));
+      }
+    } finally {
+      await store.close();
+    }
+  }
+
+  stdout.writeln('Offer cancelled. Hold invoice will be voided by coordinator.');
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// CLI command: `bitblik offer mark-blik-invalid`
+// ---------------------------------------------------------------------------
+
+/// CLI command: `bitblik offer mark-blik-invalid`.
+///
+/// Tells the coordinator the BLIK code was invalid / did not charge.
+/// Coordinator puts the offer back so a new taker can reserve it.
+/// Fast path: `--offer <id> --coordinator <npub|hex>` skips local store.
+Future<int> runOfferMarkBlikInvalid(List<String> args) async {
+  final parsed = _parseFlags(args);
+  final offerIdArg = parsed['offer'];
+  final coordinatorArg = parsed['coordinator'];
+  final relays = _collectMultiFlag(args, '--relay');
+
+  String? coordinatorPubkey;
+  if (coordinatorArg != null) {
+    try {
+      coordinatorPubkey = _resolvePubkey(coordinatorArg);
+    } on FormatException catch (e) {
+      stderr.writeln('Invalid --coordinator: ${e.message}');
+      return 64;
+    }
+  }
+
+  // ---- Fast path ----
+  if (offerIdArg != null && coordinatorPubkey != null) {
+    final secrets = await SecretsStore.loadOrCreate();
+    final client = BitblikProtocolClient(
+      secrets: secrets,
+      relays: relays.isEmpty ? null : relays,
+    );
+    try {
+      await client.init();
+      return await _callMarkBlikInvalidRpc(
+          client, offerIdArg, coordinatorPubkey);
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  // ---- Normal path: load from local store ----
+  final store = await OfferStore.open();
+  final Offer offer;
+  try {
+    final all = await store.all();
+    // Maker can mark invalid after receiving the BLIK code.
+    final eligible = all
+        .where((o) =>
+            o.status == OfferStatus.blikSentToMaker ||
+            o.status == OfferStatus.blikReceived)
+        .toList();
+
+    if (eligible.isEmpty) {
+      stderr.writeln(
+          'No offers in a state where BLIK can be marked invalid.\n'
+          'Or pass --offer <id> --coordinator <npub|hex> to skip local lookup.');
+      return 1;
+    }
+
+    if (offerIdArg != null) {
+      final found = eligible.where((o) => o.id == offerIdArg).firstOrNull;
+      if (found == null) {
+        stderr.writeln(
+            'Offer "$offerIdArg" not found or not in an eligible status.');
+        return 64;
+      }
+      offer = found;
+    } else if (eligible.length > 1) {
+      stderr.writeln('Multiple eligible offers. Pass --offer <id>:');
+      for (final o in eligible) {
+        stderr.writeln(
+            '  ${o.id}  status=${o.status.name}  '
+            '${o.fiatAmount} ${o.fiatCurrency}');
+      }
+      return 64;
+    } else {
+      offer = eligible.first;
+    }
+  } finally {
+    await store.close();
+  }
+
+  final secrets = await SecretsStore.loadOrCreate();
+  final client = BitblikProtocolClient(
+    secrets: secrets,
+    relays: relays.isEmpty ? null : relays,
+  );
+  try {
+    await client.init();
+    return await _callMarkBlikInvalidRpc(
+        client, offer.id, offer.coordinatorPubkey,
+        localOffer: offer);
+  } finally {
+    await client.dispose();
+  }
+}
+
+Future<int> _callMarkBlikInvalidRpc(
+  BitblikProtocolClient client,
+  String offerId,
+  String coordinatorPubkey, {
+  Offer? localOffer,
+}) async {
+  stdout.writeln('Marking BLIK code as invalid…');
+  final response = await client.sendRequest(
+    NostrRequest(
+      method: kRpcMarkBlikInvalid,
+      params: {'offer_id': offerId},
+    ),
+    coordinatorPubkey,
+  );
+
+  if (!response.isSuccess) {
+    stderr.writeln(
+        'Coordinator error: ${response.error?['message'] ?? response.error}');
+    return 1;
+  }
+
+  if (localOffer != null) {
+    final store = await OfferStore.open();
+    try {
+      await store.upsert(localOffer.copyWith(status: OfferStatus.invalidBlik));
+    } finally {
+      await store.close();
+    }
+  } else {
+    final store = await OfferStore.open();
+    try {
+      final stored = await store.get(offerId);
+      if (stored != null) {
+        await store.upsert(stored.copyWith(status: OfferStatus.invalidBlik));
+      }
+    } finally {
+      await store.close();
+    }
+  }
+
+  stdout.writeln(
+      'BLIK marked invalid. Taker notified; offer will be listed for a new taker.');
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// CLI command: `bitblik offer open-dispute`
+// ---------------------------------------------------------------------------
+
+/// CLI command: `bitblik offer open-dispute`.
+///
+/// Opens a dispute after the taker raised a conflict (taker claims BLIK charged
+/// but maker reported it invalid). Coordinator mediates.
+/// Fast path: `--offer <id> --coordinator <npub|hex>` skips local store.
+Future<int> runOfferOpenDispute(List<String> args) async {
+  final parsed = _parseFlags(args);
+  final offerIdArg = parsed['offer'];
+  final coordinatorArg = parsed['coordinator'];
+  final relays = _collectMultiFlag(args, '--relay');
+
+  String? coordinatorPubkey;
+  if (coordinatorArg != null) {
+    try {
+      coordinatorPubkey = _resolvePubkey(coordinatorArg);
+    } on FormatException catch (e) {
+      stderr.writeln('Invalid --coordinator: ${e.message}');
+      return 64;
+    }
+  }
+
+  // ---- Fast path ----
+  if (offerIdArg != null && coordinatorPubkey != null) {
+    final secrets = await SecretsStore.loadOrCreate();
+    final client = BitblikProtocolClient(
+      secrets: secrets,
+      relays: relays.isEmpty ? null : relays,
+    );
+    try {
+      await client.init();
+      return await _callOpenDisputeRpc(client, offerIdArg, coordinatorPubkey);
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  // ---- Normal path: load from local store ----
+  final store = await OfferStore.open();
+  final Offer offer;
+  try {
+    final all = await store.all();
+    final eligible = all
+        .where((o) => o.status == OfferStatus.conflict)
+        .toList();
+
+    if (eligible.isEmpty) {
+      stderr.writeln(
+          'No offers in conflict status found locally.\n'
+          'Or pass --offer <id> --coordinator <npub|hex> to skip local lookup.');
+      return 1;
+    }
+
+    if (offerIdArg != null) {
+      final found = eligible.where((o) => o.id == offerIdArg).firstOrNull;
+      if (found == null) {
+        stderr.writeln(
+            'Offer "$offerIdArg" not found or not in conflict status.');
+        return 64;
+      }
+      offer = found;
+    } else if (eligible.length > 1) {
+      stderr.writeln('Multiple offers in conflict. Pass --offer <id>:');
+      for (final o in eligible) {
+        stderr.writeln(
+            '  ${o.id}  status=${o.status.name}  '
+            '${o.fiatAmount} ${o.fiatCurrency}');
+      }
+      return 64;
+    } else {
+      offer = eligible.first;
+    }
+  } finally {
+    await store.close();
+  }
+
+  final secrets = await SecretsStore.loadOrCreate();
+  final client = BitblikProtocolClient(
+    secrets: secrets,
+    relays: relays.isEmpty ? null : relays,
+  );
+  try {
+    await client.init();
+    return await _callOpenDisputeRpc(
+        client, offer.id, offer.coordinatorPubkey,
+        localOffer: offer);
+  } finally {
+    await client.dispose();
+  }
+}
+
+Future<int> _callOpenDisputeRpc(
+  BitblikProtocolClient client,
+  String offerId,
+  String coordinatorPubkey, {
+  Offer? localOffer,
+}) async {
+  stdout.writeln('Opening dispute…');
+  final response = await client.sendRequest(
+    NostrRequest(
+      method: kRpcOpenDispute,
+      params: {'offer_id': offerId},
+    ),
+    coordinatorPubkey,
+  );
+
+  if (!response.isSuccess) {
+    stderr.writeln(
+        'Coordinator error: ${response.error?['message'] ?? response.error}');
+    return 1;
+  }
+
+  if (localOffer != null) {
+    final store = await OfferStore.open();
+    try {
+      await store.upsert(localOffer.copyWith(status: OfferStatus.dispute));
+    } finally {
+      await store.close();
+    }
+  } else {
+    final store = await OfferStore.open();
+    try {
+      final stored = await store.get(offerId);
+      if (stored != null) {
+        await store.upsert(stored.copyWith(status: OfferStatus.dispute));
+      }
+    } finally {
+      await store.close();
+    }
+  }
+
+  stdout.writeln('Dispute opened. Contact the coordinator to resolve.');
   return 0;
 }
 
