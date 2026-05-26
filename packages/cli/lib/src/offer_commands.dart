@@ -681,23 +681,24 @@ Future<int> _callCancelOfferRpc(
     return 1;
   }
 
-  if (localOffer != null) {
-    final store = await OfferStore.open();
-    try {
+  final store = await OfferStore.open();
+  try {
+    if (localOffer != null) {
       await store.upsert(localOffer.copyWith(status: OfferStatus.cancelled));
-    } finally {
-      await store.close();
-    }
-  } else {
-    final store = await OfferStore.open();
-    try {
-      final stored = await store.get(offerId);
+    } else {
+      // Fast path: no localOffer supplied. Store is keyed by payment hash, so
+      // store.get(offerId) only works when offerId IS the payment hash.
+      // Also search by coordinator UUID (the id field) to cover the UUID case.
+      final stored = await store.get(offerId) ??
+          (await store.all())
+              .where((o) => o.id == offerId)
+              .firstOrNull;
       if (stored != null) {
         await store.upsert(stored.copyWith(status: OfferStatus.cancelled));
       }
-    } finally {
-      await store.close();
     }
+  } finally {
+    await store.close();
   }
 
   stdout.writeln('Offer cancelled. Hold invoice will be voided by coordinator.');
