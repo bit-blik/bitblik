@@ -64,7 +64,7 @@ class NostrService {
 
       _signer = Bip340EventSigner(
         privateKey: privateKeyHex,
-        publicKey: bip340.getPublicKey(privateKey),
+        publicKey: bip340.getPublicKey(privateKeyHex),
       );
 
       AppLogger.info(
