@@ -1,4 +1,3 @@
-import 'dart:developer' as Logger;
 
 import '../../../i18n/gen/strings.g.dart'; // Import Slang
 import 'package:flutter/material.dart';

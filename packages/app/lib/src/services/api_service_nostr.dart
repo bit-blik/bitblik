@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:memory_cache/memory_cache.dart';
 import 'package:ndk/ndk.dart';
-import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
 import 'key_service.dart';

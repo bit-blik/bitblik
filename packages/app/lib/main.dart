@@ -51,7 +51,7 @@ import 'src/screens/taker_flow/taker_conflict_screen.dart'; // Import the taker 
 import 'src/screens/taker_flow/taker_submit_blik_screen.dart';
 import 'src/screens/taker_flow/taker_wait_confirmation_screen.dart';
 import 'src/screens/wallet_screen.dart';
-import 'src/utils/platform_detection.dart'; // Import our platform detection utility
+// Import our platform detection utility
 
 final double kMakerFeePercentage = 0.5;
 final double kTakerFeePercentage = 0.5;

@@ -1,4 +1,3 @@
-import 'dart:js' show allowInterop;
 import 'package:flutter_webln/flutter_webln.dart';
 import 'package:ndk/shared/logger/logger.dart';
 

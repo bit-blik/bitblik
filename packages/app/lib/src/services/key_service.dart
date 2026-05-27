@@ -5,7 +5,6 @@ import 'package:bip340/bip340.dart' as bip340;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:ndk/entities.dart';
 import 'package:ndk/ndk.dart';
-import 'package:ndk/shared/logger/logger.dart';
 
 import 'wallet_ids.dart';
 

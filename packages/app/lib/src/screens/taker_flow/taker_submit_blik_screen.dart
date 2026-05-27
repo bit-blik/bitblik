@@ -11,7 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
-import 'package:bitblik_core/core.dart'; // Added
+// Added
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
 import '../../widgets/progress_indicators.dart'; // Import TakerProgressIndicator
