@@ -356,6 +356,19 @@ class NostrService {
             return {};
           }
 
+        case kRpcGetOfferDetails:
+          final offerId = params['offer_id'] as String?;
+          final paymentHash = params['payment_hash'] as String?;
+          final offer = await _coordinatorService.getOfferDetailsForParticipant(
+            userPubkey,
+            offerId: offerId,
+            paymentHash: paymentHash,
+          );
+          if (offer == null) {
+            return {};
+          }
+          return offer.toJsonWithPubkeys();
+
         case kRpcGetMyFinishedOffers:
           final activeOffers =
               await _coordinatorService.getMyActiveOffers(userPubkey);

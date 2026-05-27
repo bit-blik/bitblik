@@ -1124,8 +1124,8 @@ Future<int> _callConfirmPaymentRpc(
 
 /// CLI command: `bitblik offer sync`.
 ///
-/// For each unique coordinator in non-terminal local offers, calls
-/// [kRpcGetMyActiveOffer] and upserts the returned status + UUID.
+/// For each non-terminal local offer, queries the coordinator for that
+/// specific offer and reconciles the local cached status.
 Future<int> runOfferSync(List<String> args) async {
   final relays = _collectMultiFlag(args, '--relay');
 
@@ -1143,12 +1143,6 @@ Future<int> runOfferSync(List<String> args) async {
     return 0;
   }
 
-  // Group by coordinator so we make one RPC call per coordinator.
-  final byCoordinator = <String, List<Offer>>{};
-  for (final o in localActive) {
-    (byCoordinator[o.coordinatorPubkey] ??= []).add(o);
-  }
-
   final secrets = await SecretsStore.loadOrCreate();
   final client = BitblikProtocolClient(
     secrets: secrets,
@@ -1159,98 +1153,12 @@ Future<int> runOfferSync(List<String> args) async {
   try {
     await client.init();
 
-    for (final entry in byCoordinator.entries) {
-      final coordinatorPubkey = entry.key;
-      final offers = entry.value;
-
-      final response = await client.sendRequest(
-        const NostrRequest(method: kRpcGetMyActiveOffer, params: {}),
-        coordinatorPubkey,
+    for (final offer in localActive) {
+      changed += await _syncOfferWithCoordinator(
+        client,
+        offer,
+        verbose: true,
       );
-
-      if (!response.isSuccess) {
-        stderr.writeln(
-            'Coordinator ${coordinatorPubkey.substring(0, 12)}… error: '
-            '${response.error?['message'] ?? response.error}');
-        continue;
-      }
-
-      final result = response.result;
-
-      // Payment hash of the local offer matched by coordinator response.
-      // Null = no match (empty response or coordinator returned a different offer).
-      String? matchedPaymentHash;
-
-      if (result != null && result.isNotEmpty) {
-        final remoteId =
-            result['id']?.toString() ?? result['offer_id']?.toString();
-        final remoteStatusStr = result['status']?.toString();
-        final remoteHash = result['hold_invoice_payment_hash']?.toString() ??
-            result['paymentHash']?.toString();
-
-        if (remoteId == null || remoteStatusStr == null) {
-          stderr.writeln(
-              'Coordinator ${coordinatorPubkey.substring(0, 12)}…: malformed response.');
-        } else if (remoteHash == null) {
-          stderr.writeln(
-              'Coordinator ${coordinatorPubkey.substring(0, 12)}…: '
-              'response missing payment hash.');
-        } else {
-          final local = offers
-              .where((o) => o.holdInvoicePaymentHash == remoteHash)
-              .firstOrNull;
-
-          if (local != null) {
-            matchedPaymentHash = remoteHash;
-
-            OfferStatus status;
-            try {
-              status = OfferStatus.values.byName(remoteStatusStr);
-            } catch (_) {
-              status = OfferStatus.unknown;
-            }
-
-            if (local.id == remoteId && local.status == status) {
-              stdout.writeln(
-                  '  ${local.holdInvoicePaymentHash}: unchanged (${status.name})');
-            } else {
-              final prevStatus = local.status;
-              final s2 = await OfferStore.open();
-              try {
-                await s2.upsert(local.copyWith(id: remoteId, status: status));
-              } finally {
-                await s2.close();
-              }
-              stdout.writeln(
-                  '  ${local.holdInvoicePaymentHash}: ${prevStatus.name} → '
-                  '${status.name} (id: $remoteId)');
-              changed++;
-            }
-          }
-          // else: coordinator returned an offer we don't have locally — fall through
-          // to the unmatched-UUID cleanup below.
-        }
-      }
-
-      // Any UUID-identified local offer not matched by the coordinator response
-      // has reached a terminal state on the coordinator (cancelled, expired,
-      // settled, etc.) that the coordinator's active-offer query excludes.
-      // Mark them expired locally so they stop blocking new offer creation.
-      for (final o in offers) {
-        if (!_looksLikeUuid(o.id)) continue;
-        if (o.holdInvoicePaymentHash != null &&
-            o.holdInvoicePaymentHash == matchedPaymentHash) continue;
-        final s2 = await OfferStore.open();
-        try {
-          await s2.upsert(o.copyWith(status: OfferStatus.expired));
-        } finally {
-          await s2.close();
-        }
-        stdout.writeln(
-            '  ${o.id}: ${o.status.name} → expired '
-            '(not active on coordinator)');
-        changed++;
-      }
     }
   } finally {
     await client.dispose();
@@ -1261,7 +1169,7 @@ Future<int> runOfferSync(List<String> args) async {
 }
 
 /// Silently syncs non-terminal local offers against each coordinator via
-/// [kRpcGetMyActiveOffer]. Errors are printed to stderr but never throw.
+/// [kRpcGetOfferDetails]. Errors are printed to stderr but never throw.
 Future<void> _syncActiveOffers(BitblikProtocolClient client) async {
   final store = await OfferStore.open();
   final List<Offer> localActive;
@@ -1274,76 +1182,128 @@ Future<void> _syncActiveOffers(BitblikProtocolClient client) async {
 
   if (localActive.isEmpty) return;
 
-  final byCoordinator = <String, List<Offer>>{};
-  for (final o in localActive) {
-    (byCoordinator[o.coordinatorPubkey] ??= []).add(o);
+  for (final offer in localActive) {
+    await _syncOfferWithCoordinator(client, offer, verbose: false);
+  }
+}
+
+Future<int> _syncOfferWithCoordinator(
+  BitblikProtocolClient client,
+  Offer local, {
+  required bool verbose,
+}) async {
+  final identifier = _syncIdentifier(local);
+  final params = {
+    if (_looksLikeUuid(local.id)) 'offer_id': local.id,
+    if (!_looksLikeUuid(local.id) &&
+        local.holdInvoicePaymentHash != null &&
+        local.holdInvoicePaymentHash!.isNotEmpty)
+      'payment_hash': local.holdInvoicePaymentHash!,
+  };
+
+  if (params.isEmpty) {
+    if (verbose) {
+      stderr.writeln('  $identifier: missing offer identifier for sync.');
+    }
+    return 0;
   }
 
-  for (final entry in byCoordinator.entries) {
-    final coordinatorPubkey = entry.key;
-    final offers = entry.value;
-
-    NostrResponse response;
-    try {
-      response = await client.sendRequest(
-        const NostrRequest(method: kRpcGetMyActiveOffer, params: {}),
-        coordinatorPubkey,
-      );
-    } catch (e) {
-      stderr.writeln('Sync: coordinator ${coordinatorPubkey.substring(0, 12)}… unreachable: $e');
-      continue;
-    }
-
-    if (!response.isSuccess) continue;
-
-    String? matchedPaymentHash;
-
-    final result = response.result;
-    if (result != null && result.isNotEmpty) {
-      final remoteId =
-          result['id']?.toString() ?? result['offer_id']?.toString();
-      final remoteStatusStr = result['status']?.toString();
-      final remoteHash = result['hold_invoice_payment_hash']?.toString() ??
-          result['paymentHash']?.toString();
-
-      if (remoteId != null && remoteStatusStr != null && remoteHash != null) {
-        final local = offers
-            .where((o) => o.holdInvoicePaymentHash == remoteHash)
-            .firstOrNull;
-
-        if (local != null) {
-          matchedPaymentHash = remoteHash;
-          OfferStatus status;
-          try {
-            status = OfferStatus.values.byName(remoteStatusStr);
-          } catch (_) {
-            status = OfferStatus.unknown;
-          }
-          if (local.id != remoteId || local.status != status) {
-            final s2 = await OfferStore.open();
-            try {
-              await s2.upsert(local.copyWith(id: remoteId, status: status));
-            } finally {
-              await s2.close();
-            }
-          }
-        }
-      }
-    }
-
-    // UUID-identified local offers not matched → terminal on coordinator.
-    for (final o in offers) {
-      if (!_looksLikeUuid(o.id)) continue;
-      if (o.holdInvoicePaymentHash != null &&
-          o.holdInvoicePaymentHash == matchedPaymentHash) continue;
-      final s2 = await OfferStore.open();
-      try {
-        await s2.upsert(o.copyWith(status: OfferStatus.expired));
-      } finally {
-        await s2.close();
-      }
-    }
+  late final NostrResponse response;
+  try {
+    response = await client.sendRequest(
+      NostrRequest(method: kRpcGetOfferDetails, params: params),
+      local.coordinatorPubkey,
+    );
+  } catch (e) {
+    stderr.writeln(
+        'Sync: coordinator ${local.coordinatorPubkey.substring(0, 12)}… '
+        'unreachable for $identifier: $e');
+    return 0;
   }
+
+  if (!response.isSuccess) {
+    stderr.writeln(
+        'Coordinator ${local.coordinatorPubkey.substring(0, 12)}… error for '
+        '$identifier: ${response.error?['message'] ?? response.error}');
+    return 0;
+  }
+
+  final result = response.result;
+  if (result == null || result.isEmpty) {
+    if (!_looksLikeUuid(local.id)) {
+      if (verbose) {
+        stdout.writeln('  $identifier: unchanged (${local.status.name})');
+      }
+      return 0;
+    }
+    return _persistSyncedOffer(
+      local,
+      remoteId: local.id,
+      remoteStatus: OfferStatus.expired,
+      reason: 'not found on coordinator',
+      verbose: verbose,
+    );
+  }
+
+  final remoteId = result['id']?.toString() ?? result['offer_id']?.toString();
+  final remoteStatusStr = result['status']?.toString();
+  if (remoteId == null || remoteStatusStr == null) {
+    stderr.writeln(
+        'Coordinator ${local.coordinatorPubkey.substring(0, 12)}… malformed '
+        'response for $identifier.');
+    return 0;
+  }
+
+  OfferStatus remoteStatus;
+  try {
+    remoteStatus = OfferStatus.values.byName(remoteStatusStr);
+  } catch (_) {
+    remoteStatus = OfferStatus.unknown;
+  }
+
+  return _persistSyncedOffer(
+    local,
+    remoteId: remoteId,
+    remoteStatus: remoteStatus,
+    reason: null,
+    verbose: verbose,
+  );
+}
+
+Future<int> _persistSyncedOffer(
+  Offer local, {
+  required String remoteId,
+  required OfferStatus remoteStatus,
+  required String? reason,
+  required bool verbose,
+}) async {
+  if (local.id == remoteId && local.status == remoteStatus) {
+    if (verbose) {
+      stdout.writeln('  ${_syncIdentifier(local)}: unchanged (${remoteStatus.name})');
+    }
+    return 0;
+  }
+
+  final store = await OfferStore.open();
+  try {
+    await store.upsert(local.copyWith(id: remoteId, status: remoteStatus));
+  } finally {
+    await store.close();
+  }
+
+  if (verbose) {
+    final suffix = reason == null ? '' : ' ($reason)';
+    stdout.writeln(
+        '  ${_syncIdentifier(local)}: ${local.status.name} → ${remoteStatus.name} '
+        '(id: $remoteId)$suffix');
+  }
+  return 1;
+}
+
+String _syncIdentifier(Offer offer) {
+  return _looksLikeUuid(offer.id)
+      ? offer.id
+      : (offer.holdInvoicePaymentHash ?? offer.id);
 }
 
 String _waitMessage(OfferStatus s) {

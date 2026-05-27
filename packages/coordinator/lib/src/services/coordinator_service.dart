@@ -1295,6 +1295,27 @@ class CoordinatorService {
     return await _dbService.getOfferById(offerId);
   }
 
+  Future<Offer?> getOfferDetailsForParticipant(
+    String userPubkey, {
+    String? offerId,
+    String? paymentHash,
+  }) async {
+    Offer? offer;
+    if (offerId != null && offerId.isNotEmpty) {
+      offer = await _dbService.getOfferById(offerId);
+    } else if (paymentHash != null && paymentHash.isNotEmpty) {
+      offer = await _dbService.getOfferByPaymentHash(paymentHash);
+    } else {
+      throw ArgumentError('offerId or paymentHash is required');
+    }
+
+    if (offer == null) return null;
+    if (offer.makerPubkey != userPubkey && offer.takerPubkey != userPubkey) {
+      return null;
+    }
+    return offer;
+  }
+
   Future<DateTime?> reserveOffer(String offerId, String takerId) async {
     AppLogger.info('Reserving offer $offerId for taker $takerId',
         offerId: offerId);

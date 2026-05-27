@@ -26,5 +26,6 @@ const String kRpcMarkBlikCharged = 'mark_blik_charged';
 
 // Queries
 const String kRpcGetMyActiveOffer = 'get_my_active_offer';
+const String kRpcGetOfferDetails = 'get_offer_details';
 const String kRpcGetMyFinishedOffers = 'get_my_finished_offers';
 const String kRpcGetSuccessfulOffersStats = 'get_successful_offers_stats';
