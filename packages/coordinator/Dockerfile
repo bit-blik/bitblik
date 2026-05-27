@@ -49,4 +49,4 @@ WORKDIR /app
 
 EXPOSE 8080
 
-CMD ["/app/bin/bundle/bin/server"]
+CMD ["/app/bin/server"]
