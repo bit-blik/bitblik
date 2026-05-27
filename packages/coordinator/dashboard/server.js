@@ -575,18 +575,48 @@ app.post('/api/offers-data', async (req, res) => {
       ORDER BY w.day_num
     `;
 
-    const [groupedResult, totalsResult, takerDomainResult, weekdaySuccessResult] = await Promise.all([
+    // Successful offer volume by weekday (Mon-Sun), independent of selected period
+    const weekdayVolumeQuery = `
+      WITH weekdays AS (
+        SELECT
+          day_num,
+          day_name
+        FROM (VALUES
+          (1, 'Mon'),
+          (2, 'Tue'),
+          (3, 'Wed'),
+          (4, 'Thu'),
+          (5, 'Fri'),
+          (6, 'Sat'),
+          (7, 'Sun')
+        ) AS w(day_num, day_name)
+      )
+      SELECT
+        w.day_name AS weekday,
+        COALESCE(SUM(o.amount_sats), 0) AS volume_sats,
+        COALESCE(ROUND(SUM(o.fiat_amount)::NUMERIC, 2), 0) AS volume_fiat
+      FROM weekdays w
+      LEFT JOIN offers o
+        ON EXTRACT(ISODOW FROM o.created_at)::INT = w.day_num
+        AND o.status = 'takerPaid'
+      GROUP BY w.day_num, w.day_name
+      ORDER BY w.day_num
+    `;
+
+    const [groupedResult, totalsResult, takerDomainResult, weekdaySuccessResult, weekdayVolumeResult] = await Promise.all([
       pool.query(groupedQuery),
       pool.query(totalsQuery),
       pool.query(takerDomainQuery),
-      pool.query(weekdaySuccessQuery)
+      pool.query(weekdaySuccessQuery),
+      pool.query(weekdayVolumeQuery)
     ]);
 
     res.json({ 
       rows: groupedResult.rows,
       totals: totalsResult.rows[0],
       takerDomainRanking: takerDomainResult.rows,
-      weekdaySuccess: weekdaySuccessResult.rows
+      weekdaySuccess: weekdaySuccessResult.rows,
+      weekdayVolume: weekdayVolumeResult.rows
     });
   } catch (error) {
     console.error('Database error:', error);

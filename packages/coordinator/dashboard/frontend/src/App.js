@@ -43,6 +43,7 @@ const AnalyticsDashboard = () => {
   const [totals, setTotals] = useState(null);
   const [takerDomainRanking, setTakerDomainRanking] = useState([]);
   const [weekdaySuccess, setWeekdaySuccess] = useState([]);
+  const [weekdayVolume, setWeekdayVolume] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [groupBy, setGroupBy] = useState('daily');
@@ -155,6 +156,13 @@ const AnalyticsDashboard = () => {
             ...item,
             success_count: parseInt(item.success_count || 0, 10),
             avg_offer_count: parseFloat(item.avg_offer_count || 0),
+          }))
+        );
+        setWeekdayVolume(
+          (result.weekdayVolume || []).map((item) => ({
+            ...item,
+            volume_sats: parseInt(item.volume_sats || 0, 10),
+            volume_fiat: parseFloat(item.volume_fiat || 0),
           }))
         );
       } catch (err) {
@@ -705,6 +713,52 @@ const AnalyticsDashboard = () => {
                 </ResponsiveContainer>
               </div>
 
+              <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                  Successful Offer Volume by Weekday (Total)
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={weekdayVolume}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="weekday" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                    <YAxis
+                      yAxisId="left"
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      tickFormatter={(value) => formatNumber(value)}
+                      label={{ value: 'Volume (sats)', angle: -90, position: 'insideLeft', style: { fill: '#10b981' } }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      tickFormatter={(value) => formatCurrencyChart(value)}
+                      label={{ value: 'Volume (PLN)', angle: 90, position: 'insideRight', style: { fill: '#f59e0b' } }}
+                    />
+                    <Tooltip
+                      formatter={(value, name) => {
+                        if (name === 'Volume (PLN)') return [formatCurrencyChart(value), name];
+                        return [`${formatNumber(value)} sats`, name];
+                      }}
+                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="volume_sats" fill="#10b981" name="Volume (sats)" />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="volume_fiat"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      name="Volume (PLN)"
+                      dot={{ fill: '#f59e0b', r: 4 }}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-violet-500"></div>
