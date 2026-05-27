@@ -34,11 +34,6 @@ enum OfferStatus {
 
 // Represents an offer listed by the coordinator.
 class Offer {
-  static final RegExp _timezoneSuffixPattern = RegExp(
-    r'(Z|[+-]\d{2}:\d{2})$',
-    caseSensitive: false,
-  );
-
   final String id;
   final int amountSats;
   final int makerFees; // Renamed from feeSats
@@ -155,17 +150,8 @@ class Offer {
       if (value is String) {
         final normalized = value.trim();
         if (normalized.isEmpty) return null;
-
-        // Coordinator/local DB sometimes stores ISO8601 without timezone.
-        // Treat bare timestamps as UTC so client timezone does not shift
-        // reservation/confirmation expiry windows.
-        final isoCandidate =
-            _timezoneSuffixPattern.hasMatch(normalized)
-                ? normalized
-                : '${normalized}Z';
-
         try {
-          return DateTime.parse(isoCandidate);
+          return DateTime.parse(normalized);
         } catch (_) {
           // Fallback: try parse as int millis inside a string
           final asInt = int.tryParse(normalized);
@@ -234,12 +220,8 @@ class Offer {
         if (v is int) return DateTime.fromMillisecondsSinceEpoch(v, isUtc: true);
         if (v is String) {
           final normalized = v.trim();
-          final isoCandidate =
-              _timezoneSuffixPattern.hasMatch(normalized)
-                  ? normalized
-                  : '${normalized}Z';
           try {
-            return DateTime.parse(isoCandidate);
+            return DateTime.parse(normalized);
           } catch (_) {
             final asInt = int.tryParse(normalized);
             if (asInt != null)
@@ -393,7 +375,7 @@ class Offer {
     DateTime? epochSecondsOrNull(String? raw) {
       final v = int.tryParse(raw ?? '');
       if (v == null || v == 0) return null;
-      return DateTime.fromMillisecondsSinceEpoch(v * 1000);
+      return DateTime.fromMillisecondsSinceEpoch(v * 1000, isUtc: true);
     }
 
     final createdAtSecs = int.tryParse(tagMap['created_at'] ?? '0') ?? 0;
@@ -405,7 +387,10 @@ class Offer {
       fiatAmount: double.tryParse(tagMap['fa'] ?? '0') ?? 0.0,
       fiatCurrency: tagMap['f'] ?? 'PLN',
       status: _statusFromNip69(tagMap['s'] ?? 'pending') ?? OfferStatus.funded,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(createdAtSecs * 1000),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        createdAtSecs * 1000,
+        isUtc: true,
+      ),
       makerPubkey: tagMap['maker'] ?? event.pubKey,
       coordinatorPubkey: tagMap['p'] ?? event.pubKey,
       takerPubkey: tagMap['taker'],

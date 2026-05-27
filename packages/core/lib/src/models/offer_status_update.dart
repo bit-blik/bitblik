@@ -28,8 +28,15 @@ class OfferStatusUpdate {
   ) {
     DateTime? parseEpochSeconds(dynamic v) {
       if (v == null) return null;
-      if (v is int) return DateTime.fromMillisecondsSinceEpoch(v * 1000);
-      if (v is num) return DateTime.fromMillisecondsSinceEpoch(v.toInt() * 1000);
+      if (v is int) {
+        return DateTime.fromMillisecondsSinceEpoch(v * 1000, isUtc: true);
+      }
+      if (v is num) {
+        return DateTime.fromMillisecondsSinceEpoch(
+          v.toInt() * 1000,
+          isUtc: true,
+        );
+      }
       return null;
     }
 
@@ -42,6 +49,7 @@ class OfferStatusUpdate {
       coordinatorPubkey: coordinatorPubkey,
       timestamp: DateTime.fromMillisecondsSinceEpoch(
         (json['timestamp'] as int) * 1000,
+        isUtc: true,
       ),
     );
   }

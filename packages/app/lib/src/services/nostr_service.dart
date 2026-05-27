@@ -378,7 +378,7 @@ class NostrService {
     return _handleResponse(response, (result) {
       final timestamp = result['reserved_at'] as int?;
       if (timestamp != null) {
-        return DateTime.fromMillisecondsSinceEpoch(timestamp);
+        return DateTime.fromMillisecondsSinceEpoch(timestamp, isUtc: true);
       }
       return null;
     });
