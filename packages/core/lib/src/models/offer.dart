@@ -34,6 +34,11 @@ enum OfferStatus {
 
 // Represents an offer listed by the coordinator.
 class Offer {
+  static final RegExp _timezoneSuffixPattern = RegExp(
+    r'(Z|[+-]\d{2}:\d{2})$',
+    caseSensitive: false,
+  );
+
   final String id;
   final int amountSats;
   final int makerFees; // Renamed from feeSats
@@ -145,17 +150,27 @@ class Offer {
     DateTime? parseOptionalDateTime(dynamic value) {
       if (value == null) return null;
       if (value is int) {
-        return DateTime.fromMillisecondsSinceEpoch(value);
+        return DateTime.fromMillisecondsSinceEpoch(value, isUtc: true);
       }
       if (value is String) {
-        // Try ISO8601 first
+        final normalized = value.trim();
+        if (normalized.isEmpty) return null;
+
+        // Coordinator/local DB sometimes stores ISO8601 without timezone.
+        // Treat bare timestamps as UTC so client timezone does not shift
+        // reservation/confirmation expiry windows.
+        final isoCandidate =
+            _timezoneSuffixPattern.hasMatch(normalized)
+                ? normalized
+                : '${normalized}Z';
+
         try {
-          return DateTime.parse(value);
+          return DateTime.parse(isoCandidate);
         } catch (_) {
           // Fallback: try parse as int millis inside a string
-          final asInt = int.tryParse(value);
+          final asInt = int.tryParse(normalized);
           if (asInt != null) {
-            return DateTime.fromMillisecondsSinceEpoch(asInt);
+            return DateTime.fromMillisecondsSinceEpoch(asInt, isUtc: true);
           }
         }
       }
@@ -216,18 +231,23 @@ class Offer {
       }(),
       createdAt: () {
         final v = json['created_at'];
-        if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+        if (v is int) return DateTime.fromMillisecondsSinceEpoch(v, isUtc: true);
         if (v is String) {
+          final normalized = v.trim();
+          final isoCandidate =
+              _timezoneSuffixPattern.hasMatch(normalized)
+                  ? normalized
+                  : '${normalized}Z';
           try {
-            return DateTime.parse(v);
+            return DateTime.parse(isoCandidate);
           } catch (_) {
-            final asInt = int.tryParse(v);
+            final asInt = int.tryParse(normalized);
             if (asInt != null)
-              return DateTime.fromMillisecondsSinceEpoch(asInt);
+              return DateTime.fromMillisecondsSinceEpoch(asInt, isUtc: true);
           }
         }
         // Sensible fallback to "now" to avoid crash; ideally this should not happen.
-        return DateTime.now();
+        return DateTime.now().toUtc();
       }(),
       makerPubkey: safeString(
         json['maker_pubkey'],
@@ -266,22 +286,22 @@ class Offer {
       'fiat_amount': fiatAmount,
       'fiat_currency': fiatCurrency,
       'status': status.name,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt.toUtc().toIso8601String(),
       'maker_pubkey': makerPubkey,
       'coordinator_pubkey': coordinatorPubkey,
       'taker_pubkey': takerPubkey,
-      'reserved_at': reservedAt?.toIso8601String(),
-      'blik_received_at': blikReceivedAt?.toIso8601String(),
+      'reserved_at': reservedAt?.toUtc().toIso8601String(),
+      'blik_received_at': blikReceivedAt?.toUtc().toIso8601String(),
       'blik_code': blikCode,
       'hold_invoice_payment_hash': holdInvoicePaymentHash,
       'hold_invoice': holdInvoice,
       'taker_lightning_address': takerLightningAddress,
       'taker_invoice': takerInvoice,
       'hold_invoice_preimage': holdInvoicePreimage,
-      'updated_at': updatedAt?.toIso8601String(),
-      'maker_confirmed_at': makerConfirmedAt?.toIso8601String(),
-      'settled_at': settledAt?.toIso8601String(),
-      'taker_paid_at': takerPaidAt?.toIso8601String(),
+      'updated_at': updatedAt?.toUtc().toIso8601String(),
+      'maker_confirmed_at': makerConfirmedAt?.toUtc().toIso8601String(),
+      'settled_at': settledAt?.toUtc().toIso8601String(),
+      'taker_paid_at': takerPaidAt?.toUtc().toIso8601String(),
       'taker_fees': takerFees,
       'payment_wallet_id': paymentWalletId,
     };
