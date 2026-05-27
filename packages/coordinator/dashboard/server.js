@@ -590,16 +590,47 @@ app.post('/api/offers-data', async (req, res) => {
           (6, 'Sat'),
           (7, 'Sun')
         ) AS w(day_num, day_name)
+      ),
+      date_bounds AS (
+        SELECT
+          DATE(MIN(created_at)) AS min_date,
+          DATE(MAX(created_at)) AS max_date
+        FROM offers
+      ),
+      calendar_dates AS (
+        SELECT
+          generate_series(min_date, max_date, INTERVAL '1 day')::DATE AS offer_date
+        FROM date_bounds
+        WHERE min_date IS NOT NULL
+      ),
+      volume_by_date AS (
+        SELECT
+          DATE(created_at) AS offer_date,
+          COALESCE(SUM(fiat_amount) FILTER (WHERE status = 'takerPaid'), 0) AS volume_fiat
+        FROM offers
+        GROUP BY DATE(created_at)
+      ),
+      weekday_daily AS (
+        SELECT
+          EXTRACT(ISODOW FROM c.offer_date)::INT AS day_num,
+          COALESCE(v.volume_fiat, 0) AS volume_fiat
+        FROM calendar_dates c
+        LEFT JOIN volume_by_date v ON v.offer_date = c.offer_date
+      ),
+      weekday_aggregates AS (
+        SELECT
+          day_num,
+          ROUND(SUM(volume_fiat)::NUMERIC, 2) AS total_volume_fiat,
+          ROUND(AVG(volume_fiat)::NUMERIC, 2) AS avg_volume_fiat
+        FROM weekday_daily
+        GROUP BY day_num
       )
       SELECT
         w.day_name AS weekday,
-        COALESCE(SUM(o.amount_sats), 0) AS volume_sats,
-        COALESCE(ROUND(SUM(o.fiat_amount)::NUMERIC, 2), 0) AS volume_fiat
+        COALESCE(a.total_volume_fiat, 0) AS total_volume_fiat,
+        COALESCE(a.avg_volume_fiat, 0) AS avg_volume_fiat
       FROM weekdays w
-      LEFT JOIN offers o
-        ON EXTRACT(ISODOW FROM o.created_at)::INT = w.day_num
-        AND o.status = 'takerPaid'
-      GROUP BY w.day_num, w.day_name
+      LEFT JOIN weekday_aggregates a ON a.day_num = w.day_num
       ORDER BY w.day_num
     `;
 

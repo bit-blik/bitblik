@@ -161,8 +161,8 @@ const AnalyticsDashboard = () => {
         setWeekdayVolume(
           (result.weekdayVolume || []).map((item) => ({
             ...item,
-            volume_sats: parseInt(item.volume_sats || 0, 10),
-            volume_fiat: parseFloat(item.volume_fiat || 0),
+            total_volume_fiat: parseFloat(item.total_volume_fiat || 0),
+            avg_volume_fiat: parseFloat(item.avg_volume_fiat || 0),
           }))
         );
       } catch (err) {
@@ -725,32 +725,31 @@ const AnalyticsDashboard = () => {
                     <YAxis
                       yAxisId="left"
                       tick={{ fill: '#6b7280', fontSize: 12 }}
-                      tickFormatter={(value) => formatNumber(value)}
-                      label={{ value: 'Volume (sats)', angle: -90, position: 'insideLeft', style: { fill: '#10b981' } }}
+                      tickFormatter={(value) => formatCurrencyChart(value)}
+                      label={{ value: 'Total Volume (PLN)', angle: -90, position: 'insideLeft', style: { fill: '#10b981' } }}
                     />
                     <YAxis
                       yAxisId="right"
                       orientation="right"
                       tick={{ fill: '#6b7280', fontSize: 12 }}
                       tickFormatter={(value) => formatCurrencyChart(value)}
-                      label={{ value: 'Volume (PLN)', angle: 90, position: 'insideRight', style: { fill: '#f59e0b' } }}
+                      label={{ value: 'Avg Volume (PLN)', angle: 90, position: 'insideRight', style: { fill: '#f59e0b' } }}
                     />
                     <Tooltip
                       formatter={(value, name) => {
-                        if (name === 'Volume (PLN)') return [formatCurrencyChart(value), name];
-                        return [`${formatNumber(value)} sats`, name];
+                        return [formatCurrencyChart(value), name];
                       }}
                       contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                     />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="volume_sats" fill="#10b981" name="Volume (sats)" />
+                    <Bar yAxisId="left" dataKey="total_volume_fiat" fill="#10b981" name="Total Volume (PLN)" />
                     <Line
                       yAxisId="right"
                       type="monotone"
-                      dataKey="volume_fiat"
+                      dataKey="avg_volume_fiat"
                       stroke="#f59e0b"
                       strokeWidth={2}
-                      name="Volume (PLN)"
+                      name="Avg Volume (PLN)"
                       dot={{ fill: '#f59e0b', r: 4 }}
                     />
                   </BarChart>
