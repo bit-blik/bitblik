@@ -400,8 +400,8 @@ class DatabaseService {
       substitutionValues: {
         'id': id,
         'makerPubkey': makerPubkey,
-        'newStatus': OfferStatus.cancelled, // Use cancelled status
-        'requiredStatus': OfferStatus.funded,
+        'newStatus': OfferStatus.cancelled.name,
+        'requiredStatus': OfferStatus.funded.name,
         'updated_at': now,
       },
     );
