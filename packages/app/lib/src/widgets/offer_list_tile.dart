@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../utils/locale_format.dart';
 
 class OfferListTile extends ConsumerWidget {
   const OfferListTile({
@@ -23,78 +24,90 @@ class OfferListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
     final apiService = ref.watch(apiServiceProvider);
-    final coordinatorInfo =
-        apiService.getCoordinatorInfoByPubkey(offer.coordinatorPubkey);
+    final coordinatorInfo = apiService.getCoordinatorInfoByPubkey(
+      offer.coordinatorPubkey,
+    );
     final coordinatorName =
         coordinatorInfo?.name ?? t.myOffers.unknownCoordinator;
+    final localeTag = effectiveFormatLocale(context);
 
-    final fiatLabel = NumberFormat.decimalPattern().format(offer.fiatAmount);
-    final dateLabel =
-        DateFormat('dd-MM-yyyy HH:mm').format(offer.createdAt.toLocal());
+    final fiatLabel = NumberFormat.decimalPattern(
+      localeTag,
+    ).format(offer.fiatAmount);
+    final dateLabel = formatLocalizedDateTime(context, offer.createdAt);
 
     final statusLabel = _statusLabel(t, offer.status);
     final statusColor = _statusColor(offer.status);
 
     return ListTile(
       onTap: onTap,
-      leading: showNeko
-          ? SizedBox(
-            width: 40,
-            height: 40,
-            child: Stack(
-              children: [
-                ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl:
-                        'https://robohash.org/${offer.makerPubkey}?set=set4',
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    placeholder:
-                        (_, __) => CircleAvatar(
-                          backgroundColor: statusColor.withValues(alpha: 0.15),
-                          child: Icon(
-                            _statusIcon(offer.status),
-                            color: statusColor,
-                            size: 20,
-                          ),
-                        ),
-                    errorWidget:
-                        (_, __, ___) => CircleAvatar(
-                          backgroundColor: statusColor.withValues(alpha: 0.15),
-                          child: Icon(
-                            _statusIcon(offer.status),
-                            color: statusColor,
-                            size: 20,
-                          ),
-                        ),
-                  ),
-                ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
+      leading:
+          showNeko
+              ? SizedBox(
+                width: 40,
+                height: 40,
+                child: Stack(
+                  children: [
+                    ClipOval(
+                      child: CachedNetworkImage(
+                        imageUrl:
+                            'https://robohash.org/${offer.makerPubkey}?set=set4',
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        placeholder:
+                            (_, __) => CircleAvatar(
+                              backgroundColor: statusColor.withValues(
+                                alpha: 0.15,
+                              ),
+                              child: Icon(
+                                _statusIcon(offer.status),
+                                color: statusColor,
+                                size: 20,
+                              ),
+                            ),
+                        errorWidget:
+                            (_, __, ___) => CircleAvatar(
+                              backgroundColor: statusColor.withValues(
+                                alpha: 0.15,
+                              ),
+                              child: Icon(
+                                _statusIcon(offer.status),
+                                color: statusColor,
+                                size: 20,
+                              ),
+                            ),
+                      ),
                     ),
-                    child: Icon(
-                      _statusIcon(offer.status),
-                      color: Colors.white,
-                      size: 9,
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: Icon(
+                          _statusIcon(offer.status),
+                          color: Colors.white,
+                          size: 9,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          )
-          : CircleAvatar(
-            backgroundColor: statusColor.withValues(alpha: 0.15),
-            child: Icon(_statusIcon(offer.status), color: statusColor, size: 20),
-          ),
+              )
+              : CircleAvatar(
+                backgroundColor: statusColor.withValues(alpha: 0.15),
+                child: Icon(
+                  _statusIcon(offer.status),
+                  color: statusColor,
+                  size: 20,
+                ),
+              ),
       title: Text(
         '$fiatLabel ${offer.fiatCurrency}',
         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -106,8 +119,7 @@ class OfferListTile extends ConsumerWidget {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(4),

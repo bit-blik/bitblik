@@ -734,7 +734,11 @@ myOffers:
     title: "Szczegóły oferty"
     notFound: "Nie znaleziono oferty."
     amount: "Kwota"
+    fees: "Opłaty"
     sats: "Satoshi"
+    maker: "Maker"
+    taker: "Taker"
+    yourFee: "Twoja opłata"
     makerFee: "Opłata makera"
     takerFee: "Opłata takera"
     coordinator: "Koordynator"
@@ -747,6 +751,8 @@ myOffers:
     id: "ID oferty"
     paymentHash: "Hash płatności"
     holdInvoice: "Hold Invoice"
+    continueActiveOffer: "Przejdź do aktywnej oferty"
+    after: "po ${duration}"
 
 landing:
   mainTitle: "Wymiana\n BLIK ⇄ bitcoin"

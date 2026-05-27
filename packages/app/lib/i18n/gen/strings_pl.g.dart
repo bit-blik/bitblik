@@ -1307,7 +1307,11 @@ class _TranslationsMyOffersDetailsPl extends TranslationsMyOffersDetailsEn {
 	@override String get title => 'Szczegóły oferty';
 	@override String get notFound => 'Nie znaleziono oferty.';
 	@override String get amount => 'Kwota';
+	@override String get fees => 'Opłaty';
 	@override String get sats => 'Satoshi';
+	@override String get maker => 'Maker';
+	@override String get taker => 'Taker';
+	@override String get yourFee => 'Twoja opłata';
 	@override String get makerFee => 'Opłata makera';
 	@override String get takerFee => 'Opłata takera';
 	@override String get coordinator => 'Koordynator';
@@ -1320,6 +1324,8 @@ class _TranslationsMyOffersDetailsPl extends TranslationsMyOffersDetailsEn {
 	@override String get id => 'ID oferty';
 	@override String get paymentHash => 'Hash płatności';
 	@override String get holdInvoice => 'Hold Invoice';
+	@override String get continueActiveOffer => 'Przejdź do aktywnej oferty';
+	@override String after({required Object duration}) => 'po ${duration}';
 }
 
 // Path: landing.actions
@@ -2506,7 +2512,11 @@ extension on TranslationsPl {
 			case 'myOffers.details.title': return 'Szczegóły oferty';
 			case 'myOffers.details.notFound': return 'Nie znaleziono oferty.';
 			case 'myOffers.details.amount': return 'Kwota';
+			case 'myOffers.details.fees': return 'Opłaty';
 			case 'myOffers.details.sats': return 'Satoshi';
+			case 'myOffers.details.maker': return 'Maker';
+			case 'myOffers.details.taker': return 'Taker';
+			case 'myOffers.details.yourFee': return 'Twoja opłata';
 			case 'myOffers.details.makerFee': return 'Opłata makera';
 			case 'myOffers.details.takerFee': return 'Opłata takera';
 			case 'myOffers.details.coordinator': return 'Koordynator';
@@ -2519,6 +2529,8 @@ extension on TranslationsPl {
 			case 'myOffers.details.id': return 'ID oferty';
 			case 'myOffers.details.paymentHash': return 'Hash płatności';
 			case 'myOffers.details.holdInvoice': return 'Hold Invoice';
+			case 'myOffers.details.continueActiveOffer': return 'Przejdź do aktywnej oferty';
+			case 'myOffers.details.after': return ({required Object duration}) => 'po ${duration}';
 			case 'landing.mainTitle': return 'Wymiana\n BLIK ⇄ bitcoin';
 			case 'landing.subtitle': return 'Płać lub sprzedawaj kod BLIK za bitcoin';
 			case 'landing.actions.payBlik': return 'Zapłać BLIK';

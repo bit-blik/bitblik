@@ -8,6 +8,7 @@ import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer model
 import '../providers/providers.dart'; // Import providers
+import '../utils/locale_format.dart';
 import '../widgets/offer_list_tile.dart';
 
 class RoleSelectionScreen extends ConsumerStatefulWidget {
@@ -645,11 +646,12 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                                 fee: offer.makerFees,
                                 status: offer.status,
                                 date:
-                                    offer.takerPaidAt
-                                        ?.toLocal()
-                                        .toString()
-                                        .substring(0, 16) ??
-                                    '-',
+                                    offer.takerPaidAt != null
+                                        ? formatLocalizedDateTime(
+                                          context,
+                                          offer.takerPaidAt!,
+                                        )
+                                        : '-',
                               ),
                             ),
                             trailing: const Icon(

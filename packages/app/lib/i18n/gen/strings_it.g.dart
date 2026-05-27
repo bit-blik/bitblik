@@ -958,6 +958,7 @@ class _TranslationsMakerSuccessIt extends TranslationsMakerSuccessEn {
 	@override String get headline => 'Pagamento confermato!';
 	@override String get subtitle => 'Il Taker verrà ora pagato.';
 	@override String get detailsTitle => 'Dettagli offerta:';
+	@override String duration({required Object time}) => 'L\'offerta ha richiesto ${time}!';
 }
 
 // Path: taker.roleSelection
@@ -1309,7 +1310,11 @@ class _TranslationsMyOffersDetailsIt extends TranslationsMyOffersDetailsEn {
 	@override String get title => 'Dettagli offerta';
 	@override String get notFound => 'Offerta non trovata.';
 	@override String get amount => 'Importo';
+	@override String get fees => 'Commissioni';
 	@override String get sats => 'Satoshi';
+	@override String get maker => 'Maker';
+	@override String get taker => 'Taker';
+	@override String get yourFee => 'La tua commissione';
 	@override String get makerFee => 'Commissione maker';
 	@override String get takerFee => 'Commissione taker';
 	@override String get coordinator => 'Coordinatore';
@@ -1322,6 +1327,8 @@ class _TranslationsMyOffersDetailsIt extends TranslationsMyOffersDetailsEn {
 	@override String get id => 'ID offerta';
 	@override String get paymentHash => 'Hash pagamento';
 	@override String get holdInvoice => 'Hold Invoice';
+	@override String get continueActiveOffer => 'Continua offerta attiva';
+	@override String after({required Object duration}) => 'dopo ${duration}';
 }
 
 // Path: landing.actions
@@ -2342,6 +2349,7 @@ extension on TranslationsIt {
 			case 'maker.success.headline': return 'Pagamento confermato!';
 			case 'maker.success.subtitle': return 'Il Taker verrà ora pagato.';
 			case 'maker.success.detailsTitle': return 'Dettagli offerta:';
+			case 'maker.success.duration': return ({required Object time}) => 'L\'offerta ha richiesto ${time}!';
 			case 'taker.roleSelection.button': return 'VENDI codice BLIK per satoshi';
 			case 'taker.progress.step1': return 'Invia BLIK';
 			case 'taker.progress.step2': return 'Conferma BLIK';
@@ -2510,7 +2518,11 @@ extension on TranslationsIt {
 			case 'myOffers.details.title': return 'Dettagli offerta';
 			case 'myOffers.details.notFound': return 'Offerta non trovata.';
 			case 'myOffers.details.amount': return 'Importo';
+			case 'myOffers.details.fees': return 'Commissioni';
 			case 'myOffers.details.sats': return 'Satoshi';
+			case 'myOffers.details.maker': return 'Maker';
+			case 'myOffers.details.taker': return 'Taker';
+			case 'myOffers.details.yourFee': return 'La tua commissione';
 			case 'myOffers.details.makerFee': return 'Commissione maker';
 			case 'myOffers.details.takerFee': return 'Commissione taker';
 			case 'myOffers.details.coordinator': return 'Coordinatore';
@@ -2523,6 +2535,8 @@ extension on TranslationsIt {
 			case 'myOffers.details.id': return 'ID offerta';
 			case 'myOffers.details.paymentHash': return 'Hash pagamento';
 			case 'myOffers.details.holdInvoice': return 'Hold Invoice';
+			case 'myOffers.details.continueActiveOffer': return 'Continua offerta attiva';
+			case 'myOffers.details.after': return ({required Object duration}) => 'dopo ${duration}';
 			case 'landing.mainTitle': return 'Il tuo ponte BLIK ⇄ bitcoin';
 			case 'landing.subtitle': return 'Paga o vendi il tuo codice BLIK con bitcoin';
 			case 'landing.actions.payBlik': return 'Paga BLIK';

@@ -131,17 +131,12 @@ class OfferDbService {
     final terminalNames =
         terminalStatuses.map((s) => "'${s.name}'").join(',');
     final maps = await db.rawQuery(
-      'SELECT * FROM $_table '
-      'WHERE status NOT IN ($terminalNames) '
-      'ORDER BY created_at DESC LIMIT 1',
+      'SELECT * FROM $_table WHERE status NOT IN ($terminalNames)',
     );
-    if (maps.isEmpty) return null;
-    try {
-      return Offer.fromJson(maps.first);
-    } catch (e) {
-      Logger.log.e(() => 'could not parse offer from json: $e');
-      return null;
-    }
+    final offers = _parseOffers(maps);
+    if (offers.isEmpty) return null;
+    offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return offers.first;
   }
 
   Future<Offer?> getOfferById(String id) async {
@@ -172,21 +167,13 @@ class OfferDbService {
 
   Future<List<Offer>> listOffers({int? limit}) async {
     final db = await database;
-    final maps = await db.query(
-      _table,
-      orderBy: 'created_at DESC',
-      limit: limit,
-    );
-    return maps
-        .map((m) {
-          try {
-            return Offer.fromJson(m);
-          } catch (_) {
-            return null;
-          }
-        })
-        .whereType<Offer>()
-        .toList();
+    final maps = await db.query(_table);
+    final offers = _parseOffers(maps);
+    offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (limit != null && offers.length > limit) {
+      return offers.take(limit).toList();
+    }
+    return offers;
   }
 
   /// Locally-cancelled offers created within [window]. Used by the boot-time
@@ -200,18 +187,23 @@ class OfferDbService {
       whereArgs: [OfferStatus.cancelled.name],
     );
     final cutoff = DateTime.now().toUtc().subtract(window);
-    final parsed = maps
+    final parsed = _parseOffers(maps);
+    return parsed
+        .where((o) => o.createdAt.toUtc().isAfter(cutoff))
+        .toList();
+  }
+
+  List<Offer> _parseOffers(List<Map<String, Object?>> maps) {
+    return maps
         .map((m) {
           try {
             return Offer.fromJson(m);
-          } catch (_) {
+          } catch (e) {
+            Logger.log.w(() => '[OfferDbService] Skipping unparsable offer row: $e');
             return null;
           }
         })
         .whereType<Offer>()
-        .toList();
-    return parsed
-        .where((o) => o.createdAt.toUtc().isAfter(cutoff))
         .toList();
   }
 

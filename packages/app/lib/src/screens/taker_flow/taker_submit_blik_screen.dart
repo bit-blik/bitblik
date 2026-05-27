@@ -322,7 +322,10 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     final takerFeeAmount =
         offer.takerFees ??
         (_coordinatorInfo != null
-            ? OfferQuote.takerFeeSats(offer.amountSats, _coordinatorInfo!.takerFee)
+            ? OfferQuote.takerFeeSats(
+              offer.amountSats,
+              _coordinatorInfo!.takerFee,
+            )
             : 0);
     final amountToInvoiceSats = offer.amountSats - takerFeeAmount;
     if (amountToInvoiceSats <= 0) {
@@ -530,17 +533,21 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       data:
           (coordInfo) =>
               coordInfo != null
-                  ? OfferQuote.takerFeeSats(activeOffer.amountSats, coordInfo.takerFee)
+                  ? OfferQuote.takerFeeSats(
+                    activeOffer.amountSats,
+                    coordInfo.takerFee,
+                  )
                   : 0,
       orElse: () => 0,
     );
 
     final youllReceive = activeOffer.amountSats - takerFeeAmount;
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
 
     // Format number with spaces as thousand separators - same as offer details
     String formatNumber(int number) {
-      final formatter = NumberFormat('#,###', 'en_US');
-      return formatter.format(number).replaceAll(',', ' ');
+      final formatter = NumberFormat.decimalPattern(localeTag);
+      return formatter.format(number);
     }
 
     final blikCode = _blikController.text;

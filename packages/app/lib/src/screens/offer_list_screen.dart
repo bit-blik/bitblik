@@ -378,7 +378,8 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
     final offersAsyncValue = ref.watch(availableOffersProvider);
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
     final myActiveOffer = ref.watch(activeOfferProvider);
-    final sortedAllCoordinators = ref.watch(discoveredCoordinatorsProvider)
+    final sortedAllCoordinators = ref
+        .watch(discoveredCoordinatorsProvider)
         .maybeWhen(data: (r) => r, orElse: () => <CoordinatorRecord>[]);
 
     return Padding(
@@ -584,8 +585,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                           sortedCoordinators: sortedAllCoordinators,
                           selectedCoordinatorPubkey:
                               _selectedStatsCoordinatorPubkey,
-                          onCoordinatorChanged: (pk) =>
-                              setState(() => _selectedStatsCoordinatorPubkey = pk),
+                          onCoordinatorChanged:
+                              (pk) => setState(
+                                () => _selectedStatsCoordinatorPubkey = pk,
+                              ),
                         ),
                       ),
                     ],
@@ -643,8 +646,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                     final bool isFunded =
                                         offer.status == OfferStatus.funded;
                                     final bool isReserved =
-                                        offer.status ==
-                                        OfferStatus.reserved;
+                                        offer.status == OfferStatus.reserved;
                                     final bool isBlikReceived =
                                         offer.status ==
                                         OfferStatus.blikReceived;
@@ -886,9 +888,11 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                             } else if (myActiveOffer.status ==
                                                     OfferStatus.blikReceived ||
                                                 myActiveOffer.status ==
-                                                    OfferStatus.blikSentToMaker ||
+                                                    OfferStatus
+                                                        .blikSentToMaker ||
                                                 myActiveOffer.status ==
-                                                    OfferStatus.makerConfirmed) {
+                                                    OfferStatus
+                                                        .makerConfirmed) {
                                               destinationScreen =
                                                   TakerWaitConfirmationScreen(
                                                     offer: myActiveOffer,
@@ -1042,9 +1046,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                       Builder(
                         builder: (context) {
                           // Coordinators present in finished offers, ordered by score
-                          final finishedPubkeys = finishedOffers
-                              .map((o) => o.coordinatorPubkey)
-                              .toSet();
+                          final finishedPubkeys =
+                              finishedOffers
+                                  .map((o) => o.coordinatorPubkey)
+                                  .toSet();
                           final sortedFinishedCoordinators =
                               sortedAllCoordinators
                                   .where(
@@ -1054,8 +1059,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                   .toList();
                           // Include any pubkeys not yet in registry
                           for (final pk in finishedPubkeys) {
-                            if (!sortedFinishedCoordinators
-                                .any((r) => r.pubkeyHex == pk)) {
+                            if (!sortedFinishedCoordinators.any(
+                              (r) => r.pubkeyHex == pk,
+                            )) {
                               sortedFinishedCoordinators.add(
                                 CoordinatorRecord(pubkeyHex: pk),
                               );
@@ -1066,14 +1072,14 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                           final effectivePubkey =
                               sortedFinishedCoordinators.isNotEmpty
                                   ? (sortedFinishedCoordinators.any(
-                                          (r) =>
-                                              r.pubkeyHex ==
-                                              _selectedFinishedCoordinatorPubkey,
-                                        )
-                                        ? _selectedFinishedCoordinatorPubkey!
-                                        : sortedFinishedCoordinators
-                                            .first
-                                            .pubkeyHex)
+                                        (r) =>
+                                            r.pubkeyHex ==
+                                            _selectedFinishedCoordinatorPubkey,
+                                      )
+                                      ? _selectedFinishedCoordinatorPubkey!
+                                      : sortedFinishedCoordinators
+                                          .first
+                                          .pubkeyHex)
                                   : null;
 
                           final filteredFinishedOffers =
@@ -1112,10 +1118,12 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                           isExpanded: true,
                                           isDense: true,
                                           underline: const SizedBox.shrink(),
-                                          items: sortedFinishedCoordinators
-                                              .map(
-                                                (c) =>
-                                                    DropdownMenuItem<String>(
+                                          items:
+                                              sortedFinishedCoordinators
+                                                  .map(
+                                                    (c) => DropdownMenuItem<
+                                                      String
+                                                    >(
                                                       value: c.pubkeyHex,
                                                       child: Text(
                                                         c.name,
@@ -1127,8 +1135,8 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                         ),
                                                       ),
                                                     ),
-                                              )
-                                              .toList(),
+                                                  )
+                                                  .toList(),
                                           onChanged: (value) {
                                             if (value != null) {
                                               setState(() {
@@ -1199,8 +1207,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   t.offers.details.amount(
-                                                    amount: offer.amountSats
-                                                        .toString(),
+                                                    amount:
+                                                        offer.amountSats
+                                                            .toString(),
                                                   ),
                                                   style: TextStyle(
                                                     fontSize: 12,
@@ -1211,8 +1220,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                 ),
                                                 Text(
                                                   t.offers.details.takerFee(
-                                                    fee: offer.takerFees
-                                                        .toString(),
+                                                    fee:
+                                                        offer.takerFees
+                                                            .toString(),
                                                   ),
                                                   style: TextStyle(
                                                     fontSize: 12,
@@ -1407,7 +1417,8 @@ Widget _buildStatsSection(
       final recentOffersData = data['offers'] as List<dynamic>? ?? [];
       final allRecentOffers = recentOffersData.cast<Offer>();
 
-      final numberFormat = NumberFormat('#,##0', 'en');
+      final localeTag = Localizations.localeOf(context).toLanguageTag();
+      final numberFormat = NumberFormat.decimalPattern(localeTag);
 
       final last7DaysBlikTime =
           last7Days['avg_time_blik_received_to_created_seconds'] as num?;
@@ -1417,9 +1428,10 @@ Widget _buildStatsSection(
       // Build sorted coordinator list from offers present in the data
       final offerPubkeys =
           allRecentOffers.map((o) => o.coordinatorPubkey).toSet();
-      final filteredSortedCoords = sortedCoordinators
-          .where((r) => offerPubkeys.contains(r.pubkeyHex))
-          .toList();
+      final filteredSortedCoords =
+          sortedCoordinators
+              .where((r) => offerPubkeys.contains(r.pubkeyHex))
+              .toList();
       for (final pk in offerPubkeys) {
         if (!filteredSortedCoords.any((r) => r.pubkeyHex == pk)) {
           filteredSortedCoords.add(CoordinatorRecord(pubkeyHex: pk));
@@ -1427,18 +1439,21 @@ Widget _buildStatsSection(
       }
 
       // Effective selection — always non-null when offers exist
-      final effectivePubkey = filteredSortedCoords.isNotEmpty
-          ? (filteredSortedCoords.any(
-                  (r) => r.pubkeyHex == selectedCoordinatorPubkey)
-              ? selectedCoordinatorPubkey!
-              : filteredSortedCoords.first.pubkeyHex)
-          : null;
+      final effectivePubkey =
+          filteredSortedCoords.isNotEmpty
+              ? (filteredSortedCoords.any(
+                    (r) => r.pubkeyHex == selectedCoordinatorPubkey,
+                  )
+                  ? selectedCoordinatorPubkey!
+                  : filteredSortedCoords.first.pubkeyHex)
+              : null;
 
-      final recentOffers = effectivePubkey != null
-          ? allRecentOffers
-              .where((o) => o.coordinatorPubkey == effectivePubkey)
-              .toList()
-          : allRecentOffers;
+      final recentOffers =
+          effectivePubkey != null
+              ? allRecentOffers
+                  .where((o) => o.coordinatorPubkey == effectivePubkey)
+                  .toList()
+              : allRecentOffers;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1451,167 +1466,177 @@ Widget _buildStatsSection(
 
           Expanded(
             child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Combine last 7d and avg stats into one line
-                Text(
-                  t.home.statistics.last7DaysSingleLine(
-                    count: numberFormat.format(last7Days['count'] ?? 0),
-                    avgBlikTime: _formatDurationFromSeconds(
-                      last7DaysBlikTime?.round(),
-                    ),
-                    avgPaidTime: _formatDurationFromSeconds(
-                      last7DaysPaidTime?.round(),
-                    ),
-                  ),
-                  style: const TextStyle(fontSize: 13),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Coordinator filter — after stats, before list
-                if (filteredSortedCoords.isNotEmpty)
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: filteredSortedCoords.map((c) {
-                        final selected = c.pubkeyHex == effectivePubkey;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: FilterChip(
-                            avatar: _buildCoordinatorIcon(c, size: 16),
-                            label: Text(
-                              c.name,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            selected: selected,
-                            showCheckmark: false,
-                            onSelected: onCoordinatorChanged != null
-                                ? (_) => onCoordinatorChanged(c.pubkeyHex)
-                                : null,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-
-                const SizedBox(height: 8),
-                if (recentOffers.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(t.offers.details.noSuccessfulTrades),
-                  )
-                else
-                  Expanded(
-                    child: Scrollbar(
-                      child: ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: recentOffers.length,
-                        itemBuilder: (context, index) {
-                          final offer = recentOffers[index];
-                          return InkWell(
-                            onTap: () {
-                              if (kIsWeb) {
-                                context.go('/offers/${offer.id}');
-                              } else {
-                                context.push('/offers/${offer.id}');
-                              }
-                            },
-                            child: Card(
-                              margin: const EdgeInsets.symmetric(
-                                vertical: 1.0,
-                                horizontal: 0,
-                              ), // less margin
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0,
-                                  vertical: 8.0,
-                                ), // less padding
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    // Amount and currency
-                                    Text(
-                                      t.offers.details.amountWithCurrency(
-                                        amount: formatDouble(offer.fiatAmount),
-                                        currency: offer.fiatCurrency,
-                                      ),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    // Date (now as time ago)
-                                    Text(
-                                      _formatTimeAgo(offer.createdAt.toLocal()),
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    // Taken after and Paid after (flexible to prevent overflow)
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          // Taken after (if available)
-                                          if (offer.timeToReserveSeconds !=
-                                              null)
-                                            Flexible(
-                                              child: Text(
-                                                t.offers.details.takenAfter(
-                                                  duration:
-                                                      _formatDurationFromSeconds(
-                                                        offer
-                                                            .timeToReserveSeconds,
-                                                      ),
-                                                ),
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          if (offer.timeToReserveSeconds !=
-                                              null)
-                                            const SizedBox(width: 8),
-                                          // Paid after (if available)
-                                          if (offer
-                                                  .totalCompletionTimeMakerSeconds !=
-                                              null)
-                                            Flexible(
-                                              child: Text(
-                                                t.offers.details.paidAfter(
-                                                  duration:
-                                                      _formatDurationFromSeconds(
-                                                        offer
-                                                            .totalCompletionTimeMakerSeconds,
-                                                      ),
-                                                ),
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Combine last 7d and avg stats into one line
+                  Text(
+                    t.home.statistics.last7DaysSingleLine(
+                      count: numberFormat.format(last7Days['count'] ?? 0),
+                      avgBlikTime: _formatDurationFromSeconds(
+                        last7DaysBlikTime?.round(),
+                      ),
+                      avgPaidTime: _formatDurationFromSeconds(
+                        last7DaysPaidTime?.round(),
                       ),
                     ),
+                    style: const TextStyle(fontSize: 13),
                   ),
-              ],
+
+                  const SizedBox(height: 8),
+
+                  // Coordinator filter — after stats, before list
+                  if (filteredSortedCoords.isNotEmpty)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children:
+                            filteredSortedCoords.map((c) {
+                              final selected = c.pubkeyHex == effectivePubkey;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: FilterChip(
+                                  avatar: _buildCoordinatorIcon(c, size: 16),
+                                  label: Text(
+                                    c.name,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  selected: selected,
+                                  showCheckmark: false,
+                                  onSelected:
+                                      onCoordinatorChanged != null
+                                          ? (_) =>
+                                              onCoordinatorChanged(c.pubkeyHex)
+                                          : null,
+                                ),
+                              );
+                            }).toList(),
+                      ),
+                    ),
+
+                  const SizedBox(height: 8),
+                  if (recentOffers.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(t.offers.details.noSuccessfulTrades),
+                    )
+                  else
+                    Expanded(
+                      child: Scrollbar(
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: recentOffers.length,
+                          itemBuilder: (context, index) {
+                            final offer = recentOffers[index];
+                            return InkWell(
+                              onTap: () {
+                                if (kIsWeb) {
+                                  context.go('/offers/${offer.id}');
+                                } else {
+                                  context.push('/offers/${offer.id}');
+                                }
+                              },
+                              child: Card(
+                                margin: const EdgeInsets.symmetric(
+                                  vertical: 1.0,
+                                  horizontal: 0,
+                                ), // less margin
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0,
+                                    vertical: 8.0,
+                                  ), // less padding
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      // Amount and currency
+                                      Text(
+                                        t.offers.details.amountWithCurrency(
+                                          amount: formatDouble(
+                                            offer.fiatAmount,
+                                          ),
+                                          currency: offer.fiatCurrency,
+                                        ),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      // Date (now as time ago)
+                                      Text(
+                                        _formatTimeAgo(
+                                          offer.createdAt.toLocal(),
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      // Taken after and Paid after (flexible to prevent overflow)
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            // Taken after (if available)
+                                            if (offer.timeToReserveSeconds !=
+                                                null)
+                                              Flexible(
+                                                child: Text(
+                                                  t.offers.details.takenAfter(
+                                                    duration:
+                                                        _formatDurationFromSeconds(
+                                                          offer
+                                                              .timeToReserveSeconds,
+                                                        ),
+                                                  ),
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            if (offer.timeToReserveSeconds !=
+                                                null)
+                                              const SizedBox(width: 8),
+                                            // Paid after (if available)
+                                            if (offer
+                                                    .totalCompletionTimeMakerSeconds !=
+                                                null)
+                                              Flexible(
+                                                child: Text(
+                                                  t.offers.details.paidAfter(
+                                                    duration:
+                                                        _formatDurationFromSeconds(
+                                                          offer
+                                                              .totalCompletionTimeMakerSeconds,
+                                                        ),
+                                                  ),
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
           ),
         ],
       );

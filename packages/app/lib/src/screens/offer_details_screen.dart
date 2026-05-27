@@ -113,8 +113,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
           final bool isFunded = offer.status == OfferStatus.funded;
           final bool isReserved = offer.status == OfferStatus.reserved;
-          final bool isBlikReceived =
-              offer.status == OfferStatus.blikReceived;
+          final bool isBlikReceived = offer.status == OfferStatus.blikReceived;
 
           // Get coordinator info for taker fee calculation
           final coordinatorInfoAsync = ref.watch(
@@ -142,7 +141,10 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
             data:
                 (coordInfo) =>
                     coordInfo != null
-                        ? OfferQuote.takerFeeSats(offer.amountSats, coordInfo.takerFee)
+                        ? OfferQuote.takerFeeSats(
+                          offer.amountSats,
+                          coordInfo.takerFee,
+                        )
                         : 0,
             orElse: () => 0,
           );
@@ -416,8 +418,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   const SizedBox(height: 32),
 
                                   // Exchange Rate row (hide for takerPaid)
-                                  if (offer.status !=
-                                      OfferStatus.takerPaid)
+                                  if (offer.status != OfferStatus.takerPaid)
                                     _buildInfoRow(
                                       t.offers.details.exchangeRate,
                                       '${_formatNumber(exchangeRate)} ${offer.fiatCurrency}/BTC',
@@ -428,13 +429,11 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                           ),
                                     ),
 
-                                  if (offer.status !=
-                                      OfferStatus.takerPaid)
+                                  if (offer.status != OfferStatus.takerPaid)
                                     const SizedBox(height: 16),
 
                                   // Taker fee row (hide for takerPaid)
-                                  if (offer.status !=
-                                      OfferStatus.takerPaid)
+                                  if (offer.status != OfferStatus.takerPaid)
                                     _buildInfoRow(
                                       t.offers.details.takerFeeLabel,
                                       '$takerFeeAmount sats',
@@ -485,13 +484,11 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       },
                                     ),
 
-                                  if (offer.status !=
-                                      OfferStatus.takerPaid)
+                                  if (offer.status != OfferStatus.takerPaid)
                                     const SizedBox(height: 24),
 
                                   // You'll receive row (highlighted) (hide for takerPaid)
-                                  if (offer.status !=
-                                      OfferStatus.takerPaid)
+                                  if (offer.status != OfferStatus.takerPaid)
                                     _buildInfoRow(
                                       t.offers.details.youllReceive,
                                       '$youllReceive sats',
@@ -499,8 +496,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     ),
 
                                   // Timing information for completed offers (takerPaid status)
-                                  if (offer.status ==
-                                          OfferStatus.takerPaid &&
+                                  if (offer.status == OfferStatus.takerPaid &&
                                       offer.timeToReserveSeconds != null &&
                                       offer.totalCompletionTimeMakerSeconds !=
                                           null) ...[
@@ -766,8 +762,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
   /// Formats a number with spaces as thousand separators
   String _formatNumber(int number) {
-    final formatter = NumberFormat('#,###', 'en_US');
-    return formatter.format(number).replaceAll(',', ' ');
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
+    final formatter = NumberFormat.decimalPattern(localeTag);
+    return formatter.format(number);
   }
 
   /// Formats a duration from seconds in a human-readable format

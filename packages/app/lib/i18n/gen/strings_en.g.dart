@@ -1483,6 +1483,9 @@ class TranslationsMakerSuccessEn {
 
 	/// en: 'Offer details:'
 	String get detailsTitle => 'Offer details:';
+
+	/// en: 'Offer took ${time}!'
+	String duration({required Object time}) => 'Offer took ${time}!';
 }
 
 // Path: taker.roleSelection
@@ -2003,8 +2006,20 @@ class TranslationsMyOffersDetailsEn {
 	/// en: 'Amount'
 	String get amount => 'Amount';
 
+	/// en: 'Fees'
+	String get fees => 'Fees';
+
 	/// en: 'Satoshis'
 	String get sats => 'Satoshis';
+
+	/// en: 'Maker'
+	String get maker => 'Maker';
+
+	/// en: 'Taker'
+	String get taker => 'Taker';
+
+	/// en: 'Your fee'
+	String get yourFee => 'Your fee';
 
 	/// en: 'Maker Fee'
 	String get makerFee => 'Maker Fee';
@@ -2041,6 +2056,12 @@ class TranslationsMyOffersDetailsEn {
 
 	/// en: 'Hold Invoice'
 	String get holdInvoice => 'Hold Invoice';
+
+	/// en: 'Continue active offer'
+	String get continueActiveOffer => 'Continue active offer';
+
+	/// en: 'after ${duration}'
+	String after({required Object duration}) => 'after ${duration}';
 }
 
 // Path: landing.actions
@@ -3525,6 +3546,7 @@ extension on Translations {
 			case 'maker.success.headline': return 'Payment confirmed!';
 			case 'maker.success.subtitle': return 'Taker will now be paid.';
 			case 'maker.success.detailsTitle': return 'Offer details:';
+			case 'maker.success.duration': return ({required Object time}) => 'Offer took ${time}!';
 			case 'taker.roleSelection.button': return 'SELL BLIK code for satoshi';
 			case 'taker.progress.step1': return 'Submit BLIK';
 			case 'taker.progress.step2': return 'Confirm BLIK';
@@ -3693,7 +3715,11 @@ extension on Translations {
 			case 'myOffers.details.title': return 'Offer Details';
 			case 'myOffers.details.notFound': return 'Offer not found.';
 			case 'myOffers.details.amount': return 'Amount';
+			case 'myOffers.details.fees': return 'Fees';
 			case 'myOffers.details.sats': return 'Satoshis';
+			case 'myOffers.details.maker': return 'Maker';
+			case 'myOffers.details.taker': return 'Taker';
+			case 'myOffers.details.yourFee': return 'Your fee';
 			case 'myOffers.details.makerFee': return 'Maker Fee';
 			case 'myOffers.details.takerFee': return 'Taker Fee';
 			case 'myOffers.details.coordinator': return 'Coordinator';
@@ -3706,6 +3732,8 @@ extension on Translations {
 			case 'myOffers.details.id': return 'Offer ID';
 			case 'myOffers.details.paymentHash': return 'Payment Hash';
 			case 'myOffers.details.holdInvoice': return 'Hold Invoice';
+			case 'myOffers.details.continueActiveOffer': return 'Continue active offer';
+			case 'myOffers.details.after': return ({required Object duration}) => 'after ${duration}';
 			case 'landing.mainTitle': return 'Your BLIK ⇄ bitcoin Bridge';
 			case 'landing.subtitle': return 'Pay for or sell your BLIK code with bitcoin';
 			case 'landing.actions.payBlik': return 'Pay BLIK';

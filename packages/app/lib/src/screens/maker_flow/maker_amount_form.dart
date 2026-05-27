@@ -210,9 +210,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     // "Too low/high" only when no coordinator fits at all.
     CoordinatorRecord? fittingCoordinator;
     final enabledAsync = ref.read(enabledCoordinatorsProvider);
-    final enabled = enabledAsync is AsyncData<List<CoordinatorRecord>>
-        ? enabledAsync.value
-        : const <CoordinatorRecord>[];
+    final enabled =
+        enabledAsync is AsyncData<List<CoordinatorRecord>>
+            ? enabledAsync.value
+            : const <CoordinatorRecord>[];
 
     if (currentError == null && sats != null && enabled.isNotEmpty) {
       final satsInt = sats.round();
@@ -269,7 +270,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       final satsInt = _satsEquivalent?.round();
       final selectedInfo = _selectedCoordinatorInfo;
       if (satsInt != null && selectedInfo != null) {
-        final outOfRange = satsInt < selectedInfo.minAmountSats ||
+        final outOfRange =
+            satsInt < selectedInfo.minAmountSats ||
             satsInt > selectedInfo.maxAmountSats;
         if (outOfRange) {
           if (fittingCoordinator != null) {
@@ -437,8 +439,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     if (sats == null) return source;
     final satsInt = sats.round();
     return source
-        .where((c) =>
-            satsInt >= c.minAmountSats && satsInt <= c.maxAmountSats)
+        .where((c) => satsInt >= c.minAmountSats && satsInt <= c.maxAmountSats)
         .toList(growable: false);
   }
 
@@ -449,9 +450,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       if (coordinators.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              t.maker.amountForm.errors.noCoordinatorMatchesAmount,
-            ),
+            content: Text(t.maker.amountForm.errors.noCoordinatorMatchesAmount),
           ),
         );
         return;
@@ -1043,7 +1042,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
   /// Formats a number with spaces as thousand separators
   String _formatNumber(int number) {
-    final formatter = NumberFormat('#,###', 'en_US');
-    return formatter.format(number).replaceAll(',', ' ');
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
+    final formatter = NumberFormat.decimalPattern(localeTag);
+    return formatter.format(number);
   }
 }

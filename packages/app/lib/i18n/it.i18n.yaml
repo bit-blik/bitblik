@@ -436,6 +436,7 @@ maker:
     headline: Pagamento confermato!
     subtitle: Il Taker verrà ora pagato.
     detailsTitle: "Dettagli offerta:"
+    duration: "L'offerta ha richiesto ${time}!"
 
 # =============================================================================
 # TAKER FLOW
@@ -732,7 +733,11 @@ myOffers:
     title: "Dettagli offerta"
     notFound: "Offerta non trovata."
     amount: "Importo"
+    fees: "Commissioni"
     sats: "Satoshi"
+    maker: "Maker"
+    taker: "Taker"
+    yourFee: "La tua commissione"
     makerFee: "Commissione maker"
     takerFee: "Commissione taker"
     coordinator: "Coordinatore"
@@ -745,6 +750,8 @@ myOffers:
     id: "ID offerta"
     paymentHash: "Hash pagamento"
     holdInvoice: "Hold Invoice"
+    continueActiveOffer: "Continua offerta attiva"
+    after: "dopo ${duration}"
 
 landing:
   mainTitle: "Il tuo ponte BLIK ⇄ bitcoin"

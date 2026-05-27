@@ -452,6 +452,7 @@ maker:
     headline: Payment confirmed!
     subtitle: Taker will now be paid.
     detailsTitle: "Offer details:"
+    duration: "Offer took ${time}!"
 
 # =============================================================================
 # TAKER FLOW
@@ -748,7 +749,11 @@ myOffers:
     title: "Offer Details"
     notFound: "Offer not found."
     amount: "Amount"
+    fees: "Fees"
     sats: "Satoshis"
+    maker: "Maker"
+    taker: "Taker"
+    yourFee: "Your fee"
     makerFee: "Maker Fee"
     takerFee: "Taker Fee"
     coordinator: "Coordinator"
@@ -761,6 +766,8 @@ myOffers:
     id: "Offer ID"
     paymentHash: "Payment Hash"
     holdInvoice: "Hold Invoice"
+    continueActiveOffer: "Continue active offer"
+    after: "after ${duration}"
 
 landing:
   mainTitle: "Your BLIK ⇄ bitcoin Bridge"

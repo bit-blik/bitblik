@@ -1,17 +1,16 @@
 import 'package:bitblik_core/core.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import '../services/offer_db_service.dart';
-
-final _localOfferProvider =
-    FutureProvider.family<Offer?, String>((ref, id) async {
-  return OfferDbService().getOfferById(id);
-});
+import '../utils/locale_format.dart';
 
 class LocalOfferDetailsScreen extends ConsumerWidget {
   const LocalOfferDetailsScreen({required this.offerId, super.key});
@@ -23,21 +22,85 @@ class LocalOfferDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
-    final offerAsync = ref.watch(_localOfferProvider(offerId));
+    final offersAsync = ref.watch(myOffersProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(t.myOffers.details.title)),
-      body: offerAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('${t.coordinator.management.error}: $err')),
-        data: (offer) {
-          if (offer == null) {
-            return Center(child: Text(t.myOffers.details.notFound));
-          }
-          return _OfferDetailsBody(offer: offer);
-        },
+      body: RefreshIndicator(
+        onRefresh: () => _refreshOfferDetails(ref),
+        child: offersAsync.when(
+          loading:
+              () => ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(
+                    height: 400,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+              ),
+          error:
+              (err, _) => ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: 400,
+                    child: Center(
+                      child: Text('${t.coordinator.management.error}: $err'),
+                    ),
+                  ),
+                ],
+              ),
+          data: (offers) {
+            Offer? offer;
+            for (final candidate in offers) {
+              if (candidate.id == offerId) {
+                offer = candidate;
+                break;
+              }
+            }
+            if (offer == null) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: 400,
+                    child: Center(child: Text(t.myOffers.details.notFound)),
+                  ),
+                ],
+              );
+            }
+            return _OfferDetailsBody(offer: offer);
+          },
+        ),
       ),
     );
+  }
+
+  Future<void> _refreshOfferDetails(WidgetRef ref) async {
+    final offers = await ref.read(myOffersProvider.future);
+    Offer? offer;
+    for (final candidate in offers) {
+      if (candidate.id == offerId) {
+        offer = candidate;
+        break;
+      }
+    }
+    if (offer == null) {
+      return;
+    }
+
+    final apiService = await ref.read(initializedApiServiceProvider.future);
+    final remote = await apiService.getOfferDetails(
+      offer,
+      offer.coordinatorPubkey,
+    );
+    if (remote == null) {
+      return;
+    }
+
+    await OfferDbService().upsertOffer(Offer.fromJson(remote));
+    ref.invalidate(myOffersProvider);
   }
 }
 
@@ -50,14 +113,37 @@ class _OfferDetailsBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
     final apiService = ref.watch(apiServiceProvider);
-    final coordinatorInfo =
-        apiService.getCoordinatorInfoByPubkey(offer.coordinatorPubkey);
+    final currentPubKey =
+        ref.watch(publicKeyProvider).value ??
+        ref.watch(keyServiceProvider).publicKeyHex;
+    final activeOffer = ref.watch(activeOfferProvider);
+    final coordinatorInfo = apiService.getCoordinatorInfoByPubkey(
+      offer.coordinatorPubkey,
+    );
     final coordinatorName =
         coordinatorInfo?.name ?? t.myOffers.unknownCoordinator;
+    final localeTag = effectiveFormatLocale(context);
 
-    final fiatFmt = NumberFormat.decimalPattern();
-    final satsFmt = NumberFormat.decimalPattern();
-    final dateFmt = DateFormat('dd-MM-yyyy HH:mm');
+    final fiatFmt = NumberFormat.decimalPattern(localeTag);
+    final satsFmt = NumberFormat.decimalPattern(localeTag);
+    final amountLabel =
+        '${fiatFmt.format(offer.fiatAmount)} ${offer.fiatCurrency} • ${satsFmt.format(offer.amountSats)} sats';
+    final ourFee =
+        currentPubKey == offer.makerPubkey
+            ? offer.makerFees
+            : currentPubKey == offer.takerPubkey
+            ? (offer.takerFees ?? 0)
+            : 0;
+    final takerPubkey = offer.takerPubkey;
+    final takerPaidReferenceAt =
+        offer.takerPaidAt ??
+        (offer.status == OfferStatus.takerPaid ? offer.settledAt : null);
+    final isCurrentOfferActive = activeOffer?.id == offer.id;
+    final shouldShowCreatedAt =
+        offer.reservedAt == null ||
+        offer.createdAt.difference(offer.reservedAt!).abs() >
+            const Duration(seconds: 1);
+    final shouldShowFee = _shouldShowFee(offer.status) && ourFee > 0;
 
     Color statusColor = _statusColor(offer.status);
 
@@ -102,25 +188,14 @@ class _OfferDetailsBody extends ConsumerWidget {
               children: [
                 _Row(
                   label: t.myOffers.details.amount,
-                  value:
-                      '${fiatFmt.format(offer.fiatAmount)} ${offer.fiatCurrency}',
+                  value: amountLabel,
                   bold: true,
                 ),
-                const Divider(height: 16),
-                _Row(
-                  label: t.myOffers.details.sats,
-                  value: '${satsFmt.format(offer.amountSats)} sats',
-                ),
-                const Divider(height: 16),
-                _Row(
-                  label: t.myOffers.details.makerFee,
-                  value: '${offer.makerFees} sats',
-                ),
-                if (offer.takerFees != null) ...[
+                if (shouldShowFee) ...[
                   const Divider(height: 16),
                   _Row(
-                    label: t.myOffers.details.takerFee,
-                    value: '${offer.takerFees} sats',
+                    label: t.myOffers.details.yourFee,
+                    value: '$ourFee sats',
                   ),
                 ],
               ],
@@ -136,48 +211,90 @@ class _OfferDetailsBody extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _Row(
+                _WidgetRow(
                   label: t.myOffers.details.coordinator,
-                  value: coordinatorName,
+                  child: InkWell(
+                    onTap:
+                        coordinatorInfo?.nostrNpub == null
+                            ? null
+                            : () =>
+                                _openNostrProfile(coordinatorInfo!.nostrNpub!),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _CoordinatorLogo(
+                            icon: coordinatorInfo?.icon,
+                            fallbackColor: statusColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              coordinatorName,
+                              style: TextStyle(
+                                color:
+                                    coordinatorInfo?.nostrNpub != null
+                                        ? Colors.blue
+                                        : null,
+                                decoration:
+                                    coordinatorInfo?.nostrNpub != null
+                                        ? TextDecoration.underline
+                                        : null,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 const Divider(height: 16),
-                _Row(
-                  label: t.myOffers.details.createdAt,
-                  value: dateFmt.format(offer.createdAt.toLocal()),
+                _WidgetRow(
+                  label: t.myOffers.details.maker,
+                  child: _CounterpartyPreview(
+                    pubkey: offer.makerPubkey,
+                    statusColor: statusColor,
+                  ),
                 ),
+                if (takerPubkey != null && takerPubkey.isNotEmpty) ...[
+                  const Divider(height: 16),
+                  _WidgetRow(
+                    label: t.myOffers.details.taker,
+                    child: _CounterpartyPreview(
+                      pubkey: takerPubkey,
+                      statusColor: statusColor,
+                    ),
+                  ),
+                ],
+                if (shouldShowCreatedAt) ...[
+                  const Divider(height: 16),
+                  _Row(
+                    label: t.myOffers.details.createdAt,
+                    value: formatLocalizedDateTime(context, offer.createdAt),
+                  ),
+                ],
                 if (offer.reservedAt != null) ...[
                   const Divider(height: 16),
                   _Row(
                     label: t.myOffers.details.reservedAt,
-                    value: dateFmt.format(offer.reservedAt!.toLocal()),
+                    value: t.myOffers.details.after(
+                      duration: _formatDuration(
+                        offer.reservedAt!.difference(offer.createdAt),
+                      ),
+                    ),
                   ),
                 ],
-                if (offer.blikReceivedAt != null) ...[
-                  const Divider(height: 16),
-                  _Row(
-                    label: t.myOffers.details.blikReceivedAt,
-                    value: dateFmt.format(offer.blikReceivedAt!.toLocal()),
-                  ),
-                ],
-                if (offer.makerConfirmedAt != null) ...[
-                  const Divider(height: 16),
-                  _Row(
-                    label: t.myOffers.details.makerConfirmedAt,
-                    value: dateFmt.format(offer.makerConfirmedAt!.toLocal()),
-                  ),
-                ],
-                if (offer.settledAt != null) ...[
-                  const Divider(height: 16),
-                  _Row(
-                    label: t.myOffers.details.settledAt,
-                    value: dateFmt.format(offer.settledAt!.toLocal()),
-                  ),
-                ],
-                if (offer.takerPaidAt != null) ...[
+                if (takerPaidReferenceAt != null) ...[
                   const Divider(height: 16),
                   _Row(
                     label: t.myOffers.details.takerPaidAt,
-                    value: dateFmt.format(offer.takerPaidAt!.toLocal()),
+                    value: t.myOffers.details.after(
+                      duration: _formatDuration(
+                        takerPaidReferenceAt.difference(offer.createdAt),
+                      ),
+                    ),
                   ),
                 ],
               ],
@@ -194,10 +311,7 @@ class _OfferDetailsBody extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _CopyableField(
-                  label: t.myOffers.details.id,
-                  value: offer.id,
-                ),
+                _CopyableField(label: t.myOffers.details.id, value: offer.id),
                 if (offer.holdInvoicePaymentHash != null) ...[
                   const Divider(height: 16),
                   _CopyableField(
@@ -209,8 +323,153 @@ class _OfferDetailsBody extends ConsumerWidget {
             ),
           ),
         ),
+        if (isCurrentOfferActive) ...[
+          const SizedBox(height: 20),
+          _ActiveOfferCta(
+            label: t.myOffers.details.continueActiveOffer,
+            statusColor: statusColor,
+            onTap:
+                currentPubKey == null || activeOffer == null
+                    ? null
+                    : () => _openActiveOfferFlow(
+                      context,
+                      ref,
+                      activeOffer,
+                      currentPubKey,
+                      t,
+                    ),
+          ),
+        ],
       ],
     );
+  }
+
+  Future<void> _openNostrProfile(String npub) async {
+    final url = 'https://njump.to/$npub';
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  void _openActiveOfferFlow(
+    BuildContext context,
+    WidgetRef ref,
+    Offer activeOffer,
+    String currentPubKey,
+    Translations t,
+  ) {
+    if (activeOffer.holdInvoicePaymentHash != null) {
+      ref.read(paymentHashProvider.notifier).state =
+          activeOffer.holdInvoicePaymentHash!;
+    }
+
+    final offerStatus = activeOffer.status;
+    if (offerStatus == OfferStatus.blikReceived ||
+        offerStatus == OfferStatus.blikSentToMaker ||
+        offerStatus == OfferStatus.expiredBlik ||
+        offerStatus == OfferStatus.expiredSentBlik ||
+        offerStatus == OfferStatus.takerCharged) {
+      if (currentPubKey == activeOffer.makerPubkey) {
+        context.go('/confirm-blik');
+      } else if (currentPubKey == activeOffer.takerPubkey) {
+        context.go('/wait-confirmation', extra: activeOffer);
+      }
+      return;
+    }
+
+    if (currentPubKey == activeOffer.makerPubkey) {
+      _navigateToMakerStep(context, activeOffer, t);
+    } else if (currentPubKey == activeOffer.takerPubkey) {
+      _navigateToTakerStep(context, activeOffer, t);
+    }
+  }
+
+  void _navigateToMakerStep(BuildContext context, Offer offer, Translations t) {
+    switch (offer.status) {
+      case OfferStatus.created:
+        context.go('/pay', extra: offer);
+        return;
+      case OfferStatus.funded:
+        context.go('/wait-taker', extra: offer);
+        return;
+      case OfferStatus.reserved:
+        context.go('/wait-blik', extra: offer);
+        return;
+      case OfferStatus.conflict:
+      case OfferStatus.dispute:
+        context.go('/maker-conflict', extra: offer);
+        return;
+      case OfferStatus.invalidBlik:
+        context.go('/maker-invalid-blik', extra: offer);
+        return;
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              t.offers.errors.cannotResume(status: offer.status.name),
+            ),
+          ),
+        );
+    }
+  }
+
+  void _navigateToTakerStep(BuildContext context, Offer offer, Translations t) {
+    final offerStatus = offer.status;
+    if (offerStatus == OfferStatus.reserved) {
+      context.go('/submit-blik', extra: offer);
+    } else if (offerStatus == OfferStatus.blikReceived ||
+        offerStatus == OfferStatus.blikSentToMaker ||
+        offerStatus == OfferStatus.makerConfirmed ||
+        offerStatus == OfferStatus.expiredBlik ||
+        offerStatus == OfferStatus.expiredSentBlik ||
+        offerStatus == OfferStatus.takerCharged) {
+      context.go('/wait-confirmation', extra: offer);
+    } else if (offerStatus == OfferStatus.settled) {
+      context.go('/paying-taker', extra: offer);
+    } else if (offerStatus == OfferStatus.takerPaymentFailed) {
+      context.go('/taker-failed', extra: offer);
+    } else if (offerStatus == OfferStatus.invalidBlik) {
+      context.go('/taker-invalid-blik', extra: offer);
+    } else if (offerStatus == OfferStatus.conflict ||
+        offerStatus == OfferStatus.dispute) {
+      context.go('/taker-conflict', extra: offer.id);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t.offers.errors.cannotResumeTaker(status: offerStatus.name),
+          ),
+        ),
+      );
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    final seconds = duration.inSeconds;
+    if (seconds < 60) return '${seconds}s';
+    final minutes = duration.inMinutes;
+    final remSeconds = seconds % 60;
+    if (remSeconds == 0) return '${minutes}m';
+    return '${minutes}m ${remSeconds}s';
+  }
+
+  bool _shouldShowFee(OfferStatus status) {
+    const activeStatuses = {
+      OfferStatus.created,
+      OfferStatus.funded,
+      OfferStatus.reserved,
+      OfferStatus.blikReceived,
+      OfferStatus.blikSentToMaker,
+      OfferStatus.invalidBlik,
+      OfferStatus.takerCharged,
+      OfferStatus.makerConfirmed,
+      OfferStatus.settled,
+      OfferStatus.payingTaker,
+      OfferStatus.takerPaymentFailed,
+      OfferStatus.conflict,
+      OfferStatus.dispute,
+      OfferStatus.unknown,
+    };
+
+    return activeStatuses.contains(status) || status == OfferStatus.takerPaid;
   }
 
   String _statusLabel(Translations t, OfferStatus status) {
@@ -345,6 +604,173 @@ class _Row extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _WidgetRow extends StatelessWidget {
+  const _WidgetRow({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 3,
+          child: Text(label, style: TextStyle(color: Colors.grey[700])),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 5,
+          child: Align(alignment: Alignment.centerRight, child: child),
+        ),
+      ],
+    );
+  }
+}
+
+class _CoordinatorLogo extends StatelessWidget {
+  const _CoordinatorLogo({required this.icon, required this.fallbackColor});
+
+  final String? icon;
+  final Color fallbackColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = icon?.trim();
+    if (normalized != null && normalized.isNotEmpty) {
+      if (normalized.startsWith('http')) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: CachedNetworkImage(
+            imageUrl: normalized,
+            width: 24,
+            height: 24,
+            fit: BoxFit.cover,
+            errorWidget: (_, _, _) => _fallback(),
+          ),
+        );
+      }
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(999),
+        child: Image.asset(
+          normalized,
+          width: 24,
+          height: 24,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => _fallback(),
+        ),
+      );
+    }
+    return _fallback();
+  }
+
+  Widget _fallback() {
+    return CircleAvatar(
+      radius: 12,
+      backgroundColor: fallbackColor.withValues(alpha: 0.15),
+      child: Icon(Icons.account_balance_wallet, size: 14, color: fallbackColor),
+    );
+  }
+}
+
+class _CounterpartyPreview extends StatelessWidget {
+  const _CounterpartyPreview({required this.pubkey, required this.statusColor});
+
+  final String pubkey;
+  final Color statusColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 28,
+          height: 28,
+          child: ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: 'https://robohash.org/$pubkey?set=set4',
+              fit: BoxFit.cover,
+              errorWidget:
+                  (_, _, _) => CircleAvatar(
+                    backgroundColor: statusColor.withValues(alpha: 0.15),
+                    child: Icon(Icons.pets, size: 14, color: statusColor),
+                  ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            '${pubkey.substring(0, 12)}…${pubkey.substring(pubkey.length - 8)}',
+            textAlign: TextAlign.right,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActiveOfferCta extends StatelessWidget {
+  const _ActiveOfferCta({
+    required this.label,
+    required this.statusColor,
+    required this.onTap,
+  });
+
+  final String label;
+  final Color statusColor;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(26),
+        child: Ink(
+          decoration: BoxDecoration(
+            color:
+                onTap == null
+                    ? theme.colorScheme.surfaceContainerHighest
+                    : Colors.black,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: onTap == null ? theme.dividerColor : Colors.black,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          child: Row(
+            children: [
+              const SizedBox(width: 26),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: onTap == null ? theme.disabledColor : Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: onTap == null ? theme.disabledColor : Colors.white,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

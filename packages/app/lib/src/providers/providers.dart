@@ -96,8 +96,9 @@ final initializedApiServiceProvider = FutureProvider<ApiServiceNostr>((
 /// Provider exposing the live [CoordinatorRegistry]. Kicks one-shot
 /// discovery + stale-only health probes in the background on first
 /// build; never blocks subscribers.
-final coordinatorRegistryProvider =
-    FutureProvider<CoordinatorRegistry>((ref) async {
+final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
+  ref,
+) async {
   final apiService = await ref.watch(initializedApiServiceProvider.future);
   final registry = apiService.coordinatorRegistry;
 
@@ -130,8 +131,9 @@ final coordinatorRegistryProvider =
 
 /// Stream of coordinator records (enabled + disabled) sorted by reliability.
 /// Settings UI watches this directly.
-final discoveredCoordinatorsProvider =
-    StreamProvider<List<CoordinatorRecord>>((ref) async* {
+final discoveredCoordinatorsProvider = StreamProvider<List<CoordinatorRecord>>((
+  ref,
+) async* {
   final registry = await ref.watch(coordinatorRegistryProvider.future);
   yield registry.all;
   yield* registry.changes;
@@ -140,25 +142,25 @@ final discoveredCoordinatorsProvider =
 /// Enabled-only view for the maker create-offer flow.
 final enabledCoordinatorsProvider =
     Provider<AsyncValue<List<CoordinatorRecord>>>((ref) {
-  final async = ref.watch(discoveredCoordinatorsProvider);
-  return async.whenData(
-    (records) => records.where((r) => r.enabled).toList(growable: false),
-  );
-});
+      final async = ref.watch(discoveredCoordinatorsProvider);
+      return async.whenData(
+        (records) => records.where((r) => r.enabled).toList(growable: false),
+      );
+    });
 
 /// Coordinator info lookup by pubkey — reads through the registry which
 /// hydrates from cache on startup, so first call returns instantly for
 /// known coordinators.
 final coordinatorInfoByPubkeyProvider =
     FutureProvider.family<CoordinatorInfo?, String>((ref, pubkey) async {
-  final registry = await ref.watch(coordinatorRegistryProvider.future);
-  final cached = registry.infoFor(pubkey);
-  if (cached != null) return cached;
-  // Subscribing to changes will surface the info as soon as discovery
-  // populates it. We poll the snapshot after the first change.
-  await ref.watch(discoveredCoordinatorsProvider.future);
-  return registry.infoFor(pubkey);
-});
+      final registry = await ref.watch(coordinatorRegistryProvider.future);
+      final cached = registry.infoFor(pubkey);
+      if (cached != null) return cached;
+      // Subscribing to changes will surface the info as soon as discovery
+      // populates it. We poll the snapshot after the first change.
+      await ref.watch(discoveredCoordinatorsProvider.future);
+      return registry.infoFor(pubkey);
+    });
 
 /// Helper provider to get reservation duration for a coordinator.
 /// Returns Duration based on coordinator's reservationSeconds, or null if coordinator info unavailable.
@@ -192,7 +194,8 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   final apiService = ref.watch(apiServiceProvider);
   await for (final offer in apiService.offersStream) {
     offers.removeWhere((o) => o.id == offer.id);
-    if (offer.status == OfferStatus.funded || offer.status == OfferStatus.reserved) {
+    if (offer.status == OfferStatus.funded ||
+        offer.status == OfferStatus.reserved) {
       offers.add(offer);
     }
     yield List<Offer>.from(offers.reversed);
@@ -224,7 +227,8 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     unawaited(_reconcileCancelledOffersIfNeeded());
     // If a non-terminal offer is loaded, verify it against the coordinator
     // to catch the case where we were offline when it was cancelled/expired.
-    if (offer != null && !OfferDbService.terminalStatuses.contains(offer.status)) {
+    if (offer != null &&
+        !OfferDbService.terminalStatuses.contains(offer.status)) {
       unawaited(_reconcileActiveOfferIfNeeded(offer));
     }
   }
@@ -241,8 +245,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   ///   - Remote matches local → no action.
   Future<void> _reconcileActiveOfferIfNeeded(Offer localOffer) async {
     try {
-      final apiService =
-          await _ref.read(initializedApiServiceProvider.future);
+      final apiService = await _ref.read(initializedApiServiceProvider.future);
       Logger.log.i(
         () =>
             '[ActiveOfferNotifier] reconciling active offer ${localOffer.id} (local status=${localOffer.status.name})',
@@ -287,9 +290,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       }
 
       // If coordinator reports a different offer id, this local offer is stale.
-      final sameOffer = remoteId == localOffer.id ||
+      final sameOffer =
+          remoteId == localOffer.id ||
           (localOffer.holdInvoicePaymentHash != null &&
-              localOffer.holdInvoicePaymentHash == remote['payment_hash']?.toString());
+              localOffer.holdInvoicePaymentHash ==
+                  remote['payment_hash']?.toString());
 
       if (!sameOffer) {
         Logger.log.i(
@@ -308,10 +313,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         () =>
             '[ActiveOfferNotifier] syncing active offer $remoteId: local=${localOffer.status.name} -> remote=${remoteStatus.name}',
       );
-      final updated = localOffer.copyWith(
-        id: remoteId,
-        status: remoteStatus,
-      );
+      final updated = localOffer.copyWith(id: remoteId, status: remoteStatus);
       await OfferDbService().upsertOffer(updated);
 
       if (OfferDbService.terminalStatuses.contains(remoteStatus)) {
@@ -321,8 +323,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       }
     } catch (e) {
       Logger.log.e(
-        () =>
-            '[ActiveOfferNotifier] active-offer reconciliation failed: $e',
+        () => '[ActiveOfferNotifier] active-offer reconciliation failed: $e',
       );
     }
   }
@@ -332,12 +333,12 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// coordinator reports same offer with non-terminal status, revive it.
   Future<void> _reconcileCancelledOffersIfNeeded() async {
     try {
-      final cancelled = await OfferDbService()
-          .listRecentCancelled(_cancelledLookbackWindow);
+      final cancelled = await OfferDbService().listRecentCancelled(
+        _cancelledLookbackWindow,
+      );
       if (cancelled.isEmpty) return;
 
-      final apiService =
-          await _ref.read(initializedApiServiceProvider.future);
+      final apiService = await _ref.read(initializedApiServiceProvider.future);
 
       Logger.log.i(
         () =>
@@ -357,8 +358,9 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
           OfferStatus remoteStatus;
           try {
-            remoteStatus =
-                OfferStatus.values.byName(remote['status']?.toString() ?? '');
+            remoteStatus = OfferStatus.values.byName(
+              remote['status']?.toString() ?? '',
+            );
           } catch (_) {
             continue;
           }
@@ -390,8 +392,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       }
     } catch (e) {
       Logger.log.e(
-        () =>
-            '[ActiveOfferNotifier] cancelled-offer reconciliation failed: $e',
+        () => '[ActiveOfferNotifier] cancelled-offer reconciliation failed: $e',
       );
     }
   }
@@ -403,7 +404,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       );
       await OfferDbService().upsertOffer(offer);
     } else {
-      Logger.log.d(() => '[ActiveOfferNotifier] Clearing in-memory active offer (history preserved)');
+      Logger.log.d(
+        () =>
+            '[ActiveOfferNotifier] Clearing in-memory active offer (history preserved)',
+      );
     }
     state = offer;
   }
@@ -422,8 +426,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     final current = state;
     if (current == null) return;
 
-    final apiService =
-        await _ref.read(initializedApiServiceProvider.future);
+    final apiService = await _ref.read(initializedApiServiceProvider.future);
     Map<String, dynamic>? coordinatorOffer;
     try {
       coordinatorOffer = await apiService.getOfferDetails(
@@ -432,8 +435,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       );
     } catch (e) {
       Logger.log.w(
-        () =>
-            '[ActiveOfferNotifier] getOfferDetails failed during cancel: $e',
+        () => '[ActiveOfferNotifier] getOfferDetails failed during cancel: $e',
       );
     }
 
@@ -449,7 +451,8 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         }
       }
 
-      final sameOffer = remoteId != null &&
+      final sameOffer =
+          remoteId != null &&
           (remoteId == current.id ||
               current.holdInvoicePaymentHash != null &&
                   remoteId == current.holdInvoicePaymentHash);
@@ -460,10 +463,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           !OfferDbService.terminalStatuses.contains(remoteStatus)) {
         // Coordinator already funded this offer (or moved further).
         // Persist whatever the coordinator says, but refuse to cancel locally.
-        final updated = current.copyWith(
-          id: remoteId,
-          status: remoteStatus,
-        );
+        final updated = current.copyWith(id: remoteId, status: remoteStatus);
         await OfferDbService().upsertOffer(updated);
         state = updated;
         throw OfferAlreadyFundedException(remoteStatus);
@@ -478,9 +478,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     try {
       await apiService.cancelOffer(cancelId, current.coordinatorPubkey);
     } catch (e) {
-      Logger.log.w(
-        () => '[ActiveOfferNotifier] cancel_offer RPC failed: $e',
-      );
+      Logger.log.w(() => '[ActiveOfferNotifier] cancel_offer RPC failed: $e');
     }
 
     final cancelled = current.copyWith(status: OfferStatus.cancelled);
@@ -529,15 +527,42 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     }
     await db.upsertOffer(updated);
 
+    final shouldHydrateCompletedOffer =
+        newStatus == OfferStatus.makerConfirmed ||
+        newStatus == OfferStatus.settled ||
+        newStatus == OfferStatus.takerPaid;
+    Offer hydrated = updated;
+    if (shouldHydrateCompletedOffer) {
+      try {
+        final apiService = await _ref.read(
+          initializedApiServiceProvider.future,
+        );
+        final remote = await apiService.getOfferDetails(
+          updated,
+          updated.coordinatorPubkey,
+        );
+        if (remote != null) {
+          hydrated = Offer.fromJson(remote);
+          await db.upsertOffer(hydrated);
+        }
+      } catch (e) {
+        Logger.log.w(
+          () =>
+              '[ActiveOfferNotifier] failed hydrating completed offer ${updated.id}: $e',
+        );
+      }
+    }
+
     final currentState = state;
-    final isCurrent = currentState != null &&
-        (currentState.id == updated.id ||
+    final isCurrent =
+        currentState != null &&
+        (currentState.id == hydrated.id ||
             (currentState.holdInvoicePaymentHash != null &&
                 currentState.holdInvoicePaymentHash ==
-                    updated.holdInvoicePaymentHash));
+                    hydrated.holdInvoicePaymentHash));
 
     if (isCurrent) {
-      state = updated;
+      state = hydrated;
       return;
     }
 
@@ -548,9 +573,9 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         !OfferDbService.terminalStatuses.contains(newStatus)) {
       Logger.log.i(
         () =>
-            '[ActiveOfferNotifier] reviving cancelled offer ${updated.id} -> ${newStatus.name}',
+            '[ActiveOfferNotifier] reviving cancelled offer ${hydrated.id} -> ${newStatus.name}',
       );
-      state = updated;
+      state = hydrated;
     }
   }
 
