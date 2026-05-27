@@ -233,7 +233,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   ///
   /// When the app was offline while the coordinator cancelled or expired the
   /// offer, the local DB still holds the stale non-terminal status (e.g.
-  /// `funded`). This method fetches the coordinator's current view and
+  /// `funded`). This method fetches exact offer from coordinator and
   /// reconciles:
   ///   - Remote is null → offer no longer exists on coordinator; mark cancelled.
   ///   - Remote has a terminal status → update local DB and clear in-memory state.
@@ -243,9 +243,6 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     try {
       final apiService =
           await _ref.read(initializedApiServiceProvider.future);
-      final userPubkey = _ref.read(keyServiceProvider).publicKeyHex;
-      if (userPubkey == null) return;
-
       Logger.log.i(
         () =>
             '[ActiveOfferNotifier] reconciling active offer ${localOffer.id} (local status=${localOffer.status.name})',
@@ -253,14 +250,14 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
       Map<String, dynamic>? remote;
       try {
-        remote = await apiService.getMyActiveOffer(
-          userPubkey,
+        remote = await apiService.getOfferDetails(
+          localOffer,
           localOffer.coordinatorPubkey,
         );
       } catch (e) {
         Logger.log.w(
           () =>
-              '[ActiveOfferNotifier] getMyActiveOffer failed during active-offer reconciliation: $e',
+              '[ActiveOfferNotifier] getOfferDetails failed during active-offer reconciliation: $e',
         );
         return;
       }
@@ -331,9 +328,8 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   }
 
   /// Boot-time recovery: for every locally-cancelled offer within
-  /// [_cancelledLookbackWindow], ask each coordinator for the user's
-  /// current active offer. If the coordinator reports the same id with a
-  /// non-terminal status, persist that status and revive the offer.
+  /// [_cancelledLookbackWindow], ask coordinator for each exact offer. If
+  /// coordinator reports same offer with non-terminal status, revive it.
   Future<void> _reconcileCancelledOffersIfNeeded() async {
     try {
       final cancelled = await OfferDbService()
@@ -342,36 +338,22 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
       final apiService =
           await _ref.read(initializedApiServiceProvider.future);
-      final userPubkey = _ref.read(keyServiceProvider).publicKeyHex;
-      if (userPubkey == null) return;
-
-      // Group cancelled offers by coordinator for one RPC per coordinator.
-      final byCoordinator = <String, List<Offer>>{};
-      for (final offer in cancelled) {
-        byCoordinator
-            .putIfAbsent(offer.coordinatorPubkey, () => [])
-            .add(offer);
-      }
 
       Logger.log.i(
         () =>
-            '[ActiveOfferNotifier] reconciling ${cancelled.length} cancelled offers across ${byCoordinator.length} coordinators',
+            '[ActiveOfferNotifier] reconciling ${cancelled.length} cancelled offers via getOfferDetails',
       );
 
-      for (final entry in byCoordinator.entries) {
+      for (final localOffer in cancelled) {
         try {
-          final remote = await apiService.getMyActiveOffer(
-            userPubkey,
-            entry.key,
+          final remote = await apiService.getOfferDetails(
+            localOffer,
+            localOffer.coordinatorPubkey,
           );
           if (remote == null) continue;
 
           final remoteId = remote['id']?.toString();
           if (remoteId == null) continue;
-
-          final localMatch =
-              entry.value.where((o) => o.id == remoteId).toList();
-          if (localMatch.isEmpty) continue;
 
           OfferStatus remoteStatus;
           try {
@@ -384,7 +366,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
             continue;
           }
 
-          final revived = localMatch.first.copyWith(
+          final revived = localOffer.copyWith(
             id: remoteId,
             status: remoteStatus,
           );
@@ -402,7 +384,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         } catch (e) {
           Logger.log.w(
             () =>
-                '[ActiveOfferNotifier] reconciliation failed for coordinator ${entry.key}: $e',
+                '[ActiveOfferNotifier] reconciliation failed for ${localOffer.id}: $e',
           );
         }
       }
@@ -429,7 +411,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// Cancel the currently active offer, with a coordinator pre-check.
   ///
   /// Flow:
-  ///   1. Ask the coordinator for the user's active offer.
+  ///   1. Ask coordinator for exact offer.
   ///   2. If the coordinator reports the same offer as already `funded`,
   ///      throw [OfferAlreadyFundedException] without touching local state.
   ///      Caller should redirect into the funded flow.
@@ -442,22 +424,16 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
     final apiService =
         await _ref.read(initializedApiServiceProvider.future);
-    final keyService = _ref.read(keyServiceProvider);
-    final userPubkey = keyService.publicKeyHex;
-    if (userPubkey == null) {
-      throw StateError('User pubkey not available');
-    }
-
     Map<String, dynamic>? coordinatorOffer;
     try {
-      coordinatorOffer = await apiService.getMyActiveOffer(
-        userPubkey,
+      coordinatorOffer = await apiService.getOfferDetails(
+        current,
         current.coordinatorPubkey,
       );
     } catch (e) {
       Logger.log.w(
         () =>
-            '[ActiveOfferNotifier] getMyActiveOffer failed during cancel: $e',
+            '[ActiveOfferNotifier] getOfferDetails failed during cancel: $e',
       );
     }
 

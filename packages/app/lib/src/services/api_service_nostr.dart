@@ -264,17 +264,17 @@ class ApiServiceNostr {
     }
   }
 
-  Future<Map<String, dynamic>?> getMyActiveOffer(
-    String userPubkey,
+  Future<Map<String, dynamic>?> getOfferDetails(
+    Offer offer,
     String coordinatorPubkey,
   ) async {
     try {
-      return await _nostrService.getMyActiveOffer(
-        userPubkey,
+      return await _nostrService.getOfferDetails(
+        offer,
         coordinatorPubkey,
       );
     } catch (e) {
-      Logger.log.e(() => 'Error calling getMyActiveOffer: $e');
+      Logger.log.e(() => 'Error calling getOfferDetails: $e');
       return null;
     }
   }

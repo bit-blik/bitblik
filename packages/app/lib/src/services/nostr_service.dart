@@ -445,9 +445,9 @@ class NostrService {
     _handleResponse(response, (result) => null);
   }
 
-  /// GET /my-active-offer
-  Future<Map<String, dynamic>?> getMyActiveOffer(
-    String userPubkey,
+  /// GET /offer-details
+  Future<Map<String, dynamic>?> getOfferDetails(
+    Offer offer,
     String coordinatorPubkey,
   ) async {
     if (!_isInitialized) {
@@ -455,26 +455,36 @@ class NostrService {
     }
 
     try {
-      final request = NostrRequest(method: kRpcGetMyActiveOffer, params: {});
+      final params = <String, dynamic>{};
+      if (_looksLikeUuid(offer.id)) {
+        params['offer_id'] = offer.id;
+      } else if (offer.holdInvoicePaymentHash != null &&
+          offer.holdInvoicePaymentHash!.isNotEmpty) {
+        params['payment_hash'] = offer.holdInvoicePaymentHash!;
+      } else {
+        return null;
+      }
+
+      final request = NostrRequest(method: kRpcGetOfferDetails, params: params);
       final response = await sendRequest(request, coordinatorPubkey);
       final result = _handleResponse(response, (result) {
         if (result.isEmpty) return null;
-        // Add coordinator pubkey to the result
         result['coordinator_pubkey'] = coordinatorPubkey;
         return result;
       });
-      if (result != null) {
-        return result; // Return the first active offer found
-      }
+      if (result != null) return result;
     } catch (e) {
-      // Continue to the next coordinator if one fails
       Logger.log.e(
-        () =>
-            "Error getting active offer from coordinator ${coordinatorPubkey}: $e",
+        () => "Error getting offer details from coordinator ${coordinatorPubkey}: $e",
       );
     }
-    return null; // No active offer found on any coordinator
+    return null;
   }
+
+  bool _looksLikeUuid(String s) => RegExp(
+        r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+        caseSensitive: false,
+      ).hasMatch(s);
 
   /// GET /my-finished-offers - This will now query all coordinators
   Future<List<Offer>> getMyFinishedOffers(String userPubkey) async {

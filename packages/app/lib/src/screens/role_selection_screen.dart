@@ -79,11 +79,11 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
     try {
       Logger.log.i(
         () =>
-            '[RoleSelectionScreen] Fetching active offer from coordinator for offer ${activeOffer.id}',
+            '[RoleSelectionScreen] Fetching offer details from coordinator for offer ${activeOffer.id}',
       );
       final apiService = ref.read(apiServiceProvider);
-      final fetchedOffer = await apiService.getMyActiveOffer(
-        publicKey,
+      final fetchedOffer = await apiService.getOfferDetails(
+        activeOffer,
         activeOffer.coordinatorPubkey,
       );
       Logger.log.d(

@@ -309,7 +309,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     // }
     //
     // final apiService = ref.read(apiServiceProvider);
-    // final fullOfferData = await apiService.getMyActiveOffer(
+    // final fullOfferData = await apiService.getOfferDetails(
     //   publicKey,
     //   coordinatorPubkey,
     // );

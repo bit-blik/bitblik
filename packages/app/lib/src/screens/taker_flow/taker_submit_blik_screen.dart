@@ -114,8 +114,8 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         throw Exception(t.taker.paymentProcess.errors.noPublicKey);
       }
 
-      final fullOfferData = await apiService.getMyActiveOffer(
-        publicKey,
+      final fullOfferData = await apiService.getOfferDetails(
+        widget.initialOffer,
         widget.initialOffer.coordinatorPubkey,
       );
 
