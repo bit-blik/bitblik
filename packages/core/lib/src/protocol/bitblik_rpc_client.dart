@@ -88,11 +88,23 @@ class BitblikRpcClient {
         senderPubkeyHex: signer.getPublicKey(),
         coordinatorPubkey: coordinatorPubkey,
       );
-      ndk.broadcast.broadcast(
+      final broadcastResponse = ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: signer,
         specificRelays: relays,
       );
+      final relayResults = await broadcastResponse.broadcastDoneFuture;
+      final anyRelayAccepted = relayResults.any(
+        (response) => response.broadcastSuccessful,
+      );
+      if (!anyRelayAccepted) {
+        final details = relayResults
+            .map((response) => '${response.relayUrl}: ${response.msg}')
+            .join(', ');
+        throw StateError(
+          'Failed to broadcast RPC request to relays: $details',
+        );
+      }
 
       return await completer.future.timeout(
         timeout,
