@@ -31,6 +31,9 @@ WORKDIR /workspace/packages/coordinator
 RUN dart build cli -t bin/server.dart -o bin/server
 
 #######################################################
+FROM dart:3.11.4-sdk AS dart-runtime
+
+#######################################################
 FROM alpine:latest
 
 ARG APP_VERSION
@@ -40,6 +43,7 @@ RUN apk add --no-cache zlib gmp tzdata sqlite-libs libstdc++
 RUN ln -s /usr/lib/libsqlite3.so.0 /usr/lib/libsqlite3.so
 RUN apk add signal-cli~=0.14
 
+COPY --from=dart-runtime /runtime/ /
 COPY --from=build /workspace/packages/coordinator/bin/server /app/bin/
 COPY --from=build /workspace/simplex-chat /app/
 
@@ -49,4 +53,4 @@ WORKDIR /app
 
 EXPOSE 8080
 
-CMD ["/app/bin/server"]
+CMD ["/app/bin/bundle/bin/server"]
