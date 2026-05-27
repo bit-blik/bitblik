@@ -115,8 +115,11 @@ class NostrService {
       );
 
       await _signer.sign(event);
-      await _ndk.broadcast
-          .broadcast(nostrEvent: event, specificRelays: _relays);
+      await _ndk.broadcast.broadcast(
+        nostrEvent: event,
+        customSigner: _signer,
+        specificRelays: _relays,
+      );
 
       AppLogger.info(
           'Published coordinator info event for pub key: ${event.pubKey} to relays: $_relays');
@@ -180,8 +183,11 @@ class NostrService {
       );
 
       await _signer.sign(event);
-      await _ndk.broadcast
-          .broadcast(nostrEvent: event, specificRelays: _relays);
+      await _ndk.broadcast.broadcast(
+        nostrEvent: event,
+        customSigner: _signer,
+        specificRelays: _relays,
+      );
     } catch (e) {
       AppLogger.info(
           'Error sending encrypted status update to $recipientPubkey: $e');
@@ -519,8 +525,11 @@ class NostrService {
       );
 
       await _signer.sign(event);
-      await _ndk.broadcast
-          .broadcast(nostrEvent: event, specificRelays: _relays);
+      await _ndk.broadcast.broadcast(
+        nostrEvent: event,
+        customSigner: _signer,
+        specificRelays: _relays,
+      );
 
       AppLogger.info('Sent encrypted response to $recipientPubkey');
     } catch (e) {

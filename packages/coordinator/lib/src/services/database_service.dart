@@ -430,13 +430,13 @@ class DatabaseService {
       OfferStatus.payingTaker,
       OfferStatus.takerPaymentFailed,
       OfferStatus.takerPaid
-    ];
+    ].map((status) => status.name).toList(growable: false);
 
     final results = await _connection!.query(
       '''
          SELECT * FROM offers
          WHERE (maker_pubkey = @userPubkey OR taker_pubkey = @userPubkey)
-         AND status = ANY(@activeStatuses)
+         AND status = ANY(CAST(@activeStatuses AS TEXT[]))
          ORDER BY created_at DESC
        ''',
       substitutionValues: {
