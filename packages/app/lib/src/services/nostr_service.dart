@@ -35,17 +35,24 @@ class NostrService {
   bool _isInitialized = false;
   Future<void>? _initInFlight;
 
-  final StreamController<OfferStatusUpdate> _offerStatusController =
-      StreamController<OfferStatusUpdate>.broadcast();
+  late StreamController<OfferStatusUpdate> _offerStatusController;
   late StreamController<Offer> _offerStreamController;
 
   NostrService(this._keyService) {
+    _createStreamControllers();
+  }
+
+  void _createStreamControllers() {
+    _offerStatusController = StreamController<OfferStatusUpdate>.broadcast();
     _offerStreamController = StreamController<Offer>.broadcast();
   }
 
   /// Initialize the Nostr service
   Future<void> init() async {
     if (_isInitialized) return;
+    if (_offerStatusController.isClosed || _offerStreamController.isClosed) {
+      _createStreamControllers();
+    }
 
     final inFlight = _initInFlight;
     if (inFlight != null) {
@@ -860,17 +867,6 @@ class NostrService {
   /// Get stream of offer status updates
   Stream<OfferStatusUpdate> get offerStatusStream =>
       _offerStatusController.stream;
-
-  /// Update relay configuration. Reinitialises NDK + registry.
-  Future<void> updateRelayConfig(List<String> relayUrls) async {
-    _relayUrls = List.from(relayUrls);
-    if (_isInitialized) {
-      await dispose();
-      await init();
-      // Kick a fresh discovery in the background.
-      unawaited(_coordinatorRegistry?.discover() ?? Future<void>.value());
-    }
-  }
 
   /// Dispose resources
   Future<void> dispose() async {

@@ -399,11 +399,6 @@ class ApiServiceNostr {
     }
   }
 
-  /// Update Nostr relay configuration
-  Future<void> updateRelayConfig(List<String> relayUrls) async {
-    await _nostrService.updateRelayConfig(relayUrls);
-  }
-
   /// Coordinator registry exposed for screens that need streamed updates.
   CoordinatorRegistry get coordinatorRegistry =>
       _nostrService.coordinatorRegistry;
