@@ -316,7 +316,7 @@ maker:
         onlineService: "Prodotto o servizio online"
       atmHint: "I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive."
       ecommerceWarningTitle: "Rischio rimborso negozio online"
-      ecommerceWarningBody: "Se il negozio non può completare l'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. BitBlik non può obbligare il taker a restituirlo a te."
+      ecommerceWarningBody: "Se il negozio non può completare l'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. Il coordinatore non può obbligare il taker a restituirlo a te."
       ecommerceConfirmation: "Capisco che dovrei aggiungere una nota all'ordine online per chiedere al negozio di rimborsare su un conto diverso se il rimborso diventa necessario."
 
     errors:

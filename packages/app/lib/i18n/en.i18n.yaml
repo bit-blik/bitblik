@@ -316,7 +316,7 @@ maker:
         onlineService: "Online service/product"
       atmHint: "Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees."
       ecommerceWarningTitle: "Online merchant refund risk"
-      ecommerceWarningBody: "If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker's bank account. BitBlik cannot force the taker to return it to you."
+      ecommerceWarningBody: "If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker's bank account. The coordinator cannot force the taker to return it to you."
       ecommerceConfirmation: "I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary."
     
     errors:

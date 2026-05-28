@@ -315,7 +315,7 @@ maker:
         onlineService: "Produkt lub usługa online"
       atmHint: "Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty."
       ecommerceWarningTitle: "Ryzyko zwrotu od sprzedawcy online"
-      ecommerceWarningBody: "Jeśli sprzedawca nie zrealizuje zamówienia i automatycznie wyśle zwrot, zwrot może trafić na konto bankowe takera. BitBlik nie może wymusić, aby taker oddał te środki Tobie."
+      ecommerceWarningBody: "Jeśli sprzedawca nie zrealizuje zamówienia i automatycznie wyśle zwrot, zwrot może trafić na konto bankowe takera. Koordynator nie może wymusić, aby taker oddał te środki Tobie."
       ecommerceConfirmation: "Rozumiem, że powinienem dodać do zamówienia online informację, aby w razie zwrotu sprzedawca zwrócił środki na inne konto."
     
     errors:
