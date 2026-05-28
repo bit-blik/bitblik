@@ -145,6 +145,15 @@ class CoordinatorRegistry {
     await Future.wait(due.map(probeHealth));
   }
 
+  /// Probe every listed coordinator, regardless of enabled state or probe age.
+  /// Useful for user-triggered manual refreshes where the expectation is a
+  /// fresh responsiveness snapshot for the whole visible list.
+  Future<void> probeAllListed() async {
+    final listed = all.map((r) => r.pubkeyHex).toList(growable: false);
+    if (listed.isEmpty) return;
+    await Future.wait(listed.map(probeHealth));
+  }
+
   /// Flip a coordinator's enabled flag.
   Future<void> setEnabled(String pubkey, bool value) async {
     final hex = _normalize(pubkey);

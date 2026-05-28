@@ -142,7 +142,7 @@ class _CoordinatorManagementScreenState
   Future<void> _refreshDiscovery() async {
     final registry = await ref.read(coordinatorRegistryProvider.future);
     await registry.discover();
-    await registry.probeAllEnabled();
+    await registry.probeAllListed();
   }
 
   @override
