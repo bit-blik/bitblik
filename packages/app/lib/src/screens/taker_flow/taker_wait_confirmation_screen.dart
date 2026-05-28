@@ -276,19 +276,19 @@ class _TakerWaitConfirmationScreenState
   Widget? _categoryReminder(BuildContext context, OfferCategory? category) {
     final t = Translations.of(context);
     switch (category) {
-      case OfferCategory.atmCashout:
+      case OfferCategory.atm:
         return _buildCategoryReminderCard(
           text: t.taker.waitConfirmation.categoryReminder.atm,
           icon: Icons.local_atm_outlined,
           accent: Colors.orange,
         );
-      case OfferCategory.onlineService:
+      case OfferCategory.online:
         return _buildCategoryReminderCard(
           text: t.taker.waitConfirmation.categoryReminder.ecommerce,
           icon: Icons.shopping_cart_checkout_outlined,
           accent: Colors.amber.shade800,
         );
-      case OfferCategory.physicalShop:
+      case OfferCategory.shop:
       case null:
         return null;
     }

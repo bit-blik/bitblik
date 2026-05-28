@@ -111,17 +111,15 @@ offers:
     coordinator: "Coordinator"
     categoryLabel: "Category"
     categories:
-      physicalShop: "Physical good in shop"
+      physicalShop: "Shop, café or restaurant"
       atmCashout: "ATM cash out"
       onlineService: "Online service/product"
     consents:
-      atm: "I understand some ATMs add an extra bank fee on top, and by taking this offer I accept those additional charges."
-      ecommerce: "I understand that if a merchant refund wrongly comes to my bank account, I must contact the coordinator and return the funds so the maker can be refunded manually."
-  
+      atm: "Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM."
+      ecommerce: "For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the BLIK you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations."
+
   tooltips:
     takerFeeInfo: "Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive."
-    atmCategory: "Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM."
-    ecommerceCategory: "If the merchant refunds the order automatically, the refund may go to your bank account. If that happens and the refund is not rightfully yours, contact the coordinator and return the funds."
   
   actions:
     take: TAKE
@@ -311,13 +309,14 @@ maker:
     category:
       label: "Offer category"
       options:
-        physicalShop: "Physical good in shop"
+        physicalShop: "Shop, café or restaurant"
         atmCashout: "ATM cash out"
         onlineService: "Online service/product"
       atmHint: "Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees."
+      physicalShopHint: "The ideal place to use Bitblik is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a BLIK code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you're feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you."
       ecommerceWarningTitle: "Online merchant refund risk"
-      ecommerceWarningBody: "If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker's bank account. The coordinator cannot force the taker to return it to you."
-      ecommerceConfirmation: "I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary."
+      ecommerceWarningBody: "For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the BLIK, which is the taker's account. The coordinator cannot force the taker to return those funds to you."
+      ecommerceConfirmation: "I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary."
     
     errors:
       initiating: "Error initiating offer: ${details}"

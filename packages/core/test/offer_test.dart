@@ -15,12 +15,12 @@ void main() {
         createdAt: DateTime.utc(2026, 1, 2, 3, 4, 5),
         makerPubkey: 'maker-pubkey',
         coordinatorPubkey: 'coordinator-pubkey',
-        category: OfferCategory.onlineService,
+        category: OfferCategory.online,
       );
 
       final decoded = Offer.fromJson(offer.toJson());
 
-      expect(decoded.category, OfferCategory.onlineService);
+      expect(decoded.category, OfferCategory.online);
     });
 
     test('missing category stays null', () {
@@ -60,7 +60,7 @@ void main() {
 
       final offer = Offer.fromNostrEvent(event);
 
-      expect(offer.category, OfferCategory.atmCashout);
+      expect(offer.category, OfferCategory.atm);
     });
   });
 }

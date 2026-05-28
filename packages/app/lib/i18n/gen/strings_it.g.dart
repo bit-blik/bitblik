@@ -570,8 +570,6 @@ class _TranslationsOffersTooltipsIt extends TranslationsOffersTooltipsEn {
 
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi';
-	@override String get atmCategory => 'Alcuni ATM aggiungono una commissione extra oltre all\'importo dell\'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall\'ATM.';
-	@override String get ecommerceCategory => 'Se il commerciante rimborsa automaticamente l\'ordine, il rimborso potrebbe arrivare sul tuo conto bancario. Se succede e il rimborso non ti spetta, contatta il coordinatore e restituisci i fondi.';
 }
 
 // Path: offers.actions
@@ -1489,7 +1487,7 @@ class _TranslationsOffersDetailsCategoriesIt extends TranslationsOffersDetailsCa
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get physicalShop => 'Bene fisico in negozio';
+	@override String get physicalShop => 'Negozio, caffè o ristorante';
 	@override String get atmCashout => 'Prelievo contanti da ATM';
 	@override String get onlineService => 'Prodotto o servizio online';
 }
@@ -1501,8 +1499,8 @@ class _TranslationsOffersDetailsConsentsIt extends TranslationsOffersDetailsCons
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get atm => 'Capisco che alcuni ATM aggiungono una commissione bancaria extra oltre all\'importo dell\'offerta e accetto tali costi aggiuntivi.';
-	@override String get ecommerce => 'Capisco che se un rimborso del commerciante arriva per errore sul mio conto bancario, devo contattare il coordinatore e restituire i fondi affinché il maker possa essere rimborsato manualmente.';
+	@override String get atm => 'Alcuni ATM aggiungono una commissione extra oltre all\'importo dell\'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall\'ATM.';
+	@override String get ecommerce => 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il commerciante online potrebbe automaticamente restituire denaro sul conto bancario collegato al BLIK che hai generato. Quei fondi arrivano sul tuo conto e non ti appartengono. Se succede, contatta il coordinatore in buona fede e organizza la restituzione dei fondi al maker. Accettando questa offerta, accetti questi termini e giuri solennemente di agire onestamente in tali situazioni.';
 }
 
 // Path: maker.amountForm.progress
@@ -1564,9 +1562,10 @@ class _TranslationsMakerAmountFormCategoryIt extends TranslationsMakerAmountForm
 	@override String get label => 'Categoria offerta';
 	@override late final _TranslationsMakerAmountFormCategoryOptionsIt options = _TranslationsMakerAmountFormCategoryOptionsIt._(_root);
 	@override String get atmHint => 'I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive.';
+	@override String get physicalShopHint => 'Il posto ideale per usare Bitblik è una cassa self-service — poiché aspettare che un taker riservi, generi e confermi il codice BLIK potrebbe richiedere un paio di minuti. Funziona benissimo in negozi, caffè e ristoranti. Se ti senti abbastanza coraggioso da far aspettare un cassiere normale (e le persone in coda dietro di te) quei pochi minuti, complimenti.';
 	@override String get ecommerceWarningTitle => 'Rischio rimborso negozio online';
-	@override String get ecommerceWarningBody => 'Se il negozio non può completare l\'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. Il coordinatore non può obbligare il taker a restituirlo a te.';
-	@override String get ecommerceConfirmation => 'Capisco che dovrei aggiungere una nota all\'ordine online per chiedere al negozio di rimborsare su un conto diverso se il rimborso diventa necessario.';
+	@override String get ecommerceWarningBody => 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al BLIK, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te.';
+	@override String get ecommerceConfirmation => 'Capisco il rischio di rimborso e aggiungerò una nota all\'ordine per chiedere al commerciante di rimborsare su un conto diverso se necessario.';
 }
 
 // Path: maker.amountForm.errors
@@ -2103,7 +2102,7 @@ class _TranslationsMakerAmountFormCategoryOptionsIt extends TranslationsMakerAmo
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get physicalShop => 'Bene fisico in negozio';
+	@override String get physicalShop => 'Negozio, caffè o ristorante';
 	@override String get atmCashout => 'Prelievo contanti da ATM';
 	@override String get onlineService => 'Prodotto o servizio online';
 }
@@ -2199,14 +2198,12 @@ extension on TranslationsIt {
 			case 'offers.details.youllReceive': return 'Riceverai';
 			case 'offers.details.coordinator': return 'Coordinatore';
 			case 'offers.details.categoryLabel': return 'Categoria';
-			case 'offers.details.categories.physicalShop': return 'Bene fisico in negozio';
+			case 'offers.details.categories.physicalShop': return 'Negozio, caffè o ristorante';
 			case 'offers.details.categories.atmCashout': return 'Prelievo contanti da ATM';
 			case 'offers.details.categories.onlineService': return 'Prodotto o servizio online';
-			case 'offers.details.consents.atm': return 'Capisco che alcuni ATM aggiungono una commissione bancaria extra oltre all\'importo dell\'offerta e accetto tali costi aggiuntivi.';
-			case 'offers.details.consents.ecommerce': return 'Capisco che se un rimborso del commerciante arriva per errore sul mio conto bancario, devo contattare il coordinatore e restituire i fondi affinché il maker possa essere rimborsato manualmente.';
+			case 'offers.details.consents.atm': return 'Alcuni ATM aggiungono una commissione extra oltre all\'importo dell\'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall\'ATM.';
+			case 'offers.details.consents.ecommerce': return 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il commerciante online potrebbe automaticamente restituire denaro sul conto bancario collegato al BLIK che hai generato. Quei fondi arrivano sul tuo conto e non ti appartengono. Se succede, contatta il coordinatore in buona fede e organizza la restituzione dei fondi al maker. Accettando questa offerta, accetti questi termini e giuri solennemente di agire onestamente in tali situazioni.';
 			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi';
-			case 'offers.tooltips.atmCategory': return 'Alcuni ATM aggiungono una commissione extra oltre all\'importo dell\'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall\'ATM.';
-			case 'offers.tooltips.ecommerceCategory': return 'Se il commerciante rimborsa automaticamente l\'ordine, il rimborso potrebbe arrivare sul tuo conto bancario. Se succede e il rimborso non ti spetta, contatta il coordinatore e restituisci i fondi.';
 			case 'offers.actions.take': return 'ACCETTA';
 			case 'offers.actions.takeOffer': return 'Accetta Offerta';
 			case 'offers.actions.resume': return 'INSERISCI BLIK';
@@ -2336,13 +2333,14 @@ extension on TranslationsIt {
 			case 'maker.amountForm.tooltips.feeInfo': return ({required Object feePercent}) => 'Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning.';
 			case 'maker.amountForm.tooltips.payInfo': return 'Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l\'importo esatto, e l\'importo della fattura sarà quello finale e definitivo da pagare.';
 			case 'maker.amountForm.category.label': return 'Categoria offerta';
-			case 'maker.amountForm.category.options.physicalShop': return 'Bene fisico in negozio';
+			case 'maker.amountForm.category.options.physicalShop': return 'Negozio, caffè o ristorante';
 			case 'maker.amountForm.category.options.atmCashout': return 'Prelievo contanti da ATM';
 			case 'maker.amountForm.category.options.onlineService': return 'Prodotto o servizio online';
 			case 'maker.amountForm.category.atmHint': return 'I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive.';
+			case 'maker.amountForm.category.physicalShopHint': return 'Il posto ideale per usare Bitblik è una cassa self-service — poiché aspettare che un taker riservi, generi e confermi il codice BLIK potrebbe richiedere un paio di minuti. Funziona benissimo in negozi, caffè e ristoranti. Se ti senti abbastanza coraggioso da far aspettare un cassiere normale (e le persone in coda dietro di te) quei pochi minuti, complimenti.';
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Rischio rimborso negozio online';
-			case 'maker.amountForm.category.ecommerceWarningBody': return 'Se il negozio non può completare l\'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. Il coordinatore non può obbligare il taker a restituirlo a te.';
-			case 'maker.amountForm.category.ecommerceConfirmation': return 'Capisco che dovrei aggiungere una nota all\'ordine online per chiedere al negozio di rimborsare su un conto diverso se il rimborso diventa necessario.';
+			case 'maker.amountForm.category.ecommerceWarningBody': return 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al BLIK, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te.';
+			case 'maker.amountForm.category.ecommerceConfirmation': return 'Capisco il rischio di rimborso e aggiungerò una nota all\'ordine per chiedere al commerciante di rimborsare su un conto diverso se necessario.';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Errore nell\'avvio dell\'offerta: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Errore: Chiave pubblica non ancora caricata.';
 			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'Nessun coordinatore supporta questo importo. Prova con un valore diverso.';

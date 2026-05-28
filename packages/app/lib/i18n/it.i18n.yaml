@@ -111,17 +111,15 @@ offers:
     coordinator: "Coordinatore"
     categoryLabel: "Categoria"
     categories:
-      physicalShop: "Bene fisico in negozio"
+      physicalShop: "Negozio, caffè o ristorante"
       atmCashout: "Prelievo contanti da ATM"
       onlineService: "Prodotto o servizio online"
     consents:
-      atm: "Capisco che alcuni ATM aggiungono una commissione bancaria extra oltre all'importo dell'offerta e accetto tali costi aggiuntivi."
-      ecommerce: "Capisco che se un rimborso del commerciante arriva per errore sul mio conto bancario, devo contattare il coordinatore e restituire i fondi affinché il maker possa essere rimborsato manualmente."
+      atm: "Alcuni ATM aggiungono una commissione extra oltre all'importo dell'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall'ATM."
+      ecommerce: "Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il commerciante online potrebbe automaticamente restituire denaro sul conto bancario collegato al BLIK che hai generato. Quei fondi arrivano sul tuo conto e non ti appartengono. Se succede, contatta il coordinatore in buona fede e organizza la restituzione dei fondi al maker. Accettando questa offerta, accetti questi termini e giuri solennemente di agire onestamente in tali situazioni."
 
   tooltips:
     takerFeeInfo: "Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall'importo che ricevi"
-    atmCategory: "Alcuni ATM aggiungono una commissione extra oltre all'importo dell'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall'ATM."
-    ecommerceCategory: "Se il commerciante rimborsa automaticamente l'ordine, il rimborso potrebbe arrivare sul tuo conto bancario. Se succede e il rimborso non ti spetta, contatta il coordinatore e restituisci i fondi."
 
   actions:
     take: ACCETTA
@@ -311,13 +309,14 @@ maker:
     category:
       label: "Categoria offerta"
       options:
-        physicalShop: "Bene fisico in negozio"
+        physicalShop: "Negozio, caffè o ristorante"
         atmCashout: "Prelievo contanti da ATM"
         onlineService: "Prodotto o servizio online"
       atmHint: "I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive."
+      physicalShopHint: "Il posto ideale per usare Bitblik è una cassa self-service — poiché aspettare che un taker riservi, generi e confermi il codice BLIK potrebbe richiedere un paio di minuti. Funziona benissimo in negozi, caffè e ristoranti. Se ti senti abbastanza coraggioso da far aspettare un cassiere normale (e le persone in coda dietro di te) quei pochi minuti, complimenti."
       ecommerceWarningTitle: "Rischio rimborso negozio online"
-      ecommerceWarningBody: "Se il negozio non può completare l'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. Il coordinatore non può obbligare il taker a restituirlo a te."
-      ecommerceConfirmation: "Capisco che dovrei aggiungere una nota all'ordine online per chiedere al negozio di rimborsare su un conto diverso se il rimborso diventa necessario."
+      ecommerceWarningBody: "Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al BLIK, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te."
+      ecommerceConfirmation: "Capisco il rischio di rimborso e aggiungerò una nota all'ordine per chiedere al commerciante di rimborsare su un conto diverso se necessario."
 
     errors:
       initiating: "Errore nell'avvio dell'offerta: ${details}"

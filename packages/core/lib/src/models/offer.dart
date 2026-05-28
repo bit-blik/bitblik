@@ -33,9 +33,9 @@ enum OfferStatus {
 }
 
 enum OfferCategory {
-  physicalShop,
-  atmCashout,
-  onlineService,
+  shop,
+  atm,
+  online,
 }
 
 // Represents an offer listed by the coordinator.

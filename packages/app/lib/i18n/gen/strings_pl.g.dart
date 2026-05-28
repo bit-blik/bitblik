@@ -569,8 +569,6 @@ class _TranslationsOffersTooltipsPl extends TranslationsOffersTooltipsEn {
 
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.';
-	@override String get atmCategory => 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
-	@override String get ecommerceCategory => 'Jeśli sprzedawca automatycznie zwróci zamówienie, zwrot może trafić na Twoje konto bankowe. Jeśli tak się stanie, a środki nie należą do Ciebie, skontaktuj się z koordynatorem i zwróć je.';
 }
 
 // Path: offers.actions
@@ -1486,7 +1484,7 @@ class _TranslationsOffersDetailsCategoriesPl extends TranslationsOffersDetailsCa
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String get physicalShop => 'Towar fizyczny w sklepie';
+	@override String get physicalShop => 'Sklep, kawiarnia lub restauracja';
 	@override String get atmCashout => 'Wypłata gotówki z bankomatu';
 	@override String get onlineService => 'Produkt lub usługa online';
 }
@@ -1498,8 +1496,8 @@ class _TranslationsOffersDetailsConsentsPl extends TranslationsOffersDetailsCons
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String get atm => 'Rozumiem, że niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty i akceptuję te dodatkowe koszty.';
-	@override String get ecommerce => 'Rozumiem, że jeśli zwrot od sprzedawcy błędnie trafi na moje konto bankowe, muszę skontaktować się z koordynatorem i zwrócić środki, aby maker mógł otrzymać ręczny zwrot.';
+	@override String get atm => 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
+	@override String get ecommerce => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.';
 }
 
 // Path: maker.amountForm.progress
@@ -1561,9 +1559,10 @@ class _TranslationsMakerAmountFormCategoryPl extends TranslationsMakerAmountForm
 	@override String get label => 'Kategoria oferty';
 	@override late final _TranslationsMakerAmountFormCategoryOptionsPl options = _TranslationsMakerAmountFormCategoryOptionsPl._(_root);
 	@override String get atmHint => 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
+	@override String get physicalShopHint => 'Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.';
 	@override String get ecommerceWarningTitle => 'Ryzyko zwrotu od sprzedawcy online';
-	@override String get ecommerceWarningBody => 'Jeśli sprzedawca nie zrealizuje zamówienia i automatycznie wyśle zwrot, zwrot może trafić na konto bankowe takera. Koordynator nie może wymusić, aby taker oddał te środki Tobie.';
-	@override String get ecommerceConfirmation => 'Rozumiem, że powinienem dodać do zamówienia online informację, aby w razie zwrotu sprzedawca zwrócił środki na inne konto.';
+	@override String get ecommerceWarningBody => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
+	@override String get ecommerceConfirmation => 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
 }
 
 // Path: maker.amountForm.errors
@@ -2100,7 +2099,7 @@ class _TranslationsMakerAmountFormCategoryOptionsPl extends TranslationsMakerAmo
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String get physicalShop => 'Towar fizyczny w sklepie';
+	@override String get physicalShop => 'Sklep, kawiarnia lub restauracja';
 	@override String get atmCashout => 'Wypłata gotówki z bankomatu';
 	@override String get onlineService => 'Produkt lub usługa online';
 }
@@ -2195,14 +2194,12 @@ extension on TranslationsPl {
 			case 'offers.details.youllReceive': return 'Otrzymasz';
 			case 'offers.details.coordinator': return 'Koordynator';
 			case 'offers.details.categoryLabel': return 'Kategoria';
-			case 'offers.details.categories.physicalShop': return 'Towar fizyczny w sklepie';
+			case 'offers.details.categories.physicalShop': return 'Sklep, kawiarnia lub restauracja';
 			case 'offers.details.categories.atmCashout': return 'Wypłata gotówki z bankomatu';
 			case 'offers.details.categories.onlineService': return 'Produkt lub usługa online';
-			case 'offers.details.consents.atm': return 'Rozumiem, że niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty i akceptuję te dodatkowe koszty.';
-			case 'offers.details.consents.ecommerce': return 'Rozumiem, że jeśli zwrot od sprzedawcy błędnie trafi na moje konto bankowe, muszę skontaktować się z koordynatorem i zwrócić środki, aby maker mógł otrzymać ręczny zwrot.';
+			case 'offers.details.consents.atm': return 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
+			case 'offers.details.consents.ecommerce': return 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.';
 			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.';
-			case 'offers.tooltips.atmCategory': return 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
-			case 'offers.tooltips.ecommerceCategory': return 'Jeśli sprzedawca automatycznie zwróci zamówienie, zwrot może trafić na Twoje konto bankowe. Jeśli tak się stanie, a środki nie należą do Ciebie, skontaktuj się z koordynatorem i zwróć je.';
 			case 'offers.actions.take': return 'WEŹ';
 			case 'offers.actions.takeOffer': return 'Weź ofertę';
 			case 'offers.actions.resume': return 'Wprowadź BLIK';
@@ -2332,13 +2329,14 @@ extension on TranslationsPl {
 			case 'maker.amountForm.tooltips.feeInfo': return ({required Object feePercent}) => 'Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning.';
 			case 'maker.amountForm.tooltips.payInfo': return 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.';
 			case 'maker.amountForm.category.label': return 'Kategoria oferty';
-			case 'maker.amountForm.category.options.physicalShop': return 'Towar fizyczny w sklepie';
+			case 'maker.amountForm.category.options.physicalShop': return 'Sklep, kawiarnia lub restauracja';
 			case 'maker.amountForm.category.options.atmCashout': return 'Wypłata gotówki z bankomatu';
 			case 'maker.amountForm.category.options.onlineService': return 'Produkt lub usługa online';
 			case 'maker.amountForm.category.atmHint': return 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
+			case 'maker.amountForm.category.physicalShopHint': return 'Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.';
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Ryzyko zwrotu od sprzedawcy online';
-			case 'maker.amountForm.category.ecommerceWarningBody': return 'Jeśli sprzedawca nie zrealizuje zamówienia i automatycznie wyśle zwrot, zwrot może trafić na konto bankowe takera. Koordynator nie może wymusić, aby taker oddał te środki Tobie.';
-			case 'maker.amountForm.category.ecommerceConfirmation': return 'Rozumiem, że powinienem dodać do zamówienia online informację, aby w razie zwrotu sprzedawca zwrócił środki na inne konto.';
+			case 'maker.amountForm.category.ecommerceWarningBody': return 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
+			case 'maker.amountForm.category.ecommerceConfirmation': return 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Błąd inicjowania oferty: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Błąd: Klucz publiczny nie został jeszcze załadowany.';
 			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'Żaden koordynator nie obsługuje tej kwoty. Spróbuj inną wartość.';

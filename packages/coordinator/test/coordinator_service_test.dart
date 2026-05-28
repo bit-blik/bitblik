@@ -411,7 +411,7 @@ void main() {
       // final paymentHash = 'funded-payment-hash';
       final makerId = 'maker-for-funded';
       final fiatAmount = 150.0;
-      const category = OfferCategory.onlineService;
+      const category = OfferCategory.online;
       // final satsAmountCalc = 300000; // Example, actual would be calculated
       // final makerFeesCalc = 1500; // Example
 

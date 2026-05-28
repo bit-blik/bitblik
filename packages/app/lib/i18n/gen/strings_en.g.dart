@@ -798,12 +798,6 @@ class TranslationsOffersTooltipsEn {
 
 	/// en: 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.'
 	String takerFeeInfo({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.';
-
-	/// en: 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.'
-	String get atmCategory => 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.';
-
-	/// en: 'If the merchant refunds the order automatically, the refund may go to your bank account. If that happens and the refund is not rightfully yours, contact the coordinator and return the funds.'
-	String get ecommerceCategory => 'If the merchant refunds the order automatically, the refund may go to your bank account. If that happens and the refund is not rightfully yours, contact the coordinator and return the funds.';
 }
 
 // Path: offers.actions
@@ -2339,8 +2333,8 @@ class TranslationsOffersDetailsCategoriesEn {
 
 	// Translations
 
-	/// en: 'Physical good in shop'
-	String get physicalShop => 'Physical good in shop';
+	/// en: 'Shop, café or restaurant'
+	String get physicalShop => 'Shop, café or restaurant';
 
 	/// en: 'ATM cash out'
 	String get atmCashout => 'ATM cash out';
@@ -2357,11 +2351,11 @@ class TranslationsOffersDetailsConsentsEn {
 
 	// Translations
 
-	/// en: 'I understand some ATMs add an extra bank fee on top, and by taking this offer I accept those additional charges.'
-	String get atm => 'I understand some ATMs add an extra bank fee on top, and by taking this offer I accept those additional charges.';
+	/// en: 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.'
+	String get atm => 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.';
 
-	/// en: 'I understand that if a merchant refund wrongly comes to my bank account, I must contact the coordinator and return the funds so the maker can be refunded manually.'
-	String get ecommerce => 'I understand that if a merchant refund wrongly comes to my bank account, I must contact the coordinator and return the funds so the maker can be refunded manually.';
+	/// en: 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the BLIK you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations.'
+	String get ecommerce => 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the BLIK you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations.';
 }
 
 // Path: maker.amountForm.progress
@@ -2455,14 +2449,17 @@ class TranslationsMakerAmountFormCategoryEn {
 	/// en: 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.'
 	String get atmHint => 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
 
+	/// en: 'The ideal place to use Bitblik is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a BLIK code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you're feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.'
+	String get physicalShopHint => 'The ideal place to use Bitblik is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a BLIK code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you\'re feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.';
+
 	/// en: 'Online merchant refund risk'
 	String get ecommerceWarningTitle => 'Online merchant refund risk';
 
-	/// en: 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker's bank account. The coordinator cannot force the taker to return it to you.'
-	String get ecommerceWarningBody => 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker\'s bank account. The coordinator cannot force the taker to return it to you.';
+	/// en: 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the BLIK, which is the taker's account. The coordinator cannot force the taker to return those funds to you.'
+	String get ecommerceWarningBody => 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the BLIK, which is the taker\'s account. The coordinator cannot force the taker to return those funds to you.';
 
-	/// en: 'I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary.'
-	String get ecommerceConfirmation => 'I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary.';
+	/// en: 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.'
+	String get ecommerceConfirmation => 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.';
 }
 
 // Path: maker.amountForm.errors
@@ -3327,8 +3324,8 @@ class TranslationsMakerAmountFormCategoryOptionsEn {
 
 	// Translations
 
-	/// en: 'Physical good in shop'
-	String get physicalShop => 'Physical good in shop';
+	/// en: 'Shop, café or restaurant'
+	String get physicalShop => 'Shop, café or restaurant';
 
 	/// en: 'ATM cash out'
 	String get atmCashout => 'ATM cash out';
@@ -3432,14 +3429,12 @@ extension on Translations {
 			case 'offers.details.youllReceive': return 'You\'ll receive';
 			case 'offers.details.coordinator': return 'Coordinator';
 			case 'offers.details.categoryLabel': return 'Category';
-			case 'offers.details.categories.physicalShop': return 'Physical good in shop';
+			case 'offers.details.categories.physicalShop': return 'Shop, café or restaurant';
 			case 'offers.details.categories.atmCashout': return 'ATM cash out';
 			case 'offers.details.categories.onlineService': return 'Online service/product';
-			case 'offers.details.consents.atm': return 'I understand some ATMs add an extra bank fee on top, and by taking this offer I accept those additional charges.';
-			case 'offers.details.consents.ecommerce': return 'I understand that if a merchant refund wrongly comes to my bank account, I must contact the coordinator and return the funds so the maker can be refunded manually.';
+			case 'offers.details.consents.atm': return 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.';
+			case 'offers.details.consents.ecommerce': return 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the BLIK you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations.';
 			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.';
-			case 'offers.tooltips.atmCategory': return 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.';
-			case 'offers.tooltips.ecommerceCategory': return 'If the merchant refunds the order automatically, the refund may go to your bank account. If that happens and the refund is not rightfully yours, contact the coordinator and return the funds.';
 			case 'offers.actions.take': return 'TAKE';
 			case 'offers.actions.takeOffer': return 'Take Offer';
 			case 'offers.actions.resume': return 'ENTER BLIK';
@@ -3569,13 +3564,14 @@ extension on Translations {
 			case 'maker.amountForm.tooltips.feeInfo': return ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment.';
 			case 'maker.amountForm.tooltips.payInfo': return 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.';
 			case 'maker.amountForm.category.label': return 'Offer category';
-			case 'maker.amountForm.category.options.physicalShop': return 'Physical good in shop';
+			case 'maker.amountForm.category.options.physicalShop': return 'Shop, café or restaurant';
 			case 'maker.amountForm.category.options.atmCashout': return 'ATM cash out';
 			case 'maker.amountForm.category.options.onlineService': return 'Online service/product';
 			case 'maker.amountForm.category.atmHint': return 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
+			case 'maker.amountForm.category.physicalShopHint': return 'The ideal place to use Bitblik is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a BLIK code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you\'re feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.';
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Online merchant refund risk';
-			case 'maker.amountForm.category.ecommerceWarningBody': return 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker\'s bank account. The coordinator cannot force the taker to return it to you.';
-			case 'maker.amountForm.category.ecommerceConfirmation': return 'I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary.';
+			case 'maker.amountForm.category.ecommerceWarningBody': return 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the BLIK, which is the taker\'s account. The coordinator cannot force the taker to return those funds to you.';
+			case 'maker.amountForm.category.ecommerceConfirmation': return 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Error initiating offer: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Error: Public key not yet loaded.';
 			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'No coordinator supports this amount. Try a different value.';

@@ -30,6 +30,21 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    _loadConsentAcceptance();
+  }
+
+  Future<void> _loadConsentAcceptance() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _atmConsentAccepted = prefs.getBool('consent_atm') ?? false;
+      _ecommerceConsentAccepted = prefs.getBool('consent_ecommerce') ?? false;
+    });
+  }
+
+  Future<void> _saveConsentAcceptance({bool? atm, bool? ecommerce}) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (atm != null) await prefs.setBool('consent_atm', atm);
+    if (ecommerce != null) await prefs.setBool('consent_ecommerce', ecommerce);
   }
 
   Future<void> _loadTermsAcceptance(
@@ -81,37 +96,24 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
   String _categoryLabel(BuildContext context, OfferCategory? category) {
     final t = Translations.of(context);
     switch (category) {
-      case OfferCategory.physicalShop:
+      case OfferCategory.shop:
         return t.offers.details.categories.physicalShop;
-      case OfferCategory.atmCashout:
+      case OfferCategory.atm:
         return t.offers.details.categories.atmCashout;
-      case OfferCategory.onlineService:
+      case OfferCategory.online:
         return t.offers.details.categories.onlineService;
       case null:
         return '-';
     }
   }
 
-  String? _categoryTooltip(BuildContext context, OfferCategory? category) {
-    final t = Translations.of(context);
-    switch (category) {
-      case OfferCategory.atmCashout:
-        return t.offers.tooltips.atmCategory;
-      case OfferCategory.onlineService:
-        return t.offers.tooltips.ecommerceCategory;
-      case OfferCategory.physicalShop:
-      case null:
-        return null;
-    }
-  }
-
   IconData? _categoryIcon(OfferCategory? category) {
     switch (category) {
-      case OfferCategory.physicalShop:
+      case OfferCategory.shop:
         return Icons.storefront_outlined;
-      case OfferCategory.atmCashout:
+      case OfferCategory.atm:
         return Icons.local_atm_outlined;
-      case OfferCategory.onlineService:
+      case OfferCategory.online:
         return Icons.shopping_bag_outlined;
       case null:
         return null;
@@ -120,11 +122,11 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
   String? _categoryAsset(OfferCategory? category) {
     switch (category) {
-      case OfferCategory.physicalShop:
+      case OfferCategory.shop:
         return 'assets/category_shop.png';
-      case OfferCategory.atmCashout:
+      case OfferCategory.atm:
         return 'assets/category_atm.png';
-      case OfferCategory.onlineService:
+      case OfferCategory.online:
         return 'assets/category_online.png';
       case null:
         return null;
@@ -153,13 +155,13 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
   List<Color> _categoryGradientColors(OfferCategory? category) {
     switch (category) {
-      case OfferCategory.physicalShop:
+      case OfferCategory.shop:
         // teal #039F94 fading into
         return [const Color(0xFF016B61), const Color(0xa0016B61)];
-      case OfferCategory.atmCashout:
+      case OfferCategory.atm:
         // dark green #025C2E into
         return [const Color(0xFF025C2E), const Color(0xa022A758)];
-      case OfferCategory.onlineService:
+      case OfferCategory.online:
         // navy blue into muted
         return [const Color(0xFF032696), const Color(0xa0032696)];
       case null:
@@ -213,9 +215,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           final bool isReserved = offer.status == OfferStatus.reserved;
           final bool isBlikReceived = offer.status == OfferStatus.blikReceived;
           final requiresAtmConsent =
-              offer.category == OfferCategory.atmCashout;
+              offer.category == OfferCategory.atm;
           final requiresEcommerceConsent =
-              offer.category == OfferCategory.onlineService;
+              offer.category == OfferCategory.online;
 
           // Get coordinator info for taker fee calculation
           final coordinatorInfoAsync = ref.watch(
@@ -684,44 +686,10 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                             height: 22,
                                           )
                                           : null,
-                                      hasInfoIcon:
-                                          _categoryTooltip(
-                                            context,
-                                            offer.category,
-                                          ) !=
-                                          null,
-                                      onInfoTap: () {
-                                        final tooltip = _categoryTooltip(
-                                          context,
-                                          offer.category,
-                                        );
-                                        if (tooltip == null) return;
-                                        showDialog(
-                                          context: context,
-                                          builder:
-                                              (context) => AlertDialog(
-                                                title: Text(
-                                                  t.offers.details.categoryLabel,
-                                                ),
-                                                content: Text(tooltip),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed:
-                                                        () => Navigator.of(
-                                                          context,
-                                                        ).pop(),
-                                                    child: Text(
-                                                      t.common.buttons.close,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                        );
-                                      },
                                     ),
                                     if (isFunded &&
                                         offer.category ==
-                                            OfferCategory.atmCashout) ...[
+                                            OfferCategory.atm) ...[
                                       const SizedBox(height: 14),
                                       Container(
                                         width: double.infinity,
@@ -739,73 +707,70 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                             ),
                                           ),
                                         ),
-                                        child: Column(
+                                        child: Row(
                                           crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                              CrossAxisAlignment.center,
                                           children: [
-                                            Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const Icon(
-                                                  Icons.info_outline,
-                                                  color: Colors.orange,
-                                                ),
-                                                const SizedBox(width: 10),
-                                                Expanded(
-                                                  child: Text(
-                                                    t.offers.tooltips.atmCategory,
-                                                    style: const TextStyle(
-                                                      fontSize: 13,
-                                                      height: 1.35,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
+                                            Checkbox(
+                                              value: _atmConsentAccepted,
+                                              activeColor: Colors.red,
+                                              onChanged: (value) {
+                                                final v = value ?? false;
+                                                setState(() {
+                                                  _atmConsentAccepted = v;
+                                                });
+                                                _saveConsentAcceptance(atm: v);
+                                              },
                                             ),
-                                            const SizedBox(height: 8),
-                                            Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Checkbox(
-                                                  value: _atmConsentAccepted,
-                                                  activeColor: Colors.red,
-                                                  onChanged: (value) {
-                                                    setState(() {
-                                                      _atmConsentAccepted =
-                                                          value ?? false;
-                                                    });
-                                                  },
-                                                ),
-                                                Expanded(
-                                                  child: GestureDetector(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        _atmConsentAccepted =
-                                                            !_atmConsentAccepted;
-                                                      });
-                                                    },
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                            top: 12,
-                                                          ),
+                                            Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    builder: (ctx) => Padding(
+                                                      padding: const EdgeInsets.all(24),
                                                       child: Text(
-                                                        t
-                                                            .offers
-                                                            .details
-                                                            .consents
-                                                            .atm,
+                                                        t.offers.details.consents.atm,
                                                         style: const TextStyle(
-                                                          fontSize: 13,
-                                                          height: 1.35,
+                                                          fontSize: 14,
+                                                          height: 1.5,
                                                         ),
                                                       ),
                                                     ),
+                                                  );
+                                                },
+                                                child: Text(
+                                                  t.offers.details.consents.atm,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    height: 1.35,
                                                   ),
                                                 ),
-                                              ],
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.info_outline,
+                                                color: Colors.orange,
+                                                size: 20,
+                                              ),
+                                              onPressed: () {
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  builder: (ctx) => Padding(
+                                                    padding: const EdgeInsets.all(24),
+                                                    child: Text(
+                                                      t.offers.details.consents.atm,
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        height: 1.5,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
                                             ),
                                           ],
                                         ),
@@ -813,7 +778,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     ],
                                     if (isFunded &&
                                         offer.category ==
-                                            OfferCategory.onlineService) ...[
+                                            OfferCategory.online) ...[
                                       const SizedBox(height: 14),
                                       Container(
                                         width: double.infinity,
@@ -831,61 +796,70 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                             ),
                                           ),
                                         ),
-                                        child: Column(
+                                        child: Row(
                                           crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                              CrossAxisAlignment.center,
                                           children: [
-                                            Text(
-                                              t.offers.tooltips.ecommerceCategory,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                height: 1.35,
-                                              ),
+                                            Checkbox(
+                                              value: _ecommerceConsentAccepted,
+                                              activeColor: Colors.red,
+                                              onChanged: (value) {
+                                                final v = value ?? false;
+                                                setState(() {
+                                                  _ecommerceConsentAccepted = v;
+                                                });
+                                                _saveConsentAcceptance(ecommerce: v);
+                                              },
                                             ),
-                                            const SizedBox(height: 8),
-                                            Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Checkbox(
-                                                  value:
-                                                      _ecommerceConsentAccepted,
-                                                  activeColor: Colors.red,
-                                                  onChanged: (value) {
-                                                    setState(() {
-                                                      _ecommerceConsentAccepted =
-                                                          value ?? false;
-                                                    });
-                                                  },
-                                                ),
-                                                Expanded(
-                                                  child: GestureDetector(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        _ecommerceConsentAccepted =
-                                                            !_ecommerceConsentAccepted;
-                                                      });
-                                                    },
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                            top: 12,
-                                                          ),
+                                            Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    builder: (ctx) => Padding(
+                                                      padding: const EdgeInsets.all(24),
                                                       child: Text(
-                                                        t
-                                                            .offers
-                                                            .details
-                                                            .consents
-                                                            .ecommerce,
+                                                        t.offers.details.consents.ecommerce,
                                                         style: const TextStyle(
-                                                          fontSize: 13,
-                                                          height: 1.35,
+                                                          fontSize: 14,
+                                                          height: 1.5,
                                                         ),
                                                       ),
                                                     ),
+                                                  );
+                                                },
+                                                child: Text(
+                                                  t.offers.details.consents.ecommerce,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    height: 1.35,
                                                   ),
                                                 ),
-                                              ],
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.info_outline,
+                                                color: Colors.amber,
+                                                size: 20,
+                                              ),
+                                              onPressed: () {
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  builder: (ctx) => Padding(
+                                                    padding: const EdgeInsets.all(24),
+                                                    child: Text(
+                                                      t.offers.details.consents.ecommerce,
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        height: 1.5,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
                                             ),
                                           ],
                                         ),

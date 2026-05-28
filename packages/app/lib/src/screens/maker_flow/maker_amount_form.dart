@@ -87,7 +87,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   CoordinatorInfo? _selectedCoordinatorInfo;
   bool _termsAccepted = false; // Track if terms of usage are accepted
   bool _hasTriedAutoSelect = false; // Track if we've tried to auto-select
-  OfferCategory? _selectedCategory;
+  OfferCategory? _selectedCategory = OfferCategory.shop;
   bool _ecommerceRiskAccepted = false;
 
   @override
@@ -95,6 +95,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     super.initState();
     _fiatController.addListener(_validateAndRecalculate);
     _loadInitialData();
+    _loadEcommerceRiskAccepted();
 
     // Auto-focus the amount input field when screen is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -110,6 +111,19 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     _fiatController.dispose();
     _amountFocusNode.dispose(); // Dispose the FocusNode
     super.dispose();
+  }
+
+  Future<void> _loadEcommerceRiskAccepted() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _ecommerceRiskAccepted = prefs.getBool('maker_ecommerce_risk_accepted') ?? false;
+    });
+  }
+
+  Future<void> _saveEcommerceRiskAccepted(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('maker_ecommerce_risk_accepted', value);
   }
 
   Future<void> _loadInitialData() async {
@@ -317,7 +331,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       return;
     }
     if (supportsCategory &&
-        _selectedCategory == OfferCategory.onlineService &&
+        _selectedCategory == OfferCategory.online &&
         !_ecommerceRiskAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -640,22 +654,22 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
   IconData _categoryIcon(OfferCategory category) {
     switch (category) {
-      case OfferCategory.physicalShop:
+      case OfferCategory.shop:
         return Icons.storefront_outlined;
-      case OfferCategory.atmCashout:
+      case OfferCategory.atm:
         return Icons.local_atm_outlined;
-      case OfferCategory.onlineService:
+      case OfferCategory.online:
         return Icons.shopping_cart_checkout_outlined;
     }
   }
 
   String? _categoryAsset(OfferCategory category) {
     switch (category) {
-      case OfferCategory.physicalShop:
+      case OfferCategory.shop:
         return 'assets/category_shop.png';
-      case OfferCategory.atmCashout:
+      case OfferCategory.atm:
         return 'assets/category_atm.png';
-      case OfferCategory.onlineService:
+      case OfferCategory.online:
         return 'assets/category_online.png';
     }
   }
@@ -671,11 +685,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   String _categoryWarningTitle(BuildContext context, OfferCategory category) {
     final t = Translations.of(context);
     switch (category) {
-      case OfferCategory.atmCashout:
+      case OfferCategory.atm:
         return t.maker.amountForm.category.options.atmCashout;
-      case OfferCategory.onlineService:
-        return t.maker.amountForm.category.ecommerceWarningTitle;
-      case OfferCategory.physicalShop:
+      case OfferCategory.online:
+        return t.maker.amountForm.category.options.onlineService;
+      case OfferCategory.shop:
         return t.maker.amountForm.category.options.physicalShop;
     }
   }
@@ -692,7 +706,35 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
             builder: (context, setDialogState) {
               Widget? content;
 
-              if (category == OfferCategory.atmCashout) {
+              if (category == OfferCategory.shop) {
+                content = Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.blue.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.info_outline,
+                        color: Colors.blue,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          t.maker.amountForm.category.physicalShopHint,
+                          style: const TextStyle(fontSize: 13, height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } else if (category == OfferCategory.atm) {
                 content = Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -720,7 +762,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     ],
                   ),
                 );
-              } else if (category == OfferCategory.onlineService) {
+              } else if (category == OfferCategory.online) {
                 final warningColor = Colors.amber[700]!;
                 content = Column(
                   mainAxisSize: MainAxisSize.min,
@@ -765,19 +807,19 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           activeColor: Colors.red,
                           visualDensity: VisualDensity.compact,
                           onChanged: (value) {
-                            setState(() {
-                              _ecommerceRiskAccepted = value ?? false;
-                            });
+                            final v = value ?? false;
+                            setState(() { _ecommerceRiskAccepted = v; });
                             setDialogState(() {});
+                            _saveEcommerceRiskAccepted(v);
                           },
                         ),
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
-                              setState(() {
-                                _ecommerceRiskAccepted = !_ecommerceRiskAccepted;
-                              });
+                              final v = !_ecommerceRiskAccepted;
+                              setState(() { _ecommerceRiskAccepted = v; });
                               setDialogState(() {});
+                              _saveEcommerceRiskAccepted(v);
                             },
                             child: Padding(
                               padding: const EdgeInsets.only(top: 10),
@@ -970,7 +1012,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   setState(() {
                                     _selectedCategory = category;
                                     if (category !=
-                                        OfferCategory.onlineService) {
+                                        OfferCategory.online) {
                                       _ecommerceRiskAccepted = false;
                                     }
                                   });
@@ -978,9 +1020,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               },
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 120),
-                                height: 53,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
+                                  vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(999),
@@ -996,9 +1038,26 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                           ? const Color(0xFFFFF2F6)
                                           : Colors.white,
                                 ),
-                                child: Row(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
+                                    Container(
+                                      width: 16,
+                                      height: 16,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: selected
+                                              ? Colors.red
+                                              : Colors.grey.shade400,
+                                          width: selected ? 4.5 : 1.5,
+                                        ),
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
                                     _categoryIconWidget(
                                       category,
                                       36,
@@ -1008,7 +1067,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                     ),
                                     if (selected &&
                                         category ==
-                                            OfferCategory.onlineService) ...[
+                                            OfferCategory.online) ...[
                                       const SizedBox(width: 4),
                                       Checkbox(
                                         value: _ecommerceRiskAccepted,
@@ -1017,17 +1076,16 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                             MaterialTapTargetSize.shrinkWrap,
                                         activeColor: Colors.red,
                                         onChanged: (value) {
-                                          setState(() {
-                                            _ecommerceRiskAccepted =
-                                                value ?? false;
-                                          });
+                                          final v = value ?? false;
+                                          setState(() { _ecommerceRiskAccepted = v; });
+                                          _saveEcommerceRiskAccepted(v);
                                         },
                                       ),
                                     ],
                                     if (category ==
-                                            OfferCategory.atmCashout ||
+                                            OfferCategory.atm ||
                                         category ==
-                                            OfferCategory.onlineService) ...[
+                                            OfferCategory.online) ...[
                                       const SizedBox(width: 5),
                                       Icon(
                                         Icons.warning_amber_rounded,
@@ -1039,6 +1097,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                       ),
                                     ],
                                   ],
+                                ),
                                 ),
                               ),
                             ),
@@ -1334,7 +1393,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             _amountErrorText != null ||
                             _fiatController.text.isEmpty ||
                             _rate == null ||
-                            (_selectedCategory == OfferCategory.onlineService &&
+                            (_selectedCategory == OfferCategory.online &&
                                 !_ecommerceRiskAccepted) ||
                             (_selectedCoordinatorInfo?.termsOfUsageNaddr !=
                                     null &&
