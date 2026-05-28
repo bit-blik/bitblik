@@ -400,70 +400,103 @@ app.get('/api/offers/:offerId/audit', async (req, res) => {
 
 app.post('/api/offers-data', async (req, res) => {
   try {
-    const { groupBy } = req.body;
+    const { groupBy, page = 0 } = req.body;
     
     // Validate groupBy parameter
     const validGroupings = ['daily', 'weekly', 'monthly'];
     if (!groupBy || !validGroupings.includes(groupBy)) {
       return res.status(400).json({ error: 'Invalid groupBy parameter. Must be one of: daily, weekly, monthly' });
     }
+    if (!Number.isInteger(page) || page < 0) {
+      return res.status(400).json({ error: 'Invalid page parameter. Must be a non-negative integer' });
+    }
 
     // Build SQL query based on grouping - secure, server-side only
     let dateGrouping;
     let dateFormat;
+    let pageSize;
 
     switch(groupBy) {
       case 'daily':
         dateGrouping = "DATE(created_at)";
         dateFormat = "YYYY-MM-DD";
+        pageSize = 30;
         break;
       case 'weekly':
         dateGrouping = "DATE_TRUNC('week', created_at)";
-        dateFormat = "IYYY-\"W\"IW";
+        dateFormat = "YYYY-MM-DD";
+        pageSize = 12;
         break;
       case 'monthly':
         dateGrouping = "DATE_TRUNC('month', created_at)";
         dateFormat = "YYYY-MM";
+        pageSize = 12;
         break;
     }
-
-    // Grouped data for charts (limited to recent periods)
-    // For daily view, restrict to last 30 days
-    const dateFilter = groupBy === 'daily' 
-      ? "WHERE created_at >= NOW() - INTERVAL '29 days'" 
-      : '';
     
+    const offset = page * pageSize;
+
     const groupedQuery = `
+      WITH grouped_periods AS (
+        SELECT
+          ${dateGrouping} AS period_start,
+          ROUND(
+            100 - (
+              CAST(COUNT(*) FILTER (WHERE status IN ('expired', 'cancelled')) AS NUMERIC) /
+              NULLIF(CAST(COUNT(*) FILTER (WHERE status IN ('expired', 'cancelled', 'takerPaid')) AS NUMERIC), 0)
+            ) * 100,
+            2
+          ) AS success_percentage,
+          COUNT(*) FILTER (WHERE status IN ('expired', 'cancelled')) AS failed,
+          COUNT(*) FILTER (WHERE status = 'takerPaid') AS success,
+          COALESCE(SUM(maker_fees + taker_fees - taker_invoice_fees) FILTER (WHERE status = 'takerPaid'), 0) AS profit,
+          COALESCE(SUM(fiat_amount) FILTER (WHERE status = 'takerPaid'), 0) AS volume,
+          COALESCE(SUM(amount_sats) FILTER (WHERE status = 'takerPaid'), 0) AS volume_sats,
+          COUNT(*) FILTER (WHERE status = 'takerPaid') AS success_count,
+          EXTRACT(EPOCH FROM AVG(reserved_at - created_at) FILTER (WHERE status = 'takerPaid')) AS avg_reserved_seconds,
+          EXTRACT(EPOCH FROM AVG(maker_confirmed_at - created_at) FILTER (WHERE status = 'takerPaid')) AS avg_total_seconds,
+          ROUND(COALESCE(AVG(taker_invoice_fees) FILTER (WHERE status = 'takerPaid'), 0), 2) AS avg_taker_invoice_fees,
+          ROUND(
+            COALESCE(
+              AVG(taker_invoice_fees * 100.0 / NULLIF(amount_sats - taker_fees, 0)) FILTER (WHERE status = 'takerPaid'),
+              0
+            ) * 100,
+            2
+          ) AS taker_fees_percentage
+        FROM offers
+        GROUP BY ${dateGrouping}
+      ),
+      paged_periods AS (
+        SELECT *
+        FROM grouped_periods
+        ORDER BY period_start DESC
+        OFFSET $1
+        LIMIT $2
+      )
       SELECT
-        TO_CHAR(${dateGrouping}, '${dateFormat}') AS date,
-        ROUND(
-          100 - (
-            CAST(COUNT(*) FILTER (WHERE status IN ('expired', 'cancelled')) AS NUMERIC) /
-            NULLIF(CAST(COUNT(*) FILTER (WHERE status IN ('expired', 'cancelled', 'takerPaid')) AS NUMERIC), 0)
-          ) * 100,
-          2
-        ) AS success_percentage,
-        COUNT(*) FILTER (WHERE status IN ('expired', 'cancelled')) AS failed,
-        COUNT(*) FILTER (WHERE status = 'takerPaid') AS success,
-        COALESCE(SUM(maker_fees + taker_fees - taker_invoice_fees) FILTER (WHERE status = 'takerPaid'), 0) AS profit,
-        COALESCE(SUM(fiat_amount) FILTER (WHERE status = 'takerPaid'), 0) AS volume,
-        COALESCE(SUM(amount_sats) FILTER (WHERE status = 'takerPaid'), 0) AS volume_sats,
-        COUNT(*) FILTER (WHERE status = 'takerPaid') AS success_count,
-        EXTRACT(EPOCH FROM AVG(reserved_at - created_at) FILTER (WHERE status = 'takerPaid')) AS avg_reserved_seconds,
-        EXTRACT(EPOCH FROM AVG(maker_confirmed_at - created_at) FILTER (WHERE status = 'takerPaid')) AS avg_total_seconds,
-        ROUND(COALESCE(AVG(taker_invoice_fees) FILTER (WHERE status = 'takerPaid'), 0), 2) AS avg_taker_invoice_fees,
-        ROUND(
-          COALESCE(
-            AVG(taker_invoice_fees * 100.0 / NULLIF(amount_sats - taker_fees, 0)) FILTER (WHERE status = 'takerPaid'),
-            0
-          ) * 100,
-          2
-        ) AS taker_fees_percentage
-      FROM offers
-      ${dateFilter}
-      GROUP BY ${dateGrouping}
-      ORDER BY ${dateGrouping} ASC
-      LIMIT 90
+        TO_CHAR(period_start, '${dateFormat}') AS date,
+        success_percentage,
+        failed,
+        success,
+        profit,
+        volume,
+        volume_sats,
+        success_count,
+        avg_reserved_seconds,
+        avg_total_seconds,
+        avg_taker_invoice_fees,
+        taker_fees_percentage
+      FROM paged_periods
+      ORDER BY period_start ASC
+    `;
+
+    const groupedCountQuery = `
+      SELECT COUNT(*)::INT AS total_periods
+      FROM (
+        SELECT ${dateGrouping}
+        FROM offers
+        GROUP BY ${dateGrouping}
+      ) grouped_periods
     `;
 
     // Overall totals - same regardless of grouping
@@ -492,26 +525,6 @@ app.post('/api/offers-data', async (req, res) => {
           2
         ) AS overall_taker_fees_percentage
       FROM offers
-    `;
-
-    // Taker domain ranking - total, not affected by date filters
-    const takerDomainQuery = `
-      SELECT
-        SPLIT_PART(taker_lightning_address, '@', 2) AS taker_domain,
-        COUNT(*) AS offer_count,
-        ROUND(
-          COALESCE(
-            AVG(taker_invoice_fees * 100.0 / NULLIF(amount_sats - taker_fees, 0)) FILTER (WHERE status = 'takerPaid'),
-            0
-          ) * 100,
-          2
-        ) AS avg_fees_percentage
-      FROM offers
-      WHERE status = 'takerPaid'
-        AND taker_lightning_address IS NOT NULL
-        AND taker_lightning_address LIKE '%@%'
-      GROUP BY SPLIT_PART(taker_lightning_address, '@', 2)
-      ORDER BY avg_fees_percentage DESC
     `;
 
     // Successful offers by weekday (Mon-Sun), independent of selected period
@@ -634,20 +647,28 @@ app.post('/api/offers-data', async (req, res) => {
       ORDER BY w.day_num
     `;
 
-    const [groupedResult, totalsResult, takerDomainResult, weekdaySuccessResult, weekdayVolumeResult] = await Promise.all([
-      pool.query(groupedQuery),
+    const [groupedResult, groupedCountResult, totalsResult, weekdaySuccessResult, weekdayVolumeResult] = await Promise.all([
+      pool.query(groupedQuery, [offset, pageSize]),
+      pool.query(groupedCountQuery),
       pool.query(totalsQuery),
-      pool.query(takerDomainQuery),
       pool.query(weekdaySuccessQuery),
       pool.query(weekdayVolumeQuery)
     ]);
 
+    const totalPeriods = groupedCountResult.rows[0]?.total_periods || 0;
+
     res.json({ 
       rows: groupedResult.rows,
       totals: totalsResult.rows[0],
-      takerDomainRanking: takerDomainResult.rows,
       weekdaySuccess: weekdaySuccessResult.rows,
-      weekdayVolume: weekdayVolumeResult.rows
+      weekdayVolume: weekdayVolumeResult.rows,
+      pagination: {
+        page,
+        pageSize,
+        totalPeriods,
+        hasOlder: offset + pageSize < totalPeriods,
+        hasNewer: page > 0,
+      }
     });
   } catch (error) {
     console.error('Database error:', error);

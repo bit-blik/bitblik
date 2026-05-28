@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Calendar, TrendingUp, DollarSign, AlertCircle, Clock, Bitcoin, List, BarChart3 } from 'lucide-react';
+import { Calendar, TrendingUp, DollarSign, AlertCircle, Clock, Bitcoin, List, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
 import './App.css';
 import OffersPage from './pages/OffersPage';
 
@@ -41,12 +41,14 @@ const Navigation = () => {
 const AnalyticsDashboard = () => {
   const [data, setData] = useState([]);
   const [totals, setTotals] = useState(null);
-  const [takerDomainRanking, setTakerDomainRanking] = useState([]);
   const [weekdaySuccess, setWeekdaySuccess] = useState([]);
   const [weekdayVolume, setWeekdayVolume] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [groupBy, setGroupBy] = useState('daily');
+  const [page, setPage] = useState(0);
+  const [pagination, setPagination] = useState(null);
   const [btcPlnRate, setBtcPlnRate] = useState(null);
   const [rateLoading, setRateLoading] = useState(true);
   const [rateError, setRateError] = useState(null);
@@ -129,7 +131,12 @@ const AnalyticsDashboard = () => {
   // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      const isInitialLoad = data.length === 0 && !totals;
+      if (isInitialLoad) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
       setError(null);
 
       try {
@@ -140,7 +147,7 @@ const AnalyticsDashboard = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ groupBy })
+          body: JSON.stringify({ groupBy, page })
         });
 
         if (!response.ok) {
@@ -150,7 +157,7 @@ const AnalyticsDashboard = () => {
         const result = await response.json();
         setData(result.rows || []);
         setTotals(result.totals || null);
-        setTakerDomainRanking(result.takerDomainRanking || []);
+        setPagination(result.pagination || null);
         setWeekdaySuccess(
           (result.weekdaySuccess || []).map((item) => ({
             ...item,
@@ -170,11 +177,14 @@ const AnalyticsDashboard = () => {
         console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     };
 
+    // `data`/`totals` intentionally omitted to avoid re-fetch loop.
     fetchData();
-  }, [groupBy]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupBy, page]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pl-PL', {
@@ -212,6 +222,20 @@ const AnalyticsDashboard = () => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatPagerDate = (value) => {
+    const date = new Date(`${value}T00:00:00`);
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC',
+    }).format(date);
+  };
+
+  const formatPeriodRange = () => {
+    if (!data.length) return 'No data';
+    return `${formatPagerDate(data[0].date)} - ${formatPagerDate(data[data.length - 1].date)}`;
   };
 
   // Convert sats to PLN using the fetched rate
@@ -271,6 +295,8 @@ const AnalyticsDashboard = () => {
   // Calculate profit in PLN
   const totalProfitPln = satsToPln(stats.totalProfitSats);
 
+  const contentLoadingClass = refreshing ? 'opacity-60 transition-opacity duration-200' : 'opacity-100 transition-opacity duration-200';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -309,15 +335,18 @@ const AnalyticsDashboard = () => {
               <div className="h-6 w-px bg-gray-300"></div>
               
               {/* Period Selector - Compact Pills */}
-              <div className="flex items-center gap-1.5 bg-blue-50 rounded px-2.5 py-1.5 border border-blue-200">
-                <Calendar size={14} className="text-blue-600 flex-shrink-0" />
-                {['daily', 'weekly', 'monthly'].map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setGroupBy(period)}
-                    className={`px-2.5 py-1 rounded text-xs font-bold uppercase transition-all ${
-                      groupBy === period
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
+                <div className="flex items-center gap-1.5 bg-blue-50 rounded px-2.5 py-1.5 border border-blue-200">
+                  <Calendar size={14} className="text-blue-600 flex-shrink-0" />
+                  {['daily', 'weekly', 'monthly'].map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => {
+                        setGroupBy(period);
+                        setPage(0);
+                      }}
+                      className={`px-2.5 py-1 rounded text-xs font-bold uppercase transition-all ${
+                        groupBy === period
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
                         : 'bg-white text-gray-600 hover:bg-gray-100'
                     }`}
                   >
@@ -325,6 +354,39 @@ const AnalyticsDashboard = () => {
                   </button>
                 ))}
               </div>
+
+              <div className="h-6 w-px bg-gray-300"></div>
+
+              <div className="flex items-center gap-1.5 bg-slate-50 rounded px-2 py-1.5 border border-slate-200">
+                <button
+                  onClick={() => setPage((current) => current + 1)}
+                  disabled={!pagination?.hasOlder || loading || refreshing}
+                  className="p-1 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Older period"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span className="text-[11px] font-semibold text-slate-700 min-w-[128px] text-center">
+                  {formatPeriodRange()}
+                </span>
+                <button
+                  onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                  disabled={!pagination?.hasNewer || loading || refreshing}
+                  className="p-1 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Newer period"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+
+              {refreshing && (
+                <>
+                  <div className="h-6 w-px bg-gray-300"></div>
+                  <div className="text-[11px] font-semibold text-blue-600 whitespace-nowrap">
+                    Updating...
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -338,7 +400,7 @@ const AnalyticsDashboard = () => {
         ) : (
           <>
             {/* Compact Stats Row - Using Horizontal Space Efficiently */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className={`grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 ${contentLoadingClass}`}>
               {/* Total Volume Card - Compact */}
               <div className="group relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-300"></div>
@@ -513,7 +575,7 @@ const AnalyticsDashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 ${contentLoadingClass}`}>
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-purple-500"></div>
@@ -549,7 +611,7 @@ const AnalyticsDashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 ${contentLoadingClass}`}>
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-blue-500"></div>
@@ -597,7 +659,7 @@ const AnalyticsDashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 ${contentLoadingClass}`}>
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-cyan-500"></div>
@@ -633,7 +695,7 @@ const AnalyticsDashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 ${contentLoadingClass}`}>
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-orange-500"></div>
@@ -669,7 +731,7 @@ const AnalyticsDashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 ${contentLoadingClass}`}>
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-sky-500"></div>
@@ -757,7 +819,7 @@ const AnalyticsDashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className={`grid grid-cols-1 gap-6 mb-6 ${contentLoadingClass}`}>
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-violet-500"></div>
@@ -772,23 +834,6 @@ const AnalyticsDashboard = () => {
                     <Legend />
                     <Line type="monotone" dataKey="taker_fees_percentage" stroke="#8b5cf6" strokeWidth={2} name="Fees % of Amount" dot={{ fill: '#8b5cf6', r: 4 }} />
                   </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-indigo-500"></div>
-                  Taker Domain Ranking (Total)
-                </h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={takerDomainRanking} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <YAxis dataKey="taker_domain" type="category" width={120} tick={{ fill: '#6b7280', fontSize: 11 }} />
-                    <Tooltip formatter={(value) => `${value}%`} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
-                    <Legend />
-                    <Bar dataKey="avg_fees_percentage" fill="#6366f1" name="Avg Fees %" />
-                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
