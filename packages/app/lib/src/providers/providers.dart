@@ -638,57 +638,6 @@ final hasReceivingWalletProvider = StreamProvider<bool>((ref) async* {
   }
 });
 
-/// Provider for finished (takerPaid, <24h) offers for the current user (taker)
-/// This provider waits for discovered coordinators before loading finished offers
-final finishedOffersProvider = FutureProvider<List<Offer>>((ref) async {
-  final publicKey = await ref.watch(publicKeyProvider.future);
-  if (publicKey == null) return [];
-
-  // Snapshot the registry once. Do NOT subscribe to the registry's change
-  // stream here: this provider also writes to the registry below
-  // (updateLocalFinishedCounts), and a subscription would form a feedback
-  // loop that re-fans out one RPC per coordinator on every tick.
-  final registry = await ref.watch(coordinatorRegistryProvider.future);
-  final coordinators = registry.enabled;
-  if (coordinators.isEmpty) {
-    Logger.log.d(
-      () => 'No coordinators enabled yet, returning empty finished offers list',
-    );
-    return <Offer>[];
-  }
-
-  Logger.log.d(
-    () => 'Loading finished offers from ${coordinators.length} coordinators',
-  );
-  final apiService = await ref.read(initializedApiServiceProvider.future);
-  final offersData = await apiService.getMyFinishedOffers(publicKey);
-
-  // Feed personal-finished counts into the registry so they influence
-  // coordinator sort order. updateLocalFinishedCounts is now a no-op
-  // when values are unchanged, so this is safe to call on every refresh.
-  final counts = <String, int>{};
-  for (final offer in offersData) {
-    if (offer.status == OfferStatus.takerPaid ||
-        offer.status == OfferStatus.settled ||
-        offer.status == OfferStatus.makerConfirmed) {
-      counts[offer.coordinatorPubkey] =
-          (counts[offer.coordinatorPubkey] ?? 0) + 1;
-    }
-  }
-  if (counts.isNotEmpty) {
-    registry.updateLocalFinishedCounts(counts);
-  }
-
-  final now = DateTime.now().toUtc();
-  return offersData.where((offer) {
-    if (offer.status == OfferStatus.takerPaid) {
-      final paidAt = offer.takerPaidAt;
-      return paidAt != null && now.difference(paidAt.toUtc()).inHours < 24;
-    }
-    return false;
-  }).toList();
-});
-
 /// This provider manages the lifecycle of the offer status subscription.
 /// It should be initialized once in the app's lifecycle, for example in main.dart,
 /// to ensure it's always running and can react to changes in the active offer.

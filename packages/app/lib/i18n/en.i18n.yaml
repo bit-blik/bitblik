@@ -84,7 +84,6 @@ offers:
     selectedOffer: "Offer:"
     activeOffer: "You have an active offer:"
     finishedOffers: Finished offers
-    finishedOffersWithTime: "Finished offers (last 24h):"
     noAvailable: No available offers.
     noAvailableTip: "Tip: share Bitblik in your community and among friends to increase Bitblik orders."
     noSuccessfulTrades: No successful trades.
@@ -174,7 +173,6 @@ offers:
     failedToCancel: "Failed to cancel offer: ${details}"
     activeDetailsLost: "Error: Lost active offer details."
     checkingActive: "Error checking active offers: ${details}"
-    loadingFinished: "Error loading finished offers: ${details}"
     cannotResume: "Cannot resume offer in state: ${status}"
     cannotResumeTaker: "Cannot resume taker offer in state: ${status}"
     resuming: "Error resuming offer: ${details}"

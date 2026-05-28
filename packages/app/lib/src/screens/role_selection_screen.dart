@@ -8,7 +8,6 @@ import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer model
 import '../providers/providers.dart'; // Import providers
-import '../utils/locale_format.dart';
 import '../widgets/offer_list_tile.dart';
 
 class RoleSelectionScreen extends ConsumerStatefulWidget {
@@ -320,7 +319,6 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                   builder: (context) {
                     final hasRealActiveOffer =
                         !kDebugMode && hasActiveOffer && !isTakerPaid;
-                    final screenWidth = MediaQuery.of(context).size.width;
                     final cardHeight =
                         220.0; //screenWidth > 600 ? 200.0 : 180.0; // Responsive height
 
@@ -411,11 +409,6 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 30),
-
-                // Finished offers section
-                _buildFinishedOffersSection(context, ref, t),
               ],
             ),
           ),
@@ -540,135 +533,6 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildFinishedOffersSection(
-    BuildContext context,
-    WidgetRef ref,
-    Translations t,
-  ) {
-    return Consumer(
-      builder: (context, ref, _) {
-        final coordinatorsAsync = ref.watch(discoveredCoordinatorsProvider);
-        final finishedAsync = ref.watch(finishedOffersProvider);
-
-        return coordinatorsAsync.when(
-          loading:
-              () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 32.0),
-                child: Center(
-                  child: Column(
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('Discovering coordinators...'),
-                    ],
-                  ),
-                ),
-              ),
-          error:
-              (err, stack) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 32.0),
-                child: Text(
-                  'Error discovering coordinators: ${err.toString()}',
-                  style: TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-          data: (coordinators) {
-            // If no coordinators found, don't show anything
-            if (coordinators.isEmpty) {
-              return const SizedBox();
-            }
-
-            // Now check finished offers
-            return finishedAsync.when(
-              loading:
-                  () => const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32.0),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Loading finished offers...'),
-                        ],
-                      ),
-                    ),
-                  ),
-              error:
-                  (err, stack) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 32.0),
-                    child: Text(
-                      t.offers.errors.loadingFinished(details: err.toString()),
-                      style: TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-              data: (finishedOffers) {
-                if (finishedOffers.isEmpty) return const SizedBox();
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 30),
-                    Text(
-                      t.offers.details.finishedOffersWithTime,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ...finishedOffers.map(
-                      (offer) => InkWell(
-                        onTap: () {
-                          if (kIsWeb) {
-                            context.go('/offers/${offer.id}');
-                          } else {
-                            context.push('/offers/${offer.id}');
-                          }
-                        },
-                        child: Card(
-                          elevation: 1,
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            title: Text(
-                              "${formatDouble(offer.fiatAmount)} ${offer.fiatCurrency}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: Text(
-                              t.offers.details.subtitleWithDate(
-                                sats: offer.amountSats,
-                                fee: offer.makerFees,
-                                status: offer.status,
-                                date:
-                                    offer.takerPaidAt != null
-                                        ? formatLocalizedDateTime(
-                                          context,
-                                          offer.takerPaidAt!,
-                                        )
-                                        : '-',
-                              ),
-                            ),
-                            trailing: const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-        );
-      },
     );
   }
 

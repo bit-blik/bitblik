@@ -709,9 +709,6 @@ class TranslationsOffersDetailsEn {
 	/// en: 'Finished offers'
 	String get finishedOffers => 'Finished offers';
 
-	/// en: 'Finished offers (last 24h):'
-	String get finishedOffersWithTime => 'Finished offers (last 24h):';
-
 	/// en: 'No available offers.'
 	String get noAvailable => 'No available offers.';
 
@@ -975,9 +972,6 @@ class TranslationsOffersErrorsEn {
 
 	/// en: 'Error checking active offers: ${details}'
 	String checkingActive({required Object details}) => 'Error checking active offers: ${details}';
-
-	/// en: 'Error loading finished offers: ${details}'
-	String loadingFinished({required Object details}) => 'Error loading finished offers: ${details}';
 
 	/// en: 'Cannot resume offer in state: ${status}'
 	String cannotResume({required Object status}) => 'Cannot resume offer in state: ${status}';
@@ -3404,7 +3398,6 @@ extension on Translations {
 			case 'offers.details.selectedOffer': return 'Offer:';
 			case 'offers.details.activeOffer': return 'You have an active offer:';
 			case 'offers.details.finishedOffers': return 'Finished offers';
-			case 'offers.details.finishedOffersWithTime': return 'Finished offers (last 24h):';
 			case 'offers.details.noAvailable': return 'No available offers.';
 			case 'offers.details.noAvailableTip': return 'Tip: share Bitblik in your community and among friends to increase Bitblik orders.';
 			case 'offers.details.noSuccessfulTrades': return 'No successful trades.';
@@ -3479,7 +3472,6 @@ extension on Translations {
 			case 'offers.errors.failedToCancel': return ({required Object details}) => 'Failed to cancel offer: ${details}';
 			case 'offers.errors.activeDetailsLost': return 'Error: Lost active offer details.';
 			case 'offers.errors.checkingActive': return ({required Object details}) => 'Error checking active offers: ${details}';
-			case 'offers.errors.loadingFinished': return ({required Object details}) => 'Error loading finished offers: ${details}';
 			case 'offers.errors.cannotResume': return ({required Object status}) => 'Cannot resume offer in state: ${status}';
 			case 'offers.errors.cannotResumeTaker': return ({required Object status}) => 'Cannot resume taker offer in state: ${status}';
 			case 'offers.errors.resuming': return ({required Object details}) => 'Error resuming offer: ${details}';

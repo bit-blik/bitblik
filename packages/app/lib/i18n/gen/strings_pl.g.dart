@@ -533,7 +533,6 @@ class _TranslationsOffersDetailsPl extends TranslationsOffersDetailsEn {
 	@override String get selectedOffer => 'Oferta:';
 	@override String get activeOffer => 'Masz aktywną ofertę:';
 	@override String get finishedOffers => 'Zakończone oferty';
-	@override String get finishedOffersWithTime => 'Zakończone oferty (ostatnie 24h):';
 	@override String get noAvailable => 'Brak dostępnych ofert.';
 	@override String get noAvailableTip => 'Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik.';
 	@override String get noSuccessfulTrades => 'Brak udanych transakcji.';
@@ -658,7 +657,6 @@ class _TranslationsOffersErrorsPl extends TranslationsOffersErrorsEn {
 	@override String failedToCancel({required Object details}) => 'Nie udało się anulować oferty: ${details}';
 	@override String get activeDetailsLost => 'Błąd: Utracono szczegóły aktywnej oferty.';
 	@override String checkingActive({required Object details}) => 'Błąd sprawdzania aktywnych ofert: ${details}';
-	@override String loadingFinished({required Object details}) => 'Błąd ładowania zakończonych ofert: ${details}';
 	@override String cannotResume({required Object status}) => 'Nie można wznowić oferty w stanie: ${status}';
 	@override String cannotResumeTaker({required Object status}) => 'Nie można wznowić oferty takera w stanie: ${status}';
 	@override String resuming({required Object details}) => 'Błąd wznawiania oferty: ${details}';
@@ -2170,7 +2168,6 @@ extension on TranslationsPl {
 			case 'offers.details.selectedOffer': return 'Oferta:';
 			case 'offers.details.activeOffer': return 'Masz aktywną ofertę:';
 			case 'offers.details.finishedOffers': return 'Zakończone oferty';
-			case 'offers.details.finishedOffersWithTime': return 'Zakończone oferty (ostatnie 24h):';
 			case 'offers.details.noAvailable': return 'Brak dostępnych ofert.';
 			case 'offers.details.noAvailableTip': return 'Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik.';
 			case 'offers.details.noSuccessfulTrades': return 'Brak udanych transakcji.';
@@ -2244,7 +2241,6 @@ extension on TranslationsPl {
 			case 'offers.errors.failedToCancel': return ({required Object details}) => 'Nie udało się anulować oferty: ${details}';
 			case 'offers.errors.activeDetailsLost': return 'Błąd: Utracono szczegóły aktywnej oferty.';
 			case 'offers.errors.checkingActive': return ({required Object details}) => 'Błąd sprawdzania aktywnych ofert: ${details}';
-			case 'offers.errors.loadingFinished': return ({required Object details}) => 'Błąd ładowania zakończonych ofert: ${details}';
 			case 'offers.errors.cannotResume': return ({required Object status}) => 'Nie można wznowić oferty w stanie: ${status}';
 			case 'offers.errors.cannotResumeTaker': return ({required Object status}) => 'Nie można wznowić oferty takera w stanie: ${status}';
 			case 'offers.errors.resuming': return ({required Object details}) => 'Błąd wznawiania oferty: ${details}';

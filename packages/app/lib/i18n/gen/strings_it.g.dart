@@ -533,7 +533,6 @@ class _TranslationsOffersDetailsIt extends TranslationsOffersDetailsEn {
 	@override String get selectedOffer => 'Offerta:';
 	@override String get activeOffer => 'Hai un\'offerta attiva:';
 	@override String get finishedOffers => 'Offerte completate';
-	@override String get finishedOffersWithTime => 'Offerte completate (ultime 24h):';
 	@override String get noAvailable => 'Nessuna offerta disponibile.';
 	@override String get noAvailableTip => 'Suggerimento: condividi Bitblik nella tua community e tra i tuoi amici per aumentare gli ordini su Bitblik.';
 	@override String get noSuccessfulTrades => 'Nessuna transazione completata.';
@@ -659,7 +658,6 @@ class _TranslationsOffersErrorsIt extends TranslationsOffersErrorsEn {
 	@override String failedToCancel({required Object details}) => 'Impossibile annullare l\'offerta: ${details}';
 	@override String get activeDetailsLost => 'Errore: Dettagli dell\'offerta attiva persi.';
 	@override String checkingActive({required Object details}) => 'Errore nel controllo delle offerte attive: ${details}';
-	@override String loadingFinished({required Object details}) => 'Errore nel caricamento delle offerte completate: ${details}';
 	@override String cannotResume({required Object status}) => 'Impossibile riprendere l\'offerta nello stato: ${status}';
 	@override String cannotResumeTaker({required Object status}) => 'Impossibile riprendere l\'offerta taker nello stato: ${status}';
 	@override String resuming({required Object details}) => 'Errore nel riprendere l\'offerta: ${details}';
@@ -2173,7 +2171,6 @@ extension on TranslationsIt {
 			case 'offers.details.selectedOffer': return 'Offerta:';
 			case 'offers.details.activeOffer': return 'Hai un\'offerta attiva:';
 			case 'offers.details.finishedOffers': return 'Offerte completate';
-			case 'offers.details.finishedOffersWithTime': return 'Offerte completate (ultime 24h):';
 			case 'offers.details.noAvailable': return 'Nessuna offerta disponibile.';
 			case 'offers.details.noAvailableTip': return 'Suggerimento: condividi Bitblik nella tua community e tra i tuoi amici per aumentare gli ordini su Bitblik.';
 			case 'offers.details.noSuccessfulTrades': return 'Nessuna transazione completata.';
@@ -2248,7 +2245,6 @@ extension on TranslationsIt {
 			case 'offers.errors.failedToCancel': return ({required Object details}) => 'Impossibile annullare l\'offerta: ${details}';
 			case 'offers.errors.activeDetailsLost': return 'Errore: Dettagli dell\'offerta attiva persi.';
 			case 'offers.errors.checkingActive': return ({required Object details}) => 'Errore nel controllo delle offerte attive: ${details}';
-			case 'offers.errors.loadingFinished': return ({required Object details}) => 'Errore nel caricamento delle offerte completate: ${details}';
 			case 'offers.errors.cannotResume': return ({required Object status}) => 'Impossibile riprendere l\'offerta nello stato: ${status}';
 			case 'offers.errors.cannotResumeTaker': return ({required Object status}) => 'Impossibile riprendere l\'offerta taker nello stato: ${status}';
 			case 'offers.errors.resuming': return ({required Object details}) => 'Errore nel riprendere l\'offerta: ${details}';

@@ -84,7 +84,6 @@ offers:
     selectedOffer: "Oferta:"
     activeOffer: "Masz aktywną ofertę:"
     finishedOffers: Zakończone oferty
-    finishedOffersWithTime: "Zakończone oferty (ostatnie 24h):"
     noAvailable: Brak dostępnych ofert.
     noAvailableTip: "Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik."
     noSuccessfulTrades: Brak udanych transakcji.
@@ -173,7 +172,6 @@ offers:
     failedToCancel: "Nie udało się anulować oferty: ${details}"
     activeDetailsLost: "Błąd: Utracono szczegóły aktywnej oferty."
     checkingActive: "Błąd sprawdzania aktywnych ofert: ${details}"
-    loadingFinished: "Błąd ładowania zakończonych ofert: ${details}"
     cannotResume: "Nie można wznowić oferty w stanie: ${status}"
     cannotResumeTaker: "Nie można wznowić oferty takera w stanie: ${status}"
     resuming: "Błąd wznawiania oferty: ${details}"
