@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import '../services/offer_db_service.dart';
+import '../utils/category_icons.dart';
 import '../utils/locale_format.dart';
 
 class LocalOfferDetailsScreen extends ConsumerWidget {
@@ -176,6 +177,10 @@ class _OfferDetailsBody extends ConsumerWidget {
                 ],
               ),
             ),
+            if (offer.category != null) ...[
+              const SizedBox(width: 10),
+              categoryIconWidget(offer.category, 20),
+            ],
           ],
         ),
         const SizedBox(height: 16),

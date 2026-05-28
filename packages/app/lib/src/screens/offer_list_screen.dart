@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../config/group_links.dart';
 import 'package:bitblik_core/core.dart';
+import '../utils/category_icons.dart';
 import '../providers/providers.dart';
 import '../widgets/lightning_address_widget.dart';
 import '../widgets/progress_indicators.dart'; // Import the progress indicators
@@ -1000,6 +1001,18 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                   ),
 
                                                 ListTile(
+                                                  leading: offer.category != null
+                                                      ? SizedBox(
+                                                          width: 40,
+                                                          height: 40,
+                                                          child: Center(
+                                                            child: categoryIconWidget(
+                                                              offer.category,
+                                                              28,
+                                                            ),
+                                                          ),
+                                                        )
+                                                      : null,
                                                   title: Text(
                                                     t.offers.details
                                                         .amountWithCurrency(
@@ -1020,7 +1033,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                         color: Colors.black,
                                                       ),
                                                   subtitle: Text(
-                                                    '${t.offers.details.takerFee(fee: offer.takerFees?.toString() ?? "0")}',
+                                                    t.offers.details.takerFee(fee: offer.takerFees?.toString() ?? "0"),
                                                   ),
                                                   subtitleTextStyle: TextStyle(
                                                     fontSize: 12,
