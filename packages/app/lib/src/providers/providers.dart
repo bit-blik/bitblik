@@ -187,18 +187,107 @@ final offersSubscriptionInitializer = FutureProvider<void>((ref) async {
 
 final offers = <Offer>[];
 
+Future<List<Offer>> refreshAvailableOffersCache(
+  ApiServiceNostr apiService,
+) async {
+  final currentOffers = List<Offer>.from(offers);
+  final enabledCoordinatorPubkeys =
+      apiService.discoveredCoordinators
+          .where((record) => record.enabled)
+          .map((record) => record.pubkeyHex)
+          .toSet();
+  if (currentOffers.isEmpty) {
+    return List<Offer>.from(
+      offers
+          .where(
+            (offer) =>
+                enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey),
+          )
+          .toList()
+          .reversed,
+    );
+  }
+
+  final refreshedOffers = await Future.wait(
+    currentOffers.map((offer) async {
+      try {
+        return await apiService.getOffer(offer.id);
+      } catch (e) {
+        Logger.log.w(
+          () =>
+              '[availableOffers] failed refreshing public offer ${offer.id}: $e',
+        );
+        return offer;
+      }
+    }),
+  );
+
+  final activeOffers =
+      refreshedOffers
+          .whereType<Offer>()
+          .where(
+            (offer) =>
+                enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+                (offer.status == OfferStatus.funded ||
+                    offer.status == OfferStatus.reserved),
+          )
+          .toList()
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+  offers
+    ..clear()
+    ..addAll(activeOffers);
+
+  return List<Offer>.from(offers.reversed);
+}
+
 // Provider for real-time list of available offers from Nostr subscription
 final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   // Depend on single global initializer
   await ref.watch(offersSubscriptionInitializer.future);
   final apiService = ref.watch(apiServiceProvider);
+  final discoveredCoordinators = ref.watch(discoveredCoordinatorsProvider);
+  final enabledCoordinatorPubkeys = discoveredCoordinators.maybeWhen(
+    data:
+        (records) =>
+            records
+                .where((record) => record.enabled)
+                .map((record) => record.pubkeyHex)
+                .toSet(),
+    orElse:
+        () =>
+            apiService.discoveredCoordinators
+                .where((record) => record.enabled)
+                .map((record) => record.pubkeyHex)
+                .toSet(),
+  );
+  // Emit the latest cached snapshot immediately so pull-to-refresh and
+  // provider rebuilds don't hang waiting for a future live event.
+  yield List<Offer>.from(
+    offers
+        .where(
+          (offer) =>
+              enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey),
+        )
+        .toList()
+        .reversed,
+  );
   await for (final offer in apiService.offersStream) {
     offers.removeWhere((o) => o.id == offer.id);
-    if (offer.status == OfferStatus.funded ||
-        offer.status == OfferStatus.reserved) {
+    if (enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+        (offer.status == OfferStatus.funded ||
+            offer.status == OfferStatus.reserved)) {
       offers.add(offer);
     }
-    yield List<Offer>.from(offers.reversed);
+    yield List<Offer>.from(
+      offers
+          .where(
+            (candidate) =>
+                enabledCoordinatorPubkeys.contains(candidate.coordinatorPubkey),
+          )
+          .toList()
+          .reversed,
+    );
   }
 });
 
@@ -218,6 +307,21 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// assumed to be definitively cancelled — coordinator hold invoice
   /// would have expired by then.
   static const Duration _cancelledLookbackWindow = Duration(hours: 24);
+
+  Future<void> _promoteMostRecentActiveOffer() async {
+    final nextActive = await OfferDbService().getActiveOffer();
+    if (nextActive != null) {
+      Logger.log.i(
+        () =>
+            '[ActiveOfferNotifier] promoted fallback active offer ${nextActive.id} (${nextActive.status.name})',
+      );
+    } else {
+      Logger.log.d(
+        () => '[ActiveOfferNotifier] no fallback active offer available',
+      );
+    }
+    state = nextActive;
+  }
 
   Future<void> _loadActiveOffer() async {
     final offer = await OfferDbService().getActiveOffer();
@@ -416,9 +520,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   ///
   /// Flow:
   ///   1. Ask coordinator for exact offer.
-  ///   2. If the coordinator reports the same offer as already `funded`,
-  ///      throw [OfferAlreadyFundedException] without touching local state.
-  ///      Caller should redirect into the funded flow.
+  ///   2. If the local offer is still `created` but the coordinator reports
+  ///      the same offer as already `funded` (or later), throw
+  ///      [OfferAlreadyFundedException] without touching local state. Caller
+  ///      should redirect into the funded flow.
   ///   3. Otherwise call `cancel_offer` RPC best-effort, mark the local
   ///      row `cancelled`, and clear the in-memory active state. The
   ///      DB row stays so a future status update can revive it.
@@ -459,10 +564,12 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
       if (sameOffer &&
           remoteStatus != null &&
+          current.status == OfferStatus.created &&
           remoteStatus.index >= OfferStatus.funded.index &&
           !OfferDbService.terminalStatuses.contains(remoteStatus)) {
-        // Coordinator already funded this offer (or moved further).
-        // Persist whatever the coordinator says, but refuse to cancel locally.
+        // Coordinator already funded this offer while local state still says
+        // `created`. Persist whatever the coordinator says, but refuse to
+        // cancel locally from the pre-funding flow.
         final updated = current.copyWith(id: remoteId, status: remoteStatus);
         await OfferDbService().upsertOffer(updated);
         state = updated;
@@ -483,7 +590,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
     final cancelled = current.copyWith(status: OfferStatus.cancelled);
     await OfferDbService().upsertOffer(cancelled);
-    state = null;
+    await _promoteMostRecentActiveOffer();
   }
 
   /// Persist a status update from the coordinator.
@@ -562,7 +669,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                     hydrated.holdInvoicePaymentHash));
 
     if (isCurrent) {
-      state = hydrated;
+      if (OfferDbService.terminalStatuses.contains(newStatus)) {
+        await _promoteMostRecentActiveOffer();
+      } else {
+        state = hydrated;
+      }
       return;
     }
 
@@ -636,57 +747,6 @@ final hasReceivingWalletProvider = StreamProvider<bool>((ref) async* {
   await for (final wallets in ndk.wallets.walletsStream) {
     yield hasReceivingWallet(wallets);
   }
-});
-
-/// Provider for finished (takerPaid, <24h) offers for the current user (taker)
-/// This provider waits for discovered coordinators before loading finished offers
-final finishedOffersProvider = FutureProvider<List<Offer>>((ref) async {
-  final publicKey = await ref.watch(publicKeyProvider.future);
-  if (publicKey == null) return [];
-
-  // Snapshot the registry once. Do NOT subscribe to the registry's change
-  // stream here: this provider also writes to the registry below
-  // (updateLocalFinishedCounts), and a subscription would form a feedback
-  // loop that re-fans out one RPC per coordinator on every tick.
-  final registry = await ref.watch(coordinatorRegistryProvider.future);
-  final coordinators = registry.enabled;
-  if (coordinators.isEmpty) {
-    Logger.log.d(
-      () => 'No coordinators enabled yet, returning empty finished offers list',
-    );
-    return <Offer>[];
-  }
-
-  Logger.log.d(
-    () => 'Loading finished offers from ${coordinators.length} coordinators',
-  );
-  final apiService = await ref.read(initializedApiServiceProvider.future);
-  final offersData = await apiService.getMyFinishedOffers(publicKey);
-
-  // Feed personal-finished counts into the registry so they influence
-  // coordinator sort order. updateLocalFinishedCounts is now a no-op
-  // when values are unchanged, so this is safe to call on every refresh.
-  final counts = <String, int>{};
-  for (final offer in offersData) {
-    if (offer.status == OfferStatus.takerPaid ||
-        offer.status == OfferStatus.settled ||
-        offer.status == OfferStatus.makerConfirmed) {
-      counts[offer.coordinatorPubkey] =
-          (counts[offer.coordinatorPubkey] ?? 0) + 1;
-    }
-  }
-  if (counts.isNotEmpty) {
-    registry.updateLocalFinishedCounts(counts);
-  }
-
-  final now = DateTime.now().toUtc();
-  return offersData.where((offer) {
-    if (offer.status == OfferStatus.takerPaid) {
-      final paidAt = offer.takerPaidAt;
-      return paidAt != null && now.difference(paidAt.toUtc()).inHours < 24;
-    }
-    return false;
-  }).toList();
 });
 
 /// This provider manages the lifecycle of the offer status subscription.
@@ -784,6 +844,9 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
 ) async {
   // Wait for API service to be fully initialized
   final apiService = await ref.watch(initializedApiServiceProvider.future);
+  // Re-run when coordinator enablement changes so disabled coordinators
+  // disappear from the recent successful offers section immediately.
+  ref.watch(discoveredCoordinatorsProvider);
 
   // Snapshot the registry once — do not subscribe to its change stream
   // here. This provider issues N RPCs per refresh; reacting to every

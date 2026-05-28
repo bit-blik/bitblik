@@ -262,6 +262,15 @@ class NostrService {
         case kRpcInitiateOffer:
           final fiatAmount = (params['fiat_amount'] as num?)?.toDouble();
           final makerId = params['maker_id'] as String? ?? userPubkey;
+          final categoryRaw = params['category'] as String?;
+          OfferCategory? category;
+          if (categoryRaw != null && categoryRaw.trim().isNotEmpty) {
+            try {
+              category = OfferCategory.values.byName(categoryRaw);
+            } catch (_) {
+              throw Exception('Invalid category: $categoryRaw');
+            }
+          }
 
           if (fiatAmount == null) {
             throw Exception('Missing required parameter: fiat_amount');
@@ -270,6 +279,7 @@ class NostrService {
           return await _coordinatorService.initiateOfferFiat(
             fiatAmount: fiatAmount,
             makerId: makerId,
+            category: category,
           );
 
         case kRpcReserveOffer:
@@ -628,6 +638,7 @@ class NostrService {
               ? (offer.takerPaidAt!.millisecondsSinceEpoch ~/ 1000).toString()
               : ''
         ],
+        if (offer.category != null) ['category', offer.category!.name],
         if (offer.takerFees != null && offer.takerFees! > 0)
           ['taker_fees', offer.takerFees.toString()],
         if (offer.makerFees > 0) ['maker_fees', offer.makerFees.toString()],

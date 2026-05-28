@@ -10,3 +10,6 @@ environment:
 dependencies:
   meta: ^1.17.0
   ndk: any
+
+dev_dependencies:
+  test: ^1.24.0

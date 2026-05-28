@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../services/offer_db_service.dart';
 import '../widgets/offer_list_tile.dart';
 
 enum _OfferFilter { all, active, completed, failed }
@@ -47,6 +48,19 @@ class MyOffersScreen extends ConsumerStatefulWidget {
 class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
   _OfferFilter _filter = _OfferFilter.active;
   bool _defaultFilterResolved = false;
+
+  Future<void> _refreshAllOffers() async {
+    final offers = await ref.read(myOffersProvider.future);
+    final apiService = await ref.read(initializedApiServiceProvider.future);
+    final db = OfferDbService();
+    await Future.wait(
+      offers.map((offer) async {
+        final remote = await apiService.getOfferDetails(offer, offer.coordinatorPubkey);
+        if (remote != null) await db.upsertOffer(Offer.fromJson(remote));
+      }),
+    );
+    ref.invalidate(myOffersProvider);
+  }
 
   List<Offer> _applyFilter(List<Offer> offers) {
     switch (_filter) {
@@ -95,7 +109,7 @@ class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
                     filtered.isEmpty
                         ? RefreshIndicator(
                           onRefresh:
-                              () async => ref.invalidate(myOffersProvider),
+                              _refreshAllOffers,
                           child: ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             children: [
@@ -109,7 +123,7 @@ class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
                         )
                         : RefreshIndicator(
                           onRefresh:
-                              () async => ref.invalidate(myOffersProvider),
+                              _refreshAllOffers,
                           child: ListView.separated(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             itemCount: filtered.length,

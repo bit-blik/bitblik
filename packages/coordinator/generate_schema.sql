@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS offers (
   maker_confirmed_at TIMESTAMPTZ,
   settled_at TIMESTAMPTZ,
   taker_paid_at TIMESTAMPTZ,
-  taker_fees BIGINT NULL -- Renamed from taker_fees_sats
+  taker_fees BIGINT NULL, -- Renamed from taker_fees_sats
+  category TEXT
 );
 
 -- Add index for faster lookups by status

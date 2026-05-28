@@ -169,6 +169,9 @@ flutter:
     - assets/nwc.png
     - assets/albygo.png
     - assets/altstore.png
+    - assets/category_shop.png
+    - assets/category_atm.png
+    - assets/category_online.png
     - assets/faq/
     - CHANGELOG.md
 

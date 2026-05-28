@@ -533,7 +533,6 @@ class _TranslationsOffersDetailsPl extends TranslationsOffersDetailsEn {
 	@override String get selectedOffer => 'Oferta:';
 	@override String get activeOffer => 'Masz aktywną ofertę:';
 	@override String get finishedOffers => 'Zakończone oferty';
-	@override String get finishedOffersWithTime => 'Zakończone oferty (ostatnie 24h):';
 	@override String get noAvailable => 'Brak dostępnych ofert.';
 	@override String get noAvailableTip => 'Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik.';
 	@override String get noSuccessfulTrades => 'Brak udanych transakcji.';
@@ -556,6 +555,9 @@ class _TranslationsOffersDetailsPl extends TranslationsOffersDetailsEn {
 	@override String get statusLabel => 'Status';
 	@override String get youllReceive => 'Otrzymasz';
 	@override String get coordinator => 'Koordynator';
+	@override String get categoryLabel => 'Kategoria';
+	@override late final _TranslationsOffersDetailsCategoriesPl categories = _TranslationsOffersDetailsCategoriesPl._(_root);
+	@override late final _TranslationsOffersDetailsConsentsPl consents = _TranslationsOffersDetailsConsentsPl._(_root);
 }
 
 // Path: offers.tooltips
@@ -655,12 +657,13 @@ class _TranslationsOffersErrorsPl extends TranslationsOffersErrorsEn {
 	@override String failedToCancel({required Object details}) => 'Nie udało się anulować oferty: ${details}';
 	@override String get activeDetailsLost => 'Błąd: Utracono szczegóły aktywnej oferty.';
 	@override String checkingActive({required Object details}) => 'Błąd sprawdzania aktywnych ofert: ${details}';
-	@override String loadingFinished({required Object details}) => 'Błąd ładowania zakończonych ofert: ${details}';
 	@override String cannotResume({required Object status}) => 'Nie można wznowić oferty w stanie: ${status}';
 	@override String cannotResumeTaker({required Object status}) => 'Nie można wznowić oferty takera w stanie: ${status}';
 	@override String resuming({required Object details}) => 'Błąd wznawiania oferty: ${details}';
 	@override String get makerPublicKeyNotFound => 'Nie znaleziono klucza publicznego Makera';
 	@override String get takerPublicKeyNotFound => 'Nie znaleziono klucza publicznego Takera.';
+	@override String get atmConsentRequired => 'Zaakceptuj warunek dodatkowej opłaty ATM przed wzięciem tej oferty.';
+	@override String get ecommerceConsentRequired => 'Zaakceptuj warunek zwrotu środków z ecommerce przed wzięciem tej oferty.';
 }
 
 // Path: offers.success
@@ -844,6 +847,8 @@ class _TranslationsMakerAmountFormPl extends TranslationsMakerAmountFormEn {
 	@override late final _TranslationsMakerAmountFormLabelsPl labels = _TranslationsMakerAmountFormLabelsPl._(_root);
 	@override late final _TranslationsMakerAmountFormActionsPl actions = _TranslationsMakerAmountFormActionsPl._(_root);
 	@override late final _TranslationsMakerAmountFormTooltipsPl tooltips = _TranslationsMakerAmountFormTooltipsPl._(_root);
+	@override late final _TranslationsMakerAmountFormCategoryPl category = _TranslationsMakerAmountFormCategoryPl._(_root);
+	@override late final _TranslationsMakerAmountFormOnboardingPl onboarding = _TranslationsMakerAmountFormOnboardingPl._(_root);
 	@override late final _TranslationsMakerAmountFormErrorsPl errors = _TranslationsMakerAmountFormErrorsPl._(_root);
 }
 
@@ -1013,6 +1018,7 @@ class _TranslationsTakerWaitConfirmationPl extends TranslationsTakerWaitConfirma
 	@override String importantNotice({required Object amount, required Object currency}) => 'BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie BLIK tylko na kwotę ${amount} ${currency}';
 	@override String importantBlikAmountConfirmation({required Object amount, required Object currency}) => 'BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność BLIK na kwotę dokładnie ${amount} ${currency}.';
 	@override String get instructions => 'Osoba wystawiająca ofertę musi teraz wpisać kod BLIK w ciągu 2 minut. Następnie musisz zaakceptować kod BLIK w swojej aplikacji bankowej.';
+	@override late final _TranslationsTakerWaitConfirmationCategoryReminderPl categoryReminder = _TranslationsTakerWaitConfirmationCategoryReminderPl._(_root);
 	@override String get waitingForMakerToReceive => 'Czekamy, aż twórca oferty otrzyma Twój kod BLIK...';
 	@override String get makerReceivedBlik => 'Twórca oferty otrzymał Twój kod BLIK';
 	@override String get timerExpiredMessage => 'Minął termin ważności kodu BLIK 2m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.';
@@ -1470,6 +1476,29 @@ class _TranslationsRelaysPopupPl extends TranslationsRelaysPopupEn {
 	@override String get connectingMessage => 'Łączenie z przekaźnikami...';
 }
 
+// Path: offers.details.categories
+class _TranslationsOffersDetailsCategoriesPl extends TranslationsOffersDetailsCategoriesEn {
+	_TranslationsOffersDetailsCategoriesPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get physicalShop => 'Sklep, kawiarnia lub restauracja';
+	@override String get atmCashout => 'Wypłata gotówki z bankomatu';
+	@override String get onlineService => 'Produkt lub usługa online';
+}
+
+// Path: offers.details.consents
+class _TranslationsOffersDetailsConsentsPl extends TranslationsOffersDetailsConsentsEn {
+	_TranslationsOffersDetailsConsentsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get atm => 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
+	@override String get ecommerce => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.';
+}
+
 // Path: maker.amountForm.progress
 class _TranslationsMakerAmountFormProgressPl extends TranslationsMakerAmountFormProgressEn {
 	_TranslationsMakerAmountFormProgressPl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -1490,6 +1519,7 @@ class _TranslationsMakerAmountFormLabelsPl extends TranslationsMakerAmountFormLa
 
 	// Translations
 	@override String get coordinator => 'Koordynator';
+	@override String get category => 'Kategoria';
 	@override String get exchangeRate => 'Kurs wymiany';
 	@override String get fee => 'Opłata';
 	@override String get satoshisToPay => 'Do zapłaty';
@@ -1518,6 +1548,39 @@ class _TranslationsMakerAmountFormTooltipsPl extends TranslationsMakerAmountForm
 	@override String get payInfo => 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.';
 }
 
+// Path: maker.amountForm.category
+class _TranslationsMakerAmountFormCategoryPl extends TranslationsMakerAmountFormCategoryEn {
+	_TranslationsMakerAmountFormCategoryPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Kategoria oferty';
+	@override late final _TranslationsMakerAmountFormCategoryOptionsPl options = _TranslationsMakerAmountFormCategoryOptionsPl._(_root);
+	@override String get atmHint => 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
+	@override String get physicalShopHint => 'Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.';
+	@override String get ecommerceWarningTitle => 'Ryzyko zwrotu od sprzedawcy online';
+	@override String get ecommerceWarningBody => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
+	@override String get ecommerceConfirmation => 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
+}
+
+// Path: maker.amountForm.onboarding
+class _TranslationsMakerAmountFormOnboardingPl extends TranslationsMakerAmountFormOnboardingEn {
+	_TranslationsMakerAmountFormOnboardingPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get titlePrefix => 'Nowość';
+	@override String get title => 'Wybierz kategorię oferty';
+	@override String get body => 'Przed wygenerowaniem faktury wybierz kategorię, która najlepiej opisuje to, za co płacisz.';
+	@override String get showWhy => 'Dlaczego to jest ważne?';
+	@override String get hideWhy => 'Ukryj szczegóły';
+	@override String get whyTitle => 'Dobra kategoria pomaga takerom bezpiecznie podjąć decyzję';
+	@override String get whyBody => 'Różne sytuacje oznaczają różne oczekiwania i ryzyka. Wypłaty z bankomatu mogą mieć dodatkowe opłaty bankowe, a zakupy online mogą wiązać się z problemami przy zwrotach. Oznaczenie właściwej kategorii daje takerowi potrzebny kontekst przed akceptacją oferty.';
+	@override String get cta => 'Rozumiem';
+}
+
 // Path: maker.amountForm.errors
 class _TranslationsMakerAmountFormErrorsPl extends TranslationsMakerAmountFormErrorsEn {
 	_TranslationsMakerAmountFormErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -1528,6 +1591,8 @@ class _TranslationsMakerAmountFormErrorsPl extends TranslationsMakerAmountFormEr
 	@override String initiating({required Object details}) => 'Błąd inicjowania oferty: ${details}';
 	@override String get publicKeyNotLoaded => 'Błąd: Klucz publiczny nie został jeszcze załadowany.';
 	@override String get noCoordinatorMatchesAmount => 'Żaden koordynator nie obsługuje tej kwoty. Spróbuj inną wartość.';
+	@override String get categoryRequired => 'Wybierz kategorię oferty.';
+	@override String get ecommerceConfirmationRequired => 'Potwierdź ryzyko zwrotu od sprzedawcy online przed kontynuacją.';
 }
 
 // Path: maker.payInvoice.actions
@@ -1762,6 +1827,17 @@ class _TranslationsTakerSubmitBlikDetailsPl extends TranslationsTakerSubmitBlikD
 	@override String get takerFee => 'Opłata Taker';
 	@override String get status => 'Status';
 	@override String get youllReceive => 'Otrzymasz';
+}
+
+// Path: taker.waitConfirmation.categoryReminder
+class _TranslationsTakerWaitConfirmationCategoryReminderPl extends TranslationsTakerWaitConfirmationCategoryReminderEn {
+	_TranslationsTakerWaitConfirmationCategoryReminderPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get atm => 'Przypomnienie dla oferty ATM: Twój bank może nadal poprosić o zatwierdzenie dodatkowej opłaty bankomatowej ponad główną kwotę.';
+	@override String get ecommerce => 'Przypomnienie dla zamówienia online: jeśli sprzedawca wyśle automatyczny zwrot na Twoje konto, skontaktuj się z koordynatorem i oddaj środki.';
 }
 
 // Path: taker.waitConfirmation.takerCharged
@@ -2032,6 +2108,18 @@ class _TranslationsHomeStatisticsErrorsPl extends TranslationsHomeStatisticsErro
 	@override String loading({required Object error}) => 'Błąd ładowania statystyk: ${error}';
 }
 
+// Path: maker.amountForm.category.options
+class _TranslationsMakerAmountFormCategoryOptionsPl extends TranslationsMakerAmountFormCategoryOptionsEn {
+	_TranslationsMakerAmountFormCategoryOptionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get physicalShop => 'Sklep, kawiarnia lub restauracja';
+	@override String get atmCashout => 'Wypłata gotówki z bankomatu';
+	@override String get onlineService => 'Produkt lub usługa online';
+}
+
 // Path: maker.conflict.disputeDialog.actions
 class _TranslationsMakerConflictDisputeDialogActionsPl extends TranslationsMakerConflictDisputeDialogActionsEn {
 	_TranslationsMakerConflictDisputeDialogActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -2098,7 +2186,6 @@ extension on TranslationsPl {
 			case 'offers.details.selectedOffer': return 'Oferta:';
 			case 'offers.details.activeOffer': return 'Masz aktywną ofertę:';
 			case 'offers.details.finishedOffers': return 'Zakończone oferty';
-			case 'offers.details.finishedOffersWithTime': return 'Zakończone oferty (ostatnie 24h):';
 			case 'offers.details.noAvailable': return 'Brak dostępnych ofert.';
 			case 'offers.details.noAvailableTip': return 'Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik.';
 			case 'offers.details.noSuccessfulTrades': return 'Brak udanych transakcji.';
@@ -2121,6 +2208,12 @@ extension on TranslationsPl {
 			case 'offers.details.statusLabel': return 'Status';
 			case 'offers.details.youllReceive': return 'Otrzymasz';
 			case 'offers.details.coordinator': return 'Koordynator';
+			case 'offers.details.categoryLabel': return 'Kategoria';
+			case 'offers.details.categories.physicalShop': return 'Sklep, kawiarnia lub restauracja';
+			case 'offers.details.categories.atmCashout': return 'Wypłata gotówki z bankomatu';
+			case 'offers.details.categories.onlineService': return 'Produkt lub usługa online';
+			case 'offers.details.consents.atm': return 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
+			case 'offers.details.consents.ecommerce': return 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.';
 			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.';
 			case 'offers.actions.take': return 'WEŹ';
 			case 'offers.actions.takeOffer': return 'Weź ofertę';
@@ -2166,12 +2259,13 @@ extension on TranslationsPl {
 			case 'offers.errors.failedToCancel': return ({required Object details}) => 'Nie udało się anulować oferty: ${details}';
 			case 'offers.errors.activeDetailsLost': return 'Błąd: Utracono szczegóły aktywnej oferty.';
 			case 'offers.errors.checkingActive': return ({required Object details}) => 'Błąd sprawdzania aktywnych ofert: ${details}';
-			case 'offers.errors.loadingFinished': return ({required Object details}) => 'Błąd ładowania zakończonych ofert: ${details}';
 			case 'offers.errors.cannotResume': return ({required Object status}) => 'Nie można wznowić oferty w stanie: ${status}';
 			case 'offers.errors.cannotResumeTaker': return ({required Object status}) => 'Nie można wznowić oferty takera w stanie: ${status}';
 			case 'offers.errors.resuming': return ({required Object details}) => 'Błąd wznawiania oferty: ${details}';
 			case 'offers.errors.makerPublicKeyNotFound': return 'Nie znaleziono klucza publicznego Makera';
 			case 'offers.errors.takerPublicKeyNotFound': return 'Nie znaleziono klucza publicznego Takera.';
+			case 'offers.errors.atmConsentRequired': return 'Zaakceptuj warunek dodatkowej opłaty ATM przed wzięciem tej oferty.';
+			case 'offers.errors.ecommerceConsentRequired': return 'Zaakceptuj warunek zwrotu środków z ecommerce przed wzięciem tej oferty.';
 			case 'offers.success.title': return 'Oferta zakończona';
 			case 'offers.success.headline': return 'Płatność potwierdzona!';
 			case 'offers.success.subtitle': return 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.';
@@ -2239,6 +2333,7 @@ extension on TranslationsPl {
 			case 'maker.amountForm.progress.step2': return '2. Czekaj na zabranie';
 			case 'maker.amountForm.progress.step3': return '3. Użyj BLIK';
 			case 'maker.amountForm.labels.coordinator': return 'Koordynator';
+			case 'maker.amountForm.labels.category': return 'Kategoria';
 			case 'maker.amountForm.labels.exchangeRate': return 'Kurs wymiany';
 			case 'maker.amountForm.labels.fee': return 'Opłata';
 			case 'maker.amountForm.labels.satoshisToPay': return 'Do zapłaty';
@@ -2247,9 +2342,28 @@ extension on TranslationsPl {
 			case 'maker.amountForm.actions.generateInvoice': return 'Wygeneruj Fakturę';
 			case 'maker.amountForm.tooltips.feeInfo': return ({required Object feePercent}) => 'Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning.';
 			case 'maker.amountForm.tooltips.payInfo': return 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.';
+			case 'maker.amountForm.category.label': return 'Kategoria oferty';
+			case 'maker.amountForm.category.options.physicalShop': return 'Sklep, kawiarnia lub restauracja';
+			case 'maker.amountForm.category.options.atmCashout': return 'Wypłata gotówki z bankomatu';
+			case 'maker.amountForm.category.options.onlineService': return 'Produkt lub usługa online';
+			case 'maker.amountForm.category.atmHint': return 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
+			case 'maker.amountForm.category.physicalShopHint': return 'Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.';
+			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Ryzyko zwrotu od sprzedawcy online';
+			case 'maker.amountForm.category.ecommerceWarningBody': return 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
+			case 'maker.amountForm.category.ecommerceConfirmation': return 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
+			case 'maker.amountForm.onboarding.titlePrefix': return 'Nowość';
+			case 'maker.amountForm.onboarding.title': return 'Wybierz kategorię oferty';
+			case 'maker.amountForm.onboarding.body': return 'Przed wygenerowaniem faktury wybierz kategorię, która najlepiej opisuje to, za co płacisz.';
+			case 'maker.amountForm.onboarding.showWhy': return 'Dlaczego to jest ważne?';
+			case 'maker.amountForm.onboarding.hideWhy': return 'Ukryj szczegóły';
+			case 'maker.amountForm.onboarding.whyTitle': return 'Dobra kategoria pomaga takerom bezpiecznie podjąć decyzję';
+			case 'maker.amountForm.onboarding.whyBody': return 'Różne sytuacje oznaczają różne oczekiwania i ryzyka. Wypłaty z bankomatu mogą mieć dodatkowe opłaty bankowe, a zakupy online mogą wiązać się z problemami przy zwrotach. Oznaczenie właściwej kategorii daje takerowi potrzebny kontekst przed akceptacją oferty.';
+			case 'maker.amountForm.onboarding.cta': return 'Rozumiem';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Błąd inicjowania oferty: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Błąd: Klucz publiczny nie został jeszcze załadowany.';
 			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'Żaden koordynator nie obsługuje tej kwoty. Spróbuj inną wartość.';
+			case 'maker.amountForm.errors.categoryRequired': return 'Wybierz kategorię oferty.';
+			case 'maker.amountForm.errors.ecommerceConfirmationRequired': return 'Potwierdź ryzyko zwrotu od sprzedawcy online przed kontynuacją.';
 			case 'maker.payInvoice.title': return 'Zapłać tę fakturę Hold:';
 			case 'maker.payInvoice.actions.copy': return 'Kopiuj Fakturę';
 			case 'maker.payInvoice.actions.payInWallet': return 'Otwórz w portfelu zewnętrznym';
@@ -2374,6 +2488,8 @@ extension on TranslationsPl {
 			case 'taker.waitConfirmation.importantNotice': return ({required Object amount, required Object currency}) => 'BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie BLIK tylko na kwotę ${amount} ${currency}';
 			case 'taker.waitConfirmation.importantBlikAmountConfirmation': return ({required Object amount, required Object currency}) => 'BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność BLIK na kwotę dokładnie ${amount} ${currency}.';
 			case 'taker.waitConfirmation.instructions': return 'Osoba wystawiająca ofertę musi teraz wpisać kod BLIK w ciągu 2 minut. Następnie musisz zaakceptować kod BLIK w swojej aplikacji bankowej.';
+			case 'taker.waitConfirmation.categoryReminder.atm': return 'Przypomnienie dla oferty ATM: Twój bank może nadal poprosić o zatwierdzenie dodatkowej opłaty bankomatowej ponad główną kwotę.';
+			case 'taker.waitConfirmation.categoryReminder.ecommerce': return 'Przypomnienie dla zamówienia online: jeśli sprzedawca wyśle automatyczny zwrot na Twoje konto, skontaktuj się z koordynatorem i oddaj środki.';
 			case 'taker.waitConfirmation.waitingForMakerToReceive': return 'Czekamy, aż twórca oferty otrzyma Twój kod BLIK...';
 			case 'taker.waitConfirmation.makerReceivedBlik': return 'Twórca oferty otrzymał Twój kod BLIK';
 			case 'taker.waitConfirmation.timerExpiredMessage': return 'Minął termin ważności kodu BLIK 2m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.';

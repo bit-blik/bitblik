@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../utils/category_icons.dart';
 import '../utils/locale_format.dart';
 
 class OfferListTile extends ConsumerWidget {
@@ -39,119 +40,131 @@ class OfferListTile extends ConsumerWidget {
     final statusLabel = _statusLabel(t, offer.status);
     final statusColor = _statusColor(offer.status);
 
-    return ListTile(
-      onTap: onTap,
-      leading:
-          showNeko
-              ? SizedBox(
-                width: 40,
-                height: 40,
-                child: Stack(
-                  children: [
-                    ClipOval(
-                      child: CachedNetworkImage(
-                        imageUrl:
-                            'https://robohash.org/${offer.makerPubkey}?set=set4',
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        placeholder:
-                            (_, __) => CircleAvatar(
-                              backgroundColor: statusColor.withValues(
-                                alpha: 0.15,
-                              ),
-                              child: Icon(
-                                _statusIcon(offer.status),
-                                color: statusColor,
-                                size: 20,
-                              ),
+    final Widget statusLeading =
+        showNeko
+            ? SizedBox(
+              width: 40,
+              height: 40,
+              child: Stack(
+                children: [
+                  ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl:
+                          'https://robohash.org/${offer.makerPubkey}?set=set4',
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      placeholder:
+                          (_, __) => CircleAvatar(
+                            backgroundColor: statusColor.withValues(alpha: 0.15),
+                            child: Icon(
+                              _statusIcon(offer.status),
+                              color: statusColor,
+                              size: 20,
                             ),
-                        errorWidget:
-                            (_, __, ___) => CircleAvatar(
-                              backgroundColor: statusColor.withValues(
-                                alpha: 0.15,
-                              ),
-                              child: Icon(
-                                _statusIcon(offer.status),
-                                color: statusColor,
-                                size: 20,
-                              ),
+                          ),
+                      errorWidget:
+                          (_, __, ___) => CircleAvatar(
+                            backgroundColor: statusColor.withValues(alpha: 0.15),
+                            child: Icon(
+                              _statusIcon(offer.status),
+                              color: statusColor,
+                              size: 20,
                             ),
-                      ),
+                          ),
                     ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: statusColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        child: Icon(
-                          _statusIcon(offer.status),
-                          color: Colors.white,
-                          size: 9,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-              : CircleAvatar(
-                backgroundColor: statusColor.withValues(alpha: 0.15),
-                child: Icon(
-                  _statusIcon(offer.status),
-                  color: statusColor,
-                  size: 20,
-                ),
-              ),
-      title: Text(
-        '$fiatLabel ${offer.fiatCurrency}',
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 2),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  statusLabel,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                      child: Icon(
+                        _statusIcon(offer.status),
+                        color: Colors.white,
+                        size: 9,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  coordinatorName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ),
+            )
+            : CircleAvatar(
+              backgroundColor: statusColor.withValues(alpha: 0.15),
+              child: Icon(_statusIcon(offer.status), color: statusColor, size: 20),
+            );
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (offer.category != null) ...[
+              categoryIconWidget(offer.category, 28),
+              const SizedBox(width: 12),
             ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            dateLabel,
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-        ],
+            statusLeading,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$fiatLabel ${offer.fiatCurrency}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          statusLabel,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          coordinatorName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    dateLabel,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
     );
   }
 

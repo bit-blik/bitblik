@@ -14,3 +14,4 @@ Peer-to-peer BLIK/Lightning exchange over Nostr. Makers fund a Lightning hold in
 ## Protocol
 
 Communication between clients and coordinators uses encrypted Nostr direct messages (NIP-44). Offers are published as parameterised replaceable events (kind 38383). RPC requests are kind 25195, responses 25196, status updates 25197.
+

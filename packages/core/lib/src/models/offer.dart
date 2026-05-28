@@ -32,6 +32,12 @@ enum OfferStatus {
   unknown,
 }
 
+enum OfferCategory {
+  shop,
+  atm,
+  online,
+}
+
 // Represents an offer listed by the coordinator.
 class Offer {
   final String id;
@@ -59,6 +65,7 @@ class Offer {
   final DateTime? settledAt;
   final DateTime? takerPaidAt;
   final int? takerFees;
+  final OfferCategory? category;
 
   /// Wallet ID used by the maker to pay the hold invoice.
   /// Null means the default sending wallet was used (or payment not yet made).
@@ -137,6 +144,7 @@ class Offer {
     this.settledAt,
     this.takerPaidAt,
     this.takerFees,
+    this.category,
     this.paymentWalletId,
   });
 
@@ -255,6 +263,15 @@ class Offer {
       settledAt: parseOptionalDateTime(json['settled_at']),
       takerPaidAt: parseOptionalDateTime(json['taker_paid_at']),
       takerFees: json['taker_fees'] as int?,
+      category: () {
+        final raw = json['category'];
+        if (raw is! String || raw.trim().isEmpty) return null;
+        try {
+          return OfferCategory.values.byName(raw);
+        } catch (_) {
+          return null;
+        }
+      }(),
       paymentWalletId: json['payment_wallet_id'] as String?,
     );
   }
@@ -285,6 +302,7 @@ class Offer {
       'settled_at': settledAt?.toUtc().toIso8601String(),
       'taker_paid_at': takerPaidAt?.toUtc().toIso8601String(),
       'taker_fees': takerFees,
+      'category': category?.name,
       'payment_wallet_id': paymentWalletId,
     };
   }
@@ -326,6 +344,7 @@ class Offer {
     DateTime? settledAt,
     DateTime? takerPaidAt,
     int? takerFees,
+    OfferCategory? category,
     String? paymentWalletId,
   }) {
     return Offer(
@@ -354,13 +373,14 @@ class Offer {
       settledAt: settledAt ?? this.settledAt,
       takerPaidAt: takerPaidAt ?? this.takerPaidAt,
       takerFees: takerFees ?? this.takerFees,
+      category: category ?? this.category,
       paymentWalletId: paymentWalletId ?? this.paymentWalletId,
     );
   }
 
   @override
   String toString() {
-    return 'Offer(id: $id, amountSats: $amountSats, makerFees: $makerFees, status: $status, maker: ${makerPubkey.substring(0, 6)}..., taker: ${takerPubkey?.substring(0, 6)}..., createdAt: $createdAt)'; // Renamed field
+    return 'Offer(id: $id, amountSats: $amountSats, makerFees: $makerFees, status: $status, category: ${category?.name}, maker: ${makerPubkey.substring(0, 6)}..., taker: ${takerPubkey?.substring(0, 6)}..., createdAt: $createdAt)'; // Renamed field
   }
 
   /// Parse a kind [kKindOffer] Nostr event (NIP-69-ish parameterized
@@ -397,6 +417,15 @@ class Offer {
       reservedAt: epochSecondsOrNull(tagMap['reserved_at']),
       takerPaidAt: epochSecondsOrNull(tagMap['paid_at']),
       takerFees: int.tryParse(tagMap['taker_fees'] ?? ''),
+      category: () {
+        final raw = tagMap['category'];
+        if (raw == null || raw.isEmpty) return null;
+        try {
+          return OfferCategory.values.byName(raw);
+        } catch (_) {
+          return null;
+        }
+      }(),
     );
   }
 }

@@ -266,11 +266,16 @@ class NostrService {
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
     required String makerId,
+    OfferCategory? category,
     required String coordinatorPubkey,
   }) async {
     final request = NostrRequest(
       method: kRpcInitiateOffer,
-      params: {'fiat_amount': fiatAmount, 'maker_id': makerId},
+      params: {
+        'fiat_amount': fiatAmount,
+        'maker_id': makerId,
+        if (category != null) 'category': category.name,
+      },
     );
 
     final response = await sendRequest(request, coordinatorPubkey);

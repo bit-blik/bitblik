@@ -748,9 +748,10 @@ class CoordinatorService {
     required double fiatAmount,
     required String makerId,
     String fiatCurrency = 'PLN',
+    OfferCategory? category,
   }) async {
     AppLogger.info(
-        'Initiating offer: fiatAmount=$fiatAmount $fiatCurrency, maker=$makerId');
+        'Initiating offer: fiatAmount=$fiatAmount $fiatCurrency, maker=$makerId, category=${category?.name}');
     final rate = await _getPlnRate();
     final btcPerPln = 1 / rate;
     final btcAmount = fiatAmount * btcPerPln;
@@ -806,6 +807,7 @@ class CoordinatorService {
       'preimageHex': preimageHex,
       'fiatAmount': fiatAmount,
       'fiatCurrency': fiatCurrency,
+      'category': category?.name,
       'actualPaymentHashForSubscription': returnedPaymentHashHex,
     };
     AppLogger.info(
@@ -923,6 +925,15 @@ class CoordinatorService {
         status: OfferStatus.funded,
         fiatAmount: pendingData['fiatAmount'],
         fiatCurrency: pendingData['fiatCurrency'],
+        category: () {
+          final raw = pendingData['category'];
+          if (raw is! String || raw.trim().isEmpty) return null;
+          try {
+            return OfferCategory.values.byName(raw);
+          } catch (_) {
+            return null;
+          }
+        }(),
       );
       await _dbService.createOffer(offer);
       // --- Begin: broadcast NIP-69 order event ---
@@ -938,12 +949,7 @@ class CoordinatorService {
       // Publish status update
       await _publishStatusUpdate(offer);
 
-      final fiatText =
-          '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
-      final notificationText =
-          // TODO test.bitblik.app for test version
-          // TODO link for full offer id -> opens screen with offer details and possibility of TAKE
-          "New offer/Nowa oferta: ${offer.amountSats} sats (${fiatText}) -> https://${frontendDomain}/offers/${offer.id}";
+      final notificationText = _buildFundedOfferNotification(offer);
 
       // Send all notifications in parallel
       final List<Future<void>> notificationFutures = [];
@@ -1031,6 +1037,28 @@ class CoordinatorService {
       }
     } catch (e) {
       AppLogger.info('Error sending Signal notification: $e');
+    }
+  }
+
+  String _buildFundedOfferNotification(Offer offer) {
+    final fiatText =
+        '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
+    final categoryText = _formatCategoryForNotification(offer.category);
+    final categorySuffix =
+        categoryText == null ? '' : ' • $categoryText';
+    return 'New offer/Nowa oferta: ${offer.amountSats} sats ($fiatText)$categorySuffix -> https://${frontendDomain}/offers/${offer.id}';
+  }
+
+  String? _formatCategoryForNotification(OfferCategory? category) {
+    switch (category) {
+      case OfferCategory.shop:
+        return 'Physical good in shop / Towar fizyczny w sklepie';
+      case OfferCategory.atm:
+        return 'ATM cash out / Wypłata gotówki z bankomatu';
+      case OfferCategory.online:
+        return 'Online service/product / Produkt lub usługa online';
+      case null:
+        return null;
     }
   }
 

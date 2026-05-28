@@ -185,6 +185,7 @@ void main() {
     int? takerFees = testTakerFees, // Changed to int? to match Offer model
     String? takerInvoice, // Added takerInvoice
     String coordinatorPubkey = 'test-coordinator-pubkey',
+    OfferCategory? category,
   }) {
     return Offer(
       id: id,
@@ -205,6 +206,7 @@ void main() {
       fiatCurrency: 'PLN', // Default currency
       takerInvoice: takerInvoice, // Added takerInvoice
       coordinatorPubkey: coordinatorPubkey,
+      category: category,
     );
   }
 
@@ -405,10 +407,11 @@ void main() {
           .called(1);
     });
 
-    test('Invoice ACCEPTED: (pending) -> funded', () async {
+    test('Invoice ACCEPTED: (pending) -> funded with category', () async {
       // final paymentHash = 'funded-payment-hash';
       final makerId = 'maker-for-funded';
       final fiatAmount = 150.0;
+      const category = OfferCategory.online;
       // final satsAmountCalc = 300000; // Example, actual would be calculated
       // final makerFeesCalc = 1500; // Example
 
@@ -438,7 +441,7 @@ void main() {
           .thenAnswer((_) => streamController.stream);
 
       final initResult = await coordinatorService.initiateOfferFiat(
-          fiatAmount: fiatAmount, makerId: makerId);
+          fiatAmount: fiatAmount, makerId: makerId, category: category);
       final actualPaymentHash = initResult['paymentHash'] as String;
 
       // 2. Simulate invoice ACCEPTED update
@@ -455,6 +458,7 @@ void main() {
       expect(createdOffer.holdInvoicePaymentHash, actualPaymentHash);
       expect(createdOffer.makerPubkey, makerId);
       expect(createdOffer.fiatAmount, fiatAmount);
+      expect(createdOffer.category, category);
       // expect(createdOffer.amountSats, closeTo(satsAmountCalc, 100)); // Depending on rate
       // expect(createdOffer.makerFees, closeTo(makerFeesCalc, 10));   // Depending on rate
     });

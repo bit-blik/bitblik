@@ -175,6 +175,15 @@ Future<int> runOfferCreate(List<String> args) async {
     }
 
     final result = response.result!;
+    OfferCategory? category;
+    final categoryRaw = result['category']?.toString();
+    if (categoryRaw != null && categoryRaw.isNotEmpty) {
+      try {
+        category = OfferCategory.values.byName(categoryRaw);
+      } catch (_) {
+        category = null;
+      }
+    }
     final offer = Offer(
       id: result['id']?.toString() ??
           result['offer_id']?.toString() ??
@@ -191,6 +200,7 @@ Future<int> runOfferCreate(List<String> args) async {
       coordinatorPubkey: coordinatorPubkey,
       holdInvoicePaymentHash: result['paymentHash']?.toString(),
       holdInvoice: result['holdInvoice']?.toString(),
+      category: category,
     );
 
     final store = await OfferStore.open();
