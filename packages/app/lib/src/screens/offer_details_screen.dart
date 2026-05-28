@@ -154,14 +154,14 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
   List<Color> _categoryGradientColors(OfferCategory? category) {
     switch (category) {
       case OfferCategory.physicalShop:
-        // logo dominant: #039F94 teal
-        return [const Color(0xFF016B61), const Color(0xFF039F94)];
+        // teal #039F94 fading into
+        return [const Color(0xFF016B61), const Color(0xa0016B61)];
       case OfferCategory.atmCashout:
-        // logo dominant: #03A049 green
-        return [const Color(0xFF025C2E), const Color(0xFF03A049)];
+        // dark green #025C2E into
+        return [const Color(0xFF025C2E), const Color(0xa022A758)];
       case OfferCategory.onlineService:
-        // logo dominant: #0453F6 blue
-        return [const Color(0xFF032696), const Color(0xFF0453F6)];
+        // navy blue into muted
+        return [const Color(0xFF032696), const Color(0xa0032696)];
       case null:
         return [Colors.grey.shade700, Colors.grey.shade500];
     }
@@ -501,11 +501,11 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                         if (offer.category != null)
                           Positioned.fill(
                             child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
                                     _categoryGradientColors(offer.category)[0],
                                     _categoryGradientColors(
                                       offer.category,
@@ -513,11 +513,11 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     _categoryGradientColors(
                                       offer.category,
                                     )[1].withValues(alpha: 0.18),
-                                    Colors.transparent,
-                                  ],
-                                  stops: const [0.0, 0.14, 0.30, 0.44],
-                                ),
-                              ),
+                                        Colors.transparent,
+                                      ],
+                                      stops: const [0.0, 0.14, 0.30, 0.44],
+                                    ),
+                                  ),
                             ),
                           ),
                         // Ghost icon anchored top-left
