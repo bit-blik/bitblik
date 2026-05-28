@@ -35,6 +35,8 @@ class _CoordinatorManagementScreenState
     try {
       final apiService = ref.read(apiServiceProvider);
       await apiService.setCoordinatorEnabled(pubkey, enabled);
+      ref.invalidate(availableOffersProvider);
+      ref.invalidate(successfulOffersStatsProvider);
 
       if (enabled) {
         // Background probe; registry streams update on completion.
@@ -261,7 +263,9 @@ class _CoordinatorManagementScreenState
                                     Text(
                                       c.responsive == true
                                           ? t.coordinator.management.online
-                                          : t.coordinator.management
+                                          : t
+                                              .coordinator
+                                              .management
                                               .unknownOffline,
                                     ),
                                   ],
@@ -362,9 +366,8 @@ class _CoordinatorManagementScreenState
                     onPressed:
                         _saving
                             ? null
-                            : () => _addCustomCoordinator(
-                              _addNpubController.text,
-                            ),
+                            : () =>
+                                _addCustomCoordinator(_addNpubController.text),
                     child:
                         _saving
                             ? const SizedBox(

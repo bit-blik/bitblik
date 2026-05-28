@@ -216,6 +216,8 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           final requiresAtmConsent = offer.category == OfferCategory.atm;
           final requiresEcommerceConsent =
               offer.category == OfferCategory.online;
+          final amountTextColor =
+              offer.category == null ? Colors.black : Colors.white;
 
           // Get coordinator info for taker fee calculation
           final coordinatorInfoAsync = ref.watch(
@@ -497,9 +499,14 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                     ),
                     child: Stack(
                       children: [
-                        // Fading gradient background from top-left into content
+                        // Keep a generous top gradient even on short cards
+                        // so the amount header stays on the intended backdrop.
                         if (offer.category != null)
-                          Positioned.fill(
+                          Positioned(
+                            left: 0,
+                            top: 0,
+                            right: 0,
+                            height: 380,
                             child: Container(
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
@@ -510,10 +517,13 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     _categoryGradientColors(offer.category)[1],
                                     _categoryGradientColors(
                                       offer.category,
-                                    )[1].withValues(alpha: 0.18),
+                                    )[1].withValues(alpha: 0.48),
+                                    _categoryGradientColors(
+                                      offer.category,
+                                    )[1].withValues(alpha: 0.16),
                                     Colors.transparent,
                                   ],
-                                  stops: const [0.0, 0.14, 0.30, 0.44],
+                                  stops: const [0.0, 0.16, 0.42, 0.68, 1.0],
                                 ),
                               ),
                             ),
@@ -540,9 +550,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   RichText(
                                     textAlign: TextAlign.center,
                                     text: TextSpan(
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 42,
-                                        color: Colors.white,
+                                        color: amountTextColor,
                                       ),
                                       children: [
                                         TextSpan(

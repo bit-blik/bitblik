@@ -187,10 +187,25 @@ final offersSubscriptionInitializer = FutureProvider<void>((ref) async {
 
 final offers = <Offer>[];
 
-Future<List<Offer>> refreshAvailableOffersCache(ApiServiceNostr apiService) async {
+Future<List<Offer>> refreshAvailableOffersCache(
+  ApiServiceNostr apiService,
+) async {
   final currentOffers = List<Offer>.from(offers);
+  final enabledCoordinatorPubkeys =
+      apiService.discoveredCoordinators
+          .where((record) => record.enabled)
+          .map((record) => record.pubkeyHex)
+          .toSet();
   if (currentOffers.isEmpty) {
-    return List<Offer>.from(offers.reversed);
+    return List<Offer>.from(
+      offers
+          .where(
+            (offer) =>
+                enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey),
+          )
+          .toList()
+          .reversed,
+    );
   }
 
   final refreshedOffers = await Future.wait(
@@ -199,7 +214,8 @@ Future<List<Offer>> refreshAvailableOffersCache(ApiServiceNostr apiService) asyn
         return await apiService.getOffer(offer.id);
       } catch (e) {
         Logger.log.w(
-          () => '[availableOffers] failed refreshing public offer ${offer.id}: $e',
+          () =>
+              '[availableOffers] failed refreshing public offer ${offer.id}: $e',
         );
         return offer;
       }
@@ -211,8 +227,9 @@ Future<List<Offer>> refreshAvailableOffersCache(ApiServiceNostr apiService) asyn
           .whereType<Offer>()
           .where(
             (offer) =>
-                offer.status == OfferStatus.funded ||
-                offer.status == OfferStatus.reserved,
+                enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+                (offer.status == OfferStatus.funded ||
+                    offer.status == OfferStatus.reserved),
           )
           .toList()
         ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
@@ -229,16 +246,48 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   // Depend on single global initializer
   await ref.watch(offersSubscriptionInitializer.future);
   final apiService = ref.watch(apiServiceProvider);
+  final discoveredCoordinators = ref.watch(discoveredCoordinatorsProvider);
+  final enabledCoordinatorPubkeys = discoveredCoordinators.maybeWhen(
+    data:
+        (records) =>
+            records
+                .where((record) => record.enabled)
+                .map((record) => record.pubkeyHex)
+                .toSet(),
+    orElse:
+        () =>
+            apiService.discoveredCoordinators
+                .where((record) => record.enabled)
+                .map((record) => record.pubkeyHex)
+                .toSet(),
+  );
   // Emit the latest cached snapshot immediately so pull-to-refresh and
   // provider rebuilds don't hang waiting for a future live event.
-  yield List<Offer>.from(offers.reversed);
+  yield List<Offer>.from(
+    offers
+        .where(
+          (offer) =>
+              enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey),
+        )
+        .toList()
+        .reversed,
+  );
   await for (final offer in apiService.offersStream) {
     offers.removeWhere((o) => o.id == offer.id);
-    if (offer.status == OfferStatus.funded ||
-        offer.status == OfferStatus.reserved) {
+    if (enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+        (offer.status == OfferStatus.funded ||
+            offer.status == OfferStatus.reserved)) {
       offers.add(offer);
     }
-    yield List<Offer>.from(offers.reversed);
+    yield List<Offer>.from(
+      offers
+          .where(
+            (candidate) =>
+                enabledCoordinatorPubkeys.contains(candidate.coordinatorPubkey),
+          )
+          .toList()
+          .reversed,
+    );
   }
 });
 
@@ -795,6 +844,9 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
 ) async {
   // Wait for API service to be fully initialized
   final apiService = await ref.watch(initializedApiServiceProvider.future);
+  // Re-run when coordinator enablement changes so disabled coordinators
+  // disappear from the recent successful offers section immediately.
+  ref.watch(discoveredCoordinatorsProvider);
 
   // Snapshot the registry once — do not subscribe to its change stream
   // here. This provider issues N RPCs per refresh; reacting to every

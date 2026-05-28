@@ -848,6 +848,7 @@ class _TranslationsMakerAmountFormPl extends TranslationsMakerAmountFormEn {
 	@override late final _TranslationsMakerAmountFormActionsPl actions = _TranslationsMakerAmountFormActionsPl._(_root);
 	@override late final _TranslationsMakerAmountFormTooltipsPl tooltips = _TranslationsMakerAmountFormTooltipsPl._(_root);
 	@override late final _TranslationsMakerAmountFormCategoryPl category = _TranslationsMakerAmountFormCategoryPl._(_root);
+	@override late final _TranslationsMakerAmountFormOnboardingPl onboarding = _TranslationsMakerAmountFormOnboardingPl._(_root);
 	@override late final _TranslationsMakerAmountFormErrorsPl errors = _TranslationsMakerAmountFormErrorsPl._(_root);
 }
 
@@ -1561,6 +1562,23 @@ class _TranslationsMakerAmountFormCategoryPl extends TranslationsMakerAmountForm
 	@override String get ecommerceWarningTitle => 'Ryzyko zwrotu od sprzedawcy online';
 	@override String get ecommerceWarningBody => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
 	@override String get ecommerceConfirmation => 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
+}
+
+// Path: maker.amountForm.onboarding
+class _TranslationsMakerAmountFormOnboardingPl extends TranslationsMakerAmountFormOnboardingEn {
+	_TranslationsMakerAmountFormOnboardingPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get titlePrefix => 'Nowość';
+	@override String get title => 'Wybierz kategorię oferty';
+	@override String get body => 'Przed wygenerowaniem faktury wybierz kategorię, która najlepiej opisuje to, za co płacisz.';
+	@override String get showWhy => 'Dlaczego to jest ważne?';
+	@override String get hideWhy => 'Ukryj szczegóły';
+	@override String get whyTitle => 'Dobra kategoria pomaga takerom bezpiecznie podjąć decyzję';
+	@override String get whyBody => 'Różne sytuacje oznaczają różne oczekiwania i ryzyka. Wypłaty z bankomatu mogą mieć dodatkowe opłaty bankowe, a zakupy online mogą wiązać się z problemami przy zwrotach. Oznaczenie właściwej kategorii daje takerowi potrzebny kontekst przed akceptacją oferty.';
+	@override String get cta => 'Rozumiem';
 }
 
 // Path: maker.amountForm.errors
@@ -2333,6 +2351,14 @@ extension on TranslationsPl {
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Ryzyko zwrotu od sprzedawcy online';
 			case 'maker.amountForm.category.ecommerceWarningBody': return 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
 			case 'maker.amountForm.category.ecommerceConfirmation': return 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
+			case 'maker.amountForm.onboarding.titlePrefix': return 'Nowość';
+			case 'maker.amountForm.onboarding.title': return 'Wybierz kategorię oferty';
+			case 'maker.amountForm.onboarding.body': return 'Przed wygenerowaniem faktury wybierz kategorię, która najlepiej opisuje to, za co płacisz.';
+			case 'maker.amountForm.onboarding.showWhy': return 'Dlaczego to jest ważne?';
+			case 'maker.amountForm.onboarding.hideWhy': return 'Ukryj szczegóły';
+			case 'maker.amountForm.onboarding.whyTitle': return 'Dobra kategoria pomaga takerom bezpiecznie podjąć decyzję';
+			case 'maker.amountForm.onboarding.whyBody': return 'Różne sytuacje oznaczają różne oczekiwania i ryzyka. Wypłaty z bankomatu mogą mieć dodatkowe opłaty bankowe, a zakupy online mogą wiązać się z problemami przy zwrotach. Oznaczenie właściwej kategorii daje takerowi potrzebny kontekst przed akceptacją oferty.';
+			case 'maker.amountForm.onboarding.cta': return 'Rozumiem';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Błąd inicjowania oferty: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Błąd: Klucz publiczny nie został jeszcze załadowany.';
 			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'Żaden koordynator nie obsługuje tej kwoty. Spróbuj inną wartość.';

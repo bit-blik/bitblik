@@ -314,6 +314,15 @@ maker:
       ecommerceWarningTitle: "Ryzyko zwrotu od sprzedawcy online"
       ecommerceWarningBody: "Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie."
       ecommerceConfirmation: "Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto."
+    onboarding:
+      titlePrefix: "Nowość"
+      title: "Wybierz kategorię oferty"
+      body: "Przed wygenerowaniem faktury wybierz kategorię, która najlepiej opisuje to, za co płacisz."
+      showWhy: "Dlaczego to jest ważne?"
+      hideWhy: "Ukryj szczegóły"
+      whyTitle: "Dobra kategoria pomaga takerom bezpiecznie podjąć decyzję"
+      whyBody: "Różne sytuacje oznaczają różne oczekiwania i ryzyka. Wypłaty z bankomatu mogą mieć dodatkowe opłaty bankowe, a zakupy online mogą wiązać się z problemami przy zwrotach. Oznaczenie właściwej kategorii daje takerowi potrzebny kontekst przed akceptacją oferty."
+      cta: "Rozumiem"
     
     errors:
       initiating: "Błąd inicjowania oferty: ${details}"

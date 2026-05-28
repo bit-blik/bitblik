@@ -1301,6 +1301,7 @@ class TranslationsMakerAmountFormEn {
 	late final TranslationsMakerAmountFormActionsEn actions = TranslationsMakerAmountFormActionsEn.internal(_root);
 	late final TranslationsMakerAmountFormTooltipsEn tooltips = TranslationsMakerAmountFormTooltipsEn.internal(_root);
 	late final TranslationsMakerAmountFormCategoryEn category = TranslationsMakerAmountFormCategoryEn.internal(_root);
+	late final TranslationsMakerAmountFormOnboardingEn onboarding = TranslationsMakerAmountFormOnboardingEn.internal(_root);
 	late final TranslationsMakerAmountFormErrorsEn errors = TranslationsMakerAmountFormErrorsEn.internal(_root);
 }
 
@@ -2456,6 +2457,39 @@ class TranslationsMakerAmountFormCategoryEn {
 	String get ecommerceConfirmation => 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.';
 }
 
+// Path: maker.amountForm.onboarding
+class TranslationsMakerAmountFormOnboardingEn {
+	TranslationsMakerAmountFormOnboardingEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'New'
+	String get titlePrefix => 'New';
+
+	/// en: 'Choose the offer category'
+	String get title => 'Choose the offer category';
+
+	/// en: 'Pick the category that best matches what you are paying for before generating the invoice.'
+	String get body => 'Pick the category that best matches what you are paying for before generating the invoice.';
+
+	/// en: 'Why does this matter?'
+	String get showWhy => 'Why does this matter?';
+
+	/// en: 'Hide details'
+	String get hideWhy => 'Hide details';
+
+	/// en: 'Choosing the right category helps takers decide safely'
+	String get whyTitle => 'Choosing the right category helps takers decide safely';
+
+	/// en: 'Different situations carry different expectations and risks. ATM cash outs may include extra bank fees, and online purchases can involve refund edge cases. Marking the right category gives takers the context they need before accepting your offer.'
+	String get whyBody => 'Different situations carry different expectations and risks. ATM cash outs may include extra bank fees, and online purchases can involve refund edge cases. Marking the right category gives takers the context they need before accepting your offer.';
+
+	/// en: 'Got it'
+	String get cta => 'Got it';
+}
+
 // Path: maker.amountForm.errors
 class TranslationsMakerAmountFormErrorsEn {
 	TranslationsMakerAmountFormErrorsEn.internal(this._root);
@@ -3564,6 +3598,14 @@ extension on Translations {
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Online merchant refund risk';
 			case 'maker.amountForm.category.ecommerceWarningBody': return 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the BLIK, which is the taker\'s account. The coordinator cannot force the taker to return those funds to you.';
 			case 'maker.amountForm.category.ecommerceConfirmation': return 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.';
+			case 'maker.amountForm.onboarding.titlePrefix': return 'New';
+			case 'maker.amountForm.onboarding.title': return 'Choose the offer category';
+			case 'maker.amountForm.onboarding.body': return 'Pick the category that best matches what you are paying for before generating the invoice.';
+			case 'maker.amountForm.onboarding.showWhy': return 'Why does this matter?';
+			case 'maker.amountForm.onboarding.hideWhy': return 'Hide details';
+			case 'maker.amountForm.onboarding.whyTitle': return 'Choosing the right category helps takers decide safely';
+			case 'maker.amountForm.onboarding.whyBody': return 'Different situations carry different expectations and risks. ATM cash outs may include extra bank fees, and online purchases can involve refund edge cases. Marking the right category gives takers the context they need before accepting your offer.';
+			case 'maker.amountForm.onboarding.cta': return 'Got it';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Error initiating offer: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Error: Public key not yet loaded.';
 			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'No coordinator supports this amount. Try a different value.';

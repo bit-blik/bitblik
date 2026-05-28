@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,6 +65,41 @@ class MakerProgressIndicator extends StatelessWidget {
   }
 }
 
+class _OnboardingBeakPainter extends CustomPainter {
+  const _OnboardingBeakPainter({
+    required this.color,
+    required this.shadowColor,
+  });
+
+  final Color color;
+  final Color shadowColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final shadowPath =
+        Path()
+          ..moveTo(size.width * 0.5, 0)
+          ..lineTo(0, size.height)
+          ..lineTo(size.width, size.height)
+          ..close();
+    canvas.drawShadow(shadowPath, shadowColor, 2, false);
+
+    final fillPath =
+        Path()
+          ..moveTo(size.width * 0.5, 0)
+          ..lineTo(size.width * 0.15, size.height)
+          ..lineTo(size.width * 0.85, size.height)
+          ..close();
+    final paint = Paint()..color = color;
+    canvas.drawPath(fillPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _OnboardingBeakPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.shadowColor != shadowColor;
+  }
+}
+
 class MakerAmountForm extends ConsumerStatefulWidget {
   const MakerAmountForm({super.key});
 
@@ -74,6 +108,10 @@ class MakerAmountForm extends ConsumerStatefulWidget {
 }
 
 class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
+  static const _categoryOnboardingDismissedKey =
+      'maker_category_onboarding_dismissed';
+  static final _categoryOnboardingNewCutoff = DateTime(2026, 10, 1);
+
   final _fiatController = TextEditingController();
   final _amountFocusNode = FocusNode(); // Add FocusNode for amount input
   double? _satsEquivalent;
@@ -89,6 +127,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   bool _hasTriedAutoSelect = false; // Track if we've tried to auto-select
   OfferCategory? _selectedCategory = OfferCategory.shop;
   bool _ecommerceRiskAccepted = false;
+  bool _showCategoryOnboarding = false;
+  bool _categoryOnboardingExpanded = false;
 
   @override
   void initState() {
@@ -96,6 +136,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     _fiatController.addListener(_validateAndRecalculate);
     _loadInitialData();
     _loadEcommerceRiskAccepted();
+    _loadCategoryOnboardingState();
 
     // Auto-focus the amount input field when screen is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -117,13 +158,41 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      _ecommerceRiskAccepted = prefs.getBool('maker_ecommerce_risk_accepted') ?? false;
+      _ecommerceRiskAccepted =
+          prefs.getBool('maker_ecommerce_risk_accepted') ?? false;
     });
   }
 
   Future<void> _saveEcommerceRiskAccepted(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('maker_ecommerce_risk_accepted', value);
+  }
+
+  Future<void> _loadCategoryOnboardingState() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _showCategoryOnboarding =
+          !(prefs.getBool(_categoryOnboardingDismissedKey) ?? false);
+    });
+  }
+
+  Future<void> _dismissCategoryOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_categoryOnboardingDismissedKey, true);
+    if (!mounted) return;
+    setState(() {
+      _showCategoryOnboarding = false;
+      _categoryOnboardingExpanded = false;
+    });
+  }
+
+  String _categoryOnboardingTitle(Translations t) {
+    final now = DateTime.now();
+    if (now.isBefore(_categoryOnboardingNewCutoff)) {
+      return '${t.maker.amountForm.onboarding.titlePrefix}: ${t.maker.amountForm.onboarding.title}';
+    }
+    return t.maker.amountForm.onboarding.title;
   }
 
   Future<void> _loadInitialData() async {
@@ -335,7 +404,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         !_ecommerceRiskAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(t.maker.amountForm.errors.ecommerceConfirmationRequired),
+          content: Text(
+            t.maker.amountForm.errors.ecommerceConfirmationRequired,
+          ),
         ),
       );
       return;
@@ -651,6 +722,234 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
   }
 
+  Widget _buildCategoryOnboardingCard(Translations t) {
+    const noteBackground = Color(0xFFFFF4CC);
+    const noteAccent = Color(0xFF8A5A00);
+
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 36),
+            child: SizedBox(
+              width: 18,
+              height: 12,
+              child: CustomPaint(
+                painter: _OnboardingBeakPainter(
+                  color: noteBackground.withValues(alpha: 0.96),
+                  shadowColor: const Color(0x12000000),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            decoration: BoxDecoration(
+              color: noteBackground.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x16000000),
+                  blurRadius: 14,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE8A3).withValues(alpha: 0.96),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.lightbulb_outline,
+                        color: noteAccent,
+                        size: 19,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _categoryOnboardingTitle(t),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF513400),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _dismissCategoryOnboarding,
+                      icon: const Icon(Icons.close, size: 17),
+                      visualDensity: VisualDensity.compact,
+                      splashRadius: 17,
+                      color: Colors.grey[600],
+                      tooltip: t.common.buttons.close,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  t.maker.amountForm.onboarding.body,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    height: 1.4,
+                    color: Color(0xFF6B4B06),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Column(
+                  children: OfferCategory.values
+                      .map((category) {
+                        final label = switch (category) {
+                          OfferCategory.shop =>
+                            t.maker.amountForm.category.options.physicalShop,
+                          OfferCategory.atm =>
+                            t.maker.amountForm.category.options.atmCashout,
+                          OfferCategory.online =>
+                            t.maker.amountForm.category.options.onlineService,
+                        };
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom:
+                                category != OfferCategory.values.last ? 8 : 0,
+                          ),
+                          child: Row(
+                            children: [
+                              _categoryIconWidget(category, 22, noteAccent),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  label,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF6B4B06),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      })
+                      .toList(growable: false),
+                ),
+                const SizedBox(height: 10),
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    setState(() {
+                      _categoryOnboardingExpanded =
+                          !_categoryOnboardingExpanded;
+                    });
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE9A8).withValues(alpha: 0.78),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _categoryOnboardingExpanded
+                                ? t.maker.amountForm.onboarding.hideWhy
+                                : t.maker.amountForm.onboarding.showWhy,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: noteAccent,
+                            ),
+                          ),
+                        ),
+                        AnimatedRotation(
+                          turns: _categoryOnboardingExpanded ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 180),
+                          child: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: noteAccent,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                AnimatedCrossFade(
+                  firstChild: const SizedBox.shrink(),
+                  secondChild: Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF8DE).withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t.maker.amountForm.onboarding.whyTitle,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF6B4B06),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            t.maker.amountForm.onboarding.whyBody,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              height: 1.42,
+                              color: Color(0xFF7A5A10),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  crossFadeState:
+                      _categoryOnboardingExpanded
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                  duration: const Duration(milliseconds: 180),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _dismissCategoryOnboarding,
+                    style: TextButton.styleFrom(
+                      foregroundColor: noteAccent,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: Text(t.maker.amountForm.onboarding.cta),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   IconData _categoryIcon(OfferCategory category) {
     switch (category) {
@@ -693,7 +992,6 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         return t.maker.amountForm.category.options.physicalShop;
     }
   }
-
 
   void _showCategoryInfoDialog(OfferCategory category) {
     final t = Translations.of(context);
@@ -789,10 +1087,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           Expanded(
                             child: Text(
                               t.maker.amountForm.category.ecommerceWarningBody,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                height: 1.4,
-                              ),
+                              style: const TextStyle(fontSize: 13, height: 1.4),
                             ),
                           ),
                         ],
@@ -808,7 +1103,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           visualDensity: VisualDensity.compact,
                           onChanged: (value) {
                             final v = value ?? false;
-                            setState(() { _ecommerceRiskAccepted = v; });
+                            setState(() {
+                              _ecommerceRiskAccepted = v;
+                            });
                             setDialogState(() {});
                             _saveEcommerceRiskAccepted(v);
                           },
@@ -817,14 +1114,20 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           child: GestureDetector(
                             onTap: () {
                               final v = !_ecommerceRiskAccepted;
-                              setState(() { _ecommerceRiskAccepted = v; });
+                              setState(() {
+                                _ecommerceRiskAccepted = v;
+                              });
                               setDialogState(() {});
                               _saveEcommerceRiskAccepted(v);
                             },
                             child: Padding(
                               padding: const EdgeInsets.only(top: 10),
                               child: Text(
-                                t.maker.amountForm.category.ecommerceConfirmation,
+                                t
+                                    .maker
+                                    .amountForm
+                                    .category
+                                    .ecommerceConfirmation,
                                 style: const TextStyle(
                                   fontSize: 13,
                                   height: 1.4,
@@ -994,8 +1297,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
               if (supportsCategory) ...[
                 Row(
-                  children:
-                      OfferCategory.values.map((category) {
+                  children: OfferCategory.values
+                      .map((category) {
                         final selected = _selectedCategory == category;
                         return Expanded(
                           child: Padding(
@@ -1011,8 +1314,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 } else {
                                   setState(() {
                                     _selectedCategory = category;
-                                    if (category !=
-                                        OfferCategory.online) {
+                                    if (category != OfferCategory.online) {
                                       _ecommerceRiskAccepted = false;
                                     }
                                   });
@@ -1041,70 +1343,76 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 16,
-                                      height: 16,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: selected
-                                              ? Colors.red
-                                              : Colors.grey.shade400,
-                                          width: selected ? 4.5 : 1.5,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: 16,
+                                        height: 16,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color:
+                                                selected
+                                                    ? Colors.red
+                                                    : Colors.grey.shade400,
+                                            width: selected ? 4.5 : 1.5,
+                                          ),
+                                          color: Colors.white,
                                         ),
-                                        color: Colors.white,
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    _categoryIconWidget(
-                                      category,
-                                      36,
-                                      selected
-                                          ? Colors.red
-                                          : Colors.grey[700]!,
-                                    ),
-                                    if (selected &&
-                                        category ==
-                                            OfferCategory.online) ...[
-                                      const SizedBox(width: 4),
-                                      Checkbox(
-                                        value: _ecommerceRiskAccepted,
-                                        visualDensity: VisualDensity.compact,
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        activeColor: Colors.red,
-                                        onChanged: (value) {
-                                          final v = value ?? false;
-                                          setState(() { _ecommerceRiskAccepted = v; });
-                                          _saveEcommerceRiskAccepted(v);
-                                        },
+                                      const SizedBox(width: 8),
+                                      _categoryIconWidget(
+                                        category,
+                                        36,
+                                        selected
+                                            ? Colors.red
+                                            : Colors.grey[700]!,
                                       ),
+                                      if (selected &&
+                                          category == OfferCategory.online) ...[
+                                        const SizedBox(width: 4),
+                                        Checkbox(
+                                          value: _ecommerceRiskAccepted,
+                                          visualDensity: VisualDensity.compact,
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          activeColor: Colors.red,
+                                          onChanged: (value) {
+                                            final v = value ?? false;
+                                            setState(() {
+                                              _ecommerceRiskAccepted = v;
+                                            });
+                                            _saveEcommerceRiskAccepted(v);
+                                          },
+                                        ),
+                                      ],
+                                      if (category == OfferCategory.atm ||
+                                          category == OfferCategory.online) ...[
+                                        const SizedBox(width: 5),
+                                        Icon(
+                                          Icons.warning_amber_rounded,
+                                          size: 18,
+                                          color:
+                                              selected
+                                                  ? Colors.orange
+                                                  : Colors.grey[400],
+                                        ),
+                                      ],
                                     ],
-                                    if (category ==
-                                            OfferCategory.atm ||
-                                        category ==
-                                            OfferCategory.online) ...[
-                                      const SizedBox(width: 5),
-                                      Icon(
-                                        Icons.warning_amber_rounded,
-                                        size: 18,
-                                        color:
-                                            selected
-                                                ? Colors.orange
-                                                : Colors.grey[400],
-                                      ),
-                                    ],
-                                  ],
-                                ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         );
-                      }).toList(growable: false),
+                      })
+                      .toList(growable: false),
                 ),
+                if (_showCategoryOnboarding)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: _buildCategoryOnboardingCard(t),
+                  ),
                 const SizedBox(height: 16),
               ],
 

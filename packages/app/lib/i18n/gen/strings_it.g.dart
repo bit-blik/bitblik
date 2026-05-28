@@ -849,6 +849,7 @@ class _TranslationsMakerAmountFormIt extends TranslationsMakerAmountFormEn {
 	@override late final _TranslationsMakerAmountFormActionsIt actions = _TranslationsMakerAmountFormActionsIt._(_root);
 	@override late final _TranslationsMakerAmountFormTooltipsIt tooltips = _TranslationsMakerAmountFormTooltipsIt._(_root);
 	@override late final _TranslationsMakerAmountFormCategoryIt category = _TranslationsMakerAmountFormCategoryIt._(_root);
+	@override late final _TranslationsMakerAmountFormOnboardingIt onboarding = _TranslationsMakerAmountFormOnboardingIt._(_root);
 	@override late final _TranslationsMakerAmountFormErrorsIt errors = _TranslationsMakerAmountFormErrorsIt._(_root);
 }
 
@@ -1564,6 +1565,23 @@ class _TranslationsMakerAmountFormCategoryIt extends TranslationsMakerAmountForm
 	@override String get ecommerceWarningTitle => 'Rischio rimborso negozio online';
 	@override String get ecommerceWarningBody => 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al BLIK, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te.';
 	@override String get ecommerceConfirmation => 'Capisco il rischio di rimborso e aggiungerò una nota all\'ordine per chiedere al commerciante di rimborsare su un conto diverso se necessario.';
+}
+
+// Path: maker.amountForm.onboarding
+class _TranslationsMakerAmountFormOnboardingIt extends TranslationsMakerAmountFormOnboardingEn {
+	_TranslationsMakerAmountFormOnboardingIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get titlePrefix => 'Novità';
+	@override String get title => 'Scegli la categoria dell\'offerta';
+	@override String get body => 'Prima di generare la fattura, scegli la categoria che descrive meglio ciò che stai pagando.';
+	@override String get showWhy => 'Perché è importante?';
+	@override String get hideWhy => 'Nascondi dettagli';
+	@override String get whyTitle => 'La categoria giusta aiuta i taker a decidere in modo sicuro';
+	@override String get whyBody => 'Situazioni diverse comportano aspettative e rischi diversi. I prelievi ATM possono includere commissioni bancarie extra, mentre gli acquisti online possono avere casi particolari sui rimborsi. Selezionare la categoria corretta dà ai taker il contesto necessario prima di accettare la tua offerta.';
+	@override String get cta => 'Ho capito';
 }
 
 // Path: maker.amountForm.errors
@@ -2337,6 +2355,14 @@ extension on TranslationsIt {
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Rischio rimborso negozio online';
 			case 'maker.amountForm.category.ecommerceWarningBody': return 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al BLIK, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te.';
 			case 'maker.amountForm.category.ecommerceConfirmation': return 'Capisco il rischio di rimborso e aggiungerò una nota all\'ordine per chiedere al commerciante di rimborsare su un conto diverso se necessario.';
+			case 'maker.amountForm.onboarding.titlePrefix': return 'Novità';
+			case 'maker.amountForm.onboarding.title': return 'Scegli la categoria dell\'offerta';
+			case 'maker.amountForm.onboarding.body': return 'Prima di generare la fattura, scegli la categoria che descrive meglio ciò che stai pagando.';
+			case 'maker.amountForm.onboarding.showWhy': return 'Perché è importante?';
+			case 'maker.amountForm.onboarding.hideWhy': return 'Nascondi dettagli';
+			case 'maker.amountForm.onboarding.whyTitle': return 'La categoria giusta aiuta i taker a decidere in modo sicuro';
+			case 'maker.amountForm.onboarding.whyBody': return 'Situazioni diverse comportano aspettative e rischi diversi. I prelievi ATM possono includere commissioni bancarie extra, mentre gli acquisti online possono avere casi particolari sui rimborsi. Selezionare la categoria corretta dà ai taker il contesto necessario prima di accettare la tua offerta.';
+			case 'maker.amountForm.onboarding.cta': return 'Ho capito';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Errore nell\'avvio dell\'offerta: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Errore: Chiave pubblica non ancora caricata.';
 			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'Nessun coordinatore supporta questo importo. Prova con un valore diverso.';
