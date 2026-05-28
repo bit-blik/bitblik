@@ -539,16 +539,28 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                               padding: const EdgeInsets.all(20.0),
                               child: Column(
                                 children: [
-                                  Text(
-                                    '${(offer.fiatAmount * 100).round() % 100 == 0 ? offer.fiatAmount.toStringAsFixed(0) : offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}',
-                                    style: TextStyle(
-                                      fontSize: 42,
-                                      fontWeight: FontWeight.w300,
-                                      color: offer.category != null
-                                          ? Colors.white
-                                          : Colors.black,
-                                    ),
+                                  RichText(
                                     textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                      style: TextStyle(
+                                        fontSize: 42,
+                                        color: offer.category != null
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: (offer.fiatAmount * 100).round() % 100 == 0
+                                              ? offer.fiatAmount.toStringAsFixed(0)
+                                              : offer.fiatAmount.toStringAsFixed(2),
+                                          style: const TextStyle(fontWeight: FontWeight.w600),
+                                        ),
+                                        TextSpan(
+                                          text: ' ${offer.fiatCurrency}',
+                                          style: const TextStyle(fontWeight: FontWeight.w400),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                   const SizedBox(height: 16),
                                   if (isFunded)
