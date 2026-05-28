@@ -637,17 +637,6 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
   }
 
-  String _categoryLabel(BuildContext context, OfferCategory category) {
-    final t = Translations.of(context);
-    switch (category) {
-      case OfferCategory.physicalShop:
-        return t.maker.amountForm.category.options.physicalShop;
-      case OfferCategory.atmCashout:
-        return t.maker.amountForm.category.options.atmCashout;
-      case OfferCategory.onlineService:
-        return t.maker.amountForm.category.options.onlineService;
-    }
-  }
 
   IconData _categoryIcon(OfferCategory category) {
     switch (category) {
@@ -658,6 +647,169 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       case OfferCategory.onlineService:
         return Icons.shopping_cart_checkout_outlined;
     }
+  }
+
+  String? _categoryAsset(OfferCategory category) {
+    switch (category) {
+      case OfferCategory.physicalShop:
+        return 'assets/category_shop.png';
+      case OfferCategory.atmCashout:
+        return 'assets/category_atm.png';
+      case OfferCategory.onlineService:
+        return 'assets/category_online.png';
+    }
+  }
+
+  Widget _categoryIconWidget(OfferCategory category, double size, Color color) {
+    final asset = _categoryAsset(category);
+    if (asset != null) {
+      return Image.asset(asset, width: size, height: size);
+    }
+    return Icon(_categoryIcon(category), size: size, color: color);
+  }
+
+  String _categoryWarningTitle(BuildContext context, OfferCategory category) {
+    final t = Translations.of(context);
+    switch (category) {
+      case OfferCategory.atmCashout:
+        return t.maker.amountForm.category.options.atmCashout;
+      case OfferCategory.onlineService:
+        return t.maker.amountForm.category.ecommerceWarningTitle;
+      case OfferCategory.physicalShop:
+        return t.maker.amountForm.category.options.physicalShop;
+    }
+  }
+
+
+  void _showCategoryInfoDialog(OfferCategory category) {
+    final t = Translations.of(context);
+    final title = _categoryWarningTitle(context, category);
+
+    showDialog<void>(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setDialogState) {
+              Widget? content;
+
+              if (category == OfferCategory.atmCashout) {
+                content = Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.orange.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.info_outline,
+                        color: Colors.orange,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          t.maker.amountForm.category.atmHint,
+                          style: const TextStyle(fontSize: 13, height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } else if (category == OfferCategory.onlineService) {
+                final warningColor = Colors.amber[700]!;
+                content = Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: warningColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: warningColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: warningColor,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              t.maker.amountForm.category.ecommerceWarningBody,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: _ecommerceRiskAccepted,
+                          activeColor: Colors.red,
+                          visualDensity: VisualDensity.compact,
+                          onChanged: (value) {
+                            setState(() {
+                              _ecommerceRiskAccepted = value ?? false;
+                            });
+                            setDialogState(() {});
+                          },
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _ecommerceRiskAccepted = !_ecommerceRiskAccepted;
+                              });
+                              setDialogState(() {});
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: Text(
+                                t.maker.amountForm.category.ecommerceConfirmation,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              }
+
+              return AlertDialog(
+                title: Text(title),
+                content: content,
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(t.common.buttons.close),
+                  ),
+                ],
+              );
+            },
+          ),
+    );
   }
 
   bool _supportsOfferCategory(String? version) {
@@ -799,181 +951,100 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               const SizedBox(height: 16),
 
               if (supportsCategory) ...[
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    t.maker.amountForm.category.label,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Column(
+                Row(
                   children:
                       OfferCategory.values.map((category) {
                         final selected = _selectedCategory == category;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(14),
-                            onTap: () {
-                              setState(() {
-                                _selectedCategory = category;
-                                if (category != OfferCategory.onlineService) {
-                                  _ecommerceRiskAccepted = false;
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              right:
+                                  category != OfferCategory.values.last ? 8 : 0,
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(999),
+                              onTap: () {
+                                if (selected) {
+                                  _showCategoryInfoDialog(category);
+                                } else {
+                                  setState(() {
+                                    _selectedCategory = category;
+                                    if (category !=
+                                        OfferCategory.onlineService) {
+                                      _ecommerceRiskAccepted = false;
+                                    }
+                                  });
                                 }
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 120),
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 120),
+                                height: 53,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color:
+                                        selected
+                                            ? Colors.red
+                                            : Colors.grey.shade300,
+                                    width: selected ? 1.6 : 1,
+                                  ),
                                   color:
                                       selected
-                                          ? Colors.red
-                                          : Colors.grey.shade300,
-                                  width: selected ? 1.6 : 1,
+                                          ? const Color(0xFFFFF2F6)
+                                          : Colors.white,
                                 ),
-                                color:
-                                    selected
-                                        ? const Color(0xFFFFF2F6)
-                                        : Colors.white,
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    _categoryIcon(category),
-                                    color:
-                                        selected
-                                            ? Colors.red
-                                            : Colors.grey[700],
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      _categoryLabel(context, category),
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight:
-                                            selected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                      ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _categoryIconWidget(
+                                      category,
+                                      36,
+                                      selected
+                                          ? Colors.red
+                                          : Colors.grey[700]!,
                                     ),
-                                  ),
-                                  Icon(
-                                    selected
-                                        ? Icons.radio_button_checked
-                                        : Icons.radio_button_off,
-                                    color:
-                                        selected
-                                            ? Colors.red
-                                            : Colors.grey[500],
-                                  ),
-                                ],
+                                    if (selected &&
+                                        category ==
+                                            OfferCategory.onlineService) ...[
+                                      const SizedBox(width: 4),
+                                      Checkbox(
+                                        value: _ecommerceRiskAccepted,
+                                        visualDensity: VisualDensity.compact,
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        activeColor: Colors.red,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _ecommerceRiskAccepted =
+                                                value ?? false;
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                    if (category ==
+                                            OfferCategory.atmCashout ||
+                                        category ==
+                                            OfferCategory.onlineService) ...[
+                                      const SizedBox(width: 5),
+                                      Icon(
+                                        Icons.warning_amber_rounded,
+                                        size: 18,
+                                        color:
+                                            selected
+                                                ? Colors.orange
+                                                : Colors.grey[400],
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         );
                       }).toList(growable: false),
-                ),
-              ],
-              if (supportsCategory &&
-                  _selectedCategory == OfferCategory.atmCashout) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.orange.withValues(alpha: 0.25),
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.info_outline, color: Colors.orange),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          t.maker.amountForm.category.atmHint,
-                          style: const TextStyle(fontSize: 13, height: 1.35),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              if (supportsCategory &&
-                  _selectedCategory == OfferCategory.onlineService) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.amber.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t.maker.amountForm.category.ecommerceWarningTitle,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        t.maker.amountForm.category.ecommerceWarningBody,
-                        style: const TextStyle(fontSize: 13, height: 1.35),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Checkbox(
-                            value: _ecommerceRiskAccepted,
-                            activeColor: Colors.red,
-                            onChanged: (value) {
-                              setState(() {
-                                _ecommerceRiskAccepted = value ?? false;
-                              });
-                            },
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _ecommerceRiskAccepted =
-                                      !_ecommerceRiskAccepted;
-                                });
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Text(
-                                  t.maker.amountForm.category.ecommerceConfirmation,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    height: 1.35,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
                 ),
                 const SizedBox(height: 16),
               ],
