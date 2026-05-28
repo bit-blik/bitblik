@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:ndk/shared/nips/nip19/nip19.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart';
@@ -585,21 +586,23 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(
-          width: 130,
+        Expanded(
+          flex: 3,
           child: Text(
             label,
-            style: const TextStyle(color: Colors.grey, fontSize: 13),
+            style: TextStyle(color: Colors.grey[700]),
           ),
         ),
+        const SizedBox(width: 12),
         Expanded(
+          flex: 5,
           child: Text(
             value,
+            textAlign: TextAlign.right,
             style: TextStyle(
               fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
-              fontSize: 14,
             ),
           ),
         ),
@@ -617,7 +620,7 @@ class _WidgetRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           flex: 3,
@@ -686,8 +689,10 @@ class _CounterpartyPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Translations.of(context);
+    final npub = Nip19.encodePubKey(pubkey);
+
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
           width: 28,
@@ -707,9 +712,27 @@ class _CounterpartyPreview extends StatelessWidget {
         const SizedBox(width: 8),
         Flexible(
           child: Text(
-            '${pubkey.substring(0, 12)}…${pubkey.substring(pubkey.length - 8)}',
+            npub,
             textAlign: TextAlign.right,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
           ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.copy, size: 18),
+          tooltip: t.common.clipboard.copyToClipboard,
+          padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
+          constraints: const BoxConstraints(minHeight: 48),
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: npub));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(t.common.clipboard.copied),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
         ),
       ],
     );
