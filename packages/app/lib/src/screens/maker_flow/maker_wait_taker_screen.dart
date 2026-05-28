@@ -197,9 +197,16 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     ref.read(errorProvider.notifier).state = null;
 
     try {
-      final apiService = ref.read(apiServiceProvider);
-      await apiService.cancelOffer(offer.id, offer.coordinatorPubkey);
+      await ref.read(activeOfferProvider.notifier).cancelActiveOffer();
       _resetToRoleSelection(t.maker.waitTaker.offerCancelledSuccessfully);
+    } on OfferAlreadyFundedException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t.maker.payInvoice.errors.cancelOfferAlreadyFunded),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         final errorMsg = t.maker.waitTaker.failedToCancelOffer(

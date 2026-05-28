@@ -141,6 +141,10 @@ class _OfferDetailsBody extends ConsumerWidget {
         offer.takerPaidAt ??
         (offer.status == OfferStatus.takerPaid ? offer.settledAt : null);
     final isCurrentOfferActive = activeOffer?.id == offer.id;
+    final canResumeMakerWaitTaker =
+        currentPubKey != null &&
+        currentPubKey == offer.makerPubkey &&
+        offer.status == OfferStatus.funded;
     final shouldShowCreatedAt =
         offer.reservedAt == null ||
         offer.createdAt.difference(offer.reservedAt!).abs() >
@@ -329,18 +333,18 @@ class _OfferDetailsBody extends ConsumerWidget {
             ),
           ),
         ),
-        if (isCurrentOfferActive) ...[
+        if (isCurrentOfferActive || canResumeMakerWaitTaker) ...[
           const SizedBox(height: 20),
           _ActiveOfferCta(
             label: t.myOffers.details.continueActiveOffer,
             statusColor: statusColor,
             onTap:
-                currentPubKey == null || activeOffer == null
+                currentPubKey == null
                     ? null
-                    : () => _openActiveOfferFlow(
+                    : () => _resumeOfferFromDetails(
                       context,
                       ref,
-                      activeOffer,
+                      offer,
                       currentPubKey,
                       t,
                     ),
@@ -353,6 +357,18 @@ class _OfferDetailsBody extends ConsumerWidget {
   Future<void> _openNostrProfile(String npub) async {
     final url = 'https://njump.to/$npub';
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _resumeOfferFromDetails(
+    BuildContext context,
+    WidgetRef ref,
+    Offer offer,
+    String currentPubKey,
+    Translations t,
+  ) async {
+    await ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
+    if (!context.mounted) return;
+    _openActiveOfferFlow(context, ref, offer, currentPubKey, t);
   }
 
   void _openActiveOfferFlow(

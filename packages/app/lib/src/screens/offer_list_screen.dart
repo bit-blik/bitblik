@@ -633,6 +633,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                           Logger.log.d(
                             () => "[OfferListScreen] Manual refresh triggered.",
                           );
+                          final apiService = await ref.read(
+                            initializedApiServiceProvider.future,
+                          );
+                          await refreshAvailableOffersCache(apiService);
                           ref.invalidate(availableOffersProvider);
                           ref.invalidate(activeOfferProvider);
                           await ref.read(availableOffersProvider.future);

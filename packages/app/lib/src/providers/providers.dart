@@ -187,11 +187,51 @@ final offersSubscriptionInitializer = FutureProvider<void>((ref) async {
 
 final offers = <Offer>[];
 
+Future<List<Offer>> refreshAvailableOffersCache(ApiServiceNostr apiService) async {
+  final currentOffers = List<Offer>.from(offers);
+  if (currentOffers.isEmpty) {
+    return List<Offer>.from(offers.reversed);
+  }
+
+  final refreshedOffers = await Future.wait(
+    currentOffers.map((offer) async {
+      try {
+        return await apiService.getOffer(offer.id);
+      } catch (e) {
+        Logger.log.w(
+          () => '[availableOffers] failed refreshing public offer ${offer.id}: $e',
+        );
+        return offer;
+      }
+    }),
+  );
+
+  final activeOffers =
+      refreshedOffers
+          .whereType<Offer>()
+          .where(
+            (offer) =>
+                offer.status == OfferStatus.funded ||
+                offer.status == OfferStatus.reserved,
+          )
+          .toList()
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+  offers
+    ..clear()
+    ..addAll(activeOffers);
+
+  return List<Offer>.from(offers.reversed);
+}
+
 // Provider for real-time list of available offers from Nostr subscription
 final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   // Depend on single global initializer
   await ref.watch(offersSubscriptionInitializer.future);
   final apiService = ref.watch(apiServiceProvider);
+  // Emit the latest cached snapshot immediately so pull-to-refresh and
+  // provider rebuilds don't hang waiting for a future live event.
+  yield List<Offer>.from(offers.reversed);
   await for (final offer in apiService.offersStream) {
     offers.removeWhere((o) => o.id == offer.id);
     if (offer.status == OfferStatus.funded ||
@@ -218,6 +258,21 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// assumed to be definitively cancelled — coordinator hold invoice
   /// would have expired by then.
   static const Duration _cancelledLookbackWindow = Duration(hours: 24);
+
+  Future<void> _promoteMostRecentActiveOffer() async {
+    final nextActive = await OfferDbService().getActiveOffer();
+    if (nextActive != null) {
+      Logger.log.i(
+        () =>
+            '[ActiveOfferNotifier] promoted fallback active offer ${nextActive.id} (${nextActive.status.name})',
+      );
+    } else {
+      Logger.log.d(
+        () => '[ActiveOfferNotifier] no fallback active offer available',
+      );
+    }
+    state = nextActive;
+  }
 
   Future<void> _loadActiveOffer() async {
     final offer = await OfferDbService().getActiveOffer();
@@ -416,9 +471,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   ///
   /// Flow:
   ///   1. Ask coordinator for exact offer.
-  ///   2. If the coordinator reports the same offer as already `funded`,
-  ///      throw [OfferAlreadyFundedException] without touching local state.
-  ///      Caller should redirect into the funded flow.
+  ///   2. If the local offer is still `created` but the coordinator reports
+  ///      the same offer as already `funded` (or later), throw
+  ///      [OfferAlreadyFundedException] without touching local state. Caller
+  ///      should redirect into the funded flow.
   ///   3. Otherwise call `cancel_offer` RPC best-effort, mark the local
   ///      row `cancelled`, and clear the in-memory active state. The
   ///      DB row stays so a future status update can revive it.
@@ -459,10 +515,12 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
       if (sameOffer &&
           remoteStatus != null &&
+          current.status == OfferStatus.created &&
           remoteStatus.index >= OfferStatus.funded.index &&
           !OfferDbService.terminalStatuses.contains(remoteStatus)) {
-        // Coordinator already funded this offer (or moved further).
-        // Persist whatever the coordinator says, but refuse to cancel locally.
+        // Coordinator already funded this offer while local state still says
+        // `created`. Persist whatever the coordinator says, but refuse to
+        // cancel locally from the pre-funding flow.
         final updated = current.copyWith(id: remoteId, status: remoteStatus);
         await OfferDbService().upsertOffer(updated);
         state = updated;
@@ -483,7 +541,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
     final cancelled = current.copyWith(status: OfferStatus.cancelled);
     await OfferDbService().upsertOffer(cancelled);
-    state = null;
+    await _promoteMostRecentActiveOffer();
   }
 
   /// Persist a status update from the coordinator.
@@ -562,7 +620,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                     hydrated.holdInvoicePaymentHash));
 
     if (isCurrent) {
-      state = hydrated;
+      if (OfferDbService.terminalStatuses.contains(newStatus)) {
+        await _promoteMostRecentActiveOffer();
+      } else {
+        state = hydrated;
+      }
       return;
     }
 

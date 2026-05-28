@@ -157,18 +157,17 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     switch (category) {
       case OfferCategory.shop:
         // teal #039F94 fading into
-        return [const Color(0xFF016B61), const Color(0xa0016B61)];
+        return [const Color(0xFF016B61), const Color(0xA0016B61)];
       case OfferCategory.atm:
         // dark green #025C2E into
-        return [const Color(0xFF025C2E), const Color(0xa022A758)];
+        return [const Color(0xFF025C2E), const Color(0xA0025C2E)];
       case OfferCategory.online:
         // navy blue into muted
-        return [const Color(0xFF032696), const Color(0xa0032696)];
+        return [const Color(0xFF032696), const Color(0xA0032696)];
       case null:
         return [Colors.grey.shade700, Colors.grey.shade500];
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -214,8 +213,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           final bool isFunded = offer.status == OfferStatus.funded;
           final bool isReserved = offer.status == OfferStatus.reserved;
           final bool isBlikReceived = offer.status == OfferStatus.blikReceived;
-          final requiresAtmConsent =
-              offer.category == OfferCategory.atm;
+          final requiresAtmConsent = offer.category == OfferCategory.atm;
           final requiresEcommerceConsent =
               offer.category == OfferCategory.online;
 
@@ -503,23 +501,21 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                         if (offer.category != null)
                           Positioned.fill(
                             child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
                                     _categoryGradientColors(offer.category)[0],
-                                    _categoryGradientColors(
-                                      offer.category,
-                                    )[1],
+                                    _categoryGradientColors(offer.category)[1],
                                     _categoryGradientColors(
                                       offer.category,
                                     )[1].withValues(alpha: 0.18),
-                                        Colors.transparent,
-                                      ],
-                                      stops: const [0.0, 0.14, 0.30, 0.44],
-                                    ),
-                                  ),
+                                    Colors.transparent,
+                                  ],
+                                  stops: const [0.0, 0.14, 0.30, 0.44],
+                                ),
+                              ),
                             ),
                           ),
                         // Ghost icon anchored top-left
@@ -544,22 +540,29 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   RichText(
                                     textAlign: TextAlign.center,
                                     text: TextSpan(
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 42,
-                                        color: offer.category != null
-                                            ? Colors.white
-                                            : Colors.black,
+                                        color: Colors.white,
                                       ),
                                       children: [
                                         TextSpan(
-                                          text: (offer.fiatAmount * 100).round() % 100 == 0
-                                              ? offer.fiatAmount.toStringAsFixed(0)
-                                              : offer.fiatAmount.toStringAsFixed(2),
-                                          style: const TextStyle(fontWeight: FontWeight.w600),
+                                          text:
+                                              (offer.fiatAmount * 100).round() %
+                                                          100 ==
+                                                      0
+                                                  ? offer.fiatAmount
+                                                      .toStringAsFixed(0)
+                                                  : offer.fiatAmount
+                                                      .toStringAsFixed(2),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                         TextSpan(
                                           text: ' ${offer.fiatCurrency}',
-                                          style: const TextStyle(fontWeight: FontWeight.w400),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w400,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -670,203 +673,6 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       isHighlighted: true,
                                     ),
 
-                                  if (offer.status != OfferStatus.takerPaid &&
-                                      offer.category != null) ...[
-                                    const SizedBox(height: 16),
-                                    _buildInfoRow(
-                                      t.offers.details.categoryLabel,
-                                      _categoryLabel(context, offer.category),
-                                      valuePrefix: _categoryAsset(
-                                                offer.category,
-                                              ) !=
-                                              null
-                                          ? Image.asset(
-                                            _categoryAsset(offer.category)!,
-                                            width: 22,
-                                            height: 22,
-                                          )
-                                          : null,
-                                    ),
-                                    if (isFunded &&
-                                        offer.category ==
-                                            OfferCategory.atm) ...[
-                                      const SizedBox(height: 14),
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.orange.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.orange.withValues(
-                                              alpha: 0.25,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Checkbox(
-                                              value: _atmConsentAccepted,
-                                              activeColor: Colors.red,
-                                              onChanged: (value) {
-                                                final v = value ?? false;
-                                                setState(() {
-                                                  _atmConsentAccepted = v;
-                                                });
-                                                _saveConsentAcceptance(atm: v);
-                                              },
-                                            ),
-                                            Expanded(
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  showModalBottomSheet(
-                                                    context: context,
-                                                    builder: (ctx) => Padding(
-                                                      padding: const EdgeInsets.all(24),
-                                                      child: Text(
-                                                        t.offers.details.consents.atm,
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                          height: 1.5,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                                child: Text(
-                                                  t.offers.details.consents.atm,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    height: 1.35,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.info_outline,
-                                                color: Colors.orange,
-                                                size: 20,
-                                              ),
-                                              onPressed: () {
-                                                showModalBottomSheet(
-                                                  context: context,
-                                                  builder: (ctx) => Padding(
-                                                    padding: const EdgeInsets.all(24),
-                                                    child: Text(
-                                                      t.offers.details.consents.atm,
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        height: 1.5,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                    if (isFunded &&
-                                        offer.category ==
-                                            OfferCategory.online) ...[
-                                      const SizedBox(height: 14),
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.amber.withValues(
-                                            alpha: 0.12,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.amber.withValues(
-                                              alpha: 0.35,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Checkbox(
-                                              value: _ecommerceConsentAccepted,
-                                              activeColor: Colors.red,
-                                              onChanged: (value) {
-                                                final v = value ?? false;
-                                                setState(() {
-                                                  _ecommerceConsentAccepted = v;
-                                                });
-                                                _saveConsentAcceptance(ecommerce: v);
-                                              },
-                                            ),
-                                            Expanded(
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  showModalBottomSheet(
-                                                    context: context,
-                                                    builder: (ctx) => Padding(
-                                                      padding: const EdgeInsets.all(24),
-                                                      child: Text(
-                                                        t.offers.details.consents.ecommerce,
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                          height: 1.5,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                                child: Text(
-                                                  t.offers.details.consents.ecommerce,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    height: 1.35,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.info_outline,
-                                                color: Colors.amber,
-                                                size: 20,
-                                              ),
-                                              onPressed: () {
-                                                showModalBottomSheet(
-                                                  context: context,
-                                                  builder: (ctx) => Padding(
-                                                    padding: const EdgeInsets.all(24),
-                                                    child: Text(
-                                                      t.offers.details.consents.ecommerce,
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        height: 1.5,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-
                                   // Timing information for completed offers (takerPaid status)
                                   if (offer.status == OfferStatus.takerPaid &&
                                       offer.timeToReserveSeconds != null &&
@@ -913,6 +719,288 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   Container(height: 1, color: Colors.grey[300]),
 
                                   const SizedBox(height: 20),
+
+                                  if (offer.category != null) ...[
+                                    _buildInfoRow(
+                                      t.offers.details.categoryLabel,
+                                      _categoryLabel(context, offer.category),
+                                      valuePrefix:
+                                          _categoryAsset(offer.category) != null
+                                              ? Image.asset(
+                                                _categoryAsset(offer.category)!,
+                                                width: 22,
+                                                height: 22,
+                                              )
+                                              : null,
+                                    ),
+                                    if (isFunded &&
+                                        offer.category ==
+                                            OfferCategory.atm) ...[
+                                      const SizedBox(height: 10),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.orange.withValues(
+                                              alpha: 0.25,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Checkbox(
+                                              value: _atmConsentAccepted,
+                                              activeColor: Colors.red,
+                                              visualDensity:
+                                                  const VisualDensity(
+                                                    horizontal: -4,
+                                                    vertical: -4,
+                                                  ),
+                                              materialTapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                              onChanged: (value) {
+                                                final v = value ?? false;
+                                                setState(() {
+                                                  _atmConsentAccepted = v;
+                                                });
+                                                _saveConsentAcceptance(atm: v);
+                                              },
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    builder:
+                                                        (ctx) => Padding(
+                                                          padding:
+                                                              const EdgeInsets.all(
+                                                                24,
+                                                              ),
+                                                          child: Text(
+                                                            t
+                                                                .offers
+                                                                .details
+                                                                .consents
+                                                                .atm,
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontSize: 14,
+                                                                  height: 1.5,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                  );
+                                                },
+                                                child: Text(
+                                                  t.offers.details.consents.atm,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    height: 1.2,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            IconButton(
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(
+                                                minWidth: 28,
+                                                minHeight: 28,
+                                              ),
+                                              visualDensity:
+                                                  const VisualDensity(
+                                                    horizontal: -4,
+                                                    vertical: -4,
+                                                  ),
+                                              icon: const Icon(
+                                                Icons.info_outline,
+                                                color: Colors.orange,
+                                                size: 18,
+                                              ),
+                                              onPressed: () {
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  builder:
+                                                      (ctx) => Padding(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              24,
+                                                            ),
+                                                        child: Text(
+                                                          t
+                                                              .offers
+                                                              .details
+                                                              .consents
+                                                              .atm,
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 14,
+                                                                height: 1.5,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                    if (isFunded &&
+                                        offer.category ==
+                                            OfferCategory.online) ...[
+                                      const SizedBox(height: 10),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.amber.withValues(
+                                              alpha: 0.35,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Checkbox(
+                                              value: _ecommerceConsentAccepted,
+                                              activeColor: Colors.red,
+                                              visualDensity:
+                                                  const VisualDensity(
+                                                    horizontal: -4,
+                                                    vertical: -4,
+                                                  ),
+                                              materialTapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                              onChanged: (value) {
+                                                final v = value ?? false;
+                                                setState(() {
+                                                  _ecommerceConsentAccepted = v;
+                                                });
+                                                _saveConsentAcceptance(
+                                                  ecommerce: v,
+                                                );
+                                              },
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    builder:
+                                                        (ctx) => Padding(
+                                                          padding:
+                                                              const EdgeInsets.all(
+                                                                24,
+                                                              ),
+                                                          child: Text(
+                                                            t
+                                                                .offers
+                                                                .details
+                                                                .consents
+                                                                .ecommerce,
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontSize: 14,
+                                                                  height: 1.5,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                  );
+                                                },
+                                                child: Text(
+                                                  t
+                                                      .offers
+                                                      .details
+                                                      .consents
+                                                      .ecommerce,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    height: 1.2,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            IconButton(
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(
+                                                minWidth: 28,
+                                                minHeight: 28,
+                                              ),
+                                              visualDensity:
+                                                  const VisualDensity(
+                                                    horizontal: -4,
+                                                    vertical: -4,
+                                                  ),
+                                              icon: const Icon(
+                                                Icons.info_outline,
+                                                color: Colors.amber,
+                                                size: 18,
+                                              ),
+                                              onPressed: () {
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  builder:
+                                                      (ctx) => Padding(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              24,
+                                                            ),
+                                                        child: Text(
+                                                          t
+                                                              .offers
+                                                              .details
+                                                              .consents
+                                                              .ecommerce,
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 14,
+                                                                height: 1.5,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 20),
+                                  ],
 
                                   // Coordinator row
                                   coordinatorInfoAsync.when(
@@ -1129,10 +1217,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (valuePrefix != null) ...[
-              valuePrefix,
-              const SizedBox(width: 6),
-            ],
+            if (valuePrefix != null) ...[valuePrefix, const SizedBox(width: 6)],
             Text(
               value,
               style: TextStyle(
