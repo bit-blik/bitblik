@@ -1562,7 +1562,7 @@ class _TranslationsMakerAmountFormCategoryPl extends TranslationsMakerAmountForm
 	@override late final _TranslationsMakerAmountFormCategoryOptionsPl options = _TranslationsMakerAmountFormCategoryOptionsPl._(_root);
 	@override String get atmHint => 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
 	@override String get ecommerceWarningTitle => 'Ryzyko zwrotu od sprzedawcy online';
-	@override String get ecommerceWarningBody => 'Jeśli sprzedawca nie zrealizuje zamówienia i automatycznie wyśle zwrot, zwrot może trafić na konto bankowe takera. BitBlik nie może wymusić, aby taker oddał te środki Tobie.';
+	@override String get ecommerceWarningBody => 'Jeśli sprzedawca nie zrealizuje zamówienia i automatycznie wyśle zwrot, zwrot może trafić na konto bankowe takera. Koordynator nie może wymusić, aby taker oddał te środki Tobie.';
 	@override String get ecommerceConfirmation => 'Rozumiem, że powinienem dodać do zamówienia online informację, aby w razie zwrotu sprzedawca zwrócił środki na inne konto.';
 }
 
@@ -2337,7 +2337,7 @@ extension on TranslationsPl {
 			case 'maker.amountForm.category.options.onlineService': return 'Produkt lub usługa online';
 			case 'maker.amountForm.category.atmHint': return 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Ryzyko zwrotu od sprzedawcy online';
-			case 'maker.amountForm.category.ecommerceWarningBody': return 'Jeśli sprzedawca nie zrealizuje zamówienia i automatycznie wyśle zwrot, zwrot może trafić na konto bankowe takera. BitBlik nie może wymusić, aby taker oddał te środki Tobie.';
+			case 'maker.amountForm.category.ecommerceWarningBody': return 'Jeśli sprzedawca nie zrealizuje zamówienia i automatycznie wyśle zwrot, zwrot może trafić na konto bankowe takera. Koordynator nie może wymusić, aby taker oddał te środki Tobie.';
 			case 'maker.amountForm.category.ecommerceConfirmation': return 'Rozumiem, że powinienem dodać do zamówienia online informację, aby w razie zwrotu sprzedawca zwrócił środki na inne konto.';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Błąd inicjowania oferty: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Błąd: Klucz publiczny nie został jeszcze załadowany.';

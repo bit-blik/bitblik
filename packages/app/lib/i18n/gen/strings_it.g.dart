@@ -1565,7 +1565,7 @@ class _TranslationsMakerAmountFormCategoryIt extends TranslationsMakerAmountForm
 	@override late final _TranslationsMakerAmountFormCategoryOptionsIt options = _TranslationsMakerAmountFormCategoryOptionsIt._(_root);
 	@override String get atmHint => 'I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive.';
 	@override String get ecommerceWarningTitle => 'Rischio rimborso negozio online';
-	@override String get ecommerceWarningBody => 'Se il negozio non può completare l\'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. BitBlik non può obbligare il taker a restituirlo a te.';
+	@override String get ecommerceWarningBody => 'Se il negozio non può completare l\'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. Il coordinatore non può obbligare il taker a restituirlo a te.';
 	@override String get ecommerceConfirmation => 'Capisco che dovrei aggiungere una nota all\'ordine online per chiedere al negozio di rimborsare su un conto diverso se il rimborso diventa necessario.';
 }
 
@@ -2341,7 +2341,7 @@ extension on TranslationsIt {
 			case 'maker.amountForm.category.options.onlineService': return 'Prodotto o servizio online';
 			case 'maker.amountForm.category.atmHint': return 'I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive.';
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Rischio rimborso negozio online';
-			case 'maker.amountForm.category.ecommerceWarningBody': return 'Se il negozio non può completare l\'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. BitBlik non può obbligare il taker a restituirlo a te.';
+			case 'maker.amountForm.category.ecommerceWarningBody': return 'Se il negozio non può completare l\'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. Il coordinatore non può obbligare il taker a restituirlo a te.';
 			case 'maker.amountForm.category.ecommerceConfirmation': return 'Capisco che dovrei aggiungere una nota all\'ordine online per chiedere al negozio di rimborsare su un conto diverso se il rimborso diventa necessario.';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Errore nell\'avvio dell\'offerta: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Errore: Chiave pubblica non ancora caricata.';

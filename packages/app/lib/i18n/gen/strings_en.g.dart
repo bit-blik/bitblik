@@ -2458,8 +2458,8 @@ class TranslationsMakerAmountFormCategoryEn {
 	/// en: 'Online merchant refund risk'
 	String get ecommerceWarningTitle => 'Online merchant refund risk';
 
-	/// en: 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker's bank account. BitBlik cannot force the taker to return it to you.'
-	String get ecommerceWarningBody => 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker\'s bank account. BitBlik cannot force the taker to return it to you.';
+	/// en: 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker's bank account. The coordinator cannot force the taker to return it to you.'
+	String get ecommerceWarningBody => 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker\'s bank account. The coordinator cannot force the taker to return it to you.';
 
 	/// en: 'I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary.'
 	String get ecommerceConfirmation => 'I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary.';
@@ -3574,7 +3574,7 @@ extension on Translations {
 			case 'maker.amountForm.category.options.onlineService': return 'Online service/product';
 			case 'maker.amountForm.category.atmHint': return 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Online merchant refund risk';
-			case 'maker.amountForm.category.ecommerceWarningBody': return 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker\'s bank account. BitBlik cannot force the taker to return it to you.';
+			case 'maker.amountForm.category.ecommerceWarningBody': return 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker\'s bank account. The coordinator cannot force the taker to return it to you.';
 			case 'maker.amountForm.category.ecommerceConfirmation': return 'I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary.';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Error initiating offer: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Error: Public key not yet loaded.';
