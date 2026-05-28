@@ -55,6 +55,7 @@ class OfferDbService {
       settled_at TEXT,
       taker_paid_at TEXT,
       taker_fees INTEGER,
+      category TEXT,
       payment_wallet_id TEXT
     )
   ''';
@@ -70,7 +71,7 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: (db, version) async {
         await db.execute(_createTableSql);
       },
@@ -100,6 +101,13 @@ class OfferDbService {
             await db.execute(
               'ALTER TABLE $_table ADD COLUMN payment_wallet_id TEXT',
             );
+          }
+        }
+        if (oldVersion < 7) {
+          final columns = await db.rawQuery('PRAGMA table_info($_table)');
+          final hasColumn = columns.any((col) => col['name'] == 'category');
+          if (!hasColumn) {
+            await db.execute('ALTER TABLE $_table ADD COLUMN category TEXT');
           }
         }
       },

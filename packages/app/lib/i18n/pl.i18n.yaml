@@ -108,9 +108,19 @@ offers:
     statusLabel: "Status"
     youllReceive: "Otrzymasz"
     coordinator: "Koordynator"
+    categoryLabel: "Kategoria"
+    categories:
+      physicalShop: "Towar fizyczny w sklepie"
+      atmCashout: "Wypłata gotówki z bankomatu"
+      onlineService: "Produkt lub usługa online"
+    consents:
+      atm: "Rozumiem, że niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty i akceptuję te dodatkowe koszty."
+      ecommerce: "Rozumiem, że jeśli zwrot od sprzedawcy błędnie trafi na moje konto bankowe, muszę skontaktować się z koordynatorem i zwrócić środki, aby maker mógł otrzymać ręczny zwrot."
   
   tooltips:
     takerFeeInfo: "Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz."
+    atmCategory: "Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat."
+    ecommerceCategory: "Jeśli sprzedawca automatycznie zwróci zamówienie, zwrot może trafić na Twoje konto bankowe. Jeśli tak się stanie, a środki nie należą do Ciebie, skontaktuj się z koordynatorem i zwróć je."
   
   actions:
     take: WEŹ
@@ -171,6 +181,8 @@ offers:
     resuming: "Błąd wznawiania oferty: ${details}"
     makerPublicKeyNotFound: Nie znaleziono klucza publicznego Makera
     takerPublicKeyNotFound: Nie znaleziono klucza publicznego Takera.
+    atmConsentRequired: "Zaakceptuj warunek dodatkowej opłaty ATM przed wzięciem tej oferty."
+    ecommerceConsentRequired: "Zaakceptuj warunek zwrotu środków z ecommerce przed wzięciem tej oferty."
 
   success:
     title: Oferta zakończona
@@ -282,6 +294,7 @@ maker:
       step3: "3. Użyj BLIK"
     labels:
       coordinator: Koordynator
+      category: Kategoria
       exchangeRate: Kurs wymiany
       fee: Opłata
       satoshisToPay: Do zapłaty
@@ -293,11 +306,24 @@ maker:
     tooltips:
       feeInfo: "Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning."
       payInfo: "Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty."
+
+    category:
+      label: "Kategoria oferty"
+      options:
+        physicalShop: "Towar fizyczny w sklepie"
+        atmCashout: "Wypłata gotówki z bankomatu"
+        onlineService: "Produkt lub usługa online"
+      atmHint: "Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty."
+      ecommerceWarningTitle: "Ryzyko zwrotu od sprzedawcy online"
+      ecommerceWarningBody: "Jeśli sprzedawca nie zrealizuje zamówienia i automatycznie wyśle zwrot, zwrot może trafić na konto bankowe takera. BitBlik nie może wymusić, aby taker oddał te środki Tobie."
+      ecommerceConfirmation: "Rozumiem, że powinienem dodać do zamówienia online informację, aby w razie zwrotu sprzedawca zwrócił środki na inne konto."
     
     errors:
       initiating: "Błąd inicjowania oferty: ${details}"
       publicKeyNotLoaded: "Błąd: Klucz publiczny nie został jeszcze załadowany."
       noCoordinatorMatchesAmount: "Żaden koordynator nie obsługuje tej kwoty. Spróbuj inną wartość."
+      categoryRequired: "Wybierz kategorię oferty."
+      ecommerceConfirmationRequired: "Potwierdź ryzyko zwrotu od sprzedawcy online przed kontynuacją."
   
   payInvoice:
     title: "Zapłać tę fakturę Hold:"
@@ -490,6 +516,9 @@ taker:
     importantNotice: "BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie BLIK tylko na kwotę ${amount} ${currency}"
     importantBlikAmountConfirmation: "BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność BLIK na kwotę dokładnie ${amount} ${currency}."
     instructions: "Osoba wystawiająca ofertę musi teraz wpisać kod BLIK w ciągu 2 minut. Następnie musisz zaakceptować kod BLIK w swojej aplikacji bankowej."
+    categoryReminder:
+      atm: "Przypomnienie dla oferty ATM: Twój bank może nadal poprosić o zatwierdzenie dodatkowej opłaty bankomatowej ponad główną kwotę."
+      ecommerce: "Przypomnienie dla zamówienia online: jeśli sprzedawca wyśle automatyczny zwrot na Twoje konto, skontaktuj się z koordynatorem i oddaj środki."
     waitingForMakerToReceive: "Czekamy, aż twórca oferty otrzyma Twój kod BLIK..."
     makerReceivedBlik: "Twórca oferty otrzymał Twój kod BLIK"
     timerExpiredMessage: "Minął termin ważności kodu BLIK 2m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty."

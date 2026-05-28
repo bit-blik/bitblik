@@ -85,8 +85,13 @@ class DatabaseService {
         taker_paid_at TIMESTAMPTZ,
         taker_fees BIGINT NULL, -- Renamed
         fiat_amount NUMERIC,
-        fiat_currency TEXT
+        fiat_currency TEXT,
+        category TEXT
       );
+    ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS category TEXT;
     ''');
     await _connection!.execute('''
       CREATE INDEX IF NOT EXISTS idx_offers_status ON offers (status);
@@ -189,8 +194,8 @@ class DatabaseService {
     final now = DateTime.now().toUtc();
     await _connection!.execute(
       '''
-        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency)
-        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency)
+        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category)
+        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category)
       ''',
       substitutionValues: {
         'id': offer.id,
@@ -205,6 +210,7 @@ class DatabaseService {
         'updated_at': now,
         'fiat_amount': offer.fiatAmount,
         'fiat_currency': offer.fiatCurrency,
+        'category': offer.category?.name,
       },
     );
     return offer.copyWith(updatedAt: now);
@@ -469,6 +475,15 @@ class DatabaseService {
 
   Offer _mapRowToOffer(PostgreSQLResultRow row) {
     final map = row.toColumnMap();
+    OfferCategory? parseCategory(dynamic raw) {
+      if (raw is! String || raw.trim().isEmpty) return null;
+      try {
+        return OfferCategory.values.byName(raw);
+      } catch (_) {
+        return null;
+      }
+    }
+
     return Offer(
       id: map['id'],
       amountSats: map['amount_sats'],
@@ -492,6 +507,7 @@ class DatabaseService {
       settledAt: (map['settled_at'] as DateTime?)?.toLocal(),
       takerPaidAt: (map['taker_paid_at'] as DateTime?)?.toLocal(),
       takerFees: map['taker_fees'],
+      category: parseCategory(map['category']),
     );
 }
 

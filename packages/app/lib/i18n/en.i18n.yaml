@@ -109,9 +109,19 @@ offers:
     statusLabel: "Status"
     youllReceive: "You'll receive"
     coordinator: "Coordinator"
+    categoryLabel: "Category"
+    categories:
+      physicalShop: "Physical good in shop"
+      atmCashout: "ATM cash out"
+      onlineService: "Online service/product"
+    consents:
+      atm: "I understand some ATMs add an extra bank fee on top, and by taking this offer I accept those additional charges."
+      ecommerce: "I understand that if a merchant refund wrongly comes to my bank account, I must contact the coordinator and return the funds so the maker can be refunded manually."
   
   tooltips:
     takerFeeInfo: "Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive."
+    atmCategory: "Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM."
+    ecommerceCategory: "If the merchant refunds the order automatically, the refund may go to your bank account. If that happens and the refund is not rightfully yours, contact the coordinator and return the funds."
   
   actions:
     take: TAKE
@@ -172,6 +182,8 @@ offers:
     resuming: "Error resuming offer: ${details}"
     makerPublicKeyNotFound: Maker public key not found
     takerPublicKeyNotFound: Taker public key not found.
+    atmConsentRequired: "Accept the ATM surcharge condition before taking this offer."
+    ecommerceConsentRequired: "Accept the ecommerce refund-return condition before taking this offer."
 
   success:
     title: Offer completed
@@ -283,6 +295,7 @@ maker:
       step3: "3. Use BLIK"
     labels:
       coordinator: Coordinator
+      category: Category
       exchangeRate: Exchange Rate
       fee: Fee
       satoshisToPay: Amount to Pay
@@ -294,11 +307,24 @@ maker:
     tooltips:
       feeInfo: "Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment."
       payInfo: "This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay."
+
+    category:
+      label: "Offer category"
+      options:
+        physicalShop: "Physical good in shop"
+        atmCashout: "ATM cash out"
+        onlineService: "Online service/product"
+      atmHint: "Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees."
+      ecommerceWarningTitle: "Online merchant refund risk"
+      ecommerceWarningBody: "If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker's bank account. BitBlik cannot force the taker to return it to you."
+      ecommerceConfirmation: "I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary."
     
     errors:
       initiating: "Error initiating offer: ${details}"
       publicKeyNotLoaded: "Error: Public key not yet loaded."
       noCoordinatorMatchesAmount: "No coordinator supports this amount. Try a different value."
+      categoryRequired: "Select an offer category."
+      ecommerceConfirmationRequired: "Confirm the online merchant refund risk before continuing."
   
   payInvoice:
     title: "Pay this Hold invoice:"
@@ -506,6 +532,9 @@ taker:
     importantNotice: "VERY IMPORTANT: Make sure you only accept BLIK confirmation for ${amount} ${currency}"
     importantBlikAmountConfirmation: "VERY IMPORTANT: In your banking app, ensure you are confirming a BLIK payment for exactly ${amount} ${currency}."
     instructions: The maker must now enter it into the payment terminal within 2 minutes. You then must accept the BLIK code in your banking app.
+    categoryReminder:
+      atm: "ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount."
+      ecommerce: "Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it."
     waitingForMakerToReceive: "Waiting for maker to receive your BLIK code..."
     makerReceivedBlik: "Maker has received your BLIK code."
     timerExpiredMessage: "BLIK 2m expiration time has passed. Waiting for maker to confirm or mark code as invalid."

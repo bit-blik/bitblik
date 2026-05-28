@@ -780,6 +780,12 @@ class TranslationsOffersDetailsEn {
 
 	/// en: 'Coordinator'
 	String get coordinator => 'Coordinator';
+
+	/// en: 'Category'
+	String get categoryLabel => 'Category';
+
+	late final TranslationsOffersDetailsCategoriesEn categories = TranslationsOffersDetailsCategoriesEn.internal(_root);
+	late final TranslationsOffersDetailsConsentsEn consents = TranslationsOffersDetailsConsentsEn.internal(_root);
 }
 
 // Path: offers.tooltips
@@ -792,6 +798,12 @@ class TranslationsOffersTooltipsEn {
 
 	/// en: 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.'
 	String takerFeeInfo({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.';
+
+	/// en: 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.'
+	String get atmCategory => 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.';
+
+	/// en: 'If the merchant refunds the order automatically, the refund may go to your bank account. If that happens and the refund is not rightfully yours, contact the coordinator and return the funds.'
+	String get ecommerceCategory => 'If the merchant refunds the order automatically, the refund may go to your bank account. If that happens and the refund is not rightfully yours, contact the coordinator and return the funds.';
 }
 
 // Path: offers.actions
@@ -987,6 +999,12 @@ class TranslationsOffersErrorsEn {
 
 	/// en: 'Taker public key not found.'
 	String get takerPublicKeyNotFound => 'Taker public key not found.';
+
+	/// en: 'Accept the ATM surcharge condition before taking this offer.'
+	String get atmConsentRequired => 'Accept the ATM surcharge condition before taking this offer.';
+
+	/// en: 'Accept the ecommerce refund-return condition before taking this offer.'
+	String get ecommerceConsentRequired => 'Accept the ecommerce refund-return condition before taking this offer.';
 }
 
 // Path: offers.success
@@ -1294,6 +1312,7 @@ class TranslationsMakerAmountFormEn {
 	late final TranslationsMakerAmountFormLabelsEn labels = TranslationsMakerAmountFormLabelsEn.internal(_root);
 	late final TranslationsMakerAmountFormActionsEn actions = TranslationsMakerAmountFormActionsEn.internal(_root);
 	late final TranslationsMakerAmountFormTooltipsEn tooltips = TranslationsMakerAmountFormTooltipsEn.internal(_root);
+	late final TranslationsMakerAmountFormCategoryEn category = TranslationsMakerAmountFormCategoryEn.internal(_root);
 	late final TranslationsMakerAmountFormErrorsEn errors = TranslationsMakerAmountFormErrorsEn.internal(_root);
 }
 
@@ -1576,6 +1595,8 @@ class TranslationsTakerWaitConfirmationEn {
 
 	/// en: 'The maker must now enter it into the payment terminal within 2 minutes. You then must accept the BLIK code in your banking app.'
 	String get instructions => 'The maker must now enter it into the payment terminal within 2 minutes. You then must accept the BLIK code in your banking app.';
+
+	late final TranslationsTakerWaitConfirmationCategoryReminderEn categoryReminder = TranslationsTakerWaitConfirmationCategoryReminderEn.internal(_root);
 
 	/// en: 'Waiting for maker to receive your BLIK code...'
 	String get waitingForMakerToReceive => 'Waiting for maker to receive your BLIK code...';
@@ -2310,6 +2331,39 @@ class TranslationsRelaysPopupEn {
 	String get connectingMessage => 'Connecting to relays...';
 }
 
+// Path: offers.details.categories
+class TranslationsOffersDetailsCategoriesEn {
+	TranslationsOffersDetailsCategoriesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Physical good in shop'
+	String get physicalShop => 'Physical good in shop';
+
+	/// en: 'ATM cash out'
+	String get atmCashout => 'ATM cash out';
+
+	/// en: 'Online service/product'
+	String get onlineService => 'Online service/product';
+}
+
+// Path: offers.details.consents
+class TranslationsOffersDetailsConsentsEn {
+	TranslationsOffersDetailsConsentsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'I understand some ATMs add an extra bank fee on top, and by taking this offer I accept those additional charges.'
+	String get atm => 'I understand some ATMs add an extra bank fee on top, and by taking this offer I accept those additional charges.';
+
+	/// en: 'I understand that if a merchant refund wrongly comes to my bank account, I must contact the coordinator and return the funds so the maker can be refunded manually.'
+	String get ecommerce => 'I understand that if a merchant refund wrongly comes to my bank account, I must contact the coordinator and return the funds so the maker can be refunded manually.';
+}
+
 // Path: maker.amountForm.progress
 class TranslationsMakerAmountFormProgressEn {
 	TranslationsMakerAmountFormProgressEn.internal(this._root);
@@ -2338,6 +2392,9 @@ class TranslationsMakerAmountFormLabelsEn {
 
 	/// en: 'Coordinator'
 	String get coordinator => 'Coordinator';
+
+	/// en: 'Category'
+	String get category => 'Category';
 
 	/// en: 'Exchange Rate'
 	String get exchangeRate => 'Exchange Rate';
@@ -2382,6 +2439,32 @@ class TranslationsMakerAmountFormTooltipsEn {
 	String get payInfo => 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.';
 }
 
+// Path: maker.amountForm.category
+class TranslationsMakerAmountFormCategoryEn {
+	TranslationsMakerAmountFormCategoryEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Offer category'
+	String get label => 'Offer category';
+
+	late final TranslationsMakerAmountFormCategoryOptionsEn options = TranslationsMakerAmountFormCategoryOptionsEn.internal(_root);
+
+	/// en: 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.'
+	String get atmHint => 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
+
+	/// en: 'Online merchant refund risk'
+	String get ecommerceWarningTitle => 'Online merchant refund risk';
+
+	/// en: 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker's bank account. BitBlik cannot force the taker to return it to you.'
+	String get ecommerceWarningBody => 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker\'s bank account. BitBlik cannot force the taker to return it to you.';
+
+	/// en: 'I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary.'
+	String get ecommerceConfirmation => 'I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary.';
+}
+
 // Path: maker.amountForm.errors
 class TranslationsMakerAmountFormErrorsEn {
 	TranslationsMakerAmountFormErrorsEn.internal(this._root);
@@ -2398,6 +2481,12 @@ class TranslationsMakerAmountFormErrorsEn {
 
 	/// en: 'No coordinator supports this amount. Try a different value.'
 	String get noCoordinatorMatchesAmount => 'No coordinator supports this amount. Try a different value.';
+
+	/// en: 'Select an offer category.'
+	String get categoryRequired => 'Select an offer category.';
+
+	/// en: 'Confirm the online merchant refund risk before continuing.'
+	String get ecommerceConfirmationRequired => 'Confirm the online merchant refund risk before continuing.';
 }
 
 // Path: maker.payInvoice.actions
@@ -2825,6 +2914,21 @@ class TranslationsTakerSubmitBlikDetailsEn {
 	String get youllReceive => 'You\'ll receive';
 }
 
+// Path: taker.waitConfirmation.categoryReminder
+class TranslationsTakerWaitConfirmationCategoryReminderEn {
+	TranslationsTakerWaitConfirmationCategoryReminderEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.'
+	String get atm => 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.';
+
+	/// en: 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.'
+	String get ecommerce => 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.';
+}
+
 // Path: taker.waitConfirmation.takerCharged
 class TranslationsTakerWaitConfirmationTakerChargedEn {
 	TranslationsTakerWaitConfirmationTakerChargedEn.internal(this._root);
@@ -3215,6 +3319,24 @@ class TranslationsHomeStatisticsErrorsEn {
 	String loading({required Object error}) => 'Error loading statistics: ${error}';
 }
 
+// Path: maker.amountForm.category.options
+class TranslationsMakerAmountFormCategoryOptionsEn {
+	TranslationsMakerAmountFormCategoryOptionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Physical good in shop'
+	String get physicalShop => 'Physical good in shop';
+
+	/// en: 'ATM cash out'
+	String get atmCashout => 'ATM cash out';
+
+	/// en: 'Online service/product'
+	String get onlineService => 'Online service/product';
+}
+
 // Path: maker.conflict.disputeDialog.actions
 class TranslationsMakerConflictDisputeDialogActionsEn {
 	TranslationsMakerConflictDisputeDialogActionsEn.internal(this._root);
@@ -3309,7 +3431,15 @@ extension on Translations {
 			case 'offers.details.statusLabel': return 'Status';
 			case 'offers.details.youllReceive': return 'You\'ll receive';
 			case 'offers.details.coordinator': return 'Coordinator';
+			case 'offers.details.categoryLabel': return 'Category';
+			case 'offers.details.categories.physicalShop': return 'Physical good in shop';
+			case 'offers.details.categories.atmCashout': return 'ATM cash out';
+			case 'offers.details.categories.onlineService': return 'Online service/product';
+			case 'offers.details.consents.atm': return 'I understand some ATMs add an extra bank fee on top, and by taking this offer I accept those additional charges.';
+			case 'offers.details.consents.ecommerce': return 'I understand that if a merchant refund wrongly comes to my bank account, I must contact the coordinator and return the funds so the maker can be refunded manually.';
 			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.';
+			case 'offers.tooltips.atmCategory': return 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.';
+			case 'offers.tooltips.ecommerceCategory': return 'If the merchant refunds the order automatically, the refund may go to your bank account. If that happens and the refund is not rightfully yours, contact the coordinator and return the funds.';
 			case 'offers.actions.take': return 'TAKE';
 			case 'offers.actions.takeOffer': return 'Take Offer';
 			case 'offers.actions.resume': return 'ENTER BLIK';
@@ -3360,6 +3490,8 @@ extension on Translations {
 			case 'offers.errors.resuming': return ({required Object details}) => 'Error resuming offer: ${details}';
 			case 'offers.errors.makerPublicKeyNotFound': return 'Maker public key not found';
 			case 'offers.errors.takerPublicKeyNotFound': return 'Taker public key not found.';
+			case 'offers.errors.atmConsentRequired': return 'Accept the ATM surcharge condition before taking this offer.';
+			case 'offers.errors.ecommerceConsentRequired': return 'Accept the ecommerce refund-return condition before taking this offer.';
 			case 'offers.success.title': return 'Offer completed';
 			case 'offers.success.headline': return 'Payment confirmed!';
 			case 'offers.success.subtitle': return 'Taker will be paid now.';
@@ -3427,6 +3559,7 @@ extension on Translations {
 			case 'maker.amountForm.progress.step2': return '2. Wait for Taker';
 			case 'maker.amountForm.progress.step3': return '3. Use BLIK';
 			case 'maker.amountForm.labels.coordinator': return 'Coordinator';
+			case 'maker.amountForm.labels.category': return 'Category';
 			case 'maker.amountForm.labels.exchangeRate': return 'Exchange Rate';
 			case 'maker.amountForm.labels.fee': return 'Fee';
 			case 'maker.amountForm.labels.satoshisToPay': return 'Amount to Pay';
@@ -3435,9 +3568,19 @@ extension on Translations {
 			case 'maker.amountForm.actions.generateInvoice': return 'Generate Invoice';
 			case 'maker.amountForm.tooltips.feeInfo': return ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment.';
 			case 'maker.amountForm.tooltips.payInfo': return 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.';
+			case 'maker.amountForm.category.label': return 'Offer category';
+			case 'maker.amountForm.category.options.physicalShop': return 'Physical good in shop';
+			case 'maker.amountForm.category.options.atmCashout': return 'ATM cash out';
+			case 'maker.amountForm.category.options.onlineService': return 'Online service/product';
+			case 'maker.amountForm.category.atmHint': return 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
+			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Online merchant refund risk';
+			case 'maker.amountForm.category.ecommerceWarningBody': return 'If the merchant cannot fulfill the order and automatically sends a refund, that refund may go back to the taker\'s bank account. BitBlik cannot force the taker to return it to you.';
+			case 'maker.amountForm.category.ecommerceConfirmation': return 'I understand I should add a note to the online order telling the merchant to refund a different account if a refund becomes necessary.';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Error initiating offer: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Error: Public key not yet loaded.';
 			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'No coordinator supports this amount. Try a different value.';
+			case 'maker.amountForm.errors.categoryRequired': return 'Select an offer category.';
+			case 'maker.amountForm.errors.ecommerceConfirmationRequired': return 'Confirm the online merchant refund risk before continuing.';
 			case 'maker.payInvoice.title': return 'Pay this Hold invoice:';
 			case 'maker.payInvoice.actions.copy': return 'Copy Invoice';
 			case 'maker.payInvoice.actions.payInWallet': return 'Open in External Wallet';
@@ -3577,6 +3720,8 @@ extension on Translations {
 			case 'taker.waitConfirmation.importantNotice': return ({required Object amount, required Object currency}) => 'VERY IMPORTANT: Make sure you only accept BLIK confirmation for ${amount} ${currency}';
 			case 'taker.waitConfirmation.importantBlikAmountConfirmation': return ({required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a BLIK payment for exactly ${amount} ${currency}.';
 			case 'taker.waitConfirmation.instructions': return 'The maker must now enter it into the payment terminal within 2 minutes. You then must accept the BLIK code in your banking app.';
+			case 'taker.waitConfirmation.categoryReminder.atm': return 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.';
+			case 'taker.waitConfirmation.categoryReminder.ecommerce': return 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.';
 			case 'taker.waitConfirmation.waitingForMakerToReceive': return 'Waiting for maker to receive your BLIK code...';
 			case 'taker.waitConfirmation.makerReceivedBlik': return 'Maker has received your BLIK code.';
 			case 'taker.waitConfirmation.timerExpiredMessage': return 'BLIK 2m expiration time has passed. Waiting for maker to confirm or mark code as invalid.';

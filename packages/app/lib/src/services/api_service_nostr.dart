@@ -33,6 +33,7 @@ class ApiServiceNostr {
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
     required String makerId,
+    OfferCategory? category,
     String? coordinatorPubkey,
   }) async {
     try {
@@ -42,6 +43,7 @@ class ApiServiceNostr {
       return await _nostrService.initiateOfferFiat(
         fiatAmount: fiatAmount,
         makerId: makerId,
+        category: category,
         coordinatorPubkey: coordinatorPubkey,
       );
     } catch (e) {

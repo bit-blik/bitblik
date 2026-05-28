@@ -557,6 +557,9 @@ class _TranslationsOffersDetailsIt extends TranslationsOffersDetailsEn {
 	@override String get statusLabel => 'Stato';
 	@override String get youllReceive => 'Riceverai';
 	@override String get coordinator => 'Coordinatore';
+	@override String get categoryLabel => 'Categoria';
+	@override late final _TranslationsOffersDetailsCategoriesIt categories = _TranslationsOffersDetailsCategoriesIt._(_root);
+	@override late final _TranslationsOffersDetailsConsentsIt consents = _TranslationsOffersDetailsConsentsIt._(_root);
 }
 
 // Path: offers.tooltips
@@ -567,6 +570,8 @@ class _TranslationsOffersTooltipsIt extends TranslationsOffersTooltipsEn {
 
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi';
+	@override String get atmCategory => 'Alcuni ATM aggiungono una commissione extra oltre all\'importo dell\'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall\'ATM.';
+	@override String get ecommerceCategory => 'Se il commerciante rimborsa automaticamente l\'ordine, il rimborso potrebbe arrivare sul tuo conto bancario. Se succede e il rimborso non ti spetta, contatta il coordinatore e restituisci i fondi.';
 }
 
 // Path: offers.actions
@@ -662,6 +667,8 @@ class _TranslationsOffersErrorsIt extends TranslationsOffersErrorsEn {
 	@override String resuming({required Object details}) => 'Errore nel riprendere l\'offerta: ${details}';
 	@override String get makerPublicKeyNotFound => 'Chiave pubblica del maker non trovata';
 	@override String get takerPublicKeyNotFound => 'Chiave pubblica del taker non trovata.';
+	@override String get atmConsentRequired => 'Accetta la condizione sulla commissione ATM prima di prendere questa offerta.';
+	@override String get ecommerceConsentRequired => 'Accetta la condizione di restituzione del rimborso ecommerce prima di prendere questa offerta.';
 }
 
 // Path: offers.success
@@ -845,6 +852,7 @@ class _TranslationsMakerAmountFormIt extends TranslationsMakerAmountFormEn {
 	@override late final _TranslationsMakerAmountFormLabelsIt labels = _TranslationsMakerAmountFormLabelsIt._(_root);
 	@override late final _TranslationsMakerAmountFormActionsIt actions = _TranslationsMakerAmountFormActionsIt._(_root);
 	@override late final _TranslationsMakerAmountFormTooltipsIt tooltips = _TranslationsMakerAmountFormTooltipsIt._(_root);
+	@override late final _TranslationsMakerAmountFormCategoryIt category = _TranslationsMakerAmountFormCategoryIt._(_root);
 	@override late final _TranslationsMakerAmountFormErrorsIt errors = _TranslationsMakerAmountFormErrorsIt._(_root);
 }
 
@@ -1016,6 +1024,7 @@ class _TranslationsTakerWaitConfirmationIt extends TranslationsTakerWaitConfirma
 	@override String importantNotice({required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Assicurati di accettare solo la conferma BLIK per ${amount} ${currency}';
 	@override String importantBlikAmountConfirmation({required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Nella tua app bancaria, assicurati di confermare un pagamento BLIK per esattamente ${amount} ${currency}.';
 	@override String get instructions => 'Il maker deve ora inserirlo nel terminale di pagamento entro 2 minuti. Dovrai poi accettare il codice BLIK nella tua app bancaria.';
+	@override late final _TranslationsTakerWaitConfirmationCategoryReminderIt categoryReminder = _TranslationsTakerWaitConfirmationCategoryReminderIt._(_root);
 	@override String get waitingForMakerToReceive => 'In attesa che il maker riceva il tuo codice BLIK...';
 	@override String get makerReceivedBlik => 'Il maker ha ricevuto il tuo codice BLIK.';
 	@override String get timerExpiredMessage => 'Il tempo di scadenza BLIK di 2 minuti è passato. In attesa che il maker confermi o contrassegni il codice come non valido.';
@@ -1473,6 +1482,29 @@ class _TranslationsRelaysPopupIt extends TranslationsRelaysPopupEn {
 	@override String get connectingMessage => 'Connessione ai relay...';
 }
 
+// Path: offers.details.categories
+class _TranslationsOffersDetailsCategoriesIt extends TranslationsOffersDetailsCategoriesEn {
+	_TranslationsOffersDetailsCategoriesIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get physicalShop => 'Bene fisico in negozio';
+	@override String get atmCashout => 'Prelievo contanti da ATM';
+	@override String get onlineService => 'Prodotto o servizio online';
+}
+
+// Path: offers.details.consents
+class _TranslationsOffersDetailsConsentsIt extends TranslationsOffersDetailsConsentsEn {
+	_TranslationsOffersDetailsConsentsIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get atm => 'Capisco che alcuni ATM aggiungono una commissione bancaria extra oltre all\'importo dell\'offerta e accetto tali costi aggiuntivi.';
+	@override String get ecommerce => 'Capisco che se un rimborso del commerciante arriva per errore sul mio conto bancario, devo contattare il coordinatore e restituire i fondi affinché il maker possa essere rimborsato manualmente.';
+}
+
 // Path: maker.amountForm.progress
 class _TranslationsMakerAmountFormProgressIt extends TranslationsMakerAmountFormProgressEn {
 	_TranslationsMakerAmountFormProgressIt._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -1493,6 +1525,7 @@ class _TranslationsMakerAmountFormLabelsIt extends TranslationsMakerAmountFormLa
 
 	// Translations
 	@override String get coordinator => 'Coordinatore';
+	@override String get category => 'Categoria';
 	@override String get exchangeRate => 'Tasso di Cambio';
 	@override String get fee => 'Commissione';
 	@override String get satoshisToPay => 'Importo da Pagare';
@@ -1521,6 +1554,21 @@ class _TranslationsMakerAmountFormTooltipsIt extends TranslationsMakerAmountForm
 	@override String get payInfo => 'Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l\'importo esatto, e l\'importo della fattura sarà quello finale e definitivo da pagare.';
 }
 
+// Path: maker.amountForm.category
+class _TranslationsMakerAmountFormCategoryIt extends TranslationsMakerAmountFormCategoryEn {
+	_TranslationsMakerAmountFormCategoryIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Categoria offerta';
+	@override late final _TranslationsMakerAmountFormCategoryOptionsIt options = _TranslationsMakerAmountFormCategoryOptionsIt._(_root);
+	@override String get atmHint => 'I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive.';
+	@override String get ecommerceWarningTitle => 'Rischio rimborso negozio online';
+	@override String get ecommerceWarningBody => 'Se il negozio non può completare l\'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. BitBlik non può obbligare il taker a restituirlo a te.';
+	@override String get ecommerceConfirmation => 'Capisco che dovrei aggiungere una nota all\'ordine online per chiedere al negozio di rimborsare su un conto diverso se il rimborso diventa necessario.';
+}
+
 // Path: maker.amountForm.errors
 class _TranslationsMakerAmountFormErrorsIt extends TranslationsMakerAmountFormErrorsEn {
 	_TranslationsMakerAmountFormErrorsIt._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -1531,6 +1579,8 @@ class _TranslationsMakerAmountFormErrorsIt extends TranslationsMakerAmountFormEr
 	@override String initiating({required Object details}) => 'Errore nell\'avvio dell\'offerta: ${details}';
 	@override String get publicKeyNotLoaded => 'Errore: Chiave pubblica non ancora caricata.';
 	@override String get noCoordinatorMatchesAmount => 'Nessun coordinatore supporta questo importo. Prova con un valore diverso.';
+	@override String get categoryRequired => 'Seleziona una categoria per l\'offerta.';
+	@override String get ecommerceConfirmationRequired => 'Conferma il rischio di rimborso del negozio online prima di continuare.';
 }
 
 // Path: maker.payInvoice.actions
@@ -1765,6 +1815,17 @@ class _TranslationsTakerSubmitBlikDetailsIt extends TranslationsTakerSubmitBlikD
 	@override String get takerFee => 'Commissione taker';
 	@override String get status => 'Stato';
 	@override String get youllReceive => 'Riceverai';
+}
+
+// Path: taker.waitConfirmation.categoryReminder
+class _TranslationsTakerWaitConfirmationCategoryReminderIt extends TranslationsTakerWaitConfirmationCategoryReminderEn {
+	_TranslationsTakerWaitConfirmationCategoryReminderIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get atm => 'Promemoria offerta ATM: la tua banca potrebbe ancora chiederti di approvare una commissione ATM extra oltre all\'importo principale.';
+	@override String get ecommerce => 'Promemoria ordine online: se il commerciante invia un rimborso automatico al tuo conto bancario, contatta il coordinatore e restituiscilo.';
 }
 
 // Path: taker.waitConfirmation.takerCharged
@@ -2035,6 +2096,18 @@ class _TranslationsHomeStatisticsErrorsIt extends TranslationsHomeStatisticsErro
 	@override String loading({required Object error}) => 'Errore nel caricamento delle statistiche: ${error}';
 }
 
+// Path: maker.amountForm.category.options
+class _TranslationsMakerAmountFormCategoryOptionsIt extends TranslationsMakerAmountFormCategoryOptionsEn {
+	_TranslationsMakerAmountFormCategoryOptionsIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get physicalShop => 'Bene fisico in negozio';
+	@override String get atmCashout => 'Prelievo contanti da ATM';
+	@override String get onlineService => 'Prodotto o servizio online';
+}
+
 // Path: maker.conflict.disputeDialog.actions
 class _TranslationsMakerConflictDisputeDialogActionsIt extends TranslationsMakerConflictDisputeDialogActionsEn {
 	_TranslationsMakerConflictDisputeDialogActionsIt._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -2125,7 +2198,15 @@ extension on TranslationsIt {
 			case 'offers.details.statusLabel': return 'Stato';
 			case 'offers.details.youllReceive': return 'Riceverai';
 			case 'offers.details.coordinator': return 'Coordinatore';
+			case 'offers.details.categoryLabel': return 'Categoria';
+			case 'offers.details.categories.physicalShop': return 'Bene fisico in negozio';
+			case 'offers.details.categories.atmCashout': return 'Prelievo contanti da ATM';
+			case 'offers.details.categories.onlineService': return 'Prodotto o servizio online';
+			case 'offers.details.consents.atm': return 'Capisco che alcuni ATM aggiungono una commissione bancaria extra oltre all\'importo dell\'offerta e accetto tali costi aggiuntivi.';
+			case 'offers.details.consents.ecommerce': return 'Capisco che se un rimborso del commerciante arriva per errore sul mio conto bancario, devo contattare il coordinatore e restituire i fondi affinché il maker possa essere rimborsato manualmente.';
 			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi';
+			case 'offers.tooltips.atmCategory': return 'Alcuni ATM aggiungono una commissione extra oltre all\'importo dell\'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall\'ATM.';
+			case 'offers.tooltips.ecommerceCategory': return 'Se il commerciante rimborsa automaticamente l\'ordine, il rimborso potrebbe arrivare sul tuo conto bancario. Se succede e il rimborso non ti spetta, contatta il coordinatore e restituisci i fondi.';
 			case 'offers.actions.take': return 'ACCETTA';
 			case 'offers.actions.takeOffer': return 'Accetta Offerta';
 			case 'offers.actions.resume': return 'INSERISCI BLIK';
@@ -2176,6 +2257,8 @@ extension on TranslationsIt {
 			case 'offers.errors.resuming': return ({required Object details}) => 'Errore nel riprendere l\'offerta: ${details}';
 			case 'offers.errors.makerPublicKeyNotFound': return 'Chiave pubblica del maker non trovata';
 			case 'offers.errors.takerPublicKeyNotFound': return 'Chiave pubblica del taker non trovata.';
+			case 'offers.errors.atmConsentRequired': return 'Accetta la condizione sulla commissione ATM prima di prendere questa offerta.';
+			case 'offers.errors.ecommerceConsentRequired': return 'Accetta la condizione di restituzione del rimborso ecommerce prima di prendere questa offerta.';
 			case 'offers.success.title': return 'Offerta completata';
 			case 'offers.success.headline': return 'Pagamento confermato!';
 			case 'offers.success.subtitle': return 'Il taker verrà pagato ora.';
@@ -2243,6 +2326,7 @@ extension on TranslationsIt {
 			case 'maker.amountForm.progress.step2': return '2. Attendi Taker';
 			case 'maker.amountForm.progress.step3': return '3. Usa BLIK';
 			case 'maker.amountForm.labels.coordinator': return 'Coordinatore';
+			case 'maker.amountForm.labels.category': return 'Categoria';
 			case 'maker.amountForm.labels.exchangeRate': return 'Tasso di Cambio';
 			case 'maker.amountForm.labels.fee': return 'Commissione';
 			case 'maker.amountForm.labels.satoshisToPay': return 'Importo da Pagare';
@@ -2251,9 +2335,19 @@ extension on TranslationsIt {
 			case 'maker.amountForm.actions.generateInvoice': return 'Genera Fattura';
 			case 'maker.amountForm.tooltips.feeInfo': return ({required Object feePercent}) => 'Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning.';
 			case 'maker.amountForm.tooltips.payInfo': return 'Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l\'importo esatto, e l\'importo della fattura sarà quello finale e definitivo da pagare.';
+			case 'maker.amountForm.category.label': return 'Categoria offerta';
+			case 'maker.amountForm.category.options.physicalShop': return 'Bene fisico in negozio';
+			case 'maker.amountForm.category.options.atmCashout': return 'Prelievo contanti da ATM';
+			case 'maker.amountForm.category.options.onlineService': return 'Prodotto o servizio online';
+			case 'maker.amountForm.category.atmHint': return 'I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive.';
+			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Rischio rimborso negozio online';
+			case 'maker.amountForm.category.ecommerceWarningBody': return 'Se il negozio non può completare l\'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. BitBlik non può obbligare il taker a restituirlo a te.';
+			case 'maker.amountForm.category.ecommerceConfirmation': return 'Capisco che dovrei aggiungere una nota all\'ordine online per chiedere al negozio di rimborsare su un conto diverso se il rimborso diventa necessario.';
 			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Errore nell\'avvio dell\'offerta: ${details}';
 			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Errore: Chiave pubblica non ancora caricata.';
 			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'Nessun coordinatore supporta questo importo. Prova con un valore diverso.';
+			case 'maker.amountForm.errors.categoryRequired': return 'Seleziona una categoria per l\'offerta.';
+			case 'maker.amountForm.errors.ecommerceConfirmationRequired': return 'Conferma il rischio di rimborso del negozio online prima di continuare.';
 			case 'maker.payInvoice.title': return 'Paga questa fattura Hold:';
 			case 'maker.payInvoice.actions.copy': return 'Copia Fattura';
 			case 'maker.payInvoice.actions.payInWallet': return 'Apri nel Wallet Esterno';
@@ -2380,6 +2474,8 @@ extension on TranslationsIt {
 			case 'taker.waitConfirmation.importantNotice': return ({required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Assicurati di accettare solo la conferma BLIK per ${amount} ${currency}';
 			case 'taker.waitConfirmation.importantBlikAmountConfirmation': return ({required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Nella tua app bancaria, assicurati di confermare un pagamento BLIK per esattamente ${amount} ${currency}.';
 			case 'taker.waitConfirmation.instructions': return 'Il maker deve ora inserirlo nel terminale di pagamento entro 2 minuti. Dovrai poi accettare il codice BLIK nella tua app bancaria.';
+			case 'taker.waitConfirmation.categoryReminder.atm': return 'Promemoria offerta ATM: la tua banca potrebbe ancora chiederti di approvare una commissione ATM extra oltre all\'importo principale.';
+			case 'taker.waitConfirmation.categoryReminder.ecommerce': return 'Promemoria ordine online: se il commerciante invia un rimborso automatico al tuo conto bancario, contatta il coordinatore e restituiscilo.';
 			case 'taker.waitConfirmation.waitingForMakerToReceive': return 'In attesa che il maker riceva il tuo codice BLIK...';
 			case 'taker.waitConfirmation.makerReceivedBlik': return 'Il maker ha ricevuto il tuo codice BLIK.';
 			case 'taker.waitConfirmation.timerExpiredMessage': return 'Il tempo di scadenza BLIK di 2 minuti è passato. In attesa che il maker confermi o contrassegni il codice come non valido.';

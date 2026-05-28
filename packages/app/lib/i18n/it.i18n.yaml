@@ -109,9 +109,19 @@ offers:
     statusLabel: "Stato"
     youllReceive: "Riceverai"
     coordinator: "Coordinatore"
+    categoryLabel: "Categoria"
+    categories:
+      physicalShop: "Bene fisico in negozio"
+      atmCashout: "Prelievo contanti da ATM"
+      onlineService: "Prodotto o servizio online"
+    consents:
+      atm: "Capisco che alcuni ATM aggiungono una commissione bancaria extra oltre all'importo dell'offerta e accetto tali costi aggiuntivi."
+      ecommerce: "Capisco che se un rimborso del commerciante arriva per errore sul mio conto bancario, devo contattare il coordinatore e restituire i fondi affinché il maker possa essere rimborsato manualmente."
 
   tooltips:
     takerFeeInfo: "Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall'importo che ricevi"
+    atmCategory: "Alcuni ATM aggiungono una commissione extra oltre all'importo dell'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall'ATM."
+    ecommerceCategory: "Se il commerciante rimborsa automaticamente l'ordine, il rimborso potrebbe arrivare sul tuo conto bancario. Se succede e il rimborso non ti spetta, contatta il coordinatore e restituisci i fondi."
 
   actions:
     take: ACCETTA
@@ -172,6 +182,8 @@ offers:
     resuming: "Errore nel riprendere l'offerta: ${details}"
     makerPublicKeyNotFound: Chiave pubblica del maker non trovata
     takerPublicKeyNotFound: Chiave pubblica del taker non trovata.
+    atmConsentRequired: "Accetta la condizione sulla commissione ATM prima di prendere questa offerta."
+    ecommerceConsentRequired: "Accetta la condizione di restituzione del rimborso ecommerce prima di prendere questa offerta."
 
   success:
     title: Offerta completata
@@ -283,6 +295,7 @@ maker:
       step3: "3. Usa BLIK"
     labels:
       coordinator: Coordinatore
+      category: Categoria
       exchangeRate: Tasso di Cambio
       fee: Commissione
       satoshisToPay: Importo da Pagare
@@ -295,10 +308,23 @@ maker:
       feeInfo: "Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning."
       payInfo: "Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l'importo esatto, e l'importo della fattura sarà quello finale e definitivo da pagare."
 
+    category:
+      label: "Categoria offerta"
+      options:
+        physicalShop: "Bene fisico in negozio"
+        atmCashout: "Prelievo contanti da ATM"
+        onlineService: "Prodotto o servizio online"
+      atmHint: "I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive."
+      ecommerceWarningTitle: "Rischio rimborso negozio online"
+      ecommerceWarningBody: "Se il negozio non può completare l'ordine e invia automaticamente un rimborso, quel rimborso potrebbe tornare sul conto bancario del taker. BitBlik non può obbligare il taker a restituirlo a te."
+      ecommerceConfirmation: "Capisco che dovrei aggiungere una nota all'ordine online per chiedere al negozio di rimborsare su un conto diverso se il rimborso diventa necessario."
+
     errors:
       initiating: "Errore nell'avvio dell'offerta: ${details}"
       publicKeyNotLoaded: "Errore: Chiave pubblica non ancora caricata."
       noCoordinatorMatchesAmount: "Nessun coordinatore supporta questo importo. Prova con un valore diverso."
+      categoryRequired: "Seleziona una categoria per l'offerta."
+      ecommerceConfirmationRequired: "Conferma il rischio di rimborso del negozio online prima di continuare."
 
   payInvoice:
     title: "Paga questa fattura Hold:"
@@ -490,6 +516,9 @@ taker:
     importantNotice: "MOLTO IMPORTANTE: Assicurati di accettare solo la conferma BLIK per ${amount} ${currency}"
     importantBlikAmountConfirmation: "MOLTO IMPORTANTE: Nella tua app bancaria, assicurati di confermare un pagamento BLIK per esattamente ${amount} ${currency}."
     instructions: Il maker deve ora inserirlo nel terminale di pagamento entro 2 minuti. Dovrai poi accettare il codice BLIK nella tua app bancaria.
+    categoryReminder:
+      atm: "Promemoria offerta ATM: la tua banca potrebbe ancora chiederti di approvare una commissione ATM extra oltre all'importo principale."
+      ecommerce: "Promemoria ordine online: se il commerciante invia un rimborso automatico al tuo conto bancario, contatta il coordinatore e restituiscilo."
     waitingForMakerToReceive: "In attesa che il maker riceva il tuo codice BLIK..."
     makerReceivedBlik: "Il maker ha ricevuto il tuo codice BLIK."
     timerExpiredMessage: "Il tempo di scadenza BLIK di 2 minuti è passato. In attesa che il maker confermi o contrassegni il codice come non valido."

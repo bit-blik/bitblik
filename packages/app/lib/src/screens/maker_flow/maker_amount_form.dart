@@ -87,6 +87,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   CoordinatorInfo? _selectedCoordinatorInfo;
   bool _termsAccepted = false; // Track if terms of usage are accepted
   bool _hasTriedAutoSelect = false; // Track if we've tried to auto-select
+  OfferCategory? _selectedCategory;
+  bool _ecommerceRiskAccepted = false;
 
   @override
   void initState() {
@@ -161,9 +163,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   }
 
   Future<void> _selectCoordinator(CoordinatorRecord coordinator) async {
+    final supportsCategory = _supportsOfferCategory(coordinator.version);
     setState(() {
       _selectedCoordinatorPubkey = coordinator.pubkey;
       _selectedCoordinatorInfo = coordinator.toCoordinatorInfo();
+      if (!supportsCategory) {
+        _selectedCategory = null;
+        _ecommerceRiskAccepted = false;
+      }
     });
 
     // Load terms acceptance from SharedPreferences
@@ -300,6 +307,25 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       );
       return;
     }
+    final supportsCategory = _supportsOfferCategory(
+      _selectedCoordinatorInfo?.version,
+    );
+    if (supportsCategory && _selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.maker.amountForm.errors.categoryRequired)),
+      );
+      return;
+    }
+    if (supportsCategory &&
+        _selectedCategory == OfferCategory.onlineService &&
+        !_ecommerceRiskAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t.maker.amountForm.errors.ecommerceConfirmationRequired),
+        ),
+      );
+      return;
+    }
 
     final publicKeyAsyncValue = ref.read(publicKeyProvider);
     final makerId = publicKeyAsyncValue.value;
@@ -320,6 +346,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       final result = await apiService.initiateOfferFiat(
         fiatAmount: fiatAmount,
         makerId: makerId,
+        category: supportsCategory ? _selectedCategory : null,
         coordinatorPubkey: coordinatorPubkey,
       );
       final paymentHash = result['paymentHash'] as String;
@@ -340,6 +367,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               holdInvoice: result['holdInvoice'],
               makerPubkey: makerId,
               coordinatorPubkey: coordinatorPubkey,
+              category: supportsCategory ? _selectedCategory : null,
             ),
           );
       if (mounted) {
@@ -565,7 +593,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       tileColor:
                           (coordinator.responsive == false ||
                                   coordinator.responsive == null)
-                              ? Colors.grey.withOpacity(0.15)
+                              ? Colors.grey.withValues(alpha: 0.15)
                               : null,
                     );
                   }).toList(),
@@ -609,6 +637,51 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
   }
 
+  String _categoryLabel(BuildContext context, OfferCategory category) {
+    final t = Translations.of(context);
+    switch (category) {
+      case OfferCategory.physicalShop:
+        return t.maker.amountForm.category.options.physicalShop;
+      case OfferCategory.atmCashout:
+        return t.maker.amountForm.category.options.atmCashout;
+      case OfferCategory.onlineService:
+        return t.maker.amountForm.category.options.onlineService;
+    }
+  }
+
+  IconData _categoryIcon(OfferCategory category) {
+    switch (category) {
+      case OfferCategory.physicalShop:
+        return Icons.storefront_outlined;
+      case OfferCategory.atmCashout:
+        return Icons.local_atm_outlined;
+      case OfferCategory.onlineService:
+        return Icons.shopping_cart_checkout_outlined;
+    }
+  }
+
+  bool _supportsOfferCategory(String? version) {
+    if (version == null || version.trim().isEmpty) return false;
+    final parsed = _parseVersion(version);
+    if (parsed == null) return false;
+    const min = [0, 7, 0];
+    for (var i = 0; i < 3; i++) {
+      if (parsed[i] > min[i]) return true;
+      if (parsed[i] < min[i]) return false;
+    }
+    return true;
+  }
+
+  List<int>? _parseVersion(String raw) {
+    final match = RegExp(r'^v?(\d+)\.(\d+)\.(\d+)').firstMatch(raw.trim());
+    if (match == null) return null;
+    return [
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+      int.parse(match.group(3)!),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(isLoadingProvider);
@@ -616,6 +689,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
     final coordinatorsAsync = ref.watch(enabledCoordinatorsProvider);
     final t = Translations.of(context);
+    final supportsCategory = _supportsOfferCategory(
+      _selectedCoordinatorInfo?.version,
+    );
 
     // Auto-select coordinator when they become available (only once)
     if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>> &&
@@ -722,6 +798,186 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               ],
               const SizedBox(height: 16),
 
+              if (supportsCategory) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    t.maker.amountForm.category.label,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Column(
+                  children:
+                      OfferCategory.values.map((category) {
+                        final selected = _selectedCategory == category;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: () {
+                              setState(() {
+                                _selectedCategory = category;
+                                if (category != OfferCategory.onlineService) {
+                                  _ecommerceRiskAccepted = false;
+                                }
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 120),
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color:
+                                      selected
+                                          ? Colors.red
+                                          : Colors.grey.shade300,
+                                  width: selected ? 1.6 : 1,
+                                ),
+                                color:
+                                    selected
+                                        ? const Color(0xFFFFF2F6)
+                                        : Colors.white,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _categoryIcon(category),
+                                    color:
+                                        selected
+                                            ? Colors.red
+                                            : Colors.grey[700],
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _categoryLabel(context, category),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight:
+                                            selected
+                                                ? FontWeight.w600
+                                                : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    selected
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_off,
+                                    color:
+                                        selected
+                                            ? Colors.red
+                                            : Colors.grey[500],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(growable: false),
+                ),
+              ],
+              if (supportsCategory &&
+                  _selectedCategory == OfferCategory.atmCashout) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.orange.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.info_outline, color: Colors.orange),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          t.maker.amountForm.category.atmHint,
+                          style: const TextStyle(fontSize: 13, height: 1.35),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (supportsCategory &&
+                  _selectedCategory == OfferCategory.onlineService) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.amber.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.maker.amountForm.category.ecommerceWarningTitle,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        t.maker.amountForm.category.ecommerceWarningBody,
+                        style: const TextStyle(fontSize: 13, height: 1.35),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Checkbox(
+                            value: _ecommerceRiskAccepted,
+                            activeColor: Colors.red,
+                            onChanged: (value) {
+                              setState(() {
+                                _ecommerceRiskAccepted = value ?? false;
+                              });
+                            },
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _ecommerceRiskAccepted =
+                                      !_ecommerceRiskAccepted;
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Text(
+                                  t.maker.amountForm.category.ecommerceConfirmation,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
               // Details section
               Container(
                 padding: const EdgeInsets.only(left: 10.0, right: 10.0),
@@ -740,7 +996,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           );
                           unawaited(registry.discover());
                         }
-                        if (mounted) _showCoordinatorPicker(context);
+                        if (!mounted) return;
+                        _showCoordinatorPicker(this.context);
                       },
                       child: _buildDetailRow(
                         t.maker.amountForm.labels.coordinator,
@@ -934,7 +1191,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             _selectedCoordinatorPubkey != null) {
                           final prefs = await SharedPreferences.getInstance();
                           final key =
-                              'terms_accepted_${_selectedCoordinatorPubkey}';
+                              'terms_accepted_$_selectedCoordinatorPubkey';
                           await prefs.setBool(key, value);
                           setState(() {
                             _termsAccepted = value;
@@ -948,7 +1205,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           if (_selectedCoordinatorPubkey != null) {
                             final prefs = await SharedPreferences.getInstance();
                             final key =
-                                'terms_accepted_${_selectedCoordinatorPubkey}';
+                                'terms_accepted_$_selectedCoordinatorPubkey';
                             final newValue = !_termsAccepted;
                             await prefs.setBool(key, newValue);
                             setState(() {
@@ -999,12 +1256,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               _buildGradientButton(
                 onPressed:
                     _selectedCoordinatorPubkey == null ||
+                            (supportsCategory && _selectedCategory == null) ||
                             isLoading ||
                             _isLoadingInitialData ||
                             publicKeyAsyncValue.isLoading ||
                             _amountErrorText != null ||
                             _fiatController.text.isEmpty ||
                             _rate == null ||
+                            (_selectedCategory == OfferCategory.onlineService &&
+                                !_ecommerceRiskAccepted) ||
                             (_selectedCoordinatorInfo?.termsOfUsageNaddr !=
                                     null &&
                                 !_termsAccepted)

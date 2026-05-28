@@ -24,6 +24,8 @@ class OfferDetailsScreen extends ConsumerStatefulWidget {
 class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
   bool _termsAccepted = false;
   bool _isLoadingTerms = true;
+  bool _atmConsentAccepted = false;
+  bool _ecommerceConsentAccepted = false;
 
   @override
   void initState() {
@@ -70,6 +72,39 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
+  void _showReceivingWalletRequired(WidgetRef ref, Translations t) {
+    LightningAddressWidget.showReceivingWalletRequiredDialog(context, ref, t);
+  }
+
+  ScaffoldMessengerState _scaffoldMessenger() => ScaffoldMessenger.of(context);
+
+  String _categoryLabel(BuildContext context, OfferCategory? category) {
+    final t = Translations.of(context);
+    switch (category) {
+      case OfferCategory.physicalShop:
+        return t.offers.details.categories.physicalShop;
+      case OfferCategory.atmCashout:
+        return t.offers.details.categories.atmCashout;
+      case OfferCategory.onlineService:
+        return t.offers.details.categories.onlineService;
+      case null:
+        return '-';
+    }
+  }
+
+  String? _categoryTooltip(BuildContext context, OfferCategory? category) {
+    final t = Translations.of(context);
+    switch (category) {
+      case OfferCategory.atmCashout:
+        return t.offers.tooltips.atmCategory;
+      case OfferCategory.onlineService:
+        return t.offers.tooltips.ecommerceCategory;
+      case OfferCategory.physicalShop:
+      case null:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Watch available offers for real-time updates
@@ -114,6 +149,10 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           final bool isFunded = offer.status == OfferStatus.funded;
           final bool isReserved = offer.status == OfferStatus.reserved;
           final bool isBlikReceived = offer.status == OfferStatus.blikReceived;
+          final requiresAtmConsent =
+              offer.category == OfferCategory.atmCashout;
+          final requiresEcommerceConsent =
+              offer.category == OfferCategory.onlineService;
 
           // Get coordinator info for taker fee calculation
           final coordinatorInfoAsync = ref.watch(
@@ -176,10 +215,15 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                 data: (value) => value,
                                 orElse: () => false,
                               );
+                          final hasCategoryConsent =
+                              (!requiresAtmConsent || _atmConsentAccepted) &&
+                              (!requiresEcommerceConsent ||
+                                  _ecommerceConsentAccepted);
                           final isButtonEnabled =
                               publicKey != null &&
                               hasReceivingWallet &&
                               isTermsAccepted &&
+                              hasCategoryConsent &&
                               !_isLoadingTerms;
 
                           return isButtonEnabled
@@ -188,12 +232,10 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                 final hasReceivingWalletNow = await ref.read(
                                   hasReceivingWalletProvider.future,
                                 );
+                                if (!mounted) return;
+                                final scaffoldMessenger = _scaffoldMessenger();
                                 if (!hasReceivingWalletNow) {
-                                  LightningAddressWidget.showReceivingWalletRequiredDialog(
-                                    context,
-                                    ref,
-                                    t,
-                                  );
+                                  _showReceivingWalletRequired(ref, t);
                                   return;
                                 }
 
@@ -201,7 +243,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                 if (coordInfo?.termsOfUsageNaddr != null &&
                                     !_termsAccepted) {
                                   // Should not happen if button is properly disabled, but check anyway
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  scaffoldMessenger.showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         t.coordinator.selector.termsAccept +
@@ -211,12 +253,34 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   );
                                   return;
                                 }
+                                if (requiresAtmConsent &&
+                                    !_atmConsentAccepted) {
+                                  scaffoldMessenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        t.offers.errors.atmConsentRequired,
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (requiresEcommerceConsent &&
+                                    !_ecommerceConsentAccepted) {
+                                  scaffoldMessenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        t
+                                            .offers
+                                            .errors
+                                            .ecommerceConsentRequired,
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
 
                                 final takerId = publicKey;
                                 final apiService = ref.read(apiServiceProvider);
-                                final scaffoldMessenger = ScaffoldMessenger.of(
-                                  context,
-                                );
 
                                 try {
                                   final reservationTimestamp = await apiService
@@ -225,6 +289,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                         takerId,
                                         offer.coordinatorPubkey,
                                       );
+                                  if (!mounted) return;
 
                                   if (reservationTimestamp != null) {
                                     final updatedOffer = offer.copyWith(
@@ -275,7 +340,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                               : null;
                         },
                         loading: () => null,
-                        error: (_, __) => null,
+                        error: (_, _) => null,
                         orElse: () => null,
                       ),
                   orElse: () => null,
@@ -495,6 +560,49 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       isHighlighted: true,
                                     ),
 
+                                  if (offer.status != OfferStatus.takerPaid &&
+                                      offer.category != null) ...[
+                                    const SizedBox(height: 16),
+                                    _buildInfoRow(
+                                      t.offers.details.categoryLabel,
+                                      _categoryLabel(context, offer.category),
+                                      hasInfoIcon:
+                                          _categoryTooltip(
+                                            context,
+                                            offer.category,
+                                          ) !=
+                                          null,
+                                      onInfoTap: () {
+                                        final tooltip = _categoryTooltip(
+                                          context,
+                                          offer.category,
+                                        );
+                                        if (tooltip == null) return;
+                                        showDialog(
+                                          context: context,
+                                          builder:
+                                              (context) => AlertDialog(
+                                                title: Text(
+                                                  t.offers.details.categoryLabel,
+                                                ),
+                                                content: Text(tooltip),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed:
+                                                        () => Navigator.of(
+                                                          context,
+                                                        ).pop(),
+                                                    child: Text(
+                                                      t.common.buttons.close,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+
                                   // Timing information for completed offers (takerPaid status)
                                   if (offer.status == OfferStatus.takerPaid &&
                                       offer.timeToReserveSeconds != null &&
@@ -561,11 +669,181 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                           '...',
                                         ),
                                     error:
-                                        (_, __) => _buildInfoRow(
+                                        (_, _) => _buildInfoRow(
                                           t.offers.details.coordinator,
                                           'Unknown',
                                         ),
                                   ),
+
+                                  if (isFunded &&
+                                      offer.category ==
+                                          OfferCategory.atmCashout) ...[
+                                    const SizedBox(height: 14),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.orange.withValues(
+                                            alpha: 0.25,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Icon(
+                                                Icons.info_outline,
+                                                color: Colors.orange,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  t.offers.tooltips.atmCategory,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    height: 1.35,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Checkbox(
+                                                value: _atmConsentAccepted,
+                                                activeColor: Colors.red,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    _atmConsentAccepted =
+                                                        value ?? false;
+                                                  });
+                                                },
+                                              ),
+                                              Expanded(
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _atmConsentAccepted =
+                                                          !_atmConsentAccepted;
+                                                    });
+                                                  },
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          top: 12,
+                                                        ),
+                                                    child: Text(
+                                                      t
+                                                          .offers
+                                                          .details
+                                                          .consents
+                                                          .atm,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        height: 1.35,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+
+                                  if (isFunded &&
+                                      offer.category ==
+                                          OfferCategory.onlineService) ...[
+                                    const SizedBox(height: 14),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.amber.withValues(
+                                            alpha: 0.35,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            t.offers.tooltips.ecommerceCategory,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              height: 1.35,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Checkbox(
+                                                value:
+                                                    _ecommerceConsentAccepted,
+                                                activeColor: Colors.red,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    _ecommerceConsentAccepted =
+                                                        value ?? false;
+                                                  });
+                                                },
+                                              ),
+                                              Expanded(
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _ecommerceConsentAccepted =
+                                                          !_ecommerceConsentAccepted;
+                                                    });
+                                                  },
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          top: 12,
+                                                        ),
+                                                    child: Text(
+                                                      t
+                                                          .offers
+                                                          .details
+                                                          .consents
+                                                          .ecommerce,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        height: 1.35,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
 
                                   // Terms of Usage checkbox (only for funded offers with terms)
                                   if (isFunded)
@@ -1130,7 +1408,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           color: ribbonColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

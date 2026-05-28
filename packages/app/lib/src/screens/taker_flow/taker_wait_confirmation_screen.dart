@@ -255,6 +255,7 @@ class _TakerWaitConfirmationScreenState
   }
 
   Widget _buildContentForStatus(BuildContext context, Offer offer) {
+    final reminder = _categoryReminder(context, offer.category);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(10.0),
       child: Column(
@@ -262,7 +263,61 @@ class _TakerWaitConfirmationScreenState
         children: <Widget>[
           const TakerProgressIndicator(activeStep: 2),
           const SizedBox(height: 10),
+          if (reminder != null) ...[
+            reminder,
+            const SizedBox(height: 14),
+          ],
           _buildStatusWidget(context, offer),
+        ],
+      ),
+    );
+  }
+
+  Widget? _categoryReminder(BuildContext context, OfferCategory? category) {
+    final t = Translations.of(context);
+    switch (category) {
+      case OfferCategory.atmCashout:
+        return _buildCategoryReminderCard(
+          text: t.taker.waitConfirmation.categoryReminder.atm,
+          icon: Icons.local_atm_outlined,
+          accent: Colors.orange,
+        );
+      case OfferCategory.onlineService:
+        return _buildCategoryReminderCard(
+          text: t.taker.waitConfirmation.categoryReminder.ecommerce,
+          icon: Icons.shopping_cart_checkout_outlined,
+          accent: Colors.amber.shade800,
+        );
+      case OfferCategory.physicalShop:
+      case null:
+        return null;
+    }
+  }
+
+  Widget _buildCategoryReminderCard({
+    required String text,
+    required IconData icon,
+    required Color accent,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 13, height: 1.35),
+            ),
+          ),
         ],
       ),
     );
