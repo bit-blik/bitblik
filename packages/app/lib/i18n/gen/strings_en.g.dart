@@ -850,11 +850,11 @@ class TranslationsOffersStatusEn {
 	/// en: 'BLIK Received'
 	String get blikSentToMaker => 'BLIK Received';
 
-	/// en: 'BLIK Expired'
-	String get expiredBlik => 'BLIK Expired';
+	/// en: 'BLIK expired'
+	String get expiredBlik => 'BLIK expired';
 
-	/// en: 'Confirmation Expired'
-	String get expiredSentBlik => 'Confirmation Expired';
+	/// en: 'BLIK expired'
+	String get expiredSentBlik => 'BLIK expired';
 
 	/// en: 'Taker Charged'
 	String get takerCharged => 'Taker Charged';
@@ -3474,8 +3474,8 @@ extension on Translations {
 			case 'offers.status.reserved': return 'Reserved';
 			case 'offers.status.blikReceived': return 'BLIK Sent';
 			case 'offers.status.blikSentToMaker': return 'BLIK Received';
-			case 'offers.status.expiredBlik': return 'BLIK Expired';
-			case 'offers.status.expiredSentBlik': return 'Confirmation Expired';
+			case 'offers.status.expiredBlik': return 'BLIK expired';
+			case 'offers.status.expiredSentBlik': return 'BLIK expired';
 			case 'offers.status.takerCharged': return 'Taker Charged';
 			case 'offers.status.invalidBlik': return 'Invalid BLIK';
 			case 'offers.status.conflict': return 'Conflict';

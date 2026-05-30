@@ -16,6 +16,8 @@ const _activeStatuses = {
   OfferStatus.reserved,
   OfferStatus.blikReceived,
   OfferStatus.blikSentToMaker,
+  OfferStatus.expiredBlik,
+  OfferStatus.expiredSentBlik,
   OfferStatus.invalidBlik,
   OfferStatus.takerCharged,
   OfferStatus.makerConfirmed,
@@ -32,8 +34,6 @@ const _completedStatuses = {OfferStatus.takerPaid};
 const _failedStatuses = {
   OfferStatus.expired,
   OfferStatus.cancelled,
-  OfferStatus.expiredBlik,
-  OfferStatus.expiredSentBlik,
 };
 
 class MyOffersScreen extends ConsumerStatefulWidget {

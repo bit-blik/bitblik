@@ -600,7 +600,7 @@ class _TranslationsOffersStatusIt extends TranslationsOffersStatusEn {
 	@override String get blikReceived => 'BLIK Inviato';
 	@override String get blikSentToMaker => 'BLIK Ricevuto';
 	@override String get expiredBlik => 'BLIK Scaduto';
-	@override String get expiredSentBlik => 'Conferma Scaduta';
+	@override String get expiredSentBlik => 'BLIK Scaduto';
 	@override String get takerCharged => 'Taker Addebitato';
 	@override String get invalidBlik => 'BLIK Non Valido';
 	@override String get conflict => 'Conflitto';
@@ -2232,7 +2232,7 @@ extension on TranslationsIt {
 			case 'offers.status.blikReceived': return 'BLIK Inviato';
 			case 'offers.status.blikSentToMaker': return 'BLIK Ricevuto';
 			case 'offers.status.expiredBlik': return 'BLIK Scaduto';
-			case 'offers.status.expiredSentBlik': return 'Conferma Scaduta';
+			case 'offers.status.expiredSentBlik': return 'BLIK Scaduto';
 			case 'offers.status.takerCharged': return 'Taker Addebitato';
 			case 'offers.status.invalidBlik': return 'BLIK Non Valido';
 			case 'offers.status.conflict': return 'Conflitto';

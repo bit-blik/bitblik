@@ -1,10 +1,11 @@
 ## [0.6.0] - 2026-05-30
 
-- feat: coordinator list sorted by most used (locally & globally)
+- feat: new category field: shop/atm/online
 - feat: my offers list
-- feat: check wallet balance/budget before paying
-- feat: finished orders filter by coordinator
+- feat: coordinator list sorted by most used (locally & globally)
 - feat: choose wallet for paying if default has no balance/budget
+- feat: finished orders filter by coordinator
+- fix: BLIK code split into 2 lines on small screens
 - fix: ios keyboard during takerPaymentFailed doesn't hide on un-focus
 
 ## [0.5.1] - 2026-04-02

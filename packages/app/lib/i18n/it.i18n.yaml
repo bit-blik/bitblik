@@ -136,7 +136,7 @@ offers:
     blikReceived: "BLIK Inviato"
     blikSentToMaker: "BLIK Ricevuto"
     expiredBlik: "BLIK Scaduto"
-    expiredSentBlik: "Conferma Scaduta"
+    expiredSentBlik: "BLIK Scaduto"
     takerCharged: "Taker Addebitato"
     invalidBlik: "BLIK Non Valido"
     conflict: "Conflitto"

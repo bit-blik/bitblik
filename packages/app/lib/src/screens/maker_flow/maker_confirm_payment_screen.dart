@@ -276,8 +276,10 @@ class _MakerConfirmPaymentScreenState
 
     final bool isFetchingBlik = receivedBlikCode == null && !isExpired;
     final formattedBlikCode = _formatBlikCode(receivedBlikCode ?? '··· ···');
-    const TextStyle blikStyle = TextStyle(
-      fontSize: 68,
+    final blikFontSize =
+        (MediaQuery.of(context).size.width * 0.19).clamp(32.0, 68.0);
+    final TextStyle blikStyle = TextStyle(
+      fontSize: blikFontSize,
       fontWeight: FontWeight.w600,
       color: Colors.black,
       letterSpacing: 6,
@@ -374,25 +376,6 @@ class _MakerConfirmPaymentScreenState
                       ),
                     ),
                   ],
-                  // Instructions - only show for non-expired status
-                  if (!isExpired) ...[
-                    _buildInstructionItem(
-                      '1',
-                      t.maker.confirmPayment.instruction1,
-                    ),
-                    const SizedBox(height: 6),
-                    _buildInstructionItem(
-                      '2',
-                      t.maker.confirmPayment.instruction2,
-                    ),
-                    const SizedBox(height: 6),
-                    _buildInstructionItem(
-                      '3',
-                      t.maker.confirmPayment.instruction3,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
                   // Error message
                   if (errorMessage != null) ...[
                     Text(
@@ -489,8 +472,9 @@ class _MakerConfirmPaymentScreenState
     double copyButtonWidth,
   ) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
+        const SizedBox(height: 8),
         // BLIK code received text
         Text(
           t.maker.confirmPayment.title,
@@ -501,6 +485,7 @@ class _MakerConfirmPaymentScreenState
           ),
           textAlign: TextAlign.center,
         ),
+        const SizedBox(height: 24),
         // Large BLIK code (with loading hint if needed)
         Column(
           children: [
@@ -518,6 +503,7 @@ class _MakerConfirmPaymentScreenState
             ],
           ],
         ),
+        const SizedBox(height: 24),
         // Copy BLIK button with gradient
         Center(
           child: SizedBox(
@@ -563,6 +549,14 @@ class _MakerConfirmPaymentScreenState
             ),
           ),
         ),
+        const SizedBox(height: 32),
+        // Instructions
+        _buildInstructionItem('1', t.maker.confirmPayment.instruction1),
+        const SizedBox(height: 6),
+        _buildInstructionItem('2', t.maker.confirmPayment.instruction2),
+        const SizedBox(height: 6),
+        _buildInstructionItem('3', t.maker.confirmPayment.instruction3),
+        const SizedBox(height: 8),
       ],
     );
   }

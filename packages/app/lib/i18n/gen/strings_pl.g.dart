@@ -599,7 +599,7 @@ class _TranslationsOffersStatusPl extends TranslationsOffersStatusEn {
 	@override String get blikReceived => 'BLIK wysłany';
 	@override String get blikSentToMaker => 'Otrzymano BLIK';
 	@override String get expiredBlik => 'BLIK wygasł';
-	@override String get expiredSentBlik => 'Potwierdzenie wygasło';
+	@override String get expiredSentBlik => 'BLIK wygasł';
 	@override String get takerCharged => 'Taker obciążony';
 	@override String get invalidBlik => 'Nieprawidłowy BLIK';
 	@override String get conflict => 'Konflikt';
@@ -2228,7 +2228,7 @@ extension on TranslationsPl {
 			case 'offers.status.blikReceived': return 'BLIK wysłany';
 			case 'offers.status.blikSentToMaker': return 'Otrzymano BLIK';
 			case 'offers.status.expiredBlik': return 'BLIK wygasł';
-			case 'offers.status.expiredSentBlik': return 'Potwierdzenie wygasło';
+			case 'offers.status.expiredSentBlik': return 'BLIK wygasł';
 			case 'offers.status.takerCharged': return 'Taker obciążony';
 			case 'offers.status.invalidBlik': return 'Nieprawidłowy BLIK';
 			case 'offers.status.conflict': return 'Konflikt';

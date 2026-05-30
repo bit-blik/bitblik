@@ -135,7 +135,7 @@ offers:
     blikReceived: "BLIK wysłany"
     blikSentToMaker: "Otrzymano BLIK"
     expiredBlik: "BLIK wygasł"
-    expiredSentBlik: "Potwierdzenie wygasło"
+    expiredSentBlik: "BLIK wygasł"
     takerCharged: "Taker obciążony"
     invalidBlik: "Nieprawidłowy BLIK"
     conflict: "Konflikt"

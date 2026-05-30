@@ -30,6 +30,10 @@ class ApiServiceNostr {
     await _nostrService.dispose();
   }
 
+  /// Emits `true` when at least one relay is connected, `false` when none are.
+  /// Fires on every connect/reconnect (boot, network restore, app resume).
+  Stream<bool> get relayConnectionState => _nostrService.relayConnectionState;
+
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
     required String makerId,
@@ -268,15 +272,18 @@ class ApiServiceNostr {
 
   Future<Map<String, dynamic>?> getOfferDetails(
     Offer offer,
-    String coordinatorPubkey,
-  ) async {
+    String coordinatorPubkey, {
+    bool strict = false,
+  }) async {
     try {
       return await _nostrService.getOfferDetails(
         offer,
         coordinatorPubkey,
+        strict: strict,
       );
     } catch (e) {
       Logger.log.e(() => 'Error calling getOfferDetails: $e');
+      if (strict) rethrow;
       return null;
     }
   }

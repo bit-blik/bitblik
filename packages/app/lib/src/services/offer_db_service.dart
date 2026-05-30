@@ -25,8 +25,6 @@ class OfferDbService {
   static const Set<OfferStatus> terminalStatuses = {
     OfferStatus.cancelled,
     OfferStatus.expired,
-    OfferStatus.expiredBlik,
-    OfferStatus.expiredSentBlik,
     OfferStatus.takerPaid,
   };
 

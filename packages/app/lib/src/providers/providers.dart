@@ -298,10 +298,18 @@ final activeOfferProvider = StateNotifierProvider<ActiveOfferNotifier, Offer?>(
 
 class ActiveOfferNotifier extends StateNotifier<Offer?> {
   ActiveOfferNotifier(this._ref) : super(null) {
-    _loadActiveOffer();
+    _init();
   }
 
   final Ref _ref;
+
+  /// Reconcile is driven by relay connectivity so it never runs against a
+  /// dead connection. This subscription fires on every connect/reconnect.
+  StreamSubscription<bool>? _connectivitySub;
+
+  /// Guards against overlapping reconcile passes when connectivity events
+  /// arrive in quick succession.
+  bool _reconcileInFlight = false;
 
   /// Window used by boot-time reconciliation. An offer older than this is
   /// assumed to be definitively cancelled — coordinator hold invoice
@@ -323,17 +331,55 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     state = nextActive;
   }
 
+  Future<void> _init() async {
+    await _loadActiveOffer();
+    await _listenForRelayConnectivity();
+  }
+
+  /// Load the locally-active offer for immediate UI. Network reconciliation is
+  /// NOT triggered here — it is driven by relay connectivity (see
+  /// [_listenForRelayConnectivity]) so it never runs against a connection that
+  /// isn't up yet (the boot-time timeout that used to strand offers).
   Future<void> _loadActiveOffer() async {
-    final offer = await OfferDbService().getActiveOffer();
-    state = offer;
-    // Only fire reconciliation when there is actually something to
-    // reconcile. listRecentCancelled is a single indexed query — cheap.
-    unawaited(_reconcileCancelledOffersIfNeeded());
-    // If a non-terminal offer is loaded, verify it against the coordinator
-    // to catch the case where we were offline when it was cancelled/expired.
-    if (offer != null &&
-        !OfferDbService.terminalStatuses.contains(offer.status)) {
-      unawaited(_reconcileActiveOfferIfNeeded(offer));
+    state = await OfferDbService().getActiveOffer();
+  }
+
+  /// Reconcile local offers against the coordinator on every relay
+  /// connect/reconnect: app boot once relays are up, network restore, and the
+  /// app returning from background on mobile.
+  Future<void> _listenForRelayConnectivity() async {
+    try {
+      final apiService = await _ref.read(initializedApiServiceProvider.future);
+      _connectivitySub = apiService.relayConnectionState.listen((connected) {
+        if (connected) unawaited(_reconcileAll());
+      });
+    } catch (e) {
+      Logger.log.w(
+        () =>
+            '[ActiveOfferNotifier] failed to subscribe to relay connectivity: $e',
+      );
+    }
+  }
+
+  /// Revive wrongly/locally-cancelled offers and sync the active one. Guarded
+  /// so overlapping connectivity events don't run it concurrently.
+  Future<void> _reconcileAll() async {
+    if (_reconcileInFlight) return;
+    _reconcileInFlight = true;
+    try {
+      // listRecentCancelled is a single indexed query — cheap.
+      await _reconcileCancelledOffersIfNeeded();
+      final active = state ?? await OfferDbService().getActiveOffer();
+      if (active != null &&
+          !OfferDbService.terminalStatuses.contains(active.status)) {
+        await _reconcileActiveOfferIfNeeded(active);
+      }
+    } catch (e) {
+      Logger.log.w(
+        () => '[ActiveOfferNotifier] reconcileAll failed: $e',
+      );
+    } finally {
+      _reconcileInFlight = false;
     }
   }
 
@@ -360,8 +406,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         remote = await apiService.getOfferDetails(
           localOffer,
           localOffer.coordinatorPubkey,
+          strict: true,
         );
       } catch (e) {
+        // Transient failure (timeout, relays not yet connected). Do NOT treat
+        // as a missing offer — leave local state untouched and retry later.
         Logger.log.w(
           () =>
               '[ActiveOfferNotifier] getOfferDetails failed during active-offer reconciliation: $e',
@@ -694,6 +743,12 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   Future<void> resetDatabase() async {
     await OfferDbService().resetDatabase();
     state = null;
+  }
+
+  @override
+  void dispose() {
+    _connectivitySub?.cancel();
+    super.dispose();
   }
 }
 

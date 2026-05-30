@@ -219,11 +219,11 @@ class OfferListTile extends ConsumerWidget {
         return Icons.check_circle;
       case OfferStatus.cancelled:
       case OfferStatus.expired:
-      case OfferStatus.expiredBlik:
-      case OfferStatus.expiredSentBlik:
       case OfferStatus.invalidBlik:
       case OfferStatus.takerPaymentFailed:
         return Icons.cancel;
+      case OfferStatus.expiredBlik:
+      case OfferStatus.expiredSentBlik:
       case OfferStatus.conflict:
       case OfferStatus.dispute:
         return Icons.warning_amber;
@@ -249,11 +249,11 @@ class OfferListTile extends ConsumerWidget {
         return Colors.green;
       case OfferStatus.cancelled:
       case OfferStatus.expired:
-      case OfferStatus.expiredBlik:
-      case OfferStatus.expiredSentBlik:
       case OfferStatus.invalidBlik:
       case OfferStatus.takerPaymentFailed:
         return Colors.redAccent;
+      case OfferStatus.expiredBlik:
+      case OfferStatus.expiredSentBlik:
       case OfferStatus.conflict:
       case OfferStatus.dispute:
         return Colors.orange;

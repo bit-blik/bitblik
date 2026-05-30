@@ -358,6 +358,7 @@ class NostrService {
       filters: [filter],
       cacheRead: false,
       explicitRelays: _relayUrls,
+      timeout:
     );
     final events = await response.stream.toList();
 
@@ -451,10 +452,19 @@ class NostrService {
   }
 
   /// GET /offer-details
+  /// Fetch offer details from the coordinator.
+  ///
+  /// Returns `null` ONLY when the coordinator genuinely reports no such offer
+  /// (it answers with an empty result). When [strict] is true, transient
+  /// failures (timeout, RPC error, relays not yet connected) are rethrown
+  /// instead of being swallowed to `null`, so callers can tell "coordinator
+  /// said no" apart from "I never got an answer". Non-strict callers keep the
+  /// best-effort behaviour of returning `null` on any failure.
   Future<Map<String, dynamic>?> getOfferDetails(
     Offer offer,
-    String coordinatorPubkey,
-  ) async {
+    String coordinatorPubkey, {
+    bool strict = false,
+  }) async {
     if (!_isInitialized) {
       await init();
     }
@@ -472,18 +482,20 @@ class NostrService {
 
       final request = NostrRequest(method: kRpcGetOfferDetails, params: params);
       final response = await sendRequest(request, coordinatorPubkey);
-      final result = _handleResponse(response, (result) {
+      // Genuine "offer not found" → coordinator returns {} → null here.
+      // Transient failures throw before reaching this point.
+      return _handleResponse(response, (result) {
         if (result.isEmpty) return null;
         result['coordinator_pubkey'] = coordinatorPubkey;
         return result;
       });
-      if (result != null) return result;
     } catch (e) {
       Logger.log.e(
         () => "Error getting offer details from coordinator ${coordinatorPubkey}: $e",
       );
+      if (strict) rethrow;
+      return null;
     }
-    return null;
   }
 
   bool _looksLikeUuid(String s) => RegExp(
@@ -914,6 +926,19 @@ class NostrService {
 
   /// Get NDK instance (for connectivity management)
   Ndk? get ndk => _ndk;
+
+  /// Emits `true` whenever at least one relay is connected and `false` when
+  /// none are. Backed by a BehaviorSubject, so a new listener immediately
+  /// receives the current state; deduplicated so it only fires on actual
+  /// connect/disconnect transitions (including reconnects after the app
+  /// returns from background). Empty until [ndk] is initialized.
+  Stream<bool> get relayConnectionState {
+    final ndk = _ndk;
+    if (ndk == null) return const Stream<bool>.empty();
+    return ndk.connectivity.relayConnectivityChanges
+        .map((relays) => relays.values.any((r) => r.isConnected))
+        .distinct();
+  }
 }
 
 /// Exception for Nostr-related errors
