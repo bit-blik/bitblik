@@ -885,11 +885,9 @@ final offerDetailsProvider = FutureProvider.family<Offer?, String>((
   ref,
   offerId,
 ) async {
-  // First, ensure that the API service is fully initialized.
+  // Ensure the API service is fully initialized. getOffer queries _relayUrls
+  // directly, so the coordinator registry is not needed here — don't await it.
   final apiService = await ref.watch(initializedApiServiceProvider.future);
-  // Ensure registry is built (kicks discovery in background); do not
-  // subscribe to its stream — we only need to read the offer once.
-  await ref.watch(coordinatorRegistryProvider.future);
   return apiService.getOffer(offerId);
 });
 

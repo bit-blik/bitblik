@@ -353,20 +353,31 @@ class NostrService {
 
     final filter = Filter(kinds: [kKindOffer], dTags: [offerId], limit: 1);
 
-    // Use query for a one-time fetch.
+    // One-time fetch. Return as soon as ANY relay answers instead of draining
+    // the stream until EOSE-from-all-relays / the 10s default timeout: limit:1
+    // on an addressable kind (38383) means the first event IS the offer, and
+    // the details screen live-merges later status updates from the
+    // subscription. cacheRead:false keeps it authoritative from the relay.
     final response = _ndk!.requests.query(
       filters: [filter],
       cacheRead: false,
       explicitRelays: _relayUrls,
-      timeout:
     );
-    final events = await response.stream.toList();
 
-    if (events.isEmpty) {
+    Nip01Event? event;
+    await for (final e in response.stream.timeout(
+      const Duration(seconds: 6),
+      onTimeout: (sink) => sink.close(),
+    )) {
+      event = e;
+      break;
+    }
+
+    if (event == null) {
       return null;
     }
 
-    return Offer.fromNostrEvent(events.first);
+    return Offer.fromNostrEvent(event);
   }
 
   /// POST /offers/{offerId}/reserve
