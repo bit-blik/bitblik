@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { List, RefreshCw, Wifi, WifiOff, Clock, Zap, ChevronRight, X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
+import { List, RefreshCw, Wifi, WifiOff, ChevronRight, X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 
 // Use window.location to dynamically determine protocol and host
 const getWebSocketUrl = () => {
@@ -47,19 +47,85 @@ const formatDate = (dateString) => {
   });
 };
 
+const formatDayLabel = (dateString) => {
+  if (!dateString) return 'Unknown';
+  const d = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const sameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  if (sameDay(d, today)) return 'Today';
+  if (sameDay(d, yesterday)) return 'Yesterday';
+  return d.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+};
+
+const groupOffersByDay = (offers) => {
+  const groups = [];
+  let currentDayKey = null;
+  let currentGroup = null;
+  for (const offer of offers) {
+    const dateStr = offer.updated_at || offer.created_at;
+    const d = new Date(dateStr);
+    const dayKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if (dayKey !== currentDayKey) {
+      currentDayKey = dayKey;
+      currentGroup = { dayLabel: formatDayLabel(dateStr), offers: [] };
+      groups.push(currentGroup);
+    }
+    currentGroup.offers.push(offer);
+  }
+  return groups;
+};
+
 const formatSats = (value) => {
   if (value === null || value === undefined) return '-';
   return new Intl.NumberFormat('en-US').format(value);
 };
 
-const formatCurrency = (value) => {
+const formatCurrency = (value, currency = 'PLN') => {
   if (value === null || value === undefined) return '-';
   return new Intl.NumberFormat('pl-PL', {
     style: 'currency',
-    currency: 'PLN',
+    currency: currency || 'PLN',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+};
+
+const calcTakerFeePct = (taker_invoice_fees, amount_sats) => {
+  if (!taker_invoice_fees || !amount_sats || amount_sats === 0) return null;
+  return (taker_invoice_fees * 100) / amount_sats;
+};
+
+const calcProfit = (maker_fees, taker_fees, taker_invoice_fees) => {
+  if (maker_fees == null && taker_fees == null) return null;
+  return (maker_fees || 0) + (taker_fees || 0) - (taker_invoice_fees || 0);
+};
+
+const calcProfitFiat = (profit_sats, fiat_amount, amount_sats) => {
+  if (profit_sats == null || !fiat_amount || !amount_sats || amount_sats === 0) return null;
+  return (profit_sats * fiat_amount) / amount_sats;
+};
+
+const calcDuration = (from, to) => {
+  if (!from || !to) return null;
+  const ms = new Date(to) - new Date(from);
+  if (ms < 0) return null;
+  const totalSecs = Math.floor(ms / 1000);
+  const h = Math.floor(totalSecs / 3600);
+  const m = Math.floor((totalSecs % 3600) / 60);
+  const s = totalSecs % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 };
 
 const OffersPage = () => {
@@ -268,16 +334,19 @@ const OffersPage = () => {
                     Status
                   </th>
                   <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
-                    Amount (sats)
+                    Amount
                   </th>
                   <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
-                    Fiat Amount
+                    Time to Reserve
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
-                    Created
+                  <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Time to Paid
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
-                    Updated
+                  <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Taker Invoice Routing Fees
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Profit
                   </th>
                   <th className="text-center px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Actions
@@ -287,67 +356,110 @@ const OffersPage = () => {
               <tbody>
                 {offers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
                       No offers found
                     </td>
                   </tr>
                 ) : (
-                  offers.map((offer) => (
-                    <tr
-                      key={offer.id}
-                      className="border-b border-gray-100 hover:bg-blue-50/50 transition-colors cursor-pointer"
-                      onClick={() => handleOfferClick(offer)}
-                    >
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-sm text-gray-700">
-                          {offer.id.substring(0, 8)}...
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                            STATUS_COLORS[offer.status] || 'bg-gray-100 text-gray-800 border-gray-300'
-                          }`}
-                        >
-                          {offer.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-mono text-sm text-gray-900 font-medium">
-                          {formatSats(offer.amount_sats)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-medium text-sm text-emerald-700">
-                          {formatCurrency(offer.fiat_amount)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                          <Clock size={12} />
-                          {formatDate(offer.created_at)}
+                  groupOffersByDay(offers).flatMap((group) => [
+                    <tr key={`day-${group.dayLabel}`}>
+                      <td colSpan={8} className="px-4 pt-4 pb-1">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                            {group.dayLabel}
+                          </span>
+                          <div className="flex-1 h-px bg-gray-200" />
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                          <Zap size={12} />
-                          {formatDate(offer.updated_at)}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOfferClick(offer);
-                          }}
-                        >
-                          View Logs
-                          <ChevronRight size={12} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                    </tr>,
+                    ...group.offers.map((offer) => (
+                      <tr
+                        key={offer.id}
+                        className="border-b border-gray-100 hover:bg-blue-50/50 transition-colors cursor-pointer"
+                        onClick={() => handleOfferClick(offer)}
+                      >
+                        <td className="px-4 py-3">
+                          <span className="font-mono text-sm text-gray-700">
+                            {offer.id.substring(0, 8)}...
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                              STATUS_COLORS[offer.status] || 'bg-gray-100 text-gray-800 border-gray-300'
+                            }`}
+                          >
+                            {offer.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span className="font-medium text-base text-emerald-700">
+                              {formatCurrency(offer.fiat_amount, offer.fiat_currency)}
+                            </span>
+                            <span className="font-mono text-xs text-gray-500">
+                              {formatSats(offer.amount_sats)} sats
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-gray-700">
+                            {calcDuration(offer.created_at, offer.reserved_at) ?? <span className="text-gray-400">-</span>}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-gray-700">
+                            {calcDuration(offer.created_at, offer.taker_paid_at) ?? <span className="text-gray-400">-</span>}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
+                          {(() => {
+                            const feeSats = offer.taker_invoice_fees;
+                            const feePct = calcTakerFeePct(offer.taker_invoice_fees, offer.amount_sats);
+                            if (feeSats == null) return <span className="text-gray-400 text-xs">-</span>;
+                            return (
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className="font-mono text-sm text-gray-900">{formatSats(feeSats)} sats</span>
+                                {feePct != null && (
+                                  <span className="text-xs text-gray-500">{feePct.toFixed(2)}%</span>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </td>
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
+                          {(() => {
+                            const finishedStatuses = ['settled', 'takerPaid'];
+                            if (!finishedStatuses.includes(offer.status)) return <span className="text-gray-400 text-xs">-</span>;
+                            const profitSats = calcProfit(offer.maker_fees, offer.taker_fees, offer.taker_invoice_fees);
+                            const profitFiat = calcProfitFiat(profitSats, offer.fiat_amount, offer.amount_sats);
+                            if (profitSats == null) return <span className="text-gray-400 text-xs">-</span>;
+                            const color = profitSats >= 0 ? 'text-emerald-700' : 'text-red-600';
+                            return (
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className={`font-mono text-sm font-medium ${color}`}>{formatSats(profitSats)} sats</span>
+                                {profitFiat != null && (
+                                  <span className={`text-xs ${color}`}>{formatCurrency(profitFiat, offer.fiat_currency)}</span>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOfferClick(offer);
+                            }}
+                          >
+                            View Logs
+                            <ChevronRight size={12} />
+                          </button>
+                        </td>
+                      </tr>
+                    )),
+                  ])
                 )}
               </tbody>
             </table>
