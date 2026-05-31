@@ -581,8 +581,7 @@ taker:
     steps:
       makerConfirmedBlik: "Maker potwierdził płatność BLIK"
       makerInvoiceSettled: "Faktura hold Makera rozliczona"
-      payingTakerInvoice: "Opłacanie Twojej faktury Lightning"
-      takerInvoicePaid: "Twoja faktura Lightning opłacona"
+      takerInvoicePaid: "Opłacanie Twojej faktury Lightning"
       takerPaymentFailed: "Płatność na Twoją fakturę nie powiodła się"
 
     errors:

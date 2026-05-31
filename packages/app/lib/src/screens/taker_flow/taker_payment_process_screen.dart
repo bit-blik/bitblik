@@ -11,7 +11,6 @@ import '../../widgets/progress_indicators.dart'; // Import for TakerProgressIndi
 enum PaymentStep {
   makerConfirmed,
   makerSettled,
-  payingTaker,
   takerPaid,
   takerPaymentFailed, // Add failed state
 }
@@ -19,7 +18,6 @@ enum PaymentStep {
 final Map<PaymentStep, OfferStatus> stepToStatusMapping = {
   PaymentStep.makerConfirmed: OfferStatus.makerConfirmed,
   PaymentStep.makerSettled: OfferStatus.settled,
-  PaymentStep.payingTaker: OfferStatus.payingTaker,
   PaymentStep.takerPaid: OfferStatus.takerPaid,
   PaymentStep.takerPaymentFailed: OfferStatus.takerPaymentFailed,
 };
@@ -28,7 +26,6 @@ final Map<PaymentStep, OfferStatus> stepToStatusMapping = {
 const List<PaymentStep> successfulStepsOrder = [
   PaymentStep.makerConfirmed,
   PaymentStep.makerSettled,
-  PaymentStep.payingTaker,
   PaymentStep.takerPaid,
 ];
 
@@ -164,8 +161,6 @@ class _PaymentChecklist extends ConsumerWidget {
         return t.taker.paymentProcess.steps.makerConfirmedBlik;
       case PaymentStep.makerSettled:
         return t.taker.paymentProcess.steps.makerInvoiceSettled;
-      case PaymentStep.payingTaker:
-        return t.taker.paymentProcess.steps.payingTakerInvoice;
       case PaymentStep.takerPaid:
         return t.taker.paymentProcess.steps.takerInvoicePaid;
       case PaymentStep.takerPaymentFailed:

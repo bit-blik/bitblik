@@ -643,7 +643,7 @@ class _TranslationsOffersStatusIt extends TranslationsOffersStatusEn {
 	@override String get makerConfirmed => 'Confermata';
 	@override String get settled => 'Conclusa';
 	@override String get payingTaker => 'Pagamento Taker';
-	@override String get takerPaymentFailed => 'Pagamento Fallito';
+	@override String get takerPaymentFailed => 'Taker s1Pagamento Fallito';
 	@override String get takerPaid => 'Taker Pagato';
 	@override String get unknownStatus => 'Sconosciuto';
 }
@@ -2075,8 +2075,7 @@ class _TranslationsTakerPaymentProcessStepsIt extends TranslationsTakerPaymentPr
 	// Translations
 	@override String get makerConfirmedBlik => 'Il Maker ha confermato il pagamento BLIK';
 	@override String get makerInvoiceSettled => 'Fattura hold del Maker saldata';
-	@override String get payingTakerInvoice => 'Pagamento della tua fattura Lightning';
-	@override String get takerInvoicePaid => 'La tua fattura Lightning è stata pagata';
+	@override String get takerInvoicePaid => 'Pagamento della tua fattura Lightning';
 	@override String get takerPaymentFailed => 'Pagamento alla tua fattura fallito';
 }
 
@@ -2430,7 +2429,7 @@ extension on TranslationsIt {
 			case 'offers.status.makerConfirmed': return 'Confermata';
 			case 'offers.status.settled': return 'Conclusa';
 			case 'offers.status.payingTaker': return 'Pagamento Taker';
-			case 'offers.status.takerPaymentFailed': return 'Pagamento Fallito';
+			case 'offers.status.takerPaymentFailed': return 'Taker s1Pagamento Fallito';
 			case 'offers.status.takerPaid': return 'Taker Pagato';
 			case 'offers.status.unknownStatus': return 'Sconosciuto';
 			case 'offers.statusMessages.reserved': return 'Offerta riservata dal Taker!';
@@ -2724,8 +2723,7 @@ extension on TranslationsIt {
 			case 'taker.paymentProcess.states.waitingUpdate': return 'In attesa dell\'aggiornamento dell\'offerta...';
 			case 'taker.paymentProcess.steps.makerConfirmedBlik': return 'Il Maker ha confermato il pagamento BLIK';
 			case 'taker.paymentProcess.steps.makerInvoiceSettled': return 'Fattura hold del Maker saldata';
-			case 'taker.paymentProcess.steps.payingTakerInvoice': return 'Pagamento della tua fattura Lightning';
-			case 'taker.paymentProcess.steps.takerInvoicePaid': return 'La tua fattura Lightning è stata pagata';
+			case 'taker.paymentProcess.steps.takerInvoicePaid': return 'Pagamento della tua fattura Lightning';
 			case 'taker.paymentProcess.steps.takerPaymentFailed': return 'Pagamento alla tua fattura fallito';
 			case 'taker.paymentProcess.errors.sending': return ({required Object details}) => 'Errore nell\'invio del pagamento: ${details}';
 			case 'taker.paymentProcess.errors.notConfirmed': return 'Offerta non confermata dal Maker.';

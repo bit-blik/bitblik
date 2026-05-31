@@ -324,7 +324,8 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   static const Duration _cancelledLookbackWindow = Duration(hours: 24);
 
   Future<void> _promoteMostRecentActiveOffer() async {
-    final nextActive = await OfferDbService().getActiveOffer();
+    final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
+    final nextActive = await OfferDbService().getActiveOffer(userPubkey: myPubkey);
     if (nextActive != null) {
       Logger.log.i(
         () =>
@@ -348,7 +349,8 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// [_listenForRelayConnectivity]) so it never runs against a connection that
   /// isn't up yet (the boot-time timeout that used to strand offers).
   Future<void> _loadActiveOffer() async {
-    state = await OfferDbService().getActiveOffer();
+    final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
+    state = await OfferDbService().getActiveOffer(userPubkey: myPubkey);
   }
 
   /// Reconcile local offers against the coordinator on every relay
@@ -376,7 +378,8 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     try {
       // listRecentCancelled is a single indexed query — cheap.
       await _reconcileCancelledOffersIfNeeded();
-      final active = state ?? await OfferDbService().getActiveOffer();
+      final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
+      final active = state ?? await OfferDbService().getActiveOffer(userPubkey: myPubkey);
       if (active != null &&
           !OfferDbService.terminalStatuses.contains(active.status)) {
         await _reconcileActiveOfferIfNeeded(active);
@@ -476,7 +479,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       final updated = localOffer.copyWith(id: remoteId, status: remoteStatus);
       await OfferDbService().upsertOffer(updated);
 
-      if (OfferDbService.terminalStatuses.contains(remoteStatus)) {
+      if (OfferDbService.terminalStatuses.contains(remoteStatus) &&
+          remoteStatus != OfferStatus.takerPaid) {
+        // takerPaid is kept in state so the payment-process screen can show
+        // success — applyStatusUpdate handles it without auto-promoting.
         if (state?.id == localOffer.id) state = null;
       } else {
         if (state?.id == localOffer.id) state = updated;
@@ -731,9 +737,17 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                     hydrated.holdInvoicePaymentHash));
 
     if (isCurrent) {
-      if (OfferDbService.terminalStatuses.contains(newStatus)) {
-        NotificationService().stopOfferForegroundService();
+      if (newStatus == OfferStatus.takerPaid) {
+        // Keep the takerPaid offer in state so the payment-process and
+        // payment-failed screens can observe the success transition. The
+        // screen is responsible for clearing active offer when the user
+        // taps Done. Auto-promoting here would set state=null before any
+        // listener sees takerPaid, causing the dialog to stay stuck forever.
+        state = hydrated;
+        _ref.read(appLifecycleProvider)._updateForegroundService();
+      } else if (OfferDbService.terminalStatuses.contains(newStatus)) {
         await _promoteMostRecentActiveOffer();
+        _ref.read(appLifecycleProvider)._updateForegroundService();
       } else {
         state = hydrated;
       }
@@ -1259,10 +1273,29 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
 
   void initialize() {
     WidgetsBinding.instance.addObserver(this);
-    if (!kIsWeb &&
-        (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
-      _initDesktopMonitoring();
+    if (!kIsWeb) {
+      if (Platform.isAndroid || Platform.isIOS) {
+        _initMobileMonitoring();
+      } else {
+        _initDesktopMonitoring();
+      }
     }
+  }
+
+  void _initMobileMonitoring() {
+    final enabled = _ref.read(newOfferNotificationsProvider);
+    if (enabled) {
+      _updateForegroundService();
+      unawaited(_startNewOfferMonitoring());
+    }
+    _ref.listen<bool>(newOfferNotificationsProvider, (_, enabled) {
+      _updateForegroundService();
+      if (enabled) {
+        unawaited(_startNewOfferMonitoring());
+      } else {
+        _stopNewOfferMonitoring();
+      }
+    });
   }
 
   void _initDesktopMonitoring() {
@@ -1276,6 +1309,24 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         _stopNewOfferMonitoring();
       }
     });
+  }
+
+  void _updateForegroundService() {
+    if (kIsWeb || !Platform.isAndroid) return;
+    final offer = _ref.read(activeOfferProvider);
+    final settingEnabled = _ref.read(newOfferNotificationsProvider);
+    final hasActiveOffer =
+        offer != null &&
+        !OfferDbService.terminalStatuses.contains(offer.status);
+    if (hasActiveOffer || settingEnabled) {
+      final strings = t.offerNotifications;
+      NotificationService().startOfferForegroundService(
+        strings.activeService.title,
+        strings.activeService.body,
+      );
+    } else {
+      NotificationService().stopOfferForegroundService();
+    }
   }
 
   void dispose() {
@@ -1295,6 +1346,11 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       if (offer.status != OfferStatus.funded) return;
       if (_seenOfferIds.contains(offer.id)) return;
       _seenOfferIds.add(offer.id);
+      // On mobile suppress notification while app is in foreground
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+        if (_currentState == AppLifecycleState.resumed ||
+            _currentState == AppLifecycleState.inactive) return;
+      }
       final strings = t.offerNotifications;
       final locale =
           LocaleSettings.instance.currentLocale.flutterLocale.toString();
@@ -1339,38 +1395,24 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
         final ndkInstance = _ref.read(ndkProvider);
-        // faster reconnects
         if (ndkInstance != null) {
           // ndkInstance.connectivity.do();
         }
-        NotificationService().stopOfferForegroundService();
         NotificationService().cancelBlikReminder();
-        _stopNewOfferMonitoring();
         break;
       case AppLifecycleState.inactive:
         break;
       case AppLifecycleState.paused:
         final offer = _ref.read(activeOfferProvider);
-        final newOfferAlertsEnabled = _ref.read(newOfferNotificationsProvider);
         final hasActiveOffer =
             offer != null &&
             !OfferDbService.terminalStatuses.contains(offer.status);
-        if (hasActiveOffer || newOfferAlertsEnabled) {
-          final strings = t.offerNotifications;
-          NotificationService().startOfferForegroundService(
-            strings.activeService.title,
-            strings.activeService.body,
-          );
-        }
         if (hasActiveOffer && offer!.status == OfferStatus.blikSentToMaker) {
           final strings = t.offerNotifications;
           NotificationService().scheduleBlikReminder(
             strings.blikPendingReminder.title,
             strings.blikPendingReminder.body,
           );
-        }
-        if (newOfferAlertsEnabled) {
-          _startNewOfferMonitoring();
         }
         break;
       case AppLifecycleState.detached:

@@ -214,8 +214,9 @@ class NostrService {
   /// Send a request to the coordinator and wait for response
   Future<NostrResponse> sendRequest(
     NostrRequest request,
-    String coordinatorPubkey,
-  ) async {
+    String coordinatorPubkey, {
+    Duration? timeoutOverride,
+  }) async {
     if (!_isInitialized) {
       await init();
     }
@@ -224,7 +225,11 @@ class NostrService {
     }
 
     try {
-      return await _rpcClient!.send(request, coordinatorPubkey);
+      return await _rpcClient!.send(
+        request,
+        coordinatorPubkey,
+        timeoutOverride: timeoutOverride,
+      );
     } on TimeoutException {
       // Trigger a health check for this coordinator, unless this WAS the
       // health check (avoid infinite recursion).
@@ -610,7 +615,11 @@ class NostrService {
       params: {'offer_id': offerId, 'bolt11': newBolt11},
     );
 
-    final response = await sendRequest(request, coordinatorPubkey);
+    final response = await sendRequest(
+      request,
+      coordinatorPubkey,
+      timeoutOverride: const Duration(seconds: 120),
+    );
     _handleResponse(response, (result) => null);
   }
 
@@ -625,7 +634,11 @@ class NostrService {
       params: {'offer_id': offerId},
     );
 
-    final response = await sendRequest(request, coordinatorPubkey);
+    final response = await sendRequest(
+      request,
+      coordinatorPubkey,
+      timeoutOverride: const Duration(seconds: 120),
+    );
     return _handleResponse(response, (result) => result);
   }
 

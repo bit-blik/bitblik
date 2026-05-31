@@ -25,6 +25,7 @@ class OfferListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
     final apiService = ref.watch(apiServiceProvider);
+    final myPubkey = ref.watch(keyServiceProvider).publicKeyHex;
     final coordinatorInfo = apiService.getCoordinatorInfoByPubkey(
       offer.coordinatorPubkey,
     );
@@ -40,8 +41,23 @@ class OfferListTile extends ConsumerWidget {
     final statusLabel = _statusLabel(t, offer.status);
     final statusColor = _statusColor(offer.status);
 
+    final isMaker = myPubkey != null && offer.makerPubkey == myPubkey;
+    final isTaker = myPubkey != null && offer.takerPubkey == myPubkey;
+    final roleLabel = isMaker
+        ? t.myOffers.details.maker
+        : isTaker
+        ? t.myOffers.details.taker
+        : null;
+    // Use the user's own pubkey as the neko seed when their role is known.
+    final nekoPubkey = isMaker
+        ? offer.makerPubkey
+        : isTaker
+        ? offer.takerPubkey!
+        : offer.makerPubkey;
+    final showNekoAvatar = isMaker || isTaker || showNeko;
+
     final Widget statusLeading =
-        showNeko
+        showNekoAvatar
             ? SizedBox(
               width: 40,
               height: 40,
@@ -50,7 +66,7 @@ class OfferListTile extends ConsumerWidget {
                   ClipOval(
                     child: CachedNetworkImage(
                       imageUrl:
-                          'https://robohash.org/${offer.makerPubkey}?set=set4',
+                          'https://robohash.org/$nekoPubkey?set=set4',
                       width: 40,
                       height: 40,
                       fit: BoxFit.cover,
@@ -117,9 +133,38 @@ class OfferListTile extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '$fiatLabel ${offer.fiatCurrency}',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$fiatLabel ${offer.fiatCurrency}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      if (roleLabel != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.grey.shade400,
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            roleLabel,
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Row(

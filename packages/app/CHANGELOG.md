@@ -1,9 +1,12 @@
-## [0.6.0] - 2026-05-30
+## [0.6.0] - 2026-06-01
 
 - feat: new category field: shop/atm/online
+- feat: local notifications for change of status
+- feat: optional background service monitoring new offers
 - feat: my offers list
 - feat: coordinator list sorted by most used (locally & globally)
 - feat: choose wallet for paying if default has no balance/budget
+- feat: choose wallet for generating new invoice if taker payment failed
 - feat: finished orders filter by coordinator
 - fix: BLIK code split into 2 lines on small screens
 - fix: ios keyboard during takerPaymentFailed doesn't hide on un-focus

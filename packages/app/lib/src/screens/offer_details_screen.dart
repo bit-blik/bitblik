@@ -27,6 +27,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
   bool _atmConsentAccepted = false;
   bool _ecommerceConsentAccepted = false;
   bool _autoTakeTriggered = false;
+  bool _isTaking = false;
 
   @override
   void initState() {
@@ -101,10 +102,13 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final apiService = ref.read(apiServiceProvider);
 
+    setState(() => _isTaking = true);
+
     final hasReceivingWalletNow =
         await ref.read(hasReceivingWalletProvider.future);
     if (!mounted) return;
     if (!hasReceivingWalletNow) {
+      setState(() => _isTaking = false);
       _showReceivingWalletRequired(ref, t);
       return;
     }
@@ -125,6 +129,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
         ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
         router.go('/submit-blik', extra: updatedOffer);
       } else {
+        setState(() => _isTaking = false);
         ref.read(errorProvider.notifier).state =
             t.reservations.errors.failedNoTimestamp;
         if (scaffoldMessenger.mounted) {
@@ -138,6 +143,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
       }
     } catch (e) {
       if (!mounted) return;
+      setState(() => _isTaking = false);
       final errorMsg = t.reservations.errors.failedToReserve(
         details: e.toString(),
       );
@@ -328,7 +334,13 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
           Widget? actionButton;
 
-          if (isFunded) {
+          if (_isTaking) {
+            actionButton = const SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: Center(child: CircularProgressIndicator()),
+            );
+          } else if (isFunded) {
             actionButton = SizedBox(
               width: double.infinity,
               height: 56,

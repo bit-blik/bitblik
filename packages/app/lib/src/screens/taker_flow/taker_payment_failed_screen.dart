@@ -33,6 +33,7 @@ class _TakerPaymentFailedScreenState
   Wallet? _defaultReceivingWallet;
   List<Wallet> _otherReceivingWallets = [];
   String? _generatingWalletId;
+  BuildContext? _retryDialogContext;
 
   @override
   void initState() {
@@ -56,18 +57,28 @@ class _TakerPaymentFailedScreenState
     }
   }
 
-  void _handleStatusUpdate(OfferStatus? status) {
-    if (status == null) return;
+  void _closeRetryDialog() {
+    final ctx = _retryDialogContext;
+    _retryDialogContext = null;
+    if (ctx != null && ctx.mounted) {
+      Navigator.of(ctx).pop();
+    }
+  }
 
-    if (mounted) {
-      if (status == OfferStatus.takerPaid) {
-        setState(() {
-          _currentState = PaymentRetryState.success;
-        });
-      } else if (status == OfferStatus.takerPaymentFailed) {
+  void _handleStatusUpdate(OfferStatus? status) {
+    if (status == null || !mounted) return;
+
+    if (status == OfferStatus.takerPaid) {
+      _closeRetryDialog();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/paying-taker');
+      });
+    } else if (status == OfferStatus.takerPaymentFailed) {
+      _closeRetryDialog();
+      if (mounted) {
         setState(() {
           _currentState = PaymentRetryState.failed;
-          // _errorMessage = t.taker.paymentFailed.errors.paymentRetryFailed;
+          _errorMessage = t.taker.paymentFailed.errors.paymentRetryFailed;
         });
       }
     }
@@ -140,14 +151,30 @@ class _TakerPaymentFailedScreenState
       );
       return;
     }
-
-    // Ensure the widget is still mounted before proceeding
     if (!mounted) return;
 
-    setState(() {
-      _currentState = PaymentRetryState.loading; // Set loading state
-      _errorMessage = null; // Clear previous error
-    });
+    setState(() => _errorMessage = null);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        _retryDialogContext = ctx;
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(t.taker.paymentFailed.loading.processingPayment),
+              ],
+            ),
+          ),
+        );
+      },
+    ).whenComplete(() => _retryDialogContext = null);
 
     try {
       final apiService = ref.read(apiServiceProvider);
@@ -155,34 +182,23 @@ class _TakerPaymentFailedScreenState
       if (userPubkey == null || userPubkey.isEmpty) {
         throw Exception(t.taker.paymentFailed.errors.takerPublicKeyNotFound);
       }
-
-      // 1. Update the invoice first
       await apiService.updateTakerInvoice(
         offerId: widget.offer.id,
         newBolt11: newInvoice,
         userPubkey: userPubkey,
         coordinatorPubkey: widget.offer.coordinatorPubkey,
       );
-
-      // 2. Trigger the retry mechanism on the backend
       await apiService.retryTakerPayment(
         offerId: widget.offer.id,
         userPubkey: userPubkey,
         coordinatorPubkey: widget.offer.coordinatorPubkey,
       );
-
-      if (mounted) {
-        setState(() {
-          _currentState =
-              PaymentRetryState
-                  .loading; // Keep loading while waiting for status
-        });
-      }
+      // Dialog stays open — waiting for coordinator status update via ref.listen
     } catch (e) {
-      // Handle API errors or other exceptions, only if still mounted
+      _closeRetryDialog();
       if (mounted) {
         setState(() {
-          _currentState = PaymentRetryState.failed; // Set failed state on error
+          _currentState = PaymentRetryState.failed;
           _errorMessage = t.taker.paymentFailed.errors.updatingInvoice(
             details: e.toString(),
           );
@@ -239,51 +255,7 @@ class _TakerPaymentFailedScreenState
   Widget _buildContent(BuildContext context, int netAmountSats) {
     switch (_currentState) {
       case PaymentRetryState.loading:
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // const CircularProgressIndicator(),
-            // const SizedBox(height: 16),
-            Text(t.taker.paymentFailed.loading.processingPayment),
-          ],
-        );
-
       case PaymentRetryState.success:
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Icon(
-              Icons.check_circle_outline,
-              color: Colors.green,
-              size: 64,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              t.taker.paymentFailed.success.title,
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              t.taker.paymentFailed.success.message,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () async {
-                await ref
-                    .read(activeOfferProvider.notifier)
-                    .setActiveOffer(null);
-                if (mounted) {
-                  context.go('/');
-                }
-              },
-              child: Text(t.common.buttons.goHome),
-            ),
-          ],
-        );
 
       case PaymentRetryState.initial:
       case PaymentRetryState.failed:

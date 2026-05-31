@@ -1644,7 +1644,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                           // Android GitHub APK button
                           Link(
                             uri: Uri.parse(
-                              'https://github.com/bit-blik/client/releases',
+                              'https://github.com/bit-blik/bitblik/releases',
                             ),
                             target: LinkTarget.blank,
                             builder:

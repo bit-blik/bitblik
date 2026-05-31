@@ -80,7 +80,7 @@ class NotificationService {
     if (!_initialized || kIsWeb) return;
     const androidDetails = AndroidNotificationDetails(
       'offer_status',
-      'Offer Status',
+      'New Offers',
       channelDescription: 'Notifications about offer status changes',
       importance: Importance.high,
       priority: Priority.high,
@@ -111,7 +111,7 @@ class NotificationService {
     if (!_initialized || kIsWeb) return;
     const androidDetails = AndroidNotificationDetails(
       'offer_status',
-      'Offer Status',
+      'New Offers',
       channelDescription: 'Notifications about offer status changes',
       importance: Importance.high,
       priority: Priority.high,

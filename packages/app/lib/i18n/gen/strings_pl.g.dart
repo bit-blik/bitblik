@@ -2072,8 +2072,7 @@ class _TranslationsTakerPaymentProcessStepsPl extends TranslationsTakerPaymentPr
 	// Translations
 	@override String get makerConfirmedBlik => 'Maker potwierdził płatność BLIK';
 	@override String get makerInvoiceSettled => 'Faktura hold Makera rozliczona';
-	@override String get payingTakerInvoice => 'Opłacanie Twojej faktury Lightning';
-	@override String get takerInvoicePaid => 'Twoja faktura Lightning opłacona';
+	@override String get takerInvoicePaid => 'Opłacanie Twojej faktury Lightning';
 	@override String get takerPaymentFailed => 'Płatność na Twoją fakturę nie powiodła się';
 }
 
@@ -2718,8 +2717,7 @@ extension on TranslationsPl {
 			case 'taker.paymentProcess.states.waitingUpdate': return 'Oczekiwanie na aktualizację oferty...';
 			case 'taker.paymentProcess.steps.makerConfirmedBlik': return 'Maker potwierdził płatność BLIK';
 			case 'taker.paymentProcess.steps.makerInvoiceSettled': return 'Faktura hold Makera rozliczona';
-			case 'taker.paymentProcess.steps.payingTakerInvoice': return 'Opłacanie Twojej faktury Lightning';
-			case 'taker.paymentProcess.steps.takerInvoicePaid': return 'Twoja faktura Lightning opłacona';
+			case 'taker.paymentProcess.steps.takerInvoicePaid': return 'Opłacanie Twojej faktury Lightning';
 			case 'taker.paymentProcess.steps.takerPaymentFailed': return 'Płatność na Twoją fakturę nie powiodła się';
 			case 'taker.paymentProcess.errors.sending': return ({required Object details}) => 'Błąd wysyłania płatności: ${details}';
 			case 'taker.paymentProcess.errors.notConfirmed': return 'Oferta niepotwierdzona przez Makera.';

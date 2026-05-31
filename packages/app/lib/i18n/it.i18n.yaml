@@ -145,8 +145,8 @@ offers:
     dispute: "Disputa"
     makerConfirmed: "Confermata"
     settled: "Conclusa"
-    payingTaker: "Pagamento Taker"
-    takerPaymentFailed: "Pagamento Fallito"
+    payingTaker: "Pagamento wTaker"
+    takerPaymentFailed: "Taker s1Pagamento Fallito"
     takerPaid: "Taker Pagato"
     unknownStatus: "Sconosciuto"
 
@@ -580,8 +580,7 @@ taker:
     steps:
       makerConfirmedBlik: "Il Maker ha confermato il pagamento BLIK"
       makerInvoiceSettled: "Fattura hold del Maker saldata"
-      payingTakerInvoice: "Pagamento della tua fattura Lightning"
-      takerInvoicePaid: "La tua fattura Lightning è stata pagata"
+      takerInvoicePaid: "Pagamento della tua fattura Lightning"
       takerPaymentFailed: "Pagamento alla tua fattura fallito"
 
     errors:

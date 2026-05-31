@@ -144,13 +144,23 @@ class OfferDbService {
   }
 
   /// Most-recent offer whose status is not in [terminalStatuses].
-  Future<Offer?> getActiveOffer() async {
+  /// When [userPubkey] is provided, only offers where the user is the maker
+  /// or taker are returned.
+  Future<Offer?> getActiveOffer({String? userPubkey}) async {
     final db = await database;
     final terminalNames =
         terminalStatuses.map((s) => "'${s.name}'").join(',');
-    final maps = await db.rawQuery(
-      'SELECT * FROM $_table WHERE status NOT IN ($terminalNames)',
-    );
+    final List<Map<String, Object?>> maps;
+    if (userPubkey != null) {
+      maps = await db.rawQuery(
+        'SELECT * FROM $_table WHERE status NOT IN ($terminalNames) AND (maker_pubkey = ? OR taker_pubkey = ?)',
+        [userPubkey, userPubkey],
+      );
+    } else {
+      maps = await db.rawQuery(
+        'SELECT * FROM $_table WHERE status NOT IN ($terminalNames)',
+      );
+    }
     final offers = _parseOffers(maps);
     if (offers.isEmpty) return null;
     offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));

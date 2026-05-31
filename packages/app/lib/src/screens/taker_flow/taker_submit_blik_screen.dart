@@ -344,9 +344,18 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       Logger.log.e(
         () => '[TakerSubmitBlikScreen] Failed to create taker invoice: $e',
       );
-      ref.read(errorProvider.notifier).state = t.system.errors.generic;
-      _startBlikInputTimer(offer);
-      return;
+      if (!mounted) return;
+      final retryInvoice = await _showWalletPickerDialog(
+        ndk: ndk,
+        amountSats: amountToInvoiceSats,
+        error: e.toString(),
+      );
+      if (retryInvoice == null) {
+        ref.read(errorProvider.notifier).state = t.system.errors.generic;
+        _startBlikInputTimer(offer);
+        return;
+      }
+      takerInvoice = retryInvoice;
     }
     // --- End Validations ---
 
@@ -388,6 +397,178 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         ref.read(isLoadingProvider.notifier).state = false;
       }
     }
+  }
+
+  Future<String?> _showWalletPickerDialog({
+    required Ndk ndk,
+    required int amountSats,
+    required String error,
+  }) async {
+    final all = ndk.wallets.getWalletsForUnit('sat');
+    final defaultW = ndk.wallets.defaultWalletForReceiving;
+    final receivingWallets = all.where((w) => w.canReceive).toList();
+
+    if (receivingWallets.isEmpty || !mounted) return null;
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        String? generatingId;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            Future<void> generateFromWallet(Wallet wallet) async {
+              if (generatingId != null) return;
+              setDialogState(() => generatingId = wallet.id);
+              try {
+                final result = await ndk.wallets.receive(
+                  walletId: wallet.id,
+                  amountSats: amountSats,
+                );
+                final invoice = _extractBolt11Invoice(result);
+                if (invoice == null) throw Exception('No invoice in response');
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop(invoice);
+                }
+              } catch (e) {
+                Logger.log.e(
+                  () =>
+                      '[TakerSubmitBlikScreen] Wallet picker invoice gen failed: $e',
+                );
+                if (ctx.mounted) {
+                  setDialogState(() => generatingId = null);
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        t.taker.paymentFailed.errors
+                            .generateFailed(details: e.toString()),
+                      ),
+                    ),
+                  );
+                }
+              }
+            }
+
+            return AlertDialog(
+              title: Text(t.taker.paymentFailed.walletSection.title),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    t.taker.paymentFailed.errors.generateFailed(
+                      details: error,
+                    ),
+                    style: TextStyle(
+                      color: Theme.of(ctx).colorScheme.error,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...receivingWallets.map((wallet) {
+                    final isGenerating = generatingId == wallet.id;
+                    final isDefault = wallet.id == defaultW?.id;
+                    return InkWell(
+                      onTap: generatingId != null
+                          ? null
+                          : () => generateFromWallet(wallet),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.account_balance_wallet_outlined,
+                              size: 18,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        wallet.name,
+                                        style: const TextStyle(fontSize: 14),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (isDefault) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 5,
+                                            vertical: 1,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade200,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            t.taker.paymentFailed.walletSection
+                                                .defaultLabel,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  Text(
+                                    t.taker.paymentFailed.walletSection
+                                        .tapToGenerate(
+                                          amountSats: amountSats.toString(),
+                                        ),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isGenerating)
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            else
+                              Icon(
+                                Icons.bolt,
+                                size: 16,
+                                color: Colors.orange[600],
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: generatingId != null
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(null),
+                  child: Text(t.common.buttons.cancel),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<String> _createInvoiceForDefaultReceivingWallet({

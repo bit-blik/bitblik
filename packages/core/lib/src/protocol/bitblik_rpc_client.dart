@@ -66,11 +66,12 @@ class BitblikRpcClient {
   }
 
   /// Send an encrypted request to [coordinatorPubkey] and await the matching
-  /// response. Throws [TimeoutException] after [timeout] elapses.
+  /// response. Throws [TimeoutException] after [timeout] (or [timeoutOverride]) elapses.
   Future<NostrResponse> send(
     NostrRequest request,
-    String coordinatorPubkey,
-  ) async {
+    String coordinatorPubkey, {
+    Duration? timeoutOverride,
+  }) async {
     final id = request.id ?? _nextId();
     final reqWithId = NostrRequest(
       method: request.method,
@@ -106,11 +107,15 @@ class BitblikRpcClient {
         );
       }
 
+      final effectiveTimeout = timeoutOverride ?? timeout;
       return await completer.future.timeout(
-        timeout,
+        effectiveTimeout,
         onTimeout: () {
           _pending.remove(id);
-          throw TimeoutException('Bitblik RPC request timed out', timeout);
+          throw TimeoutException(
+            'Bitblik RPC request timed out',
+            effectiveTimeout,
+          );
         },
       );
     } catch (_) {

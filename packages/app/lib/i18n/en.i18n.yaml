@@ -146,7 +146,7 @@ offers:
     makerConfirmed: "Confirmed"
     settled: "Settled"
     payingTaker: "Paying Taker"
-    takerPaymentFailed: "Payment Failed"
+    takerPaymentFailed: "Taker Payment Failed"
     takerPaid: "Taker Paid"
     unknownStatus: "Unknown"
     
@@ -596,8 +596,7 @@ taker:
     steps:
       makerConfirmedBlik: "Maker confirmed BLIK payment"
       makerInvoiceSettled: "Maker's hold invoice settled"
-      payingTakerInvoice: "Paying your Lightning invoice"
-      takerInvoicePaid: "Your Lightning invoice paid"
+      takerInvoicePaid: "Paying your Lightning invoice"
       takerPaymentFailed: "Payment to your invoice failed"
 
     errors:

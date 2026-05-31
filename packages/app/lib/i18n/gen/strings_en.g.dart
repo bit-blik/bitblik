@@ -921,8 +921,8 @@ class TranslationsOffersStatusEn {
 	/// en: 'Paying Taker'
 	String get payingTaker => 'Paying Taker';
 
-	/// en: 'Payment Failed'
-	String get takerPaymentFailed => 'Payment Failed';
+	/// en: 'Taker Payment Failed'
+	String get takerPaymentFailed => 'Taker Payment Failed';
 
 	/// en: 'Taker Paid'
 	String get takerPaid => 'Taker Paid';
@@ -3285,10 +3285,7 @@ class TranslationsTakerPaymentProcessStepsEn {
 	String get makerInvoiceSettled => 'Maker\'s hold invoice settled';
 
 	/// en: 'Paying your Lightning invoice'
-	String get payingTakerInvoice => 'Paying your Lightning invoice';
-
-	/// en: 'Your Lightning invoice paid'
-	String get takerInvoicePaid => 'Your Lightning invoice paid';
+	String get takerInvoicePaid => 'Paying your Lightning invoice';
 
 	/// en: 'Payment to your invoice failed'
 	String get takerPaymentFailed => 'Payment to your invoice failed';
@@ -3750,7 +3747,7 @@ extension on Translations {
 			case 'offers.status.makerConfirmed': return 'Confirmed';
 			case 'offers.status.settled': return 'Settled';
 			case 'offers.status.payingTaker': return 'Paying Taker';
-			case 'offers.status.takerPaymentFailed': return 'Payment Failed';
+			case 'offers.status.takerPaymentFailed': return 'Taker Payment Failed';
 			case 'offers.status.takerPaid': return 'Taker Paid';
 			case 'offers.status.unknownStatus': return 'Unknown';
 			case 'offers.statusMessages.reserved': return 'Offer reserved by Taker!';
@@ -4057,8 +4054,7 @@ extension on Translations {
 			case 'taker.paymentProcess.states.waitingUpdate': return 'Waiting for offer update...';
 			case 'taker.paymentProcess.steps.makerConfirmedBlik': return 'Maker confirmed BLIK payment';
 			case 'taker.paymentProcess.steps.makerInvoiceSettled': return 'Maker\'s hold invoice settled';
-			case 'taker.paymentProcess.steps.payingTakerInvoice': return 'Paying your Lightning invoice';
-			case 'taker.paymentProcess.steps.takerInvoicePaid': return 'Your Lightning invoice paid';
+			case 'taker.paymentProcess.steps.takerInvoicePaid': return 'Paying your Lightning invoice';
 			case 'taker.paymentProcess.steps.takerPaymentFailed': return 'Payment to your invoice failed';
 			case 'taker.paymentProcess.errors.sending': return ({required Object details}) => 'Error sending payment: ${details}';
 			case 'taker.paymentProcess.errors.notConfirmed': return 'Offer not confirmed by Maker.';
