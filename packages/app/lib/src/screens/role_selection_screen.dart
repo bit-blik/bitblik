@@ -1,10 +1,13 @@
 // RoleSelectionScreen: Modern landing page with centralized design matching the provided layout
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../i18n/gen/strings.g.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer model
 import '../providers/providers.dart'; // Import providers
@@ -18,14 +21,28 @@ class RoleSelectionScreen extends ConsumerStatefulWidget {
       _RoleSelectionScreenState();
 }
 
-class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
+class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
+    with SingleTickerProviderStateMixin {
   bool _isSyncing = false;
   bool _hasTriggeredInitialSync = false;
+  AnimationController? _logoController;
 
   @override
   void initState() {
     super.initState();
     Logger.log.d(() => '[RoleSelectionScreen] initState called');
+    if (_isBffActive()) {
+      _logoController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1200),
+      )..repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _logoController?.dispose();
+    super.dispose();
   }
 
   /// Syncs the local active offer state with the coordinator's state
@@ -412,6 +429,10 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               ],
             ),
           ),
+          if (_isBffActive()) ...[
+            const SizedBox(height: 30),
+            _buildBffBanner(),
+          ],
         ],
       ),
     );
@@ -588,6 +609,47 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
         _navigateToTakerStep(context, activeOffer);
       }
     }
+  }
+
+  bool _isBffActive() {
+    final now = DateTime.now();
+    final start = DateTime(2026, 5, 31);
+    final end = DateTime(2026, 6, 8, 23, 59, 59);
+    return now.isAfter(start) && now.isBefore(end);
+  }
+
+  Widget _buildBffBanner() {
+    return GestureDetector(
+      onTap: () async {
+        await launchUrl(
+          Uri.parse('https://bitcoinfilmfest.com/?ref=bitblikapp'),
+          mode: LaunchMode.externalApplication,
+        );
+      },
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Image.asset('assets/bff-rabbit.png', height: 100, fit: BoxFit.contain),
+            Image.asset('assets/bff-laurs.png', height: 64, fit: BoxFit.contain),
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: AnimatedBuilder(
+                animation: _logoController ?? const AlwaysStoppedAnimation(0),
+                builder: (context, child) {
+                  final t = _logoController?.value ?? 0.0;
+                  final angle = sin(t * 2 * pi) * 0.5;
+                  return Transform.rotate(angle: angle, child: child);
+                },
+                child: Image.asset('assets/bff-logo.png', height: 64, fit: BoxFit.contain),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   String formatDouble(double value) {

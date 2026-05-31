@@ -2163,7 +2163,8 @@ class CoordinatorService {
             'Async Error: Missing both taker invoice and Lightning Address for offer $offerId.',
             offerId: offerId);
         await _dbService.updateOfferStatus(
-            offerId, OfferStatus.takerPaymentFailed);
+            offerId, OfferStatus.takerPaymentFailed,
+            failureReason: 'Missing both taker invoice and Lightning Address');
         final failedOffer = await _dbService.getOfferById(offerId);
         if (failedOffer != null) {
           await _publishStatusUpdate(failedOffer);
@@ -2188,7 +2189,9 @@ class CoordinatorService {
               'Async Error: Failed to resolve LNURL for net amount $netAmountSats for offer $offerId.',
               offerId: offerId);
           await _dbService.updateOfferStatus(
-              offerId, OfferStatus.takerPaymentFailed);
+              offerId, OfferStatus.takerPaymentFailed,
+              failureReason:
+                  'Failed to get invoice from lightning address (LNURL resolution failed)');
           final failedOffer = await _dbService.getOfferById(offerId);
           if (failedOffer != null) {
             await _publishStatusUpdate(failedOffer);
@@ -2210,7 +2213,8 @@ class CoordinatorService {
           'Async Exception during taker payment for offer $offerId: $e',
           offerId: offerId);
       await _dbService.updateOfferStatus(
-          offerId, OfferStatus.takerPaymentFailed);
+          offerId, OfferStatus.takerPaymentFailed,
+          failureReason: e.toString());
       final failedOffer = await _dbService.getOfferById(offerId);
       if (failedOffer != null) {
         await _publishStatusUpdate(failedOffer);
@@ -2227,7 +2231,8 @@ class CoordinatorService {
         AppLogger.info('Offer $offerId not found for taker payment.',
             offerId: offerId);
         await _dbService.updateOfferStatus(
-            offerId, OfferStatus.takerPaymentFailed);
+            offerId, OfferStatus.takerPaymentFailed,
+            failureReason: 'Offer not found');
         return "invalid offer";
       }
       await Future.delayed(_kDebugDelayDuration);
@@ -2251,7 +2256,8 @@ class CoordinatorService {
         AppLogger.info(
             'CRITICAL: No payment backend configured for _sendTakerPayment.');
         await _dbService.updateOfferStatus(
-            offerId, OfferStatus.takerPaymentFailed);
+            offerId, OfferStatus.takerPaymentFailed,
+            failureReason: 'No payment backend configured');
         return 'No payment backend configured.';
       }
 
@@ -2292,7 +2298,8 @@ class CoordinatorService {
             ' Failed to pay taker for offer $offerId. Reason: ${paymentResult.paymentError}',
             offerId: offerId);
         await _dbService.updateOfferStatus(
-            offerId, OfferStatus.takerPaymentFailed);
+            offerId, OfferStatus.takerPaymentFailed,
+            failureReason: paymentResult.paymentError ?? 'Payment failed (no route or unknown error)');
 
         // Publish status update
         final failedOffer = await _dbService.getOfferById(offerId);
@@ -2307,7 +2314,8 @@ class CoordinatorService {
           'Exception during taker payment for offer $offerId (using $_paymentBackendType): $e',
           offerId: offerId);
       await _dbService.updateOfferStatus(
-          offerId, OfferStatus.takerPaymentFailed);
+          offerId, OfferStatus.takerPaymentFailed,
+          failureReason: e.toString());
       // Publish status update
       final failedOffer = await _dbService.getOfferById(offerId);
       if (failedOffer != null) {

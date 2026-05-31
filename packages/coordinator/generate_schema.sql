@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS offers (
   settled_at TIMESTAMPTZ,
   taker_paid_at TIMESTAMPTZ,
   taker_fees BIGINT NULL, -- Renamed from taker_fees_sats
+  taker_payment_failure_reason TEXT NULL,
   category TEXT
 );
 

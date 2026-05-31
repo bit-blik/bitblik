@@ -84,6 +84,7 @@ class DatabaseService {
         settled_at TIMESTAMPTZ,
         taker_paid_at TIMESTAMPTZ,
         taker_fees BIGINT NULL, -- Renamed
+        taker_payment_failure_reason TEXT NULL,
         fiat_amount NUMERIC,
         fiat_currency TEXT,
         category TEXT
@@ -92,6 +93,10 @@ class DatabaseService {
     await _connection!.execute('''
       ALTER TABLE offers
       ADD COLUMN IF NOT EXISTS category TEXT;
+    ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS taker_payment_failure_reason TEXT NULL;
     ''');
     await _connection!.execute('''
       CREATE INDEX IF NOT EXISTS idx_offers_status ON offers (status);
@@ -287,7 +292,8 @@ class DatabaseService {
       String? takerLightningAddress,
       DateTime? reservedAt,
       DateTime? blikReceivedAt,
-      int? takerFees}) async {
+      int? takerFees,
+      String? failureReason}) async {
     // Renamed parameter
     // Added takerFees
     if (_connection == null) throw StateError('Database not connected.');
@@ -360,6 +366,13 @@ class DatabaseService {
         setClauses.add('taker_invoice = NULL');
         setClauses.add('taker_invoice_fees = NULL');
         setClauses.add('blik_received_at = NULL');
+        break;
+      case OfferStatus.takerPaymentFailed:
+        if (failureReason != null) {
+          params['taker_payment_failure_reason'] = failureReason;
+          setClauses.add(
+              'taker_payment_failure_reason = @taker_payment_failure_reason');
+        }
         break;
       case OfferStatus.invalidBlik: // Add case for invalidBlik
       case OfferStatus.conflict: // Add case for conflict
@@ -507,6 +520,7 @@ class DatabaseService {
       settledAt: (map['settled_at'] as DateTime?)?.toLocal(),
       takerPaidAt: (map['taker_paid_at'] as DateTime?)?.toLocal(),
       takerFees: map['taker_fees'],
+      takerPaymentFailureReason: map['taker_payment_failure_reason'],
       category: parseCategory(map['category']),
     );
 }

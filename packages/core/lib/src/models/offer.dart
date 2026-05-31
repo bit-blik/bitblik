@@ -65,6 +65,7 @@ class Offer {
   final DateTime? settledAt;
   final DateTime? takerPaidAt;
   final int? takerFees;
+  final String? takerPaymentFailureReason;
   final OfferCategory? category;
 
   /// Wallet ID used by the maker to pay the hold invoice.
@@ -144,6 +145,7 @@ class Offer {
     this.settledAt,
     this.takerPaidAt,
     this.takerFees,
+    this.takerPaymentFailureReason,
     this.category,
     this.paymentWalletId,
   });
@@ -263,6 +265,7 @@ class Offer {
       settledAt: parseOptionalDateTime(json['settled_at']),
       takerPaidAt: parseOptionalDateTime(json['taker_paid_at']),
       takerFees: json['taker_fees'] as int?,
+      takerPaymentFailureReason: json['taker_payment_failure_reason'] as String?,
       category: () {
         final raw = json['category'];
         if (raw is! String || raw.trim().isEmpty) return null;
@@ -302,6 +305,7 @@ class Offer {
       'settled_at': settledAt?.toUtc().toIso8601String(),
       'taker_paid_at': takerPaidAt?.toUtc().toIso8601String(),
       'taker_fees': takerFees,
+      'taker_payment_failure_reason': takerPaymentFailureReason,
       'category': category?.name,
       'payment_wallet_id': paymentWalletId,
     };
@@ -344,6 +348,7 @@ class Offer {
     DateTime? settledAt,
     DateTime? takerPaidAt,
     int? takerFees,
+    String? takerPaymentFailureReason,
     OfferCategory? category,
     String? paymentWalletId,
   }) {
@@ -373,6 +378,8 @@ class Offer {
       settledAt: settledAt ?? this.settledAt,
       takerPaidAt: takerPaidAt ?? this.takerPaidAt,
       takerFees: takerFees ?? this.takerFees,
+      takerPaymentFailureReason:
+          takerPaymentFailureReason ?? this.takerPaymentFailureReason,
       category: category ?? this.category,
       paymentWalletId: paymentWalletId ?? this.paymentWalletId,
     );
