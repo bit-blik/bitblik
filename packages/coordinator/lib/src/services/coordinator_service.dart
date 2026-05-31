@@ -219,7 +219,7 @@ class CoordinatorService {
   final Map<String, Timer> _blikConfirmationTimers = {};
   final Map<String, Timer> _fundedOfferTimers = {};
   final Map<String, Timer> _takerChargedTimers = {};
-  final Map<String, Timer> _conflictTimers = {};
+  final Map<String, Timer> _disputeEscalationTimers = {};
 
   // Fee percentages, configurable via environment variables
   late final double _makerFeePercentage;
@@ -324,7 +324,7 @@ class CoordinatorService {
     await _checkExpiredReservations();
     await _checkExpiredBlikConfirmations();
     await _checkTakerChargedAutoConfirm();
-    await _checkConflictAutoDispute();
+    await _checkDisputeEscalationAutoDispute();
   }
 
   Future<void> _initializeMatrixClient() async {
@@ -544,16 +544,23 @@ class CoordinatorService {
     }
   }
 
-  Future<void> _checkConflictAutoDispute() async {
-    AppLogger.info('Checking for conflict auto dispute on startup...');
+  Future<void> _checkDisputeEscalationAutoDispute() async {
+    AppLogger.info(
+        'Checking for invalidBlik/expiredSentBlik/conflict dispute escalation on startup...');
     if (_paymentBackend == null) {
       AppLogger.info('Skipping, no payment backend configured.');
       return;
     }
 
     try {
-      final offers =
-          await _dbService.getOffersByStatus(OfferStatus.conflict, limit: 1000);
+      final offers = [
+        ...await _dbService.getOffersByStatus(OfferStatus.invalidBlik,
+            limit: 1000),
+        ...await _dbService.getOffersByStatus(OfferStatus.expiredSentBlik,
+            limit: 1000),
+        ...await _dbService.getOffersByStatus(OfferStatus.conflict,
+            limit: 1000),
+      ];
       final now = _clock.now().toUtc();
       final timeoutDuration =
           Duration(seconds: _conflictAutoDisputeTimeoutSeconds);
@@ -561,29 +568,27 @@ class CoordinatorService {
       int autoDisputedCount = 0;
       int timerRestartedCount = 0;
       for (final offer in offers) {
-        final conflictStartAt = (offer.updatedAt ?? offer.createdAt).toUtc();
-        final expiryTime = conflictStartAt.add(timeoutDuration);
+        final statusChangedAt = (offer.updatedAt ?? offer.createdAt).toUtc();
+        final expiryTime = statusChangedAt.add(timeoutDuration);
         if (now.isAfter(expiryTime)) {
           AppLogger.info(
-              'Offer ${offer.id} conflict timeout reached (entered conflict at $conflictStartAt, expired at $expiryTime). Opening dispute.',
+              'Offer ${offer.id} ${offer.status} timeout reached (entered status at $statusChangedAt, expired at $expiryTime). Settling and opening dispute.',
               offerId: offer.id);
-          final success = await openDispute(offer.id, offer.makerPubkey);
-          if (success) {
-            autoDisputedCount++;
-          }
+          await _handleDisputeEscalationTimeout(offer.id);
+          autoDisputedCount++;
         } else {
           AppLogger.info(
-              'Offer ${offer.id} still within conflict window (expires at $expiryTime). Restarting timer.',
+              'Offer ${offer.id} still within ${offer.status} window (expires at $expiryTime). Restarting timer.',
               offerId: offer.id);
-          _startConflictTimer(offer);
+          _startDisputeEscalationTimer(offer);
           timerRestartedCount++;
         }
       }
 
       AppLogger.info(
-          'Conflict auto dispute check complete. Auto disputed $autoDisputedCount offers, restarted timers for $timerRestartedCount offers.');
+          'Dispute escalation check complete. Auto disputed $autoDisputedCount offers, restarted timers for $timerRestartedCount offers.');
     } catch (e) {
-      AppLogger.info('Error during conflict auto dispute check: $e');
+      AppLogger.info('Error during dispute escalation auto dispute check: $e');
     }
   }
 
@@ -1185,63 +1190,97 @@ class CoordinatorService {
     }
   }
 
-  void _startConflictTimer(Offer offer) {
-    if (offer.status != OfferStatus.conflict) {
+  void _startDisputeEscalationTimer(Offer offer) {
+    if (offer.status != OfferStatus.invalidBlik &&
+        offer.status != OfferStatus.expiredSentBlik &&
+        offer.status != OfferStatus.conflict) {
       AppLogger.info(
-          'Error: Cannot start conflict timer for offer ${offer.id} - not in state conflict, status is ${offer.status}',
+          'Error: Cannot start dispute escalation timer for offer ${offer.id} - not in invalidBlik, expiredSentBlik, or conflict, status is ${offer.status}',
           offerId: offer.id);
       return;
     }
 
-    _conflictTimers[offer.id]?.cancel();
+    _disputeEscalationTimers[offer.id]?.cancel();
 
     final now = _clock.now().toUtc();
-    final conflictStartAt = (offer.updatedAt ?? now).toUtc();
-    final expirationTime = conflictStartAt
-        .add(Duration(seconds: _conflictAutoDisputeTimeoutSeconds));
+    final statusChangedAt = (offer.updatedAt ?? offer.createdAt).toUtc();
+    final expirationTime =
+        statusChangedAt.add(Duration(seconds: _conflictAutoDisputeTimeoutSeconds));
     final remainingDuration = expirationTime.difference(now);
 
     if (remainingDuration.isNegative || remainingDuration.inSeconds == 0) {
       AppLogger.info(
-          'Offer ${offer.id} has already passed conflict timeout. Handling auto dispute immediately.',
+          'Offer ${offer.id} has already passed dispute escalation timeout. Handling immediately.',
           offerId: offer.id);
-      _conflictTimers.remove(offer.id);
-      _handleConflictTimeout(offer.id);
+      _disputeEscalationTimers.remove(offer.id);
+      _handleDisputeEscalationTimeout(offer.id);
       return;
     }
 
     AppLogger.info(
-        'Starting conflict auto dispute timer for offer ${offer.id} with remaining duration: ${remainingDuration.inSeconds}s',
+        'Starting dispute escalation timer for offer ${offer.id} (status: ${offer.status}) with remaining duration: ${remainingDuration.inSeconds}s',
         offerId: offer.id);
-    _conflictTimers[offer.id] = Timer(remainingDuration, () {
-      AppLogger.info('Conflict timer expired for offer ${offer.id}',
+    _disputeEscalationTimers[offer.id] = Timer(remainingDuration, () {
+      AppLogger.info('Dispute escalation timer expired for offer ${offer.id}',
           offerId: offer.id);
-      _conflictTimers.remove(offer.id);
-      _handleConflictTimeout(offer.id);
+      _disputeEscalationTimers.remove(offer.id);
+      _handleDisputeEscalationTimeout(offer.id);
     });
   }
 
-  Future<void> _handleConflictTimeout(String offerId) async {
-    AppLogger.info('Handling conflict timeout for offer $offerId',
+  Future<void> _handleDisputeEscalationTimeout(String offerId) async {
+    AppLogger.info('Handling dispute escalation timeout for offer $offerId',
         offerId: offerId);
     final offer = await _dbService.getOfferById(offerId);
     if (offer == null) {
       AppLogger.info(
-          'Offer $offerId not found while handling conflict timeout.',
+          'Offer $offerId not found while handling dispute escalation timeout.',
           offerId: offerId);
       return;
     }
-    if (offer.status != OfferStatus.conflict) {
+    if (offer.status != OfferStatus.invalidBlik &&
+        offer.status != OfferStatus.expiredSentBlik &&
+        offer.status != OfferStatus.conflict) {
       AppLogger.info(
-          'Offer $offerId is no longer in conflict (current status: ${offer.status}). No action needed for conflict timeout.',
+          'Offer $offerId is no longer in invalidBlik, expiredSentBlik, or conflict (current status: ${offer.status}). No action needed.',
           offerId: offerId);
       return;
     }
 
-    final success = await openDispute(offerId, offer.makerPubkey);
-    if (!success) {
+    try {
+      if (_paymentBackend != null) {
+        await _paymentBackend!
+            .settleInvoice(preimageHex: offer.holdInvoicePreimage!);
+        AppLogger.info(
+            'Hold invoice for offer $offerId settled via $_paymentBackendType due to dispute escalation timeout.',
+            offerId: offerId);
+      } else {
+        AppLogger.info(
+            'CRITICAL: No payment backend to settle invoice for offer $offerId during dispute escalation.',
+            offerId: offerId);
+        return;
+      }
+    } catch (e) {
       AppLogger.info(
-          'Failed to auto-open dispute for offer $offerId after conflict timeout.',
+          'Error settling hold invoice for offer $offerId during dispute escalation: $e',
+          offerId: offerId);
+      return;
+    }
+
+    final success =
+        await _dbService.updateOfferStatus(offerId, OfferStatus.dispute);
+    if (success) {
+      AppLogger.info(
+          'Offer $offerId status updated to dispute after escalation timeout.',
+          offerId: offerId);
+      final updatedOffer = await _dbService.getOfferById(offerId);
+      if (updatedOffer != null) {
+        await _publishStatusUpdate(updatedOffer);
+        await _nostrService?.broadcastNip69OrderFromOffer(updatedOffer);
+      }
+    } else {
+      AppLogger.info(
+          'Failed to update offer $offerId status to dispute after escalation timeout.',
           offerId: offerId);
     }
   }
@@ -1380,6 +1419,8 @@ class CoordinatorService {
           offerId: offerId);
       _fundedOfferTimers[offerId]?.cancel();
       _fundedOfferTimers.remove(offerId);
+      _disputeEscalationTimers[offerId]?.cancel();
+      _disputeEscalationTimers.remove(offerId);
       _startReservationTimer(offerId);
 
       // Publish status update
@@ -1511,10 +1552,10 @@ class CoordinatorService {
         final revertedOffer = await _dbService.getOfferById(offerId);
         if (revertedOffer != null) {
           await _publishStatusUpdate(revertedOffer);
+          if (revertedOffer.status == OfferStatus.expiredSentBlik) {
+            _startDisputeEscalationTimer(revertedOffer);
+          }
         }
-
-        // TODO start 60min timer to settle the invoice
-        //_startFundedOfferTimer(offer);
       } else {
         AppLogger.info(
             'Error reverting offer $offerId status after BLIK confirmation timeout.',
@@ -1737,12 +1778,7 @@ class CoordinatorService {
       final updatedOffer = await _dbService.getOfferById(offerId);
       if (updatedOffer != null) {
         await _publishStatusUpdate(updatedOffer);
-        if (newStatus == OfferStatus.conflict) {
-          _startConflictTimer(updatedOffer);
-        } else {
-          _conflictTimers[offerId]?.cancel();
-          _conflictTimers.remove(offerId);
-        }
+        _startDisputeEscalationTimer(updatedOffer);
       }
     } else {
       AppLogger.warning(
@@ -1786,11 +1822,10 @@ class CoordinatorService {
       if (updatedOffer != null) {
         await _publishStatusUpdate(updatedOffer);
         await _nostrService?.broadcastNip69OrderFromOffer(updatedOffer);
+        _disputeEscalationTimers[offerId]?.cancel();
+        _disputeEscalationTimers.remove(offerId);
         if (newStatus == OfferStatus.conflict) {
-          _startConflictTimer(updatedOffer);
-        } else {
-          _conflictTimers[offerId]?.cancel();
-          _conflictTimers.remove(offerId);
+          _startDisputeEscalationTimer(updatedOffer);
         }
       }
       if (newStatus == OfferStatus.takerCharged && updatedOffer != null) {
@@ -1807,8 +1842,8 @@ class CoordinatorService {
   Future<bool> openDispute(String offerId, String makerId) async {
     AppLogger.info('Maker $makerId marking offer $offerId as dispute.',
         offerId: offerId);
-    _conflictTimers[offerId]?.cancel();
-    _conflictTimers.remove(offerId);
+    _disputeEscalationTimers[offerId]?.cancel();
+    _disputeEscalationTimers.remove(offerId);
     final offer = await _dbService.getOfferById(offerId);
 
     if (offer == null || offer.makerPubkey != makerId) {
@@ -1893,8 +1928,8 @@ class CoordinatorService {
     _reservationTimers.remove(offerId);
     _blikConfirmationTimers[offerId]?.cancel();
     _blikConfirmationTimers.remove(offerId);
-    _conflictTimers[offerId]?.cancel();
-    _conflictTimers.remove(offerId);
+    _disputeEscalationTimers[offerId]?.cancel();
+    _disputeEscalationTimers.remove(offerId);
     AppLogger.info(
         'Cancelled timers for offer $offerId during maker confirmation.',
         offerId: offerId);
@@ -2006,6 +2041,8 @@ class CoordinatorService {
 
     _reservationTimers[offerId]?.cancel();
     _reservationTimers.remove(offerId);
+    _disputeEscalationTimers[offerId]?.cancel();
+    _disputeEscalationTimers.remove(offerId);
 
     // Revert offer to funded using the new method
     final reverted = await _revertOfferToFunded(offerId);

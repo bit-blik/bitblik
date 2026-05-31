@@ -183,9 +183,10 @@ void main() {
     int amountSats = testSatsAmount,
     int makerFees = testMakerFees,
     int? takerFees = testTakerFees, // Changed to int? to match Offer model
-    String? takerInvoice, // Added takerInvoice
+    String? takerInvoice,
     String coordinatorPubkey = 'test-coordinator-pubkey',
     OfferCategory? category,
+    DateTime? updatedAt,
   }) {
     return Offer(
       id: id,
@@ -203,10 +204,11 @@ void main() {
       amountSats: amountSats,
       makerFees: makerFees,
       takerFees: takerFees,
-      fiatCurrency: 'PLN', // Default currency
-      takerInvoice: takerInvoice, // Added takerInvoice
+      fiatCurrency: 'PLN',
+      takerInvoice: takerInvoice,
       coordinatorPubkey: coordinatorPubkey,
       category: category,
+      updatedAt: updatedAt,
     );
   }
 
@@ -293,6 +295,8 @@ void main() {
     // they will now result in a MissingStubError, prompting the addition of specific mocks for them.
     // This is generally a safer approach.
 
+    when(mockDbService.getOffersByStatus(any, limit: anyNamed('limit')))
+        .thenAnswer((_) async => []);
     when(mockDbService.getOfferById(any)).thenAnswer((_) async => null);
     when(mockDbService.updateOfferStatus(
       any,
@@ -1697,6 +1701,335 @@ void main() {
         expect(offer.status, OfferStatus.dispute);
       });
     });
+    // --- Dispute Escalation Timer Tests ---
+
+    test(
+        'invalidBlik: 60-min timer auto-settles hold invoice and moves to dispute',
+        () {
+      fakeAsync((async) {
+        final offerId = 'invalidblik-escalation-offer';
+        var offer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.blikSentToMaker,
+          makerPubkey: testMakerId,
+          takerPubkey: testTakerId,
+          holdInvoicePreimage: testPreimage,
+        );
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => offer);
+
+        when(mockDbService.updateOfferStatus(offerId, OfferStatus.invalidBlik))
+            .thenAnswer((_) async {
+          offer = offer.copyWith(
+              status: OfferStatus.invalidBlik,
+              updatedAt: clock.now().toUtc());
+          return true;
+        });
+        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .thenAnswer((_) async {
+          offer = offer.copyWith(status: OfferStatus.dispute);
+          return true;
+        });
+        when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .thenAnswer((_) async {});
+
+        coordinatorService
+            .markBlikInvalid(offerId, testMakerId)
+            .then((r) => expect(r, isTrue));
+        async.flushMicrotasks();
+        expect(offer.status, OfferStatus.invalidBlik);
+
+        async.elapse(const Duration(seconds: 3599));
+        async.flushMicrotasks();
+        verifyNever(
+            mockPaymentService.settleInvoice(preimageHex: testPreimage));
+        verifyNever(
+            mockDbService.updateOfferStatus(offerId, OfferStatus.dispute));
+
+        async.elapse(const Duration(seconds: 2));
+        async.flushMicrotasks();
+
+        verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .called(1);
+        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .called(1);
+        expect(offer.status, OfferStatus.dispute);
+      });
+    });
+
+    test(
+        'expiredSentBlik: 60-min timer auto-settles hold invoice and moves to dispute',
+        () {
+      fakeAsync((async) {
+        final offerId = 'expiredsent-escalation-offer';
+        // Offer already in expiredSentBlik (updatedAt = now → full 60min window remaining)
+        var offer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.expiredSentBlik,
+          holdInvoicePreimage: testPreimage,
+          makerPubkey: testMakerId,
+          takerPubkey: testTakerId,
+          updatedAt: clock.now().toUtc(),
+        );
+
+        when(mockDbService.getOffersByStatus(OfferStatus.expiredSentBlik,
+                limit: 1000))
+            .thenAnswer((_) async => [offer]);
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => offer);
+        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .thenAnswer((_) async {
+          offer = offer.copyWith(status: OfferStatus.dispute);
+          return true;
+        });
+        when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .thenAnswer((_) async {});
+
+        // Startup check sees within-window offer → starts 60-min timer
+        coordinatorService.doInitialCheckStatuses().then((_) {});
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(seconds: 3599));
+        async.flushMicrotasks();
+        verifyNever(
+            mockPaymentService.settleInvoice(preimageHex: testPreimage));
+        verifyNever(
+            mockDbService.updateOfferStatus(offerId, OfferStatus.dispute));
+
+        async.elapse(const Duration(seconds: 2));
+        async.flushMicrotasks();
+
+        verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .called(1);
+        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .called(1);
+        expect(offer.status, OfferStatus.dispute);
+      });
+    });
+
+    test(
+        'conflict: 60-min timer auto-settles hold invoice and moves to dispute (via markBlikInvalid path)',
+        () {
+      fakeAsync((async) {
+        final offerId = 'conflict-direct-escalation-offer';
+        var offer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.blikSentToMaker,
+          makerPubkey: testMakerId,
+          takerPubkey: testTakerId,
+          holdInvoicePreimage: testPreimage,
+          takerFees: testTakerFees,
+        );
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => offer);
+
+        // takerCharged transition (via markBlikInvalid when already takerCharged)
+        when(mockDbService.updateOfferStatus(offerId, OfferStatus.conflict))
+            .thenAnswer((_) async {
+          offer = offer.copyWith(
+              status: OfferStatus.conflict, updatedAt: clock.now().toUtc());
+          return true;
+        });
+        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .thenAnswer((_) async {
+          offer = offer.copyWith(status: OfferStatus.dispute);
+          return true;
+        });
+        when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .thenAnswer((_) async {});
+
+        // markBlikInvalid on takerCharged offer → conflict
+        offer = offer.copyWith(status: OfferStatus.takerCharged);
+        coordinatorService
+            .markBlikInvalid(offerId, testMakerId)
+            .then((r) => expect(r, isTrue));
+        async.flushMicrotasks();
+        expect(offer.status, OfferStatus.conflict);
+
+        async.elapse(const Duration(seconds: 3599));
+        async.flushMicrotasks();
+        verifyNever(
+            mockPaymentService.settleInvoice(preimageHex: testPreimage));
+        verifyNever(
+            mockDbService.updateOfferStatus(offerId, OfferStatus.dispute));
+
+        async.elapse(const Duration(seconds: 2));
+        async.flushMicrotasks();
+
+        verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .called(1);
+        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .called(1);
+        expect(offer.status, OfferStatus.dispute);
+      });
+    });
+
+    group('Startup dispute escalation checks (_checkDisputeEscalationAutoDispute)',
+        () {
+      Future<void> runStartupChecks() =>
+          coordinatorService.doInitialCheckStatuses();
+
+      test('invalidBlik older than 60min → immediate settle and dispute',
+          () async {
+        final offerId = 'startup-invalidblik-old';
+        final pastTime =
+            DateTime.now().toUtc().subtract(const Duration(hours: 2));
+        var offer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.invalidBlik,
+          updatedAt: pastTime,
+          holdInvoicePreimage: testPreimage,
+          makerPubkey: testMakerId,
+          takerPubkey: testTakerId,
+        );
+
+        when(mockDbService.getOffersByStatus(OfferStatus.invalidBlik,
+                limit: 1000))
+            .thenAnswer((_) async => [offer]);
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => offer);
+        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .thenAnswer((_) async {
+          offer = offer.copyWith(status: OfferStatus.dispute);
+          return true;
+        });
+        when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .thenAnswer((_) async {});
+
+        await runStartupChecks();
+
+        verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .called(1);
+        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .called(1);
+        expect(offer.status, OfferStatus.dispute);
+      });
+
+      test('expiredSentBlik older than 60min → immediate settle and dispute',
+          () async {
+        final offerId = 'startup-expiredsent-old';
+        final pastTime =
+            DateTime.now().toUtc().subtract(const Duration(hours: 2));
+        var offer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.expiredSentBlik,
+          updatedAt: pastTime,
+          holdInvoicePreimage: testPreimage,
+          makerPubkey: testMakerId,
+          takerPubkey: testTakerId,
+        );
+
+        when(mockDbService.getOffersByStatus(OfferStatus.expiredSentBlik,
+                limit: 1000))
+            .thenAnswer((_) async => [offer]);
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => offer);
+        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .thenAnswer((_) async {
+          offer = offer.copyWith(status: OfferStatus.dispute);
+          return true;
+        });
+        when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .thenAnswer((_) async {});
+
+        await runStartupChecks();
+
+        verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .called(1);
+        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .called(1);
+        expect(offer.status, OfferStatus.dispute);
+      });
+
+      test('conflict older than 60min → immediate settle and dispute',
+          () async {
+        final offerId = 'startup-conflict-old';
+        final pastTime =
+            DateTime.now().toUtc().subtract(const Duration(hours: 2));
+        var offer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.conflict,
+          updatedAt: pastTime,
+          holdInvoicePreimage: testPreimage,
+          makerPubkey: testMakerId,
+          takerPubkey: testTakerId,
+        );
+
+        when(mockDbService.getOffersByStatus(OfferStatus.conflict, limit: 1000))
+            .thenAnswer((_) async => [offer]);
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => offer);
+        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .thenAnswer((_) async {
+          offer = offer.copyWith(status: OfferStatus.dispute);
+          return true;
+        });
+        when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .thenAnswer((_) async {});
+
+        await runStartupChecks();
+
+        verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+            .called(1);
+        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+            .called(1);
+        expect(offer.status, OfferStatus.dispute);
+      });
+
+      test(
+          'invalidBlik within 60-min window → timer restarted, fires at correct remaining time',
+          () {
+        fakeAsync((async) {
+          final offerId = 'startup-invalidblik-recent';
+          // Entered invalidBlik 30min ago → 30min remaining
+          final thirtyMinsAgo =
+              clock.now().toUtc().subtract(const Duration(minutes: 30));
+          var offer = createTestOffer(
+            id: offerId,
+            status: OfferStatus.invalidBlik,
+            updatedAt: thirtyMinsAgo,
+            holdInvoicePreimage: testPreimage,
+            makerPubkey: testMakerId,
+            takerPubkey: testTakerId,
+          );
+
+          when(mockDbService.getOffersByStatus(OfferStatus.invalidBlik,
+                  limit: 1000))
+              .thenAnswer((_) async => [offer]);
+          when(mockDbService.getOfferById(offerId))
+              .thenAnswer((_) async => offer);
+          when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+              .thenAnswer((_) async {
+            offer = offer.copyWith(status: OfferStatus.dispute);
+            return true;
+          });
+          when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+              .thenAnswer((_) async {});
+
+          coordinatorService.doInitialCheckStatuses().then((_) {});
+          async.flushMicrotasks();
+
+          // Just before the remaining 30min expires
+          async.elapse(
+              const Duration(minutes: 29, seconds: 59));
+          async.flushMicrotasks();
+          verifyNever(
+              mockPaymentService.settleInvoice(preimageHex: testPreimage));
+          verifyNever(
+              mockDbService.updateOfferStatus(offerId, OfferStatus.dispute));
+
+          // Past 30-min remaining → full 60-min elapsed from status change → fires
+          async.elapse(const Duration(seconds: 2));
+          async.flushMicrotasks();
+
+          verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
+              .called(1);
+          verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
+              .called(1);
+          expect(offer.status, OfferStatus.dispute);
+        });
+      });
+    }); // End of Startup dispute escalation checks
   }); // End of Timeout Behaviors (using FakeAsync) group
 
   group('User Actions, State Transitions, and Edge Cases', () {
