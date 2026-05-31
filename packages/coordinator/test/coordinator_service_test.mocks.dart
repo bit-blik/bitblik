@@ -250,6 +250,7 @@ class MockDatabaseService extends _i1.Mock implements _i7.DatabaseService {
     DateTime? reservedAt,
     DateTime? blikReceivedAt,
     int? takerFees,
+    String? failureReason,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -265,6 +266,7 @@ class MockDatabaseService extends _i1.Mock implements _i7.DatabaseService {
             #reservedAt: reservedAt,
             #blikReceivedAt: blikReceivedAt,
             #takerFees: takerFees,
+            #failureReason: failureReason,
           },
         ),
         returnValue: _i8.Future<bool>.value(false),

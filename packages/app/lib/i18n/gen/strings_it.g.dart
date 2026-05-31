@@ -58,6 +58,7 @@ class TranslationsIt extends Translations {
 	@override late final _TranslationsLandingIt landing = _TranslationsLandingIt._(_root);
 	@override late final _TranslationsFaqIt faq = _TranslationsFaqIt._(_root);
 	@override late final _TranslationsSettingsIt settings = _TranslationsSettingsIt._(_root);
+	@override late final _TranslationsNotificationSettingsIt notificationSettings = _TranslationsNotificationSettingsIt._(_root);
 	@override late final _TranslationsWalletIt wallet = _TranslationsWalletIt._(_root);
 	@override late final _TranslationsNwcIt nwc = _TranslationsNwcIt._(_root);
 	@override late final _TranslationsNekoManagementIt nekoManagement = _TranslationsNekoManagementIt._(_root);
@@ -333,6 +334,17 @@ class _TranslationsSettingsIt extends TranslationsSettingsEn {
 	@override String get title => 'Impostazioni';
 }
 
+// Path: notificationSettings
+class _TranslationsNotificationSettingsIt extends TranslationsNotificationSettingsEn {
+	_TranslationsNotificationSettingsIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Notifiche';
+	@override late final _TranslationsNotificationSettingsNewOfferAlertsIt newOfferAlerts = _TranslationsNotificationSettingsNewOfferAlertsIt._(_root);
+}
+
 // Path: wallet
 class _TranslationsWalletIt extends TranslationsWalletEn {
 	_TranslationsWalletIt._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -395,6 +407,7 @@ class _TranslationsOfferNotificationsIt extends TranslationsOfferNotificationsEn
 	@override late final _TranslationsOfferNotificationsFundedIt funded = _TranslationsOfferNotificationsFundedIt._(_root);
 	@override late final _TranslationsOfferNotificationsReservedIt reserved = _TranslationsOfferNotificationsReservedIt._(_root);
 	@override late final _TranslationsOfferNotificationsBlikReadyIt blikReady = _TranslationsOfferNotificationsBlikReadyIt._(_root);
+	@override late final _TranslationsOfferNotificationsNewOfferIt newOffer = _TranslationsOfferNotificationsNewOfferIt._(_root);
 	@override late final _TranslationsOfferNotificationsBlikPendingReminderIt blikPendingReminder = _TranslationsOfferNotificationsBlikPendingReminderIt._(_root);
 	@override late final _TranslationsOfferNotificationsTakerChargedIt takerCharged = _TranslationsOfferNotificationsTakerChargedIt._(_root);
 	@override late final _TranslationsOfferNotificationsInvalidBlikIt invalidBlik = _TranslationsOfferNotificationsInvalidBlikIt._(_root);
@@ -1376,6 +1389,17 @@ class _TranslationsLandingActionsIt extends TranslationsLandingActionsEn {
 	@override String get howItWorks => 'Come funziona?';
 }
 
+// Path: notificationSettings.newOfferAlerts
+class _TranslationsNotificationSettingsNewOfferAlertsIt extends TranslationsNotificationSettingsNewOfferAlertsEn {
+	_TranslationsNotificationSettingsNewOfferAlertsIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Avvisi nuove offerte';
+	@override String get description => 'Se abilitato, BitBlik ti notificherà delle nuove offerte disponibili da accettare mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.';
+}
+
 // Path: wallet.missingReceiving
 class _TranslationsWalletMissingReceivingIt extends TranslationsWalletMissingReceivingEn {
 	_TranslationsWalletMissingReceivingIt._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -1511,8 +1535,8 @@ class _TranslationsOfferNotificationsActiveServiceIt extends TranslationsOfferNo
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Offerta in corso';
-	@override String get body => 'Monitoraggio aggiornamenti di stato in background.';
+	@override String get title => 'In attesa di nuove offerte';
+	@override String get body => 'Servizio in background che monitora gli eventi Nostr delle offerte BitBlik.';
 }
 
 // Path: offerNotifications.funded
@@ -1546,6 +1570,17 @@ class _TranslationsOfferNotificationsBlikReadyIt extends TranslationsOfferNotifi
 	// Translations
 	@override String get title => 'Codice BLIK pronto';
 	@override String get body => 'Il tuo codice BLIK è pronto per essere visualizzato.';
+}
+
+// Path: offerNotifications.newOffer
+class _TranslationsOfferNotificationsNewOfferIt extends TranslationsOfferNotificationsNewOfferEn {
+	_TranslationsOfferNotificationsNewOfferIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Nuova offerta disponibile';
+	@override String body({required Object amount, required Object currency}) => 'Offerta ${amount} ${currency} pronta da accettare.';
 }
 
 // Path: offerNotifications.blikPendingReminder
@@ -2817,6 +2852,9 @@ extension on TranslationsIt {
 			case 'faq.screenTitle': return 'FAQ';
 			case 'faq.tooltip': return 'FAQ';
 			case 'settings.title': return 'Impostazioni';
+			case 'notificationSettings.title': return 'Notifiche';
+			case 'notificationSettings.newOfferAlerts.label': return 'Avvisi nuove offerte';
+			case 'notificationSettings.newOfferAlerts.description': return 'Se abilitato, BitBlik ti notificherà delle nuove offerte disponibili da accettare mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.';
 			case 'wallet.title': return 'Portafoglio';
 			case 'wallet.description': return 'Gestisci le impostazioni del tuo portafoglio Lightning';
 			case 'wallet.missingReceiving.title': return 'Portafoglio di ricezione richiesto';
@@ -2870,14 +2908,16 @@ extension on TranslationsIt {
 			case 'relays.status.disconnected': return 'Disconnesso';
 			case 'relays.popup.title': return ({required Object connected, required Object total}) => 'Relay (${connected}/${total} connessi)';
 			case 'relays.popup.connectingMessage': return 'Connessione ai relay...';
-			case 'offerNotifications.activeService.title': return 'Offerta in corso';
-			case 'offerNotifications.activeService.body': return 'Monitoraggio aggiornamenti di stato in background.';
+			case 'offerNotifications.activeService.title': return 'In attesa di nuove offerte';
+			case 'offerNotifications.activeService.body': return 'Servizio in background che monitora gli eventi Nostr delle offerte BitBlik.';
 			case 'offerNotifications.funded.title': return 'Offerta finanziata';
 			case 'offerNotifications.funded.body': return 'La tua fattura hold è stata accettata. L\'offerta è ora attiva.';
 			case 'offerNotifications.reserved.title': return 'Offerta prenotata';
 			case 'offerNotifications.reserved.body': return 'Un taker ha prenotato la tua offerta.';
 			case 'offerNotifications.blikReady.title': return 'Codice BLIK pronto';
 			case 'offerNotifications.blikReady.body': return 'Il tuo codice BLIK è pronto per essere visualizzato.';
+			case 'offerNotifications.newOffer.title': return 'Nuova offerta disponibile';
+			case 'offerNotifications.newOffer.body': return ({required Object amount, required Object currency}) => 'Offerta ${amount} ${currency} pronta da accettare.';
 			case 'offerNotifications.blikPendingReminder.title': return 'BLIK in attesa di azione';
 			case 'offerNotifications.blikPendingReminder.body': return 'Conferma il pagamento o segna il codice BLIK come non valido.';
 			case 'offerNotifications.takerCharged.title': return 'BLIK addebitato';

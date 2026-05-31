@@ -7,6 +7,7 @@ import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
@@ -1103,6 +1104,29 @@ class RelayConnectivityNotifier
   }
 }
 
+const _kNewOfferNotificationsKey = 'new_offer_notifications';
+
+final newOfferNotificationsProvider =
+    StateNotifierProvider<NewOfferNotificationsNotifier, bool>(
+      (ref) => NewOfferNotificationsNotifier(),
+    );
+
+class NewOfferNotificationsNotifier extends StateNotifier<bool> {
+  NewOfferNotificationsNotifier() : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = SharedPreferencesAsync();
+    state = await prefs.getBool(_kNewOfferNotificationsKey) ?? false;
+  }
+
+  Future<void> set(bool value) async {
+    state = value;
+    await SharedPreferencesAsync().setBool(_kNewOfferNotificationsKey, value);
+  }
+}
+
 // Provider for app lifecycle management
 final appLifecycleProvider = Provider<AppLifecycleNotifier>((ref) {
   // Pass the ref to the notifier
@@ -1220,6 +1244,8 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
   AppLifecycleNotifier(this._ref);
 
   AppLifecycleState _currentState = AppLifecycleState.resumed;
+  StreamSubscription<Offer>? _newOfferSub;
+  Set<String> _seenOfferIds = {};
 
   AppLifecycleState get currentState => _currentState;
 
@@ -1228,7 +1254,38 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
   }
 
   void dispose() {
+    _newOfferSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+  }
+
+  Future<void> _startNewOfferMonitoring() async {
+    _newOfferSub?.cancel();
+    // Ensure the Nostr offer subscription is running even if user never visited
+    // the offers screen (offersSubscriptionInitializer is lazy).
+    await _ref.read(offersSubscriptionInitializer.future);
+    // Snapshot currently known offer IDs so we only notify for truly new ones.
+    _seenOfferIds = offers.map((o) => o.id).toSet();
+    final apiService = _ref.read(apiServiceProvider);
+    _newOfferSub = apiService.offersStream.listen((offer) {
+      if (offer.status != OfferStatus.funded) return;
+      if (_seenOfferIds.contains(offer.id)) return;
+      _seenOfferIds.add(offer.id);
+      final strings = t.offerNotifications;
+      NotificationService().show(
+        20,
+        strings.newOffer.title,
+        strings.newOffer.body(
+          amount: offer.fiatAmount.toStringAsFixed(0),
+          currency: offer.fiatCurrency,
+        ),
+      );
+    });
+  }
+
+  void _stopNewOfferMonitoring() {
+    _newOfferSub?.cancel();
+    _newOfferSub = null;
+    _seenOfferIds = {};
   }
 
   @override
@@ -1244,24 +1301,32 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         }
         NotificationService().stopOfferForegroundService();
         NotificationService().cancelBlikReminder();
+        _stopNewOfferMonitoring();
         break;
       case AppLifecycleState.inactive:
         break;
       case AppLifecycleState.paused:
         final offer = _ref.read(activeOfferProvider);
-        if (offer != null &&
-            !OfferDbService.terminalStatuses.contains(offer.status)) {
+        final newOfferAlertsEnabled = _ref.read(newOfferNotificationsProvider);
+        final hasActiveOffer =
+            offer != null &&
+            !OfferDbService.terminalStatuses.contains(offer.status);
+        if (hasActiveOffer || newOfferAlertsEnabled) {
           final strings = t.offerNotifications;
           NotificationService().startOfferForegroundService(
             strings.activeService.title,
             strings.activeService.body,
           );
-          if (offer.status == OfferStatus.blikSentToMaker) {
-            NotificationService().scheduleBlikReminder(
-              strings.blikPendingReminder.title,
-              strings.blikPendingReminder.body,
-            );
-          }
+        }
+        if (hasActiveOffer && offer!.status == OfferStatus.blikSentToMaker) {
+          final strings = t.offerNotifications;
+          NotificationService().scheduleBlikReminder(
+            strings.blikPendingReminder.title,
+            strings.blikPendingReminder.body,
+          );
+        }
+        if (newOfferAlertsEnabled) {
+          _startNewOfferMonitoring();
         }
         break;
       case AppLifecycleState.detached:

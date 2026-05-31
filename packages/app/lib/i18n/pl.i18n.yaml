@@ -829,6 +829,12 @@ faq:
 settings:
   title: Ustawienia
 
+notificationSettings:
+  title: Powiadomienia
+  newOfferAlerts:
+    label: Alerty o nowych ofertach
+    description: Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.
+
 wallet:
   title: Portfel
   description: Zarządzaj ustawieniami portfela Lightning
@@ -907,8 +913,8 @@ relays:
 # =============================================================================
 offerNotifications:
   activeService:
-    title: Oferta w toku
-    body: Monitorowanie aktualizacji statusu w tle.
+    title: Oczekiwanie na nowe oferty
+    body: Usługa w tle monitorująca zdarzenia Nostr ofert BitBlik.
   funded:
     title: Oferta zasilona
     body: Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.
@@ -918,6 +924,9 @@ offerNotifications:
   blikReady:
     title: Kod BLIK gotowy
     body: Twój kod BLIK jest gotowy do wyświetlenia.
+  newOffer:
+    title: Nowa oferta dostępna
+    body: "Oferta ${amount} ${currency} jest gotowa do wzięcia."
   blikPendingReminder:
     title: BLIK czeka na Twoją akcję
     body: Potwierdź płatność lub oznacz kod BLIK jako nieprawidłowy.

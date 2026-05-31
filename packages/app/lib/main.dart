@@ -48,6 +48,7 @@ import 'src/screens/offer_details_screen.dart';
 import 'src/screens/offer_list_screen.dart';
 import 'src/screens/role_selection_screen.dart';
 import 'src/screens/settings_screen.dart';
+import 'src/screens/notification_settings_screen.dart';
 import 'src/screens/taker_flow/taker_conflict_screen.dart'; // Import the taker conflict screen
 import 'src/screens/taker_flow/taker_submit_blik_screen.dart';
 import 'src/screens/taker_flow/taker_wait_confirmation_screen.dart';
@@ -153,6 +154,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: NotificationSettingsScreen.routeName,
+            builder: (context, state) => const NotificationSettingsScreen(),
           ),
           GoRoute(
             path: '/wallet',

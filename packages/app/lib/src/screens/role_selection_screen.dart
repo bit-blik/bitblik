@@ -7,6 +7,7 @@ import '../../i18n/gen/strings.g.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer model
@@ -28,6 +29,8 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
   bool _bffDismissed = false;
   AnimationController? _logoController;
 
+  static const _kBffDismissedKey = 'bff_banner_dismissed';
+
   @override
   void initState() {
     super.initState();
@@ -37,7 +40,23 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
         vsync: this,
         duration: const Duration(milliseconds: 1200),
       )..repeat();
+      _loadBffDismissed();
     }
+  }
+
+  Future<void> _loadBffDismissed() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _bffDismissed = prefs.getBool(_kBffDismissedKey) ?? false;
+      });
+    }
+  }
+
+  Future<void> _dismissBffBanner() async {
+    setState(() => _bffDismissed = true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kBffDismissedKey, true);
   }
 
   @override
@@ -445,7 +464,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                 Padding(
                   padding: const EdgeInsets.only(right: 3, bottom: 3),
                   child: GestureDetector(
-                    onTap: () => setState(() => _bffDismissed = true),
+                    onTap: _dismissBffBanner,
                     child: Container(
                       decoration: const BoxDecoration(
                         color: Colors.black54,

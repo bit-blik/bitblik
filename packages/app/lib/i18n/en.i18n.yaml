@@ -844,6 +844,12 @@ faq:
 settings:
   title: Settings
 
+notificationSettings:
+  title: Notifications
+  newOfferAlerts:
+    label: New offer alerts
+    description: When enabled, BitBlik will notify you about new offers available to take while the app is in the background. This may be faster than external messengers.
+
 wallet:
   title: Wallet
   description: Manage your Lightning wallet settings
@@ -922,8 +928,8 @@ relays:
 # =============================================================================
 offerNotifications:
   activeService:
-    title: Offer in progress
-    body: Watching for status updates in the background.
+    title: Waiting for new offers
+    body: Background service monitoring Nostr events of BitBlik offers.
   funded:
     title: Offer funded
     body: Your hold invoice was accepted. Offer is now live.
@@ -933,6 +939,9 @@ offerNotifications:
   blikReady:
     title: BLIK code ready
     body: Your BLIK code is ready to view.
+  newOffer:
+    title: New offer available
+    body: "${amount} ${currency} offer is ready to take."
   blikPendingReminder:
     title: BLIK waiting for your action
     body: Confirm the payment or mark the BLIK code as invalid.

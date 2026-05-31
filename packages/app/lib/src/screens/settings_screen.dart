@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../i18n/gen/strings.g.dart';
 import 'coordinator_management_screen.dart';
 import 'neko_management_screen.dart';
+import 'notification_settings_screen.dart';
 import 'wallet_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -53,6 +54,18 @@ class SettingsScreen extends ConsumerWidget {
                 context.go(CoordinatorManagementScreen.routeName);
               } else {
                 context.push(CoordinatorManagementScreen.routeName);
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined),
+            title: Text(t.notificationSettings.title),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              if (kIsWeb) {
+                context.go(NotificationSettingsScreen.routeName);
+              } else {
+                context.push(NotificationSettingsScreen.routeName);
               }
             },
           ),
