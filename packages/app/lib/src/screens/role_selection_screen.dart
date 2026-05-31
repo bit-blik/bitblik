@@ -25,6 +25,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
     with SingleTickerProviderStateMixin {
   bool _isSyncing = false;
   bool _hasTriggeredInitialSync = false;
+  bool _bffDismissed = false;
   AnimationController? _logoController;
 
   @override
@@ -429,9 +430,37 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
               ],
             ),
           ),
-          if (_isBffActive()) ...[
+          if (_isBffActive() && !_bffDismissed) ...[
             const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: Text(
+                    t.landing.partnership,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 3, bottom: 3),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _bffDismissed = true),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: const Icon(Icons.close, size: 10, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            _buildMovieStripSeparator(),
             _buildBffBanner(),
+            _buildMovieStripSeparator(),
           ],
         ],
       ),
@@ -618,6 +647,17 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
     return now.isAfter(start) && now.isBefore(end);
   }
 
+  Widget _buildMovieStripSeparator() {
+    return SizedBox(
+      height: 22,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: _FilmStripPainter(),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+
   Widget _buildBffBanner() {
     return GestureDetector(
       onTap: () async {
@@ -630,20 +670,26 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
         cursor: SystemMouseCursors.click,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset('assets/bff-rabbit.png', height: 100, fit: BoxFit.contain),
-            Image.asset('assets/bff-laurs.png', height: 64, fit: BoxFit.contain),
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: AnimatedBuilder(
-                animation: _logoController ?? const AlwaysStoppedAnimation(0),
-                builder: (context, child) {
-                  final t = _logoController?.value ?? 0.0;
-                  final angle = sin(t * 2 * pi) * 0.5;
-                  return Transform.rotate(angle: angle, child: child);
-                },
-                child: Image.asset('assets/bff-logo.png', height: 64, fit: BoxFit.contain),
+            Flexible(
+              child: Image.asset('assets/bff-rabbit.png', height: 100, fit: BoxFit.contain),
+            ),
+            Flexible(
+              child: Image.asset('assets/bff-laurs.png', height: 64, fit: BoxFit.contain),
+            ),
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: AnimatedBuilder(
+                  animation: _logoController ?? const AlwaysStoppedAnimation(0),
+                  builder: (context, child) {
+                    final t = _logoController?.value ?? 0.0;
+                    final angle = sin(t * 2 * pi) * 0.5;
+                    return Transform.rotate(angle: angle, child: child);
+                  },
+                  child: Image.asset('assets/bff-logo.png', height: 64, fit: BoxFit.contain),
+                ),
               ),
             ),
           ],
@@ -670,4 +716,37 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
       return asString;
     }
   }
+}
+
+class _FilmStripPainter extends CustomPainter {
+  static const _blue = Color(0xFF33B9FD);
+  static const _holeW = 10.0;
+  static const _holeH = 14.0;
+  static const _gap = 7.0;
+  static const _radius = Radius.circular(2);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Black background
+    canvas.drawRect(Offset.zero & size, Paint()..color = Colors.black);
+
+    final holePaint = Paint()..color = _blue;
+    final vPad = (size.height - _holeH) / 2;
+    final unit = _holeW + _gap;
+    final count = (size.width / unit).ceil() + 1;
+
+    for (int i = 0; i < count; i++) {
+      final x = _gap / 2 + i * unit;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(x, vPad, _holeW, _holeH),
+          _radius,
+        ),
+        holePaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

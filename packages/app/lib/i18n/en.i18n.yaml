@@ -822,7 +822,8 @@ myOffers:
 landing:
   mainTitle: "Your BLIK ⇄ bitcoin Bridge"
   subtitle: "Pay for or sell your BLIK code with bitcoin"
-  
+  partnership: "partnership"
+
   actions:
     payBlik: "Pay BLIK"
     payBlikSubtitle: "with bitcoin"
@@ -915,6 +916,35 @@ relays:
   popup:
     title: "Relays (${connected}/${total} connected)"
     connectingMessage: Connecting to relays...
+
+# =============================================================================
+# LOCAL NOTIFICATIONS
+# =============================================================================
+offerNotifications:
+  activeService:
+    title: Offer in progress
+    body: Watching for status updates in the background.
+  funded:
+    title: Offer funded
+    body: Your hold invoice was accepted. Offer is now live.
+  reserved:
+    title: Offer reserved
+    body: A taker has reserved your offer.
+  blikReady:
+    title: BLIK code ready
+    body: Your BLIK code is ready to view.
+  blikPendingReminder:
+    title: BLIK waiting for your action
+    body: Confirm the payment or mark the BLIK code as invalid.
+  takerCharged:
+    title: BLIK charged
+    body: Taker reports BLIK was charged. Confirm or mark as invalid.
+  invalidBlik:
+    title: BLIK marked invalid
+    body: Maker marked your BLIK code as invalid.
+  takerPaid:
+    title: Payment received
+    body: Your Lightning payment has been sent.
 
 # =============================================================================
 # ALTSTORE INSTALLATION

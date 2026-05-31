@@ -10,7 +10,9 @@ import 'package:bitblik_core/core.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
+import '../services/notification_service.dart';
 import '../services/offer_db_service.dart';
+import '../../i18n/gen/strings.g.dart';
 
 final keyServiceProvider = Provider<KeyService>((ref) {
   final service = KeyService();
@@ -709,6 +711,12 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       }
     }
 
+    if (existing.status == OfferStatus.blikSentToMaker &&
+        newStatus != OfferStatus.blikSentToMaker) {
+      NotificationService().cancelBlikReminder();
+    }
+    _maybeNotify(hydrated, newStatus);
+
     final currentState = state;
     final isCurrent =
         currentState != null &&
@@ -719,6 +727,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
     if (isCurrent) {
       if (OfferDbService.terminalStatuses.contains(newStatus)) {
+        NotificationService().stopOfferForegroundService();
         await _promoteMostRecentActiveOffer();
       } else {
         state = hydrated;
@@ -736,6 +745,45 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
             '[ActiveOfferNotifier] reviving cancelled offer ${hydrated.id} -> ${newStatus.name}',
       );
       state = hydrated;
+    }
+  }
+
+  void _maybeNotify(Offer offer, OfferStatus newStatus) {
+    final lifecycle = _ref.read(appLifecycleProvider).currentState;
+    if (lifecycle == AppLifecycleState.resumed ||
+        lifecycle == AppLifecycleState.inactive) return;
+    final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
+    if (myPubkey == null) return;
+    final isMaker = offer.makerPubkey == myPubkey;
+    final isTaker = offer.takerPubkey == myPubkey;
+    final strings = t.offerNotifications;
+    switch (newStatus) {
+      case OfferStatus.funded:
+        if (isMaker) {
+          NotificationService().show(1, strings.funded.title, strings.funded.body);
+        }
+      case OfferStatus.reserved:
+        if (isMaker) {
+          NotificationService().show(2, strings.reserved.title, strings.reserved.body);
+        }
+      case OfferStatus.blikSentToMaker:
+        if (isMaker) {
+          NotificationService().show(3, strings.blikReady.title, strings.blikReady.body);
+        }
+      case OfferStatus.takerCharged:
+        if (isMaker) {
+          NotificationService().show(4, strings.takerCharged.title, strings.takerCharged.body);
+        }
+      case OfferStatus.invalidBlik:
+        if (isTaker) {
+          NotificationService().show(5, strings.invalidBlik.title, strings.invalidBlik.body);
+        }
+      case OfferStatus.takerPaid:
+        if (isTaker) {
+          NotificationService().show(6, strings.takerPaid.title, strings.takerPaid.body);
+        }
+      default:
+        break;
     }
   }
 
@@ -1194,10 +1242,27 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         if (ndkInstance != null) {
           // ndkInstance.connectivity.do();
         }
+        NotificationService().stopOfferForegroundService();
+        NotificationService().cancelBlikReminder();
         break;
       case AppLifecycleState.inactive:
         break;
       case AppLifecycleState.paused:
+        final offer = _ref.read(activeOfferProvider);
+        if (offer != null &&
+            !OfferDbService.terminalStatuses.contains(offer.status)) {
+          final strings = t.offerNotifications;
+          NotificationService().startOfferForegroundService(
+            strings.activeService.title,
+            strings.activeService.body,
+          );
+          if (offer.status == OfferStatus.blikSentToMaker) {
+            NotificationService().scheduleBlikReminder(
+              strings.blikPendingReminder.title,
+              strings.blikPendingReminder.body,
+            );
+          }
+        }
         break;
       case AppLifecycleState.detached:
         break;

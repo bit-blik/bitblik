@@ -74,6 +74,7 @@ dependencies:
   cached_network_image: ^3.4.1
   connectivity_plus: ^7.0.0
   mobile_scanner: ^7.1.4
+  flutter_local_notifications: ^20.1.0
 
 dependency_overrides:
   ndk:

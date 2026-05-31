@@ -807,7 +807,8 @@ myOffers:
 landing:
   mainTitle: "Wymiana\n BLIK ⇄ bitcoin"
   subtitle: "Płać lub sprzedawaj kod BLIK za bitcoin"
-  
+  partnership: "współpraca"
+
   actions:
     payBlik: "Zapłać BLIK"
     payBlikSubtitle: "używając bitcoin"
@@ -900,6 +901,35 @@ relays:
   popup:
     title: "Przekaźniki (${connected}/${total} połączonych)"
     connectingMessage: Łączenie z przekaźnikami...
+
+# =============================================================================
+# LOCAL NOTIFICATIONS
+# =============================================================================
+offerNotifications:
+  activeService:
+    title: Oferta w toku
+    body: Monitorowanie aktualizacji statusu w tle.
+  funded:
+    title: Oferta zasilona
+    body: Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.
+  reserved:
+    title: Oferta zarezerwowana
+    body: Taker zarezerwował Twoją ofertę.
+  blikReady:
+    title: Kod BLIK gotowy
+    body: Twój kod BLIK jest gotowy do wyświetlenia.
+  blikPendingReminder:
+    title: BLIK czeka na Twoją akcję
+    body: Potwierdź płatność lub oznacz kod BLIK jako nieprawidłowy.
+  takerCharged:
+    title: BLIK obciążony
+    body: Taker zgłasza, że BLIK został obciążony. Potwierdź lub oznacz jako nieprawidłowy.
+  invalidBlik:
+    title: BLIK oznaczony jako nieprawidłowy
+    body: Maker oznaczył Twój kod BLIK jako nieprawidłowy.
+  takerPaid:
+    title: Płatność otrzymana
+    body: Twoja płatność Lightning została wysłana.
 
 # =============================================================================
 # ALTSTORE INSTALLATION

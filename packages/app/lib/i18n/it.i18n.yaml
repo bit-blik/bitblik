@@ -806,6 +806,7 @@ myOffers:
 landing:
   mainTitle: "Il tuo ponte BLIK ⇄ bitcoin"
   subtitle: "Paga o vendi il tuo codice BLIK con bitcoin"
+  partnership: "partnership"
 
   actions:
     payBlik: "Paga BLIK"
@@ -899,6 +900,35 @@ relays:
   popup:
     title: "Relay (${connected}/${total} connessi)"
     connectingMessage: Connessione ai relay...
+
+# =============================================================================
+# LOCAL NOTIFICATIONS
+# =============================================================================
+offerNotifications:
+  activeService:
+    title: Offerta in corso
+    body: Monitoraggio aggiornamenti di stato in background.
+  funded:
+    title: Offerta finanziata
+    body: La tua fattura hold è stata accettata. L'offerta è ora attiva.
+  reserved:
+    title: Offerta prenotata
+    body: Un taker ha prenotato la tua offerta.
+  blikReady:
+    title: Codice BLIK pronto
+    body: Il tuo codice BLIK è pronto per essere visualizzato.
+  blikPendingReminder:
+    title: BLIK in attesa di azione
+    body: Conferma il pagamento o segna il codice BLIK come non valido.
+  takerCharged:
+    title: BLIK addebitato
+    body: Il taker segnala che il BLIK è stato addebitato. Conferma o segna come non valido.
+  invalidBlik:
+    title: BLIK non valido
+    body: Il maker ha contrassegnato il tuo codice BLIK come non valido.
+  takerPaid:
+    title: Pagamento ricevuto
+    body: Il tuo pagamento Lightning è stato inviato.
 
 # =============================================================================
 # ALTSTORE INSTALLATION

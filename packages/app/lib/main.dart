@@ -36,6 +36,7 @@ import 'package:markdown/markdown.dart' as md;
 import 'i18n/gen/strings.g.dart'; // Import Slang from new path
 import 'package:bitblik_core/core.dart'; // Needed for OfferStatus enum
 import 'src/providers/providers.dart';
+import 'src/services/notification_service.dart';
 import 'src/screens/coordinator_management_screen.dart';
 import 'src/screens/faq_screen.dart'; // Import the FAQ screen
 import 'src/screens/maker_flow/maker_amount_form.dart';
@@ -259,6 +260,7 @@ Future<void> main() async {
   }
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
   String? localeString = await asyncPrefs.getString('app_locale');
   if (localeString != null) {
     appLocale = localeString == 'pl' ? AppLocale.pl : AppLocale.en;
@@ -1510,71 +1512,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
           ),
-          if (kDebugMode)
-            Builder(
-              builder: (ctx) => PopupMenuButton<String>(
-                icon: const Icon(Icons.bug_report, size: 20),
-                tooltip: 'Debug screens',
-                onSelected: (value) {
-                  if (value == 'taker_failed_lnurl') {
-                    ctx.push('/taker-failed',
-                        extra: Offer(
-                          id: 'debug-offer-id',
-                          amountSats: 100000,
-                          makerFees: 500,
-                          status: OfferStatus.takerPaymentFailed,
-                          fiatAmount: 100.0,
-                          fiatCurrency: 'PLN',
-                          createdAt: DateTime.now().toUtc(),
-                          makerPubkey: 'debugmakerdeadbeef',
-                          coordinatorPubkey: 'debugcoorddeadbeef',
-                          takerLightningAddress: 'taker@example.com',
-                          takerPaymentFailureReason:
-                              'Failed to get invoice from lightning address (LNURL resolution failed)',
-                        ));
-                  } else if (value == 'taker_failed_route') {
-                    ctx.push('/taker-failed',
-                        extra: Offer(
-                          id: 'debug-offer-id-2',
-                          amountSats: 50000,
-                          makerFees: 250,
-                          status: OfferStatus.takerPaymentFailed,
-                          fiatAmount: 50.0,
-                          fiatCurrency: 'PLN',
-                          createdAt: DateTime.now().toUtc(),
-                          makerPubkey: 'debugmakerdeadbeef',
-                          coordinatorPubkey: 'debugcoorddeadbeef',
-                          takerPaymentFailureReason:
-                              'Payment failed (no route or unknown error)',
-                        ));
-                  } else if (value == 'taker_failed_none') {
-                    ctx.push('/taker-failed',
-                        extra: Offer(
-                          id: 'debug-offer-id-3',
-                          amountSats: 75000,
-                          makerFees: 375,
-                          status: OfferStatus.takerPaymentFailed,
-                          fiatAmount: 75.0,
-                          fiatCurrency: 'PLN',
-                          createdAt: DateTime.now().toUtc(),
-                          makerPubkey: 'debugmakerdeadbeef',
-                          coordinatorPubkey: 'debugcoorddeadbeef',
-                        ));
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                      value: 'taker_failed_lnurl',
-                      child: Text('TakerFailed: LNURL error')),
-                  PopupMenuItem(
-                      value: 'taker_failed_route',
-                      child: Text('TakerFailed: no route')),
-                  PopupMenuItem(
-                      value: 'taker_failed_none',
-                      child: Text('TakerFailed: no reason')),
-                ],
-              ),
-            ),
         ],
       ),
       body: Center(
@@ -1585,18 +1522,18 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
       ),
       endDrawer: _buildNekoDrawer(context, publicKeyAsync),
       bottomNavigationBar: SizedBox(
-        height: 70,
+        height: 60,
         child: Padding(
-          padding: const EdgeInsets.all(6.0),
+          padding: const EdgeInsets.all(4.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Divider(),
+              const Divider(height: 8),
 
               // Version, GitHub link, and download buttons on the same line
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3.0),
+                padding: const EdgeInsets.symmetric(vertical: 2.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,

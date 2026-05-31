@@ -26,6 +26,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
   bool _isExpired = false;
   bool _isRecreating = false;
   Timer? _expiryTimer;
+  Offer? _lastKnownOffer; // snapshot so expired UI has offer details even after state→null
 
   @override
   void initState() {
@@ -47,7 +48,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     final remaining = expiresAt.difference(DateTime.now());
     if (!remaining.isNegative && remaining > Duration.zero) {
       _expiryTimer = Timer(remaining, () {
-        if (mounted) setState(() => _isExpired = true);
+        if (mounted) {
+          _lastKnownOffer ??= ref.read(activeOfferProvider);
+          setState(() => _isExpired = true);
+        }
       });
     }
   }
@@ -189,7 +193,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
   }
 
   Future<void> _recreateOffer() async {
-    final offer = ref.read(activeOfferProvider);
+    final offer = _lastKnownOffer ?? ref.read(activeOfferProvider);
     final makerId = ref.read(publicKeyProvider).value;
     if (offer == null || makerId == null) return;
 
@@ -300,17 +304,26 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     final offer = ref.watch(activeOfferProvider);
     final t = Translations.of(context);
 
+    if (offer != null) _lastKnownOffer = offer;
+
     ref.listen<Offer?>(activeOfferProvider, (previous, next) {
-      if (next != null && mounted) {
+      if (!mounted) return;
+      if (next != null) {
         _handleStatusUpdate(next.statusEnum);
+      } else if (previous != null && !_isExpired) {
+        // Offer cleared by coordinator (applyStatusUpdate goes funded→null for
+        // terminal statuses without passing through expired in memory).
+        // Treat as expiry if the 10-min window has elapsed.
+        final expiresAt = previous.createdAt.add(const Duration(minutes: 10));
+        if (!DateTime.now().isBefore(expiresAt)) {
+          _lastKnownOffer = previous;
+          setState(() => _isExpired = true);
+        }
       }
     });
 
-    if (offer == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     if (_isExpired) {
+      final expiredOffer = _lastKnownOffer;
       return Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
@@ -335,18 +348,20 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                     style: const TextStyle(fontSize: 16, color: Colors.black54),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 30),
-                  _buildDetailRow(
-                    context,
-                    t.offers.details.amountLabel,
-                    '${(offer.fiatAmount * 100).round() % 100 == 0 ? offer.fiatAmount.toStringAsFixed(0) : offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}',
-                  ),
-                  const SizedBox(height: 8),
-                  _buildDetailRow(
-                    context,
-                    t.maker.amountForm.labels.fee,
-                    '${offer.makerFees} sats',
-                  ),
+                  if (expiredOffer != null) ...[
+                    const SizedBox(height: 30),
+                    _buildDetailRow(
+                      context,
+                      t.offers.details.amountLabel,
+                      '${(expiredOffer.fiatAmount * 100).round() % 100 == 0 ? expiredOffer.fiatAmount.toStringAsFixed(0) : expiredOffer.fiatAmount.toStringAsFixed(2)} ${expiredOffer.fiatCurrency}',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildDetailRow(
+                      context,
+                      t.maker.amountForm.labels.fee,
+                      '${expiredOffer.makerFees} sats',
+                    ),
+                  ],
                   const SizedBox(height: 30),
                   SizedBox(
                     width: double.infinity,
@@ -395,6 +410,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
           ),
         ),
       );
+    }
+
+    if (offer == null) {
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Scaffold(

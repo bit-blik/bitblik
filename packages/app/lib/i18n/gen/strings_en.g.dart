@@ -63,6 +63,7 @@ class Translations implements BaseTranslations<AppLocale, Translations> {
 	late final TranslationsNwcEn nwc = TranslationsNwcEn.internal(_root);
 	late final TranslationsNekoManagementEn nekoManagement = TranslationsNekoManagementEn.internal(_root);
 	late final TranslationsRelaysEn relays = TranslationsRelaysEn.internal(_root);
+	late final TranslationsOfferNotificationsEn offerNotifications = TranslationsOfferNotificationsEn.internal(_root);
 	late final TranslationsAltstoreEn altstore = TranslationsAltstoreEn.internal(_root);
 }
 
@@ -353,6 +354,9 @@ class TranslationsLandingEn {
 	/// en: 'Pay for or sell your BLIK code with bitcoin'
 	String get subtitle => 'Pay for or sell your BLIK code with bitcoin';
 
+	/// en: 'partnership'
+	String get partnership => 'partnership';
+
 	late final TranslationsLandingActionsEn actions = TranslationsLandingActionsEn.internal(_root);
 }
 
@@ -447,6 +451,23 @@ class TranslationsRelaysEn {
 
 	late final TranslationsRelaysStatusEn status = TranslationsRelaysStatusEn.internal(_root);
 	late final TranslationsRelaysPopupEn popup = TranslationsRelaysPopupEn.internal(_root);
+}
+
+// Path: offerNotifications
+class TranslationsOfferNotificationsEn {
+	TranslationsOfferNotificationsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsOfferNotificationsActiveServiceEn activeService = TranslationsOfferNotificationsActiveServiceEn.internal(_root);
+	late final TranslationsOfferNotificationsFundedEn funded = TranslationsOfferNotificationsFundedEn.internal(_root);
+	late final TranslationsOfferNotificationsReservedEn reserved = TranslationsOfferNotificationsReservedEn.internal(_root);
+	late final TranslationsOfferNotificationsBlikReadyEn blikReady = TranslationsOfferNotificationsBlikReadyEn.internal(_root);
+	late final TranslationsOfferNotificationsBlikPendingReminderEn blikPendingReminder = TranslationsOfferNotificationsBlikPendingReminderEn.internal(_root);
+	late final TranslationsOfferNotificationsTakerChargedEn takerCharged = TranslationsOfferNotificationsTakerChargedEn.internal(_root);
+	late final TranslationsOfferNotificationsInvalidBlikEn invalidBlik = TranslationsOfferNotificationsInvalidBlikEn.internal(_root);
+	late final TranslationsOfferNotificationsTakerPaidEn takerPaid = TranslationsOfferNotificationsTakerPaidEn.internal(_root);
 }
 
 // Path: altstore
@@ -2336,6 +2357,126 @@ class TranslationsRelaysPopupEn {
 	String get connectingMessage => 'Connecting to relays...';
 }
 
+// Path: offerNotifications.activeService
+class TranslationsOfferNotificationsActiveServiceEn {
+	TranslationsOfferNotificationsActiveServiceEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Offer in progress'
+	String get title => 'Offer in progress';
+
+	/// en: 'Watching for status updates in the background.'
+	String get body => 'Watching for status updates in the background.';
+}
+
+// Path: offerNotifications.funded
+class TranslationsOfferNotificationsFundedEn {
+	TranslationsOfferNotificationsFundedEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Offer funded'
+	String get title => 'Offer funded';
+
+	/// en: 'Your hold invoice was accepted. Offer is now live.'
+	String get body => 'Your hold invoice was accepted. Offer is now live.';
+}
+
+// Path: offerNotifications.reserved
+class TranslationsOfferNotificationsReservedEn {
+	TranslationsOfferNotificationsReservedEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Offer reserved'
+	String get title => 'Offer reserved';
+
+	/// en: 'A taker has reserved your offer.'
+	String get body => 'A taker has reserved your offer.';
+}
+
+// Path: offerNotifications.blikReady
+class TranslationsOfferNotificationsBlikReadyEn {
+	TranslationsOfferNotificationsBlikReadyEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'BLIK code ready'
+	String get title => 'BLIK code ready';
+
+	/// en: 'Your BLIK code is ready to view.'
+	String get body => 'Your BLIK code is ready to view.';
+}
+
+// Path: offerNotifications.blikPendingReminder
+class TranslationsOfferNotificationsBlikPendingReminderEn {
+	TranslationsOfferNotificationsBlikPendingReminderEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'BLIK waiting for your action'
+	String get title => 'BLIK waiting for your action';
+
+	/// en: 'Confirm the payment or mark the BLIK code as invalid.'
+	String get body => 'Confirm the payment or mark the BLIK code as invalid.';
+}
+
+// Path: offerNotifications.takerCharged
+class TranslationsOfferNotificationsTakerChargedEn {
+	TranslationsOfferNotificationsTakerChargedEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'BLIK charged'
+	String get title => 'BLIK charged';
+
+	/// en: 'Taker reports BLIK was charged. Confirm or mark as invalid.'
+	String get body => 'Taker reports BLIK was charged. Confirm or mark as invalid.';
+}
+
+// Path: offerNotifications.invalidBlik
+class TranslationsOfferNotificationsInvalidBlikEn {
+	TranslationsOfferNotificationsInvalidBlikEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'BLIK marked invalid'
+	String get title => 'BLIK marked invalid';
+
+	/// en: 'Maker marked your BLIK code as invalid.'
+	String get body => 'Maker marked your BLIK code as invalid.';
+}
+
+// Path: offerNotifications.takerPaid
+class TranslationsOfferNotificationsTakerPaidEn {
+	TranslationsOfferNotificationsTakerPaidEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Payment received'
+	String get title => 'Payment received';
+
+	/// en: 'Your Lightning payment has been sent.'
+	String get body => 'Your Lightning payment has been sent.';
+}
+
 // Path: offers.details.categories
 class TranslationsOffersDetailsCategoriesEn {
 	TranslationsOffersDetailsCategoriesEn.internal(this._root);
@@ -3983,6 +4124,7 @@ extension on Translations {
 			case 'myOffers.details.after': return ({required Object duration}) => 'after ${duration}';
 			case 'landing.mainTitle': return 'Your BLIK ⇄ bitcoin Bridge';
 			case 'landing.subtitle': return 'Pay for or sell your BLIK code with bitcoin';
+			case 'landing.partnership': return 'partnership';
 			case 'landing.actions.payBlik': return 'Pay BLIK';
 			case 'landing.actions.payBlikSubtitle': return 'with bitcoin';
 			case 'landing.actions.sellBlik': return 'Buy bitcoin';
@@ -4044,6 +4186,22 @@ extension on Translations {
 			case 'relays.status.disconnected': return 'Disconnected';
 			case 'relays.popup.title': return ({required Object connected, required Object total}) => 'Relays (${connected}/${total} connected)';
 			case 'relays.popup.connectingMessage': return 'Connecting to relays...';
+			case 'offerNotifications.activeService.title': return 'Offer in progress';
+			case 'offerNotifications.activeService.body': return 'Watching for status updates in the background.';
+			case 'offerNotifications.funded.title': return 'Offer funded';
+			case 'offerNotifications.funded.body': return 'Your hold invoice was accepted. Offer is now live.';
+			case 'offerNotifications.reserved.title': return 'Offer reserved';
+			case 'offerNotifications.reserved.body': return 'A taker has reserved your offer.';
+			case 'offerNotifications.blikReady.title': return 'BLIK code ready';
+			case 'offerNotifications.blikReady.body': return 'Your BLIK code is ready to view.';
+			case 'offerNotifications.blikPendingReminder.title': return 'BLIK waiting for your action';
+			case 'offerNotifications.blikPendingReminder.body': return 'Confirm the payment or mark the BLIK code as invalid.';
+			case 'offerNotifications.takerCharged.title': return 'BLIK charged';
+			case 'offerNotifications.takerCharged.body': return 'Taker reports BLIK was charged. Confirm or mark as invalid.';
+			case 'offerNotifications.invalidBlik.title': return 'BLIK marked invalid';
+			case 'offerNotifications.invalidBlik.body': return 'Maker marked your BLIK code as invalid.';
+			case 'offerNotifications.takerPaid.title': return 'Payment received';
+			case 'offerNotifications.takerPaid.body': return 'Your Lightning payment has been sent.';
 			case 'altstore.dialogTitle': return 'AltStore Not Installed';
 			case 'altstore.step1Title': return 'Download and install AltStore PAL';
 			case 'altstore.step1Button': return 'altstore.io/download';

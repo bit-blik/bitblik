@@ -62,6 +62,7 @@ class TranslationsIt extends Translations {
 	@override late final _TranslationsNwcIt nwc = _TranslationsNwcIt._(_root);
 	@override late final _TranslationsNekoManagementIt nekoManagement = _TranslationsNekoManagementIt._(_root);
 	@override late final _TranslationsRelaysIt relays = _TranslationsRelaysIt._(_root);
+	@override late final _TranslationsOfferNotificationsIt offerNotifications = _TranslationsOfferNotificationsIt._(_root);
 	@override late final _TranslationsAltstoreIt altstore = _TranslationsAltstoreIt._(_root);
 }
 
@@ -307,6 +308,7 @@ class _TranslationsLandingIt extends TranslationsLandingEn {
 	// Translations
 	@override String get mainTitle => 'Il tuo ponte BLIK ⇄ bitcoin';
 	@override String get subtitle => 'Paga o vendi il tuo codice BLIK con bitcoin';
+	@override String get partnership => 'partnership';
 	@override late final _TranslationsLandingActionsIt actions = _TranslationsLandingActionsIt._(_root);
 }
 
@@ -380,6 +382,23 @@ class _TranslationsRelaysIt extends TranslationsRelaysEn {
 	@override String get title => 'Relay';
 	@override late final _TranslationsRelaysStatusIt status = _TranslationsRelaysStatusIt._(_root);
 	@override late final _TranslationsRelaysPopupIt popup = _TranslationsRelaysPopupIt._(_root);
+}
+
+// Path: offerNotifications
+class _TranslationsOfferNotificationsIt extends TranslationsOfferNotificationsEn {
+	_TranslationsOfferNotificationsIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsOfferNotificationsActiveServiceIt activeService = _TranslationsOfferNotificationsActiveServiceIt._(_root);
+	@override late final _TranslationsOfferNotificationsFundedIt funded = _TranslationsOfferNotificationsFundedIt._(_root);
+	@override late final _TranslationsOfferNotificationsReservedIt reserved = _TranslationsOfferNotificationsReservedIt._(_root);
+	@override late final _TranslationsOfferNotificationsBlikReadyIt blikReady = _TranslationsOfferNotificationsBlikReadyIt._(_root);
+	@override late final _TranslationsOfferNotificationsBlikPendingReminderIt blikPendingReminder = _TranslationsOfferNotificationsBlikPendingReminderIt._(_root);
+	@override late final _TranslationsOfferNotificationsTakerChargedIt takerCharged = _TranslationsOfferNotificationsTakerChargedIt._(_root);
+	@override late final _TranslationsOfferNotificationsInvalidBlikIt invalidBlik = _TranslationsOfferNotificationsInvalidBlikIt._(_root);
+	@override late final _TranslationsOfferNotificationsTakerPaidIt takerPaid = _TranslationsOfferNotificationsTakerPaidIt._(_root);
 }
 
 // Path: altstore
@@ -1483,6 +1502,94 @@ class _TranslationsRelaysPopupIt extends TranslationsRelaysPopupEn {
 	// Translations
 	@override String title({required Object connected, required Object total}) => 'Relay (${connected}/${total} connessi)';
 	@override String get connectingMessage => 'Connessione ai relay...';
+}
+
+// Path: offerNotifications.activeService
+class _TranslationsOfferNotificationsActiveServiceIt extends TranslationsOfferNotificationsActiveServiceEn {
+	_TranslationsOfferNotificationsActiveServiceIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Offerta in corso';
+	@override String get body => 'Monitoraggio aggiornamenti di stato in background.';
+}
+
+// Path: offerNotifications.funded
+class _TranslationsOfferNotificationsFundedIt extends TranslationsOfferNotificationsFundedEn {
+	_TranslationsOfferNotificationsFundedIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Offerta finanziata';
+	@override String get body => 'La tua fattura hold è stata accettata. L\'offerta è ora attiva.';
+}
+
+// Path: offerNotifications.reserved
+class _TranslationsOfferNotificationsReservedIt extends TranslationsOfferNotificationsReservedEn {
+	_TranslationsOfferNotificationsReservedIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Offerta prenotata';
+	@override String get body => 'Un taker ha prenotato la tua offerta.';
+}
+
+// Path: offerNotifications.blikReady
+class _TranslationsOfferNotificationsBlikReadyIt extends TranslationsOfferNotificationsBlikReadyEn {
+	_TranslationsOfferNotificationsBlikReadyIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Codice BLIK pronto';
+	@override String get body => 'Il tuo codice BLIK è pronto per essere visualizzato.';
+}
+
+// Path: offerNotifications.blikPendingReminder
+class _TranslationsOfferNotificationsBlikPendingReminderIt extends TranslationsOfferNotificationsBlikPendingReminderEn {
+	_TranslationsOfferNotificationsBlikPendingReminderIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'BLIK in attesa di azione';
+	@override String get body => 'Conferma il pagamento o segna il codice BLIK come non valido.';
+}
+
+// Path: offerNotifications.takerCharged
+class _TranslationsOfferNotificationsTakerChargedIt extends TranslationsOfferNotificationsTakerChargedEn {
+	_TranslationsOfferNotificationsTakerChargedIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'BLIK addebitato';
+	@override String get body => 'Il taker segnala che il BLIK è stato addebitato. Conferma o segna come non valido.';
+}
+
+// Path: offerNotifications.invalidBlik
+class _TranslationsOfferNotificationsInvalidBlikIt extends TranslationsOfferNotificationsInvalidBlikEn {
+	_TranslationsOfferNotificationsInvalidBlikIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'BLIK non valido';
+	@override String get body => 'Il maker ha contrassegnato il tuo codice BLIK come non valido.';
+}
+
+// Path: offerNotifications.takerPaid
+class _TranslationsOfferNotificationsTakerPaidIt extends TranslationsOfferNotificationsTakerPaidEn {
+	_TranslationsOfferNotificationsTakerPaidIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Pagamento ricevuto';
+	@override String get body => 'Il tuo pagamento Lightning è stato inviato.';
 }
 
 // Path: offers.details.categories
@@ -2701,6 +2808,7 @@ extension on TranslationsIt {
 			case 'myOffers.details.after': return ({required Object duration}) => 'dopo ${duration}';
 			case 'landing.mainTitle': return 'Il tuo ponte BLIK ⇄ bitcoin';
 			case 'landing.subtitle': return 'Paga o vendi il tuo codice BLIK con bitcoin';
+			case 'landing.partnership': return 'partnership';
 			case 'landing.actions.payBlik': return 'Paga BLIK';
 			case 'landing.actions.payBlikSubtitle': return 'con bitcoin';
 			case 'landing.actions.sellBlik': return 'Compra bitcoin';
@@ -2762,6 +2870,22 @@ extension on TranslationsIt {
 			case 'relays.status.disconnected': return 'Disconnesso';
 			case 'relays.popup.title': return ({required Object connected, required Object total}) => 'Relay (${connected}/${total} connessi)';
 			case 'relays.popup.connectingMessage': return 'Connessione ai relay...';
+			case 'offerNotifications.activeService.title': return 'Offerta in corso';
+			case 'offerNotifications.activeService.body': return 'Monitoraggio aggiornamenti di stato in background.';
+			case 'offerNotifications.funded.title': return 'Offerta finanziata';
+			case 'offerNotifications.funded.body': return 'La tua fattura hold è stata accettata. L\'offerta è ora attiva.';
+			case 'offerNotifications.reserved.title': return 'Offerta prenotata';
+			case 'offerNotifications.reserved.body': return 'Un taker ha prenotato la tua offerta.';
+			case 'offerNotifications.blikReady.title': return 'Codice BLIK pronto';
+			case 'offerNotifications.blikReady.body': return 'Il tuo codice BLIK è pronto per essere visualizzato.';
+			case 'offerNotifications.blikPendingReminder.title': return 'BLIK in attesa di azione';
+			case 'offerNotifications.blikPendingReminder.body': return 'Conferma il pagamento o segna il codice BLIK come non valido.';
+			case 'offerNotifications.takerCharged.title': return 'BLIK addebitato';
+			case 'offerNotifications.takerCharged.body': return 'Il taker segnala che il BLIK è stato addebitato. Conferma o segna come non valido.';
+			case 'offerNotifications.invalidBlik.title': return 'BLIK non valido';
+			case 'offerNotifications.invalidBlik.body': return 'Il maker ha contrassegnato il tuo codice BLIK come non valido.';
+			case 'offerNotifications.takerPaid.title': return 'Pagamento ricevuto';
+			case 'offerNotifications.takerPaid.body': return 'Il tuo pagamento Lightning è stato inviato.';
 			case 'altstore.dialogTitle': return 'AltStore Non Installato';
 			case 'altstore.step1Title': return 'Scarica e installa AltStore PAL';
 			case 'altstore.step1Button': return 'altstore.io/download';
