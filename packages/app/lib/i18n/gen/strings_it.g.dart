@@ -885,6 +885,9 @@ class _TranslationsMakerWaitTakerIt extends TranslationsMakerWaitTakerEn {
 	@override String offerCannotBeCancelled({required Object status}) => 'L\'offerta non può essere annullata nello stato attuale (${status}).';
 	@override String get offerCancelledSuccessfully => 'Offerta annullata con successo.';
 	@override String failedToCancelOffer({required Object details}) => 'Impossibile annullare l\'offerta: ${details}';
+	@override String get offerExpiredTitle => 'Offerta scaduta';
+	@override String get offerExpiredMessage => 'Nessun taker ha riservato la tua offerta in tempo.';
+	@override String get recreateOffer => 'Nuova offerta — stesso importo';
 }
 
 // Path: maker.waitForBlik
@@ -1070,6 +1073,7 @@ class _TranslationsTakerPaymentFailedIt extends TranslationsTakerPaymentFailedEn
 	@override late final _TranslationsTakerPaymentFailedFormIt form = _TranslationsTakerPaymentFailedFormIt._(_root);
 	@override late final _TranslationsTakerPaymentFailedActionsIt actions = _TranslationsTakerPaymentFailedActionsIt._(_root);
 	@override late final _TranslationsTakerPaymentFailedErrorsIt errors = _TranslationsTakerPaymentFailedErrorsIt._(_root);
+	@override late final _TranslationsTakerPaymentFailedWalletSectionIt walletSection = _TranslationsTakerPaymentFailedWalletSectionIt._(_root);
 	@override late final _TranslationsTakerPaymentFailedLoadingIt loading = _TranslationsTakerPaymentFailedLoadingIt._(_root);
 	@override late final _TranslationsTakerPaymentFailedSuccessIt success = _TranslationsTakerPaymentFailedSuccessIt._(_root);
 }
@@ -1562,6 +1566,7 @@ class _TranslationsMakerAmountFormCategoryIt extends TranslationsMakerAmountForm
 	// Translations
 	@override String get label => 'Categoria offerta';
 	@override late final _TranslationsMakerAmountFormCategoryOptionsIt options = _TranslationsMakerAmountFormCategoryOptionsIt._(_root);
+	@override late final _TranslationsMakerAmountFormCategoryShortLabelsIt shortLabels = _TranslationsMakerAmountFormCategoryShortLabelsIt._(_root);
 	@override String get atmHint => 'I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive.';
 	@override String get physicalShopHint => 'Il posto ideale per usare Bitblik è una cassa self-service — poiché aspettare che un taker riservi, generi e confermi il codice BLIK potrebbe richiedere un paio di minuti. Funziona benissimo in negozi, caffè e ristoranti. Se ti senti abbastanza coraggioso da far aspettare un cassiere normale (e le persone in coda dietro di te) quei pochi minuti, complimenti.';
 	@override String get ecommerceWarningTitle => 'Rischio rimborso negozio online';
@@ -1991,6 +1996,19 @@ class _TranslationsTakerPaymentFailedErrorsIt extends TranslationsTakerPaymentFa
 	@override String updatingInvoice({required Object details}) => 'Errore nell\'aggiornamento della fattura: ${details}';
 	@override String get paymentRetryFailed => 'Nuovo tentativo di pagamento fallito. Controlla la fattura o riprova più tardi.';
 	@override String get takerPublicKeyNotFound => 'Chiave pubblica del taker non trovata.';
+	@override String generateFailed({required Object details}) => 'Impossibile generare la fattura: ${details}';
+}
+
+// Path: taker.paymentFailed.walletSection
+class _TranslationsTakerPaymentFailedWalletSectionIt extends TranslationsTakerPaymentFailedWalletSectionEn {
+	_TranslationsTakerPaymentFailedWalletSectionIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Genera fattura dal portafoglio';
+	@override String get defaultLabel => 'predefinito';
+	@override String tapToGenerate({required Object amountSats}) => 'Tocca per generare la fattura per ${amountSats} sats';
 }
 
 // Path: taker.paymentFailed.loading
@@ -2124,6 +2142,18 @@ class _TranslationsMakerAmountFormCategoryOptionsIt extends TranslationsMakerAmo
 	@override String get physicalShop => 'Negozio, caffè o ristorante';
 	@override String get atmCashout => 'Prelievo contanti da ATM';
 	@override String get onlineService => 'Prodotto o servizio online';
+}
+
+// Path: maker.amountForm.category.shortLabels
+class _TranslationsMakerAmountFormCategoryShortLabelsIt extends TranslationsMakerAmountFormCategoryShortLabelsEn {
+	_TranslationsMakerAmountFormCategoryShortLabelsIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get shop => 'Negozio';
+	@override String get atm => 'ATM';
+	@override String get online => 'Online';
 }
 
 // Path: maker.conflict.disputeDialog.actions
@@ -2355,6 +2385,9 @@ extension on TranslationsIt {
 			case 'maker.amountForm.category.options.physicalShop': return 'Negozio, caffè o ristorante';
 			case 'maker.amountForm.category.options.atmCashout': return 'Prelievo contanti da ATM';
 			case 'maker.amountForm.category.options.onlineService': return 'Prodotto o servizio online';
+			case 'maker.amountForm.category.shortLabels.shop': return 'Negozio';
+			case 'maker.amountForm.category.shortLabels.atm': return 'ATM';
+			case 'maker.amountForm.category.shortLabels.online': return 'Online';
 			case 'maker.amountForm.category.atmHint': return 'I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive.';
 			case 'maker.amountForm.category.physicalShopHint': return 'Il posto ideale per usare Bitblik è una cassa self-service — poiché aspettare che un taker riservi, generi e confermi il codice BLIK potrebbe richiedere un paio di minuti. Funziona benissimo in negozi, caffè e ristoranti. Se ti senti abbastanza coraggioso da far aspettare un cassiere normale (e le persone in coda dietro di te) quei pochi minuti, complimenti.';
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Rischio rimborso negozio online';
@@ -2403,6 +2436,9 @@ extension on TranslationsIt {
 			case 'maker.waitTaker.offerCannotBeCancelled': return ({required Object status}) => 'L\'offerta non può essere annullata nello stato attuale (${status}).';
 			case 'maker.waitTaker.offerCancelledSuccessfully': return 'Offerta annullata con successo.';
 			case 'maker.waitTaker.failedToCancelOffer': return ({required Object details}) => 'Impossibile annullare l\'offerta: ${details}';
+			case 'maker.waitTaker.offerExpiredTitle': return 'Offerta scaduta';
+			case 'maker.waitTaker.offerExpiredMessage': return 'Nessun taker ha riservato la tua offerta in tempo.';
+			case 'maker.waitTaker.recreateOffer': return 'Nuova offerta — stesso importo';
 			case 'maker.waitForBlik.title': return 'In attesa di BLIK';
 			case 'maker.waitForBlik.messageInfo': return 'Il Taker ha riservato l\'offerta!';
 			case 'maker.waitForBlik.messageWaiting': return 'In attesa del codice BLIK...';
@@ -2557,6 +2593,10 @@ extension on TranslationsIt {
 			case 'taker.paymentFailed.errors.updatingInvoice': return ({required Object details}) => 'Errore nell\'aggiornamento della fattura: ${details}';
 			case 'taker.paymentFailed.errors.paymentRetryFailed': return 'Nuovo tentativo di pagamento fallito. Controlla la fattura o riprova più tardi.';
 			case 'taker.paymentFailed.errors.takerPublicKeyNotFound': return 'Chiave pubblica del taker non trovata.';
+			case 'taker.paymentFailed.errors.generateFailed': return ({required Object details}) => 'Impossibile generare la fattura: ${details}';
+			case 'taker.paymentFailed.walletSection.title': return 'Genera fattura dal portafoglio';
+			case 'taker.paymentFailed.walletSection.defaultLabel': return 'predefinito';
+			case 'taker.paymentFailed.walletSection.tapToGenerate': return ({required Object amountSats}) => 'Tocca per generare la fattura per ${amountSats} sats';
 			case 'taker.paymentFailed.loading.processingPayment': return 'Elaborazione del nuovo tentativo di pagamento...';
 			case 'taker.paymentFailed.success.title': return 'Pagamento Riuscito';
 			case 'taker.paymentFailed.success.message': return 'Il tuo pagamento è stato elaborato con successo.';

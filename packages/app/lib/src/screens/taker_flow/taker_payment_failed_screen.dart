@@ -99,7 +99,7 @@ class _TakerPaymentFailedScreenState
       Logger.log.e(() => '[TakerPaymentFailedScreen] Invoice gen failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate invoice: $e')),
+          SnackBar(content: Text(t.taker.paymentFailed.errors.generateFailed(details: e.toString()))),
         );
       }
     } finally {
@@ -368,7 +368,7 @@ class _TakerPaymentFailedScreenState
               const Divider(height: 1),
               const SizedBox(height: 12),
               Text(
-                'Generate invoice from wallet',
+                t.taker.paymentFailed.walletSection.title,
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -459,7 +459,7 @@ class _TakerPaymentFailedScreenState
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'default',
+                            t.taker.paymentFailed.walletSection.defaultLabel,
                             style: TextStyle(
                                 fontSize: 10, color: Colors.grey[600]),
                           ),
@@ -468,7 +468,7 @@ class _TakerPaymentFailedScreenState
                     ],
                   ),
                   Text(
-                    'Tap to generate invoice for $amountSats sats',
+                    t.taker.paymentFailed.walletSection.tapToGenerate(amountSats: amountSats.toString()),
                     style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                   ),
                 ],

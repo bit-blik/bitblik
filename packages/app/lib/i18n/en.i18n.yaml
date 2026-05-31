@@ -312,6 +312,10 @@ maker:
         physicalShop: "Shop, café or restaurant"
         atmCashout: "ATM cash out"
         onlineService: "Online service/product"
+      shortLabels:
+        shop: "Shop"
+        atm: "ATM"
+        online: "Online"
       atmHint: "Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees."
       physicalShopHint: "The ideal place to use Bitblik is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a BLIK code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you're feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you."
       ecommerceWarningTitle: "Online merchant refund risk"
@@ -387,7 +391,10 @@ maker:
     offerCannotBeCancelled: "Offer cannot be cancelled in current state (${status})."
     offerCancelledSuccessfully: "Offer cancelled successfully."
     failedToCancelOffer: "Failed to cancel offer: ${details}"
-  
+    offerExpiredTitle: "Offer Expired"
+    offerExpiredMessage: "No taker reserved your offer in time."
+    recreateOffer: "New offer — same amount"
+
   waitForBlik:
     title: Waiting for BLIK
     messageInfo: Taker has reserved offer!
@@ -624,6 +631,11 @@ taker:
       updatingInvoice: "Error updating invoice: ${details}"
       paymentRetryFailed: "Payment retry failed. Please check the invoice or try again later."
       takerPublicKeyNotFound: "Taker public key not found."
+      generateFailed: "Failed to generate invoice: ${details}"
+    walletSection:
+      title: "Generate invoice from wallet"
+      defaultLabel: "default"
+      tapToGenerate: "Tap to generate invoice for ${amountSats} sats"
     loading:
       processingPayment: "Processing your payment retry..."
     success:

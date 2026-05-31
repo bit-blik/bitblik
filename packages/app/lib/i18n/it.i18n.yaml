@@ -312,6 +312,10 @@ maker:
         physicalShop: "Negozio, caffè o ristorante"
         atmCashout: "Prelievo contanti da ATM"
         onlineService: "Prodotto o servizio online"
+      shortLabels:
+        shop: "Negozio"
+        atm: "ATM"
+        online: "Online"
       atmHint: "I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive."
       physicalShopHint: "Il posto ideale per usare Bitblik è una cassa self-service — poiché aspettare che un taker riservi, generi e confermi il codice BLIK potrebbe richiedere un paio di minuti. Funziona benissimo in negozi, caffè e ristoranti. Se ti senti abbastanza coraggioso da far aspettare un cassiere normale (e le persone in coda dietro di te) quei pochi minuti, complimenti."
       ecommerceWarningTitle: "Rischio rimborso negozio online"
@@ -372,6 +376,9 @@ maker:
     offerCannotBeCancelled: "L'offerta non può essere annullata nello stato attuale (${status})."
     offerCancelledSuccessfully: "Offerta annullata con successo."
     failedToCancelOffer: "Impossibile annullare l'offerta: ${details}"
+    offerExpiredTitle: "Offerta scaduta"
+    offerExpiredMessage: "Nessun taker ha riservato la tua offerta in tempo."
+    recreateOffer: "Nuova offerta — stesso importo"
 
   waitForBlik:
     title: In attesa di BLIK
@@ -608,6 +615,11 @@ taker:
       updatingInvoice: "Errore nell'aggiornamento della fattura: ${details}"
       paymentRetryFailed: "Nuovo tentativo di pagamento fallito. Controlla la fattura o riprova più tardi."
       takerPublicKeyNotFound: "Chiave pubblica del taker non trovata."
+      generateFailed: "Impossibile generare la fattura: ${details}"
+    walletSection:
+      title: "Genera fattura dal portafoglio"
+      defaultLabel: "predefinito"
+      tapToGenerate: "Tocca per generare la fattura per ${amountSats} sats"
     loading:
       processingPayment: "Elaborazione del nuovo tentativo di pagamento..."
     success:

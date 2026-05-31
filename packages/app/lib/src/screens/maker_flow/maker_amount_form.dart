@@ -1001,14 +1001,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
   }
 
-  String _categoryShortLabel(OfferCategory category) {
+  String _categoryShortLabel(OfferCategory category, Translations t) {
     switch (category) {
       case OfferCategory.shop:
-        return 'Shop';
+        return t.maker.amountForm.category.shortLabels.shop;
       case OfferCategory.atm:
-        return 'ATM';
+        return t.maker.amountForm.category.shortLabels.atm;
       case OfferCategory.online:
-        return 'Online';
+        return t.maker.amountForm.category.shortLabels.online;
     }
   }
 
@@ -1472,7 +1472,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        _categoryShortLabel(category),
+                                        _categoryShortLabel(category, t),
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: selected

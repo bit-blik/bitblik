@@ -1365,6 +1365,15 @@ class TranslationsMakerWaitTakerEn {
 
 	/// en: 'Failed to cancel offer: ${details}'
 	String failedToCancelOffer({required Object details}) => 'Failed to cancel offer: ${details}';
+
+	/// en: 'Offer Expired'
+	String get offerExpiredTitle => 'Offer Expired';
+
+	/// en: 'No taker reserved your offer in time.'
+	String get offerExpiredMessage => 'No taker reserved your offer in time.';
+
+	/// en: 'New offer — same amount'
+	String get recreateOffer => 'New offer — same amount';
 }
 
 // Path: maker.waitForBlik
@@ -1673,6 +1682,7 @@ class TranslationsTakerPaymentFailedEn {
 	late final TranslationsTakerPaymentFailedFormEn form = TranslationsTakerPaymentFailedFormEn.internal(_root);
 	late final TranslationsTakerPaymentFailedActionsEn actions = TranslationsTakerPaymentFailedActionsEn.internal(_root);
 	late final TranslationsTakerPaymentFailedErrorsEn errors = TranslationsTakerPaymentFailedErrorsEn.internal(_root);
+	late final TranslationsTakerPaymentFailedWalletSectionEn walletSection = TranslationsTakerPaymentFailedWalletSectionEn.internal(_root);
 	late final TranslationsTakerPaymentFailedLoadingEn loading = TranslationsTakerPaymentFailedLoadingEn.internal(_root);
 	late final TranslationsTakerPaymentFailedSuccessEn success = TranslationsTakerPaymentFailedSuccessEn.internal(_root);
 }
@@ -2446,6 +2456,7 @@ class TranslationsMakerAmountFormCategoryEn {
 	String get label => 'Offer category';
 
 	late final TranslationsMakerAmountFormCategoryOptionsEn options = TranslationsMakerAmountFormCategoryOptionsEn.internal(_root);
+	late final TranslationsMakerAmountFormCategoryShortLabelsEn shortLabels = TranslationsMakerAmountFormCategoryShortLabelsEn.internal(_root);
 
 	/// en: 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.'
 	String get atmHint => 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
@@ -3186,6 +3197,27 @@ class TranslationsTakerPaymentFailedErrorsEn {
 
 	/// en: 'Taker public key not found.'
 	String get takerPublicKeyNotFound => 'Taker public key not found.';
+
+	/// en: 'Failed to generate invoice: ${details}'
+	String generateFailed({required Object details}) => 'Failed to generate invoice: ${details}';
+}
+
+// Path: taker.paymentFailed.walletSection
+class TranslationsTakerPaymentFailedWalletSectionEn {
+	TranslationsTakerPaymentFailedWalletSectionEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Generate invoice from wallet'
+	String get title => 'Generate invoice from wallet';
+
+	/// en: 'default'
+	String get defaultLabel => 'default';
+
+	/// en: 'Tap to generate invoice for ${amountSats} sats'
+	String tapToGenerate({required Object amountSats}) => 'Tap to generate invoice for ${amountSats} sats';
 }
 
 // Path: taker.paymentFailed.loading
@@ -3369,6 +3401,24 @@ class TranslationsMakerAmountFormCategoryOptionsEn {
 
 	/// en: 'Online service/product'
 	String get onlineService => 'Online service/product';
+}
+
+// Path: maker.amountForm.category.shortLabels
+class TranslationsMakerAmountFormCategoryShortLabelsEn {
+	TranslationsMakerAmountFormCategoryShortLabelsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Shop'
+	String get shop => 'Shop';
+
+	/// en: 'ATM'
+	String get atm => 'ATM';
+
+	/// en: 'Online'
+	String get online => 'Online';
 }
 
 // Path: maker.conflict.disputeDialog.actions
@@ -3604,6 +3654,9 @@ extension on Translations {
 			case 'maker.amountForm.category.options.physicalShop': return 'Shop, café or restaurant';
 			case 'maker.amountForm.category.options.atmCashout': return 'ATM cash out';
 			case 'maker.amountForm.category.options.onlineService': return 'Online service/product';
+			case 'maker.amountForm.category.shortLabels.shop': return 'Shop';
+			case 'maker.amountForm.category.shortLabels.atm': return 'ATM';
+			case 'maker.amountForm.category.shortLabels.online': return 'Online';
 			case 'maker.amountForm.category.atmHint': return 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
 			case 'maker.amountForm.category.physicalShopHint': return 'The ideal place to use Bitblik is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a BLIK code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you\'re feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.';
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Online merchant refund risk';
@@ -3665,6 +3718,9 @@ extension on Translations {
 			case 'maker.waitTaker.offerCannotBeCancelled': return ({required Object status}) => 'Offer cannot be cancelled in current state (${status}).';
 			case 'maker.waitTaker.offerCancelledSuccessfully': return 'Offer cancelled successfully.';
 			case 'maker.waitTaker.failedToCancelOffer': return ({required Object details}) => 'Failed to cancel offer: ${details}';
+			case 'maker.waitTaker.offerExpiredTitle': return 'Offer Expired';
+			case 'maker.waitTaker.offerExpiredMessage': return 'No taker reserved your offer in time.';
+			case 'maker.waitTaker.recreateOffer': return 'New offer — same amount';
 			case 'maker.waitForBlik.title': return 'Waiting for BLIK';
 			case 'maker.waitForBlik.messageInfo': return 'Taker has reserved offer!';
 			case 'maker.waitForBlik.messageWaiting': return 'Waiting to provide BLIK code...';
@@ -3819,6 +3875,10 @@ extension on Translations {
 			case 'taker.paymentFailed.errors.updatingInvoice': return ({required Object details}) => 'Error updating invoice: ${details}';
 			case 'taker.paymentFailed.errors.paymentRetryFailed': return 'Payment retry failed. Please check the invoice or try again later.';
 			case 'taker.paymentFailed.errors.takerPublicKeyNotFound': return 'Taker public key not found.';
+			case 'taker.paymentFailed.errors.generateFailed': return ({required Object details}) => 'Failed to generate invoice: ${details}';
+			case 'taker.paymentFailed.walletSection.title': return 'Generate invoice from wallet';
+			case 'taker.paymentFailed.walletSection.defaultLabel': return 'default';
+			case 'taker.paymentFailed.walletSection.tapToGenerate': return ({required Object amountSats}) => 'Tap to generate invoice for ${amountSats} sats';
 			case 'taker.paymentFailed.loading.processingPayment': return 'Processing your payment retry...';
 			case 'taker.paymentFailed.success.title': return 'Payment Successful';
 			case 'taker.paymentFailed.success.message': return 'Your payment has been processed successfully.';

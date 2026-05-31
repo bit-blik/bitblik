@@ -311,6 +311,10 @@ maker:
         physicalShop: "Sklep, kawiarnia lub restauracja"
         atmCashout: "Wypłata gotówki z bankomatu"
         onlineService: "Produkt lub usługa online"
+      shortLabels:
+        shop: "Sklep"
+        atm: "Bankomat"
+        online: "Online"
       atmHint: "Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty."
       physicalShopHint: "Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to."
       ecommerceWarningTitle: "Ryzyko zwrotu od sprzedawcy online"
@@ -371,7 +375,10 @@ maker:
     offerCannotBeCancelled: "Oferty nie można anulować w obecnym stanie (${status})."
     offerCancelledSuccessfully: "Oferta anulowana pomyślnie."
     failedToCancelOffer: "Nie udało się anulować oferty: ${details}"
-  
+    offerExpiredTitle: "Oferta wygasła"
+    offerExpiredMessage: "Żaden taker nie zarezerwował oferty w czasie."
+    recreateOffer: "Nowa oferta — ta sama kwota"
+
   waitForBlik:
     title: Oczekiwanie na BLIK
     messageInfo: Ktoś zarezerwował twoją ofertę!
@@ -609,6 +616,11 @@ taker:
       updatingInvoice: "Błąd aktualizacji faktury: ${details}"
       paymentRetryFailed: "Ponowna próba płatności nie powiodła się. Sprawdź fakturę lub spróbuj ponownie później."
       takerPublicKeyNotFound: "Nie znaleziono klucza publicznego Kupującego."
+      generateFailed: "Nie udało się wygenerować faktury: ${details}"
+    walletSection:
+      title: "Generuj fakturę z portfela"
+      defaultLabel: "domyślny"
+      tapToGenerate: "Dotknij, aby wygenerować fakturę na ${amountSats} sats"
     loading:
       processingPayment: "Przetwarzanie ponownej płatności..."
     success:

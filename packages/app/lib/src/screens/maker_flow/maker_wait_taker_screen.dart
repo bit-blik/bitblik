@@ -23,17 +23,33 @@ class MakerWaitTakerScreen extends ConsumerStatefulWidget {
 
 class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
   bool _isCancelling = false;
+  bool _isExpired = false;
+  bool _isRecreating = false;
+  Timer? _expiryTimer;
 
   @override
   void initState() {
     super.initState();
     final offer = ref.read(activeOfferProvider);
     _handleStatusUpdate(offer?.statusEnum);
+    _scheduleExpiryTimer(offer);
   }
 
   @override
   void dispose() {
+    _expiryTimer?.cancel();
     super.dispose();
+  }
+
+  void _scheduleExpiryTimer(Offer? offer) {
+    if (offer == null) return;
+    final expiresAt = offer.createdAt.add(const Duration(minutes: 10));
+    final remaining = expiresAt.difference(DateTime.now());
+    if (!remaining.isNegative && remaining > Duration.zero) {
+      _expiryTimer = Timer(remaining, () {
+        if (mounted) setState(() => _isExpired = true);
+      });
+    }
   }
 
   void _handleStatusUpdate(OfferStatus? status) async {
@@ -86,9 +102,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       }
     } else if (status == OfferStatus.expired) {
       if (mounted) {
-        // _resetToRoleSelection(
-        //   t.maker.waitTaker.offerNoLongerAvailable(status: status.name),
-        // );
+        setState(() => _isExpired = true);
       }
     } else {
       if (mounted) {
@@ -163,6 +177,59 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       Logger.log.w(
         () => '[MakerWaitTakerScreen] Could not refresh wallet balance: $e',
       );
+    }
+  }
+
+  void _goHome() {
+    ref.read(holdInvoiceProvider.notifier).state = null;
+    ref.read(paymentHashProvider.notifier).state = null;
+    ref.read(receivedBlikCodeProvider.notifier).state = null;
+    ref.read(errorProvider.notifier).state = null;
+    if (mounted) context.go('/');
+  }
+
+  Future<void> _recreateOffer() async {
+    final offer = ref.read(activeOfferProvider);
+    final makerId = ref.read(publicKeyProvider).value;
+    if (offer == null || makerId == null) return;
+
+    setState(() => _isRecreating = true);
+    try {
+      final apiService = ref.read(apiServiceProvider);
+      final result = await apiService.initiateOfferFiat(
+        fiatAmount: offer.fiatAmount,
+        makerId: makerId,
+        category: offer.category,
+        coordinatorPubkey: offer.coordinatorPubkey,
+      );
+      final paymentHash = result['paymentHash'] as String;
+      ref.read(holdInvoiceProvider.notifier).state = result['holdInvoice'];
+      ref.read(paymentHashProvider.notifier).state = paymentHash;
+      await ref.read(activeOfferProvider.notifier).setActiveOffer(
+        Offer(
+          id: paymentHash,
+          amountSats: result['makerFees'] + result['amountSats'],
+          makerFees: result['makerFees'],
+          status: OfferStatus.created,
+          fiatAmount: offer.fiatAmount,
+          fiatCurrency: offer.fiatCurrency,
+          createdAt: DateTime.now(),
+          holdInvoicePaymentHash: paymentHash,
+          holdInvoice: result['holdInvoice'],
+          makerPubkey: makerId,
+          coordinatorPubkey: offer.coordinatorPubkey,
+          category: offer.category,
+        ),
+      );
+      if (mounted) context.go('/pay');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create offer: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRecreating = false);
     }
   }
 
@@ -241,6 +308,93 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
 
     if (offer == null) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_isExpired) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const MakerProgressIndicator(activeStep: 2),
+                  const SizedBox(height: 40),
+                  Icon(Icons.timer_off_outlined, size: 80, color: Colors.orange[700]),
+                  const SizedBox(height: 20),
+                  Text(
+                    t.maker.waitTaker.offerExpiredTitle,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    t.maker.waitTaker.offerExpiredMessage,
+                    style: const TextStyle(fontSize: 16, color: Colors.black54),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 30),
+                  _buildDetailRow(
+                    context,
+                    t.offers.details.amountLabel,
+                    '${(offer.fiatAmount * 100).round() % 100 == 0 ? offer.fiatAmount.toStringAsFixed(0) : offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDetailRow(
+                    context,
+                    t.maker.amountForm.labels.fee,
+                    '${offer.makerFees} sats',
+                  ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isRecreating ? null : _recreateOffer,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: _isRecreating
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              t.maker.waitTaker.recreateOffer,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _goHome,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(t.common.buttons.goHome),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
