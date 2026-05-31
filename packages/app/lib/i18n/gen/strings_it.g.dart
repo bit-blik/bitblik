@@ -1567,6 +1567,7 @@ class _TranslationsMakerAmountFormCategoryIt extends TranslationsMakerAmountForm
 	@override String get ecommerceWarningTitle => 'Rischio rimborso negozio online';
 	@override String get ecommerceWarningBody => 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al BLIK, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te.';
 	@override String get ecommerceConfirmation => 'Capisco il rischio di rimborso e aggiungerò una nota all\'ordine per chiedere al commerciante di rimborsare su un conto diverso se necessario.';
+	@override String get whyThisIsNeeded => 'perché è necessario?';
 }
 
 // Path: maker.amountForm.onboarding
@@ -2359,6 +2360,7 @@ extension on TranslationsIt {
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Rischio rimborso negozio online';
 			case 'maker.amountForm.category.ecommerceWarningBody': return 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al BLIK, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te.';
 			case 'maker.amountForm.category.ecommerceConfirmation': return 'Capisco il rischio di rimborso e aggiungerò una nota all\'ordine per chiedere al commerciante di rimborsare su un conto diverso se necessario.';
+			case 'maker.amountForm.category.whyThisIsNeeded': return 'perché è necessario?';
 			case 'maker.amountForm.onboarding.titlePrefix': return 'Novità';
 			case 'maker.amountForm.onboarding.title': return 'Scegli la categoria dell\'offerta';
 			case 'maker.amountForm.onboarding.body': return 'Prima di generare la fattura, scegli la categoria che descrive meglio ciò che stai pagando.';

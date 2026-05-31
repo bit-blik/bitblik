@@ -317,6 +317,7 @@ maker:
       ecommerceWarningTitle: "Rischio rimborso negozio online"
       ecommerceWarningBody: "Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al BLIK, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te."
       ecommerceConfirmation: "Capisco il rischio di rimborso e aggiungerò una nota all'ordine per chiedere al commerciante di rimborsare su un conto diverso se necessario."
+      whyThisIsNeeded: "perché è necessario?"
     onboarding:
       titlePrefix: "Novità"
       title: "Scegli la categoria dell'offerta"

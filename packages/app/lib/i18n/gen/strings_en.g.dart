@@ -2461,6 +2461,9 @@ class TranslationsMakerAmountFormCategoryEn {
 
 	/// en: 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.'
 	String get ecommerceConfirmation => 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.';
+
+	/// en: 'why this is needed?'
+	String get whyThisIsNeeded => 'why this is needed?';
 }
 
 // Path: maker.amountForm.onboarding
@@ -3606,6 +3609,7 @@ extension on Translations {
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Online merchant refund risk';
 			case 'maker.amountForm.category.ecommerceWarningBody': return 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the BLIK, which is the taker\'s account. The coordinator cannot force the taker to return those funds to you.';
 			case 'maker.amountForm.category.ecommerceConfirmation': return 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.';
+			case 'maker.amountForm.category.whyThisIsNeeded': return 'why this is needed?';
 			case 'maker.amountForm.onboarding.titlePrefix': return 'New';
 			case 'maker.amountForm.onboarding.title': return 'Choose the offer category';
 			case 'maker.amountForm.onboarding.body': return 'Pick the category that best matches what you are paying for before generating the invoice.';

@@ -316,6 +316,7 @@ maker:
       ecommerceWarningTitle: "Ryzyko zwrotu od sprzedawcy online"
       ecommerceWarningBody: "Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie."
       ecommerceConfirmation: "Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto."
+      whyThisIsNeeded: "dlaczego to jest potrzebne?"
     onboarding:
       titlePrefix: "Nowość"
       title: "Wybierz kategorię oferty"

@@ -317,6 +317,7 @@ maker:
       ecommerceWarningTitle: "Online merchant refund risk"
       ecommerceWarningBody: "For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the BLIK, which is the taker's account. The coordinator cannot force the taker to return those funds to you."
       ecommerceConfirmation: "I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary."
+      whyThisIsNeeded: "why this is needed?"
     onboarding:
       titlePrefix: "New"
       title: "Choose the offer category"

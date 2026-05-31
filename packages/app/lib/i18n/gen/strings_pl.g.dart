@@ -1564,6 +1564,7 @@ class _TranslationsMakerAmountFormCategoryPl extends TranslationsMakerAmountForm
 	@override String get ecommerceWarningTitle => 'Ryzyko zwrotu od sprzedawcy online';
 	@override String get ecommerceWarningBody => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
 	@override String get ecommerceConfirmation => 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
+	@override String get whyThisIsNeeded => 'dlaczego to jest potrzebne?';
 }
 
 // Path: maker.amountForm.onboarding
@@ -2355,6 +2356,7 @@ extension on TranslationsPl {
 			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Ryzyko zwrotu od sprzedawcy online';
 			case 'maker.amountForm.category.ecommerceWarningBody': return 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
 			case 'maker.amountForm.category.ecommerceConfirmation': return 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
+			case 'maker.amountForm.category.whyThisIsNeeded': return 'dlaczego to jest potrzebne?';
 			case 'maker.amountForm.onboarding.titlePrefix': return 'Nowość';
 			case 'maker.amountForm.onboarding.title': return 'Wybierz kategorię oferty';
 			case 'maker.amountForm.onboarding.body': return 'Przed wygenerowaniem faktury wybierz kategorię, która najlepiej opisuje to, za co płacisz.';
