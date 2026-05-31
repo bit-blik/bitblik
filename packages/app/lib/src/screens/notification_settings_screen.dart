@@ -1,7 +1,13 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+
+bool get _isMobile =>
+    !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
 class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
@@ -17,14 +23,15 @@ class NotificationSettingsScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(t.notificationSettings.title)),
       body: ListView(
         children: [
-          SwitchListTile(
-            secondary: const Icon(Icons.notifications_outlined),
-            title: Text(t.notificationSettings.newOfferAlerts.label),
-            subtitle: Text(t.notificationSettings.newOfferAlerts.description),
-            value: enabled,
-            onChanged: (value) =>
-                ref.read(newOfferNotificationsProvider.notifier).set(value),
-          ),
+          if (_isMobile)
+            SwitchListTile(
+              secondary: const Icon(Icons.notifications_outlined),
+              title: Text(t.notificationSettings.newOfferAlerts.label),
+              subtitle: Text(t.notificationSettings.newOfferAlerts.description),
+              value: enabled,
+              onChanged: (value) =>
+                  ref.read(newOfferNotificationsProvider.notifier).set(value),
+            ),
         ],
       ),
     );

@@ -925,7 +925,11 @@ offerNotifications:
     body: Il tuo codice BLIK è pronto per essere visualizzato.
   newOffer:
     title: Nuova offerta disponibile
-    body: "Offerta ${amount} ${currency} pronta da accettare."
+    body: "${amount} ${currency} · ${sats} sats"
+  categories:
+    shop: Negozio
+    atm: ATM
+    online: Online
   blikPendingReminder:
     title: BLIK in attesa di azione
     body: Conferma il pagamento o segna il codice BLIK come non valido.

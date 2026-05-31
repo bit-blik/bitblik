@@ -408,6 +408,7 @@ class _TranslationsOfferNotificationsIt extends TranslationsOfferNotificationsEn
 	@override late final _TranslationsOfferNotificationsReservedIt reserved = _TranslationsOfferNotificationsReservedIt._(_root);
 	@override late final _TranslationsOfferNotificationsBlikReadyIt blikReady = _TranslationsOfferNotificationsBlikReadyIt._(_root);
 	@override late final _TranslationsOfferNotificationsNewOfferIt newOffer = _TranslationsOfferNotificationsNewOfferIt._(_root);
+	@override late final _TranslationsOfferNotificationsCategoriesIt categories = _TranslationsOfferNotificationsCategoriesIt._(_root);
 	@override late final _TranslationsOfferNotificationsBlikPendingReminderIt blikPendingReminder = _TranslationsOfferNotificationsBlikPendingReminderIt._(_root);
 	@override late final _TranslationsOfferNotificationsTakerChargedIt takerCharged = _TranslationsOfferNotificationsTakerChargedIt._(_root);
 	@override late final _TranslationsOfferNotificationsInvalidBlikIt invalidBlik = _TranslationsOfferNotificationsInvalidBlikIt._(_root);
@@ -1580,7 +1581,19 @@ class _TranslationsOfferNotificationsNewOfferIt extends TranslationsOfferNotific
 
 	// Translations
 	@override String get title => 'Nuova offerta disponibile';
-	@override String body({required Object amount, required Object currency}) => 'Offerta ${amount} ${currency} pronta da accettare.';
+	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats';
+}
+
+// Path: offerNotifications.categories
+class _TranslationsOfferNotificationsCategoriesIt extends TranslationsOfferNotificationsCategoriesEn {
+	_TranslationsOfferNotificationsCategoriesIt._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get shop => 'Negozio';
+	@override String get atm => 'ATM';
+	@override String get online => 'Online';
 }
 
 // Path: offerNotifications.blikPendingReminder
@@ -2917,7 +2930,10 @@ extension on TranslationsIt {
 			case 'offerNotifications.blikReady.title': return 'Codice BLIK pronto';
 			case 'offerNotifications.blikReady.body': return 'Il tuo codice BLIK è pronto per essere visualizzato.';
 			case 'offerNotifications.newOffer.title': return 'Nuova offerta disponibile';
-			case 'offerNotifications.newOffer.body': return ({required Object amount, required Object currency}) => 'Offerta ${amount} ${currency} pronta da accettare.';
+			case 'offerNotifications.newOffer.body': return ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats';
+			case 'offerNotifications.categories.shop': return 'Negozio';
+			case 'offerNotifications.categories.atm': return 'ATM';
+			case 'offerNotifications.categories.online': return 'Online';
 			case 'offerNotifications.blikPendingReminder.title': return 'BLIK in attesa di azione';
 			case 'offerNotifications.blikPendingReminder.body': return 'Conferma il pagamento o segna il codice BLIK come non valido.';
 			case 'offerNotifications.takerCharged.title': return 'BLIK addebitato';

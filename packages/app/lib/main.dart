@@ -291,6 +291,7 @@ class MyApp extends ConsumerStatefulWidget {
 
 class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   StreamSubscription<Uri>? _sub;
+  StreamSubscription<NotificationTap>? _notificationTapSub;
   final AppLinks _appLinks = AppLinks();
   bool _routerReady = false;
   String? _pendingRouteNavigation;
@@ -350,6 +351,16 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       } catch (e) {
         Logger.log.e(() => '❌ Error during app initialization: $e');
       }
+    });
+
+    _notificationTapSub = NotificationService().tapStream.listen((tap) {
+      final payload = tap.payload ?? '';
+      if (!payload.startsWith('offer:')) return;
+      final offerId = payload.substring('offer:'.length);
+      if (tap.actionId == NotificationService.actionTakeOffer) {
+        ref.read(pendingAutoTakeOfferIdProvider.notifier).state = offerId;
+      }
+      _goToRouteWhenReady('/offers/$offerId');
     });
 
     // Only listen for deep links on Android/iOS/macOS, not web
@@ -532,6 +543,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _sub?.cancel();
+    _notificationTapSub?.cancel();
     super.dispose();
   }
 

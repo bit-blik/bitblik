@@ -26,6 +26,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
   bool _isLoadingTerms = true;
   bool _atmConsentAccepted = false;
   bool _ecommerceConsentAccepted = false;
+  bool _autoTakeTriggered = false;
 
   @override
   void initState() {
@@ -89,6 +90,65 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
   void _showReceivingWalletRequired(WidgetRef ref, Translations t) {
     LightningAddressWidget.showReceivingWalletRequiredDialog(context, ref, t);
+  }
+
+  Future<void> _executeTakeOffer({
+    required Offer offer,
+    required String publicKey,
+    required GoRouter router,
+  }) async {
+    final t = Translations.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final apiService = ref.read(apiServiceProvider);
+
+    final hasReceivingWalletNow =
+        await ref.read(hasReceivingWalletProvider.future);
+    if (!mounted) return;
+    if (!hasReceivingWalletNow) {
+      _showReceivingWalletRequired(ref, t);
+      return;
+    }
+
+    try {
+      final reservationTimestamp = await apiService.reserveOffer(
+        offer.id,
+        publicKey,
+        offer.coordinatorPubkey,
+      );
+      if (!mounted) return;
+      if (reservationTimestamp != null) {
+        final updatedOffer = offer.copyWith(
+          status: OfferStatus.reserved,
+          takerPubkey: publicKey,
+          reservedAt: reservationTimestamp,
+        );
+        ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
+        router.go('/submit-blik', extra: updatedOffer);
+      } else {
+        ref.read(errorProvider.notifier).state =
+            t.reservations.errors.failedNoTimestamp;
+        if (scaffoldMessenger.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text(t.reservations.errors.failedNoTimestamp),
+            ),
+          );
+        }
+        ref.invalidate(availableOffersProvider);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final errorMsg = t.reservations.errors.failedToReserve(
+        details: e.toString(),
+      );
+      ref.read(errorProvider.notifier).state = errorMsg;
+      if (scaffoldMessenger.mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(errorMsg)),
+        );
+      }
+      ref.invalidate(availableOffersProvider);
+    }
   }
 
   ScaffoldMessengerState _scaffoldMessenger() => ScaffoldMessenger.of(context);
@@ -179,6 +239,18 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     final myActiveOffer = ref.watch(activeOfferProvider);
     final t = Translations.of(context);
     final router = GoRouter.of(context);
+
+    // When offer disappears from availableOffersProvider (e.g. maker cancels
+    // a funded offer), re-fetch offerDetailsProvider to get the updated status.
+    ref.listen<AsyncValue<List<Offer>>>(availableOffersProvider, (prev, next) {
+      final wasInList =
+          prev?.valueOrNull?.any((o) => o.id == widget.offerId) ?? false;
+      final isInList =
+          next.valueOrNull?.any((o) => o.id == widget.offerId) ?? false;
+      if (wasInList && !isInList) {
+        ref.invalidate(offerDetailsProvider(widget.offerId));
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(title: Text(t.offers.details.selectedOffer)),
@@ -290,117 +362,37 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                               hasCategoryConsent &&
                               !_isLoadingTerms;
 
-                          return isButtonEnabled
-                              ? () async {
-                                // Check if there is any receiving-capable wallet
-                                final hasReceivingWalletNow = await ref.read(
-                                  hasReceivingWalletProvider.future,
-                                );
-                                if (!mounted) return;
-                                final scaffoldMessenger = _scaffoldMessenger();
-                                if (!hasReceivingWalletNow) {
-                                  _showReceivingWalletRequired(ref, t);
-                                  return;
-                                }
-
-                                // Check if terms are accepted
-                                if (coordInfo?.termsOfUsageNaddr != null &&
-                                    !_termsAccepted) {
-                                  // Should not happen if button is properly disabled, but check anyway
-                                  scaffoldMessenger.showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        t.coordinator.selector.termsAccept +
-                                            t.coordinator.selector.termsOfUsage,
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                if (requiresAtmConsent &&
-                                    !_atmConsentAccepted) {
-                                  scaffoldMessenger.showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        t.offers.errors.atmConsentRequired,
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                if (requiresEcommerceConsent &&
-                                    !_ecommerceConsentAccepted) {
-                                  scaffoldMessenger.showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        t
-                                            .offers
-                                            .errors
-                                            .ecommerceConsentRequired,
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final takerId = publicKey;
-                                final apiService = ref.read(apiServiceProvider);
-
-                                try {
-                                  final reservationTimestamp = await apiService
-                                      .reserveOffer(
-                                        offer.id,
-                                        takerId,
-                                        offer.coordinatorPubkey,
-                                      );
+                          // Auto-take when notification action was tapped
+                          if (isButtonEnabled && !_autoTakeTriggered) {
+                            final pendingId = ref.read(
+                              pendingAutoTakeOfferIdProvider,
+                            );
+                            if (pendingId == widget.offerId) {
+                              _autoTakeTriggered = true;
+                              WidgetsBinding.instance.addPostFrameCallback(
+                                (_) {
                                   if (!mounted) return;
+                                  ref
+                                      .read(
+                                        pendingAutoTakeOfferIdProvider.notifier,
+                                      )
+                                      .state = null;
+                                  _executeTakeOffer(
+                                    offer: offer,
+                                    publicKey: publicKey!,
+                                    router: router,
+                                  );
+                                },
+                              );
+                            }
+                          }
 
-                                  if (reservationTimestamp != null) {
-                                    final updatedOffer = offer.copyWith(
-                                      status: OfferStatus.reserved,
-                                      takerPubkey: takerId,
-                                      reservedAt: reservationTimestamp,
-                                    );
-
-                                    ref
-                                        .read(activeOfferProvider.notifier)
-                                        .setActiveOffer(updatedOffer);
-
-                                    // Navigate to submit BLIK screen
-                                    router.go(
-                                      "/submit-blik",
-                                      extra: updatedOffer,
-                                    );
-                                  } else {
-                                    ref.read(errorProvider.notifier).state =
-                                        t.reservations.errors.failedNoTimestamp;
-                                    if (scaffoldMessenger.mounted) {
-                                      scaffoldMessenger.showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            t
-                                                .reservations
-                                                .errors
-                                                .failedNoTimestamp,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                    ref.invalidate(availableOffersProvider);
-                                  }
-                                } catch (e) {
-                                  final errorMsg = t.reservations.errors
-                                      .failedToReserve(details: e.toString());
-                                  ref.read(errorProvider.notifier).state =
-                                      errorMsg;
-                                  if (scaffoldMessenger.mounted) {
-                                    scaffoldMessenger.showSnackBar(
-                                      SnackBar(content: Text(errorMsg)),
-                                    );
-                                  }
-                                  ref.invalidate(availableOffersProvider);
-                                }
-                              }
+                          return isButtonEnabled
+                              ? () => _executeTakeOffer(
+                                    offer: offer,
+                                    publicKey: publicKey!,
+                                    router: router,
+                                  )
                               : null;
                         },
                         loading: () => null,

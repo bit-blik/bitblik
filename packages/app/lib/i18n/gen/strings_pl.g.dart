@@ -408,6 +408,7 @@ class _TranslationsOfferNotificationsPl extends TranslationsOfferNotificationsEn
 	@override late final _TranslationsOfferNotificationsReservedPl reserved = _TranslationsOfferNotificationsReservedPl._(_root);
 	@override late final _TranslationsOfferNotificationsBlikReadyPl blikReady = _TranslationsOfferNotificationsBlikReadyPl._(_root);
 	@override late final _TranslationsOfferNotificationsNewOfferPl newOffer = _TranslationsOfferNotificationsNewOfferPl._(_root);
+	@override late final _TranslationsOfferNotificationsCategoriesPl categories = _TranslationsOfferNotificationsCategoriesPl._(_root);
 	@override late final _TranslationsOfferNotificationsBlikPendingReminderPl blikPendingReminder = _TranslationsOfferNotificationsBlikPendingReminderPl._(_root);
 	@override late final _TranslationsOfferNotificationsTakerChargedPl takerCharged = _TranslationsOfferNotificationsTakerChargedPl._(_root);
 	@override late final _TranslationsOfferNotificationsInvalidBlikPl invalidBlik = _TranslationsOfferNotificationsInvalidBlikPl._(_root);
@@ -1533,7 +1534,7 @@ class _TranslationsOfferNotificationsActiveServicePl extends TranslationsOfferNo
 
 	// Translations
 	@override String get title => 'Oczekiwanie na nowe oferty';
-	@override String get body => 'Usługa w tle monitorująca zdarzenia Nostr ofert BitBlik.';
+	@override String get body => 'Usługa w tle monitorująca ofert BitBlik.';
 }
 
 // Path: offerNotifications.funded
@@ -1577,7 +1578,19 @@ class _TranslationsOfferNotificationsNewOfferPl extends TranslationsOfferNotific
 
 	// Translations
 	@override String get title => 'Nowa oferta dostępna';
-	@override String body({required Object amount, required Object currency}) => 'Oferta ${amount} ${currency} jest gotowa do wzięcia.';
+	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sat';
+}
+
+// Path: offerNotifications.categories
+class _TranslationsOfferNotificationsCategoriesPl extends TranslationsOfferNotificationsCategoriesEn {
+	_TranslationsOfferNotificationsCategoriesPl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get shop => 'Sklep';
+	@override String get atm => 'Bankomat';
+	@override String get online => 'Online';
 }
 
 // Path: offerNotifications.blikPendingReminder
@@ -2903,7 +2916,7 @@ extension on TranslationsPl {
 			case 'relays.popup.title': return ({required Object connected, required Object total}) => 'Przekaźniki (${connected}/${total} połączonych)';
 			case 'relays.popup.connectingMessage': return 'Łączenie z przekaźnikami...';
 			case 'offerNotifications.activeService.title': return 'Oczekiwanie na nowe oferty';
-			case 'offerNotifications.activeService.body': return 'Usługa w tle monitorująca zdarzenia Nostr ofert BitBlik.';
+			case 'offerNotifications.activeService.body': return 'Usługa w tle monitorująca ofert BitBlik.';
 			case 'offerNotifications.funded.title': return 'Oferta zasilona';
 			case 'offerNotifications.funded.body': return 'Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.';
 			case 'offerNotifications.reserved.title': return 'Oferta zarezerwowana';
@@ -2911,7 +2924,10 @@ extension on TranslationsPl {
 			case 'offerNotifications.blikReady.title': return 'Kod BLIK gotowy';
 			case 'offerNotifications.blikReady.body': return 'Twój kod BLIK jest gotowy do wyświetlenia.';
 			case 'offerNotifications.newOffer.title': return 'Nowa oferta dostępna';
-			case 'offerNotifications.newOffer.body': return ({required Object amount, required Object currency}) => 'Oferta ${amount} ${currency} jest gotowa do wzięcia.';
+			case 'offerNotifications.newOffer.body': return ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sat';
+			case 'offerNotifications.categories.shop': return 'Sklep';
+			case 'offerNotifications.categories.atm': return 'Bankomat';
+			case 'offerNotifications.categories.online': return 'Online';
 			case 'offerNotifications.blikPendingReminder.title': return 'BLIK czeka na Twoją akcję';
 			case 'offerNotifications.blikPendingReminder.body': return 'Potwierdź płatność lub oznacz kod BLIK jako nieprawidłowy.';
 			case 'offerNotifications.takerCharged.title': return 'BLIK obciążony';

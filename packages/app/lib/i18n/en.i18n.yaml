@@ -929,7 +929,7 @@ relays:
 offerNotifications:
   activeService:
     title: Waiting for new offers
-    body: Background service monitoring Nostr events of BitBlik offers.
+    body: Nostr service monitoring events of BitBlik offers.
   funded:
     title: Offer funded
     body: Your hold invoice was accepted. Offer is now live.
@@ -941,7 +941,11 @@ offerNotifications:
     body: Your BLIK code is ready to view.
   newOffer:
     title: New offer available
-    body: "${amount} ${currency} offer is ready to take."
+    body: "${amount} ${currency} · ${sats} sats"
+  categories:
+    shop: Shop
+    atm: ATM
+    online: Online
   blikPendingReminder:
     title: BLIK waiting for your action
     body: Confirm the payment or mark the BLIK code as invalid.

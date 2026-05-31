@@ -1,4 +1,7 @@
 import 'dart:async'; // For Stream.periodic
+import 'dart:io';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +10,7 @@ import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
@@ -1104,6 +1108,10 @@ class RelayConnectivityNotifier
   }
 }
 
+/// Offer ID set when "Take Offer" notification action is tapped.
+/// OfferDetailsScreen reads this and auto-triggers the take if conditions are met.
+final pendingAutoTakeOfferIdProvider = StateProvider<String?>((ref) => null);
+
 const _kNewOfferNotificationsKey = 'new_offer_notifications';
 
 final newOfferNotificationsProvider =
@@ -1251,6 +1259,23 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
 
   void initialize() {
     WidgetsBinding.instance.addObserver(this);
+    if (!kIsWeb &&
+        (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+      _initDesktopMonitoring();
+    }
+  }
+
+  void _initDesktopMonitoring() {
+    if (_ref.read(newOfferNotificationsProvider)) {
+      unawaited(_startNewOfferMonitoring());
+    }
+    _ref.listen<bool>(newOfferNotificationsProvider, (_, enabled) {
+      if (enabled) {
+        unawaited(_startNewOfferMonitoring());
+      } else {
+        _stopNewOfferMonitoring();
+      }
+    });
   }
 
   void dispose() {
@@ -1271,13 +1296,32 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       if (_seenOfferIds.contains(offer.id)) return;
       _seenOfferIds.add(offer.id);
       final strings = t.offerNotifications;
-      NotificationService().show(
-        20,
-        strings.newOffer.title,
-        strings.newOffer.body(
-          amount: offer.fiatAmount.toStringAsFixed(0),
-          currency: offer.fiatCurrency,
-        ),
+      final locale =
+          LocaleSettings.instance.currentLocale.flutterLocale.toString();
+      final numFmt = NumberFormat.decimalPatternDigits(
+        locale: locale,
+        decimalDigits: 2,
+      );
+      final formattedAmount = numFmt.format(offer.fiatAmount);
+      final formattedSats =
+          NumberFormat.decimalPattern(locale).format(offer.amountSats);
+      final categoryStr = switch (offer.category) {
+        OfferCategory.shop => strings.categories.shop,
+        OfferCategory.atm => strings.categories.atm,
+        OfferCategory.online => strings.categories.online,
+        null => '',
+      };
+      var body = strings.newOffer.body(
+        amount: formattedAmount,
+        currency: offer.fiatCurrency,
+        sats: formattedSats,
+      );
+      if (categoryStr.isNotEmpty) body += ' · $categoryStr';
+      NotificationService().showNewOffer(
+        id: 20,
+        title: strings.newOffer.title,
+        body: body,
+        payload: 'offer:${offer.id}',
       );
     });
   }

@@ -914,7 +914,7 @@ relays:
 offerNotifications:
   activeService:
     title: Oczekiwanie na nowe oferty
-    body: Usługa w tle monitorująca zdarzenia Nostr ofert BitBlik.
+    body: Usługa w tle monitorująca ofert BitBlik.
   funded:
     title: Oferta zasilona
     body: Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.
@@ -926,7 +926,11 @@ offerNotifications:
     body: Twój kod BLIK jest gotowy do wyświetlenia.
   newOffer:
     title: Nowa oferta dostępna
-    body: "Oferta ${amount} ${currency} jest gotowa do wzięcia."
+    body: "${amount} ${currency} · ${sats} sat"
+  categories:
+    shop: Sklep
+    atm: Bankomat
+    online: Online
   blikPendingReminder:
     title: BLIK czeka na Twoją akcję
     body: Potwierdź płatność lub oznacz kod BLIK jako nieprawidłowy.

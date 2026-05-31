@@ -480,6 +480,7 @@ class TranslationsOfferNotificationsEn {
 	late final TranslationsOfferNotificationsReservedEn reserved = TranslationsOfferNotificationsReservedEn.internal(_root);
 	late final TranslationsOfferNotificationsBlikReadyEn blikReady = TranslationsOfferNotificationsBlikReadyEn.internal(_root);
 	late final TranslationsOfferNotificationsNewOfferEn newOffer = TranslationsOfferNotificationsNewOfferEn.internal(_root);
+	late final TranslationsOfferNotificationsCategoriesEn categories = TranslationsOfferNotificationsCategoriesEn.internal(_root);
 	late final TranslationsOfferNotificationsBlikPendingReminderEn blikPendingReminder = TranslationsOfferNotificationsBlikPendingReminderEn.internal(_root);
 	late final TranslationsOfferNotificationsTakerChargedEn takerCharged = TranslationsOfferNotificationsTakerChargedEn.internal(_root);
 	late final TranslationsOfferNotificationsInvalidBlikEn invalidBlik = TranslationsOfferNotificationsInvalidBlikEn.internal(_root);
@@ -2399,8 +2400,8 @@ class TranslationsOfferNotificationsActiveServiceEn {
 	/// en: 'Waiting for new offers'
 	String get title => 'Waiting for new offers';
 
-	/// en: 'Background service monitoring Nostr events of BitBlik offers.'
-	String get body => 'Background service monitoring Nostr events of BitBlik offers.';
+	/// en: 'Nostr service monitoring events of BitBlik offers.'
+	String get body => 'Nostr service monitoring events of BitBlik offers.';
 }
 
 // Path: offerNotifications.funded
@@ -2459,8 +2460,26 @@ class TranslationsOfferNotificationsNewOfferEn {
 	/// en: 'New offer available'
 	String get title => 'New offer available';
 
-	/// en: '${amount} ${currency} offer is ready to take.'
-	String body({required Object amount, required Object currency}) => '${amount} ${currency} offer is ready to take.';
+	/// en: '${amount} ${currency} · ${sats} sats'
+	String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats';
+}
+
+// Path: offerNotifications.categories
+class TranslationsOfferNotificationsCategoriesEn {
+	TranslationsOfferNotificationsCategoriesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Shop'
+	String get shop => 'Shop';
+
+	/// en: 'ATM'
+	String get atm => 'ATM';
+
+	/// en: 'Online'
+	String get online => 'Online';
 }
 
 // Path: offerNotifications.blikPendingReminder
@@ -4236,7 +4255,7 @@ extension on Translations {
 			case 'relays.popup.title': return ({required Object connected, required Object total}) => 'Relays (${connected}/${total} connected)';
 			case 'relays.popup.connectingMessage': return 'Connecting to relays...';
 			case 'offerNotifications.activeService.title': return 'Waiting for new offers';
-			case 'offerNotifications.activeService.body': return 'Background service monitoring Nostr events of BitBlik offers.';
+			case 'offerNotifications.activeService.body': return 'Nostr service monitoring events of BitBlik offers.';
 			case 'offerNotifications.funded.title': return 'Offer funded';
 			case 'offerNotifications.funded.body': return 'Your hold invoice was accepted. Offer is now live.';
 			case 'offerNotifications.reserved.title': return 'Offer reserved';
@@ -4244,7 +4263,10 @@ extension on Translations {
 			case 'offerNotifications.blikReady.title': return 'BLIK code ready';
 			case 'offerNotifications.blikReady.body': return 'Your BLIK code is ready to view.';
 			case 'offerNotifications.newOffer.title': return 'New offer available';
-			case 'offerNotifications.newOffer.body': return ({required Object amount, required Object currency}) => '${amount} ${currency} offer is ready to take.';
+			case 'offerNotifications.newOffer.body': return ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats';
+			case 'offerNotifications.categories.shop': return 'Shop';
+			case 'offerNotifications.categories.atm': return 'ATM';
+			case 'offerNotifications.categories.online': return 'Online';
 			case 'offerNotifications.blikPendingReminder.title': return 'BLIK waiting for your action';
 			case 'offerNotifications.blikPendingReminder.body': return 'Confirm the payment or mark the BLIK code as invalid.';
 			case 'offerNotifications.takerCharged.title': return 'BLIK charged';
