@@ -1057,11 +1057,11 @@ class CoordinatorService {
   String? _formatCategoryForNotification(OfferCategory? category) {
     switch (category) {
       case OfferCategory.shop:
-        return 'Physical good in shop / Towar fizyczny w sklepie';
+        return 'Shop/Sklep';
       case OfferCategory.atm:
-        return 'ATM cash out / Wypłata gotówki z bankomatu';
+        return 'ATM/Bankomat';
       case OfferCategory.online:
-        return 'Online service/product / Produkt lub usługa online';
+        return 'Online';
       case null:
         return null;
     }
