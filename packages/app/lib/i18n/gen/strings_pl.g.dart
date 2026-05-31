@@ -568,6 +568,8 @@ class _TranslationsOffersTooltipsPl extends TranslationsOffersTooltipsEn {
 
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.';
+	@override String get ratesFetchedAt => 'Pobrano o';
+	@override String get ratesSources => 'Źródła średniego kursu';
 }
 
 // Path: offers.actions
@@ -2215,6 +2217,8 @@ extension on TranslationsPl {
 			case 'offers.details.consents.atm': return 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
 			case 'offers.details.consents.ecommerce': return 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.';
 			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.';
+			case 'offers.tooltips.ratesFetchedAt': return 'Pobrano o';
+			case 'offers.tooltips.ratesSources': return 'Źródła średniego kursu';
 			case 'offers.actions.take': return 'WEŹ';
 			case 'offers.actions.takeOffer': return 'Weź ofertę';
 			case 'offers.actions.resume': return 'Wprowadź BLIK';

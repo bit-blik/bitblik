@@ -119,6 +119,8 @@ offers:
 
   tooltips:
     takerFeeInfo: "Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive."
+    ratesFetchedAt: "Fetched at"
+    ratesSources: "Avg. rate sources"
   
   actions:
     take: TAKE

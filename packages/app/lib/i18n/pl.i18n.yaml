@@ -118,6 +118,8 @@ offers:
 
   tooltips:
     takerFeeInfo: "Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz."
+    ratesFetchedAt: "Pobrano o"
+    ratesSources: "Źródła średniego kursu"
   
   actions:
     take: WEŹ

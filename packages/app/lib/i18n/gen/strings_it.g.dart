@@ -569,6 +569,8 @@ class _TranslationsOffersTooltipsIt extends TranslationsOffersTooltipsEn {
 
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi';
+	@override String get ratesFetchedAt => 'Recuperato alle';
+	@override String get ratesSources => 'Fonti tasso medio';
 }
 
 // Path: offers.actions
@@ -2219,6 +2221,8 @@ extension on TranslationsIt {
 			case 'offers.details.consents.atm': return 'Alcuni ATM aggiungono una commissione extra oltre all\'importo dell\'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall\'ATM.';
 			case 'offers.details.consents.ecommerce': return 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il commerciante online potrebbe automaticamente restituire denaro sul conto bancario collegato al BLIK che hai generato. Quei fondi arrivano sul tuo conto e non ti appartengono. Se succede, contatta il coordinatore in buona fede e organizza la restituzione dei fondi al maker. Accettando questa offerta, accetti questi termini e giuri solennemente di agire onestamente in tali situazioni.';
 			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi';
+			case 'offers.tooltips.ratesFetchedAt': return 'Recuperato alle';
+			case 'offers.tooltips.ratesSources': return 'Fonti tasso medio';
 			case 'offers.actions.take': return 'ACCETTA';
 			case 'offers.actions.takeOffer': return 'Accetta Offerta';
 			case 'offers.actions.resume': return 'INSERISCI BLIK';

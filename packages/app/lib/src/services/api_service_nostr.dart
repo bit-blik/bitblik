@@ -10,6 +10,8 @@ import 'nostr_service.dart';
 
 class ApiServiceNostr {
   static const _btcPlnCacheKey = 'btcPlnRate';
+  static const _btcPlnFetchedAtCacheKey = 'btcPlnFetchedAt';
+  static String _sourceRateCacheKey(String name) => 'btcPlnSource_$name';
 
   final NostrService _nostrService;
   final KeyService _keyService;
@@ -119,41 +121,52 @@ class ApiServiceNostr {
   }
 
   Future<double> getBtcPlnRate() async {
-    // Check cache first
     final cachedRate = MemoryCache.instance.read<double>(_btcPlnCacheKey);
     if (cachedRate != null) {
       return cachedRate;
     }
 
-    List<Future<double?>> fetchFutures = [];
+    await _fetchAndCacheAllSources();
 
-    for (var source in _exchangeRateSources) {
-      fetchFutures.add(_fetchRateFromSource(source));
+    final fresh = MemoryCache.instance.read<double>(_btcPlnCacheKey);
+    if (fresh != null) return fresh;
+
+    throw Exception('Failed to fetch BTC/PLN rate from all sources.');
+  }
+
+  Future<void> _fetchAndCacheAllSources() async {
+    final fetchedAt = DateTime.now();
+    final results = await Future.wait(
+      _exchangeRateSources.map(_fetchRateFromSource),
+    );
+
+    for (var i = 0; i < _exchangeRateSources.length; i++) {
+      final name = _exchangeRateSources[i]['name']!;
+      final rate = results[i];
+      if (rate != null) {
+        MemoryCache.instance.create(
+          _sourceRateCacheKey(name),
+          rate,
+          expiry: const Duration(minutes: 5),
+        );
+      }
     }
 
-    final List<double?> results = await Future.wait(fetchFutures);
-    final List<double> validRates =
-        results.where((rate) => rate != null).cast<double>().toList();
-
+    final validRates = results.whereType<double>().toList();
     if (validRates.isNotEmpty) {
-      final averageRate =
-          validRates.reduce((a, b) => a + b) / validRates.length;
+      final averageRate = validRates.reduce((a, b) => a + b) / validRates.length;
       MemoryCache.instance.create(
         _btcPlnCacheKey,
         averageRate,
         expiry: const Duration(minutes: 5),
       );
-      return averageRate;
+      MemoryCache.instance.create(
+        _btcPlnFetchedAtCacheKey,
+        fetchedAt,
+        expiry: const Duration(minutes: 5),
+      );
     } else {
-      final lastKnown = MemoryCache.instance.read<double>(_btcPlnCacheKey);
-      if (lastKnown != null) {
-        Logger.log.w(
-          () =>
-              'Returning stale BTC/PLN rate due to all sources failing to fetch.',
-        );
-        return lastKnown;
-      }
-      throw Exception('Failed to fetch BTC/PLN rate from all sources.');
+      Logger.log.w(() => 'Returning stale BTC/PLN rate due to all sources failing to fetch.');
     }
   }
 
@@ -193,6 +206,24 @@ class ApiServiceNostr {
       Logger.log.e(() => 'Error fetching BTC/PLN rate from $sourceName: $e');
       return null;
     }
+  }
+
+  Future<({Map<String, double?> rates, DateTime fetchedAt})> getSourceRates() async {
+    if (MemoryCache.instance.read<double>(_btcPlnCacheKey) == null) {
+      await _fetchAndCacheAllSources();
+    }
+    final fetchedAt =
+        MemoryCache.instance.read<DateTime>(_btcPlnFetchedAtCacheKey) ??
+        DateTime.now();
+    final rates = Map.fromEntries(
+      _exchangeRateSources.map(
+        (s) => MapEntry(
+          s['name']!,
+          MemoryCache.instance.read<double>(_sourceRateCacheKey(s['name']!)),
+        ),
+      ),
+    );
+    return (rates: rates, fetchedAt: fetchedAt);
   }
 
   Future<DateTime?> reserveOffer(

@@ -795,6 +795,12 @@ class TranslationsOffersTooltipsEn {
 
 	/// en: 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.'
 	String takerFeeInfo({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.';
+
+	/// en: 'Fetched at'
+	String get ratesFetchedAt => 'Fetched at';
+
+	/// en: 'Avg. rate sources'
+	String get ratesSources => 'Avg. rate sources';
 }
 
 // Path: offers.actions
@@ -3462,6 +3468,8 @@ extension on Translations {
 			case 'offers.details.consents.atm': return 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.';
 			case 'offers.details.consents.ecommerce': return 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the BLIK you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations.';
 			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.';
+			case 'offers.tooltips.ratesFetchedAt': return 'Fetched at';
+			case 'offers.tooltips.ratesSources': return 'Avg. rate sources';
 			case 'offers.actions.take': return 'TAKE';
 			case 'offers.actions.takeOffer': return 'Take Offer';
 			case 'offers.actions.resume': return 'ENTER BLIK';

@@ -505,8 +505,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
   }
 
-  /// Shows a dialog with exchange rate sources
   void _showExchangeRateSourcesDialog(BuildContext context) {
+    final apiService = ref.read(apiServiceProvider);
+    final t = Translations.of(context);
     showDialog(
       context: context,
       builder:
@@ -516,27 +517,76 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               onTap: () => Navigator.of(context).pop(),
               child: Container(
                 padding: const EdgeInsets.all(16.0),
+                constraints: const BoxConstraints(maxWidth: 320),
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children:
-                      ApiServiceNostr.exchangeRateSourceNames
-                          .map(
-                            (source) => Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 4.0,
-                              ),
-                              child: Text(
-                                source,
-                                style: const TextStyle(color: Colors.white),
-                              ),
+                child: FutureBuilder<({Map<String, double?> rates, DateTime fetchedAt})>(
+                  future: apiService.getSourceRates(),
+                  builder: (context, snapshot) {
+                    final data = snapshot.data;
+                    final rates = data?.rates;
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          t.offers.tooltips.ratesSources,
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...ApiServiceNostr.exchangeRateSourceNames.map((name) {
+                          final rate = rates?[name];
+                          final rateText =
+                              rates == null
+                                  ? '…'
+                                  : rate != null
+                                  ? '${_formatNumber(rate.round())} PLN/BTC'
+                                  : '—';
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                                const SizedBox(width: 16),
+                                Text(
+                                  rateText,
+                                  style: TextStyle(
+                                    color:
+                                        rate != null
+                                            ? Colors.white
+                                            : Colors.grey[500],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                          )
-                          .toList(),
+                          );
+                        }),
+                        if (data != null) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            '${t.offers.tooltips.ratesFetchedAt} ${data.fetchedAt.hour.toString().padLeft(2, '0')}:${data.fetchedAt.minute.toString().padLeft(2, '0')}',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 11,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        ],
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

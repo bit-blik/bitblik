@@ -119,6 +119,8 @@ offers:
 
   tooltips:
     takerFeeInfo: "Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall'importo che ricevi"
+    ratesFetchedAt: "Recuperato alle"
+    ratesSources: "Fonti tasso medio"
 
   actions:
     take: ACCETTA

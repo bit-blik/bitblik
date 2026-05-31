@@ -216,8 +216,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           final requiresAtmConsent = offer.category == OfferCategory.atm;
           final requiresEcommerceConsent =
               offer.category == OfferCategory.online;
-          final amountTextColor =
-              offer.category == null ? Colors.black : Colors.white;
+          const amountTextColor = Colors.black;
 
           // Get coordinator info for taker fee calculation
           final coordinatorInfoAsync = ref.watch(
@@ -499,19 +498,13 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                     ),
                     child: Stack(
                       children: [
-                        // Keep a generous top gradient even on short cards
-                        // so the amount header stays on the intended backdrop.
                         if (offer.category != null)
-                          Positioned(
-                            left: 0,
-                            top: 0,
-                            right: 0,
-                            height: 380,
+                          Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
-                                  end: Alignment.bottomCenter,
+                                  end: Alignment.bottomRight,
                                   colors: [
                                     _categoryGradientColors(offer.category)[0],
                                     _categoryGradientColors(offer.category)[1],
@@ -523,7 +516,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     )[1].withValues(alpha: 0.16),
                                     Colors.transparent,
                                   ],
-                                  stops: const [0.0, 0.16, 0.42, 0.68, 1.0],
+                                  stops: const [0.0, 0.08, 0.22, 0.38, 0.55],
                                 ),
                               ),
                             ),
@@ -577,7 +570,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 10),
                                   if (isFunded)
                                     FundedOfferProgressIndicator(
                                       key: ValueKey(
@@ -603,7 +596,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       ),
                                       blikReceivedAt: offer.blikReceivedAt!,
                                     ),
-                                  const SizedBox(height: 32),
+                                  const SizedBox(height: 20),
 
                                   // Exchange Rate row (hide for takerPaid)
                                   if (offer.status != OfferStatus.takerPaid)
@@ -618,7 +611,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     ),
 
                                   if (offer.status != OfferStatus.takerPaid)
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 10),
 
                                   // Taker fee row (hide for takerPaid)
                                   if (offer.status != OfferStatus.takerPaid)
@@ -673,7 +666,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     ),
 
                                   if (offer.status != OfferStatus.takerPaid)
-                                    const SizedBox(height: 24),
+                                    const SizedBox(height: 14),
 
                                   // You'll receive row (highlighted) (hide for takerPaid)
                                   if (offer.status != OfferStatus.takerPaid)
@@ -688,7 +681,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       offer.timeToReserveSeconds != null &&
                                       offer.totalCompletionTimeMakerSeconds !=
                                           null) ...[
-                                    const SizedBox(height: 24),
+                                    const SizedBox(height: 14),
 
                                     // Taken after
                                     Text(
@@ -705,7 +698,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       textAlign: TextAlign.center,
                                     ),
 
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 10),
 
                                     // Paid after (total time)
                                     Text(
@@ -723,12 +716,12 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     ),
                                   ],
 
-                                  const SizedBox(height: 20),
+                                  const SizedBox(height: 12),
 
                                   // Separator line
                                   Container(height: 1, color: Colors.grey[300]),
 
-                                  const SizedBox(height: 20),
+                                  const SizedBox(height: 12),
 
                                   if (offer.category != null) ...[
                                     _buildInfoRow(
@@ -746,7 +739,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     if (isFunded &&
                                         offer.category ==
                                             OfferCategory.atm) ...[
-                                      const SizedBox(height: 10),
+                                      const SizedBox(height: 6),
                                       Container(
                                         width: double.infinity,
                                         padding: const EdgeInsets.symmetric(
@@ -876,7 +869,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     if (isFunded &&
                                         offer.category ==
                                             OfferCategory.online) ...[
-                                      const SizedBox(height: 10),
+                                      const SizedBox(height: 6),
                                       Container(
                                         width: double.infinity,
                                         padding: const EdgeInsets.symmetric(
@@ -1009,7 +1002,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                         ),
                                       ),
                                     ],
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: 12),
                                   ],
 
                                   // Coordinator row
@@ -1045,7 +1038,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                             null) {
                                           return Column(
                                             children: [
-                                              const SizedBox(height: 10),
+                                              const SizedBox(height: 6),
                                               if (_isLoadingTerms)
                                                 const Padding(
                                                   padding: EdgeInsets.symmetric(
@@ -1137,7 +1130,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       orElse: () => const SizedBox.shrink(),
                                     ),
 
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 4),
 
                                   // Receiving wallet hint for funded offers
                                   if (isFunded &&
@@ -1145,7 +1138,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                         data: (value) => !value,
                                         orElse: () => false,
                                       )) ...[
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 6),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 8,
@@ -1158,7 +1151,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                           ),
                                     ),
                                   ],
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 4),
 
                                   // Action button
                                   if (actionButton != null) actionButton,
@@ -1211,15 +1204,15 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
               ],
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[600],
+                  color: Colors.black,
                   fontWeight: FontWeight.w400,
                 ),
               ),
               if (hasInfoIcon) ...[
                 const SizedBox(width: 4),
-                Icon(Icons.info_outline, size: 16, color: Colors.grey[500]),
+                const Icon(Icons.info_outline, size: 16, color: Colors.black),
               ],
             ],
           ),
@@ -1282,27 +1275,35 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
               onTap: () => Navigator.of(context).pop(),
               child: Container(
                 padding: const EdgeInsets.all(16.0),
+                constraints: const BoxConstraints(maxWidth: 320),
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children:
-                      ApiServiceNostr.exchangeRateSourceNames
-                          .map(
-                            (source) => Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 4.0,
-                              ),
-                              child: Text(
-                                source,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          )
-                          .toList(),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      t.offers.tooltips.ratesSources,
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...ApiServiceNostr.exchangeRateSourceNames.map(
+                      (name) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text(
+                          name,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1317,9 +1318,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
-            color: Colors.grey[600],
+            color: Colors.black,
             fontWeight: FontWeight.w400,
           ),
         ),
