@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bitblik_core/core.dart';
 import 'package:ndk/ndk.dart';
 import 'package:test/test.dart';
@@ -53,7 +55,7 @@ void main() {
           ['created_at', '1767225600'],
           ['maker', 'maker-pubkey'],
           ['p', 'coordinator-pubkey'],
-          ['category', 'atmCashout'],
+          ['category', 'atm'],
         ],
         content: '',
       );
@@ -61,6 +63,37 @@ void main() {
       final offer = Offer.fromNostrEvent(event);
 
       expect(offer.category, OfferCategory.atm);
+    });
+  });
+
+  group('Offer RPC json', () {
+    test('omits bulky and sensitive fields by default', () {
+      final offer = Offer(
+        id: 'offer-rpc-1',
+        amountSats: 123456,
+        makerFees: 1234,
+        status: OfferStatus.blikReceived,
+        fiatAmount: 100.5,
+        fiatCurrency: 'PLN',
+        createdAt: DateTime.utc(2026, 1, 2, 3, 4, 5),
+        makerPubkey: 'maker-pubkey',
+        coordinatorPubkey: 'coordinator-pubkey',
+        blikCode: '123456',
+        holdInvoice: 'lnbc1holdinvoice',
+        holdInvoicePreimage: 'super-secret-preimage',
+        takerInvoice: 'x' * 70000,
+        category: OfferCategory.online,
+      );
+
+      final rpcJson = offer.toRpcJson();
+      final payload = jsonEncode({'id': '1', 'result': rpcJson});
+
+      expect(rpcJson['hold_invoice'], 'lnbc1holdinvoice');
+      expect(rpcJson.containsKey('blik_code'), isFalse);
+      expect(rpcJson.containsKey('hold_invoice_preimage'), isFalse);
+      expect(rpcJson.containsKey('taker_invoice'), isFalse);
+      expect(rpcJson['category'], OfferCategory.online.name);
+      expect(utf8.encode(payload).length, lessThan(65535));
     });
   });
 }

@@ -59,7 +59,7 @@ class Offer {
   final String? takerLightningAddress;
   final String? takerInvoice;
   final String?
-  holdInvoicePreimage; // Might be sensitive, consider if needed on client
+      holdInvoicePreimage; // Might be sensitive, consider if needed on client
   final DateTime? updatedAt;
   final DateTime? makerConfirmedAt;
   final DateTime? settledAt;
@@ -227,7 +227,8 @@ class Offer {
       }(),
       createdAt: () {
         final v = json['created_at'];
-        if (v is int) return DateTime.fromMillisecondsSinceEpoch(v, isUtc: true);
+        if (v is int)
+          return DateTime.fromMillisecondsSinceEpoch(v, isUtc: true);
         if (v is String) {
           final normalized = v.trim();
           try {
@@ -265,7 +266,8 @@ class Offer {
       settledAt: parseOptionalDateTime(json['settled_at']),
       takerPaidAt: parseOptionalDateTime(json['taker_paid_at']),
       takerFees: json['taker_fees'] as int?,
-      takerPaymentFailureReason: json['taker_payment_failure_reason'] as String?,
+      takerPaymentFailureReason:
+          json['taker_payment_failure_reason'] as String?,
       category: () {
         final raw = json['category'];
         if (raw is! String || raw.trim().isEmpty) return null;
@@ -320,10 +322,36 @@ class Offer {
 
   bool get isDispute => status == OfferStatus.dispute;
 
-  Map<String, dynamic> toJsonWithPubkeys() => toJson()..addAll({
-        'maker_pubkey': makerPubkey,
-        'taker_pubkey': takerPubkey,
-      });
+  Map<String, dynamic> toJsonWithPubkeys() => toJson()
+    ..addAll({
+      'maker_pubkey': makerPubkey,
+      'taker_pubkey': takerPubkey,
+    });
+
+  /// Compact offer payload for encrypted RPC responses.
+  ///
+  /// NIP-44 rejects plaintexts larger than 65,535 bytes. The coordinator's
+  /// query endpoints do not need to ship bulky/sensitive fields such as the
+  /// taker's invoice or the hold-invoice preimage on every poll, so omit them
+  /// by default to preserve compatibility with older clients that still rely on
+  /// `get_my_active_offer`.
+  Map<String, dynamic> toRpcJson({
+    bool includeBlikCode = false,
+    bool includeTakerInvoice = false,
+    bool includeHoldInvoicePreimage = false,
+  }) {
+    final json = toJsonWithPubkeys();
+    if (!includeBlikCode) {
+      json.remove('blik_code');
+    }
+    if (!includeTakerInvoice) {
+      json.remove('taker_invoice');
+    }
+    if (!includeHoldInvoicePreimage) {
+      json.remove('hold_invoice_preimage');
+    }
+    return json;
+  }
 
   // copyWith method for updating state immutably
   Offer copyWith({

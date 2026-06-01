@@ -30,6 +30,24 @@ class NostrService {
     ],
   }) : _relays = relays;
 
+  String _shortKey(String value) {
+    if (value.length <= 12) return value;
+    return '${value.substring(0, 8)}...${value.substring(value.length - 4)}';
+  }
+
+  String _describeResponse(NostrResponse response) {
+    final result = response.result;
+    final error = response.error;
+    if (result != null) {
+      final keys = result.keys.toList()..sort();
+      return 'resultKeys=$keys containsBlik=${result.containsKey('blik_code')}';
+    }
+    if (error != null) {
+      return 'errorCode=${error['code']}';
+    }
+    return 'empty';
+  }
+
   /// Initialize the Nostr service
   Future<void> init({required String privateKey}) async {
     // Initialize NDK with bootstrap relays config
@@ -152,6 +170,11 @@ class NostrService {
         'timestamp': timestamp.millisecondsSinceEpoch ~/ 1000,
       };
 
+      AppLogger.info(
+        'Publishing status update offer=$offerId status=$status paymentHash=${_shortKey(paymentHash)} maker=${_shortKey(makerPubkey)} taker=${takerPubkey == null || takerPubkey.isEmpty ? '-' : _shortKey(takerPubkey)}',
+        offerId: offerId,
+      );
+
       await _sendEncryptedStatusUpdate(makerPubkey, payload, offerId);
       if (takerPubkey != null && takerPubkey.isNotEmpty) {
         await _sendEncryptedStatusUpdate(takerPubkey, payload, offerId);
@@ -174,6 +197,11 @@ class NostrService {
         throw Exception('No private key available for encryption');
       }
 
+      AppLogger.info(
+        'Sending status update offer=$offerId status=${payload['status']} to=${_shortKey(recipientPubkey)} paymentHash=${_shortKey((payload['payment_hash'] ?? '').toString())}',
+        offerId: offerId,
+      );
+
       final event = await ProtocolCodec.encryptStatusUpdate(
         payload: payload,
         offerId: offerId,
@@ -187,6 +215,10 @@ class NostrService {
         nostrEvent: event,
         customSigner: _signer,
         specificRelays: _relays,
+      );
+      AppLogger.info(
+        'Sent status update offer=$offerId status=${payload['status']} to=${_shortKey(recipientPubkey)} event=${event.id}',
+        offerId: offerId,
       );
     } catch (e) {
       AppLogger.info(
@@ -230,6 +262,9 @@ class NostrService {
 
     final request = await ProtocolCodec.decryptRequest(event, privateKey);
     final id = request.id;
+    AppLogger.info(
+      'Received RPC method=${request.method} id=${id ?? '-'} from=${_shortKey(event.pubKey)} params=${request.params.keys.toList()..sort()}',
+    );
     if (id == null) {
       await _sendErrorResponse(
           event.pubKey, null, 'INVALID_REQUEST', 'Missing id');
@@ -361,7 +396,7 @@ class NostrService {
               await _coordinatorService.getMyActiveOffers(userPubkey);
           if (activeOffers.isNotEmpty) {
             final offer = activeOffers.first;
-            return offer.toJsonWithPubkeys();
+            return offer.toRpcJson();
           } else {
             return {};
           }
@@ -377,7 +412,7 @@ class NostrService {
           if (offer == null) {
             return {};
           }
-          return offer.toJsonWithPubkeys();
+          return offer.toRpcJson();
 
         case kRpcGetMyFinishedOffers:
           final activeOffers =
@@ -392,7 +427,7 @@ class NostrService {
               .toList();
 
           final finishedList =
-              finished.map((offer) => offer.toJsonWithPubkeys()).toList();
+              finished.map((offer) => offer.toRpcJson()).toList();
           return {'offers': finishedList};
 
         case kRpcCancelOffer:
@@ -540,6 +575,10 @@ class NostrService {
         throw Exception('No private key available for encryption');
       }
 
+      AppLogger.info(
+        'Sending RPC response id=${response.id ?? '-'} to=${_shortKey(recipientPubkey)} ${_describeResponse(response)}',
+      );
+
       final event = await ProtocolCodec.encryptResponse(
         response: response,
         senderPrivateKeyHex: privateKey,
@@ -554,9 +593,13 @@ class NostrService {
         specificRelays: _relays,
       );
 
-      AppLogger.info('Sent encrypted response to $recipientPubkey');
+      AppLogger.info(
+        'Sent RPC response id=${response.id ?? '-'} to=${_shortKey(recipientPubkey)} event=${event.id}',
+      );
     } catch (e) {
-      AppLogger.info('Error sending encrypted message: $e');
+      AppLogger.info(
+        'Error sending encrypted message to ${_shortKey(recipientPubkey)} id=${response.id ?? '-'} ${_describeResponse(response)}: $e',
+      );
     }
   }
 

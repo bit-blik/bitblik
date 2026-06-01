@@ -220,6 +220,7 @@ class CoordinatorService {
   final Map<String, Timer> _fundedOfferTimers = {};
   final Map<String, Timer> _takerChargedTimers = {};
   final Map<String, Timer> _disputeEscalationTimers = {};
+  final Map<String, Timer> _statusRepublishTimers = {};
 
   // Fee percentages, configurable via environment variables
   late final double _makerFeePercentage;
@@ -771,10 +772,8 @@ class CoordinatorService {
           'Amount $satsAmount sats exceeds maximum $_maxAmountSats sats');
     }
 
-    final makerFees =
-        OfferQuote.makerFeeSats(satsAmount, _makerFeePercentage);
-    final takerFees =
-        OfferQuote.takerFeeSats(satsAmount, _takerFeePercentage);
+    final makerFees = OfferQuote.makerFeeSats(satsAmount, _makerFeePercentage);
+    final takerFees = OfferQuote.takerFeeSats(satsAmount, _takerFeePercentage);
     final totalAmountSats = satsAmount + makerFees;
     final preimage = _generatePreimage();
     final paymentHash = sha256.convert(preimage).bytes;
@@ -1049,8 +1048,7 @@ class CoordinatorService {
     final fiatText =
         '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
     final categoryText = _formatCategoryForNotification(offer.category);
-    final categorySuffix =
-        categoryText == null ? '' : ' • $categoryText';
+    final categorySuffix = categoryText == null ? '' : ' • $categoryText';
     return 'New offer/Nowa oferta: ${offer.amountSats} sats ($fiatText)$categorySuffix -> https://${frontendDomain}/offers/${offer.id}';
   }
 
@@ -1204,8 +1202,8 @@ class CoordinatorService {
 
     final now = _clock.now().toUtc();
     final statusChangedAt = (offer.updatedAt ?? offer.createdAt).toUtc();
-    final expirationTime =
-        statusChangedAt.add(Duration(seconds: _conflictAutoDisputeTimeoutSeconds));
+    final expirationTime = statusChangedAt
+        .add(Duration(seconds: _conflictAutoDisputeTimeoutSeconds));
     final remainingDuration = expirationTime.difference(now);
 
     if (remainingDuration.isNegative || remainingDuration.inSeconds == 0) {
@@ -1738,7 +1736,8 @@ class CoordinatorService {
   }
 
   Future<bool> markBlikInvalid(String offerId, String makerId) async {
-    AppLogger.warning('Maker $makerId marking BLIK as invalid for offer $offerId',
+    AppLogger.warning(
+        'Maker $makerId marking BLIK as invalid for offer $offerId',
         offerId: offerId);
     final offer = await _dbService.getOfferById(offerId);
 
@@ -2299,7 +2298,8 @@ class CoordinatorService {
             offerId: offerId);
         await _dbService.updateOfferStatus(
             offerId, OfferStatus.takerPaymentFailed,
-            failureReason: paymentResult.paymentError ?? 'Payment failed (no route or unknown error)');
+            failureReason: paymentResult.paymentError ??
+                'Payment failed (no route or unknown error)');
 
         // Publish status update
         final failedOffer = await _dbService.getOfferById(offerId);
@@ -2448,7 +2448,10 @@ class CoordinatorService {
   }
 
   /// Publish offer status update via Nostr
-  Future<void> _publishStatusUpdate(Offer offer) async {
+  Future<void> _publishStatusUpdate(
+    Offer offer, {
+    bool allowCompatibilityRetry = true,
+  }) async {
     if (_nostrService == null) {
       AppLogger.info(
           'Nostr service not available, skipping status update publication');
@@ -2456,6 +2459,10 @@ class CoordinatorService {
     }
 
     try {
+      AppLogger.info(
+        'Queueing status update offer=${offer.id} status=${offer.status.name} paymentHash=${offer.holdInvoicePaymentHash ?? ''} maker=${offer.makerPubkey} taker=${offer.takerPubkey ?? '-'} retry=${allowCompatibilityRetry ? 'primary' : 'compat'}',
+        offerId: offer.id,
+      );
       await _nostrService!.publishOfferStatusUpdate(
         offerId: offer.id,
         paymentHash: offer.holdInvoicePaymentHash ?? '',
@@ -2466,10 +2473,54 @@ class CoordinatorService {
         makerPubkey: offer.makerPubkey,
         takerPubkey: offer.takerPubkey,
       );
+      if (allowCompatibilityRetry) {
+        _scheduleCompatibilityStatusRepublish(offer);
+      }
     } catch (e) {
       AppLogger.info('Error publishing status update for offer ${offer.id}: $e',
           offerId: offer.id);
     }
+  }
+
+  void _scheduleCompatibilityStatusRepublish(Offer offer) {
+    _statusRepublishTimers[offer.id]?.cancel();
+
+    // Legacy clients subscribe to offer status updates from "now", and may
+    // briefly restart the subscription as local offer ids are reconciled.
+    // A one-shot re-publication of `blikReceived` gives them a second chance
+    // to observe the transition and trigger `get_blik`.
+    if (offer.status != OfferStatus.blikReceived) {
+      _statusRepublishTimers.remove(offer.id);
+      return;
+    }
+
+    _statusRepublishTimers[offer.id] =
+        Timer(const Duration(seconds: 4), () async {
+      _statusRepublishTimers.remove(offer.id);
+      try {
+        AppLogger.info(
+          'Compatibility re-publish timer fired for offer ${offer.id}',
+          offerId: offer.id,
+        );
+        final current = await _dbService.getOfferById(offer.id);
+        if (current == null || current.status != OfferStatus.blikReceived) {
+          AppLogger.info(
+            'Skipping compatibility re-publish for offer ${offer.id}; current status=${current?.status.name ?? 'missing'}',
+            offerId: offer.id,
+          );
+          return;
+        }
+        await _publishStatusUpdate(
+          current,
+          allowCompatibilityRetry: false,
+        );
+      } catch (e) {
+        AppLogger.info(
+          'Error re-publishing blikReceived compatibility update for offer ${offer.id}: $e',
+          offerId: offer.id,
+        );
+      }
+    });
   }
 
   Future<Map<String, dynamic>> getSuccessfulOffersWithStats() async {

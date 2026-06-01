@@ -31,6 +31,10 @@ class NostrService {
 
   NdkResponse? _offerStatusSubscription;
   NdkResponse? _offerSubscription;
+  final Map<String, Offer> _knownOffers = {};
+  StreamSubscription<List<CoordinatorRecord>>? _coordinatorRegistryChangesSub;
+  Set<String> _offerSubscriptionAuthors = const {};
+  bool _offerSubscriptionRequested = false;
 
   bool _isInitialized = false;
   Future<void>? _initInFlight;
@@ -90,6 +94,22 @@ class NostrService {
       relays: _relayUrls,
     );
     await _coordinatorRegistry!.init();
+    await _coordinatorRegistryChangesSub?.cancel();
+    _coordinatorRegistryChangesSub = _coordinatorRegistry!.changes.listen((
+      records,
+    ) {
+      final enabledPubkeys =
+          records
+              .where((record) => record.enabled)
+              .map((record) => record.pubkeyHex)
+              .toSet();
+      _pruneKnownOffers(enabledPubkeys);
+      if (!_offerSubscriptionRequested ||
+          setEquals(enabledPubkeys, _offerSubscriptionAuthors)) {
+        return;
+      }
+      unawaited(_syncOfferSubscription(enabledPubkeys));
+    });
   }
 
   CoordinatorRegistry get coordinatorRegistry {
@@ -298,23 +318,72 @@ class NostrService {
 
   /// Get a stream of all live offers published (subscribe before listening!)
   Stream<Offer> get offersStream => _offerStreamController.stream;
+  List<Offer> get knownOffers =>
+      _knownOffers.values.toList(growable: false)
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
   /// Start listening for offers (subscribe to event kind 38383 from all coordinators)
   Future<void> startOfferSubscription() async {
     if (!_isInitialized) {
       await init();
     }
+    _offerSubscriptionRequested = true;
+    final enabledPubkeys =
+        coordinatorRegistry.enabled.map((record) => record.pubkeyHex).toSet();
+    await _syncOfferSubscription(enabledPubkeys);
+  }
 
-    // Unsubscribe previous subscription, if any
+  void _handleOfferEvent(Nip01Event event) {
+    try {
+      final offer = Offer.fromNostrEvent(event);
+      _knownOffers[offer.id] = offer;
+      _offerStreamController.add(offer);
+    } catch (e) {
+      Logger.log.e(() => '❌ Error parsing offer event: $e');
+    }
+  }
+
+  /// Stop the live offer subscription
+  Future<void> stopOfferSubscription() async {
+    _offerSubscriptionRequested = false;
+    if (_offerSubscription != null) {
+      await _ndk!.requests.closeSubscription(_offerSubscription!.requestId);
+      _offerSubscription = null;
+    }
+    _offerSubscriptionAuthors = const {};
+    await _offerStreamController.close();
+    _offerStreamController =
+        StreamController<Offer>.broadcast(); // so can restart
+  }
+
+  Future<void> _syncOfferSubscription(Set<String> enabledPubkeys) async {
+    _pruneKnownOffers(enabledPubkeys);
+    if (enabledPubkeys.isEmpty) {
+      if (_offerSubscription != null) {
+        await _ndk!.requests.closeSubscription(_offerSubscription!.requestId);
+        _offerSubscription = null;
+      }
+      _offerSubscriptionAuthors = const {};
+      Logger.log.i(
+        () => '🔎 Stopped offers subscription: no enabled coordinators',
+      );
+      return;
+    }
+    if (_offerSubscription != null &&
+        setEquals(enabledPubkeys, _offerSubscriptionAuthors)) {
+      return;
+    }
+
     if (_offerSubscription != null) {
       await _ndk!.requests.closeSubscription(_offerSubscription!.requestId);
     }
+
     final filter = Filter(
       kinds: [kKindOffer],
+      authors: enabledPubkeys.toList(growable: false),
       tags: {
         "#f": ["PLN"],
         "#y": ["Bitblik"],
-        // "#pm": ["BLIK"],
       },
       since:
           DateTime.now()
@@ -327,27 +396,22 @@ class NostrService {
       filters: [filter],
       explicitRelays: _relayUrls,
     );
+    _offerSubscriptionAuthors = enabledPubkeys;
     _offerSubscription!.stream.listen(_handleOfferEvent);
-    Logger.log.i(() => '🔎 Started offers subscription');
+    Logger.log.i(
+      () =>
+          '🔎 Started offers subscription for ${enabledPubkeys.length} enabled coordinators',
+    );
   }
 
-  void _handleOfferEvent(Nip01Event event) {
-    try {
-      _offerStreamController.add(Offer.fromNostrEvent(event));
-    } catch (e) {
-      Logger.log.e(() => '❌ Error parsing offer event: $e');
+  void _pruneKnownOffers(Set<String> enabledPubkeys) {
+    if (enabledPubkeys.isEmpty) {
+      _knownOffers.clear();
+      return;
     }
-  }
-
-  /// Stop the live offer subscription
-  Future<void> stopOfferSubscription() async {
-    if (_offerSubscription != null) {
-      await _ndk!.requests.closeSubscription(_offerSubscription!.requestId);
-      _offerSubscription = null;
-    }
-    await _offerStreamController.close();
-    _offerStreamController =
-        StreamController<Offer>.broadcast(); // so can restart
+    _knownOffers.removeWhere(
+      (_, offer) => !enabledPubkeys.contains(offer.coordinatorPubkey),
+    );
   }
 
   /// GET /offers/{offerId}
@@ -382,7 +446,9 @@ class NostrService {
       return null;
     }
 
-    return Offer.fromNostrEvent(event);
+    final offer = Offer.fromNostrEvent(event);
+    _knownOffers[offer.id] = offer;
+    return offer;
   }
 
   /// POST /offers/{offerId}/reserve
@@ -922,6 +988,8 @@ class NostrService {
   /// Dispose resources
   Future<void> dispose() async {
     _initInFlight = null;
+    await _coordinatorRegistryChangesSub?.cancel();
+    _coordinatorRegistryChangesSub = null;
     await _coordinatorRegistry?.dispose();
     _coordinatorRegistry = null;
     if (_rpcClient != null) {
@@ -938,6 +1006,8 @@ class NostrService {
     }
     await _offerStatusController.close();
     await _offerStreamController.close();
+    _knownOffers.clear();
+    _offerSubscriptionRequested = false;
     if (_ndk != null) {
       await _ndk!.destroy();
       _ndk = null;

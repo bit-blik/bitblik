@@ -192,12 +192,10 @@ final offersSubscriptionInitializer = FutureProvider<void>((ref) async {
   await apiService.startOfferSubscription();
 });
 
-final offers = <Offer>[];
-
 Future<List<Offer>> refreshAvailableOffersCache(
   ApiServiceNostr apiService,
 ) async {
-  final currentOffers = List<Offer>.from(offers);
+  final currentOffers = List<Offer>.from(apiService.knownOffers);
   final enabledCoordinatorPubkeys =
       apiService.discoveredCoordinators
           .where((record) => record.enabled)
@@ -205,7 +203,7 @@ Future<List<Offer>> refreshAvailableOffersCache(
           .toSet();
   if (currentOffers.isEmpty) {
     return List<Offer>.from(
-      offers
+      apiService.knownOffers
           .where(
             (offer) =>
                 enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey),
@@ -241,11 +239,7 @@ Future<List<Offer>> refreshAvailableOffersCache(
           .toList()
         ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-  offers
-    ..clear()
-    ..addAll(activeOffers);
-
-  return List<Offer>.from(offers.reversed);
+  return List<Offer>.from(activeOffers.reversed);
 }
 
 // Provider for real-time list of available offers from Nostr subscription
@@ -270,31 +264,31 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   );
   // Emit the latest cached snapshot immediately so pull-to-refresh and
   // provider rebuilds don't hang waiting for a future live event.
-  yield List<Offer>.from(
-    offers
-        .where(
-          (offer) =>
-              enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey),
-        )
-        .toList()
-        .reversed,
-  );
-  await for (final offer in apiService.offersStream) {
-    offers.removeWhere((o) => o.id == offer.id);
-    if (enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
-        (offer.status == OfferStatus.funded ||
-            offer.status == OfferStatus.reserved)) {
-      offers.add(offer);
-    }
-    yield List<Offer>.from(
-      offers
+  final initialOffers =
+      apiService.knownOffers
           .where(
-            (candidate) =>
-                enabledCoordinatorPubkeys.contains(candidate.coordinatorPubkey),
+            (offer) =>
+                enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+                (offer.status == OfferStatus.funded ||
+                    offer.status == OfferStatus.reserved),
           )
           .toList()
-          .reversed,
-    );
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  yield List<Offer>.from(initialOffers.reversed);
+  await for (final _ in apiService.offersStream) {
+    final visibleOffers =
+        apiService.knownOffers
+            .where(
+              (candidate) =>
+                  enabledCoordinatorPubkeys.contains(
+                    candidate.coordinatorPubkey,
+                  ) &&
+                  (candidate.status == OfferStatus.funded ||
+                      candidate.status == OfferStatus.reserved),
+            )
+            .toList()
+          ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    yield List<Offer>.from(visibleOffers.reversed);
   }
 });
 
@@ -1340,10 +1334,12 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
     // the offers screen (offersSubscriptionInitializer is lazy).
     await _ref.read(offersSubscriptionInitializer.future);
     // Snapshot currently known offer IDs so we only notify for truly new ones.
-    _seenOfferIds = offers.map((o) => o.id).toSet();
+    _seenOfferIds =
+        _ref.read(apiServiceProvider).knownOffers.map((o) => o.id).toSet();
     final apiService = _ref.read(apiServiceProvider);
     _newOfferSub = apiService.offersStream.listen((offer) async {
       if (offer.status != OfferStatus.funded) return;
+      if (!apiService.isEnabled(offer.coordinatorPubkey)) return;
       if (_seenOfferIds.contains(offer.id)) return;
       _seenOfferIds.add(offer.id);
       final localOffer = await OfferDbService().getOfferById(offer.id);

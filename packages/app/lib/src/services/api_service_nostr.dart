@@ -482,6 +482,7 @@ class ApiServiceNostr {
   Ndk? get ndk => _nostrService.ndk;
 
   Stream<Offer> get offersStream => _nostrService.offersStream;
+  List<Offer> get knownOffers => _nostrService.knownOffers;
 
   Future<void> startOfferSubscription() async {
     // Ensure KeyService/NDK are initialized before starting subscriptions.
