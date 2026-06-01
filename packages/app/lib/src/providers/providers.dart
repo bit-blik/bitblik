@@ -1,6 +1,7 @@
 import 'dart:async'; // For Stream.periodic
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:flutter/widgets.dart';
@@ -319,7 +320,9 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
   Future<void> _promoteMostRecentActiveOffer() async {
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
-    final nextActive = await OfferDbService().getActiveOffer(userPubkey: myPubkey);
+    final nextActive = await OfferDbService().getActiveOffer(
+      userPubkey: myPubkey,
+    );
     if (nextActive != null) {
       Logger.log.i(
         () =>
@@ -373,15 +376,14 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       // listRecentCancelled is a single indexed query — cheap.
       await _reconcileCancelledOffersIfNeeded();
       final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
-      final active = state ?? await OfferDbService().getActiveOffer(userPubkey: myPubkey);
+      final active =
+          state ?? await OfferDbService().getActiveOffer(userPubkey: myPubkey);
       if (active != null &&
           !OfferDbService.terminalStatuses.contains(active.status)) {
         await _reconcileActiveOfferIfNeeded(active);
       }
     } catch (e) {
-      Logger.log.w(
-        () => '[ActiveOfferNotifier] reconcileAll failed: $e',
-      );
+      Logger.log.w(() => '[ActiveOfferNotifier] reconcileAll failed: $e');
     } finally {
       _reconcileInFlight = false;
     }
@@ -764,7 +766,8 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   void _maybeNotify(Offer offer, OfferStatus newStatus) {
     final lifecycle = _ref.read(appLifecycleProvider).currentState;
     if (lifecycle == AppLifecycleState.resumed ||
-        lifecycle == AppLifecycleState.inactive) return;
+        lifecycle == AppLifecycleState.inactive)
+      return;
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
     if (myPubkey == null) return;
     final isMaker = offer.makerPubkey == myPubkey;
@@ -773,27 +776,51 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     switch (newStatus) {
       case OfferStatus.funded:
         if (isMaker) {
-          NotificationService().show(1, strings.funded.title, strings.funded.body);
+          NotificationService().show(
+            1,
+            strings.funded.title,
+            strings.funded.body,
+          );
         }
       case OfferStatus.reserved:
         if (isMaker) {
-          NotificationService().show(2, strings.reserved.title, strings.reserved.body);
+          NotificationService().show(
+            2,
+            strings.reserved.title,
+            strings.reserved.body,
+          );
         }
       case OfferStatus.blikSentToMaker:
         if (isMaker) {
-          NotificationService().show(3, strings.blikReady.title, strings.blikReady.body);
+          NotificationService().show(
+            3,
+            strings.blikReady.title,
+            strings.blikReady.body,
+          );
         }
       case OfferStatus.takerCharged:
         if (isMaker) {
-          NotificationService().show(4, strings.takerCharged.title, strings.takerCharged.body);
+          NotificationService().show(
+            4,
+            strings.takerCharged.title,
+            strings.takerCharged.body,
+          );
         }
       case OfferStatus.invalidBlik:
         if (isTaker) {
-          NotificationService().show(5, strings.invalidBlik.title, strings.invalidBlik.body);
+          NotificationService().show(
+            5,
+            strings.invalidBlik.title,
+            strings.invalidBlik.body,
+          );
         }
       case OfferStatus.takerPaid:
         if (isTaker) {
-          NotificationService().show(6, strings.takerPaid.title, strings.takerPaid.body);
+          NotificationService().show(
+            6,
+            strings.takerPaid.title,
+            strings.takerPaid.body,
+          );
         }
       default:
         break;
@@ -1261,13 +1288,17 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
 
   AppLifecycleState _currentState = AppLifecycleState.resumed;
   StreamSubscription<Offer>? _newOfferSub;
+  StreamSubscription<List<ConnectivityResult>>? _connectivityMonitorSub;
   Set<String> _seenOfferIds = {};
+  bool _relayReconnectInFlight = false;
+  bool _lastNetworkReachable = true;
 
   AppLifecycleState get currentState => _currentState;
 
   void initialize() {
     WidgetsBinding.instance.addObserver(this);
     if (!kIsWeb) {
+      unawaited(_startNetworkConnectivityMonitoring());
       if (Platform.isAndroid || Platform.isIOS) {
         _initMobileMonitoring();
       } else {
@@ -1325,7 +1356,68 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
 
   void dispose() {
     _newOfferSub?.cancel();
+    _connectivityMonitorSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+  }
+
+  Future<void> _startNetworkConnectivityMonitoring() async {
+    final connectivity = Connectivity();
+    try {
+      _lastNetworkReachable = _hasNetwork(
+        await connectivity.checkConnectivity(),
+      );
+    } catch (e) {
+      Logger.log.w(
+        () => '[AppLifecycleNotifier] failed to read initial connectivity: $e',
+      );
+    }
+
+    _connectivityMonitorSub = connectivity.onConnectivityChanged.listen((
+      results,
+    ) {
+      final hasNetwork = _hasNetwork(results);
+      final regainedNetwork = !_lastNetworkReachable && hasNetwork;
+      _lastNetworkReachable = hasNetwork;
+
+      if (regainedNetwork) {
+        unawaited(
+          _restoreCoordinatorRelayConnectivity(reason: 'network restored'),
+        );
+      }
+    });
+  }
+
+  bool _hasNetwork(List<ConnectivityResult> results) =>
+      results.any((result) => result != ConnectivityResult.none);
+
+  Future<void> _restoreCoordinatorRelayConnectivity({
+    required String reason,
+  }) async {
+    if (_relayReconnectInFlight) return;
+    _relayReconnectInFlight = true;
+
+    try {
+      final apiService = await _ref.read(initializedApiServiceProvider.future);
+      final ndk = apiService.ndk;
+      if (ndk == null) return;
+
+      Logger.log.i(
+        () => '[AppLifecycleNotifier] forcing relay reconnect: $reason',
+      );
+      await ndk.connectivity.tryReconnect();
+
+      // Refresh coordinator-derived state after transport recovery so the
+      // app rehydrates its custom Bitblik layer, not just the raw sockets.
+      await apiService.coordinatorRegistry.discover();
+      await apiService.coordinatorRegistry.probeAllEnabled();
+    } catch (e) {
+      Logger.log.w(
+        () =>
+            '[AppLifecycleNotifier] failed restoring coordinator relays after $reason: $e',
+      );
+    } finally {
+      _relayReconnectInFlight = false;
+    }
   }
 
   Future<void> _startNewOfferMonitoring() async {
@@ -1349,11 +1441,13 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       final activeOffer = _ref.read(activeOfferProvider);
       if (activeOffer != null &&
           activeOffer.status == OfferStatus.created &&
-          activeOffer.coordinatorPubkey == offer.coordinatorPubkey) return;
+          activeOffer.coordinatorPubkey == offer.coordinatorPubkey)
+        return;
       // On mobile suppress notification while app is in foreground
       if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
         if (_currentState == AppLifecycleState.resumed ||
-            _currentState == AppLifecycleState.inactive) return;
+            _currentState == AppLifecycleState.inactive)
+          return;
       }
       final strings = t.offerNotifications;
       final locale =
@@ -1363,8 +1457,9 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         decimalDigits: 2,
       );
       final formattedAmount = numFmt.format(offer.fiatAmount);
-      final formattedSats =
-          NumberFormat.decimalPattern(locale).format(offer.amountSats);
+      final formattedSats = NumberFormat.decimalPattern(
+        locale,
+      ).format(offer.amountSats);
       final categoryStr = switch (offer.category) {
         OfferCategory.shop => strings.categories.shop,
         OfferCategory.atm => strings.categories.atm,
@@ -1398,10 +1493,7 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.resumed:
-        final ndkInstance = _ref.read(ndkProvider);
-        if (ndkInstance != null) {
-          // ndkInstance.connectivity.do();
-        }
+        unawaited(_restoreCoordinatorRelayConnectivity(reason: 'app resumed'));
         NotificationService().cancelBlikReminder();
         break;
       case AppLifecycleState.inactive:
