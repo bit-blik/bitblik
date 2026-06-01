@@ -1342,10 +1342,18 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
     // Snapshot currently known offer IDs so we only notify for truly new ones.
     _seenOfferIds = offers.map((o) => o.id).toSet();
     final apiService = _ref.read(apiServiceProvider);
-    _newOfferSub = apiService.offersStream.listen((offer) {
+    _newOfferSub = apiService.offersStream.listen((offer) async {
       if (offer.status != OfferStatus.funded) return;
       if (_seenOfferIds.contains(offer.id)) return;
       _seenOfferIds.add(offer.id);
+      final localOffer = await OfferDbService().getOfferById(offer.id);
+      if (localOffer != null) return;
+      // Race: offer funded on coordinator before kind-20033 reconciles local ID.
+      // If we have a 'created' active offer on same coordinator it's ours.
+      final activeOffer = _ref.read(activeOfferProvider);
+      if (activeOffer != null &&
+          activeOffer.status == OfferStatus.created &&
+          activeOffer.coordinatorPubkey == offer.coordinatorPubkey) return;
       // On mobile suppress notification while app is in foreground
       if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
         if (_currentState == AppLifecycleState.resumed ||

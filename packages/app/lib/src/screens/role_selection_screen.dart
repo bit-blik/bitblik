@@ -662,7 +662,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
   bool _isBffActive() {
     final now = DateTime.now();
     final start = DateTime(2026, 5, 31);
-    final end = DateTime(2026, 6, 8, 23, 59, 59);
+    final end = DateTime(2026, 6, 13, 23, 59, 59);
     return now.isAfter(start) && now.isBefore(end);
   }
 
