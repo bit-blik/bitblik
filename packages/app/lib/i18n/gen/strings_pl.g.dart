@@ -3,6 +3,7 @@
 ///
 // coverage:ignore-file
 // ignore_for_file: type=lint, unused_import
+// dart format off
 
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +11,7 @@ import 'package:slang/generated.dart';
 import 'strings.g.dart';
 
 // Path: <root>
-class TranslationsPl extends Translations {
+class TranslationsPl extends Translations with BaseTranslations<AppLocale, Translations> {
 	/// You can call this constructor and build your own translation instance of this locale.
 	/// Constructing via the enum [AppLocale.build] is preferred.
 	TranslationsPl({Map<String, Node>? overrides, PluralResolver? cardinalResolver, PluralResolver? ordinalResolver, TranslationMetadata<AppLocale, Translations>? meta})
@@ -38,38 +39,38 @@ class TranslationsPl extends Translations {
 	TranslationsPl $copyWith({TranslationMetadata<AppLocale, Translations>? meta}) => TranslationsPl(meta: meta ?? this.$meta);
 
 	// Translations
-	@override late final _TranslationsAppPl app = _TranslationsAppPl._(_root);
-	@override late final _TranslationsCommonPl common = _TranslationsCommonPl._(_root);
-	@override late final _TranslationsLightningAddressPl lightningAddress = _TranslationsLightningAddressPl._(_root);
-	@override late final _TranslationsOffersPl offers = _TranslationsOffersPl._(_root);
-	@override late final _TranslationsReservationsPl reservations = _TranslationsReservationsPl._(_root);
-	@override late final _TranslationsExchangePl exchange = _TranslationsExchangePl._(_root);
-	@override late final _TranslationsCoordinatorPl coordinator = _TranslationsCoordinatorPl._(_root);
-	@override late final _TranslationsMakerPl maker = _TranslationsMakerPl._(_root);
-	@override late final _TranslationsTakerPl taker = _TranslationsTakerPl._(_root);
-	@override late final _TranslationsBlikPl blik = _TranslationsBlikPl._(_root);
-	@override late final _TranslationsNekoInfoPl nekoInfo = _TranslationsNekoInfoPl._(_root);
-	@override late final _TranslationsGenerateNewKeyPl generateNewKey = _TranslationsGenerateNewKeyPl._(_root);
-	@override late final _TranslationsBackupPl backup = _TranslationsBackupPl._(_root);
-	@override late final _TranslationsRestorePl restore = _TranslationsRestorePl._(_root);
-	@override late final _TranslationsHomePl home = _TranslationsHomePl._(_root);
-	@override late final _TranslationsSystemPl system = _TranslationsSystemPl._(_root);
-	@override late final _TranslationsMyOffersPl myOffers = _TranslationsMyOffersPl._(_root);
-	@override late final _TranslationsLandingPl landing = _TranslationsLandingPl._(_root);
-	@override late final _TranslationsFaqPl faq = _TranslationsFaqPl._(_root);
-	@override late final _TranslationsSettingsPl settings = _TranslationsSettingsPl._(_root);
-	@override late final _TranslationsNotificationSettingsPl notificationSettings = _TranslationsNotificationSettingsPl._(_root);
-	@override late final _TranslationsWalletPl wallet = _TranslationsWalletPl._(_root);
-	@override late final _TranslationsNwcPl nwc = _TranslationsNwcPl._(_root);
-	@override late final _TranslationsNekoManagementPl nekoManagement = _TranslationsNekoManagementPl._(_root);
-	@override late final _TranslationsRelaysPl relays = _TranslationsRelaysPl._(_root);
-	@override late final _TranslationsOfferNotificationsPl offerNotifications = _TranslationsOfferNotificationsPl._(_root);
-	@override late final _TranslationsAltstorePl altstore = _TranslationsAltstorePl._(_root);
+	@override late final _Translations$app$pl app = _Translations$app$pl._(_root);
+	@override late final _Translations$common$pl common = _Translations$common$pl._(_root);
+	@override late final _Translations$lightningAddress$pl lightningAddress = _Translations$lightningAddress$pl._(_root);
+	@override late final _Translations$offers$pl offers = _Translations$offers$pl._(_root);
+	@override late final _Translations$reservations$pl reservations = _Translations$reservations$pl._(_root);
+	@override late final _Translations$exchange$pl exchange = _Translations$exchange$pl._(_root);
+	@override late final _Translations$coordinator$pl coordinator = _Translations$coordinator$pl._(_root);
+	@override late final _Translations$maker$pl maker = _Translations$maker$pl._(_root);
+	@override late final _Translations$taker$pl taker = _Translations$taker$pl._(_root);
+	@override late final _Translations$blik$pl blik = _Translations$blik$pl._(_root);
+	@override late final _Translations$nekoInfo$pl nekoInfo = _Translations$nekoInfo$pl._(_root);
+	@override late final _Translations$generateNewKey$pl generateNewKey = _Translations$generateNewKey$pl._(_root);
+	@override late final _Translations$backup$pl backup = _Translations$backup$pl._(_root);
+	@override late final _Translations$restore$pl restore = _Translations$restore$pl._(_root);
+	@override late final _Translations$home$pl home = _Translations$home$pl._(_root);
+	@override late final _Translations$system$pl system = _Translations$system$pl._(_root);
+	@override late final _Translations$myOffers$pl myOffers = _Translations$myOffers$pl._(_root);
+	@override late final _Translations$landing$pl landing = _Translations$landing$pl._(_root);
+	@override late final _Translations$faq$pl faq = _Translations$faq$pl._(_root);
+	@override late final _Translations$settings$pl settings = _Translations$settings$pl._(_root);
+	@override late final _Translations$notificationSettings$pl notificationSettings = _Translations$notificationSettings$pl._(_root);
+	@override late final _Translations$wallet$pl wallet = _Translations$wallet$pl._(_root);
+	@override late final _Translations$nwc$pl nwc = _Translations$nwc$pl._(_root);
+	@override late final _Translations$nekoManagement$pl nekoManagement = _Translations$nekoManagement$pl._(_root);
+	@override late final _Translations$relays$pl relays = _Translations$relays$pl._(_root);
+	@override late final _Translations$offerNotifications$pl offerNotifications = _Translations$offerNotifications$pl._(_root);
+	@override late final _Translations$altstore$pl altstore = _Translations$altstore$pl._(_root);
 }
 
 // Path: app
-class _TranslationsAppPl extends TranslationsAppEn {
-	_TranslationsAppPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$app$pl extends Translations$app$en {
+	_Translations$app$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -80,136 +81,136 @@ class _TranslationsAppPl extends TranslationsAppEn {
 }
 
 // Path: common
-class _TranslationsCommonPl extends TranslationsCommonEn {
-	_TranslationsCommonPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$common$pl extends Translations$common$en {
+	_Translations$common$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsCommonButtonsPl buttons = _TranslationsCommonButtonsPl._(_root);
-	@override late final _TranslationsCommonLabelsPl labels = _TranslationsCommonLabelsPl._(_root);
-	@override late final _TranslationsCommonNotificationsPl notifications = _TranslationsCommonNotificationsPl._(_root);
-	@override late final _TranslationsCommonClipboardPl clipboard = _TranslationsCommonClipboardPl._(_root);
-	@override late final _TranslationsCommonActionsPl actions = _TranslationsCommonActionsPl._(_root);
+	@override late final _Translations$common$buttons$pl buttons = _Translations$common$buttons$pl._(_root);
+	@override late final _Translations$common$labels$pl labels = _Translations$common$labels$pl._(_root);
+	@override late final _Translations$common$notifications$pl notifications = _Translations$common$notifications$pl._(_root);
+	@override late final _Translations$common$clipboard$pl clipboard = _Translations$common$clipboard$pl._(_root);
+	@override late final _Translations$common$actions$pl actions = _Translations$common$actions$pl._(_root);
 }
 
 // Path: lightningAddress
-class _TranslationsLightningAddressPl extends TranslationsLightningAddressEn {
-	_TranslationsLightningAddressPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$lightningAddress$pl extends Translations$lightningAddress$en {
+	_Translations$lightningAddress$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsLightningAddressLabelsPl labels = _TranslationsLightningAddressLabelsPl._(_root);
-	@override late final _TranslationsLightningAddressPromptsPl prompts = _TranslationsLightningAddressPromptsPl._(_root);
-	@override late final _TranslationsLightningAddressFeedbackPl feedback = _TranslationsLightningAddressFeedbackPl._(_root);
-	@override late final _TranslationsLightningAddressErrorsPl errors = _TranslationsLightningAddressErrorsPl._(_root);
+	@override late final _Translations$lightningAddress$labels$pl labels = _Translations$lightningAddress$labels$pl._(_root);
+	@override late final _Translations$lightningAddress$prompts$pl prompts = _Translations$lightningAddress$prompts$pl._(_root);
+	@override late final _Translations$lightningAddress$feedback$pl feedback = _Translations$lightningAddress$feedback$pl._(_root);
+	@override late final _Translations$lightningAddress$errors$pl errors = _Translations$lightningAddress$errors$pl._(_root);
 }
 
 // Path: offers
-class _TranslationsOffersPl extends TranslationsOffersEn {
-	_TranslationsOffersPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$pl extends Translations$offers$en {
+	_Translations$offers$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsOffersDetailsPl details = _TranslationsOffersDetailsPl._(_root);
-	@override late final _TranslationsOffersTooltipsPl tooltips = _TranslationsOffersTooltipsPl._(_root);
-	@override late final _TranslationsOffersActionsPl actions = _TranslationsOffersActionsPl._(_root);
-	@override late final _TranslationsOffersStatusPl status = _TranslationsOffersStatusPl._(_root);
-	@override late final _TranslationsOffersStatusMessagesPl statusMessages = _TranslationsOffersStatusMessagesPl._(_root);
-	@override late final _TranslationsOffersProgressPl progress = _TranslationsOffersProgressPl._(_root);
-	@override late final _TranslationsOffersErrorsPl errors = _TranslationsOffersErrorsPl._(_root);
-	@override late final _TranslationsOffersSuccessPl success = _TranslationsOffersSuccessPl._(_root);
+	@override late final _Translations$offers$details$pl details = _Translations$offers$details$pl._(_root);
+	@override late final _Translations$offers$tooltips$pl tooltips = _Translations$offers$tooltips$pl._(_root);
+	@override late final _Translations$offers$actions$pl actions = _Translations$offers$actions$pl._(_root);
+	@override late final _Translations$offers$status$pl status = _Translations$offers$status$pl._(_root);
+	@override late final _Translations$offers$statusMessages$pl statusMessages = _Translations$offers$statusMessages$pl._(_root);
+	@override late final _Translations$offers$progress$pl progress = _Translations$offers$progress$pl._(_root);
+	@override late final _Translations$offers$errors$pl errors = _Translations$offers$errors$pl._(_root);
+	@override late final _Translations$offers$success$pl success = _Translations$offers$success$pl._(_root);
 }
 
 // Path: reservations
-class _TranslationsReservationsPl extends TranslationsReservationsEn {
-	_TranslationsReservationsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$reservations$pl extends Translations$reservations$en {
+	_Translations$reservations$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsReservationsActionsPl actions = _TranslationsReservationsActionsPl._(_root);
-	@override late final _TranslationsReservationsFeedbackPl feedback = _TranslationsReservationsFeedbackPl._(_root);
-	@override late final _TranslationsReservationsErrorsPl errors = _TranslationsReservationsErrorsPl._(_root);
+	@override late final _Translations$reservations$actions$pl actions = _Translations$reservations$actions$pl._(_root);
+	@override late final _Translations$reservations$feedback$pl feedback = _Translations$reservations$feedback$pl._(_root);
+	@override late final _Translations$reservations$errors$pl errors = _Translations$reservations$errors$pl._(_root);
 }
 
 // Path: exchange
-class _TranslationsExchangePl extends TranslationsExchangeEn {
-	_TranslationsExchangePl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$exchange$pl extends Translations$exchange$en {
+	_Translations$exchange$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsExchangeLabelsPl labels = _TranslationsExchangeLabelsPl._(_root);
-	@override late final _TranslationsExchangeFeedbackPl feedback = _TranslationsExchangeFeedbackPl._(_root);
-	@override late final _TranslationsExchangeErrorsPl errors = _TranslationsExchangeErrorsPl._(_root);
+	@override late final _Translations$exchange$labels$pl labels = _Translations$exchange$labels$pl._(_root);
+	@override late final _Translations$exchange$feedback$pl feedback = _Translations$exchange$feedback$pl._(_root);
+	@override late final _Translations$exchange$errors$pl errors = _Translations$exchange$errors$pl._(_root);
 }
 
 // Path: coordinator
-class _TranslationsCoordinatorPl extends TranslationsCoordinatorEn {
-	_TranslationsCoordinatorPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$coordinator$pl extends Translations$coordinator$en {
+	_Translations$coordinator$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Koordynatorzy';
-	@override late final _TranslationsCoordinatorInfoPl info = _TranslationsCoordinatorInfoPl._(_root);
-	@override late final _TranslationsCoordinatorSelectorPl selector = _TranslationsCoordinatorSelectorPl._(_root);
-	@override late final _TranslationsCoordinatorDialogPl dialog = _TranslationsCoordinatorDialogPl._(_root);
-	@override late final _TranslationsCoordinatorManagementPl management = _TranslationsCoordinatorManagementPl._(_root);
+	@override late final _Translations$coordinator$info$pl info = _Translations$coordinator$info$pl._(_root);
+	@override late final _Translations$coordinator$selector$pl selector = _Translations$coordinator$selector$pl._(_root);
+	@override late final _Translations$coordinator$dialog$pl dialog = _Translations$coordinator$dialog$pl._(_root);
+	@override late final _Translations$coordinator$management$pl management = _Translations$coordinator$management$pl._(_root);
 }
 
 // Path: maker
-class _TranslationsMakerPl extends TranslationsMakerEn {
-	_TranslationsMakerPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$pl extends Translations$maker$en {
+	_Translations$maker$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsMakerRoleSelectionPl roleSelection = _TranslationsMakerRoleSelectionPl._(_root);
-	@override late final _TranslationsMakerAmountFormPl amountForm = _TranslationsMakerAmountFormPl._(_root);
-	@override late final _TranslationsMakerPayInvoicePl payInvoice = _TranslationsMakerPayInvoicePl._(_root);
-	@override late final _TranslationsMakerWaitTakerPl waitTaker = _TranslationsMakerWaitTakerPl._(_root);
-	@override late final _TranslationsMakerWaitForBlikPl waitForBlik = _TranslationsMakerWaitForBlikPl._(_root);
-	@override late final _TranslationsMakerConfirmPaymentPl confirmPayment = _TranslationsMakerConfirmPaymentPl._(_root);
-	@override late final _TranslationsMakerInvalidBlikPl invalidBlik = _TranslationsMakerInvalidBlikPl._(_root);
-	@override late final _TranslationsMakerConflictPl conflict = _TranslationsMakerConflictPl._(_root);
-	@override late final _TranslationsMakerSuccessPl success = _TranslationsMakerSuccessPl._(_root);
+	@override late final _Translations$maker$roleSelection$pl roleSelection = _Translations$maker$roleSelection$pl._(_root);
+	@override late final _Translations$maker$amountForm$pl amountForm = _Translations$maker$amountForm$pl._(_root);
+	@override late final _Translations$maker$payInvoice$pl payInvoice = _Translations$maker$payInvoice$pl._(_root);
+	@override late final _Translations$maker$waitTaker$pl waitTaker = _Translations$maker$waitTaker$pl._(_root);
+	@override late final _Translations$maker$waitForBlik$pl waitForBlik = _Translations$maker$waitForBlik$pl._(_root);
+	@override late final _Translations$maker$confirmPayment$pl confirmPayment = _Translations$maker$confirmPayment$pl._(_root);
+	@override late final _Translations$maker$invalidBlik$pl invalidBlik = _Translations$maker$invalidBlik$pl._(_root);
+	@override late final _Translations$maker$conflict$pl conflict = _Translations$maker$conflict$pl._(_root);
+	@override late final _Translations$maker$success$pl success = _Translations$maker$success$pl._(_root);
 }
 
 // Path: taker
-class _TranslationsTakerPl extends TranslationsTakerEn {
-	_TranslationsTakerPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$pl extends Translations$taker$en {
+	_Translations$taker$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsTakerRoleSelectionPl roleSelection = _TranslationsTakerRoleSelectionPl._(_root);
-	@override late final _TranslationsTakerProgressPl progress = _TranslationsTakerProgressPl._(_root);
-	@override late final _TranslationsTakerSubmitBlikPl submitBlik = _TranslationsTakerSubmitBlikPl._(_root);
-	@override late final _TranslationsTakerWaitConfirmationPl waitConfirmation = _TranslationsTakerWaitConfirmationPl._(_root);
-	@override late final _TranslationsTakerPaymentProcessPl paymentProcess = _TranslationsTakerPaymentProcessPl._(_root);
-	@override late final _TranslationsTakerPaymentFailedPl paymentFailed = _TranslationsTakerPaymentFailedPl._(_root);
-	@override late final _TranslationsTakerPaymentSuccessPl paymentSuccess = _TranslationsTakerPaymentSuccessPl._(_root);
-	@override late final _TranslationsTakerInvalidBlikPl invalidBlik = _TranslationsTakerInvalidBlikPl._(_root);
-	@override late final _TranslationsTakerConflictPl conflict = _TranslationsTakerConflictPl._(_root);
+	@override late final _Translations$taker$roleSelection$pl roleSelection = _Translations$taker$roleSelection$pl._(_root);
+	@override late final _Translations$taker$progress$pl progress = _Translations$taker$progress$pl._(_root);
+	@override late final _Translations$taker$submitBlik$pl submitBlik = _Translations$taker$submitBlik$pl._(_root);
+	@override late final _Translations$taker$waitConfirmation$pl waitConfirmation = _Translations$taker$waitConfirmation$pl._(_root);
+	@override late final _Translations$taker$paymentProcess$pl paymentProcess = _Translations$taker$paymentProcess$pl._(_root);
+	@override late final _Translations$taker$paymentFailed$pl paymentFailed = _Translations$taker$paymentFailed$pl._(_root);
+	@override late final _Translations$taker$paymentSuccess$pl paymentSuccess = _Translations$taker$paymentSuccess$pl._(_root);
+	@override late final _Translations$taker$invalidBlik$pl invalidBlik = _Translations$taker$invalidBlik$pl._(_root);
+	@override late final _Translations$taker$conflict$pl conflict = _Translations$taker$conflict$pl._(_root);
 }
 
 // Path: blik
-class _TranslationsBlikPl extends TranslationsBlikEn {
-	_TranslationsBlikPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$blik$pl extends Translations$blik$en {
+	_Translations$blik$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsBlikInstructionsPl instructions = _TranslationsBlikInstructionsPl._(_root);
+	@override late final _Translations$blik$instructions$pl instructions = _Translations$blik$instructions$pl._(_root);
 }
 
 // Path: nekoInfo
-class _TranslationsNekoInfoPl extends TranslationsNekoInfoEn {
-	_TranslationsNekoInfoPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$nekoInfo$pl extends Translations$nekoInfo$en {
+	_Translations$nekoInfo$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -220,74 +221,74 @@ class _TranslationsNekoInfoPl extends TranslationsNekoInfoEn {
 }
 
 // Path: generateNewKey
-class _TranslationsGenerateNewKeyPl extends TranslationsGenerateNewKeyEn {
-	_TranslationsGenerateNewKeyPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$generateNewKey$pl extends Translations$generateNewKey$en {
+	_Translations$generateNewKey$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Nowy';
 	@override String get description => 'Czy na pewno chcesz wygenerować nowe Neko? Twoje obecne zostanie utracone na zawsze, jeśli go nie zarchiwizowałeś.';
-	@override late final _TranslationsGenerateNewKeyButtonsPl buttons = _TranslationsGenerateNewKeyButtonsPl._(_root);
-	@override late final _TranslationsGenerateNewKeyErrorsPl errors = _TranslationsGenerateNewKeyErrorsPl._(_root);
-	@override late final _TranslationsGenerateNewKeyFeedbackPl feedback = _TranslationsGenerateNewKeyFeedbackPl._(_root);
-	@override late final _TranslationsGenerateNewKeyTooltipsPl tooltips = _TranslationsGenerateNewKeyTooltipsPl._(_root);
+	@override late final _Translations$generateNewKey$buttons$pl buttons = _Translations$generateNewKey$buttons$pl._(_root);
+	@override late final _Translations$generateNewKey$errors$pl errors = _Translations$generateNewKey$errors$pl._(_root);
+	@override late final _Translations$generateNewKey$feedback$pl feedback = _Translations$generateNewKey$feedback$pl._(_root);
+	@override late final _Translations$generateNewKey$tooltips$pl tooltips = _Translations$generateNewKey$tooltips$pl._(_root);
 }
 
 // Path: backup
-class _TranslationsBackupPl extends TranslationsBackupEn {
-	_TranslationsBackupPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$backup$pl extends Translations$backup$en {
+	_Translations$backup$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Zarchiwizuj';
 	@override String get description => 'To jest Twój klucz prywatny. Zabezpiecza on komunikację z koordynatorem. Nigdy nikomu go nie ujawniaj. Zarchiwizuj go w bezpiecznym miejscu, aby uniknąć problemów podczas sporów.';
-	@override late final _TranslationsBackupFeedbackPl feedback = _TranslationsBackupFeedbackPl._(_root);
-	@override late final _TranslationsBackupTooltipsPl tooltips = _TranslationsBackupTooltipsPl._(_root);
+	@override late final _Translations$backup$feedback$pl feedback = _Translations$backup$feedback$pl._(_root);
+	@override late final _Translations$backup$tooltips$pl tooltips = _Translations$backup$tooltips$pl._(_root);
 }
 
 // Path: restore
-class _TranslationsRestorePl extends TranslationsRestoreEn {
-	_TranslationsRestorePl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$restore$pl extends Translations$restore$en {
+	_Translations$restore$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Przywróć';
-	@override late final _TranslationsRestoreLabelsPl labels = _TranslationsRestoreLabelsPl._(_root);
-	@override late final _TranslationsRestoreButtonsPl buttons = _TranslationsRestoreButtonsPl._(_root);
-	@override late final _TranslationsRestoreErrorsPl errors = _TranslationsRestoreErrorsPl._(_root);
-	@override late final _TranslationsRestoreFeedbackPl feedback = _TranslationsRestoreFeedbackPl._(_root);
-	@override late final _TranslationsRestoreTooltipsPl tooltips = _TranslationsRestoreTooltipsPl._(_root);
+	@override late final _Translations$restore$labels$pl labels = _Translations$restore$labels$pl._(_root);
+	@override late final _Translations$restore$buttons$pl buttons = _Translations$restore$buttons$pl._(_root);
+	@override late final _Translations$restore$errors$pl errors = _Translations$restore$errors$pl._(_root);
+	@override late final _Translations$restore$feedback$pl feedback = _Translations$restore$feedback$pl._(_root);
+	@override late final _Translations$restore$tooltips$pl tooltips = _Translations$restore$tooltips$pl._(_root);
 }
 
 // Path: home
-class _TranslationsHomePl extends TranslationsHomeEn {
-	_TranslationsHomePl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$home$pl extends Translations$home$en {
+	_Translations$home$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsHomeNotificationsPl notifications = _TranslationsHomeNotificationsPl._(_root);
-	@override late final _TranslationsHomeStatisticsPl statistics = _TranslationsHomeStatisticsPl._(_root);
+	@override late final _Translations$home$notifications$pl notifications = _Translations$home$notifications$pl._(_root);
+	@override late final _Translations$home$statistics$pl statistics = _Translations$home$statistics$pl._(_root);
 }
 
 // Path: system
-class _TranslationsSystemPl extends TranslationsSystemEn {
-	_TranslationsSystemPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$system$pl extends Translations$system$en {
+	_Translations$system$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get loadingPublicKey => 'Ładowanie Twojego klucza publicznego...';
-	@override late final _TranslationsSystemErrorsPl errors = _TranslationsSystemErrorsPl._(_root);
-	@override late final _TranslationsSystemBlikPl blik = _TranslationsSystemBlikPl._(_root);
+	@override late final _Translations$system$errors$pl errors = _Translations$system$errors$pl._(_root);
+	@override late final _Translations$system$blik$pl blik = _Translations$system$blik$pl._(_root);
 }
 
 // Path: myOffers
-class _TranslationsMyOffersPl extends TranslationsMyOffersEn {
-	_TranslationsMyOffersPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$myOffers$pl extends Translations$myOffers$en {
+	_Translations$myOffers$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -296,13 +297,13 @@ class _TranslationsMyOffersPl extends TranslationsMyOffersEn {
 	@override String get empty => 'Brak ofert.';
 	@override String get unknownCoordinator => 'Nieznany koordynator';
 	@override String get menuLabel => 'Moje oferty';
-	@override late final _TranslationsMyOffersFilterPl filter = _TranslationsMyOffersFilterPl._(_root);
-	@override late final _TranslationsMyOffersDetailsPl details = _TranslationsMyOffersDetailsPl._(_root);
+	@override late final _Translations$myOffers$filter$pl filter = _Translations$myOffers$filter$pl._(_root);
+	@override late final _Translations$myOffers$details$pl details = _Translations$myOffers$details$pl._(_root);
 }
 
 // Path: landing
-class _TranslationsLandingPl extends TranslationsLandingEn {
-	_TranslationsLandingPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$landing$pl extends Translations$landing$en {
+	_Translations$landing$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -310,12 +311,12 @@ class _TranslationsLandingPl extends TranslationsLandingEn {
 	@override String get mainTitle => 'Wymiana\n BLIK ⇄ bitcoin';
 	@override String get subtitle => 'Płać lub sprzedawaj kod BLIK za bitcoin';
 	@override String get partnership => 'współpraca';
-	@override late final _TranslationsLandingActionsPl actions = _TranslationsLandingActionsPl._(_root);
+	@override late final _Translations$landing$actions$pl actions = _Translations$landing$actions$pl._(_root);
 }
 
 // Path: faq
-class _TranslationsFaqPl extends TranslationsFaqEn {
-	_TranslationsFaqPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$faq$pl extends Translations$faq$en {
+	_Translations$faq$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -325,8 +326,8 @@ class _TranslationsFaqPl extends TranslationsFaqEn {
 }
 
 // Path: settings
-class _TranslationsSettingsPl extends TranslationsSettingsEn {
-	_TranslationsSettingsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$settings$pl extends Translations$settings$en {
+	_Translations$settings$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -335,48 +336,48 @@ class _TranslationsSettingsPl extends TranslationsSettingsEn {
 }
 
 // Path: notificationSettings
-class _TranslationsNotificationSettingsPl extends TranslationsNotificationSettingsEn {
-	_TranslationsNotificationSettingsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$notificationSettings$pl extends Translations$notificationSettings$en {
+	_Translations$notificationSettings$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Powiadomienia';
-	@override late final _TranslationsNotificationSettingsNewOfferAlertsPl newOfferAlerts = _TranslationsNotificationSettingsNewOfferAlertsPl._(_root);
+	@override late final _Translations$notificationSettings$newOfferAlerts$pl newOfferAlerts = _Translations$notificationSettings$newOfferAlerts$pl._(_root);
 }
 
 // Path: wallet
-class _TranslationsWalletPl extends TranslationsWalletEn {
-	_TranslationsWalletPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$wallet$pl extends Translations$wallet$en {
+	_Translations$wallet$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Portfel';
 	@override String get description => 'Zarządzaj ustawieniami portfela Lightning';
-	@override late final _TranslationsWalletMissingReceivingPl missingReceiving = _TranslationsWalletMissingReceivingPl._(_root);
+	@override late final _Translations$wallet$missingReceiving$pl missingReceiving = _Translations$wallet$missingReceiving$pl._(_root);
 }
 
 // Path: nwc
-class _TranslationsNwcPl extends TranslationsNwcEn {
-	_TranslationsNwcPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$nwc$pl extends Translations$nwc$en {
+	_Translations$nwc$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Nostr Wallet Connect (NWC)';
 	@override String get description => 'Połącz swój portfel Lightning przez NWC';
-	@override late final _TranslationsNwcLabelsPl labels = _TranslationsNwcLabelsPl._(_root);
-	@override late final _TranslationsNwcPromptsPl prompts = _TranslationsNwcPromptsPl._(_root);
-	@override late final _TranslationsNwcActionsPl actions = _TranslationsNwcActionsPl._(_root);
-	@override late final _TranslationsNwcFeedbackPl feedback = _TranslationsNwcFeedbackPl._(_root);
-	@override late final _TranslationsNwcErrorsPl errors = _TranslationsNwcErrorsPl._(_root);
-	@override late final _TranslationsNwcTimePl time = _TranslationsNwcTimePl._(_root);
+	@override late final _Translations$nwc$labels$pl labels = _Translations$nwc$labels$pl._(_root);
+	@override late final _Translations$nwc$prompts$pl prompts = _Translations$nwc$prompts$pl._(_root);
+	@override late final _Translations$nwc$actions$pl actions = _Translations$nwc$actions$pl._(_root);
+	@override late final _Translations$nwc$feedback$pl feedback = _Translations$nwc$feedback$pl._(_root);
+	@override late final _Translations$nwc$errors$pl errors = _Translations$nwc$errors$pl._(_root);
+	@override late final _Translations$nwc$time$pl time = _Translations$nwc$time$pl._(_root);
 }
 
 // Path: nekoManagement
-class _TranslationsNekoManagementPl extends TranslationsNekoManagementEn {
-	_TranslationsNekoManagementPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$nekoManagement$pl extends Translations$nekoManagement$en {
+	_Translations$nekoManagement$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -385,39 +386,39 @@ class _TranslationsNekoManagementPl extends TranslationsNekoManagementEn {
 }
 
 // Path: relays
-class _TranslationsRelaysPl extends TranslationsRelaysEn {
-	_TranslationsRelaysPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$relays$pl extends Translations$relays$en {
+	_Translations$relays$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Przekaźniki';
-	@override late final _TranslationsRelaysStatusPl status = _TranslationsRelaysStatusPl._(_root);
-	@override late final _TranslationsRelaysPopupPl popup = _TranslationsRelaysPopupPl._(_root);
+	@override late final _Translations$relays$status$pl status = _Translations$relays$status$pl._(_root);
+	@override late final _Translations$relays$popup$pl popup = _Translations$relays$popup$pl._(_root);
 }
 
 // Path: offerNotifications
-class _TranslationsOfferNotificationsPl extends TranslationsOfferNotificationsEn {
-	_TranslationsOfferNotificationsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$pl extends Translations$offerNotifications$en {
+	_Translations$offerNotifications$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsOfferNotificationsActiveServicePl activeService = _TranslationsOfferNotificationsActiveServicePl._(_root);
-	@override late final _TranslationsOfferNotificationsFundedPl funded = _TranslationsOfferNotificationsFundedPl._(_root);
-	@override late final _TranslationsOfferNotificationsReservedPl reserved = _TranslationsOfferNotificationsReservedPl._(_root);
-	@override late final _TranslationsOfferNotificationsBlikReadyPl blikReady = _TranslationsOfferNotificationsBlikReadyPl._(_root);
-	@override late final _TranslationsOfferNotificationsNewOfferPl newOffer = _TranslationsOfferNotificationsNewOfferPl._(_root);
-	@override late final _TranslationsOfferNotificationsCategoriesPl categories = _TranslationsOfferNotificationsCategoriesPl._(_root);
-	@override late final _TranslationsOfferNotificationsBlikPendingReminderPl blikPendingReminder = _TranslationsOfferNotificationsBlikPendingReminderPl._(_root);
-	@override late final _TranslationsOfferNotificationsTakerChargedPl takerCharged = _TranslationsOfferNotificationsTakerChargedPl._(_root);
-	@override late final _TranslationsOfferNotificationsInvalidBlikPl invalidBlik = _TranslationsOfferNotificationsInvalidBlikPl._(_root);
-	@override late final _TranslationsOfferNotificationsTakerPaidPl takerPaid = _TranslationsOfferNotificationsTakerPaidPl._(_root);
+	@override late final _Translations$offerNotifications$activeService$pl activeService = _Translations$offerNotifications$activeService$pl._(_root);
+	@override late final _Translations$offerNotifications$funded$pl funded = _Translations$offerNotifications$funded$pl._(_root);
+	@override late final _Translations$offerNotifications$reserved$pl reserved = _Translations$offerNotifications$reserved$pl._(_root);
+	@override late final _Translations$offerNotifications$blikReady$pl blikReady = _Translations$offerNotifications$blikReady$pl._(_root);
+	@override late final _Translations$offerNotifications$newOffer$pl newOffer = _Translations$offerNotifications$newOffer$pl._(_root);
+	@override late final _Translations$offerNotifications$categories$pl categories = _Translations$offerNotifications$categories$pl._(_root);
+	@override late final _Translations$offerNotifications$blikPendingReminder$pl blikPendingReminder = _Translations$offerNotifications$blikPendingReminder$pl._(_root);
+	@override late final _Translations$offerNotifications$takerCharged$pl takerCharged = _Translations$offerNotifications$takerCharged$pl._(_root);
+	@override late final _Translations$offerNotifications$invalidBlik$pl invalidBlik = _Translations$offerNotifications$invalidBlik$pl._(_root);
+	@override late final _Translations$offerNotifications$takerPaid$pl takerPaid = _Translations$offerNotifications$takerPaid$pl._(_root);
 }
 
 // Path: altstore
-class _TranslationsAltstorePl extends TranslationsAltstoreEn {
-	_TranslationsAltstorePl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$altstore$pl extends Translations$altstore$en {
+	_Translations$altstore$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -432,8 +433,8 @@ class _TranslationsAltstorePl extends TranslationsAltstoreEn {
 }
 
 // Path: common.buttons
-class _TranslationsCommonButtonsPl extends TranslationsCommonButtonsEn {
-	_TranslationsCommonButtonsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$common$buttons$pl extends Translations$common$buttons$en {
+	_Translations$common$buttons$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -453,8 +454,8 @@ class _TranslationsCommonButtonsPl extends TranslationsCommonButtonsEn {
 }
 
 // Path: common.labels
-class _TranslationsCommonLabelsPl extends TranslationsCommonLabelsEn {
-	_TranslationsCommonLabelsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$common$labels$pl extends Translations$common$labels$en {
+	_Translations$common$labels$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -465,8 +466,8 @@ class _TranslationsCommonLabelsPl extends TranslationsCommonLabelsEn {
 }
 
 // Path: common.notifications
-class _TranslationsCommonNotificationsPl extends TranslationsCommonNotificationsEn {
-	_TranslationsCommonNotificationsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$common$notifications$pl extends Translations$common$notifications$en {
+	_Translations$common$notifications$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -477,8 +478,8 @@ class _TranslationsCommonNotificationsPl extends TranslationsCommonNotifications
 }
 
 // Path: common.clipboard
-class _TranslationsCommonClipboardPl extends TranslationsCommonClipboardEn {
-	_TranslationsCommonClipboardPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$common$clipboard$pl extends Translations$common$clipboard$en {
+	_Translations$common$clipboard$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -489,8 +490,8 @@ class _TranslationsCommonClipboardPl extends TranslationsCommonClipboardEn {
 }
 
 // Path: common.actions
-class _TranslationsCommonActionsPl extends TranslationsCommonActionsEn {
-	_TranslationsCommonActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$common$actions$pl extends Translations$common$actions$en {
+	_Translations$common$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -500,8 +501,8 @@ class _TranslationsCommonActionsPl extends TranslationsCommonActionsEn {
 }
 
 // Path: lightningAddress.labels
-class _TranslationsLightningAddressLabelsPl extends TranslationsLightningAddressLabelsEn {
-	_TranslationsLightningAddressLabelsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$lightningAddress$labels$pl extends Translations$lightningAddress$labels$en {
+	_Translations$lightningAddress$labels$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -513,8 +514,8 @@ class _TranslationsLightningAddressLabelsPl extends TranslationsLightningAddress
 }
 
 // Path: lightningAddress.prompts
-class _TranslationsLightningAddressPromptsPl extends TranslationsLightningAddressPromptsEn {
-	_TranslationsLightningAddressPromptsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$lightningAddress$prompts$pl extends Translations$lightningAddress$prompts$en {
+	_Translations$lightningAddress$prompts$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -533,8 +534,8 @@ class _TranslationsLightningAddressPromptsPl extends TranslationsLightningAddres
 }
 
 // Path: lightningAddress.feedback
-class _TranslationsLightningAddressFeedbackPl extends TranslationsLightningAddressFeedbackEn {
-	_TranslationsLightningAddressFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$lightningAddress$feedback$pl extends Translations$lightningAddress$feedback$en {
+	_Translations$lightningAddress$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -545,8 +546,8 @@ class _TranslationsLightningAddressFeedbackPl extends TranslationsLightningAddre
 }
 
 // Path: lightningAddress.errors
-class _TranslationsLightningAddressErrorsPl extends TranslationsLightningAddressErrorsEn {
-	_TranslationsLightningAddressErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$lightningAddress$errors$pl extends Translations$lightningAddress$errors$en {
+	_Translations$lightningAddress$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -556,8 +557,8 @@ class _TranslationsLightningAddressErrorsPl extends TranslationsLightningAddress
 }
 
 // Path: offers.details
-class _TranslationsOffersDetailsPl extends TranslationsOffersDetailsEn {
-	_TranslationsOffersDetailsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$details$pl extends Translations$offers$details$en {
+	_Translations$offers$details$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -589,13 +590,13 @@ class _TranslationsOffersDetailsPl extends TranslationsOffersDetailsEn {
 	@override String get youllReceive => 'Otrzymasz';
 	@override String get coordinator => 'Koordynator';
 	@override String get categoryLabel => 'Kategoria';
-	@override late final _TranslationsOffersDetailsCategoriesPl categories = _TranslationsOffersDetailsCategoriesPl._(_root);
-	@override late final _TranslationsOffersDetailsConsentsPl consents = _TranslationsOffersDetailsConsentsPl._(_root);
+	@override late final _Translations$offers$details$categories$pl categories = _Translations$offers$details$categories$pl._(_root);
+	@override late final _Translations$offers$details$consents$pl consents = _Translations$offers$details$consents$pl._(_root);
 }
 
 // Path: offers.tooltips
-class _TranslationsOffersTooltipsPl extends TranslationsOffersTooltipsEn {
-	_TranslationsOffersTooltipsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$tooltips$pl extends Translations$offers$tooltips$en {
+	_Translations$offers$tooltips$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -606,8 +607,8 @@ class _TranslationsOffersTooltipsPl extends TranslationsOffersTooltipsEn {
 }
 
 // Path: offers.actions
-class _TranslationsOffersActionsPl extends TranslationsOffersActionsEn {
-	_TranslationsOffersActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$actions$pl extends Translations$offers$actions$en {
+	_Translations$offers$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -620,8 +621,8 @@ class _TranslationsOffersActionsPl extends TranslationsOffersActionsEn {
 }
 
 // Path: offers.status
-class _TranslationsOffersStatusPl extends TranslationsOffersStatusEn {
-	_TranslationsOffersStatusPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$status$pl extends Translations$offers$status$en {
+	_Translations$offers$status$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -648,8 +649,8 @@ class _TranslationsOffersStatusPl extends TranslationsOffersStatusEn {
 }
 
 // Path: offers.statusMessages
-class _TranslationsOffersStatusMessagesPl extends TranslationsOffersStatusMessagesEn {
-	_TranslationsOffersStatusMessagesPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$statusMessages$pl extends Translations$offers$statusMessages$en {
+	_Translations$offers$statusMessages$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -661,8 +662,8 @@ class _TranslationsOffersStatusMessagesPl extends TranslationsOffersStatusMessag
 }
 
 // Path: offers.progress
-class _TranslationsOffersProgressPl extends TranslationsOffersProgressEn {
-	_TranslationsOffersProgressPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$progress$pl extends Translations$offers$progress$en {
+	_Translations$offers$progress$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -673,8 +674,8 @@ class _TranslationsOffersProgressPl extends TranslationsOffersProgressEn {
 }
 
 // Path: offers.errors
-class _TranslationsOffersErrorsPl extends TranslationsOffersErrorsEn {
-	_TranslationsOffersErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$errors$pl extends Translations$offers$errors$en {
+	_Translations$offers$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -702,8 +703,8 @@ class _TranslationsOffersErrorsPl extends TranslationsOffersErrorsEn {
 }
 
 // Path: offers.success
-class _TranslationsOffersSuccessPl extends TranslationsOffersSuccessEn {
-	_TranslationsOffersSuccessPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$success$pl extends Translations$offers$success$en {
+	_Translations$offers$success$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -716,8 +717,8 @@ class _TranslationsOffersSuccessPl extends TranslationsOffersSuccessEn {
 }
 
 // Path: reservations.actions
-class _TranslationsReservationsActionsPl extends TranslationsReservationsActionsEn {
-	_TranslationsReservationsActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$reservations$actions$pl extends Translations$reservations$actions$en {
+	_Translations$reservations$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -726,8 +727,8 @@ class _TranslationsReservationsActionsPl extends TranslationsReservationsActions
 }
 
 // Path: reservations.feedback
-class _TranslationsReservationsFeedbackPl extends TranslationsReservationsFeedbackEn {
-	_TranslationsReservationsFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$reservations$feedback$pl extends Translations$reservations$feedback$en {
+	_Translations$reservations$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -736,8 +737,8 @@ class _TranslationsReservationsFeedbackPl extends TranslationsReservationsFeedba
 }
 
 // Path: reservations.errors
-class _TranslationsReservationsErrorsPl extends TranslationsReservationsErrorsEn {
-	_TranslationsReservationsErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$reservations$errors$pl extends Translations$reservations$errors$en {
+	_Translations$reservations$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -750,8 +751,8 @@ class _TranslationsReservationsErrorsPl extends TranslationsReservationsErrorsEn
 }
 
 // Path: exchange.labels
-class _TranslationsExchangeLabelsPl extends TranslationsExchangeLabelsEn {
-	_TranslationsExchangeLabelsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$exchange$labels$pl extends Translations$exchange$labels$en {
+	_Translations$exchange$labels$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -762,8 +763,8 @@ class _TranslationsExchangeLabelsPl extends TranslationsExchangeLabelsEn {
 }
 
 // Path: exchange.feedback
-class _TranslationsExchangeFeedbackPl extends TranslationsExchangeFeedbackEn {
-	_TranslationsExchangeFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$exchange$feedback$pl extends Translations$exchange$feedback$en {
+	_Translations$exchange$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -772,8 +773,8 @@ class _TranslationsExchangeFeedbackPl extends TranslationsExchangeFeedbackEn {
 }
 
 // Path: exchange.errors
-class _TranslationsExchangeErrorsPl extends TranslationsExchangeErrorsEn {
-	_TranslationsExchangeErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$exchange$errors$pl extends Translations$exchange$errors$en {
+	_Translations$exchange$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -787,8 +788,8 @@ class _TranslationsExchangeErrorsPl extends TranslationsExchangeErrorsEn {
 }
 
 // Path: coordinator.info
-class _TranslationsCoordinatorInfoPl extends TranslationsCoordinatorInfoEn {
-	_TranslationsCoordinatorInfoPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$coordinator$info$pl extends Translations$coordinator$info$en {
+	_Translations$coordinator$info$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -799,8 +800,8 @@ class _TranslationsCoordinatorInfoPl extends TranslationsCoordinatorInfoEn {
 }
 
 // Path: coordinator.selector
-class _TranslationsCoordinatorSelectorPl extends TranslationsCoordinatorSelectorEn {
-	_TranslationsCoordinatorSelectorPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$coordinator$selector$pl extends Translations$coordinator$selector$en {
+	_Translations$coordinator$selector$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -816,8 +817,8 @@ class _TranslationsCoordinatorSelectorPl extends TranslationsCoordinatorSelector
 }
 
 // Path: coordinator.dialog
-class _TranslationsCoordinatorDialogPl extends TranslationsCoordinatorDialogEn {
-	_TranslationsCoordinatorDialogPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$coordinator$dialog$pl extends Translations$coordinator$dialog$en {
+	_Translations$coordinator$dialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -831,8 +832,8 @@ class _TranslationsCoordinatorDialogPl extends TranslationsCoordinatorDialogEn {
 }
 
 // Path: coordinator.management
-class _TranslationsCoordinatorManagementPl extends TranslationsCoordinatorManagementEn {
-	_TranslationsCoordinatorManagementPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$coordinator$management$pl extends Translations$coordinator$management$en {
+	_Translations$coordinator$management$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -862,8 +863,8 @@ class _TranslationsCoordinatorManagementPl extends TranslationsCoordinatorManage
 }
 
 // Path: maker.roleSelection
-class _TranslationsMakerRoleSelectionPl extends TranslationsMakerRoleSelectionEn {
-	_TranslationsMakerRoleSelectionPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$roleSelection$pl extends Translations$maker$roleSelection$en {
+	_Translations$maker$roleSelection$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -872,37 +873,37 @@ class _TranslationsMakerRoleSelectionPl extends TranslationsMakerRoleSelectionEn
 }
 
 // Path: maker.amountForm
-class _TranslationsMakerAmountFormPl extends TranslationsMakerAmountFormEn {
-	_TranslationsMakerAmountFormPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$pl extends Translations$maker$amountForm$en {
+	_Translations$maker$amountForm$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override late final _TranslationsMakerAmountFormProgressPl progress = _TranslationsMakerAmountFormProgressPl._(_root);
-	@override late final _TranslationsMakerAmountFormLabelsPl labels = _TranslationsMakerAmountFormLabelsPl._(_root);
-	@override late final _TranslationsMakerAmountFormActionsPl actions = _TranslationsMakerAmountFormActionsPl._(_root);
-	@override late final _TranslationsMakerAmountFormTooltipsPl tooltips = _TranslationsMakerAmountFormTooltipsPl._(_root);
-	@override late final _TranslationsMakerAmountFormCategoryPl category = _TranslationsMakerAmountFormCategoryPl._(_root);
-	@override late final _TranslationsMakerAmountFormOnboardingPl onboarding = _TranslationsMakerAmountFormOnboardingPl._(_root);
-	@override late final _TranslationsMakerAmountFormErrorsPl errors = _TranslationsMakerAmountFormErrorsPl._(_root);
+	@override late final _Translations$maker$amountForm$progress$pl progress = _Translations$maker$amountForm$progress$pl._(_root);
+	@override late final _Translations$maker$amountForm$labels$pl labels = _Translations$maker$amountForm$labels$pl._(_root);
+	@override late final _Translations$maker$amountForm$actions$pl actions = _Translations$maker$amountForm$actions$pl._(_root);
+	@override late final _Translations$maker$amountForm$tooltips$pl tooltips = _Translations$maker$amountForm$tooltips$pl._(_root);
+	@override late final _Translations$maker$amountForm$category$pl category = _Translations$maker$amountForm$category$pl._(_root);
+	@override late final _Translations$maker$amountForm$onboarding$pl onboarding = _Translations$maker$amountForm$onboarding$pl._(_root);
+	@override late final _Translations$maker$amountForm$errors$pl errors = _Translations$maker$amountForm$errors$pl._(_root);
 }
 
 // Path: maker.payInvoice
-class _TranslationsMakerPayInvoicePl extends TranslationsMakerPayInvoiceEn {
-	_TranslationsMakerPayInvoicePl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$payInvoice$pl extends Translations$maker$payInvoice$en {
+	_Translations$maker$payInvoice$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Zapłać tę fakturę Hold:';
-	@override late final _TranslationsMakerPayInvoiceActionsPl actions = _TranslationsMakerPayInvoiceActionsPl._(_root);
-	@override late final _TranslationsMakerPayInvoiceFeedbackPl feedback = _TranslationsMakerPayInvoiceFeedbackPl._(_root);
-	@override late final _TranslationsMakerPayInvoiceErrorsPl errors = _TranslationsMakerPayInvoiceErrorsPl._(_root);
+	@override late final _Translations$maker$payInvoice$actions$pl actions = _Translations$maker$payInvoice$actions$pl._(_root);
+	@override late final _Translations$maker$payInvoice$feedback$pl feedback = _Translations$maker$payInvoice$feedback$pl._(_root);
+	@override late final _Translations$maker$payInvoice$errors$pl errors = _Translations$maker$payInvoice$errors$pl._(_root);
 }
 
 // Path: maker.waitTaker
-class _TranslationsMakerWaitTakerPl extends TranslationsMakerWaitTakerEn {
-	_TranslationsMakerWaitTakerPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$waitTaker$pl extends Translations$maker$waitTaker$en {
+	_Translations$maker$waitTaker$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -922,8 +923,8 @@ class _TranslationsMakerWaitTakerPl extends TranslationsMakerWaitTakerEn {
 }
 
 // Path: maker.waitForBlik
-class _TranslationsMakerWaitForBlikPl extends TranslationsMakerWaitForBlikEn {
-	_TranslationsMakerWaitForBlikPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$waitForBlik$pl extends Translations$maker$waitForBlik$en {
+	_Translations$maker$waitForBlik$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -935,8 +936,8 @@ class _TranslationsMakerWaitForBlikPl extends TranslationsMakerWaitForBlikEn {
 }
 
 // Path: maker.confirmPayment
-class _TranslationsMakerConfirmPaymentPl extends TranslationsMakerConfirmPaymentEn {
-	_TranslationsMakerConfirmPaymentPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$confirmPayment$pl extends Translations$maker$confirmPayment$en {
+	_Translations$maker$confirmPayment$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -951,16 +952,16 @@ class _TranslationsMakerConfirmPaymentPl extends TranslationsMakerConfirmPayment
 	@override String get expiredWarning => 'Kod BLIK wygasł. Musisz ręcznie potwierdzić status płatności:';
 	@override String get expiredInstruction1 => 'Jeśli płatność BLIK zakończyła się sukcesem i zrealizowałeś zakup, kliknij "Potwierdź udaną płatność" poniżej.';
 	@override String get expiredInstruction2 => 'Jeśli płatność BLIK nie powiodła się lub nie została zrealizowana, kliknij "Nieprawidłowy kod BLIK" poniżej.';
-	@override late final _TranslationsMakerConfirmPaymentActionsPl actions = _TranslationsMakerConfirmPaymentActionsPl._(_root);
-	@override late final _TranslationsMakerConfirmPaymentConfirmDialogPl confirmDialog = _TranslationsMakerConfirmPaymentConfirmDialogPl._(_root);
-	@override late final _TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogPl invalidBlikDisputeDialog = _TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogPl._(_root);
-	@override late final _TranslationsMakerConfirmPaymentFeedbackPl feedback = _TranslationsMakerConfirmPaymentFeedbackPl._(_root);
-	@override late final _TranslationsMakerConfirmPaymentErrorsPl errors = _TranslationsMakerConfirmPaymentErrorsPl._(_root);
+	@override late final _Translations$maker$confirmPayment$actions$pl actions = _Translations$maker$confirmPayment$actions$pl._(_root);
+	@override late final _Translations$maker$confirmPayment$confirmDialog$pl confirmDialog = _Translations$maker$confirmPayment$confirmDialog$pl._(_root);
+	@override late final _Translations$maker$confirmPayment$invalidBlikDisputeDialog$pl invalidBlikDisputeDialog = _Translations$maker$confirmPayment$invalidBlikDisputeDialog$pl._(_root);
+	@override late final _Translations$maker$confirmPayment$feedback$pl feedback = _Translations$maker$confirmPayment$feedback$pl._(_root);
+	@override late final _Translations$maker$confirmPayment$errors$pl errors = _Translations$maker$confirmPayment$errors$pl._(_root);
 }
 
 // Path: maker.invalidBlik
-class _TranslationsMakerInvalidBlikPl extends TranslationsMakerInvalidBlikEn {
-	_TranslationsMakerInvalidBlikPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$invalidBlik$pl extends Translations$maker$invalidBlik$en {
+	_Translations$maker$invalidBlik$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -970,8 +971,8 @@ class _TranslationsMakerInvalidBlikPl extends TranslationsMakerInvalidBlikEn {
 }
 
 // Path: maker.conflict
-class _TranslationsMakerConflictPl extends TranslationsMakerConflictEn {
-	_TranslationsMakerConflictPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$conflict$pl extends Translations$maker$conflict$en {
+	_Translations$maker$conflict$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -980,16 +981,16 @@ class _TranslationsMakerConflictPl extends TranslationsMakerConflictEn {
 	@override String get headline => 'Zgłoszono Konflikt Oferty';
 	@override String get body => 'Oznaczyłeś kod BLIK jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.';
 	@override String get instructions => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.';
-	@override late final _TranslationsMakerConflictActionsPl actions = _TranslationsMakerConflictActionsPl._(_root);
-	@override late final _TranslationsMakerConflictDisputeDialogPl disputeDialog = _TranslationsMakerConflictDisputeDialogPl._(_root);
-	@override late final _TranslationsMakerConflictFeedbackPl feedback = _TranslationsMakerConflictFeedbackPl._(_root);
-	@override late final _TranslationsMakerConflictErrorsPl errors = _TranslationsMakerConflictErrorsPl._(_root);
-	@override late final _TranslationsMakerConflictNostrContactPl nostrContact = _TranslationsMakerConflictNostrContactPl._(_root);
+	@override late final _Translations$maker$conflict$actions$pl actions = _Translations$maker$conflict$actions$pl._(_root);
+	@override late final _Translations$maker$conflict$disputeDialog$pl disputeDialog = _Translations$maker$conflict$disputeDialog$pl._(_root);
+	@override late final _Translations$maker$conflict$feedback$pl feedback = _Translations$maker$conflict$feedback$pl._(_root);
+	@override late final _Translations$maker$conflict$errors$pl errors = _Translations$maker$conflict$errors$pl._(_root);
+	@override late final _Translations$maker$conflict$nostrContact$pl nostrContact = _Translations$maker$conflict$nostrContact$pl._(_root);
 }
 
 // Path: maker.success
-class _TranslationsMakerSuccessPl extends TranslationsMakerSuccessEn {
-	_TranslationsMakerSuccessPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$success$pl extends Translations$maker$success$en {
+	_Translations$maker$success$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1002,8 +1003,8 @@ class _TranslationsMakerSuccessPl extends TranslationsMakerSuccessEn {
 }
 
 // Path: taker.roleSelection
-class _TranslationsTakerRoleSelectionPl extends TranslationsTakerRoleSelectionEn {
-	_TranslationsTakerRoleSelectionPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$roleSelection$pl extends Translations$taker$roleSelection$en {
+	_Translations$taker$roleSelection$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1012,8 +1013,8 @@ class _TranslationsTakerRoleSelectionPl extends TranslationsTakerRoleSelectionEn
 }
 
 // Path: taker.progress
-class _TranslationsTakerProgressPl extends TranslationsTakerProgressEn {
-	_TranslationsTakerProgressPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$progress$pl extends Translations$taker$progress$en {
+	_Translations$taker$progress$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1024,8 +1025,8 @@ class _TranslationsTakerProgressPl extends TranslationsTakerProgressEn {
 }
 
 // Path: taker.submitBlik
-class _TranslationsTakerSubmitBlikPl extends TranslationsTakerSubmitBlikEn {
-	_TranslationsTakerSubmitBlikPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$submitBlik$pl extends Translations$taker$submitBlik$en {
+	_Translations$taker$submitBlik$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1035,16 +1036,16 @@ class _TranslationsTakerSubmitBlikPl extends TranslationsTakerSubmitBlikEn {
 	@override String get instruction => 'Wprowadź BLIK zanim upłynie czas...';
 	@override String timeLimit({required Object seconds}) => 'Wprowadź BLIK w ciągu: ${seconds} s';
 	@override String get timeExpired => 'Czas na wprowadzenie kodu BLIK minął.';
-	@override late final _TranslationsTakerSubmitBlikActionsPl actions = _TranslationsTakerSubmitBlikActionsPl._(_root);
-	@override late final _TranslationsTakerSubmitBlikFeedbackPl feedback = _TranslationsTakerSubmitBlikFeedbackPl._(_root);
-	@override late final _TranslationsTakerSubmitBlikValidationPl validation = _TranslationsTakerSubmitBlikValidationPl._(_root);
-	@override late final _TranslationsTakerSubmitBlikErrorsPl errors = _TranslationsTakerSubmitBlikErrorsPl._(_root);
-	@override late final _TranslationsTakerSubmitBlikDetailsPl details = _TranslationsTakerSubmitBlikDetailsPl._(_root);
+	@override late final _Translations$taker$submitBlik$actions$pl actions = _Translations$taker$submitBlik$actions$pl._(_root);
+	@override late final _Translations$taker$submitBlik$feedback$pl feedback = _Translations$taker$submitBlik$feedback$pl._(_root);
+	@override late final _Translations$taker$submitBlik$validation$pl validation = _Translations$taker$submitBlik$validation$pl._(_root);
+	@override late final _Translations$taker$submitBlik$errors$pl errors = _Translations$taker$submitBlik$errors$pl._(_root);
+	@override late final _Translations$taker$submitBlik$details$pl details = _Translations$taker$submitBlik$details$pl._(_root);
 }
 
 // Path: taker.waitConfirmation
-class _TranslationsTakerWaitConfirmationPl extends TranslationsTakerWaitConfirmationEn {
-	_TranslationsTakerWaitConfirmationPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$waitConfirmation$pl extends Translations$taker$waitConfirmation$en {
+	_Translations$taker$waitConfirmation$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1056,7 +1057,7 @@ class _TranslationsTakerWaitConfirmationPl extends TranslationsTakerWaitConfirma
 	@override String importantNotice({required Object amount, required Object currency}) => 'BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie BLIK tylko na kwotę ${amount} ${currency}';
 	@override String importantBlikAmountConfirmation({required Object amount, required Object currency}) => 'BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność BLIK na kwotę dokładnie ${amount} ${currency}.';
 	@override String get instructions => 'Osoba wystawiająca ofertę musi teraz wpisać kod BLIK w ciągu 2 minut. Następnie musisz zaakceptować kod BLIK w swojej aplikacji bankowej.';
-	@override late final _TranslationsTakerWaitConfirmationCategoryReminderPl categoryReminder = _TranslationsTakerWaitConfirmationCategoryReminderPl._(_root);
+	@override late final _Translations$taker$waitConfirmation$categoryReminder$pl categoryReminder = _Translations$taker$waitConfirmation$categoryReminder$pl._(_root);
 	@override String get waitingForMakerToReceive => 'Czekamy, aż twórca oferty otrzyma Twój kod BLIK...';
 	@override String get makerReceivedBlik => 'Twórca oferty otrzymał Twój kod BLIK';
 	@override String get timerExpiredMessage => 'Minął termin ważności kodu BLIK 2m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.';
@@ -1069,60 +1070,60 @@ class _TranslationsTakerWaitConfirmationPl extends TranslationsTakerWaitConfirma
 	@override String get expiredInstruction1 => 'Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację.';
 	@override String get expiredInstruction2 => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.';
 	@override String get expiredInstruction3 => 'Jeśli płatność BLIK została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.';
-	@override late final _TranslationsTakerWaitConfirmationTakerChargedPl takerCharged = _TranslationsTakerWaitConfirmationTakerChargedPl._(_root);
-	@override late final _TranslationsTakerWaitConfirmationExpiredActionsPl expiredActions = _TranslationsTakerWaitConfirmationExpiredActionsPl._(_root);
-	@override late final _TranslationsTakerWaitConfirmationFeedbackPl feedback = _TranslationsTakerWaitConfirmationFeedbackPl._(_root);
-	@override late final _TranslationsTakerWaitConfirmationErrorsPl errors = _TranslationsTakerWaitConfirmationErrorsPl._(_root);
+	@override late final _Translations$taker$waitConfirmation$takerCharged$pl takerCharged = _Translations$taker$waitConfirmation$takerCharged$pl._(_root);
+	@override late final _Translations$taker$waitConfirmation$expiredActions$pl expiredActions = _Translations$taker$waitConfirmation$expiredActions$pl._(_root);
+	@override late final _Translations$taker$waitConfirmation$feedback$pl feedback = _Translations$taker$waitConfirmation$feedback$pl._(_root);
+	@override late final _Translations$taker$waitConfirmation$errors$pl errors = _Translations$taker$waitConfirmation$errors$pl._(_root);
 }
 
 // Path: taker.paymentProcess
-class _TranslationsTakerPaymentProcessPl extends TranslationsTakerPaymentProcessEn {
-	_TranslationsTakerPaymentProcessPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentProcess$pl extends Translations$taker$paymentProcess$en {
+	_Translations$taker$paymentProcess$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Proces Płatności';
 	@override String get waitingForOfferUpdate => 'Oczekiwanie na aktualizację statusu oferty...';
-	@override late final _TranslationsTakerPaymentProcessStatesPl states = _TranslationsTakerPaymentProcessStatesPl._(_root);
-	@override late final _TranslationsTakerPaymentProcessStepsPl steps = _TranslationsTakerPaymentProcessStepsPl._(_root);
-	@override late final _TranslationsTakerPaymentProcessErrorsPl errors = _TranslationsTakerPaymentProcessErrorsPl._(_root);
-	@override late final _TranslationsTakerPaymentProcessLoadingPl loading = _TranslationsTakerPaymentProcessLoadingPl._(_root);
-	@override late final _TranslationsTakerPaymentProcessActionsPl actions = _TranslationsTakerPaymentProcessActionsPl._(_root);
+	@override late final _Translations$taker$paymentProcess$states$pl states = _Translations$taker$paymentProcess$states$pl._(_root);
+	@override late final _Translations$taker$paymentProcess$steps$pl steps = _Translations$taker$paymentProcess$steps$pl._(_root);
+	@override late final _Translations$taker$paymentProcess$errors$pl errors = _Translations$taker$paymentProcess$errors$pl._(_root);
+	@override late final _Translations$taker$paymentProcess$loading$pl loading = _Translations$taker$paymentProcess$loading$pl._(_root);
+	@override late final _Translations$taker$paymentProcess$actions$pl actions = _Translations$taker$paymentProcess$actions$pl._(_root);
 }
 
 // Path: taker.paymentFailed
-class _TranslationsTakerPaymentFailedPl extends TranslationsTakerPaymentFailedEn {
-	_TranslationsTakerPaymentFailedPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentFailed$pl extends Translations$taker$paymentFailed$en {
+	_Translations$taker$paymentFailed$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Płatność Nie Powiodła Się';
 	@override String instructions({required Object netAmount}) => 'Proszę podać nową fakturę Lightning na kwotę ${netAmount} satoshi';
-	@override late final _TranslationsTakerPaymentFailedFormPl form = _TranslationsTakerPaymentFailedFormPl._(_root);
-	@override late final _TranslationsTakerPaymentFailedActionsPl actions = _TranslationsTakerPaymentFailedActionsPl._(_root);
-	@override late final _TranslationsTakerPaymentFailedErrorsPl errors = _TranslationsTakerPaymentFailedErrorsPl._(_root);
-	@override late final _TranslationsTakerPaymentFailedWalletSectionPl walletSection = _TranslationsTakerPaymentFailedWalletSectionPl._(_root);
-	@override late final _TranslationsTakerPaymentFailedLoadingPl loading = _TranslationsTakerPaymentFailedLoadingPl._(_root);
-	@override late final _TranslationsTakerPaymentFailedSuccessPl success = _TranslationsTakerPaymentFailedSuccessPl._(_root);
+	@override late final _Translations$taker$paymentFailed$form$pl form = _Translations$taker$paymentFailed$form$pl._(_root);
+	@override late final _Translations$taker$paymentFailed$actions$pl actions = _Translations$taker$paymentFailed$actions$pl._(_root);
+	@override late final _Translations$taker$paymentFailed$errors$pl errors = _Translations$taker$paymentFailed$errors$pl._(_root);
+	@override late final _Translations$taker$paymentFailed$walletSection$pl walletSection = _Translations$taker$paymentFailed$walletSection$pl._(_root);
+	@override late final _Translations$taker$paymentFailed$loading$pl loading = _Translations$taker$paymentFailed$loading$pl._(_root);
+	@override late final _Translations$taker$paymentFailed$success$pl success = _Translations$taker$paymentFailed$success$pl._(_root);
 }
 
 // Path: taker.paymentSuccess
-class _TranslationsTakerPaymentSuccessPl extends TranslationsTakerPaymentSuccessEn {
-	_TranslationsTakerPaymentSuccessPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentSuccess$pl extends Translations$taker$paymentSuccess$en {
+	_Translations$taker$paymentSuccess$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Płatność Udana';
 	@override String get message => 'Twoja płatność została przetworzona pomyślnie.';
-	@override late final _TranslationsTakerPaymentSuccessActionsPl actions = _TranslationsTakerPaymentSuccessActionsPl._(_root);
+	@override late final _Translations$taker$paymentSuccess$actions$pl actions = _Translations$taker$paymentSuccess$actions$pl._(_root);
 }
 
 // Path: taker.invalidBlik
-class _TranslationsTakerInvalidBlikPl extends TranslationsTakerInvalidBlikEn {
-	_TranslationsTakerInvalidBlikPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$invalidBlik$pl extends Translations$taker$invalidBlik$en {
+	_Translations$taker$invalidBlik$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1132,14 +1133,14 @@ class _TranslationsTakerInvalidBlikPl extends TranslationsTakerInvalidBlikEn {
 	@override String get explanation => 'Maker oferty wskazał, że podany przez Ciebie kod BLIK był nieprawidłowy lub nie zadziałał.\n\nCo chcesz zrobić?';
 	@override String get werentCharged => 'Jeśli Twoje konto NIE zostało obciążone:';
 	@override String get wereCharged => 'Jeśli Twoje konto zostało obciążone:';
-	@override late final _TranslationsTakerInvalidBlikActionsPl actions = _TranslationsTakerInvalidBlikActionsPl._(_root);
-	@override late final _TranslationsTakerInvalidBlikFeedbackPl feedback = _TranslationsTakerInvalidBlikFeedbackPl._(_root);
-	@override late final _TranslationsTakerInvalidBlikErrorsPl errors = _TranslationsTakerInvalidBlikErrorsPl._(_root);
+	@override late final _Translations$taker$invalidBlik$actions$pl actions = _Translations$taker$invalidBlik$actions$pl._(_root);
+	@override late final _Translations$taker$invalidBlik$feedback$pl feedback = _Translations$taker$invalidBlik$feedback$pl._(_root);
+	@override late final _Translations$taker$invalidBlik$errors$pl errors = _Translations$taker$invalidBlik$errors$pl._(_root);
 }
 
 // Path: taker.conflict
-class _TranslationsTakerConflictPl extends TranslationsTakerConflictEn {
-	_TranslationsTakerConflictPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$conflict$pl extends Translations$taker$conflict$en {
+	_Translations$taker$conflict$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1148,15 +1149,15 @@ class _TranslationsTakerConflictPl extends TranslationsTakerConflictEn {
 	@override String get headline => 'Zgłoszono Konflikt Oferty';
 	@override String get body => 'Maker oznaczył kod BLIK jako nieprawidłowy, ale Ty zgłosiłeś konflikt, wskazując, że uważasz, iż płatność zakończyła się sukcesem.';
 	@override String get instructions => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.';
-	@override late final _TranslationsTakerConflictActionsPl actions = _TranslationsTakerConflictActionsPl._(_root);
-	@override late final _TranslationsTakerConflictFeedbackPl feedback = _TranslationsTakerConflictFeedbackPl._(_root);
-	@override late final _TranslationsTakerConflictErrorsPl errors = _TranslationsTakerConflictErrorsPl._(_root);
-	@override late final _TranslationsTakerConflictNostrContactPl nostrContact = _TranslationsTakerConflictNostrContactPl._(_root);
+	@override late final _Translations$taker$conflict$actions$pl actions = _Translations$taker$conflict$actions$pl._(_root);
+	@override late final _Translations$taker$conflict$feedback$pl feedback = _Translations$taker$conflict$feedback$pl._(_root);
+	@override late final _Translations$taker$conflict$errors$pl errors = _Translations$taker$conflict$errors$pl._(_root);
+	@override late final _Translations$taker$conflict$nostrContact$pl nostrContact = _Translations$taker$conflict$nostrContact$pl._(_root);
 }
 
 // Path: blik.instructions
-class _TranslationsBlikInstructionsPl extends TranslationsBlikInstructionsEn {
-	_TranslationsBlikInstructionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$blik$instructions$pl extends Translations$blik$instructions$en {
+	_Translations$blik$instructions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1165,8 +1166,8 @@ class _TranslationsBlikInstructionsPl extends TranslationsBlikInstructionsEn {
 }
 
 // Path: generateNewKey.buttons
-class _TranslationsGenerateNewKeyButtonsPl extends TranslationsGenerateNewKeyButtonsEn {
-	_TranslationsGenerateNewKeyButtonsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$generateNewKey$buttons$pl extends Translations$generateNewKey$buttons$en {
+	_Translations$generateNewKey$buttons$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1175,8 +1176,8 @@ class _TranslationsGenerateNewKeyButtonsPl extends TranslationsGenerateNewKeyBut
 }
 
 // Path: generateNewKey.errors
-class _TranslationsGenerateNewKeyErrorsPl extends TranslationsGenerateNewKeyErrorsEn {
-	_TranslationsGenerateNewKeyErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$generateNewKey$errors$pl extends Translations$generateNewKey$errors$en {
+	_Translations$generateNewKey$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1186,8 +1187,8 @@ class _TranslationsGenerateNewKeyErrorsPl extends TranslationsGenerateNewKeyErro
 }
 
 // Path: generateNewKey.feedback
-class _TranslationsGenerateNewKeyFeedbackPl extends TranslationsGenerateNewKeyFeedbackEn {
-	_TranslationsGenerateNewKeyFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$generateNewKey$feedback$pl extends Translations$generateNewKey$feedback$en {
+	_Translations$generateNewKey$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1196,8 +1197,8 @@ class _TranslationsGenerateNewKeyFeedbackPl extends TranslationsGenerateNewKeyFe
 }
 
 // Path: generateNewKey.tooltips
-class _TranslationsGenerateNewKeyTooltipsPl extends TranslationsGenerateNewKeyTooltipsEn {
-	_TranslationsGenerateNewKeyTooltipsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$generateNewKey$tooltips$pl extends Translations$generateNewKey$tooltips$en {
+	_Translations$generateNewKey$tooltips$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1206,8 +1207,8 @@ class _TranslationsGenerateNewKeyTooltipsPl extends TranslationsGenerateNewKeyTo
 }
 
 // Path: backup.feedback
-class _TranslationsBackupFeedbackPl extends TranslationsBackupFeedbackEn {
-	_TranslationsBackupFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$backup$feedback$pl extends Translations$backup$feedback$en {
+	_Translations$backup$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1216,8 +1217,8 @@ class _TranslationsBackupFeedbackPl extends TranslationsBackupFeedbackEn {
 }
 
 // Path: backup.tooltips
-class _TranslationsBackupTooltipsPl extends TranslationsBackupTooltipsEn {
-	_TranslationsBackupTooltipsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$backup$tooltips$pl extends Translations$backup$tooltips$en {
+	_Translations$backup$tooltips$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1226,8 +1227,8 @@ class _TranslationsBackupTooltipsPl extends TranslationsBackupTooltipsEn {
 }
 
 // Path: restore.labels
-class _TranslationsRestoreLabelsPl extends TranslationsRestoreLabelsEn {
-	_TranslationsRestoreLabelsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$restore$labels$pl extends Translations$restore$labels$en {
+	_Translations$restore$labels$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1236,8 +1237,8 @@ class _TranslationsRestoreLabelsPl extends TranslationsRestoreLabelsEn {
 }
 
 // Path: restore.buttons
-class _TranslationsRestoreButtonsPl extends TranslationsRestoreButtonsEn {
-	_TranslationsRestoreButtonsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$restore$buttons$pl extends Translations$restore$buttons$en {
+	_Translations$restore$buttons$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1246,8 +1247,8 @@ class _TranslationsRestoreButtonsPl extends TranslationsRestoreButtonsEn {
 }
 
 // Path: restore.errors
-class _TranslationsRestoreErrorsPl extends TranslationsRestoreErrorsEn {
-	_TranslationsRestoreErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$restore$errors$pl extends Translations$restore$errors$en {
+	_Translations$restore$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1257,8 +1258,8 @@ class _TranslationsRestoreErrorsPl extends TranslationsRestoreErrorsEn {
 }
 
 // Path: restore.feedback
-class _TranslationsRestoreFeedbackPl extends TranslationsRestoreFeedbackEn {
-	_TranslationsRestoreFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$restore$feedback$pl extends Translations$restore$feedback$en {
+	_Translations$restore$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1267,8 +1268,8 @@ class _TranslationsRestoreFeedbackPl extends TranslationsRestoreFeedbackEn {
 }
 
 // Path: restore.tooltips
-class _TranslationsRestoreTooltipsPl extends TranslationsRestoreTooltipsEn {
-	_TranslationsRestoreTooltipsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$restore$tooltips$pl extends Translations$restore$tooltips$en {
+	_Translations$restore$tooltips$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1277,8 +1278,8 @@ class _TranslationsRestoreTooltipsPl extends TranslationsRestoreTooltipsEn {
 }
 
 // Path: home.notifications
-class _TranslationsHomeNotificationsPl extends TranslationsHomeNotificationsEn {
-	_TranslationsHomeNotificationsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$home$notifications$pl extends Translations$home$notifications$en {
+	_Translations$home$notifications$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1291,8 +1292,8 @@ class _TranslationsHomeNotificationsPl extends TranslationsHomeNotificationsEn {
 }
 
 // Path: home.statistics
-class _TranslationsHomeStatisticsPl extends TranslationsHomeStatisticsEn {
-	_TranslationsHomeStatisticsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$home$statistics$pl extends Translations$home$statistics$en {
+	_Translations$home$statistics$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1301,12 +1302,12 @@ class _TranslationsHomeStatisticsPl extends TranslationsHomeStatisticsEn {
 	@override String lifetimeCompact({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
 	@override String last7DaysCompact({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
 	@override String last7DaysSingleLine({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}';
-	@override late final _TranslationsHomeStatisticsErrorsPl errors = _TranslationsHomeStatisticsErrorsPl._(_root);
+	@override late final _Translations$home$statistics$errors$pl errors = _Translations$home$statistics$errors$pl._(_root);
 }
 
 // Path: system.errors
-class _TranslationsSystemErrorsPl extends TranslationsSystemErrorsEn {
-	_TranslationsSystemErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$system$errors$pl extends Translations$system$errors$en {
+	_Translations$system$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1320,8 +1321,8 @@ class _TranslationsSystemErrorsPl extends TranslationsSystemErrorsEn {
 }
 
 // Path: system.blik
-class _TranslationsSystemBlikPl extends TranslationsSystemBlikEn {
-	_TranslationsSystemBlikPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$system$blik$pl extends Translations$system$blik$en {
+	_Translations$system$blik$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1330,8 +1331,8 @@ class _TranslationsSystemBlikPl extends TranslationsSystemBlikEn {
 }
 
 // Path: myOffers.filter
-class _TranslationsMyOffersFilterPl extends TranslationsMyOffersFilterEn {
-	_TranslationsMyOffersFilterPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$myOffers$filter$pl extends Translations$myOffers$filter$en {
+	_Translations$myOffers$filter$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1343,8 +1344,8 @@ class _TranslationsMyOffersFilterPl extends TranslationsMyOffersFilterEn {
 }
 
 // Path: myOffers.details
-class _TranslationsMyOffersDetailsPl extends TranslationsMyOffersDetailsEn {
-	_TranslationsMyOffersDetailsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$myOffers$details$pl extends Translations$myOffers$details$en {
+	_Translations$myOffers$details$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1374,8 +1375,8 @@ class _TranslationsMyOffersDetailsPl extends TranslationsMyOffersDetailsEn {
 }
 
 // Path: landing.actions
-class _TranslationsLandingActionsPl extends TranslationsLandingActionsEn {
-	_TranslationsLandingActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$landing$actions$pl extends Translations$landing$actions$en {
+	_Translations$landing$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1388,8 +1389,8 @@ class _TranslationsLandingActionsPl extends TranslationsLandingActionsEn {
 }
 
 // Path: notificationSettings.newOfferAlerts
-class _TranslationsNotificationSettingsNewOfferAlertsPl extends TranslationsNotificationSettingsNewOfferAlertsEn {
-	_TranslationsNotificationSettingsNewOfferAlertsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$notificationSettings$newOfferAlerts$pl extends Translations$notificationSettings$newOfferAlerts$en {
+	_Translations$notificationSettings$newOfferAlerts$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1399,8 +1400,8 @@ class _TranslationsNotificationSettingsNewOfferAlertsPl extends TranslationsNoti
 }
 
 // Path: wallet.missingReceiving
-class _TranslationsWalletMissingReceivingPl extends TranslationsWalletMissingReceivingEn {
-	_TranslationsWalletMissingReceivingPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$wallet$missingReceiving$pl extends Translations$wallet$missingReceiving$en {
+	_Translations$wallet$missingReceiving$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1411,8 +1412,8 @@ class _TranslationsWalletMissingReceivingPl extends TranslationsWalletMissingRec
 }
 
 // Path: nwc.labels
-class _TranslationsNwcLabelsPl extends TranslationsNwcLabelsEn {
-	_TranslationsNwcLabelsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$nwc$labels$pl extends Translations$nwc$labels$en {
+	_Translations$nwc$labels$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1434,8 +1435,8 @@ class _TranslationsNwcLabelsPl extends TranslationsNwcLabelsEn {
 }
 
 // Path: nwc.prompts
-class _TranslationsNwcPromptsPl extends TranslationsNwcPromptsEn {
-	_TranslationsNwcPromptsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$nwc$prompts$pl extends Translations$nwc$prompts$en {
+	_Translations$nwc$prompts$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1451,8 +1452,8 @@ class _TranslationsNwcPromptsPl extends TranslationsNwcPromptsEn {
 }
 
 // Path: nwc.actions
-class _TranslationsNwcActionsPl extends TranslationsNwcActionsEn {
-	_TranslationsNwcActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$nwc$actions$pl extends Translations$nwc$actions$en {
+	_Translations$nwc$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1462,8 +1463,8 @@ class _TranslationsNwcActionsPl extends TranslationsNwcActionsEn {
 }
 
 // Path: nwc.feedback
-class _TranslationsNwcFeedbackPl extends TranslationsNwcFeedbackEn {
-	_TranslationsNwcFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$nwc$feedback$pl extends Translations$nwc$feedback$en {
+	_Translations$nwc$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1475,8 +1476,8 @@ class _TranslationsNwcFeedbackPl extends TranslationsNwcFeedbackEn {
 }
 
 // Path: nwc.errors
-class _TranslationsNwcErrorsPl extends TranslationsNwcErrorsEn {
-	_TranslationsNwcErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$nwc$errors$pl extends Translations$nwc$errors$en {
+	_Translations$nwc$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1490,8 +1491,8 @@ class _TranslationsNwcErrorsPl extends TranslationsNwcErrorsEn {
 }
 
 // Path: nwc.time
-class _TranslationsNwcTimePl extends TranslationsNwcTimeEn {
-	_TranslationsNwcTimePl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$nwc$time$pl extends Translations$nwc$time$en {
+	_Translations$nwc$time$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1503,8 +1504,8 @@ class _TranslationsNwcTimePl extends TranslationsNwcTimeEn {
 }
 
 // Path: relays.status
-class _TranslationsRelaysStatusPl extends TranslationsRelaysStatusEn {
-	_TranslationsRelaysStatusPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$relays$status$pl extends Translations$relays$status$en {
+	_Translations$relays$status$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1516,8 +1517,8 @@ class _TranslationsRelaysStatusPl extends TranslationsRelaysStatusEn {
 }
 
 // Path: relays.popup
-class _TranslationsRelaysPopupPl extends TranslationsRelaysPopupEn {
-	_TranslationsRelaysPopupPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$relays$popup$pl extends Translations$relays$popup$en {
+	_Translations$relays$popup$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1527,8 +1528,8 @@ class _TranslationsRelaysPopupPl extends TranslationsRelaysPopupEn {
 }
 
 // Path: offerNotifications.activeService
-class _TranslationsOfferNotificationsActiveServicePl extends TranslationsOfferNotificationsActiveServiceEn {
-	_TranslationsOfferNotificationsActiveServicePl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$activeService$pl extends Translations$offerNotifications$activeService$en {
+	_Translations$offerNotifications$activeService$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1538,8 +1539,8 @@ class _TranslationsOfferNotificationsActiveServicePl extends TranslationsOfferNo
 }
 
 // Path: offerNotifications.funded
-class _TranslationsOfferNotificationsFundedPl extends TranslationsOfferNotificationsFundedEn {
-	_TranslationsOfferNotificationsFundedPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$funded$pl extends Translations$offerNotifications$funded$en {
+	_Translations$offerNotifications$funded$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1549,8 +1550,8 @@ class _TranslationsOfferNotificationsFundedPl extends TranslationsOfferNotificat
 }
 
 // Path: offerNotifications.reserved
-class _TranslationsOfferNotificationsReservedPl extends TranslationsOfferNotificationsReservedEn {
-	_TranslationsOfferNotificationsReservedPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$reserved$pl extends Translations$offerNotifications$reserved$en {
+	_Translations$offerNotifications$reserved$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1560,8 +1561,8 @@ class _TranslationsOfferNotificationsReservedPl extends TranslationsOfferNotific
 }
 
 // Path: offerNotifications.blikReady
-class _TranslationsOfferNotificationsBlikReadyPl extends TranslationsOfferNotificationsBlikReadyEn {
-	_TranslationsOfferNotificationsBlikReadyPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$blikReady$pl extends Translations$offerNotifications$blikReady$en {
+	_Translations$offerNotifications$blikReady$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1571,8 +1572,8 @@ class _TranslationsOfferNotificationsBlikReadyPl extends TranslationsOfferNotifi
 }
 
 // Path: offerNotifications.newOffer
-class _TranslationsOfferNotificationsNewOfferPl extends TranslationsOfferNotificationsNewOfferEn {
-	_TranslationsOfferNotificationsNewOfferPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$newOffer$pl extends Translations$offerNotifications$newOffer$en {
+	_Translations$offerNotifications$newOffer$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1582,8 +1583,8 @@ class _TranslationsOfferNotificationsNewOfferPl extends TranslationsOfferNotific
 }
 
 // Path: offerNotifications.categories
-class _TranslationsOfferNotificationsCategoriesPl extends TranslationsOfferNotificationsCategoriesEn {
-	_TranslationsOfferNotificationsCategoriesPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$categories$pl extends Translations$offerNotifications$categories$en {
+	_Translations$offerNotifications$categories$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1594,8 +1595,8 @@ class _TranslationsOfferNotificationsCategoriesPl extends TranslationsOfferNotif
 }
 
 // Path: offerNotifications.blikPendingReminder
-class _TranslationsOfferNotificationsBlikPendingReminderPl extends TranslationsOfferNotificationsBlikPendingReminderEn {
-	_TranslationsOfferNotificationsBlikPendingReminderPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$blikPendingReminder$pl extends Translations$offerNotifications$blikPendingReminder$en {
+	_Translations$offerNotifications$blikPendingReminder$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1605,8 +1606,8 @@ class _TranslationsOfferNotificationsBlikPendingReminderPl extends TranslationsO
 }
 
 // Path: offerNotifications.takerCharged
-class _TranslationsOfferNotificationsTakerChargedPl extends TranslationsOfferNotificationsTakerChargedEn {
-	_TranslationsOfferNotificationsTakerChargedPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$takerCharged$pl extends Translations$offerNotifications$takerCharged$en {
+	_Translations$offerNotifications$takerCharged$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1616,8 +1617,8 @@ class _TranslationsOfferNotificationsTakerChargedPl extends TranslationsOfferNot
 }
 
 // Path: offerNotifications.invalidBlik
-class _TranslationsOfferNotificationsInvalidBlikPl extends TranslationsOfferNotificationsInvalidBlikEn {
-	_TranslationsOfferNotificationsInvalidBlikPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$invalidBlik$pl extends Translations$offerNotifications$invalidBlik$en {
+	_Translations$offerNotifications$invalidBlik$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1627,8 +1628,8 @@ class _TranslationsOfferNotificationsInvalidBlikPl extends TranslationsOfferNoti
 }
 
 // Path: offerNotifications.takerPaid
-class _TranslationsOfferNotificationsTakerPaidPl extends TranslationsOfferNotificationsTakerPaidEn {
-	_TranslationsOfferNotificationsTakerPaidPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offerNotifications$takerPaid$pl extends Translations$offerNotifications$takerPaid$en {
+	_Translations$offerNotifications$takerPaid$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1638,8 +1639,8 @@ class _TranslationsOfferNotificationsTakerPaidPl extends TranslationsOfferNotifi
 }
 
 // Path: offers.details.categories
-class _TranslationsOffersDetailsCategoriesPl extends TranslationsOffersDetailsCategoriesEn {
-	_TranslationsOffersDetailsCategoriesPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$details$categories$pl extends Translations$offers$details$categories$en {
+	_Translations$offers$details$categories$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1650,8 +1651,8 @@ class _TranslationsOffersDetailsCategoriesPl extends TranslationsOffersDetailsCa
 }
 
 // Path: offers.details.consents
-class _TranslationsOffersDetailsConsentsPl extends TranslationsOffersDetailsConsentsEn {
-	_TranslationsOffersDetailsConsentsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$offers$details$consents$pl extends Translations$offers$details$consents$en {
+	_Translations$offers$details$consents$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1661,8 +1662,8 @@ class _TranslationsOffersDetailsConsentsPl extends TranslationsOffersDetailsCons
 }
 
 // Path: maker.amountForm.progress
-class _TranslationsMakerAmountFormProgressPl extends TranslationsMakerAmountFormProgressEn {
-	_TranslationsMakerAmountFormProgressPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$progress$pl extends Translations$maker$amountForm$progress$en {
+	_Translations$maker$amountForm$progress$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1673,8 +1674,8 @@ class _TranslationsMakerAmountFormProgressPl extends TranslationsMakerAmountForm
 }
 
 // Path: maker.amountForm.labels
-class _TranslationsMakerAmountFormLabelsPl extends TranslationsMakerAmountFormLabelsEn {
-	_TranslationsMakerAmountFormLabelsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$labels$pl extends Translations$maker$amountForm$labels$en {
+	_Translations$maker$amountForm$labels$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1689,8 +1690,8 @@ class _TranslationsMakerAmountFormLabelsPl extends TranslationsMakerAmountFormLa
 }
 
 // Path: maker.amountForm.actions
-class _TranslationsMakerAmountFormActionsPl extends TranslationsMakerAmountFormActionsEn {
-	_TranslationsMakerAmountFormActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$actions$pl extends Translations$maker$amountForm$actions$en {
+	_Translations$maker$amountForm$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1699,8 +1700,8 @@ class _TranslationsMakerAmountFormActionsPl extends TranslationsMakerAmountFormA
 }
 
 // Path: maker.amountForm.tooltips
-class _TranslationsMakerAmountFormTooltipsPl extends TranslationsMakerAmountFormTooltipsEn {
-	_TranslationsMakerAmountFormTooltipsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$tooltips$pl extends Translations$maker$amountForm$tooltips$en {
+	_Translations$maker$amountForm$tooltips$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1710,15 +1711,15 @@ class _TranslationsMakerAmountFormTooltipsPl extends TranslationsMakerAmountForm
 }
 
 // Path: maker.amountForm.category
-class _TranslationsMakerAmountFormCategoryPl extends TranslationsMakerAmountFormCategoryEn {
-	_TranslationsMakerAmountFormCategoryPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$category$pl extends Translations$maker$amountForm$category$en {
+	_Translations$maker$amountForm$category$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
 	@override String get label => 'Kategoria oferty';
-	@override late final _TranslationsMakerAmountFormCategoryOptionsPl options = _TranslationsMakerAmountFormCategoryOptionsPl._(_root);
-	@override late final _TranslationsMakerAmountFormCategoryShortLabelsPl shortLabels = _TranslationsMakerAmountFormCategoryShortLabelsPl._(_root);
+	@override late final _Translations$maker$amountForm$category$options$pl options = _Translations$maker$amountForm$category$options$pl._(_root);
+	@override late final _Translations$maker$amountForm$category$shortLabels$pl shortLabels = _Translations$maker$amountForm$category$shortLabels$pl._(_root);
 	@override String get atmHint => 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
 	@override String get physicalShopHint => 'Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.';
 	@override String get ecommerceWarningTitle => 'Ryzyko zwrotu od sprzedawcy online';
@@ -1728,8 +1729,8 @@ class _TranslationsMakerAmountFormCategoryPl extends TranslationsMakerAmountForm
 }
 
 // Path: maker.amountForm.onboarding
-class _TranslationsMakerAmountFormOnboardingPl extends TranslationsMakerAmountFormOnboardingEn {
-	_TranslationsMakerAmountFormOnboardingPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$onboarding$pl extends Translations$maker$amountForm$onboarding$en {
+	_Translations$maker$amountForm$onboarding$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1745,8 +1746,8 @@ class _TranslationsMakerAmountFormOnboardingPl extends TranslationsMakerAmountFo
 }
 
 // Path: maker.amountForm.errors
-class _TranslationsMakerAmountFormErrorsPl extends TranslationsMakerAmountFormErrorsEn {
-	_TranslationsMakerAmountFormErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$errors$pl extends Translations$maker$amountForm$errors$en {
+	_Translations$maker$amountForm$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1759,8 +1760,8 @@ class _TranslationsMakerAmountFormErrorsPl extends TranslationsMakerAmountFormEr
 }
 
 // Path: maker.payInvoice.actions
-class _TranslationsMakerPayInvoiceActionsPl extends TranslationsMakerPayInvoiceActionsEn {
-	_TranslationsMakerPayInvoiceActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$payInvoice$actions$pl extends Translations$maker$payInvoice$actions$en {
+	_Translations$maker$payInvoice$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1773,8 +1774,8 @@ class _TranslationsMakerPayInvoiceActionsPl extends TranslationsMakerPayInvoiceA
 }
 
 // Path: maker.payInvoice.feedback
-class _TranslationsMakerPayInvoiceFeedbackPl extends TranslationsMakerPayInvoiceFeedbackEn {
-	_TranslationsMakerPayInvoiceFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$payInvoice$feedback$pl extends Translations$maker$payInvoice$feedback$en {
+	_Translations$maker$payInvoice$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1786,8 +1787,8 @@ class _TranslationsMakerPayInvoiceFeedbackPl extends TranslationsMakerPayInvoice
 }
 
 // Path: maker.payInvoice.errors
-class _TranslationsMakerPayInvoiceErrorsPl extends TranslationsMakerPayInvoiceErrorsEn {
-	_TranslationsMakerPayInvoiceErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$payInvoice$errors$pl extends Translations$maker$payInvoice$errors$en {
+	_Translations$maker$payInvoice$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1804,8 +1805,8 @@ class _TranslationsMakerPayInvoiceErrorsPl extends TranslationsMakerPayInvoiceEr
 }
 
 // Path: maker.confirmPayment.actions
-class _TranslationsMakerConfirmPaymentActionsPl extends TranslationsMakerConfirmPaymentActionsEn {
-	_TranslationsMakerConfirmPaymentActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$confirmPayment$actions$pl extends Translations$maker$confirmPayment$actions$en {
+	_Translations$maker$confirmPayment$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1816,8 +1817,8 @@ class _TranslationsMakerConfirmPaymentActionsPl extends TranslationsMakerConfirm
 }
 
 // Path: maker.confirmPayment.confirmDialog
-class _TranslationsMakerConfirmPaymentConfirmDialogPl extends TranslationsMakerConfirmPaymentConfirmDialogEn {
-	_TranslationsMakerConfirmPaymentConfirmDialogPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$confirmPayment$confirmDialog$pl extends Translations$maker$confirmPayment$confirmDialog$en {
+	_Translations$maker$confirmPayment$confirmDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1829,8 +1830,8 @@ class _TranslationsMakerConfirmPaymentConfirmDialogPl extends TranslationsMakerC
 }
 
 // Path: maker.confirmPayment.invalidBlikDisputeDialog
-class _TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogPl extends TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogEn {
-	_TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$confirmPayment$invalidBlikDisputeDialog$pl extends Translations$maker$confirmPayment$invalidBlikDisputeDialog$en {
+	_Translations$maker$confirmPayment$invalidBlikDisputeDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1842,8 +1843,8 @@ class _TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogPl extends Transla
 }
 
 // Path: maker.confirmPayment.feedback
-class _TranslationsMakerConfirmPaymentFeedbackPl extends TranslationsMakerConfirmPaymentFeedbackEn {
-	_TranslationsMakerConfirmPaymentFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$confirmPayment$feedback$pl extends Translations$maker$confirmPayment$feedback$en {
+	_Translations$maker$confirmPayment$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1854,8 +1855,8 @@ class _TranslationsMakerConfirmPaymentFeedbackPl extends TranslationsMakerConfir
 }
 
 // Path: maker.confirmPayment.errors
-class _TranslationsMakerConfirmPaymentErrorsPl extends TranslationsMakerConfirmPaymentErrorsEn {
-	_TranslationsMakerConfirmPaymentErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$confirmPayment$errors$pl extends Translations$maker$confirmPayment$errors$en {
+	_Translations$maker$confirmPayment$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1872,8 +1873,8 @@ class _TranslationsMakerConfirmPaymentErrorsPl extends TranslationsMakerConfirmP
 }
 
 // Path: maker.conflict.actions
-class _TranslationsMakerConflictActionsPl extends TranslationsMakerConflictActionsEn {
-	_TranslationsMakerConflictActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$conflict$actions$pl extends Translations$maker$conflict$actions$en {
+	_Translations$maker$conflict$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1885,8 +1886,8 @@ class _TranslationsMakerConflictActionsPl extends TranslationsMakerConflictActio
 }
 
 // Path: maker.conflict.disputeDialog
-class _TranslationsMakerConflictDisputeDialogPl extends TranslationsMakerConflictDisputeDialogEn {
-	_TranslationsMakerConflictDisputeDialogPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$conflict$disputeDialog$pl extends Translations$maker$conflict$disputeDialog$en {
+	_Translations$maker$conflict$disputeDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1894,12 +1895,12 @@ class _TranslationsMakerConflictDisputeDialogPl extends TranslationsMakerConflic
 	@override String get title => 'Otworzyć spór?';
 	@override String get content => 'Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) do portfela według własnego wyboru.';
 	@override String get contentDetailed => 'Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona do portfela według własnego wyboru (pomniejszona o opłaty). Upewnij się, że masz portfel gotowy do odbioru.';
-	@override late final _TranslationsMakerConflictDisputeDialogActionsPl actions = _TranslationsMakerConflictDisputeDialogActionsPl._(_root);
+	@override late final _Translations$maker$conflict$disputeDialog$actions$pl actions = _Translations$maker$conflict$disputeDialog$actions$pl._(_root);
 }
 
 // Path: maker.conflict.feedback
-class _TranslationsMakerConflictFeedbackPl extends TranslationsMakerConflictFeedbackEn {
-	_TranslationsMakerConflictFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$conflict$feedback$pl extends Translations$maker$conflict$feedback$en {
+	_Translations$maker$conflict$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1908,8 +1909,8 @@ class _TranslationsMakerConflictFeedbackPl extends TranslationsMakerConflictFeed
 }
 
 // Path: maker.conflict.errors
-class _TranslationsMakerConflictErrorsPl extends TranslationsMakerConflictErrorsEn {
-	_TranslationsMakerConflictErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$conflict$errors$pl extends Translations$maker$conflict$errors$en {
+	_Translations$maker$conflict$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1918,8 +1919,8 @@ class _TranslationsMakerConflictErrorsPl extends TranslationsMakerConflictErrors
 }
 
 // Path: maker.conflict.nostrContact
-class _TranslationsMakerConflictNostrContactPl extends TranslationsMakerConflictNostrContactEn {
-	_TranslationsMakerConflictNostrContactPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$conflict$nostrContact$pl extends Translations$maker$conflict$nostrContact$en {
+	_Translations$maker$conflict$nostrContact$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1934,8 +1935,8 @@ class _TranslationsMakerConflictNostrContactPl extends TranslationsMakerConflict
 }
 
 // Path: taker.submitBlik.actions
-class _TranslationsTakerSubmitBlikActionsPl extends TranslationsTakerSubmitBlikActionsEn {
-	_TranslationsTakerSubmitBlikActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$submitBlik$actions$pl extends Translations$taker$submitBlik$actions$en {
+	_Translations$taker$submitBlik$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1944,8 +1945,8 @@ class _TranslationsTakerSubmitBlikActionsPl extends TranslationsTakerSubmitBlikA
 }
 
 // Path: taker.submitBlik.feedback
-class _TranslationsTakerSubmitBlikFeedbackPl extends TranslationsTakerSubmitBlikFeedbackEn {
-	_TranslationsTakerSubmitBlikFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$submitBlik$feedback$pl extends Translations$taker$submitBlik$feedback$en {
+	_Translations$taker$submitBlik$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1954,8 +1955,8 @@ class _TranslationsTakerSubmitBlikFeedbackPl extends TranslationsTakerSubmitBlik
 }
 
 // Path: taker.submitBlik.validation
-class _TranslationsTakerSubmitBlikValidationPl extends TranslationsTakerSubmitBlikValidationEn {
-	_TranslationsTakerSubmitBlikValidationPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$submitBlik$validation$pl extends Translations$taker$submitBlik$validation$en {
+	_Translations$taker$submitBlik$validation$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1964,8 +1965,8 @@ class _TranslationsTakerSubmitBlikValidationPl extends TranslationsTakerSubmitBl
 }
 
 // Path: taker.submitBlik.errors
-class _TranslationsTakerSubmitBlikErrorsPl extends TranslationsTakerSubmitBlikErrorsEn {
-	_TranslationsTakerSubmitBlikErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$submitBlik$errors$pl extends Translations$taker$submitBlik$errors$en {
+	_Translations$taker$submitBlik$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1979,8 +1980,8 @@ class _TranslationsTakerSubmitBlikErrorsPl extends TranslationsTakerSubmitBlikEr
 }
 
 // Path: taker.submitBlik.details
-class _TranslationsTakerSubmitBlikDetailsPl extends TranslationsTakerSubmitBlikDetailsEn {
-	_TranslationsTakerSubmitBlikDetailsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$submitBlik$details$pl extends Translations$taker$submitBlik$details$en {
+	_Translations$taker$submitBlik$details$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -1993,8 +1994,8 @@ class _TranslationsTakerSubmitBlikDetailsPl extends TranslationsTakerSubmitBlikD
 }
 
 // Path: taker.waitConfirmation.categoryReminder
-class _TranslationsTakerWaitConfirmationCategoryReminderPl extends TranslationsTakerWaitConfirmationCategoryReminderEn {
-	_TranslationsTakerWaitConfirmationCategoryReminderPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$waitConfirmation$categoryReminder$pl extends Translations$taker$waitConfirmation$categoryReminder$en {
+	_Translations$taker$waitConfirmation$categoryReminder$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2004,8 +2005,8 @@ class _TranslationsTakerWaitConfirmationCategoryReminderPl extends TranslationsT
 }
 
 // Path: taker.waitConfirmation.takerCharged
-class _TranslationsTakerWaitConfirmationTakerChargedPl extends TranslationsTakerWaitConfirmationTakerChargedEn {
-	_TranslationsTakerWaitConfirmationTakerChargedPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$waitConfirmation$takerCharged$pl extends Translations$taker$waitConfirmation$takerCharged$en {
+	_Translations$taker$waitConfirmation$takerCharged$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2015,8 +2016,8 @@ class _TranslationsTakerWaitConfirmationTakerChargedPl extends TranslationsTaker
 }
 
 // Path: taker.waitConfirmation.expiredActions
-class _TranslationsTakerWaitConfirmationExpiredActionsPl extends TranslationsTakerWaitConfirmationExpiredActionsEn {
-	_TranslationsTakerWaitConfirmationExpiredActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$waitConfirmation$expiredActions$pl extends Translations$taker$waitConfirmation$expiredActions$en {
+	_Translations$taker$waitConfirmation$expiredActions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2027,8 +2028,8 @@ class _TranslationsTakerWaitConfirmationExpiredActionsPl extends TranslationsTak
 }
 
 // Path: taker.waitConfirmation.feedback
-class _TranslationsTakerWaitConfirmationFeedbackPl extends TranslationsTakerWaitConfirmationFeedbackEn {
-	_TranslationsTakerWaitConfirmationFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$waitConfirmation$feedback$pl extends Translations$taker$waitConfirmation$feedback$en {
+	_Translations$taker$waitConfirmation$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2039,8 +2040,8 @@ class _TranslationsTakerWaitConfirmationFeedbackPl extends TranslationsTakerWait
 }
 
 // Path: taker.waitConfirmation.errors
-class _TranslationsTakerWaitConfirmationErrorsPl extends TranslationsTakerWaitConfirmationErrorsEn {
-	_TranslationsTakerWaitConfirmationErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$waitConfirmation$errors$pl extends Translations$taker$waitConfirmation$errors$en {
+	_Translations$taker$waitConfirmation$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2050,8 +2051,8 @@ class _TranslationsTakerWaitConfirmationErrorsPl extends TranslationsTakerWaitCo
 }
 
 // Path: taker.paymentProcess.states
-class _TranslationsTakerPaymentProcessStatesPl extends TranslationsTakerPaymentProcessStatesEn {
-	_TranslationsTakerPaymentProcessStatesPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentProcess$states$pl extends Translations$taker$paymentProcess$states$en {
+	_Translations$taker$paymentProcess$states$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2064,8 +2065,8 @@ class _TranslationsTakerPaymentProcessStatesPl extends TranslationsTakerPaymentP
 }
 
 // Path: taker.paymentProcess.steps
-class _TranslationsTakerPaymentProcessStepsPl extends TranslationsTakerPaymentProcessStepsEn {
-	_TranslationsTakerPaymentProcessStepsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentProcess$steps$pl extends Translations$taker$paymentProcess$steps$en {
+	_Translations$taker$paymentProcess$steps$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2077,8 +2078,8 @@ class _TranslationsTakerPaymentProcessStepsPl extends TranslationsTakerPaymentPr
 }
 
 // Path: taker.paymentProcess.errors
-class _TranslationsTakerPaymentProcessErrorsPl extends TranslationsTakerPaymentProcessErrorsEn {
-	_TranslationsTakerPaymentProcessErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentProcess$errors$pl extends Translations$taker$paymentProcess$errors$en {
+	_Translations$taker$paymentProcess$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2096,8 +2097,8 @@ class _TranslationsTakerPaymentProcessErrorsPl extends TranslationsTakerPaymentP
 }
 
 // Path: taker.paymentProcess.loading
-class _TranslationsTakerPaymentProcessLoadingPl extends TranslationsTakerPaymentProcessLoadingEn {
-	_TranslationsTakerPaymentProcessLoadingPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentProcess$loading$pl extends Translations$taker$paymentProcess$loading$en {
+	_Translations$taker$paymentProcess$loading$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2106,8 +2107,8 @@ class _TranslationsTakerPaymentProcessLoadingPl extends TranslationsTakerPayment
 }
 
 // Path: taker.paymentProcess.actions
-class _TranslationsTakerPaymentProcessActionsPl extends TranslationsTakerPaymentProcessActionsEn {
-	_TranslationsTakerPaymentProcessActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentProcess$actions$pl extends Translations$taker$paymentProcess$actions$en {
+	_Translations$taker$paymentProcess$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2116,8 +2117,8 @@ class _TranslationsTakerPaymentProcessActionsPl extends TranslationsTakerPayment
 }
 
 // Path: taker.paymentFailed.form
-class _TranslationsTakerPaymentFailedFormPl extends TranslationsTakerPaymentFailedFormEn {
-	_TranslationsTakerPaymentFailedFormPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentFailed$form$pl extends Translations$taker$paymentFailed$form$en {
+	_Translations$taker$paymentFailed$form$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2127,8 +2128,8 @@ class _TranslationsTakerPaymentFailedFormPl extends TranslationsTakerPaymentFail
 }
 
 // Path: taker.paymentFailed.actions
-class _TranslationsTakerPaymentFailedActionsPl extends TranslationsTakerPaymentFailedActionsEn {
-	_TranslationsTakerPaymentFailedActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentFailed$actions$pl extends Translations$taker$paymentFailed$actions$en {
+	_Translations$taker$paymentFailed$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2137,8 +2138,8 @@ class _TranslationsTakerPaymentFailedActionsPl extends TranslationsTakerPaymentF
 }
 
 // Path: taker.paymentFailed.errors
-class _TranslationsTakerPaymentFailedErrorsPl extends TranslationsTakerPaymentFailedErrorsEn {
-	_TranslationsTakerPaymentFailedErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentFailed$errors$pl extends Translations$taker$paymentFailed$errors$en {
+	_Translations$taker$paymentFailed$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2151,8 +2152,8 @@ class _TranslationsTakerPaymentFailedErrorsPl extends TranslationsTakerPaymentFa
 }
 
 // Path: taker.paymentFailed.walletSection
-class _TranslationsTakerPaymentFailedWalletSectionPl extends TranslationsTakerPaymentFailedWalletSectionEn {
-	_TranslationsTakerPaymentFailedWalletSectionPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentFailed$walletSection$pl extends Translations$taker$paymentFailed$walletSection$en {
+	_Translations$taker$paymentFailed$walletSection$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2163,8 +2164,8 @@ class _TranslationsTakerPaymentFailedWalletSectionPl extends TranslationsTakerPa
 }
 
 // Path: taker.paymentFailed.loading
-class _TranslationsTakerPaymentFailedLoadingPl extends TranslationsTakerPaymentFailedLoadingEn {
-	_TranslationsTakerPaymentFailedLoadingPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentFailed$loading$pl extends Translations$taker$paymentFailed$loading$en {
+	_Translations$taker$paymentFailed$loading$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2173,8 +2174,8 @@ class _TranslationsTakerPaymentFailedLoadingPl extends TranslationsTakerPaymentF
 }
 
 // Path: taker.paymentFailed.success
-class _TranslationsTakerPaymentFailedSuccessPl extends TranslationsTakerPaymentFailedSuccessEn {
-	_TranslationsTakerPaymentFailedSuccessPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentFailed$success$pl extends Translations$taker$paymentFailed$success$en {
+	_Translations$taker$paymentFailed$success$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2184,8 +2185,8 @@ class _TranslationsTakerPaymentFailedSuccessPl extends TranslationsTakerPaymentF
 }
 
 // Path: taker.paymentSuccess.actions
-class _TranslationsTakerPaymentSuccessActionsPl extends TranslationsTakerPaymentSuccessActionsEn {
-	_TranslationsTakerPaymentSuccessActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$paymentSuccess$actions$pl extends Translations$taker$paymentSuccess$actions$en {
+	_Translations$taker$paymentSuccess$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2194,8 +2195,8 @@ class _TranslationsTakerPaymentSuccessActionsPl extends TranslationsTakerPayment
 }
 
 // Path: taker.invalidBlik.actions
-class _TranslationsTakerInvalidBlikActionsPl extends TranslationsTakerInvalidBlikActionsEn {
-	_TranslationsTakerInvalidBlikActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$invalidBlik$actions$pl extends Translations$taker$invalidBlik$actions$en {
+	_Translations$taker$invalidBlik$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2207,8 +2208,8 @@ class _TranslationsTakerInvalidBlikActionsPl extends TranslationsTakerInvalidBli
 }
 
 // Path: taker.invalidBlik.feedback
-class _TranslationsTakerInvalidBlikFeedbackPl extends TranslationsTakerInvalidBlikFeedbackEn {
-	_TranslationsTakerInvalidBlikFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$invalidBlik$feedback$pl extends Translations$taker$invalidBlik$feedback$en {
+	_Translations$taker$invalidBlik$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2217,8 +2218,8 @@ class _TranslationsTakerInvalidBlikFeedbackPl extends TranslationsTakerInvalidBl
 }
 
 // Path: taker.invalidBlik.errors
-class _TranslationsTakerInvalidBlikErrorsPl extends TranslationsTakerInvalidBlikErrorsEn {
-	_TranslationsTakerInvalidBlikErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$invalidBlik$errors$pl extends Translations$taker$invalidBlik$errors$en {
+	_Translations$taker$invalidBlik$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2228,8 +2229,8 @@ class _TranslationsTakerInvalidBlikErrorsPl extends TranslationsTakerInvalidBlik
 }
 
 // Path: taker.conflict.actions
-class _TranslationsTakerConflictActionsPl extends TranslationsTakerConflictActionsEn {
-	_TranslationsTakerConflictActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$conflict$actions$pl extends Translations$taker$conflict$actions$en {
+	_Translations$taker$conflict$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2238,8 +2239,8 @@ class _TranslationsTakerConflictActionsPl extends TranslationsTakerConflictActio
 }
 
 // Path: taker.conflict.feedback
-class _TranslationsTakerConflictFeedbackPl extends TranslationsTakerConflictFeedbackEn {
-	_TranslationsTakerConflictFeedbackPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$conflict$feedback$pl extends Translations$taker$conflict$feedback$en {
+	_Translations$taker$conflict$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2248,8 +2249,8 @@ class _TranslationsTakerConflictFeedbackPl extends TranslationsTakerConflictFeed
 }
 
 // Path: taker.conflict.errors
-class _TranslationsTakerConflictErrorsPl extends TranslationsTakerConflictErrorsEn {
-	_TranslationsTakerConflictErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$conflict$errors$pl extends Translations$taker$conflict$errors$en {
+	_Translations$taker$conflict$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2258,8 +2259,8 @@ class _TranslationsTakerConflictErrorsPl extends TranslationsTakerConflictErrors
 }
 
 // Path: taker.conflict.nostrContact
-class _TranslationsTakerConflictNostrContactPl extends TranslationsTakerConflictNostrContactEn {
-	_TranslationsTakerConflictNostrContactPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$taker$conflict$nostrContact$pl extends Translations$taker$conflict$nostrContact$en {
+	_Translations$taker$conflict$nostrContact$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2274,8 +2275,8 @@ class _TranslationsTakerConflictNostrContactPl extends TranslationsTakerConflict
 }
 
 // Path: home.statistics.errors
-class _TranslationsHomeStatisticsErrorsPl extends TranslationsHomeStatisticsErrorsEn {
-	_TranslationsHomeStatisticsErrorsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$home$statistics$errors$pl extends Translations$home$statistics$errors$en {
+	_Translations$home$statistics$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2284,8 +2285,8 @@ class _TranslationsHomeStatisticsErrorsPl extends TranslationsHomeStatisticsErro
 }
 
 // Path: maker.amountForm.category.options
-class _TranslationsMakerAmountFormCategoryOptionsPl extends TranslationsMakerAmountFormCategoryOptionsEn {
-	_TranslationsMakerAmountFormCategoryOptionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$category$options$pl extends Translations$maker$amountForm$category$options$en {
+	_Translations$maker$amountForm$category$options$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2296,8 +2297,8 @@ class _TranslationsMakerAmountFormCategoryOptionsPl extends TranslationsMakerAmo
 }
 
 // Path: maker.amountForm.category.shortLabels
-class _TranslationsMakerAmountFormCategoryShortLabelsPl extends TranslationsMakerAmountFormCategoryShortLabelsEn {
-	_TranslationsMakerAmountFormCategoryShortLabelsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$amountForm$category$shortLabels$pl extends Translations$maker$amountForm$category$shortLabels$en {
+	_Translations$maker$amountForm$category$shortLabels$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2308,8 +2309,8 @@ class _TranslationsMakerAmountFormCategoryShortLabelsPl extends TranslationsMake
 }
 
 // Path: maker.conflict.disputeDialog.actions
-class _TranslationsMakerConflictDisputeDialogActionsPl extends TranslationsMakerConflictDisputeDialogActionsEn {
-	_TranslationsMakerConflictDisputeDialogActionsPl._(TranslationsPl root) : this._root = root, super.internal(root);
+class _Translations$maker$conflict$disputeDialog$actions$pl extends Translations$maker$conflict$disputeDialog$actions$en {
+	_Translations$maker$conflict$disputeDialog$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
 
 	final TranslationsPl _root; // ignore: unused_field
 
@@ -2318,631 +2319,635 @@ class _TranslationsMakerConflictDisputeDialogActionsPl extends TranslationsMaker
 	@override String get cancel => 'Anuluj';
 }
 
-/// Flat map(s) containing all translations.
+/// The flat map containing all translations for locale <pl>.
 /// Only for edge cases! For simple maps, use the map function of this library.
+///
+/// The Dart AOT compiler has issues with very large switch statements,
+/// so the map is split into smaller functions (512 entries each).
 extension on TranslationsPl {
 	dynamic _flatMapFunction(String path) {
-		switch (path) {
-			case 'app.title': return 'BitBlik';
-			case 'app.greeting': return 'Cześć!';
-			case 'app.changelog': return 'Historia zmian';
-			case 'common.buttons.cancel': return 'Anuluj';
-			case 'common.buttons.save': return 'Zapisz';
-			case 'common.buttons.done': return 'Gotowe';
-			case 'common.buttons.retry': return 'Spróbuj ponownie';
-			case 'common.buttons.goHome': return 'Wróć do strony głównej';
-			case 'common.buttons.saveAndContinue': return 'Zapisz i kontynuuj';
-			case 'common.buttons.reveal': return 'Pokaż';
-			case 'common.buttons.hide': return 'Ukryj';
-			case 'common.buttons.copy': return 'Kopiuj';
-			case 'common.buttons.close': return 'Zamknij';
-			case 'common.buttons.restore': return 'Przywróć';
-			case 'common.buttons.faq': return 'FAQ';
-			case 'common.labels.amount': return 'Kwota (PLN)';
-			case 'common.labels.status': return ({required Object status}) => 'Status: ${status}';
-			case 'common.labels.role': return ({required Object role}) => 'Rola: ${role}';
-			case 'common.notifications.success': return 'Sukces';
-			case 'common.notifications.error': return 'Błąd';
-			case 'common.notifications.loading': return 'Ładowanie...';
-			case 'common.clipboard.copyToClipboard': return 'Kopiuj do schowka';
-			case 'common.clipboard.pasteFromClipboard': return 'Wklej ze schowka';
-			case 'common.clipboard.copied': return 'Skopiowano do schowka!';
-			case 'common.actions.cancelAndReturnToOffers': return 'Anuluj i wróć do ofert';
-			case 'common.actions.cancelAndReturnHome': return 'Anuluj i wróć do strony głównej';
-			case 'lightningAddress.labels.address': return 'Adres Lightning (LNURL)';
-			case 'lightningAddress.labels.hint': return 'uzytkownik@domena.com';
-			case 'lightningAddress.labels.short': return ({required Object address}) => 'Adres Lightning: ${address}';
-			case 'lightningAddress.labels.receivingAddress': return 'Twój adres odbiorczy:';
-			case 'lightningAddress.prompts.enter': return 'Wprowadź swój adres Lightning, aby kontynuować';
-			case 'lightningAddress.prompts.edit': return 'Edytuj';
-			case 'lightningAddress.prompts.invalid': return 'Wprowadź prawidłowy adres Lightning';
-			case 'lightningAddress.prompts.required': return 'Adres Lightning jest wymagany.';
-			case 'lightningAddress.prompts.enterToTakeOffer': return 'Musisz ustawić adres Lightning, aby przyjąć ofertę.';
-			case 'lightningAddress.prompts.missing': return 'Brak adresu Lightning. Dodaj go, aby móc przyjmować oferty.';
-			case 'lightningAddress.prompts.add': return 'Dodaj';
-			case 'lightningAddress.prompts.delete': return 'Usuń';
-			case 'lightningAddress.prompts.confirmDelete': return 'Czy na pewno chcesz usunąć swój adres Lightning?';
-			case 'lightningAddress.prompts.howToGet': return 'Nie masz jeszcze adresu Lightning? Dowiedz się, jak go zdobyć!';
-			case 'lightningAddress.prompts.learnMore': return 'Dowiedz się więcej o adresach Lightning';
-			case 'lightningAddress.feedback.saved': return 'Adres Lightning zapisany!';
-			case 'lightningAddress.feedback.updated': return 'Adres Lightning zaktualizowany!';
-			case 'lightningAddress.feedback.valid': return 'Prawidłowy adres Lightning';
-			case 'lightningAddress.errors.saving': return ({required Object details}) => 'Błąd podczas zapisywania adresu: ${details}';
-			case 'lightningAddress.errors.loading': return ({required Object details}) => 'Błąd podczas ładowania adresu Lightning: ${details}';
-			case 'offers.details.yourOffer': return 'Twoja oferta:';
-			case 'offers.details.selectedOffer': return 'Oferta:';
-			case 'offers.details.activeOffer': return 'Masz aktywną ofertę:';
-			case 'offers.details.finishedOffers': return 'Zakończone oferty';
-			case 'offers.details.noAvailable': return 'Brak dostępnych ofert.';
-			case 'offers.details.noAvailableTip': return 'Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik.';
-			case 'offers.details.noSuccessfulTrades': return 'Brak udanych transakcji.';
-			case 'offers.details.loadingDetails': return 'Ładowanie szczegółów oferty...';
-			case 'offers.details.amount': return ({required Object amount}) => 'Kwota: ${amount} satoshi';
-			case 'offers.details.amountWithCurrency': return ({required Object amount, required Object currency}) => '${amount} ${currency}';
-			case 'offers.details.makerFee': return ({required Object fee}) => 'Opłata: ${fee} sats';
-			case 'offers.details.takerFee': return ({required Object fee}) => 'Opłata: ${fee} sats';
-			case 'offers.details.subtitle': return ({required Object sats, required Object fee, required Object status}) => '${sats} + ${fee} (opłata) satoshi\nStatus: ${status}';
-			case 'offers.details.subtitleWithDate': return ({required Object sats, required Object fee, required Object status, required Object date}) => '${sats} + ${fee} (opłata) satoshi\nStatus: ${status}\nZapłacono: ${date}';
-			case 'offers.details.activeSubtitle': return ({required Object status, required Object amount}) => 'Status: ${status}\nKwota: ${amount} satoshi';
-			case 'offers.details.id': return ({required Object id}) => 'ID Oferty: ${id}...';
-			case 'offers.details.created': return ({required Object dateTime}) => 'Utworzono: ${dateTime}';
-			case 'offers.details.takenAfter': return ({required Object duration}) => 'Przyjęto po: ${duration}';
-			case 'offers.details.paidAfter': return ({required Object duration}) => 'Zapłacono po: ${duration}';
-			case 'offers.details.exchangeRate': return 'Kurs wymiany';
-			case 'offers.details.takerFeeLabel': return 'Opłata';
-			case 'offers.details.amountLabel': return 'Kwota';
-			case 'offers.details.feeLabel': return 'Opłata';
-			case 'offers.details.statusLabel': return 'Status';
-			case 'offers.details.youllReceive': return 'Otrzymasz';
-			case 'offers.details.coordinator': return 'Koordynator';
-			case 'offers.details.categoryLabel': return 'Kategoria';
-			case 'offers.details.categories.physicalShop': return 'Sklep, kawiarnia lub restauracja';
-			case 'offers.details.categories.atmCashout': return 'Wypłata gotówki z bankomatu';
-			case 'offers.details.categories.onlineService': return 'Produkt lub usługa online';
-			case 'offers.details.consents.atm': return 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
-			case 'offers.details.consents.ecommerce': return 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.';
-			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.';
-			case 'offers.tooltips.ratesFetchedAt': return 'Pobrano o';
-			case 'offers.tooltips.ratesSources': return 'Źródła średniego kursu';
-			case 'offers.actions.take': return 'WEŹ';
-			case 'offers.actions.takeOffer': return 'Weź ofertę';
-			case 'offers.actions.resume': return 'Wprowadź BLIK';
-			case 'offers.actions.cancel': return 'Anuluj ofertę';
-			case 'offers.actions.view': return 'Zobacz';
-			case 'offers.status.created': return 'Utworzona';
-			case 'offers.status.funded': return 'Sfinansowana';
-			case 'offers.status.expired': return 'Wygasła';
-			case 'offers.status.cancelled': return 'Anulowana';
-			case 'offers.status.reserved': return 'Zarezerwowana';
-			case 'offers.status.blikReceived': return 'BLIK wysłany';
-			case 'offers.status.blikSentToMaker': return 'Otrzymano BLIK';
-			case 'offers.status.expiredBlik': return 'BLIK wygasł';
-			case 'offers.status.expiredSentBlik': return 'BLIK wygasł';
-			case 'offers.status.takerCharged': return 'Taker obciążony';
-			case 'offers.status.invalidBlik': return 'Nieprawidłowy BLIK';
-			case 'offers.status.conflict': return 'Konflikt';
-			case 'offers.status.dispute': return 'Spór';
-			case 'offers.status.makerConfirmed': return 'Potwierdzona';
-			case 'offers.status.settled': return 'Rozliczona';
-			case 'offers.status.payingTaker': return 'Płacenie Takera';
-			case 'offers.status.takerPaymentFailed': return 'Płatność Takera nieudana';
-			case 'offers.status.takerPaid': return 'Zapłacony';
-			case 'offers.status.unknownStatus': return 'Nieznany';
-			case 'offers.statusMessages.reserved': return 'Oferta zarezerwowana przez Takera!';
-			case 'offers.statusMessages.cancelled': return 'Oferta anulowana pomyślnie.';
-			case 'offers.statusMessages.cancelledOrExpired': return 'Oferta została anulowana lub wygasła.';
-			case 'offers.statusMessages.noLongerAvailable': return ({required Object status}) => 'Oferta nie jest już dostępna (Status: ${status}).';
-			case 'offers.progress.waitingForTaker': return ({required Object time}) => 'Oczekiwanie na takera: ${time}';
-			case 'offers.progress.reserved': return ({required Object seconds}) => 'Zarezerwowano: ${seconds} s pozostało';
-			case 'offers.progress.confirming': return ({required Object seconds}) => 'Potwierdzanie: ${seconds} s pozostało';
-			case 'offers.errors.loading': return ({required Object details}) => 'Błąd ładowania ofert: ${details}';
-			case 'offers.errors.loadingDetails': return ({required Object details}) => 'Błąd ładowania szczegółów oferty: ${details}';
-			case 'offers.errors.detailsMissing': return 'Błąd: Brakujące lub nieprawidłowe szczegóły oferty.';
-			case 'offers.errors.detailsNotLoaded': return 'Nie udało się załadować szczegółów oferty.';
-			case 'offers.errors.notFound': return 'Błąd: Oferta nie znaleziona.';
-			case 'offers.errors.unexpectedState': return 'Błąd: Oferta jest w nieoczekiwanym stanie.';
-			case 'offers.errors.unexpectedStateWithStatus': return ({required Object status}) => 'Oferta jest w nieoczekiwanym stanie (${status}). Spróbuj ponownie lub skontaktuj się z pomocą.';
-			case 'offers.errors.invalidStatus': return 'Oferta ma nieprawidłowy status.';
-			case 'offers.errors.couldNotIdentify': return 'Błąd: Nie można zidentyfikować oferty do anulowania.';
-			case 'offers.errors.cannotBeCancelled': return ({required Object status}) => 'Oferty nie można anulować w obecnym stanie (${status}).';
-			case 'offers.errors.failedToCancel': return ({required Object details}) => 'Nie udało się anulować oferty: ${details}';
-			case 'offers.errors.activeDetailsLost': return 'Błąd: Utracono szczegóły aktywnej oferty.';
-			case 'offers.errors.checkingActive': return ({required Object details}) => 'Błąd sprawdzania aktywnych ofert: ${details}';
-			case 'offers.errors.cannotResume': return ({required Object status}) => 'Nie można wznowić oferty w stanie: ${status}';
-			case 'offers.errors.cannotResumeTaker': return ({required Object status}) => 'Nie można wznowić oferty takera w stanie: ${status}';
-			case 'offers.errors.resuming': return ({required Object details}) => 'Błąd wznawiania oferty: ${details}';
-			case 'offers.errors.makerPublicKeyNotFound': return 'Nie znaleziono klucza publicznego Makera';
-			case 'offers.errors.takerPublicKeyNotFound': return 'Nie znaleziono klucza publicznego Takera.';
-			case 'offers.errors.atmConsentRequired': return 'Zaakceptuj warunek dodatkowej opłaty ATM przed wzięciem tej oferty.';
-			case 'offers.errors.ecommerceConsentRequired': return 'Zaakceptuj warunek zwrotu środków z ecommerce przed wzięciem tej oferty.';
-			case 'offers.success.title': return 'Oferta zakończona';
-			case 'offers.success.headline': return 'Płatność potwierdzona!';
-			case 'offers.success.subtitle': return 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.';
-			case 'offers.success.detailsTitle': return 'Szczegóły oferty:';
-			case 'offers.success.duration': return ({required Object time}) => 'Realizacja oferty zajęła ${time}.';
-			case 'reservations.actions.cancel': return 'Anuluj rezerwację';
-			case 'reservations.feedback.cancelled': return 'Rezerwacja anulowana.';
-			case 'reservations.errors.cancelling': return ({required Object error}) => 'Nie udało się anulować rezerwacji: ${error}';
-			case 'reservations.errors.failedToReserve': return ({required Object details}) => 'Nie udało się zarezerwować oferty: ${details}';
-			case 'reservations.errors.failedNoTimestamp': return 'Nie udało się zarezerwować oferty (brak znacznika czasu).';
-			case 'reservations.errors.timestampMissing': return 'Brak znacznika czasu rezerwacji oferty.';
-			case 'reservations.errors.notReserved': return ({required Object status}) => 'Oferta nie jest już w stanie zarezerwowanym (${status}).';
-			case 'exchange.labels.enterAmount': return 'Wprowadź kwotę (PLN) do zapłaty:';
-			case 'exchange.labels.equivalent': return ({required Object sats}) => '≈ ${sats} satoshi';
-			case 'exchange.labels.rate': return ({required Object rate}) => 'Kurs wymiany ≈ ${rate} PLN/BTC';
-			case 'exchange.feedback.fetching': return 'Pobieranie kursu wymiany...';
-			case 'exchange.errors.fetchingRate': return 'Nie udało się pobrać kursu wymiany.';
-			case 'exchange.errors.invalidFormat': return 'Nieprawidłowy format liczby';
-			case 'exchange.errors.mustBePositive': return 'Kwota musi być dodatnia';
-			case 'exchange.errors.invalidFeePercentage': return 'Nieprawidłowy procent opłaty';
-			case 'exchange.errors.tooLowFiat': return ({required Object minAmount, required Object currency}) => 'Kwota jest za niska. Minimum to ${minAmount} ${currency}.';
-			case 'exchange.errors.tooHighFiat': return ({required Object maxAmount, required Object currency}) => 'Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}.';
-			case 'coordinator.title': return 'Koordynatorzy';
-			case 'coordinator.info.fee': return 'opłata';
-			case 'coordinator.info.rangeDisplay': return ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Kwota: ${minAmount}-${maxAmount} ${currency}';
-			case 'coordinator.info.feeDisplay': return ({required Object fee}) => '${fee}% opłata';
-			case 'coordinator.selector.loading': return 'Ładowanie koordynatorów...';
-			case 'coordinator.selector.errorLoading': return 'Błąd ładowania koordynatorów';
-			case 'coordinator.selector.choose': return 'Wybierz koordynatora';
-			case 'coordinator.selector.viewNostrProfile': return 'Zobacz profil Nostr';
-			case 'coordinator.selector.unresponsive': return 'Ten koordynator nie odpowiada';
-			case 'coordinator.selector.waitingResponse': return 'Oczekiwanie na odpowiedź koordynatora';
-			case 'coordinator.selector.termsAccept': return 'Akceptuję ';
-			case 'coordinator.selector.termsOfUsage': return 'Warunki użytkowania';
-			case 'coordinator.dialog.makerFee': return 'Opłata twórcy';
-			case 'coordinator.dialog.takerFee': return 'Opłata odbiorcy';
-			case 'coordinator.dialog.amountRange': return 'Zakres kwoty';
-			case 'coordinator.dialog.reservationTime': return 'Czas rezerwacji';
-			case 'coordinator.dialog.currencies': return 'Waluty';
-			case 'coordinator.dialog.viewTerms': return 'Zobacz warunki';
-			case 'coordinator.management.title': return 'Zarządzanie Koordynatorami';
-			case 'coordinator.management.availableCoordinators': return 'Dostępni Koordynatorzy';
-			case 'coordinator.management.noCoordinators': return 'Nie odkryto jeszcze żadnych koordynatorów.';
-			case 'coordinator.management.online': return 'Online';
-			case 'coordinator.management.unknownOffline': return 'Nieznany/Offline';
-			case 'coordinator.management.openNostrProfile': return 'Otwórz profil Nostr';
-			case 'coordinator.management.enable': return 'Włącz';
-			case 'coordinator.management.remove': return 'Usuń';
-			case 'coordinator.management.addCustomWhitelist': return 'Dodaj koordynatora';
-			case 'coordinator.management.addCustomWhitelistHint': return 'npub1...';
-			case 'coordinator.management.add': return 'Dodaj';
-			case 'coordinator.management.coordinatorBlacklisted': return 'Koordynator zablokowany';
-			case 'coordinator.management.coordinatorUnblacklisted': return 'Koordynator odblokowany';
-			case 'coordinator.management.coordinatorAdded': return 'Koordynator dodany do niestandardowej białej listy';
-			case 'coordinator.management.coordinatorRemoved': return 'Koordynator usunięty z niestandardowej białej listy';
-			case 'coordinator.management.coordinatorAddInfoUnavailable': return 'Nie znaleziono informacji o koordynatorze w przekaźnikach. Koordynator nie został dodany.';
-			case 'coordinator.management.pleaseEnterNpub': return 'Proszę wprowadzić npub';
-			case 'coordinator.management.error': return 'Błąd';
-			case 'coordinator.management.metricYourOffers': return 'Twoje oferty';
-			case 'coordinator.management.metricYourOffersTooltip': return 'Liczba ofert, które pomyślnie zrealizowałeś z tym koordynatorem.';
-			case 'coordinator.management.metricNetworkOffers': return 'Oferty (30 dni)';
-			case 'coordinator.management.metricNetworkOffersTooltip': return 'Pomyślnie rozliczone oferty przez tego koordynatora dla wszystkich użytkowników w ciągu ostatnich 30 dni.';
-			case 'maker.roleSelection.button': return 'ZAPŁAĆ przez Lightning';
-			case 'maker.amountForm.progress.step1': return '1. Utwórz Ofertę';
-			case 'maker.amountForm.progress.step2': return '2. Czekaj na zabranie';
-			case 'maker.amountForm.progress.step3': return '3. Użyj BLIK';
-			case 'maker.amountForm.labels.coordinator': return 'Koordynator';
-			case 'maker.amountForm.labels.category': return 'Kategoria';
-			case 'maker.amountForm.labels.exchangeRate': return 'Kurs wymiany';
-			case 'maker.amountForm.labels.fee': return 'Opłata';
-			case 'maker.amountForm.labels.satoshisToPay': return 'Do zapłaty';
-			case 'maker.amountForm.labels.enterAmount': return 'Wprowadź kwotę';
-			case 'maker.amountForm.labels.tapToSelect': return 'Kliknij, aby wybrać';
-			case 'maker.amountForm.actions.generateInvoice': return 'Wygeneruj Fakturę';
-			case 'maker.amountForm.tooltips.feeInfo': return ({required Object feePercent}) => 'Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning.';
-			case 'maker.amountForm.tooltips.payInfo': return 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.';
-			case 'maker.amountForm.category.label': return 'Kategoria oferty';
-			case 'maker.amountForm.category.options.physicalShop': return 'Sklep, kawiarnia lub restauracja';
-			case 'maker.amountForm.category.options.atmCashout': return 'Wypłata gotówki z bankomatu';
-			case 'maker.amountForm.category.options.onlineService': return 'Produkt lub usługa online';
-			case 'maker.amountForm.category.shortLabels.shop': return 'Sklep';
-			case 'maker.amountForm.category.shortLabels.atm': return 'Bankomat';
-			case 'maker.amountForm.category.shortLabels.online': return 'Online';
-			case 'maker.amountForm.category.atmHint': return 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
-			case 'maker.amountForm.category.physicalShopHint': return 'Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.';
-			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Ryzyko zwrotu od sprzedawcy online';
-			case 'maker.amountForm.category.ecommerceWarningBody': return 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
-			case 'maker.amountForm.category.ecommerceConfirmation': return 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
-			case 'maker.amountForm.category.whyThisIsNeeded': return 'dlaczego to jest potrzebne?';
-			case 'maker.amountForm.onboarding.titlePrefix': return 'Nowość';
-			case 'maker.amountForm.onboarding.title': return 'Wybierz kategorię oferty';
-			case 'maker.amountForm.onboarding.body': return 'Przed wygenerowaniem faktury wybierz kategorię, która najlepiej opisuje to, za co płacisz.';
-			case 'maker.amountForm.onboarding.showWhy': return 'Dlaczego to jest ważne?';
-			case 'maker.amountForm.onboarding.hideWhy': return 'Ukryj szczegóły';
-			case 'maker.amountForm.onboarding.whyTitle': return 'Dobra kategoria pomaga takerom bezpiecznie podjąć decyzję';
-			case 'maker.amountForm.onboarding.whyBody': return 'Różne sytuacje oznaczają różne oczekiwania i ryzyka. Wypłaty z bankomatu mogą mieć dodatkowe opłaty bankowe, a zakupy online mogą wiązać się z problemami przy zwrotach. Oznaczenie właściwej kategorii daje takerowi potrzebny kontekst przed akceptacją oferty.';
-			case 'maker.amountForm.onboarding.cta': return 'Rozumiem';
-			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Błąd inicjowania oferty: ${details}';
-			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Błąd: Klucz publiczny nie został jeszcze załadowany.';
-			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'Żaden koordynator nie obsługuje tej kwoty. Spróbuj inną wartość.';
-			case 'maker.amountForm.errors.categoryRequired': return 'Wybierz kategorię oferty.';
-			case 'maker.amountForm.errors.ecommerceConfirmationRequired': return 'Potwierdź ryzyko zwrotu od sprzedawcy online przed kontynuacją.';
-			case 'maker.payInvoice.title': return 'Zapłać tę fakturę Hold:';
-			case 'maker.payInvoice.actions.copy': return 'Kopiuj Fakturę';
-			case 'maker.payInvoice.actions.payInWallet': return 'Otwórz w portfelu zewnętrznym';
-			case 'maker.payInvoice.actions.connectWallet': return 'Połącz portfel';
-			case 'maker.payInvoice.actions.payWithNwc': return 'Zapłać';
-			case 'maker.payInvoice.actions.paying': return 'Płacenie...';
-			case 'maker.payInvoice.feedback.copied': return 'Faktura skopiowana do schowka!';
-			case 'maker.payInvoice.feedback.waitingConfirmation': return 'Oczekiwanie na potwierdzenie płatności...';
-			case 'maker.payInvoice.feedback.nwcConnected': return 'Portfel NWC połączony!';
-			case 'maker.payInvoice.feedback.nwcPaymentSuccess': return 'Płatność udana!';
-			case 'maker.payInvoice.errors.couldNotOpenApp': return 'Nie można otworzyć aplikacji Lightning dla faktury.';
-			case 'maker.payInvoice.errors.openingApp': return ({required Object details}) => 'Błąd otwierania aplikacji Lightning: ${details}';
-			case 'maker.payInvoice.errors.publicKeyNotAvailable': return 'Klucz publiczny nie jest dostępny.';
-			case 'maker.payInvoice.errors.couldNotFetchActive': return 'Nie udało się pobrać szczegółów aktywnej oferty. Mogła wygasnąć.';
-			case 'maker.payInvoice.errors.nwcPaymentFailed': return ({required Object details}) => 'Płatność nie powiodła się: ${details}';
-			case 'maker.payInvoice.errors.nwcNotConnected': return 'Portfel NWC nie jest połączony';
-			case 'maker.payInvoice.errors.insufficientBalance': return ({required Object required, required Object available}) => 'Niewystarczające środki. Potrzeba ${required} sats, dostępne ${available} sats';
-			case 'maker.payInvoice.errors.cancelOfferAlreadyFunded': return 'Koordynator zgłasza, że ta oferta jest już opłacona. Nie można jej teraz anulować.';
-			case 'maker.payInvoice.errors.cancelFailed': return ({required Object details}) => 'Nie można anulować oferty: ${details}';
-			case 'maker.waitTaker.message': return 'Oczekiwanie na rezerwację przez Kupującego...';
-			case 'maker.waitTaker.errorActiveOfferDetailsLost': return 'Błąd: Utracono szczegóły aktywnej oferty.';
-			case 'maker.waitTaker.errorFailedToRetrieveBlik': return 'Błąd: Nie udało się pobrać kodu BLIK.';
-			case 'maker.waitTaker.errorRetrievingBlik': return ({required Object details}) => 'Błąd pobierania kodu BLIK: ${details}';
-			case 'maker.waitTaker.offerNoLongerAvailable': return ({required Object status}) => 'Oferta nie jest już dostępna (Status: ${status}).';
-			case 'maker.waitTaker.errorCouldNotIdentifyOffer': return 'Błąd: Nie można zidentyfikować oferty do anulowania.';
-			case 'maker.waitTaker.offerCannotBeCancelled': return ({required Object status}) => 'Oferty nie można anulować w obecnym stanie (${status}).';
-			case 'maker.waitTaker.offerCancelledSuccessfully': return 'Oferta anulowana pomyślnie.';
-			case 'maker.waitTaker.failedToCancelOffer': return ({required Object details}) => 'Nie udało się anulować oferty: ${details}';
-			case 'maker.waitTaker.offerExpiredTitle': return 'Oferta wygasła';
-			case 'maker.waitTaker.offerExpiredMessage': return 'Żaden taker nie zarezerwował oferty w czasie.';
-			case 'maker.waitTaker.recreateOffer': return 'Nowa oferta — ta sama kwota';
-			case 'maker.waitForBlik.title': return 'Oczekiwanie na BLIK';
-			case 'maker.waitForBlik.messageInfo': return 'Ktoś zarezerwował twoją ofertę!';
-			case 'maker.waitForBlik.messageWaiting': return 'Oczekiwanie na kod BLIK...';
-			case 'maker.waitForBlik.progressLabel': return ({required Object seconds}) => 'Zarezerwowano: ${seconds} s pozostało';
-			case 'maker.confirmPayment.title': return 'Otrzymano kod BLIK!';
-			case 'maker.confirmPayment.retrieving': return 'Pobieranie kodu BLIK...';
-			case 'maker.confirmPayment.instruction1': return 'Wprowadź kod do systemu płatności BLIK.';
-			case 'maker.confirmPayment.instruction2': return 'Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.';
-			case 'maker.confirmPayment.instruction3': return 'Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:';
-			case 'maker.confirmPayment.takerChargedWarning': return 'Pobierający zgłosił, że płatność BLIK została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.';
-			case 'maker.confirmPayment.expiredTitle': return 'Kod BLIK wygasł';
-			case 'maker.confirmPayment.expiredWarning': return 'Kod BLIK wygasł. Musisz ręcznie potwierdzić status płatności:';
-			case 'maker.confirmPayment.expiredInstruction1': return 'Jeśli płatność BLIK zakończyła się sukcesem i zrealizowałeś zakup, kliknij "Potwierdź udaną płatność" poniżej.';
-			case 'maker.confirmPayment.expiredInstruction2': return 'Jeśli płatność BLIK nie powiodła się lub nie została zrealizowana, kliknij "Nieprawidłowy kod BLIK" poniżej.';
-			case 'maker.confirmPayment.actions.confirm': return 'Potwierdź udaną płatność';
-			case 'maker.confirmPayment.actions.markInvalid': return 'Nieprawidłowy kod BLIK';
-			case 'maker.confirmPayment.actions.copyBlik': return 'Kopiuj BLIK';
-			case 'maker.confirmPayment.confirmDialog.title': return 'Potwierdzić płatność?';
-			case 'maker.confirmPayment.confirmDialog.content': return 'Ta akcja jest nieodwracalna. Po potwierdzeniu:\n\n• Kupujący otrzyma środki natychmiast\n• Koordynator nie będzie mógł zakwestionować środków\n• Nie możesz cofnąć tej akcji\n\nPotwierdź tylko wtedy, gdy płatność BLIK zakończyła się sukcesem.';
-			case 'maker.confirmPayment.confirmDialog.cancel': return 'Anuluj';
-			case 'maker.confirmPayment.confirmDialog.confirmButton': return 'Tak, potwierdź płatność';
-			case 'maker.confirmPayment.invalidBlikDisputeDialog.title': return 'Otworzyć spór?';
-			case 'maker.confirmPayment.invalidBlikDisputeDialog.content': return 'Kupujący zgłosił, że płatność BLIK została pobrana z jego konta.\n\nOznaczenie tego jako nieprawidłowe natychmiast otworzy SPÓR wymagający interwencji koordynatora.\n\n• Opłata za spór może zostać naliczona, jeśli zostanie rozstrzygnięty na Twoją niekorzyść\n• Faktura hold zostanie rozliczona natychmiast\n• Wymagana będzie ręczna weryfikacja\n\nKontynuuj tylko wtedy, gdy masz pewność, że płatność BLIK NIE powiodła się.';
-			case 'maker.confirmPayment.invalidBlikDisputeDialog.cancel': return 'Anuluj';
-			case 'maker.confirmPayment.invalidBlikDisputeDialog.confirmButton': return 'Tak, otwórz spór';
-			case 'maker.confirmPayment.feedback.confirmed': return 'Maker potwierdził płatność.';
-			case 'maker.confirmPayment.feedback.confirmedTakerPaid': return 'Płatność potwierdzona! Taker otrzyma środki.';
-			case 'maker.confirmPayment.feedback.progressLabel': return ({required Object seconds}) => 'Potwierdzanie: ${seconds} s pozostało';
-			case 'maker.confirmPayment.errors.failedToRetrieve': return 'Błąd: Nie udało się pobrać kodu BLIK.';
-			case 'maker.confirmPayment.errors.retrieving': return ({required Object details}) => 'Błąd pobierania kodu BLIK: ${details}';
-			case 'maker.confirmPayment.errors.missingHashOrKey': return 'Błąd: Brakujący hash płatności lub klucz publiczny.';
-			case 'maker.confirmPayment.errors.incorrectState': return ({required Object status}) => 'Oferta nie jest w prawidłowym stanie do potwierdzenia (Status: ${status})';
-			case 'maker.confirmPayment.errors.confirming': return ({required Object details}) => 'Błąd potwierdzania płatności: ${details}';
-			case 'maker.confirmPayment.errors.invalidState': return 'Błąd: Otrzymano nieprawidłowy stan oferty.';
-			case 'maker.confirmPayment.errors.internalIncomplete': return 'Błąd wewnętrzny: Niekompletne szczegóły oferty.';
-			case 'maker.confirmPayment.errors.notAwaitingConfirmation': return ({required Object status}) => 'Oferta nie oczekuje już na potwierdzenie (Status: ${status}).';
-			case 'maker.confirmPayment.errors.unexpectedStatus': return 'Otrzymano nieoczekiwany status oferty z serwera.';
-			case 'maker.invalidBlik.title': return 'Nieprawidłowy kod BLIK';
-			case 'maker.invalidBlik.info': return 'Oznaczyłeś kod BLIK jako nieprawidłowy. Oczekiwanie na podanie nowego kodu przez takera lub rozpoczęcie sporu.';
-			case 'maker.conflict.title': return 'Konflikt Oferty';
-			case 'maker.conflict.headline': return 'Zgłoszono Konflikt Oferty';
-			case 'maker.conflict.body': return 'Oznaczyłeś kod BLIK jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.';
-			case 'maker.conflict.instructions': return 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.';
-			case 'maker.conflict.actions.back': return 'Powrót do strony głównej';
-			case 'maker.conflict.actions.confirmPayment': return 'Mój błąd, potwierdź sukces płatności BLIK';
-			case 'maker.conflict.actions.openDispute': return 'Płatność BLIK NIE powiodła się, OTWÓRZ SPÓR';
-			case 'maker.conflict.actions.submitDispute': return 'Zgłoś Spór';
-			case 'maker.conflict.disputeDialog.title': return 'Otworzyć spór?';
-			case 'maker.conflict.disputeDialog.content': return 'Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) do portfela według własnego wyboru.';
-			case 'maker.conflict.disputeDialog.contentDetailed': return 'Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona do portfela według własnego wyboru (pomniejszona o opłaty). Upewnij się, że masz portfel gotowy do odbioru.';
-			case 'maker.conflict.disputeDialog.actions.confirm': return 'Otwórz Spór';
-			case 'maker.conflict.disputeDialog.actions.cancel': return 'Anuluj';
-			case 'maker.conflict.feedback.disputeOpenedSuccess': return 'Spór pomyślnie otwarty. Koordynator rozpatrzy sprawę.';
-			case 'maker.conflict.errors.openingDispute': return ({required Object error}) => 'Błąd otwierania sporu: ${error}';
-			case 'maker.conflict.nostrContact.title': return 'Skontaktuj się z Koordynatorem na Nostr';
-			case 'maker.conflict.nostrContact.description': return 'Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.';
-			case 'maker.conflict.nostrContact.copyNpub': return 'Kopiuj npub';
-			case 'maker.conflict.nostrContact.openProfile': return 'Zobacz Profil';
-			case 'maker.conflict.nostrContact.npubCopied': return 'Npub koordynatora skopiowany do schowka!';
-			case 'maker.conflict.nostrContact.yourIdentityDescription': return 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.';
-			case 'maker.conflict.nostrContact.manageNekoKeys': return 'Zarządzaj Kluczami Neko';
-			case 'maker.success.title': return 'Oferta zakończona';
-			case 'maker.success.headline': return 'Płatność potwierdzona!';
-			case 'maker.success.subtitle': return 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.';
-			case 'maker.success.detailsTitle': return 'Szczegóły oferty:';
-			case 'maker.success.duration': return ({required Object time}) => 'Oferta zajęła ${time}!';
-			case 'taker.roleSelection.button': return 'SPRZEDAJ kod BLIK za satoshi';
-			case 'taker.progress.step1': return 'Wyślij BLIK';
-			case 'taker.progress.step2': return 'Potwierdź BLIK';
-			case 'taker.progress.step3': return 'Otrzymaj płatność';
-			case 'taker.submitBlik.title': return 'Wpisz 6-cyfr BLIK';
-			case 'taker.submitBlik.label': return 'Kod BLIK';
-			case 'taker.submitBlik.instruction': return 'Wprowadź BLIK zanim upłynie czas...';
-			case 'taker.submitBlik.timeLimit': return ({required Object seconds}) => 'Wprowadź BLIK w ciągu: ${seconds} s';
-			case 'taker.submitBlik.timeExpired': return 'Czas na wprowadzenie kodu BLIK minął.';
-			case 'taker.submitBlik.actions.submit': return 'Wyślij BLIK';
-			case 'taker.submitBlik.feedback.pasted': return 'Wklejono kod BLIK.';
-			case 'taker.submitBlik.validation.invalidFormat': return 'Wprowadź prawidłowy 6-cyfrowy kod BLIK.';
-			case 'taker.submitBlik.errors.submitting': return ({required Object details}) => 'Błąd wysyłania kodu BLIK: ${details}';
-			case 'taker.submitBlik.errors.clipboardInvalid': return 'Schowek nie zawiera prawidłowego 6-cyfrowego kodu BLIK.';
-			case 'taker.submitBlik.errors.stateChanged': return 'Błąd: Stan oferty uległ zmianie.';
-			case 'taker.submitBlik.errors.stateNotValid': return 'Błąd: Stan oferty nie jest już ważny.';
-			case 'taker.submitBlik.errors.fetchedIdMismatch': return ({required Object fetchedId, required Object initialId}) => 'Pobrane ID aktywnej oferty (${fetchedId}) nie pasuje do początkowego ID oferty (${initialId}). Niezgodność stanu?';
-			case 'taker.submitBlik.errors.paymentHashMissing': return 'Brak hasha płatności oferty po pobraniu.';
-			case 'taker.submitBlik.details.requestedAmount': return 'Żądana kwota BLIK';
-			case 'taker.submitBlik.details.exchangeRate': return 'Kurs wymiany';
-			case 'taker.submitBlik.details.takerFee': return 'Opłata Taker';
-			case 'taker.submitBlik.details.status': return 'Status';
-			case 'taker.submitBlik.details.youllReceive': return 'Otrzymasz';
-			case 'taker.waitConfirmation.title': return 'Oczekiwanie na Makera';
-			case 'taker.waitConfirmation.statusLabel': return ({required Object status}) => 'Status oferty: ${status}';
-			case 'taker.waitConfirmation.waitingMaker': return ({required Object seconds}) => 'Oczekiwanie na potwierdzenie Makera: ${seconds} s';
-			case 'taker.waitConfirmation.waitingMakerConfirmation': return ({required Object seconds}) => 'Oczekiwanie na potwierdzenie płatności BLIK przez Makera w jego aplikacji bankowej. Pozostały czas: ${seconds}s';
-			case 'taker.waitConfirmation.importantNotice': return ({required Object amount, required Object currency}) => 'BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie BLIK tylko na kwotę ${amount} ${currency}';
-			case 'taker.waitConfirmation.importantBlikAmountConfirmation': return ({required Object amount, required Object currency}) => 'BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność BLIK na kwotę dokładnie ${amount} ${currency}.';
-			case 'taker.waitConfirmation.instructions': return 'Osoba wystawiająca ofertę musi teraz wpisać kod BLIK w ciągu 2 minut. Następnie musisz zaakceptować kod BLIK w swojej aplikacji bankowej.';
-			case 'taker.waitConfirmation.categoryReminder.atm': return 'Przypomnienie dla oferty ATM: Twój bank może nadal poprosić o zatwierdzenie dodatkowej opłaty bankomatowej ponad główną kwotę.';
-			case 'taker.waitConfirmation.categoryReminder.ecommerce': return 'Przypomnienie dla zamówienia online: jeśli sprzedawca wyśle automatyczny zwrot na Twoje konto, skontaktuj się z koordynatorem i oddaj środki.';
-			case 'taker.waitConfirmation.waitingForMakerToReceive': return 'Czekamy, aż twórca oferty otrzyma Twój kod BLIK...';
-			case 'taker.waitConfirmation.makerReceivedBlik': return 'Twórca oferty otrzymał Twój kod BLIK';
-			case 'taker.waitConfirmation.timerExpiredMessage': return 'Minął termin ważności kodu BLIK 2m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.';
-			case 'taker.waitConfirmation.timerExpiredActions': return 'Minął termin ważności kodu BLIK 2m, ale wystawca nie otrzymał kodu BLIK. Możesz wysłać nowy kod BLIK lub anulować.';
-			case 'taker.waitConfirmation.resendBlikButton': return 'Wyślij nowy kod BLIK';
-			case 'taker.waitConfirmation.navigatedHome': return 'Przeniesiono na stronę główną.';
-			case 'taker.waitConfirmation.expiredTitle': return 'Kod BLIK wygasł';
-			case 'taker.waitConfirmation.expiredWarning': return 'Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć.';
-			case 'taker.waitConfirmation.expiredSentWarning': return 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?';
-			case 'taker.waitConfirmation.expiredInstruction1': return 'Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację.';
-			case 'taker.waitConfirmation.expiredInstruction2': return 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.';
-			case 'taker.waitConfirmation.expiredInstruction3': return 'Jeśli płatność BLIK została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.';
-			case 'taker.waitConfirmation.takerCharged.title': return 'Oznaczyłeś BLIK jako opłacony';
-			case 'taker.waitConfirmation.takerCharged.message': return 'Twórca oferty musi potwierdzić płatność lub ją zakwestionować. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny.';
-			case 'taker.waitConfirmation.expiredActions.reportConflict': return 'BLIK został pobrany z mojego konta';
-			case 'taker.waitConfirmation.expiredActions.renewReservation': return 'Spróbuj ponownie z nowym kodem BLIK';
-			case 'taker.waitConfirmation.expiredActions.cancelReservation': return 'Anuluj rezerwację';
-			case 'taker.waitConfirmation.feedback.makerConfirmed': return 'Maker potwierdził płatność.';
-			case 'taker.waitConfirmation.feedback.paymentSuccessful': return 'Płatność udana! Wkrótce otrzymasz środki.';
-			case 'taker.waitConfirmation.feedback.conflictReported': return 'Konflikt zgłoszony. Koordynator rozpatrzy sytuację.';
-			case 'taker.waitConfirmation.errors.invalidOfferStateReceived': return 'Otrzymano ofertę o nieprawidłowym stanie dla tego ekranu. Resetowanie.';
-			case 'taker.waitConfirmation.errors.reportingConflict': return ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}';
-			case 'taker.paymentProcess.title': return 'Proces Płatności';
-			case 'taker.paymentProcess.waitingForOfferUpdate': return 'Oczekiwanie na aktualizację statusu oferty...';
-			case 'taker.paymentProcess.states.preparing': return 'Przygotowywanie do wysłania płatności...';
-			case 'taker.paymentProcess.states.sending': return 'Wysyłanie płatności...';
-			case 'taker.paymentProcess.states.received': return 'Płatność otrzymana!';
-			case 'taker.paymentProcess.states.failed': return 'Płatność nie powiodła się';
-			case 'taker.paymentProcess.states.waitingUpdate': return 'Oczekiwanie na aktualizację oferty...';
-			case 'taker.paymentProcess.steps.makerConfirmedBlik': return 'Maker potwierdził płatność BLIK';
-			case 'taker.paymentProcess.steps.makerInvoiceSettled': return 'Faktura hold Makera rozliczona';
-			case 'taker.paymentProcess.steps.takerInvoicePaid': return 'Opłacanie Twojej faktury Lightning';
-			case 'taker.paymentProcess.steps.takerPaymentFailed': return 'Płatność na Twoją fakturę nie powiodła się';
-			case 'taker.paymentProcess.errors.sending': return ({required Object details}) => 'Błąd wysyłania płatności: ${details}';
-			case 'taker.paymentProcess.errors.notConfirmed': return 'Oferta niepotwierdzona przez Makera.';
-			case 'taker.paymentProcess.errors.expired': return 'Oferta wygasła.';
-			case 'taker.paymentProcess.errors.cancelled': return 'Oferta anulowana.';
-			case 'taker.paymentProcess.errors.paymentFailed': return 'Płatność oferty nie powiodła się.';
-			case 'taker.paymentProcess.errors.unknown': return 'Nieznany błąd oferty.';
-			case 'taker.paymentProcess.errors.takerPaymentFailed': return 'Płatność na Twoją fakturę Lightning nie powiodła się.';
-			case 'taker.paymentProcess.errors.noPublicKey': return 'Błąd: Nie można pobrać Twojego klucza publicznego.';
-			case 'taker.paymentProcess.errors.loadingPublicKey': return 'Błąd ładowania Twoich danych';
-			case 'taker.paymentProcess.errors.missingPaymentHash': return 'Błąd: Brakujące szczegóły płatności.';
-			case 'taker.paymentProcess.loading.publicKey': return 'Ładowanie Twoich danych...';
-			case 'taker.paymentProcess.actions.goToFailureDetails': return 'Wprowadź nową fakturę Lightning';
-			case 'taker.paymentFailed.title': return 'Płatność Nie Powiodła Się';
-			case 'taker.paymentFailed.instructions': return ({required Object netAmount}) => 'Proszę podać nową fakturę Lightning na kwotę ${netAmount} satoshi';
-			case 'taker.paymentFailed.form.newInvoiceLabel': return 'Nowa faktura Lightning';
-			case 'taker.paymentFailed.form.newInvoiceHint': return 'Wprowadź swoją fakturę BOLT11';
-			case 'taker.paymentFailed.actions.retryPayment': return 'Wyślij nową fakturę';
-			case 'taker.paymentFailed.errors.enterValidInvoice': return 'Proszę wprowadzić prawidłową fakturę';
-			case 'taker.paymentFailed.errors.updatingInvoice': return ({required Object details}) => 'Błąd aktualizacji faktury: ${details}';
-			case 'taker.paymentFailed.errors.paymentRetryFailed': return 'Ponowna próba płatności nie powiodła się. Sprawdź fakturę lub spróbuj ponownie później.';
-			case 'taker.paymentFailed.errors.takerPublicKeyNotFound': return 'Nie znaleziono klucza publicznego Kupującego.';
-			case 'taker.paymentFailed.errors.generateFailed': return ({required Object details}) => 'Nie udało się wygenerować faktury: ${details}';
-			case 'taker.paymentFailed.walletSection.title': return 'Generuj fakturę z portfela';
-			case 'taker.paymentFailed.walletSection.defaultLabel': return 'domyślny';
-			case 'taker.paymentFailed.walletSection.tapToGenerate': return ({required Object amountSats}) => 'Dotknij, aby wygenerować fakturę na ${amountSats} sats';
-			case 'taker.paymentFailed.loading.processingPayment': return 'Przetwarzanie ponownej płatności...';
-			case 'taker.paymentFailed.success.title': return 'Płatność udana';
-			case 'taker.paymentFailed.success.message': return 'Twoja płatność została przetworzona pomyślnie.';
-			case 'taker.paymentSuccess.title': return 'Płatność Udana';
-			case 'taker.paymentSuccess.message': return 'Twoja płatność została przetworzona pomyślnie.';
-			case 'taker.paymentSuccess.actions.goHome': return 'Przejdź do strony głównej';
-			case 'taker.invalidBlik.title': return 'Nieprawidłowy Kod BLIK';
-			case 'taker.invalidBlik.message': return 'Maker Odrzucił Kod BLIK';
-			case 'taker.invalidBlik.explanation': return 'Maker oferty wskazał, że podany przez Ciebie kod BLIK był nieprawidłowy lub nie zadziałał.\n\nCo chcesz zrobić?';
-			case 'taker.invalidBlik.werentCharged': return 'Jeśli Twoje konto NIE zostało obciążone:';
-			case 'taker.invalidBlik.wereCharged': return 'Jeśli Twoje konto zostało obciążone:';
-			case 'taker.invalidBlik.actions.retry': return 'Wyślij nowy kod BLIK';
-			case 'taker.invalidBlik.actions.cancelReservation': return 'Anuluj Transakcję';
-			case 'taker.invalidBlik.actions.reportConflict': return 'Rozpocząć Spór';
-			case 'taker.invalidBlik.actions.returnHome': return 'Wróć do strony głównej';
-			case 'taker.invalidBlik.feedback.conflictReportedSuccess': return 'Konflikt zgłoszony. Koordynator rozpatrzy sprawę.';
-			case 'taker.invalidBlik.errors.reservationFailed': return 'Nie udało się ponownie zarezerwować oferty';
-			case 'taker.invalidBlik.errors.conflictReport': return ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}';
-			case 'taker.conflict.title': return 'Konflikt Oferty';
-			case 'taker.conflict.headline': return 'Zgłoszono Konflikt Oferty';
-			case 'taker.conflict.body': return 'Maker oznaczył kod BLIK jako nieprawidłowy, ale Ty zgłosiłeś konflikt, wskazując, że uważasz, iż płatność zakończyła się sukcesem.';
-			case 'taker.conflict.instructions': return 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.';
-			case 'taker.conflict.actions.back': return 'Powrót do strony głównej';
-			case 'taker.conflict.feedback.reported': return 'Konflikt zgłoszony. Koordynator rozpatrzy sprawę.';
-			case 'taker.conflict.errors.reporting': return ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}';
-			case 'taker.conflict.nostrContact.title': return 'Skontaktuj się z Koordynatorem na Nostr';
-			case 'taker.conflict.nostrContact.description': return 'Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.';
-			case 'taker.conflict.nostrContact.copyNpub': return 'Kopiuj npub';
-			case 'taker.conflict.nostrContact.openProfile': return 'Zobacz Profil';
-			case 'taker.conflict.nostrContact.npubCopied': return 'Npub koordynatora skopiowany do schowka!';
-			case 'taker.conflict.nostrContact.yourIdentityDescription': return 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.';
-			case 'taker.conflict.nostrContact.manageNekoKeys': return 'Zarządzaj Kluczami Neko';
-			case 'blik.instructions.taker': return 'Gdy Maker wprowadzi kod BLIK, będziesz musiał potwierdzić płatność w swojej aplikacji bankowej. Upewnij się, że kwota jest poprawna przed potwierdzeniem.';
-			case 'nekoInfo.title': return 'Czym jest Neko?';
-			case 'nekoInfo.description': return 'Twoje Neko to Twoja tożsamość do korzystania z BitBlik. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków.';
-			case 'nekoInfo.backupWarning': return 'Pamiętaj, aby zarchiwizować swoje Neko';
-			case 'generateNewKey.title': return 'Nowy';
-			case 'generateNewKey.description': return 'Czy na pewno chcesz wygenerować nowe Neko? Twoje obecne zostanie utracone na zawsze, jeśli go nie zarchiwizowałeś.';
-			case 'generateNewKey.buttons.generate': return 'Generuj';
-			case 'generateNewKey.errors.activeOffer': return 'Nie możesz wygenerować nowego Neko, gdy masz aktywną ofertę.';
-			case 'generateNewKey.errors.failed': return 'Nie udało się wygenerować nowego Neko';
-			case 'generateNewKey.feedback.success': return 'Nowe Neko wygenerowane pomyślnie!';
-			case 'generateNewKey.tooltips.generate': return 'Wygeneruj nowe Neko';
-			case 'backup.title': return 'Zarchiwizuj';
-			case 'backup.description': return 'To jest Twój klucz prywatny. Zabezpiecza on komunikację z koordynatorem. Nigdy nikomu go nie ujawniaj. Zarchiwizuj go w bezpiecznym miejscu, aby uniknąć problemów podczas sporów.';
-			case 'backup.feedback.copied': return 'Klucz prywatny skopiowany do schowka!';
-			case 'backup.tooltips.backup': return 'Zarchiwizuj Neko';
-			case 'restore.title': return 'Przywróć';
-			case 'restore.labels.privateKey': return 'Klucz prywatny';
-			case 'restore.buttons.restore': return 'Przywróć';
-			case 'restore.errors.invalidKey': return 'Musi to być 64-znakowy ciąg szesnastkowy.';
-			case 'restore.errors.failed': return 'Przywracanie nie powiodło się';
-			case 'restore.feedback.success': return 'Neko przywrócone pomyślnie! Aplikacja zostanie ponownie uruchomiona.';
-			case 'restore.tooltips.restore': return 'Przywróć Neko';
-			case 'home.notifications.title': return 'Otrzymuj powiadomienia o nowych ofertach przez:';
-			case 'home.notifications.telegram': return 'Telegram';
-			case 'home.notifications.simplex': return 'SimpleX';
-			case 'home.notifications.element': return 'Element';
-			case 'home.notifications.signal': return 'Signal';
-			case 'home.statistics.title': return 'Zakończone oferty';
-			case 'home.statistics.lifetimeCompact': return ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
-			case 'home.statistics.last7DaysCompact': return ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
-			case 'home.statistics.last7DaysSingleLine': return ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}';
-			case 'home.statistics.errors.loading': return ({required Object error}) => 'Błąd ładowania statystyk: ${error}';
-			case 'system.loadingPublicKey': return 'Ładowanie Twojego klucza publicznego...';
-			case 'system.errors.generic': return 'Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.';
-			case 'system.errors.loadingTimeoutConfig': return 'Błąd ładowania konfiguracji limitu czasu.';
-			case 'system.errors.loadingCoordinatorConfig': return 'Błąd ładowania konfiguracji koordynatora. Proszę spróbować ponownie.';
-			case 'system.errors.noPublicKey': return 'Twój klucz publiczny nie jest dostępny. Nie można kontynuować.';
-			case 'system.errors.internalOfferIncomplete': return 'Błąd wewnętrzny: Szczegóły oferty są niekompletne. Spróbuj ponownie.';
-			case 'system.errors.loadingPublicKey': return 'Błąd ładowania Twojego klucza publicznego. Uruchom ponownie aplikację.';
-			case 'system.blik.copied': return 'Kod BLIK skopiowany do schowka';
-			case 'myOffers.title': return 'Moje oferty';
-			case 'myOffers.empty': return 'Brak ofert.';
-			case 'myOffers.unknownCoordinator': return 'Nieznany koordynator';
-			case 'myOffers.menuLabel': return 'Moje oferty';
-			case 'myOffers.filter.all': return 'Wszystkie';
-			case 'myOffers.filter.active': return 'Aktywne';
-			case 'myOffers.filter.completed': return 'Zakończone';
-			case 'myOffers.filter.failed': return 'Nieudane';
-			case 'myOffers.details.title': return 'Szczegóły oferty';
-			case 'myOffers.details.notFound': return 'Nie znaleziono oferty.';
-			case 'myOffers.details.amount': return 'Kwota';
-			case 'myOffers.details.fees': return 'Opłaty';
-			case 'myOffers.details.sats': return 'Satoshi';
-			case 'myOffers.details.maker': return 'Maker';
-			case 'myOffers.details.taker': return 'Taker';
-			case 'myOffers.details.yourFee': return 'Twoja opłata';
-			case 'myOffers.details.makerFee': return 'Opłata makera';
-			case 'myOffers.details.takerFee': return 'Opłata takera';
-			case 'myOffers.details.coordinator': return 'Koordynator';
-			case 'myOffers.details.createdAt': return 'Utworzono';
-			case 'myOffers.details.reservedAt': return 'Zarezerwowano';
-			case 'myOffers.details.blikReceivedAt': return 'BLIK wysłany';
-			case 'myOffers.details.makerConfirmedAt': return 'Potwierdzono';
-			case 'myOffers.details.settledAt': return 'Rozliczono';
-			case 'myOffers.details.takerPaidAt': return 'Taker opłacony';
-			case 'myOffers.details.id': return 'ID oferty';
-			case 'myOffers.details.paymentHash': return 'Hash płatności';
-			case 'myOffers.details.holdInvoice': return 'Hold Invoice';
-			case 'myOffers.details.continueActiveOffer': return 'Przejdź do aktywnej oferty';
-			case 'myOffers.details.after': return ({required Object duration}) => 'po ${duration}';
-			case 'landing.mainTitle': return 'Wymiana\n BLIK ⇄ bitcoin';
-			case 'landing.subtitle': return 'Płać lub sprzedawaj kod BLIK za bitcoin';
-			case 'landing.partnership': return 'współpraca';
-			case 'landing.actions.payBlik': return 'Zapłać BLIK';
-			case 'landing.actions.payBlikSubtitle': return 'używając bitcoin';
-			case 'landing.actions.sellBlik': return 'Kup bitcoin';
-			case 'landing.actions.sellBlikSubtitle': return 'używając BLIK';
-			case 'landing.actions.howItWorks': return 'Jak to działa?';
-			case 'faq.screenTitle': return 'FAQ';
-			case 'faq.tooltip': return 'FAQ';
-			case 'settings.title': return 'Ustawienia';
-			case 'notificationSettings.title': return 'Powiadomienia';
-			case 'notificationSettings.newOfferAlerts.label': return 'Alerty o nowych ofertach';
-			case 'notificationSettings.newOfferAlerts.description': return 'Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.';
-			case 'wallet.title': return 'Portfel';
-			case 'wallet.description': return 'Zarządzaj ustawieniami portfela Lightning';
-			case 'wallet.missingReceiving.title': return 'Wymagany portfel odbiorczy';
-			case 'wallet.missingReceiving.message': return 'Brak skonfigurowanego portfela do odbierania. Dodaj go w ustawieniach portfela, aby przyjmować oferty.';
-			case 'wallet.missingReceiving.openSettings': return 'Ustawienia portfela';
-			case 'nwc.title': return 'Nostr Wallet Connect (NWC)';
-			case 'nwc.description': return 'Połącz swój portfel Lightning przez NWC';
-			case 'nwc.labels.connectionString': return 'Ciąg połączenia NWC';
-			case 'nwc.labels.hint': return 'nostr+walletconnect://...';
-			case 'nwc.labels.status': return 'Status połączenia';
-			case 'nwc.labels.connected': return 'Połączono';
-			case 'nwc.labels.disconnected': return 'Rozłączono';
-			case 'nwc.labels.scanQrCode': return 'Zeskanuj kod QR z połączeniem NWC';
-			case 'nwc.labels.balance': return 'Saldo';
-			case 'nwc.labels.budget': return 'Budżet';
-			case 'nwc.labels.usedBudget': return 'Wykorzystano';
-			case 'nwc.labels.totalBudget': return 'Łącznie';
-			case 'nwc.labels.renewsIn': return 'Odnowienie za';
-			case 'nwc.labels.renewalPeriod': return 'Okres odnowienia';
-			case 'nwc.labels.relay': return 'Przekaźnik';
-			case 'nwc.labels.relays': return 'Przekaźniki';
-			case 'nwc.prompts.enter': return 'Wprowadź swój ciąg połączenia NWC';
-			case 'nwc.prompts.connect': return 'Połącz portfel';
-			case 'nwc.prompts.disconnect': return 'Rozłącz';
-			case 'nwc.prompts.confirmDisconnect': return 'Czy na pewno chcesz rozłączyć portfel NWC?';
-			case 'nwc.prompts.pasteConnection': return 'Wklej ciąg połączenia';
-			case 'nwc.prompts.chooseMethod': return 'Wybierz sposób połączenia portfela Lightning';
-			case 'nwc.prompts.howToGet': return 'Nie masz jeszcze połączenia NWC? Dowiedz się, jak je uzyskać!';
-			case 'nwc.prompts.learnMore': return 'Dowiedz się więcej o NWC';
-			case 'nwc.actions.connectAlbyGo': return 'Połącz z Alby Go';
-			case 'nwc.actions.connectNwc': return 'Skanuj kod QR NWC';
-			case 'nwc.feedback.connected': return 'Portfel NWC połączony pomyślnie!';
-			case 'nwc.feedback.disconnected': return 'Portfel NWC rozłączony';
-			case 'nwc.feedback.connecting': return 'Łączenie z portfelem NWC...';
-			case 'nwc.feedback.loadingWalletInfo': return 'Ładowanie informacji o portfelu...';
-			case 'nwc.errors.connecting': return ({required Object details}) => 'Błąd połączenia z NWC: ${details}';
-			case 'nwc.errors.disconnecting': return ({required Object details}) => 'Błąd rozłączania NWC: ${details}';
-			case 'nwc.errors.invalid': return 'Nieprawidłowy ciąg połączenia NWC';
-			case 'nwc.errors.required': return 'Wymagany ciąg połączenia NWC';
-			case 'nwc.errors.loadingBalance': return 'Nie udało się załadować salda portfela';
-			case 'nwc.errors.loadingBudget': return 'Nie udało się załadować budżetu portfela';
-			case 'nwc.time.minutes': return ({required Object count}) => '${count}m';
-			case 'nwc.time.hours': return ({required Object count}) => '${count}h';
-			case 'nwc.time.days': return ({required Object count}) => '${count}d';
-			case 'nwc.time.justNow': return 'teraz';
-			case 'nekoManagement.title': return 'Neko';
-			case 'relays.title': return 'Przekaźniki';
-			case 'relays.status.connected': return 'Połączony';
-			case 'relays.status.connecting': return 'Łączenie';
-			case 'relays.status.reconnecting': return 'Ponowne łączenie';
-			case 'relays.status.disconnected': return 'Rozłączony';
-			case 'relays.popup.title': return ({required Object connected, required Object total}) => 'Przekaźniki (${connected}/${total} połączonych)';
-			case 'relays.popup.connectingMessage': return 'Łączenie z przekaźnikami...';
-			case 'offerNotifications.activeService.title': return 'Oczekiwanie na nowe oferty';
-			case 'offerNotifications.activeService.body': return 'Usługa w tle monitorująca ofert BitBlik.';
-			case 'offerNotifications.funded.title': return 'Oferta zasilona';
-			case 'offerNotifications.funded.body': return 'Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.';
-			case 'offerNotifications.reserved.title': return 'Oferta zarezerwowana';
-			case 'offerNotifications.reserved.body': return 'Taker zarezerwował Twoją ofertę.';
-			case 'offerNotifications.blikReady.title': return 'Kod BLIK gotowy';
-			case 'offerNotifications.blikReady.body': return 'Twój kod BLIK jest gotowy do wyświetlenia.';
-			case 'offerNotifications.newOffer.title': return 'Nowa oferta dostępna';
-			case 'offerNotifications.newOffer.body': return ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sat';
-			case 'offerNotifications.categories.shop': return 'Sklep';
-			case 'offerNotifications.categories.atm': return 'Bankomat';
-			case 'offerNotifications.categories.online': return 'Online';
-			case 'offerNotifications.blikPendingReminder.title': return 'BLIK czeka na Twoją akcję';
-			case 'offerNotifications.blikPendingReminder.body': return 'Potwierdź płatność lub oznacz kod BLIK jako nieprawidłowy.';
-			case 'offerNotifications.takerCharged.title': return 'BLIK obciążony';
-			case 'offerNotifications.takerCharged.body': return 'Taker zgłasza, że BLIK został obciążony. Potwierdź lub oznacz jako nieprawidłowy.';
-			case 'offerNotifications.invalidBlik.title': return 'BLIK oznaczony jako nieprawidłowy';
-			case 'offerNotifications.invalidBlik.body': return 'Maker oznaczył Twój kod BLIK jako nieprawidłowy.';
-			case 'offerNotifications.takerPaid.title': return 'Płatność otrzymana';
-			case 'offerNotifications.takerPaid.body': return 'Twoja płatność Lightning została wysłana.';
-			case 'altstore.dialogTitle': return 'AltStore Nie Zainstalowany';
-			case 'altstore.step1Title': return 'Pobierz i zainstaluj AltStore PAL';
-			case 'altstore.step1Button': return 'altstore.io/download';
-			case 'altstore.step1Warning': return 'Potrzebujesz Safari, aby zainstalować AltStore PAL!';
-			case 'altstore.step2Title': return 'Zainstaluj BitBlik';
-			case 'altstore.step2Button': return 'Zainstaluj BitBlik';
-			case 'altstore.step2Fallback': return 'Nie działa? Wklej źródło do AltStore';
-			default: return null;
-		}
+		return switch (path) {
+			'app.title' => 'BitBlik',
+			'app.greeting' => 'Cześć!',
+			'app.changelog' => 'Historia zmian',
+			'common.buttons.cancel' => 'Anuluj',
+			'common.buttons.save' => 'Zapisz',
+			'common.buttons.done' => 'Gotowe',
+			'common.buttons.retry' => 'Spróbuj ponownie',
+			'common.buttons.goHome' => 'Wróć do strony głównej',
+			'common.buttons.saveAndContinue' => 'Zapisz i kontynuuj',
+			'common.buttons.reveal' => 'Pokaż',
+			'common.buttons.hide' => 'Ukryj',
+			'common.buttons.copy' => 'Kopiuj',
+			'common.buttons.close' => 'Zamknij',
+			'common.buttons.restore' => 'Przywróć',
+			'common.buttons.faq' => 'FAQ',
+			'common.labels.amount' => 'Kwota (PLN)',
+			'common.labels.status' => ({required Object status}) => 'Status: ${status}',
+			'common.labels.role' => ({required Object role}) => 'Rola: ${role}',
+			'common.notifications.success' => 'Sukces',
+			'common.notifications.error' => 'Błąd',
+			'common.notifications.loading' => 'Ładowanie...',
+			'common.clipboard.copyToClipboard' => 'Kopiuj do schowka',
+			'common.clipboard.pasteFromClipboard' => 'Wklej ze schowka',
+			'common.clipboard.copied' => 'Skopiowano do schowka!',
+			'common.actions.cancelAndReturnToOffers' => 'Anuluj i wróć do ofert',
+			'common.actions.cancelAndReturnHome' => 'Anuluj i wróć do strony głównej',
+			'lightningAddress.labels.address' => 'Adres Lightning (LNURL)',
+			'lightningAddress.labels.hint' => 'uzytkownik@domena.com',
+			'lightningAddress.labels.short' => ({required Object address}) => 'Adres Lightning: ${address}',
+			'lightningAddress.labels.receivingAddress' => 'Twój adres odbiorczy:',
+			'lightningAddress.prompts.enter' => 'Wprowadź swój adres Lightning, aby kontynuować',
+			'lightningAddress.prompts.edit' => 'Edytuj',
+			'lightningAddress.prompts.invalid' => 'Wprowadź prawidłowy adres Lightning',
+			'lightningAddress.prompts.required' => 'Adres Lightning jest wymagany.',
+			'lightningAddress.prompts.enterToTakeOffer' => 'Musisz ustawić adres Lightning, aby przyjąć ofertę.',
+			'lightningAddress.prompts.missing' => 'Brak adresu Lightning. Dodaj go, aby móc przyjmować oferty.',
+			'lightningAddress.prompts.add' => 'Dodaj',
+			'lightningAddress.prompts.delete' => 'Usuń',
+			'lightningAddress.prompts.confirmDelete' => 'Czy na pewno chcesz usunąć swój adres Lightning?',
+			'lightningAddress.prompts.howToGet' => 'Nie masz jeszcze adresu Lightning? Dowiedz się, jak go zdobyć!',
+			'lightningAddress.prompts.learnMore' => 'Dowiedz się więcej o adresach Lightning',
+			'lightningAddress.feedback.saved' => 'Adres Lightning zapisany!',
+			'lightningAddress.feedback.updated' => 'Adres Lightning zaktualizowany!',
+			'lightningAddress.feedback.valid' => 'Prawidłowy adres Lightning',
+			'lightningAddress.errors.saving' => ({required Object details}) => 'Błąd podczas zapisywania adresu: ${details}',
+			'lightningAddress.errors.loading' => ({required Object details}) => 'Błąd podczas ładowania adresu Lightning: ${details}',
+			'offers.details.yourOffer' => 'Twoja oferta:',
+			'offers.details.selectedOffer' => 'Oferta:',
+			'offers.details.activeOffer' => 'Masz aktywną ofertę:',
+			'offers.details.finishedOffers' => 'Zakończone oferty',
+			'offers.details.noAvailable' => 'Brak dostępnych ofert.',
+			'offers.details.noAvailableTip' => 'Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik.',
+			'offers.details.noSuccessfulTrades' => 'Brak udanych transakcji.',
+			'offers.details.loadingDetails' => 'Ładowanie szczegółów oferty...',
+			'offers.details.amount' => ({required Object amount}) => 'Kwota: ${amount} satoshi',
+			'offers.details.amountWithCurrency' => ({required Object amount, required Object currency}) => '${amount} ${currency}',
+			'offers.details.makerFee' => ({required Object fee}) => 'Opłata: ${fee} sats',
+			'offers.details.takerFee' => ({required Object fee}) => 'Opłata: ${fee} sats',
+			'offers.details.subtitle' => ({required Object sats, required Object fee, required Object status}) => '${sats} + ${fee} (opłata) satoshi\nStatus: ${status}',
+			'offers.details.subtitleWithDate' => ({required Object sats, required Object fee, required Object status, required Object date}) => '${sats} + ${fee} (opłata) satoshi\nStatus: ${status}\nZapłacono: ${date}',
+			'offers.details.activeSubtitle' => ({required Object status, required Object amount}) => 'Status: ${status}\nKwota: ${amount} satoshi',
+			'offers.details.id' => ({required Object id}) => 'ID Oferty: ${id}...',
+			'offers.details.created' => ({required Object dateTime}) => 'Utworzono: ${dateTime}',
+			'offers.details.takenAfter' => ({required Object duration}) => 'Przyjęto po: ${duration}',
+			'offers.details.paidAfter' => ({required Object duration}) => 'Zapłacono po: ${duration}',
+			'offers.details.exchangeRate' => 'Kurs wymiany',
+			'offers.details.takerFeeLabel' => 'Opłata',
+			'offers.details.amountLabel' => 'Kwota',
+			'offers.details.feeLabel' => 'Opłata',
+			'offers.details.statusLabel' => 'Status',
+			'offers.details.youllReceive' => 'Otrzymasz',
+			'offers.details.coordinator' => 'Koordynator',
+			'offers.details.categoryLabel' => 'Kategoria',
+			'offers.details.categories.physicalShop' => 'Sklep, kawiarnia lub restauracja',
+			'offers.details.categories.atmCashout' => 'Wypłata gotówki z bankomatu',
+			'offers.details.categories.onlineService' => 'Produkt lub usługa online',
+			'offers.details.consents.atm' => 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.',
+			'offers.details.consents.ecommerce' => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.',
+			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.',
+			'offers.tooltips.ratesFetchedAt' => 'Pobrano o',
+			'offers.tooltips.ratesSources' => 'Źródła średniego kursu',
+			'offers.actions.take' => 'WEŹ',
+			'offers.actions.takeOffer' => 'Weź ofertę',
+			'offers.actions.resume' => 'Wprowadź BLIK',
+			'offers.actions.cancel' => 'Anuluj ofertę',
+			'offers.actions.view' => 'Zobacz',
+			'offers.status.created' => 'Utworzona',
+			'offers.status.funded' => 'Sfinansowana',
+			'offers.status.expired' => 'Wygasła',
+			'offers.status.cancelled' => 'Anulowana',
+			'offers.status.reserved' => 'Zarezerwowana',
+			'offers.status.blikReceived' => 'BLIK wysłany',
+			'offers.status.blikSentToMaker' => 'Otrzymano BLIK',
+			'offers.status.expiredBlik' => 'BLIK wygasł',
+			'offers.status.expiredSentBlik' => 'BLIK wygasł',
+			'offers.status.takerCharged' => 'Taker obciążony',
+			'offers.status.invalidBlik' => 'Nieprawidłowy BLIK',
+			'offers.status.conflict' => 'Konflikt',
+			'offers.status.dispute' => 'Spór',
+			'offers.status.makerConfirmed' => 'Potwierdzona',
+			'offers.status.settled' => 'Rozliczona',
+			'offers.status.payingTaker' => 'Płacenie Takera',
+			'offers.status.takerPaymentFailed' => 'Płatność Takera nieudana',
+			'offers.status.takerPaid' => 'Zapłacony',
+			'offers.status.unknownStatus' => 'Nieznany',
+			'offers.statusMessages.reserved' => 'Oferta zarezerwowana przez Takera!',
+			'offers.statusMessages.cancelled' => 'Oferta anulowana pomyślnie.',
+			'offers.statusMessages.cancelledOrExpired' => 'Oferta została anulowana lub wygasła.',
+			'offers.statusMessages.noLongerAvailable' => ({required Object status}) => 'Oferta nie jest już dostępna (Status: ${status}).',
+			'offers.progress.waitingForTaker' => ({required Object time}) => 'Oczekiwanie na takera: ${time}',
+			'offers.progress.reserved' => ({required Object seconds}) => 'Zarezerwowano: ${seconds} s pozostało',
+			'offers.progress.confirming' => ({required Object seconds}) => 'Potwierdzanie: ${seconds} s pozostało',
+			'offers.errors.loading' => ({required Object details}) => 'Błąd ładowania ofert: ${details}',
+			'offers.errors.loadingDetails' => ({required Object details}) => 'Błąd ładowania szczegółów oferty: ${details}',
+			'offers.errors.detailsMissing' => 'Błąd: Brakujące lub nieprawidłowe szczegóły oferty.',
+			'offers.errors.detailsNotLoaded' => 'Nie udało się załadować szczegółów oferty.',
+			'offers.errors.notFound' => 'Błąd: Oferta nie znaleziona.',
+			'offers.errors.unexpectedState' => 'Błąd: Oferta jest w nieoczekiwanym stanie.',
+			'offers.errors.unexpectedStateWithStatus' => ({required Object status}) => 'Oferta jest w nieoczekiwanym stanie (${status}). Spróbuj ponownie lub skontaktuj się z pomocą.',
+			'offers.errors.invalidStatus' => 'Oferta ma nieprawidłowy status.',
+			'offers.errors.couldNotIdentify' => 'Błąd: Nie można zidentyfikować oferty do anulowania.',
+			'offers.errors.cannotBeCancelled' => ({required Object status}) => 'Oferty nie można anulować w obecnym stanie (${status}).',
+			'offers.errors.failedToCancel' => ({required Object details}) => 'Nie udało się anulować oferty: ${details}',
+			'offers.errors.activeDetailsLost' => 'Błąd: Utracono szczegóły aktywnej oferty.',
+			'offers.errors.checkingActive' => ({required Object details}) => 'Błąd sprawdzania aktywnych ofert: ${details}',
+			'offers.errors.cannotResume' => ({required Object status}) => 'Nie można wznowić oferty w stanie: ${status}',
+			'offers.errors.cannotResumeTaker' => ({required Object status}) => 'Nie można wznowić oferty takera w stanie: ${status}',
+			'offers.errors.resuming' => ({required Object details}) => 'Błąd wznawiania oferty: ${details}',
+			'offers.errors.makerPublicKeyNotFound' => 'Nie znaleziono klucza publicznego Makera',
+			'offers.errors.takerPublicKeyNotFound' => 'Nie znaleziono klucza publicznego Takera.',
+			'offers.errors.atmConsentRequired' => 'Zaakceptuj warunek dodatkowej opłaty ATM przed wzięciem tej oferty.',
+			'offers.errors.ecommerceConsentRequired' => 'Zaakceptuj warunek zwrotu środków z ecommerce przed wzięciem tej oferty.',
+			'offers.success.title' => 'Oferta zakończona',
+			'offers.success.headline' => 'Płatność potwierdzona!',
+			'offers.success.subtitle' => 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.',
+			'offers.success.detailsTitle' => 'Szczegóły oferty:',
+			'offers.success.duration' => ({required Object time}) => 'Realizacja oferty zajęła ${time}.',
+			'reservations.actions.cancel' => 'Anuluj rezerwację',
+			'reservations.feedback.cancelled' => 'Rezerwacja anulowana.',
+			'reservations.errors.cancelling' => ({required Object error}) => 'Nie udało się anulować rezerwacji: ${error}',
+			'reservations.errors.failedToReserve' => ({required Object details}) => 'Nie udało się zarezerwować oferty: ${details}',
+			'reservations.errors.failedNoTimestamp' => 'Nie udało się zarezerwować oferty (brak znacznika czasu).',
+			'reservations.errors.timestampMissing' => 'Brak znacznika czasu rezerwacji oferty.',
+			'reservations.errors.notReserved' => ({required Object status}) => 'Oferta nie jest już w stanie zarezerwowanym (${status}).',
+			'exchange.labels.enterAmount' => 'Wprowadź kwotę (PLN) do zapłaty:',
+			'exchange.labels.equivalent' => ({required Object sats}) => '≈ ${sats} satoshi',
+			'exchange.labels.rate' => ({required Object rate}) => 'Kurs wymiany ≈ ${rate} PLN/BTC',
+			'exchange.feedback.fetching' => 'Pobieranie kursu wymiany...',
+			'exchange.errors.fetchingRate' => 'Nie udało się pobrać kursu wymiany.',
+			'exchange.errors.invalidFormat' => 'Nieprawidłowy format liczby',
+			'exchange.errors.mustBePositive' => 'Kwota musi być dodatnia',
+			'exchange.errors.invalidFeePercentage' => 'Nieprawidłowy procent opłaty',
+			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'Kwota jest za niska. Minimum to ${minAmount} ${currency}.',
+			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}.',
+			'coordinator.title' => 'Koordynatorzy',
+			'coordinator.info.fee' => 'opłata',
+			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Kwota: ${minAmount}-${maxAmount} ${currency}',
+			'coordinator.info.feeDisplay' => ({required Object fee}) => '${fee}% opłata',
+			'coordinator.selector.loading' => 'Ładowanie koordynatorów...',
+			'coordinator.selector.errorLoading' => 'Błąd ładowania koordynatorów',
+			'coordinator.selector.choose' => 'Wybierz koordynatora',
+			'coordinator.selector.viewNostrProfile' => 'Zobacz profil Nostr',
+			'coordinator.selector.unresponsive' => 'Ten koordynator nie odpowiada',
+			'coordinator.selector.waitingResponse' => 'Oczekiwanie na odpowiedź koordynatora',
+			'coordinator.selector.termsAccept' => 'Akceptuję ',
+			'coordinator.selector.termsOfUsage' => 'Warunki użytkowania',
+			'coordinator.dialog.makerFee' => 'Opłata twórcy',
+			'coordinator.dialog.takerFee' => 'Opłata odbiorcy',
+			'coordinator.dialog.amountRange' => 'Zakres kwoty',
+			'coordinator.dialog.reservationTime' => 'Czas rezerwacji',
+			'coordinator.dialog.currencies' => 'Waluty',
+			'coordinator.dialog.viewTerms' => 'Zobacz warunki',
+			'coordinator.management.title' => 'Zarządzanie Koordynatorami',
+			'coordinator.management.availableCoordinators' => 'Dostępni Koordynatorzy',
+			'coordinator.management.noCoordinators' => 'Nie odkryto jeszcze żadnych koordynatorów.',
+			'coordinator.management.online' => 'Online',
+			'coordinator.management.unknownOffline' => 'Nieznany/Offline',
+			'coordinator.management.openNostrProfile' => 'Otwórz profil Nostr',
+			'coordinator.management.enable' => 'Włącz',
+			'coordinator.management.remove' => 'Usuń',
+			'coordinator.management.addCustomWhitelist' => 'Dodaj koordynatora',
+			'coordinator.management.addCustomWhitelistHint' => 'npub1...',
+			'coordinator.management.add' => 'Dodaj',
+			'coordinator.management.coordinatorBlacklisted' => 'Koordynator zablokowany',
+			'coordinator.management.coordinatorUnblacklisted' => 'Koordynator odblokowany',
+			'coordinator.management.coordinatorAdded' => 'Koordynator dodany do niestandardowej białej listy',
+			'coordinator.management.coordinatorRemoved' => 'Koordynator usunięty z niestandardowej białej listy',
+			'coordinator.management.coordinatorAddInfoUnavailable' => 'Nie znaleziono informacji o koordynatorze w przekaźnikach. Koordynator nie został dodany.',
+			'coordinator.management.pleaseEnterNpub' => 'Proszę wprowadzić npub',
+			'coordinator.management.error' => 'Błąd',
+			'coordinator.management.metricYourOffers' => 'Twoje oferty',
+			'coordinator.management.metricYourOffersTooltip' => 'Liczba ofert, które pomyślnie zrealizowałeś z tym koordynatorem.',
+			'coordinator.management.metricNetworkOffers' => 'Oferty (30 dni)',
+			'coordinator.management.metricNetworkOffersTooltip' => 'Pomyślnie rozliczone oferty przez tego koordynatora dla wszystkich użytkowników w ciągu ostatnich 30 dni.',
+			'maker.roleSelection.button' => 'ZAPŁAĆ przez Lightning',
+			'maker.amountForm.progress.step1' => '1. Utwórz Ofertę',
+			'maker.amountForm.progress.step2' => '2. Czekaj na zabranie',
+			'maker.amountForm.progress.step3' => '3. Użyj BLIK',
+			'maker.amountForm.labels.coordinator' => 'Koordynator',
+			'maker.amountForm.labels.category' => 'Kategoria',
+			'maker.amountForm.labels.exchangeRate' => 'Kurs wymiany',
+			'maker.amountForm.labels.fee' => 'Opłata',
+			'maker.amountForm.labels.satoshisToPay' => 'Do zapłaty',
+			'maker.amountForm.labels.enterAmount' => 'Wprowadź kwotę',
+			'maker.amountForm.labels.tapToSelect' => 'Kliknij, aby wybrać',
+			'maker.amountForm.actions.generateInvoice' => 'Wygeneruj Fakturę',
+			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning.',
+			'maker.amountForm.tooltips.payInfo' => 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.',
+			'maker.amountForm.category.label' => 'Kategoria oferty',
+			'maker.amountForm.category.options.physicalShop' => 'Sklep, kawiarnia lub restauracja',
+			'maker.amountForm.category.options.atmCashout' => 'Wypłata gotówki z bankomatu',
+			'maker.amountForm.category.options.onlineService' => 'Produkt lub usługa online',
+			'maker.amountForm.category.shortLabels.shop' => 'Sklep',
+			'maker.amountForm.category.shortLabels.atm' => 'Bankomat',
+			'maker.amountForm.category.shortLabels.online' => 'Online',
+			'maker.amountForm.category.atmHint' => 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.',
+			'maker.amountForm.category.physicalShopHint' => 'Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.',
+			'maker.amountForm.category.ecommerceWarningTitle' => 'Ryzyko zwrotu od sprzedawcy online',
+			'maker.amountForm.category.ecommerceWarningBody' => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.',
+			'maker.amountForm.category.ecommerceConfirmation' => 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.',
+			'maker.amountForm.category.whyThisIsNeeded' => 'dlaczego to jest potrzebne?',
+			'maker.amountForm.onboarding.titlePrefix' => 'Nowość',
+			'maker.amountForm.onboarding.title' => 'Wybierz kategorię oferty',
+			'maker.amountForm.onboarding.body' => 'Przed wygenerowaniem faktury wybierz kategorię, która najlepiej opisuje to, za co płacisz.',
+			'maker.amountForm.onboarding.showWhy' => 'Dlaczego to jest ważne?',
+			'maker.amountForm.onboarding.hideWhy' => 'Ukryj szczegóły',
+			'maker.amountForm.onboarding.whyTitle' => 'Dobra kategoria pomaga takerom bezpiecznie podjąć decyzję',
+			'maker.amountForm.onboarding.whyBody' => 'Różne sytuacje oznaczają różne oczekiwania i ryzyka. Wypłaty z bankomatu mogą mieć dodatkowe opłaty bankowe, a zakupy online mogą wiązać się z problemami przy zwrotach. Oznaczenie właściwej kategorii daje takerowi potrzebny kontekst przed akceptacją oferty.',
+			'maker.amountForm.onboarding.cta' => 'Rozumiem',
+			'maker.amountForm.errors.initiating' => ({required Object details}) => 'Błąd inicjowania oferty: ${details}',
+			'maker.amountForm.errors.publicKeyNotLoaded' => 'Błąd: Klucz publiczny nie został jeszcze załadowany.',
+			'maker.amountForm.errors.noCoordinatorMatchesAmount' => 'Żaden koordynator nie obsługuje tej kwoty. Spróbuj inną wartość.',
+			'maker.amountForm.errors.categoryRequired' => 'Wybierz kategorię oferty.',
+			'maker.amountForm.errors.ecommerceConfirmationRequired' => 'Potwierdź ryzyko zwrotu od sprzedawcy online przed kontynuacją.',
+			'maker.payInvoice.title' => 'Zapłać tę fakturę Hold:',
+			'maker.payInvoice.actions.copy' => 'Kopiuj Fakturę',
+			'maker.payInvoice.actions.payInWallet' => 'Otwórz w portfelu zewnętrznym',
+			'maker.payInvoice.actions.connectWallet' => 'Połącz portfel',
+			'maker.payInvoice.actions.payWithNwc' => 'Zapłać',
+			'maker.payInvoice.actions.paying' => 'Płacenie...',
+			'maker.payInvoice.feedback.copied' => 'Faktura skopiowana do schowka!',
+			'maker.payInvoice.feedback.waitingConfirmation' => 'Oczekiwanie na potwierdzenie płatności...',
+			'maker.payInvoice.feedback.nwcConnected' => 'Portfel NWC połączony!',
+			'maker.payInvoice.feedback.nwcPaymentSuccess' => 'Płatność udana!',
+			'maker.payInvoice.errors.couldNotOpenApp' => 'Nie można otworzyć aplikacji Lightning dla faktury.',
+			'maker.payInvoice.errors.openingApp' => ({required Object details}) => 'Błąd otwierania aplikacji Lightning: ${details}',
+			'maker.payInvoice.errors.publicKeyNotAvailable' => 'Klucz publiczny nie jest dostępny.',
+			'maker.payInvoice.errors.couldNotFetchActive' => 'Nie udało się pobrać szczegółów aktywnej oferty. Mogła wygasnąć.',
+			'maker.payInvoice.errors.nwcPaymentFailed' => ({required Object details}) => 'Płatność nie powiodła się: ${details}',
+			'maker.payInvoice.errors.nwcNotConnected' => 'Portfel NWC nie jest połączony',
+			'maker.payInvoice.errors.insufficientBalance' => ({required Object required, required Object available}) => 'Niewystarczające środki. Potrzeba ${required} sats, dostępne ${available} sats',
+			'maker.payInvoice.errors.cancelOfferAlreadyFunded' => 'Koordynator zgłasza, że ta oferta jest już opłacona. Nie można jej teraz anulować.',
+			'maker.payInvoice.errors.cancelFailed' => ({required Object details}) => 'Nie można anulować oferty: ${details}',
+			'maker.waitTaker.message' => 'Oczekiwanie na rezerwację przez Kupującego...',
+			'maker.waitTaker.errorActiveOfferDetailsLost' => 'Błąd: Utracono szczegóły aktywnej oferty.',
+			'maker.waitTaker.errorFailedToRetrieveBlik' => 'Błąd: Nie udało się pobrać kodu BLIK.',
+			'maker.waitTaker.errorRetrievingBlik' => ({required Object details}) => 'Błąd pobierania kodu BLIK: ${details}',
+			'maker.waitTaker.offerNoLongerAvailable' => ({required Object status}) => 'Oferta nie jest już dostępna (Status: ${status}).',
+			'maker.waitTaker.errorCouldNotIdentifyOffer' => 'Błąd: Nie można zidentyfikować oferty do anulowania.',
+			'maker.waitTaker.offerCannotBeCancelled' => ({required Object status}) => 'Oferty nie można anulować w obecnym stanie (${status}).',
+			'maker.waitTaker.offerCancelledSuccessfully' => 'Oferta anulowana pomyślnie.',
+			'maker.waitTaker.failedToCancelOffer' => ({required Object details}) => 'Nie udało się anulować oferty: ${details}',
+			'maker.waitTaker.offerExpiredTitle' => 'Oferta wygasła',
+			'maker.waitTaker.offerExpiredMessage' => 'Żaden taker nie zarezerwował oferty w czasie.',
+			'maker.waitTaker.recreateOffer' => 'Nowa oferta — ta sama kwota',
+			'maker.waitForBlik.title' => 'Oczekiwanie na BLIK',
+			'maker.waitForBlik.messageInfo' => 'Ktoś zarezerwował twoją ofertę!',
+			'maker.waitForBlik.messageWaiting' => 'Oczekiwanie na kod BLIK...',
+			'maker.waitForBlik.progressLabel' => ({required Object seconds}) => 'Zarezerwowano: ${seconds} s pozostało',
+			'maker.confirmPayment.title' => 'Otrzymano kod BLIK!',
+			'maker.confirmPayment.retrieving' => 'Pobieranie kodu BLIK...',
+			'maker.confirmPayment.instruction1' => 'Wprowadź kod do systemu płatności BLIK.',
+			'maker.confirmPayment.instruction2' => 'Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.',
+			'maker.confirmPayment.instruction3' => 'Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:',
+			'maker.confirmPayment.takerChargedWarning' => 'Pobierający zgłosił, że płatność BLIK została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.',
+			'maker.confirmPayment.expiredTitle' => 'Kod BLIK wygasł',
+			'maker.confirmPayment.expiredWarning' => 'Kod BLIK wygasł. Musisz ręcznie potwierdzić status płatności:',
+			'maker.confirmPayment.expiredInstruction1' => 'Jeśli płatność BLIK zakończyła się sukcesem i zrealizowałeś zakup, kliknij "Potwierdź udaną płatność" poniżej.',
+			'maker.confirmPayment.expiredInstruction2' => 'Jeśli płatność BLIK nie powiodła się lub nie została zrealizowana, kliknij "Nieprawidłowy kod BLIK" poniżej.',
+			'maker.confirmPayment.actions.confirm' => 'Potwierdź udaną płatność',
+			'maker.confirmPayment.actions.markInvalid' => 'Nieprawidłowy kod BLIK',
+			'maker.confirmPayment.actions.copyBlik' => 'Kopiuj BLIK',
+			'maker.confirmPayment.confirmDialog.title' => 'Potwierdzić płatność?',
+			'maker.confirmPayment.confirmDialog.content' => 'Ta akcja jest nieodwracalna. Po potwierdzeniu:\n\n• Kupujący otrzyma środki natychmiast\n• Koordynator nie będzie mógł zakwestionować środków\n• Nie możesz cofnąć tej akcji\n\nPotwierdź tylko wtedy, gdy płatność BLIK zakończyła się sukcesem.',
+			'maker.confirmPayment.confirmDialog.cancel' => 'Anuluj',
+			'maker.confirmPayment.confirmDialog.confirmButton' => 'Tak, potwierdź płatność',
+			'maker.confirmPayment.invalidBlikDisputeDialog.title' => 'Otworzyć spór?',
+			'maker.confirmPayment.invalidBlikDisputeDialog.content' => 'Kupujący zgłosił, że płatność BLIK została pobrana z jego konta.\n\nOznaczenie tego jako nieprawidłowe natychmiast otworzy SPÓR wymagający interwencji koordynatora.\n\n• Opłata za spór może zostać naliczona, jeśli zostanie rozstrzygnięty na Twoją niekorzyść\n• Faktura hold zostanie rozliczona natychmiast\n• Wymagana będzie ręczna weryfikacja\n\nKontynuuj tylko wtedy, gdy masz pewność, że płatność BLIK NIE powiodła się.',
+			'maker.confirmPayment.invalidBlikDisputeDialog.cancel' => 'Anuluj',
+			'maker.confirmPayment.invalidBlikDisputeDialog.confirmButton' => 'Tak, otwórz spór',
+			'maker.confirmPayment.feedback.confirmed' => 'Maker potwierdził płatność.',
+			'maker.confirmPayment.feedback.confirmedTakerPaid' => 'Płatność potwierdzona! Taker otrzyma środki.',
+			'maker.confirmPayment.feedback.progressLabel' => ({required Object seconds}) => 'Potwierdzanie: ${seconds} s pozostało',
+			'maker.confirmPayment.errors.failedToRetrieve' => 'Błąd: Nie udało się pobrać kodu BLIK.',
+			'maker.confirmPayment.errors.retrieving' => ({required Object details}) => 'Błąd pobierania kodu BLIK: ${details}',
+			'maker.confirmPayment.errors.missingHashOrKey' => 'Błąd: Brakujący hash płatności lub klucz publiczny.',
+			'maker.confirmPayment.errors.incorrectState' => ({required Object status}) => 'Oferta nie jest w prawidłowym stanie do potwierdzenia (Status: ${status})',
+			'maker.confirmPayment.errors.confirming' => ({required Object details}) => 'Błąd potwierdzania płatności: ${details}',
+			'maker.confirmPayment.errors.invalidState' => 'Błąd: Otrzymano nieprawidłowy stan oferty.',
+			'maker.confirmPayment.errors.internalIncomplete' => 'Błąd wewnętrzny: Niekompletne szczegóły oferty.',
+			'maker.confirmPayment.errors.notAwaitingConfirmation' => ({required Object status}) => 'Oferta nie oczekuje już na potwierdzenie (Status: ${status}).',
+			'maker.confirmPayment.errors.unexpectedStatus' => 'Otrzymano nieoczekiwany status oferty z serwera.',
+			'maker.invalidBlik.title' => 'Nieprawidłowy kod BLIK',
+			'maker.invalidBlik.info' => 'Oznaczyłeś kod BLIK jako nieprawidłowy. Oczekiwanie na podanie nowego kodu przez takera lub rozpoczęcie sporu.',
+			'maker.conflict.title' => 'Konflikt Oferty',
+			'maker.conflict.headline' => 'Zgłoszono Konflikt Oferty',
+			'maker.conflict.body' => 'Oznaczyłeś kod BLIK jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.',
+			'maker.conflict.instructions' => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.',
+			'maker.conflict.actions.back' => 'Powrót do strony głównej',
+			'maker.conflict.actions.confirmPayment' => 'Mój błąd, potwierdź sukces płatności BLIK',
+			'maker.conflict.actions.openDispute' => 'Płatność BLIK NIE powiodła się, OTWÓRZ SPÓR',
+			'maker.conflict.actions.submitDispute' => 'Zgłoś Spór',
+			'maker.conflict.disputeDialog.title' => 'Otworzyć spór?',
+			'maker.conflict.disputeDialog.content' => 'Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) do portfela według własnego wyboru.',
+			'maker.conflict.disputeDialog.contentDetailed' => 'Otwarcie sporu będzie wymagało ręcznej interwencji koordynatora, co zajmuje czas i wiąże się z opłatą za spór.\n\nFaktura hold zostanie natychmiast rozliczona, aby zapobiec jej wygaśnięciu przed rozstrzygnięciem sporu.\n\nJeśli spór zostanie rozstrzygnięty na Twoją korzyść, kwota satoshi zostanie zwrócona do portfela według własnego wyboru (pomniejszona o opłaty). Upewnij się, że masz portfel gotowy do odbioru.',
+			'maker.conflict.disputeDialog.actions.confirm' => 'Otwórz Spór',
+			'maker.conflict.disputeDialog.actions.cancel' => 'Anuluj',
+			'maker.conflict.feedback.disputeOpenedSuccess' => 'Spór pomyślnie otwarty. Koordynator rozpatrzy sprawę.',
+			'maker.conflict.errors.openingDispute' => ({required Object error}) => 'Błąd otwierania sporu: ${error}',
+			'maker.conflict.nostrContact.title' => 'Skontaktuj się z Koordynatorem na Nostr',
+			'maker.conflict.nostrContact.description' => 'Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.',
+			'maker.conflict.nostrContact.copyNpub' => 'Kopiuj npub',
+			'maker.conflict.nostrContact.openProfile' => 'Zobacz Profil',
+			'maker.conflict.nostrContact.npubCopied' => 'Npub koordynatora skopiowany do schowka!',
+			'maker.conflict.nostrContact.yourIdentityDescription' => 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.',
+			'maker.conflict.nostrContact.manageNekoKeys' => 'Zarządzaj Kluczami Neko',
+			'maker.success.title' => 'Oferta zakończona',
+			'maker.success.headline' => 'Płatność potwierdzona!',
+			'maker.success.subtitle' => 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.',
+			'maker.success.detailsTitle' => 'Szczegóły oferty:',
+			'maker.success.duration' => ({required Object time}) => 'Oferta zajęła ${time}!',
+			'taker.roleSelection.button' => 'SPRZEDAJ kod BLIK za satoshi',
+			'taker.progress.step1' => 'Wyślij BLIK',
+			'taker.progress.step2' => 'Potwierdź BLIK',
+			'taker.progress.step3' => 'Otrzymaj płatność',
+			'taker.submitBlik.title' => 'Wpisz 6-cyfr BLIK',
+			'taker.submitBlik.label' => 'Kod BLIK',
+			'taker.submitBlik.instruction' => 'Wprowadź BLIK zanim upłynie czas...',
+			'taker.submitBlik.timeLimit' => ({required Object seconds}) => 'Wprowadź BLIK w ciągu: ${seconds} s',
+			'taker.submitBlik.timeExpired' => 'Czas na wprowadzenie kodu BLIK minął.',
+			'taker.submitBlik.actions.submit' => 'Wyślij BLIK',
+			'taker.submitBlik.feedback.pasted' => 'Wklejono kod BLIK.',
+			'taker.submitBlik.validation.invalidFormat' => 'Wprowadź prawidłowy 6-cyfrowy kod BLIK.',
+			'taker.submitBlik.errors.submitting' => ({required Object details}) => 'Błąd wysyłania kodu BLIK: ${details}',
+			'taker.submitBlik.errors.clipboardInvalid' => 'Schowek nie zawiera prawidłowego 6-cyfrowego kodu BLIK.',
+			'taker.submitBlik.errors.stateChanged' => 'Błąd: Stan oferty uległ zmianie.',
+			'taker.submitBlik.errors.stateNotValid' => 'Błąd: Stan oferty nie jest już ważny.',
+			'taker.submitBlik.errors.fetchedIdMismatch' => ({required Object fetchedId, required Object initialId}) => 'Pobrane ID aktywnej oferty (${fetchedId}) nie pasuje do początkowego ID oferty (${initialId}). Niezgodność stanu?',
+			'taker.submitBlik.errors.paymentHashMissing' => 'Brak hasha płatności oferty po pobraniu.',
+			'taker.submitBlik.details.requestedAmount' => 'Żądana kwota BLIK',
+			'taker.submitBlik.details.exchangeRate' => 'Kurs wymiany',
+			'taker.submitBlik.details.takerFee' => 'Opłata Taker',
+			'taker.submitBlik.details.status' => 'Status',
+			'taker.submitBlik.details.youllReceive' => 'Otrzymasz',
+			'taker.waitConfirmation.title' => 'Oczekiwanie na Makera',
+			'taker.waitConfirmation.statusLabel' => ({required Object status}) => 'Status oferty: ${status}',
+			'taker.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'Oczekiwanie na potwierdzenie Makera: ${seconds} s',
+			'taker.waitConfirmation.waitingMakerConfirmation' => ({required Object seconds}) => 'Oczekiwanie na potwierdzenie płatności BLIK przez Makera w jego aplikacji bankowej. Pozostały czas: ${seconds}s',
+			'taker.waitConfirmation.importantNotice' => ({required Object amount, required Object currency}) => 'BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie BLIK tylko na kwotę ${amount} ${currency}',
+			'taker.waitConfirmation.importantBlikAmountConfirmation' => ({required Object amount, required Object currency}) => 'BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność BLIK na kwotę dokładnie ${amount} ${currency}.',
+			'taker.waitConfirmation.instructions' => 'Osoba wystawiająca ofertę musi teraz wpisać kod BLIK w ciągu 2 minut. Następnie musisz zaakceptować kod BLIK w swojej aplikacji bankowej.',
+			'taker.waitConfirmation.categoryReminder.atm' => 'Przypomnienie dla oferty ATM: Twój bank może nadal poprosić o zatwierdzenie dodatkowej opłaty bankomatowej ponad główną kwotę.',
+			'taker.waitConfirmation.categoryReminder.ecommerce' => 'Przypomnienie dla zamówienia online: jeśli sprzedawca wyśle automatyczny zwrot na Twoje konto, skontaktuj się z koordynatorem i oddaj środki.',
+			'taker.waitConfirmation.waitingForMakerToReceive' => 'Czekamy, aż twórca oferty otrzyma Twój kod BLIK...',
+			'taker.waitConfirmation.makerReceivedBlik' => 'Twórca oferty otrzymał Twój kod BLIK',
+			'taker.waitConfirmation.timerExpiredMessage' => 'Minął termin ważności kodu BLIK 2m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.',
+			'taker.waitConfirmation.timerExpiredActions' => 'Minął termin ważności kodu BLIK 2m, ale wystawca nie otrzymał kodu BLIK. Możesz wysłać nowy kod BLIK lub anulować.',
+			'taker.waitConfirmation.resendBlikButton' => 'Wyślij nowy kod BLIK',
+			'taker.waitConfirmation.navigatedHome' => 'Przeniesiono na stronę główną.',
+			'taker.waitConfirmation.expiredTitle' => 'Kod BLIK wygasł',
+			'taker.waitConfirmation.expiredWarning' => 'Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć.',
+			'taker.waitConfirmation.expiredSentWarning' => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?',
+			'taker.waitConfirmation.expiredInstruction1' => 'Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację.',
+			'taker.waitConfirmation.expiredInstruction2' => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.',
+			'taker.waitConfirmation.expiredInstruction3' => 'Jeśli płatność BLIK została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.',
+			'taker.waitConfirmation.takerCharged.title' => 'Oznaczyłeś BLIK jako opłacony',
+			'taker.waitConfirmation.takerCharged.message' => 'Twórca oferty musi potwierdzić płatność lub ją zakwestionować. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny.',
+			'taker.waitConfirmation.expiredActions.reportConflict' => 'BLIK został pobrany z mojego konta',
+			'taker.waitConfirmation.expiredActions.renewReservation' => 'Spróbuj ponownie z nowym kodem BLIK',
+			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Anuluj rezerwację',
+			'taker.waitConfirmation.feedback.makerConfirmed' => 'Maker potwierdził płatność.',
+			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Płatność udana! Wkrótce otrzymasz środki.',
+			'taker.waitConfirmation.feedback.conflictReported' => 'Konflikt zgłoszony. Koordynator rozpatrzy sytuację.',
+			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Otrzymano ofertę o nieprawidłowym stanie dla tego ekranu. Resetowanie.',
+			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
+			'taker.paymentProcess.title' => 'Proces Płatności',
+			'taker.paymentProcess.waitingForOfferUpdate' => 'Oczekiwanie na aktualizację statusu oferty...',
+			'taker.paymentProcess.states.preparing' => 'Przygotowywanie do wysłania płatności...',
+			'taker.paymentProcess.states.sending' => 'Wysyłanie płatności...',
+			'taker.paymentProcess.states.received' => 'Płatność otrzymana!',
+			'taker.paymentProcess.states.failed' => 'Płatność nie powiodła się',
+			'taker.paymentProcess.states.waitingUpdate' => 'Oczekiwanie na aktualizację oferty...',
+			'taker.paymentProcess.steps.makerConfirmedBlik' => 'Maker potwierdził płatność BLIK',
+			'taker.paymentProcess.steps.makerInvoiceSettled' => 'Faktura hold Makera rozliczona',
+			'taker.paymentProcess.steps.takerInvoicePaid' => 'Opłacanie Twojej faktury Lightning',
+			'taker.paymentProcess.steps.takerPaymentFailed' => 'Płatność na Twoją fakturę nie powiodła się',
+			'taker.paymentProcess.errors.sending' => ({required Object details}) => 'Błąd wysyłania płatności: ${details}',
+			'taker.paymentProcess.errors.notConfirmed' => 'Oferta niepotwierdzona przez Makera.',
+			'taker.paymentProcess.errors.expired' => 'Oferta wygasła.',
+			'taker.paymentProcess.errors.cancelled' => 'Oferta anulowana.',
+			'taker.paymentProcess.errors.paymentFailed' => 'Płatność oferty nie powiodła się.',
+			'taker.paymentProcess.errors.unknown' => 'Nieznany błąd oferty.',
+			'taker.paymentProcess.errors.takerPaymentFailed' => 'Płatność na Twoją fakturę Lightning nie powiodła się.',
+			'taker.paymentProcess.errors.noPublicKey' => 'Błąd: Nie można pobrać Twojego klucza publicznego.',
+			'taker.paymentProcess.errors.loadingPublicKey' => 'Błąd ładowania Twoich danych',
+			'taker.paymentProcess.errors.missingPaymentHash' => 'Błąd: Brakujące szczegóły płatności.',
+			'taker.paymentProcess.loading.publicKey' => 'Ładowanie Twoich danych...',
+			'taker.paymentProcess.actions.goToFailureDetails' => 'Wprowadź nową fakturę Lightning',
+			'taker.paymentFailed.title' => 'Płatność Nie Powiodła Się',
+			'taker.paymentFailed.instructions' => ({required Object netAmount}) => 'Proszę podać nową fakturę Lightning na kwotę ${netAmount} satoshi',
+			'taker.paymentFailed.form.newInvoiceLabel' => 'Nowa faktura Lightning',
+			'taker.paymentFailed.form.newInvoiceHint' => 'Wprowadź swoją fakturę BOLT11',
+			'taker.paymentFailed.actions.retryPayment' => 'Wyślij nową fakturę',
+			'taker.paymentFailed.errors.enterValidInvoice' => 'Proszę wprowadzić prawidłową fakturę',
+			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Błąd aktualizacji faktury: ${details}',
+			'taker.paymentFailed.errors.paymentRetryFailed' => 'Ponowna próba płatności nie powiodła się. Sprawdź fakturę lub spróbuj ponownie później.',
+			'taker.paymentFailed.errors.takerPublicKeyNotFound' => 'Nie znaleziono klucza publicznego Kupującego.',
+			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Nie udało się wygenerować faktury: ${details}',
+			'taker.paymentFailed.walletSection.title' => 'Generuj fakturę z portfela',
+			'taker.paymentFailed.walletSection.defaultLabel' => 'domyślny',
+			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Dotknij, aby wygenerować fakturę na ${amountSats} sats',
+			'taker.paymentFailed.loading.processingPayment' => 'Przetwarzanie ponownej płatności...',
+			'taker.paymentFailed.success.title' => 'Płatność udana',
+			'taker.paymentFailed.success.message' => 'Twoja płatność została przetworzona pomyślnie.',
+			'taker.paymentSuccess.title' => 'Płatność Udana',
+			'taker.paymentSuccess.message' => 'Twoja płatność została przetworzona pomyślnie.',
+			'taker.paymentSuccess.actions.goHome' => 'Przejdź do strony głównej',
+			'taker.invalidBlik.title' => 'Nieprawidłowy Kod BLIK',
+			'taker.invalidBlik.message' => 'Maker Odrzucił Kod BLIK',
+			'taker.invalidBlik.explanation' => 'Maker oferty wskazał, że podany przez Ciebie kod BLIK był nieprawidłowy lub nie zadziałał.\n\nCo chcesz zrobić?',
+			'taker.invalidBlik.werentCharged' => 'Jeśli Twoje konto NIE zostało obciążone:',
+			'taker.invalidBlik.wereCharged' => 'Jeśli Twoje konto zostało obciążone:',
+			'taker.invalidBlik.actions.retry' => 'Wyślij nowy kod BLIK',
+			'taker.invalidBlik.actions.cancelReservation' => 'Anuluj Transakcję',
+			'taker.invalidBlik.actions.reportConflict' => 'Rozpocząć Spór',
+			'taker.invalidBlik.actions.returnHome' => 'Wróć do strony głównej',
+			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Konflikt zgłoszony. Koordynator rozpatrzy sprawę.',
+			'taker.invalidBlik.errors.reservationFailed' => 'Nie udało się ponownie zarezerwować oferty',
+			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
+			'taker.conflict.title' => 'Konflikt Oferty',
+			'taker.conflict.headline' => 'Zgłoszono Konflikt Oferty',
+			'taker.conflict.body' => 'Maker oznaczył kod BLIK jako nieprawidłowy, ale Ty zgłosiłeś konflikt, wskazując, że uważasz, iż płatność zakończyła się sukcesem.',
+			'taker.conflict.instructions' => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.',
+			'taker.conflict.actions.back' => 'Powrót do strony głównej',
+			'taker.conflict.feedback.reported' => 'Konflikt zgłoszony. Koordynator rozpatrzy sprawę.',
+			'taker.conflict.errors.reporting' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
+			'taker.conflict.nostrContact.title' => 'Skontaktuj się z Koordynatorem na Nostr',
+			'taker.conflict.nostrContact.description' => 'Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.',
+			'taker.conflict.nostrContact.copyNpub' => 'Kopiuj npub',
+			'taker.conflict.nostrContact.openProfile' => 'Zobacz Profil',
+			'taker.conflict.nostrContact.npubCopied' => 'Npub koordynatora skopiowany do schowka!',
+			'taker.conflict.nostrContact.yourIdentityDescription' => 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.',
+			'taker.conflict.nostrContact.manageNekoKeys' => 'Zarządzaj Kluczami Neko',
+			'blik.instructions.taker' => 'Gdy Maker wprowadzi kod BLIK, będziesz musiał potwierdzić płatność w swojej aplikacji bankowej. Upewnij się, że kwota jest poprawna przed potwierdzeniem.',
+			'nekoInfo.title' => 'Czym jest Neko?',
+			'nekoInfo.description' => 'Twoje Neko to Twoja tożsamość do korzystania z BitBlik. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków.',
+			'nekoInfo.backupWarning' => 'Pamiętaj, aby zarchiwizować swoje Neko',
+			'generateNewKey.title' => 'Nowy',
+			'generateNewKey.description' => 'Czy na pewno chcesz wygenerować nowe Neko? Twoje obecne zostanie utracone na zawsze, jeśli go nie zarchiwizowałeś.',
+			'generateNewKey.buttons.generate' => 'Generuj',
+			'generateNewKey.errors.activeOffer' => 'Nie możesz wygenerować nowego Neko, gdy masz aktywną ofertę.',
+			'generateNewKey.errors.failed' => 'Nie udało się wygenerować nowego Neko',
+			'generateNewKey.feedback.success' => 'Nowe Neko wygenerowane pomyślnie!',
+			'generateNewKey.tooltips.generate' => 'Wygeneruj nowe Neko',
+			'backup.title' => 'Zarchiwizuj',
+			'backup.description' => 'To jest Twój klucz prywatny. Zabezpiecza on komunikację z koordynatorem. Nigdy nikomu go nie ujawniaj. Zarchiwizuj go w bezpiecznym miejscu, aby uniknąć problemów podczas sporów.',
+			'backup.feedback.copied' => 'Klucz prywatny skopiowany do schowka!',
+			'backup.tooltips.backup' => 'Zarchiwizuj Neko',
+			'restore.title' => 'Przywróć',
+			'restore.labels.privateKey' => 'Klucz prywatny',
+			'restore.buttons.restore' => 'Przywróć',
+			'restore.errors.invalidKey' => 'Musi to być 64-znakowy ciąg szesnastkowy.',
+			'restore.errors.failed' => 'Przywracanie nie powiodło się',
+			'restore.feedback.success' => 'Neko przywrócone pomyślnie! Aplikacja zostanie ponownie uruchomiona.',
+			'restore.tooltips.restore' => 'Przywróć Neko',
+			'home.notifications.title' => 'Otrzymuj powiadomienia o nowych ofertach przez:',
+			'home.notifications.telegram' => 'Telegram',
+			'home.notifications.simplex' => 'SimpleX',
+			'home.notifications.element' => 'Element',
+			'home.notifications.signal' => 'Signal',
+			'home.statistics.title' => 'Zakończone oferty',
+			'home.statistics.lifetimeCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
+			'home.statistics.last7DaysCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
+			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}',
+			'home.statistics.errors.loading' => ({required Object error}) => 'Błąd ładowania statystyk: ${error}',
+			'system.loadingPublicKey' => 'Ładowanie Twojego klucza publicznego...',
+			'system.errors.generic' => 'Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.',
+			'system.errors.loadingTimeoutConfig' => 'Błąd ładowania konfiguracji limitu czasu.',
+			'system.errors.loadingCoordinatorConfig' => 'Błąd ładowania konfiguracji koordynatora. Proszę spróbować ponownie.',
+			'system.errors.noPublicKey' => 'Twój klucz publiczny nie jest dostępny. Nie można kontynuować.',
+			'system.errors.internalOfferIncomplete' => 'Błąd wewnętrzny: Szczegóły oferty są niekompletne. Spróbuj ponownie.',
+			'system.errors.loadingPublicKey' => 'Błąd ładowania Twojego klucza publicznego. Uruchom ponownie aplikację.',
+			'system.blik.copied' => 'Kod BLIK skopiowany do schowka',
+			'myOffers.title' => 'Moje oferty',
+			'myOffers.empty' => 'Brak ofert.',
+			'myOffers.unknownCoordinator' => 'Nieznany koordynator',
+			'myOffers.menuLabel' => 'Moje oferty',
+			'myOffers.filter.all' => 'Wszystkie',
+			'myOffers.filter.active' => 'Aktywne',
+			'myOffers.filter.completed' => 'Zakończone',
+			'myOffers.filter.failed' => 'Nieudane',
+			'myOffers.details.title' => 'Szczegóły oferty',
+			'myOffers.details.notFound' => 'Nie znaleziono oferty.',
+			'myOffers.details.amount' => 'Kwota',
+			'myOffers.details.fees' => 'Opłaty',
+			'myOffers.details.sats' => 'Satoshi',
+			'myOffers.details.maker' => 'Maker',
+			'myOffers.details.taker' => 'Taker',
+			'myOffers.details.yourFee' => 'Twoja opłata',
+			'myOffers.details.makerFee' => 'Opłata makera',
+			'myOffers.details.takerFee' => 'Opłata takera',
+			'myOffers.details.coordinator' => 'Koordynator',
+			_ => null,
+		} ?? switch (path) {
+			'myOffers.details.createdAt' => 'Utworzono',
+			'myOffers.details.reservedAt' => 'Zarezerwowano',
+			'myOffers.details.blikReceivedAt' => 'BLIK wysłany',
+			'myOffers.details.makerConfirmedAt' => 'Potwierdzono',
+			'myOffers.details.settledAt' => 'Rozliczono',
+			'myOffers.details.takerPaidAt' => 'Taker opłacony',
+			'myOffers.details.id' => 'ID oferty',
+			'myOffers.details.paymentHash' => 'Hash płatności',
+			'myOffers.details.holdInvoice' => 'Hold Invoice',
+			'myOffers.details.continueActiveOffer' => 'Przejdź do aktywnej oferty',
+			'myOffers.details.after' => ({required Object duration}) => 'po ${duration}',
+			'landing.mainTitle' => 'Wymiana\n BLIK ⇄ bitcoin',
+			'landing.subtitle' => 'Płać lub sprzedawaj kod BLIK za bitcoin',
+			'landing.partnership' => 'współpraca',
+			'landing.actions.payBlik' => 'Zapłać BLIK',
+			'landing.actions.payBlikSubtitle' => 'używając bitcoin',
+			'landing.actions.sellBlik' => 'Kup bitcoin',
+			'landing.actions.sellBlikSubtitle' => 'używając BLIK',
+			'landing.actions.howItWorks' => 'Jak to działa?',
+			'faq.screenTitle' => 'FAQ',
+			'faq.tooltip' => 'FAQ',
+			'settings.title' => 'Ustawienia',
+			'notificationSettings.title' => 'Powiadomienia',
+			'notificationSettings.newOfferAlerts.label' => 'Alerty o nowych ofertach',
+			'notificationSettings.newOfferAlerts.description' => 'Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.',
+			'wallet.title' => 'Portfel',
+			'wallet.description' => 'Zarządzaj ustawieniami portfela Lightning',
+			'wallet.missingReceiving.title' => 'Wymagany portfel odbiorczy',
+			'wallet.missingReceiving.message' => 'Brak skonfigurowanego portfela do odbierania. Dodaj go w ustawieniach portfela, aby przyjmować oferty.',
+			'wallet.missingReceiving.openSettings' => 'Ustawienia portfela',
+			'nwc.title' => 'Nostr Wallet Connect (NWC)',
+			'nwc.description' => 'Połącz swój portfel Lightning przez NWC',
+			'nwc.labels.connectionString' => 'Ciąg połączenia NWC',
+			'nwc.labels.hint' => 'nostr+walletconnect://...',
+			'nwc.labels.status' => 'Status połączenia',
+			'nwc.labels.connected' => 'Połączono',
+			'nwc.labels.disconnected' => 'Rozłączono',
+			'nwc.labels.scanQrCode' => 'Zeskanuj kod QR z połączeniem NWC',
+			'nwc.labels.balance' => 'Saldo',
+			'nwc.labels.budget' => 'Budżet',
+			'nwc.labels.usedBudget' => 'Wykorzystano',
+			'nwc.labels.totalBudget' => 'Łącznie',
+			'nwc.labels.renewsIn' => 'Odnowienie za',
+			'nwc.labels.renewalPeriod' => 'Okres odnowienia',
+			'nwc.labels.relay' => 'Przekaźnik',
+			'nwc.labels.relays' => 'Przekaźniki',
+			'nwc.prompts.enter' => 'Wprowadź swój ciąg połączenia NWC',
+			'nwc.prompts.connect' => 'Połącz portfel',
+			'nwc.prompts.disconnect' => 'Rozłącz',
+			'nwc.prompts.confirmDisconnect' => 'Czy na pewno chcesz rozłączyć portfel NWC?',
+			'nwc.prompts.pasteConnection' => 'Wklej ciąg połączenia',
+			'nwc.prompts.chooseMethod' => 'Wybierz sposób połączenia portfela Lightning',
+			'nwc.prompts.howToGet' => 'Nie masz jeszcze połączenia NWC? Dowiedz się, jak je uzyskać!',
+			'nwc.prompts.learnMore' => 'Dowiedz się więcej o NWC',
+			'nwc.actions.connectAlbyGo' => 'Połącz z Alby Go',
+			'nwc.actions.connectNwc' => 'Skanuj kod QR NWC',
+			'nwc.feedback.connected' => 'Portfel NWC połączony pomyślnie!',
+			'nwc.feedback.disconnected' => 'Portfel NWC rozłączony',
+			'nwc.feedback.connecting' => 'Łączenie z portfelem NWC...',
+			'nwc.feedback.loadingWalletInfo' => 'Ładowanie informacji o portfelu...',
+			'nwc.errors.connecting' => ({required Object details}) => 'Błąd połączenia z NWC: ${details}',
+			'nwc.errors.disconnecting' => ({required Object details}) => 'Błąd rozłączania NWC: ${details}',
+			'nwc.errors.invalid' => 'Nieprawidłowy ciąg połączenia NWC',
+			'nwc.errors.required' => 'Wymagany ciąg połączenia NWC',
+			'nwc.errors.loadingBalance' => 'Nie udało się załadować salda portfela',
+			'nwc.errors.loadingBudget' => 'Nie udało się załadować budżetu portfela',
+			'nwc.time.minutes' => ({required Object count}) => '${count}m',
+			'nwc.time.hours' => ({required Object count}) => '${count}h',
+			'nwc.time.days' => ({required Object count}) => '${count}d',
+			'nwc.time.justNow' => 'teraz',
+			'nekoManagement.title' => 'Neko',
+			'relays.title' => 'Przekaźniki',
+			'relays.status.connected' => 'Połączony',
+			'relays.status.connecting' => 'Łączenie',
+			'relays.status.reconnecting' => 'Ponowne łączenie',
+			'relays.status.disconnected' => 'Rozłączony',
+			'relays.popup.title' => ({required Object connected, required Object total}) => 'Przekaźniki (${connected}/${total} połączonych)',
+			'relays.popup.connectingMessage' => 'Łączenie z przekaźnikami...',
+			'offerNotifications.activeService.title' => 'Oczekiwanie na nowe oferty',
+			'offerNotifications.activeService.body' => 'Usługa w tle monitorująca ofert BitBlik.',
+			'offerNotifications.funded.title' => 'Oferta zasilona',
+			'offerNotifications.funded.body' => 'Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.',
+			'offerNotifications.reserved.title' => 'Oferta zarezerwowana',
+			'offerNotifications.reserved.body' => 'Taker zarezerwował Twoją ofertę.',
+			'offerNotifications.blikReady.title' => 'Kod BLIK gotowy',
+			'offerNotifications.blikReady.body' => 'Twój kod BLIK jest gotowy do wyświetlenia.',
+			'offerNotifications.newOffer.title' => 'Nowa oferta dostępna',
+			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sat',
+			'offerNotifications.categories.shop' => 'Sklep',
+			'offerNotifications.categories.atm' => 'Bankomat',
+			'offerNotifications.categories.online' => 'Online',
+			'offerNotifications.blikPendingReminder.title' => 'BLIK czeka na Twoją akcję',
+			'offerNotifications.blikPendingReminder.body' => 'Potwierdź płatność lub oznacz kod BLIK jako nieprawidłowy.',
+			'offerNotifications.takerCharged.title' => 'BLIK obciążony',
+			'offerNotifications.takerCharged.body' => 'Taker zgłasza, że BLIK został obciążony. Potwierdź lub oznacz jako nieprawidłowy.',
+			'offerNotifications.invalidBlik.title' => 'BLIK oznaczony jako nieprawidłowy',
+			'offerNotifications.invalidBlik.body' => 'Maker oznaczył Twój kod BLIK jako nieprawidłowy.',
+			'offerNotifications.takerPaid.title' => 'Płatność otrzymana',
+			'offerNotifications.takerPaid.body' => 'Twoja płatność Lightning została wysłana.',
+			'altstore.dialogTitle' => 'AltStore Nie Zainstalowany',
+			'altstore.step1Title' => 'Pobierz i zainstaluj AltStore PAL',
+			'altstore.step1Button' => 'altstore.io/download',
+			'altstore.step1Warning' => 'Potrzebujesz Safari, aby zainstalować AltStore PAL!',
+			'altstore.step2Title' => 'Zainstaluj BitBlik',
+			'altstore.step2Button' => 'Zainstaluj BitBlik',
+			'altstore.step2Fallback' => 'Nie działa? Wklej źródło do AltStore',
+			_ => null,
+		};
 	}
 }
-

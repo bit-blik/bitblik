@@ -3,12 +3,13 @@
 ///
 // coverage:ignore-file
 // ignore_for_file: type=lint, unused_import
+// dart format off
 
 part of 'strings.g.dart';
 
 // Path: <root>
 typedef TranslationsEn = Translations; // ignore: unused_element
-class Translations implements BaseTranslations<AppLocale, Translations> {
+class Translations with BaseTranslations<AppLocale, Translations> {
 	/// Returns the current translations of the given [context].
 	///
 	/// Usage:
@@ -39,38 +40,38 @@ class Translations implements BaseTranslations<AppLocale, Translations> {
 	Translations $copyWith({TranslationMetadata<AppLocale, Translations>? meta}) => Translations(meta: meta ?? this.$meta);
 
 	// Translations
-	late final TranslationsAppEn app = TranslationsAppEn.internal(_root);
-	late final TranslationsCommonEn common = TranslationsCommonEn.internal(_root);
-	late final TranslationsLightningAddressEn lightningAddress = TranslationsLightningAddressEn.internal(_root);
-	late final TranslationsOffersEn offers = TranslationsOffersEn.internal(_root);
-	late final TranslationsReservationsEn reservations = TranslationsReservationsEn.internal(_root);
-	late final TranslationsExchangeEn exchange = TranslationsExchangeEn.internal(_root);
-	late final TranslationsCoordinatorEn coordinator = TranslationsCoordinatorEn.internal(_root);
-	late final TranslationsMakerEn maker = TranslationsMakerEn.internal(_root);
-	late final TranslationsTakerEn taker = TranslationsTakerEn.internal(_root);
-	late final TranslationsBlikEn blik = TranslationsBlikEn.internal(_root);
-	late final TranslationsHomeEn home = TranslationsHomeEn.internal(_root);
-	late final TranslationsNekoInfoEn nekoInfo = TranslationsNekoInfoEn.internal(_root);
-	late final TranslationsGenerateNewKeyEn generateNewKey = TranslationsGenerateNewKeyEn.internal(_root);
-	late final TranslationsBackupEn backup = TranslationsBackupEn.internal(_root);
-	late final TranslationsRestoreEn restore = TranslationsRestoreEn.internal(_root);
-	late final TranslationsSystemEn system = TranslationsSystemEn.internal(_root);
-	late final TranslationsMyOffersEn myOffers = TranslationsMyOffersEn.internal(_root);
-	late final TranslationsLandingEn landing = TranslationsLandingEn.internal(_root);
-	late final TranslationsFaqEn faq = TranslationsFaqEn.internal(_root);
-	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
-	late final TranslationsNotificationSettingsEn notificationSettings = TranslationsNotificationSettingsEn.internal(_root);
-	late final TranslationsWalletEn wallet = TranslationsWalletEn.internal(_root);
-	late final TranslationsNwcEn nwc = TranslationsNwcEn.internal(_root);
-	late final TranslationsNekoManagementEn nekoManagement = TranslationsNekoManagementEn.internal(_root);
-	late final TranslationsRelaysEn relays = TranslationsRelaysEn.internal(_root);
-	late final TranslationsOfferNotificationsEn offerNotifications = TranslationsOfferNotificationsEn.internal(_root);
-	late final TranslationsAltstoreEn altstore = TranslationsAltstoreEn.internal(_root);
+	late final Translations$app$en app = Translations$app$en.internal(_root);
+	late final Translations$common$en common = Translations$common$en.internal(_root);
+	late final Translations$lightningAddress$en lightningAddress = Translations$lightningAddress$en.internal(_root);
+	late final Translations$offers$en offers = Translations$offers$en.internal(_root);
+	late final Translations$reservations$en reservations = Translations$reservations$en.internal(_root);
+	late final Translations$exchange$en exchange = Translations$exchange$en.internal(_root);
+	late final Translations$coordinator$en coordinator = Translations$coordinator$en.internal(_root);
+	late final Translations$maker$en maker = Translations$maker$en.internal(_root);
+	late final Translations$taker$en taker = Translations$taker$en.internal(_root);
+	late final Translations$blik$en blik = Translations$blik$en.internal(_root);
+	late final Translations$home$en home = Translations$home$en.internal(_root);
+	late final Translations$nekoInfo$en nekoInfo = Translations$nekoInfo$en.internal(_root);
+	late final Translations$generateNewKey$en generateNewKey = Translations$generateNewKey$en.internal(_root);
+	late final Translations$backup$en backup = Translations$backup$en.internal(_root);
+	late final Translations$restore$en restore = Translations$restore$en.internal(_root);
+	late final Translations$system$en system = Translations$system$en.internal(_root);
+	late final Translations$myOffers$en myOffers = Translations$myOffers$en.internal(_root);
+	late final Translations$landing$en landing = Translations$landing$en.internal(_root);
+	late final Translations$faq$en faq = Translations$faq$en.internal(_root);
+	late final Translations$settings$en settings = Translations$settings$en.internal(_root);
+	late final Translations$notificationSettings$en notificationSettings = Translations$notificationSettings$en.internal(_root);
+	late final Translations$wallet$en wallet = Translations$wallet$en.internal(_root);
+	late final Translations$nwc$en nwc = Translations$nwc$en.internal(_root);
+	late final Translations$nekoManagement$en nekoManagement = Translations$nekoManagement$en.internal(_root);
+	late final Translations$relays$en relays = Translations$relays$en.internal(_root);
+	late final Translations$offerNotifications$en offerNotifications = Translations$offerNotifications$en.internal(_root);
+	late final Translations$altstore$en altstore = Translations$altstore$en.internal(_root);
 }
 
 // Path: app
-class TranslationsAppEn {
-	TranslationsAppEn.internal(this._root);
+class Translations$app$en {
+	Translations$app$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -87,76 +88,76 @@ class TranslationsAppEn {
 }
 
 // Path: common
-class TranslationsCommonEn {
-	TranslationsCommonEn.internal(this._root);
+class Translations$common$en {
+	Translations$common$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsCommonButtonsEn buttons = TranslationsCommonButtonsEn.internal(_root);
-	late final TranslationsCommonLabelsEn labels = TranslationsCommonLabelsEn.internal(_root);
-	late final TranslationsCommonNotificationsEn notifications = TranslationsCommonNotificationsEn.internal(_root);
-	late final TranslationsCommonClipboardEn clipboard = TranslationsCommonClipboardEn.internal(_root);
-	late final TranslationsCommonActionsEn actions = TranslationsCommonActionsEn.internal(_root);
+	late final Translations$common$buttons$en buttons = Translations$common$buttons$en.internal(_root);
+	late final Translations$common$labels$en labels = Translations$common$labels$en.internal(_root);
+	late final Translations$common$notifications$en notifications = Translations$common$notifications$en.internal(_root);
+	late final Translations$common$clipboard$en clipboard = Translations$common$clipboard$en.internal(_root);
+	late final Translations$common$actions$en actions = Translations$common$actions$en.internal(_root);
 }
 
 // Path: lightningAddress
-class TranslationsLightningAddressEn {
-	TranslationsLightningAddressEn.internal(this._root);
+class Translations$lightningAddress$en {
+	Translations$lightningAddress$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsLightningAddressLabelsEn labels = TranslationsLightningAddressLabelsEn.internal(_root);
-	late final TranslationsLightningAddressPromptsEn prompts = TranslationsLightningAddressPromptsEn.internal(_root);
-	late final TranslationsLightningAddressFeedbackEn feedback = TranslationsLightningAddressFeedbackEn.internal(_root);
-	late final TranslationsLightningAddressErrorsEn errors = TranslationsLightningAddressErrorsEn.internal(_root);
+	late final Translations$lightningAddress$labels$en labels = Translations$lightningAddress$labels$en.internal(_root);
+	late final Translations$lightningAddress$prompts$en prompts = Translations$lightningAddress$prompts$en.internal(_root);
+	late final Translations$lightningAddress$feedback$en feedback = Translations$lightningAddress$feedback$en.internal(_root);
+	late final Translations$lightningAddress$errors$en errors = Translations$lightningAddress$errors$en.internal(_root);
 }
 
 // Path: offers
-class TranslationsOffersEn {
-	TranslationsOffersEn.internal(this._root);
+class Translations$offers$en {
+	Translations$offers$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsOffersDetailsEn details = TranslationsOffersDetailsEn.internal(_root);
-	late final TranslationsOffersTooltipsEn tooltips = TranslationsOffersTooltipsEn.internal(_root);
-	late final TranslationsOffersActionsEn actions = TranslationsOffersActionsEn.internal(_root);
-	late final TranslationsOffersStatusEn status = TranslationsOffersStatusEn.internal(_root);
-	late final TranslationsOffersStatusMessagesEn statusMessages = TranslationsOffersStatusMessagesEn.internal(_root);
-	late final TranslationsOffersProgressEn progress = TranslationsOffersProgressEn.internal(_root);
-	late final TranslationsOffersErrorsEn errors = TranslationsOffersErrorsEn.internal(_root);
-	late final TranslationsOffersSuccessEn success = TranslationsOffersSuccessEn.internal(_root);
+	late final Translations$offers$details$en details = Translations$offers$details$en.internal(_root);
+	late final Translations$offers$tooltips$en tooltips = Translations$offers$tooltips$en.internal(_root);
+	late final Translations$offers$actions$en actions = Translations$offers$actions$en.internal(_root);
+	late final Translations$offers$status$en status = Translations$offers$status$en.internal(_root);
+	late final Translations$offers$statusMessages$en statusMessages = Translations$offers$statusMessages$en.internal(_root);
+	late final Translations$offers$progress$en progress = Translations$offers$progress$en.internal(_root);
+	late final Translations$offers$errors$en errors = Translations$offers$errors$en.internal(_root);
+	late final Translations$offers$success$en success = Translations$offers$success$en.internal(_root);
 }
 
 // Path: reservations
-class TranslationsReservationsEn {
-	TranslationsReservationsEn.internal(this._root);
+class Translations$reservations$en {
+	Translations$reservations$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsReservationsActionsEn actions = TranslationsReservationsActionsEn.internal(_root);
-	late final TranslationsReservationsFeedbackEn feedback = TranslationsReservationsFeedbackEn.internal(_root);
-	late final TranslationsReservationsErrorsEn errors = TranslationsReservationsErrorsEn.internal(_root);
+	late final Translations$reservations$actions$en actions = Translations$reservations$actions$en.internal(_root);
+	late final Translations$reservations$feedback$en feedback = Translations$reservations$feedback$en.internal(_root);
+	late final Translations$reservations$errors$en errors = Translations$reservations$errors$en.internal(_root);
 }
 
 // Path: exchange
-class TranslationsExchangeEn {
-	TranslationsExchangeEn.internal(this._root);
+class Translations$exchange$en {
+	Translations$exchange$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsExchangeLabelsEn labels = TranslationsExchangeLabelsEn.internal(_root);
-	late final TranslationsExchangeFeedbackEn feedback = TranslationsExchangeFeedbackEn.internal(_root);
-	late final TranslationsExchangeErrorsEn errors = TranslationsExchangeErrorsEn.internal(_root);
+	late final Translations$exchange$labels$en labels = Translations$exchange$labels$en.internal(_root);
+	late final Translations$exchange$feedback$en feedback = Translations$exchange$feedback$en.internal(_root);
+	late final Translations$exchange$errors$en errors = Translations$exchange$errors$en.internal(_root);
 }
 
 // Path: coordinator
-class TranslationsCoordinatorEn {
-	TranslationsCoordinatorEn.internal(this._root);
+class Translations$coordinator$en {
+	Translations$coordinator$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -165,72 +166,72 @@ class TranslationsCoordinatorEn {
 	/// en: 'Coordinators'
 	String get title => 'Coordinators';
 
-	late final TranslationsCoordinatorInfoEn info = TranslationsCoordinatorInfoEn.internal(_root);
-	late final TranslationsCoordinatorSelectorEn selector = TranslationsCoordinatorSelectorEn.internal(_root);
-	late final TranslationsCoordinatorDialogEn dialog = TranslationsCoordinatorDialogEn.internal(_root);
-	late final TranslationsCoordinatorManagementEn management = TranslationsCoordinatorManagementEn.internal(_root);
+	late final Translations$coordinator$info$en info = Translations$coordinator$info$en.internal(_root);
+	late final Translations$coordinator$selector$en selector = Translations$coordinator$selector$en.internal(_root);
+	late final Translations$coordinator$dialog$en dialog = Translations$coordinator$dialog$en.internal(_root);
+	late final Translations$coordinator$management$en management = Translations$coordinator$management$en.internal(_root);
 }
 
 // Path: maker
-class TranslationsMakerEn {
-	TranslationsMakerEn.internal(this._root);
+class Translations$maker$en {
+	Translations$maker$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsMakerRoleSelectionEn roleSelection = TranslationsMakerRoleSelectionEn.internal(_root);
-	late final TranslationsMakerAmountFormEn amountForm = TranslationsMakerAmountFormEn.internal(_root);
-	late final TranslationsMakerPayInvoiceEn payInvoice = TranslationsMakerPayInvoiceEn.internal(_root);
-	late final TranslationsMakerWaitTakerEn waitTaker = TranslationsMakerWaitTakerEn.internal(_root);
-	late final TranslationsMakerWaitForBlikEn waitForBlik = TranslationsMakerWaitForBlikEn.internal(_root);
-	late final TranslationsMakerConfirmPaymentEn confirmPayment = TranslationsMakerConfirmPaymentEn.internal(_root);
-	late final TranslationsMakerInvalidBlikEn invalidBlik = TranslationsMakerInvalidBlikEn.internal(_root);
-	late final TranslationsMakerConflictEn conflict = TranslationsMakerConflictEn.internal(_root);
-	late final TranslationsMakerSuccessEn success = TranslationsMakerSuccessEn.internal(_root);
+	late final Translations$maker$roleSelection$en roleSelection = Translations$maker$roleSelection$en.internal(_root);
+	late final Translations$maker$amountForm$en amountForm = Translations$maker$amountForm$en.internal(_root);
+	late final Translations$maker$payInvoice$en payInvoice = Translations$maker$payInvoice$en.internal(_root);
+	late final Translations$maker$waitTaker$en waitTaker = Translations$maker$waitTaker$en.internal(_root);
+	late final Translations$maker$waitForBlik$en waitForBlik = Translations$maker$waitForBlik$en.internal(_root);
+	late final Translations$maker$confirmPayment$en confirmPayment = Translations$maker$confirmPayment$en.internal(_root);
+	late final Translations$maker$invalidBlik$en invalidBlik = Translations$maker$invalidBlik$en.internal(_root);
+	late final Translations$maker$conflict$en conflict = Translations$maker$conflict$en.internal(_root);
+	late final Translations$maker$success$en success = Translations$maker$success$en.internal(_root);
 }
 
 // Path: taker
-class TranslationsTakerEn {
-	TranslationsTakerEn.internal(this._root);
+class Translations$taker$en {
+	Translations$taker$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsTakerRoleSelectionEn roleSelection = TranslationsTakerRoleSelectionEn.internal(_root);
-	late final TranslationsTakerProgressEn progress = TranslationsTakerProgressEn.internal(_root);
-	late final TranslationsTakerSubmitBlikEn submitBlik = TranslationsTakerSubmitBlikEn.internal(_root);
-	late final TranslationsTakerWaitConfirmationEn waitConfirmation = TranslationsTakerWaitConfirmationEn.internal(_root);
-	late final TranslationsTakerPaymentProcessEn paymentProcess = TranslationsTakerPaymentProcessEn.internal(_root);
-	late final TranslationsTakerPaymentFailedEn paymentFailed = TranslationsTakerPaymentFailedEn.internal(_root);
-	late final TranslationsTakerPaymentSuccessEn paymentSuccess = TranslationsTakerPaymentSuccessEn.internal(_root);
-	late final TranslationsTakerInvalidBlikEn invalidBlik = TranslationsTakerInvalidBlikEn.internal(_root);
-	late final TranslationsTakerConflictEn conflict = TranslationsTakerConflictEn.internal(_root);
+	late final Translations$taker$roleSelection$en roleSelection = Translations$taker$roleSelection$en.internal(_root);
+	late final Translations$taker$progress$en progress = Translations$taker$progress$en.internal(_root);
+	late final Translations$taker$submitBlik$en submitBlik = Translations$taker$submitBlik$en.internal(_root);
+	late final Translations$taker$waitConfirmation$en waitConfirmation = Translations$taker$waitConfirmation$en.internal(_root);
+	late final Translations$taker$paymentProcess$en paymentProcess = Translations$taker$paymentProcess$en.internal(_root);
+	late final Translations$taker$paymentFailed$en paymentFailed = Translations$taker$paymentFailed$en.internal(_root);
+	late final Translations$taker$paymentSuccess$en paymentSuccess = Translations$taker$paymentSuccess$en.internal(_root);
+	late final Translations$taker$invalidBlik$en invalidBlik = Translations$taker$invalidBlik$en.internal(_root);
+	late final Translations$taker$conflict$en conflict = Translations$taker$conflict$en.internal(_root);
 }
 
 // Path: blik
-class TranslationsBlikEn {
-	TranslationsBlikEn.internal(this._root);
+class Translations$blik$en {
+	Translations$blik$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsBlikInstructionsEn instructions = TranslationsBlikInstructionsEn.internal(_root);
+	late final Translations$blik$instructions$en instructions = Translations$blik$instructions$en.internal(_root);
 }
 
 // Path: home
-class TranslationsHomeEn {
-	TranslationsHomeEn.internal(this._root);
+class Translations$home$en {
+	Translations$home$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsHomeNotificationsEn notifications = TranslationsHomeNotificationsEn.internal(_root);
-	late final TranslationsHomeStatisticsEn statistics = TranslationsHomeStatisticsEn.internal(_root);
+	late final Translations$home$notifications$en notifications = Translations$home$notifications$en.internal(_root);
+	late final Translations$home$statistics$en statistics = Translations$home$statistics$en.internal(_root);
 }
 
 // Path: nekoInfo
-class TranslationsNekoInfoEn {
-	TranslationsNekoInfoEn.internal(this._root);
+class Translations$nekoInfo$en {
+	Translations$nekoInfo$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -247,8 +248,8 @@ class TranslationsNekoInfoEn {
 }
 
 // Path: generateNewKey
-class TranslationsGenerateNewKeyEn {
-	TranslationsGenerateNewKeyEn.internal(this._root);
+class Translations$generateNewKey$en {
+	Translations$generateNewKey$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -260,15 +261,15 @@ class TranslationsGenerateNewKeyEn {
 	/// en: 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven't backed it up.'
 	String get description => 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven\'t backed it up.';
 
-	late final TranslationsGenerateNewKeyButtonsEn buttons = TranslationsGenerateNewKeyButtonsEn.internal(_root);
-	late final TranslationsGenerateNewKeyErrorsEn errors = TranslationsGenerateNewKeyErrorsEn.internal(_root);
-	late final TranslationsGenerateNewKeyFeedbackEn feedback = TranslationsGenerateNewKeyFeedbackEn.internal(_root);
-	late final TranslationsGenerateNewKeyTooltipsEn tooltips = TranslationsGenerateNewKeyTooltipsEn.internal(_root);
+	late final Translations$generateNewKey$buttons$en buttons = Translations$generateNewKey$buttons$en.internal(_root);
+	late final Translations$generateNewKey$errors$en errors = Translations$generateNewKey$errors$en.internal(_root);
+	late final Translations$generateNewKey$feedback$en feedback = Translations$generateNewKey$feedback$en.internal(_root);
+	late final Translations$generateNewKey$tooltips$en tooltips = Translations$generateNewKey$tooltips$en.internal(_root);
 }
 
 // Path: backup
-class TranslationsBackupEn {
-	TranslationsBackupEn.internal(this._root);
+class Translations$backup$en {
+	Translations$backup$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -280,13 +281,13 @@ class TranslationsBackupEn {
 	/// en: 'This is your private key. It secures communication with the coordinator. Never reveal it to anyone. Back it up in a secure place to prevent issues during disputes.'
 	String get description => 'This is your private key. It secures communication with the coordinator. Never reveal it to anyone. Back it up in a secure place to prevent issues during disputes.';
 
-	late final TranslationsBackupFeedbackEn feedback = TranslationsBackupFeedbackEn.internal(_root);
-	late final TranslationsBackupTooltipsEn tooltips = TranslationsBackupTooltipsEn.internal(_root);
+	late final Translations$backup$feedback$en feedback = Translations$backup$feedback$en.internal(_root);
+	late final Translations$backup$tooltips$en tooltips = Translations$backup$tooltips$en.internal(_root);
 }
 
 // Path: restore
-class TranslationsRestoreEn {
-	TranslationsRestoreEn.internal(this._root);
+class Translations$restore$en {
+	Translations$restore$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -295,16 +296,16 @@ class TranslationsRestoreEn {
 	/// en: 'Restore'
 	String get title => 'Restore';
 
-	late final TranslationsRestoreLabelsEn labels = TranslationsRestoreLabelsEn.internal(_root);
-	late final TranslationsRestoreButtonsEn buttons = TranslationsRestoreButtonsEn.internal(_root);
-	late final TranslationsRestoreErrorsEn errors = TranslationsRestoreErrorsEn.internal(_root);
-	late final TranslationsRestoreFeedbackEn feedback = TranslationsRestoreFeedbackEn.internal(_root);
-	late final TranslationsRestoreTooltipsEn tooltips = TranslationsRestoreTooltipsEn.internal(_root);
+	late final Translations$restore$labels$en labels = Translations$restore$labels$en.internal(_root);
+	late final Translations$restore$buttons$en buttons = Translations$restore$buttons$en.internal(_root);
+	late final Translations$restore$errors$en errors = Translations$restore$errors$en.internal(_root);
+	late final Translations$restore$feedback$en feedback = Translations$restore$feedback$en.internal(_root);
+	late final Translations$restore$tooltips$en tooltips = Translations$restore$tooltips$en.internal(_root);
 }
 
 // Path: system
-class TranslationsSystemEn {
-	TranslationsSystemEn.internal(this._root);
+class Translations$system$en {
+	Translations$system$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -313,13 +314,13 @@ class TranslationsSystemEn {
 	/// en: 'Loading your public key...'
 	String get loadingPublicKey => 'Loading your public key...';
 
-	late final TranslationsSystemErrorsEn errors = TranslationsSystemErrorsEn.internal(_root);
-	late final TranslationsSystemBlikEn blik = TranslationsSystemBlikEn.internal(_root);
+	late final Translations$system$errors$en errors = Translations$system$errors$en.internal(_root);
+	late final Translations$system$blik$en blik = Translations$system$blik$en.internal(_root);
 }
 
 // Path: myOffers
-class TranslationsMyOffersEn {
-	TranslationsMyOffersEn.internal(this._root);
+class Translations$myOffers$en {
+	Translations$myOffers$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -337,13 +338,13 @@ class TranslationsMyOffersEn {
 	/// en: 'My offers'
 	String get menuLabel => 'My offers';
 
-	late final TranslationsMyOffersFilterEn filter = TranslationsMyOffersFilterEn.internal(_root);
-	late final TranslationsMyOffersDetailsEn details = TranslationsMyOffersDetailsEn.internal(_root);
+	late final Translations$myOffers$filter$en filter = Translations$myOffers$filter$en.internal(_root);
+	late final Translations$myOffers$details$en details = Translations$myOffers$details$en.internal(_root);
 }
 
 // Path: landing
-class TranslationsLandingEn {
-	TranslationsLandingEn.internal(this._root);
+class Translations$landing$en {
+	Translations$landing$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -358,12 +359,12 @@ class TranslationsLandingEn {
 	/// en: 'partnership'
 	String get partnership => 'partnership';
 
-	late final TranslationsLandingActionsEn actions = TranslationsLandingActionsEn.internal(_root);
+	late final Translations$landing$actions$en actions = Translations$landing$actions$en.internal(_root);
 }
 
 // Path: faq
-class TranslationsFaqEn {
-	TranslationsFaqEn.internal(this._root);
+class Translations$faq$en {
+	Translations$faq$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -377,8 +378,8 @@ class TranslationsFaqEn {
 }
 
 // Path: settings
-class TranslationsSettingsEn {
-	TranslationsSettingsEn.internal(this._root);
+class Translations$settings$en {
+	Translations$settings$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -389,8 +390,8 @@ class TranslationsSettingsEn {
 }
 
 // Path: notificationSettings
-class TranslationsNotificationSettingsEn {
-	TranslationsNotificationSettingsEn.internal(this._root);
+class Translations$notificationSettings$en {
+	Translations$notificationSettings$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -399,12 +400,12 @@ class TranslationsNotificationSettingsEn {
 	/// en: 'Notifications'
 	String get title => 'Notifications';
 
-	late final TranslationsNotificationSettingsNewOfferAlertsEn newOfferAlerts = TranslationsNotificationSettingsNewOfferAlertsEn.internal(_root);
+	late final Translations$notificationSettings$newOfferAlerts$en newOfferAlerts = Translations$notificationSettings$newOfferAlerts$en.internal(_root);
 }
 
 // Path: wallet
-class TranslationsWalletEn {
-	TranslationsWalletEn.internal(this._root);
+class Translations$wallet$en {
+	Translations$wallet$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -416,12 +417,12 @@ class TranslationsWalletEn {
 	/// en: 'Manage your Lightning wallet settings'
 	String get description => 'Manage your Lightning wallet settings';
 
-	late final TranslationsWalletMissingReceivingEn missingReceiving = TranslationsWalletMissingReceivingEn.internal(_root);
+	late final Translations$wallet$missingReceiving$en missingReceiving = Translations$wallet$missingReceiving$en.internal(_root);
 }
 
 // Path: nwc
-class TranslationsNwcEn {
-	TranslationsNwcEn.internal(this._root);
+class Translations$nwc$en {
+	Translations$nwc$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -433,17 +434,17 @@ class TranslationsNwcEn {
 	/// en: 'Connect your Lightning wallet via NWC'
 	String get description => 'Connect your Lightning wallet via NWC';
 
-	late final TranslationsNwcLabelsEn labels = TranslationsNwcLabelsEn.internal(_root);
-	late final TranslationsNwcPromptsEn prompts = TranslationsNwcPromptsEn.internal(_root);
-	late final TranslationsNwcActionsEn actions = TranslationsNwcActionsEn.internal(_root);
-	late final TranslationsNwcFeedbackEn feedback = TranslationsNwcFeedbackEn.internal(_root);
-	late final TranslationsNwcErrorsEn errors = TranslationsNwcErrorsEn.internal(_root);
-	late final TranslationsNwcTimeEn time = TranslationsNwcTimeEn.internal(_root);
+	late final Translations$nwc$labels$en labels = Translations$nwc$labels$en.internal(_root);
+	late final Translations$nwc$prompts$en prompts = Translations$nwc$prompts$en.internal(_root);
+	late final Translations$nwc$actions$en actions = Translations$nwc$actions$en.internal(_root);
+	late final Translations$nwc$feedback$en feedback = Translations$nwc$feedback$en.internal(_root);
+	late final Translations$nwc$errors$en errors = Translations$nwc$errors$en.internal(_root);
+	late final Translations$nwc$time$en time = Translations$nwc$time$en.internal(_root);
 }
 
 // Path: nekoManagement
-class TranslationsNekoManagementEn {
-	TranslationsNekoManagementEn.internal(this._root);
+class Translations$nekoManagement$en {
+	Translations$nekoManagement$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -454,8 +455,8 @@ class TranslationsNekoManagementEn {
 }
 
 // Path: relays
-class TranslationsRelaysEn {
-	TranslationsRelaysEn.internal(this._root);
+class Translations$relays$en {
+	Translations$relays$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -464,32 +465,32 @@ class TranslationsRelaysEn {
 	/// en: 'Relays'
 	String get title => 'Relays';
 
-	late final TranslationsRelaysStatusEn status = TranslationsRelaysStatusEn.internal(_root);
-	late final TranslationsRelaysPopupEn popup = TranslationsRelaysPopupEn.internal(_root);
+	late final Translations$relays$status$en status = Translations$relays$status$en.internal(_root);
+	late final Translations$relays$popup$en popup = Translations$relays$popup$en.internal(_root);
 }
 
 // Path: offerNotifications
-class TranslationsOfferNotificationsEn {
-	TranslationsOfferNotificationsEn.internal(this._root);
+class Translations$offerNotifications$en {
+	Translations$offerNotifications$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsOfferNotificationsActiveServiceEn activeService = TranslationsOfferNotificationsActiveServiceEn.internal(_root);
-	late final TranslationsOfferNotificationsFundedEn funded = TranslationsOfferNotificationsFundedEn.internal(_root);
-	late final TranslationsOfferNotificationsReservedEn reserved = TranslationsOfferNotificationsReservedEn.internal(_root);
-	late final TranslationsOfferNotificationsBlikReadyEn blikReady = TranslationsOfferNotificationsBlikReadyEn.internal(_root);
-	late final TranslationsOfferNotificationsNewOfferEn newOffer = TranslationsOfferNotificationsNewOfferEn.internal(_root);
-	late final TranslationsOfferNotificationsCategoriesEn categories = TranslationsOfferNotificationsCategoriesEn.internal(_root);
-	late final TranslationsOfferNotificationsBlikPendingReminderEn blikPendingReminder = TranslationsOfferNotificationsBlikPendingReminderEn.internal(_root);
-	late final TranslationsOfferNotificationsTakerChargedEn takerCharged = TranslationsOfferNotificationsTakerChargedEn.internal(_root);
-	late final TranslationsOfferNotificationsInvalidBlikEn invalidBlik = TranslationsOfferNotificationsInvalidBlikEn.internal(_root);
-	late final TranslationsOfferNotificationsTakerPaidEn takerPaid = TranslationsOfferNotificationsTakerPaidEn.internal(_root);
+	late final Translations$offerNotifications$activeService$en activeService = Translations$offerNotifications$activeService$en.internal(_root);
+	late final Translations$offerNotifications$funded$en funded = Translations$offerNotifications$funded$en.internal(_root);
+	late final Translations$offerNotifications$reserved$en reserved = Translations$offerNotifications$reserved$en.internal(_root);
+	late final Translations$offerNotifications$blikReady$en blikReady = Translations$offerNotifications$blikReady$en.internal(_root);
+	late final Translations$offerNotifications$newOffer$en newOffer = Translations$offerNotifications$newOffer$en.internal(_root);
+	late final Translations$offerNotifications$categories$en categories = Translations$offerNotifications$categories$en.internal(_root);
+	late final Translations$offerNotifications$blikPendingReminder$en blikPendingReminder = Translations$offerNotifications$blikPendingReminder$en.internal(_root);
+	late final Translations$offerNotifications$takerCharged$en takerCharged = Translations$offerNotifications$takerCharged$en.internal(_root);
+	late final Translations$offerNotifications$invalidBlik$en invalidBlik = Translations$offerNotifications$invalidBlik$en.internal(_root);
+	late final Translations$offerNotifications$takerPaid$en takerPaid = Translations$offerNotifications$takerPaid$en.internal(_root);
 }
 
 // Path: altstore
-class TranslationsAltstoreEn {
-	TranslationsAltstoreEn.internal(this._root);
+class Translations$altstore$en {
+	Translations$altstore$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -518,8 +519,8 @@ class TranslationsAltstoreEn {
 }
 
 // Path: common.buttons
-class TranslationsCommonButtonsEn {
-	TranslationsCommonButtonsEn.internal(this._root);
+class Translations$common$buttons$en {
+	Translations$common$buttons$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -563,8 +564,8 @@ class TranslationsCommonButtonsEn {
 }
 
 // Path: common.labels
-class TranslationsCommonLabelsEn {
-	TranslationsCommonLabelsEn.internal(this._root);
+class Translations$common$labels$en {
+	Translations$common$labels$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -581,8 +582,8 @@ class TranslationsCommonLabelsEn {
 }
 
 // Path: common.notifications
-class TranslationsCommonNotificationsEn {
-	TranslationsCommonNotificationsEn.internal(this._root);
+class Translations$common$notifications$en {
+	Translations$common$notifications$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -599,8 +600,8 @@ class TranslationsCommonNotificationsEn {
 }
 
 // Path: common.clipboard
-class TranslationsCommonClipboardEn {
-	TranslationsCommonClipboardEn.internal(this._root);
+class Translations$common$clipboard$en {
+	Translations$common$clipboard$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -617,8 +618,8 @@ class TranslationsCommonClipboardEn {
 }
 
 // Path: common.actions
-class TranslationsCommonActionsEn {
-	TranslationsCommonActionsEn.internal(this._root);
+class Translations$common$actions$en {
+	Translations$common$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -632,8 +633,8 @@ class TranslationsCommonActionsEn {
 }
 
 // Path: lightningAddress.labels
-class TranslationsLightningAddressLabelsEn {
-	TranslationsLightningAddressLabelsEn.internal(this._root);
+class Translations$lightningAddress$labels$en {
+	Translations$lightningAddress$labels$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -653,8 +654,8 @@ class TranslationsLightningAddressLabelsEn {
 }
 
 // Path: lightningAddress.prompts
-class TranslationsLightningAddressPromptsEn {
-	TranslationsLightningAddressPromptsEn.internal(this._root);
+class Translations$lightningAddress$prompts$en {
+	Translations$lightningAddress$prompts$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -695,8 +696,8 @@ class TranslationsLightningAddressPromptsEn {
 }
 
 // Path: lightningAddress.feedback
-class TranslationsLightningAddressFeedbackEn {
-	TranslationsLightningAddressFeedbackEn.internal(this._root);
+class Translations$lightningAddress$feedback$en {
+	Translations$lightningAddress$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -713,8 +714,8 @@ class TranslationsLightningAddressFeedbackEn {
 }
 
 // Path: lightningAddress.errors
-class TranslationsLightningAddressErrorsEn {
-	TranslationsLightningAddressErrorsEn.internal(this._root);
+class Translations$lightningAddress$errors$en {
+	Translations$lightningAddress$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -728,8 +729,8 @@ class TranslationsLightningAddressErrorsEn {
 }
 
 // Path: offers.details
-class TranslationsOffersDetailsEn {
-	TranslationsOffersDetailsEn.internal(this._root);
+class Translations$offers$details$en {
+	Translations$offers$details$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -819,13 +820,13 @@ class TranslationsOffersDetailsEn {
 	/// en: 'Category'
 	String get categoryLabel => 'Category';
 
-	late final TranslationsOffersDetailsCategoriesEn categories = TranslationsOffersDetailsCategoriesEn.internal(_root);
-	late final TranslationsOffersDetailsConsentsEn consents = TranslationsOffersDetailsConsentsEn.internal(_root);
+	late final Translations$offers$details$categories$en categories = Translations$offers$details$categories$en.internal(_root);
+	late final Translations$offers$details$consents$en consents = Translations$offers$details$consents$en.internal(_root);
 }
 
 // Path: offers.tooltips
-class TranslationsOffersTooltipsEn {
-	TranslationsOffersTooltipsEn.internal(this._root);
+class Translations$offers$tooltips$en {
+	Translations$offers$tooltips$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -842,8 +843,8 @@ class TranslationsOffersTooltipsEn {
 }
 
 // Path: offers.actions
-class TranslationsOffersActionsEn {
-	TranslationsOffersActionsEn.internal(this._root);
+class Translations$offers$actions$en {
+	Translations$offers$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -866,8 +867,8 @@ class TranslationsOffersActionsEn {
 }
 
 // Path: offers.status
-class TranslationsOffersStatusEn {
-	TranslationsOffersStatusEn.internal(this._root);
+class Translations$offers$status$en {
+	Translations$offers$status$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -932,8 +933,8 @@ class TranslationsOffersStatusEn {
 }
 
 // Path: offers.statusMessages
-class TranslationsOffersStatusMessagesEn {
-	TranslationsOffersStatusMessagesEn.internal(this._root);
+class Translations$offers$statusMessages$en {
+	Translations$offers$statusMessages$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -953,8 +954,8 @@ class TranslationsOffersStatusMessagesEn {
 }
 
 // Path: offers.progress
-class TranslationsOffersProgressEn {
-	TranslationsOffersProgressEn.internal(this._root);
+class Translations$offers$progress$en {
+	Translations$offers$progress$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -971,8 +972,8 @@ class TranslationsOffersProgressEn {
 }
 
 // Path: offers.errors
-class TranslationsOffersErrorsEn {
-	TranslationsOffersErrorsEn.internal(this._root);
+class Translations$offers$errors$en {
+	Translations$offers$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1040,8 +1041,8 @@ class TranslationsOffersErrorsEn {
 }
 
 // Path: offers.success
-class TranslationsOffersSuccessEn {
-	TranslationsOffersSuccessEn.internal(this._root);
+class Translations$offers$success$en {
+	Translations$offers$success$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1064,8 +1065,8 @@ class TranslationsOffersSuccessEn {
 }
 
 // Path: reservations.actions
-class TranslationsReservationsActionsEn {
-	TranslationsReservationsActionsEn.internal(this._root);
+class Translations$reservations$actions$en {
+	Translations$reservations$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1076,8 +1077,8 @@ class TranslationsReservationsActionsEn {
 }
 
 // Path: reservations.feedback
-class TranslationsReservationsFeedbackEn {
-	TranslationsReservationsFeedbackEn.internal(this._root);
+class Translations$reservations$feedback$en {
+	Translations$reservations$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1088,8 +1089,8 @@ class TranslationsReservationsFeedbackEn {
 }
 
 // Path: reservations.errors
-class TranslationsReservationsErrorsEn {
-	TranslationsReservationsErrorsEn.internal(this._root);
+class Translations$reservations$errors$en {
+	Translations$reservations$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1112,8 +1113,8 @@ class TranslationsReservationsErrorsEn {
 }
 
 // Path: exchange.labels
-class TranslationsExchangeLabelsEn {
-	TranslationsExchangeLabelsEn.internal(this._root);
+class Translations$exchange$labels$en {
+	Translations$exchange$labels$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1130,8 +1131,8 @@ class TranslationsExchangeLabelsEn {
 }
 
 // Path: exchange.feedback
-class TranslationsExchangeFeedbackEn {
-	TranslationsExchangeFeedbackEn.internal(this._root);
+class Translations$exchange$feedback$en {
+	Translations$exchange$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1142,8 +1143,8 @@ class TranslationsExchangeFeedbackEn {
 }
 
 // Path: exchange.errors
-class TranslationsExchangeErrorsEn {
-	TranslationsExchangeErrorsEn.internal(this._root);
+class Translations$exchange$errors$en {
+	Translations$exchange$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1169,8 +1170,8 @@ class TranslationsExchangeErrorsEn {
 }
 
 // Path: coordinator.info
-class TranslationsCoordinatorInfoEn {
-	TranslationsCoordinatorInfoEn.internal(this._root);
+class Translations$coordinator$info$en {
+	Translations$coordinator$info$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1187,8 +1188,8 @@ class TranslationsCoordinatorInfoEn {
 }
 
 // Path: coordinator.selector
-class TranslationsCoordinatorSelectorEn {
-	TranslationsCoordinatorSelectorEn.internal(this._root);
+class Translations$coordinator$selector$en {
+	Translations$coordinator$selector$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1220,8 +1221,8 @@ class TranslationsCoordinatorSelectorEn {
 }
 
 // Path: coordinator.dialog
-class TranslationsCoordinatorDialogEn {
-	TranslationsCoordinatorDialogEn.internal(this._root);
+class Translations$coordinator$dialog$en {
+	Translations$coordinator$dialog$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1247,8 +1248,8 @@ class TranslationsCoordinatorDialogEn {
 }
 
 // Path: coordinator.management
-class TranslationsCoordinatorManagementEn {
-	TranslationsCoordinatorManagementEn.internal(this._root);
+class Translations$coordinator$management$en {
+	Translations$coordinator$management$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1322,8 +1323,8 @@ class TranslationsCoordinatorManagementEn {
 }
 
 // Path: maker.roleSelection
-class TranslationsMakerRoleSelectionEn {
-	TranslationsMakerRoleSelectionEn.internal(this._root);
+class Translations$maker$roleSelection$en {
+	Translations$maker$roleSelection$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1334,24 +1335,24 @@ class TranslationsMakerRoleSelectionEn {
 }
 
 // Path: maker.amountForm
-class TranslationsMakerAmountFormEn {
-	TranslationsMakerAmountFormEn.internal(this._root);
+class Translations$maker$amountForm$en {
+	Translations$maker$amountForm$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
-	late final TranslationsMakerAmountFormProgressEn progress = TranslationsMakerAmountFormProgressEn.internal(_root);
-	late final TranslationsMakerAmountFormLabelsEn labels = TranslationsMakerAmountFormLabelsEn.internal(_root);
-	late final TranslationsMakerAmountFormActionsEn actions = TranslationsMakerAmountFormActionsEn.internal(_root);
-	late final TranslationsMakerAmountFormTooltipsEn tooltips = TranslationsMakerAmountFormTooltipsEn.internal(_root);
-	late final TranslationsMakerAmountFormCategoryEn category = TranslationsMakerAmountFormCategoryEn.internal(_root);
-	late final TranslationsMakerAmountFormOnboardingEn onboarding = TranslationsMakerAmountFormOnboardingEn.internal(_root);
-	late final TranslationsMakerAmountFormErrorsEn errors = TranslationsMakerAmountFormErrorsEn.internal(_root);
+	late final Translations$maker$amountForm$progress$en progress = Translations$maker$amountForm$progress$en.internal(_root);
+	late final Translations$maker$amountForm$labels$en labels = Translations$maker$amountForm$labels$en.internal(_root);
+	late final Translations$maker$amountForm$actions$en actions = Translations$maker$amountForm$actions$en.internal(_root);
+	late final Translations$maker$amountForm$tooltips$en tooltips = Translations$maker$amountForm$tooltips$en.internal(_root);
+	late final Translations$maker$amountForm$category$en category = Translations$maker$amountForm$category$en.internal(_root);
+	late final Translations$maker$amountForm$onboarding$en onboarding = Translations$maker$amountForm$onboarding$en.internal(_root);
+	late final Translations$maker$amountForm$errors$en errors = Translations$maker$amountForm$errors$en.internal(_root);
 }
 
 // Path: maker.payInvoice
-class TranslationsMakerPayInvoiceEn {
-	TranslationsMakerPayInvoiceEn.internal(this._root);
+class Translations$maker$payInvoice$en {
+	Translations$maker$payInvoice$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1360,15 +1361,15 @@ class TranslationsMakerPayInvoiceEn {
 	/// en: 'Pay this Hold invoice:'
 	String get title => 'Pay this Hold invoice:';
 
-	late final TranslationsMakerPayInvoiceActionsEn actions = TranslationsMakerPayInvoiceActionsEn.internal(_root);
-	late final TranslationsMakerPayInvoiceFeedbackEn feedback = TranslationsMakerPayInvoiceFeedbackEn.internal(_root);
-	late final TranslationsMakerPayInvoiceErrorsEn errors = TranslationsMakerPayInvoiceErrorsEn.internal(_root);
-	late final TranslationsMakerPayInvoiceBudgetWarningEn budgetWarning = TranslationsMakerPayInvoiceBudgetWarningEn.internal(_root);
+	late final Translations$maker$payInvoice$actions$en actions = Translations$maker$payInvoice$actions$en.internal(_root);
+	late final Translations$maker$payInvoice$feedback$en feedback = Translations$maker$payInvoice$feedback$en.internal(_root);
+	late final Translations$maker$payInvoice$errors$en errors = Translations$maker$payInvoice$errors$en.internal(_root);
+	late final Translations$maker$payInvoice$budgetWarning$en budgetWarning = Translations$maker$payInvoice$budgetWarning$en.internal(_root);
 }
 
 // Path: maker.waitTaker
-class TranslationsMakerWaitTakerEn {
-	TranslationsMakerWaitTakerEn.internal(this._root);
+class Translations$maker$waitTaker$en {
+	Translations$maker$waitTaker$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1415,8 +1416,8 @@ class TranslationsMakerWaitTakerEn {
 }
 
 // Path: maker.waitForBlik
-class TranslationsMakerWaitForBlikEn {
-	TranslationsMakerWaitForBlikEn.internal(this._root);
+class Translations$maker$waitForBlik$en {
+	Translations$maker$waitForBlik$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1436,8 +1437,8 @@ class TranslationsMakerWaitForBlikEn {
 }
 
 // Path: maker.confirmPayment
-class TranslationsMakerConfirmPaymentEn {
-	TranslationsMakerConfirmPaymentEn.internal(this._root);
+class Translations$maker$confirmPayment$en {
+	Translations$maker$confirmPayment$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1476,16 +1477,16 @@ class TranslationsMakerConfirmPaymentEn {
 	/// en: 'If the BLIK payment failed or was not completed, click "Invalid BLIK Code" below.'
 	String get expiredInstruction2 => 'If the BLIK payment failed or was not completed, click "Invalid BLIK Code" below.';
 
-	late final TranslationsMakerConfirmPaymentActionsEn actions = TranslationsMakerConfirmPaymentActionsEn.internal(_root);
-	late final TranslationsMakerConfirmPaymentConfirmDialogEn confirmDialog = TranslationsMakerConfirmPaymentConfirmDialogEn.internal(_root);
-	late final TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogEn invalidBlikDisputeDialog = TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogEn.internal(_root);
-	late final TranslationsMakerConfirmPaymentFeedbackEn feedback = TranslationsMakerConfirmPaymentFeedbackEn.internal(_root);
-	late final TranslationsMakerConfirmPaymentErrorsEn errors = TranslationsMakerConfirmPaymentErrorsEn.internal(_root);
+	late final Translations$maker$confirmPayment$actions$en actions = Translations$maker$confirmPayment$actions$en.internal(_root);
+	late final Translations$maker$confirmPayment$confirmDialog$en confirmDialog = Translations$maker$confirmPayment$confirmDialog$en.internal(_root);
+	late final Translations$maker$confirmPayment$invalidBlikDisputeDialog$en invalidBlikDisputeDialog = Translations$maker$confirmPayment$invalidBlikDisputeDialog$en.internal(_root);
+	late final Translations$maker$confirmPayment$feedback$en feedback = Translations$maker$confirmPayment$feedback$en.internal(_root);
+	late final Translations$maker$confirmPayment$errors$en errors = Translations$maker$confirmPayment$errors$en.internal(_root);
 }
 
 // Path: maker.invalidBlik
-class TranslationsMakerInvalidBlikEn {
-	TranslationsMakerInvalidBlikEn.internal(this._root);
+class Translations$maker$invalidBlik$en {
+	Translations$maker$invalidBlik$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1499,8 +1500,8 @@ class TranslationsMakerInvalidBlikEn {
 }
 
 // Path: maker.conflict
-class TranslationsMakerConflictEn {
-	TranslationsMakerConflictEn.internal(this._root);
+class Translations$maker$conflict$en {
+	Translations$maker$conflict$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1518,16 +1519,16 @@ class TranslationsMakerConflictEn {
 	/// en: 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.'
 	String get instructions => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
 
-	late final TranslationsMakerConflictActionsEn actions = TranslationsMakerConflictActionsEn.internal(_root);
-	late final TranslationsMakerConflictDisputeDialogEn disputeDialog = TranslationsMakerConflictDisputeDialogEn.internal(_root);
-	late final TranslationsMakerConflictFeedbackEn feedback = TranslationsMakerConflictFeedbackEn.internal(_root);
-	late final TranslationsMakerConflictErrorsEn errors = TranslationsMakerConflictErrorsEn.internal(_root);
-	late final TranslationsMakerConflictNostrContactEn nostrContact = TranslationsMakerConflictNostrContactEn.internal(_root);
+	late final Translations$maker$conflict$actions$en actions = Translations$maker$conflict$actions$en.internal(_root);
+	late final Translations$maker$conflict$disputeDialog$en disputeDialog = Translations$maker$conflict$disputeDialog$en.internal(_root);
+	late final Translations$maker$conflict$feedback$en feedback = Translations$maker$conflict$feedback$en.internal(_root);
+	late final Translations$maker$conflict$errors$en errors = Translations$maker$conflict$errors$en.internal(_root);
+	late final Translations$maker$conflict$nostrContact$en nostrContact = Translations$maker$conflict$nostrContact$en.internal(_root);
 }
 
 // Path: maker.success
-class TranslationsMakerSuccessEn {
-	TranslationsMakerSuccessEn.internal(this._root);
+class Translations$maker$success$en {
+	Translations$maker$success$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1550,8 +1551,8 @@ class TranslationsMakerSuccessEn {
 }
 
 // Path: taker.roleSelection
-class TranslationsTakerRoleSelectionEn {
-	TranslationsTakerRoleSelectionEn.internal(this._root);
+class Translations$taker$roleSelection$en {
+	Translations$taker$roleSelection$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1562,8 +1563,8 @@ class TranslationsTakerRoleSelectionEn {
 }
 
 // Path: taker.progress
-class TranslationsTakerProgressEn {
-	TranslationsTakerProgressEn.internal(this._root);
+class Translations$taker$progress$en {
+	Translations$taker$progress$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1580,8 +1581,8 @@ class TranslationsTakerProgressEn {
 }
 
 // Path: taker.submitBlik
-class TranslationsTakerSubmitBlikEn {
-	TranslationsTakerSubmitBlikEn.internal(this._root);
+class Translations$taker$submitBlik$en {
+	Translations$taker$submitBlik$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1602,16 +1603,16 @@ class TranslationsTakerSubmitBlikEn {
 	/// en: 'Time to enter BLIK code has expired.'
 	String get timeExpired => 'Time to enter BLIK code has expired.';
 
-	late final TranslationsTakerSubmitBlikActionsEn actions = TranslationsTakerSubmitBlikActionsEn.internal(_root);
-	late final TranslationsTakerSubmitBlikFeedbackEn feedback = TranslationsTakerSubmitBlikFeedbackEn.internal(_root);
-	late final TranslationsTakerSubmitBlikValidationEn validation = TranslationsTakerSubmitBlikValidationEn.internal(_root);
-	late final TranslationsTakerSubmitBlikErrorsEn errors = TranslationsTakerSubmitBlikErrorsEn.internal(_root);
-	late final TranslationsTakerSubmitBlikDetailsEn details = TranslationsTakerSubmitBlikDetailsEn.internal(_root);
+	late final Translations$taker$submitBlik$actions$en actions = Translations$taker$submitBlik$actions$en.internal(_root);
+	late final Translations$taker$submitBlik$feedback$en feedback = Translations$taker$submitBlik$feedback$en.internal(_root);
+	late final Translations$taker$submitBlik$validation$en validation = Translations$taker$submitBlik$validation$en.internal(_root);
+	late final Translations$taker$submitBlik$errors$en errors = Translations$taker$submitBlik$errors$en.internal(_root);
+	late final Translations$taker$submitBlik$details$en details = Translations$taker$submitBlik$details$en.internal(_root);
 }
 
 // Path: taker.waitConfirmation
-class TranslationsTakerWaitConfirmationEn {
-	TranslationsTakerWaitConfirmationEn.internal(this._root);
+class Translations$taker$waitConfirmation$en {
+	Translations$taker$waitConfirmation$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1638,7 +1639,7 @@ class TranslationsTakerWaitConfirmationEn {
 	/// en: 'The maker must now enter it into the payment terminal within 2 minutes. You then must accept the BLIK code in your banking app.'
 	String get instructions => 'The maker must now enter it into the payment terminal within 2 minutes. You then must accept the BLIK code in your banking app.';
 
-	late final TranslationsTakerWaitConfirmationCategoryReminderEn categoryReminder = TranslationsTakerWaitConfirmationCategoryReminderEn.internal(_root);
+	late final Translations$taker$waitConfirmation$categoryReminder$en categoryReminder = Translations$taker$waitConfirmation$categoryReminder$en.internal(_root);
 
 	/// en: 'Waiting for maker to receive your BLIK code...'
 	String get waitingForMakerToReceive => 'Waiting for maker to receive your BLIK code...';
@@ -1676,15 +1677,15 @@ class TranslationsTakerWaitConfirmationEn {
 	/// en: 'If the BLIK payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.'
 	String get expiredInstruction3 => 'If the BLIK payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.';
 
-	late final TranslationsTakerWaitConfirmationTakerChargedEn takerCharged = TranslationsTakerWaitConfirmationTakerChargedEn.internal(_root);
-	late final TranslationsTakerWaitConfirmationExpiredActionsEn expiredActions = TranslationsTakerWaitConfirmationExpiredActionsEn.internal(_root);
-	late final TranslationsTakerWaitConfirmationFeedbackEn feedback = TranslationsTakerWaitConfirmationFeedbackEn.internal(_root);
-	late final TranslationsTakerWaitConfirmationErrorsEn errors = TranslationsTakerWaitConfirmationErrorsEn.internal(_root);
+	late final Translations$taker$waitConfirmation$takerCharged$en takerCharged = Translations$taker$waitConfirmation$takerCharged$en.internal(_root);
+	late final Translations$taker$waitConfirmation$expiredActions$en expiredActions = Translations$taker$waitConfirmation$expiredActions$en.internal(_root);
+	late final Translations$taker$waitConfirmation$feedback$en feedback = Translations$taker$waitConfirmation$feedback$en.internal(_root);
+	late final Translations$taker$waitConfirmation$errors$en errors = Translations$taker$waitConfirmation$errors$en.internal(_root);
 }
 
 // Path: taker.paymentProcess
-class TranslationsTakerPaymentProcessEn {
-	TranslationsTakerPaymentProcessEn.internal(this._root);
+class Translations$taker$paymentProcess$en {
+	Translations$taker$paymentProcess$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1696,16 +1697,16 @@ class TranslationsTakerPaymentProcessEn {
 	/// en: 'Waiting for offer status update...'
 	String get waitingForOfferUpdate => 'Waiting for offer status update...';
 
-	late final TranslationsTakerPaymentProcessStatesEn states = TranslationsTakerPaymentProcessStatesEn.internal(_root);
-	late final TranslationsTakerPaymentProcessStepsEn steps = TranslationsTakerPaymentProcessStepsEn.internal(_root);
-	late final TranslationsTakerPaymentProcessErrorsEn errors = TranslationsTakerPaymentProcessErrorsEn.internal(_root);
-	late final TranslationsTakerPaymentProcessLoadingEn loading = TranslationsTakerPaymentProcessLoadingEn.internal(_root);
-	late final TranslationsTakerPaymentProcessActionsEn actions = TranslationsTakerPaymentProcessActionsEn.internal(_root);
+	late final Translations$taker$paymentProcess$states$en states = Translations$taker$paymentProcess$states$en.internal(_root);
+	late final Translations$taker$paymentProcess$steps$en steps = Translations$taker$paymentProcess$steps$en.internal(_root);
+	late final Translations$taker$paymentProcess$errors$en errors = Translations$taker$paymentProcess$errors$en.internal(_root);
+	late final Translations$taker$paymentProcess$loading$en loading = Translations$taker$paymentProcess$loading$en.internal(_root);
+	late final Translations$taker$paymentProcess$actions$en actions = Translations$taker$paymentProcess$actions$en.internal(_root);
 }
 
 // Path: taker.paymentFailed
-class TranslationsTakerPaymentFailedEn {
-	TranslationsTakerPaymentFailedEn.internal(this._root);
+class Translations$taker$paymentFailed$en {
+	Translations$taker$paymentFailed$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1717,17 +1718,17 @@ class TranslationsTakerPaymentFailedEn {
 	/// en: 'Please provide a new Lightning invoice for ${netAmount} satoshi'
 	String instructions({required Object netAmount}) => 'Please provide a new Lightning invoice for ${netAmount} satoshi';
 
-	late final TranslationsTakerPaymentFailedFormEn form = TranslationsTakerPaymentFailedFormEn.internal(_root);
-	late final TranslationsTakerPaymentFailedActionsEn actions = TranslationsTakerPaymentFailedActionsEn.internal(_root);
-	late final TranslationsTakerPaymentFailedErrorsEn errors = TranslationsTakerPaymentFailedErrorsEn.internal(_root);
-	late final TranslationsTakerPaymentFailedWalletSectionEn walletSection = TranslationsTakerPaymentFailedWalletSectionEn.internal(_root);
-	late final TranslationsTakerPaymentFailedLoadingEn loading = TranslationsTakerPaymentFailedLoadingEn.internal(_root);
-	late final TranslationsTakerPaymentFailedSuccessEn success = TranslationsTakerPaymentFailedSuccessEn.internal(_root);
+	late final Translations$taker$paymentFailed$form$en form = Translations$taker$paymentFailed$form$en.internal(_root);
+	late final Translations$taker$paymentFailed$actions$en actions = Translations$taker$paymentFailed$actions$en.internal(_root);
+	late final Translations$taker$paymentFailed$errors$en errors = Translations$taker$paymentFailed$errors$en.internal(_root);
+	late final Translations$taker$paymentFailed$walletSection$en walletSection = Translations$taker$paymentFailed$walletSection$en.internal(_root);
+	late final Translations$taker$paymentFailed$loading$en loading = Translations$taker$paymentFailed$loading$en.internal(_root);
+	late final Translations$taker$paymentFailed$success$en success = Translations$taker$paymentFailed$success$en.internal(_root);
 }
 
 // Path: taker.paymentSuccess
-class TranslationsTakerPaymentSuccessEn {
-	TranslationsTakerPaymentSuccessEn.internal(this._root);
+class Translations$taker$paymentSuccess$en {
+	Translations$taker$paymentSuccess$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1739,12 +1740,12 @@ class TranslationsTakerPaymentSuccessEn {
 	/// en: 'Your payment has been processed successfully.'
 	String get message => 'Your payment has been processed successfully.';
 
-	late final TranslationsTakerPaymentSuccessActionsEn actions = TranslationsTakerPaymentSuccessActionsEn.internal(_root);
+	late final Translations$taker$paymentSuccess$actions$en actions = Translations$taker$paymentSuccess$actions$en.internal(_root);
 }
 
 // Path: taker.invalidBlik
-class TranslationsTakerInvalidBlikEn {
-	TranslationsTakerInvalidBlikEn.internal(this._root);
+class Translations$taker$invalidBlik$en {
+	Translations$taker$invalidBlik$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1765,14 +1766,14 @@ class TranslationsTakerInvalidBlikEn {
 	/// en: 'If you were charged:'
 	String get wereCharged => 'If you were charged:';
 
-	late final TranslationsTakerInvalidBlikActionsEn actions = TranslationsTakerInvalidBlikActionsEn.internal(_root);
-	late final TranslationsTakerInvalidBlikFeedbackEn feedback = TranslationsTakerInvalidBlikFeedbackEn.internal(_root);
-	late final TranslationsTakerInvalidBlikErrorsEn errors = TranslationsTakerInvalidBlikErrorsEn.internal(_root);
+	late final Translations$taker$invalidBlik$actions$en actions = Translations$taker$invalidBlik$actions$en.internal(_root);
+	late final Translations$taker$invalidBlik$feedback$en feedback = Translations$taker$invalidBlik$feedback$en.internal(_root);
+	late final Translations$taker$invalidBlik$errors$en errors = Translations$taker$invalidBlik$errors$en.internal(_root);
 }
 
 // Path: taker.conflict
-class TranslationsTakerConflictEn {
-	TranslationsTakerConflictEn.internal(this._root);
+class Translations$taker$conflict$en {
+	Translations$taker$conflict$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1790,15 +1791,15 @@ class TranslationsTakerConflictEn {
 	/// en: 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.'
 	String get instructions => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
 
-	late final TranslationsTakerConflictActionsEn actions = TranslationsTakerConflictActionsEn.internal(_root);
-	late final TranslationsTakerConflictFeedbackEn feedback = TranslationsTakerConflictFeedbackEn.internal(_root);
-	late final TranslationsTakerConflictErrorsEn errors = TranslationsTakerConflictErrorsEn.internal(_root);
-	late final TranslationsTakerConflictNostrContactEn nostrContact = TranslationsTakerConflictNostrContactEn.internal(_root);
+	late final Translations$taker$conflict$actions$en actions = Translations$taker$conflict$actions$en.internal(_root);
+	late final Translations$taker$conflict$feedback$en feedback = Translations$taker$conflict$feedback$en.internal(_root);
+	late final Translations$taker$conflict$errors$en errors = Translations$taker$conflict$errors$en.internal(_root);
+	late final Translations$taker$conflict$nostrContact$en nostrContact = Translations$taker$conflict$nostrContact$en.internal(_root);
 }
 
 // Path: blik.instructions
-class TranslationsBlikInstructionsEn {
-	TranslationsBlikInstructionsEn.internal(this._root);
+class Translations$blik$instructions$en {
+	Translations$blik$instructions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1809,8 +1810,8 @@ class TranslationsBlikInstructionsEn {
 }
 
 // Path: home.notifications
-class TranslationsHomeNotificationsEn {
-	TranslationsHomeNotificationsEn.internal(this._root);
+class Translations$home$notifications$en {
+	Translations$home$notifications$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1833,8 +1834,8 @@ class TranslationsHomeNotificationsEn {
 }
 
 // Path: home.statistics
-class TranslationsHomeStatisticsEn {
-	TranslationsHomeStatisticsEn.internal(this._root);
+class Translations$home$statistics$en {
+	Translations$home$statistics$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1852,12 +1853,12 @@ class TranslationsHomeStatisticsEn {
 	/// en: 'Last 7d: ${count} offers | Avg BLIK: ${avgBlikTime} | Avg Paid: ${avgPaidTime}'
 	String last7DaysSingleLine({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg BLIK: ${avgBlikTime}  |  Avg Paid: ${avgPaidTime}';
 
-	late final TranslationsHomeStatisticsErrorsEn errors = TranslationsHomeStatisticsErrorsEn.internal(_root);
+	late final Translations$home$statistics$errors$en errors = Translations$home$statistics$errors$en.internal(_root);
 }
 
 // Path: generateNewKey.buttons
-class TranslationsGenerateNewKeyButtonsEn {
-	TranslationsGenerateNewKeyButtonsEn.internal(this._root);
+class Translations$generateNewKey$buttons$en {
+	Translations$generateNewKey$buttons$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1868,8 +1869,8 @@ class TranslationsGenerateNewKeyButtonsEn {
 }
 
 // Path: generateNewKey.errors
-class TranslationsGenerateNewKeyErrorsEn {
-	TranslationsGenerateNewKeyErrorsEn.internal(this._root);
+class Translations$generateNewKey$errors$en {
+	Translations$generateNewKey$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1883,8 +1884,8 @@ class TranslationsGenerateNewKeyErrorsEn {
 }
 
 // Path: generateNewKey.feedback
-class TranslationsGenerateNewKeyFeedbackEn {
-	TranslationsGenerateNewKeyFeedbackEn.internal(this._root);
+class Translations$generateNewKey$feedback$en {
+	Translations$generateNewKey$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1895,8 +1896,8 @@ class TranslationsGenerateNewKeyFeedbackEn {
 }
 
 // Path: generateNewKey.tooltips
-class TranslationsGenerateNewKeyTooltipsEn {
-	TranslationsGenerateNewKeyTooltipsEn.internal(this._root);
+class Translations$generateNewKey$tooltips$en {
+	Translations$generateNewKey$tooltips$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1907,8 +1908,8 @@ class TranslationsGenerateNewKeyTooltipsEn {
 }
 
 // Path: backup.feedback
-class TranslationsBackupFeedbackEn {
-	TranslationsBackupFeedbackEn.internal(this._root);
+class Translations$backup$feedback$en {
+	Translations$backup$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1919,8 +1920,8 @@ class TranslationsBackupFeedbackEn {
 }
 
 // Path: backup.tooltips
-class TranslationsBackupTooltipsEn {
-	TranslationsBackupTooltipsEn.internal(this._root);
+class Translations$backup$tooltips$en {
+	Translations$backup$tooltips$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1931,8 +1932,8 @@ class TranslationsBackupTooltipsEn {
 }
 
 // Path: restore.labels
-class TranslationsRestoreLabelsEn {
-	TranslationsRestoreLabelsEn.internal(this._root);
+class Translations$restore$labels$en {
+	Translations$restore$labels$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1943,8 +1944,8 @@ class TranslationsRestoreLabelsEn {
 }
 
 // Path: restore.buttons
-class TranslationsRestoreButtonsEn {
-	TranslationsRestoreButtonsEn.internal(this._root);
+class Translations$restore$buttons$en {
+	Translations$restore$buttons$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1955,8 +1956,8 @@ class TranslationsRestoreButtonsEn {
 }
 
 // Path: restore.errors
-class TranslationsRestoreErrorsEn {
-	TranslationsRestoreErrorsEn.internal(this._root);
+class Translations$restore$errors$en {
+	Translations$restore$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1970,8 +1971,8 @@ class TranslationsRestoreErrorsEn {
 }
 
 // Path: restore.feedback
-class TranslationsRestoreFeedbackEn {
-	TranslationsRestoreFeedbackEn.internal(this._root);
+class Translations$restore$feedback$en {
+	Translations$restore$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1982,8 +1983,8 @@ class TranslationsRestoreFeedbackEn {
 }
 
 // Path: restore.tooltips
-class TranslationsRestoreTooltipsEn {
-	TranslationsRestoreTooltipsEn.internal(this._root);
+class Translations$restore$tooltips$en {
+	Translations$restore$tooltips$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -1994,8 +1995,8 @@ class TranslationsRestoreTooltipsEn {
 }
 
 // Path: system.errors
-class TranslationsSystemErrorsEn {
-	TranslationsSystemErrorsEn.internal(this._root);
+class Translations$system$errors$en {
+	Translations$system$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2021,8 +2022,8 @@ class TranslationsSystemErrorsEn {
 }
 
 // Path: system.blik
-class TranslationsSystemBlikEn {
-	TranslationsSystemBlikEn.internal(this._root);
+class Translations$system$blik$en {
+	Translations$system$blik$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2033,8 +2034,8 @@ class TranslationsSystemBlikEn {
 }
 
 // Path: myOffers.filter
-class TranslationsMyOffersFilterEn {
-	TranslationsMyOffersFilterEn.internal(this._root);
+class Translations$myOffers$filter$en {
+	Translations$myOffers$filter$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2054,8 +2055,8 @@ class TranslationsMyOffersFilterEn {
 }
 
 // Path: myOffers.details
-class TranslationsMyOffersDetailsEn {
-	TranslationsMyOffersDetailsEn.internal(this._root);
+class Translations$myOffers$details$en {
+	Translations$myOffers$details$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2129,8 +2130,8 @@ class TranslationsMyOffersDetailsEn {
 }
 
 // Path: landing.actions
-class TranslationsLandingActionsEn {
-	TranslationsLandingActionsEn.internal(this._root);
+class Translations$landing$actions$en {
+	Translations$landing$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2153,8 +2154,8 @@ class TranslationsLandingActionsEn {
 }
 
 // Path: notificationSettings.newOfferAlerts
-class TranslationsNotificationSettingsNewOfferAlertsEn {
-	TranslationsNotificationSettingsNewOfferAlertsEn.internal(this._root);
+class Translations$notificationSettings$newOfferAlerts$en {
+	Translations$notificationSettings$newOfferAlerts$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2168,8 +2169,8 @@ class TranslationsNotificationSettingsNewOfferAlertsEn {
 }
 
 // Path: wallet.missingReceiving
-class TranslationsWalletMissingReceivingEn {
-	TranslationsWalletMissingReceivingEn.internal(this._root);
+class Translations$wallet$missingReceiving$en {
+	Translations$wallet$missingReceiving$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2186,8 +2187,8 @@ class TranslationsWalletMissingReceivingEn {
 }
 
 // Path: nwc.labels
-class TranslationsNwcLabelsEn {
-	TranslationsNwcLabelsEn.internal(this._root);
+class Translations$nwc$labels$en {
+	Translations$nwc$labels$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2237,8 +2238,8 @@ class TranslationsNwcLabelsEn {
 }
 
 // Path: nwc.prompts
-class TranslationsNwcPromptsEn {
-	TranslationsNwcPromptsEn.internal(this._root);
+class Translations$nwc$prompts$en {
+	Translations$nwc$prompts$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2270,8 +2271,8 @@ class TranslationsNwcPromptsEn {
 }
 
 // Path: nwc.actions
-class TranslationsNwcActionsEn {
-	TranslationsNwcActionsEn.internal(this._root);
+class Translations$nwc$actions$en {
+	Translations$nwc$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2285,8 +2286,8 @@ class TranslationsNwcActionsEn {
 }
 
 // Path: nwc.feedback
-class TranslationsNwcFeedbackEn {
-	TranslationsNwcFeedbackEn.internal(this._root);
+class Translations$nwc$feedback$en {
+	Translations$nwc$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2306,8 +2307,8 @@ class TranslationsNwcFeedbackEn {
 }
 
 // Path: nwc.errors
-class TranslationsNwcErrorsEn {
-	TranslationsNwcErrorsEn.internal(this._root);
+class Translations$nwc$errors$en {
+	Translations$nwc$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2333,8 +2334,8 @@ class TranslationsNwcErrorsEn {
 }
 
 // Path: nwc.time
-class TranslationsNwcTimeEn {
-	TranslationsNwcTimeEn.internal(this._root);
+class Translations$nwc$time$en {
+	Translations$nwc$time$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2354,8 +2355,8 @@ class TranslationsNwcTimeEn {
 }
 
 // Path: relays.status
-class TranslationsRelaysStatusEn {
-	TranslationsRelaysStatusEn.internal(this._root);
+class Translations$relays$status$en {
+	Translations$relays$status$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2375,8 +2376,8 @@ class TranslationsRelaysStatusEn {
 }
 
 // Path: relays.popup
-class TranslationsRelaysPopupEn {
-	TranslationsRelaysPopupEn.internal(this._root);
+class Translations$relays$popup$en {
+	Translations$relays$popup$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2390,8 +2391,8 @@ class TranslationsRelaysPopupEn {
 }
 
 // Path: offerNotifications.activeService
-class TranslationsOfferNotificationsActiveServiceEn {
-	TranslationsOfferNotificationsActiveServiceEn.internal(this._root);
+class Translations$offerNotifications$activeService$en {
+	Translations$offerNotifications$activeService$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2405,8 +2406,8 @@ class TranslationsOfferNotificationsActiveServiceEn {
 }
 
 // Path: offerNotifications.funded
-class TranslationsOfferNotificationsFundedEn {
-	TranslationsOfferNotificationsFundedEn.internal(this._root);
+class Translations$offerNotifications$funded$en {
+	Translations$offerNotifications$funded$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2420,8 +2421,8 @@ class TranslationsOfferNotificationsFundedEn {
 }
 
 // Path: offerNotifications.reserved
-class TranslationsOfferNotificationsReservedEn {
-	TranslationsOfferNotificationsReservedEn.internal(this._root);
+class Translations$offerNotifications$reserved$en {
+	Translations$offerNotifications$reserved$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2435,8 +2436,8 @@ class TranslationsOfferNotificationsReservedEn {
 }
 
 // Path: offerNotifications.blikReady
-class TranslationsOfferNotificationsBlikReadyEn {
-	TranslationsOfferNotificationsBlikReadyEn.internal(this._root);
+class Translations$offerNotifications$blikReady$en {
+	Translations$offerNotifications$blikReady$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2450,8 +2451,8 @@ class TranslationsOfferNotificationsBlikReadyEn {
 }
 
 // Path: offerNotifications.newOffer
-class TranslationsOfferNotificationsNewOfferEn {
-	TranslationsOfferNotificationsNewOfferEn.internal(this._root);
+class Translations$offerNotifications$newOffer$en {
+	Translations$offerNotifications$newOffer$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2465,8 +2466,8 @@ class TranslationsOfferNotificationsNewOfferEn {
 }
 
 // Path: offerNotifications.categories
-class TranslationsOfferNotificationsCategoriesEn {
-	TranslationsOfferNotificationsCategoriesEn.internal(this._root);
+class Translations$offerNotifications$categories$en {
+	Translations$offerNotifications$categories$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2483,8 +2484,8 @@ class TranslationsOfferNotificationsCategoriesEn {
 }
 
 // Path: offerNotifications.blikPendingReminder
-class TranslationsOfferNotificationsBlikPendingReminderEn {
-	TranslationsOfferNotificationsBlikPendingReminderEn.internal(this._root);
+class Translations$offerNotifications$blikPendingReminder$en {
+	Translations$offerNotifications$blikPendingReminder$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2498,8 +2499,8 @@ class TranslationsOfferNotificationsBlikPendingReminderEn {
 }
 
 // Path: offerNotifications.takerCharged
-class TranslationsOfferNotificationsTakerChargedEn {
-	TranslationsOfferNotificationsTakerChargedEn.internal(this._root);
+class Translations$offerNotifications$takerCharged$en {
+	Translations$offerNotifications$takerCharged$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2513,8 +2514,8 @@ class TranslationsOfferNotificationsTakerChargedEn {
 }
 
 // Path: offerNotifications.invalidBlik
-class TranslationsOfferNotificationsInvalidBlikEn {
-	TranslationsOfferNotificationsInvalidBlikEn.internal(this._root);
+class Translations$offerNotifications$invalidBlik$en {
+	Translations$offerNotifications$invalidBlik$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2528,8 +2529,8 @@ class TranslationsOfferNotificationsInvalidBlikEn {
 }
 
 // Path: offerNotifications.takerPaid
-class TranslationsOfferNotificationsTakerPaidEn {
-	TranslationsOfferNotificationsTakerPaidEn.internal(this._root);
+class Translations$offerNotifications$takerPaid$en {
+	Translations$offerNotifications$takerPaid$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2543,8 +2544,8 @@ class TranslationsOfferNotificationsTakerPaidEn {
 }
 
 // Path: offers.details.categories
-class TranslationsOffersDetailsCategoriesEn {
-	TranslationsOffersDetailsCategoriesEn.internal(this._root);
+class Translations$offers$details$categories$en {
+	Translations$offers$details$categories$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2561,8 +2562,8 @@ class TranslationsOffersDetailsCategoriesEn {
 }
 
 // Path: offers.details.consents
-class TranslationsOffersDetailsConsentsEn {
-	TranslationsOffersDetailsConsentsEn.internal(this._root);
+class Translations$offers$details$consents$en {
+	Translations$offers$details$consents$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2576,8 +2577,8 @@ class TranslationsOffersDetailsConsentsEn {
 }
 
 // Path: maker.amountForm.progress
-class TranslationsMakerAmountFormProgressEn {
-	TranslationsMakerAmountFormProgressEn.internal(this._root);
+class Translations$maker$amountForm$progress$en {
+	Translations$maker$amountForm$progress$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2594,8 +2595,8 @@ class TranslationsMakerAmountFormProgressEn {
 }
 
 // Path: maker.amountForm.labels
-class TranslationsMakerAmountFormLabelsEn {
-	TranslationsMakerAmountFormLabelsEn.internal(this._root);
+class Translations$maker$amountForm$labels$en {
+	Translations$maker$amountForm$labels$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2624,8 +2625,8 @@ class TranslationsMakerAmountFormLabelsEn {
 }
 
 // Path: maker.amountForm.actions
-class TranslationsMakerAmountFormActionsEn {
-	TranslationsMakerAmountFormActionsEn.internal(this._root);
+class Translations$maker$amountForm$actions$en {
+	Translations$maker$amountForm$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2636,8 +2637,8 @@ class TranslationsMakerAmountFormActionsEn {
 }
 
 // Path: maker.amountForm.tooltips
-class TranslationsMakerAmountFormTooltipsEn {
-	TranslationsMakerAmountFormTooltipsEn.internal(this._root);
+class Translations$maker$amountForm$tooltips$en {
+	Translations$maker$amountForm$tooltips$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2651,8 +2652,8 @@ class TranslationsMakerAmountFormTooltipsEn {
 }
 
 // Path: maker.amountForm.category
-class TranslationsMakerAmountFormCategoryEn {
-	TranslationsMakerAmountFormCategoryEn.internal(this._root);
+class Translations$maker$amountForm$category$en {
+	Translations$maker$amountForm$category$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2661,8 +2662,8 @@ class TranslationsMakerAmountFormCategoryEn {
 	/// en: 'Offer category'
 	String get label => 'Offer category';
 
-	late final TranslationsMakerAmountFormCategoryOptionsEn options = TranslationsMakerAmountFormCategoryOptionsEn.internal(_root);
-	late final TranslationsMakerAmountFormCategoryShortLabelsEn shortLabels = TranslationsMakerAmountFormCategoryShortLabelsEn.internal(_root);
+	late final Translations$maker$amountForm$category$options$en options = Translations$maker$amountForm$category$options$en.internal(_root);
+	late final Translations$maker$amountForm$category$shortLabels$en shortLabels = Translations$maker$amountForm$category$shortLabels$en.internal(_root);
 
 	/// en: 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.'
 	String get atmHint => 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
@@ -2684,8 +2685,8 @@ class TranslationsMakerAmountFormCategoryEn {
 }
 
 // Path: maker.amountForm.onboarding
-class TranslationsMakerAmountFormOnboardingEn {
-	TranslationsMakerAmountFormOnboardingEn.internal(this._root);
+class Translations$maker$amountForm$onboarding$en {
+	Translations$maker$amountForm$onboarding$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2717,8 +2718,8 @@ class TranslationsMakerAmountFormOnboardingEn {
 }
 
 // Path: maker.amountForm.errors
-class TranslationsMakerAmountFormErrorsEn {
-	TranslationsMakerAmountFormErrorsEn.internal(this._root);
+class Translations$maker$amountForm$errors$en {
+	Translations$maker$amountForm$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2741,8 +2742,8 @@ class TranslationsMakerAmountFormErrorsEn {
 }
 
 // Path: maker.payInvoice.actions
-class TranslationsMakerPayInvoiceActionsEn {
-	TranslationsMakerPayInvoiceActionsEn.internal(this._root);
+class Translations$maker$payInvoice$actions$en {
+	Translations$maker$payInvoice$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2765,8 +2766,8 @@ class TranslationsMakerPayInvoiceActionsEn {
 }
 
 // Path: maker.payInvoice.feedback
-class TranslationsMakerPayInvoiceFeedbackEn {
-	TranslationsMakerPayInvoiceFeedbackEn.internal(this._root);
+class Translations$maker$payInvoice$feedback$en {
+	Translations$maker$payInvoice$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2786,8 +2787,8 @@ class TranslationsMakerPayInvoiceFeedbackEn {
 }
 
 // Path: maker.payInvoice.errors
-class TranslationsMakerPayInvoiceErrorsEn {
-	TranslationsMakerPayInvoiceErrorsEn.internal(this._root);
+class Translations$maker$payInvoice$errors$en {
+	Translations$maker$payInvoice$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2822,8 +2823,8 @@ class TranslationsMakerPayInvoiceErrorsEn {
 }
 
 // Path: maker.payInvoice.budgetWarning
-class TranslationsMakerPayInvoiceBudgetWarningEn {
-	TranslationsMakerPayInvoiceBudgetWarningEn.internal(this._root);
+class Translations$maker$payInvoice$budgetWarning$en {
+	Translations$maker$payInvoice$budgetWarning$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2870,8 +2871,8 @@ class TranslationsMakerPayInvoiceBudgetWarningEn {
 }
 
 // Path: maker.confirmPayment.actions
-class TranslationsMakerConfirmPaymentActionsEn {
-	TranslationsMakerConfirmPaymentActionsEn.internal(this._root);
+class Translations$maker$confirmPayment$actions$en {
+	Translations$maker$confirmPayment$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2888,8 +2889,8 @@ class TranslationsMakerConfirmPaymentActionsEn {
 }
 
 // Path: maker.confirmPayment.confirmDialog
-class TranslationsMakerConfirmPaymentConfirmDialogEn {
-	TranslationsMakerConfirmPaymentConfirmDialogEn.internal(this._root);
+class Translations$maker$confirmPayment$confirmDialog$en {
+	Translations$maker$confirmPayment$confirmDialog$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2909,8 +2910,8 @@ class TranslationsMakerConfirmPaymentConfirmDialogEn {
 }
 
 // Path: maker.confirmPayment.invalidBlikDisputeDialog
-class TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogEn {
-	TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogEn.internal(this._root);
+class Translations$maker$confirmPayment$invalidBlikDisputeDialog$en {
+	Translations$maker$confirmPayment$invalidBlikDisputeDialog$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2930,8 +2931,8 @@ class TranslationsMakerConfirmPaymentInvalidBlikDisputeDialogEn {
 }
 
 // Path: maker.confirmPayment.feedback
-class TranslationsMakerConfirmPaymentFeedbackEn {
-	TranslationsMakerConfirmPaymentFeedbackEn.internal(this._root);
+class Translations$maker$confirmPayment$feedback$en {
+	Translations$maker$confirmPayment$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2948,8 +2949,8 @@ class TranslationsMakerConfirmPaymentFeedbackEn {
 }
 
 // Path: maker.confirmPayment.errors
-class TranslationsMakerConfirmPaymentErrorsEn {
-	TranslationsMakerConfirmPaymentErrorsEn.internal(this._root);
+class Translations$maker$confirmPayment$errors$en {
+	Translations$maker$confirmPayment$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2984,8 +2985,8 @@ class TranslationsMakerConfirmPaymentErrorsEn {
 }
 
 // Path: maker.conflict.actions
-class TranslationsMakerConflictActionsEn {
-	TranslationsMakerConflictActionsEn.internal(this._root);
+class Translations$maker$conflict$actions$en {
+	Translations$maker$conflict$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3005,8 +3006,8 @@ class TranslationsMakerConflictActionsEn {
 }
 
 // Path: maker.conflict.disputeDialog
-class TranslationsMakerConflictDisputeDialogEn {
-	TranslationsMakerConflictDisputeDialogEn.internal(this._root);
+class Translations$maker$conflict$disputeDialog$en {
+	Translations$maker$conflict$disputeDialog$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3021,12 +3022,12 @@ class TranslationsMakerConflictDisputeDialogEn {
 	/// en: 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee. The hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved. If the dispute is ruled in your favor, the satoshi amount will be refunded to a wallet of your choice (minus fees). Make sure you have a wallet ready to receive.'
 	String get contentDetailed => 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee.\n\nThe hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved.\n\nIf the dispute is ruled in your favor, the satoshi amount will be refunded to a wallet of your choice (minus fees). Make sure you have a wallet ready to receive.';
 
-	late final TranslationsMakerConflictDisputeDialogActionsEn actions = TranslationsMakerConflictDisputeDialogActionsEn.internal(_root);
+	late final Translations$maker$conflict$disputeDialog$actions$en actions = Translations$maker$conflict$disputeDialog$actions$en.internal(_root);
 }
 
 // Path: maker.conflict.feedback
-class TranslationsMakerConflictFeedbackEn {
-	TranslationsMakerConflictFeedbackEn.internal(this._root);
+class Translations$maker$conflict$feedback$en {
+	Translations$maker$conflict$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3037,8 +3038,8 @@ class TranslationsMakerConflictFeedbackEn {
 }
 
 // Path: maker.conflict.errors
-class TranslationsMakerConflictErrorsEn {
-	TranslationsMakerConflictErrorsEn.internal(this._root);
+class Translations$maker$conflict$errors$en {
+	Translations$maker$conflict$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3049,8 +3050,8 @@ class TranslationsMakerConflictErrorsEn {
 }
 
 // Path: maker.conflict.nostrContact
-class TranslationsMakerConflictNostrContactEn {
-	TranslationsMakerConflictNostrContactEn.internal(this._root);
+class Translations$maker$conflict$nostrContact$en {
+	Translations$maker$conflict$nostrContact$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3079,8 +3080,8 @@ class TranslationsMakerConflictNostrContactEn {
 }
 
 // Path: taker.submitBlik.actions
-class TranslationsTakerSubmitBlikActionsEn {
-	TranslationsTakerSubmitBlikActionsEn.internal(this._root);
+class Translations$taker$submitBlik$actions$en {
+	Translations$taker$submitBlik$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3091,8 +3092,8 @@ class TranslationsTakerSubmitBlikActionsEn {
 }
 
 // Path: taker.submitBlik.feedback
-class TranslationsTakerSubmitBlikFeedbackEn {
-	TranslationsTakerSubmitBlikFeedbackEn.internal(this._root);
+class Translations$taker$submitBlik$feedback$en {
+	Translations$taker$submitBlik$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3103,8 +3104,8 @@ class TranslationsTakerSubmitBlikFeedbackEn {
 }
 
 // Path: taker.submitBlik.validation
-class TranslationsTakerSubmitBlikValidationEn {
-	TranslationsTakerSubmitBlikValidationEn.internal(this._root);
+class Translations$taker$submitBlik$validation$en {
+	Translations$taker$submitBlik$validation$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3115,8 +3116,8 @@ class TranslationsTakerSubmitBlikValidationEn {
 }
 
 // Path: taker.submitBlik.errors
-class TranslationsTakerSubmitBlikErrorsEn {
-	TranslationsTakerSubmitBlikErrorsEn.internal(this._root);
+class Translations$taker$submitBlik$errors$en {
+	Translations$taker$submitBlik$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3142,8 +3143,8 @@ class TranslationsTakerSubmitBlikErrorsEn {
 }
 
 // Path: taker.submitBlik.details
-class TranslationsTakerSubmitBlikDetailsEn {
-	TranslationsTakerSubmitBlikDetailsEn.internal(this._root);
+class Translations$taker$submitBlik$details$en {
+	Translations$taker$submitBlik$details$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3166,8 +3167,8 @@ class TranslationsTakerSubmitBlikDetailsEn {
 }
 
 // Path: taker.waitConfirmation.categoryReminder
-class TranslationsTakerWaitConfirmationCategoryReminderEn {
-	TranslationsTakerWaitConfirmationCategoryReminderEn.internal(this._root);
+class Translations$taker$waitConfirmation$categoryReminder$en {
+	Translations$taker$waitConfirmation$categoryReminder$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3181,8 +3182,8 @@ class TranslationsTakerWaitConfirmationCategoryReminderEn {
 }
 
 // Path: taker.waitConfirmation.takerCharged
-class TranslationsTakerWaitConfirmationTakerChargedEn {
-	TranslationsTakerWaitConfirmationTakerChargedEn.internal(this._root);
+class Translations$taker$waitConfirmation$takerCharged$en {
+	Translations$taker$waitConfirmation$takerCharged$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3196,8 +3197,8 @@ class TranslationsTakerWaitConfirmationTakerChargedEn {
 }
 
 // Path: taker.waitConfirmation.expiredActions
-class TranslationsTakerWaitConfirmationExpiredActionsEn {
-	TranslationsTakerWaitConfirmationExpiredActionsEn.internal(this._root);
+class Translations$taker$waitConfirmation$expiredActions$en {
+	Translations$taker$waitConfirmation$expiredActions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3214,8 +3215,8 @@ class TranslationsTakerWaitConfirmationExpiredActionsEn {
 }
 
 // Path: taker.waitConfirmation.feedback
-class TranslationsTakerWaitConfirmationFeedbackEn {
-	TranslationsTakerWaitConfirmationFeedbackEn.internal(this._root);
+class Translations$taker$waitConfirmation$feedback$en {
+	Translations$taker$waitConfirmation$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3232,8 +3233,8 @@ class TranslationsTakerWaitConfirmationFeedbackEn {
 }
 
 // Path: taker.waitConfirmation.errors
-class TranslationsTakerWaitConfirmationErrorsEn {
-	TranslationsTakerWaitConfirmationErrorsEn.internal(this._root);
+class Translations$taker$waitConfirmation$errors$en {
+	Translations$taker$waitConfirmation$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3247,8 +3248,8 @@ class TranslationsTakerWaitConfirmationErrorsEn {
 }
 
 // Path: taker.paymentProcess.states
-class TranslationsTakerPaymentProcessStatesEn {
-	TranslationsTakerPaymentProcessStatesEn.internal(this._root);
+class Translations$taker$paymentProcess$states$en {
+	Translations$taker$paymentProcess$states$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3271,8 +3272,8 @@ class TranslationsTakerPaymentProcessStatesEn {
 }
 
 // Path: taker.paymentProcess.steps
-class TranslationsTakerPaymentProcessStepsEn {
-	TranslationsTakerPaymentProcessStepsEn.internal(this._root);
+class Translations$taker$paymentProcess$steps$en {
+	Translations$taker$paymentProcess$steps$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3292,8 +3293,8 @@ class TranslationsTakerPaymentProcessStepsEn {
 }
 
 // Path: taker.paymentProcess.errors
-class TranslationsTakerPaymentProcessErrorsEn {
-	TranslationsTakerPaymentProcessErrorsEn.internal(this._root);
+class Translations$taker$paymentProcess$errors$en {
+	Translations$taker$paymentProcess$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3331,8 +3332,8 @@ class TranslationsTakerPaymentProcessErrorsEn {
 }
 
 // Path: taker.paymentProcess.loading
-class TranslationsTakerPaymentProcessLoadingEn {
-	TranslationsTakerPaymentProcessLoadingEn.internal(this._root);
+class Translations$taker$paymentProcess$loading$en {
+	Translations$taker$paymentProcess$loading$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3343,8 +3344,8 @@ class TranslationsTakerPaymentProcessLoadingEn {
 }
 
 // Path: taker.paymentProcess.actions
-class TranslationsTakerPaymentProcessActionsEn {
-	TranslationsTakerPaymentProcessActionsEn.internal(this._root);
+class Translations$taker$paymentProcess$actions$en {
+	Translations$taker$paymentProcess$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3355,8 +3356,8 @@ class TranslationsTakerPaymentProcessActionsEn {
 }
 
 // Path: taker.paymentFailed.form
-class TranslationsTakerPaymentFailedFormEn {
-	TranslationsTakerPaymentFailedFormEn.internal(this._root);
+class Translations$taker$paymentFailed$form$en {
+	Translations$taker$paymentFailed$form$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3370,8 +3371,8 @@ class TranslationsTakerPaymentFailedFormEn {
 }
 
 // Path: taker.paymentFailed.actions
-class TranslationsTakerPaymentFailedActionsEn {
-	TranslationsTakerPaymentFailedActionsEn.internal(this._root);
+class Translations$taker$paymentFailed$actions$en {
+	Translations$taker$paymentFailed$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3382,8 +3383,8 @@ class TranslationsTakerPaymentFailedActionsEn {
 }
 
 // Path: taker.paymentFailed.errors
-class TranslationsTakerPaymentFailedErrorsEn {
-	TranslationsTakerPaymentFailedErrorsEn.internal(this._root);
+class Translations$taker$paymentFailed$errors$en {
+	Translations$taker$paymentFailed$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3406,8 +3407,8 @@ class TranslationsTakerPaymentFailedErrorsEn {
 }
 
 // Path: taker.paymentFailed.walletSection
-class TranslationsTakerPaymentFailedWalletSectionEn {
-	TranslationsTakerPaymentFailedWalletSectionEn.internal(this._root);
+class Translations$taker$paymentFailed$walletSection$en {
+	Translations$taker$paymentFailed$walletSection$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3424,8 +3425,8 @@ class TranslationsTakerPaymentFailedWalletSectionEn {
 }
 
 // Path: taker.paymentFailed.loading
-class TranslationsTakerPaymentFailedLoadingEn {
-	TranslationsTakerPaymentFailedLoadingEn.internal(this._root);
+class Translations$taker$paymentFailed$loading$en {
+	Translations$taker$paymentFailed$loading$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3436,8 +3437,8 @@ class TranslationsTakerPaymentFailedLoadingEn {
 }
 
 // Path: taker.paymentFailed.success
-class TranslationsTakerPaymentFailedSuccessEn {
-	TranslationsTakerPaymentFailedSuccessEn.internal(this._root);
+class Translations$taker$paymentFailed$success$en {
+	Translations$taker$paymentFailed$success$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3451,8 +3452,8 @@ class TranslationsTakerPaymentFailedSuccessEn {
 }
 
 // Path: taker.paymentSuccess.actions
-class TranslationsTakerPaymentSuccessActionsEn {
-	TranslationsTakerPaymentSuccessActionsEn.internal(this._root);
+class Translations$taker$paymentSuccess$actions$en {
+	Translations$taker$paymentSuccess$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3463,8 +3464,8 @@ class TranslationsTakerPaymentSuccessActionsEn {
 }
 
 // Path: taker.invalidBlik.actions
-class TranslationsTakerInvalidBlikActionsEn {
-	TranslationsTakerInvalidBlikActionsEn.internal(this._root);
+class Translations$taker$invalidBlik$actions$en {
+	Translations$taker$invalidBlik$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3484,8 +3485,8 @@ class TranslationsTakerInvalidBlikActionsEn {
 }
 
 // Path: taker.invalidBlik.feedback
-class TranslationsTakerInvalidBlikFeedbackEn {
-	TranslationsTakerInvalidBlikFeedbackEn.internal(this._root);
+class Translations$taker$invalidBlik$feedback$en {
+	Translations$taker$invalidBlik$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3496,8 +3497,8 @@ class TranslationsTakerInvalidBlikFeedbackEn {
 }
 
 // Path: taker.invalidBlik.errors
-class TranslationsTakerInvalidBlikErrorsEn {
-	TranslationsTakerInvalidBlikErrorsEn.internal(this._root);
+class Translations$taker$invalidBlik$errors$en {
+	Translations$taker$invalidBlik$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3511,8 +3512,8 @@ class TranslationsTakerInvalidBlikErrorsEn {
 }
 
 // Path: taker.conflict.actions
-class TranslationsTakerConflictActionsEn {
-	TranslationsTakerConflictActionsEn.internal(this._root);
+class Translations$taker$conflict$actions$en {
+	Translations$taker$conflict$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3523,8 +3524,8 @@ class TranslationsTakerConflictActionsEn {
 }
 
 // Path: taker.conflict.feedback
-class TranslationsTakerConflictFeedbackEn {
-	TranslationsTakerConflictFeedbackEn.internal(this._root);
+class Translations$taker$conflict$feedback$en {
+	Translations$taker$conflict$feedback$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3535,8 +3536,8 @@ class TranslationsTakerConflictFeedbackEn {
 }
 
 // Path: taker.conflict.errors
-class TranslationsTakerConflictErrorsEn {
-	TranslationsTakerConflictErrorsEn.internal(this._root);
+class Translations$taker$conflict$errors$en {
+	Translations$taker$conflict$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3547,8 +3548,8 @@ class TranslationsTakerConflictErrorsEn {
 }
 
 // Path: taker.conflict.nostrContact
-class TranslationsTakerConflictNostrContactEn {
-	TranslationsTakerConflictNostrContactEn.internal(this._root);
+class Translations$taker$conflict$nostrContact$en {
+	Translations$taker$conflict$nostrContact$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3577,8 +3578,8 @@ class TranslationsTakerConflictNostrContactEn {
 }
 
 // Path: home.statistics.errors
-class TranslationsHomeStatisticsErrorsEn {
-	TranslationsHomeStatisticsErrorsEn.internal(this._root);
+class Translations$home$statistics$errors$en {
+	Translations$home$statistics$errors$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3589,8 +3590,8 @@ class TranslationsHomeStatisticsErrorsEn {
 }
 
 // Path: maker.amountForm.category.options
-class TranslationsMakerAmountFormCategoryOptionsEn {
-	TranslationsMakerAmountFormCategoryOptionsEn.internal(this._root);
+class Translations$maker$amountForm$category$options$en {
+	Translations$maker$amountForm$category$options$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3607,8 +3608,8 @@ class TranslationsMakerAmountFormCategoryOptionsEn {
 }
 
 // Path: maker.amountForm.category.shortLabels
-class TranslationsMakerAmountFormCategoryShortLabelsEn {
-	TranslationsMakerAmountFormCategoryShortLabelsEn.internal(this._root);
+class Translations$maker$amountForm$category$shortLabels$en {
+	Translations$maker$amountForm$category$shortLabels$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3625,8 +3626,8 @@ class TranslationsMakerAmountFormCategoryShortLabelsEn {
 }
 
 // Path: maker.conflict.disputeDialog.actions
-class TranslationsMakerConflictDisputeDialogActionsEn {
-	TranslationsMakerConflictDisputeDialogActionsEn.internal(this._root);
+class Translations$maker$conflict$disputeDialog$actions$en {
+	Translations$maker$conflict$disputeDialog$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -3639,647 +3640,651 @@ class TranslationsMakerConflictDisputeDialogActionsEn {
 	String get cancel => 'Cancel';
 }
 
-/// Flat map(s) containing all translations.
+/// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
+///
+/// The Dart AOT compiler has issues with very large switch statements,
+/// so the map is split into smaller functions (512 entries each).
 extension on Translations {
 	dynamic _flatMapFunction(String path) {
-		switch (path) {
-			case 'app.title': return 'BitBlik';
-			case 'app.greeting': return 'Hello!';
-			case 'app.changelog': return 'Changelog';
-			case 'common.buttons.cancel': return 'Cancel';
-			case 'common.buttons.save': return 'Save';
-			case 'common.buttons.done': return 'Done';
-			case 'common.buttons.retry': return 'Retry';
-			case 'common.buttons.goHome': return 'Go Home';
-			case 'common.buttons.saveAndContinue': return 'Save and Continue';
-			case 'common.buttons.reveal': return 'Reveal';
-			case 'common.buttons.hide': return 'Hide';
-			case 'common.buttons.copy': return 'Copy';
-			case 'common.buttons.close': return 'Close';
-			case 'common.buttons.restore': return 'Restore';
-			case 'common.buttons.faq': return 'FAQ';
-			case 'common.labels.amount': return 'Amount (PLN)';
-			case 'common.labels.status': return ({required Object status}) => 'Status: ${status}';
-			case 'common.labels.role': return ({required Object role}) => 'Role: ${role}';
-			case 'common.notifications.success': return 'Success';
-			case 'common.notifications.error': return 'Error';
-			case 'common.notifications.loading': return 'Loading...';
-			case 'common.clipboard.copyToClipboard': return 'Copy to clipboard';
-			case 'common.clipboard.pasteFromClipboard': return 'Paste from clipboard';
-			case 'common.clipboard.copied': return 'Copied to clipboard!';
-			case 'common.actions.cancelAndReturnToOffers': return 'Cancel and return to offers';
-			case 'common.actions.cancelAndReturnHome': return 'Cancel and return home';
-			case 'lightningAddress.labels.address': return 'Lightning Address (LNURL)';
-			case 'lightningAddress.labels.hint': return 'user@domain.com';
-			case 'lightningAddress.labels.short': return ({required Object address}) => 'Lightning Address: ${address}';
-			case 'lightningAddress.labels.receivingAddress': return 'Your receiving address:';
-			case 'lightningAddress.prompts.enter': return 'Enter your Lightning address to continue';
-			case 'lightningAddress.prompts.edit': return 'Edit';
-			case 'lightningAddress.prompts.invalid': return 'Enter a valid Lightning address';
-			case 'lightningAddress.prompts.required': return 'Lightning address is required.';
-			case 'lightningAddress.prompts.enterToTakeOffer': return 'You must set a Lightning address to take an offer.';
-			case 'lightningAddress.prompts.missing': return 'Lightning address is missing. Please add one to be able to take offers.';
-			case 'lightningAddress.prompts.add': return 'Add';
-			case 'lightningAddress.prompts.delete': return 'Delete';
-			case 'lightningAddress.prompts.confirmDelete': return 'Are you sure you want to delete your Lightning address?';
-			case 'lightningAddress.prompts.howToGet': return 'Don\'t have a Lightning address yet? Learn how to get one!';
-			case 'lightningAddress.prompts.learnMore': return 'Learn more about Lightning Address';
-			case 'lightningAddress.feedback.saved': return 'Lightning address saved!';
-			case 'lightningAddress.feedback.updated': return 'Lightning address updated!';
-			case 'lightningAddress.feedback.valid': return 'Valid Lightning address';
-			case 'lightningAddress.errors.saving': return ({required Object details}) => 'Error saving address: ${details}';
-			case 'lightningAddress.errors.loading': return ({required Object details}) => 'Error loading Lightning address: ${details}';
-			case 'offers.details.yourOffer': return 'Your offer:';
-			case 'offers.details.selectedOffer': return 'Offer:';
-			case 'offers.details.activeOffer': return 'You have an active offer:';
-			case 'offers.details.finishedOffers': return 'Finished offers';
-			case 'offers.details.noAvailable': return 'No available offers.';
-			case 'offers.details.noAvailableTip': return 'Tip: share Bitblik in your community and among friends to increase Bitblik orders.';
-			case 'offers.details.noSuccessfulTrades': return 'No successful trades.';
-			case 'offers.details.loadingDetails': return 'Loading offer details...';
-			case 'offers.details.amount': return ({required Object amount}) => 'Amount: ${amount} satoshi';
-			case 'offers.details.amountWithCurrency': return ({required Object amount, required Object currency}) => '${amount} ${currency}';
-			case 'offers.details.makerFee': return ({required Object fee}) => 'Fee: ${fee} sats';
-			case 'offers.details.takerFee': return ({required Object fee}) => 'Fee: ${fee} sats';
-			case 'offers.details.subtitle': return ({required Object sats, required Object fee, required Object status}) => '${sats} + ${fee} (fee) satoshi\nStatus: ${status}';
-			case 'offers.details.subtitleWithDate': return ({required Object sats, required Object fee, required Object status, required Object date}) => '${sats} + ${fee} (fee) satoshi\nStatus: ${status}\nPaid: ${date}';
-			case 'offers.details.activeSubtitle': return ({required Object status, required Object amount}) => 'Status: ${status}\nAmount: ${amount} satoshi';
-			case 'offers.details.id': return ({required Object id}) => 'Offer ID: ${id}...';
-			case 'offers.details.created': return ({required Object dateTime}) => 'Created: ${dateTime}';
-			case 'offers.details.takenAfter': return ({required Object duration}) => 'Taken after: ${duration}';
-			case 'offers.details.paidAfter': return ({required Object duration}) => 'Paid after: ${duration}';
-			case 'offers.details.exchangeRate': return 'Exchange Rate';
-			case 'offers.details.amountLabel': return 'Amount';
-			case 'offers.details.makerFeeLabel': return 'Maker fee';
-			case 'offers.details.takerFeeLabel': return 'Taker fee';
-			case 'offers.details.feeLabel': return 'Fee';
-			case 'offers.details.statusLabel': return 'Status';
-			case 'offers.details.youllReceive': return 'You\'ll receive';
-			case 'offers.details.coordinator': return 'Coordinator';
-			case 'offers.details.categoryLabel': return 'Category';
-			case 'offers.details.categories.physicalShop': return 'Shop, café or restaurant';
-			case 'offers.details.categories.atmCashout': return 'ATM cash out';
-			case 'offers.details.categories.onlineService': return 'Online service/product';
-			case 'offers.details.consents.atm': return 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.';
-			case 'offers.details.consents.ecommerce': return 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the BLIK you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations.';
-			case 'offers.tooltips.takerFeeInfo': return ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.';
-			case 'offers.tooltips.ratesFetchedAt': return 'Fetched at';
-			case 'offers.tooltips.ratesSources': return 'Avg. rate sources';
-			case 'offers.actions.take': return 'TAKE';
-			case 'offers.actions.takeOffer': return 'Take Offer';
-			case 'offers.actions.resume': return 'ENTER BLIK';
-			case 'offers.actions.cancel': return 'Cancel offer';
-			case 'offers.actions.view': return 'View details';
-			case 'offers.status.created': return 'Created';
-			case 'offers.status.funded': return 'Funded';
-			case 'offers.status.expired': return 'Expired';
-			case 'offers.status.cancelled': return 'Cancelled';
-			case 'offers.status.reserved': return 'Reserved';
-			case 'offers.status.blikReceived': return 'BLIK Sent';
-			case 'offers.status.blikSentToMaker': return 'BLIK Received';
-			case 'offers.status.expiredBlik': return 'BLIK expired';
-			case 'offers.status.expiredSentBlik': return 'BLIK expired';
-			case 'offers.status.takerCharged': return 'Taker Charged';
-			case 'offers.status.invalidBlik': return 'Invalid BLIK';
-			case 'offers.status.conflict': return 'Conflict';
-			case 'offers.status.dispute': return 'Dispute';
-			case 'offers.status.makerConfirmed': return 'Confirmed';
-			case 'offers.status.settled': return 'Settled';
-			case 'offers.status.payingTaker': return 'Paying Taker';
-			case 'offers.status.takerPaymentFailed': return 'Taker Payment Failed';
-			case 'offers.status.takerPaid': return 'Taker Paid';
-			case 'offers.status.unknownStatus': return 'Unknown';
-			case 'offers.statusMessages.reserved': return 'Offer reserved by Taker!';
-			case 'offers.statusMessages.cancelled': return 'Offer cancelled successfully.';
-			case 'offers.statusMessages.cancelledOrExpired': return 'Offer has been cancelled or expired.';
-			case 'offers.statusMessages.noLongerAvailable': return ({required Object status}) => 'Offer is no longer available (Status: ${status}).';
-			case 'offers.progress.waitingForTaker': return ({required Object time}) => 'Waiting for taker: ${time}';
-			case 'offers.progress.reserved': return ({required Object seconds}) => 'Reserved: ${seconds} s left';
-			case 'offers.progress.confirming': return ({required Object seconds}) => 'Confirming: ${seconds} s left';
-			case 'offers.errors.loading': return ({required Object details}) => 'Error loading offers: ${details}';
-			case 'offers.errors.loadingDetails': return ({required Object details}) => 'Error loading offer details: ${details}';
-			case 'offers.errors.detailsMissing': return 'Error: Offer details missing or invalid.';
-			case 'offers.errors.detailsNotLoaded': return 'Unable to load offer details.';
-			case 'offers.errors.notFound': return 'Error: Offer not found.';
-			case 'offers.errors.unexpectedState': return 'Error: Offer is in an unexpected state.';
-			case 'offers.errors.unexpectedStateWithStatus': return ({required Object status}) => 'Offer is in an unexpected state (${status}). Please try again or contact support.';
-			case 'offers.errors.invalidStatus': return 'Offer has invalid status.';
-			case 'offers.errors.couldNotIdentify': return 'Error: Could not identify offer to cancel.';
-			case 'offers.errors.cannotBeCancelled': return ({required Object status}) => 'Offer cannot be cancelled in current state (${status}).';
-			case 'offers.errors.failedToCancel': return ({required Object details}) => 'Failed to cancel offer: ${details}';
-			case 'offers.errors.activeDetailsLost': return 'Error: Lost active offer details.';
-			case 'offers.errors.checkingActive': return ({required Object details}) => 'Error checking active offers: ${details}';
-			case 'offers.errors.cannotResume': return ({required Object status}) => 'Cannot resume offer in state: ${status}';
-			case 'offers.errors.cannotResumeTaker': return ({required Object status}) => 'Cannot resume taker offer in state: ${status}';
-			case 'offers.errors.resuming': return ({required Object details}) => 'Error resuming offer: ${details}';
-			case 'offers.errors.makerPublicKeyNotFound': return 'Maker public key not found';
-			case 'offers.errors.takerPublicKeyNotFound': return 'Taker public key not found.';
-			case 'offers.errors.atmConsentRequired': return 'Accept the ATM surcharge condition before taking this offer.';
-			case 'offers.errors.ecommerceConsentRequired': return 'Accept the ecommerce refund-return condition before taking this offer.';
-			case 'offers.success.title': return 'Offer completed';
-			case 'offers.success.headline': return 'Payment confirmed!';
-			case 'offers.success.subtitle': return 'Taker will be paid now.';
-			case 'offers.success.detailsTitle': return 'Offer details:';
-			case 'offers.success.duration': return ({required Object time}) => 'Offer took ${time} to complete.';
-			case 'reservations.actions.cancel': return 'Cancel reservation';
-			case 'reservations.feedback.cancelled': return 'Reservation cancelled.';
-			case 'reservations.errors.cancelling': return ({required Object error}) => 'Failed to cancel reservation: ${error}';
-			case 'reservations.errors.failedToReserve': return ({required Object details}) => 'Failed to reserve offer: ${details}';
-			case 'reservations.errors.failedNoTimestamp': return 'Failed to reserve offer (no timestamp).';
-			case 'reservations.errors.timestampMissing': return 'Offer reservation timestamp missing.';
-			case 'reservations.errors.notReserved': return ({required Object status}) => 'Offer is no longer in reserved state (${status}).';
-			case 'exchange.labels.enterAmount': return 'Enter amount (PLN) to pay:';
-			case 'exchange.labels.equivalent': return ({required Object sats}) => '≈ ${sats} satoshi';
-			case 'exchange.labels.rate': return ({required Object rate}) => 'Exchange rate ≈ ${rate} PLN/BTC';
-			case 'exchange.feedback.fetching': return 'Fetching exchange rate...';
-			case 'exchange.errors.fetchingRate': return 'Failed to fetch exchange rate.';
-			case 'exchange.errors.invalidFormat': return 'Invalid number format';
-			case 'exchange.errors.mustBePositive': return 'Amount must be positive';
-			case 'exchange.errors.invalidFeePercentage': return 'Invalid fee percentage';
-			case 'exchange.errors.tooLowFiat': return ({required Object minAmount, required Object currency}) => 'Amount is too low. Minimum is ${minAmount} ${currency}.';
-			case 'exchange.errors.tooHighFiat': return ({required Object maxAmount, required Object currency}) => 'Amount is too high. Maximum is ${maxAmount} ${currency}.';
-			case 'coordinator.title': return 'Coordinators';
-			case 'coordinator.info.fee': return 'fee';
-			case 'coordinator.info.rangeDisplay': return ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Amount: ${minAmount}-${maxAmount} ${currency}';
-			case 'coordinator.info.feeDisplay': return ({required Object fee}) => '${fee}% fee';
-			case 'coordinator.selector.loading': return 'Loading Coordinators...';
-			case 'coordinator.selector.errorLoading': return 'Error Loading Coordinators';
-			case 'coordinator.selector.choose': return 'Choose Coordinator';
-			case 'coordinator.selector.viewNostrProfile': return 'View Nostr profile';
-			case 'coordinator.selector.unresponsive': return 'This coordinator is unresponsive';
-			case 'coordinator.selector.waitingResponse': return 'Waiting for coordinator response';
-			case 'coordinator.selector.termsAccept': return 'I accept coordinator\'s ';
-			case 'coordinator.selector.termsOfUsage': return 'Terms of use';
-			case 'coordinator.dialog.makerFee': return 'Maker Fee';
-			case 'coordinator.dialog.takerFee': return 'Taker Fee';
-			case 'coordinator.dialog.amountRange': return 'Amount Range';
-			case 'coordinator.dialog.reservationTime': return 'Reservation Time';
-			case 'coordinator.dialog.currencies': return 'Currencies';
-			case 'coordinator.dialog.viewTerms': return 'View Terms';
-			case 'coordinator.management.title': return 'Coordinator Management';
-			case 'coordinator.management.availableCoordinators': return 'Available Coordinators';
-			case 'coordinator.management.noCoordinators': return 'No coordinators discovered yet.';
-			case 'coordinator.management.online': return 'Online';
-			case 'coordinator.management.unknownOffline': return 'Unknown/Offline';
-			case 'coordinator.management.openNostrProfile': return 'Open Nostr Profile';
-			case 'coordinator.management.enable': return 'Enable';
-			case 'coordinator.management.remove': return 'Remove';
-			case 'coordinator.management.addCustomWhitelist': return 'Add custom coordinator';
-			case 'coordinator.management.addCustomWhitelistHint': return 'npub1...';
-			case 'coordinator.management.add': return 'Add';
-			case 'coordinator.management.coordinatorBlacklisted': return 'Coordinator blacklisted';
-			case 'coordinator.management.coordinatorUnblacklisted': return 'Coordinator unblacklisted';
-			case 'coordinator.management.coordinatorAdded': return 'Coordinator added to custom whitelist';
-			case 'coordinator.management.coordinatorRemoved': return 'Coordinator removed from custom whitelist';
-			case 'coordinator.management.coordinatorAddInfoUnavailable': return 'No coordinator info found on relays. Coordinator not added.';
-			case 'coordinator.management.pleaseEnterNpub': return 'Please enter an npub';
-			case 'coordinator.management.error': return 'Error';
-			case 'coordinator.management.metricYourOffers': return 'Your offers';
-			case 'coordinator.management.metricYourOffersTooltip': return 'Number of offers you have successfully completed with this coordinator.';
-			case 'coordinator.management.metricNetworkOffers': return 'Offers (30d)';
-			case 'coordinator.management.metricNetworkOffersTooltip': return 'Successful offers settled by this coordinator across all users in the last 30 days.';
-			case 'maker.roleSelection.button': return 'PAY with Lightning';
-			case 'maker.amountForm.progress.step1': return '1. Create Offer';
-			case 'maker.amountForm.progress.step2': return '2. Wait for Taker';
-			case 'maker.amountForm.progress.step3': return '3. Use BLIK';
-			case 'maker.amountForm.labels.coordinator': return 'Coordinator';
-			case 'maker.amountForm.labels.category': return 'Category';
-			case 'maker.amountForm.labels.exchangeRate': return 'Exchange Rate';
-			case 'maker.amountForm.labels.fee': return 'Fee';
-			case 'maker.amountForm.labels.satoshisToPay': return 'Amount to Pay';
-			case 'maker.amountForm.labels.enterAmount': return 'Enter amount';
-			case 'maker.amountForm.labels.tapToSelect': return 'Tap to select';
-			case 'maker.amountForm.actions.generateInvoice': return 'Generate Invoice';
-			case 'maker.amountForm.tooltips.feeInfo': return ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment.';
-			case 'maker.amountForm.tooltips.payInfo': return 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.';
-			case 'maker.amountForm.category.label': return 'Offer category';
-			case 'maker.amountForm.category.options.physicalShop': return 'Shop, café or restaurant';
-			case 'maker.amountForm.category.options.atmCashout': return 'ATM cash out';
-			case 'maker.amountForm.category.options.onlineService': return 'Online service/product';
-			case 'maker.amountForm.category.shortLabels.shop': return 'Shop';
-			case 'maker.amountForm.category.shortLabels.atm': return 'ATM';
-			case 'maker.amountForm.category.shortLabels.online': return 'Online';
-			case 'maker.amountForm.category.atmHint': return 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
-			case 'maker.amountForm.category.physicalShopHint': return 'The ideal place to use Bitblik is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a BLIK code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you\'re feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.';
-			case 'maker.amountForm.category.ecommerceWarningTitle': return 'Online merchant refund risk';
-			case 'maker.amountForm.category.ecommerceWarningBody': return 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the BLIK, which is the taker\'s account. The coordinator cannot force the taker to return those funds to you.';
-			case 'maker.amountForm.category.ecommerceConfirmation': return 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.';
-			case 'maker.amountForm.category.whyThisIsNeeded': return 'why this is needed?';
-			case 'maker.amountForm.onboarding.titlePrefix': return 'New';
-			case 'maker.amountForm.onboarding.title': return 'Choose the offer category';
-			case 'maker.amountForm.onboarding.body': return 'Pick the category that best matches what you are paying for before generating the invoice.';
-			case 'maker.amountForm.onboarding.showWhy': return 'Why does this matter?';
-			case 'maker.amountForm.onboarding.hideWhy': return 'Hide details';
-			case 'maker.amountForm.onboarding.whyTitle': return 'Choosing the right category helps takers decide safely';
-			case 'maker.amountForm.onboarding.whyBody': return 'Different situations carry different expectations and risks. ATM cash outs may include extra bank fees, and online purchases can involve refund edge cases. Marking the right category gives takers the context they need before accepting your offer.';
-			case 'maker.amountForm.onboarding.cta': return 'Got it';
-			case 'maker.amountForm.errors.initiating': return ({required Object details}) => 'Error initiating offer: ${details}';
-			case 'maker.amountForm.errors.publicKeyNotLoaded': return 'Error: Public key not yet loaded.';
-			case 'maker.amountForm.errors.noCoordinatorMatchesAmount': return 'No coordinator supports this amount. Try a different value.';
-			case 'maker.amountForm.errors.categoryRequired': return 'Select an offer category.';
-			case 'maker.amountForm.errors.ecommerceConfirmationRequired': return 'Confirm the online merchant refund risk before continuing.';
-			case 'maker.payInvoice.title': return 'Pay this Hold invoice:';
-			case 'maker.payInvoice.actions.copy': return 'Copy Invoice';
-			case 'maker.payInvoice.actions.payInWallet': return 'Open in External Wallet';
-			case 'maker.payInvoice.actions.connectWallet': return 'Connect Wallet';
-			case 'maker.payInvoice.actions.payWithNwc': return 'Pay';
-			case 'maker.payInvoice.actions.paying': return 'Paying...';
-			case 'maker.payInvoice.feedback.copied': return 'Invoice copied to clipboard!';
-			case 'maker.payInvoice.feedback.waitingConfirmation': return 'Waiting for payment confirmation...';
-			case 'maker.payInvoice.feedback.nwcConnected': return 'NWC wallet connected!';
-			case 'maker.payInvoice.feedback.nwcPaymentSuccess': return 'Payment successful!';
-			case 'maker.payInvoice.errors.couldNotOpenApp': return 'Could not open Lightning app for invoice.';
-			case 'maker.payInvoice.errors.openingApp': return ({required Object details}) => 'Error opening Lightning app: ${details}';
-			case 'maker.payInvoice.errors.publicKeyNotAvailable': return 'Public key is not available.';
-			case 'maker.payInvoice.errors.couldNotFetchActive': return 'Could not fetch active offer details. It may have expired.';
-			case 'maker.payInvoice.errors.nwcPaymentFailed': return ({required Object details}) => 'Payment failed: ${details}';
-			case 'maker.payInvoice.errors.nwcNotConnected': return 'NWC wallet not connected';
-			case 'maker.payInvoice.errors.insufficientBalance': return ({required Object required, required Object available}) => 'Insufficient balance. Need ${required} sats, have ${available} sats';
-			case 'maker.payInvoice.errors.cancelOfferAlreadyFunded': return 'Coordinator reports this offer is already funded. It cannot be cancelled now.';
-			case 'maker.payInvoice.errors.cancelFailed': return ({required Object details}) => 'Could not cancel offer: ${details}';
-			case 'maker.payInvoice.budgetWarning.title': return 'Payment may fail';
-			case 'maker.payInvoice.budgetWarning.balanceTooLow': return ({required Object name}) => 'Your default spending wallet ${name} does not have enough balance for this payment.';
-			case 'maker.payInvoice.budgetWarning.budgetTooLow': return ({required Object name}) => 'Your default spending wallet ${name} does not have enough spending budget for this payment.';
-			case 'maker.payInvoice.budgetWarning.balanceLine': return ({required Object available}) => 'Balance: ${available} sats';
-			case 'maker.payInvoice.budgetWarning.budgetLine': return ({required Object remaining}) => 'Remaining NWC budget: ${remaining} sats';
-			case 'maker.payInvoice.budgetWarning.requiredLine': return ({required Object required}) => 'Required: ${required} sats';
-			case 'maker.payInvoice.budgetWarning.addFundsHint': return ({required Object name}) => 'Add funds to ${name} to cover this payment amount.';
-			case 'maker.payInvoice.budgetWarning.increaseBudgetHint': return 'Increase the NWC spending budget for this connection in your wallet app.';
-			case 'maker.payInvoice.budgetWarning.switchWalletLabel': return 'Or use a different wallet:';
-			case 'maker.payInvoice.budgetWarning.walletLowFundsTag': return 'May fail';
-			case 'maker.payInvoice.budgetWarning.payAnyway': return 'Try anyway';
-			case 'maker.payInvoice.budgetWarning.cancel': return 'Cancel';
-			case 'maker.payInvoice.budgetWarning.readyTitle': return 'Pay invoice';
-			case 'maker.waitTaker.message': return 'Waiting for a Taker to reserve your offer...';
-			case 'maker.waitTaker.progressLabel': return ({required Object time}) => 'Waiting for taker: ${time}';
-			case 'maker.waitTaker.errorActiveOfferDetailsLost': return 'Error: Lost active offer details.';
-			case 'maker.waitTaker.errorFailedToRetrieveBlik': return 'Error: Failed to retrieve BLIK code.';
-			case 'maker.waitTaker.errorRetrievingBlik': return ({required Object details}) => 'Error retrieving BLIK code: ${details}';
-			case 'maker.waitTaker.offerNoLongerAvailable': return ({required Object status}) => 'Offer is no longer available (Status: ${status}).';
-			case 'maker.waitTaker.errorCouldNotIdentifyOffer': return 'Error: Could not identify offer to cancel.';
-			case 'maker.waitTaker.offerCannotBeCancelled': return ({required Object status}) => 'Offer cannot be cancelled in current state (${status}).';
-			case 'maker.waitTaker.offerCancelledSuccessfully': return 'Offer cancelled successfully.';
-			case 'maker.waitTaker.failedToCancelOffer': return ({required Object details}) => 'Failed to cancel offer: ${details}';
-			case 'maker.waitTaker.offerExpiredTitle': return 'Offer Expired';
-			case 'maker.waitTaker.offerExpiredMessage': return 'No taker reserved your offer in time.';
-			case 'maker.waitTaker.recreateOffer': return 'New offer — same amount';
-			case 'maker.waitForBlik.title': return 'Waiting for BLIK';
-			case 'maker.waitForBlik.messageInfo': return 'Taker has reserved offer!';
-			case 'maker.waitForBlik.messageWaiting': return 'Waiting to provide BLIK code...';
-			case 'maker.waitForBlik.progressLabel': return ({required Object seconds}) => 'Reserved: ${seconds} s left';
-			case 'maker.confirmPayment.title': return 'BLIK code received!';
-			case 'maker.confirmPayment.retrieving': return 'Retrieving BLIK code...';
-			case 'maker.confirmPayment.instructions': return 'Enter this code into the payment terminal. When Taker confirms in their banking app and payment is successful, press Confirm below.';
-			case 'maker.confirmPayment.instruction1': return 'Enter the code into the BLIK payment request.';
-			case 'maker.confirmPayment.instruction2': return 'Wait until Taker confirms the payment in their app.';
-			case 'maker.confirmPayment.instruction3': return 'When payment is succesful, press Confirm below:';
-			case 'maker.confirmPayment.takerChargedWarning': return 'The taker has reported that the BLIK payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.';
-			case 'maker.confirmPayment.expiredTitle': return 'BLIK Code Expired';
-			case 'maker.confirmPayment.expiredWarning': return 'The BLIK code has expired. You need to manually confirm the payment status:';
-			case 'maker.confirmPayment.expiredInstruction1': return 'If the BLIK payment was successful and you completed your purchase, click "Confirm successful payment" below.';
-			case 'maker.confirmPayment.expiredInstruction2': return 'If the BLIK payment failed or was not completed, click "Invalid BLIK Code" below.';
-			case 'maker.confirmPayment.actions.confirm': return 'Confirm successful payment';
-			case 'maker.confirmPayment.actions.markInvalid': return 'Invalid BLIK Code';
-			case 'maker.confirmPayment.actions.copyBlik': return 'Copy BLIK';
-			case 'maker.confirmPayment.confirmDialog.title': return 'Confirm Payment?';
-			case 'maker.confirmPayment.confirmDialog.content': return 'This action is irreversible. After confirming:\n\n• The Taker will receive the funds immediately\n• The coordinator will not be able to dispute the funds\n• You cannot undo this action\n\nOnly confirm if the BLIK payment was successful.';
-			case 'maker.confirmPayment.confirmDialog.cancel': return 'Cancel';
-			case 'maker.confirmPayment.confirmDialog.confirmButton': return 'Yes, Confirm Payment';
-			case 'maker.confirmPayment.invalidBlikDisputeDialog.title': return 'Open Dispute?';
-			case 'maker.confirmPayment.invalidBlikDisputeDialog.content': return 'The taker has reported that the BLIK payment was charged from their account.\n\nMarking this as invalid will immediately open a DISPUTE that requires coordinator intervention.\n\n• A dispute fee may be charged if ruled against you\n• The hold invoice will be settled immediately\n• Manual verification will be required\n\nOnly proceed if you are certain the BLIK payment did NOT succeed.';
-			case 'maker.confirmPayment.invalidBlikDisputeDialog.cancel': return 'Cancel';
-			case 'maker.confirmPayment.invalidBlikDisputeDialog.confirmButton': return 'Yes, Open Dispute';
-			case 'maker.confirmPayment.feedback.confirmed': return 'Maker confirmed payment.';
-			case 'maker.confirmPayment.feedback.confirmedTakerPaid': return 'Payment confirmed! Taker will receive funds.';
-			case 'maker.confirmPayment.feedback.progressLabel': return ({required Object seconds}) => 'Confirming: ${seconds} s left';
-			case 'maker.confirmPayment.errors.failedToRetrieve': return 'Error: Failed to retrieve BLIK code.';
-			case 'maker.confirmPayment.errors.retrieving': return ({required Object details}) => 'Error retrieving BLIK code: ${details}';
-			case 'maker.confirmPayment.errors.missingHashOrKey': return 'Error: Missing payment hash or public key.';
-			case 'maker.confirmPayment.errors.incorrectState': return ({required Object status}) => 'Offer is not in correct state for confirmation (Status: ${status})';
-			case 'maker.confirmPayment.errors.confirming': return ({required Object details}) => 'Error confirming payment: ${details}';
-			case 'maker.confirmPayment.errors.invalidState': return 'Error: Received invalid offer state.';
-			case 'maker.confirmPayment.errors.internalIncomplete': return 'Internal error: Incomplete offer details.';
-			case 'maker.confirmPayment.errors.notAwaitingConfirmation': return ({required Object status}) => 'Offer is no longer awaiting confirmation (Status: ${status}).';
-			case 'maker.confirmPayment.errors.unexpectedStatus': return 'Received unexpected offer status from server.';
-			case 'maker.invalidBlik.title': return 'Invalid BLIK Code';
-			case 'maker.invalidBlik.info': return 'You marked the BLIK code as invalid. Waiting for taker to provide new code or start dispute.';
-			case 'maker.conflict.title': return 'Offer Conflict';
-			case 'maker.conflict.headline': return 'Offer Conflict Reported';
-			case 'maker.conflict.body': return 'You marked the BLIK code as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.';
-			case 'maker.conflict.instructions': return 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
-			case 'maker.conflict.actions.back': return 'Back to Home';
-			case 'maker.conflict.actions.confirmPayment': return 'My mistake, confirm BLIK payment success';
-			case 'maker.conflict.actions.openDispute': return 'Blik payment did NOT succeed, OPEN DISPUTE';
-			case 'maker.conflict.actions.submitDispute': return 'Submit Dispute';
-			case 'maker.conflict.disputeDialog.title': return 'Open dispute?';
-			case 'maker.conflict.disputeDialog.content': return 'Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to a wallet of your choice.';
-			case 'maker.conflict.disputeDialog.contentDetailed': return 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee.\n\nThe hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved.\n\nIf the dispute is ruled in your favor, the satoshi amount will be refunded to a wallet of your choice (minus fees). Make sure you have a wallet ready to receive.';
-			case 'maker.conflict.disputeDialog.actions.confirm': return 'Open Dispute';
-			case 'maker.conflict.disputeDialog.actions.cancel': return 'Cancel';
-			case 'maker.conflict.feedback.disputeOpenedSuccess': return 'Dispute successfully opened. Coordinator will review.';
-			case 'maker.conflict.errors.openingDispute': return ({required Object error}) => 'Error opening dispute: ${error}';
-			case 'maker.conflict.nostrContact.title': return 'Contact Coordinator on Nostr';
-			case 'maker.conflict.nostrContact.description': return 'You can DM the coordinator directly for help with this dispute.';
-			case 'maker.conflict.nostrContact.copyNpub': return 'Copy npub';
-			case 'maker.conflict.nostrContact.openProfile': return 'View Profile';
-			case 'maker.conflict.nostrContact.npubCopied': return 'Coordinator npub copied to clipboard!';
-			case 'maker.conflict.nostrContact.yourIdentityDescription': return 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.';
-			case 'maker.conflict.nostrContact.manageNekoKeys': return 'Manage Neko Keys';
-			case 'maker.success.title': return 'Offer completed';
-			case 'maker.success.headline': return 'Payment confirmed!';
-			case 'maker.success.subtitle': return 'Taker will now be paid.';
-			case 'maker.success.detailsTitle': return 'Offer details:';
-			case 'maker.success.duration': return ({required Object time}) => 'Offer took ${time}!';
-			case 'taker.roleSelection.button': return 'SELL BLIK code for satoshi';
-			case 'taker.progress.step1': return 'Submit BLIK';
-			case 'taker.progress.step2': return 'Confirm BLIK';
-			case 'taker.progress.step3': return 'Get Paid';
-			case 'taker.submitBlik.title': return 'Enter 6-digit BLIK';
-			case 'taker.submitBlik.label': return 'BLIK Code';
-			case 'taker.submitBlik.instruction': return 'Enter BLIK before time ends...';
-			case 'taker.submitBlik.timeLimit': return ({required Object seconds}) => 'Enter BLIK within: ${seconds} s';
-			case 'taker.submitBlik.timeExpired': return 'Time to enter BLIK code has expired.';
-			case 'taker.submitBlik.actions.submit': return 'Submit BLIK';
-			case 'taker.submitBlik.feedback.pasted': return 'Pasted BLIK code.';
-			case 'taker.submitBlik.validation.invalidFormat': return 'Enter a valid 6-digit BLIK code.';
-			case 'taker.submitBlik.errors.submitting': return ({required Object details}) => 'Error submitting BLIK code: ${details}';
-			case 'taker.submitBlik.errors.clipboardInvalid': return 'Clipboard does not contain a valid 6-digit BLIK code.';
-			case 'taker.submitBlik.errors.stateChanged': return 'Error: Offer state has changed.';
-			case 'taker.submitBlik.errors.stateNotValid': return 'Error: Offer state is no longer valid.';
-			case 'taker.submitBlik.errors.fetchedIdMismatch': return ({required Object fetchedId, required Object initialId}) => 'Fetched active offer ID (${fetchedId}) does not match initial offer ID (${initialId}). State mismatch?';
-			case 'taker.submitBlik.errors.paymentHashMissing': return 'Offer payment hash missing after fetch.';
-			case 'taker.submitBlik.details.requestedAmount': return 'Requested BLIK amount';
-			case 'taker.submitBlik.details.exchangeRate': return 'Exchange Rate';
-			case 'taker.submitBlik.details.takerFee': return 'Taker fee';
-			case 'taker.submitBlik.details.status': return 'Status';
-			case 'taker.submitBlik.details.youllReceive': return 'You\'ll receive';
-			case 'taker.waitConfirmation.title': return 'Waiting for Maker';
-			case 'taker.waitConfirmation.statusLabel': return ({required Object status}) => 'Offer status: ${status}';
-			case 'taker.waitConfirmation.waitingMaker': return ({required Object seconds}) => 'Waiting for Maker confirmation: ${seconds} s';
-			case 'taker.waitConfirmation.waitingMakerConfirmation': return ({required Object seconds}) => 'Waiting for Maker to confirm BLIK is correct. Time remaining: ${seconds}s';
-			case 'taker.waitConfirmation.importantNotice': return ({required Object amount, required Object currency}) => 'VERY IMPORTANT: Make sure you only accept BLIK confirmation for ${amount} ${currency}';
-			case 'taker.waitConfirmation.importantBlikAmountConfirmation': return ({required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a BLIK payment for exactly ${amount} ${currency}.';
-			case 'taker.waitConfirmation.instructions': return 'The maker must now enter it into the payment terminal within 2 minutes. You then must accept the BLIK code in your banking app.';
-			case 'taker.waitConfirmation.categoryReminder.atm': return 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.';
-			case 'taker.waitConfirmation.categoryReminder.ecommerce': return 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.';
-			case 'taker.waitConfirmation.waitingForMakerToReceive': return 'Waiting for maker to receive your BLIK code...';
-			case 'taker.waitConfirmation.makerReceivedBlik': return 'Maker has received your BLIK code.';
-			case 'taker.waitConfirmation.timerExpiredMessage': return 'BLIK 2m expiration time has passed. Waiting for maker to confirm or mark code as invalid.';
-			case 'taker.waitConfirmation.timerExpiredActions': return 'BLIK 2m expiration time has passed but the maker hasn\'t received the BLIK code. You can resend a new BLIK code or cancel.';
-			case 'taker.waitConfirmation.resendBlikButton': return 'Resend New BLIK Code';
-			case 'taker.waitConfirmation.navigatedHome': return 'Navigated home.';
-			case 'taker.waitConfirmation.expiredTitle': return 'BLIK Code Expired';
-			case 'taker.waitConfirmation.expiredWarning': return 'The maker did not receive the BLIK code so it couldn\'t have used it.';
-			case 'taker.waitConfirmation.expiredSentWarning': return 'The maker hasn\'t confirmed the payment yet. What would you like to do?';
-			case 'taker.waitConfirmation.expiredInstruction1': return 'If you want to try again with a new BLIK code, renew the reservation.';
-			case 'taker.waitConfirmation.expiredInstruction2': return 'If you no longer want to complete this transaction, cancel the reservation.';
-			case 'taker.waitConfirmation.expiredInstruction3': return 'If the BLIK payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.';
-			case 'taker.waitConfirmation.takerCharged.title': return 'You marked BLIK as charged';
-			case 'taker.waitConfirmation.takerCharged.message': return 'The maker has 60min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.';
-			case 'taker.waitConfirmation.expiredActions.reportConflict': return 'BLIK was charged from my bank account';
-			case 'taker.waitConfirmation.expiredActions.renewReservation': return 'Try again with new BLIK code';
-			case 'taker.waitConfirmation.expiredActions.cancelReservation': return 'Cancel reservation';
-			case 'taker.waitConfirmation.feedback.makerConfirmed': return 'Maker confirmed payment.';
-			case 'taker.waitConfirmation.feedback.paymentSuccessful': return 'Payment successful! You will receive funds shortly.';
-			case 'taker.waitConfirmation.feedback.conflictReported': return 'Conflict reported. Coordinator will review the situation.';
-			case 'taker.waitConfirmation.errors.invalidOfferStateReceived': return 'Received an offer with an invalid state for this screen. Resetting.';
-			case 'taker.waitConfirmation.errors.reportingConflict': return ({required Object details}) => 'Error reporting conflict: ${details}';
-			case 'taker.paymentProcess.title': return 'Payment Process';
-			case 'taker.paymentProcess.waitingForOfferUpdate': return 'Waiting for offer status update...';
-			case 'taker.paymentProcess.states.preparing': return 'Preparing to send payment...';
-			case 'taker.paymentProcess.states.sending': return 'Sending payment...';
-			case 'taker.paymentProcess.states.received': return 'Payment received!';
-			case 'taker.paymentProcess.states.failed': return 'Payment failed';
-			case 'taker.paymentProcess.states.waitingUpdate': return 'Waiting for offer update...';
-			case 'taker.paymentProcess.steps.makerConfirmedBlik': return 'Maker confirmed BLIK payment';
-			case 'taker.paymentProcess.steps.makerInvoiceSettled': return 'Maker\'s hold invoice settled';
-			case 'taker.paymentProcess.steps.takerInvoicePaid': return 'Paying your Lightning invoice';
-			case 'taker.paymentProcess.steps.takerPaymentFailed': return 'Payment to your invoice failed';
-			case 'taker.paymentProcess.errors.sending': return ({required Object details}) => 'Error sending payment: ${details}';
-			case 'taker.paymentProcess.errors.notConfirmed': return 'Offer not confirmed by Maker.';
-			case 'taker.paymentProcess.errors.expired': return 'Offer expired.';
-			case 'taker.paymentProcess.errors.cancelled': return 'Offer cancelled.';
-			case 'taker.paymentProcess.errors.paymentFailed': return 'Offer payment failed.';
-			case 'taker.paymentProcess.errors.unknown': return 'Unknown offer error.';
-			case 'taker.paymentProcess.errors.takerPaymentFailed': return 'The payment to your Lightning invoice failed.';
-			case 'taker.paymentProcess.errors.noPublicKey': return 'Error: Cannot fetch your public key.';
-			case 'taker.paymentProcess.errors.loadingPublicKey': return 'Error loading your data';
-			case 'taker.paymentProcess.errors.missingPaymentHash': return 'Error: Missing payment details.';
-			case 'taker.paymentProcess.loading.publicKey': return 'Loading your data...';
-			case 'taker.paymentProcess.actions.goToFailureDetails': return 'Retry with new invoice';
-			case 'taker.paymentFailed.title': return 'Payment Failed';
-			case 'taker.paymentFailed.instructions': return ({required Object netAmount}) => 'Please provide a new Lightning invoice for ${netAmount} satoshi';
-			case 'taker.paymentFailed.form.newInvoiceLabel': return 'New Lightning invoice';
-			case 'taker.paymentFailed.form.newInvoiceHint': return 'Enter your BOLT11 invoice';
-			case 'taker.paymentFailed.actions.retryPayment': return 'Submit New Invoice';
-			case 'taker.paymentFailed.errors.enterValidInvoice': return 'Please enter a valid invoice';
-			case 'taker.paymentFailed.errors.updatingInvoice': return ({required Object details}) => 'Error updating invoice: ${details}';
-			case 'taker.paymentFailed.errors.paymentRetryFailed': return 'Payment retry failed. Please check the invoice or try again later.';
-			case 'taker.paymentFailed.errors.takerPublicKeyNotFound': return 'Taker public key not found.';
-			case 'taker.paymentFailed.errors.generateFailed': return ({required Object details}) => 'Failed to generate invoice: ${details}';
-			case 'taker.paymentFailed.walletSection.title': return 'Generate invoice from wallet';
-			case 'taker.paymentFailed.walletSection.defaultLabel': return 'default';
-			case 'taker.paymentFailed.walletSection.tapToGenerate': return ({required Object amountSats}) => 'Tap to generate invoice for ${amountSats} sats';
-			case 'taker.paymentFailed.loading.processingPayment': return 'Processing your payment retry...';
-			case 'taker.paymentFailed.success.title': return 'Payment Successful';
-			case 'taker.paymentFailed.success.message': return 'Your payment has been processed successfully.';
-			case 'taker.paymentSuccess.title': return 'Payment Successful';
-			case 'taker.paymentSuccess.message': return 'Your payment has been processed successfully.';
-			case 'taker.paymentSuccess.actions.goHome': return 'Go to home';
-			case 'taker.invalidBlik.title': return 'Invalid BLIK Code';
-			case 'taker.invalidBlik.message': return 'Maker Rejected BLIK Code';
-			case 'taker.invalidBlik.explanation': return 'The offer maker indicated that the BLIK code you provided was invalid or didn\'t work.\n\nWhat would you like to do?';
-			case 'taker.invalidBlik.werentCharged': return 'If you were NOT charged:';
-			case 'taker.invalidBlik.wereCharged': return 'If you were charged:';
-			case 'taker.invalidBlik.actions.retry': return 'Send new BLIK code';
-			case 'taker.invalidBlik.actions.cancelReservation': return 'Cancel Transaction';
-			case 'taker.invalidBlik.actions.reportConflict': return 'Start Dispute';
-			case 'taker.invalidBlik.actions.returnHome': return 'Return to home';
-			case 'taker.invalidBlik.feedback.conflictReportedSuccess': return 'Conflict reported. Coordinator will review.';
-			case 'taker.invalidBlik.errors.reservationFailed': return 'Failed to reserve offer again';
-			case 'taker.invalidBlik.errors.conflictReport': return ({required Object details}) => 'Error reporting conflict: ${details}';
-			case 'taker.conflict.title': return 'Offer Conflict';
-			case 'taker.conflict.headline': return 'Offer Conflict Reported';
-			case 'taker.conflict.body': return 'The Maker marked the BLIK code as invalid, but you reported a conflict, indicating you believe the payment was successful.';
-			case 'taker.conflict.instructions': return 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
-			case 'taker.conflict.actions.back': return 'Back to Home';
-			case 'taker.conflict.feedback.reported': return 'Conflict reported. Coordinator will review.';
-			case 'taker.conflict.errors.reporting': return ({required Object details}) => 'Error reporting conflict: ${details}';
-			case 'taker.conflict.nostrContact.title': return 'Contact Coordinator on Nostr';
-			case 'taker.conflict.nostrContact.description': return 'You can DM the coordinator directly for help with this dispute.';
-			case 'taker.conflict.nostrContact.copyNpub': return 'Copy npub';
-			case 'taker.conflict.nostrContact.openProfile': return 'View Profile';
-			case 'taker.conflict.nostrContact.npubCopied': return 'Coordinator npub copied to clipboard!';
-			case 'taker.conflict.nostrContact.yourIdentityDescription': return 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.';
-			case 'taker.conflict.nostrContact.manageNekoKeys': return 'Manage Neko Keys';
-			case 'blik.instructions.taker': return 'Once the Maker enters the BLIK code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.';
-			case 'home.notifications.title': return 'Get notified about new offers via:';
-			case 'home.notifications.telegram': return 'Telegram';
-			case 'home.notifications.simplex': return 'SimpleX';
-			case 'home.notifications.element': return 'Element';
-			case 'home.notifications.signal': return 'Signal';
-			case 'home.statistics.title': return 'Finished Offers';
-			case 'home.statistics.lifetimeCompact': return ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'All: ${count} transactions\nAvg wait for BLIK: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}';
-			case 'home.statistics.last7DaysCompact': return ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} transactions\nAvg wait for BLIK: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}';
-			case 'home.statistics.last7DaysSingleLine': return ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg BLIK: ${avgBlikTime}  |  Avg Paid: ${avgPaidTime}';
-			case 'home.statistics.errors.loading': return ({required Object error}) => 'Error loading statistics: ${error}';
-			case 'nekoInfo.title': return 'What is a Neko?';
-			case 'nekoInfo.description': return 'Your Neko is your identity for using BitBlik. It\'s composed of a private and public key to ensure cryptographically secure communication with the coordinator.\n\nTo ensure greater anonymity, it is recommended to use a new, fresh Neko for each offer.\n\n⚠️ IMPORTANT: Your private key is only stored on your device (client-side). It is critically important to backup your private key, as losing access to it may prevent you from resolving disputes and recovering your funds.';
-			case 'nekoInfo.backupWarning': return 'Remember to backup your Neko';
-			case 'generateNewKey.title': return 'New';
-			case 'generateNewKey.description': return 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven\'t backed it up.';
-			case 'generateNewKey.buttons.generate': return 'Generate';
-			case 'generateNewKey.errors.activeOffer': return 'You cannot generate a new Neko while you have an active offer.';
-			case 'generateNewKey.errors.failed': return 'Failed to generate new Neko';
-			case 'generateNewKey.feedback.success': return 'New Neko generated successfully!';
-			case 'generateNewKey.tooltips.generate': return 'Generate New Neko';
-			case 'backup.title': return 'Backup';
-			case 'backup.description': return 'This is your private key. It secures communication with the coordinator. Never reveal it to anyone. Back it up in a secure place to prevent issues during disputes.';
-			case 'backup.feedback.copied': return 'Private key copied to clipboard!';
-			case 'backup.tooltips.backup': return 'Backup Neko';
-			case 'restore.title': return 'Restore';
-			case 'restore.labels.privateKey': return 'Private Key';
-			case 'restore.buttons.restore': return 'Restore';
-			case 'restore.errors.invalidKey': return 'Must be a 64-character hex string.';
-			case 'restore.errors.failed': return 'Restore failed';
-			case 'restore.feedback.success': return 'Neko restored successfully! App will restart.';
-			case 'restore.tooltips.restore': return 'Restore Neko';
-			case 'system.loadingPublicKey': return 'Loading your public key...';
-			case 'system.errors.generic': return 'An unexpected error occurred. Please try again.';
-			case 'system.errors.loadingTimeoutConfig': return 'Error loading timeout configuration.';
-			case 'system.errors.loadingCoordinatorConfig': return 'Error loading coordinator configuration. Please try again.';
-			case 'system.errors.noPublicKey': return 'Your public key is not available. Cannot proceed.';
-			case 'system.errors.internalOfferIncomplete': return 'Internal error: Offer details are incomplete. Please try again.';
-			case 'system.errors.loadingPublicKey': return 'Error loading your public key. Please restart the app.';
-			case 'system.blik.copied': return 'BLIK code copied to clipboard';
-			case 'myOffers.title': return 'My offers';
-			case 'myOffers.empty': return 'No offers yet.';
-			case 'myOffers.unknownCoordinator': return 'Unknown coordinator';
-			case 'myOffers.menuLabel': return 'My offers';
-			case 'myOffers.filter.all': return 'All';
-			case 'myOffers.filter.active': return 'Active';
-			case 'myOffers.filter.completed': return 'Completed';
-			case 'myOffers.filter.failed': return 'Failed';
-			case 'myOffers.details.title': return 'Offer Details';
-			case 'myOffers.details.notFound': return 'Offer not found.';
-			case 'myOffers.details.amount': return 'Amount';
-			case 'myOffers.details.fees': return 'Fees';
-			case 'myOffers.details.sats': return 'Satoshis';
-			case 'myOffers.details.maker': return 'Maker';
-			case 'myOffers.details.taker': return 'Taker';
-			case 'myOffers.details.yourFee': return 'Your fee';
-			case 'myOffers.details.makerFee': return 'Maker Fee';
-			case 'myOffers.details.takerFee': return 'Taker Fee';
-			case 'myOffers.details.coordinator': return 'Coordinator';
-			case 'myOffers.details.createdAt': return 'Created';
-			case 'myOffers.details.reservedAt': return 'Reserved';
-			case 'myOffers.details.blikReceivedAt': return 'BLIK Submitted';
-			case 'myOffers.details.makerConfirmedAt': return 'Confirmed';
-			case 'myOffers.details.settledAt': return 'Settled';
-			case 'myOffers.details.takerPaidAt': return 'Taker Paid';
-			case 'myOffers.details.id': return 'Offer ID';
-			case 'myOffers.details.paymentHash': return 'Payment Hash';
-			case 'myOffers.details.holdInvoice': return 'Hold Invoice';
-			case 'myOffers.details.continueActiveOffer': return 'Continue active offer';
-			case 'myOffers.details.after': return ({required Object duration}) => 'after ${duration}';
-			case 'landing.mainTitle': return 'Your BLIK ⇄ bitcoin Bridge';
-			case 'landing.subtitle': return 'Pay for or sell your BLIK code with bitcoin';
-			case 'landing.partnership': return 'partnership';
-			case 'landing.actions.payBlik': return 'Pay BLIK';
-			case 'landing.actions.payBlikSubtitle': return 'with bitcoin';
-			case 'landing.actions.sellBlik': return 'Buy bitcoin';
-			case 'landing.actions.sellBlikSubtitle': return 'with BLIK';
-			case 'landing.actions.howItWorks': return 'How it works?';
-			case 'faq.screenTitle': return 'FAQ';
-			case 'faq.tooltip': return 'FAQ';
-			case 'settings.title': return 'Settings';
-			case 'notificationSettings.title': return 'Notifications';
-			case 'notificationSettings.newOfferAlerts.label': return 'New offer alerts';
-			case 'notificationSettings.newOfferAlerts.description': return 'When enabled, BitBlik will notify you about new offers available to take while the app is in the background. This may be faster than external messengers.';
-			case 'wallet.title': return 'Wallet';
-			case 'wallet.description': return 'Manage your Lightning wallet settings';
-			case 'wallet.missingReceiving.title': return 'Receiving wallet required';
-			case 'wallet.missingReceiving.message': return 'No wallet configured for receiving. Add one in Wallet settings to take offers.';
-			case 'wallet.missingReceiving.openSettings': return 'Wallet settings';
-			case 'nwc.title': return 'Nostr Wallet Connect (NWC)';
-			case 'nwc.description': return 'Connect your Lightning wallet via NWC';
-			case 'nwc.labels.connectionString': return 'NWC Connection String';
-			case 'nwc.labels.hint': return 'nostr+walletconnect://...';
-			case 'nwc.labels.status': return 'Connection Status';
-			case 'nwc.labels.connected': return 'Connected';
-			case 'nwc.labels.disconnected': return 'Disconnected';
-			case 'nwc.labels.scanQrCode': return 'Scan QR code with your NWC connection';
-			case 'nwc.labels.balance': return 'Balance';
-			case 'nwc.labels.budget': return 'Budget';
-			case 'nwc.labels.usedBudget': return 'Used';
-			case 'nwc.labels.totalBudget': return 'Total';
-			case 'nwc.labels.renewsIn': return 'Renews in';
-			case 'nwc.labels.renewalPeriod': return 'Renewal Period';
-			case 'nwc.labels.relay': return 'Relay';
-			case 'nwc.labels.relays': return 'Relays';
-			case 'nwc.prompts.enter': return 'Enter your NWC connection string';
-			case 'nwc.prompts.connect': return 'Connect Wallet';
-			case 'nwc.prompts.disconnect': return 'Disconnect';
-			case 'nwc.prompts.confirmDisconnect': return 'Are you sure you want to disconnect your NWC wallet?';
-			case 'nwc.prompts.pasteConnection': return 'Paste connection string';
-			case 'nwc.prompts.chooseMethod': return 'Choose how to connect your Lightning wallet';
-			case 'nwc.prompts.howToGet': return 'Don\'t have an NWC connection yet? Learn how to get one!';
-			case 'nwc.prompts.learnMore': return 'Learn more about NWC';
-			case 'nwc.actions.connectAlbyGo': return 'Connect with Alby Go';
-			case 'nwc.actions.connectNwc': return 'Scan NWC QR Code';
-			case 'nwc.feedback.connected': return 'NWC wallet connected successfully!';
-			case 'nwc.feedback.disconnected': return 'NWC wallet disconnected';
-			case 'nwc.feedback.connecting': return 'Connecting to NWC wallet...';
-			case 'nwc.feedback.loadingWalletInfo': return 'Loading wallet information...';
-			case 'nwc.errors.connecting': return ({required Object details}) => 'Error connecting to NWC: ${details}';
-			case 'nwc.errors.disconnecting': return ({required Object details}) => 'Error disconnecting NWC: ${details}';
-			case 'nwc.errors.invalid': return 'Invalid NWC connection string';
-			case 'nwc.errors.required': return 'NWC connection string is required';
-			case 'nwc.errors.loadingBalance': return 'Failed to load wallet balance';
-			case 'nwc.errors.loadingBudget': return 'Failed to load wallet budget';
-			case 'nwc.time.minutes': return ({required Object count}) => '${count}m';
-			case 'nwc.time.hours': return ({required Object count}) => '${count}h';
-			case 'nwc.time.days': return ({required Object count}) => '${count}d';
-			case 'nwc.time.justNow': return 'just now';
-			case 'nekoManagement.title': return 'Neko';
-			case 'relays.title': return 'Relays';
-			case 'relays.status.connected': return 'Connected';
-			case 'relays.status.connecting': return 'Connecting';
-			case 'relays.status.reconnecting': return 'Reconnecting';
-			case 'relays.status.disconnected': return 'Disconnected';
-			case 'relays.popup.title': return ({required Object connected, required Object total}) => 'Relays (${connected}/${total} connected)';
-			case 'relays.popup.connectingMessage': return 'Connecting to relays...';
-			case 'offerNotifications.activeService.title': return 'Waiting for new offers';
-			case 'offerNotifications.activeService.body': return 'Nostr service monitoring events of BitBlik offers.';
-			case 'offerNotifications.funded.title': return 'Offer funded';
-			case 'offerNotifications.funded.body': return 'Your hold invoice was accepted. Offer is now live.';
-			case 'offerNotifications.reserved.title': return 'Offer reserved';
-			case 'offerNotifications.reserved.body': return 'A taker has reserved your offer.';
-			case 'offerNotifications.blikReady.title': return 'BLIK code ready';
-			case 'offerNotifications.blikReady.body': return 'Your BLIK code is ready to view.';
-			case 'offerNotifications.newOffer.title': return 'New offer available';
-			case 'offerNotifications.newOffer.body': return ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats';
-			case 'offerNotifications.categories.shop': return 'Shop';
-			case 'offerNotifications.categories.atm': return 'ATM';
-			case 'offerNotifications.categories.online': return 'Online';
-			case 'offerNotifications.blikPendingReminder.title': return 'BLIK waiting for your action';
-			case 'offerNotifications.blikPendingReminder.body': return 'Confirm the payment or mark the BLIK code as invalid.';
-			case 'offerNotifications.takerCharged.title': return 'BLIK charged';
-			case 'offerNotifications.takerCharged.body': return 'Taker reports BLIK was charged. Confirm or mark as invalid.';
-			case 'offerNotifications.invalidBlik.title': return 'BLIK marked invalid';
-			case 'offerNotifications.invalidBlik.body': return 'Maker marked your BLIK code as invalid.';
-			case 'offerNotifications.takerPaid.title': return 'Payment received';
-			case 'offerNotifications.takerPaid.body': return 'Your Lightning payment has been sent.';
-			case 'altstore.dialogTitle': return 'AltStore Not Installed';
-			case 'altstore.step1Title': return 'Download and install AltStore PAL';
-			case 'altstore.step1Button': return 'altstore.io/download';
-			case 'altstore.step1Warning': return 'You need Safari to install AltStore PAL!';
-			case 'altstore.step2Title': return 'Install BitBlik';
-			case 'altstore.step2Button': return 'Install BitBlik';
-			case 'altstore.step2Fallback': return 'Still not working? Paste the source into AltStore';
-			default: return null;
-		}
+		return switch (path) {
+			'app.title' => 'BitBlik',
+			'app.greeting' => 'Hello!',
+			'app.changelog' => 'Changelog',
+			'common.buttons.cancel' => 'Cancel',
+			'common.buttons.save' => 'Save',
+			'common.buttons.done' => 'Done',
+			'common.buttons.retry' => 'Retry',
+			'common.buttons.goHome' => 'Go Home',
+			'common.buttons.saveAndContinue' => 'Save and Continue',
+			'common.buttons.reveal' => 'Reveal',
+			'common.buttons.hide' => 'Hide',
+			'common.buttons.copy' => 'Copy',
+			'common.buttons.close' => 'Close',
+			'common.buttons.restore' => 'Restore',
+			'common.buttons.faq' => 'FAQ',
+			'common.labels.amount' => 'Amount (PLN)',
+			'common.labels.status' => ({required Object status}) => 'Status: ${status}',
+			'common.labels.role' => ({required Object role}) => 'Role: ${role}',
+			'common.notifications.success' => 'Success',
+			'common.notifications.error' => 'Error',
+			'common.notifications.loading' => 'Loading...',
+			'common.clipboard.copyToClipboard' => 'Copy to clipboard',
+			'common.clipboard.pasteFromClipboard' => 'Paste from clipboard',
+			'common.clipboard.copied' => 'Copied to clipboard!',
+			'common.actions.cancelAndReturnToOffers' => 'Cancel and return to offers',
+			'common.actions.cancelAndReturnHome' => 'Cancel and return home',
+			'lightningAddress.labels.address' => 'Lightning Address (LNURL)',
+			'lightningAddress.labels.hint' => 'user@domain.com',
+			'lightningAddress.labels.short' => ({required Object address}) => 'Lightning Address: ${address}',
+			'lightningAddress.labels.receivingAddress' => 'Your receiving address:',
+			'lightningAddress.prompts.enter' => 'Enter your Lightning address to continue',
+			'lightningAddress.prompts.edit' => 'Edit',
+			'lightningAddress.prompts.invalid' => 'Enter a valid Lightning address',
+			'lightningAddress.prompts.required' => 'Lightning address is required.',
+			'lightningAddress.prompts.enterToTakeOffer' => 'You must set a Lightning address to take an offer.',
+			'lightningAddress.prompts.missing' => 'Lightning address is missing. Please add one to be able to take offers.',
+			'lightningAddress.prompts.add' => 'Add',
+			'lightningAddress.prompts.delete' => 'Delete',
+			'lightningAddress.prompts.confirmDelete' => 'Are you sure you want to delete your Lightning address?',
+			'lightningAddress.prompts.howToGet' => 'Don\'t have a Lightning address yet? Learn how to get one!',
+			'lightningAddress.prompts.learnMore' => 'Learn more about Lightning Address',
+			'lightningAddress.feedback.saved' => 'Lightning address saved!',
+			'lightningAddress.feedback.updated' => 'Lightning address updated!',
+			'lightningAddress.feedback.valid' => 'Valid Lightning address',
+			'lightningAddress.errors.saving' => ({required Object details}) => 'Error saving address: ${details}',
+			'lightningAddress.errors.loading' => ({required Object details}) => 'Error loading Lightning address: ${details}',
+			'offers.details.yourOffer' => 'Your offer:',
+			'offers.details.selectedOffer' => 'Offer:',
+			'offers.details.activeOffer' => 'You have an active offer:',
+			'offers.details.finishedOffers' => 'Finished offers',
+			'offers.details.noAvailable' => 'No available offers.',
+			'offers.details.noAvailableTip' => 'Tip: share Bitblik in your community and among friends to increase Bitblik orders.',
+			'offers.details.noSuccessfulTrades' => 'No successful trades.',
+			'offers.details.loadingDetails' => 'Loading offer details...',
+			'offers.details.amount' => ({required Object amount}) => 'Amount: ${amount} satoshi',
+			'offers.details.amountWithCurrency' => ({required Object amount, required Object currency}) => '${amount} ${currency}',
+			'offers.details.makerFee' => ({required Object fee}) => 'Fee: ${fee} sats',
+			'offers.details.takerFee' => ({required Object fee}) => 'Fee: ${fee} sats',
+			'offers.details.subtitle' => ({required Object sats, required Object fee, required Object status}) => '${sats} + ${fee} (fee) satoshi\nStatus: ${status}',
+			'offers.details.subtitleWithDate' => ({required Object sats, required Object fee, required Object status, required Object date}) => '${sats} + ${fee} (fee) satoshi\nStatus: ${status}\nPaid: ${date}',
+			'offers.details.activeSubtitle' => ({required Object status, required Object amount}) => 'Status: ${status}\nAmount: ${amount} satoshi',
+			'offers.details.id' => ({required Object id}) => 'Offer ID: ${id}...',
+			'offers.details.created' => ({required Object dateTime}) => 'Created: ${dateTime}',
+			'offers.details.takenAfter' => ({required Object duration}) => 'Taken after: ${duration}',
+			'offers.details.paidAfter' => ({required Object duration}) => 'Paid after: ${duration}',
+			'offers.details.exchangeRate' => 'Exchange Rate',
+			'offers.details.amountLabel' => 'Amount',
+			'offers.details.makerFeeLabel' => 'Maker fee',
+			'offers.details.takerFeeLabel' => 'Taker fee',
+			'offers.details.feeLabel' => 'Fee',
+			'offers.details.statusLabel' => 'Status',
+			'offers.details.youllReceive' => 'You\'ll receive',
+			'offers.details.coordinator' => 'Coordinator',
+			'offers.details.categoryLabel' => 'Category',
+			'offers.details.categories.physicalShop' => 'Shop, café or restaurant',
+			'offers.details.categories.atmCashout' => 'ATM cash out',
+			'offers.details.categories.onlineService' => 'Online service/product',
+			'offers.details.consents.atm' => 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.',
+			'offers.details.consents.ecommerce' => 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the BLIK you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations.',
+			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.',
+			'offers.tooltips.ratesFetchedAt' => 'Fetched at',
+			'offers.tooltips.ratesSources' => 'Avg. rate sources',
+			'offers.actions.take' => 'TAKE',
+			'offers.actions.takeOffer' => 'Take Offer',
+			'offers.actions.resume' => 'ENTER BLIK',
+			'offers.actions.cancel' => 'Cancel offer',
+			'offers.actions.view' => 'View details',
+			'offers.status.created' => 'Created',
+			'offers.status.funded' => 'Funded',
+			'offers.status.expired' => 'Expired',
+			'offers.status.cancelled' => 'Cancelled',
+			'offers.status.reserved' => 'Reserved',
+			'offers.status.blikReceived' => 'BLIK Sent',
+			'offers.status.blikSentToMaker' => 'BLIK Received',
+			'offers.status.expiredBlik' => 'BLIK expired',
+			'offers.status.expiredSentBlik' => 'BLIK expired',
+			'offers.status.takerCharged' => 'Taker Charged',
+			'offers.status.invalidBlik' => 'Invalid BLIK',
+			'offers.status.conflict' => 'Conflict',
+			'offers.status.dispute' => 'Dispute',
+			'offers.status.makerConfirmed' => 'Confirmed',
+			'offers.status.settled' => 'Settled',
+			'offers.status.payingTaker' => 'Paying Taker',
+			'offers.status.takerPaymentFailed' => 'Taker Payment Failed',
+			'offers.status.takerPaid' => 'Taker Paid',
+			'offers.status.unknownStatus' => 'Unknown',
+			'offers.statusMessages.reserved' => 'Offer reserved by Taker!',
+			'offers.statusMessages.cancelled' => 'Offer cancelled successfully.',
+			'offers.statusMessages.cancelledOrExpired' => 'Offer has been cancelled or expired.',
+			'offers.statusMessages.noLongerAvailable' => ({required Object status}) => 'Offer is no longer available (Status: ${status}).',
+			'offers.progress.waitingForTaker' => ({required Object time}) => 'Waiting for taker: ${time}',
+			'offers.progress.reserved' => ({required Object seconds}) => 'Reserved: ${seconds} s left',
+			'offers.progress.confirming' => ({required Object seconds}) => 'Confirming: ${seconds} s left',
+			'offers.errors.loading' => ({required Object details}) => 'Error loading offers: ${details}',
+			'offers.errors.loadingDetails' => ({required Object details}) => 'Error loading offer details: ${details}',
+			'offers.errors.detailsMissing' => 'Error: Offer details missing or invalid.',
+			'offers.errors.detailsNotLoaded' => 'Unable to load offer details.',
+			'offers.errors.notFound' => 'Error: Offer not found.',
+			'offers.errors.unexpectedState' => 'Error: Offer is in an unexpected state.',
+			'offers.errors.unexpectedStateWithStatus' => ({required Object status}) => 'Offer is in an unexpected state (${status}). Please try again or contact support.',
+			'offers.errors.invalidStatus' => 'Offer has invalid status.',
+			'offers.errors.couldNotIdentify' => 'Error: Could not identify offer to cancel.',
+			'offers.errors.cannotBeCancelled' => ({required Object status}) => 'Offer cannot be cancelled in current state (${status}).',
+			'offers.errors.failedToCancel' => ({required Object details}) => 'Failed to cancel offer: ${details}',
+			'offers.errors.activeDetailsLost' => 'Error: Lost active offer details.',
+			'offers.errors.checkingActive' => ({required Object details}) => 'Error checking active offers: ${details}',
+			'offers.errors.cannotResume' => ({required Object status}) => 'Cannot resume offer in state: ${status}',
+			'offers.errors.cannotResumeTaker' => ({required Object status}) => 'Cannot resume taker offer in state: ${status}',
+			'offers.errors.resuming' => ({required Object details}) => 'Error resuming offer: ${details}',
+			'offers.errors.makerPublicKeyNotFound' => 'Maker public key not found',
+			'offers.errors.takerPublicKeyNotFound' => 'Taker public key not found.',
+			'offers.errors.atmConsentRequired' => 'Accept the ATM surcharge condition before taking this offer.',
+			'offers.errors.ecommerceConsentRequired' => 'Accept the ecommerce refund-return condition before taking this offer.',
+			'offers.success.title' => 'Offer completed',
+			'offers.success.headline' => 'Payment confirmed!',
+			'offers.success.subtitle' => 'Taker will be paid now.',
+			'offers.success.detailsTitle' => 'Offer details:',
+			'offers.success.duration' => ({required Object time}) => 'Offer took ${time} to complete.',
+			'reservations.actions.cancel' => 'Cancel reservation',
+			'reservations.feedback.cancelled' => 'Reservation cancelled.',
+			'reservations.errors.cancelling' => ({required Object error}) => 'Failed to cancel reservation: ${error}',
+			'reservations.errors.failedToReserve' => ({required Object details}) => 'Failed to reserve offer: ${details}',
+			'reservations.errors.failedNoTimestamp' => 'Failed to reserve offer (no timestamp).',
+			'reservations.errors.timestampMissing' => 'Offer reservation timestamp missing.',
+			'reservations.errors.notReserved' => ({required Object status}) => 'Offer is no longer in reserved state (${status}).',
+			'exchange.labels.enterAmount' => 'Enter amount (PLN) to pay:',
+			'exchange.labels.equivalent' => ({required Object sats}) => '≈ ${sats} satoshi',
+			'exchange.labels.rate' => ({required Object rate}) => 'Exchange rate ≈ ${rate} PLN/BTC',
+			'exchange.feedback.fetching' => 'Fetching exchange rate...',
+			'exchange.errors.fetchingRate' => 'Failed to fetch exchange rate.',
+			'exchange.errors.invalidFormat' => 'Invalid number format',
+			'exchange.errors.mustBePositive' => 'Amount must be positive',
+			'exchange.errors.invalidFeePercentage' => 'Invalid fee percentage',
+			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'Amount is too low. Minimum is ${minAmount} ${currency}.',
+			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Amount is too high. Maximum is ${maxAmount} ${currency}.',
+			'coordinator.title' => 'Coordinators',
+			'coordinator.info.fee' => 'fee',
+			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Amount: ${minAmount}-${maxAmount} ${currency}',
+			'coordinator.info.feeDisplay' => ({required Object fee}) => '${fee}% fee',
+			'coordinator.selector.loading' => 'Loading Coordinators...',
+			'coordinator.selector.errorLoading' => 'Error Loading Coordinators',
+			'coordinator.selector.choose' => 'Choose Coordinator',
+			'coordinator.selector.viewNostrProfile' => 'View Nostr profile',
+			'coordinator.selector.unresponsive' => 'This coordinator is unresponsive',
+			'coordinator.selector.waitingResponse' => 'Waiting for coordinator response',
+			'coordinator.selector.termsAccept' => 'I accept coordinator\'s ',
+			'coordinator.selector.termsOfUsage' => 'Terms of use',
+			'coordinator.dialog.makerFee' => 'Maker Fee',
+			'coordinator.dialog.takerFee' => 'Taker Fee',
+			'coordinator.dialog.amountRange' => 'Amount Range',
+			'coordinator.dialog.reservationTime' => 'Reservation Time',
+			'coordinator.dialog.currencies' => 'Currencies',
+			'coordinator.dialog.viewTerms' => 'View Terms',
+			'coordinator.management.title' => 'Coordinator Management',
+			'coordinator.management.availableCoordinators' => 'Available Coordinators',
+			'coordinator.management.noCoordinators' => 'No coordinators discovered yet.',
+			'coordinator.management.online' => 'Online',
+			'coordinator.management.unknownOffline' => 'Unknown/Offline',
+			'coordinator.management.openNostrProfile' => 'Open Nostr Profile',
+			'coordinator.management.enable' => 'Enable',
+			'coordinator.management.remove' => 'Remove',
+			'coordinator.management.addCustomWhitelist' => 'Add custom coordinator',
+			'coordinator.management.addCustomWhitelistHint' => 'npub1...',
+			'coordinator.management.add' => 'Add',
+			'coordinator.management.coordinatorBlacklisted' => 'Coordinator blacklisted',
+			'coordinator.management.coordinatorUnblacklisted' => 'Coordinator unblacklisted',
+			'coordinator.management.coordinatorAdded' => 'Coordinator added to custom whitelist',
+			'coordinator.management.coordinatorRemoved' => 'Coordinator removed from custom whitelist',
+			'coordinator.management.coordinatorAddInfoUnavailable' => 'No coordinator info found on relays. Coordinator not added.',
+			'coordinator.management.pleaseEnterNpub' => 'Please enter an npub',
+			'coordinator.management.error' => 'Error',
+			'coordinator.management.metricYourOffers' => 'Your offers',
+			'coordinator.management.metricYourOffersTooltip' => 'Number of offers you have successfully completed with this coordinator.',
+			'coordinator.management.metricNetworkOffers' => 'Offers (30d)',
+			'coordinator.management.metricNetworkOffersTooltip' => 'Successful offers settled by this coordinator across all users in the last 30 days.',
+			'maker.roleSelection.button' => 'PAY with Lightning',
+			'maker.amountForm.progress.step1' => '1. Create Offer',
+			'maker.amountForm.progress.step2' => '2. Wait for Taker',
+			'maker.amountForm.progress.step3' => '3. Use BLIK',
+			'maker.amountForm.labels.coordinator' => 'Coordinator',
+			'maker.amountForm.labels.category' => 'Category',
+			'maker.amountForm.labels.exchangeRate' => 'Exchange Rate',
+			'maker.amountForm.labels.fee' => 'Fee',
+			'maker.amountForm.labels.satoshisToPay' => 'Amount to Pay',
+			'maker.amountForm.labels.enterAmount' => 'Enter amount',
+			'maker.amountForm.labels.tapToSelect' => 'Tap to select',
+			'maker.amountForm.actions.generateInvoice' => 'Generate Invoice',
+			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment.',
+			'maker.amountForm.tooltips.payInfo' => 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.',
+			'maker.amountForm.category.label' => 'Offer category',
+			'maker.amountForm.category.options.physicalShop' => 'Shop, café or restaurant',
+			'maker.amountForm.category.options.atmCashout' => 'ATM cash out',
+			'maker.amountForm.category.options.onlineService' => 'Online service/product',
+			'maker.amountForm.category.shortLabels.shop' => 'Shop',
+			'maker.amountForm.category.shortLabels.atm' => 'ATM',
+			'maker.amountForm.category.shortLabels.online' => 'Online',
+			'maker.amountForm.category.atmHint' => 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.',
+			'maker.amountForm.category.physicalShopHint' => 'The ideal place to use Bitblik is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a BLIK code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you\'re feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.',
+			'maker.amountForm.category.ecommerceWarningTitle' => 'Online merchant refund risk',
+			'maker.amountForm.category.ecommerceWarningBody' => 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the BLIK, which is the taker\'s account. The coordinator cannot force the taker to return those funds to you.',
+			'maker.amountForm.category.ecommerceConfirmation' => 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.',
+			'maker.amountForm.category.whyThisIsNeeded' => 'why this is needed?',
+			'maker.amountForm.onboarding.titlePrefix' => 'New',
+			'maker.amountForm.onboarding.title' => 'Choose the offer category',
+			'maker.amountForm.onboarding.body' => 'Pick the category that best matches what you are paying for before generating the invoice.',
+			'maker.amountForm.onboarding.showWhy' => 'Why does this matter?',
+			'maker.amountForm.onboarding.hideWhy' => 'Hide details',
+			'maker.amountForm.onboarding.whyTitle' => 'Choosing the right category helps takers decide safely',
+			'maker.amountForm.onboarding.whyBody' => 'Different situations carry different expectations and risks. ATM cash outs may include extra bank fees, and online purchases can involve refund edge cases. Marking the right category gives takers the context they need before accepting your offer.',
+			'maker.amountForm.onboarding.cta' => 'Got it',
+			'maker.amountForm.errors.initiating' => ({required Object details}) => 'Error initiating offer: ${details}',
+			'maker.amountForm.errors.publicKeyNotLoaded' => 'Error: Public key not yet loaded.',
+			'maker.amountForm.errors.noCoordinatorMatchesAmount' => 'No coordinator supports this amount. Try a different value.',
+			'maker.amountForm.errors.categoryRequired' => 'Select an offer category.',
+			'maker.amountForm.errors.ecommerceConfirmationRequired' => 'Confirm the online merchant refund risk before continuing.',
+			'maker.payInvoice.title' => 'Pay this Hold invoice:',
+			'maker.payInvoice.actions.copy' => 'Copy Invoice',
+			'maker.payInvoice.actions.payInWallet' => 'Open in External Wallet',
+			'maker.payInvoice.actions.connectWallet' => 'Connect Wallet',
+			'maker.payInvoice.actions.payWithNwc' => 'Pay',
+			'maker.payInvoice.actions.paying' => 'Paying...',
+			'maker.payInvoice.feedback.copied' => 'Invoice copied to clipboard!',
+			'maker.payInvoice.feedback.waitingConfirmation' => 'Waiting for payment confirmation...',
+			'maker.payInvoice.feedback.nwcConnected' => 'NWC wallet connected!',
+			'maker.payInvoice.feedback.nwcPaymentSuccess' => 'Payment successful!',
+			'maker.payInvoice.errors.couldNotOpenApp' => 'Could not open Lightning app for invoice.',
+			'maker.payInvoice.errors.openingApp' => ({required Object details}) => 'Error opening Lightning app: ${details}',
+			'maker.payInvoice.errors.publicKeyNotAvailable' => 'Public key is not available.',
+			'maker.payInvoice.errors.couldNotFetchActive' => 'Could not fetch active offer details. It may have expired.',
+			'maker.payInvoice.errors.nwcPaymentFailed' => ({required Object details}) => 'Payment failed: ${details}',
+			'maker.payInvoice.errors.nwcNotConnected' => 'NWC wallet not connected',
+			'maker.payInvoice.errors.insufficientBalance' => ({required Object required, required Object available}) => 'Insufficient balance. Need ${required} sats, have ${available} sats',
+			'maker.payInvoice.errors.cancelOfferAlreadyFunded' => 'Coordinator reports this offer is already funded. It cannot be cancelled now.',
+			'maker.payInvoice.errors.cancelFailed' => ({required Object details}) => 'Could not cancel offer: ${details}',
+			'maker.payInvoice.budgetWarning.title' => 'Payment may fail',
+			'maker.payInvoice.budgetWarning.balanceTooLow' => ({required Object name}) => 'Your default spending wallet ${name} does not have enough balance for this payment.',
+			'maker.payInvoice.budgetWarning.budgetTooLow' => ({required Object name}) => 'Your default spending wallet ${name} does not have enough spending budget for this payment.',
+			'maker.payInvoice.budgetWarning.balanceLine' => ({required Object available}) => 'Balance: ${available} sats',
+			'maker.payInvoice.budgetWarning.budgetLine' => ({required Object remaining}) => 'Remaining NWC budget: ${remaining} sats',
+			'maker.payInvoice.budgetWarning.requiredLine' => ({required Object required}) => 'Required: ${required} sats',
+			'maker.payInvoice.budgetWarning.addFundsHint' => ({required Object name}) => 'Add funds to ${name} to cover this payment amount.',
+			'maker.payInvoice.budgetWarning.increaseBudgetHint' => 'Increase the NWC spending budget for this connection in your wallet app.',
+			'maker.payInvoice.budgetWarning.switchWalletLabel' => 'Or use a different wallet:',
+			'maker.payInvoice.budgetWarning.walletLowFundsTag' => 'May fail',
+			'maker.payInvoice.budgetWarning.payAnyway' => 'Try anyway',
+			'maker.payInvoice.budgetWarning.cancel' => 'Cancel',
+			'maker.payInvoice.budgetWarning.readyTitle' => 'Pay invoice',
+			'maker.waitTaker.message' => 'Waiting for a Taker to reserve your offer...',
+			'maker.waitTaker.progressLabel' => ({required Object time}) => 'Waiting for taker: ${time}',
+			'maker.waitTaker.errorActiveOfferDetailsLost' => 'Error: Lost active offer details.',
+			'maker.waitTaker.errorFailedToRetrieveBlik' => 'Error: Failed to retrieve BLIK code.',
+			'maker.waitTaker.errorRetrievingBlik' => ({required Object details}) => 'Error retrieving BLIK code: ${details}',
+			'maker.waitTaker.offerNoLongerAvailable' => ({required Object status}) => 'Offer is no longer available (Status: ${status}).',
+			'maker.waitTaker.errorCouldNotIdentifyOffer' => 'Error: Could not identify offer to cancel.',
+			'maker.waitTaker.offerCannotBeCancelled' => ({required Object status}) => 'Offer cannot be cancelled in current state (${status}).',
+			'maker.waitTaker.offerCancelledSuccessfully' => 'Offer cancelled successfully.',
+			'maker.waitTaker.failedToCancelOffer' => ({required Object details}) => 'Failed to cancel offer: ${details}',
+			'maker.waitTaker.offerExpiredTitle' => 'Offer Expired',
+			'maker.waitTaker.offerExpiredMessage' => 'No taker reserved your offer in time.',
+			'maker.waitTaker.recreateOffer' => 'New offer — same amount',
+			'maker.waitForBlik.title' => 'Waiting for BLIK',
+			'maker.waitForBlik.messageInfo' => 'Taker has reserved offer!',
+			'maker.waitForBlik.messageWaiting' => 'Waiting to provide BLIK code...',
+			'maker.waitForBlik.progressLabel' => ({required Object seconds}) => 'Reserved: ${seconds} s left',
+			'maker.confirmPayment.title' => 'BLIK code received!',
+			'maker.confirmPayment.retrieving' => 'Retrieving BLIK code...',
+			'maker.confirmPayment.instructions' => 'Enter this code into the payment terminal. When Taker confirms in their banking app and payment is successful, press Confirm below.',
+			'maker.confirmPayment.instruction1' => 'Enter the code into the BLIK payment request.',
+			'maker.confirmPayment.instruction2' => 'Wait until Taker confirms the payment in their app.',
+			'maker.confirmPayment.instruction3' => 'When payment is succesful, press Confirm below:',
+			'maker.confirmPayment.takerChargedWarning' => 'The taker has reported that the BLIK payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.',
+			'maker.confirmPayment.expiredTitle' => 'BLIK Code Expired',
+			'maker.confirmPayment.expiredWarning' => 'The BLIK code has expired. You need to manually confirm the payment status:',
+			'maker.confirmPayment.expiredInstruction1' => 'If the BLIK payment was successful and you completed your purchase, click "Confirm successful payment" below.',
+			'maker.confirmPayment.expiredInstruction2' => 'If the BLIK payment failed or was not completed, click "Invalid BLIK Code" below.',
+			'maker.confirmPayment.actions.confirm' => 'Confirm successful payment',
+			'maker.confirmPayment.actions.markInvalid' => 'Invalid BLIK Code',
+			'maker.confirmPayment.actions.copyBlik' => 'Copy BLIK',
+			'maker.confirmPayment.confirmDialog.title' => 'Confirm Payment?',
+			'maker.confirmPayment.confirmDialog.content' => 'This action is irreversible. After confirming:\n\n• The Taker will receive the funds immediately\n• The coordinator will not be able to dispute the funds\n• You cannot undo this action\n\nOnly confirm if the BLIK payment was successful.',
+			'maker.confirmPayment.confirmDialog.cancel' => 'Cancel',
+			'maker.confirmPayment.confirmDialog.confirmButton' => 'Yes, Confirm Payment',
+			'maker.confirmPayment.invalidBlikDisputeDialog.title' => 'Open Dispute?',
+			'maker.confirmPayment.invalidBlikDisputeDialog.content' => 'The taker has reported that the BLIK payment was charged from their account.\n\nMarking this as invalid will immediately open a DISPUTE that requires coordinator intervention.\n\n• A dispute fee may be charged if ruled against you\n• The hold invoice will be settled immediately\n• Manual verification will be required\n\nOnly proceed if you are certain the BLIK payment did NOT succeed.',
+			'maker.confirmPayment.invalidBlikDisputeDialog.cancel' => 'Cancel',
+			'maker.confirmPayment.invalidBlikDisputeDialog.confirmButton' => 'Yes, Open Dispute',
+			'maker.confirmPayment.feedback.confirmed' => 'Maker confirmed payment.',
+			'maker.confirmPayment.feedback.confirmedTakerPaid' => 'Payment confirmed! Taker will receive funds.',
+			'maker.confirmPayment.feedback.progressLabel' => ({required Object seconds}) => 'Confirming: ${seconds} s left',
+			'maker.confirmPayment.errors.failedToRetrieve' => 'Error: Failed to retrieve BLIK code.',
+			'maker.confirmPayment.errors.retrieving' => ({required Object details}) => 'Error retrieving BLIK code: ${details}',
+			'maker.confirmPayment.errors.missingHashOrKey' => 'Error: Missing payment hash or public key.',
+			'maker.confirmPayment.errors.incorrectState' => ({required Object status}) => 'Offer is not in correct state for confirmation (Status: ${status})',
+			'maker.confirmPayment.errors.confirming' => ({required Object details}) => 'Error confirming payment: ${details}',
+			'maker.confirmPayment.errors.invalidState' => 'Error: Received invalid offer state.',
+			'maker.confirmPayment.errors.internalIncomplete' => 'Internal error: Incomplete offer details.',
+			'maker.confirmPayment.errors.notAwaitingConfirmation' => ({required Object status}) => 'Offer is no longer awaiting confirmation (Status: ${status}).',
+			'maker.confirmPayment.errors.unexpectedStatus' => 'Received unexpected offer status from server.',
+			'maker.invalidBlik.title' => 'Invalid BLIK Code',
+			'maker.invalidBlik.info' => 'You marked the BLIK code as invalid. Waiting for taker to provide new code or start dispute.',
+			'maker.conflict.title' => 'Offer Conflict',
+			'maker.conflict.headline' => 'Offer Conflict Reported',
+			'maker.conflict.body' => 'You marked the BLIK code as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.',
+			'maker.conflict.instructions' => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.',
+			'maker.conflict.actions.back' => 'Back to Home',
+			'maker.conflict.actions.confirmPayment' => 'My mistake, confirm BLIK payment success',
+			'maker.conflict.actions.openDispute' => 'Blik payment did NOT succeed, OPEN DISPUTE',
+			'maker.conflict.actions.submitDispute' => 'Submit Dispute',
+			'maker.conflict.disputeDialog.title' => 'Open dispute?',
+			'maker.conflict.disputeDialog.content' => 'Opening a dispute requires manual verification by the coordinator, which will take time. A dispute fee will be deducted if the dispute is ruled against you. The hold invoice will be settled to prevent it from expiring. If the dispute is ruled in your favor, you will receive a refund (minus fees) to a wallet of your choice.',
+			'maker.conflict.disputeDialog.contentDetailed' => 'Opening a dispute will require manual coordinator intervention, which takes time and incurs a dispute fee.\n\nThe hold invoice will be immediately settled to prevent it from expiring before the dispute is resolved.\n\nIf the dispute is ruled in your favor, the satoshi amount will be refunded to a wallet of your choice (minus fees). Make sure you have a wallet ready to receive.',
+			'maker.conflict.disputeDialog.actions.confirm' => 'Open Dispute',
+			'maker.conflict.disputeDialog.actions.cancel' => 'Cancel',
+			'maker.conflict.feedback.disputeOpenedSuccess' => 'Dispute successfully opened. Coordinator will review.',
+			'maker.conflict.errors.openingDispute' => ({required Object error}) => 'Error opening dispute: ${error}',
+			'maker.conflict.nostrContact.title' => 'Contact Coordinator on Nostr',
+			'maker.conflict.nostrContact.description' => 'You can DM the coordinator directly for help with this dispute.',
+			'maker.conflict.nostrContact.copyNpub' => 'Copy npub',
+			'maker.conflict.nostrContact.openProfile' => 'View Profile',
+			'maker.conflict.nostrContact.npubCopied' => 'Coordinator npub copied to clipboard!',
+			'maker.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
+			'maker.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
+			'maker.success.title' => 'Offer completed',
+			'maker.success.headline' => 'Payment confirmed!',
+			'maker.success.subtitle' => 'Taker will now be paid.',
+			'maker.success.detailsTitle' => 'Offer details:',
+			'maker.success.duration' => ({required Object time}) => 'Offer took ${time}!',
+			'taker.roleSelection.button' => 'SELL BLIK code for satoshi',
+			'taker.progress.step1' => 'Submit BLIK',
+			'taker.progress.step2' => 'Confirm BLIK',
+			'taker.progress.step3' => 'Get Paid',
+			'taker.submitBlik.title' => 'Enter 6-digit BLIK',
+			'taker.submitBlik.label' => 'BLIK Code',
+			'taker.submitBlik.instruction' => 'Enter BLIK before time ends...',
+			'taker.submitBlik.timeLimit' => ({required Object seconds}) => 'Enter BLIK within: ${seconds} s',
+			'taker.submitBlik.timeExpired' => 'Time to enter BLIK code has expired.',
+			'taker.submitBlik.actions.submit' => 'Submit BLIK',
+			'taker.submitBlik.feedback.pasted' => 'Pasted BLIK code.',
+			'taker.submitBlik.validation.invalidFormat' => 'Enter a valid 6-digit BLIK code.',
+			'taker.submitBlik.errors.submitting' => ({required Object details}) => 'Error submitting BLIK code: ${details}',
+			'taker.submitBlik.errors.clipboardInvalid' => 'Clipboard does not contain a valid 6-digit BLIK code.',
+			'taker.submitBlik.errors.stateChanged' => 'Error: Offer state has changed.',
+			'taker.submitBlik.errors.stateNotValid' => 'Error: Offer state is no longer valid.',
+			'taker.submitBlik.errors.fetchedIdMismatch' => ({required Object fetchedId, required Object initialId}) => 'Fetched active offer ID (${fetchedId}) does not match initial offer ID (${initialId}). State mismatch?',
+			'taker.submitBlik.errors.paymentHashMissing' => 'Offer payment hash missing after fetch.',
+			'taker.submitBlik.details.requestedAmount' => 'Requested BLIK amount',
+			'taker.submitBlik.details.exchangeRate' => 'Exchange Rate',
+			'taker.submitBlik.details.takerFee' => 'Taker fee',
+			'taker.submitBlik.details.status' => 'Status',
+			'taker.submitBlik.details.youllReceive' => 'You\'ll receive',
+			'taker.waitConfirmation.title' => 'Waiting for Maker',
+			'taker.waitConfirmation.statusLabel' => ({required Object status}) => 'Offer status: ${status}',
+			'taker.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'Waiting for Maker confirmation: ${seconds} s',
+			'taker.waitConfirmation.waitingMakerConfirmation' => ({required Object seconds}) => 'Waiting for Maker to confirm BLIK is correct. Time remaining: ${seconds}s',
+			'taker.waitConfirmation.importantNotice' => ({required Object amount, required Object currency}) => 'VERY IMPORTANT: Make sure you only accept BLIK confirmation for ${amount} ${currency}',
+			'taker.waitConfirmation.importantBlikAmountConfirmation' => ({required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a BLIK payment for exactly ${amount} ${currency}.',
+			'taker.waitConfirmation.instructions' => 'The maker must now enter it into the payment terminal within 2 minutes. You then must accept the BLIK code in your banking app.',
+			'taker.waitConfirmation.categoryReminder.atm' => 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.',
+			'taker.waitConfirmation.categoryReminder.ecommerce' => 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.',
+			'taker.waitConfirmation.waitingForMakerToReceive' => 'Waiting for maker to receive your BLIK code...',
+			'taker.waitConfirmation.makerReceivedBlik' => 'Maker has received your BLIK code.',
+			'taker.waitConfirmation.timerExpiredMessage' => 'BLIK 2m expiration time has passed. Waiting for maker to confirm or mark code as invalid.',
+			'taker.waitConfirmation.timerExpiredActions' => 'BLIK 2m expiration time has passed but the maker hasn\'t received the BLIK code. You can resend a new BLIK code or cancel.',
+			'taker.waitConfirmation.resendBlikButton' => 'Resend New BLIK Code',
+			'taker.waitConfirmation.navigatedHome' => 'Navigated home.',
+			'taker.waitConfirmation.expiredTitle' => 'BLIK Code Expired',
+			'taker.waitConfirmation.expiredWarning' => 'The maker did not receive the BLIK code so it couldn\'t have used it.',
+			'taker.waitConfirmation.expiredSentWarning' => 'The maker hasn\'t confirmed the payment yet. What would you like to do?',
+			'taker.waitConfirmation.expiredInstruction1' => 'If you want to try again with a new BLIK code, renew the reservation.',
+			'taker.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
+			'taker.waitConfirmation.expiredInstruction3' => 'If the BLIK payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',
+			'taker.waitConfirmation.takerCharged.title' => 'You marked BLIK as charged',
+			'taker.waitConfirmation.takerCharged.message' => 'The maker has 60min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.',
+			'taker.waitConfirmation.expiredActions.reportConflict' => 'BLIK was charged from my bank account',
+			'taker.waitConfirmation.expiredActions.renewReservation' => 'Try again with new BLIK code',
+			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Cancel reservation',
+			'taker.waitConfirmation.feedback.makerConfirmed' => 'Maker confirmed payment.',
+			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Payment successful! You will receive funds shortly.',
+			'taker.waitConfirmation.feedback.conflictReported' => 'Conflict reported. Coordinator will review the situation.',
+			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Received an offer with an invalid state for this screen. Resetting.',
+			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Error reporting conflict: ${details}',
+			'taker.paymentProcess.title' => 'Payment Process',
+			'taker.paymentProcess.waitingForOfferUpdate' => 'Waiting for offer status update...',
+			'taker.paymentProcess.states.preparing' => 'Preparing to send payment...',
+			'taker.paymentProcess.states.sending' => 'Sending payment...',
+			'taker.paymentProcess.states.received' => 'Payment received!',
+			'taker.paymentProcess.states.failed' => 'Payment failed',
+			'taker.paymentProcess.states.waitingUpdate' => 'Waiting for offer update...',
+			'taker.paymentProcess.steps.makerConfirmedBlik' => 'Maker confirmed BLIK payment',
+			'taker.paymentProcess.steps.makerInvoiceSettled' => 'Maker\'s hold invoice settled',
+			'taker.paymentProcess.steps.takerInvoicePaid' => 'Paying your Lightning invoice',
+			'taker.paymentProcess.steps.takerPaymentFailed' => 'Payment to your invoice failed',
+			'taker.paymentProcess.errors.sending' => ({required Object details}) => 'Error sending payment: ${details}',
+			'taker.paymentProcess.errors.notConfirmed' => 'Offer not confirmed by Maker.',
+			'taker.paymentProcess.errors.expired' => 'Offer expired.',
+			'taker.paymentProcess.errors.cancelled' => 'Offer cancelled.',
+			'taker.paymentProcess.errors.paymentFailed' => 'Offer payment failed.',
+			'taker.paymentProcess.errors.unknown' => 'Unknown offer error.',
+			'taker.paymentProcess.errors.takerPaymentFailed' => 'The payment to your Lightning invoice failed.',
+			'taker.paymentProcess.errors.noPublicKey' => 'Error: Cannot fetch your public key.',
+			'taker.paymentProcess.errors.loadingPublicKey' => 'Error loading your data',
+			'taker.paymentProcess.errors.missingPaymentHash' => 'Error: Missing payment details.',
+			'taker.paymentProcess.loading.publicKey' => 'Loading your data...',
+			'taker.paymentProcess.actions.goToFailureDetails' => 'Retry with new invoice',
+			'taker.paymentFailed.title' => 'Payment Failed',
+			'taker.paymentFailed.instructions' => ({required Object netAmount}) => 'Please provide a new Lightning invoice for ${netAmount} satoshi',
+			'taker.paymentFailed.form.newInvoiceLabel' => 'New Lightning invoice',
+			'taker.paymentFailed.form.newInvoiceHint' => 'Enter your BOLT11 invoice',
+			'taker.paymentFailed.actions.retryPayment' => 'Submit New Invoice',
+			'taker.paymentFailed.errors.enterValidInvoice' => 'Please enter a valid invoice',
+			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Error updating invoice: ${details}',
+			'taker.paymentFailed.errors.paymentRetryFailed' => 'Payment retry failed. Please check the invoice or try again later.',
+			'taker.paymentFailed.errors.takerPublicKeyNotFound' => 'Taker public key not found.',
+			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Failed to generate invoice: ${details}',
+			'taker.paymentFailed.walletSection.title' => 'Generate invoice from wallet',
+			'taker.paymentFailed.walletSection.defaultLabel' => 'default',
+			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tap to generate invoice for ${amountSats} sats',
+			'taker.paymentFailed.loading.processingPayment' => 'Processing your payment retry...',
+			'taker.paymentFailed.success.title' => 'Payment Successful',
+			'taker.paymentFailed.success.message' => 'Your payment has been processed successfully.',
+			'taker.paymentSuccess.title' => 'Payment Successful',
+			'taker.paymentSuccess.message' => 'Your payment has been processed successfully.',
+			'taker.paymentSuccess.actions.goHome' => 'Go to home',
+			'taker.invalidBlik.title' => 'Invalid BLIK Code',
+			'taker.invalidBlik.message' => 'Maker Rejected BLIK Code',
+			'taker.invalidBlik.explanation' => 'The offer maker indicated that the BLIK code you provided was invalid or didn\'t work.\n\nWhat would you like to do?',
+			'taker.invalidBlik.werentCharged' => 'If you were NOT charged:',
+			'taker.invalidBlik.wereCharged' => 'If you were charged:',
+			'taker.invalidBlik.actions.retry' => 'Send new BLIK code',
+			'taker.invalidBlik.actions.cancelReservation' => 'Cancel Transaction',
+			'taker.invalidBlik.actions.reportConflict' => 'Start Dispute',
+			'taker.invalidBlik.actions.returnHome' => 'Return to home',
+			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Conflict reported. Coordinator will review.',
+			'taker.invalidBlik.errors.reservationFailed' => 'Failed to reserve offer again',
+			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Error reporting conflict: ${details}',
+			'taker.conflict.title' => 'Offer Conflict',
+			'taker.conflict.headline' => 'Offer Conflict Reported',
+			'taker.conflict.body' => 'The Maker marked the BLIK code as invalid, but you reported a conflict, indicating you believe the payment was successful.',
+			'taker.conflict.instructions' => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.',
+			'taker.conflict.actions.back' => 'Back to Home',
+			'taker.conflict.feedback.reported' => 'Conflict reported. Coordinator will review.',
+			'taker.conflict.errors.reporting' => ({required Object details}) => 'Error reporting conflict: ${details}',
+			'taker.conflict.nostrContact.title' => 'Contact Coordinator on Nostr',
+			'taker.conflict.nostrContact.description' => 'You can DM the coordinator directly for help with this dispute.',
+			'taker.conflict.nostrContact.copyNpub' => 'Copy npub',
+			'taker.conflict.nostrContact.openProfile' => 'View Profile',
+			'taker.conflict.nostrContact.npubCopied' => 'Coordinator npub copied to clipboard!',
+			'taker.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
+			'taker.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
+			'blik.instructions.taker' => 'Once the Maker enters the BLIK code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.',
+			'home.notifications.title' => 'Get notified about new offers via:',
+			'home.notifications.telegram' => 'Telegram',
+			'home.notifications.simplex' => 'SimpleX',
+			'home.notifications.element' => 'Element',
+			'home.notifications.signal' => 'Signal',
+			'home.statistics.title' => 'Finished Offers',
+			'home.statistics.lifetimeCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'All: ${count} transactions\nAvg wait for BLIK: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
+			'home.statistics.last7DaysCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} transactions\nAvg wait for BLIK: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
+			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg BLIK: ${avgBlikTime}  |  Avg Paid: ${avgPaidTime}',
+			'home.statistics.errors.loading' => ({required Object error}) => 'Error loading statistics: ${error}',
+			'nekoInfo.title' => 'What is a Neko?',
+			'nekoInfo.description' => 'Your Neko is your identity for using BitBlik. It\'s composed of a private and public key to ensure cryptographically secure communication with the coordinator.\n\nTo ensure greater anonymity, it is recommended to use a new, fresh Neko for each offer.\n\n⚠️ IMPORTANT: Your private key is only stored on your device (client-side). It is critically important to backup your private key, as losing access to it may prevent you from resolving disputes and recovering your funds.',
+			'nekoInfo.backupWarning' => 'Remember to backup your Neko',
+			'generateNewKey.title' => 'New',
+			'generateNewKey.description' => 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven\'t backed it up.',
+			'generateNewKey.buttons.generate' => 'Generate',
+			'generateNewKey.errors.activeOffer' => 'You cannot generate a new Neko while you have an active offer.',
+			'generateNewKey.errors.failed' => 'Failed to generate new Neko',
+			'generateNewKey.feedback.success' => 'New Neko generated successfully!',
+			'generateNewKey.tooltips.generate' => 'Generate New Neko',
+			'backup.title' => 'Backup',
+			'backup.description' => 'This is your private key. It secures communication with the coordinator. Never reveal it to anyone. Back it up in a secure place to prevent issues during disputes.',
+			'backup.feedback.copied' => 'Private key copied to clipboard!',
+			'backup.tooltips.backup' => 'Backup Neko',
+			'restore.title' => 'Restore',
+			'restore.labels.privateKey' => 'Private Key',
+			'restore.buttons.restore' => 'Restore',
+			'restore.errors.invalidKey' => 'Must be a 64-character hex string.',
+			'restore.errors.failed' => 'Restore failed',
+			'restore.feedback.success' => 'Neko restored successfully! App will restart.',
+			'restore.tooltips.restore' => 'Restore Neko',
+			'system.loadingPublicKey' => 'Loading your public key...',
+			'system.errors.generic' => 'An unexpected error occurred. Please try again.',
+			'system.errors.loadingTimeoutConfig' => 'Error loading timeout configuration.',
+			'system.errors.loadingCoordinatorConfig' => 'Error loading coordinator configuration. Please try again.',
+			'system.errors.noPublicKey' => 'Your public key is not available. Cannot proceed.',
+			'system.errors.internalOfferIncomplete' => 'Internal error: Offer details are incomplete. Please try again.',
+			'system.errors.loadingPublicKey' => 'Error loading your public key. Please restart the app.',
+			'system.blik.copied' => 'BLIK code copied to clipboard',
+			'myOffers.title' => 'My offers',
+			'myOffers.empty' => 'No offers yet.',
+			'myOffers.unknownCoordinator' => 'Unknown coordinator',
+			_ => null,
+		} ?? switch (path) {
+			'myOffers.menuLabel' => 'My offers',
+			'myOffers.filter.all' => 'All',
+			'myOffers.filter.active' => 'Active',
+			'myOffers.filter.completed' => 'Completed',
+			'myOffers.filter.failed' => 'Failed',
+			'myOffers.details.title' => 'Offer Details',
+			'myOffers.details.notFound' => 'Offer not found.',
+			'myOffers.details.amount' => 'Amount',
+			'myOffers.details.fees' => 'Fees',
+			'myOffers.details.sats' => 'Satoshis',
+			'myOffers.details.maker' => 'Maker',
+			'myOffers.details.taker' => 'Taker',
+			'myOffers.details.yourFee' => 'Your fee',
+			'myOffers.details.makerFee' => 'Maker Fee',
+			'myOffers.details.takerFee' => 'Taker Fee',
+			'myOffers.details.coordinator' => 'Coordinator',
+			'myOffers.details.createdAt' => 'Created',
+			'myOffers.details.reservedAt' => 'Reserved',
+			'myOffers.details.blikReceivedAt' => 'BLIK Submitted',
+			'myOffers.details.makerConfirmedAt' => 'Confirmed',
+			'myOffers.details.settledAt' => 'Settled',
+			'myOffers.details.takerPaidAt' => 'Taker Paid',
+			'myOffers.details.id' => 'Offer ID',
+			'myOffers.details.paymentHash' => 'Payment Hash',
+			'myOffers.details.holdInvoice' => 'Hold Invoice',
+			'myOffers.details.continueActiveOffer' => 'Continue active offer',
+			'myOffers.details.after' => ({required Object duration}) => 'after ${duration}',
+			'landing.mainTitle' => 'Your BLIK ⇄ bitcoin Bridge',
+			'landing.subtitle' => 'Pay for or sell your BLIK code with bitcoin',
+			'landing.partnership' => 'partnership',
+			'landing.actions.payBlik' => 'Pay BLIK',
+			'landing.actions.payBlikSubtitle' => 'with bitcoin',
+			'landing.actions.sellBlik' => 'Buy bitcoin',
+			'landing.actions.sellBlikSubtitle' => 'with BLIK',
+			'landing.actions.howItWorks' => 'How it works?',
+			'faq.screenTitle' => 'FAQ',
+			'faq.tooltip' => 'FAQ',
+			'settings.title' => 'Settings',
+			'notificationSettings.title' => 'Notifications',
+			'notificationSettings.newOfferAlerts.label' => 'New offer alerts',
+			'notificationSettings.newOfferAlerts.description' => 'When enabled, BitBlik will notify you about new offers available to take while the app is in the background. This may be faster than external messengers.',
+			'wallet.title' => 'Wallet',
+			'wallet.description' => 'Manage your Lightning wallet settings',
+			'wallet.missingReceiving.title' => 'Receiving wallet required',
+			'wallet.missingReceiving.message' => 'No wallet configured for receiving. Add one in Wallet settings to take offers.',
+			'wallet.missingReceiving.openSettings' => 'Wallet settings',
+			'nwc.title' => 'Nostr Wallet Connect (NWC)',
+			'nwc.description' => 'Connect your Lightning wallet via NWC',
+			'nwc.labels.connectionString' => 'NWC Connection String',
+			'nwc.labels.hint' => 'nostr+walletconnect://...',
+			'nwc.labels.status' => 'Connection Status',
+			'nwc.labels.connected' => 'Connected',
+			'nwc.labels.disconnected' => 'Disconnected',
+			'nwc.labels.scanQrCode' => 'Scan QR code with your NWC connection',
+			'nwc.labels.balance' => 'Balance',
+			'nwc.labels.budget' => 'Budget',
+			'nwc.labels.usedBudget' => 'Used',
+			'nwc.labels.totalBudget' => 'Total',
+			'nwc.labels.renewsIn' => 'Renews in',
+			'nwc.labels.renewalPeriod' => 'Renewal Period',
+			'nwc.labels.relay' => 'Relay',
+			'nwc.labels.relays' => 'Relays',
+			'nwc.prompts.enter' => 'Enter your NWC connection string',
+			'nwc.prompts.connect' => 'Connect Wallet',
+			'nwc.prompts.disconnect' => 'Disconnect',
+			'nwc.prompts.confirmDisconnect' => 'Are you sure you want to disconnect your NWC wallet?',
+			'nwc.prompts.pasteConnection' => 'Paste connection string',
+			'nwc.prompts.chooseMethod' => 'Choose how to connect your Lightning wallet',
+			'nwc.prompts.howToGet' => 'Don\'t have an NWC connection yet? Learn how to get one!',
+			'nwc.prompts.learnMore' => 'Learn more about NWC',
+			'nwc.actions.connectAlbyGo' => 'Connect with Alby Go',
+			'nwc.actions.connectNwc' => 'Scan NWC QR Code',
+			'nwc.feedback.connected' => 'NWC wallet connected successfully!',
+			'nwc.feedback.disconnected' => 'NWC wallet disconnected',
+			'nwc.feedback.connecting' => 'Connecting to NWC wallet...',
+			'nwc.feedback.loadingWalletInfo' => 'Loading wallet information...',
+			'nwc.errors.connecting' => ({required Object details}) => 'Error connecting to NWC: ${details}',
+			'nwc.errors.disconnecting' => ({required Object details}) => 'Error disconnecting NWC: ${details}',
+			'nwc.errors.invalid' => 'Invalid NWC connection string',
+			'nwc.errors.required' => 'NWC connection string is required',
+			'nwc.errors.loadingBalance' => 'Failed to load wallet balance',
+			'nwc.errors.loadingBudget' => 'Failed to load wallet budget',
+			'nwc.time.minutes' => ({required Object count}) => '${count}m',
+			'nwc.time.hours' => ({required Object count}) => '${count}h',
+			'nwc.time.days' => ({required Object count}) => '${count}d',
+			'nwc.time.justNow' => 'just now',
+			'nekoManagement.title' => 'Neko',
+			'relays.title' => 'Relays',
+			'relays.status.connected' => 'Connected',
+			'relays.status.connecting' => 'Connecting',
+			'relays.status.reconnecting' => 'Reconnecting',
+			'relays.status.disconnected' => 'Disconnected',
+			'relays.popup.title' => ({required Object connected, required Object total}) => 'Relays (${connected}/${total} connected)',
+			'relays.popup.connectingMessage' => 'Connecting to relays...',
+			'offerNotifications.activeService.title' => 'Waiting for new offers',
+			'offerNotifications.activeService.body' => 'Nostr service monitoring events of BitBlik offers.',
+			'offerNotifications.funded.title' => 'Offer funded',
+			'offerNotifications.funded.body' => 'Your hold invoice was accepted. Offer is now live.',
+			'offerNotifications.reserved.title' => 'Offer reserved',
+			'offerNotifications.reserved.body' => 'A taker has reserved your offer.',
+			'offerNotifications.blikReady.title' => 'BLIK code ready',
+			'offerNotifications.blikReady.body' => 'Your BLIK code is ready to view.',
+			'offerNotifications.newOffer.title' => 'New offer available',
+			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats',
+			'offerNotifications.categories.shop' => 'Shop',
+			'offerNotifications.categories.atm' => 'ATM',
+			'offerNotifications.categories.online' => 'Online',
+			'offerNotifications.blikPendingReminder.title' => 'BLIK waiting for your action',
+			'offerNotifications.blikPendingReminder.body' => 'Confirm the payment or mark the BLIK code as invalid.',
+			'offerNotifications.takerCharged.title' => 'BLIK charged',
+			'offerNotifications.takerCharged.body' => 'Taker reports BLIK was charged. Confirm or mark as invalid.',
+			'offerNotifications.invalidBlik.title' => 'BLIK marked invalid',
+			'offerNotifications.invalidBlik.body' => 'Maker marked your BLIK code as invalid.',
+			'offerNotifications.takerPaid.title' => 'Payment received',
+			'offerNotifications.takerPaid.body' => 'Your Lightning payment has been sent.',
+			'altstore.dialogTitle' => 'AltStore Not Installed',
+			'altstore.step1Title' => 'Download and install AltStore PAL',
+			'altstore.step1Button' => 'altstore.io/download',
+			'altstore.step1Warning' => 'You need Safari to install AltStore PAL!',
+			'altstore.step2Title' => 'Install BitBlik',
+			'altstore.step2Button' => 'Install BitBlik',
+			'altstore.step2Fallback' => 'Still not working? Paste the source into AltStore',
+			_ => null,
+		};
 	}
 }
-
