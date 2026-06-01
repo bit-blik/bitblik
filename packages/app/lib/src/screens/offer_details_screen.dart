@@ -617,8 +617,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   if (offer.status != OfferStatus.takerPaid)
                                     const SizedBox(height: 10),
 
-                                  // Taker fee row (hide for takerPaid)
-                                  if (offer.status != OfferStatus.takerPaid)
+                                  // Taker fee row (hide for takerPaid and when fee is 0)
+                                  if (offer.status != OfferStatus.takerPaid &&
+                                      takerFeeAmount != 0)
                                     _buildInfoRow(
                                       t.offers.details.takerFeeLabel,
                                       '$takerFeeAmount sats',

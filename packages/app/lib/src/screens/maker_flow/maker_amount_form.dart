@@ -1712,45 +1712,47 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     ),
 
                     // Fee row
-                    _buildDetailRow(
-                      t.maker.amountForm.labels.fee,
-                      Text(
-                        (_selectedCoordinatorInfo != null &&
-                                _satsEquivalent != null)
-                            ? '≈${(_satsEquivalent! * _selectedCoordinatorInfo!.makerFee / 100).toStringAsFixed(0)} sats'
-                            : '-',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                    if (_selectedCoordinatorInfo == null ||
+                        _selectedCoordinatorInfo!.makerFee != 0)
+                      _buildDetailRow(
+                        t.maker.amountForm.labels.fee,
+                        Text(
+                          (_selectedCoordinatorInfo != null &&
+                                  _satsEquivalent != null)
+                              ? '≈${(_satsEquivalent! * _selectedCoordinatorInfo!.makerFee / 100).toStringAsFixed(0)} sats'
+                              : '-',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
-                      ),
-                      infoIcon: Icons.info_outline,
-                      onInfoTap: () {
-                        if (_selectedCoordinatorInfo != null) {
-                          showDialog(
-                            context: context,
-                            builder:
-                                (context) => AlertDialog(
-                                  title: Text(t.maker.amountForm.labels.fee),
-                                  content: Text(
-                                    t.maker.amountForm.tooltips.feeInfo(
-                                      feePercent:
-                                          _selectedCoordinatorInfo!.makerFee
-                                              .toString(),
+                        infoIcon: Icons.info_outline,
+                        onInfoTap: () {
+                          if (_selectedCoordinatorInfo != null) {
+                            showDialog(
+                              context: context,
+                              builder:
+                                  (context) => AlertDialog(
+                                    title: Text(t.maker.amountForm.labels.fee),
+                                    content: Text(
+                                      t.maker.amountForm.tooltips.feeInfo(
+                                        feePercent:
+                                            _selectedCoordinatorInfo!.makerFee
+                                                .toString(),
+                                      ),
                                     ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.of(context).pop(),
+                                        child: Text(t.common.buttons.close),
+                                      ),
+                                    ],
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed:
-                                          () => Navigator.of(context).pop(),
-                                      child: Text(t.common.buttons.close),
-                                    ),
-                                  ],
-                                ),
-                          );
-                        }
-                      },
-                    ),
+                            );
+                          }
+                        },
+                      ),
 
                     const Divider(height: 16),
 
