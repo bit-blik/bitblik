@@ -15,6 +15,15 @@ const getApiBase = () => {
 const WS_URL = getWebSocketUrl();
 const API_BASE = getApiBase();
 
+const CATEGORY_COLORS = {
+  atm: 'bg-lime-100 text-lime-800 border-lime-300',
+  online: 'bg-blue-100 text-blue-800 border-blue-300',
+};
+
+const CATEGORY_INLINE_STYLES = {
+  shop: { backgroundColor: '#E6F3F1', color: '#016B61', borderColor: '#80B5B0' },
+};
+
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   reserved: 'bg-blue-100 text-blue-800 border-blue-300',
@@ -333,6 +342,9 @@ const OffersPage = () => {
                   <th className="text-left px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Status
                   </th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Category
+                  </th>
                   <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Amount
                   </th>
@@ -356,14 +368,14 @@ const OffersPage = () => {
               <tbody>
                 {offers.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
                       No offers found
                     </td>
                   </tr>
                 ) : (
                   groupOffersByDay(offers).flatMap((group) => [
                     <tr key={`day-${group.dayLabel}`}>
-                      <td colSpan={8} className="px-4 pt-4 pb-1">
+                      <td colSpan={9} className="px-4 pt-4 pb-1">
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">
                             {group.dayLabel}
@@ -391,6 +403,18 @@ const OffersPage = () => {
                           >
                             {offer.status}
                           </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {offer.category ? (
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${CATEGORY_COLORS[offer.category] || 'bg-slate-100 text-slate-700 border-slate-300'}`}
+                              style={CATEGORY_INLINE_STYLES[offer.category] || {}}
+                            >
+                              {offer.category}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex flex-col items-end gap-0.5">
