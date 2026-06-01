@@ -608,15 +608,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   Future<void> _showCoordinatorPicker(BuildContext context) async {
     final coordinatorsAsync = ref.read(enabledCoordinatorsProvider);
     if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>>) {
-      final coordinators = _filterByAmount(coordinatorsAsync.value);
-      if (coordinators.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(t.maker.amountForm.errors.noCoordinatorMatchesAmount),
-          ),
-        );
-        return;
-      }
+      final coordinators = coordinatorsAsync.value;
+      if (coordinators.isEmpty) return;
       await showModalBottomSheet(
         context: context,
         builder: (context) {
@@ -636,6 +629,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             .toString();
                     final feePct = coordinator.makerFee.toStringAsFixed(2);
                     final t = Translations.of(context);
+                    final sats = _satsEquivalent;
+                    final outOfRange =
+                        sats != null &&
+                        (sats.round() < coordinator.minAmountSats ||
+                            sats.round() > coordinator.maxAmountSats);
+                    final notResponsive =
+                        coordinator.responsive == false ||
+                        coordinator.responsive == null;
+                    final disabled = notResponsive || outOfRange;
                     return ListTile(
                       title: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -663,14 +665,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   context,
                                 ).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  color:
-                                      (coordinator.responsive == false ||
-                                              coordinator.responsive == null)
-                                          ? Colors.grey
-                                          : null,
+                                  color: disabled ? Colors.grey : null,
                                 ),
                               ),
-                              if (coordinator.responsive == true)
+                              if (coordinator.responsive == true && !outOfRange)
                                 const Padding(
                                   padding: EdgeInsets.only(left: 4.0),
                                   child: Icon(
@@ -705,7 +703,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   maxAmount: maxPln,
                                   currency: 'PLN',
                                 ),
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: disabled ? Colors.grey : null,
+                                    ),
                               ),
                               Text(
                                 t.coordinator.info.feeDisplay(fee: feePct),
@@ -717,16 +718,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         ],
                       ),
                       onTap:
-                          (coordinator.responsive == false ||
-                                  coordinator.responsive == null)
+                          disabled
                               ? null
                               : () {
                                 Navigator.of(context).pop();
                                 _selectCoordinator(coordinator);
                               },
                       tileColor:
-                          (coordinator.responsive == false ||
-                                  coordinator.responsive == null)
+                          disabled
                               ? Colors.grey.withValues(alpha: 0.15)
                               : null,
                     );
