@@ -134,6 +134,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   void initState() {
     super.initState();
     _fiatController.addListener(_validateAndRecalculate);
+    _amountFocusNode.addListener(_onAmountFocusChange);
     _loadInitialData();
     _loadEcommerceRiskAccepted();
     _loadCategoryOnboardingState();
@@ -149,8 +150,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   @override
   void dispose() {
     _fiatController.removeListener(_validateAndRecalculate);
+    _amountFocusNode.removeListener(_onAmountFocusChange);
     _fiatController.dispose();
-    _amountFocusNode.dispose(); // Dispose the FocusNode
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -245,6 +247,37 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     }
   }
 
+  void _onAmountFocusChange() {
+    if (!_amountFocusNode.hasFocus) {
+      _reSelectCoordinatorForAmount();
+    }
+  }
+
+  void _reSelectCoordinatorForAmount() {
+    final coordinatorsAsync = ref.read(enabledCoordinatorsProvider);
+    if (coordinatorsAsync is! AsyncData<List<CoordinatorRecord>>) return;
+
+    final filtered = _filterByAmount(coordinatorsAsync.value);
+    final responsive = filtered.where((c) => c.responsive == true).toList();
+
+    if (responsive.isEmpty) {
+      if (_satsEquivalent != null) {
+        setState(() {
+          _selectedCoordinatorPubkey = null;
+          _selectedCoordinatorInfo = null;
+          _hasTriedAutoSelect = false;
+        });
+      }
+      return;
+    }
+
+    // Always settle on the first (highest-priority) coordinator that fits.
+    final best = responsive.first;
+    if (best.pubkey != _selectedCoordinatorPubkey) {
+      _selectCoordinator(best);
+    }
+  }
+
   Future<void> _selectCoordinator(CoordinatorRecord coordinator) async {
     final supportsCategory = _supportsOfferCategory(coordinator.version);
     setState(() {
@@ -298,7 +331,6 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     // Validate against the union of all enabled coordinators' ranges.
     // "Too low/high" only when no coordinator fits at all.
-    CoordinatorRecord? fittingCoordinator;
     final enabledAsync = ref.read(enabledCoordinatorsProvider);
     final enabled =
         enabledAsync is AsyncData<List<CoordinatorRecord>>
@@ -307,22 +339,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     if (currentError == null && sats != null && enabled.isNotEmpty) {
       final satsInt = sats.round();
+      // Find any match (responsive or not) for range error messaging.
+      CoordinatorRecord? anyMatch;
       for (final c in enabled) {
-        if (c.responsive == true &&
-            satsInt >= c.minAmountSats &&
-            satsInt <= c.maxAmountSats) {
-          fittingCoordinator = c;
+        if (satsInt >= c.minAmountSats && satsInt <= c.maxAmountSats) {
+          anyMatch = c;
           break;
-        }
-      }
-      // Fall back to any (even non-responsive) match for range messaging.
-      CoordinatorRecord? anyMatch = fittingCoordinator;
-      if (anyMatch == null) {
-        for (final c in enabled) {
-          if (satsInt >= c.minAmountSats && satsInt <= c.maxAmountSats) {
-            anyMatch = c;
-            break;
-          }
         }
       }
       if (anyMatch == null && _rate != null) {
@@ -353,29 +375,6 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     setState(() {
       _amountErrorText = currentError;
       _satsEquivalent = (currentError == null) ? sats : null;
-
-      // If currently-selected coordinator no longer fits the amount,
-      // switch to a fitting one when available (don't just deselect —
-      // that surprises users when another coordinator does support it).
-      final satsInt = _satsEquivalent?.round();
-      final selectedInfo = _selectedCoordinatorInfo;
-      if (satsInt != null && selectedInfo != null) {
-        final outOfRange =
-            satsInt < selectedInfo.minAmountSats ||
-            satsInt > selectedInfo.maxAmountSats;
-        if (outOfRange) {
-          if (fittingCoordinator != null) {
-            // Schedule async select; can't await inside setState.
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) _selectCoordinator(fittingCoordinator!);
-            });
-          } else {
-            _selectedCoordinatorPubkey = null;
-            _selectedCoordinatorInfo = null;
-            _hasTriedAutoSelect = false;
-          }
-        }
-      }
     });
   }
 
