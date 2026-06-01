@@ -59,7 +59,7 @@ dependencies:
   go_router: ^17.0.0  # For specific Android Intents
   memory_cache: ^1.2.0 # For in-memory caching
   shared_preferences: ^2.5.3 # For storing user preferences
-  package_info_plus: ^10.1.0 # For getting app version at runtime
+  package_info_plus: ^8.3.1 # For getting app version at runtime
   slang: ^4.15.0
   slang_flutter: ^4.15.0
   markdown: ^7.3.0 # For parsing Markdown to HTML
