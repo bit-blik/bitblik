@@ -159,6 +159,7 @@ class _Translations$coordinator$pl extends Translations$coordinator$en {
 	@override late final _Translations$coordinator$info$pl info = _Translations$coordinator$info$pl._(_root);
 	@override late final _Translations$coordinator$selector$pl selector = _Translations$coordinator$selector$pl._(_root);
 	@override late final _Translations$coordinator$dialog$pl dialog = _Translations$coordinator$dialog$pl._(_root);
+	@override late final _Translations$coordinator$details$pl details = _Translations$coordinator$details$pl._(_root);
 	@override late final _Translations$coordinator$management$pl management = _Translations$coordinator$management$pl._(_root);
 }
 
@@ -393,6 +394,8 @@ class _Translations$relays$pl extends Translations$relays$en {
 
 	// Translations
 	@override String get title => 'Przekaźniki';
+	@override String get coordinatorRelays => 'Przekaźniki koordynatora';
+	@override String get discoveryRelays => 'Przekaźniki wykrywania';
 	@override late final _Translations$relays$status$pl status = _Translations$relays$status$pl._(_root);
 	@override late final _Translations$relays$popup$pl popup = _Translations$relays$popup$pl._(_root);
 }
@@ -831,6 +834,32 @@ class _Translations$coordinator$dialog$pl extends Translations$coordinator$dialo
 	@override String get viewTerms => 'Zobacz warunki';
 }
 
+// Path: coordinator.details
+class _Translations$coordinator$details$pl extends Translations$coordinator$details$en {
+	_Translations$coordinator$details$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Koordynator';
+	@override String get relaysInUse => 'Używane przekaźniki';
+	@override String get relaysInUseHint => 'Cała komunikacja z tym koordynatorem odbywa się przez te przekaźniki (z jego listy NIP-65).';
+	@override String get noRelays => 'Brak znanych przekaźników';
+	@override String get makerFee => 'Opłata makera';
+	@override String get takerFee => 'Opłata takera';
+	@override String get amountRange => 'Zakres kwoty';
+	@override String get reservationTime => 'Czas rezerwacji';
+	@override String get currencies => 'Waluty';
+	@override String get version => 'Wersja';
+	@override String get yourOffers => 'Twoje oferty';
+	@override String get successfulOffers => 'Udane oferty (30d)';
+	@override String get statusOnline => 'Online';
+	@override String get statusOffline => 'Offline';
+	@override String get statusUnknown => 'Nieznany';
+	@override String get openNostrProfile => 'Otwórz profil Nostr';
+	@override String get termsOfUsage => 'Warunki użytkowania';
+}
+
 // Path: coordinator.management
 class _Translations$coordinator$management$pl extends Translations$coordinator$management$en {
 	_Translations$coordinator$management$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -839,7 +868,7 @@ class _Translations$coordinator$management$pl extends Translations$coordinator$m
 
 	// Translations
 	@override String get title => 'Zarządzanie Koordynatorami';
-	@override String get availableCoordinators => 'Dostępni Koordynatorzy';
+	@override String get availableCoordinators => 'Koordynatorzy';
 	@override String get noCoordinators => 'Nie odkryto jeszcze żadnych koordynatorów.';
 	@override String get online => 'Online';
 	@override String get unknownOffline => 'Nieznany/Offline';
@@ -2499,8 +2528,25 @@ extension on TranslationsPl {
 			'coordinator.dialog.reservationTime' => 'Czas rezerwacji',
 			'coordinator.dialog.currencies' => 'Waluty',
 			'coordinator.dialog.viewTerms' => 'Zobacz warunki',
+			'coordinator.details.title' => 'Koordynator',
+			'coordinator.details.relaysInUse' => 'Używane przekaźniki',
+			'coordinator.details.relaysInUseHint' => 'Cała komunikacja z tym koordynatorem odbywa się przez te przekaźniki (z jego listy NIP-65).',
+			'coordinator.details.noRelays' => 'Brak znanych przekaźników',
+			'coordinator.details.makerFee' => 'Opłata makera',
+			'coordinator.details.takerFee' => 'Opłata takera',
+			'coordinator.details.amountRange' => 'Zakres kwoty',
+			'coordinator.details.reservationTime' => 'Czas rezerwacji',
+			'coordinator.details.currencies' => 'Waluty',
+			'coordinator.details.version' => 'Wersja',
+			'coordinator.details.yourOffers' => 'Twoje oferty',
+			'coordinator.details.successfulOffers' => 'Udane oferty (30d)',
+			'coordinator.details.statusOnline' => 'Online',
+			'coordinator.details.statusOffline' => 'Offline',
+			'coordinator.details.statusUnknown' => 'Nieznany',
+			'coordinator.details.openNostrProfile' => 'Otwórz profil Nostr',
+			'coordinator.details.termsOfUsage' => 'Warunki użytkowania',
 			'coordinator.management.title' => 'Zarządzanie Koordynatorami',
-			'coordinator.management.availableCoordinators' => 'Dostępni Koordynatorzy',
+			'coordinator.management.availableCoordinators' => 'Koordynatorzy',
 			'coordinator.management.noCoordinators' => 'Nie odkryto jeszcze żadnych koordynatorów.',
 			'coordinator.management.online' => 'Online',
 			'coordinator.management.unknownOffline' => 'Nieznany/Offline',
@@ -2822,6 +2868,8 @@ extension on TranslationsPl {
 			'system.blik.copied' => 'Kod BLIK skopiowany do schowka',
 			'myOffers.title' => 'Moje oferty',
 			'myOffers.empty' => 'Brak ofert.',
+			_ => null,
+		} ?? switch (path) {
 			'myOffers.unknownCoordinator' => 'Nieznany koordynator',
 			'myOffers.menuLabel' => 'Moje oferty',
 			'myOffers.filter.all' => 'Wszystkie',
@@ -2839,8 +2887,6 @@ extension on TranslationsPl {
 			'myOffers.details.makerFee' => 'Opłata makera',
 			'myOffers.details.takerFee' => 'Opłata takera',
 			'myOffers.details.coordinator' => 'Koordynator',
-			_ => null,
-		} ?? switch (path) {
 			'myOffers.details.createdAt' => 'Utworzono',
 			'myOffers.details.reservedAt' => 'Zarezerwowano',
 			'myOffers.details.blikReceivedAt' => 'BLIK wysłany',
@@ -2913,6 +2959,8 @@ extension on TranslationsPl {
 			'nwc.time.justNow' => 'teraz',
 			'nekoManagement.title' => 'Neko',
 			'relays.title' => 'Przekaźniki',
+			'relays.coordinatorRelays' => 'Przekaźniki koordynatora',
+			'relays.discoveryRelays' => 'Przekaźniki wykrywania',
 			'relays.status.connected' => 'Połączony',
 			'relays.status.connecting' => 'Łączenie',
 			'relays.status.reconnecting' => 'Ponowne łączenie',

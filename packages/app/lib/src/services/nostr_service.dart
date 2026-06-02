@@ -14,12 +14,10 @@ import 'nostr_cache_factory.dart';
 
 /// Service for Nostr-based communication with coordinators
 class NostrService {
-  static const List<String> _defaultRelayUrls = [
-    'wss://relay.mostro.network',
-    'wss://relay.primal.net',
-    // 'wss://relay.damus.io',
-    // 'wss://nos.lol',
-  ];
+  /// Discovery relays — used ONLY to find coordinators (their info + NIP-65
+  /// events) and to bootstrap NDK. All per-coordinator communication is routed
+  /// to each coordinator's own relays (see [CoordinatorRegistry.relaysFor]).
+  static const List<String> _defaultRelayUrls = kDiscoveryRelays;
 
   final KeyService _keyService;
   Ndk? _ndk;
@@ -104,12 +102,39 @@ class NostrService {
               .map((record) => record.pubkeyHex)
               .toSet();
       _pruneKnownOffers(enabledPubkeys);
+      // Keep the RPC response subscription pointed at the relays of all
+      // enabled coordinators so we receive replies regardless of where each
+      // coordinator publishes.
+      unawaited(
+        _rpcClient?.updateResponseRelays(
+              _coordinatorRegistry!.relaysForEnabled(),
+            ) ??
+            Future.value(),
+      );
       if (!_offerSubscriptionRequested ||
           setEquals(enabledPubkeys, _offerSubscriptionAuthors)) {
         return;
       }
       unawaited(_syncOfferSubscription(enabledPubkeys));
     });
+  }
+
+  /// Union of relays in active use to reach enabled coordinators. Drives the
+  /// top-bar connectivity dots (excludes discovery-only and NWC relays).
+  Set<String> get coordinatorRelaysInUse =>
+      _coordinatorRegistry?.relaysForEnabled() ?? <String>{};
+
+  /// Relays to subscribe/query across all enabled coordinators, falling back to
+  /// discovery relays when none are known yet.
+  List<String> _enabledCoordinatorRelays() {
+    final relays = _coordinatorRegistry?.relaysForEnabled().toList() ?? const [];
+    return relays.isEmpty ? _relayUrls : relays;
+  }
+
+  /// Relays for a single coordinator, falling back to discovery relays.
+  List<String> _relaysForCoordinator(String pubkey) {
+    final relays = _coordinatorRegistry?.relaysFor(pubkey) ?? const [];
+    return relays.isEmpty ? _relayUrls : relays;
   }
 
   CoordinatorRegistry get coordinatorRegistry {
@@ -249,6 +274,7 @@ class NostrService {
         request,
         coordinatorPubkey,
         timeoutOverride: timeoutOverride,
+        relays: _coordinatorRegistry?.relaysFor(coordinatorPubkey),
       );
     } on TimeoutException {
       // Trigger a health check for this coordinator, unless this WAS the
@@ -394,7 +420,7 @@ class NostrService {
     _offerSubscription = _ndk!.requests.subscription(
       name: "offers-stream",
       filters: [filter],
-      explicitRelays: _relayUrls,
+      explicitRelays: _enabledCoordinatorRelays(),
     );
     _offerSubscriptionAuthors = enabledPubkeys;
     _offerSubscription!.stream.listen(_handleOfferEvent);
@@ -430,7 +456,7 @@ class NostrService {
     final response = _ndk!.requests.query(
       filters: [filter],
       cacheRead: false,
-      explicitRelays: _relayUrls,
+      explicitRelays: _enabledCoordinatorRelays(),
     );
 
     Nip01Event? event;
@@ -938,7 +964,7 @@ class NostrService {
     _offerStatusSubscription = _ndk!.requests.subscription(
       name: "offer-status-updates",
       filters: [filter],
-      explicitRelays: _relayUrls,
+      explicitRelays: _relaysForCoordinator(coordinatorPubKey),
     );
 
     _offerStatusSubscription!.stream.listen(_handleOfferStatusEvent);

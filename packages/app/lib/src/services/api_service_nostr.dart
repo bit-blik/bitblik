@@ -20,6 +20,11 @@ class ApiServiceNostr {
 
   Future<void> init() async {
     await _keyService.init();
+    if (_keyService.publicKeyHex == null || _keyService.privateKeyHex == null) {
+      throw const KeyServiceInitializationException(
+        'Secure identity storage did not provide a usable keypair.',
+      );
+    }
     await _nostrService.init();
     final ndkInstance = _nostrService.ndk;
     if (ndkInstance != null) {
@@ -154,7 +159,8 @@ class ApiServiceNostr {
 
     final validRates = results.whereType<double>().toList();
     if (validRates.isNotEmpty) {
-      final averageRate = validRates.reduce((a, b) => a + b) / validRates.length;
+      final averageRate =
+          validRates.reduce((a, b) => a + b) / validRates.length;
       MemoryCache.instance.create(
         _btcPlnCacheKey,
         averageRate,
@@ -166,7 +172,10 @@ class ApiServiceNostr {
         expiry: const Duration(minutes: 5),
       );
     } else {
-      Logger.log.w(() => 'Returning stale BTC/PLN rate due to all sources failing to fetch.');
+      Logger.log.w(
+        () =>
+            'Returning stale BTC/PLN rate due to all sources failing to fetch.',
+      );
     }
   }
 
@@ -208,7 +217,8 @@ class ApiServiceNostr {
     }
   }
 
-  Future<({Map<String, double?> rates, DateTime fetchedAt})> getSourceRates() async {
+  Future<({Map<String, double?> rates, DateTime fetchedAt})>
+  getSourceRates() async {
     if (MemoryCache.instance.read<double>(_btcPlnCacheKey) == null) {
       await _fetchAndCacheAllSources();
     }

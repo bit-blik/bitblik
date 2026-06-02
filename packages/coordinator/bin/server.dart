@@ -77,7 +77,8 @@ Future<void> main(List<String> args) async {
       AppLogger.info('Error during rebroadcast of last 24 hours offers: $e');
     }
 
-    AppLogger.info('✅ Coordinator running on Nostr with relays: $relays');
+    AppLogger.info(
+        '✅ Coordinator running on Nostr with relays: ${nostrService.workingRelays} (env seed: $relays)');
     AppLogger.info(
         '✅ Coordinator pubkey: ${nostrService.coordinatorPubkey ?? 'Unknown'}');
 

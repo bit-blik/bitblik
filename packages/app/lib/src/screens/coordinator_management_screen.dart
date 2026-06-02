@@ -2,11 +2,11 @@ import 'package:bitblik_core/core.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ndk/shared/nips/nip19/nip19.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../widgets/relay_dots.dart';
+import 'coordinator_details_screen.dart';
 
 class CoordinatorManagementScreen extends ConsumerStatefulWidget {
   const CoordinatorManagementScreen({super.key});
@@ -154,7 +154,24 @@ class _CoordinatorManagementScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.coordinator.management.availableCoordinators),
+        title: Text(
+          t.coordinator.management.availableCoordinators,
+        ),
+        actions: [
+          // Discovery relay status (relays used to find coordinators).
+          // Tap for the same relay-detail overlay as the top-bar dots.
+          Padding(
+            padding: const EdgeInsets.only(right: 12.0),
+            child: Center(
+              child: RelayDots(
+                relays: ref.watch(discoveryRelaysProvider),
+                size: 7,
+                showCount: true,
+                overlayTitle: t.relays.discoveryRelays,
+              ),
+            ),
+          ),
+        ],
       ),
 
       body: GestureDetector(
@@ -205,115 +222,130 @@ class _CoordinatorManagementScreenState
                           final pubkey = c.pubkeyHex;
                           final isDisabled = !c.enabled;
 
-                          // Build the main content (title and subtitle)
-                          final mainContent = ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                            ),
-                            leading:
-                                c.icon != null && c.icon!.isNotEmpty
-                                    ? CachedNetworkImage(
-                                      imageUrl: c.icon!,
-                                      placeholder:
-                                          (context, url) => const SizedBox(
-                                            width: 40,
-                                            height: 40,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
+                          final logo =
+                              c.icon != null && c.icon!.isNotEmpty
+                                  ? CachedNetworkImage(
+                                    imageUrl: c.icon!,
+                                    placeholder:
+                                        (context, url) => const SizedBox(
+                                          width: 40,
+                                          height: 40,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
                                           ),
-                                      errorWidget:
-                                          (context, url, error) => const Icon(
-                                            Icons.account_circle,
-                                            size: 40,
-                                            color: Colors.grey,
-                                          ),
-                                      width: 40,
-                                      height: 40,
-                                      fit: BoxFit.cover,
-                                    )
-                                    : const Icon(
-                                      Icons.account_circle,
-                                      size: 40,
-                                      color: Colors.grey,
-                                    ),
-                            title: Text(
-                              c.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      c.responsive == true
-                                          ? Icons.circle
-                                          : c.responsive == false
-                                          ? Icons.circle_outlined
-                                          : Icons.help_outline,
-                                      size: 12,
-                                      color:
-                                          c.responsive == true
-                                              ? Colors.green
-                                              : Colors.grey,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      c.responsive == true
-                                          ? t.coordinator.management.online
-                                          : t
-                                              .coordinator
-                                              .management
-                                              .unknownOffline,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                _ScoreMetricsRow(record: c),
-                              ],
-                            ),
-                            trailing: IconButton(
-                              tooltip:
-                                  t.coordinator.management.openNostrProfile,
-                              icon: Image.asset(
-                                'assets/nostr.png',
-                                width: 24,
-                                height: 24,
+                                        ),
+                                    errorWidget:
+                                        (context, url, error) => const Icon(
+                                          Icons.account_circle,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        ),
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                  )
+                                  : const Icon(
+                                    Icons.account_circle,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  );
+
+                          // Tappable info area (logo + name + status + metrics)
+                          // takes all available width so long names fit.
+                          final info = InkWell(
+                            onTap: () =>
+                                openCoordinatorDetails(context, pubkey),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                                horizontal: 8.0,
                               ),
-                              onPressed:
-                                  isDisabled
-                                      ? null
-                                      : () async {
-                                        final url =
-                                            'https://njump.to/${Nip19.encodePubKey(pubkey)}';
-                                        await launchUrl(
-                                          Uri.parse(url),
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                      },
+                              child: Row(
+                                children: [
+                                  logo,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          c.name,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.titleMedium,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              c.responsive == true
+                                                  ? Icons.circle
+                                                  : c.responsive == false
+                                                  ? Icons.circle_outlined
+                                                  : Icons.help_outline,
+                                              size: 12,
+                                              color:
+                                                  c.responsive == true
+                                                      ? Colors.green
+                                                      : Colors.grey,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              c.responsive == true
+                                                  ? t
+                                                      .coordinator
+                                                      .management
+                                                      .online
+                                                  : t
+                                                      .coordinator
+                                                      .management
+                                                      .unknownOffline,
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodySmall,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        _ScoreMetricsRow(record: c),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
 
-                          // Build the trailing section with switch/delete button
-                          final trailingSection = Row(
-                            mainAxisSize: MainAxisSize.min,
+                          // Full-width row: info (expanded) + compact controls
+                          // + a chevron that drills into coordinator details.
+                          return Row(
                             children: [
-                              const SizedBox(width: 8),
-                              Text(
-                                t.coordinator.management.enable,
-                                style: const TextStyle(fontSize: 12),
+                              Expanded(
+                                child:
+                                    isDisabled
+                                        ? Opacity(opacity: 0.4, child: info)
+                                        : info,
                               ),
-                              Switch(
-                                value: c.enabled,
-                                onChanged:
-                                    _saving
-                                        ? null
-                                        : (val) => _toggleEnable(pubkey, val),
+                              Transform.scale(
+                                scale: 0.8,
+                                child: Switch(
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  value: c.enabled,
+                                  onChanged:
+                                      _saving
+                                          ? null
+                                          : (val) =>
+                                              _toggleEnable(pubkey, val),
+                                ),
                               ),
                               if (c.manualAdded)
                                 IconButton(
+                                  visualDensity: VisualDensity.compact,
                                   icon: const Icon(Icons.delete_outline),
                                   tooltip: t.coordinator.management.remove,
                                   onPressed:
@@ -321,24 +353,16 @@ class _CoordinatorManagementScreenState
                                           ? null
                                           : () => _removeCoordinator(pubkey),
                                 ),
-                            ],
-                          );
-
-                          // Combine main content and trailing section
-                          return Row(
-                            children: [
-                              Expanded(
-                                child:
-                                    isDisabled
-                                        ? Opacity(
-                                          opacity: 0.4,
-                                          child: IgnorePointer(
-                                            child: mainContent,
-                                          ),
-                                        )
-                                        : mainContent,
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                icon: const Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.grey,
+                                ),
+                                tooltip: t.coordinator.details.title,
+                                onPressed: () =>
+                                    openCoordinatorDetails(context, pubkey),
                               ),
-                              trailingSection,
                             ],
                           );
                         },

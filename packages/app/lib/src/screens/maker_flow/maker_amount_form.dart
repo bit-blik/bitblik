@@ -11,6 +11,7 @@ import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
+import '../coordinator_details_screen.dart';
 // CoordinatorRecord comes from bitblik_core
 
 // Progress indicator widget for maker flow
@@ -123,6 +124,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
   String? _selectedCoordinatorPubkey; // Remember selected coordinator pubkey
   CoordinatorInfo? _selectedCoordinatorInfo;
+  bool _coordinatorPickerOpen = false; // Drives the dropdown arrow direction
   bool _termsAccepted = false; // Track if terms of usage are accepted
   bool _hasTriedAutoSelect = false; // Track if we've tried to auto-select
   OfferCategory? _selectedCategory = OfferCategory.shop;
@@ -610,6 +612,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>>) {
       final coordinators = coordinatorsAsync.value;
       if (coordinators.isEmpty) return;
+      setState(() => _coordinatorPickerOpen = true);
       await showModalBottomSheet(
         context: context,
         builder: (context) {
@@ -678,12 +681,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   ),
                                 ),
                               const Spacer(),
-                              if (_selectedCoordinatorPubkey ==
-                                  coordinator.pubkey)
-                                Icon(
-                                  Icons.check,
-                                  color: Theme.of(context).primaryColor,
-                                ),
+                              Radio<String>(
+                                value: coordinator.pubkey,
+                                groupValue: _selectedCoordinatorPubkey,
+                                onChanged:
+                                    disabled
+                                        ? null
+                                        : (_) {
+                                          Navigator.of(context).pop();
+                                          _selectCoordinator(coordinator);
+                                        },
+                              ),
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -713,6 +721,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(color: Colors.blueGrey),
                               ),
+                              Text(
+                                '${t.coordinator.management.metricNetworkOffers}: ${coordinator.networkFinishedCount}',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.green),
+                              ),
                             ],
                           ),
                         ],
@@ -734,6 +747,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           );
         },
       );
+      if (mounted) setState(() => _coordinatorPickerOpen = false);
     }
   }
 
@@ -1629,6 +1643,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            // Dropdown indicator before the logo (opens the
+                            // chooser via the row's GestureDetector). Points
+                            // right when closed, down while the chooser is open.
+                            Icon(
+                              _coordinatorPickerOpen
+                                  ? Icons.arrow_drop_down_sharp
+                                  : Icons.arrow_right_sharp,
+                              size: 32,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 2),
                             if (_selectedCoordinatorInfo != null) ...[
                               if (_selectedCoordinatorInfo!.icon != null &&
                                   _selectedCoordinatorInfo!.icon!.isNotEmpty)
@@ -1637,13 +1662,13 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                     )
                                     ? Image.network(
                                       _selectedCoordinatorInfo!.icon!,
-                                      width: 16,
-                                      height: 16,
+                                      width: 22,
+                                      height: 22,
                                     )
                                     : Image.asset(
                                       _selectedCoordinatorInfo!.icon!,
-                                      width: 16,
-                                      height: 16,
+                                      width: 22,
+                                      height: 22,
                                     ))
                               else
                                 const Icon(Icons.account_circle, size: 24),
@@ -1655,41 +1680,44 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.info_outline, size: 20),
-                              // IconButton(
-                              //   icon: const Icon(Icons.info, size: 20),
-                              //   color: Colors.grey,
-                              //   padding: EdgeInsets.zero,
-                              //   constraints: const BoxConstraints(),
-                              //   onPressed: () {
-                              //     // Refresh coordinator list
-                              //     ref.invalidate(enabledCoordinatorsProvider);
-                              //   },
-                              // ),
-                            ] else
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    t.maker.amountForm.labels.tapToSelect,
-                                    style: const TextStyle(
-                                      fontSize: 14,
+                              const SizedBox(width: 18),
+                              // Right arrow → coordinator detail view. Own tap
+                              // handler so it doesn't open the chooser.
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  final pk = _selectedCoordinatorPubkey;
+                                  if (pk != null) {
+                                    openCoordinatorDetails(context, pk);
+                                  }
+                                },
+                                child: Transform.translate(
+                                  offset: const Offset(4, 0),
+                                  child: const Padding(
+                                    padding: EdgeInsets.only(
+                                      left: 2,
+                                      top: 4,
+                                      bottom: 4,
+                                    ),
+                                    child: Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 20,
                                       color: Colors.grey,
-                                      fontStyle: FontStyle.italic,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.arrow_forward_ios,
-                                    size: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ],
+                                ),
+                              ),
+                            ] else
+                              Text(
+                                t.maker.amountForm.labels.tapToSelect,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
                           ],
                         ),
-                        infoIcon: Icons.arrow_drop_down_sharp,
                       ),
                     ),
 

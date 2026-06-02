@@ -25,6 +25,18 @@ class CoordinatorRecord {
   /// "add custom" flow). Drives the management screen's delete button.
   final bool manualAdded;
 
+  /// Relays this coordinator actively uses, from its NIP-65 (kind
+  /// [kKindRelayList]) event. Falls back to the discovery relays the
+  /// coordinator's info event was seen on when no NIP-65 is published. Empty
+  /// only until discovery has run. All per-coordinator communication (RPC,
+  /// offers, status) is routed to these.
+  final List<String> relays;
+
+  /// Display name/picture from the coordinator's kind-0 profile metadata event,
+  /// when published. Preferred over the kind-15125 info `name`/`icon`.
+  final String? profileName;
+  final String? profilePicture;
+
   /// null = never probed, true = last probe succeeded, false = last probe failed.
   final bool? responsive;
   final DateTime? lastHealthCheck;
@@ -47,6 +59,9 @@ class CoordinatorRecord {
     this.firstSeenAt,
     this.enabled = true,
     this.manualAdded = false,
+    this.relays = const [],
+    this.profileName,
+    this.profilePicture,
     this.responsive,
     this.lastHealthCheck,
     this.successfulProbes = 0,
@@ -59,8 +74,8 @@ class CoordinatorRecord {
   // Convenience accessors for UI code — fall back to safe defaults when
   // `info` is absent (e.g. for migrated legacy entries pending re-discovery).
   String get pubkey => pubkeyHex;
-  String get name => info?.name ?? pubkeyHex;
-  String? get icon => info?.icon;
+  String get name => profileName ?? info?.name ?? pubkeyHex;
+  String? get icon => profilePicture ?? info?.icon;
   int get minAmountSats => info?.minAmountSats ?? 0;
   int get maxAmountSats => info?.maxAmountSats ?? 0;
   double get makerFee => info?.makerFee ?? 0.0;
@@ -69,6 +84,9 @@ class CoordinatorRecord {
   List<String> get currencies => info?.currencies ?? const [];
   String get version => info?.version ?? '';
   String? get termsOfUsageNaddr => info?.termsOfUsageNaddr;
+
+  /// True once this coordinator's relay set is known (NIP-65 or fallback).
+  bool get hasRelays => relays.isNotEmpty;
 
   CoordinatorInfo? toCoordinatorInfo() => info;
 
@@ -93,6 +111,9 @@ class CoordinatorRecord {
     DateTime? firstSeenAt,
     bool? enabled,
     bool? manualAdded,
+    List<String>? relays,
+    String? profileName,
+    String? profilePicture,
     Object? responsive = _sentinel,
     DateTime? lastHealthCheck,
     int? successfulProbes,
@@ -108,6 +129,9 @@ class CoordinatorRecord {
       firstSeenAt: firstSeenAt ?? this.firstSeenAt,
       enabled: enabled ?? this.enabled,
       manualAdded: manualAdded ?? this.manualAdded,
+      relays: relays ?? this.relays,
+      profileName: profileName ?? this.profileName,
+      profilePicture: profilePicture ?? this.profilePicture,
       responsive: identical(responsive, _sentinel)
           ? this.responsive
           : responsive as bool?,
@@ -128,6 +152,9 @@ class CoordinatorRecord {
         if (firstSeenAt != null) 'first_seen_at': firstSeenAt!.toIso8601String(),
         'enabled': enabled,
         'manual_added': manualAdded,
+        if (relays.isNotEmpty) 'relays': relays,
+        if (profileName != null) 'profile_name': profileName,
+        if (profilePicture != null) 'profile_picture': profilePicture,
         if (responsive != null) 'responsive': responsive,
         if (lastHealthCheck != null)
           'last_health_check': lastHealthCheck!.toIso8601String(),
@@ -157,6 +184,12 @@ class CoordinatorRecord {
       firstSeenAt: parseDt(json['first_seen_at']),
       enabled: json['enabled'] as bool? ?? true,
       manualAdded: json['manual_added'] as bool? ?? false,
+      relays: (json['relays'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      profileName: json['profile_name'] as String?,
+      profilePicture: json['profile_picture'] as String?,
       responsive: json['responsive'] as bool?,
       lastHealthCheck: parseDt(json['last_health_check']),
       successfulProbes: (json['successful_probes'] as num?)?.toInt() ?? 0,

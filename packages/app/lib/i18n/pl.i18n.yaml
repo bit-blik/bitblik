@@ -254,9 +254,28 @@ coordinator:
     currencies: "Waluty"
     viewTerms: "Zobacz warunki"
   
+  details:
+    title: "Koordynator"
+    relaysInUse: "Używane przekaźniki"
+    relaysInUseHint: "Cała komunikacja z tym koordynatorem odbywa się przez te przekaźniki (z jego listy NIP-65)."
+    noRelays: "Brak znanych przekaźników"
+    makerFee: "Opłata makera"
+    takerFee: "Opłata takera"
+    amountRange: "Zakres kwoty"
+    reservationTime: "Czas rezerwacji"
+    currencies: "Waluty"
+    version: "Wersja"
+    yourOffers: "Twoje oferty"
+    successfulOffers: "Udane oferty (30d)"
+    statusOnline: "Online"
+    statusOffline: "Offline"
+    statusUnknown: "Nieznany"
+    openNostrProfile: "Otwórz profil Nostr"
+    termsOfUsage: "Warunki użytkowania"
+
   management:
     title: "Zarządzanie Koordynatorami"
-    availableCoordinators: "Dostępni Koordynatorzy"
+    availableCoordinators: "Koordynatorzy"
     noCoordinators: "Nie odkryto jeszcze żadnych koordynatorów."
     online: "Online"
     unknownOffline: "Nieznany/Offline"
@@ -898,6 +917,8 @@ nekoManagement:
 # =============================================================================
 relays:
   title: Przekaźniki
+  coordinatorRelays: Przekaźniki koordynatora
+  discoveryRelays: Przekaźniki wykrywania
   status:
     connected: Połączony
     connecting: Łączenie

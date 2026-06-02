@@ -169,6 +169,7 @@ class Translations$coordinator$en {
 	late final Translations$coordinator$info$en info = Translations$coordinator$info$en.internal(_root);
 	late final Translations$coordinator$selector$en selector = Translations$coordinator$selector$en.internal(_root);
 	late final Translations$coordinator$dialog$en dialog = Translations$coordinator$dialog$en.internal(_root);
+	late final Translations$coordinator$details$en details = Translations$coordinator$details$en.internal(_root);
 	late final Translations$coordinator$management$en management = Translations$coordinator$management$en.internal(_root);
 }
 
@@ -464,6 +465,12 @@ class Translations$relays$en {
 
 	/// en: 'Relays'
 	String get title => 'Relays';
+
+	/// en: 'Coordinator relays'
+	String get coordinatorRelays => 'Coordinator relays';
+
+	/// en: 'Discovery relays'
+	String get discoveryRelays => 'Discovery relays';
 
 	late final Translations$relays$status$en status = Translations$relays$status$en.internal(_root);
 	late final Translations$relays$popup$en popup = Translations$relays$popup$en.internal(_root);
@@ -1247,6 +1254,66 @@ class Translations$coordinator$dialog$en {
 	String get viewTerms => 'View Terms';
 }
 
+// Path: coordinator.details
+class Translations$coordinator$details$en {
+	Translations$coordinator$details$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Coordinator'
+	String get title => 'Coordinator';
+
+	/// en: 'Relays in use'
+	String get relaysInUse => 'Relays in use';
+
+	/// en: 'All communication with this coordinator is routed to these relays (from its NIP-65 list).'
+	String get relaysInUseHint => 'All communication with this coordinator is routed to these relays (from its NIP-65 list).';
+
+	/// en: 'No relays known yet'
+	String get noRelays => 'No relays known yet';
+
+	/// en: 'Maker fee'
+	String get makerFee => 'Maker fee';
+
+	/// en: 'Taker fee'
+	String get takerFee => 'Taker fee';
+
+	/// en: 'Amount range'
+	String get amountRange => 'Amount range';
+
+	/// en: 'Reservation time'
+	String get reservationTime => 'Reservation time';
+
+	/// en: 'Currencies'
+	String get currencies => 'Currencies';
+
+	/// en: 'Version'
+	String get version => 'Version';
+
+	/// en: 'Your offers'
+	String get yourOffers => 'Your offers';
+
+	/// en: 'Successful offers (30d)'
+	String get successfulOffers => 'Successful offers (30d)';
+
+	/// en: 'Online'
+	String get statusOnline => 'Online';
+
+	/// en: 'Offline'
+	String get statusOffline => 'Offline';
+
+	/// en: 'Unknown'
+	String get statusUnknown => 'Unknown';
+
+	/// en: 'Open Nostr profile'
+	String get openNostrProfile => 'Open Nostr profile';
+
+	/// en: 'Terms of use'
+	String get termsOfUsage => 'Terms of use';
+}
+
 // Path: coordinator.management
 class Translations$coordinator$management$en {
 	Translations$coordinator$management$en.internal(this._root);
@@ -1258,8 +1325,8 @@ class Translations$coordinator$management$en {
 	/// en: 'Coordinator Management'
 	String get title => 'Coordinator Management';
 
-	/// en: 'Available Coordinators'
-	String get availableCoordinators => 'Available Coordinators';
+	/// en: 'Coordinators'
+	String get availableCoordinators => 'Coordinators';
 
 	/// en: 'No coordinators discovered yet.'
 	String get noCoordinators => 'No coordinators discovered yet.';
@@ -3821,8 +3888,25 @@ extension on Translations {
 			'coordinator.dialog.reservationTime' => 'Reservation Time',
 			'coordinator.dialog.currencies' => 'Currencies',
 			'coordinator.dialog.viewTerms' => 'View Terms',
+			'coordinator.details.title' => 'Coordinator',
+			'coordinator.details.relaysInUse' => 'Relays in use',
+			'coordinator.details.relaysInUseHint' => 'All communication with this coordinator is routed to these relays (from its NIP-65 list).',
+			'coordinator.details.noRelays' => 'No relays known yet',
+			'coordinator.details.makerFee' => 'Maker fee',
+			'coordinator.details.takerFee' => 'Taker fee',
+			'coordinator.details.amountRange' => 'Amount range',
+			'coordinator.details.reservationTime' => 'Reservation time',
+			'coordinator.details.currencies' => 'Currencies',
+			'coordinator.details.version' => 'Version',
+			'coordinator.details.yourOffers' => 'Your offers',
+			'coordinator.details.successfulOffers' => 'Successful offers (30d)',
+			'coordinator.details.statusOnline' => 'Online',
+			'coordinator.details.statusOffline' => 'Offline',
+			'coordinator.details.statusUnknown' => 'Unknown',
+			'coordinator.details.openNostrProfile' => 'Open Nostr profile',
+			'coordinator.details.termsOfUsage' => 'Terms of use',
 			'coordinator.management.title' => 'Coordinator Management',
-			'coordinator.management.availableCoordinators' => 'Available Coordinators',
+			'coordinator.management.availableCoordinators' => 'Coordinators',
 			'coordinator.management.noCoordinators' => 'No coordinators discovered yet.',
 			'coordinator.management.online' => 'Online',
 			'coordinator.management.unknownOffline' => 'Unknown/Offline',
@@ -4143,6 +4227,8 @@ extension on Translations {
 			'backup.feedback.copied' => 'Private key copied to clipboard!',
 			'backup.tooltips.backup' => 'Backup Neko',
 			'restore.title' => 'Restore',
+			_ => null,
+		} ?? switch (path) {
 			'restore.labels.privateKey' => 'Private Key',
 			'restore.buttons.restore' => 'Restore',
 			'restore.errors.invalidKey' => 'Must be a 64-character hex string.',
@@ -4160,8 +4246,6 @@ extension on Translations {
 			'myOffers.title' => 'My offers',
 			'myOffers.empty' => 'No offers yet.',
 			'myOffers.unknownCoordinator' => 'Unknown coordinator',
-			_ => null,
-		} ?? switch (path) {
 			'myOffers.menuLabel' => 'My offers',
 			'myOffers.filter.all' => 'All',
 			'myOffers.filter.active' => 'Active',
@@ -4250,6 +4334,8 @@ extension on Translations {
 			'nwc.time.justNow' => 'just now',
 			'nekoManagement.title' => 'Neko',
 			'relays.title' => 'Relays',
+			'relays.coordinatorRelays' => 'Coordinator relays',
+			'relays.discoveryRelays' => 'Discovery relays',
 			'relays.status.connected' => 'Connected',
 			'relays.status.connecting' => 'Connecting',
 			'relays.status.reconnecting' => 'Reconnecting',

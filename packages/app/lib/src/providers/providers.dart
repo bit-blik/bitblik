@@ -118,6 +118,8 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
       await registry.probeAllEnabled();
       // Best-effort: refresh network usage counts to seed scoring.
       unawaited(registry.fetchNetworkFinishedCounts());
+      // Best-effort: count the user's own successful offers per coordinator.
+      unawaited(_refreshLocalFinishedCounts(ref, apiService, registry));
     } catch (e) {
       Logger.log.e(() => 'Initial coordinator discovery failed: $e');
     }
@@ -136,6 +138,30 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
 
   return registry;
 });
+
+/// Count the user's own successful (takerPaid) offers per coordinator and feed
+/// them to the registry so the "your offers" metric reflects real data.
+Future<void> _refreshLocalFinishedCounts(
+  Ref ref,
+  ApiServiceNostr apiService,
+  CoordinatorRegistry registry,
+) async {
+  try {
+    final pubkey = ref.read(keyServiceProvider).publicKeyHex;
+    if (pubkey == null) return;
+    final offers = await apiService.getMyFinishedOffers(pubkey);
+    final counts = <String, int>{};
+    for (final offer in offers) {
+      if (offer.status != OfferStatus.takerPaid) continue;
+      final c = offer.coordinatorPubkey;
+      if (c.isEmpty) continue;
+      counts[c] = (counts[c] ?? 0) + 1;
+    }
+    registry.updateLocalFinishedCounts(counts);
+  } catch (e) {
+    Logger.log.w(() => 'Failed to refresh local finished counts: $e');
+  }
+}
 
 /// Stream of coordinator records (enabled + disabled) sorted by reliability.
 /// Settings UI watches this directly.
@@ -169,6 +195,23 @@ final coordinatorInfoByPubkeyProvider =
       await ref.watch(discoveredCoordinatorsProvider.future);
       return registry.infoFor(pubkey);
     });
+
+/// Live [CoordinatorRecord] lookup by pubkey (hex). Tracks registry changes so
+/// the details screen reflects relay/health updates. Returns null until the
+/// coordinator is known.
+final coordinatorRecordByPubkeyProvider =
+    Provider.family<CoordinatorRecord?, String>((ref, pubkey) {
+  final async = ref.watch(discoveredCoordinatorsProvider);
+  return async.maybeWhen(
+    data: (records) {
+      for (final r in records) {
+        if (r.pubkeyHex == pubkey) return r;
+      }
+      return null;
+    },
+    orElse: () => null,
+  );
+});
 
 /// Helper provider to get reservation duration for a coordinator.
 /// Returns Duration based on coordinator's reservationSeconds, or null if coordinator info unavailable.
@@ -1107,6 +1150,9 @@ class RelayConnectivityNotifier
     }
   }
 
+  /// Raw map of ALL NDK relays (coordinator, discovery, NWC). Consumers filter
+  /// to the subset they care about (coordinator relays for the top bar,
+  /// discovery relays for the management screen).
   void _updateFromRelays(Map<String, dynamic> relays) {
     final result = <String, RelayStatus>{};
     for (final entry in relays.entries) {
@@ -1142,6 +1188,45 @@ class RelayConnectivityNotifier
     super.dispose();
   }
 }
+
+/// The live discovery relays — Bitblik's profile NIP-65 relays resolved by the
+/// registry (fallback: hardcoded bootstrap). Reactive to registry changes.
+final discoveryRelaysProvider = Provider<List<String>>((ref) {
+  final async = ref.watch(discoveredCoordinatorsProvider);
+  return async.maybeWhen(
+    data: (_) {
+      try {
+        return ref.read(apiServiceProvider).coordinatorRegistry.relays;
+      } catch (_) {
+        return kDiscoveryRelays;
+      }
+    },
+    orElse: () => kDiscoveryRelays,
+  );
+});
+
+/// Relays in active use to reach enabled coordinators (normalized, deduped).
+/// Mirrors [CoordinatorRegistry.relaysForEnabled]: each enabled coordinator's
+/// own relays, or the discovery relays as fallback when its set isn't known
+/// yet. Empty when there are no enabled coordinators. Reactive to registry
+/// changes via [discoveredCoordinatorsProvider].
+final coordinatorRelaysInUseProvider = Provider<Set<String>>((ref) {
+  final async = ref.watch(discoveredCoordinatorsProvider);
+  return async.maybeWhen(
+    data: (records) {
+      final out = <String>{};
+      for (final r in records.where((r) => r.enabled)) {
+        if (r.relays.isNotEmpty) {
+          out.addAll(r.relays.map(normalizeRelayUrl));
+        } else {
+          out.addAll(kDiscoveryRelays.map(normalizeRelayUrl));
+        }
+      }
+      return out;
+    },
+    orElse: () => <String>{},
+  );
+});
 
 /// Offer ID set when "Take Offer" notification action is tapped.
 /// OfferDetailsScreen reads this and auto-triggers the take if conditions are met.

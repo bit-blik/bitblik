@@ -37,6 +37,7 @@ import 'i18n/gen/strings.g.dart'; // Import Slang from new path
 import 'package:bitblik_core/core.dart'; // Needed for OfferStatus enum
 import 'src/providers/providers.dart';
 import 'src/services/notification_service.dart';
+import 'src/screens/coordinator_details_screen.dart';
 import 'src/screens/coordinator_management_screen.dart';
 import 'src/screens/faq_screen.dart'; // Import the FAQ screen
 import 'src/screens/maker_flow/maker_amount_form.dart';
@@ -53,6 +54,7 @@ import 'src/screens/taker_flow/taker_conflict_screen.dart'; // Import the taker 
 import 'src/screens/taker_flow/taker_submit_blik_screen.dart';
 import 'src/screens/taker_flow/taker_wait_confirmation_screen.dart';
 import 'src/screens/wallet_screen.dart';
+import 'src/widgets/relay_dots.dart';
 // Import our platform detection utility
 
 final double kMakerFeePercentage = 0.5;
@@ -150,6 +152,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/coordinators',
             builder: (context, state) => const CoordinatorManagementScreen(),
+          ),
+          GoRoute(
+            path: '${CoordinatorDetailsScreen.routeName}/:pubkey',
+            builder: (context, state) {
+              final pubkey = state.pathParameters['pubkey'];
+              if (pubkey == null) {
+                return const Center(child: Text('No coordinator provided.'));
+              }
+              return CoordinatorDetailsScreen(pubkey: pubkey);
+            },
           ),
           GoRoute(
             path: '/settings',
@@ -1143,138 +1155,47 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     }
   }
 
-  /// Get the state name for tooltip (i18n)
-  String _getStateName(RelayConnectionState state, Translations t) {
-    switch (state) {
-      case RelayConnectionState.connected:
-        return t.relays.status.connected;
-      case RelayConnectionState.connecting:
-        return t.relays.status.connecting;
-      case RelayConnectionState.reconnecting:
-        return t.relays.status.reconnecting;
-      case RelayConnectionState.disconnected:
-        return t.relays.status.disconnected;
-    }
-  }
-
-  /// Shows the relay status popup when tapped
-  void _showRelayStatusPopup(
-    BuildContext context,
-    Map<String, RelayStatus> relays,
-  ) {
-    final t = Translations.of(context);
-    final connectedCount = relays.values.where((r) => r.isConnected).length;
-    final totalCount = relays.length;
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      builder: (dialogContext) {
-        return Stack(
-          children: [
-            // Invisible barrier that closes the dialog when tapped
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () => Navigator.of(dialogContext).pop(),
-                child: Container(color: Colors.transparent),
-              ),
-            ),
-            // The popup positioned near the top right
-            Positioned(
-              top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
-              right: 16,
-              child: Material(
-                elevation: 8,
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.white,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  constraints: const BoxConstraints(maxWidth: 280),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t.relays.popup.title(
-                          connected: connectedCount.toString(),
-                          total: totalCount.toString(),
-                        ),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...relays.entries.map((e) {
-                        final shortUrl = e.key
-                            .replaceFirst('wss://', '')
-                            .replaceFirst('ws://', '');
-                        final stateColor = _getStateColor(e.value.state);
-                        final stateName = _getStateName(e.value.state, t);
-                        final isConnecting =
-                            e.value.state == RelayConnectionState.connecting ||
-                            e.value.state == RelayConnectionState.reconnecting;
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (isConnecting)
-                                SizedBox(
-                                  width: 12,
-                                  height: 12,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: stateColor,
-                                  ),
-                                )
-                              else
-                                Container(
-                                  width: 12,
-                                  height: 12,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: stateColor,
-                                  ),
-                                ),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  shortUrl,
-                                  style: const TextStyle(fontSize: 13),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                stateName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: stateColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildRelayConnectivityIndicator() {
-    final relays = ref.watch(relayConnectivityProvider);
+    final coordinatorRelays = ref.watch(coordinatorRelaysInUseProvider);
+    final raw = ref.watch(relayConnectivityProvider);
+
+    // No enabled coordinators → no coordinator relays in use. Show a single red
+    // dot that navigates to coordinator management, instead of dumping every
+    // NDK relay (NWC / discovery) into the bar.
+    if (coordinatorRelays.isEmpty) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => context.push('/coordinators'),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8.0,
+              vertical: 4.0,
+            ),
+            child: Container(
+              width: 13,
+              height: 13,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.red,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Show only the relays used to reach enabled coordinators (excludes NWC and
+    // discovery-only relays).
+    final relays = <String, RelayStatus>{
+      for (final e in raw.entries)
+        if (coordinatorRelays.contains(normalizeRelayUrl(e.key)))
+          e.key: e.value,
+    };
 
     if (relays.isEmpty) {
-      // No relay data yet, show loading/unknown state
+      // Coordinator relays known but NDK hasn't connected yet → loading.
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: SizedBox(
@@ -1301,7 +1222,13 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     }
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => _showRelayStatusPopup(context, relays),
+      onTap: () => showRelayStatusOverlay(
+        context,
+        coordinatorRelays,
+        title: Translations.of(context).relays.coordinatorRelays,
+        onReconnect: () =>
+            ref.read(apiServiceProvider).ndk?.connectivity.tryReconnect(),
+      ),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Padding(
@@ -1585,7 +1512,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                         InkWell(
                           onTap: () async {
                             final Uri url = Uri.parse(
-                              'https://njump.to/npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3',
+                              'https://njump.to/$kBitblikNpub',
                             );
                             await launchUrl(
                               url,

@@ -20,3 +20,8 @@ const int kKindOfferStatusUpdate = 25197;
 
 /// Parameterized replaceable public offer listing (P2P trade marker).
 const int kKindOffer = 38383;
+
+/// NIP-65 relay list metadata. Coordinators publish this to advertise the
+/// relays they actively use; clients read it to route all per-coordinator
+/// communication. Tags are `["r", "wss://relay", ("read"|"write")?]`.
+const int kKindRelayList = 10002;

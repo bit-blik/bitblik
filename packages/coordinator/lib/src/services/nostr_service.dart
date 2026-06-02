@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:bip340/bip340.dart' as bip340;
 import 'package:ndk/ndk.dart';
+import 'package:ndk/domain_layer/entities/read_write_marker.dart';
 
 import 'coordinator_service.dart';
 import 'package:bitblik_core/core.dart';
@@ -16,8 +17,22 @@ class NostrService {
   late Bip340EventSigner _signer;
   final RustEventVerifier rustEventVerifier = RustEventVerifier();
 
-  // Relay configuration
-  final List<String> _relays;
+  // Relay configuration.
+  //
+  // [_envRelays] is the seed set from config (NOSTR_RELAYS). [_relays] is the
+  // working set actually used for info/offers/responses/status — resolved at
+  // [init] from the coordinator's own NIP-65 event when one already exists,
+  // otherwise published fresh from [_envRelays].
+  final List<String> _envRelays;
+  List<String> _relays;
+
+  /// Discovery relays — resolved from Bitblik's profile NIP-65 at [init]
+  /// (fallback: hardcoded bootstrap). The coordinator publishes its info +
+  /// NIP-65 here so clients find it on the same relays they discover from.
+  List<String> _discoveryRelays = List.from(kDiscoveryRelays);
+
+  /// The relays currently used to communicate (resolved after [init]).
+  List<String> get workingRelays => List.unmodifiable(_relays);
 
   // Subscription for incoming requests
   NdkResponse? _requestSubscription;
@@ -28,7 +43,13 @@ class NostrService {
       'wss://relay.damus.io',
       'wss://relay.primal.net',
     ],
-  }) : _relays = relays;
+  })  : _envRelays = relays,
+        _relays = List.from(relays);
+
+  /// Relays the coordinator publishes its discovery events (info + NIP-65) to,
+  /// so clients can find it on the discovery set as well as its own.
+  List<String> get _discoveryTargets =>
+      {..._discoveryRelays, ..._relays}.toList();
 
   String _shortKey(String value) {
     if (value.length <= 12) return value;
@@ -50,12 +71,14 @@ class NostrService {
 
   /// Initialize the Nostr service
   Future<void> init({required String privateKey}) async {
-    // Initialize NDK with bootstrap relays config
+    // Bootstrap NDK on discovery + env relays so the self NIP-65 lookup can
+    // succeed regardless of where a prior list was published.
+    final bootstrap = {...kDiscoveryRelays, ..._envRelays}.toList();
     _ndk = Ndk(
       NdkConfig(
           cache: MemCacheManager(),
           eventVerifier: rustEventVerifier,
-          bootstrapRelays: _relays,
+          bootstrapRelays: bootstrap,
           logLevel: LogLevel.info),
     );
 
@@ -91,11 +114,130 @@ class NostrService {
           'Store this private key in your .env file as NOSTR_PRIVATE_KEY');
     }
 
+    // Log the coordinator key into NDK accounts so the userRelayLists usecase
+    // (NIP-65 publish) can sign with it.
+    _ndk.accounts.loginPrivateKey(
+      pubkey: _signer.getPublicKey(),
+      privkey: _signer.privateKey!,
+    );
+
+    // Resolve discovery relays from Bitblik's profile NIP-65 (fallback:
+    // hardcoded bootstrap). These are where we publish our info + NIP-65.
+    await _resolveDiscoveryRelays();
+
+    // Resolve the working relay set from our own NIP-65 (or publish a new one).
+    await _resolveWorkingRelays();
+
+    // Ensure a kind-0 profile (name/logo) exists on the discovery relays.
+    await _ensureMetadata();
+
     // Publish coordinator info
     await _publishCoordinatorInfo();
 
     // Start listening for requests
     await _startRequestListener();
+  }
+
+  /// Determine the relays this coordinator uses. If a NIP-65 (kind
+  /// [kKindRelayList]) event already exists for our pubkey, adopt the relays it
+  /// advertises (env relays were only a bootstrap seed). Otherwise publish a
+  /// fresh NIP-65 advertising the env relays.
+  /// Resolve discovery relays from Bitblik's profile NIP-65. Falls back to the
+  /// hardcoded bootstrap relays when unavailable.
+  Future<void> _resolveDiscoveryRelays() async {
+    // Union of hardcoded bootstrap relays and Bitblik's advertised relays, so
+    // we publish where clients always look (bootstrap) plus any relays Bitblik
+    // adds. Mirrors the client-side resolution.
+    final resolved = <String>{...kDiscoveryRelays};
+    final list = await _fetchRelayListFor(kBitblikPubkeyHex);
+    if (list != null) resolved.addAll(list);
+    _discoveryRelays = resolved.toList();
+    AppLogger.info('Resolved discovery relays: $_discoveryRelays');
+  }
+
+  /// Ensure a kind-0 profile metadata event (name + logo) exists for this
+  /// coordinator. If none is published yet, broadcast a fresh one built from
+  /// the env-configured name/icon to the discovery relays. Sticky: never
+  /// overwrites an existing profile.
+  Future<void> _ensureMetadata() async {
+    final hex = _signer.getPublicKey();
+    try {
+      final existing = await _ndk.metadata.loadMetadata(hex, forceRefresh: true);
+      if (existing != null) {
+        AppLogger.info('Existing kind 0 metadata found (name=${existing.name})');
+        return;
+      }
+      final info = await _coordinatorService.getCoordinatorInfo();
+      final metadata = Metadata()
+        ..pubKey = hex
+        ..name = info.name
+        ..displayName = info.name
+        ..picture = info.icon;
+      await _ndk.metadata.broadcastMetadata(
+        metadata,
+        specificRelays: _discoveryTargets,
+      );
+      AppLogger.info(
+          'Published fresh kind 0 metadata: name=${info.name} picture=${info.icon}');
+    } catch (e) {
+      AppLogger.info('Error ensuring kind 0 metadata: $e');
+    }
+  }
+
+  Future<void> _resolveWorkingRelays() async {
+    final hex = _signer.getPublicKey();
+    final existing = await _fetchRelayListFor(hex);
+    if (existing != null && existing.isNotEmpty) {
+      _relays = existing;
+      AppLogger.info('Adopted existing NIP-65 relays: $_relays');
+    } else {
+      _relays = List.from(_envRelays);
+      await _publishRelayList();
+      AppLogger.info('Published new NIP-65 relays from env: $_relays');
+    }
+  }
+
+  /// Fetch the newest NIP-65 relay list authored by [hex] via NDK's
+  /// user-relay-list usecase (resolves over the bootstrap/discovery relays).
+  /// Returns `null` when none is found.
+  Future<List<String>?> _fetchRelayListFor(String hex) async {
+    final list = await _ndk.userRelayLists.getSingleUserRelayList(
+      hex,
+      forceRefresh: true,
+    );
+    if (list == null) return null;
+    final urls = list.urls
+        .map(normalizeRelayUrl)
+        .where((u) => u.isNotEmpty)
+        .toList();
+    return urls.isEmpty ? null : urls;
+  }
+
+  /// Publish a NIP-65 relay list advertising [_relays] via NDK's
+  /// `userRelayLists` usecase (requires the coordinator key logged into NDK
+  /// accounts — see [init]).
+  ///
+  /// Two broadcasts: the first seeds the list cleanly from the working relays
+  /// (`broadcastRelays: _relays`, so the advertised set is exactly [_relays],
+  /// not the discovery set), the second republishes that same cached list to
+  /// the discovery relays so clients can find it. The second call reuses the
+  /// freshly-cached list (within REFRESH_USER_RELAY_DURATION) so it does not
+  /// re-seed from the discovery relays.
+  Future<void> _publishRelayList() async {
+    if (_relays.isEmpty) return;
+    try {
+      for (final targets in [_relays, _discoveryRelays]) {
+        await _ndk.userRelayLists.broadcastAddNip65Relay(
+          relayUrl: _relays.first,
+          marker: ReadWriteMarker.readWrite,
+          broadcastRelays: targets,
+        );
+      }
+      AppLogger.info(
+          'Published NIP-65 relay list ($_relays) to working + discovery relays');
+    } catch (e) {
+      AppLogger.info('Error publishing NIP-65 relay list: $e');
+    }
   }
 
   /// Decode nsec bech32 private key to hex format
@@ -136,11 +278,11 @@ class NostrService {
       await _ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: _signer,
-        specificRelays: _relays,
+        specificRelays: _discoveryTargets,
       );
 
       AppLogger.info(
-          'Published coordinator info event for pub key: ${event.pubKey} to relays: $_relays');
+          'Published coordinator info event for pub key: ${event.pubKey} to relays: $_discoveryTargets');
     } catch (e) {
       AppLogger.info('Error publishing coordinator info: $e');
     }
@@ -238,6 +380,9 @@ class NostrService {
       final response = _ndk.requests.subscription(
         name: "coordinator-requests",
         filters: [filter],
+        // Listen on our working relays (NIP-65 set), which may differ from the
+        // bootstrap/discovery relays.
+        explicitRelays: _relays,
       );
       _requestSubscription = response;
 

@@ -2,6 +2,7 @@ import 'dart:math'; // For Random.secure()
 import 'dart:typed_data'; // For Uint8List
 
 import 'package:bip340/bip340.dart' as bip340;
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:ndk/entities.dart';
 import 'package:ndk/ndk.dart';
@@ -91,8 +92,7 @@ class KeyService {
       Logger.log.e(() => '❌ Error initializing KeyService: $e');
       _publicKeyHex = null;
       _privateKeyHex = null;
-      // Consider attempting to generate fresh keys on error?
-      // await _generateAndStoreKeyPair();
+      throw KeyServiceInitializationException.fromError(e);
     }
   }
 
@@ -324,4 +324,29 @@ class KeyService {
       Logger.log.w(() => '⚠️ Failed migrating legacy LNURL wallet: $e');
     }
   }
+}
+
+class KeyServiceInitializationException implements Exception {
+  final String message;
+  final Object? cause;
+
+  const KeyServiceInitializationException(this.message, {this.cause});
+
+  factory KeyServiceInitializationException.fromError(Object error) {
+    if (error is PlatformException && error.code == 'KeyringLocked') {
+      return KeyServiceInitializationException(
+        'Secure storage is locked. Unlock the system keyring/device and restart the app.',
+        cause: error,
+      );
+    }
+
+    return KeyServiceInitializationException(
+      'Failed to initialize secure identity storage.',
+      cause: error,
+    );
+  }
+
+  @override
+  String toString() =>
+      'KeyServiceInitializationException: $message${cause != null ? ' Cause: $cause' : ''}';
 }

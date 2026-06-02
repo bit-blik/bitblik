@@ -255,9 +255,28 @@ coordinator:
     currencies: "Valute"
     viewTerms: "Visualizza Termini"
 
+  details:
+    title: "Coordinatore"
+    relaysInUse: "Relay in uso"
+    relaysInUseHint: "Tutta la comunicazione con questo coordinatore passa per questi relay (dalla sua lista NIP-65)."
+    noRelays: "Nessun relay ancora noto"
+    makerFee: "Commissione maker"
+    takerFee: "Commissione taker"
+    amountRange: "Intervallo importo"
+    reservationTime: "Tempo di prenotazione"
+    currencies: "Valute"
+    version: "Versione"
+    yourOffers: "Le tue offerte"
+    successfulOffers: "Offerte riuscite (30g)"
+    statusOnline: "Online"
+    statusOffline: "Offline"
+    statusUnknown: "Sconosciuto"
+    openNostrProfile: "Apri profilo Nostr"
+    termsOfUsage: "Termini di utilizzo"
+
   management:
     title: "Gestione Coordinatori"
-    availableCoordinators: "Coordinatori Disponibili"
+    availableCoordinators: "Coordinatori"
     noCoordinators: "Nessun coordinatore trovato."
     online: "Online"
     unknownOffline: "Sconosciuto/Offline"
@@ -897,6 +916,8 @@ nekoManagement:
 # =============================================================================
 relays:
   title: Relay
+  coordinatorRelays: Relay del coordinatore
+  discoveryRelays: Relay di scoperta
   status:
     connected: Connesso
     connecting: Connessione

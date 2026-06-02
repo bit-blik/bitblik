@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:ndk/ndk.dart';
 
 import '../constants/kinds.dart';
+import '../constants/relays.dart';
 import 'protocol_codec.dart';
 import 'rpc_envelope.dart';
 
@@ -22,12 +23,20 @@ import 'rpc_envelope.dart';
 class BitblikRpcClient {
   final Ndk ndk;
   final Bip340EventSigner signer;
+
+  /// Initial/bootstrap relays for the response subscription and the default
+  /// broadcast target. Per-coordinator routing overrides the broadcast target
+  /// via [send]'s `relays`, and the response subscription via
+  /// [updateResponseRelays].
   final List<String> relays;
   final Duration timeout;
 
   final Map<String, Completer<NostrResponse>> _pending = {};
   final Random _random = Random();
   NdkResponse? _subscription;
+
+  /// Relays the current response subscription listens on. Starts as [relays].
+  late List<String> _responseRelays = List.from(relays);
 
   /// Optional name suffix for the relay subscription (helps debugging when
   /// multiple clients share an NDK instance).
@@ -43,6 +52,10 @@ class BitblikRpcClient {
 
   /// Subscribe to incoming responses. Must be called before [send].
   Future<void> start() async {
+    await _openSubscription(_responseRelays);
+  }
+
+  Future<void> _openSubscription(List<String> relays) async {
     final filter = Filter(
       kinds: [kKindCoordinatorResponse],
       pTags: [signer.getPublicKey()],
@@ -54,6 +67,26 @@ class BitblikRpcClient {
       explicitRelays: relays,
     );
     _subscription!.stream.listen(_onResponse);
+    _responseRelays = List.from(relays);
+  }
+
+  /// Re-point the response subscription at [relays] (the union of the relays
+  /// of all coordinators we expect to hear from). No-op when the set is
+  /// unchanged. Falls back to the bootstrap [relays] when [relays] is empty so
+  /// the client is never left without a subscription.
+  Future<void> updateResponseRelays(Set<String> relays) async {
+    final target = relays.isEmpty ? this.relays.toSet() : relays;
+    final current = _responseRelays.toSet();
+    if (_subscription != null &&
+        target.length == current.length &&
+        target.containsAll(current)) {
+      return;
+    }
+    if (_subscription != null) {
+      await ndk.requests.closeSubscription(_subscription!.requestId);
+      _subscription = null;
+    }
+    await _openSubscription(target.toList(growable: false));
   }
 
   /// Close the response subscription. Pending request futures will hang until
@@ -71,13 +104,32 @@ class BitblikRpcClient {
     NostrRequest request,
     String coordinatorPubkey, {
     Duration? timeoutOverride,
+    List<String>? relays,
   }) async {
+    final targetRelays =
+        (relays == null || relays.isEmpty) ? this.relays : relays;
+    // Prefer relays that are currently connected to avoid paying a connect
+    // timeout on dead relays. Fall back to the full set when none are
+    // connected, so NDK still attempts to (re)connect and we never end up
+    // broadcasting to nothing.
+    final connected = _connectedAmong(targetRelays);
+    final broadcastRelays = connected.isNotEmpty ? connected : targetRelays;
     final id = request.id ?? _nextId();
     final reqWithId = NostrRequest(
       method: request.method,
       params: request.params,
       id: id,
     );
+
+    // Ensure we are listening for the response on the relays we are about to
+    // broadcast to. Per-coordinator routing may target relays the current
+    // subscription doesn't cover (e.g. a freshly discovered coordinator);
+    // expanding here removes the race between discovery and the app's
+    // [updateResponseRelays] call.
+    final needed = broadcastRelays.toSet();
+    if (!_responseRelays.toSet().containsAll(needed)) {
+      await updateResponseRelays(_responseRelays.toSet()..addAll(needed));
+    }
 
     final completer = Completer<NostrResponse>();
     _pending[id] = completer;
@@ -92,7 +144,7 @@ class BitblikRpcClient {
       final broadcastResponse = ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: signer,
-        specificRelays: relays,
+        specificRelays: broadcastRelays,
       );
       final relayResults = await broadcastResponse.broadcastDoneFuture;
       final anyRelayAccepted = relayResults.any(
@@ -122,6 +174,20 @@ class BitblikRpcClient {
       _pending.remove(id);
       rethrow;
     }
+  }
+
+  /// Subset of [urls] whose relay is currently connected in NDK's pool.
+  /// Matches on normalized URLs (NDK may store a cleaned form).
+  List<String> _connectedAmong(List<String> urls) {
+    final connected = <String>{};
+    ndk.relays.globalState.relays.forEach((url, rc) {
+      try {
+        if (rc.isConnected) connected.add(normalizeRelayUrl(url));
+      } catch (_) {}
+    });
+    return urls
+        .where((u) => connected.contains(normalizeRelayUrl(u)))
+        .toList(growable: false);
   }
 
   Future<void> _onResponse(Nip01Event event) async {

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../screens/coordinator_details_screen.dart';
 
 class CoordinatorSelector extends ConsumerStatefulWidget {
   final CoordinatorRecord? selectedCoordinator;
@@ -138,32 +139,55 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
                         children: [
                           Row(
                             children: [
-                              (coordinator.icon != null &&
-                                      coordinator.icon!.isNotEmpty)
-                                  ? (coordinator.icon!.startsWith('http')
-                                      ? Image.network(
-                                        coordinator.icon!,
-                                        width: 32,
-                                        height: 32,
-                                      )
-                                      : Image.asset(
-                                        coordinator.icon!,
-                                        width: 32,
-                                        height: 32,
-                                      ))
-                                  : const Icon(Icons.account_circle, size: 32),
-                              const SizedBox(width: 8),
-                              Text(
-                                coordinator.name,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      (coordinator.responsive == false ||
-                                              coordinator.responsive == null)
-                                          ? Colors.grey
-                                          : null,
+                              InkWell(
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  openCoordinatorDetails(
+                                    context,
+                                    coordinator.pubkey,
+                                  );
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    (coordinator.icon != null &&
+                                            coordinator.icon!.isNotEmpty)
+                                        ? (coordinator.icon!.startsWith('http')
+                                            ? Image.network(
+                                              coordinator.icon!,
+                                              width: 32,
+                                              height: 32,
+                                            )
+                                            : Image.asset(
+                                              coordinator.icon!,
+                                              width: 32,
+                                              height: 32,
+                                            ))
+                                        : const Icon(
+                                          Icons.account_circle,
+                                          size: 32,
+                                        ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      coordinator.name,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color:
+                                            (coordinator.responsive == false ||
+                                                    coordinator.responsive ==
+                                                        null)
+                                                ? Colors.grey
+                                                : null,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey,
+                                      size: 18,
+                                    ),
+                                  ],
                                 ),
                               ),
                               if (coordinator.responsive == true)
@@ -390,25 +414,42 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
                 children: [
                   Row(
                     children: [
-                      (displayCoordinator.icon != null &&
-                              displayCoordinator.icon!.isNotEmpty)
-                          ? (displayCoordinator.icon!.startsWith('http')
-                              ? Image.network(
-                                displayCoordinator.icon!,
-                                width: 32,
-                                height: 32,
-                              )
-                              : Image.asset(
-                                displayCoordinator.icon!,
-                                width: 32,
-                                height: 32,
-                              ))
-                          : const Icon(Icons.account_circle, size: 32),
-                      const SizedBox(width: 8),
-                      Text(
-                        displayCoordinator.name,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
+                      // Tap logo+name → coordinator details (chevron hints nav).
+                      InkWell(
+                        onTap: () => openCoordinatorDetails(
+                          context,
+                          displayCoordinator.pubkey,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            (displayCoordinator.icon != null &&
+                                    displayCoordinator.icon!.isNotEmpty)
+                                ? (displayCoordinator.icon!.startsWith('http')
+                                    ? Image.network(
+                                      displayCoordinator.icon!,
+                                      width: 32,
+                                      height: 32,
+                                    )
+                                    : Image.asset(
+                                      displayCoordinator.icon!,
+                                      width: 32,
+                                      height: 32,
+                                    ))
+                                : const Icon(Icons.account_circle, size: 32),
+                            const SizedBox(width: 8),
+                            Text(
+                              displayCoordinator.name,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const Icon(
+                              Icons.chevron_right,
+                              color: Colors.grey,
+                              size: 18,
+                            ),
+                          ],
+                        ),
                       ),
                       const Spacer(),
                       const Icon(Icons.keyboard_arrow_down, color: Colors.grey),

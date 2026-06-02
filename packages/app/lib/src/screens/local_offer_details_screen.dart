@@ -6,10 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ndk/shared/nips/nip19/nip19.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import 'coordinator_details_screen.dart';
 import '../services/offer_db_service.dart';
 import '../utils/category_icons.dart';
 import '../utils/locale_format.dart';
@@ -224,11 +224,10 @@ class _OfferDetailsBody extends ConsumerWidget {
                 _WidgetRow(
                   label: t.myOffers.details.coordinator,
                   child: InkWell(
-                    onTap:
-                        coordinatorInfo?.nostrNpub == null
-                            ? null
-                            : () =>
-                                _openNostrProfile(coordinatorInfo!.nostrNpub!),
+                    onTap: () => openCoordinatorDetails(
+                      context,
+                      offer.coordinatorPubkey,
+                    ),
                     borderRadius: BorderRadius.circular(6),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -243,17 +242,16 @@ class _OfferDetailsBody extends ConsumerWidget {
                           Flexible(
                             child: Text(
                               coordinatorName,
-                              style: TextStyle(
-                                color:
-                                    coordinatorInfo?.nostrNpub != null
-                                        ? Colors.blue
-                                        : null,
-                                decoration:
-                                    coordinatorInfo?.nostrNpub != null
-                                        ? TextDecoration.underline
-                                        : null,
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
                               ),
                             ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: Colors.grey,
+                            size: 18,
                           ),
                         ],
                       ),
@@ -352,11 +350,6 @@ class _OfferDetailsBody extends ConsumerWidget {
         ],
       ],
     );
-  }
-
-  Future<void> _openNostrProfile(String npub) async {
-    final url = 'https://njump.to/$npub';
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
   Future<void> _resumeOfferFromDetails(

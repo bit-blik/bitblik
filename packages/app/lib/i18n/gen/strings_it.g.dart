@@ -159,6 +159,7 @@ class _Translations$coordinator$it extends Translations$coordinator$en {
 	@override late final _Translations$coordinator$info$it info = _Translations$coordinator$info$it._(_root);
 	@override late final _Translations$coordinator$selector$it selector = _Translations$coordinator$selector$it._(_root);
 	@override late final _Translations$coordinator$dialog$it dialog = _Translations$coordinator$dialog$it._(_root);
+	@override late final _Translations$coordinator$details$it details = _Translations$coordinator$details$it._(_root);
 	@override late final _Translations$coordinator$management$it management = _Translations$coordinator$management$it._(_root);
 }
 
@@ -393,6 +394,8 @@ class _Translations$relays$it extends Translations$relays$en {
 
 	// Translations
 	@override String get title => 'Relay';
+	@override String get coordinatorRelays => 'Relay del coordinatore';
+	@override String get discoveryRelays => 'Relay di scoperta';
 	@override late final _Translations$relays$status$it status = _Translations$relays$status$it._(_root);
 	@override late final _Translations$relays$popup$it popup = _Translations$relays$popup$it._(_root);
 }
@@ -832,6 +835,32 @@ class _Translations$coordinator$dialog$it extends Translations$coordinator$dialo
 	@override String get viewTerms => 'Visualizza Termini';
 }
 
+// Path: coordinator.details
+class _Translations$coordinator$details$it extends Translations$coordinator$details$en {
+	_Translations$coordinator$details$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Coordinatore';
+	@override String get relaysInUse => 'Relay in uso';
+	@override String get relaysInUseHint => 'Tutta la comunicazione con questo coordinatore passa per questi relay (dalla sua lista NIP-65).';
+	@override String get noRelays => 'Nessun relay ancora noto';
+	@override String get makerFee => 'Commissione maker';
+	@override String get takerFee => 'Commissione taker';
+	@override String get amountRange => 'Intervallo importo';
+	@override String get reservationTime => 'Tempo di prenotazione';
+	@override String get currencies => 'Valute';
+	@override String get version => 'Versione';
+	@override String get yourOffers => 'Le tue offerte';
+	@override String get successfulOffers => 'Offerte riuscite (30g)';
+	@override String get statusOnline => 'Online';
+	@override String get statusOffline => 'Offline';
+	@override String get statusUnknown => 'Sconosciuto';
+	@override String get openNostrProfile => 'Apri profilo Nostr';
+	@override String get termsOfUsage => 'Termini di utilizzo';
+}
+
 // Path: coordinator.management
 class _Translations$coordinator$management$it extends Translations$coordinator$management$en {
 	_Translations$coordinator$management$it._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -840,7 +869,7 @@ class _Translations$coordinator$management$it extends Translations$coordinator$m
 
 	// Translations
 	@override String get title => 'Gestione Coordinatori';
-	@override String get availableCoordinators => 'Coordinatori Disponibili';
+	@override String get availableCoordinators => 'Coordinatori';
 	@override String get noCoordinators => 'Nessun coordinatore trovato.';
 	@override String get online => 'Online';
 	@override String get unknownOffline => 'Sconosciuto/Offline';
@@ -2503,8 +2532,25 @@ extension on TranslationsIt {
 			'coordinator.dialog.reservationTime' => 'Tempo di Prenotazione',
 			'coordinator.dialog.currencies' => 'Valute',
 			'coordinator.dialog.viewTerms' => 'Visualizza Termini',
+			'coordinator.details.title' => 'Coordinatore',
+			'coordinator.details.relaysInUse' => 'Relay in uso',
+			'coordinator.details.relaysInUseHint' => 'Tutta la comunicazione con questo coordinatore passa per questi relay (dalla sua lista NIP-65).',
+			'coordinator.details.noRelays' => 'Nessun relay ancora noto',
+			'coordinator.details.makerFee' => 'Commissione maker',
+			'coordinator.details.takerFee' => 'Commissione taker',
+			'coordinator.details.amountRange' => 'Intervallo importo',
+			'coordinator.details.reservationTime' => 'Tempo di prenotazione',
+			'coordinator.details.currencies' => 'Valute',
+			'coordinator.details.version' => 'Versione',
+			'coordinator.details.yourOffers' => 'Le tue offerte',
+			'coordinator.details.successfulOffers' => 'Offerte riuscite (30g)',
+			'coordinator.details.statusOnline' => 'Online',
+			'coordinator.details.statusOffline' => 'Offline',
+			'coordinator.details.statusUnknown' => 'Sconosciuto',
+			'coordinator.details.openNostrProfile' => 'Apri profilo Nostr',
+			'coordinator.details.termsOfUsage' => 'Termini di utilizzo',
 			'coordinator.management.title' => 'Gestione Coordinatori',
-			'coordinator.management.availableCoordinators' => 'Coordinatori Disponibili',
+			'coordinator.management.availableCoordinators' => 'Coordinatori',
 			'coordinator.management.noCoordinators' => 'Nessun coordinatore trovato.',
 			'coordinator.management.online' => 'Online',
 			'coordinator.management.unknownOffline' => 'Sconosciuto/Offline',
@@ -2825,6 +2871,8 @@ extension on TranslationsIt {
 			'system.errors.noPublicKey' => 'La tua chiave pubblica non è disponibile. Impossibile procedere.',
 			'system.errors.internalOfferIncomplete' => 'Errore interno: I dettagli dell\'offerta sono incompleti. Riprova.',
 			'system.errors.loadingPublicKey' => 'Errore nel caricamento della tua chiave pubblica. Riavvia l\'app.',
+			_ => null,
+		} ?? switch (path) {
 			'system.blik.copied' => 'Codice BLIK copiato negli appunti',
 			'myOffers.title' => 'Le mie offerte',
 			'myOffers.empty' => 'Nessuna offerta.',
@@ -2842,8 +2890,6 @@ extension on TranslationsIt {
 			'myOffers.details.maker' => 'Maker',
 			'myOffers.details.taker' => 'Taker',
 			'myOffers.details.yourFee' => 'La tua commissione',
-			_ => null,
-		} ?? switch (path) {
 			'myOffers.details.makerFee' => 'Commissione maker',
 			'myOffers.details.takerFee' => 'Commissione taker',
 			'myOffers.details.coordinator' => 'Coordinatore',
@@ -2919,6 +2965,8 @@ extension on TranslationsIt {
 			'nwc.time.justNow' => 'adesso',
 			'nekoManagement.title' => 'Neko',
 			'relays.title' => 'Relay',
+			'relays.coordinatorRelays' => 'Relay del coordinatore',
+			'relays.discoveryRelays' => 'Relay di scoperta',
 			'relays.status.connected' => 'Connesso',
 			'relays.status.connecting' => 'Connessione',
 			'relays.status.reconnecting' => 'Riconnessione',

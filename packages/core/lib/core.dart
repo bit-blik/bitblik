@@ -1,6 +1,7 @@
 library core;
 
 export 'src/constants/kinds.dart';
+export 'src/constants/relays.dart';
 export 'src/constants/rpc_methods.dart';
 export 'src/coordinator/coordinator_registry.dart';
 export 'src/coordinator/coordinator_store.dart';

@@ -9,6 +9,7 @@ import '../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import '../providers/providers.dart';
 import '../services/api_service_nostr.dart';
+import 'coordinator_details_screen.dart';
 import '../widgets/lightning_address_widget.dart';
 import '../widgets/progress_indicators.dart';
 
@@ -1018,6 +1019,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                                 ? _buildCoordinatorRow(
                                                   t.offers.details.coordinator,
                                                   coordInfo,
+                                                  offer.coordinatorPubkey,
                                                 )
                                                 : _buildInfoRow(
                                                   t.offers.details.coordinator,
@@ -1316,8 +1318,13 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     );
   }
 
-  /// Builds a coordinator row with icon and name
-  Widget _buildCoordinatorRow(String label, CoordinatorInfo coordInfo) {
+  /// Builds a coordinator row with icon and name. Tapping the name/logo (or the
+  /// trailing arrow) opens the coordinator details screen.
+  Widget _buildCoordinatorRow(
+    String label,
+    CoordinatorInfo coordInfo,
+    String pubkey,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1332,7 +1339,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
         MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
-            onTap: () => _showCoordinatorDetailsDialog(coordInfo),
+            onTap: () => openCoordinatorDetails(context, pubkey),
             child: Row(
               children: [
                 if (coordInfo.icon != null) ...[
@@ -1357,180 +1364,14 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: Colors.grey[600],
+                ),
               ],
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Shows a dialog with coordinator details
-  void _showCoordinatorDetailsDialog(CoordinatorInfo coordInfo) {
-    final t = Translations.of(context);
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => Dialog(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header with icon and name
-                  Row(
-                    children: [
-                      if (coordInfo.icon != null)
-                        Image.network(
-                          coordInfo.icon!,
-                          width: 40,
-                          height: 40,
-                          errorBuilder:
-                              (context, error, stackTrace) =>
-                                  const Icon(Icons.account_balance, size: 40),
-                        ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              coordInfo.name,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (coordInfo.version != null)
-                              Text(
-                                'v${coordInfo.version}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Coordinator details
-                  _buildDialogInfoRow(
-                    t.coordinator.dialog.makerFee,
-                    '${coordInfo.makerFee}%',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDialogInfoRow(
-                    t.coordinator.dialog.takerFee,
-                    '${coordInfo.takerFee}%',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDialogInfoRow(
-                    t.coordinator.dialog.amountRange,
-                    '${coordInfo.minAmountSats}-${coordInfo.maxAmountSats} sats',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDialogInfoRow(
-                    t.coordinator.dialog.reservationTime,
-                    '${coordInfo.reservationSeconds}s',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDialogInfoRow(
-                    t.coordinator.dialog.currencies,
-                    coordInfo.currencies.join(', '),
-                  ),
-
-                  // Terms of Usage link
-                  if (coordInfo.termsOfUsageNaddr != null) ...[
-                    const SizedBox(height: 12),
-                    GestureDetector(
-                      onTap:
-                          () => _openTermsOfUsage(coordInfo.termsOfUsageNaddr!),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            t.coordinator.selector.termsOfUsage,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Flexible(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text(
-                                  t.coordinator.dialog.viewTerms,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.blue,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.open_in_new,
-                                  size: 14,
-                                  color: Colors.blue,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  // Nostr profile button
-                  if (coordInfo.nostrNpub != null) ...[
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: Image.asset(
-                          'assets/nostr.png',
-                          width: 20,
-                          height: 20,
-                        ),
-                        label: Text(t.coordinator.selector.viewNostrProfile),
-                        onPressed:
-                            () => _openNostrProfile(coordInfo.nostrNpub!),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-    );
-  }
-
-  /// Builds an info row for the coordinator dialog
-  Widget _buildDialogInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-        const SizedBox(width: 16),
-        Flexible(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            textAlign: TextAlign.right,
           ),
         ),
       ],
@@ -1639,12 +1480,6 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     );
   }
 
-  /// Opens the Nostr profile in a browser
-  void _openNostrProfile(String npub) async {
-    // Use njump.to as a Nostr profile viewer (npub is already encoded in CoordinatorInfo)
-    final url = 'https://njump.to/$npub';
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-  }
 }
 
 extension OfferCopyWith on Offer {

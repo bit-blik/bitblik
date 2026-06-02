@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer model
 import '../providers/providers.dart'; // Import providers
+import '../services/key_service.dart';
 import '../widgets/offer_list_tile.dart';
 
 class RoleSelectionScreen extends ConsumerStatefulWidget {
@@ -77,7 +78,16 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
     }
 
     final activeOffer = ref.read(activeOfferProvider);
-    final publicKey = await ref.read(publicKeyProvider.future);
+    String? publicKey;
+    try {
+      publicKey = await ref.read(publicKeyProvider.future);
+    } catch (e) {
+      Logger.log.w(
+        () =>
+            '[RoleSelectionScreen] Unable to load public key for initial sync: $e',
+      );
+      return;
+    }
 
     Logger.log.d(
       () =>
@@ -295,7 +305,15 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
       }
     });
 
-    final currentPubKey = publicKeyAsync.value;
+    if (publicKeyAsync.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (publicKeyAsync.hasError) {
+      return _buildInitializationErrorState(context, publicKeyAsync.error!, t);
+    }
+
+    final currentPubKey = publicKeyAsync.valueOrNull;
     bool hasActiveOffer =
         activeOffer != null &&
         currentPubKey != null &&
@@ -471,7 +489,11 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                         shape: BoxShape.circle,
                       ),
                       padding: const EdgeInsets.all(4),
-                      child: const Icon(Icons.close, size: 10, color: Colors.white),
+                      child: const Icon(
+                        Icons.close,
+                        size: 10,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -482,6 +504,65 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
             _buildMovieStripSeparator(),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildInitializationErrorState(
+    BuildContext context,
+    Object error,
+    Translations t,
+  ) {
+    final message =
+        error is KeyServiceInitializationException
+            ? error.message
+            : error.toString();
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.lock_outline,
+                    size: 48,
+                    color: Color(0xFFFF007F),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    t.wallet.title,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    message,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    onPressed: () {
+                      ref.invalidate(publicKeyProvider);
+                      ref.invalidate(lightningAddressProvider);
+                      ref.invalidate(initializedApiServiceProvider);
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -692,10 +773,18 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Flexible(
-              child: Image.asset('assets/bff-rabbit.png', height: 100, fit: BoxFit.contain),
+              child: Image.asset(
+                'assets/bff-rabbit.png',
+                height: 100,
+                fit: BoxFit.contain,
+              ),
             ),
             Flexible(
-              child: Image.asset('assets/bff-laurs.png', height: 64, fit: BoxFit.contain),
+              child: Image.asset(
+                'assets/bff-laurs.png',
+                height: 64,
+                fit: BoxFit.contain,
+              ),
             ),
             Flexible(
               child: Padding(
@@ -707,7 +796,11 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                     final angle = sin(t * 2 * pi) * 0.5;
                     return Transform.rotate(angle: angle, child: child);
                   },
-                  child: Image.asset('assets/bff-logo.png', height: 64, fit: BoxFit.contain),
+                  child: Image.asset(
+                    'assets/bff-logo.png',
+                    height: 64,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),

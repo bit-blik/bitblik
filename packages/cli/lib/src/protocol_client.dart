@@ -10,10 +10,9 @@ import 'secrets_store.dart';
 
 
 class BitblikProtocolClient {
-  static const List<String> defaultRelays = [
-    'wss://relay.mostro.network',
-    'wss://relay.primal.net',
-  ];
+  /// Discovery relays — used only to find coordinators and bootstrap NDK.
+  /// Per-coordinator communication is routed to each coordinator's own relays.
+  static const List<String> defaultRelays = kDiscoveryRelays;
 
   final List<String> relays;
   final Duration timeout;
@@ -71,8 +70,16 @@ class BitblikProtocolClient {
 
   CoordinatorRegistry get coordinatorRegistry => _registry;
 
+  /// Relays of all enabled coordinators (NIP-65 / fallback), falling back to
+  /// discovery relays when none are known yet.
+  List<String> _enabledRelays() {
+    final r = _registry.relaysForEnabled().toList();
+    return r.isEmpty ? relays : r;
+  }
+
   Future<List<CoordinatorRecord>> discoverCoordinators() async {
     await _registry.discover();
+    await _rpc.updateResponseRelays(_registry.relaysForEnabled());
     return _registry.all;
   }
 
@@ -81,16 +88,22 @@ class BitblikProtocolClient {
     await Future.wait(
       coordinators.map((c) => _registry.probeHealth(c.pubkeyHex)),
     );
+    await _rpc.updateResponseRelays(_registry.relaysForEnabled());
     await _registry.flushPersist();
   }
 
   /// Send any [NostrRequest] to [coordinatorPubkey] and await its response.
   /// Thin wrapper around [BitblikRpcClient.send] for CLI command modules.
+  /// Routes to the coordinator's own relays (NIP-65 / fallback).
   Future<NostrResponse> sendRequest(
     NostrRequest request,
     String coordinatorPubkey,
   ) =>
-      _rpc.send(request, coordinatorPubkey);
+      _rpc.send(
+        request,
+        coordinatorPubkey,
+        relays: _registry.relaysFor(coordinatorPubkey),
+      );
 
   /// Query live public offers (kind 38383 NIP-69-ish events).
   ///
@@ -116,7 +129,9 @@ class BitblikProtocolClient {
     final response = _ndk.requests.query(
       name: 'cli-offer-list',
       filter: filter,
-      explicitRelays: relays,
+      explicitRelays: coordinatorPubkey == null
+          ? _enabledRelays()
+          : _registry.relaysFor(coordinatorPubkey),
     );
 
     final latestById = <String, Nip01Event>{};
@@ -156,7 +171,7 @@ class BitblikProtocolClient {
     final sub = _ndk.requests.subscription(
       name: 'cli-status-${DateTime.now().millisecondsSinceEpoch}',
       filter: filter,
-      explicitRelays: relays,
+      explicitRelays: _enabledRelays(),
     );
 
     final controller = StreamController<OfferStatusUpdate>();
