@@ -849,9 +849,10 @@ settings:
 
 notificationSettings:
   title: Powiadomienia
+  androidOnly: Powiadomienia w tle są obecnie obsługiwane tylko na Androidzie.
   newOfferAlerts:
     label: Alerty o nowych ofertach
-    description: Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.
+    description: Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.
 
 wallet:
   title: Portfel

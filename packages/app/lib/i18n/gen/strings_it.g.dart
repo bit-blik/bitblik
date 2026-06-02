@@ -344,6 +344,7 @@ class _Translations$notificationSettings$it extends Translations$notificationSet
 
 	// Translations
 	@override String get title => 'Notifiche';
+	@override String get androidOnly => 'Le notifiche in background sono attualmente supportate solo su Android.';
 	@override late final _Translations$notificationSettings$newOfferAlerts$it newOfferAlerts = _Translations$notificationSettings$newOfferAlerts$it._(_root);
 }
 
@@ -1428,7 +1429,7 @@ class _Translations$notificationSettings$newOfferAlerts$it extends Translations$
 
 	// Translations
 	@override String get label => 'Avvisi nuove offerte';
-	@override String get description => 'Se abilitato, BitBlik ti notificherà delle nuove offerte disponibili da accettare mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.';
+	@override String get description => 'Se abilitato, BitBlik ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.';
 }
 
 // Path: wallet.missingReceiving
@@ -2916,8 +2917,9 @@ extension on TranslationsIt {
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Impostazioni',
 			'notificationSettings.title' => 'Notifiche',
+			'notificationSettings.androidOnly' => 'Le notifiche in background sono attualmente supportate solo su Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Avvisi nuove offerte',
-			'notificationSettings.newOfferAlerts.description' => 'Se abilitato, BitBlik ti notificherà delle nuove offerte disponibili da accettare mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.',
+			'notificationSettings.newOfferAlerts.description' => 'Se abilitato, BitBlik ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.',
 			'wallet.title' => 'Portafoglio',
 			'wallet.description' => 'Gestisci le impostazioni del tuo portafoglio Lightning',
 			'wallet.missingReceiving.title' => 'Portafoglio di ricezione richiesto',

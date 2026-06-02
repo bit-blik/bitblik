@@ -344,6 +344,7 @@ class _Translations$notificationSettings$pl extends Translations$notificationSet
 
 	// Translations
 	@override String get title => 'Powiadomienia';
+	@override String get androidOnly => 'Powiadomienia w tle są obecnie obsługiwane tylko na Androidzie.';
 	@override late final _Translations$notificationSettings$newOfferAlerts$pl newOfferAlerts = _Translations$notificationSettings$newOfferAlerts$pl._(_root);
 }
 
@@ -1425,7 +1426,7 @@ class _Translations$notificationSettings$newOfferAlerts$pl extends Translations$
 
 	// Translations
 	@override String get label => 'Alerty o nowych ofertach';
-	@override String get description => 'Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.';
+	@override String get description => 'Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.';
 }
 
 // Path: wallet.missingReceiving
@@ -2910,8 +2911,9 @@ extension on TranslationsPl {
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Ustawienia',
 			'notificationSettings.title' => 'Powiadomienia',
+			'notificationSettings.androidOnly' => 'Powiadomienia w tle są obecnie obsługiwane tylko na Androidzie.',
 			'notificationSettings.newOfferAlerts.label' => 'Alerty o nowych ofertach',
-			'notificationSettings.newOfferAlerts.description' => 'Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.',
+			'notificationSettings.newOfferAlerts.description' => 'Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.',
 			'wallet.title' => 'Portfel',
 			'wallet.description' => 'Zarządzaj ustawieniami portfela Lightning',
 			'wallet.missingReceiving.title' => 'Wymagany portfel odbiorczy',

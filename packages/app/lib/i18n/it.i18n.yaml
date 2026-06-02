@@ -848,9 +848,10 @@ settings:
 
 notificationSettings:
   title: Notifiche
+  androidOnly: Le notifiche in background sono attualmente supportate solo su Android.
   newOfferAlerts:
     label: Avvisi nuove offerte
-    description: Se abilitato, BitBlik ti notificherà delle nuove offerte disponibili da accettare mentre l'app è in background. Potrebbe essere più veloce dei messenger esterni.
+    description: Se abilitato, BitBlik ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l'app è in background. Potrebbe essere più veloce dei messenger esterni.
 
 wallet:
   title: Portafoglio

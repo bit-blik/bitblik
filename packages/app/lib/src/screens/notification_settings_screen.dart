@@ -6,8 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 
-bool get _isMobile =>
-    !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
 class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
@@ -23,15 +22,24 @@ class NotificationSettingsScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(t.notificationSettings.title)),
       body: ListView(
         children: [
-          if (_isMobile)
-            SwitchListTile(
-              secondary: const Icon(Icons.notifications_outlined),
-              title: Text(t.notificationSettings.newOfferAlerts.label),
-              subtitle: Text(t.notificationSettings.newOfferAlerts.description),
-              value: enabled,
-              onChanged: (value) =>
-                  ref.read(newOfferNotificationsProvider.notifier).set(value),
+          if (!_isAndroid)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                t.notificationSettings.androidOnly,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
+          SwitchListTile(
+            secondary: const Icon(Icons.notifications_outlined),
+            title: Text(t.notificationSettings.newOfferAlerts.label),
+            subtitle: Text(t.notificationSettings.newOfferAlerts.description),
+            value: _isAndroid && enabled,
+            onChanged: _isAndroid
+                ? (value) =>
+                    ref.read(newOfferNotificationsProvider.notifier).set(value)
+                : null,
+          ),
         ],
       ),
     );

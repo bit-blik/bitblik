@@ -864,9 +864,10 @@ settings:
 
 notificationSettings:
   title: Notifications
+  androidOnly: Background notifications are currently only supported on Android.
   newOfferAlerts:
     label: New offer alerts
-    description: When enabled, BitBlik will notify you about new offers available to take while the app is in the background. This may be faster than external messengers.
+    description: When enabled, BitBlik will notify you about new offers available to take from your enabled coordinators while the app is in the background. This may be faster than external messengers.
 
 wallet:
   title: Wallet

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,13 +57,12 @@ class SettingsScreen extends ConsumerWidget {
               }
             },
           ),
-          if (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
-            ListTile(
-              leading: const Icon(Icons.notifications_outlined),
-              title: Text(t.notificationSettings.title),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () => context.push(NotificationSettingsScreen.routeName),
-            ),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined),
+            title: Text(t.notificationSettings.title),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => context.push(NotificationSettingsScreen.routeName),
+          ),
         ],
       ),
     );

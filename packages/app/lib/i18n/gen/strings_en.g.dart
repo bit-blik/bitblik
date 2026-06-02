@@ -401,6 +401,9 @@ class Translations$notificationSettings$en {
 	/// en: 'Notifications'
 	String get title => 'Notifications';
 
+	/// en: 'Background notifications are currently only supported on Android.'
+	String get androidOnly => 'Background notifications are currently only supported on Android.';
+
 	late final Translations$notificationSettings$newOfferAlerts$en newOfferAlerts = Translations$notificationSettings$newOfferAlerts$en.internal(_root);
 }
 
@@ -2231,8 +2234,8 @@ class Translations$notificationSettings$newOfferAlerts$en {
 	/// en: 'New offer alerts'
 	String get label => 'New offer alerts';
 
-	/// en: 'When enabled, BitBlik will notify you about new offers available to take while the app is in the background. This may be faster than external messengers.'
-	String get description => 'When enabled, BitBlik will notify you about new offers available to take while the app is in the background. This may be faster than external messengers.';
+	/// en: 'When enabled, BitBlik will notify you about new offers available to take from your enabled coordinators while the app is in the background. This may be faster than external messengers.'
+	String get description => 'When enabled, BitBlik will notify you about new offers available to take from your enabled coordinators while the app is in the background. This may be faster than external messengers.';
 }
 
 // Path: wallet.missingReceiving
@@ -4285,8 +4288,9 @@ extension on Translations {
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Settings',
 			'notificationSettings.title' => 'Notifications',
+			'notificationSettings.androidOnly' => 'Background notifications are currently only supported on Android.',
 			'notificationSettings.newOfferAlerts.label' => 'New offer alerts',
-			'notificationSettings.newOfferAlerts.description' => 'When enabled, BitBlik will notify you about new offers available to take while the app is in the background. This may be faster than external messengers.',
+			'notificationSettings.newOfferAlerts.description' => 'When enabled, BitBlik will notify you about new offers available to take from your enabled coordinators while the app is in the background. This may be faster than external messengers.',
 			'wallet.title' => 'Wallet',
 			'wallet.description' => 'Manage your Lightning wallet settings',
 			'wallet.missingReceiving.title' => 'Receiving wallet required',
