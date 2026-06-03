@@ -15,14 +15,19 @@ const getApiBase = () => {
 const WS_URL = getWebSocketUrl();
 const API_BASE = getApiBase();
 
+// Max offers returned per page by the dashboard API. Older offers load
+// incrementally as the operator scrolls past the end of the list.
+const OFFERS_PAGE_SIZE = 100;
+
+// Category color scheme: shop -> red, atm -> green (emerald), online -> blue.
+// Matches the stacked-bar colors in App.js (CATEGORY_CHART_COLORS).
 const CATEGORY_COLORS = {
-  atm: 'bg-lime-100 text-lime-800 border-lime-300',
+  shop: 'bg-red-100 text-red-800 border-red-300',
+  atm: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   online: 'bg-blue-100 text-blue-800 border-blue-300',
 };
 
-const CATEGORY_INLINE_STYLES = {
-  shop: { backgroundColor: '#E6F3F1', color: '#016B61', borderColor: '#80B5B0' },
-};
+const CATEGORY_INLINE_STYLES = {};
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -143,8 +148,25 @@ const OffersPage = () => {
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const offersRef = useRef([]);
+  const loadingMoreRef = useRef(false);
+  const hasMoreRef = useRef(false);
+
+  // Keep refs in sync so the scroll handler reads fresh values without
+  // re-binding the listener on every offers update.
+  useEffect(() => {
+    offersRef.current = offers;
+  }, [offers]);
+  useEffect(() => {
+    loadingMoreRef.current = loadingMore;
+  }, [loadingMore]);
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
 
   const connectWebSocket = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -177,9 +199,12 @@ const OffersPage = () => {
         const message = JSON.parse(event.data);
 
         switch (message.type) {
-          case 'offers_snapshot':
-            setOffers(message.offers || []);
+          case 'offers_snapshot': {
+            const snapshot = message.offers || [];
+            setOffers(snapshot);
+            setHasMore(snapshot.length >= OFFERS_PAGE_SIZE);
             break;
+          }
 
           case 'offer_changed':
             setOffers((prev) => {
@@ -193,7 +218,7 @@ const OffersPage = () => {
                   return dateB - dateA;
                 });
               }
-              return [message.offer, ...prev].slice(0, 50);
+              return [message.offer, ...prev];
             });
 
             setSelectedOffer((prev) => {
@@ -257,6 +282,49 @@ const OffersPage = () => {
       }
     };
   }, [connectWebSocket]);
+
+  const loadMoreOffers = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const offset = offersRef.current.length;
+      const response = await fetch(
+        `${API_BASE}/api/offers/recent?limit=${OFFERS_PAGE_SIZE}&offset=${offset}`
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      const newRows = data.rows || [];
+      setOffers((prev) => {
+        const seen = new Set(prev.map((o) => o.id));
+        const merged = [...prev];
+        for (const row of newRows) {
+          if (!seen.has(row.id)) merged.push(row);
+        }
+        return merged;
+      });
+      setHasMore(data.hasMore ?? newRows.length >= OFFERS_PAGE_SIZE);
+    } catch (error) {
+      console.error('Failed to load more offers:', error);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const threshold = document.documentElement.scrollHeight - 400;
+      if (scrollBottom >= threshold) {
+        loadMoreOffers();
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [loadMoreOffers]);
 
   const fetchAuditLogs = async (offerId) => {
     setAuditLoading(true);
@@ -342,14 +410,14 @@ const OffersPage = () => {
                   <th className="text-left px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Status
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
-                    Category
-                  </th>
                   <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Premium
                   </th>
                   <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Amount
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Category
                   </th>
                   <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Time to Reserve
@@ -407,18 +475,6 @@ const OffersPage = () => {
                             {offer.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          {offer.category ? (
-                            <span
-                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${CATEGORY_COLORS[offer.category] || 'bg-slate-100 text-slate-700 border-slate-300'}`}
-                              style={CATEGORY_INLINE_STYLES[offer.category] || {}}
-                            >
-                              {offer.category}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400 text-xs">-</span>
-                          )}
-                        </td>
                         <td className="px-4 py-3 text-right">
                           {(() => {
                             const p = offer.premium_percent;
@@ -442,6 +498,18 @@ const OffersPage = () => {
                               {formatSats(offer.amount_sats)} sats
                             </span>
                           </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {offer.category ? (
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${CATEGORY_COLORS[offer.category] || 'bg-slate-100 text-slate-700 border-slate-300'}`}
+                              style={CATEGORY_INLINE_STYLES[offer.category] || {}}
+                            >
+                              {offer.category}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className="font-mono text-sm text-gray-700">
@@ -505,6 +573,16 @@ const OffersPage = () => {
               </tbody>
             </table>
           </div>
+          {loadingMore && (
+            <div className="flex items-center justify-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            </div>
+          )}
+          {!hasMore && offers.length > 0 && (
+            <div className="py-4 text-center text-xs text-gray-400">
+              End of offers
+            </div>
+          )}
         </div>
 
         {/* Audit Log Dialog */}

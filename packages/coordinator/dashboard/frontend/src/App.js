@@ -5,12 +5,14 @@ import { Calendar, TrendingUp, DollarSign, AlertCircle, Clock, Bitcoin, List, Ba
 import './App.css';
 import OffersPage from './pages/OffersPage';
 
-// Stable colors for known categories; unknowns fall back to the palette.
+// Stable, saturated colors for known categories; unknowns fall back to the
+// palette. Pill *background* pastels (lime-100/blue-100/...) are near-white and
+// render as washed-out/grey bars, so use vivid hues here for legibility.
 const CATEGORY_CHART_COLORS = {
-  atm: '#84cc16',
-  online: '#3b82f6',
-  shop: '#016b61',
-  unknown: '#94a3b8',
+  shop: '#ef4444',    // red-500
+  atm: '#10b981',     // emerald-500
+  online: '#3b82f6',  // blue-500
+  unknown: '#94a3b8', // slate-400
 };
 const CATEGORY_FALLBACK_PALETTE = ['#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#ef4444', '#6366f1'];
 const categoryColor = (key, index) =>

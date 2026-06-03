@@ -54,14 +54,18 @@ const connectionString = `postgresql://${dbUser}:${password}@${dbHost}:${dbPort}
 console.log('Attempting connection to database...');
 
 const pool = new Pool({
-  connectionString: connectionString
+  connectionString: connectionString,
+  // Cap how long any dashboard query waits on a lock (e.g. table DDL elsewhere)
+  // so read paths like the offers snapshot fail fast instead of hanging.
+  // Does not limit query execution time, only lock acquisition.
+  options: '-c lock_timeout=5s',
 });
 
 const wsServer = new WebSocketServer({ server, path: '/ws/offers' });
 const wsClients = new Set();
 
-const RECENT_OFFERS_DEFAULT_LIMIT = 50;
-const RECENT_OFFERS_MAX_LIMIT = 200;
+const RECENT_OFFERS_DEFAULT_LIMIT = 100;
+const RECENT_OFFERS_MAX_LIMIT = 100;
 const AUDIT_DEFAULT_LIMIT = 50;
 const AUDIT_MAX_LIMIT = 200;
 
@@ -73,7 +77,15 @@ const parseLimit = (value, defaultValue, maxValue) => {
   return Math.min(parsed, maxValue);
 };
 
-const fetchRecentOffers = async (limit = RECENT_OFFERS_DEFAULT_LIMIT) => {
+const parseOffset = (value) => {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return 0;
+  }
+  return parsed;
+};
+
+const fetchRecentOffers = async (limit = RECENT_OFFERS_DEFAULT_LIMIT, offset = 0) => {
   const query = `
     SELECT
       id,
@@ -95,9 +107,10 @@ const fetchRecentOffers = async (limit = RECENT_OFFERS_DEFAULT_LIMIT) => {
     FROM offers
     ORDER BY COALESCE(updated_at, created_at) DESC
     LIMIT $1
+    OFFSET $2
   `;
 
-  const result = await pool.query(query, [limit]);
+  const result = await pool.query(query, [limit, offset]);
   return result.rows;
 };
 
@@ -194,74 +207,115 @@ const sendRecentOffersSnapshot = async (client) => {
   });
 };
 
+// CREATE OR REPLACE FUNCTION only locks the function, not the table, so it is
+// always safe to run on every boot.
+const TRIGGER_FUNCTIONS = `
+  CREATE OR REPLACE FUNCTION notify_offers_change()
+  RETURNS trigger
+  LANGUAGE plpgsql
+  AS $$
+  DECLARE
+    offer_id_value text;
+  BEGIN
+    offer_id_value := COALESCE(NEW.id::text, OLD.id::text);
+    PERFORM pg_notify(
+      'offers_changes',
+      json_build_object(
+        'operation', TG_OP,
+        'offer_id', offer_id_value
+      )::text
+    );
+
+    IF TG_OP = 'DELETE' THEN
+      RETURN OLD;
+    END IF;
+
+    RETURN NEW;
+  END;
+  $$;
+
+  CREATE OR REPLACE FUNCTION notify_log_audit_change()
+  RETURNS trigger
+  LANGUAGE plpgsql
+  AS $$
+  DECLARE
+    offer_id_value text;
+    audit_id_value bigint;
+  BEGIN
+    offer_id_value := COALESCE(NEW.offer_id, OLD.offer_id);
+    audit_id_value := COALESCE(NEW.id, OLD.id);
+
+    PERFORM pg_notify(
+      'log_audit_changes',
+      json_build_object(
+        'operation', TG_OP,
+        'offer_id', offer_id_value,
+        'audit_id', audit_id_value
+      )::text
+    );
+
+    IF TG_OP = 'DELETE' THEN
+      RETURN OLD;
+    END IF;
+
+    RETURN NEW;
+  END;
+  $$;
+`;
+
+// Create a trigger only if it's missing. CREATE/DROP TRIGGER needs an
+// ACCESS EXCLUSIVE lock on the table, which would otherwise queue behind (and
+// block reads behind) the live coordinator's writes. Since the trigger
+// definition is stable, skip the work entirely when it already exists, and cap
+// the lock wait so a busy table never stalls startup for minutes.
+const ensureTrigger = async (table, triggerName, createSql) => {
+  const existing = await pool.query(
+    `SELECT 1
+       FROM pg_trigger t
+       JOIN pg_class c ON c.oid = t.tgrelid
+      WHERE c.relname = $1 AND t.tgname = $2 AND NOT t.tgisinternal`,
+    [table, triggerName]
+  );
+  if (existing.rowCount > 0) {
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("SET lock_timeout = '4s'");
+    await client.query(createSql);
+    console.log(`Created trigger ${triggerName} on ${table}`);
+  } catch (error) {
+    // 55P03 = lock_not_available. Reads still work; notifications resume on a
+    // future boot that wins the lock during a write gap.
+    console.warn(
+      `Skipped creating trigger ${triggerName} on ${table}: ${error.message}`
+    );
+  } finally {
+    client.release();
+  }
+};
+
 const setupRealtimeTriggers = async () => {
-  const triggerStatements = `
-    CREATE OR REPLACE FUNCTION notify_offers_change()
-    RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-    DECLARE
-      offer_id_value text;
-    BEGIN
-      offer_id_value := COALESCE(NEW.id::text, OLD.id::text);
-      PERFORM pg_notify(
-        'offers_changes',
-        json_build_object(
-          'operation', TG_OP,
-          'offer_id', offer_id_value
-        )::text
-      );
+  await pool.query(TRIGGER_FUNCTIONS);
 
-      IF TG_OP = 'DELETE' THEN
-        RETURN OLD;
-      END IF;
+  await ensureTrigger(
+    'offers',
+    'offers_changes_trigger',
+    `CREATE TRIGGER offers_changes_trigger
+       AFTER INSERT OR UPDATE OR DELETE ON offers
+       FOR EACH ROW
+       EXECUTE FUNCTION notify_offers_change()`
+  );
 
-      RETURN NEW;
-    END;
-    $$;
-
-    DROP TRIGGER IF EXISTS offers_changes_trigger ON offers;
-    CREATE TRIGGER offers_changes_trigger
-    AFTER INSERT OR UPDATE OR DELETE ON offers
-    FOR EACH ROW
-    EXECUTE FUNCTION notify_offers_change();
-
-    CREATE OR REPLACE FUNCTION notify_log_audit_change()
-    RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-    DECLARE
-      offer_id_value text;
-      audit_id_value bigint;
-    BEGIN
-      offer_id_value := COALESCE(NEW.offer_id, OLD.offer_id);
-      audit_id_value := COALESCE(NEW.id, OLD.id);
-
-      PERFORM pg_notify(
-        'log_audit_changes',
-        json_build_object(
-          'operation', TG_OP,
-          'offer_id', offer_id_value,
-          'audit_id', audit_id_value
-        )::text
-      );
-
-      IF TG_OP = 'DELETE' THEN
-        RETURN OLD;
-      END IF;
-
-      RETURN NEW;
-    END;
-    $$;
-
-    DROP TRIGGER IF EXISTS log_audit_changes_trigger ON log_audit;
-    CREATE TRIGGER log_audit_changes_trigger
-    AFTER INSERT OR UPDATE OR DELETE ON log_audit
-    FOR EACH ROW
-    EXECUTE FUNCTION notify_log_audit_change();
-  `;
-
-  await pool.query(triggerStatements);
+  await ensureTrigger(
+    'log_audit',
+    'log_audit_changes_trigger',
+    `CREATE TRIGGER log_audit_changes_trigger
+       AFTER INSERT OR UPDATE OR DELETE ON log_audit
+       FOR EACH ROW
+       EXECUTE FUNCTION notify_log_audit_change()`
+  );
 };
 
 const startRealtimeListener = async () => {
@@ -389,8 +443,9 @@ wsServer.on('connection', async (socket) => {
 app.get('/api/offers/recent', async (req, res) => {
   try {
     const limit = parseLimit(req.query.limit, RECENT_OFFERS_DEFAULT_LIMIT, RECENT_OFFERS_MAX_LIMIT);
-    const rows = await fetchRecentOffers(limit);
-    res.json({ rows });
+    const offset = parseOffset(req.query.offset);
+    const rows = await fetchRecentOffers(limit, offset);
+    res.json({ rows, limit, offset, hasMore: rows.length === limit });
   } catch (error) {
     console.error('Database error:', error);
     res.status(500).json({ error: error.message });
