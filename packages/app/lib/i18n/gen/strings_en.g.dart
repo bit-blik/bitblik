@@ -2274,11 +2274,17 @@ class Translations$settings$offerCreation$en {
 	/// en: 'Preferred coordinator'
 	String get preferredCoordinator => 'Preferred coordinator';
 
-	/// en: 'Automatic'
-	String get automaticCoordinator => 'Automatic';
+	/// en: 'Most reliable'
+	String get automaticCoordinator => 'Most reliable';
 
-	/// en: 'Automatically picks the most reliable available coordinator for each offer.'
-	String get automaticCoordinatorDescription => 'Automatically picks the most reliable available coordinator for each offer.';
+	/// en: 'Picks the coordinator with the best track record, combining your own completed offers and overall network activity.'
+	String get automaticCoordinatorDescription => 'Picks the coordinator with the best track record, combining your own completed offers and overall network activity.';
+
+	/// en: 'Cheapest'
+	String get cheapestCoordinator => 'Cheapest';
+
+	/// en: 'Picks the available coordinator with the lowest maker fee for each offer.'
+	String get cheapestCoordinatorDescription => 'Picks the available coordinator with the lowest maker fee for each offer.';
 
 	/// en: 'Enable premium pricing'
 	String get enablePremium => 'Enable premium pricing';
@@ -4458,8 +4464,10 @@ extension on Translations {
 			'settings.offerCreation.title' => 'Offer creation',
 			'settings.offerCreation.defaultCategory' => 'Default category',
 			'settings.offerCreation.preferredCoordinator' => 'Preferred coordinator',
-			'settings.offerCreation.automaticCoordinator' => 'Automatic',
-			'settings.offerCreation.automaticCoordinatorDescription' => 'Automatically picks the most reliable available coordinator for each offer.',
+			'settings.offerCreation.automaticCoordinator' => 'Most reliable',
+			'settings.offerCreation.automaticCoordinatorDescription' => 'Picks the coordinator with the best track record, combining your own completed offers and overall network activity.',
+			'settings.offerCreation.cheapestCoordinator' => 'Cheapest',
+			'settings.offerCreation.cheapestCoordinatorDescription' => 'Picks the available coordinator with the lowest maker fee for each offer.',
 			'settings.offerCreation.enablePremium' => 'Enable premium pricing',
 			'settings.offerCreation.enablePremiumDescription' => 'Show the premium slider when creating maker offers.',
 			'settings.offerCreation.defaultPremium' => 'Default premium',

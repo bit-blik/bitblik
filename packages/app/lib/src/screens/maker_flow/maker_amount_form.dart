@@ -320,6 +320,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     List<CoordinatorRecord> candidates,
   ) {
     final preferredPubkey = _preferredCoordinatorPubkey;
+    if (preferredPubkey ==
+        OfferCreationPreferences.cheapestCoordinatorSentinel) {
+      return candidates.reduce(
+        (a, b) => b.makerFee < a.makerFee ? b : a,
+      );
+    }
     if (preferredPubkey != null) {
       for (final coordinator in candidates) {
         if (coordinator.pubkey == preferredPubkey) return coordinator;
@@ -539,6 +545,21 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         ref.read(isLoadingProvider.notifier).state = false;
       }
     }
+  }
+
+  /// Logo for the selected coordinator. Prefers the kind-0 profile picture
+  /// over the kind-15125 info icon.
+  Widget _buildSelectedCoordinatorLogo() {
+    final pk = _selectedCoordinatorPubkey;
+    final icon = pk == null
+        ? null
+        : ref.watch(coordinatorRecordByPubkeyProvider(pk))?.icon;
+    if (icon != null && icon.isNotEmpty) {
+      return icon.startsWith('http')
+          ? Image.network(icon, width: 22, height: 22)
+          : Image.asset(icon, width: 22, height: 22);
+    }
+    return const Icon(Icons.account_circle, size: 24);
   }
 
   Widget _buildDetailRow(
@@ -1764,23 +1785,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             ),
                             const SizedBox(width: 2),
                             if (_selectedCoordinatorInfo != null) ...[
-                              if (_selectedCoordinatorInfo!.icon != null &&
-                                  _selectedCoordinatorInfo!.icon!.isNotEmpty)
-                                (_selectedCoordinatorInfo!.icon!.startsWith(
-                                      'http',
-                                    )
-                                    ? Image.network(
-                                      _selectedCoordinatorInfo!.icon!,
-                                      width: 22,
-                                      height: 22,
-                                    )
-                                    : Image.asset(
-                                      _selectedCoordinatorInfo!.icon!,
-                                      width: 22,
-                                      height: 22,
-                                    ))
-                              else
-                                const Icon(Icons.account_circle, size: 24),
+                              _buildSelectedCoordinatorLogo(),
                               const SizedBox(width: 8),
                               Text(
                                 _selectedCoordinatorInfo!.name,

@@ -77,6 +77,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
   ) async {
     final t = Translations.of(context);
     final router = GoRouter.of(context);
+    // Prefer the kind-0 profile picture over the kind-15125 info icon.
+    final coordIcon = ref
+        .read(coordinatorRecordByPubkeyProvider(offer.coordinatorPubkey))
+        ?.icon;
     bool termsAccepted = false;
     bool isLoadingTerms = true;
 
@@ -120,11 +124,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                   if (coordInfo != null && coordInfo.name.isNotEmpty) ...[
                     Row(
                       children: [
-                        if (coordInfo.icon != null &&
-                            coordInfo.icon!.isNotEmpty)
-                          (coordInfo.icon!.startsWith('http')
+                        if (coordIcon != null && coordIcon.isNotEmpty)
+                          (coordIcon.startsWith('http')
                               ? Image.network(
-                                coordInfo.icon!,
+                                coordIcon,
                                 width: 32,
                                 height: 32,
                                 errorBuilder:
@@ -134,7 +137,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                     ),
                               )
                               : Image.asset(
-                                coordInfo.icon!,
+                                coordIcon,
                                 width: 32,
                                 height: 32,
                                 errorBuilder:

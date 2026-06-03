@@ -1382,6 +1382,8 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     CoordinatorInfo coordInfo,
     String pubkey,
   ) {
+    // Prefer the kind-0 profile picture over the kind-15125 info icon.
+    final icon = ref.watch(coordinatorRecordByPubkeyProvider(pubkey))?.icon;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1399,9 +1401,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
             onTap: () => openCoordinatorDetails(context, pubkey),
             child: Row(
               children: [
-                if (coordInfo.icon != null) ...[
+                if (icon != null) ...[
                   Image.network(
-                    coordInfo.icon!,
+                    icon,
                     width: 20,
                     height: 20,
                     errorBuilder:

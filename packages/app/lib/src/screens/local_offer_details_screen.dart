@@ -125,6 +125,9 @@ class _OfferDetailsBody extends ConsumerWidget {
     final coordinatorInfo = apiService.getCoordinatorInfoByPubkey(
       offer.coordinatorPubkey,
     );
+    final coordinatorRecord = ref.watch(
+      coordinatorRecordByPubkeyProvider(offer.coordinatorPubkey),
+    );
     final coordinatorName =
         coordinatorInfo?.name ?? t.myOffers.unknownCoordinator;
     final localeTag = effectiveFormatLocale(context);
@@ -256,7 +259,7 @@ class _OfferDetailsBody extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _CoordinatorLogo(
-                            icon: coordinatorInfo?.icon,
+                            icon: coordinatorRecord?.icon,
                             fallbackColor: statusColor,
                           ),
                           const SizedBox(width: 8),
@@ -264,15 +267,17 @@ class _OfferDetailsBody extends ConsumerWidget {
                             child: Text(
                               coordinatorName,
                               style: const TextStyle(
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                          const Icon(
-                            Icons.chevron_right,
-                            color: Colors.grey,
-                            size: 18,
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 14,
+                            color: Colors.grey[600],
                           ),
                         ],
                       ),
@@ -683,8 +688,8 @@ class _CoordinatorLogo extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           child: CachedNetworkImage(
             imageUrl: normalized,
-            width: 24,
-            height: 24,
+            width: 20,
+            height: 20,
             fit: BoxFit.cover,
             errorWidget: (_, _, _) => _fallback(),
           ),
@@ -694,8 +699,8 @@ class _CoordinatorLogo extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         child: Image.asset(
           normalized,
-          width: 24,
-          height: 24,
+          width: 20,
+          height: 20,
           fit: BoxFit.cover,
           errorBuilder: (_, _, _) => _fallback(),
         ),
@@ -706,9 +711,9 @@ class _CoordinatorLogo extends StatelessWidget {
 
   Widget _fallback() {
     return CircleAvatar(
-      radius: 12,
+      radius: 10,
       backgroundColor: fallbackColor.withValues(alpha: 0.15),
-      child: Icon(Icons.account_balance_wallet, size: 14, color: fallbackColor),
+      child: Icon(Icons.account_balance_wallet, size: 12, color: fallbackColor),
     );
   }
 }

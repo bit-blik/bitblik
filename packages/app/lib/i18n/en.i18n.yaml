@@ -876,8 +876,10 @@ settings:
     title: Offer creation
     defaultCategory: Default category
     preferredCoordinator: Preferred coordinator
-    automaticCoordinator: Automatic
-    automaticCoordinatorDescription: "Automatically picks the most reliable available coordinator for each offer."
+    automaticCoordinator: Most reliable
+    automaticCoordinatorDescription: "Picks the coordinator with the best track record, combining your own completed offers and overall network activity."
+    cheapestCoordinator: Cheapest
+    cheapestCoordinatorDescription: "Picks the available coordinator with the lowest maker fee for each offer."
     enablePremium: Enable premium pricing
     enablePremiumDescription: Show the premium slider when creating maker offers.
     defaultPremium: Default premium

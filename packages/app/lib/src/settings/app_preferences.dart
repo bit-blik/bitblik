@@ -12,6 +12,11 @@ class OfferCreationPreferences {
     required this.preferredCoordinatorPubkey,
   });
 
+  /// Stored in [preferredCoordinatorPubkey] to mean "pick the available
+  /// coordinator with the lowest maker fee for each offer" instead of a
+  /// concrete coordinator pubkey. `null` still means automatic selection.
+  static const cheapestCoordinatorSentinel = '__cheapest__';
+
   final OfferCategory defaultCategory;
   final bool premiumEnabled;
   final double defaultPremiumPercent;

@@ -1,11 +1,12 @@
 ## [0.7.0] - 2026-06-05
-- 
+ 
 - feat: premium % option for makers
-- feat: coordinator details screen
 - feat: nip-65 for dynamic coordinator relay discovery
 - feat: use kind 0 metadata for coordinator photo/name
+- feat: automatic coordinator selection based on reliability or price
+- feat: offer creation preferences for setting defaults
 - feat: display preference for currency unit (sats or ₿)
-- feat: offer creation preferences for setting defaults 
+- feat: coordinator details screen
 
 ## [0.6.0] - 2026-06-01
 

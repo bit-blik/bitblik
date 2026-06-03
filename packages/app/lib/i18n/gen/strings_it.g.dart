@@ -1450,8 +1450,10 @@ class _Translations$settings$offerCreation$it extends Translations$settings$offe
 	@override String get title => 'Creazione offerte';
 	@override String get defaultCategory => 'Categoria predefinita';
 	@override String get preferredCoordinator => 'Coordinatore preferito';
-	@override String get automaticCoordinator => 'Automatico';
-	@override String get automaticCoordinatorDescription => 'Sceglie automaticamente il coordinatore disponibile più affidabile per ogni offerta.';
+	@override String get automaticCoordinator => 'Più affidabile';
+	@override String get automaticCoordinatorDescription => 'Sceglie il coordinatore con la migliore reputazione, combinando le tue offerte completate e l\'attività complessiva della rete.';
+	@override String get cheapestCoordinator => 'Più economico';
+	@override String get cheapestCoordinatorDescription => 'Sceglie il coordinatore disponibile con la commissione del venditore più bassa per ogni offerta.';
 	@override String get enablePremium => 'Abilita premio di prezzo';
 	@override String get enablePremiumDescription => 'Mostra il cursore del premio durante la creazione delle offerte maker.';
 	@override String get defaultPremium => 'Premio predefinito';
@@ -3020,8 +3022,10 @@ extension on TranslationsIt {
 			'settings.offerCreation.title' => 'Creazione offerte',
 			'settings.offerCreation.defaultCategory' => 'Categoria predefinita',
 			'settings.offerCreation.preferredCoordinator' => 'Coordinatore preferito',
-			'settings.offerCreation.automaticCoordinator' => 'Automatico',
-			'settings.offerCreation.automaticCoordinatorDescription' => 'Sceglie automaticamente il coordinatore disponibile più affidabile per ogni offerta.',
+			'settings.offerCreation.automaticCoordinator' => 'Più affidabile',
+			'settings.offerCreation.automaticCoordinatorDescription' => 'Sceglie il coordinatore con la migliore reputazione, combinando le tue offerte completate e l\'attività complessiva della rete.',
+			'settings.offerCreation.cheapestCoordinator' => 'Più economico',
+			'settings.offerCreation.cheapestCoordinatorDescription' => 'Sceglie il coordinatore disponibile con la commissione del venditore più bassa per ogni offerta.',
 			'settings.offerCreation.enablePremium' => 'Abilita premio di prezzo',
 			'settings.offerCreation.enablePremiumDescription' => 'Mostra il cursore del premio durante la creazione delle offerte maker.',
 			'settings.offerCreation.defaultPremium' => 'Premio predefinito',

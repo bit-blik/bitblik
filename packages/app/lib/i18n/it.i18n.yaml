@@ -860,8 +860,10 @@ settings:
     title: Creazione offerte
     defaultCategory: Categoria predefinita
     preferredCoordinator: Coordinatore preferito
-    automaticCoordinator: Automatico
-    automaticCoordinatorDescription: "Sceglie automaticamente il coordinatore disponibile più affidabile per ogni offerta."
+    automaticCoordinator: Più affidabile
+    automaticCoordinatorDescription: "Sceglie il coordinatore con la migliore reputazione, combinando le tue offerte completate e l'attività complessiva della rete."
+    cheapestCoordinator: Più economico
+    cheapestCoordinatorDescription: "Sceglie il coordinatore disponibile con la commissione del venditore più bassa per ogni offerta."
     enablePremium: Abilita premio di prezzo
     enablePremiumDescription: Mostra il cursore del premio durante la creazione delle offerte maker.
     defaultPremium: Premio predefinito

@@ -1447,8 +1447,10 @@ class _Translations$settings$offerCreation$pl extends Translations$settings$offe
 	@override String get title => 'Tworzenie ofert';
 	@override String get defaultCategory => 'Domyślna kategoria';
 	@override String get preferredCoordinator => 'Preferowany koordynator';
-	@override String get automaticCoordinator => 'Automatycznie';
-	@override String get automaticCoordinatorDescription => 'Automatycznie wybiera najbardziej niezawodnego dostępnego koordynatora dla każdej oferty.';
+	@override String get automaticCoordinator => 'Najbardziej niezawodny';
+	@override String get automaticCoordinatorDescription => 'Wybiera koordynatora z najlepszą historią, uwzględniając Twoje własne zrealizowane oferty oraz ogólną aktywność w sieci.';
+	@override String get cheapestCoordinator => 'Najtańszy';
+	@override String get cheapestCoordinatorDescription => 'Wybiera dostępnego koordynatora z najniższą prowizją wystawiającego dla każdej oferty.';
 	@override String get enablePremium => 'Włącz premię cenową';
 	@override String get enablePremiumDescription => 'Pokaż suwak premii podczas tworzenia ofert makera.';
 	@override String get defaultPremium => 'Domyślna premia';
@@ -3014,8 +3016,10 @@ extension on TranslationsPl {
 			'settings.offerCreation.title' => 'Tworzenie ofert',
 			'settings.offerCreation.defaultCategory' => 'Domyślna kategoria',
 			'settings.offerCreation.preferredCoordinator' => 'Preferowany koordynator',
-			'settings.offerCreation.automaticCoordinator' => 'Automatycznie',
-			'settings.offerCreation.automaticCoordinatorDescription' => 'Automatycznie wybiera najbardziej niezawodnego dostępnego koordynatora dla każdej oferty.',
+			'settings.offerCreation.automaticCoordinator' => 'Najbardziej niezawodny',
+			'settings.offerCreation.automaticCoordinatorDescription' => 'Wybiera koordynatora z najlepszą historią, uwzględniając Twoje własne zrealizowane oferty oraz ogólną aktywność w sieci.',
+			'settings.offerCreation.cheapestCoordinator' => 'Najtańszy',
+			'settings.offerCreation.cheapestCoordinatorDescription' => 'Wybiera dostępnego koordynatora z najniższą prowizją wystawiającego dla każdej oferty.',
 			'settings.offerCreation.enablePremium' => 'Włącz premię cenową',
 			'settings.offerCreation.enablePremiumDescription' => 'Pokaż suwak premii podczas tworzenia ofert makera.',
 			'settings.offerCreation.defaultPremium' => 'Domyślna premia',

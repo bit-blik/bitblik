@@ -861,8 +861,10 @@ settings:
     title: Tworzenie ofert
     defaultCategory: Domyślna kategoria
     preferredCoordinator: Preferowany koordynator
-    automaticCoordinator: Automatycznie
-    automaticCoordinatorDescription: "Automatycznie wybiera najbardziej niezawodnego dostępnego koordynatora dla każdej oferty."
+    automaticCoordinator: Najbardziej niezawodny
+    automaticCoordinatorDescription: "Wybiera koordynatora z najlepszą historią, uwzględniając Twoje własne zrealizowane oferty oraz ogólną aktywność w sieci."
+    cheapestCoordinator: Najtańszy
+    cheapestCoordinatorDescription: "Wybiera dostępnego koordynatora z najniższą prowizją wystawiającego dla każdej oferty."
     enablePremium: Włącz premię cenową
     enablePremiumDescription: Pokaż suwak premii podczas tworzenia ofert makera.
     defaultPremium: Domyślna premia

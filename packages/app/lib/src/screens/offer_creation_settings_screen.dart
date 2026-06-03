@@ -138,6 +138,8 @@ class _OfferCreationSettingsScreenState
     final current = _settings;
     if (current == null) return;
     const automaticSentinel = '__automatic__';
+    final cheapestSentinel =
+        OfferCreationPreferences.cheapestCoordinatorSentinel;
     final selected = await showModalBottomSheet<String>(
       context: context,
       builder: (context) {
@@ -149,7 +151,7 @@ class _OfferCreationSettingsScreenState
                 title: Text(t.settings.offerCreation.dialogs.selectCoordinator),
               ),
               ListTile(
-                leading: const Icon(Icons.auto_awesome),
+                leading: const Icon(Icons.verified),
                 title: Text(t.settings.offerCreation.automaticCoordinator),
                 subtitle: Text(
                   t.settings.offerCreation.automaticCoordinatorDescription,
@@ -159,6 +161,18 @@ class _OfferCreationSettingsScreenState
                         ? const Icon(Icons.check, color: Colors.green)
                         : null,
                 onTap: () => Navigator.of(context).pop(automaticSentinel),
+              ),
+              ListTile(
+                leading: const Icon(Icons.savings),
+                title: Text(t.settings.offerCreation.cheapestCoordinator),
+                subtitle: Text(
+                  t.settings.offerCreation.cheapestCoordinatorDescription,
+                ),
+                trailing:
+                    current.preferredCoordinatorPubkey == cheapestSentinel
+                        ? const Icon(Icons.check, color: Colors.green)
+                        : null,
+                onTap: () => Navigator.of(context).pop(cheapestSentinel),
               ),
               ...coordinators.map((coordinator) {
                 final selected =
@@ -199,11 +213,14 @@ class _OfferCreationSettingsScreenState
               ? const Center(child: CircularProgressIndicator())
               : coordinatorsAsync.when(
                 data: (coordinators) {
+                  final isCheapest =
+                      settings.preferredCoordinatorPubkey ==
+                      OfferCreationPreferences.cheapestCoordinatorSentinel;
                   final preferred = _coordinatorFor(
                     coordinators,
                     settings.preferredCoordinatorPubkey,
                   );
-                  final isAutomatic = preferred == null;
+                  final isAutomatic = preferred == null && !isCheapest;
                   final maxPremium = _maxPremium(coordinators);
                   return ListView(
                     children: [
@@ -232,18 +249,22 @@ class _OfferCreationSettingsScreenState
                       ListTile(
                         leading:
                             isAutomatic
-                                ? const Icon(Icons.auto_awesome)
-                                : _coordinatorLogo(preferred.icon, 28),
+                                ? const Icon(Icons.verified)
+                                : isCheapest
+                                ? const Icon(Icons.savings)
+                                : _coordinatorLogo(preferred!.icon, 28),
                         title: Text(
                           t.settings.offerCreation.preferredCoordinator,
                         ),
                         subtitle: Text(
                           isAutomatic
+                              ? t.settings.offerCreation.automaticCoordinator
+                              : isCheapest
                               ? t
                                   .settings
                                   .offerCreation
-                                  .automaticCoordinatorDescription
-                              : preferred.name,
+                                  .cheapestCoordinator
+                              : preferred!.name,
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () => _showCoordinatorPicker(t, coordinators),
