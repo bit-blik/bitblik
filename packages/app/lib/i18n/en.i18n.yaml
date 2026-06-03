@@ -117,8 +117,13 @@ offers:
       atm: "Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM."
       ecommerce: "For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the BLIK you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations."
 
+  labels:
+    premium: "Premium"
+    premiumBadge: "+${percent}% premium"
+
   tooltips:
     takerFeeInfo: "Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive."
+    premiumInfoTaker: "A premium means this offer is priced above market. For the same fiat amount, the maker locks fewer sats in the hold invoice, so you pay above market and receive fewer sats than at the market rate. The maximum premium is set by the coordinator."
     ratesFetchedAt: "Fetched at"
     ratesSources: "Avg. rate sources"
   
@@ -182,6 +187,7 @@ offers:
     takerPublicKeyNotFound: Taker public key not found.
     atmConsentRequired: "Accept the ATM surcharge condition before taking this offer."
     ecommerceConsentRequired: "Accept the ecommerce refund-return condition before taking this offer."
+    cannotTakeOwnOffer: "You cannot take your own offer."
 
   success:
     title: Offer completed
@@ -263,6 +269,7 @@ coordinator:
     makerFee: "Maker fee"
     takerFee: "Taker fee"
     amountRange: "Amount range"
+    maxPremium: "Max premium"
     reservationTime: "Reservation time"
     currencies: "Currencies"
     version: "Version"
@@ -316,14 +323,17 @@ maker:
       exchangeRate: Exchange Rate
       fee: Fee
       satoshisToPay: Amount to Pay
+      bitcoinToPay: Bitcoin to Pay
       enterAmount: Enter amount
       tapToSelect: Tap to select
+      premium: Premium
     actions:
       generateInvoice: Generate Invoice
-    
+
     tooltips:
       feeInfo: "Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment."
       payInfo: "This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay."
+      premiumInfo: "An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator."
 
     category:
       label: "Offer category"
@@ -388,9 +398,9 @@ maker:
       title: "Payment may fail"
       balanceTooLow: "Your default spending wallet ${name} does not have enough balance for this payment."
       budgetTooLow: "Your default spending wallet ${name} does not have enough spending budget for this payment."
-      balanceLine: "Balance: ${available} sats"
-      budgetLine: "Remaining NWC budget: ${remaining} sats"
-      requiredLine: "Required: ${required} sats"
+      balanceLine: "Balance: ${available}"
+      budgetLine: "Remaining NWC budget: ${remaining}"
+      requiredLine: "Required: ${required}"
       addFundsHint: "Add funds to ${name} to cover this payment amount."
       increaseBudgetHint: "Increase the NWC spending budget for this connection in your wallet app."
       switchWalletLabel: "Or use a different wallet:"
@@ -638,7 +648,7 @@ taker:
   
   paymentFailed:
     title: Payment Failed
-    instructions: "Please provide a new Lightning invoice for ${netAmount} satoshi"
+    instructions: "Please provide a new Lightning invoice for ${netAmount}"
     form:
       newInvoiceLabel: "New Lightning invoice"
       newInvoiceHint: "Enter your BOLT11 invoice"
@@ -653,7 +663,7 @@ taker:
     walletSection:
       title: "Generate invoice from wallet"
       defaultLabel: "default"
-      tapToGenerate: "Tap to generate invoice for ${amountSats} sats"
+      tapToGenerate: "Tap to generate invoice for ${amountSats}"
     loading:
       processingPayment: "Processing your payment retry..."
     success:
@@ -861,6 +871,33 @@ faq:
 # =============================================================================
 settings:
   title: Settings
+  offerCreation:
+    title: Offer creation
+    defaultCategory: Default category
+    preferredCoordinator: Preferred coordinator
+    automaticCoordinator: Automatic
+    automaticCoordinatorDescription: "Automatically picks the most reliable available coordinator for each offer."
+    enablePremium: Enable premium pricing
+    enablePremiumDescription: Show the premium slider when creating maker offers.
+    defaultPremium: Default premium
+    defaultPremiumDisabled: Enable premium pricing to set a default premium.
+    premiumPerCoordinatorNote: "Each coordinator sets its own maximum premium, so your default is capped by the coordinator used for an offer."
+    categoryOptions:
+      shop: Shop, café or restaurant
+      atm: ATM cash out
+      online: Online service/product
+    dialogs:
+      selectCategory: Select default category
+      selectCoordinator: Select preferred coordinator
+      premiumHint: Enter a percentage like 1.5. Values are rounded to 0.5% steps.
+      premiumHelper: Applied when premium pricing is enabled and clamped by the selected coordinator maximum.
+  display:
+    title: Display
+    bitcoinUnit: Bitcoin unit
+    bitcoinUnitDescription: Choose how bitcoin amounts are shown throughout the app.
+    unitOptions:
+      sats: sats
+      bitcoin: ₿ (BIP-177)
 
 notificationSettings:
   title: Notifications
@@ -962,7 +999,8 @@ offerNotifications:
     body: Your BLIK code is ready to view.
   newOffer:
     title: New offer available
-    body: "${amount} ${currency} · ${sats} sats"
+    body: "${amount} ${currency} · ${sats}"
+    premiumSuffix: "+${percent}% premium"
   categories:
     shop: Shop
     atm: ATM

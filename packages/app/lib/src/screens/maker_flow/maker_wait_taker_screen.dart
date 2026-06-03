@@ -10,7 +10,9 @@ import 'package:ndk/domain_layer/entities/wallet/wallet_balance.dart';
 
 import 'package:bitblik_core/core.dart'; // For OfferStatus enum
 import '../../providers/providers.dart';
+import '../../utils/bitcoin_display.dart';
 import '../../widgets/progress_indicators.dart';
+import '../../widgets/premium_info.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
 
 class MakerWaitTakerScreen extends ConsumerStatefulWidget {
@@ -26,7 +28,8 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
   bool _isExpired = false;
   bool _isRecreating = false;
   Timer? _expiryTimer;
-  Offer? _lastKnownOffer; // snapshot so expired UI has offer details even after state→null
+  Offer?
+  _lastKnownOffer; // snapshot so expired UI has offer details even after state→null
 
   @override
   void initState() {
@@ -156,9 +159,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         }
       }
     }
-    wallet ??= ndk.wallets.defaultWalletForSending is NwcWallet
-        ? ndk.wallets.defaultWalletForSending as NwcWallet
-        : null;
+    wallet ??=
+        ndk.wallets.defaultWalletForSending is NwcWallet
+            ? ndk.wallets.defaultWalletForSending as NwcWallet
+            : null;
 
     if (wallet == null || wallet.connection == null) return;
 
@@ -166,8 +170,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     await Future.delayed(const Duration(seconds: 3));
 
     try {
-      final resp = await ndk.nwc
-          .getBalance(wallet.connection!, timeout: const Duration(seconds: 10));
+      final resp = await ndk.nwc.getBalance(
+        wallet.connection!,
+        timeout: const Duration(seconds: 10),
+      );
       if (wallet.balanceSubject != null && !wallet.balanceSubject!.isClosed) {
         wallet.balanceSubject!.add([
           WalletBalance(
@@ -205,32 +211,38 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         makerId: makerId,
         category: offer.category,
         coordinatorPubkey: offer.coordinatorPubkey,
+        premiumPercent: offer.premiumPercent,
       );
       final paymentHash = result['paymentHash'] as String;
       ref.read(holdInvoiceProvider.notifier).state = result['holdInvoice'];
       ref.read(paymentHashProvider.notifier).state = paymentHash;
-      await ref.read(activeOfferProvider.notifier).setActiveOffer(
-        Offer(
-          id: paymentHash,
-          amountSats: result['makerFees'] + result['amountSats'],
-          makerFees: result['makerFees'],
-          status: OfferStatus.created,
-          fiatAmount: offer.fiatAmount,
-          fiatCurrency: offer.fiatCurrency,
-          createdAt: DateTime.now(),
-          holdInvoicePaymentHash: paymentHash,
-          holdInvoice: result['holdInvoice'],
-          makerPubkey: makerId,
-          coordinatorPubkey: offer.coordinatorPubkey,
-          category: offer.category,
-        ),
-      );
+      await ref
+          .read(activeOfferProvider.notifier)
+          .setActiveOffer(
+            Offer(
+              id: paymentHash,
+              amountSats: result['makerFees'] + result['amountSats'],
+              makerFees: result['makerFees'],
+              status: OfferStatus.created,
+              fiatAmount: offer.fiatAmount,
+              fiatCurrency: offer.fiatCurrency,
+              createdAt: DateTime.now(),
+              holdInvoicePaymentHash: paymentHash,
+              holdInvoice: result['holdInvoice'],
+              makerPubkey: makerId,
+              coordinatorPubkey: offer.coordinatorPubkey,
+              category: offer.category,
+              premiumPercent:
+                  (result['premiumPercent'] as num?)?.toDouble() ??
+                  offer.premiumPercent,
+            ),
+          );
       if (mounted) context.go('/pay');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create offer: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to create offer: $e')));
       }
     } finally {
       if (mounted) setState(() => _isRecreating = false);
@@ -303,6 +315,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     // Watch the active offer provider to get real-time status updates
     final offer = ref.watch(activeOfferProvider);
     final t = Translations.of(context);
+    final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
 
     if (offer != null) _lastKnownOffer = offer;
 
@@ -335,11 +348,18 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                 children: [
                   const MakerProgressIndicator(activeStep: 2),
                   const SizedBox(height: 40),
-                  Icon(Icons.timer_off_outlined, size: 80, color: Colors.orange[700]),
+                  Icon(
+                    Icons.timer_off_outlined,
+                    size: 80,
+                    color: Colors.orange[700],
+                  ),
                   const SizedBox(height: 20),
                   Text(
                     t.maker.waitTaker.offerExpiredTitle,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
@@ -359,8 +379,23 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                     _buildDetailRow(
                       context,
                       t.maker.amountForm.labels.fee,
-                      '${expiredOffer.makerFees} sats',
+                      formatBitcoinAmount(
+                        context,
+                        bitcoinDisplayUnit,
+                        expiredOffer.makerFees,
+                      ),
                     ),
+                    if (expiredOffer.premiumPercent > 0) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () => showPremiumInfoDialog(context),
+                        child: _buildDetailRow(
+                          context,
+                          t.offers.labels.premium,
+                          '+${formatPremium(expiredOffer.premiumPercent)}%',
+                        ),
+                      ),
+                    ],
                   ],
                   const SizedBox(height: 30),
                   SizedBox(
@@ -375,19 +410,20 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: _isRecreating
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                      child:
+                          _isRecreating
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : Text(
+                                t.maker.waitTaker.recreateOffer,
+                                style: const TextStyle(fontSize: 16),
                               ),
-                            )
-                          : Text(
-                              t.maker.waitTaker.recreateOffer,
-                              style: const TextStyle(fontSize: 16),
-                            ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -489,8 +525,23 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                     _buildDetailRow(
                       context,
                       t.maker.amountForm.labels.fee,
-                      '${offer.makerFees} sats',
+                      formatBitcoinAmount(
+                        context,
+                        bitcoinDisplayUnit,
+                        offer.makerFees,
+                      ),
                     ),
+                    if (offer.premiumPercent > 0) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () => showPremiumInfoDialog(context),
+                        child: _buildDetailRow(
+                          context,
+                          t.offers.labels.premium,
+                          '+${formatPremium(offer.premiumPercent)}%',
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 30),
 
                     // Error message

@@ -122,6 +122,7 @@ class Translations$offers$en {
 
 	// Translations
 	late final Translations$offers$details$en details = Translations$offers$details$en.internal(_root);
+	late final Translations$offers$labels$en labels = Translations$offers$labels$en.internal(_root);
 	late final Translations$offers$tooltips$en tooltips = Translations$offers$tooltips$en.internal(_root);
 	late final Translations$offers$actions$en actions = Translations$offers$actions$en.internal(_root);
 	late final Translations$offers$status$en status = Translations$offers$status$en.internal(_root);
@@ -388,6 +389,9 @@ class Translations$settings$en {
 
 	/// en: 'Settings'
 	String get title => 'Settings';
+
+	late final Translations$settings$offerCreation$en offerCreation = Translations$settings$offerCreation$en.internal(_root);
+	late final Translations$settings$display$en display = Translations$settings$display$en.internal(_root);
 }
 
 // Path: notificationSettings
@@ -834,6 +838,21 @@ class Translations$offers$details$en {
 	late final Translations$offers$details$consents$en consents = Translations$offers$details$consents$en.internal(_root);
 }
 
+// Path: offers.labels
+class Translations$offers$labels$en {
+	Translations$offers$labels$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Premium'
+	String get premium => 'Premium';
+
+	/// en: '+${percent}% premium'
+	String premiumBadge({required Object percent}) => '+${percent}% premium';
+}
+
 // Path: offers.tooltips
 class Translations$offers$tooltips$en {
 	Translations$offers$tooltips$en.internal(this._root);
@@ -844,6 +863,9 @@ class Translations$offers$tooltips$en {
 
 	/// en: 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.'
 	String takerFeeInfo({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.';
+
+	/// en: 'A premium means this offer is priced above market. For the same fiat amount, the maker locks fewer sats in the hold invoice, so you pay above market and receive fewer sats than at the market rate. The maximum premium is set by the coordinator.'
+	String get premiumInfoTaker => 'A premium means this offer is priced above market. For the same fiat amount, the maker locks fewer sats in the hold invoice, so you pay above market and receive fewer sats than at the market rate. The maximum premium is set by the coordinator.';
 
 	/// en: 'Fetched at'
 	String get ratesFetchedAt => 'Fetched at';
@@ -1048,6 +1070,9 @@ class Translations$offers$errors$en {
 
 	/// en: 'Accept the ecommerce refund-return condition before taking this offer.'
 	String get ecommerceConsentRequired => 'Accept the ecommerce refund-return condition before taking this offer.';
+
+	/// en: 'You cannot take your own offer.'
+	String get cannotTakeOwnOffer => 'You cannot take your own offer.';
 }
 
 // Path: offers.success
@@ -1285,6 +1310,9 @@ class Translations$coordinator$details$en {
 
 	/// en: 'Amount range'
 	String get amountRange => 'Amount range';
+
+	/// en: 'Max premium'
+	String get maxPremium => 'Max premium';
 
 	/// en: 'Reservation time'
 	String get reservationTime => 'Reservation time';
@@ -1785,8 +1813,8 @@ class Translations$taker$paymentFailed$en {
 	/// en: 'Payment Failed'
 	String get title => 'Payment Failed';
 
-	/// en: 'Please provide a new Lightning invoice for ${netAmount} satoshi'
-	String instructions({required Object netAmount}) => 'Please provide a new Lightning invoice for ${netAmount} satoshi';
+	/// en: 'Please provide a new Lightning invoice for ${netAmount}'
+	String instructions({required Object netAmount}) => 'Please provide a new Lightning invoice for ${netAmount}';
 
 	late final Translations$taker$paymentFailed$form$en form = Translations$taker$paymentFailed$form$en.internal(_root);
 	late final Translations$taker$paymentFailed$actions$en actions = Translations$taker$paymentFailed$actions$en.internal(_root);
@@ -2223,6 +2251,68 @@ class Translations$landing$actions$en {
 	String get howItWorks => 'How it works?';
 }
 
+// Path: settings.offerCreation
+class Translations$settings$offerCreation$en {
+	Translations$settings$offerCreation$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Offer creation'
+	String get title => 'Offer creation';
+
+	/// en: 'Default category'
+	String get defaultCategory => 'Default category';
+
+	/// en: 'Preferred coordinator'
+	String get preferredCoordinator => 'Preferred coordinator';
+
+	/// en: 'Automatic'
+	String get automaticCoordinator => 'Automatic';
+
+	/// en: 'Automatically picks the most reliable available coordinator for each offer.'
+	String get automaticCoordinatorDescription => 'Automatically picks the most reliable available coordinator for each offer.';
+
+	/// en: 'Enable premium pricing'
+	String get enablePremium => 'Enable premium pricing';
+
+	/// en: 'Show the premium slider when creating maker offers.'
+	String get enablePremiumDescription => 'Show the premium slider when creating maker offers.';
+
+	/// en: 'Default premium'
+	String get defaultPremium => 'Default premium';
+
+	/// en: 'Enable premium pricing to set a default premium.'
+	String get defaultPremiumDisabled => 'Enable premium pricing to set a default premium.';
+
+	/// en: 'Each coordinator sets its own maximum premium, so your default is capped by the coordinator used for an offer.'
+	String get premiumPerCoordinatorNote => 'Each coordinator sets its own maximum premium, so your default is capped by the coordinator used for an offer.';
+
+	late final Translations$settings$offerCreation$categoryOptions$en categoryOptions = Translations$settings$offerCreation$categoryOptions$en.internal(_root);
+	late final Translations$settings$offerCreation$dialogs$en dialogs = Translations$settings$offerCreation$dialogs$en.internal(_root);
+}
+
+// Path: settings.display
+class Translations$settings$display$en {
+	Translations$settings$display$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Display'
+	String get title => 'Display';
+
+	/// en: 'Bitcoin unit'
+	String get bitcoinUnit => 'Bitcoin unit';
+
+	/// en: 'Choose how bitcoin amounts are shown throughout the app.'
+	String get bitcoinUnitDescription => 'Choose how bitcoin amounts are shown throughout the app.';
+
+	late final Translations$settings$display$unitOptions$en unitOptions = Translations$settings$display$unitOptions$en.internal(_root);
+}
+
 // Path: notificationSettings.newOfferAlerts
 class Translations$notificationSettings$newOfferAlerts$en {
 	Translations$notificationSettings$newOfferAlerts$en.internal(this._root);
@@ -2531,8 +2621,11 @@ class Translations$offerNotifications$newOffer$en {
 	/// en: 'New offer available'
 	String get title => 'New offer available';
 
-	/// en: '${amount} ${currency} · ${sats} sats'
-	String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats';
+	/// en: '${amount} ${currency} · ${sats}'
+	String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}';
+
+	/// en: '+${percent}% premium'
+	String premiumSuffix({required Object percent}) => '+${percent}% premium';
 }
 
 // Path: offerNotifications.categories
@@ -2687,11 +2780,17 @@ class Translations$maker$amountForm$labels$en {
 	/// en: 'Amount to Pay'
 	String get satoshisToPay => 'Amount to Pay';
 
+	/// en: 'Bitcoin to Pay'
+	String get bitcoinToPay => 'Bitcoin to Pay';
+
 	/// en: 'Enter amount'
 	String get enterAmount => 'Enter amount';
 
 	/// en: 'Tap to select'
 	String get tapToSelect => 'Tap to select';
+
+	/// en: 'Premium'
+	String get premium => 'Premium';
 }
 
 // Path: maker.amountForm.actions
@@ -2719,6 +2818,9 @@ class Translations$maker$amountForm$tooltips$en {
 
 	/// en: 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.'
 	String get payInfo => 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.';
+
+	/// en: 'An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator.'
+	String get premiumInfo => 'An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator.';
 }
 
 // Path: maker.amountForm.category
@@ -2909,14 +3011,14 @@ class Translations$maker$payInvoice$budgetWarning$en {
 	/// en: 'Your default spending wallet ${name} does not have enough spending budget for this payment.'
 	String budgetTooLow({required Object name}) => 'Your default spending wallet ${name} does not have enough spending budget for this payment.';
 
-	/// en: 'Balance: ${available} sats'
-	String balanceLine({required Object available}) => 'Balance: ${available} sats';
+	/// en: 'Balance: ${available}'
+	String balanceLine({required Object available}) => 'Balance: ${available}';
 
-	/// en: 'Remaining NWC budget: ${remaining} sats'
-	String budgetLine({required Object remaining}) => 'Remaining NWC budget: ${remaining} sats';
+	/// en: 'Remaining NWC budget: ${remaining}'
+	String budgetLine({required Object remaining}) => 'Remaining NWC budget: ${remaining}';
 
-	/// en: 'Required: ${required} sats'
-	String requiredLine({required Object required}) => 'Required: ${required} sats';
+	/// en: 'Required: ${required}'
+	String requiredLine({required Object required}) => 'Required: ${required}';
 
 	/// en: 'Add funds to ${name} to cover this payment amount.'
 	String addFundsHint({required Object name}) => 'Add funds to ${name} to cover this payment amount.';
@@ -3490,8 +3592,8 @@ class Translations$taker$paymentFailed$walletSection$en {
 	/// en: 'default'
 	String get defaultLabel => 'default';
 
-	/// en: 'Tap to generate invoice for ${amountSats} sats'
-	String tapToGenerate({required Object amountSats}) => 'Tap to generate invoice for ${amountSats} sats';
+	/// en: 'Tap to generate invoice for ${amountSats}'
+	String tapToGenerate({required Object amountSats}) => 'Tap to generate invoice for ${amountSats}';
 }
 
 // Path: taker.paymentFailed.loading
@@ -3659,6 +3761,60 @@ class Translations$home$statistics$errors$en {
 	String loading({required Object error}) => 'Error loading statistics: ${error}';
 }
 
+// Path: settings.offerCreation.categoryOptions
+class Translations$settings$offerCreation$categoryOptions$en {
+	Translations$settings$offerCreation$categoryOptions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Shop, café or restaurant'
+	String get shop => 'Shop, café or restaurant';
+
+	/// en: 'ATM cash out'
+	String get atm => 'ATM cash out';
+
+	/// en: 'Online service/product'
+	String get online => 'Online service/product';
+}
+
+// Path: settings.offerCreation.dialogs
+class Translations$settings$offerCreation$dialogs$en {
+	Translations$settings$offerCreation$dialogs$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Select default category'
+	String get selectCategory => 'Select default category';
+
+	/// en: 'Select preferred coordinator'
+	String get selectCoordinator => 'Select preferred coordinator';
+
+	/// en: 'Enter a percentage like 1.5. Values are rounded to 0.5% steps.'
+	String get premiumHint => 'Enter a percentage like 1.5. Values are rounded to 0.5% steps.';
+
+	/// en: 'Applied when premium pricing is enabled and clamped by the selected coordinator maximum.'
+	String get premiumHelper => 'Applied when premium pricing is enabled and clamped by the selected coordinator maximum.';
+}
+
+// Path: settings.display.unitOptions
+class Translations$settings$display$unitOptions$en {
+	Translations$settings$display$unitOptions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'sats'
+	String get sats => 'sats';
+
+	/// en: '₿ (BIP-177)'
+	String get bitcoin => '₿ (BIP-177)';
+}
+
 // Path: maker.amountForm.category.options
 class Translations$maker$amountForm$category$options$en {
 	Translations$maker$amountForm$category$options$en.internal(this._root);
@@ -3797,7 +3953,10 @@ extension on Translations {
 			'offers.details.categories.onlineService' => 'Online service/product',
 			'offers.details.consents.atm' => 'Some ATMs add an extra fee on top of the offer amount. By taking this offer, you accept any additional bank charges required by the ATM.',
 			'offers.details.consents.ecommerce' => 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the BLIK you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations.',
+			'offers.labels.premium' => 'Premium',
+			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% premium',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.',
+			'offers.tooltips.premiumInfoTaker' => 'A premium means this offer is priced above market. For the same fiat amount, the maker locks fewer sats in the hold invoice, so you pay above market and receive fewer sats than at the market rate. The maximum premium is set by the coordinator.',
 			'offers.tooltips.ratesFetchedAt' => 'Fetched at',
 			'offers.tooltips.ratesSources' => 'Avg. rate sources',
 			'offers.actions.take' => 'TAKE',
@@ -3851,6 +4010,7 @@ extension on Translations {
 			'offers.errors.takerPublicKeyNotFound' => 'Taker public key not found.',
 			'offers.errors.atmConsentRequired' => 'Accept the ATM surcharge condition before taking this offer.',
 			'offers.errors.ecommerceConsentRequired' => 'Accept the ecommerce refund-return condition before taking this offer.',
+			'offers.errors.cannotTakeOwnOffer' => 'You cannot take your own offer.',
 			'offers.success.title' => 'Offer completed',
 			'offers.success.headline' => 'Payment confirmed!',
 			'offers.success.subtitle' => 'Taker will be paid now.',
@@ -3898,6 +4058,7 @@ extension on Translations {
 			'coordinator.details.makerFee' => 'Maker fee',
 			'coordinator.details.takerFee' => 'Taker fee',
 			'coordinator.details.amountRange' => 'Amount range',
+			'coordinator.details.maxPremium' => 'Max premium',
 			'coordinator.details.reservationTime' => 'Reservation time',
 			'coordinator.details.currencies' => 'Currencies',
 			'coordinator.details.version' => 'Version',
@@ -3939,11 +4100,14 @@ extension on Translations {
 			'maker.amountForm.labels.exchangeRate' => 'Exchange Rate',
 			'maker.amountForm.labels.fee' => 'Fee',
 			'maker.amountForm.labels.satoshisToPay' => 'Amount to Pay',
+			'maker.amountForm.labels.bitcoinToPay' => 'Bitcoin to Pay',
 			'maker.amountForm.labels.enterAmount' => 'Enter amount',
 			'maker.amountForm.labels.tapToSelect' => 'Tap to select',
+			'maker.amountForm.labels.premium' => 'Premium',
 			'maker.amountForm.actions.generateInvoice' => 'Generate Invoice',
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment.',
 			'maker.amountForm.tooltips.payInfo' => 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.',
+			'maker.amountForm.tooltips.premiumInfo' => 'An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator.',
 			'maker.amountForm.category.label' => 'Offer category',
 			'maker.amountForm.category.options.physicalShop' => 'Shop, café or restaurant',
 			'maker.amountForm.category.options.atmCashout' => 'ATM cash out',
@@ -3992,9 +4156,9 @@ extension on Translations {
 			'maker.payInvoice.budgetWarning.title' => 'Payment may fail',
 			'maker.payInvoice.budgetWarning.balanceTooLow' => ({required Object name}) => 'Your default spending wallet ${name} does not have enough balance for this payment.',
 			'maker.payInvoice.budgetWarning.budgetTooLow' => ({required Object name}) => 'Your default spending wallet ${name} does not have enough spending budget for this payment.',
-			'maker.payInvoice.budgetWarning.balanceLine' => ({required Object available}) => 'Balance: ${available} sats',
-			'maker.payInvoice.budgetWarning.budgetLine' => ({required Object remaining}) => 'Remaining NWC budget: ${remaining} sats',
-			'maker.payInvoice.budgetWarning.requiredLine' => ({required Object required}) => 'Required: ${required} sats',
+			'maker.payInvoice.budgetWarning.balanceLine' => ({required Object available}) => 'Balance: ${available}',
+			'maker.payInvoice.budgetWarning.budgetLine' => ({required Object remaining}) => 'Remaining NWC budget: ${remaining}',
+			'maker.payInvoice.budgetWarning.requiredLine' => ({required Object required}) => 'Required: ${required}',
 			'maker.payInvoice.budgetWarning.addFundsHint' => ({required Object name}) => 'Add funds to ${name} to cover this payment amount.',
 			'maker.payInvoice.budgetWarning.increaseBudgetHint' => 'Increase the NWC spending budget for this connection in your wallet app.',
 			'maker.payInvoice.budgetWarning.switchWalletLabel' => 'Or use a different wallet:',
@@ -4160,7 +4324,7 @@ extension on Translations {
 			'taker.paymentProcess.loading.publicKey' => 'Loading your data...',
 			'taker.paymentProcess.actions.goToFailureDetails' => 'Retry with new invoice',
 			'taker.paymentFailed.title' => 'Payment Failed',
-			'taker.paymentFailed.instructions' => ({required Object netAmount}) => 'Please provide a new Lightning invoice for ${netAmount} satoshi',
+			'taker.paymentFailed.instructions' => ({required Object netAmount}) => 'Please provide a new Lightning invoice for ${netAmount}',
 			'taker.paymentFailed.form.newInvoiceLabel' => 'New Lightning invoice',
 			'taker.paymentFailed.form.newInvoiceHint' => 'Enter your BOLT11 invoice',
 			'taker.paymentFailed.actions.retryPayment' => 'Submit New Invoice',
@@ -4171,7 +4335,7 @@ extension on Translations {
 			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Failed to generate invoice: ${details}',
 			'taker.paymentFailed.walletSection.title' => 'Generate invoice from wallet',
 			'taker.paymentFailed.walletSection.defaultLabel' => 'default',
-			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tap to generate invoice for ${amountSats} sats',
+			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tap to generate invoice for ${amountSats}',
 			'taker.paymentFailed.loading.processingPayment' => 'Processing your payment retry...',
 			'taker.paymentFailed.success.title' => 'Payment Successful',
 			'taker.paymentFailed.success.message' => 'Your payment has been processed successfully.',
@@ -4222,6 +4386,8 @@ extension on Translations {
 			'generateNewKey.description' => 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven\'t backed it up.',
 			'generateNewKey.buttons.generate' => 'Generate',
 			'generateNewKey.errors.activeOffer' => 'You cannot generate a new Neko while you have an active offer.',
+			_ => null,
+		} ?? switch (path) {
 			'generateNewKey.errors.failed' => 'Failed to generate new Neko',
 			'generateNewKey.feedback.success' => 'New Neko generated successfully!',
 			'generateNewKey.tooltips.generate' => 'Generate New Neko',
@@ -4230,8 +4396,6 @@ extension on Translations {
 			'backup.feedback.copied' => 'Private key copied to clipboard!',
 			'backup.tooltips.backup' => 'Backup Neko',
 			'restore.title' => 'Restore',
-			_ => null,
-		} ?? switch (path) {
 			'restore.labels.privateKey' => 'Private Key',
 			'restore.buttons.restore' => 'Restore',
 			'restore.errors.invalidKey' => 'Must be a 64-character hex string.',
@@ -4287,6 +4451,28 @@ extension on Translations {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Settings',
+			'settings.offerCreation.title' => 'Offer creation',
+			'settings.offerCreation.defaultCategory' => 'Default category',
+			'settings.offerCreation.preferredCoordinator' => 'Preferred coordinator',
+			'settings.offerCreation.automaticCoordinator' => 'Automatic',
+			'settings.offerCreation.automaticCoordinatorDescription' => 'Automatically picks the most reliable available coordinator for each offer.',
+			'settings.offerCreation.enablePremium' => 'Enable premium pricing',
+			'settings.offerCreation.enablePremiumDescription' => 'Show the premium slider when creating maker offers.',
+			'settings.offerCreation.defaultPremium' => 'Default premium',
+			'settings.offerCreation.defaultPremiumDisabled' => 'Enable premium pricing to set a default premium.',
+			'settings.offerCreation.premiumPerCoordinatorNote' => 'Each coordinator sets its own maximum premium, so your default is capped by the coordinator used for an offer.',
+			'settings.offerCreation.categoryOptions.shop' => 'Shop, café or restaurant',
+			'settings.offerCreation.categoryOptions.atm' => 'ATM cash out',
+			'settings.offerCreation.categoryOptions.online' => 'Online service/product',
+			'settings.offerCreation.dialogs.selectCategory' => 'Select default category',
+			'settings.offerCreation.dialogs.selectCoordinator' => 'Select preferred coordinator',
+			'settings.offerCreation.dialogs.premiumHint' => 'Enter a percentage like 1.5. Values are rounded to 0.5% steps.',
+			'settings.offerCreation.dialogs.premiumHelper' => 'Applied when premium pricing is enabled and clamped by the selected coordinator maximum.',
+			'settings.display.title' => 'Display',
+			'settings.display.bitcoinUnit' => 'Bitcoin unit',
+			'settings.display.bitcoinUnitDescription' => 'Choose how bitcoin amounts are shown throughout the app.',
+			'settings.display.unitOptions.sats' => 'sats',
+			'settings.display.unitOptions.bitcoin' => '₿ (BIP-177)',
 			'notificationSettings.title' => 'Notifications',
 			'notificationSettings.androidOnly' => 'Background notifications are currently only supported on Android.',
 			'notificationSettings.newOfferAlerts.label' => 'New offer alerts',
@@ -4355,7 +4541,8 @@ extension on Translations {
 			'offerNotifications.blikReady.title' => 'BLIK code ready',
 			'offerNotifications.blikReady.body' => 'Your BLIK code is ready to view.',
 			'offerNotifications.newOffer.title' => 'New offer available',
-			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats',
+			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
+			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premium',
 			'offerNotifications.categories.shop' => 'Shop',
 			'offerNotifications.categories.atm' => 'ATM',
 			'offerNotifications.categories.online' => 'Online',

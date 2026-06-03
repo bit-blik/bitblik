@@ -14,8 +14,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../config/group_links.dart';
 import 'package:bitblik_core/core.dart';
 import '../utils/category_icons.dart';
+import '../utils/bitcoin_display.dart';
 import '../providers/providers.dart';
 import '../widgets/lightning_address_widget.dart';
+import '../widgets/premium_info.dart';
 import '../widgets/progress_indicators.dart'; // Import the progress indicators
 import 'taker_flow/taker_submit_blik_screen.dart'; // Import new screen
 import 'taker_flow/taker_wait_confirmation_screen.dart'; // Import new screen
@@ -271,23 +273,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                   );
 
                               if (reservationTimestamp != null) {
-                                final Offer updatedOffer = Offer(
-                                  id: offer.id,
-                                  amountSats: offer.amountSats,
-                                  takerFees: offer.takerFees,
-                                  makerFees: offer.makerFees,
-                                  fiatCurrency: offer.fiatCurrency,
-                                  fiatAmount: offer.fiatAmount,
+                                final Offer updatedOffer = offer.copyWith(
                                   status: OfferStatus.reserved,
-                                  coordinatorPubkey: offer.coordinatorPubkey,
-                                  createdAt: offer.createdAt,
-                                  makerPubkey: offer.makerPubkey,
                                   takerPubkey: takerId,
                                   reservedAt: reservationTimestamp,
-                                  blikReceivedAt: offer.blikReceivedAt,
-                                  blikCode: offer.blikCode,
-                                  holdInvoicePaymentHash:
-                                      offer.holdInvoicePaymentHash,
                                 );
 
                                 await ref
@@ -311,8 +300,12 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                 ref.invalidate(availableOffersProvider);
                               }
                             } catch (e) {
-                              final errorMsg = t.reservations.errors
-                                  .failedToReserve(details: e.toString());
+                              final errorMsg =
+                                  e is CannotTakeOwnOfferException
+                                      ? t.offers.errors.cannotTakeOwnOffer
+                                      : t.reservations.errors.failedToReserve(
+                                        details: e.toString(),
+                                      );
                               ref.read(errorProvider.notifier).state = errorMsg;
                               if (scaffoldMessenger.mounted) {
                                 scaffoldMessenger.showSnackBar(
@@ -375,6 +368,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
     final router = GoRouter.of(context);
     final hasReceivingWalletAsync = ref.watch(hasReceivingWalletProvider);
     final t = Translations.of(context);
+    final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
 
     final offersAsyncValue = ref.watch(availableOffersProvider);
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
@@ -669,6 +663,24 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                   return;
                                                 }
 
+                                                // Cannot take your own offer
+                                                if (offer.makerPubkey ==
+                                                    publicKey) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        t
+                                                            .offers
+                                                            .errors
+                                                            .cannotTakeOwnOffer,
+                                                      ),
+                                                    ),
+                                                  );
+                                                  return;
+                                                }
+
                                                 // Check if there is any receiving-capable wallet
                                                 final hasReceivingWallet =
                                                     await ref.read(
@@ -739,36 +751,12 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                   if (reservationTimestamp !=
                                                       null) {
                                                     final Offer
-                                                    updatedOffer = Offer(
-                                                      id: offer.id,
-                                                      amountSats:
-                                                          offer.amountSats,
-                                                      takerFees:
-                                                          offer.takerFees,
-                                                      makerFees:
-                                                          offer.makerFees,
-                                                      fiatCurrency:
-                                                          offer.fiatCurrency,
-                                                      fiatAmount:
-                                                          offer.fiatAmount,
+                                                    updatedOffer = offer.copyWith(
                                                       status:
                                                           OfferStatus.reserved,
-                                                      coordinatorPubkey:
-                                                          offer
-                                                              .coordinatorPubkey,
-                                                      createdAt:
-                                                          offer.createdAt,
-                                                      makerPubkey:
-                                                          offer.makerPubkey,
                                                       takerPubkey: takerId,
                                                       reservedAt:
                                                           reservationTimestamp,
-                                                      blikReceivedAt:
-                                                          offer.blikReceivedAt,
-                                                      blikCode: offer.blikCode,
-                                                      holdInvoicePaymentHash:
-                                                          offer
-                                                              .holdInvoicePaymentHash,
                                                     );
 
                                                     ref
@@ -813,12 +801,20 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     );
                                                   }
                                                 } catch (e) {
-                                                  final errorMsg = t
-                                                      .reservations
-                                                      .errors
-                                                      .failedToReserve(
-                                                        details: e.toString(),
-                                                      );
+                                                  final errorMsg =
+                                                      e
+                                                              is CannotTakeOwnOfferException
+                                                          ? t
+                                                              .offers
+                                                              .errors
+                                                              .cannotTakeOwnOffer
+                                                          : t
+                                                              .reservations
+                                                              .errors
+                                                              .failedToReserve(
+                                                                details:
+                                                                    e.toString(),
+                                                              );
                                                   ref
                                                       .read(
                                                         errorProvider.notifier,
@@ -953,8 +949,6 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                       );
                                     }
 
-                                    trailingWidget ??= const SizedBox.shrink();
-
                                     return Column(
                                       children: [
                                         InkWell(
@@ -1005,24 +999,26 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                   ),
 
                                                 ListTile(
-                                                  leading: offer.category != null
-                                                      ? SizedBox(
-                                                          width: 40,
-                                                          height: 40,
-                                                          child: Center(
-                                                            child: categoryIconWidget(
-                                                              offer.category,
-                                                              28,
+                                                  leading:
+                                                      offer.category != null
+                                                          ? SizedBox(
+                                                            width: 40,
+                                                            height: 40,
+                                                            child: Center(
+                                                              child:
+                                                                  categoryIconWidget(
+                                                                    offer
+                                                                        .category,
+                                                                    28,
+                                                                  ),
                                                             ),
-                                                          ),
-                                                        )
-                                                      : null,
+                                                          )
+                                                          : null,
                                                   title: Text(
                                                     t.offers.details
                                                         .amountWithCurrency(
                                                           amount: formatDouble(
-                                                            offer.fiatAmount ??
-                                                                0.0,
+                                                            offer.fiatAmount,
                                                           ),
                                                           currency:
                                                               offer
@@ -1036,17 +1032,36 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                         fontSize: 24,
                                                         color: Colors.black,
                                                       ),
-                                                  subtitle: Text(
-                                                    t.offers.details.takerFee(fee: offer.takerFees?.toString() ?? "0"),
+                                                  subtitle: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        '${t.offers.details.takerFeeLabel}: ${formatBitcoinAmount(context, bitcoinDisplayUnit, offer.takerFees ?? 0)}',
+                                                      ),
+                                                      if (offer.premiumPercent >
+                                                          0) ...[
+                                                        const SizedBox(
+                                                          height: 6,
+                                                        ),
+                                                        PremiumChip(
+                                                          premiumPercent:
+                                                              offer
+                                                                  .premiumPercent,
+                                                          viewerRole:
+                                                              PremiumViewerRole
+                                                                  .taker,
+                                                        ),
+                                                      ],
+                                                    ],
                                                   ),
                                                   subtitleTextStyle: TextStyle(
                                                     fontSize: 12,
                                                     color: Colors.grey[700],
                                                   ),
                                                   isThreeLine: true,
-                                                  trailing: const Icon(
-                                                    Icons.arrow_forward_ios,
-                                                  ),
+                                                  trailing: trailingWidget,
                                                 ),
                                               ],
                                             ),
@@ -1223,11 +1238,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  t.offers.details.amount(
-                                                    amount:
-                                                        offer.amountSats
-                                                            .toString(),
-                                                  ),
+                                                  '${t.offers.details.amountLabel}: ${formatBitcoinAmount(context, bitcoinDisplayUnit, offer.amountSats)}',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     color: Colors.grey[600],
@@ -1236,11 +1247,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                       TextOverflow.ellipsis,
                                                 ),
                                                 Text(
-                                                  t.offers.details.takerFee(
-                                                    fee:
-                                                        offer.takerFees
-                                                            .toString(),
-                                                  ),
+                                                  '${t.offers.details.takerFeeLabel}: ${formatBitcoinAmount(context, bitcoinDisplayUnit, offer.takerFees ?? 0)}',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     color: Colors.grey[600],
@@ -1249,6 +1256,16 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                       TextOverflow.ellipsis,
                                                   maxLines: 1,
                                                 ),
+                                                if (offer.premiumPercent >
+                                                    0) ...[
+                                                  const SizedBox(height: 4),
+                                                  PremiumChip(
+                                                    premiumPercent:
+                                                        offer.premiumPercent,
+                                                    viewerRole:
+                                                        PremiumViewerRole.taker,
+                                                  ),
+                                                ],
                                               ],
                                             ),
                                           ),

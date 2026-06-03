@@ -87,12 +87,17 @@ class DatabaseService {
         taker_payment_failure_reason TEXT NULL,
         fiat_amount NUMERIC,
         fiat_currency TEXT,
-        category TEXT
+        category TEXT,
+        premium_percent NUMERIC NOT NULL DEFAULT 0
       );
     ''');
     await _connection!.execute('''
       ALTER TABLE offers
       ADD COLUMN IF NOT EXISTS category TEXT;
+    ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS premium_percent NUMERIC NOT NULL DEFAULT 0;
     ''');
     await _connection!.execute('''
       ALTER TABLE offers
@@ -199,8 +204,8 @@ class DatabaseService {
     final now = DateTime.now().toUtc();
     await _connection!.execute(
       '''
-        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category)
-        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category)
+        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category, premium_percent)
+        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category, @premium_percent)
       ''',
       substitutionValues: {
         'id': offer.id,
@@ -216,6 +221,7 @@ class DatabaseService {
         'fiat_amount': offer.fiatAmount,
         'fiat_currency': offer.fiatCurrency,
         'category': offer.category?.name,
+        'premium_percent': offer.premiumPercent,
       },
     );
     return offer.copyWith(updatedAt: now);
@@ -522,6 +528,12 @@ class DatabaseService {
       takerFees: map['taker_fees'],
       takerPaymentFailureReason: map['taker_payment_failure_reason'],
       category: parseCategory(map['category']),
+      premiumPercent: () {
+        final v = map['premium_percent'];
+        if (v is num) return v.toDouble();
+        if (v is String) return double.tryParse(v) ?? 0.0;
+        return 0.0;
+      }(),
     );
 }
 

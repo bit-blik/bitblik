@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../utils/bitcoin_display.dart';
 
 /// Details for a single coordinator, reachable by tapping its name/logo
 /// anywhere in the app. Shows metadata and — crucially — the **relays in use**
@@ -25,6 +26,7 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     final t = Translations.of(context);
     final record = ref.watch(coordinatorRecordByPubkeyProvider(pubkey));
     final connectivity = ref.watch(relayConnectivityProvider);
+    final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
 
     final name = record?.name ?? t.coordinator.details.title;
     final icon = record?.icon;
@@ -33,108 +35,136 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(t.coordinator.details.title)),
       body: RefreshIndicator(
         onRefresh: () => _refresh(ref),
-        child: record == null
-          ? ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
-                SizedBox(height: 200),
-                Center(child: CircularProgressIndicator()),
-              ],
-            )
-          : ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              children: [
-                Row(
+        child:
+            record == null
+                ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: const [
+                    SizedBox(height: 200),
+                    Center(child: CircularProgressIndicator()),
+                  ],
+                )
+                : ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
                   children: [
-                    _logo(icon, 48),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.w600),
+                    Row(
+                      children: [
+                        _logo(icon, 48),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              if (record.version.isNotEmpty)
+                                Text(
+                                  'v${record.version}',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: Colors.grey),
+                                ),
+                            ],
                           ),
-                          if (record.version.isNotEmpty)
-                            Text(
-                              'v${record.version}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: Colors.grey),
-                            ),
-                        ],
+                        ),
+                        _statusChip(context, t, record.responsive),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _infoRow(
+                      context,
+                      t.coordinator.details.makerFee,
+                      '${record.makerFee.toStringAsFixed(2)}%',
+                    ),
+                    _infoRow(
+                      context,
+                      t.coordinator.details.takerFee,
+                      '${record.takerFee.toStringAsFixed(2)}%',
+                    ),
+                    _infoRow(
+                      context,
+                      t.coordinator.details.amountRange,
+                      formatBitcoinRange(
+                        context,
+                        bitcoinDisplayUnit,
+                        record.minAmountSats,
+                        record.maxAmountSats,
                       ),
                     ),
-                    _statusChip(context, t, record.responsive),
+                    _infoRow(
+                      context,
+                      t.coordinator.details.maxPremium,
+                      '${record.maxPremium.toStringAsFixed(1).replaceAll(RegExp(r'\\.0$'), '')}%',
+                    ),
+                    if (record.reservationSeconds > 0)
+                      _infoRow(
+                        context,
+                        t.coordinator.details.reservationTime,
+                        '${record.reservationSeconds}s',
+                      ),
+                    if (record.currencies.isNotEmpty)
+                      _infoRow(
+                        context,
+                        t.coordinator.details.currencies,
+                        record.currencies.join(', '),
+                      ),
+                    _infoRow(
+                      context,
+                      t.coordinator.details.yourOffers,
+                      '${record.localFinishedCount}',
+                    ),
+                    _infoRow(
+                      context,
+                      t.coordinator.details.successfulOffers,
+                      '${record.networkFinishedCount}',
+                    ),
+                    const Divider(height: 32),
+
+                    // ── Relays in use ────────────────────────────────────────
+                    Text(
+                      t.coordinator.details.relaysInUse,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      t.coordinator.details.relaysInUseHint,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    if (record.relays.isEmpty)
+                      Text(
+                        t.coordinator.details.noRelays,
+                        style: const TextStyle(color: Colors.grey),
+                      )
+                    else
+                      ...record.relays.map(
+                        (relay) => _relayTile(context, relay, connectivity),
+                      ),
+
+                    const SizedBox(height: 24),
+                    if (record.info?.nostrNpub != null)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.open_in_new, size: 16),
+                        label: Text(t.coordinator.details.openNostrProfile),
+                        onPressed: () => _openNjump(record.info!.nostrNpub!),
+                      ),
+                    if (record.termsOfUsageNaddr != null) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.description_outlined, size: 16),
+                        label: Text(t.coordinator.details.termsOfUsage),
+                        onPressed: () => _openNjump(record.termsOfUsageNaddr!),
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 16),
-                _infoRow(context, t.coordinator.details.makerFee,
-                    '${record.makerFee.toStringAsFixed(2)}%'),
-                _infoRow(context, t.coordinator.details.takerFee,
-                    '${record.takerFee.toStringAsFixed(2)}%'),
-                _infoRow(
-                    context,
-                    t.coordinator.details.amountRange,
-                    '${record.minAmountSats} - ${record.maxAmountSats} sats'),
-                if (record.reservationSeconds > 0)
-                  _infoRow(context, t.coordinator.details.reservationTime,
-                      '${record.reservationSeconds}s'),
-                if (record.currencies.isNotEmpty)
-                  _infoRow(context, t.coordinator.details.currencies,
-                      record.currencies.join(', ')),
-                _infoRow(context, t.coordinator.details.yourOffers,
-                    '${record.localFinishedCount}'),
-                _infoRow(context, t.coordinator.details.successfulOffers,
-                    '${record.networkFinishedCount}'),
-                const Divider(height: 32),
-
-                // ── Relays in use ────────────────────────────────────────
-                Text(
-                  t.coordinator.details.relaysInUse,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  t.coordinator.details.relaysInUseHint,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey),
-                ),
-                const SizedBox(height: 8),
-                if (record.relays.isEmpty)
-                  Text(
-                    t.coordinator.details.noRelays,
-                    style: const TextStyle(color: Colors.grey),
-                  )
-                else
-                  ...record.relays.map(
-                    (relay) => _relayTile(context, relay, connectivity),
-                  ),
-
-                const SizedBox(height: 24),
-                if (record.info?.nostrNpub != null)
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.open_in_new, size: 16),
-                    label: Text(t.coordinator.details.openNostrProfile),
-                    onPressed: () => _openNjump(record.info!.nostrNpub!),
-                  ),
-                if (record.termsOfUsageNaddr != null) ...[
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.description_outlined, size: 16),
-                    label: Text(t.coordinator.details.termsOfUsage),
-                    onPressed: () => _openNjump(record.termsOfUsageNaddr!),
-                  ),
-                ],
-              ],
-            ),
       ),
     );
   }
@@ -216,8 +246,7 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
       RelayConnectionState.disconnected => Colors.red,
       null => Colors.grey,
     };
-    final shortUrl =
-        relay.replaceFirst('wss://', '').replaceFirst('ws://', '');
+    final shortUrl = relay.replaceFirst('wss://', '').replaceFirst('ws://', '');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(

@@ -11,6 +11,7 @@ import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
+import '../../settings/app_preferences.dart';
 import '../coordinator_details_screen.dart';
 // CoordinatorRecord comes from bitblik_core
 
@@ -127,7 +128,18 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   bool _coordinatorPickerOpen = false; // Drives the dropdown arrow direction
   bool _termsAccepted = false; // Track if terms of usage are accepted
   bool _hasTriedAutoSelect = false; // Track if we've tried to auto-select
+  // True once the user manually picks a coordinator from the chooser. While
+  // set, amount-driven auto re-selection won't override their choice (unless
+  // the chosen coordinator no longer fits the entered amount).
+  bool _userPickedCoordinator = false;
   OfferCategory? _selectedCategory = OfferCategory.shop;
+  OfferCategory _defaultCategoryPreference = OfferCategory.shop;
+  double _premiumPercent = 0; // Maker premium % above market price
+  double _defaultPremiumPreference = 0;
+  bool _premiumEnabled = false;
+  bool _userAdjustedPremium = false;
+  String? _preferredCoordinatorPubkey;
+  BitcoinDisplayUnit _bitcoinDisplayUnit = BitcoinDisplayUnit.sats;
   bool _ecommerceRiskAccepted = false;
   bool _showCategoryOnboarding = false;
   bool _categoryOnboardingExpanded = false;
@@ -210,6 +222,23 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final apiService = ref.read(apiServiceProvider);
 
     try {
+      final preferences = await AppPreferencesStore.load();
+      if (!mounted) return;
+      setState(() {
+        _defaultCategoryPreference = preferences.offerCreation.defaultCategory;
+        _selectedCategory = preferences.offerCreation.defaultCategory;
+        _premiumEnabled = preferences.offerCreation.premiumEnabled;
+        _defaultPremiumPreference =
+            preferences.offerCreation.defaultPremiumPercent;
+        _premiumPercent =
+            preferences.offerCreation.premiumEnabled
+                ? preferences.offerCreation.defaultPremiumPercent
+                : 0;
+        _preferredCoordinatorPubkey =
+            preferences.offerCreation.preferredCoordinatorPubkey;
+        _bitcoinDisplayUnit = preferences.display.bitcoinDisplayUnit;
+      });
+
       final rate = await apiService.getBtcPlnRate();
       if (!mounted) return;
       setState(() {
@@ -243,8 +272,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       final responsiveCoordinators =
           coordinators.where((c) => c.responsive == true).toList();
       if (responsiveCoordinators.isNotEmpty) {
-        final firstCoordinator = responsiveCoordinators.first;
-        _selectCoordinator(firstCoordinator);
+        _selectCoordinator(_choosePreferredCoordinator(responsiveCoordinators));
       }
     }
   }
@@ -273,21 +301,61 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       return;
     }
 
-    // Always settle on the first (highest-priority) coordinator that fits.
-    final best = responsive.first;
+    // Respect a manual choice as long as it still fits the entered amount.
+    if (_userPickedCoordinator) {
+      final stillFits = responsive.any(
+        (c) => c.pubkey == _selectedCoordinatorPubkey,
+      );
+      if (stillFits) return;
+    }
+
+    // Otherwise settle on the first (highest-priority) coordinator that fits.
+    final best = _choosePreferredCoordinator(responsive);
     if (best.pubkey != _selectedCoordinatorPubkey) {
       _selectCoordinator(best);
     }
   }
 
-  Future<void> _selectCoordinator(CoordinatorRecord coordinator) async {
+  CoordinatorRecord _choosePreferredCoordinator(
+    List<CoordinatorRecord> candidates,
+  ) {
+    final preferredPubkey = _preferredCoordinatorPubkey;
+    if (preferredPubkey != null) {
+      for (final coordinator in candidates) {
+        if (coordinator.pubkey == preferredPubkey) return coordinator;
+      }
+    }
+    return candidates.first;
+  }
+
+  Future<void> _selectCoordinator(
+    CoordinatorRecord coordinator, {
+    bool userInitiated = false,
+  }) async {
     final supportsCategory = _supportsOfferCategory(coordinator.version);
     setState(() {
+      // Sticky for the current screen session: once the user has manually
+      // touched the coordinator picker, blur-time auto-selection should stop
+      // overriding their in-range choice.
+      if (userInitiated) {
+        _userPickedCoordinator = true;
+      }
       _selectedCoordinatorPubkey = coordinator.pubkey;
       _selectedCoordinatorInfo = coordinator.toCoordinatorInfo();
       if (!supportsCategory) {
         _selectedCategory = null;
         _ecommerceRiskAccepted = false;
+      } else if (_selectedCategory == null) {
+        _selectedCategory = _defaultCategoryPreference;
+      }
+      // Clamp premium to the newly selected coordinator's advertised max.
+      final maxPremium = coordinator.maxPremium;
+      if (!_premiumEnabled || maxPremium <= 0) {
+        _premiumPercent = 0;
+      } else if (!_userAdjustedPremium && _premiumPercent <= 0) {
+        _premiumPercent = _defaultPremiumPreference.clamp(0, maxPremium);
+      } else if (_premiumPercent > maxPremium) {
+        _premiumPercent = maxPremium;
       }
     });
 
@@ -434,6 +502,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         makerId: makerId,
         category: supportsCategory ? _selectedCategory : null,
         coordinatorPubkey: coordinatorPubkey,
+        premiumPercent: _premiumPercent,
       );
       final paymentHash = result['paymentHash'] as String;
       ref.read(holdInvoiceProvider.notifier).state = result['holdInvoice'];
@@ -454,6 +523,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               makerPubkey: makerId,
               coordinatorPubkey: coordinatorPubkey,
               category: supportsCategory ? _selectedCategory : null,
+              premiumPercent:
+                  (result['premiumPercent'] as num?)?.toDouble() ??
+                  _premiumPercent,
             ),
           );
       if (mounted) {
@@ -523,7 +595,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                   color: Colors.grey[800],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: FutureBuilder<({Map<String, double?> rates, DateTime fetchedAt})>(
+                child: FutureBuilder<
+                  ({Map<String, double?> rates, DateTime fetchedAt})
+                >(
                   future: apiService.getSourceRates(),
                   builder: (context, snapshot) {
                     final data = snapshot.data;
@@ -689,7 +763,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                         ? null
                                         : (_) {
                                           Navigator.of(context).pop();
-                                          _selectCoordinator(coordinator);
+                                          _selectCoordinator(
+                                            coordinator,
+                                            userInitiated: true,
+                                          );
                                         },
                               ),
                             ],
@@ -711,10 +788,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   maxAmount: maxPln,
                                   currency: 'PLN',
                                 ),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: disabled ? Colors.grey : null,
-                                    ),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.copyWith(
+                                  color: disabled ? Colors.grey : null,
+                                ),
                               ),
                               Text(
                                 t.coordinator.info.feeDisplay(fee: feePct),
@@ -735,12 +813,13 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               ? null
                               : () {
                                 Navigator.of(context).pop();
-                                _selectCoordinator(coordinator);
+                                _selectCoordinator(
+                                  coordinator,
+                                  userInitiated: true,
+                                );
                               },
                       tileColor:
-                          disabled
-                              ? Colors.grey.withValues(alpha: 0.15)
-                              : null,
+                          disabled ? Colors.grey.withValues(alpha: 0.15) : null,
                     );
                   }).toList(),
             ),
@@ -1028,60 +1107,76 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final t = Translations.of(context);
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.maker.amountForm.category.label),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: OfferCategory.values.map((category) {
-              final hint = switch (category) {
-                OfferCategory.shop => t.maker.amountForm.category.physicalShopHint,
-                OfferCategory.atm => t.maker.amountForm.category.atmHint,
-                OfferCategory.online => t.maker.amountForm.category.ecommerceWarningBody,
-              };
-              final name = switch (category) {
-                OfferCategory.shop => t.maker.amountForm.category.options.physicalShop,
-                OfferCategory.atm => t.maker.amountForm.category.options.atmCashout,
-                OfferCategory.online => t.maker.amountForm.category.options.onlineService,
-              };
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: category != OfferCategory.values.last ? 16 : 0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        _categoryIconWidget(category, 22, Colors.grey[700]!),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
+      builder:
+          (context) => AlertDialog(
+            title: Text(t.maker.amountForm.category.label),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children:
+                    OfferCategory.values.map((category) {
+                      final hint = switch (category) {
+                        OfferCategory.shop =>
+                          t.maker.amountForm.category.physicalShopHint,
+                        OfferCategory.atm =>
+                          t.maker.amountForm.category.atmHint,
+                        OfferCategory.online =>
+                          t.maker.amountForm.category.ecommerceWarningBody,
+                      };
+                      final name = switch (category) {
+                        OfferCategory.shop =>
+                          t.maker.amountForm.category.options.physicalShop,
+                        OfferCategory.atm =>
+                          t.maker.amountForm.category.options.atmCashout,
+                        OfferCategory.online =>
+                          t.maker.amountForm.category.options.onlineService,
+                      };
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom:
+                              category != OfferCategory.values.last ? 16 : 0,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(hint, style: const TextStyle(fontSize: 13, height: 1.4)),
-                  ],
-                ),
-              );
-            }).toList(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _categoryIconWidget(
+                                  category,
+                                  22,
+                                  Colors.grey[700]!,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              hint,
+                              style: const TextStyle(fontSize: 13, height: 1.4),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(t.common.buttons.close),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(t.common.buttons.close),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1487,12 +1582,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                         _categoryShortLabel(category, t),
                                         style: TextStyle(
                                           fontSize: 13,
-                                          fontWeight: selected
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                          color: selected
-                                              ? Colors.red
-                                              : Colors.grey[700],
+                                          fontWeight:
+                                              selected
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w400,
+                                          color:
+                                              selected
+                                                  ? Colors.red
+                                                  : Colors.grey[700],
                                         ),
                                       ),
                                     ],
@@ -1573,10 +1670,16 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: GestureDetector(
-                              onTap: () =>
-                                  _showCategoryInfoDialog(OfferCategory.online),
+                              onTap:
+                                  () => _showCategoryInfoDialog(
+                                    OfferCategory.online,
+                                  ),
                               child: Text(
-                                t.maker.amountForm.category.ecommerceConfirmation,
+                                t
+                                    .maker
+                                    .amountForm
+                                    .category
+                                    .ecommerceConfirmation,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -1601,8 +1704,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               color: Colors.amber,
                               size: 18,
                             ),
-                            onPressed: () =>
-                                _showCategoryInfoDialog(OfferCategory.online),
+                            onPressed:
+                                () => _showCategoryInfoDialog(
+                                  OfferCategory.online,
+                                ),
                           ),
                         ],
                       ),
@@ -1745,7 +1850,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         Text(
                           (_selectedCoordinatorInfo != null &&
                                   _satsEquivalent != null)
-                              ? '≈${(_satsEquivalent! * _selectedCoordinatorInfo!.makerFee / 100).toStringAsFixed(0)} sats'
+                              ? _formatBitcoinAmount(
+                                _satsEquivalent! *
+                                    _selectedCoordinatorInfo!.makerFee /
+                                    100,
+                                approximate: true,
+                              )
                               : '-',
                           style: const TextStyle(
                             fontSize: 14,
@@ -1780,15 +1890,102 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         },
                       ),
 
+                    // Premium row + slider (only when coordinator allows it)
+                    if (_premiumEnabled &&
+                        _selectedCoordinatorInfo != null &&
+                        _selectedCoordinatorInfo!.maxPremiumPercent > 0) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6.0),
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: _showPremiumInfoDialog,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    t.maker.amountForm.labels.premium,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SliderTheme(
+                                data: SliderTheme.of(context).copyWith(
+                                  activeTrackColor: const Color(0xFFFF007F),
+                                  thumbColor: const Color(0xFFFF007F),
+                                  overlayColor: const Color(0x33FF007F),
+                                ),
+                                child: Slider(
+                                  value: _premiumPercent.clamp(
+                                    0,
+                                    _selectedCoordinatorInfo!.maxPremiumPercent,
+                                  ),
+                                  min: 0,
+                                  max:
+                                      _selectedCoordinatorInfo!
+                                          .maxPremiumPercent,
+                                  divisions:
+                                      (_selectedCoordinatorInfo!
+                                                  .maxPremiumPercent /
+                                              0.5)
+                                          .round(),
+                                  label: '${_formatPremium(_premiumPercent)}%',
+                                  onChanged: (value) {
+                                    setState(() {
+                                      // Snap to 0.5 steps.
+                                      _premiumPercent = (value * 2).round() / 2;
+                                      _userAdjustedPremium = true;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '${_formatPremium(_premiumPercent)}%',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color:
+                                    _premiumPercent > 0
+                                        ? const Color(0xFFFF007F)
+                                        : Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     const Divider(height: 16),
 
                     // Satoshis to pay row
                     _selectedCoordinatorInfo != null
                         ? _buildDetailRow(
-                          t.maker.amountForm.labels.satoshisToPay,
+                          _bitcoinToPayLabel(t),
                           Text(
                             _satsEquivalent != null
-                                ? "≈${(_satsEquivalent! + (_satsEquivalent! * _selectedCoordinatorInfo!.makerFee / 100)).toStringAsFixed(0)}"
+                                ? _formatBitcoinAmount(
+                                  _satsEquivalent! *
+                                          (1 - _premiumPercent / 100) +
+                                      (_satsEquivalent! *
+                                          _selectedCoordinatorInfo!.makerFee /
+                                          100),
+                                  approximate: true,
+                                )
                                 : '-',
                             style: const TextStyle(
                               fontSize: 14,
@@ -1955,10 +2152,54 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
   }
 
+  /// Trim trailing ".0" so 5.0 -> "5" but 2.5 stays "2.5".
+  String _formatPremium(double premium) {
+    final s = premium.toStringAsFixed(1);
+    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+  }
+
+  void _showPremiumInfoDialog() {
+    final t = Translations.of(context);
+    showDialog<void>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(t.maker.amountForm.labels.premium),
+            content: Text(t.maker.amountForm.tooltips.premiumInfo),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(t.common.buttons.close),
+              ),
+            ],
+          ),
+    );
+  }
+
   /// Formats a number with spaces as thousand separators
   String _formatNumber(int number) {
     final localeTag = Localizations.localeOf(context).toLanguageTag();
     final formatter = NumberFormat.decimalPattern(localeTag);
     return formatter.format(number);
+  }
+
+  String _formatBitcoinAmount(double amount, {bool approximate = false}) {
+    final prefix = approximate ? '≈' : '';
+    final formatted = _formatNumber(amount.round());
+    switch (_bitcoinDisplayUnit) {
+      case BitcoinDisplayUnit.sats:
+        return '$prefix$formatted sats';
+      case BitcoinDisplayUnit.bitcoin:
+        return '$prefix₿$formatted';
+    }
+  }
+
+  String _bitcoinToPayLabel(Translations t) {
+    switch (_bitcoinDisplayUnit) {
+      case BitcoinDisplayUnit.sats:
+        return t.maker.amountForm.labels.satoshisToPay;
+      case BitcoinDisplayUnit.bitcoin:
+        return t.maker.amountForm.labels.bitcoinToPay;
+    }
   }
 }

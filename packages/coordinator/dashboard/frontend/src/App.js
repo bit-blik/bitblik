@@ -5,6 +5,17 @@ import { Calendar, TrendingUp, DollarSign, AlertCircle, Clock, Bitcoin, List, Ba
 import './App.css';
 import OffersPage from './pages/OffersPage';
 
+// Stable colors for known categories; unknowns fall back to the palette.
+const CATEGORY_CHART_COLORS = {
+  atm: '#84cc16',
+  online: '#3b82f6',
+  shop: '#016b61',
+  unknown: '#94a3b8',
+};
+const CATEGORY_FALLBACK_PALETTE = ['#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#ef4444', '#6366f1'];
+const categoryColor = (key, index) =>
+  CATEGORY_CHART_COLORS[key] || CATEGORY_FALLBACK_PALETTE[index % CATEGORY_FALLBACK_PALETTE.length];
+
 const Navigation = () => {
   const location = useLocation();
 
@@ -43,6 +54,9 @@ const AnalyticsDashboard = () => {
   const [totals, setTotals] = useState(null);
   const [weekdaySuccess, setWeekdaySuccess] = useState([]);
   const [weekdayVolume, setWeekdayVolume] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+  const [categoryVolumeData, setCategoryVolumeData] = useState([]);
+  const [categoryKeys, setCategoryKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -172,6 +186,32 @@ const AnalyticsDashboard = () => {
             avg_volume_fiat: parseFloat(item.avg_volume_fiat || 0),
           }))
         );
+
+        // Pivot category distribution into per-period rows for a stacked bar
+        // chart: { date, <category>: count, ... }. Categories discovered
+        // dynamically so new categories appear without code changes.
+        const catRows = result.categoryDistribution || [];
+        const keys = [];
+        const byDate = new Map();
+        const volByDate = new Map();
+        catRows.forEach((row) => {
+          const key = row.category || 'unknown';
+          if (!keys.includes(key)) keys.push(key);
+          if (!byDate.has(row.date)) byDate.set(row.date, { date: row.date });
+          if (!volByDate.has(row.date)) volByDate.set(row.date, { date: row.date });
+          byDate.get(row.date)[key] = parseInt(row.count || 0, 10);
+          volByDate.get(row.date)[key] = parseFloat(row.volume || 0);
+        });
+        keys.sort();
+        const fillZeros = (entry) => {
+          keys.forEach((key) => {
+            if (entry[key] == null) entry[key] = 0;
+          });
+          return entry;
+        };
+        setCategoryKeys(keys);
+        setCategoryData(Array.from(byDate.values()).map(fillZeros));
+        setCategoryVolumeData(Array.from(volByDate.values()).map(fillZeros));
       } catch (err) {
         setError(err.message);
         console.error('Error fetching data:', err);
@@ -837,6 +877,48 @@ const AnalyticsDashboard = () => {
                 </ResponsiveContainer>
               </div>
             </div>
+
+            {categoryKeys.length > 0 && (
+              <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 ${contentLoadingClass}`}>
+                <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-indigo-500"></div>
+                    Category Distribution (Count)
+                  </h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={categoryData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                      <YAxis allowDecimals={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                      <Tooltip formatter={(value) => formatNumber(value)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                      <Legend />
+                      {categoryKeys.map((key, index) => (
+                        <Bar key={key} dataKey={key} stackId="categories" fill={categoryColor(key, index)} name={key} />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                    Category Distribution (Volume PLN)
+                  </h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={categoryVolumeData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                      <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
+                      <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                      <Legend />
+                      {categoryKeys.map((key, index) => (
+                        <Bar key={key} dataKey={key} stackId="categories" fill={categoryColor(key, index)} name={key} />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

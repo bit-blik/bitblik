@@ -7,6 +7,7 @@ export 'src/coordinator/coordinator_registry.dart';
 export 'src/coordinator/coordinator_store.dart';
 export 'src/models/coordinator_info.dart';
 export 'src/models/coordinator_record.dart';
+export 'src/models/exceptions.dart';
 export 'src/models/offer.dart';
 export 'src/models/offer_status_update.dart';
 export 'src/protocol/bitblik_rpc_client.dart';

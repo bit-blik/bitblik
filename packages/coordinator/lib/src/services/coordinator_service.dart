@@ -62,6 +62,9 @@ class CoordinatorService {
   late final int _minAmountSats;
   late final int _maxAmountSats;
 
+  // Maximum maker premium (%) above market price. 0 = feature disabled.
+  late final double _maxPremiumPercent;
+
   // Supported currencies
   late final List<String> _supportedCurrencies;
 
@@ -267,6 +270,9 @@ class CoordinatorService {
 
     _minAmountSats = int.tryParse(_env['MIN_AMOUNT_SATS'] ?? '') ?? 1000;
     _maxAmountSats = int.tryParse(_env['MAX_AMOUNT_SATS'] ?? '') ?? 250000;
+
+    // Maker premium cap (%). Default 0 = feature off; operator opts in.
+    _maxPremiumPercent = double.tryParse(_env['MAX_PREMIUM'] ?? '') ?? 0;
 
     _supportedCurrencies = (_env['CURRENCIES']?.split(',') ?? ['PLN'])
         .map((c) => c.trim().toUpperCase())
@@ -755,24 +761,32 @@ class CoordinatorService {
     required String makerId,
     String fiatCurrency = 'PLN',
     OfferCategory? category,
+    double premiumPercent = 0,
   }) async {
+    // Clamp premium to what this coordinator allows.
+    final premium = premiumPercent.clamp(0, _maxPremiumPercent).toDouble();
     AppLogger.info(
-        'Initiating offer: fiatAmount=$fiatAmount $fiatCurrency, maker=$makerId, category=${category?.name}');
+        'Initiating offer: fiatAmount=$fiatAmount $fiatCurrency, maker=$makerId, category=${category?.name}, premium=$premium%');
     final rate = await _getPlnRate();
     final btcPerPln = 1 / rate;
     final btcAmount = fiatAmount * btcPerPln;
-    final satsAmount = (btcAmount * 100000000).round();
+    // Market-value sats; range validation runs on this base amount.
+    final baseSats = (btcAmount * 100000000).round();
 
-    if (satsAmount < _minAmountSats) {
+    if (baseSats < _minAmountSats) {
       throw Exception(
-          'Amount $satsAmount sats is below minimum $_minAmountSats sats');
+          'Amount $baseSats sats is below minimum $_minAmountSats sats');
     }
-    if (satsAmount > _maxAmountSats) {
+    if (baseSats > _maxAmountSats) {
       throw Exception(
-          'Amount $satsAmount sats exceeds maximum $_maxAmountSats sats');
+          'Amount $baseSats sats exceeds maximum $_maxAmountSats sats');
     }
 
-    final makerFees = OfferQuote.makerFeeSats(satsAmount, _makerFeePercentage);
+    // Premium reduces the sats the maker locks for the same fiat amount.
+    final satsAmount = (baseSats * (1 - premium / 100)).round();
+
+    // Maker fee is charged on the original market value, unaffected by premium.
+    final makerFees = OfferQuote.makerFeeSats(baseSats, _makerFeePercentage);
     final takerFees = OfferQuote.takerFeeSats(satsAmount, _takerFeePercentage);
     final totalAmountSats = satsAmount + makerFees;
     final preimage = _generatePreimage();
@@ -812,6 +826,7 @@ class CoordinatorService {
       'fiatAmount': fiatAmount,
       'fiatCurrency': fiatCurrency,
       'category': category?.name,
+      'premiumPercent': premium,
       'actualPaymentHashForSubscription': returnedPaymentHashHex,
     };
     AppLogger.info(
@@ -825,6 +840,7 @@ class CoordinatorService {
       'amountSats': satsAmount,
       'makerFees': makerFees,
       'totalAmountSats': totalAmountSats,
+      'premiumPercent': premium,
       'rate': rate,
     };
   }
@@ -938,6 +954,7 @@ class CoordinatorService {
             return null;
           }
         }(),
+        premiumPercent: (pendingData['premiumPercent'] as num?)?.toDouble() ?? 0,
       );
       await _dbService.createOffer(offer);
       // --- Begin: broadcast NIP-69 order event ---
@@ -946,7 +963,7 @@ class CoordinatorService {
               .millisecondsSinceEpoch ~/
           1000;
       await _nostrService?.broadcastNip69OrderFromOffer(offer,
-          expiration: expirationUnix);
+          expiration: expirationUnix, premium: offer.premiumPercent);
       // --- End: broadcast NIP-69 order event ---
       _startFundedOfferTimer(offer);
 
@@ -1049,7 +1066,16 @@ class CoordinatorService {
         '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
     final categoryText = _formatCategoryForNotification(offer.category);
     final categorySuffix = categoryText == null ? '' : ' • $categoryText';
-    return 'New offer/Nowa oferta: ${offer.amountSats} sats ($fiatText)$categorySuffix -> https://${frontendDomain}/offers/${offer.id}';
+    final premiumSuffix = offer.premiumPercent > 0
+        ? ' • +${_formatPremium(offer.premiumPercent)}% premium/premia'
+        : '';
+    return 'New offer/Nowa oferta: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
+  }
+
+  /// Trim trailing ".0" so 5.0 -> "5" but 2.5 stays "2.5".
+  String _formatPremium(double premium) {
+    final s = premium.toStringAsFixed(1);
+    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
   }
 
   String? _formatCategoryForNotification(OfferCategory? category) {
@@ -1334,6 +1360,7 @@ class CoordinatorService {
       takerFee: _takerFeePercentage,
       minAmountSats: _minAmountSats,
       maxAmountSats: _maxAmountSats,
+      maxPremiumPercent: _maxPremiumPercent,
       currencies: List<String>.from(_supportedCurrencies),
       nostrNpub: null,
       icon: _coordinatorIconUrl.isNotEmpty ? _coordinatorIconUrl : null,
@@ -1398,6 +1425,14 @@ class CoordinatorService {
           offerId: offerId);
       _fundedOfferTimers[offerId]?.cancel();
       _fundedOfferTimers.remove(offerId);
+      return null;
+    }
+
+    // Maker cannot take their own offer.
+    if (offer.makerPubkey == takerId) {
+      AppLogger.info(
+          'Offer $offerId reservation rejected: taker $takerId is the maker.',
+          offerId: offerId);
       return null;
     }
 

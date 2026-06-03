@@ -19,6 +19,8 @@ import '../services/key_service.dart'; // Import KeyService
 import '../services/notification_service.dart';
 import '../services/offer_db_service.dart';
 import '../../i18n/gen/strings.g.dart';
+import '../settings/app_preferences.dart';
+import '../utils/bitcoin_display.dart';
 
 final keyServiceProvider = Provider<KeyService>((ref) {
   final service = KeyService();
@@ -201,17 +203,17 @@ final coordinatorInfoByPubkeyProvider =
 /// coordinator is known.
 final coordinatorRecordByPubkeyProvider =
     Provider.family<CoordinatorRecord?, String>((ref, pubkey) {
-  final async = ref.watch(discoveredCoordinatorsProvider);
-  return async.maybeWhen(
-    data: (records) {
-      for (final r in records) {
-        if (r.pubkeyHex == pubkey) return r;
-      }
-      return null;
-    },
-    orElse: () => null,
-  );
-});
+      final async = ref.watch(discoveredCoordinatorsProvider);
+      return async.maybeWhen(
+        data: (records) {
+          for (final r in records) {
+            if (r.pubkeyHex == pubkey) return r;
+          }
+          return null;
+        },
+        orElse: () => null,
+      );
+    });
 
 /// Helper provider to get reservation duration for a coordinator.
 /// Returns Duration based on coordinator's reservationSeconds, or null if coordinator info unavailable.
@@ -1255,6 +1257,29 @@ class NewOfferNotificationsNotifier extends StateNotifier<bool> {
   }
 }
 
+final bitcoinDisplayUnitProvider =
+    StateNotifierProvider<BitcoinDisplayUnitNotifier, BitcoinDisplayUnit>(
+      (ref) => BitcoinDisplayUnitNotifier(),
+    );
+
+class BitcoinDisplayUnitNotifier extends StateNotifier<BitcoinDisplayUnit> {
+  BitcoinDisplayUnitNotifier() : super(BitcoinDisplayUnit.sats) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final settings = await AppPreferencesStore.loadDisplay();
+    state = settings.bitcoinDisplayUnit;
+  }
+
+  Future<void> set(BitcoinDisplayUnit value) async {
+    state = value;
+    await AppPreferencesStore.saveDisplay(
+      DisplayPreferences(bitcoinDisplayUnit: value),
+    );
+  }
+}
+
 // Provider for app lifecycle management
 final appLifecycleProvider = Provider<AppLifecycleNotifier>((ref) {
   // Pass the ref to the notifier
@@ -1526,13 +1551,15 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       final activeOffer = _ref.read(activeOfferProvider);
       if (activeOffer != null &&
           activeOffer.status == OfferStatus.created &&
-          activeOffer.coordinatorPubkey == offer.coordinatorPubkey)
+          activeOffer.coordinatorPubkey == offer.coordinatorPubkey) {
         return;
+      }
       // On mobile suppress notification while app is in foreground
       if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
         if (_currentState == AppLifecycleState.resumed ||
-            _currentState == AppLifecycleState.inactive)
+            _currentState == AppLifecycleState.inactive) {
           return;
+        }
       }
       final strings = t.offerNotifications;
       final locale =
@@ -1541,10 +1568,15 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         locale: locale,
         decimalDigits: 2,
       );
+      final bitcoinDisplayUnit = await AppPreferencesStore.loadDisplay().then(
+        (settings) => settings.bitcoinDisplayUnit,
+      );
       final formattedAmount = numFmt.format(offer.fiatAmount);
-      final formattedSats = NumberFormat.decimalPattern(
+      final formattedSats = formatBitcoinAmountForLocale(
         locale,
-      ).format(offer.amountSats);
+        bitcoinDisplayUnit,
+        offer.amountSats,
+      );
       final categoryStr = switch (offer.category) {
         OfferCategory.shop => strings.categories.shop,
         OfferCategory.atm => strings.categories.atm,
@@ -1557,6 +1589,12 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         sats: formattedSats,
       );
       if (categoryStr.isNotEmpty) body += ' · $categoryStr';
+      if (offer.premiumPercent > 0) {
+        final premiumStr = offer.premiumPercent
+            .toStringAsFixed(1)
+            .replaceAll(RegExp(r'\.0$'), '');
+        body += ' · ${strings.newOffer.premiumSuffix(percent: premiumStr)}';
+      }
       NotificationService().showNewOffer(
         id: 20,
         title: strings.newOffer.title,
@@ -1588,7 +1626,7 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         final hasActiveOffer =
             offer != null &&
             !OfferDbService.terminalStatuses.contains(offer.status);
-        if (hasActiveOffer && offer!.status == OfferStatus.blikSentToMaker) {
+        if (hasActiveOffer && offer.status == OfferStatus.blikSentToMaker) {
           final strings = t.offerNotifications;
           NotificationService().scheduleBlikReminder(
             strings.blikPendingReminder.title,

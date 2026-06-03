@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../i18n/gen/strings.g.dart';
 import 'coordinator_management_screen.dart';
+import 'display_settings_screen.dart';
 import 'neko_management_screen.dart';
 import 'notification_settings_screen.dart';
+import 'offer_creation_settings_screen.dart';
 import 'wallet_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -62,6 +64,18 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(t.notificationSettings.title),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () => context.push(NotificationSettingsScreen.routeName),
+          ),
+          ListTile(
+            leading: const Icon(Icons.edit_note),
+            title: Text(t.settings.offerCreation.title),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => context.push(OfferCreationSettingsScreen.routeName),
+          ),
+          ListTile(
+            leading: const Icon(Icons.monitor_outlined),
+            title: Text(t.settings.display.title),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => context.push(DisplaySettingsScreen.routeName),
           ),
         ],
       ),

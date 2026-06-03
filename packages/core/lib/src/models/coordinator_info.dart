@@ -9,6 +9,10 @@ class CoordinatorInfo {
   final double takerFee;
   final int minAmountSats;
   final int maxAmountSats;
+
+  /// Maximum maker premium (%) this coordinator allows above market price.
+  /// `0` means the premium feature is disabled for this coordinator.
+  final double maxPremiumPercent;
   final List<String> currencies;
   final String? nostrNpub;
   final String? version;
@@ -22,6 +26,7 @@ class CoordinatorInfo {
     required this.takerFee,
     required this.minAmountSats,
     required this.maxAmountSats,
+    this.maxPremiumPercent = 0,
     required this.currencies,
     required this.nostrNpub,
     this.version,
@@ -37,6 +42,8 @@ class CoordinatorInfo {
       takerFee: (json['taker_fee'] as num).toDouble(),
       minAmountSats: json['min_amount_sats'] as int,
       maxAmountSats: json['max_amount_sats'] as int,
+      maxPremiumPercent:
+          (json['max_premium_percent'] as num?)?.toDouble() ?? 0,
       currencies: (json['currencies'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
@@ -55,6 +62,7 @@ class CoordinatorInfo {
       'taker_fee': takerFee,
       'min_amount_sats': minAmountSats,
       'max_amount_sats': maxAmountSats,
+      'max_premium_percent': maxPremiumPercent,
       'currencies': currencies,
       'nostr_npub': nostrNpub,
       if (version != null) 'version': version,
@@ -78,6 +86,8 @@ class CoordinatorInfo {
       icon: _emptyToNull(tags['icon']),
       minAmountSats: int.tryParse(tags['min_amount_sats'] ?? '0') ?? 0,
       maxAmountSats: int.tryParse(tags['max_amount_sats'] ?? '0') ?? 0,
+      maxPremiumPercent:
+          double.tryParse(tags['max_premium_percent'] ?? '0') ?? 0.0,
       makerFee: double.tryParse(tags['maker_fee'] ?? '0') ?? 0.0,
       takerFee: double.tryParse(tags['taker_fee'] ?? '0') ?? 0.0,
       reservationSeconds:
@@ -104,6 +114,7 @@ class CoordinatorInfo {
       ['icon', icon ?? ''],
       ['min_amount_sats', minAmountSats.toString()],
       ['max_amount_sats', maxAmountSats.toString()],
+      ['max_premium_percent', maxPremiumPercent.toString()],
       ['maker_fee', makerFee.toString()],
       ['taker_fee', takerFee.toString()],
       ['reservation_seconds', reservationSeconds.toString()],

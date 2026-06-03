@@ -1,0 +1,317 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../i18n/gen/strings.g.dart';
+import 'package:bitblik_core/core.dart';
+import '../providers/providers.dart';
+import '../settings/app_preferences.dart';
+import '../utils/category_icons.dart';
+
+class OfferCreationSettingsScreen extends ConsumerStatefulWidget {
+  const OfferCreationSettingsScreen({super.key});
+
+  static const routeName = '/settings/offer-creation';
+
+  @override
+  ConsumerState<OfferCreationSettingsScreen> createState() =>
+      _OfferCreationSettingsScreenState();
+}
+
+class _OfferCreationSettingsScreenState
+    extends ConsumerState<OfferCreationSettingsScreen> {
+  OfferCreationPreferences? _settings;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final settings = await AppPreferencesStore.loadOfferCreation();
+    if (!mounted) return;
+    setState(() {
+      _settings = settings;
+    });
+  }
+
+  Future<void> _save(OfferCreationPreferences settings) async {
+    setState(() {
+      _settings = settings;
+    });
+    await AppPreferencesStore.saveOfferCreation(settings);
+  }
+
+  String _categoryLabel(Translations t, OfferCategory category) {
+    switch (category) {
+      case OfferCategory.shop:
+        return t.settings.offerCreation.categoryOptions.shop;
+      case OfferCategory.atm:
+        return t.settings.offerCreation.categoryOptions.atm;
+      case OfferCategory.online:
+        return t.settings.offerCreation.categoryOptions.online;
+    }
+  }
+
+  CoordinatorRecord? _coordinatorFor(
+    List<CoordinatorRecord> coordinators,
+    String? pubkey,
+  ) {
+    if (pubkey == null) return null;
+    for (final coordinator in coordinators) {
+      if (coordinator.pubkey == pubkey) return coordinator;
+    }
+    return null;
+  }
+
+  Widget _coordinatorLogo(String? icon, double size) {
+    if (icon != null && icon.isNotEmpty) {
+      return icon.startsWith('http')
+          ? Image.network(
+            icon,
+            width: size,
+            height: size,
+            errorBuilder:
+                (_, _, _) => Icon(Icons.account_circle, size: size),
+          )
+          : Image.asset(icon, width: size, height: size);
+    }
+    return Icon(Icons.account_circle, size: size);
+  }
+
+  String _formatPremium(double premium) {
+    final s = premium.toStringAsFixed(1);
+    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+  }
+
+  /// Upper bound for the default-premium slider: the highest max premium
+  /// advertised across every coordinator that supports premium. Falls back to
+  /// 10% when none advertise one. The actual cap applied to an offer is the
+  /// selected coordinator's own max, which may be lower.
+  double _maxPremium(List<CoordinatorRecord> coordinators) {
+    double max = 0;
+    for (final coordinator in coordinators) {
+      if (coordinator.maxPremium > max) max = coordinator.maxPremium;
+    }
+    return max > 0 ? max : 10.0;
+  }
+
+  Future<void> _showCategoryPicker(Translations t) async {
+    final current = _settings;
+    if (current == null) return;
+    final selected = await showModalBottomSheet<OfferCategory>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(t.settings.offerCreation.dialogs.selectCategory),
+              ),
+              ...OfferCategory.values.map((category) {
+                final selected = current.defaultCategory == category;
+                return ListTile(
+                  leading: categoryIconWidget(category, 28),
+                  title: Text(_categoryLabel(t, category)),
+                  trailing:
+                      selected
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : null,
+                  onTap: () => Navigator.of(context).pop(category),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+    if (selected != null) {
+      await _save(current.copyWith(defaultCategory: selected));
+    }
+  }
+
+  Future<void> _showCoordinatorPicker(
+    Translations t,
+    List<CoordinatorRecord> coordinators,
+  ) async {
+    final current = _settings;
+    if (current == null) return;
+    const automaticSentinel = '__automatic__';
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              ListTile(
+                title: Text(t.settings.offerCreation.dialogs.selectCoordinator),
+              ),
+              ListTile(
+                leading: const Icon(Icons.auto_awesome),
+                title: Text(t.settings.offerCreation.automaticCoordinator),
+                subtitle: Text(
+                  t.settings.offerCreation.automaticCoordinatorDescription,
+                ),
+                trailing:
+                    current.preferredCoordinatorPubkey == null
+                        ? const Icon(Icons.check, color: Colors.green)
+                        : null,
+                onTap: () => Navigator.of(context).pop(automaticSentinel),
+              ),
+              ...coordinators.map((coordinator) {
+                final selected =
+                    current.preferredCoordinatorPubkey == coordinator.pubkey;
+                return ListTile(
+                  leading: _coordinatorLogo(coordinator.icon, 28),
+                  title: Text(coordinator.name),
+                  trailing:
+                      selected
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : null,
+                  onTap: () => Navigator.of(context).pop(coordinator.pubkey),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+    if (selected == null) return;
+    await _save(
+      selected == automaticSentinel
+          ? current.copyWith(clearPreferredCoordinator: true)
+          : current.copyWith(preferredCoordinatorPubkey: selected),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Translations.of(context);
+    final settings = _settings;
+    final coordinatorsAsync = ref.watch(enabledCoordinatorsProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: Text(t.settings.offerCreation.title)),
+      body:
+          settings == null
+              ? const Center(child: CircularProgressIndicator())
+              : coordinatorsAsync.when(
+                data: (coordinators) {
+                  final preferred = _coordinatorFor(
+                    coordinators,
+                    settings.preferredCoordinatorPubkey,
+                  );
+                  final isAutomatic = preferred == null;
+                  final maxPremium = _maxPremium(coordinators);
+                  return ListView(
+                    children: [
+                      ListTile(
+                        leading: categoryIconWidget(settings.defaultCategory, 28),
+                        title: Text(t.settings.offerCreation.defaultCategory),
+                        subtitle: Text(
+                          _categoryLabel(t, settings.defaultCategory),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () => _showCategoryPicker(t),
+                      ),
+                      SwitchListTile(
+                        secondary: const Icon(Icons.tune),
+                        title: Text(t.settings.offerCreation.enablePremium),
+                        subtitle: Text(
+                          t.settings.offerCreation.enablePremiumDescription,
+                        ),
+                        value: settings.premiumEnabled,
+                        onChanged: (value) {
+                          _save(settings.copyWith(premiumEnabled: value));
+                        },
+                      ),
+                      if (settings.premiumEnabled)
+                        _premiumSlider(t, settings, maxPremium),
+                      ListTile(
+                        leading:
+                            isAutomatic
+                                ? const Icon(Icons.auto_awesome)
+                                : _coordinatorLogo(preferred.icon, 28),
+                        title: Text(
+                          t.settings.offerCreation.preferredCoordinator,
+                        ),
+                        subtitle: Text(
+                          isAutomatic
+                              ? t
+                                  .settings
+                                  .offerCreation
+                                  .automaticCoordinatorDescription
+                              : preferred.name,
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () => _showCoordinatorPicker(t, coordinators),
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => Center(child: Text('$error')),
+              ),
+    );
+  }
+
+  Widget _premiumSlider(
+    Translations t,
+    OfferCreationPreferences settings,
+    double maxPremium,
+  ) {
+    final value = settings.defaultPremiumPercent.clamp(0.0, maxPremium);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.percent, color: Colors.grey),
+              const SizedBox(width: 12),
+              Text(
+                t.settings.offerCreation.defaultPremium,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const Spacer(),
+              Text(
+                '${_formatPremium(value)}%',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: value > 0 ? const Color(0xFFFF007F) : Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: const Color(0xFFFF007F),
+              thumbColor: const Color(0xFFFF007F),
+              overlayColor: const Color(0x33FF007F),
+            ),
+            child: Slider(
+              value: value,
+              min: 0,
+              max: maxPremium,
+              divisions: (maxPremium / 0.5).round().clamp(1, 1000),
+              label: '${_formatPremium(value)}%',
+              onChanged: (next) {
+                // Snap to 0.5 steps.
+                final snapped = (next * 2).round() / 2;
+                _save(settings.copyWith(defaultPremiumPercent: snapped));
+              },
+            ),
+          ),
+          Text(
+            t.settings.offerCreation.premiumPerCoordinatorNote,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -657,12 +657,34 @@ app.post('/api/offers-data', async (req, res) => {
       ORDER BY w.day_num
     `;
 
-    const [groupedResult, groupedCountResult, totalsResult, weekdaySuccessResult, weekdayVolumeResult] = await Promise.all([
+    // Category distribution per period, restricted to the same paged window
+    // of periods so the stacked bars line up with the other period charts.
+    const categoryDistributionQuery = `
+      WITH paged_periods AS (
+        SELECT DISTINCT ${dateGrouping} AS period_start
+        FROM offers
+        ORDER BY period_start DESC
+        OFFSET $1
+        LIMIT $2
+      )
+      SELECT
+        TO_CHAR(${dateGrouping}, '${dateFormat}') AS date,
+        COALESCE(NULLIF(TRIM(category), ''), 'unknown') AS category,
+        COUNT(*) FILTER (WHERE status = 'takerPaid')::INT AS count,
+        COALESCE(SUM(fiat_amount) FILTER (WHERE status = 'takerPaid'), 0) AS volume
+      FROM offers
+      WHERE ${dateGrouping} IN (SELECT period_start FROM paged_periods)
+      GROUP BY ${dateGrouping}, COALESCE(NULLIF(TRIM(category), ''), 'unknown')
+      ORDER BY ${dateGrouping} ASC
+    `;
+
+    const [groupedResult, groupedCountResult, totalsResult, weekdaySuccessResult, weekdayVolumeResult, categoryDistributionResult] = await Promise.all([
       pool.query(groupedQuery, [offset, pageSize]),
       pool.query(groupedCountQuery),
       pool.query(totalsQuery),
       pool.query(weekdaySuccessQuery),
-      pool.query(weekdayVolumeQuery)
+      pool.query(weekdayVolumeQuery),
+      pool.query(categoryDistributionQuery, [offset, pageSize])
     ]);
 
     const totalPeriods = groupedCountResult.rows[0]?.total_periods || 0;
@@ -672,6 +694,7 @@ app.post('/api/offers-data', async (req, res) => {
       totals: totalsResult.rows[0],
       weekdaySuccess: weekdaySuccessResult.rows,
       weekdayVolume: weekdayVolumeResult.rows,
+      categoryDistribution: categoryDistributionResult.rows,
       pagination: {
         page,
         pageSize,

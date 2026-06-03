@@ -39,6 +39,7 @@ import 'src/providers/providers.dart';
 import 'src/services/notification_service.dart';
 import 'src/screens/coordinator_details_screen.dart';
 import 'src/screens/coordinator_management_screen.dart';
+import 'src/screens/display_settings_screen.dart';
 import 'src/screens/faq_screen.dart'; // Import the FAQ screen
 import 'src/screens/maker_flow/maker_amount_form.dart';
 import 'src/screens/maker_flow/maker_conflict_screen.dart'; // Import the maker conflict screen
@@ -47,6 +48,7 @@ import 'src/screens/my_offers_screen.dart';
 import 'src/screens/neko_management_screen.dart';
 import 'src/screens/offer_details_screen.dart';
 import 'src/screens/offer_list_screen.dart';
+import 'src/screens/offer_creation_settings_screen.dart';
 import 'src/screens/role_selection_screen.dart';
 import 'src/screens/settings_screen.dart';
 import 'src/screens/notification_settings_screen.dart';
@@ -170,6 +172,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: NotificationSettingsScreen.routeName,
             builder: (context, state) => const NotificationSettingsScreen(),
+          ),
+          GoRoute(
+            path: OfferCreationSettingsScreen.routeName,
+            builder: (context, state) => const OfferCreationSettingsScreen(),
+          ),
+          GoRoute(
+            path: DisplaySettingsScreen.routeName,
+            builder: (context, state) => const DisplaySettingsScreen(),
           ),
           GoRoute(
             path: '/wallet',
@@ -1169,10 +1179,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8.0,
-              vertical: 4.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: Container(
               width: 13,
               height: 13,
@@ -1222,13 +1229,19 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     }
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => showRelayStatusOverlay(
-        context,
-        coordinatorRelays,
-        title: Translations.of(context).relays.coordinatorRelays,
-        onReconnect: () =>
-            ref.read(apiServiceProvider).ndk?.connectivity.tryReconnect(),
-      ),
+      onTap:
+          () => showRelayStatusOverlay(
+            context,
+            coordinatorRelays,
+            title: Translations.of(context).relays.coordinatorRelays,
+            onReconnect:
+                () =>
+                    ref
+                        .read(apiServiceProvider)
+                        .ndk
+                        ?.connectivity
+                        .tryReconnect(),
+          ),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Padding(
@@ -1588,7 +1601,9 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                           const SizedBox(width: 8),
                           // Android Zapstore button
                           Link(
-                            uri: Uri.parse('https://zapstore.dev/apps/app.bitblik'),
+                            uri: Uri.parse(
+                              'https://zapstore.dev/apps/app.bitblik',
+                            ),
                             builder:
                                 (context, followLink) => InkWell(
                                   onTap: followLink,

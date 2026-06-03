@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../../i18n/gen/strings.g.dart'; // Import Slang
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart'; // To reset state
+import '../../utils/bitcoin_display.dart';
+import '../../widgets/premium_info.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
 
 class MakerSuccessScreen extends ConsumerStatefulWidget {
@@ -78,6 +80,7 @@ class _MakerSuccessScreenState extends ConsumerState<MakerSuccessScreen> {
   Widget build(BuildContext context) {
     final offer = ref.watch(activeOfferProvider) ?? widget.completedOffer;
     final t = Translations.of(context);
+    final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -159,8 +162,31 @@ class _MakerSuccessScreenState extends ConsumerState<MakerSuccessScreen> {
                               _rowDetail(
                                 context,
                                 label: t.offers.details.feeLabel,
-                                value: '${offer.makerFees} sats',
+                                value: formatBitcoinAmount(
+                                  context,
+                                  bitcoinDisplayUnit,
+                                  offer.makerFees,
+                                ),
                               ),
+                              if (offer.premiumPercent > 0) ...[
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      t.offers.labels.premium,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    PremiumChip(
+                                      premiumPercent: offer.premiumPercent,
+                                    ),
+                                  ],
+                                ),
+                              ],
                               // const SizedBox(height: 8),
                               // _rowDetail(
                               //   context,

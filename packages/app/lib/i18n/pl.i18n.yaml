@@ -116,8 +116,13 @@ offers:
       atm: "Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat."
       ecommerce: "Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach."
 
+  labels:
+    premium: "Premia"
+    premiumBadge: "+${percent}% premii"
+
   tooltips:
     takerFeeInfo: "Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz."
+    premiumInfoTaker: "Premia oznacza, że ta oferta jest wyceniona powyżej rynku. Dla tej samej kwoty fiat maker blokuje mniej satów w fakturze hold, więc płacisz powyżej rynku i otrzymujesz mniej satów niż po kursie rynkowym. Maksymalną premię ustala koordynator."
     ratesFetchedAt: "Pobrano o"
     ratesSources: "Źródła średniego kursu"
   
@@ -181,6 +186,7 @@ offers:
     takerPublicKeyNotFound: Nie znaleziono klucza publicznego Takera.
     atmConsentRequired: "Zaakceptuj warunek dodatkowej opłaty ATM przed wzięciem tej oferty."
     ecommerceConsentRequired: "Zaakceptuj warunek zwrotu środków z ecommerce przed wzięciem tej oferty."
+    cannotTakeOwnOffer: "Nie możesz wziąć własnej oferty."
 
   success:
     title: Oferta zakończona
@@ -262,6 +268,7 @@ coordinator:
     makerFee: "Opłata makera"
     takerFee: "Opłata takera"
     amountRange: "Zakres kwoty"
+    maxPremium: "Maks. premia"
     reservationTime: "Czas rezerwacji"
     currencies: "Waluty"
     version: "Wersja"
@@ -315,14 +322,17 @@ maker:
       exchangeRate: Kurs wymiany
       fee: Opłata
       satoshisToPay: Do zapłaty
+      bitcoinToPay: Bitcoin do zapłaty
       enterAmount: Wprowadź kwotę
       tapToSelect: Kliknij, aby wybrać
+      premium: Premia
     actions:
       generateInvoice: Wygeneruj Fakturę
-    
+
     tooltips:
       feeInfo: "Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning."
       payInfo: "Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty."
+      premiumInfo: "Opcjonalna premia pozwala sprzedać saty powyżej ceny rynkowej. Premia zmniejsza liczbę satów zablokowanych w fakturze hold dla tej samej kwoty fiat, więc kupujący płaci powyżej rynku, a Ty zatrzymujesz różnicę. Domyślnie wyłączona (0%). Maksymalną premię ustala wybrany koordynator."
 
     category:
       label: "Kategoria oferty"
@@ -623,7 +633,7 @@ taker:
   
   paymentFailed:
     title: Płatność Nie Powiodła Się
-    instructions: "Proszę podać nową fakturę Lightning na kwotę ${netAmount} satoshi"
+    instructions: "Proszę podać nową fakturę Lightning na kwotę ${netAmount}"
     form:
       newInvoiceLabel: "Nowa faktura Lightning"
       newInvoiceHint: "Wprowadź swoją fakturę BOLT11"
@@ -638,7 +648,7 @@ taker:
     walletSection:
       title: "Generuj fakturę z portfela"
       defaultLabel: "domyślny"
-      tapToGenerate: "Dotknij, aby wygenerować fakturę na ${amountSats} sats"
+      tapToGenerate: "Dotknij, aby wygenerować fakturę na ${amountSats}"
     loading:
       processingPayment: "Przetwarzanie ponownej płatności..."
     success:
@@ -846,6 +856,33 @@ faq:
 # =============================================================================
 settings:
   title: Ustawienia
+  offerCreation:
+    title: Tworzenie ofert
+    defaultCategory: Domyślna kategoria
+    preferredCoordinator: Preferowany koordynator
+    automaticCoordinator: Automatycznie
+    automaticCoordinatorDescription: "Automatycznie wybiera najbardziej niezawodnego dostępnego koordynatora dla każdej oferty."
+    enablePremium: Włącz premię cenową
+    enablePremiumDescription: Pokaż suwak premii podczas tworzenia ofert makera.
+    defaultPremium: Domyślna premia
+    defaultPremiumDisabled: Włącz premię cenową, aby ustawić domyślną premię.
+    premiumPerCoordinatorNote: "Każdy koordynator ustala własną maksymalną premię, więc Twoja domyślna wartość jest ograniczona przez koordynatora użytego do oferty."
+    categoryOptions:
+      shop: Sklep, kawiarnia lub restauracja
+      atm: Wypłata z bankomatu
+      online: Usługa/produkt online
+    dialogs:
+      selectCategory: Wybierz domyślną kategorię
+      selectCoordinator: Wybierz preferowanego koordynatora
+      premiumHint: Wpisz wartość procentową, np. 1.5. Wartości są zaokrąglane do kroków co 0.5%.
+      premiumHelper: Stosowane po włączeniu premii cenowej i ograniczane do maksimum wybranego koordynatora.
+  display:
+    title: Wygląd
+    bitcoinUnit: Jednostka Bitcoina
+    bitcoinUnitDescription: Wybierz, jak kwoty bitcoina są pokazywane w całej aplikacji.
+    unitOptions:
+      sats: saty
+      bitcoin: ₿ (BIP-177)
 
 notificationSettings:
   title: Powiadomienia
@@ -947,7 +984,8 @@ offerNotifications:
     body: Twój kod BLIK jest gotowy do wyświetlenia.
   newOffer:
     title: Nowa oferta dostępna
-    body: "${amount} ${currency} · ${sats} sat"
+    body: "${amount} ${currency} · ${sats}"
+    premiumSuffix: "+${percent}% premii"
   categories:
     shop: Sklep
     atm: Bankomat

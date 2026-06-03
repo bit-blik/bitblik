@@ -670,6 +670,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
           elevation: 2,
           child: OfferListTile(
             offer: activeOffer,
+            showPremium: true,
             onTap:
                 activeOffer.status == OfferStatus.takerPaid
                     ? () {}

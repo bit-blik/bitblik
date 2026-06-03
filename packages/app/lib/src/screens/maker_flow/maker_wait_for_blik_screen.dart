@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import '../../providers/providers.dart';
 import 'package:bitblik_core/core.dart';
+import '../../utils/bitcoin_display.dart';
 import '../../widgets/progress_indicators.dart';
+import '../../widgets/premium_info.dart';
 import '../../../i18n/gen/strings.g.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
 
@@ -206,6 +208,7 @@ class _MakerWaitForBlikScreenState
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
+    final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
     // Watch the active offer to get the latest data
     final offer = ref.watch(activeOfferProvider);
 
@@ -371,8 +374,28 @@ class _MakerWaitForBlikScreenState
                     _buildDetailRow(
                       context,
                       t.offers.details.makerFeeLabel,
-                      '${offer.makerFees} sats',
+                      formatBitcoinAmount(
+                        context,
+                        bitcoinDisplayUnit,
+                        offer.makerFees,
+                      ),
                     ),
+                    if (offer.premiumPercent > 0) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            t.offers.labels.premium,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          PremiumChip(premiumPercent: offer.premiumPercent),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ],

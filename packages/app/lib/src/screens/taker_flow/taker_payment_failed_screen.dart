@@ -7,6 +7,7 @@ import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
+import '../../utils/bitcoin_display.dart';
 import '../../widgets/progress_indicators.dart';
 
 // Enum to manage screen state
@@ -330,7 +331,11 @@ class _TakerPaymentFailedScreenState
               ),
             Text(
               t.taker.paymentFailed.instructions(
-                netAmount: netAmountSats.toString(),
+                netAmount: formatBitcoinAmount(
+                  context,
+                  ref.watch(bitcoinDisplayUnitProvider),
+                  netAmountSats,
+                ),
               ),
               textAlign: TextAlign.center,
             ),
@@ -440,7 +445,13 @@ class _TakerPaymentFailedScreenState
                     ],
                   ),
                   Text(
-                    t.taker.paymentFailed.walletSection.tapToGenerate(amountSats: amountSats.toString()),
+                    t.taker.paymentFailed.walletSection.tapToGenerate(
+                      amountSats: formatBitcoinAmount(
+                        context,
+                        ref.read(bitcoinDisplayUnitProvider),
+                        amountSats,
+                      ),
+                    ),
                     style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                   ),
                 ],

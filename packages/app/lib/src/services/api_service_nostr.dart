@@ -7,6 +7,7 @@ import 'package:ndk/ndk.dart';
 import 'package:bitblik_core/core.dart';
 import 'key_service.dart';
 import 'nostr_service.dart';
+import 'offer_db_service.dart';
 
 class ApiServiceNostr {
   static const _btcPlnCacheKey = 'btcPlnRate';
@@ -46,6 +47,7 @@ class ApiServiceNostr {
     required String makerId,
     OfferCategory? category,
     String? coordinatorPubkey,
+    double premiumPercent = 0,
   }) async {
     try {
       if (coordinatorPubkey == null) {
@@ -56,6 +58,7 @@ class ApiServiceNostr {
         makerId: makerId,
         category: category,
         coordinatorPubkey: coordinatorPubkey,
+        premiumPercent: premiumPercent,
       );
     } catch (e) {
       Logger.log.e(() => 'Error calling initiateOfferFiat: $e');
@@ -241,6 +244,17 @@ class ApiServiceNostr {
     String takerId,
     String coordinatorPubkey,
   ) async {
+    // Client-side guard: a maker cannot take their own offer. The public
+    // NIP-69 offer event carries no maker pubkey (it falls back to the
+    // coordinator's), so the only reliable source for the real maker is our
+    // own local record of offers we created. If a local record exists for this
+    // offer with our pubkey as maker, block before any coordinator request.
+    final localOffer = await OfferDbService().getOfferById(offerId);
+    if (localOffer != null && localOffer.makerPubkey == takerId) {
+      Logger.log.w(() => 'Blocked attempt to take own offer $offerId');
+      throw const CannotTakeOwnOfferException();
+    }
+
     try {
       return await _nostrService.reserveOffer(
         offerId,

@@ -68,6 +68,11 @@ class Offer {
   final String? takerPaymentFailureReason;
   final OfferCategory? category;
 
+  /// Maker premium (%) above market price. `0` means no premium. A premium
+  /// reduces the sats locked in the hold invoice for the same fiat amount, so
+  /// the taker effectively pays above market.
+  final double premiumPercent;
+
   /// Wallet ID used by the maker to pay the hold invoice.
   /// Null means the default sending wallet was used (or payment not yet made).
   /// Persisted so wallet balance/budget can be refreshed after app restart.
@@ -147,6 +152,7 @@ class Offer {
     this.takerFees,
     this.takerPaymentFailureReason,
     this.category,
+    this.premiumPercent = 0,
     this.paymentWalletId,
   });
 
@@ -277,6 +283,7 @@ class Offer {
           return null;
         }
       }(),
+      premiumPercent: safeDouble(json['premium_percent'], 0),
       paymentWalletId: json['payment_wallet_id'] as String?,
     );
   }
@@ -309,12 +316,15 @@ class Offer {
       'taker_fees': takerFees,
       'taker_payment_failure_reason': takerPaymentFailureReason,
       'category': category?.name,
+      'premium_percent': premiumPercent,
       'payment_wallet_id': paymentWalletId,
     };
   }
 
   // Helper to get status as enum
   OfferStatus get statusEnum => status;
+
+  bool get hasPremium => premiumPercent > 0;
 
   bool get isConflict => status == OfferStatus.conflict;
 
@@ -378,6 +388,7 @@ class Offer {
     int? takerFees,
     String? takerPaymentFailureReason,
     OfferCategory? category,
+    double? premiumPercent,
     String? paymentWalletId,
   }) {
     return Offer(
@@ -409,13 +420,14 @@ class Offer {
       takerPaymentFailureReason:
           takerPaymentFailureReason ?? this.takerPaymentFailureReason,
       category: category ?? this.category,
+      premiumPercent: premiumPercent ?? this.premiumPercent,
       paymentWalletId: paymentWalletId ?? this.paymentWalletId,
     );
   }
 
   @override
   String toString() {
-    return 'Offer(id: $id, amountSats: $amountSats, makerFees: $makerFees, status: $status, category: ${category?.name}, maker: ${makerPubkey.substring(0, 6)}..., taker: ${takerPubkey?.substring(0, 6)}..., createdAt: $createdAt)'; // Renamed field
+    return 'Offer(id: $id, amountSats: $amountSats, makerFees: $makerFees, status: $status, premium: $premiumPercent%, category: ${category?.name}, maker: ${makerPubkey.substring(0, 6)}..., taker: ${takerPubkey?.substring(0, 6)}..., createdAt: $createdAt)'; // Renamed field
   }
 
   /// Parse a kind [kKindOffer] Nostr event (NIP-69-ish parameterized
@@ -461,6 +473,7 @@ class Offer {
           return null;
         }
       }(),
+      premiumPercent: double.tryParse(tagMap['premium'] ?? '0') ?? 0,
     );
   }
 }

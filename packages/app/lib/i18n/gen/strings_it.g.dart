@@ -115,6 +115,7 @@ class _Translations$offers$it extends Translations$offers$en {
 
 	// Translations
 	@override late final _Translations$offers$details$it details = _Translations$offers$details$it._(_root);
+	@override late final _Translations$offers$labels$it labels = _Translations$offers$labels$it._(_root);
 	@override late final _Translations$offers$tooltips$it tooltips = _Translations$offers$tooltips$it._(_root);
 	@override late final _Translations$offers$actions$it actions = _Translations$offers$actions$it._(_root);
 	@override late final _Translations$offers$status$it status = _Translations$offers$status$it._(_root);
@@ -334,6 +335,8 @@ class _Translations$settings$it extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Impostazioni';
+	@override late final _Translations$settings$offerCreation$it offerCreation = _Translations$settings$offerCreation$it._(_root);
+	@override late final _Translations$settings$display$it display = _Translations$settings$display$it._(_root);
 }
 
 // Path: notificationSettings
@@ -599,6 +602,17 @@ class _Translations$offers$details$it extends Translations$offers$details$en {
 	@override late final _Translations$offers$details$consents$it consents = _Translations$offers$details$consents$it._(_root);
 }
 
+// Path: offers.labels
+class _Translations$offers$labels$it extends Translations$offers$labels$en {
+	_Translations$offers$labels$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get premium => 'Premio';
+	@override String premiumBadge({required Object percent}) => '+${percent}% premio';
+}
+
 // Path: offers.tooltips
 class _Translations$offers$tooltips$it extends Translations$offers$tooltips$en {
 	_Translations$offers$tooltips$it._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -607,6 +621,7 @@ class _Translations$offers$tooltips$it extends Translations$offers$tooltips$en {
 
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi';
+	@override String get premiumInfoTaker => 'Un premio significa che questa offerta è prezzata sopra il mercato. Per lo stesso importo fiat, il maker blocca meno sat nella fattura hold, quindi paghi sopra il mercato e ricevi meno sat rispetto al tasso di mercato. Il premio massimo è impostato dal coordinatore.';
 	@override String get ratesFetchedAt => 'Recuperato alle';
 	@override String get ratesSources => 'Fonti tasso medio';
 }
@@ -705,6 +720,7 @@ class _Translations$offers$errors$it extends Translations$offers$errors$en {
 	@override String get takerPublicKeyNotFound => 'Chiave pubblica del taker non trovata.';
 	@override String get atmConsentRequired => 'Accetta la condizione sulla commissione ATM prima di prendere questa offerta.';
 	@override String get ecommerceConsentRequired => 'Accetta la condizione di restituzione del rimborso ecommerce prima di prendere questa offerta.';
+	@override String get cannotTakeOwnOffer => 'Non puoi prendere la tua stessa offerta.';
 }
 
 // Path: offers.success
@@ -850,6 +866,7 @@ class _Translations$coordinator$details$it extends Translations$coordinator$deta
 	@override String get makerFee => 'Commissione maker';
 	@override String get takerFee => 'Commissione taker';
 	@override String get amountRange => 'Intervallo importo';
+	@override String get maxPremium => 'Premio max';
 	@override String get reservationTime => 'Tempo di prenotazione';
 	@override String get currencies => 'Valute';
 	@override String get version => 'Versione';
@@ -1133,7 +1150,7 @@ class _Translations$taker$paymentFailed$it extends Translations$taker$paymentFai
 
 	// Translations
 	@override String get title => 'Pagamento Fallito';
-	@override String instructions({required Object netAmount}) => 'Fornisci una nuova fattura Lightning per ${netAmount} satoshi';
+	@override String instructions({required Object netAmount}) => 'Fornisci una nuova fattura Lightning per ${netAmount}';
 	@override late final _Translations$taker$paymentFailed$form$it form = _Translations$taker$paymentFailed$form$it._(_root);
 	@override late final _Translations$taker$paymentFailed$actions$it actions = _Translations$taker$paymentFailed$actions$it._(_root);
 	@override late final _Translations$taker$paymentFailed$errors$it errors = _Translations$taker$paymentFailed$errors$it._(_root);
@@ -1421,6 +1438,40 @@ class _Translations$landing$actions$it extends Translations$landing$actions$en {
 	@override String get howItWorks => 'Come funziona?';
 }
 
+// Path: settings.offerCreation
+class _Translations$settings$offerCreation$it extends Translations$settings$offerCreation$en {
+	_Translations$settings$offerCreation$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Creazione offerte';
+	@override String get defaultCategory => 'Categoria predefinita';
+	@override String get preferredCoordinator => 'Coordinatore preferito';
+	@override String get automaticCoordinator => 'Automatico';
+	@override String get automaticCoordinatorDescription => 'Sceglie automaticamente il coordinatore disponibile più affidabile per ogni offerta.';
+	@override String get enablePremium => 'Abilita premio di prezzo';
+	@override String get enablePremiumDescription => 'Mostra il cursore del premio durante la creazione delle offerte maker.';
+	@override String get defaultPremium => 'Premio predefinito';
+	@override String get defaultPremiumDisabled => 'Abilita il premio di prezzo per impostare un premio predefinito.';
+	@override String get premiumPerCoordinatorNote => 'Ogni coordinatore imposta il proprio premio massimo, quindi il tuo valore predefinito è limitato dal coordinatore usato per un\'offerta.';
+	@override late final _Translations$settings$offerCreation$categoryOptions$it categoryOptions = _Translations$settings$offerCreation$categoryOptions$it._(_root);
+	@override late final _Translations$settings$offerCreation$dialogs$it dialogs = _Translations$settings$offerCreation$dialogs$it._(_root);
+}
+
+// Path: settings.display
+class _Translations$settings$display$it extends Translations$settings$display$en {
+	_Translations$settings$display$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Aspetto';
+	@override String get bitcoinUnit => 'Unità bitcoin';
+	@override String get bitcoinUnitDescription => 'Scegli come mostrare gli importi bitcoin in tutta l\'app.';
+	@override late final _Translations$settings$display$unitOptions$it unitOptions = _Translations$settings$display$unitOptions$it._(_root);
+}
+
 // Path: notificationSettings.newOfferAlerts
 class _Translations$notificationSettings$newOfferAlerts$it extends Translations$notificationSettings$newOfferAlerts$en {
 	_Translations$notificationSettings$newOfferAlerts$it._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -1612,7 +1663,8 @@ class _Translations$offerNotifications$newOffer$it extends Translations$offerNot
 
 	// Translations
 	@override String get title => 'Nuova offerta disponibile';
-	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats';
+	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}';
+	@override String premiumSuffix({required Object percent}) => '+${percent}% premio';
 }
 
 // Path: offerNotifications.categories
@@ -1718,8 +1770,10 @@ class _Translations$maker$amountForm$labels$it extends Translations$maker$amount
 	@override String get exchangeRate => 'Tasso di Cambio';
 	@override String get fee => 'Commissione';
 	@override String get satoshisToPay => 'Importo da Pagare';
+	@override String get bitcoinToPay => 'Bitcoin da Pagare';
 	@override String get enterAmount => 'Inserisci importo';
 	@override String get tapToSelect => 'Tocca per selezionare';
+	@override String get premium => 'Premio';
 }
 
 // Path: maker.amountForm.actions
@@ -1741,6 +1795,7 @@ class _Translations$maker$amountForm$tooltips$it extends Translations$maker$amou
 	// Translations
 	@override String feeInfo({required Object feePercent}) => 'Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning.';
 	@override String get payInfo => 'Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l\'importo esatto, e l\'importo della fattura sarà quello finale e definitivo da pagare.';
+	@override String get premiumInfo => 'Un premio opzionale ti permette di vendere i tuoi sat sopra il prezzo di mercato. Il premio riduce i sat bloccati nella tua fattura hold per lo stesso importo fiat, così il taker paga sopra il mercato e tu trattieni la differenza. Predefinito disattivato (0%). Il premio massimo è impostato dal coordinatore selezionato.';
 }
 
 // Path: maker.amountForm.category
@@ -2193,7 +2248,7 @@ class _Translations$taker$paymentFailed$walletSection$it extends Translations$ta
 	// Translations
 	@override String get title => 'Genera fattura dal portafoglio';
 	@override String get defaultLabel => 'predefinito';
-	@override String tapToGenerate({required Object amountSats}) => 'Tocca per generare la fattura per ${amountSats} sats';
+	@override String tapToGenerate({required Object amountSats}) => 'Tocca per generare la fattura per ${amountSats}';
 }
 
 // Path: taker.paymentFailed.loading
@@ -2315,6 +2370,42 @@ class _Translations$home$statistics$errors$it extends Translations$home$statisti
 
 	// Translations
 	@override String loading({required Object error}) => 'Errore nel caricamento delle statistiche: ${error}';
+}
+
+// Path: settings.offerCreation.categoryOptions
+class _Translations$settings$offerCreation$categoryOptions$it extends Translations$settings$offerCreation$categoryOptions$en {
+	_Translations$settings$offerCreation$categoryOptions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get shop => 'Negozio, caffè o ristorante';
+	@override String get atm => 'Prelievo ATM';
+	@override String get online => 'Servizio/prodotto online';
+}
+
+// Path: settings.offerCreation.dialogs
+class _Translations$settings$offerCreation$dialogs$it extends Translations$settings$offerCreation$dialogs$en {
+	_Translations$settings$offerCreation$dialogs$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get selectCategory => 'Seleziona la categoria predefinita';
+	@override String get selectCoordinator => 'Seleziona il coordinatore preferito';
+	@override String get premiumHint => 'Inserisci una percentuale come 1.5. I valori vengono arrotondati a passi di 0.5%.';
+	@override String get premiumHelper => 'Applicato quando il premio di prezzo è abilitato e limitato al massimo del coordinatore selezionato.';
+}
+
+// Path: settings.display.unitOptions
+class _Translations$settings$display$unitOptions$it extends Translations$settings$display$unitOptions$en {
+	_Translations$settings$display$unitOptions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get sats => 'sat';
+	@override String get bitcoin => '₿ (BIP-177)';
 }
 
 // Path: maker.amountForm.category.options
@@ -2439,7 +2530,10 @@ extension on TranslationsIt {
 			'offers.details.categories.onlineService' => 'Prodotto o servizio online',
 			'offers.details.consents.atm' => 'Alcuni ATM aggiungono una commissione extra oltre all\'importo dell\'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall\'ATM.',
 			'offers.details.consents.ecommerce' => 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il commerciante online potrebbe automaticamente restituire denaro sul conto bancario collegato al BLIK che hai generato. Quei fondi arrivano sul tuo conto e non ti appartengono. Se succede, contatta il coordinatore in buona fede e organizza la restituzione dei fondi al maker. Accettando questa offerta, accetti questi termini e giuri solennemente di agire onestamente in tali situazioni.',
+			'offers.labels.premium' => 'Premio',
+			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% premio',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi',
+			'offers.tooltips.premiumInfoTaker' => 'Un premio significa che questa offerta è prezzata sopra il mercato. Per lo stesso importo fiat, il maker blocca meno sat nella fattura hold, quindi paghi sopra il mercato e ricevi meno sat rispetto al tasso di mercato. Il premio massimo è impostato dal coordinatore.',
 			'offers.tooltips.ratesFetchedAt' => 'Recuperato alle',
 			'offers.tooltips.ratesSources' => 'Fonti tasso medio',
 			'offers.actions.take' => 'ACCETTA',
@@ -2493,6 +2587,7 @@ extension on TranslationsIt {
 			'offers.errors.takerPublicKeyNotFound' => 'Chiave pubblica del taker non trovata.',
 			'offers.errors.atmConsentRequired' => 'Accetta la condizione sulla commissione ATM prima di prendere questa offerta.',
 			'offers.errors.ecommerceConsentRequired' => 'Accetta la condizione di restituzione del rimborso ecommerce prima di prendere questa offerta.',
+			'offers.errors.cannotTakeOwnOffer' => 'Non puoi prendere la tua stessa offerta.',
 			'offers.success.title' => 'Offerta completata',
 			'offers.success.headline' => 'Pagamento confermato!',
 			'offers.success.subtitle' => 'Il taker verrà pagato ora.',
@@ -2540,6 +2635,7 @@ extension on TranslationsIt {
 			'coordinator.details.makerFee' => 'Commissione maker',
 			'coordinator.details.takerFee' => 'Commissione taker',
 			'coordinator.details.amountRange' => 'Intervallo importo',
+			'coordinator.details.maxPremium' => 'Premio max',
 			'coordinator.details.reservationTime' => 'Tempo di prenotazione',
 			'coordinator.details.currencies' => 'Valute',
 			'coordinator.details.version' => 'Versione',
@@ -2581,11 +2677,14 @@ extension on TranslationsIt {
 			'maker.amountForm.labels.exchangeRate' => 'Tasso di Cambio',
 			'maker.amountForm.labels.fee' => 'Commissione',
 			'maker.amountForm.labels.satoshisToPay' => 'Importo da Pagare',
+			'maker.amountForm.labels.bitcoinToPay' => 'Bitcoin da Pagare',
 			'maker.amountForm.labels.enterAmount' => 'Inserisci importo',
 			'maker.amountForm.labels.tapToSelect' => 'Tocca per selezionare',
+			'maker.amountForm.labels.premium' => 'Premio',
 			'maker.amountForm.actions.generateInvoice' => 'Genera Fattura',
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning.',
 			'maker.amountForm.tooltips.payInfo' => 'Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l\'importo esatto, e l\'importo della fattura sarà quello finale e definitivo da pagare.',
+			'maker.amountForm.tooltips.premiumInfo' => 'Un premio opzionale ti permette di vendere i tuoi sat sopra il prezzo di mercato. Il premio riduce i sat bloccati nella tua fattura hold per lo stesso importo fiat, così il taker paga sopra il mercato e tu trattieni la differenza. Predefinito disattivato (0%). Il premio massimo è impostato dal coordinatore selezionato.',
 			'maker.amountForm.category.label' => 'Categoria offerta',
 			'maker.amountForm.category.options.physicalShop' => 'Negozio, caffè o ristorante',
 			'maker.amountForm.category.options.atmCashout' => 'Prelievo contanti da ATM',
@@ -2789,7 +2888,7 @@ extension on TranslationsIt {
 			'taker.paymentProcess.loading.publicKey' => 'Caricamento dei tuoi dati...',
 			'taker.paymentProcess.actions.goToFailureDetails' => 'Riprova con nuova fattura',
 			'taker.paymentFailed.title' => 'Pagamento Fallito',
-			'taker.paymentFailed.instructions' => ({required Object netAmount}) => 'Fornisci una nuova fattura Lightning per ${netAmount} satoshi',
+			'taker.paymentFailed.instructions' => ({required Object netAmount}) => 'Fornisci una nuova fattura Lightning per ${netAmount}',
 			'taker.paymentFailed.form.newInvoiceLabel' => 'Nuova fattura Lightning',
 			'taker.paymentFailed.form.newInvoiceHint' => 'Inserisci la tua fattura BOLT11',
 			'taker.paymentFailed.actions.retryPayment' => 'Invia Nuova Fattura',
@@ -2800,7 +2899,7 @@ extension on TranslationsIt {
 			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Impossibile generare la fattura: ${details}',
 			'taker.paymentFailed.walletSection.title' => 'Genera fattura dal portafoglio',
 			'taker.paymentFailed.walletSection.defaultLabel' => 'predefinito',
-			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tocca per generare la fattura per ${amountSats} sats',
+			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tocca per generare la fattura per ${amountSats}',
 			'taker.paymentFailed.loading.processingPayment' => 'Elaborazione del nuovo tentativo di pagamento...',
 			'taker.paymentFailed.success.title' => 'Pagamento Riuscito',
 			'taker.paymentFailed.success.message' => 'Il tuo pagamento è stato elaborato con successo.',
@@ -2864,6 +2963,8 @@ extension on TranslationsIt {
 			'restore.errors.invalidKey' => 'Deve essere una stringa esadecimale di 64 caratteri.',
 			'restore.errors.failed' => 'Ripristino fallito',
 			'restore.feedback.success' => 'Neko ripristinato con successo! L\'app verrà riavviata.',
+			_ => null,
+		} ?? switch (path) {
 			'restore.tooltips.restore' => 'Ripristina Neko',
 			'system.loadingPublicKey' => 'Caricamento della tua chiave pubblica...',
 			'system.errors.generic' => 'Si è verificato un errore imprevisto. Riprova.',
@@ -2872,8 +2973,6 @@ extension on TranslationsIt {
 			'system.errors.noPublicKey' => 'La tua chiave pubblica non è disponibile. Impossibile procedere.',
 			'system.errors.internalOfferIncomplete' => 'Errore interno: I dettagli dell\'offerta sono incompleti. Riprova.',
 			'system.errors.loadingPublicKey' => 'Errore nel caricamento della tua chiave pubblica. Riavvia l\'app.',
-			_ => null,
-		} ?? switch (path) {
 			'system.blik.copied' => 'Codice BLIK copiato negli appunti',
 			'myOffers.title' => 'Le mie offerte',
 			'myOffers.empty' => 'Nessuna offerta.',
@@ -2916,6 +3015,28 @@ extension on TranslationsIt {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Impostazioni',
+			'settings.offerCreation.title' => 'Creazione offerte',
+			'settings.offerCreation.defaultCategory' => 'Categoria predefinita',
+			'settings.offerCreation.preferredCoordinator' => 'Coordinatore preferito',
+			'settings.offerCreation.automaticCoordinator' => 'Automatico',
+			'settings.offerCreation.automaticCoordinatorDescription' => 'Sceglie automaticamente il coordinatore disponibile più affidabile per ogni offerta.',
+			'settings.offerCreation.enablePremium' => 'Abilita premio di prezzo',
+			'settings.offerCreation.enablePremiumDescription' => 'Mostra il cursore del premio durante la creazione delle offerte maker.',
+			'settings.offerCreation.defaultPremium' => 'Premio predefinito',
+			'settings.offerCreation.defaultPremiumDisabled' => 'Abilita il premio di prezzo per impostare un premio predefinito.',
+			'settings.offerCreation.premiumPerCoordinatorNote' => 'Ogni coordinatore imposta il proprio premio massimo, quindi il tuo valore predefinito è limitato dal coordinatore usato per un\'offerta.',
+			'settings.offerCreation.categoryOptions.shop' => 'Negozio, caffè o ristorante',
+			'settings.offerCreation.categoryOptions.atm' => 'Prelievo ATM',
+			'settings.offerCreation.categoryOptions.online' => 'Servizio/prodotto online',
+			'settings.offerCreation.dialogs.selectCategory' => 'Seleziona la categoria predefinita',
+			'settings.offerCreation.dialogs.selectCoordinator' => 'Seleziona il coordinatore preferito',
+			'settings.offerCreation.dialogs.premiumHint' => 'Inserisci una percentuale come 1.5. I valori vengono arrotondati a passi di 0.5%.',
+			'settings.offerCreation.dialogs.premiumHelper' => 'Applicato quando il premio di prezzo è abilitato e limitato al massimo del coordinatore selezionato.',
+			'settings.display.title' => 'Aspetto',
+			'settings.display.bitcoinUnit' => 'Unità bitcoin',
+			'settings.display.bitcoinUnitDescription' => 'Scegli come mostrare gli importi bitcoin in tutta l\'app.',
+			'settings.display.unitOptions.sats' => 'sat',
+			'settings.display.unitOptions.bitcoin' => '₿ (BIP-177)',
 			'notificationSettings.title' => 'Notifiche',
 			'notificationSettings.androidOnly' => 'Le notifiche in background sono attualmente supportate solo su Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Avvisi nuove offerte',
@@ -2984,7 +3105,8 @@ extension on TranslationsIt {
 			'offerNotifications.blikReady.title' => 'Codice BLIK pronto',
 			'offerNotifications.blikReady.body' => 'Il tuo codice BLIK è pronto per essere visualizzato.',
 			'offerNotifications.newOffer.title' => 'Nuova offerta disponibile',
-			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sats',
+			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
+			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premio',
 			'offerNotifications.categories.shop' => 'Negozio',
 			'offerNotifications.categories.atm' => 'ATM',
 			'offerNotifications.categories.online' => 'Online',

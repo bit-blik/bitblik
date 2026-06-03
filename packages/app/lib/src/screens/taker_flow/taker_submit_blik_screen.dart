@@ -14,6 +14,7 @@ import 'package:bitblik_core/core.dart';
 // Added
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
+import '../../utils/bitcoin_display.dart';
 import '../../widgets/progress_indicators.dart'; // Import TakerProgressIndicator
 import '../../widgets/lightning_address_widget.dart';
 
@@ -440,8 +441,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
                       content: Text(
-                        t.taker.paymentFailed.errors
-                            .generateFailed(details: e.toString()),
+                        t.taker.paymentFailed.errors.generateFailed(
+                          details: e.toString(),
+                        ),
                       ),
                     ),
                   );
@@ -456,9 +458,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    t.taker.paymentFailed.errors.generateFailed(
-                      details: error,
-                    ),
+                    t.taker.paymentFailed.errors.generateFailed(details: error),
                     style: TextStyle(
                       color: Theme.of(ctx).colorScheme.error,
                       fontSize: 12,
@@ -469,9 +469,10 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                     final isGenerating = generatingId == wallet.id;
                     final isDefault = wallet.id == defaultW?.id;
                     return InkWell(
-                      onTap: generatingId != null
-                          ? null
-                          : () => generateFromWallet(wallet),
+                      onTap:
+                          generatingId != null
+                              ? null
+                              : () => generateFromWallet(wallet),
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -507,11 +508,15 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: Colors.grey.shade200,
-                                            borderRadius:
-                                                BorderRadius.circular(4),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
                                           ),
                                           child: Text(
-                                            t.taker.paymentFailed.walletSection
+                                            t
+                                                .taker
+                                                .paymentFailed
+                                                .walletSection
                                                 .defaultLabel,
                                             style: TextStyle(
                                               fontSize: 10,
@@ -525,7 +530,13 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                                   Text(
                                     t.taker.paymentFailed.walletSection
                                         .tapToGenerate(
-                                          amountSats: amountSats.toString(),
+                                          amountSats: formatBitcoinAmount(
+                                            context,
+                                            ref.read(
+                                              bitcoinDisplayUnitProvider,
+                                            ),
+                                            amountSats,
+                                          ),
                                         ),
                                     style: TextStyle(
                                       fontSize: 11,
@@ -558,9 +569,10 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: generatingId != null
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(null),
+                  onPressed:
+                      generatingId != null
+                          ? null
+                          : () => Navigator.of(dialogContext).pop(null),
                   child: Text(t.common.buttons.cancel),
                 ),
               ],

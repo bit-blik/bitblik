@@ -55,6 +55,7 @@ class OfferDbService {
       taker_fees INTEGER,
       taker_payment_failure_reason TEXT,
       category TEXT,
+      premium_percent REAL,
       payment_wallet_id TEXT
     )
   ''';
@@ -70,7 +71,7 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: (db, version) async {
         await db.execute(_createTableSql);
       },
@@ -86,7 +87,8 @@ class OfferDbService {
             );
           } catch (e) {
             Logger.log.w(
-              () => '[OfferDbService] No legacy active_offer rows to migrate: $e',
+              () =>
+                  '[OfferDbService] No legacy active_offer rows to migrate: $e',
             );
           }
           await db.execute('DROP TABLE IF EXISTS active_offer');
@@ -120,6 +122,17 @@ class OfferDbService {
             );
           }
         }
+        if (oldVersion < 9) {
+          final columns = await db.rawQuery('PRAGMA table_info($_table)');
+          final hasColumn = columns.any(
+            (col) => col['name'] == 'premium_percent',
+          );
+          if (!hasColumn) {
+            await db.execute(
+              'ALTER TABLE $_table ADD COLUMN premium_percent REAL NOT NULL DEFAULT 0',
+            );
+          }
+        }
       },
     );
   }
@@ -129,7 +142,8 @@ class OfferDbService {
       final db = await database;
       final jsonData = offer.toJson();
       Logger.log.d(
-        () => '[OfferDbService] Upserting offer ${offer.id} status=${offer.status.name}',
+        () =>
+            '[OfferDbService] Upserting offer ${offer.id} status=${offer.status.name}',
       );
       await db.insert(
         _table,
@@ -148,8 +162,7 @@ class OfferDbService {
   /// or taker are returned.
   Future<Offer?> getActiveOffer({String? userPubkey}) async {
     final db = await database;
-    final terminalNames =
-        terminalStatuses.map((s) => "'${s.name}'").join(',');
+    final terminalNames = terminalStatuses.map((s) => "'${s.name}'").join(',');
     final List<Map<String, Object?>> maps;
     if (userPubkey != null) {
       maps = await db.rawQuery(
@@ -216,9 +229,7 @@ class OfferDbService {
     );
     final cutoff = DateTime.now().toUtc().subtract(window);
     final parsed = _parseOffers(maps);
-    return parsed
-        .where((o) => o.createdAt.toUtc().isAfter(cutoff))
-        .toList();
+    return parsed.where((o) => o.createdAt.toUtc().isAfter(cutoff)).toList();
   }
 
   List<Offer> _parseOffers(List<Map<String, Object?>> maps) {
@@ -227,7 +238,9 @@ class OfferDbService {
           try {
             return Offer.fromJson(m);
           } catch (e) {
-            Logger.log.w(() => '[OfferDbService] Skipping unparsable offer row: $e');
+            Logger.log.w(
+              () => '[OfferDbService] Skipping unparsable offer row: $e',
+            );
             return null;
           }
         })

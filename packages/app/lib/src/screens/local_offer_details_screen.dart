@@ -11,8 +11,10 @@ import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import 'coordinator_details_screen.dart';
 import '../services/offer_db_service.dart';
+import '../utils/bitcoin_display.dart';
 import '../utils/category_icons.dart';
 import '../utils/locale_format.dart';
+import '../widgets/premium_info.dart';
 
 class LocalOfferDetailsScreen extends ConsumerWidget {
   const LocalOfferDetailsScreen({required this.offerId, super.key});
@@ -115,6 +117,7 @@ class _OfferDetailsBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
     final apiService = ref.watch(apiServiceProvider);
+    final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
     final currentPubKey =
         ref.watch(publicKeyProvider).value ??
         ref.watch(keyServiceProvider).publicKeyHex;
@@ -127,9 +130,8 @@ class _OfferDetailsBody extends ConsumerWidget {
     final localeTag = effectiveFormatLocale(context);
 
     final fiatFmt = NumberFormat.decimalPattern(localeTag);
-    final satsFmt = NumberFormat.decimalPattern(localeTag);
     final amountLabel =
-        '${fiatFmt.format(offer.fiatAmount)} ${offer.fiatCurrency} • ${satsFmt.format(offer.amountSats)} sats';
+        '${fiatFmt.format(offer.fiatAmount)} ${offer.fiatCurrency} • ${formatBitcoinAmount(context, bitcoinDisplayUnit, offer.amountSats)}';
     final ourFee =
         currentPubKey == offer.makerPubkey
             ? offer.makerFees
@@ -150,6 +152,10 @@ class _OfferDetailsBody extends ConsumerWidget {
         offer.createdAt.difference(offer.reservedAt!).abs() >
             const Duration(seconds: 1);
     final shouldShowFee = _shouldShowFee(offer.status) && ourFee > 0;
+    final premiumViewerRole =
+        currentPubKey != null && currentPubKey == offer.takerPubkey
+            ? PremiumViewerRole.taker
+            : PremiumViewerRole.maker;
 
     Color statusColor = _statusColor(offer.status);
 
@@ -205,7 +211,21 @@ class _OfferDetailsBody extends ConsumerWidget {
                   const Divider(height: 16),
                   _Row(
                     label: t.myOffers.details.yourFee,
-                    value: '$ourFee sats',
+                    value: formatBitcoinAmount(
+                      context,
+                      bitcoinDisplayUnit,
+                      ourFee,
+                    ),
+                  ),
+                ],
+                if (offer.premiumPercent > 0) ...[
+                  const Divider(height: 16),
+                  _WidgetRow(
+                    label: t.offers.labels.premium,
+                    child: PremiumChip(
+                      premiumPercent: offer.premiumPercent,
+                      viewerRole: premiumViewerRole,
+                    ),
                   ),
                 ],
               ],
@@ -224,10 +244,11 @@ class _OfferDetailsBody extends ConsumerWidget {
                 _WidgetRow(
                   label: t.myOffers.details.coordinator,
                   child: InkWell(
-                    onTap: () => openCoordinatorDetails(
-                      context,
-                      offer.coordinatorPubkey,
-                    ),
+                    onTap:
+                        () => openCoordinatorDetails(
+                          context,
+                          offer.coordinatorPubkey,
+                        ),
                     borderRadius: BorderRadius.circular(6),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -604,10 +625,7 @@ class _Row extends StatelessWidget {
       children: [
         Expanded(
           flex: 3,
-          child: Text(
-            label,
-            style: TextStyle(color: Colors.grey[700]),
-          ),
+          child: Text(label, style: TextStyle(color: Colors.grey[700])),
         ),
         const SizedBox(width: 12),
         Expanded(

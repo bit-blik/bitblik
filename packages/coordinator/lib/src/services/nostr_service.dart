@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:bip340/bip340.dart' as bip340;
 import 'package:ndk/ndk.dart';
+import 'package:ndk/domain_layer/entities/nip_65.dart';
 import 'package:ndk/domain_layer/entities/read_write_marker.dart';
 
 import 'coordinator_service.dart';
@@ -189,12 +190,23 @@ class NostrService {
     final existing = await _fetchRelayListFor(hex);
     if (existing != null && existing.isNotEmpty) {
       _relays = existing;
+      final configured = _envRelays.map(normalizeRelayUrl).toSet();
+      final published = _relays.map(normalizeRelayUrl).toSet();
+      if (configured.isNotEmpty &&
+          (configured.length != published.length ||
+              !configured.containsAll(published))) {
+        AppLogger.info(
+          'Configured relays $_envRelays differ from published NIP-65 $_relays; runtime will use the published list until it is updated.',
+        );
+      }
       AppLogger.info('Adopted existing NIP-65 relays: $_relays');
     } else {
       _relays = List.from(_envRelays);
-      await _publishRelayList();
-      AppLogger.info('Published new NIP-65 relays from env: $_relays');
+      AppLogger.info(
+        'No existing NIP-65 relay list found; using configured relays: $_relays',
+      );
     }
+    await _publishRelayList();
   }
 
   /// Fetch the newest NIP-65 relay list authored by [hex] via NDK's
@@ -213,28 +225,36 @@ class NostrService {
     return urls.isEmpty ? null : urls;
   }
 
-  /// Publish a NIP-65 relay list advertising [_relays] via NDK's
-  /// `userRelayLists` usecase (requires the coordinator key logged into NDK
-  /// accounts — see [init]).
+  /// Publish the coordinator's CURRENT working relay list to both its working
+  /// relays and the discovery relays.
   ///
-  /// Two broadcasts: the first seeds the list cleanly from the working relays
-  /// (`broadcastRelays: _relays`, so the advertised set is exactly [_relays],
-  /// not the discovery set), the second republishes that same cached list to
-  /// the discovery relays so clients can find it. The second call reuses the
-  /// freshly-cached list (within REFRESH_USER_RELAY_DURATION) so it does not
-  /// re-seed from the discovery relays.
+  /// This mirrors the authoritative runtime set onto the discovery relays on
+  /// every startup, so clients that discover the coordinator there can also
+  /// resolve its NIP-65 without needing to guess or rely on stale fallback
+  /// sources.
   Future<void> _publishRelayList() async {
     if (_relays.isEmpty) return;
     try {
-      for (final targets in [_relays, _discoveryRelays]) {
-        await _ndk.userRelayLists.broadcastAddNip65Relay(
-          relayUrl: _relays.first,
-          marker: ReadWriteMarker.readWrite,
-          broadcastRelays: targets,
-        );
-      }
+      final relayMap = <String, ReadWriteMarker>{
+        for (final relay in _relays.map(normalizeRelayUrl))
+          if (relay.isNotEmpty) relay: ReadWriteMarker.readWrite,
+      };
+      final event = Nip65(
+        pubKey: _signer.getPublicKey(),
+        relays: relayMap,
+        createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      ).toEvent();
+      await _signer.sign(event);
+      await _ndk.broadcast
+          .broadcast(
+            nostrEvent: event,
+            customSigner: _signer,
+            specificRelays: _discoveryTargets,
+          )
+          .broadcastDoneFuture;
       AppLogger.info(
-          'Published NIP-65 relay list ($_relays) to working + discovery relays');
+        'Published NIP-65 relay list (${relayMap.keys.toList()}) to relays: $_discoveryTargets',
+      );
     } catch (e) {
       AppLogger.info('Error publishing NIP-65 relay list: $e');
     }
@@ -456,10 +476,14 @@ class NostrService {
             throw Exception('Missing required parameter: fiat_amount');
           }
 
+          final premiumPercent =
+              (params['premium_percent'] as num?)?.toDouble() ?? 0;
+
           return await _coordinatorService.initiateOfferFiat(
             fiatAmount: fiatAmount,
             makerId: makerId,
             category: category,
+            premiumPercent: premiumPercent,
           );
 
         case kRpcReserveOffer:
@@ -777,7 +801,8 @@ class NostrService {
     List<String> paymentMethods = const ['BLIK'],
     String platform = 'Bitblik',
     int? expiration,
-    double premium = 0,
+    // Defaults to the offer's own premium so status re-broadcasts preserve it.
+    double? premium,
     String network = "mainnet",
     String layer = "lightning",
     String? name,
@@ -787,6 +812,7 @@ class NostrService {
     String bond = "0",
   }) async {
     final status = _mapOfferStatusToNip69Status(offer.status);
+    final premiumValue = premium ?? offer.premiumPercent;
     try {
       final tags = <List<String>>[
         ['d', offer.id],
@@ -796,7 +822,7 @@ class NostrService {
         ['amt', offer.amountSats.toString()],
         ['fa', offer.fiatAmount.toString()],
         ['pm', ...paymentMethods],
-        ['premium', premium.toString()],
+        ['premium', premiumValue.toString()],
         if (ratingJson != null) ['rating', ratingJson],
         [
           'source',

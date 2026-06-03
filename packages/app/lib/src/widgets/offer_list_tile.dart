@@ -8,18 +8,24 @@ import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import '../utils/category_icons.dart';
 import '../utils/locale_format.dart';
+import 'premium_info.dart';
 
 class OfferListTile extends ConsumerWidget {
   const OfferListTile({
     required this.offer,
     required this.onTap,
     this.showNeko = false,
+    this.showPremium = false,
     super.key,
   });
 
   final Offer offer;
   final VoidCallback onTap;
   final bool showNeko;
+
+  /// When true, show a `+X%` premium badge next to the amount. Opt-in so the
+  /// public offers list stays unchanged; used by the user's own offers list.
+  final bool showPremium;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,6 +49,8 @@ class OfferListTile extends ConsumerWidget {
 
     final isMaker = myPubkey != null && offer.makerPubkey == myPubkey;
     final isTaker = myPubkey != null && offer.takerPubkey == myPubkey;
+    final premiumViewerRole =
+        isTaker ? PremiumViewerRole.taker : PremiumViewerRole.maker;
     final roleLabel = isMaker
         ? t.myOffers.details.maker
         : isTaker
@@ -140,6 +148,13 @@ class OfferListTile extends ConsumerWidget {
                         '$fiatLabel ${offer.fiatCurrency}',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
+                      if (showPremium && offer.premiumPercent > 0) ...[
+                        const SizedBox(width: 6),
+                        PremiumChip(
+                          premiumPercent: offer.premiumPercent,
+                          viewerRole: premiumViewerRole,
+                        ),
+                      ],
                       if (roleLabel != null) ...[
                         const SizedBox(width: 6),
                         Container(

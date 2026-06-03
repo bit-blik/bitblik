@@ -140,6 +140,7 @@ class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
                               return OfferListTile(
                                 offer: offer,
                                 showNeko: multipleNekos,
+                                showPremium: true,
                                 onTap:
                                     () =>
                                         context.push('/my-offers/${offer.id}'),

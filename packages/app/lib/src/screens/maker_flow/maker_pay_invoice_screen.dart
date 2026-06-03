@@ -21,6 +21,8 @@ import 'package:go_router/go_router.dart';
 import '../../../i18n/gen/strings.g.dart'; // Correct Slang import
 import 'webln_stub.dart' if (dart.library.js) 'webln_web.dart';
 import 'maker_amount_form.dart'; // Import MakerProgressIndicator
+import '../../utils/bitcoin_display.dart';
+import '../../widgets/premium_info.dart';
 
 // ---------------------------------------------------------------------------
 // Budget warning helpers
@@ -33,6 +35,7 @@ class _WalletBudgetInfo {
   final int? remainingBudget; // sats; null = NWC budget unavailable
   final bool hasBalanceIssue;
   final bool hasBudgetIssue;
+
   /// Unix timestamp (seconds) when the NWC budget renews; null if unknown.
   final int? budgetRenewsAt;
   final BudgetRenewalPeriod? budgetRenewalPeriod;
@@ -54,10 +57,7 @@ class _WalletBudgetInfo {
 class _BudgetDialogResult {
   final bool proceed;
   final String? selectedWalletId;
-  const _BudgetDialogResult({
-    required this.proceed,
-    this.selectedWalletId,
-  });
+  const _BudgetDialogResult({required this.proceed, this.selectedWalletId});
 }
 
 // ---------------------------------------------------------------------------
@@ -77,7 +77,6 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
   bool _hasSendingWallet = false;
   bool _isCancelling = false;
   StreamSubscription<List<Wallet>>? _walletsSubscription;
-
 
   Future<void> _handleCancelPressed() async {
     final t = Translations.of(context);
@@ -227,16 +226,19 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
         }
       }
     }
-    wallet ??= ndk.wallets.defaultWalletForSending is NwcWallet
-        ? ndk.wallets.defaultWalletForSending as NwcWallet
-        : null;
+    wallet ??=
+        ndk.wallets.defaultWalletForSending is NwcWallet
+            ? ndk.wallets.defaultWalletForSending as NwcWallet
+            : null;
 
     if (wallet == null || wallet.connection == null) return;
 
     // Live balance query → push into NDK cache (updates wallet screen too).
     try {
-      final resp = await ndk.nwc
-          .getBalance(wallet.connection!, timeout: const Duration(seconds: 10));
+      final resp = await ndk.nwc.getBalance(
+        wallet.connection!,
+        timeout: const Duration(seconds: 10),
+      );
       if (wallet.balanceSubject != null && !wallet.balanceSubject!.isClosed) {
         wallet.balanceSubject!.add([
           WalletBalance(
@@ -265,9 +267,10 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     if (defaultWallet is! NwcWallet || defaultWallet.connection == null) return;
 
     // Skip if wallet doesn't advertise get_budget support.
-    final effectivePerms = defaultWallet.connection!.permissions.isNotEmpty
-        ? defaultWallet.connection!.permissions
-        : defaultWallet.cachedPermissions;
+    final effectivePerms =
+        defaultWallet.connection!.permissions.isNotEmpty
+            ? defaultWallet.connection!.permissions
+            : defaultWallet.cachedPermissions;
     if (!effectivePerms.contains(NwcMethod.GET_BUDGET.name)) return;
 
     // Skip if balance is already the limiting factor — budget irrelevant.
@@ -282,12 +285,14 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
           .getBudget(defaultWallet.connection!)
           .timeout(const Duration(seconds: 10));
       // totalBudget == 0 → no spending limit configured → null (unlimited).
-      defaultWallet.cachedRemainingBudgetSats = budget.totalBudget > 0
-          ? budget.totalBudgetSats - budget.userBudgetSats
-          : null;
+      defaultWallet.cachedRemainingBudgetSats =
+          budget.totalBudget > 0
+              ? budget.totalBudgetSats - budget.userBudgetSats
+              : null;
     } catch (e) {
       Logger.log.w(
-        () => '[MakerPayInvoiceScreen] Could not fetch default wallet NWC budget: $e',
+        () =>
+            '[MakerPayInvoiceScreen] Could not fetch default wallet NWC budget: $e',
       );
     }
   }
@@ -378,10 +383,12 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     // otherwise waits for the NWC round-trip to populate the cache.
     int balance = await _walletSatBalance(ndk, defaultWallet.id);
     final hasBalanceIssue = balance < requiredSats;
-    int? remainingBudget = defaultWallet is NwcWallet
-        ? defaultWallet.cachedRemainingBudgetSats
-        : null;
-    bool hasBudgetIssue = remainingBudget != null && remainingBudget < requiredSats;
+    int? remainingBudget =
+        defaultWallet is NwcWallet
+            ? defaultWallet.cachedRemainingBudgetSats
+            : null;
+    bool hasBudgetIssue =
+        remainingBudget != null && remainingBudget < requiredSats;
 
     if (!hasBalanceIssue && !hasBudgetIssue) {
       await _payWithNwc(invoice);
@@ -433,10 +440,11 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     // Fetch info for every other NWC+canSend wallet for the picker.
     // Live get_budget call per wallet so budget issues and renewal times
     // are accurate at the moment the dialog is shown.
-    final allSendingWallets = ndk.wallets
-        .getWalletsForUnit('sat')
-        .where((w) => w.canSend && w.id != defaultWallet.id)
-        .toList();
+    final allSendingWallets =
+        ndk.wallets
+            .getWalletsForUnit('sat')
+            .where((w) => w.canSend && w.id != defaultWallet.id)
+            .toList();
 
     final otherInfos = <_WalletBudgetInfo>[];
     for (final w in allSendingWallets) {
@@ -460,16 +468,18 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
           }
         } catch (_) {}
       }
-      otherInfos.add(_WalletBudgetInfo(
-        walletId: w.id,
-        walletName: w.name,
-        balance: bal,
-        remainingBudget: remainBudget,
-        hasBalanceIssue: bal < requiredSats,
-        hasBudgetIssue: budgetIssue,
-        budgetRenewsAt: renewsAt,
-        budgetRenewalPeriod: renewalPeriod,
-      ));
+      otherInfos.add(
+        _WalletBudgetInfo(
+          walletId: w.id,
+          walletName: w.name,
+          balance: bal,
+          remainingBudget: remainBudget,
+          hasBalanceIssue: bal < requiredSats,
+          hasBudgetIssue: budgetIssue,
+          budgetRenewsAt: renewsAt,
+          budgetRenewalPeriod: renewalPeriod,
+        ),
+      );
     }
 
     if (!mounted) return;
@@ -488,34 +498,34 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
   }
 
   Widget _hintBox(String text) => Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(8),
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: Colors.blue.shade50,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.info_outline, size: 15, color: Colors.blue[700]),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 12, color: Colors.blue[900]),
+          ),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.info_outline, size: 15, color: Colors.blue[700]),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                text,
-                style: TextStyle(fontSize: 12, color: Colors.blue[900]),
-              ),
-            ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 
   Future<_BudgetDialogResult?> _showBudgetWarningDialog({
     required _WalletBudgetInfo defaultInfo,
     required List<_WalletBudgetInfo> otherWalletInfos,
     required int requiredSats,
   }) async {
-
     final t = Translations.of(context);
     final bw = t.maker.payInvoice.budgetWarning;
+    final bitcoinDisplayUnit = ref.read(bitcoinDisplayUnitProvider);
 
     return showDialog<_BudgetDialogResult>(
       context: context,
@@ -548,18 +558,18 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
               int newBalance = liveDefault.balance;
               int? newBudget = liveDefault.remainingBudget;
               int? newRenewsAt = liveDefault.budgetRenewsAt;
-              BudgetRenewalPeriod? newRenewalPeriod = liveDefault.budgetRenewalPeriod;
+              BudgetRenewalPeriod? newRenewalPeriod =
+                  liveDefault.budgetRenewalPeriod;
 
               if (liveDefault.hasBalanceIssue) {
                 // For NWC wallets, query the relay directly for a live balance.
                 // For other types, fall back to the local cache.
                 if (wallet is NwcWallet && wallet.connection != null) {
                   try {
-                    final resp = await ndk.nwc
-                        .getBalance(
-                          wallet.connection!,
-                          timeout: const Duration(seconds: 5),
-                        );
+                    final resp = await ndk.nwc.getBalance(
+                      wallet.connection!,
+                      timeout: const Duration(seconds: 5),
+                    );
                     newBalance = resp.balanceSats;
                   } catch (_) {
                     newBalance = ndk.wallets.getBalance(wallet.id, 'sat');
@@ -575,9 +585,10 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                   final b = await ndk.nwc
                       .getBudget(wallet.connection!)
                       .timeout(const Duration(seconds: 5));
-                  newBudget = b.totalBudget > 0
-                      ? b.totalBudgetSats - b.userBudgetSats
-                      : null;
+                  newBudget =
+                      b.totalBudget > 0
+                          ? b.totalBudgetSats - b.userBudgetSats
+                          : null;
                   newRenewsAt = b.renewsAt;
                   newRenewalPeriod = b.renewalPeriod;
                 } catch (_) {}
@@ -635,14 +646,14 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
 
             // "Pay" button in actions enabled only when a wallet without
             // funding issues is selected.
-            final selectedAlt = selectedAlternativeId != null
-                ? otherWalletInfos.cast<_WalletBudgetInfo?>().firstWhere(
+            final selectedAlt =
+                selectedAlternativeId != null
+                    ? otherWalletInfos.cast<_WalletBudgetInfo?>().firstWhere(
                       (w) => w!.walletId == selectedAlternativeId,
                       orElse: () => null,
                     )
-                : null;
-            final canPayWithAlt =
-                selectedAlt != null && !selectedAlt.mightFail;
+                    : null;
+            final canPayWithAlt = selectedAlt != null && !selectedAlt.mightFail;
 
             // After a successful refresh the default wallet may now be fine.
             final allClear = !liveDefault.mightFail;
@@ -692,22 +703,33 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                     // Amount details — live data
                     infoRow(
                       Icons.account_balance_wallet_outlined,
-                      bw.balanceLine(available: liveDefault.balance),
-                      color: liveDefault.hasBalanceIssue
-                          ? Colors.red[700]
-                          : null,
+                      bw.balanceLine(
+                        available: formatBitcoinAmount(
+                          context,
+                          bitcoinDisplayUnit,
+                          liveDefault.balance,
+                        ),
+                      ),
+                      color:
+                          liveDefault.hasBalanceIssue ? Colors.red[700] : null,
                     ),
                     if (liveDefault.remainingBudget != null)
                       infoRow(
                         Icons.tune,
-                        bw.budgetLine(remaining: liveDefault.remainingBudget!),
-                        color: liveDefault.hasBudgetIssue
-                            ? Colors.red[700]
-                            : null,
+                        bw.budgetLine(
+                          remaining: formatBitcoinAmount(
+                            context,
+                            bitcoinDisplayUnit,
+                            liveDefault.remainingBudget!,
+                          ),
+                        ),
+                        color:
+                            liveDefault.hasBudgetIssue ? Colors.red[700] : null,
                       ),
                     if (liveDefault.hasBudgetIssue &&
                         liveDefault.budgetRenewsAt != null &&
-                        liveDefault.budgetRenewalPeriod != BudgetRenewalPeriod.never)
+                        liveDefault.budgetRenewalPeriod !=
+                            BudgetRenewalPeriod.never)
                       infoRow(
                         Icons.autorenew,
                         '${t.nwc.labels.renewsIn} ${_formatRenewsIn(liveDefault.budgetRenewsAt!)}',
@@ -715,7 +737,13 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                       ),
                     infoRow(
                       Icons.bolt,
-                      bw.requiredLine(required: requiredSats),
+                      bw.requiredLine(
+                        required: formatBitcoinAmount(
+                          context,
+                          bitcoinDisplayUnit,
+                          requiredSats,
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 12),
@@ -724,10 +752,9 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                     // • balance issue  → generic "add funds" hint
                     // • NWC budget issue → NWC-specific budget hint
                     if (liveDefault.hasBalanceIssue)
-                      _hintBox(
-                        bw.addFundsHint(name: liveDefault.walletName),
-                      ),
-                    if (liveDefault.hasBalanceIssue && liveDefault.hasBudgetIssue)
+                      _hintBox(bw.addFundsHint(name: liveDefault.walletName)),
+                    if (liveDefault.hasBalanceIssue &&
+                        liveDefault.hasBudgetIssue)
                       const SizedBox(height: 6),
                     if (liveDefault.hasBudgetIssue)
                       _hintBox(bw.increaseBudgetHint),
@@ -741,26 +768,28 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                         // "Try anyway" hidden once wallet looks fine.
                         if (!allClear)
                           TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(
-                              _BudgetDialogResult(
-                                proceed: true,
-                                selectedWalletId: null,
-                                              ),
-                            ),
+                            onPressed:
+                                () => Navigator.of(ctx).pop(
+                                  _BudgetDialogResult(
+                                    proceed: true,
+                                    selectedWalletId: null,
+                                  ),
+                                ),
                             child: Text(bw.payAnyway),
                           ),
                         // Refresh spinner / button
                         IconButton(
                           tooltip: 'Refresh',
-                          icon: isRefreshing
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.refresh),
+                          icon:
+                              isRefreshing
+                                  ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : const Icon(Icons.refresh),
                           onPressed: isRefreshing ? null : doRefresh,
                         ),
                         // Cancel → Pay once all clear.
@@ -768,19 +797,18 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                           ElevatedButton.icon(
                             autofocus: true,
                             icon: const Icon(Icons.bolt),
-                            label: Text(
-                              t.maker.payInvoice.actions.payWithNwc,
-                            ),
+                            label: Text(t.maker.payInvoice.actions.payWithNwc),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.orange[700],
                               foregroundColor: Colors.white,
                             ),
-                            onPressed: () => Navigator.of(ctx).pop(
-                              _BudgetDialogResult(
-                                proceed: true,
-                                selectedWalletId: null,
-                                              ),
-                            ),
+                            onPressed:
+                                () => Navigator.of(ctx).pop(
+                                  _BudgetDialogResult(
+                                    proceed: true,
+                                    selectedWalletId: null,
+                                  ),
+                                ),
                           )
                         else
                           OutlinedButton(
@@ -812,25 +840,39 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                       ...otherWalletInfos.map((info) {
                         final isSelected =
                             info.walletId == selectedAlternativeId;
-                        final renewsInStr = info.hasBudgetIssue &&
-                                info.budgetRenewsAt != null &&
-                                info.budgetRenewalPeriod !=
-                                    BudgetRenewalPeriod.never
-                            ? _formatRenewsIn(info.budgetRenewsAt!)
-                            : null;
+                        final renewsInStr =
+                            info.hasBudgetIssue &&
+                                    info.budgetRenewsAt != null &&
+                                    info.budgetRenewalPeriod !=
+                                        BudgetRenewalPeriod.never
+                                ? _formatRenewsIn(info.budgetRenewsAt!)
+                                : null;
                         final parts = <String>[
-                          bw.balanceLine(available: info.balance),
+                          bw.balanceLine(
+                            available: formatBitcoinAmount(
+                              context,
+                              bitcoinDisplayUnit,
+                              info.balance,
+                            ),
+                          ),
                           if (info.remainingBudget != null)
-                            bw.budgetLine(remaining: info.remainingBudget!),
+                            bw.budgetLine(
+                              remaining: formatBitcoinAmount(
+                                context,
+                                bitcoinDisplayUnit,
+                                info.remainingBudget!,
+                              ),
+                            ),
                           if (renewsInStr != null && renewsInStr.isNotEmpty)
                             '${t.nwc.labels.renewsIn} $renewsInStr',
                         ];
                         final subLine = parts.join(' · ');
 
                         return InkWell(
-                          onTap: () => setDialogState(
-                            () => selectedAlternativeId = info.walletId,
-                          ),
+                          onTap:
+                              () => setDialogState(
+                                () => selectedAlternativeId = info.walletId,
+                              ),
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -838,13 +880,17 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? Colors.orange.shade50
-                                  : Colors.transparent,
+                              color:
+                                  isSelected
+                                      ? Colors.orange.shade50
+                                      : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
-                              border: isSelected
-                                  ? Border.all(color: Colors.orange.shade200)
-                                  : null,
+                              border:
+                                  isSelected
+                                      ? Border.all(
+                                        color: Colors.orange.shade200,
+                                      )
+                                      : null,
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
@@ -854,9 +900,10 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                                       ? Icons.radio_button_checked
                                       : Icons.radio_button_unchecked,
                                   size: 20,
-                                  color: isSelected
-                                      ? Colors.orange[700]
-                                      : Colors.grey[400],
+                                  color:
+                                      isSelected
+                                          ? Colors.orange[700]
+                                          : Colors.grey[400],
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -911,33 +958,37 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                 ),
               ),
               // "Pay with selected wallet" — only active when selection is good
-              actions: otherWalletInfos.isEmpty
-                  ? null
-                  : [
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.bolt),
-                          label: Text(t.maker.payInvoice.actions.payWithNwc),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: canPayWithAlt
-                                ? Colors.orange[700]
-                                : Colors.grey[300],
-                            foregroundColor: canPayWithAlt
-                                ? Colors.white
-                                : Colors.grey[600],
+              actions:
+                  otherWalletInfos.isEmpty
+                      ? null
+                      : [
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.bolt),
+                            label: Text(t.maker.payInvoice.actions.payWithNwc),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  canPayWithAlt
+                                      ? Colors.orange[700]
+                                      : Colors.grey[300],
+                              foregroundColor:
+                                  canPayWithAlt
+                                      ? Colors.white
+                                      : Colors.grey[600],
+                            ),
+                            onPressed:
+                                canPayWithAlt
+                                    ? () => Navigator.of(ctx).pop(
+                                      _BudgetDialogResult(
+                                        proceed: true,
+                                        selectedWalletId: selectedAlternativeId,
+                                      ),
+                                    )
+                                    : null,
                           ),
-                          onPressed: canPayWithAlt
-                              ? () => Navigator.of(ctx).pop(
-                                    _BudgetDialogResult(
-                                      proceed: true,
-                                      selectedWalletId: selectedAlternativeId,
-                                                          ),
-                                  )
-                              : null,
                         ),
-                      ),
-                    ],
+                      ],
             );
           },
         );
@@ -1265,26 +1316,28 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                   builder: (context) {
                     if (offer == null) return const SizedBox.shrink();
                     final sats = offer.amountSats;
-                    final fiat = offer.fiatAmount ?? 0.0;
+                    final fiat = offer.fiatAmount;
+                    final bitcoinDisplayUnit = ref.watch(
+                      bitcoinDisplayUnitProvider,
+                    );
                     final apiService = ref.watch(apiServiceProvider);
-                    final coordinatorInfo =
-                        offer.coordinatorPubkey != null
-                            ? apiService.getCoordinatorInfoByPubkey(
-                              offer.coordinatorPubkey!,
-                            )
-                            : null;
+                    final coordinatorInfo = apiService
+                        .getCoordinatorInfoByPubkey(offer.coordinatorPubkey);
                     String formatFiat(double value) => value.toStringAsFixed(
                       value.truncateToDouble() == value ? 0 : 2,
                     );
                     if (coordinatorInfo == null) return const SizedBox.shrink();
-                    final feePct = coordinatorInfo.makerFee;
                     // final feeFiat = fiat * feePct / 100;
                     // final totalFiat = fiat + feeFiat;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          "$sats sats",
+                          formatBitcoinAmount(
+                            context,
+                            bitcoinDisplayUnit,
+                            sats,
+                          ),
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w400,
@@ -1299,6 +1352,10 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                               ?.copyWith(color: Colors.grey[700], fontSize: 14),
                           textAlign: TextAlign.center,
                         ),
+                        if (offer.premiumPercent > 0) ...[
+                          const SizedBox(height: 8),
+                          PremiumChip(premiumPercent: offer.premiumPercent),
+                        ],
                       ],
                     );
                   },

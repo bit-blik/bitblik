@@ -319,6 +319,7 @@ class NostrService {
     required String makerId,
     OfferCategory? category,
     required String coordinatorPubkey,
+    double premiumPercent = 0,
   }) async {
     final request = NostrRequest(
       method: kRpcInitiateOffer,
@@ -326,6 +327,7 @@ class NostrService {
         'fiat_amount': fiatAmount,
         'maker_id': makerId,
         if (category != null) 'category': category.name,
+        if (premiumPercent > 0) 'premium_percent': premiumPercent,
       },
     );
 

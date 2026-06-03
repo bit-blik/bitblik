@@ -115,6 +115,7 @@ class _Translations$offers$pl extends Translations$offers$en {
 
 	// Translations
 	@override late final _Translations$offers$details$pl details = _Translations$offers$details$pl._(_root);
+	@override late final _Translations$offers$labels$pl labels = _Translations$offers$labels$pl._(_root);
 	@override late final _Translations$offers$tooltips$pl tooltips = _Translations$offers$tooltips$pl._(_root);
 	@override late final _Translations$offers$actions$pl actions = _Translations$offers$actions$pl._(_root);
 	@override late final _Translations$offers$status$pl status = _Translations$offers$status$pl._(_root);
@@ -334,6 +335,8 @@ class _Translations$settings$pl extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Ustawienia';
+	@override late final _Translations$settings$offerCreation$pl offerCreation = _Translations$settings$offerCreation$pl._(_root);
+	@override late final _Translations$settings$display$pl display = _Translations$settings$display$pl._(_root);
 }
 
 // Path: notificationSettings
@@ -598,6 +601,17 @@ class _Translations$offers$details$pl extends Translations$offers$details$en {
 	@override late final _Translations$offers$details$consents$pl consents = _Translations$offers$details$consents$pl._(_root);
 }
 
+// Path: offers.labels
+class _Translations$offers$labels$pl extends Translations$offers$labels$en {
+	_Translations$offers$labels$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get premium => 'Premia';
+	@override String premiumBadge({required Object percent}) => '+${percent}% premii';
+}
+
 // Path: offers.tooltips
 class _Translations$offers$tooltips$pl extends Translations$offers$tooltips$en {
 	_Translations$offers$tooltips$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -606,6 +620,7 @@ class _Translations$offers$tooltips$pl extends Translations$offers$tooltips$en {
 
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.';
+	@override String get premiumInfoTaker => 'Premia oznacza, że ta oferta jest wyceniona powyżej rynku. Dla tej samej kwoty fiat maker blokuje mniej satów w fakturze hold, więc płacisz powyżej rynku i otrzymujesz mniej satów niż po kursie rynkowym. Maksymalną premię ustala koordynator.';
 	@override String get ratesFetchedAt => 'Pobrano o';
 	@override String get ratesSources => 'Źródła średniego kursu';
 }
@@ -704,6 +719,7 @@ class _Translations$offers$errors$pl extends Translations$offers$errors$en {
 	@override String get takerPublicKeyNotFound => 'Nie znaleziono klucza publicznego Takera.';
 	@override String get atmConsentRequired => 'Zaakceptuj warunek dodatkowej opłaty ATM przed wzięciem tej oferty.';
 	@override String get ecommerceConsentRequired => 'Zaakceptuj warunek zwrotu środków z ecommerce przed wzięciem tej oferty.';
+	@override String get cannotTakeOwnOffer => 'Nie możesz wziąć własnej oferty.';
 }
 
 // Path: offers.success
@@ -849,6 +865,7 @@ class _Translations$coordinator$details$pl extends Translations$coordinator$deta
 	@override String get makerFee => 'Opłata makera';
 	@override String get takerFee => 'Opłata takera';
 	@override String get amountRange => 'Zakres kwoty';
+	@override String get maxPremium => 'Maks. premia';
 	@override String get reservationTime => 'Czas rezerwacji';
 	@override String get currencies => 'Waluty';
 	@override String get version => 'Wersja';
@@ -1130,7 +1147,7 @@ class _Translations$taker$paymentFailed$pl extends Translations$taker$paymentFai
 
 	// Translations
 	@override String get title => 'Płatność Nie Powiodła Się';
-	@override String instructions({required Object netAmount}) => 'Proszę podać nową fakturę Lightning na kwotę ${netAmount} satoshi';
+	@override String instructions({required Object netAmount}) => 'Proszę podać nową fakturę Lightning na kwotę ${netAmount}';
 	@override late final _Translations$taker$paymentFailed$form$pl form = _Translations$taker$paymentFailed$form$pl._(_root);
 	@override late final _Translations$taker$paymentFailed$actions$pl actions = _Translations$taker$paymentFailed$actions$pl._(_root);
 	@override late final _Translations$taker$paymentFailed$errors$pl errors = _Translations$taker$paymentFailed$errors$pl._(_root);
@@ -1418,6 +1435,40 @@ class _Translations$landing$actions$pl extends Translations$landing$actions$en {
 	@override String get howItWorks => 'Jak to działa?';
 }
 
+// Path: settings.offerCreation
+class _Translations$settings$offerCreation$pl extends Translations$settings$offerCreation$en {
+	_Translations$settings$offerCreation$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Tworzenie ofert';
+	@override String get defaultCategory => 'Domyślna kategoria';
+	@override String get preferredCoordinator => 'Preferowany koordynator';
+	@override String get automaticCoordinator => 'Automatycznie';
+	@override String get automaticCoordinatorDescription => 'Automatycznie wybiera najbardziej niezawodnego dostępnego koordynatora dla każdej oferty.';
+	@override String get enablePremium => 'Włącz premię cenową';
+	@override String get enablePremiumDescription => 'Pokaż suwak premii podczas tworzenia ofert makera.';
+	@override String get defaultPremium => 'Domyślna premia';
+	@override String get defaultPremiumDisabled => 'Włącz premię cenową, aby ustawić domyślną premię.';
+	@override String get premiumPerCoordinatorNote => 'Każdy koordynator ustala własną maksymalną premię, więc Twoja domyślna wartość jest ograniczona przez koordynatora użytego do oferty.';
+	@override late final _Translations$settings$offerCreation$categoryOptions$pl categoryOptions = _Translations$settings$offerCreation$categoryOptions$pl._(_root);
+	@override late final _Translations$settings$offerCreation$dialogs$pl dialogs = _Translations$settings$offerCreation$dialogs$pl._(_root);
+}
+
+// Path: settings.display
+class _Translations$settings$display$pl extends Translations$settings$display$en {
+	_Translations$settings$display$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Wygląd';
+	@override String get bitcoinUnit => 'Jednostka Bitcoina';
+	@override String get bitcoinUnitDescription => 'Wybierz, jak kwoty bitcoina są pokazywane w całej aplikacji.';
+	@override late final _Translations$settings$display$unitOptions$pl unitOptions = _Translations$settings$display$unitOptions$pl._(_root);
+}
+
 // Path: notificationSettings.newOfferAlerts
 class _Translations$notificationSettings$newOfferAlerts$pl extends Translations$notificationSettings$newOfferAlerts$en {
 	_Translations$notificationSettings$newOfferAlerts$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -1609,7 +1660,8 @@ class _Translations$offerNotifications$newOffer$pl extends Translations$offerNot
 
 	// Translations
 	@override String get title => 'Nowa oferta dostępna';
-	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sat';
+	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}';
+	@override String premiumSuffix({required Object percent}) => '+${percent}% premii';
 }
 
 // Path: offerNotifications.categories
@@ -1715,8 +1767,10 @@ class _Translations$maker$amountForm$labels$pl extends Translations$maker$amount
 	@override String get exchangeRate => 'Kurs wymiany';
 	@override String get fee => 'Opłata';
 	@override String get satoshisToPay => 'Do zapłaty';
+	@override String get bitcoinToPay => 'Bitcoin do zapłaty';
 	@override String get enterAmount => 'Wprowadź kwotę';
 	@override String get tapToSelect => 'Kliknij, aby wybrać';
+	@override String get premium => 'Premia';
 }
 
 // Path: maker.amountForm.actions
@@ -1738,6 +1792,7 @@ class _Translations$maker$amountForm$tooltips$pl extends Translations$maker$amou
 	// Translations
 	@override String feeInfo({required Object feePercent}) => 'Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning.';
 	@override String get payInfo => 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.';
+	@override String get premiumInfo => 'Opcjonalna premia pozwala sprzedać saty powyżej ceny rynkowej. Premia zmniejsza liczbę satów zablokowanych w fakturze hold dla tej samej kwoty fiat, więc kupujący płaci powyżej rynku, a Ty zatrzymujesz różnicę. Domyślnie wyłączona (0%). Maksymalną premię ustala wybrany koordynator.';
 }
 
 // Path: maker.amountForm.category
@@ -2190,7 +2245,7 @@ class _Translations$taker$paymentFailed$walletSection$pl extends Translations$ta
 	// Translations
 	@override String get title => 'Generuj fakturę z portfela';
 	@override String get defaultLabel => 'domyślny';
-	@override String tapToGenerate({required Object amountSats}) => 'Dotknij, aby wygenerować fakturę na ${amountSats} sats';
+	@override String tapToGenerate({required Object amountSats}) => 'Dotknij, aby wygenerować fakturę na ${amountSats}';
 }
 
 // Path: taker.paymentFailed.loading
@@ -2314,6 +2369,42 @@ class _Translations$home$statistics$errors$pl extends Translations$home$statisti
 	@override String loading({required Object error}) => 'Błąd ładowania statystyk: ${error}';
 }
 
+// Path: settings.offerCreation.categoryOptions
+class _Translations$settings$offerCreation$categoryOptions$pl extends Translations$settings$offerCreation$categoryOptions$en {
+	_Translations$settings$offerCreation$categoryOptions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get shop => 'Sklep, kawiarnia lub restauracja';
+	@override String get atm => 'Wypłata z bankomatu';
+	@override String get online => 'Usługa/produkt online';
+}
+
+// Path: settings.offerCreation.dialogs
+class _Translations$settings$offerCreation$dialogs$pl extends Translations$settings$offerCreation$dialogs$en {
+	_Translations$settings$offerCreation$dialogs$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get selectCategory => 'Wybierz domyślną kategorię';
+	@override String get selectCoordinator => 'Wybierz preferowanego koordynatora';
+	@override String get premiumHint => 'Wpisz wartość procentową, np. 1.5. Wartości są zaokrąglane do kroków co 0.5%.';
+	@override String get premiumHelper => 'Stosowane po włączeniu premii cenowej i ograniczane do maksimum wybranego koordynatora.';
+}
+
+// Path: settings.display.unitOptions
+class _Translations$settings$display$unitOptions$pl extends Translations$settings$display$unitOptions$en {
+	_Translations$settings$display$unitOptions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get sats => 'saty';
+	@override String get bitcoin => '₿ (BIP-177)';
+}
+
 // Path: maker.amountForm.category.options
 class _Translations$maker$amountForm$category$options$pl extends Translations$maker$amountForm$category$options$en {
 	_Translations$maker$amountForm$category$options$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -2435,7 +2526,10 @@ extension on TranslationsPl {
 			'offers.details.categories.onlineService' => 'Produkt lub usługa online',
 			'offers.details.consents.atm' => 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.',
 			'offers.details.consents.ecommerce' => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.',
+			'offers.labels.premium' => 'Premia',
+			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% premii',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.',
+			'offers.tooltips.premiumInfoTaker' => 'Premia oznacza, że ta oferta jest wyceniona powyżej rynku. Dla tej samej kwoty fiat maker blokuje mniej satów w fakturze hold, więc płacisz powyżej rynku i otrzymujesz mniej satów niż po kursie rynkowym. Maksymalną premię ustala koordynator.',
 			'offers.tooltips.ratesFetchedAt' => 'Pobrano o',
 			'offers.tooltips.ratesSources' => 'Źródła średniego kursu',
 			'offers.actions.take' => 'WEŹ',
@@ -2489,6 +2583,7 @@ extension on TranslationsPl {
 			'offers.errors.takerPublicKeyNotFound' => 'Nie znaleziono klucza publicznego Takera.',
 			'offers.errors.atmConsentRequired' => 'Zaakceptuj warunek dodatkowej opłaty ATM przed wzięciem tej oferty.',
 			'offers.errors.ecommerceConsentRequired' => 'Zaakceptuj warunek zwrotu środków z ecommerce przed wzięciem tej oferty.',
+			'offers.errors.cannotTakeOwnOffer' => 'Nie możesz wziąć własnej oferty.',
 			'offers.success.title' => 'Oferta zakończona',
 			'offers.success.headline' => 'Płatność potwierdzona!',
 			'offers.success.subtitle' => 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.',
@@ -2536,6 +2631,7 @@ extension on TranslationsPl {
 			'coordinator.details.makerFee' => 'Opłata makera',
 			'coordinator.details.takerFee' => 'Opłata takera',
 			'coordinator.details.amountRange' => 'Zakres kwoty',
+			'coordinator.details.maxPremium' => 'Maks. premia',
 			'coordinator.details.reservationTime' => 'Czas rezerwacji',
 			'coordinator.details.currencies' => 'Waluty',
 			'coordinator.details.version' => 'Wersja',
@@ -2577,11 +2673,14 @@ extension on TranslationsPl {
 			'maker.amountForm.labels.exchangeRate' => 'Kurs wymiany',
 			'maker.amountForm.labels.fee' => 'Opłata',
 			'maker.amountForm.labels.satoshisToPay' => 'Do zapłaty',
+			'maker.amountForm.labels.bitcoinToPay' => 'Bitcoin do zapłaty',
 			'maker.amountForm.labels.enterAmount' => 'Wprowadź kwotę',
 			'maker.amountForm.labels.tapToSelect' => 'Kliknij, aby wybrać',
+			'maker.amountForm.labels.premium' => 'Premia',
 			'maker.amountForm.actions.generateInvoice' => 'Wygeneruj Fakturę',
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning.',
 			'maker.amountForm.tooltips.payInfo' => 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.',
+			'maker.amountForm.tooltips.premiumInfo' => 'Opcjonalna premia pozwala sprzedać saty powyżej ceny rynkowej. Premia zmniejsza liczbę satów zablokowanych w fakturze hold dla tej samej kwoty fiat, więc kupujący płaci powyżej rynku, a Ty zatrzymujesz różnicę. Domyślnie wyłączona (0%). Maksymalną premię ustala wybrany koordynator.',
 			'maker.amountForm.category.label' => 'Kategoria oferty',
 			'maker.amountForm.category.options.physicalShop' => 'Sklep, kawiarnia lub restauracja',
 			'maker.amountForm.category.options.atmCashout' => 'Wypłata gotówki z bankomatu',
@@ -2783,7 +2882,7 @@ extension on TranslationsPl {
 			'taker.paymentProcess.loading.publicKey' => 'Ładowanie Twoich danych...',
 			'taker.paymentProcess.actions.goToFailureDetails' => 'Wprowadź nową fakturę Lightning',
 			'taker.paymentFailed.title' => 'Płatność Nie Powiodła Się',
-			'taker.paymentFailed.instructions' => ({required Object netAmount}) => 'Proszę podać nową fakturę Lightning na kwotę ${netAmount} satoshi',
+			'taker.paymentFailed.instructions' => ({required Object netAmount}) => 'Proszę podać nową fakturę Lightning na kwotę ${netAmount}',
 			'taker.paymentFailed.form.newInvoiceLabel' => 'Nowa faktura Lightning',
 			'taker.paymentFailed.form.newInvoiceHint' => 'Wprowadź swoją fakturę BOLT11',
 			'taker.paymentFailed.actions.retryPayment' => 'Wyślij nową fakturę',
@@ -2794,7 +2893,7 @@ extension on TranslationsPl {
 			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Nie udało się wygenerować faktury: ${details}',
 			'taker.paymentFailed.walletSection.title' => 'Generuj fakturę z portfela',
 			'taker.paymentFailed.walletSection.defaultLabel' => 'domyślny',
-			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Dotknij, aby wygenerować fakturę na ${amountSats} sats',
+			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Dotknij, aby wygenerować fakturę na ${amountSats}',
 			'taker.paymentFailed.loading.processingPayment' => 'Przetwarzanie ponownej płatności...',
 			'taker.paymentFailed.success.title' => 'Płatność udana',
 			'taker.paymentFailed.success.message' => 'Twoja płatność została przetworzona pomyślnie.',
@@ -2861,6 +2960,8 @@ extension on TranslationsPl {
 			'home.statistics.errors.loading' => ({required Object error}) => 'Błąd ładowania statystyk: ${error}',
 			'system.loadingPublicKey' => 'Ładowanie Twojego klucza publicznego...',
 			'system.errors.generic' => 'Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.',
+			_ => null,
+		} ?? switch (path) {
 			'system.errors.loadingTimeoutConfig' => 'Błąd ładowania konfiguracji limitu czasu.',
 			'system.errors.loadingCoordinatorConfig' => 'Błąd ładowania konfiguracji koordynatora. Proszę spróbować ponownie.',
 			'system.errors.noPublicKey' => 'Twój klucz publiczny nie jest dostępny. Nie można kontynuować.',
@@ -2869,8 +2970,6 @@ extension on TranslationsPl {
 			'system.blik.copied' => 'Kod BLIK skopiowany do schowka',
 			'myOffers.title' => 'Moje oferty',
 			'myOffers.empty' => 'Brak ofert.',
-			_ => null,
-		} ?? switch (path) {
 			'myOffers.unknownCoordinator' => 'Nieznany koordynator',
 			'myOffers.menuLabel' => 'Moje oferty',
 			'myOffers.filter.all' => 'Wszystkie',
@@ -2910,6 +3009,28 @@ extension on TranslationsPl {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Ustawienia',
+			'settings.offerCreation.title' => 'Tworzenie ofert',
+			'settings.offerCreation.defaultCategory' => 'Domyślna kategoria',
+			'settings.offerCreation.preferredCoordinator' => 'Preferowany koordynator',
+			'settings.offerCreation.automaticCoordinator' => 'Automatycznie',
+			'settings.offerCreation.automaticCoordinatorDescription' => 'Automatycznie wybiera najbardziej niezawodnego dostępnego koordynatora dla każdej oferty.',
+			'settings.offerCreation.enablePremium' => 'Włącz premię cenową',
+			'settings.offerCreation.enablePremiumDescription' => 'Pokaż suwak premii podczas tworzenia ofert makera.',
+			'settings.offerCreation.defaultPremium' => 'Domyślna premia',
+			'settings.offerCreation.defaultPremiumDisabled' => 'Włącz premię cenową, aby ustawić domyślną premię.',
+			'settings.offerCreation.premiumPerCoordinatorNote' => 'Każdy koordynator ustala własną maksymalną premię, więc Twoja domyślna wartość jest ograniczona przez koordynatora użytego do oferty.',
+			'settings.offerCreation.categoryOptions.shop' => 'Sklep, kawiarnia lub restauracja',
+			'settings.offerCreation.categoryOptions.atm' => 'Wypłata z bankomatu',
+			'settings.offerCreation.categoryOptions.online' => 'Usługa/produkt online',
+			'settings.offerCreation.dialogs.selectCategory' => 'Wybierz domyślną kategorię',
+			'settings.offerCreation.dialogs.selectCoordinator' => 'Wybierz preferowanego koordynatora',
+			'settings.offerCreation.dialogs.premiumHint' => 'Wpisz wartość procentową, np. 1.5. Wartości są zaokrąglane do kroków co 0.5%.',
+			'settings.offerCreation.dialogs.premiumHelper' => 'Stosowane po włączeniu premii cenowej i ograniczane do maksimum wybranego koordynatora.',
+			'settings.display.title' => 'Wygląd',
+			'settings.display.bitcoinUnit' => 'Jednostka Bitcoina',
+			'settings.display.bitcoinUnitDescription' => 'Wybierz, jak kwoty bitcoina są pokazywane w całej aplikacji.',
+			'settings.display.unitOptions.sats' => 'saty',
+			'settings.display.unitOptions.bitcoin' => '₿ (BIP-177)',
 			'notificationSettings.title' => 'Powiadomienia',
 			'notificationSettings.androidOnly' => 'Powiadomienia w tle są obecnie obsługiwane tylko na Androidzie.',
 			'notificationSettings.newOfferAlerts.label' => 'Alerty o nowych ofertach',
@@ -2978,7 +3099,8 @@ extension on TranslationsPl {
 			'offerNotifications.blikReady.title' => 'Kod BLIK gotowy',
 			'offerNotifications.blikReady.body' => 'Twój kod BLIK jest gotowy do wyświetlenia.',
 			'offerNotifications.newOffer.title' => 'Nowa oferta dostępna',
-			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats} sat',
+			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
+			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premii',
 			'offerNotifications.categories.shop' => 'Sklep',
 			'offerNotifications.categories.atm' => 'Bankomat',
 			'offerNotifications.categories.online' => 'Online',

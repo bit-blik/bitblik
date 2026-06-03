@@ -9,9 +9,11 @@ import '../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import '../providers/providers.dart';
 import '../services/api_service_nostr.dart';
+import '../utils/bitcoin_display.dart';
 import 'coordinator_details_screen.dart';
 import '../widgets/lightning_address_widget.dart';
 import '../widgets/progress_indicators.dart';
+import '../widgets/premium_info.dart';
 
 class OfferDetailsScreen extends ConsumerStatefulWidget {
   final String offerId;
@@ -103,10 +105,21 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final apiService = ref.read(apiServiceProvider);
 
+    // Cannot take your own offer (same maker pubkey).
+    if (offer.makerPubkey == publicKey) {
+      ref.read(errorProvider.notifier).state =
+          t.offers.errors.cannotTakeOwnOffer;
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text(t.offers.errors.cannotTakeOwnOffer)),
+      );
+      return;
+    }
+
     setState(() => _isTaking = true);
 
-    final hasReceivingWalletNow =
-        await ref.read(hasReceivingWalletProvider.future);
+    final hasReceivingWalletNow = await ref.read(
+      hasReceivingWalletProvider.future,
+    );
     if (!mounted) return;
     if (!hasReceivingWalletNow) {
       setState(() => _isTaking = false);
@@ -135,9 +148,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
             t.reservations.errors.failedNoTimestamp;
         if (scaffoldMessenger.mounted) {
           scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text(t.reservations.errors.failedNoTimestamp),
-            ),
+            SnackBar(content: Text(t.reservations.errors.failedNoTimestamp)),
           );
         }
         ref.invalidate(availableOffersProvider);
@@ -145,14 +156,13 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isTaking = false);
-      final errorMsg = t.reservations.errors.failedToReserve(
-        details: e.toString(),
-      );
+      final errorMsg =
+          e is CannotTakeOwnOfferException
+              ? t.offers.errors.cannotTakeOwnOffer
+              : t.reservations.errors.failedToReserve(details: e.toString());
       ref.read(errorProvider.notifier).state = errorMsg;
       if (scaffoldMessenger.mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(errorMsg)),
-        );
+        scaffoldMessenger.showSnackBar(SnackBar(content: Text(errorMsg)));
       }
       ref.invalidate(availableOffersProvider);
     }
@@ -244,6 +254,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
     final hasReceivingWalletAsync = ref.watch(hasReceivingWalletProvider);
     final myActiveOffer = ref.watch(activeOfferProvider);
+    final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
     final t = Translations.of(context);
     final router = GoRouter.of(context);
 
@@ -368,8 +379,12 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                               (!requiresAtmConsent || _atmConsentAccepted) &&
                               (!requiresEcommerceConsent ||
                                   _ecommerceConsentAccepted);
+                          final isOwnOffer =
+                              publicKey != null &&
+                              offer.makerPubkey == publicKey;
                           final isButtonEnabled =
                               publicKey != null &&
+                              !isOwnOffer &&
                               hasReceivingWallet &&
                               isTermsAccepted &&
                               hasCategoryConsent &&
@@ -382,30 +397,28 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                             );
                             if (pendingId == widget.offerId) {
                               _autoTakeTriggered = true;
-                              WidgetsBinding.instance.addPostFrameCallback(
-                                (_) {
-                                  if (!mounted) return;
-                                  ref
-                                      .read(
-                                        pendingAutoTakeOfferIdProvider.notifier,
-                                      )
-                                      .state = null;
-                                  _executeTakeOffer(
-                                    offer: offer,
-                                    publicKey: publicKey!,
-                                    router: router,
-                                  );
-                                },
-                              );
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!mounted) return;
+                                ref
+                                    .read(
+                                      pendingAutoTakeOfferIdProvider.notifier,
+                                    )
+                                    .state = null;
+                                _executeTakeOffer(
+                                  offer: offer,
+                                  publicKey: publicKey,
+                                  router: router,
+                                );
+                              });
                             }
                           }
 
                           return isButtonEnabled
                               ? () => _executeTakeOffer(
-                                    offer: offer,
-                                    publicKey: publicKey!,
-                                    router: router,
-                                  )
+                                offer: offer,
+                                publicKey: publicKey,
+                                router: router,
+                              )
                               : null;
                         },
                         loading: () => null,
@@ -618,12 +631,31 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   if (offer.status != OfferStatus.takerPaid)
                                     const SizedBox(height: 10),
 
+                                  // Premium row (only when offer carries one)
+                                  if (offer.premiumPercent > 0) ...[
+                                    _buildInfoRow(
+                                      t.offers.labels.premium,
+                                      '+${formatPremium(offer.premiumPercent)}%',
+                                      hasInfoIcon: true,
+                                      onInfoTap:
+                                          () => showPremiumInfoDialog(
+                                            context,
+                                            viewerRole: PremiumViewerRole.taker,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                  ],
+
                                   // Taker fee row (hide for takerPaid and when fee is 0)
                                   if (offer.status != OfferStatus.takerPaid &&
                                       takerFeeAmount != 0)
                                     _buildInfoRow(
                                       t.offers.details.takerFeeLabel,
-                                      '$takerFeeAmount sats',
+                                      formatBitcoinAmount(
+                                        context,
+                                        bitcoinDisplayUnit,
+                                        takerFeeAmount,
+                                      ),
                                       hasInfoIcon: true,
                                       onInfoTap: () {
                                         coordinatorInfoAsync.whenData((
@@ -678,7 +710,11 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   if (offer.status != OfferStatus.takerPaid)
                                     _buildInfoRow(
                                       t.offers.details.youllReceive,
-                                      '$youllReceive sats',
+                                      formatBitcoinAmount(
+                                        context,
+                                        bitcoinDisplayUnit,
+                                        youllReceive,
+                                      ),
                                       isHighlighted: true,
                                     ),
 
@@ -1160,6 +1196,27 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   ],
                                   const SizedBox(height: 4),
 
+                                  // Cannot take your own offer message
+                                  if (offer.makerPubkey ==
+                                      publicKeyAsyncValue.value)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      child: Text(
+                                        t.offers.errors.cannotTakeOwnOffer,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.error,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+
                                   // Action button
                                   if (actionButton != null) actionButton,
                                 ],
@@ -1479,7 +1536,6 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
       ),
     );
   }
-
 }
 
 extension OfferCopyWith on Offer {

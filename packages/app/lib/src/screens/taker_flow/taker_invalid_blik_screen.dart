@@ -93,22 +93,10 @@ class _TakerInvalidBlikScreenState
                             );
 
                         if (reservationTimestamp != null) {
-                          final Offer updatedOffer = Offer(
-                            id: offer.id,
-                            amountSats: offer.amountSats,
-                            makerFees: offer.makerFees,
-                            fiatCurrency: offer.fiatCurrency,
-                            fiatAmount: offer.fiatAmount,
-                            coordinatorPubkey: offer.coordinatorPubkey,
+                          final Offer updatedOffer = offer.copyWith(
                             status: OfferStatus.reserved,
-                            createdAt: offer.createdAt,
-                            makerPubkey: offer.makerPubkey,
                             takerPubkey: takerId,
                             reservedAt: reservationTimestamp,
-                            blikReceivedAt: offer.blikReceivedAt,
-                            blikCode: offer.blikCode,
-                            holdInvoicePaymentHash:
-                                offer.holdInvoicePaymentHash,
                           );
 
                           await ref

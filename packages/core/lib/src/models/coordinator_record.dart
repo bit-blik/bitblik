@@ -80,6 +80,7 @@ class CoordinatorRecord {
   int get maxAmountSats => info?.maxAmountSats ?? 0;
   double get makerFee => info?.makerFee ?? 0.0;
   double get takerFee => info?.takerFee ?? 0.0;
+  double get maxPremium => info?.maxPremiumPercent ?? 0.0;
   int get reservationSeconds => info?.reservationSeconds ?? 0;
   List<String> get currencies => info?.currencies ?? const [];
   String get version => info?.version ?? '';
