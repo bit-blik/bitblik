@@ -270,6 +270,8 @@ coordinator:
     takerFee: "Taker fee"
     amountRange: "Amount range"
     maxPremium: "Max premium"
+    maxPremiumInfoTitle: "Premium"
+    maxPremiumInfoBody: "A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers."
     reservationTime: "Reservation time"
     currencies: "Currencies"
     version: "Version"
@@ -323,7 +325,6 @@ maker:
       exchangeRate: Exchange Rate
       fee: Fee
       satoshisToPay: Amount to Pay
-      bitcoinToPay: Bitcoin to Pay
       enterAmount: Enter amount
       tapToSelect: Tap to select
       premium: Premium

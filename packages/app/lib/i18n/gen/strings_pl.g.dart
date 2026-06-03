@@ -866,6 +866,8 @@ class _Translations$coordinator$details$pl extends Translations$coordinator$deta
 	@override String get takerFee => 'Opłata takera';
 	@override String get amountRange => 'Zakres kwoty';
 	@override String get maxPremium => 'Maks. premia';
+	@override String get maxPremiumInfoTitle => 'Premia';
+	@override String get maxPremiumInfoBody => 'Premia to opcjonalna marża ponad kurs rynkowy, którą wystawiający (maker) może ustawić na ofercie. Przy premii maker blokuje mniej satoshi za tę samą kwotę fiat, więc biorący (taker) płaci powyżej rynku, a maker zatrzymuje różnicę. Ta wartość to najwyższa premia dozwolona przez tego koordynatora w jego ofertach.';
 	@override String get reservationTime => 'Czas rezerwacji';
 	@override String get currencies => 'Waluty';
 	@override String get version => 'Wersja';
@@ -1767,7 +1769,6 @@ class _Translations$maker$amountForm$labels$pl extends Translations$maker$amount
 	@override String get exchangeRate => 'Kurs wymiany';
 	@override String get fee => 'Opłata';
 	@override String get satoshisToPay => 'Do zapłaty';
-	@override String get bitcoinToPay => 'Bitcoin do zapłaty';
 	@override String get enterAmount => 'Wprowadź kwotę';
 	@override String get tapToSelect => 'Kliknij, aby wybrać';
 	@override String get premium => 'Premia';
@@ -2632,6 +2633,8 @@ extension on TranslationsPl {
 			'coordinator.details.takerFee' => 'Opłata takera',
 			'coordinator.details.amountRange' => 'Zakres kwoty',
 			'coordinator.details.maxPremium' => 'Maks. premia',
+			'coordinator.details.maxPremiumInfoTitle' => 'Premia',
+			'coordinator.details.maxPremiumInfoBody' => 'Premia to opcjonalna marża ponad kurs rynkowy, którą wystawiający (maker) może ustawić na ofercie. Przy premii maker blokuje mniej satoshi za tę samą kwotę fiat, więc biorący (taker) płaci powyżej rynku, a maker zatrzymuje różnicę. Ta wartość to najwyższa premia dozwolona przez tego koordynatora w jego ofertach.',
 			'coordinator.details.reservationTime' => 'Czas rezerwacji',
 			'coordinator.details.currencies' => 'Waluty',
 			'coordinator.details.version' => 'Wersja',
@@ -2673,7 +2676,6 @@ extension on TranslationsPl {
 			'maker.amountForm.labels.exchangeRate' => 'Kurs wymiany',
 			'maker.amountForm.labels.fee' => 'Opłata',
 			'maker.amountForm.labels.satoshisToPay' => 'Do zapłaty',
-			'maker.amountForm.labels.bitcoinToPay' => 'Bitcoin do zapłaty',
 			'maker.amountForm.labels.enterAmount' => 'Wprowadź kwotę',
 			'maker.amountForm.labels.tapToSelect' => 'Kliknij, aby wybrać',
 			'maker.amountForm.labels.premium' => 'Premia',
@@ -2959,9 +2961,9 @@ extension on TranslationsPl {
 			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Błąd ładowania statystyk: ${error}',
 			'system.loadingPublicKey' => 'Ładowanie Twojego klucza publicznego...',
-			'system.errors.generic' => 'Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.',
 			_ => null,
 		} ?? switch (path) {
+			'system.errors.generic' => 'Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.',
 			'system.errors.loadingTimeoutConfig' => 'Błąd ładowania konfiguracji limitu czasu.',
 			'system.errors.loadingCoordinatorConfig' => 'Błąd ładowania konfiguracji koordynatora. Proszę spróbować ponownie.',
 			'system.errors.noPublicKey' => 'Twój klucz publiczny nie jest dostępny. Nie można kontynuować.',

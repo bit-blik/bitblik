@@ -1469,7 +1469,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               // Large amount input field
               Container(
                 padding: const EdgeInsets.symmetric(
-                  vertical: 30.0,
+                  vertical: 22.0,
                   horizontal: 20,
                 ),
                 child: Row(
@@ -1927,29 +1927,39 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   activeTrackColor: const Color(0xFFFF007F),
                                   thumbColor: const Color(0xFFFF007F),
                                   overlayColor: const Color(0x33FF007F),
+                                  trackHeight: 2,
+                                  overlayShape: SliderComponentShape.noOverlay,
                                 ),
-                                child: Slider(
-                                  value: _premiumPercent.clamp(
-                                    0,
-                                    _selectedCoordinatorInfo!.maxPremiumPercent,
-                                  ),
-                                  min: 0,
-                                  max:
+                                // Constrain height so the row matches the
+                                // other detail rows (overlay disabled above).
+                                child: SizedBox(
+                                  height: 28,
+                                  child: Slider(
+                                    value: _premiumPercent.clamp(
+                                      0,
                                       _selectedCoordinatorInfo!
                                           .maxPremiumPercent,
-                                  divisions:
-                                      (_selectedCoordinatorInfo!
-                                                  .maxPremiumPercent /
-                                              0.5)
-                                          .round(),
-                                  label: '${_formatPremium(_premiumPercent)}%',
-                                  onChanged: (value) {
-                                    setState(() {
-                                      // Snap to 0.5 steps.
-                                      _premiumPercent = (value * 2).round() / 2;
-                                      _userAdjustedPremium = true;
-                                    });
-                                  },
+                                    ),
+                                    min: 0,
+                                    max:
+                                        _selectedCoordinatorInfo!
+                                            .maxPremiumPercent,
+                                    divisions:
+                                        (_selectedCoordinatorInfo!
+                                                    .maxPremiumPercent /
+                                                0.5)
+                                            .round(),
+                                    label:
+                                        '${_formatPremium(_premiumPercent)}%',
+                                    onChanged: (value) {
+                                      setState(() {
+                                        // Snap to 0.5 steps.
+                                        _premiumPercent =
+                                            (value * 2).round() / 2;
+                                        _userAdjustedPremium = true;
+                                      });
+                                    },
+                                  ),
                                 ),
                               ),
                             ),
@@ -1975,7 +1985,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     // Satoshis to pay row
                     _selectedCoordinatorInfo != null
                         ? _buildDetailRow(
-                          _bitcoinToPayLabel(t),
+                          t.maker.amountForm.labels.satoshisToPay,
                           Text(
                             _satsEquivalent != null
                                 ? _formatBitcoinAmount(
@@ -2194,12 +2204,4 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     }
   }
 
-  String _bitcoinToPayLabel(Translations t) {
-    switch (_bitcoinDisplayUnit) {
-      case BitcoinDisplayUnit.sats:
-        return t.maker.amountForm.labels.satoshisToPay;
-      case BitcoinDisplayUnit.bitcoin:
-        return t.maker.amountForm.labels.bitcoinToPay;
-    }
-  }
 }

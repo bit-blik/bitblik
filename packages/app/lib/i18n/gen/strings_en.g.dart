@@ -1314,6 +1314,12 @@ class Translations$coordinator$details$en {
 	/// en: 'Max premium'
 	String get maxPremium => 'Max premium';
 
+	/// en: 'Premium'
+	String get maxPremiumInfoTitle => 'Premium';
+
+	/// en: 'A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers.'
+	String get maxPremiumInfoBody => 'A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers.';
+
 	/// en: 'Reservation time'
 	String get reservationTime => 'Reservation time';
 
@@ -2780,9 +2786,6 @@ class Translations$maker$amountForm$labels$en {
 	/// en: 'Amount to Pay'
 	String get satoshisToPay => 'Amount to Pay';
 
-	/// en: 'Bitcoin to Pay'
-	String get bitcoinToPay => 'Bitcoin to Pay';
-
 	/// en: 'Enter amount'
 	String get enterAmount => 'Enter amount';
 
@@ -4059,6 +4062,8 @@ extension on Translations {
 			'coordinator.details.takerFee' => 'Taker fee',
 			'coordinator.details.amountRange' => 'Amount range',
 			'coordinator.details.maxPremium' => 'Max premium',
+			'coordinator.details.maxPremiumInfoTitle' => 'Premium',
+			'coordinator.details.maxPremiumInfoBody' => 'A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers.',
 			'coordinator.details.reservationTime' => 'Reservation time',
 			'coordinator.details.currencies' => 'Currencies',
 			'coordinator.details.version' => 'Version',
@@ -4100,7 +4105,6 @@ extension on Translations {
 			'maker.amountForm.labels.exchangeRate' => 'Exchange Rate',
 			'maker.amountForm.labels.fee' => 'Fee',
 			'maker.amountForm.labels.satoshisToPay' => 'Amount to Pay',
-			'maker.amountForm.labels.bitcoinToPay' => 'Bitcoin to Pay',
 			'maker.amountForm.labels.enterAmount' => 'Enter amount',
 			'maker.amountForm.labels.tapToSelect' => 'Tap to select',
 			'maker.amountForm.labels.premium' => 'Premium',
@@ -4385,9 +4389,9 @@ extension on Translations {
 			'generateNewKey.title' => 'New',
 			'generateNewKey.description' => 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven\'t backed it up.',
 			'generateNewKey.buttons.generate' => 'Generate',
-			'generateNewKey.errors.activeOffer' => 'You cannot generate a new Neko while you have an active offer.',
 			_ => null,
 		} ?? switch (path) {
+			'generateNewKey.errors.activeOffer' => 'You cannot generate a new Neko while you have an active offer.',
 			'generateNewKey.errors.failed' => 'Failed to generate new Neko',
 			'generateNewKey.feedback.success' => 'New Neko generated successfully!',
 			'generateNewKey.tooltips.generate' => 'Generate New Neko',

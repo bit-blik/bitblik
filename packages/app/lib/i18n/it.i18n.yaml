@@ -270,6 +270,8 @@ coordinator:
     takerFee: "Commissione taker"
     amountRange: "Intervallo importo"
     maxPremium: "Premio max"
+    maxPremiumInfoTitle: "Premio"
+    maxPremiumInfoBody: "Il premio è un sovrapprezzo opzionale rispetto al tasso di mercato che un maker può impostare su un'offerta. Con un premio, il maker blocca meno satoshi per lo stesso importo in fiat, quindi il taker paga sopra il mercato e il maker trattiene la differenza. Questo valore è il premio massimo che questo coordinatore consente sulle sue offerte."
     reservationTime: "Tempo di prenotazione"
     currencies: "Valute"
     version: "Versione"
@@ -323,7 +325,6 @@ maker:
       exchangeRate: Tasso di Cambio
       fee: Commissione
       satoshisToPay: Importo da Pagare
-      bitcoinToPay: Bitcoin da Pagare
       enterAmount: Inserisci importo
       tapToSelect: Tocca per selezionare
       premium: Premio

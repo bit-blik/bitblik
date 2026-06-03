@@ -867,6 +867,8 @@ class _Translations$coordinator$details$it extends Translations$coordinator$deta
 	@override String get takerFee => 'Commissione taker';
 	@override String get amountRange => 'Intervallo importo';
 	@override String get maxPremium => 'Premio max';
+	@override String get maxPremiumInfoTitle => 'Premio';
+	@override String get maxPremiumInfoBody => 'Il premio è un sovrapprezzo opzionale rispetto al tasso di mercato che un maker può impostare su un\'offerta. Con un premio, il maker blocca meno satoshi per lo stesso importo in fiat, quindi il taker paga sopra il mercato e il maker trattiene la differenza. Questo valore è il premio massimo che questo coordinatore consente sulle sue offerte.';
 	@override String get reservationTime => 'Tempo di prenotazione';
 	@override String get currencies => 'Valute';
 	@override String get version => 'Versione';
@@ -1770,7 +1772,6 @@ class _Translations$maker$amountForm$labels$it extends Translations$maker$amount
 	@override String get exchangeRate => 'Tasso di Cambio';
 	@override String get fee => 'Commissione';
 	@override String get satoshisToPay => 'Importo da Pagare';
-	@override String get bitcoinToPay => 'Bitcoin da Pagare';
 	@override String get enterAmount => 'Inserisci importo';
 	@override String get tapToSelect => 'Tocca per selezionare';
 	@override String get premium => 'Premio';
@@ -2636,6 +2637,8 @@ extension on TranslationsIt {
 			'coordinator.details.takerFee' => 'Commissione taker',
 			'coordinator.details.amountRange' => 'Intervallo importo',
 			'coordinator.details.maxPremium' => 'Premio max',
+			'coordinator.details.maxPremiumInfoTitle' => 'Premio',
+			'coordinator.details.maxPremiumInfoBody' => 'Il premio è un sovrapprezzo opzionale rispetto al tasso di mercato che un maker può impostare su un\'offerta. Con un premio, il maker blocca meno satoshi per lo stesso importo in fiat, quindi il taker paga sopra il mercato e il maker trattiene la differenza. Questo valore è il premio massimo che questo coordinatore consente sulle sue offerte.',
 			'coordinator.details.reservationTime' => 'Tempo di prenotazione',
 			'coordinator.details.currencies' => 'Valute',
 			'coordinator.details.version' => 'Versione',
@@ -2677,7 +2680,6 @@ extension on TranslationsIt {
 			'maker.amountForm.labels.exchangeRate' => 'Tasso di Cambio',
 			'maker.amountForm.labels.fee' => 'Commissione',
 			'maker.amountForm.labels.satoshisToPay' => 'Importo da Pagare',
-			'maker.amountForm.labels.bitcoinToPay' => 'Bitcoin da Pagare',
 			'maker.amountForm.labels.enterAmount' => 'Inserisci importo',
 			'maker.amountForm.labels.tapToSelect' => 'Tocca per selezionare',
 			'maker.amountForm.labels.premium' => 'Premio',
@@ -2962,9 +2964,9 @@ extension on TranslationsIt {
 			'restore.buttons.restore' => 'Ripristina',
 			'restore.errors.invalidKey' => 'Deve essere una stringa esadecimale di 64 caratteri.',
 			'restore.errors.failed' => 'Ripristino fallito',
-			'restore.feedback.success' => 'Neko ripristinato con successo! L\'app verrà riavviata.',
 			_ => null,
 		} ?? switch (path) {
+			'restore.feedback.success' => 'Neko ripristinato con successo! L\'app verrà riavviata.',
 			'restore.tooltips.restore' => 'Ripristina Neko',
 			'system.loadingPublicKey' => 'Caricamento della tua chiave pubblica...',
 			'system.errors.generic' => 'Si è verificato un errore imprevisto. Riprova.',

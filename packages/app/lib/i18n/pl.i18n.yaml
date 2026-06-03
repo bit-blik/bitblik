@@ -269,6 +269,8 @@ coordinator:
     takerFee: "Opłata takera"
     amountRange: "Zakres kwoty"
     maxPremium: "Maks. premia"
+    maxPremiumInfoTitle: "Premia"
+    maxPremiumInfoBody: "Premia to opcjonalna marża ponad kurs rynkowy, którą wystawiający (maker) może ustawić na ofercie. Przy premii maker blokuje mniej satoshi za tę samą kwotę fiat, więc biorący (taker) płaci powyżej rynku, a maker zatrzymuje różnicę. Ta wartość to najwyższa premia dozwolona przez tego koordynatora w jego ofertach."
     reservationTime: "Czas rezerwacji"
     currencies: "Waluty"
     version: "Wersja"
@@ -322,7 +324,6 @@ maker:
       exchangeRate: Kurs wymiany
       fee: Opłata
       satoshisToPay: Do zapłaty
-      bitcoinToPay: Bitcoin do zapłaty
       enterAmount: Wprowadź kwotę
       tapToSelect: Kliknij, aby wybrać
       premium: Premia

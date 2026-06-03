@@ -346,6 +346,9 @@ const OffersPage = () => {
                     Category
                   </th>
                   <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Premium
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Amount
                   </th>
                   <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
@@ -368,14 +371,14 @@ const OffersPage = () => {
               <tbody>
                 {offers.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={10} className="px-4 py-12 text-center text-gray-500">
                       No offers found
                     </td>
                   </tr>
                 ) : (
                   groupOffersByDay(offers).flatMap((group) => [
                     <tr key={`day-${group.dayLabel}`}>
-                      <td colSpan={9} className="px-4 pt-4 pb-1">
+                      <td colSpan={10} className="px-4 pt-4 pb-1">
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">
                             {group.dayLabel}
@@ -415,6 +418,20 @@ const OffersPage = () => {
                           ) : (
                             <span className="text-gray-400 text-xs">-</span>
                           )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {(() => {
+                            const p = offer.premium_percent;
+                            if (p == null || p === '') return <span className="text-gray-400 text-xs">-</span>;
+                            const val = parseFloat(p);
+                            if (isNaN(val) || val === 0) return <span className="text-gray-400 text-xs">-</span>;
+                            const color = val > 0 ? 'text-emerald-700' : 'text-red-600';
+                            return (
+                              <span className={`font-mono text-sm ${color}`}>
+                                {val > 0 ? '+' : ''}{val.toFixed(2)}%
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex flex-col items-end gap-0.5">

@@ -94,11 +94,17 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
                         record.maxAmountSats,
                       ),
                     ),
-                    _infoRow(
-                      context,
-                      t.coordinator.details.maxPremium,
-                      '${record.maxPremium.toStringAsFixed(1).replaceAll(RegExp(r'\\.0$'), '')}%',
-                    ),
+                    if (record.maxPremium > 0)
+                      _infoRow(
+                        context,
+                        t.coordinator.details.maxPremium,
+                        '${record.maxPremium.toStringAsFixed(1).replaceAll(RegExp(r'\\.0$'), '')}%',
+                        onInfoTap: () => _showInfoDialog(
+                          context,
+                          t.coordinator.details.maxPremiumInfoTitle,
+                          t.coordinator.details.maxPremiumInfoBody,
+                        ),
+                      ),
                     if (record.reservationSeconds > 0)
                       _infoRow(
                         context,
@@ -187,13 +193,30 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     return Icon(Icons.account_circle, size: size);
   }
 
-  Widget _infoRow(BuildContext context, String label, String value) {
+  Widget _infoRow(
+    BuildContext context,
+    String label,
+    String value, {
+    VoidCallback? onInfoTap,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
+          GestureDetector(
+            onTap: onInfoTap,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label, style: const TextStyle(color: Colors.grey)),
+                if (onInfoTap != null) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                ],
+              ],
+            ),
+          ),
           Flexible(
             child: Text(
               value,
@@ -263,6 +286,22 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
               style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
               overflow: TextOverflow.ellipsis,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showInfoDialog(BuildContext context, String title, String body) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(MaterialLocalizations.of(dialogContext).okButtonLabel),
           ),
         ],
       ),
