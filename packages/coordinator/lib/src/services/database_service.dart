@@ -103,14 +103,33 @@ class DatabaseService {
       ALTER TABLE offers
       ADD COLUMN IF NOT EXISTS taker_payment_failure_reason TEXT NULL;
     ''');
+    // Composite (status, created_at DESC) serves both the status-equality
+    // lookups (getOffersByStatus) AND their `ORDER BY created_at DESC LIMIT`
+    // without a sort step. Leading column also answers plain `status =`/`ANY`
+    // lookups, so the old single-column status index is redundant.
     await _connection!.execute('''
-      CREATE INDEX IF NOT EXISTS idx_offers_status ON offers (status);
+      CREATE INDEX IF NOT EXISTS idx_offers_status_created_at
+        ON offers (status, created_at DESC);
+    ''');
+    await _connection!.execute('''
+      DROP INDEX IF EXISTS idx_offers_status;
     ''');
     await _connection!.execute('''
       CREATE INDEX IF NOT EXISTS idx_offers_maker_pubkey ON offers (maker_pubkey);
     ''');
     await _connection!.execute('''
       CREATE INDEX IF NOT EXISTS idx_offers_taker_pubkey ON offers (taker_pubkey);
+    ''');
+    // getOffersFromLastHours: `WHERE created_at >= ? ORDER BY created_at DESC`.
+    await _connection!.execute('''
+      CREATE INDEX IF NOT EXISTS idx_offers_created_at
+        ON offers (created_at DESC);
+    ''');
+    // Dashboard recent-offers list/pagination orders by the last activity
+    // time. Expression index must match the query expression exactly.
+    await _connection!.execute('''
+      CREATE INDEX IF NOT EXISTS idx_offers_recent_sort
+        ON offers (COALESCE(updated_at, created_at) DESC);
     ''');
     AppLogger.info('Offers table checked/created.',
         action: 'database.schema.offers.ready');
@@ -132,8 +151,14 @@ class DatabaseService {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     ''');
+    // Audit fetch is `WHERE offer_id = ? ORDER BY created_at DESC, id DESC`.
+    // Composite covers the filter + ordering; supersedes the plain offer_id idx.
     await _connection!.execute('''
-      CREATE INDEX IF NOT EXISTS idx_log_audit_offer_id ON log_audit (offer_id);
+      CREATE INDEX IF NOT EXISTS idx_log_audit_offer_created
+        ON log_audit (offer_id, created_at DESC, id DESC);
+    ''');
+    await _connection!.execute('''
+      DROP INDEX IF EXISTS idx_log_audit_offer_id;
     ''');
     await _connection!.execute('''
       CREATE INDEX IF NOT EXISTS idx_log_audit_action ON log_audit (action);
