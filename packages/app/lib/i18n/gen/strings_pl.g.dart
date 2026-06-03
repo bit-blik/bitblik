@@ -898,8 +898,8 @@ class _Translations$coordinator$management$pl extends Translations$coordinator$m
 	@override String get addCustomWhitelist => 'Dodaj koordynatora';
 	@override String get addCustomWhitelistHint => 'npub1...';
 	@override String get add => 'Dodaj';
-	@override String get coordinatorBlacklisted => 'Koordynator zablokowany';
-	@override String get coordinatorUnblacklisted => 'Koordynator odblokowany';
+	@override String get coordinatorDisabled => 'Koordynator wyłączony';
+	@override String get coordinatorEnabled => 'Koordynator włączony';
 	@override String get coordinatorAdded => 'Koordynator dodany do niestandardowej białej listy';
 	@override String get coordinatorRemoved => 'Koordynator usunięty z niestandardowej białej listy';
 	@override String get coordinatorAddInfoUnavailable => 'Nie znaleziono informacji o koordynatorze w przekaźnikach. Koordynator nie został dodany.';
@@ -2656,8 +2656,8 @@ extension on TranslationsPl {
 			'coordinator.management.addCustomWhitelist' => 'Dodaj koordynatora',
 			'coordinator.management.addCustomWhitelistHint' => 'npub1...',
 			'coordinator.management.add' => 'Dodaj',
-			'coordinator.management.coordinatorBlacklisted' => 'Koordynator zablokowany',
-			'coordinator.management.coordinatorUnblacklisted' => 'Koordynator odblokowany',
+			'coordinator.management.coordinatorDisabled' => 'Koordynator wyłączony',
+			'coordinator.management.coordinatorEnabled' => 'Koordynator włączony',
 			'coordinator.management.coordinatorAdded' => 'Koordynator dodany do niestandardowej białej listy',
 			'coordinator.management.coordinatorRemoved' => 'Koordynator usunięty z niestandardowej białej listy',
 			'coordinator.management.coordinatorAddInfoUnavailable' => 'Nie znaleziono informacji o koordynatorze w przekaźnikach. Koordynator nie został dodany.',

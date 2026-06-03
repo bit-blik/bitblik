@@ -315,6 +315,16 @@ class CoordinatorRegistry {
     await Future.wait(listed.map(probeHealth));
   }
 
+  /// Reset a coordinator's responsiveness to unknown and emit, so the UI can
+  /// show a pending/"checking" state immediately before a fresh [probeHealth].
+  void markProbing(String pubkey) {
+    final hex = _normalize(pubkey);
+    final existing = _records[hex];
+    if (existing == null) return;
+    _records[hex] = existing.copyWith(responsive: null);
+    _emit();
+  }
+
   /// Flip a coordinator's enabled flag.
   Future<void> setEnabled(String pubkey, bool value) async {
     final hex = _normalize(pubkey);

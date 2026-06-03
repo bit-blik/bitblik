@@ -899,8 +899,8 @@ class _Translations$coordinator$management$it extends Translations$coordinator$m
 	@override String get addCustomWhitelist => 'Aggiungi coordinatore personalizzato';
 	@override String get addCustomWhitelistHint => 'npub1...';
 	@override String get add => 'Aggiungi';
-	@override String get coordinatorBlacklisted => 'Coordinatore inserito in blacklist';
-	@override String get coordinatorUnblacklisted => 'Coordinatore rimosso dalla blacklist';
+	@override String get coordinatorDisabled => 'Coordinatore disabilitato';
+	@override String get coordinatorEnabled => 'Coordinatore abilitato';
 	@override String get coordinatorAdded => 'Coordinatore aggiunto alla whitelist personalizzata';
 	@override String get coordinatorRemoved => 'Coordinatore rimosso dalla whitelist personalizzata';
 	@override String get coordinatorAddInfoUnavailable => 'Nessuna informazione sul coordinatore trovata sui relay. Coordinatore non aggiunto.';
@@ -2660,8 +2660,8 @@ extension on TranslationsIt {
 			'coordinator.management.addCustomWhitelist' => 'Aggiungi coordinatore personalizzato',
 			'coordinator.management.addCustomWhitelistHint' => 'npub1...',
 			'coordinator.management.add' => 'Aggiungi',
-			'coordinator.management.coordinatorBlacklisted' => 'Coordinatore inserito in blacklist',
-			'coordinator.management.coordinatorUnblacklisted' => 'Coordinatore rimosso dalla blacklist',
+			'coordinator.management.coordinatorDisabled' => 'Coordinatore disabilitato',
+			'coordinator.management.coordinatorEnabled' => 'Coordinatore abilitato',
 			'coordinator.management.coordinatorAdded' => 'Coordinatore aggiunto alla whitelist personalizzata',
 			'coordinator.management.coordinatorRemoved' => 'Coordinatore rimosso dalla whitelist personalizzata',
 			'coordinator.management.coordinatorAddInfoUnavailable' => 'Nessuna informazione sul coordinatore trovata sui relay. Coordinatore non aggiunto.',

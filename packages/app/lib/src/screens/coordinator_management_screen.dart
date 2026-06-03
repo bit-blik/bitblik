@@ -39,7 +39,9 @@ class _CoordinatorManagementScreenState
       ref.invalidate(successfulOffersStatsProvider);
 
       if (enabled) {
-        // Background probe; registry streams update on completion.
+        // Show a pending state immediately, then probe; the registry streams
+        // the online/offline result to the list on completion.
+        apiService.coordinatorRegistry.markProbing(pubkey);
         unawaitedProbe(apiService.checkCoordinatorHealth(pubkey));
       }
 
@@ -48,8 +50,8 @@ class _CoordinatorManagementScreenState
           SnackBar(
             content: Text(
               enabled
-                  ? t.coordinator.management.coordinatorUnblacklisted
-                  : t.coordinator.management.coordinatorBlacklisted,
+                  ? t.coordinator.management.coordinatorEnabled
+                  : t.coordinator.management.coordinatorDisabled,
             ),
           ),
         );

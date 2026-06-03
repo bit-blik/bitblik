@@ -1392,11 +1392,11 @@ class Translations$coordinator$management$en {
 	/// en: 'Add'
 	String get add => 'Add';
 
-	/// en: 'Coordinator blacklisted'
-	String get coordinatorBlacklisted => 'Coordinator blacklisted';
+	/// en: 'Coordinator disabled'
+	String get coordinatorDisabled => 'Coordinator disabled';
 
-	/// en: 'Coordinator unblacklisted'
-	String get coordinatorUnblacklisted => 'Coordinator unblacklisted';
+	/// en: 'Coordinator enabled'
+	String get coordinatorEnabled => 'Coordinator enabled';
 
 	/// en: 'Coordinator added to custom whitelist'
 	String get coordinatorAdded => 'Coordinator added to custom whitelist';
@@ -4085,8 +4085,8 @@ extension on Translations {
 			'coordinator.management.addCustomWhitelist' => 'Add custom coordinator',
 			'coordinator.management.addCustomWhitelistHint' => 'npub1...',
 			'coordinator.management.add' => 'Add',
-			'coordinator.management.coordinatorBlacklisted' => 'Coordinator blacklisted',
-			'coordinator.management.coordinatorUnblacklisted' => 'Coordinator unblacklisted',
+			'coordinator.management.coordinatorDisabled' => 'Coordinator disabled',
+			'coordinator.management.coordinatorEnabled' => 'Coordinator enabled',
 			'coordinator.management.coordinatorAdded' => 'Coordinator added to custom whitelist',
 			'coordinator.management.coordinatorRemoved' => 'Coordinator removed from custom whitelist',
 			'coordinator.management.coordinatorAddInfoUnavailable' => 'No coordinator info found on relays. Coordinator not added.',
