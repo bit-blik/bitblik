@@ -233,14 +233,14 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
   List<Color> _categoryGradientColors(OfferCategory? category) {
     switch (category) {
       case OfferCategory.shop:
-        // teal #039F94 fading into
-        return [const Color(0xFF016B61), const Color(0xA0016B61)];
+        // vivid red
+        return [const Color(0xFFE53935), const Color(0xA0FF5252)];
       case OfferCategory.atm:
-        // dark green #025C2E into
-        return [const Color(0xFF025C2E), const Color(0xA0025C2E)];
+        // vivid green
+        return [const Color(0xFF2E9E4F), const Color(0xA04CD964)];
       case OfferCategory.online:
-        // navy blue into muted
-        return [const Color(0xFF032696), const Color(0xA0032696)];
+        // vivid blue
+        return [const Color(0xFF1E6FE0), const Color(0xA0448AFF)];
       case null:
         return [Colors.grey.shade700, Colors.grey.shade500];
     }
