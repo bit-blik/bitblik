@@ -1,4 +1,4 @@
-## [0.7.0] - 2026-06-05
+## [0.7.0] - 2026-06-04
  
 - feat: premium % option for makers
 - feat: nip-65 for dynamic coordinator relay discovery
