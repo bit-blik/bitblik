@@ -112,9 +112,10 @@ jobs:
           mkdir -p "$deb_root/DEBIAN" "$deb_root/usr/lib/bitblik" "$deb_root/usr/bin"
           cp -R "build/cli/${{ matrix.target }}/bundle/." "$deb_root/usr/lib/bitblik/"
           ln -s ../lib/bitblik/bin/bitblik "$deb_root/usr/bin/bitblik"
-          cat > "$deb_root/DEBIAN/control" <<'EOF'
+          pkg_version="$(grep -m1 '^version:' packages/cli/pubspec.yaml | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')"
+          cat > "$deb_root/DEBIAN/control" <<EOF
           Package: bitblik
-          Version: 0.0.0~${{ github.run_number }}
+          Version: ${pkg_version}~${{ github.run_number }}
           Section: utils
           Priority: optional
           Architecture: amd64

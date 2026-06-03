@@ -39,6 +39,13 @@ FROM alpine:latest
 ARG APP_VERSION
 ENV APP_VERSION=${APP_VERSION}
 
+# simplex-chat is a glibc (ubuntu-22.04 / glibc 2.35) binary; glibc 2.35 ships a
+# built-in C.UTF-8 locale needing no locale files, so this works on musl/alpine.
+# Without a UTF-8 locale it fails to encode non-ASCII output (e.g. the "•"
+# separator) with: commitBuffer: invalid argument (cannot encode character ...)
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
 RUN apk add --no-cache zlib gmp tzdata sqlite-libs libstdc++
 RUN ln -s /usr/lib/libsqlite3.so.0 /usr/lib/libsqlite3.so
 RUN apk add signal-cli~=0.14

@@ -1011,7 +1011,15 @@ class CoordinatorService {
   Future<void> _sendSimpleXNotification(String notificationText) async {
     try {
       final simplexMsg = "#'$_simplexGroup' $notificationText";
-      final result = await run('$_simplexChatExec -e "$simplexMsg" --ha');
+      // simplex-chat is a Haskell binary that encodes stdout using the
+      // process locale. Under a C/POSIX locale it fails on non-ASCII chars
+      // (e.g. the "•" separator) with:
+      //   commitBuffer: invalid argument (cannot encode character ...)
+      // Force a UTF-8 locale so it can emit the message.
+      final result = await run(
+        '$_simplexChatExec -e "$simplexMsg" --ha',
+        environment: const {'LC_ALL': 'C.UTF-8', 'LANG': 'C.UTF-8'},
+      );
       if (result.first.stderr.isNotEmpty) {
         AppLogger.info('simplex command error: ${result.first.stderr}');
       }
