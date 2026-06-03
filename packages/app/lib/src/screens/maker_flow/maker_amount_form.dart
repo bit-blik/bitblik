@@ -1419,8 +1419,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       _selectedCoordinatorInfo?.version,
     );
 
-    // Auto-select coordinator when they become available (only once)
+    // Auto-select coordinator when they become available (only once).
+    // Gate on !_isLoadingInitialData so this never fires before
+    // _loadInitialData has applied the preferred-coordinator preference;
+    // otherwise it races and picks candidates.first instead of the preferred.
     if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>> &&
+        !_isLoadingInitialData &&
         !_hasTriedAutoSelect &&
         _selectedCoordinatorPubkey == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

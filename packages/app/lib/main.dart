@@ -1103,19 +1103,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                   }
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.help_outline),
-                title: Text(t.landing.actions.howItWorks),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  if (kIsWeb) {
-                    context.go("/faq");
-                  } else {
-                    context.push("/faq");
-                  }
-                },
-              ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.settings),
@@ -1127,6 +1114,19 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                     context.go("/settings");
                   } else {
                     context.push("/settings");
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.help_outline),
+                title: Text(t.landing.actions.howItWorks),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  if (kIsWeb) {
+                    context.go("/faq");
+                  } else {
+                    context.push("/faq");
                   }
                 },
               ),
