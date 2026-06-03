@@ -1011,15 +1011,7 @@ class CoordinatorService {
   Future<void> _sendSimpleXNotification(String notificationText) async {
     try {
       final simplexMsg = "#'$_simplexGroup' $notificationText";
-      // simplex-chat is a Haskell binary that encodes stdout using the
-      // process locale. Under a C/POSIX locale it fails on non-ASCII chars
-      // (e.g. the "•" separator) with:
-      //   commitBuffer: invalid argument (cannot encode character ...)
-      // Force a UTF-8 locale so it can emit the message.
-      final result = await run(
-        '$_simplexChatExec -e "$simplexMsg" --ha',
-        environment: const {'LC_ALL': 'C.UTF-8', 'LANG': 'C.UTF-8'},
-      );
+      final result = await run('$_simplexChatExec -e "$simplexMsg" --ha');
       if (result.first.stderr.isNotEmpty) {
         AppLogger.info('simplex command error: ${result.first.stderr}');
       }
@@ -1073,9 +1065,9 @@ class CoordinatorService {
     final fiatText =
         '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
     final categoryText = _formatCategoryForNotification(offer.category);
-    final categorySuffix = categoryText == null ? '' : ' • $categoryText';
+    final categorySuffix = categoryText == null ? '' : ' - $categoryText';
     final premiumSuffix = offer.premiumPercent > 0
-        ? ' • +${_formatPremium(offer.premiumPercent)}% premium/premia'
+        ? ' - +${_formatPremium(offer.premiumPercent)}% premium/premia'
         : '';
     return 'New offer/Nowa oferta: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
   }
