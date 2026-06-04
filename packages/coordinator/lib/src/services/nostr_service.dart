@@ -744,10 +744,6 @@ class NostrService {
         throw Exception('No private key available for encryption');
       }
 
-      AppLogger.info(
-        'Sending RPC response id=${response.id ?? '-'} to=${_shortKey(recipientPubkey)} ${_describeResponse(response)}',
-      );
-
       final event = await ProtocolCodec.encryptResponse(
         response: response,
         senderPrivateKeyHex: privateKey,
@@ -763,7 +759,7 @@ class NostrService {
       );
 
       AppLogger.info(
-        'Sent RPC response id=${response.id ?? '-'} to=${_shortKey(recipientPubkey)} event=${event.id}',
+        'Sent RPC response id=${response.id ?? '-'} to=${_shortKey(recipientPubkey)}',
       );
     } catch (e) {
       AppLogger.info(
