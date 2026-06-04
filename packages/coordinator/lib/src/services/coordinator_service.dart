@@ -1065,9 +1065,9 @@ class CoordinatorService {
     final fiatText =
         '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
     final categoryText = _formatCategoryForNotification(offer.category);
-    final categorySuffix = categoryText == null ? '' : ' - $categoryText';
+    final categorySuffix = categoryText == null ? '' : ', $categoryText';
     final premiumSuffix = offer.premiumPercent > 0
-        ? ' - +${_formatPremium(offer.premiumPercent)}% premium/premia'
+        ? ', +${_formatPremium(offer.premiumPercent)}% premium/premia'
         : '';
     return 'New offer/Nowa oferta: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
   }
