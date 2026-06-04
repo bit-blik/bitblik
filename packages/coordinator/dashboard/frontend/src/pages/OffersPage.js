@@ -48,6 +48,14 @@ const LEVEL_ICONS = {
   debug: <CheckCircle size={14} className="text-gray-400" />,
 };
 
+// Display zone — render all timestamps in Budapest regardless of the
+// viewer's browser zone. The stored values are UTC instants (timestamptz).
+const DISPLAY_TZ = 'Europe/Budapest';
+
+// Day key (YYYY-MM-DD) computed in DISPLAY_TZ so day grouping/labels don't
+// drift across midnight when the browser is in a different zone.
+const dayKeyInTz = (d) => d.toLocaleDateString('en-CA', { timeZone: DISPLAY_TZ });
+
 const formatDate = (dateString) => {
   if (!dateString) return '-';
   const d = new Date(dateString);
@@ -58,6 +66,7 @@ const formatDate = (dateString) => {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
+    timeZone: DISPLAY_TZ,
   });
 };
 
@@ -67,10 +76,7 @@ const formatDayLabel = (dateString) => {
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  const sameDay = (a, b) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
+  const sameDay = (a, b) => dayKeyInTz(a) === dayKeyInTz(b);
   if (sameDay(d, today)) return 'Today';
   if (sameDay(d, yesterday)) return 'Yesterday';
   return d.toLocaleDateString('en-GB', {
@@ -78,6 +84,7 @@ const formatDayLabel = (dateString) => {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: DISPLAY_TZ,
   });
 };
 
@@ -88,7 +95,7 @@ const groupOffersByDay = (offers) => {
   for (const offer of offers) {
     const dateStr = offer.updated_at || offer.created_at;
     const d = new Date(dateStr);
-    const dayKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const dayKey = dayKeyInTz(d);
     if (dayKey !== currentDayKey) {
       currentDayKey = dayKey;
       currentGroup = { dayLabel: formatDayLabel(dateStr), offers: [] };
