@@ -631,21 +631,6 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                   if (offer.status != OfferStatus.takerPaid)
                                     const SizedBox(height: 10),
 
-                                  // Premium row (only when offer carries one)
-                                  if (offer.premiumPercent > 0) ...[
-                                    _buildInfoRow(
-                                      t.offers.labels.premium,
-                                      '+${formatPremium(offer.premiumPercent)}%',
-                                      hasInfoIcon: true,
-                                      onInfoTap:
-                                          () => showPremiumInfoDialog(
-                                            context,
-                                            viewerRole: PremiumViewerRole.taker,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                  ],
-
                                   // Taker fee row (hide for takerPaid and when fee is 0)
                                   if (offer.status != OfferStatus.takerPaid &&
                                       takerFeeAmount != 0)
@@ -1044,6 +1029,21 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                         ),
                                       ),
                                     ],
+                                    const SizedBox(height: 12),
+                                  ],
+
+                                  // Premium row (only when offer carries one)
+                                  if (offer.premiumPercent > 0) ...[
+                                    _buildInfoRow(
+                                      t.offers.labels.premium,
+                                      '+${formatPremium(offer.premiumPercent)}%',
+                                      hasInfoIcon: true,
+                                      onInfoTap:
+                                          () => showPremiumInfoDialog(
+                                            context,
+                                            viewerRole: PremiumViewerRole.taker,
+                                          ),
+                                    ),
                                     const SizedBox(height: 12),
                                   ],
 

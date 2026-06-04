@@ -2585,7 +2585,7 @@ class CoordinatorService {
       offer.holdInvoicePaymentHash = "";
       // Add to offersJsonLast7Days only if created in the last 7 days
       if (offer.createdAt.isAfter(sevenDaysAgo)) {
-        offersJsonLast7Days.add(offer.toJson());
+        offersJsonLast7Days.add(offer.toStatsJson());
       }
 
       // Calculate stats based on allSuccessfulOffers

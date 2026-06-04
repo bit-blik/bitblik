@@ -321,6 +321,22 @@ class Offer {
     };
   }
 
+  /// Slim payload for the successful-offers stats list. Drops large fields
+  /// (bolt11 invoices, preimage, blik code, pubkeys) to keep the RPC event
+  /// under the relay size limit. Only the fields the stats UI reads are kept.
+  Map<String, dynamic> toStatsJson() {
+    return {
+      'id': id,
+      'fiat_amount': fiatAmount,
+      'fiat_currency': fiatCurrency,
+      'status': status.name,
+      'created_at': createdAt.toUtc().toIso8601String(),
+      'coordinator_pubkey': coordinatorPubkey,
+      'reserved_at': reservedAt?.toUtc().toIso8601String(),
+      'taker_paid_at': takerPaidAt?.toUtc().toIso8601String(),
+    };
+  }
+
   // Helper to get status as enum
   OfferStatus get statusEnum => status;
 
