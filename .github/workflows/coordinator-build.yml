@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'packages/coordinator/**'
+      - '!packages/coordinator/dashboard/**'
       - 'packages/core/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
@@ -12,6 +13,7 @@ on:
   pull_request:
     paths:
       - 'packages/coordinator/**'
+      - '!packages/coordinator/dashboard/**'
       - 'packages/core/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
