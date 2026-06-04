@@ -1,4 +1,4 @@
-name: Coordinator Docker build & push
+name: Coordinator Docker build
 
 on:
   push:
@@ -9,12 +9,48 @@ on:
       - 'pubspec.lock'
       - '.dockerignore'
       - '.github/workflows/coordinator-build.yml'
+  pull_request:
+    paths:
+      - 'packages/coordinator/**'
+      - 'packages/core/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/coordinator-build.yml'
   release:
     types: [published]
   workflow_dispatch:
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+
+      # Flutter needed only to resolve workspace deps that include Flutter packages
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: ./packages/coordinator
+        run: dart analyze --no-fatal-warnings
+
+      - name: Run tests
+        working-directory: ./packages/coordinator
+        run: dart test
+        env:
+          TERMS_OF_USAGE_NADDR: naddr1dummy_test_value_for_ci
+
   build:
+    needs: test
+    # Skip image build/push on pull requests; only test PRs.
+    if: github.event_name != 'pull_request'
     env:
       REGISTRY: ghcr.io
       IMAGENAME: coordinator

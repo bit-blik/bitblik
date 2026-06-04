@@ -1,10 +1,10 @@
-name: Coordinator Dashboard Docker build & push
+name: Dashboard Docker build & push
 
 on:
   push:
     paths:
       - 'packages/coordinator/dashboard/**'
-      - '.github/workflows/coordinator-dashboard-build.yml'
+      - '.github/workflows/dashboard-build.yml'
   release:
     types: [published]
   workflow_dispatch:
