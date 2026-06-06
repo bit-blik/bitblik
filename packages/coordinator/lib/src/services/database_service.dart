@@ -409,6 +409,13 @@ class DatabaseService {
       case OfferStatus.conflict: // Add case for conflict
         // No specific fields to update/clear when moving TO these states
         break;
+      case OfferStatus.dispute:
+        // The hold invoice is settled before an offer transitions to dispute,
+        // so record the settlement timestamp. COALESCE preserves any value
+        // already set (e.g. if the offer was settled before being disputed).
+        params['settled_at'] = now;
+        setClauses.add('settled_at = COALESCE(settled_at, @settled_at)');
+        break;
       default:
         break;
     }

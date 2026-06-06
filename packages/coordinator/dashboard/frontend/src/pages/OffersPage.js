@@ -93,7 +93,7 @@ const groupOffersByDay = (offers) => {
   let currentDayKey = null;
   let currentGroup = null;
   for (const offer of offers) {
-    const dateStr = offer.updated_at || offer.created_at;
+    const dateStr = offer.created_at;
     const d = new Date(dateStr);
     const dayKey = dayKeyInTz(d);
     if (dayKey !== currentDayKey) {
@@ -220,8 +220,8 @@ const OffersPage = () => {
                 const updated = [...prev];
                 updated[existingIndex] = message.offer;
                 return updated.sort((a, b) => {
-                  const dateA = new Date(a.updated_at || a.created_at);
-                  const dateB = new Date(b.updated_at || b.created_at);
+                  const dateA = new Date(a.created_at);
+                  const dateB = new Date(b.created_at);
                   return dateB - dateA;
                 });
               }

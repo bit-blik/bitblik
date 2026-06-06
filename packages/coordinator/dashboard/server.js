@@ -105,7 +105,7 @@ const fetchRecentOffers = async (limit = RECENT_OFFERS_DEFAULT_LIMIT, offset = 0
       settled_at,
       taker_paid_at
     FROM offers
-    ORDER BY COALESCE(updated_at, created_at) DESC
+    ORDER BY created_at DESC
     LIMIT $1
     OFFSET $2
   `;

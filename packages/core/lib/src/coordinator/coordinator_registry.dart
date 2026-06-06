@@ -426,21 +426,55 @@ class CoordinatorRegistry {
             .subtract(networkFinishedWindow)
             .millisecondsSinceEpoch ~/
         1000;
-    final response = ndk.requests.query(
-      name: 'coordinator-network-finished',
-      filter: Filter(
-        kinds: [kKindOffer],
-        tags: {
-          '#s': ['success'],
-        },
-        since: since,
-      ),
-      explicitRelays: relays,
-    );
+
+    // Page size requested from relays. We paginate with an `until` cursor
+    // because relays cap how many events a single REQ returns (commonly
+    // 100–500). Without pagination the count silently tops out at that cap
+    // and badly under-reports coordinators with many finished offers.
+    const pageSize = 500;
+
+    // Dedupe across pages by addressable coordinate (author + `d` offer id).
+    // kKindOffer (38383) is addressable, so each offer maps to one event; the
+    // same event can still surface in adjacent pages around the cursor.
+    final seen = <String>{};
     final counts = <String, int>{};
-    await for (final event in response.stream) {
-      counts[event.pubKey] = (counts[event.pubKey] ?? 0) + 1;
+
+    var until = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    while (true) {
+      final response = ndk.requests.query(
+        name: 'coordinator-network-finished',
+        filter: Filter(
+          kinds: [kKindOffer],
+          tags: {
+            '#s': ['success'],
+          },
+          since: since,
+          until: until,
+          limit: pageSize,
+        ),
+        explicitRelays: relays,
+      );
+
+      var pageCount = 0;
+      var oldest = until;
+      await for (final event in response.stream) {
+        pageCount++;
+        if (event.createdAt < oldest) oldest = event.createdAt;
+        final dTag = event.getDtag() ?? event.id;
+        final coordinate = '${event.pubKey}:$dTag';
+        if (!seen.add(coordinate)) continue;
+        counts[event.pubKey] = (counts[event.pubKey] ?? 0) + 1;
+      }
+
+      // Last page reached when the relay returned fewer than requested.
+      if (pageCount < pageSize) break;
+      // Advance the cursor just past the oldest event seen. Guard against a
+      // stuck cursor (a whole page sharing one timestamp) to avoid looping.
+      final nextUntil = oldest - 1;
+      if (nextUntil >= until || nextUntil < since) break;
+      until = nextUntil;
     }
+
     final now = DateTime.now();
     var changed = false;
     counts.forEach((pubkey, count) {
