@@ -485,12 +485,17 @@ class DatabaseService {
           .add('status = ANY(CAST(@expected_current_statuses AS TEXT[]))');
     }
 
-    final affectedRows = await _connection!.execute(
+    // Use query() (extended protocol) rather than execute() (simple protocol).
+    // execute() does naive textual substitution and renders a List as an
+    // unquoted postgres array literal `{funded}`, producing
+    // `CAST({funded} AS TEXT[])` -> 42601 syntax error at or near "{".
+    // query() binds the array as a typed parameter correctly.
+    final result = await _connection!.query(
       'UPDATE offers SET ${setClauses.join(', ')} WHERE ${whereClauses.join(' AND ')}',
       substitutionValues: params,
     );
     // Return bool indicating success
-    return affectedRows == 1;
+    return result.affectedRowCount == 1;
   }
 
   // Cancel an offer (set status to cancelled) only if it's currently funded
