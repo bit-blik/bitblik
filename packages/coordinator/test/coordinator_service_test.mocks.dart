@@ -273,6 +273,40 @@ class MockDatabaseService extends _i1.Mock implements _i7.DatabaseService {
       ) as _i8.Future<bool>);
 
   @override
+  _i8.Future<bool> updateOfferStatusIfCurrentStatus(
+    String? id,
+    _i2.OfferStatus? newStatus,
+    List<_i2.OfferStatus>? expectedCurrentStatuses, {
+    String? takerPubkey,
+    String? blikCode,
+    String? takerLightningAddress,
+    DateTime? reservedAt,
+    DateTime? blikReceivedAt,
+    int? takerFees,
+    String? failureReason,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateOfferStatusIfCurrentStatus,
+          [
+            id,
+            newStatus,
+            expectedCurrentStatuses,
+          ],
+          {
+            #takerPubkey: takerPubkey,
+            #blikCode: blikCode,
+            #takerLightningAddress: takerLightningAddress,
+            #reservedAt: reservedAt,
+            #blikReceivedAt: blikReceivedAt,
+            #takerFees: takerFees,
+            #failureReason: failureReason,
+          },
+        ),
+        returnValue: _i8.Future<bool>.value(false),
+      ) as _i8.Future<bool>);
+
+  @override
   _i8.Future<bool> cancelOffer(
     String? id,
     String? makerPubkey,

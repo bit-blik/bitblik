@@ -294,14 +294,18 @@ class CoordinatorService {
 
     // Initialize Telegram service
     final telegramBotToken = _env['TELEGRAM_BOT_TOKEN'];
-    final telegramChatId = _env['TELEGRAM_CHAT_ID'];
+    final telegramChatIds =
+        (_env['TELEGRAM_CHAT_ID']?.split(',') ?? const <String>[])
+            .map((chatId) => chatId.trim())
+            .where((chatId) => chatId.isNotEmpty)
+            .toSet()
+            .toList();
     if (telegramBotToken != null &&
         telegramBotToken.isNotEmpty &&
-        telegramChatId != null &&
-        telegramChatId.isNotEmpty) {
+        telegramChatIds.isNotEmpty) {
       _telegramService = TelegramService(
           botToken: telegramBotToken,
-          chatId: telegramChatId,
+          chatIds: telegramChatIds,
           httpClient: _httpClient);
       AppLogger.info('Telegram service initialized.');
       // } else {
@@ -477,8 +481,16 @@ class CoordinatorService {
                 'Error cancelling hold invoice for expired offer ${offer.id} using  $e',
                 offerId: offer.id);
           }
+          final currentOffer = await _dbService.getOfferById(offer.id);
+          if (currentOffer?.status != OfferStatus.funded) {
+            AppLogger.info(
+                'Offer ${offer.id} changed state during startup funded expiration check (current status: ${currentOffer?.status}). Skipping expiration.',
+                offerId: offer.id);
+            continue;
+          }
           final dbSuccess =
-              await _dbService.updateOfferStatus(offer.id, OfferStatus.expired);
+              await _dbService.updateOfferStatusIfCurrentStatus(
+                  offer.id, OfferStatus.expired, [OfferStatus.funded]);
           if (dbSuccess) {
             cancelledCount++;
             AppLogger.info(
@@ -630,11 +642,8 @@ class CoordinatorService {
               final revertedOffer = await _dbService.getOfferById(offer.id);
               if (revertedOffer != null) {
                 await _publishStatusUpdate(revertedOffer);
+                _startFundedOfferTimer(revertedOffer);
               }
-
-              // Restart the funded offer timer
-              _startFundedOfferTimer(
-                  offer); // offer object is available from the loop
             } else {
               AppLogger.info(
                   'Error reverting expired offer ${offer.id} on startup.',
@@ -654,9 +663,10 @@ class CoordinatorService {
           );
           if (success) {
             revertedCount++;
-            // Restart the funded offer timer
-            _startFundedOfferTimer(
-                offer); // offer object is available from the loop
+            final revertedOffer = await _dbService.getOfferById(offer.id);
+            if (revertedOffer != null) {
+              _startFundedOfferTimer(revertedOffer);
+            }
           } else {
             AppLogger.info(
                 'Error reverting reserved offer ${offer.id} with missing timestamp on startup.',
@@ -954,7 +964,8 @@ class CoordinatorService {
             return null;
           }
         }(),
-        premiumPercent: (pendingData['premiumPercent'] as num?)?.toDouble() ?? 0,
+        premiumPercent:
+            (pendingData['premiumPercent'] as num?)?.toDouble() ?? 0,
       );
       await _dbService.createOffer(offer);
       // --- Begin: broadcast NIP-69 order event ---
@@ -1122,24 +1133,27 @@ class CoordinatorService {
   Future<void> _handleFundedOfferExpiration(Offer offer) async {
     AppLogger.info('Handling funded offer expiration for offer ${offer.id}',
         offerId: offer.id);
-    if (offer.status == OfferStatus.funded) {
+    final currentOffer = await _dbService.getOfferById(offer.id);
+    if (currentOffer?.status == OfferStatus.funded) {
       if (_paymentBackend != null) {
         try {
           await _paymentBackend!
-              .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
+              .cancelInvoice(
+                  paymentHashHex: currentOffer!.holdInvoicePaymentHash!);
           AppLogger.info(
               'Hold invoice for offer ${offer.id} cancelled via $_paymentBackendType due to expiration.',
               offerId: offer.id);
           sleep(Duration(seconds: 1));
           final invoiceDetails = await _paymentBackend!
-              .lookupInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
+              .lookupInvoice(
+                  paymentHashHex: currentOffer.holdInvoicePaymentHash!);
           // TODO this will not work for NWC, we need to handle it
           if (invoiceDetails.status == InvoiceStatus.CANCELED) {
             AppLogger.info(
-                'Verified invoice ${offer.holdInvoicePaymentHash} is cancelled via $_paymentBackendType.');
+                'Verified invoice ${currentOffer.holdInvoicePaymentHash} is cancelled via $_paymentBackendType.');
           } else {
             AppLogger.info(
-                'Warning: Invoice ${offer.holdInvoicePaymentHash} status is ${invoiceDetails.status}, expected CANCELED.');
+                'Warning: Invoice ${currentOffer.holdInvoicePaymentHash} status is ${invoiceDetails.status}, expected CANCELED.');
             return; // Exit if cancellation fails
           }
         } catch (e) {
@@ -1154,7 +1168,8 @@ class CoordinatorService {
             offerId: offer.id);
       }
       final dbSuccess =
-          await _dbService.updateOfferStatus(offer.id, OfferStatus.expired);
+          await _dbService.updateOfferStatusIfCurrentStatus(
+              offer.id, OfferStatus.expired, [OfferStatus.funded]);
       if (dbSuccess) {
         AppLogger.info(
             'Offer ${offer.id} status updated to expired in DB due to expiration.',
@@ -1173,7 +1188,7 @@ class CoordinatorService {
       }
     } else {
       AppLogger.info(
-          'Offer ${offer.id} is no longer funded (current status: ${offer.status}). No action needed for funded expiration.',
+          'Offer ${offer.id} is no longer funded (current status: ${currentOffer?.status}). No action needed for funded expiration.',
           offerId: offer.id);
     }
   }

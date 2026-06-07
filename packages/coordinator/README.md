@@ -49,4 +49,4 @@ How to find out telegram bot token & chat id:
 - add the bot to the group and make it admin
 - send a message to your group to see the chat id in the response
 - get chat id with https://api.telegram.org/bot<your-bot-token>/getUpdates
-
+- configure `TELEGRAM_CHAT_ID` with either a single destination or a comma-separated list to send to multiple groups/channels at once

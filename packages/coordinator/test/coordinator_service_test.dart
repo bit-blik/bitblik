@@ -591,10 +591,11 @@ void main() {
 
         // Mock updateOfferStatus for when it's marked expired.
         // This also needs to use the dynamically captured offer ID.
-        when(mockDbService.updateOfferStatus(
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
           argThat(_OfferIdEqualsDynamicValueMatcher(
               () => capturedOfferId, 'capturedOfferId')),
           OfferStatus.expired,
+          [OfferStatus.funded],
           takerPubkey: null,
           blikCode: null,
           takerLightningAddress: null,
@@ -714,6 +715,114 @@ void main() {
       });
     });
 
+    test(
+        'startup reservation recovery still expires after funded timeout using current DB status',
+        () {
+      fakeAsync((async) {
+        final fundedTimeout = Duration(
+            seconds: CoordinatorService_static.getFundedExpireTimeoutSeconds(
+                coordinatorService));
+        final reservationTimeout = Duration(
+            seconds: CoordinatorService_static.getReservationTimeoutSeconds(
+                coordinatorService));
+        final initialTime = clock.now().toUtc();
+        final realNow = DateTime.now().toUtc();
+        final offerId = 'startup-reserved-then-expire';
+        final holdInvoicePaymentHash = 'hash-for-$offerId';
+
+        Offer currentOffer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.reserved,
+          createdAt: initialTime.subtract(fundedTimeout).add(
+                const Duration(seconds: 5),
+              ),
+          reservedAt:
+              realNow.subtract(reservationTimeout).subtract(const Duration(minutes: 5)),
+          takerPubkey: testTakerId,
+          holdInvoicePaymentHash: holdInvoicePaymentHash,
+        );
+
+        when(mockDbService.getOffersByStatus(OfferStatus.funded, limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.reserved, limit: 1000))
+            .thenAnswer((_) async => [currentOffer]);
+        when(mockDbService.getOffersByStatus(OfferStatus.blikReceived,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.blikSentToMaker,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.takerCharged,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.invalidBlik,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.expiredSentBlik,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.conflict, limit: 1000))
+            .thenAnswer((_) async => []);
+
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => currentOffer);
+
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.funded,
+          takerPubkey: null,
+          reservedAt: null,
+        )).thenAnswer((_) async {
+          currentOffer = currentOffer.copyWith(
+            status: OfferStatus.funded,
+            takerPubkey: null,
+            reservedAt: null,
+            blikCode: null,
+            takerLightningAddress: null,
+            blikReceivedAt: null,
+          );
+          return true;
+        });
+
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
+          offerId,
+          OfferStatus.expired,
+          [OfferStatus.funded],
+        )).thenAnswer((_) async {
+          currentOffer = currentOffer.copyWith(status: OfferStatus.expired);
+          return true;
+        });
+
+        when(mockPaymentService.cancelInvoice(
+                paymentHashHex: holdInvoicePaymentHash))
+            .thenAnswer((_) async {});
+        when(mockPaymentService.lookupInvoice(
+                paymentHashHex: holdInvoicePaymentHash))
+            .thenAnswer((_) async => InvoiceDetails(
+                  paymentHash: holdInvoicePaymentHash,
+                  status: InvoiceStatus.CANCELED,
+                ));
+
+        var completed = false;
+        coordinatorService.doInitialCheckStatuses().then((_) {
+          completed = true;
+        });
+        async.flushMicrotasks();
+
+        expect(completed, isTrue);
+        expect(currentOffer.status, OfferStatus.funded,
+            reason:
+                'Startup reservation recovery should first revert the offer to funded.');
+
+        async.elapse(const Duration(seconds: 6));
+        async.flushMicrotasks();
+
+        expect(currentOffer.status, OfferStatus.expired,
+            reason:
+                'Recovered offer should still expire based on funded timeout, not stay funded because of a stale reserved snapshot.');
+      });
+    });
+
     group('Funded Offer Timer Restart Scenarios', skip: true, () {
       test(
           'Reservation timeout: offer reverts to funded, then expires based on original createdAt',
@@ -780,9 +889,10 @@ void main() {
           });
 
           // Mock update to expired (after funded timeout via _handleFundedOfferExpiration)
-          when(mockDbService.updateOfferStatus(
+          when(mockDbService.updateOfferStatusIfCurrentStatus(
             offerId,
             OfferStatus.expired,
+            [OfferStatus.funded],
             takerPubkey: null,
             blikCode: null,
             takerLightningAddress: null,
@@ -843,7 +953,8 @@ void main() {
             verify(mockPaymentService.cancelInvoice(
                     paymentHashHex: holdInvoicePaymentHash))
                 .called(1);
-            verify(mockDbService.updateOfferStatus(offerId, OfferStatus.expired,
+            verify(mockDbService.updateOfferStatusIfCurrentStatus(
+                    offerId, OfferStatus.expired, [OfferStatus.funded],
                     takerPubkey: null,
                     blikCode: null,
                     takerLightningAddress: null,
@@ -862,7 +973,8 @@ void main() {
           verify(mockPaymentService.cancelInvoice(
                   paymentHashHex: holdInvoicePaymentHash))
               .called(1);
-          verify(mockDbService.updateOfferStatus(offerId, OfferStatus.expired,
+          verify(mockDbService.updateOfferStatusIfCurrentStatus(
+                  offerId, OfferStatus.expired, [OfferStatus.funded],
                   takerPubkey: null,
                   blikCode: null,
                   takerLightningAddress: null,
@@ -937,9 +1049,10 @@ void main() {
           });
 
           // Mock update to expired
-          when(mockDbService.updateOfferStatus(
+          when(mockDbService.updateOfferStatusIfCurrentStatus(
             offerId,
             OfferStatus.expired,
+            [OfferStatus.funded],
             takerPubkey: null,
             blikCode: null,
             takerLightningAddress: null,
@@ -998,7 +1111,8 @@ void main() {
             verify(mockPaymentService.cancelInvoice(
                     paymentHashHex: holdInvoicePaymentHash))
                 .called(1);
-            verify(mockDbService.updateOfferStatus(offerId, OfferStatus.expired,
+            verify(mockDbService.updateOfferStatusIfCurrentStatus(
+                    offerId, OfferStatus.expired, [OfferStatus.funded],
                     takerPubkey: null,
                     blikCode: null,
                     takerLightningAddress: null,
@@ -1017,7 +1131,8 @@ void main() {
           verify(mockPaymentService.cancelInvoice(
                   paymentHashHex: holdInvoicePaymentHash))
               .called(1);
-          verify(mockDbService.updateOfferStatus(offerId, OfferStatus.expired,
+          verify(mockDbService.updateOfferStatusIfCurrentStatus(
+                  offerId, OfferStatus.expired, [OfferStatus.funded],
                   takerPubkey: null,
                   blikCode: null,
                   takerLightningAddress: null,
@@ -1136,9 +1251,10 @@ void main() {
           });
 
           // Mock update to expired
-          when(mockDbService.updateOfferStatus(
+          when(mockDbService.updateOfferStatusIfCurrentStatus(
             offerId,
             OfferStatus.expired,
+            [OfferStatus.funded],
             takerPubkey: null,
             blikCode: null,
             takerLightningAddress: null,
@@ -1216,7 +1332,8 @@ void main() {
             verify(mockPaymentService.cancelInvoice(
                     paymentHashHex: holdInvoicePaymentHash))
                 .called(1);
-            verify(mockDbService.updateOfferStatus(offerId, OfferStatus.expired,
+            verify(mockDbService.updateOfferStatusIfCurrentStatus(
+                    offerId, OfferStatus.expired, [OfferStatus.funded],
                     takerPubkey: null,
                     blikCode: null,
                     takerLightningAddress: null,
@@ -1235,7 +1352,8 @@ void main() {
           verify(mockPaymentService.cancelInvoice(
                   paymentHashHex: holdInvoicePaymentHash))
               .called(1);
-          verify(mockDbService.updateOfferStatus(offerId, OfferStatus.expired,
+          verify(mockDbService.updateOfferStatusIfCurrentStatus(
+                  offerId, OfferStatus.expired, [OfferStatus.funded],
                   takerPubkey: null,
                   blikCode: null,
                   takerLightningAddress: null,

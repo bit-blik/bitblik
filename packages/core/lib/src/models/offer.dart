@@ -63,6 +63,7 @@ class Offer {
   final DateTime? updatedAt;
   final DateTime? makerConfirmedAt;
   final DateTime? settledAt;
+  final DateTime? disputeAt;
   final DateTime? takerPaidAt;
   final int? takerFees;
   final String? takerPaymentFailureReason;
@@ -148,6 +149,7 @@ class Offer {
     this.updatedAt,
     this.makerConfirmedAt,
     this.settledAt,
+    this.disputeAt,
     this.takerPaidAt,
     this.takerFees,
     this.takerPaymentFailureReason,
@@ -270,6 +272,7 @@ class Offer {
       updatedAt: parseOptionalDateTime(json['updated_at']),
       makerConfirmedAt: parseOptionalDateTime(json['maker_confirmed_at']),
       settledAt: parseOptionalDateTime(json['settled_at']),
+      disputeAt: parseOptionalDateTime(json['dispute_at']),
       takerPaidAt: parseOptionalDateTime(json['taker_paid_at']),
       takerFees: json['taker_fees'] as int?,
       takerPaymentFailureReason:
@@ -312,6 +315,7 @@ class Offer {
       'updated_at': updatedAt?.toUtc().toIso8601String(),
       'maker_confirmed_at': makerConfirmedAt?.toUtc().toIso8601String(),
       'settled_at': settledAt?.toUtc().toIso8601String(),
+      'dispute_at': disputeAt?.toUtc().toIso8601String(),
       'taker_paid_at': takerPaidAt?.toUtc().toIso8601String(),
       'taker_fees': takerFees,
       'taker_payment_failure_reason': takerPaymentFailureReason,
@@ -400,6 +404,7 @@ class Offer {
     DateTime? updatedAt,
     DateTime? makerConfirmedAt,
     DateTime? settledAt,
+    DateTime? disputeAt,
     DateTime? takerPaidAt,
     int? takerFees,
     String? takerPaymentFailureReason,
@@ -431,6 +436,7 @@ class Offer {
       updatedAt: updatedAt ?? this.updatedAt,
       makerConfirmedAt: makerConfirmedAt ?? this.makerConfirmedAt,
       settledAt: settledAt ?? this.settledAt,
+      disputeAt: disputeAt ?? this.disputeAt,
       takerPaidAt: takerPaidAt ?? this.takerPaidAt,
       takerFees: takerFees ?? this.takerFees,
       takerPaymentFailureReason:

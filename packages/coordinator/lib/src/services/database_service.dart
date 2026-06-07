@@ -82,6 +82,7 @@ class DatabaseService {
         blik_received_at TIMESTAMPTZ,
         maker_confirmed_at TIMESTAMPTZ,
         settled_at TIMESTAMPTZ,
+        dispute_at TIMESTAMPTZ,
         taker_paid_at TIMESTAMPTZ,
         taker_fees BIGINT NULL, -- Renamed
         taker_payment_failure_reason TEXT NULL,
@@ -102,6 +103,10 @@ class DatabaseService {
     await _connection!.execute('''
       ALTER TABLE offers
       ADD COLUMN IF NOT EXISTS taker_payment_failure_reason TEXT NULL;
+    ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS dispute_at TIMESTAMPTZ;
     ''');
     // Composite (status, created_at DESC) serves both the status-equality
     // lookups (getOffersByStatus) AND their `ORDER BY created_at DESC LIMIT`
@@ -325,6 +330,53 @@ class DatabaseService {
       DateTime? blikReceivedAt,
       int? takerFees,
       String? failureReason}) async {
+    return _updateOfferStatusInternal(
+      id,
+      newStatus,
+      takerPubkey: takerPubkey,
+      blikCode: blikCode,
+      takerLightningAddress: takerLightningAddress,
+      reservedAt: reservedAt,
+      blikReceivedAt: blikReceivedAt,
+      takerFees: takerFees,
+      failureReason: failureReason,
+    );
+  }
+
+  Future<bool> updateOfferStatusIfCurrentStatus(
+      String id, OfferStatus newStatus, List<OfferStatus> expectedCurrentStatuses,
+      {String? takerPubkey,
+      String? blikCode,
+      String? takerLightningAddress,
+      DateTime? reservedAt,
+      DateTime? blikReceivedAt,
+      int? takerFees,
+      String? failureReason}) async {
+    return _updateOfferStatusInternal(
+      id,
+      newStatus,
+      takerPubkey: takerPubkey,
+      blikCode: blikCode,
+      takerLightningAddress: takerLightningAddress,
+      reservedAt: reservedAt,
+      blikReceivedAt: blikReceivedAt,
+      takerFees: takerFees,
+      failureReason: failureReason,
+      expectedCurrentStatuses: expectedCurrentStatuses,
+    );
+  }
+
+  Future<bool> _updateOfferStatusInternal(
+      String id,
+      OfferStatus newStatus,
+      {String? takerPubkey,
+      String? blikCode,
+      String? takerLightningAddress,
+      DateTime? reservedAt,
+      DateTime? blikReceivedAt,
+      int? takerFees,
+      String? failureReason,
+      List<OfferStatus>? expectedCurrentStatuses}) async {
     // Renamed parameter
     // Added takerFees
     if (_connection == null) throw StateError('Database not connected.');
@@ -410,11 +462,10 @@ class DatabaseService {
         // No specific fields to update/clear when moving TO these states
         break;
       case OfferStatus.dispute:
-        // The hold invoice is settled before an offer transitions to dispute,
-        // so record the settlement timestamp. COALESCE preserves any value
-        // already set (e.g. if the offer was settled before being disputed).
-        params['settled_at'] = now;
-        setClauses.add('settled_at = COALESCE(settled_at, @settled_at)');
+        // Record when the offer entered dispute. COALESCE preserves the first
+        // value if the status is ever re-applied.
+        params['dispute_at'] = now;
+        setClauses.add('dispute_at = COALESCE(dispute_at, @dispute_at)');
         break;
       default:
         break;
@@ -426,8 +477,16 @@ class DatabaseService {
     // AppLogger.info(
     //     '[DatabaseService.updateOfferStatus] SQL: UPDATE offers SET ${setClauses.join(', ')} WHERE id = @id');
 
+    final whereClauses = ['id = @id'];
+    if (expectedCurrentStatuses != null && expectedCurrentStatuses.isNotEmpty) {
+      params['expected_current_statuses'] =
+          expectedCurrentStatuses.map((status) => status.name).toList();
+      whereClauses
+          .add('status = ANY(CAST(@expected_current_statuses AS TEXT[]))');
+    }
+
     final affectedRows = await _connection!.execute(
-      'UPDATE offers SET ${setClauses.join(', ')} WHERE id = @id',
+      'UPDATE offers SET ${setClauses.join(', ')} WHERE ${whereClauses.join(' AND ')}',
       substitutionValues: params,
     );
     // Return bool indicating success
@@ -556,6 +615,7 @@ class DatabaseService {
       blikReceivedAt: (map['blik_received_at'] as DateTime?)?.toLocal(),
       makerConfirmedAt: (map['maker_confirmed_at'] as DateTime?)?.toLocal(),
       settledAt: (map['settled_at'] as DateTime?)?.toLocal(),
+      disputeAt: (map['dispute_at'] as DateTime?)?.toLocal(),
       takerPaidAt: (map['taker_paid_at'] as DateTime?)?.toLocal(),
       takerFees: map['taker_fees'],
       takerPaymentFailureReason: map['taker_payment_failure_reason'],

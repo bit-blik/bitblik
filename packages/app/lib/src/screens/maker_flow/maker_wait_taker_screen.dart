@@ -27,6 +27,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
   bool _isCancelling = false;
   bool _isExpired = false;
   bool _isRecreating = false;
+  bool _isFetchingBlik = false;
   Timer? _expiryTimer;
   Offer?
   _lastKnownOffer; // snapshot so expired UI has offer details even after state→null
@@ -45,16 +46,35 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     super.dispose();
   }
 
+  /// Only `created`/`funded` offers may flip to the expired UI on the client
+  /// timer. Once a taker has engaged (reserved/blik*), the trade is live on the
+  /// coordinator: showing "expired" here strands the maker while the
+  /// coordinator still expects a BLIK confirmation — which auto-settles the
+  /// hold invoice against the maker after the dispute timeout. See [_goHome] and
+  /// [_fetchBlikAndNavigate].
+  static bool _isExpirableStatus(OfferStatus? status) {
+    return status == null ||
+        status == OfferStatus.created ||
+        status == OfferStatus.funded;
+  }
+
   void _scheduleExpiryTimer(Offer? offer) {
     if (offer == null) return;
     final expiresAt = offer.createdAt.add(const Duration(minutes: 10));
     final remaining = expiresAt.difference(DateTime.now());
     if (!remaining.isNegative && remaining > Duration.zero) {
       _expiryTimer = Timer(remaining, () {
-        if (mounted) {
-          _lastKnownOffer ??= ref.read(activeOfferProvider);
-          setState(() => _isExpired = true);
+        if (!mounted) return;
+        final current = ref.read(activeOfferProvider);
+        final status = current?.statusEnum;
+        // A taker engaged just before the timer fired. Do not show expired —
+        // route to the correct live screen instead.
+        if (!_isExpirableStatus(status)) {
+          _handleStatusUpdate(status);
+          return;
         }
+        _lastKnownOffer ??= current;
+        setState(() => _isExpired = true);
       });
     }
   }
@@ -83,30 +103,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       // Continue waiting
     } else if (status == OfferStatus.blikReceived ||
         status == OfferStatus.blikSentToMaker) {
-      try {
-        final apiService = ref.read(apiServiceProvider);
-        final blikCode = await apiService.getBlikCodeForMaker(
-          offer.id,
-          makerId,
-          coordinatorPubkey,
-        );
-        if (blikCode != null && blikCode.isNotEmpty) {
-          ref.read(receivedBlikCodeProvider.notifier).state = blikCode;
-          if (mounted) {
-            context.go('/confirm-blik');
-          }
-        } else {
-          if (mounted) {
-            // _resetToRoleSelection(t.maker.waitTaker.errorFailedToRetrieveBlik);
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          // _resetToRoleSelection(
-          //   t.maker.waitTaker.errorRetrievingBlik(details: e.toString()),
-          // );
-        }
-      }
+      await _fetchBlikAndNavigate(offer, makerId, coordinatorPubkey);
     } else if (status == OfferStatus.expired) {
       if (mounted) {
         setState(() => _isExpired = true);
@@ -117,6 +114,69 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         //   t.maker.waitTaker.offerNoLongerAvailable(status: status.name),
         // );
       }
+    }
+  }
+
+  /// A taker submitted a BLIK. The coordinator flips the offer to
+  /// `blikSentToMaker` the moment we fetch the code, which makes the maker
+  /// liable: if no confirmation arrives within the coordinator's BLIK-confirm
+  /// window the hold invoice is auto-settled against the maker. So we must NEVER
+  /// silently fail here — keep retrying until the code is shown or the offer
+  /// leaves the BLIK state, and surface every failure to the user.
+  Future<void> _fetchBlikAndNavigate(
+    Offer offer,
+    String makerId,
+    String coordinatorPubkey,
+  ) async {
+    if (_isFetchingBlik) return;
+    _isFetchingBlik = true;
+    // Trade is live — clear any stale expired UI so the maker isn't stranded.
+    if (_isExpired && mounted) {
+      setState(() => _isExpired = false);
+    }
+    final apiService = ref.read(apiServiceProvider);
+    try {
+      while (mounted) {
+        final current = ref.read(activeOfferProvider);
+        final status = current?.statusEnum;
+        if (status != OfferStatus.blikReceived &&
+            status != OfferStatus.blikSentToMaker) {
+          // Offer moved on (confirmed/expired/etc) — stop; the listener handles it.
+          return;
+        }
+        try {
+          final blikCode = await apiService.getBlikCodeForMaker(
+            offer.id,
+            makerId,
+            coordinatorPubkey,
+          );
+          if (blikCode != null && blikCode.isNotEmpty) {
+            ref.read(receivedBlikCodeProvider.notifier).state = blikCode;
+            if (mounted) context.go('/confirm-blik');
+            return;
+          }
+          Logger.log.w(
+            () =>
+                '[MakerWaitTaker] BLIK fetch returned empty for offer ${offer.id}, retrying.',
+          );
+        } catch (e) {
+          Logger.log.w(
+            () => '[MakerWaitTaker] BLIK fetch failed for offer ${offer.id}: $e',
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  t.maker.waitTaker.errorRetrievingBlik(details: e.toString()),
+                ),
+              ),
+            );
+          }
+        }
+        await Future.delayed(const Duration(seconds: 3));
+      }
+    } finally {
+      _isFetchingBlik = false;
     }
   }
 
@@ -190,7 +250,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     }
   }
 
-  void _goHome() {
+  Future<void> _goHome() async {
+    // Clear the active offer too — otherwise RoleSelectionScreen re-syncs it and
+    // auto-routes straight back here, making "Go Home" appear to do nothing.
+    await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
     ref.read(holdInvoiceProvider.notifier).state = null;
     ref.read(paymentHashProvider.notifier).state = null;
     ref.read(receivedBlikCodeProvider.notifier).state = null;
@@ -323,10 +386,13 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       if (!mounted) return;
       if (next != null) {
         _handleStatusUpdate(next.statusEnum);
-      } else if (previous != null && !_isExpired) {
+      } else if (previous != null &&
+          !_isExpired &&
+          _isExpirableStatus(previous.statusEnum)) {
         // Offer cleared by coordinator (applyStatusUpdate goes funded→null for
         // terminal statuses without passing through expired in memory).
-        // Treat as expiry if the 10-min window has elapsed.
+        // Treat as expiry only if it was still a pre-taker offer and the 10-min
+        // window has elapsed — never for a live (reserved/blik*) offer.
         final expiresAt = previous.createdAt.add(const Duration(minutes: 10));
         if (!DateTime.now().isBefore(expiresAt)) {
           _lastKnownOffer = previous;

@@ -51,6 +51,7 @@ class OfferDbService {
       updated_at TEXT,
       maker_confirmed_at TEXT,
       settled_at TEXT,
+      dispute_at TEXT,
       taker_paid_at TEXT,
       taker_fees INTEGER,
       taker_payment_failure_reason TEXT,
@@ -71,7 +72,7 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: (db, version) async {
         await db.execute(_createTableSql);
       },
@@ -131,6 +132,13 @@ class OfferDbService {
             await db.execute(
               'ALTER TABLE $_table ADD COLUMN premium_percent REAL NOT NULL DEFAULT 0',
             );
+          }
+        }
+        if (oldVersion < 10) {
+          final columns = await db.rawQuery('PRAGMA table_info($_table)');
+          final hasColumn = columns.any((col) => col['name'] == 'dispute_at');
+          if (!hasColumn) {
+            await db.execute('ALTER TABLE $_table ADD COLUMN dispute_at TEXT');
           }
         }
       },
