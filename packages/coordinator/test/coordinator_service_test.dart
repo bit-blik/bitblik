@@ -362,7 +362,7 @@ void main() {
       // The transition to 'funded' happens upon invoice payment, which is async.
       // We'll test the 'funded' transition separately.
 
-      final fiatAmount = 100.0;
+      final fiatAmount = 10.0;
       final makerId = 'maker-pubkey';
 
       // Mock exchange rate or ensure it's handled if service calls http directly
@@ -414,7 +414,7 @@ void main() {
     test('Invoice ACCEPTED: (pending) -> funded with category', () async {
       // final paymentHash = 'funded-payment-hash';
       final makerId = 'maker-for-funded';
-      final fiatAmount = 150.0;
+      final fiatAmount = 12.0;
       const category = OfferCategory.online;
       // final satsAmountCalc = 300000; // Example, actual would be calculated
       // final makerFeesCalc = 1500; // Example
@@ -525,7 +525,7 @@ void main() {
         // 1. Setup: An offer needs to become funded to start its timer.
         String serviceGeneratedPaymentHash = '';
         final makerId = 'maker-expire';
-        final fiatAmount = 120.0;
+        final fiatAmount = 12.0;
 
         String?
             capturedOfferId; // Will hold the ID of the offer created by the service
@@ -677,10 +677,11 @@ void main() {
                     () => serviceGeneratedPaymentHash,
                     'serviceGeneratedPaymentHash'),
                 named: 'paymentHashHex')));
-        verifyNever(mockDbService.updateOfferStatus(
+        verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
           argThat(_OfferIdEqualsDynamicValueMatcher(
               () => capturedOfferId, 'capturedOfferId')),
           OfferStatus.expired,
+          [OfferStatus.funded],
           takerPubkey: null,
           blikCode: null,
           takerLightningAddress: null,
@@ -699,10 +700,11 @@ void main() {
                         'serviceGeneratedPaymentHash'),
                     named: 'paymentHashHex')))
             .called(1);
-        verify(mockDbService.updateOfferStatus(
+        verify(mockDbService.updateOfferStatusIfCurrentStatus(
           argThat(_OfferIdEqualsDynamicValueMatcher(
               () => capturedOfferId, 'capturedOfferId')),
           OfferStatus.expired,
+          [OfferStatus.funded],
           takerPubkey: null,
           blikCode: null,
           takerLightningAddress: null,
