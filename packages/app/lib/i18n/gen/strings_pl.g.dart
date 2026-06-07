@@ -1115,7 +1115,7 @@ class _Translations$taker$waitConfirmation$pl extends Translations$taker$waitCon
 	@override String get navigatedHome => 'Przeniesiono na stronę główną.';
 	@override String get expiredTitle => 'Kod BLIK wygasł';
 	@override String get expiredWarning => 'Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć.';
-	@override String get expiredRelistCountdownLabel => 'Automatyczne ponowne wystawienie za';
+	@override String get expiredRelistCountdownLabel => 'Koniec rezerwacji za';
 	@override String get expiredSentWarning => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?';
 	@override String get expiredInstruction1 => 'Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację.';
 	@override String get expiredInstruction2 => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.';
@@ -2849,7 +2849,7 @@ extension on TranslationsPl {
 			'taker.waitConfirmation.navigatedHome' => 'Przeniesiono na stronę główną.',
 			'taker.waitConfirmation.expiredTitle' => 'Kod BLIK wygasł',
 			'taker.waitConfirmation.expiredWarning' => 'Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć.',
-			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Automatyczne ponowne wystawienie za',
+			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Koniec rezerwacji za',
 			'taker.waitConfirmation.expiredSentWarning' => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?',
 			'taker.waitConfirmation.expiredInstruction1' => 'Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację.',
 			'taker.waitConfirmation.expiredInstruction2' => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.',
