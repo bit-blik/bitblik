@@ -1,6 +1,6 @@
 name: bitblik_coordinator
 description: A simple Dart server-side application.
-version: 0.8.0
+version: 0.8.1
 resolution: workspace
 # repository: https://github.com/your_org/your_repo
 
