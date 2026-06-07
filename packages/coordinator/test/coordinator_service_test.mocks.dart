@@ -9,6 +9,8 @@ import 'dart:typed_data' as _i13;
 
 import 'package:bitblik_coordinator/src/models/create_hold_invoice_result.dart'
     as _i3;
+import 'package:bitblik_coordinator/src/models/cancel_invoice_result.dart'
+    as _i14;
 import 'package:bitblik_coordinator/src/models/invoice_details.dart' as _i5;
 import 'package:bitblik_coordinator/src/models/invoice_update.dart' as _i10;
 import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart' as _i4;
@@ -414,16 +416,19 @@ class MockPaymentService extends _i1.Mock implements _i9.PaymentService {
       ) as _i8.Future<void>);
 
   @override
-  _i8.Future<void> cancelInvoice({required String? paymentHashHex}) =>
+  _i8.Future<_i14.CancelInvoiceResult> cancelInvoice(
+          {required String? paymentHashHex}) =>
       (super.noSuchMethod(
         Invocation.method(
           #cancelInvoice,
           [],
           {#paymentHashHex: paymentHashHex},
         ),
-        returnValue: _i8.Future<void>.value(),
-        returnValueForMissingStub: _i8.Future<void>.value(),
-      ) as _i8.Future<void>);
+        returnValue: _i8.Future<_i14.CancelInvoiceResult>.value(
+            const _i14.CancelInvoiceResult.cancelled()),
+        returnValueForMissingStub: _i8.Future<_i14.CancelInvoiceResult>.value(
+            const _i14.CancelInvoiceResult.cancelled()),
+      ) as _i8.Future<_i14.CancelInvoiceResult>);
 
   @override
   _i8.Future<_i4.PayInvoiceResult> payInvoice({

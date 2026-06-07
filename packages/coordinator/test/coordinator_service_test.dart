@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert'; // For jsonEncode
 
 import 'package:bitblik_coordinator/src/models/create_hold_invoice_result.dart'; // Added
+import 'package:bitblik_coordinator/src/models/cancel_invoice_result.dart';
 import 'package:bitblik_coordinator/src/models/invoice_details.dart'; // Added for InvoiceDetails
 import 'package:bitblik_coordinator/src/models/invoice_status.dart';
 import 'package:bitblik_coordinator/src/models/invoice_update.dart';
@@ -476,7 +477,7 @@ void main() {
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
       when(mockPaymentService.cancelInvoice(paymentHashHex: testPaymentHash))
-          .thenAnswer((_) async {});
+          .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
       // mockDbService.cancelOffer is already stubbed in setUp to return true
 
       final result =
@@ -618,7 +619,7 @@ void main() {
                         () => serviceGeneratedPaymentHash,
                         'serviceGeneratedPaymentHash'),
                     named: 'paymentHashHex')))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
 
         // Mock lookupInvoice to return a canceled status after cancelInvoice is called
         when(mockPaymentService.lookupInvoice(
@@ -738,8 +739,9 @@ void main() {
           createdAt: initialTime.subtract(fundedTimeout).add(
                 const Duration(seconds: 5),
               ),
-          reservedAt:
-              realNow.subtract(reservationTimeout).subtract(const Duration(minutes: 5)),
+          reservedAt: realNow
+              .subtract(reservationTimeout)
+              .subtract(const Duration(minutes: 5)),
           takerPubkey: testTakerId,
           holdInvoicePaymentHash: holdInvoicePaymentHash,
         );
@@ -797,7 +799,7 @@ void main() {
 
         when(mockPaymentService.cancelInvoice(
                 paymentHashHex: holdInvoicePaymentHash))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
         when(mockPaymentService.lookupInvoice(
                 paymentHashHex: holdInvoicePaymentHash))
             .thenAnswer((_) async => InvoiceDetails(
@@ -908,7 +910,7 @@ void main() {
 
           when(mockPaymentService.cancelInvoice(
                   paymentHashHex: holdInvoicePaymentHash))
-              .thenAnswer((_) async {});
+              .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
           when(mockPaymentService.lookupInvoice(
                   paymentHashHex: holdInvoicePaymentHash))
               .thenAnswer((_) async => InvoiceDetails(
@@ -1067,7 +1069,7 @@ void main() {
           });
           when(mockPaymentService.cancelInvoice(
                   paymentHashHex: holdInvoicePaymentHash))
-              .thenAnswer((_) async {});
+              .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
           when(mockPaymentService.lookupInvoice(
                   paymentHashHex: holdInvoicePaymentHash))
               .thenAnswer((_) async => InvoiceDetails(
@@ -1275,7 +1277,7 @@ void main() {
           });
           when(mockPaymentService.cancelInvoice(
                   paymentHashHex: holdInvoicePaymentHash))
-              .thenAnswer((_) async {});
+              .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
           when(mockPaymentService.lookupInvoice(
                   paymentHashHex: holdInvoicePaymentHash))
               .thenAnswer((_) async => InvoiceDetails(
@@ -1395,10 +1397,12 @@ void main() {
         )).thenAnswer((invocation) async {
           // Simulate the DB update by changing the offer's state for subsequent getOfferById calls
           reservedOffer = reservedOffer.copyWith(status: OfferStatus.reserved);
-          reservedOffer = reservedOffer.copyWith(takerPubkey: takerIdForReservationTimeout);
+          reservedOffer =
+              reservedOffer.copyWith(takerPubkey: takerIdForReservationTimeout);
           reservedOffer = reservedOffer.copyWith(
-              reservedAt: invocation.namedArguments[Symbol('reservedAt')] as DateTime,
-            );
+            reservedAt:
+                invocation.namedArguments[Symbol('reservedAt')] as DateTime,
+          );
           return true;
         });
 
@@ -1412,7 +1416,8 @@ void main() {
               null, // Expect takerLightningAddress to be cleared
           reservedAt: null, // Expect reservedAt to be cleared
         )).thenAnswer((_) async {
-          reservedOffer = reservedOffer.copyWith(status: OfferStatus.funded); // Simulate DB update
+          reservedOffer = reservedOffer.copyWith(
+              status: OfferStatus.funded); // Simulate DB update
           reservedOffer = reservedOffer.copyWith(takerPubkey: null);
           reservedOffer = reservedOffer.copyWith(reservedAt: null);
           return true;
@@ -1494,12 +1499,16 @@ void main() {
           takerLightningAddress: testTakerLnAddress,
           blikReceivedAt: anyNamed('blikReceivedAt'),
         )).thenAnswer((invocation) async {
-          blikReceivedOffer = blikReceivedOffer.copyWith(status: OfferStatus.blikReceived);
-          blikReceivedOffer = blikReceivedOffer.copyWith(blikCode: testBlikCode);
-          blikReceivedOffer = blikReceivedOffer.copyWith(takerLightningAddress: testTakerLnAddress);
+          blikReceivedOffer =
+              blikReceivedOffer.copyWith(status: OfferStatus.blikReceived);
+          blikReceivedOffer =
+              blikReceivedOffer.copyWith(blikCode: testBlikCode);
           blikReceivedOffer = blikReceivedOffer.copyWith(
-              blikReceivedAt: invocation.namedArguments[Symbol('blikReceivedAt')] as DateTime,
-            );
+              takerLightningAddress: testTakerLnAddress);
+          blikReceivedOffer = blikReceivedOffer.copyWith(
+            blikReceivedAt:
+                invocation.namedArguments[Symbol('blikReceivedAt')] as DateTime,
+          );
           return true;
         });
 
@@ -1507,7 +1516,8 @@ void main() {
         when(mockDbService.updateOfferStatus(
                 offerIdForBlikTimeout, OfferStatus.expiredBlik))
             .thenAnswer((_) async {
-          blikReceivedOffer = blikReceivedOffer.copyWith(status: OfferStatus.expiredBlik); // Simulate DB update
+          blikReceivedOffer = blikReceivedOffer.copyWith(
+              status: OfferStatus.expiredBlik); // Simulate DB update
           return true;
         });
 
@@ -1592,8 +1602,9 @@ void main() {
           offer = offer.copyWith(blikCode: testBlikCode);
           offer = offer.copyWith(takerLightningAddress: testTakerLnAddress);
           offer = offer.copyWith(
-              blikReceivedAt: invocation.namedArguments[Symbol('blikReceivedAt')] as DateTime,
-            );
+            blikReceivedAt:
+                invocation.namedArguments[Symbol('blikReceivedAt')] as DateTime,
+          );
           return true;
         });
 
@@ -1664,7 +1675,8 @@ void main() {
           reservedAt: initialTime.subtract(Duration(minutes: 1)),
           createdAt: initialTime.subtract(Duration(minutes: 2)),
         );
-        when(mockDbService.getOfferById(offerId)).thenAnswer((_) async => offer);
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => offer);
 
         when(mockDbService.updateOfferStatus(
           offerId,
@@ -1718,6 +1730,23 @@ void main() {
           );
           return true;
         });
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
+          offerId,
+          OfferStatus.expired,
+          [OfferStatus.funded],
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(status: OfferStatus.expired);
+          return true;
+        });
+        when(mockPaymentService.cancelInvoice(
+                paymentHashHex: offer.holdInvoicePaymentHash!))
+            .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
+        when(mockPaymentService.lookupInvoice(
+                paymentHashHex: offer.holdInvoicePaymentHash!))
+            .thenAnswer((_) async => InvoiceDetails(
+                  paymentHash: offer.holdInvoicePaymentHash!,
+                  status: InvoiceStatus.CANCELED,
+                ));
 
         coordinatorService
             .submitBlikCode(
@@ -1767,7 +1796,8 @@ void main() {
         updatedAt: now.subtract(const Duration(seconds: 61)),
       );
 
-      when(mockDbService.getOffersByStatus(OfferStatus.expiredBlik, limit: 1000))
+      when(mockDbService.getOffersByStatus(OfferStatus.expiredBlik,
+              limit: 1000))
           .thenAnswer((_) async => [offer]);
       when(mockDbService.getOfferById(offer.id)).thenAnswer((_) async => offer);
       when(mockDbService.updateOfferStatus(
@@ -1822,8 +1852,9 @@ void main() {
           offer = offer.copyWith(blikCode: testBlikCode);
           offer = offer.copyWith(takerLightningAddress: testTakerLnAddress);
           offer = offer.copyWith(
-              blikReceivedAt: invocation.namedArguments[Symbol('blikReceivedAt')] as DateTime,
-            );
+            blikReceivedAt:
+                invocation.namedArguments[Symbol('blikReceivedAt')] as DateTime,
+          );
           return true;
         });
 
@@ -1981,8 +2012,7 @@ void main() {
         when(mockDbService.updateOfferStatus(offerId, OfferStatus.invalidBlik))
             .thenAnswer((_) async {
           offer = offer.copyWith(
-              status: OfferStatus.invalidBlik,
-              updatedAt: clock.now().toUtc());
+              status: OfferStatus.invalidBlik, updatedAt: clock.now().toUtc());
           return true;
         });
         when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
@@ -2124,7 +2154,8 @@ void main() {
       });
     });
 
-    group('Startup dispute escalation checks (_checkDisputeEscalationAutoDispute)',
+    group(
+        'Startup dispute escalation checks (_checkDisputeEscalationAutoDispute)',
         () {
       Future<void> runStartupChecks() =>
           coordinatorService.doInitialCheckStatuses();
@@ -2270,8 +2301,7 @@ void main() {
           async.flushMicrotasks();
 
           // Just before the remaining 30min expires
-          async.elapse(
-              const Duration(minutes: 29, seconds: 59));
+          async.elapse(const Duration(minutes: 29, seconds: 59));
           async.flushMicrotasks();
           verifyNever(
               mockPaymentService.settleInvoice(preimageHex: testPreimage));
@@ -2480,26 +2510,30 @@ void main() {
       when(mockDbService.updateOfferStatus(
               testOfferId, OfferStatus.makerConfirmed))
           .thenAnswer((_) async {
-        offer = offer.copyWith(status: OfferStatus.makerConfirmed); // Simulate DB update
+        offer = offer.copyWith(
+            status: OfferStatus.makerConfirmed); // Simulate DB update
         return true;
       });
       when(mockDbService.updateOfferStatus(testOfferId, OfferStatus.settled))
           .thenAnswer((_) async {
-        offer = offer.copyWith(status: OfferStatus.settled); // Simulate DB update
+        offer =
+            offer.copyWith(status: OfferStatus.settled); // Simulate DB update
         return true;
       });
       // _payTakerAsync will be called, which updates to payingTaker then takerPaid/takerPaymentFailed
       when(mockDbService.updateOfferStatus(
               testOfferId, OfferStatus.payingTaker))
           .thenAnswer((_) async {
-        offer = offer.copyWith(status: OfferStatus.payingTaker); // Simulate DB update
+        offer = offer.copyWith(
+            status: OfferStatus.payingTaker); // Simulate DB update
         return true;
       });
       // Assume payment to taker is successful for this path
       when(mockDbService.updateOfferStatus(testOfferId, OfferStatus.takerPaid,
               takerFees: anyNamed('takerFees')))
           .thenAnswer((_) async {
-        offer = offer.copyWith(status: OfferStatus.takerPaid); // Simulate DB update
+        offer =
+            offer.copyWith(status: OfferStatus.takerPaid); // Simulate DB update
         return true;
       });
       when(mockDbService.updateTakerInvoice(testOfferId, any))
@@ -2817,7 +2851,8 @@ void main() {
       // Mock updateTakerInvoice
       when(mockDbService.updateTakerInvoice(testOfferId, newTakerInvoice))
           .thenAnswer((_) async {
-        offer = offer.copyWith(takerInvoice: newTakerInvoice); // Simulate DB update
+        offer =
+            offer.copyWith(takerInvoice: newTakerInvoice); // Simulate DB update
         return true;
       });
 

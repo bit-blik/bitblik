@@ -476,14 +476,20 @@ class CoordinatorService {
               'Offer ${offer.id} funded expired (created at $createdAt, expired at $expiryTime). Cancelling.',
               offerId: offer.id);
           try {
-            await _paymentBackend!
+            final cancelResult = await _paymentBackend!
                 .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
-            AppLogger.info(
-                'Hold invoice for offer ${offer.id} cancelled via $_paymentBackendType due to startup expiration check.',
-                offerId: offer.id);
+            if (cancelResult.isAlreadyMissing) {
+              AppLogger.info(
+                  'Hold invoice for offer ${offer.id} is already missing on $_paymentBackendType during startup expiration check.',
+                  offerId: offer.id);
+            } else {
+              AppLogger.info(
+                  'Hold invoice for offer ${offer.id} cancelled via $_paymentBackendType due to startup expiration check.',
+                  offerId: offer.id);
+            }
           } catch (e) {
             AppLogger.info(
-                'Error cancelling hold invoice for expired offer ${offer.id} using  $e',
+                'Error cancelling hold invoice for expired offer ${offer.id} using $_paymentBackendType: $e',
                 offerId: offer.id);
           }
           final currentOffer = await _dbService.getOfferById(offer.id);
@@ -493,9 +499,8 @@ class CoordinatorService {
                 offerId: offer.id);
             continue;
           }
-          final dbSuccess =
-              await _dbService.updateOfferStatusIfCurrentStatus(
-                  offer.id, OfferStatus.expired, [OfferStatus.funded]);
+          final dbSuccess = await _dbService.updateOfferStatusIfCurrentStatus(
+              offer.id, OfferStatus.expired, [OfferStatus.funded]);
           if (dbSuccess) {
             cancelledCount++;
             AppLogger.info(
@@ -865,7 +870,13 @@ class CoordinatorService {
         paymentHashHex: paymentHashHex);
     holdInvoice = backendResponse.invoice;
     if (backendResponse.paymentHash.isNotEmpty) {
-      returnedPaymentHashHex = backendResponse.paymentHash;
+      if (_paymentBackendType == 'nwc' &&
+          backendResponse.paymentHash != paymentHashHex) {
+        AppLogger.info(
+            'NWC returned payment hash ${backendResponse.paymentHash} different from requested $paymentHashHex. Keeping the requested hash for offer lifecycle operations.');
+      } else {
+        returnedPaymentHashHex = backendResponse.paymentHash;
+      }
     }
 
     final preimageHex =
@@ -1180,39 +1191,30 @@ class CoordinatorService {
     if (currentOffer?.status == OfferStatus.funded) {
       if (_paymentBackend != null) {
         try {
-          await _paymentBackend!
-              .cancelInvoice(
-                  paymentHashHex: currentOffer!.holdInvoicePaymentHash!);
-          AppLogger.info(
-              'Hold invoice for offer ${offer.id} cancelled via $_paymentBackendType due to expiration.',
-              offerId: offer.id);
-          sleep(Duration(seconds: 1));
-          final invoiceDetails = await _paymentBackend!
-              .lookupInvoice(
-                  paymentHashHex: currentOffer.holdInvoicePaymentHash!);
-          // TODO this will not work for NWC, we need to handle it
-          if (invoiceDetails.status == InvoiceStatus.CANCELED) {
+          final cancelResult = await _paymentBackend!.cancelInvoice(
+              paymentHashHex: currentOffer!.holdInvoicePaymentHash!);
+          if (cancelResult.isAlreadyMissing) {
             AppLogger.info(
-                'Verified invoice ${currentOffer.holdInvoicePaymentHash} is cancelled via $_paymentBackendType.');
+                'Hold invoice ${currentOffer.holdInvoicePaymentHash} is already missing on $_paymentBackendType for expired offer ${offer.id}; proceeding with DB expiration.',
+                offerId: offer.id);
           } else {
             AppLogger.info(
-                'Warning: Invoice ${currentOffer.holdInvoicePaymentHash} status is ${invoiceDetails.status}, expected CANCELED.');
-            return; // Exit if cancellation fails
+                'Hold invoice for offer ${offer.id} cancelled via $_paymentBackendType due to expiration.',
+                offerId: offer.id);
           }
         } catch (e) {
           AppLogger.info(
-              'Error cancelling hold invoice for expired offer ${offer.id} using  $e',
+              'Error cancelling hold invoice for expired offer ${offer.id} using $_paymentBackendType: $e',
               offerId: offer.id);
-          return; // Exit if cancellation fails
+          return;
         }
       } else {
         AppLogger.info(
             'CRITICAL: No payment backend to cancel invoice for expired offer ${offer.id}.',
             offerId: offer.id);
       }
-      final dbSuccess =
-          await _dbService.updateOfferStatusIfCurrentStatus(
-              offer.id, OfferStatus.expired, [OfferStatus.funded]);
+      final dbSuccess = await _dbService.updateOfferStatusIfCurrentStatus(
+          offer.id, OfferStatus.expired, [OfferStatus.funded]);
       if (dbSuccess) {
         AppLogger.info(
             'Offer ${offer.id} status updated to expired in DB due to expiration.',
@@ -1682,8 +1684,7 @@ class CoordinatorService {
 
     _expiredBlikRelistTimers[offer.id]?.cancel();
 
-    final effectiveRemainingDuration =
-        remainingDuration ??
+    final effectiveRemainingDuration = remainingDuration ??
         (offer.updatedAt ?? offer.createdAt)
             .toUtc()
             .add(const Duration(seconds: _expiredBlikRelistTimeoutSeconds))
@@ -2265,14 +2266,20 @@ class CoordinatorService {
 
     if (_paymentBackend != null) {
       try {
-        await _paymentBackend!
+        final cancelResult = await _paymentBackend!
             .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
-        AppLogger.info(
-            'Hold invoice for offer $offerId cancelled successfully via $_paymentBackendType.',
-            offerId: offerId);
+        if (cancelResult.isAlreadyMissing) {
+          AppLogger.info(
+              'Hold invoice for offer $offerId is already missing on $_paymentBackendType.',
+              offerId: offerId);
+        } else {
+          AppLogger.info(
+              'Hold invoice for offer $offerId cancelled successfully via $_paymentBackendType.',
+              offerId: offerId);
+        }
       } catch (e) {
         AppLogger.info(
-            'Error cancelling hold invoice for offer $offerId using  $e',
+            'Error cancelling hold invoice for offer $offerId using $_paymentBackendType: $e',
             offerId: offerId);
       }
     } else {

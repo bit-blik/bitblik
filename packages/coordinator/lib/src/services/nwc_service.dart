@@ -8,6 +8,7 @@ import 'package:ndk/domain_layer/usecases/nwc/nwc_notification.dart';
 // NDK imports
 import 'package:ndk/ndk.dart';
 
+import '../models/cancel_invoice_result.dart';
 import '../models/create_hold_invoice_result.dart';
 import '../models/invoice_details.dart'; // Added import
 import '../models/invoice_status.dart';
@@ -19,6 +20,8 @@ import '../logging/app_logger.dart';
 
 /// Service to interact with Nostr Wallet Connect (NWC) for hold invoices.
 class NwcService implements PaymentService {
+  static const int _holdInvoiceExpirySeconds = 86400;
+
   final String _nwcUri;
   late final Ndk _ndk; // NDK instance managed by the service
   NwcConnection? _nwcConnection;
@@ -160,7 +163,7 @@ class NwcService implements PaymentService {
         amountSats: amountSats,
         paymentHash: paymentHashHex,
         description: memo, // Use memo as description
-        // expiry: default or pass as param if needed
+        expiry: _holdInvoiceExpirySeconds,
       );
       if (response.errorCode != null) {
         throw Exception(
@@ -218,7 +221,8 @@ class NwcService implements PaymentService {
   }
 
   @override
-  Future<void> cancelInvoice({required String paymentHashHex}) async {
+  Future<CancelInvoiceResult> cancelInvoice(
+      {required String paymentHashHex}) async {
     if (_nwcConnection == null) {
       throw Exception('NWC Service: Not connected.');
     }
@@ -230,10 +234,16 @@ class NwcService implements PaymentService {
         paymentHash: paymentHashHex,
       );
       if (response.errorCode != null) {
+        if (response.errorCode == 'NOT_FOUND') {
+          AppLogger.info(
+              'NWC Service: Hold invoice already missing for paymentHash: $paymentHashHex');
+          return const CancelInvoiceResult.alreadyMissing();
+        }
         throw Exception(
             'NWC Error canceling hold invoice: ${response.errorCode} - ${response.errorMessage}');
       }
       AppLogger.info('NWC Service: Hold invoice canceled successfully.');
+      return const CancelInvoiceResult.cancelled();
     } catch (e) {
       AppLogger.info('NWC Service: Error in cancelHoldInvoice: $e');
       rethrow;
@@ -345,10 +355,14 @@ class NwcService implements PaymentService {
         );
       }
 
-      // Determine status based on settledAt or other fields if available
+      // Determine status from the explicit NWC state first, then fall back.
       InvoiceStatus? status;
-      if (nwcResponse.settledAt != null && nwcResponse.settledAt! > 0) {
+      if (nwcResponse.state == 'expired' || nwcResponse.state == 'canceled') {
+        status = InvoiceStatus.CANCELED;
+      } else if (nwcResponse.settledAt != null && nwcResponse.settledAt! > 0) {
         status = InvoiceStatus.SETTLED;
+      } else if (nwcResponse.state == 'pending') {
+        status = InvoiceStatus.ACCEPTED;
       } else {
         status = InvoiceStatus.OPEN; // Default to OPEN if not settled
       }

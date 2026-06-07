@@ -64,6 +64,9 @@ const AnalyticsDashboard = () => {
   const [error, setError] = useState(null);
   const [groupBy, setGroupBy] = useState('daily');
   const [page, setPage] = useState(0);
+  // Optional custom date-range filter (YYYY-MM-DD). Both set together or null.
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [pagination, setPagination] = useState(null);
   const [btcPlnRate, setBtcPlnRate] = useState(null);
   const [rateLoading, setRateLoading] = useState(true);
@@ -156,14 +159,18 @@ const AnalyticsDashboard = () => {
       setError(null);
 
       try {
-        // Send only the groupBy parameter - backend handles SQL construction
+        // groupBy drives SQL grouping; optional startDate/endDate filter the
+        // whole dashboard (charts + totals). Both dates required together.
         const apiBase = process.env.REACT_APP_API_BASE || `${window.location.protocol}//${window.location.host}`;
+        const rangeActive = startDate && endDate;
         const response = await fetch(`${apiBase}/api/offers-data`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ groupBy, page })
+          body: JSON.stringify(
+            rangeActive ? { groupBy, page, startDate, endDate } : { groupBy, page }
+          )
         });
 
         if (!response.ok) {
@@ -224,9 +231,12 @@ const AnalyticsDashboard = () => {
     };
 
     // `data`/`totals` intentionally omitted to avoid re-fetch loop.
+    // Only refetch on range change once both bounds are set, or both cleared.
+    if (startDate && !endDate) return;
+    if (endDate && !startDate) return;
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupBy, page]);
+  }, [groupBy, page, startDate, endDate]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pl-PL', {
@@ -268,9 +278,9 @@ const AnalyticsDashboard = () => {
 
   const formatPagerDate = (value) => {
     const date = new Date(`${value}T00:00:00`);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'long',
+    return new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
+      month: 'long',
       timeZone: 'UTC',
     }).format(date);
   };
@@ -399,26 +409,74 @@ const AnalyticsDashboard = () => {
 
               <div className="h-6 w-px bg-gray-300"></div>
 
-              <div className="flex items-center gap-1.5 bg-slate-50 rounded px-2 py-1.5 border border-slate-200">
-                <button
-                  onClick={() => setPage((current) => current + 1)}
-                  disabled={!pagination?.hasOlder || loading || refreshing}
-                  className="p-1 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  aria-label="Older period"
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                <span className="text-[11px] font-semibold text-slate-700 min-w-[128px] text-center">
-                  {formatPeriodRange()}
-                </span>
-                <button
-                  onClick={() => setPage((current) => Math.max(current - 1, 0))}
-                  disabled={!pagination?.hasNewer || loading || refreshing}
-                  className="p-1 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  aria-label="Newer period"
-                >
-                  <ChevronRight size={14} />
-                </button>
+              {/* Pager - hidden while a custom date range is active */}
+              {!(startDate && endDate) && (
+                <div className="flex items-center gap-1.5 bg-slate-50 rounded px-2 py-1.5 border border-slate-200">
+                  <button
+                    onClick={() => setPage((current) => current + 1)}
+                    disabled={!pagination?.hasOlder || loading || refreshing}
+                    className="p-1 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Older period"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="text-[11px] font-semibold text-slate-700 min-w-[128px] text-center">
+                    {formatPeriodRange()}
+                  </span>
+                  <button
+                    onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                    disabled={!pagination?.hasNewer || loading || refreshing}
+                    className="p-1 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Newer period"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+
+              <div className="h-6 w-px bg-gray-300"></div>
+
+              {/* Custom date-range filter (by days). Filters all charts + totals. */}
+              <div className="flex items-center gap-1.5 bg-emerald-50 rounded px-2.5 py-1.5 border border-emerald-200">
+                <Calendar size={14} className="text-emerald-600 flex-shrink-0" />
+                <input
+                  type="date"
+                  lang="en-GB"
+                  value={startDate}
+                  max={endDate || undefined}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setPage(0);
+                  }}
+                  className="text-[11px] font-semibold text-emerald-800 bg-white rounded px-1.5 py-0.5 border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  aria-label="Start date"
+                />
+                <span className="text-[11px] font-semibold text-emerald-600">→</span>
+                <input
+                  type="date"
+                  lang="en-GB"
+                  value={endDate}
+                  min={startDate || undefined}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setPage(0);
+                  }}
+                  className="text-[11px] font-semibold text-emerald-800 bg-white rounded px-1.5 py-0.5 border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  aria-label="End date"
+                />
+                {(startDate || endDate) && (
+                  <button
+                    onClick={() => {
+                      setStartDate('');
+                      setEndDate('');
+                      setPage(0);
+                    }}
+                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 px-1"
+                    aria-label="Clear date range"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
 
               {refreshing && (

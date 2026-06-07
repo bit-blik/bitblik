@@ -85,6 +85,16 @@ const parseOffset = (value) => {
   return parsed;
 };
 
+// Strict YYYY-MM-DD validation. Used for the optional date-range filter on the
+// analytics endpoint. Values are validated here so they can be safely inlined
+// into SQL (consistent with how dateGrouping/dateFormat are handled).
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const isValidDateStr = (value) => {
+  if (typeof value !== 'string' || !DATE_RE.test(value)) return false;
+  const d = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+};
+
 const fetchRecentOffers = async (limit = RECENT_OFFERS_DEFAULT_LIMIT, offset = 0) => {
   const query = `
     SELECT
@@ -467,8 +477,8 @@ app.get('/api/offers/:offerId/audit', async (req, res) => {
 
 app.post('/api/offers-data', async (req, res) => {
   try {
-    const { groupBy, page = 0 } = req.body;
-    
+    const { groupBy, page = 0, startDate = null, endDate = null } = req.body;
+
     // Validate groupBy parameter
     const validGroupings = ['daily', 'weekly', 'monthly'];
     if (!groupBy || !validGroupings.includes(groupBy)) {
@@ -477,6 +487,24 @@ app.post('/api/offers-data', async (req, res) => {
     if (!Number.isInteger(page) || page < 0) {
       return res.status(400).json({ error: 'Invalid page parameter. Must be a non-negative integer' });
     }
+
+    // Optional date-range filter (inclusive on both ends). Both bounds required
+    // together. When active, paging is disabled and every chart/total reflects
+    // only offers created within the range.
+    let dateFilter = null;
+    const hasRange = startDate != null || endDate != null;
+    if (hasRange) {
+      if (!isValidDateStr(startDate) || !isValidDateStr(endDate)) {
+        return res.status(400).json({ error: 'Invalid startDate/endDate. Use YYYY-MM-DD and provide both.' });
+      }
+      if (startDate > endDate) {
+        return res.status(400).json({ error: 'startDate must be on or before endDate.' });
+      }
+      dateFilter = `created_at >= '${startDate}'::date AND created_at < ('${endDate}'::date + INTERVAL '1 day')`;
+    }
+    const whereClause = dateFilter ? `WHERE ${dateFilter}` : '';
+    const andClause = dateFilter ? `AND ${dateFilter}` : '';
+    const usePaging = !dateFilter;
 
     // Build SQL query based on grouping - secure, server-side only
     let dateGrouping;
@@ -502,6 +530,8 @@ app.post('/api/offers-data', async (req, res) => {
     }
     
     const offset = page * pageSize;
+    const pagingClause = usePaging ? 'OFFSET $1 LIMIT $2' : '';
+    const pagingParams = usePaging ? [offset, pageSize] : [];
 
     const groupedQuery = `
       WITH grouped_periods AS (
@@ -531,14 +561,14 @@ app.post('/api/offers-data', async (req, res) => {
             2
           ) AS taker_fees_percentage
         FROM offers
+        ${whereClause}
         GROUP BY ${dateGrouping}
       ),
       paged_periods AS (
         SELECT *
         FROM grouped_periods
         ORDER BY period_start DESC
-        OFFSET $1
-        LIMIT $2
+        ${pagingClause}
       )
       SELECT
         TO_CHAR(period_start, '${dateFormat}') AS date,
@@ -562,6 +592,7 @@ app.post('/api/offers-data', async (req, res) => {
       FROM (
         SELECT ${dateGrouping}
         FROM offers
+        ${whereClause}
         GROUP BY ${dateGrouping}
       ) grouped_periods
     `;
@@ -592,6 +623,7 @@ app.post('/api/offers-data', async (req, res) => {
           2
         ) AS overall_taker_fees_percentage
       FROM offers
+      ${whereClause}
     `;
 
     // Successful offers by weekday (Mon-Sun), independent of selected period
@@ -615,6 +647,7 @@ app.post('/api/offers-data', async (req, res) => {
           DATE(MIN(created_at)) AS min_date,
           DATE(MAX(created_at)) AS max_date
         FROM offers
+        ${whereClause}
       ),
       calendar_dates AS (
         SELECT
@@ -628,6 +661,7 @@ app.post('/api/offers-data', async (req, res) => {
           COUNT(*) FILTER (WHERE status = 'takerPaid') AS success_count,
           COUNT(*) AS offer_count
         FROM offers
+        ${whereClause}
         GROUP BY DATE(created_at)
       ),
       weekday_daily AS (
@@ -676,6 +710,7 @@ app.post('/api/offers-data', async (req, res) => {
           DATE(MIN(created_at)) AS min_date,
           DATE(MAX(created_at)) AS max_date
         FROM offers
+        ${whereClause}
       ),
       calendar_dates AS (
         SELECT
@@ -688,6 +723,7 @@ app.post('/api/offers-data', async (req, res) => {
           DATE(created_at) AS offer_date,
           COALESCE(SUM(fiat_amount) FILTER (WHERE status = 'takerPaid'), 0) AS volume_fiat
         FROM offers
+        ${whereClause}
         GROUP BY DATE(created_at)
       ),
       weekday_daily AS (
@@ -720,9 +756,9 @@ app.post('/api/offers-data', async (req, res) => {
       WITH paged_periods AS (
         SELECT DISTINCT ${dateGrouping} AS period_start
         FROM offers
+        ${whereClause}
         ORDER BY period_start DESC
-        OFFSET $1
-        LIMIT $2
+        ${pagingClause}
       )
       SELECT
         TO_CHAR(${dateGrouping}, '${dateFormat}') AS date,
@@ -731,33 +767,36 @@ app.post('/api/offers-data', async (req, res) => {
         COALESCE(SUM(fiat_amount) FILTER (WHERE status = 'takerPaid'), 0) AS volume
       FROM offers
       WHERE ${dateGrouping} IN (SELECT period_start FROM paged_periods)
+      ${andClause}
       GROUP BY ${dateGrouping}, COALESCE(NULLIF(TRIM(category), ''), 'unknown')
       ORDER BY ${dateGrouping} ASC
     `;
 
     const [groupedResult, groupedCountResult, totalsResult, weekdaySuccessResult, weekdayVolumeResult, categoryDistributionResult] = await Promise.all([
-      pool.query(groupedQuery, [offset, pageSize]),
+      pool.query(groupedQuery, pagingParams),
       pool.query(groupedCountQuery),
       pool.query(totalsQuery),
       pool.query(weekdaySuccessQuery),
       pool.query(weekdayVolumeQuery),
-      pool.query(categoryDistributionQuery, [offset, pageSize])
+      pool.query(categoryDistributionQuery, pagingParams)
     ]);
 
     const totalPeriods = groupedCountResult.rows[0]?.total_periods || 0;
 
-    res.json({ 
+    res.json({
       rows: groupedResult.rows,
       totals: totalsResult.rows[0],
       weekdaySuccess: weekdaySuccessResult.rows,
       weekdayVolume: weekdayVolumeResult.rows,
       categoryDistribution: categoryDistributionResult.rows,
       pagination: {
-        page,
+        page: usePaging ? page : 0,
         pageSize,
         totalPeriods,
-        hasOlder: offset + pageSize < totalPeriods,
-        hasNewer: page > 0,
+        // Paging is disabled while a custom date range is active.
+        hasOlder: usePaging ? offset + pageSize < totalPeriods : false,
+        hasNewer: usePaging ? page > 0 : false,
+        dateRange: dateFilter ? { startDate, endDate } : null,
       }
     });
   } catch (error) {

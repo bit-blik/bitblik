@@ -738,6 +738,50 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     }
     await db.upsertOffer(updated);
 
+    final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
+    final takerLostOwnershipOnRelist =
+        myPubkey != null &&
+        existing.takerPubkey == myPubkey &&
+        existing.makerPubkey != myPubkey &&
+        newStatus == OfferStatus.funded;
+
+    if (takerLostOwnershipOnRelist) {
+      try {
+        final apiService = await _ref.read(
+          initializedApiServiceProvider.future,
+        );
+        final remote = await apiService.getOfferDetails(
+          updated,
+          updated.coordinatorPubkey,
+        );
+
+        if (remote == null) {
+          Logger.log.i(
+            () =>
+                '[ActiveOfferNotifier] removing relisted taker offer ${updated.id}; coordinator no longer reports this user as a participant',
+          );
+          await db.deleteOfferById(updated.id);
+          final currentState = state;
+          final isCurrent =
+              currentState != null &&
+              (currentState.id == updated.id ||
+                  (currentState.holdInvoicePaymentHash != null &&
+                      currentState.holdInvoicePaymentHash ==
+                          updated.holdInvoicePaymentHash));
+          if (isCurrent) {
+            await _promoteMostRecentActiveOffer();
+            _ref.read(appLifecycleProvider)._updateForegroundService();
+          }
+          return;
+        }
+      } catch (e) {
+        Logger.log.w(
+          () =>
+              '[ActiveOfferNotifier] failed ownership check for relisted taker offer ${updated.id}: $e',
+        );
+      }
+    }
+
     final shouldHydrateCompletedOffer =
         newStatus == OfferStatus.makerConfirmed ||
         newStatus == OfferStatus.settled ||

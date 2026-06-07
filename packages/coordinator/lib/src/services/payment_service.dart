@@ -1,3 +1,4 @@
+import '../models/cancel_invoice_result.dart';
 import '../models/create_hold_invoice_result.dart';
 import '../models/invoice_details.dart'; // Added import
 import '../models/invoice_update.dart';
@@ -28,7 +29,7 @@ abstract class PaymentService {
 
   /// Cancels a hold invoice.
   /// [paymentHashHex]: The hex-encoded payment hash of the invoice to cancel.
-  Future<void> cancelInvoice({required String paymentHashHex});
+  Future<CancelInvoiceResult> cancelInvoice({required String paymentHashHex});
 
   /// Pays a BOLT11 invoice.
   /// This method is for NWC which doesn't stream payment updates in the same way LND does.

@@ -8,6 +8,7 @@ import 'package:fixnum/fixnum.dart'; // Import fixnum for Int64
 import 'package:dotenv/dotenv.dart';
 
 import 'payment_service.dart'; // Import the interface
+import '../models/cancel_invoice_result.dart';
 import '../models/invoice_status.dart';
 import '../models/invoice_update.dart';
 import '../models/create_hold_invoice_result.dart';
@@ -202,12 +203,14 @@ class LndService implements PaymentService {
   }
 
   @override
-  Future<void> cancelInvoice({required String paymentHashHex}) async {
+  Future<CancelInvoiceResult> cancelInvoice(
+      {required String paymentHashHex}) async {
     if (_invoicesClient == null) throw StateError('LND not connected.');
     final paymentHashBytes = _hexToBytes(paymentHashHex);
     final request = CancelInvoiceMsg()..paymentHash = paymentHashBytes;
     AppLogger.info('LND: Cancelling invoice for hash: $paymentHashHex');
     await _invoicesClient!.cancelInvoice(request);
+    return const CancelInvoiceResult.cancelled();
   }
 
   @override

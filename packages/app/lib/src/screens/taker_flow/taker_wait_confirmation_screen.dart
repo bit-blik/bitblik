@@ -24,9 +24,11 @@ class TakerWaitConfirmationScreen extends ConsumerStatefulWidget {
 class _TakerWaitConfirmationScreenState
     extends ConsumerState<TakerWaitConfirmationScreen> {
   Timer? _confirmationTimer;
+  Timer? _expiredBlikTimer;
   int _confirmationCountdownSeconds = 120;
   bool _timersInitialized = false;
   bool _timerExpired = false;
+  bool _expiredBlikWindowExpired = false;
   Duration? _maxConfirmationTime;
 
   @override
@@ -91,7 +93,58 @@ class _TakerWaitConfirmationScreenState
   @override
   void dispose() {
     _confirmationTimer?.cancel();
+    _expiredBlikTimer?.cancel();
     super.dispose();
+  }
+
+  void _syncExpiredBlikTimer(Offer offer) {
+    if (offer.statusEnum != OfferStatus.expiredBlik) {
+      _expiredBlikTimer?.cancel();
+      if (_expiredBlikWindowExpired) {
+        setState(() {
+          _expiredBlikWindowExpired = false;
+        });
+      }
+      return;
+    }
+
+    final relistStart = offer.updatedAt ?? DateTime.now();
+    final expiresAt = relistStart.add(const Duration(seconds: 60));
+    final remaining = expiresAt.difference(DateTime.now());
+
+    _expiredBlikTimer?.cancel();
+
+    if (remaining <= Duration.zero) {
+      if (!_expiredBlikWindowExpired) {
+        setState(() {
+          _expiredBlikWindowExpired = true;
+        });
+      }
+      _navigateToOfferDetails(offer.id);
+      return;
+    }
+
+    if (_expiredBlikWindowExpired) {
+      setState(() {
+        _expiredBlikWindowExpired = false;
+      });
+    }
+
+    _expiredBlikTimer = Timer(remaining, () {
+      if (!mounted) return;
+      setState(() {
+        _expiredBlikWindowExpired = true;
+      });
+      _navigateToOfferDetails(offer.id);
+    });
+  }
+
+  void _navigateToOfferDetails(String offerId) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.go('/offers/$offerId');
+      }
+    });
   }
 
   void _initializeOrUpdateCountdownTimer(Offer offer) {
@@ -195,6 +248,7 @@ class _TakerWaitConfirmationScreenState
       }
 
       _handleStatusTransitions(offer, t);
+      _syncExpiredBlikTimer(offer);
     });
 
     if (offer == null) {
@@ -217,10 +271,6 @@ class _TakerWaitConfirmationScreenState
 
   void _handleStatusTransitions(Offer offer, Translations t) {
     final currentStatusEnum = offer.statusEnum;
-    final relistStart = offer.updatedAt ?? DateTime.now();
-    final relistExpired = DateTime.now().isAfter(
-      relistStart.add(const Duration(seconds: 60)),
-    );
 
     if (currentStatusEnum == OfferStatus.makerConfirmed ||
         currentStatusEnum == OfferStatus.settled ||
@@ -234,19 +284,23 @@ class _TakerWaitConfirmationScreenState
       context.go("/paying-taker");
     } else if (currentStatusEnum == OfferStatus.funded) {
       _confirmationTimer?.cancel();
-      context.go('/offers/${offer.id}');
+      _expiredBlikTimer?.cancel();
+      _navigateToOfferDetails(offer.id);
     } else if (currentStatusEnum == OfferStatus.expiredBlik &&
-        relistExpired) {
+        _expiredBlikWindowExpired) {
       _confirmationTimer?.cancel();
-      context.go('/offers/${offer.id}');
+      _navigateToOfferDetails(offer.id);
     } else if (currentStatusEnum == OfferStatus.invalidBlik) {
       _confirmationTimer?.cancel();
+      _expiredBlikTimer?.cancel();
       context.go('/taker-invalid-blik', extra: offer);
     } else if (currentStatusEnum == OfferStatus.conflict) {
       _confirmationTimer?.cancel();
+      _expiredBlikTimer?.cancel();
       context.go('/taker-conflict', extra: offer.id);
     } else if (currentStatusEnum == OfferStatus.takerPaymentFailed) {
       _confirmationTimer?.cancel();
+      _expiredBlikTimer?.cancel();
       context.go('/paying-taker');
     } else if (!_isValidStatusForThisScreen(currentStatusEnum)) {
       _resetToOfferList(
@@ -350,6 +404,7 @@ class _TakerWaitConfirmationScreenState
           offer: offer,
           onResendBlik: _resendBlik,
           onCancelReservation: _cancelReservation,
+          relistExpired: _expiredBlikWindowExpired,
         );
       case OfferStatus.expiredSentBlik:
         return _ExpiredSentBlikWidget(
@@ -592,11 +647,13 @@ class _ExpiredBlikWidget extends ConsumerWidget {
   final Offer offer;
   final Future<void> Function(Offer) onResendBlik;
   final Future<void> Function(Offer) onCancelReservation;
+  final bool relistExpired;
 
   const _ExpiredBlikWidget({
     required this.offer,
     required this.onResendBlik,
     required this.onCancelReservation,
+    required this.relistExpired,
   });
 
   @override
@@ -605,6 +662,7 @@ class _ExpiredBlikWidget extends ConsumerWidget {
     final isLoading = ref.watch(isLoadingProvider);
     final errorMessage = ref.watch(errorProvider);
     final relistStart = offer.updatedAt ?? DateTime.now();
+    final canCancel = !isLoading && !relistExpired;
 
     return Column(
       children: [
@@ -658,7 +716,7 @@ class _ExpiredBlikWidget extends ConsumerWidget {
           t.taker.waitConfirmation.expiredActions.cancelReservation,
           Icons.close,
           Colors.red,
-          isLoading ? null : () => onCancelReservation(offer),
+          canCancel ? () => onCancelReservation(offer) : null,
         ),
       ],
     );
