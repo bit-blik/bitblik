@@ -20,13 +20,24 @@ class _MakerConfirmPaymentScreenState
     extends ConsumerState<MakerConfirmPaymentScreen> {
   bool _fetchAttempted = false;
 
-  bool _isExpiredStatus() {
+  bool _isPostBlikWindowStatus() {
     final offer = ref.read(activeOfferProvider);
     if (offer == null) return false;
     return offer.status == OfferStatus.expiredBlik ||
         offer.status == OfferStatus.expiredSentBlik ||
         offer.status == OfferStatus.takerCharged;
   }
+
+  bool _canConfirmPayment(OfferStatus status) =>
+      status == OfferStatus.blikSentToMaker ||
+      status == OfferStatus.expiredSentBlik ||
+      status == OfferStatus.takerCharged ||
+      status == OfferStatus.conflict;
+
+  bool _canMarkBlikInvalid(OfferStatus status) =>
+      status == OfferStatus.blikSentToMaker ||
+      status == OfferStatus.expiredSentBlik ||
+      status == OfferStatus.takerCharged;
 
   @override
   void initState() {
@@ -40,7 +51,7 @@ class _MakerConfirmPaymentScreenState
       }
     });
     // Only attempt to fetch BLIK code if status is NOT expired
-    if (!_isExpiredStatus()) {
+    if (!_isPostBlikWindowStatus()) {
       // Attempt immediately if key is already available
       final pkNow = ref.read(publicKeyProvider).value;
       if (pkNow != null) {
@@ -127,6 +138,12 @@ class _MakerConfirmPaymentScreenState
       ref.read(isLoadingProvider.notifier).state = false;
       return;
     }
+    if (!_canConfirmPayment(offer.status)) {
+      ref.read(errorProvider.notifier).state = t.maker.confirmPayment.errors
+          .confirming(details: 'offer is in state ${offer.status.name}');
+      ref.read(isLoadingProvider.notifier).state = false;
+      return;
+    }
     final offerId = offer.id;
 
     try {
@@ -152,6 +169,7 @@ class _MakerConfirmPaymentScreenState
         offer.coordinatorPubkey,
       );
 
+      if (!context.mounted) return;
       final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
       if (scaffoldMessenger != null) {
         scaffoldMessenger.showSnackBar(
@@ -160,9 +178,7 @@ class _MakerConfirmPaymentScreenState
           ), // Use Slang t
         );
       }
-      if (context.mounted) {
-        context.go('/maker-success', extra: offer);
-      }
+      context.go('/maker-success', extra: offer);
     } catch (e) {
       ref.read(errorProvider.notifier).state = t.maker.confirmPayment.errors
           .confirming(details: e.toString()); // Use Slang t
@@ -256,7 +272,7 @@ class _MakerConfirmPaymentScreenState
     // Listen for public key availability (must be done during build)
     // Only fetch BLIK code if status is not expired
     ref.listen(publicKeyProvider, (previous, next) {
-      if (!_fetchAttempted && next.value != null && !_isExpiredStatus()) {
+      if (!_fetchAttempted && next.value != null && !_isPostBlikWindowStatus()) {
         _fetchBlikCode();
       }
     });
@@ -272,7 +288,12 @@ class _MakerConfirmPaymentScreenState
 
     final errorMessage = ref.watch(errorProvider);
     final receivedBlikCode = ref.watch(receivedBlikCodeProvider);
-    final isExpired = _isExpiredStatus();
+    final isExpired = _isPostBlikWindowStatus();
+    final offerStatus = ref.watch(activeOfferProvider)?.statusEnum;
+    final canConfirm =
+        offerStatus != null && _canConfirmPayment(offerStatus);
+    final canMarkInvalid =
+        offerStatus != null && _canMarkBlikInvalid(offerStatus);
 
     final bool isFetchingBlik = receivedBlikCode == null && !isExpired;
     final formattedBlikCode = _formatBlikCode(receivedBlikCode ?? '··· ···');
@@ -390,7 +411,10 @@ class _MakerConfirmPaymentScreenState
 
                   // Confirm Successful Payment button (green)
                   ElevatedButton(
-                    onPressed: () => _showConfirmationDialog(context, ref),
+                    onPressed:
+                        canConfirm
+                            ? () => _showConfirmationDialog(context, ref)
+                            : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
@@ -418,7 +442,8 @@ class _MakerConfirmPaymentScreenState
 
                   // Invalid BLIK code button (red outlined)
                   OutlinedButton(
-                    onPressed: () => _markBlikInvalid(context, ref),
+                    onPressed:
+                        canMarkInvalid ? () => _markBlikInvalid(context, ref) : null,
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.red, width: 2),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -601,7 +626,6 @@ class _MakerConfirmPaymentScreenState
           ),
         ),
         const SizedBox(height: 24),
-        // Instructions
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(

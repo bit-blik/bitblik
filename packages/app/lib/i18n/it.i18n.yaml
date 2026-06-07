@@ -574,6 +574,7 @@ taker:
 
     expiredTitle: "Codice BLIK Scaduto"
     expiredWarning: "Il maker non ha ricevuto il codice BLIK quindi non ha potuto utilizzarlo."
+    expiredRelistCountdownLabel: "Nuova pubblicazione automatica tra"
     expiredSentWarning: "Il maker non ha ancora confermato il pagamento. Cosa vuoi fare?"
     expiredInstruction1: "Se vuoi riprovare con un nuovo codice BLIK, rinnova la prenotazione."
     expiredInstruction2: "Se non vuoi più completare questa transazione, annulla la prenotazione."

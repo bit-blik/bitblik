@@ -574,6 +574,7 @@ taker:
     
     expiredTitle: "Kod BLIK wygasł"
     expiredWarning: "Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć."
+    expiredRelistCountdownLabel: "Automatyczne ponowne wystawienie za"
     expiredSentWarning: "Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?"
     expiredInstruction1: "Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację."
     expiredInstruction2: "Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację."

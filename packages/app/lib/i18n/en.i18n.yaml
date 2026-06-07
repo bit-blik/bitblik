@@ -590,6 +590,7 @@ taker:
     
     expiredTitle: "BLIK Code Expired"
     expiredWarning: "The maker did not receive the BLIK code so it couldn't have used it."
+    expiredRelistCountdownLabel: "Reservation ends in"
     expiredSentWarning: "The maker hasn't confirmed the payment yet. What would you like to do?"
     expiredInstruction1: "If you want to try again with a new BLIK code, renew the reservation."
     expiredInstruction2: "If you no longer want to complete this transaction, cancel the reservation."

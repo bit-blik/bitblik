@@ -1115,6 +1115,7 @@ class _Translations$taker$waitConfirmation$pl extends Translations$taker$waitCon
 	@override String get navigatedHome => 'Przeniesiono na stronę główną.';
 	@override String get expiredTitle => 'Kod BLIK wygasł';
 	@override String get expiredWarning => 'Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć.';
+	@override String get expiredRelistCountdownLabel => 'Automatyczne ponowne wystawienie za';
 	@override String get expiredSentWarning => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?';
 	@override String get expiredInstruction1 => 'Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację.';
 	@override String get expiredInstruction2 => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.';
@@ -2848,6 +2849,7 @@ extension on TranslationsPl {
 			'taker.waitConfirmation.navigatedHome' => 'Przeniesiono na stronę główną.',
 			'taker.waitConfirmation.expiredTitle' => 'Kod BLIK wygasł',
 			'taker.waitConfirmation.expiredWarning' => 'Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć.',
+			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Automatyczne ponowne wystawienie za',
 			'taker.waitConfirmation.expiredSentWarning' => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?',
 			'taker.waitConfirmation.expiredInstruction1' => 'Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację.',
 			'taker.waitConfirmation.expiredInstruction2' => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.',
@@ -2962,9 +2964,9 @@ extension on TranslationsPl {
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
 			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Błąd ładowania statystyk: ${error}',
-			'system.loadingPublicKey' => 'Ładowanie Twojego klucza publicznego...',
 			_ => null,
 		} ?? switch (path) {
+			'system.loadingPublicKey' => 'Ładowanie Twojego klucza publicznego...',
 			'system.errors.generic' => 'Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.',
 			'system.errors.loadingTimeoutConfig' => 'Błąd ładowania konfiguracji limitu czasu.',
 			'system.errors.loadingCoordinatorConfig' => 'Błąd ładowania konfiguracji koordynatora. Proszę spróbować ponownie.',

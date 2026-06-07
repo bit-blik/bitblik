@@ -80,6 +80,9 @@ class CoordinatorService {
   // conflict -> dispute auto-transition timeout configuration
   late final int _conflictAutoDisputeTimeoutSeconds;
 
+  // expiredBlik -> funded auto-relist timeout configuration
+  static const int _expiredBlikRelistTimeoutSeconds = 60;
+
   // Exchange rate cache
   double? _cachedPlnRate;
   DateTime? _cachedPlnRateTime;
@@ -223,6 +226,7 @@ class CoordinatorService {
   final Map<String, Timer> _fundedOfferTimers = {};
   final Map<String, Timer> _takerChargedTimers = {};
   final Map<String, Timer> _disputeEscalationTimers = {};
+  final Map<String, Timer> _expiredBlikRelistTimers = {};
   final Map<String, Timer> _statusRepublishTimers = {};
 
   // Fee percentages, configurable via environment variables
@@ -334,6 +338,7 @@ class CoordinatorService {
     await _checkExpiredFundedOffers();
     await _checkExpiredReservations();
     await _checkExpiredBlikConfirmations();
+    await _checkExpiredBlikRelists();
     await _checkTakerChargedAutoConfirm();
     await _checkDisputeEscalationAutoDispute();
   }
@@ -763,6 +768,44 @@ class CoordinatorService {
           'Expired BLIK confirmation check complete. Expired $expiredCount offers.');
     } catch (e) {
       AppLogger.info('Error during expired BLIK confirmation check: $e');
+    }
+  }
+
+  Future<void> _checkExpiredBlikRelists() async {
+    AppLogger.info('Checking for expiredBlik auto-relist on startup...');
+    try {
+      final offers = await _dbService.getOffersByStatus(
+        OfferStatus.expiredBlik,
+        limit: 1000,
+      );
+      final now = _clock.now().toUtc();
+      const timeoutDuration =
+          Duration(seconds: _expiredBlikRelistTimeoutSeconds);
+
+      int relistedCount = 0;
+      int timerRestartedCount = 0;
+      for (final offer in offers) {
+        final statusChangedAt = (offer.updatedAt ?? offer.createdAt).toUtc();
+        final expiryTime = statusChangedAt.add(timeoutDuration);
+        if (now.isAfter(expiryTime)) {
+          AppLogger.info(
+              'Offer ${offer.id} expiredBlik grace period elapsed (entered status at $statusChangedAt, expires at $expiryTime). Relisting as funded.',
+              offerId: offer.id);
+          await _handleExpiredBlikRelistTimeout(offer.id);
+          relistedCount++;
+        } else {
+          AppLogger.info(
+              'Offer ${offer.id} still within expiredBlik grace period (expires at $expiryTime). Restarting timer.',
+              offerId: offer.id);
+          _startExpiredBlikRelistTimer(offer);
+          timerRestartedCount++;
+        }
+      }
+
+      AppLogger.info(
+          'expiredBlik auto-relist check complete. Relisted $relistedCount offers, restarted timers for $timerRestartedCount offers.');
+    } catch (e) {
+      AppLogger.info('Error during expiredBlik auto-relist check: $e');
     }
   }
 
@@ -1440,6 +1483,8 @@ class CoordinatorService {
           offerId: offerId);
       _fundedOfferTimers[offerId]?.cancel();
       _fundedOfferTimers.remove(offerId);
+      _expiredBlikRelistTimers[offerId]?.cancel();
+      _expiredBlikRelistTimers.remove(offerId);
       return null;
     }
 
@@ -1467,6 +1512,8 @@ class CoordinatorService {
           offerId: offerId);
       _fundedOfferTimers[offerId]?.cancel();
       _fundedOfferTimers.remove(offerId);
+      _expiredBlikRelistTimers[offerId]?.cancel();
+      _expiredBlikRelistTimers.remove(offerId);
       _disputeEscalationTimers[offerId]?.cancel();
       _disputeEscalationTimers.remove(offerId);
       _startReservationTimer(offerId);
@@ -1602,6 +1649,12 @@ class CoordinatorService {
           await _publishStatusUpdate(revertedOffer);
           if (revertedOffer.status == OfferStatus.expiredSentBlik) {
             _startDisputeEscalationTimer(revertedOffer);
+          } else if (revertedOffer.status == OfferStatus.expiredBlik) {
+            _startExpiredBlikRelistTimer(
+              revertedOffer,
+              remainingDuration:
+                  const Duration(seconds: _expiredBlikRelistTimeoutSeconds),
+            );
           }
         }
       } else {
@@ -1613,6 +1666,73 @@ class CoordinatorService {
       AppLogger.info(
           'Offer $offerId no longer awaiting BLIK confirmation (current status: ${offer?.status}). No action needed for BLIK timeout.',
           offerId: offerId);
+    }
+  }
+
+  void _startExpiredBlikRelistTimer(
+    Offer offer, {
+    Duration? remainingDuration,
+  }) {
+    if (offer.status != OfferStatus.expiredBlik) {
+      AppLogger.info(
+          'Error: Cannot start expiredBlik relist timer for offer ${offer.id} - status is ${offer.status}',
+          offerId: offer.id);
+      return;
+    }
+
+    _expiredBlikRelistTimers[offer.id]?.cancel();
+
+    final effectiveRemainingDuration =
+        remainingDuration ??
+        (offer.updatedAt ?? offer.createdAt)
+            .toUtc()
+            .add(const Duration(seconds: _expiredBlikRelistTimeoutSeconds))
+            .difference(_clock.now().toUtc());
+
+    if (effectiveRemainingDuration.isNegative ||
+        effectiveRemainingDuration.inSeconds == 0) {
+      AppLogger.info(
+          'Offer ${offer.id} has already passed expiredBlik relist timeout. Handling immediately.',
+          offerId: offer.id);
+      _expiredBlikRelistTimers.remove(offer.id);
+      _handleExpiredBlikRelistTimeout(offer.id);
+      return;
+    }
+
+    AppLogger.info(
+        'Starting expiredBlik relist timer for offer ${offer.id} with remaining duration: ${effectiveRemainingDuration.inSeconds}s',
+        offerId: offer.id);
+    _expiredBlikRelistTimers[offer.id] = Timer(effectiveRemainingDuration, () {
+      AppLogger.info('expiredBlik relist timer expired for offer ${offer.id}',
+          offerId: offer.id);
+      _expiredBlikRelistTimers.remove(offer.id);
+      _handleExpiredBlikRelistTimeout(offer.id);
+    });
+  }
+
+  Future<void> _handleExpiredBlikRelistTimeout(String offerId) async {
+    AppLogger.info('Handling expiredBlik relist timeout for offer $offerId',
+        offerId: offerId);
+    final offer = await _dbService.getOfferById(offerId);
+    if (offer == null || offer.status != OfferStatus.expiredBlik) {
+      AppLogger.info(
+          'Offer $offerId no longer in expiredBlik status (current status: ${offer?.status}). No action needed for relist timeout.',
+          offerId: offerId);
+      return;
+    }
+
+    final reverted = await _revertOfferToFunded(offerId);
+    if (!reverted) {
+      AppLogger.info(
+          'Failed to relist offer $offerId as funded after expiredBlik grace period.',
+          offerId: offerId);
+      return;
+    }
+
+    final revertedOffer = await _dbService.getOfferById(offerId);
+    if (revertedOffer != null) {
+      await _publishStatusUpdate(revertedOffer);
+      await _nostrService?.broadcastNip69OrderFromOffer(revertedOffer);
     }
   }
 
@@ -1977,6 +2097,8 @@ class CoordinatorService {
     _reservationTimers.remove(offerId);
     _blikConfirmationTimers[offerId]?.cancel();
     _blikConfirmationTimers.remove(offerId);
+    _expiredBlikRelistTimers[offerId]?.cancel();
+    _expiredBlikRelistTimers.remove(offerId);
     _disputeEscalationTimers[offerId]?.cancel();
     _disputeEscalationTimers.remove(offerId);
     AppLogger.info(

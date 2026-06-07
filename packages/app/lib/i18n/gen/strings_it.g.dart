@@ -1118,6 +1118,7 @@ class _Translations$taker$waitConfirmation$it extends Translations$taker$waitCon
 	@override String get navigatedHome => 'Tornato alla home.';
 	@override String get expiredTitle => 'Codice BLIK Scaduto';
 	@override String get expiredWarning => 'Il maker non ha ricevuto il codice BLIK quindi non ha potuto utilizzarlo.';
+	@override String get expiredRelistCountdownLabel => 'Nuova pubblicazione automatica tra';
 	@override String get expiredSentWarning => 'Il maker non ha ancora confermato il pagamento. Cosa vuoi fare?';
 	@override String get expiredInstruction1 => 'Se vuoi riprovare con un nuovo codice BLIK, rinnova la prenotazione.';
 	@override String get expiredInstruction2 => 'Se non vuoi più completare questa transazione, annulla la prenotazione.';
@@ -2854,6 +2855,7 @@ extension on TranslationsIt {
 			'taker.waitConfirmation.navigatedHome' => 'Tornato alla home.',
 			'taker.waitConfirmation.expiredTitle' => 'Codice BLIK Scaduto',
 			'taker.waitConfirmation.expiredWarning' => 'Il maker non ha ricevuto il codice BLIK quindi non ha potuto utilizzarlo.',
+			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Nuova pubblicazione automatica tra',
 			'taker.waitConfirmation.expiredSentWarning' => 'Il maker non ha ancora confermato il pagamento. Cosa vuoi fare?',
 			'taker.waitConfirmation.expiredInstruction1' => 'Se vuoi riprovare con un nuovo codice BLIK, rinnova la prenotazione.',
 			'taker.waitConfirmation.expiredInstruction2' => 'Se non vuoi più completare questa transazione, annulla la prenotazione.',
@@ -2965,9 +2967,9 @@ extension on TranslationsIt {
 			'restore.labels.privateKey' => 'Chiave Privata',
 			'restore.buttons.restore' => 'Ripristina',
 			'restore.errors.invalidKey' => 'Deve essere una stringa esadecimale di 64 caratteri.',
-			'restore.errors.failed' => 'Ripristino fallito',
 			_ => null,
 		} ?? switch (path) {
+			'restore.errors.failed' => 'Ripristino fallito',
 			'restore.feedback.success' => 'Neko ripristinato con successo! L\'app verrà riavviata.',
 			'restore.tooltips.restore' => 'Ripristina Neko',
 			'system.loadingPublicKey' => 'Caricamento della tua chiave pubblica...',

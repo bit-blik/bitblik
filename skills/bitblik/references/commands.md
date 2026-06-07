@@ -132,7 +132,7 @@ bitblik offer mark-blik-invalid --offer <id> --coordinator <npub|hex>
 
 Call when the received BLIK code did not work at the bank terminal. Coordinator notifies the taker and re-lists the offer for a new taker.
 
-Eligible local statuses: `blikReceived`, `blikSentToMaker`, `expiredBlik`, `expiredSentBlik`. Coordinator is the final authority on acceptance.
+Eligible local statuses: `blikSentToMaker`, `expiredSentBlik`, `takerCharged`, `conflict`. `expiredBlik` means the maker never fetched the BLIK code, so confirmation is rejected by the coordinator and the offer auto re-lists to `funded` after 60s.
 
 ---
 

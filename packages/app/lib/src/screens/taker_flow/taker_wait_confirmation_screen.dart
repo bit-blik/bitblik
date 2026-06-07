@@ -217,6 +217,10 @@ class _TakerWaitConfirmationScreenState
 
   void _handleStatusTransitions(Offer offer, Translations t) {
     final currentStatusEnum = offer.statusEnum;
+    final relistStart = offer.updatedAt ?? DateTime.now();
+    final relistExpired = DateTime.now().isAfter(
+      relistStart.add(const Duration(seconds: 60)),
+    );
 
     if (currentStatusEnum == OfferStatus.makerConfirmed ||
         currentStatusEnum == OfferStatus.settled ||
@@ -228,6 +232,13 @@ class _TakerWaitConfirmationScreenState
       );
       _confirmationTimer?.cancel();
       context.go("/paying-taker");
+    } else if (currentStatusEnum == OfferStatus.funded) {
+      _confirmationTimer?.cancel();
+      context.go('/offers/${offer.id}');
+    } else if (currentStatusEnum == OfferStatus.expiredBlik &&
+        relistExpired) {
+      _confirmationTimer?.cancel();
+      context.go('/offers/${offer.id}');
     } else if (currentStatusEnum == OfferStatus.invalidBlik) {
       _confirmationTimer?.cancel();
       context.go('/taker-invalid-blik', extra: offer);
@@ -593,23 +604,45 @@ class _ExpiredBlikWidget extends ConsumerWidget {
     final t = Translations.of(context);
     final isLoading = ref.watch(isLoadingProvider);
     final errorMessage = ref.watch(errorProvider);
+    final relistStart = offer.updatedAt ?? DateTime.now();
 
     return Column(
       children: [
         _buildExpiredIcon(),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         _buildExpiredTitle(t.taker.waitConfirmation.expiredTitle),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
         _buildWarningBox(context, t.taker.waitConfirmation.expiredWarning),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
+        Text(
+          t['taker.waitConfirmation.expiredRelistCountdownLabel'],
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        CircularCountdownTimer(
+          size: 92,
+          key: ValueKey('expired_blik_relist_${offer.id}'),
+          startTime: relistStart,
+          maxDuration: const Duration(seconds: 60),
+          strokeWidth: 8,
+          progressColor: Colors.orange,
+          backgroundColor: Colors.white,
+          fontSize: 6,
+        ),
+        const SizedBox(height: 10),
         _buildInstructions(context, [
           t.taker.waitConfirmation.expiredInstruction1,
           t.taker.waitConfirmation.expiredInstruction2,
         ]),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
         if (errorMessage != null) ...[
           _buildErrorMessage(context, errorMessage),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
         ],
         _buildPrimaryButton(
           context,
@@ -619,7 +652,7 @@ class _ExpiredBlikWidget extends ConsumerWidget {
           isLoading ? null : () => onResendBlik(offer),
           isLoading: isLoading,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildOutlinedButton(
           context,
           t.taker.waitConfirmation.expiredActions.cancelReservation,
@@ -806,8 +839,8 @@ Widget _buildInfoBox(
 
 Widget _buildWarningBox(BuildContext context, String message) {
   return Container(
-    padding: const EdgeInsets.all(16),
-    margin: const EdgeInsets.symmetric(horizontal: 20),
+    padding: const EdgeInsets.all(12),
+    margin: const EdgeInsets.symmetric(horizontal: 12),
     decoration: BoxDecoration(
       color: Colors.orange.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(8),
@@ -828,7 +861,7 @@ Widget _buildWarningBox(BuildContext context, String message) {
         Expanded(
           child: Text(
             message,
-            style: const TextStyle(fontSize: 14, color: Colors.orange),
+            style: const TextStyle(fontSize: 13, color: Colors.orange),
             softWrap: true,
           ),
         ),
@@ -839,15 +872,15 @@ Widget _buildWarningBox(BuildContext context, String message) {
 
 Widget _buildExpiredIcon() {
   return Container(
-    width: 120,
-    height: 120,
+    width: 78,
+    height: 78,
     decoration: BoxDecoration(
       shape: BoxShape.circle,
       color: Colors.orange.shade100,
     ),
     child: Icon(
       Icons.timer_off_outlined,
-      size: 60,
+      size: 38,
       color: Colors.orange.shade700,
     ),
   );
@@ -855,11 +888,11 @@ Widget _buildExpiredIcon() {
 
 Widget _buildExpiredTitle(String title) {
   return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
+    padding: const EdgeInsets.symmetric(horizontal: 12),
     child: Text(
       title,
       style: const TextStyle(
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: FontWeight.w600,
         color: Colors.black87,
       ),
@@ -870,13 +903,13 @@ Widget _buildExpiredTitle(String title) {
 
 Widget _buildInstructions(BuildContext context, List<String> instructions) {
   return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
+    padding: const EdgeInsets.symmetric(horizontal: 12),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children:
           instructions.asMap().entries.map((entry) {
             return Padding(
-              padding: EdgeInsets.only(top: entry.key > 0 ? 12 : 0),
+              padding: EdgeInsets.only(top: entry.key > 0 ? 8 : 0),
               child: _buildInstructionItem('-', entry.value),
             );
           }).toList(),
@@ -910,7 +943,7 @@ Widget _buildInstructionItem(String bullet, String text) {
       Expanded(
         child: Text(
           text,
-          style: const TextStyle(fontSize: 15, color: Colors.black87),
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
         ),
       ),
     ],

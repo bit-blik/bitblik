@@ -1769,6 +1769,9 @@ class Translations$taker$waitConfirmation$en {
 	/// en: 'The maker did not receive the BLIK code so it couldn't have used it.'
 	String get expiredWarning => 'The maker did not receive the BLIK code so it couldn\'t have used it.';
 
+	/// en: 'Reservation ends in'
+	String get expiredRelistCountdownLabel => 'Reservation ends in';
+
 	/// en: 'The maker hasn't confirmed the payment yet. What would you like to do?'
 	String get expiredSentWarning => 'The maker hasn\'t confirmed the payment yet. What would you like to do?';
 
@@ -4296,6 +4299,7 @@ extension on Translations {
 			'taker.waitConfirmation.navigatedHome' => 'Navigated home.',
 			'taker.waitConfirmation.expiredTitle' => 'BLIK Code Expired',
 			'taker.waitConfirmation.expiredWarning' => 'The maker did not receive the BLIK code so it couldn\'t have used it.',
+			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Reservation ends in',
 			'taker.waitConfirmation.expiredSentWarning' => 'The maker hasn\'t confirmed the payment yet. What would you like to do?',
 			'taker.waitConfirmation.expiredInstruction1' => 'If you want to try again with a new BLIK code, renew the reservation.',
 			'taker.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
@@ -4394,9 +4398,9 @@ extension on Translations {
 			'nekoInfo.backupWarning' => 'Remember to backup your Neko',
 			'generateNewKey.title' => 'New',
 			'generateNewKey.description' => 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven\'t backed it up.',
-			'generateNewKey.buttons.generate' => 'Generate',
 			_ => null,
 		} ?? switch (path) {
+			'generateNewKey.buttons.generate' => 'Generate',
 			'generateNewKey.errors.activeOffer' => 'You cannot generate a new Neko while you have an active offer.',
 			'generateNewKey.errors.failed' => 'Failed to generate new Neko',
 			'generateNewKey.feedback.success' => 'New Neko generated successfully!',

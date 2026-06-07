@@ -729,6 +729,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       id: update.offerId,
       status: newStatus,
       reservedAt: update.reservedAt,
+      updatedAt: update.timestamp.toLocal(),
     );
     // When matched by paymentHash the coordinator UUID differs from local id;
     // delete the old row so upsert doesn't leave a duplicate.

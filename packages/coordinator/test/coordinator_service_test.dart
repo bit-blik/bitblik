@@ -1651,6 +1651,146 @@ void main() {
       });
     });
 
+    test('expiredBlik auto relists to funded after 60 seconds', () {
+      fakeAsync((async) {
+        final offerId = 'expired-blik-auto-relist-offer-id';
+        final initialTime = clock.now().toUtc();
+
+        var offer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.reserved,
+          takerPubkey: testTakerId,
+          makerPubkey: testMakerId,
+          reservedAt: initialTime.subtract(Duration(minutes: 1)),
+          createdAt: initialTime.subtract(Duration(minutes: 2)),
+        );
+        when(mockDbService.getOfferById(offerId)).thenAnswer((_) async => offer);
+
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.blikReceived,
+          blikCode: testBlikCode,
+          takerLightningAddress: testTakerLnAddress,
+          blikReceivedAt: anyNamed('blikReceivedAt'),
+        )).thenAnswer((invocation) async {
+          offer = offer.copyWith(
+            status: OfferStatus.blikReceived,
+            blikCode: testBlikCode,
+            takerLightningAddress: testTakerLnAddress,
+            blikReceivedAt:
+                invocation.namedArguments[Symbol('blikReceivedAt')] as DateTime,
+          );
+          return true;
+        });
+
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.expiredBlik,
+          blikCode: null,
+          takerLightningAddress: null,
+          blikReceivedAt: null,
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(
+            status: OfferStatus.expiredBlik,
+            blikCode: null,
+            takerLightningAddress: null,
+            blikReceivedAt: null,
+            updatedAt: clock.now().toUtc(),
+          );
+          return true;
+        });
+
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.funded,
+          takerPubkey: null,
+          blikCode: null,
+          takerLightningAddress: null,
+          reservedAt: null,
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(
+            status: OfferStatus.funded,
+            takerPubkey: null,
+            blikCode: null,
+            takerLightningAddress: null,
+            reservedAt: null,
+            updatedAt: clock.now().toUtc(),
+          );
+          return true;
+        });
+
+        coordinatorService
+            .submitBlikCode(
+                offerId, testTakerId, testBlikCode, testTakerLnAddress, null)
+            .then((success) {
+          expect(success, isTrue);
+        });
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(seconds: 121));
+        async.flushMicrotasks();
+        expect(offer.status, OfferStatus.expiredBlik);
+
+        async.elapse(const Duration(seconds: 58));
+        async.flushMicrotasks();
+        verifyNever(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.funded,
+          takerPubkey: null,
+          blikCode: null,
+          takerLightningAddress: null,
+          reservedAt: null,
+        ));
+
+        async.elapse(const Duration(seconds: 3));
+        async.flushMicrotasks();
+        verify(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.funded,
+          takerPubkey: null,
+          blikCode: null,
+          takerLightningAddress: null,
+          reservedAt: null,
+        )).called(1);
+        expect(offer.status, OfferStatus.funded);
+      });
+    });
+
+    test('startup relists stale expiredBlik offers back to funded', () async {
+      final now = clock.now().toUtc();
+      final offer = createTestOffer(
+        id: 'startup-expired-blik-offer-id',
+        status: OfferStatus.expiredBlik,
+        makerPubkey: testMakerId,
+        takerPubkey: testTakerId,
+        createdAt: now.subtract(const Duration(minutes: 5)),
+        updatedAt: now.subtract(const Duration(seconds: 61)),
+      );
+
+      when(mockDbService.getOffersByStatus(OfferStatus.expiredBlik, limit: 1000))
+          .thenAnswer((_) async => [offer]);
+      when(mockDbService.getOfferById(offer.id)).thenAnswer((_) async => offer);
+      when(mockDbService.updateOfferStatus(
+        offer.id,
+        OfferStatus.funded,
+        takerPubkey: null,
+        blikCode: null,
+        takerLightningAddress: null,
+        reservedAt: null,
+      )).thenAnswer((_) async => true);
+
+      await coordinatorService.doInitialCheckStatuses();
+
+      verify(mockDbService.updateOfferStatus(
+        offer.id,
+        OfferStatus.funded,
+        takerPubkey: null,
+        blikCode: null,
+        takerLightningAddress: null,
+        reservedAt: null,
+      )).called(1);
+    });
+
     test(
         'blikSentToMaker expires to expiredSentBlik after 2 minutes when maker calls getBlik but does not confirm',
         () {

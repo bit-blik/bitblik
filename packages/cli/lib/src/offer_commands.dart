@@ -239,6 +239,13 @@ const _terminalStatuses = {
   OfferStatus.takerPaid,
 };
 
+const _confirmPaymentStatuses = {
+  OfferStatus.blikSentToMaker,
+  OfferStatus.expiredSentBlik,
+  OfferStatus.takerCharged,
+  OfferStatus.conflict,
+};
+
 bool _canGetBlik(OfferStatus s) =>
     _getblikWaitStatuses.contains(s) ||
     s == OfferStatus.blikReceived ||
@@ -1045,32 +1052,34 @@ Future<int> runOfferConfirmPayment(List<String> args) async {
   final Offer offer;
   try {
     final all = await store.all();
-    final active = all.where((o) => _isInProgress(o.status)).toList();
+    final eligible =
+        all.where((o) => _confirmPaymentStatuses.contains(o.status)).toList();
 
-    if (active.isEmpty) {
+    if (eligible.isEmpty) {
       stderr.writeln(
-          'No in-progress offers found locally.\n'
+          'No offers in a state where payment can be confirmed locally.\n'
           'Or pass --offer <id> --coordinator <npub|hex> to skip local lookup.');
       return 1;
     }
 
     if (offerIdArg != null) {
-      final found = active.where((o) => o.id == offerIdArg).firstOrNull;
+      final found = eligible.where((o) => o.id == offerIdArg).firstOrNull;
       if (found == null) {
-        stderr.writeln('Offer "$offerIdArg" not found or already finished.');
+        stderr.writeln(
+            'Offer "$offerIdArg" not found or not in a confirmable state.');
         return 64;
       }
       offer = found;
-    } else if (active.length > 1) {
-      stderr.writeln('Multiple in-progress offers. Pass --offer <id>:');
-      for (final o in active) {
+    } else if (eligible.length > 1) {
+      stderr.writeln('Multiple confirmable offers. Pass --offer <id>:');
+      for (final o in eligible) {
         stderr.writeln(
             '  ${o.id}  status=${o.status.name}  '
             '${o.fiatAmount} ${o.fiatCurrency}');
       }
       return 64;
     } else {
-      offer = active.first;
+      offer = eligible.first;
     }
   } finally {
     await store.close();

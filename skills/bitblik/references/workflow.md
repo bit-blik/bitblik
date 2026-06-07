@@ -21,7 +21,7 @@ created → funded → reserved → blikReceived → blikSentToMaker → makerCo
 
 - `funded` → `expired` (no taker within window)
 - `reserved` → `funded` (taker timeout, re-listed)
-- `blikReceived` → `expiredBlik` (maker never retrieved BLIK)
+- `blikReceived` → `expiredBlik` (maker never retrieved BLIK; auto re-lists to `funded` after 60s)
 - `blikSentToMaker` → `expiredSentBlik` (maker retrieved BLIK but didn't confirm)
 
 **Invalid BLIK branch:**
