@@ -212,6 +212,16 @@ final coordinatorRecordByPubkeyProvider =
 /// `takerChargedAutoConfirmSeconds`, or null if coordinator info unavailable.
 final coordinatorTakerChargedAutoConfirmDurationProvider =
     Provider.family<Duration?, String>((ref, coordinatorPubkey) {
+      // Prefer the live registry record so a freshly published info event
+      // (e.g. after the coordinator restarts with a new
+      // TAKER_CHARGED_AUTO_CONFIRM_SECONDS) updates the value immediately,
+      // instead of being pinned to a stale persisted/cached copy.
+      final record = ref.watch(
+        coordinatorRecordByPubkeyProvider(coordinatorPubkey),
+      );
+      if (record?.info != null) {
+        return Duration(seconds: record!.info!.takerChargedAutoConfirmSeconds);
+      }
       final coordinatorInfoAsync = ref.watch(
         coordinatorInfoByPubkeyProvider(coordinatorPubkey),
       );

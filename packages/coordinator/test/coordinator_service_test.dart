@@ -348,6 +348,12 @@ void main() {
             paymentPreimage: 'paid_preimage', // Corrected: removed isSuccess
             feeSat: 10));
 
+    // Default: nothing to reconcile (invoice not already settled), so payment
+    // flows proceed to the actual payInvoice call.
+    when(mockPaymentService.reconcileOutgoingPayment(
+            invoice: anyNamed('invoice')))
+        .thenAnswer((_) async => null);
+
     // TODO: This is a placeholder. The CoordinatorService initializes its own LND/NWC service.
     // We need a way to inject the mockPaymentService or mock the LND/NWC service creation.
     // For now, tests will assume that calls to _paymentBackend somehow reach mockPaymentService.

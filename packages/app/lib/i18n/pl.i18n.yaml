@@ -584,7 +584,7 @@ taker:
 
     takerCharged:
       title: "Oznaczyłeś BLIK jako opłacony"
-      message: "Twórca oferty musi potwierdzić płatność lub ją zakwestionować. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny."
+      message: "Twórca oferty ma ${minutes} min na potwierdzenie płatności lub jej zakwestionowanie. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny."
 
     expiredActions:
       reportConflict: "BLIK został pobrany z mojego konta"

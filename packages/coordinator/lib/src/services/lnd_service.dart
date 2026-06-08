@@ -409,4 +409,14 @@ class LndService implements PaymentService {
       );
     }
   }
+
+  @override
+  Future<PayInvoiceResult?> reconcileOutgoingPayment(
+      {required String invoice}) async {
+    // LND's payInvoice already consumes sendPaymentV2 (and falls back to
+    // trackPaymentV2) until a terminal SUCCEEDED/FAILED state, so a reported
+    // failure is authoritative — there is no NWC-style 5s-timeout idempotency
+    // gap to reconcile here. Returning null leaves the existing result intact.
+    return null;
+  }
 }

@@ -812,14 +812,21 @@ class _ExpiredSentBlikWidget extends ConsumerWidget {
   }
 }
 
-class _TakerChargedWidget extends StatelessWidget {
+class _TakerChargedWidget extends ConsumerWidget {
   final Offer offer;
 
   const _TakerChargedWidget({required this.offer});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
+    // Auto-confirm window advertised by the coordinator. Mirrors the
+    // coordinator's timer which fires at offer.createdAt + this duration.
+    final autoConfirmDuration = ref.watch(
+      coordinatorTakerChargedAutoConfirmDurationProvider(
+        offer.coordinatorPubkey,
+      ),
+    );
 
     return Column(
       children: [
@@ -830,13 +837,14 @@ class _TakerChargedWidget extends StatelessWidget {
           Colors.green,
         ),
         const SizedBox(height: 20),
-        // Show 60-minute countdown timer
-        if (offer.blikReceivedAt != null)
+        // Countdown until the coordinator auto-confirms. Anchored to
+        // offer.createdAt so it reflects real elapsed time across restarts.
+        if (autoConfirmDuration != null)
           CircularCountdownTimer(
             size: 200,
             key: ValueKey('taker_charged_timer_${offer.id}'),
-            startTime: offer.blikReceivedAt!,
-            maxDuration: const Duration(minutes: 5),
+            startTime: offer.createdAt,
+            maxDuration: autoConfirmDuration,
             strokeWidth: 16,
             progressColor: Colors.green,
             backgroundColor: Colors.white,
@@ -845,7 +853,10 @@ class _TakerChargedWidget extends StatelessWidget {
         const SizedBox(height: 20),
         _buildInfoBox(
           context,
-          t.taker.waitConfirmation.takerCharged.message,
+          t.taker.waitConfirmation.takerCharged.message(
+            minutes: (autoConfirmDuration ?? const Duration(minutes: 60))
+                .inMinutes,
+          ),
           Icons.info_outline,
           Colors.blue,
         ),

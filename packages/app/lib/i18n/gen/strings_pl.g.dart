@@ -2103,7 +2103,7 @@ class _Translations$taker$waitConfirmation$takerCharged$pl extends Translations$
 
 	// Translations
 	@override String get title => 'Oznaczyłeś BLIK jako opłacony';
-	@override String get message => 'Twórca oferty musi potwierdzić płatność lub ją zakwestionować. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny.';
+	@override String message({required Object minutes}) => 'Twórca oferty ma ${minutes} min na potwierdzenie płatności lub jej zakwestionowanie. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny.';
 }
 
 // Path: taker.waitConfirmation.expiredActions
@@ -2859,7 +2859,7 @@ extension on TranslationsPl {
 			'taker.waitConfirmation.expiredInstruction2' => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.',
 			'taker.waitConfirmation.expiredInstruction3' => 'Jeśli płatność BLIK została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.',
 			'taker.waitConfirmation.takerCharged.title' => 'Oznaczyłeś BLIK jako opłacony',
-			'taker.waitConfirmation.takerCharged.message' => 'Twórca oferty musi potwierdzić płatność lub ją zakwestionować. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny.',
+			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Twórca oferty ma ${minutes} min na potwierdzenie płatności lub jej zakwestionowanie. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny.',
 			'taker.waitConfirmation.expiredActions.reportConflict' => 'BLIK został pobrany z mojego konta',
 			'taker.waitConfirmation.expiredActions.renewReservation' => 'Spróbuj ponownie z nowym kodem BLIK',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Anuluj rezerwację',

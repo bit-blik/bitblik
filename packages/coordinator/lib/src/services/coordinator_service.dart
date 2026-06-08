@@ -24,6 +24,7 @@ import 'nwc_service.dart';
 import 'payment_service.dart';
 import '../models/invoice_status.dart';
 import '../models/invoice_update.dart';
+import '../models/pay_invoice_result.dart';
 import 'nostr_service.dart';
 import 'telegram_service.dart';
 import '../logging/app_logger.dart';
@@ -2455,44 +2456,66 @@ class CoordinatorService {
         AppLogger.info(
             ' Successfully paid taker for offer $offerId. Preimage: ${paymentResult.paymentPreimage}',
             offerId: offerId);
-        await Future.delayed(_kDebugDelayDuration);
-        await _dbService.updateOfferStatus(offerId, OfferStatus.takerPaid,
-            takerFees: takerFees);
-        await _dbService.updateTakerInvoiceFees(
-            offerId, paymentResult.feeSat ?? 0);
-        AppLogger.info(
-            ' Updated taker invoice fees to ${paymentResult.feeSat ?? 0} sats for offer $offerId.',
-            offerId: offerId);
-
-        // Publish status update
-        final paidOffer = await _dbService.getOfferById(offerId);
-        if (paidOffer != null) {
-          await _publishStatusUpdate(paidOffer);
-          await _nostrService?.broadcastNip69OrderFromOffer(paidOffer);
-        }
-
+        await _markTakerPaid(offerId, paymentResult, takerFees);
         return null; // Success
-      } else {
-        AppLogger.info(
-            ' Failed to pay taker for offer $offerId. Reason: ${paymentResult.paymentError}',
-            offerId: offerId);
-        await _dbService.updateOfferStatus(
-            offerId, OfferStatus.takerPaymentFailed,
-            failureReason: paymentResult.paymentError ??
-                'Payment failed (no route or unknown error)');
-
-        // Publish status update
-        final failedOffer = await _dbService.getOfferById(offerId);
-        if (failedOffer != null) {
-          await _publishStatusUpdate(failedOffer);
-        }
-
-        return ' Failed to pay taker for offer $offerId. Reason: ${paymentResult.paymentError}';
       }
+
+      // payInvoice reported failure/timeout. The NWC pay_invoice request is not
+      // idempotent: a timeout or transport error does NOT prove the payment
+      // failed — the wallet may have settled it anyway. Reconcile before
+      // declaring failure, so we don't mark a paid offer as failed (which would
+      // also let a later retry double-pay the taker).
+      final reconciled = await _paymentBackend!
+          .reconcileOutgoingPayment(invoice: takerInvoice);
+      if (reconciled != null && reconciled.isSuccess) {
+        AppLogger.info(
+            ' Taker payment for offer $offerId reconciled as SETTLED despite error "${paymentResult.paymentError}". Marking paid.',
+            offerId: offerId);
+        await _markTakerPaid(offerId, reconciled, takerFees);
+        return null;
+      }
+
+      AppLogger.info(
+          ' Failed to pay taker for offer $offerId. Reason: ${paymentResult.paymentError}',
+          offerId: offerId);
+      await _dbService.updateOfferStatus(
+          offerId, OfferStatus.takerPaymentFailed,
+          failureReason: paymentResult.paymentError ??
+              'Payment failed (no route or unknown error)');
+
+      // Publish status update
+      final failedOffer = await _dbService.getOfferById(offerId);
+      if (failedOffer != null) {
+        await _publishStatusUpdate(failedOffer);
+      }
+
+      return ' Failed to pay taker for offer $offerId. Reason: ${paymentResult.paymentError}';
     } catch (e) {
       AppLogger.info(
           'Exception during taker payment for offer $offerId (using $_paymentBackendType): $e',
           offerId: offerId);
+      // Same idempotency caveat as the failure branch: an exception doesn't
+      // prove the payment didn't settle. Reconcile before marking failed.
+      try {
+        final reconciled = await _paymentBackend
+            ?.reconcileOutgoingPayment(invoice: takerInvoice);
+        final offerForFees = await _dbService.getOfferById(offerId);
+        if (reconciled != null &&
+            reconciled.isSuccess &&
+            offerForFees != null) {
+          final takerFees = OfferQuote.takerFeeSats(
+              offerForFees.amountSats, _takerFeePercentage);
+          AppLogger.info(
+              ' Taker payment for offer $offerId reconciled as SETTLED despite exception. Marking paid.',
+              offerId: offerId);
+          await _markTakerPaid(offerId, reconciled, takerFees);
+          return null;
+        }
+      } catch (reconcileError) {
+        AppLogger.info(
+            'Reconciliation after exception failed for offer $offerId: $reconcileError',
+            offerId: offerId);
+      }
       await _dbService.updateOfferStatus(
           offerId, OfferStatus.takerPaymentFailed,
           failureReason: e.toString());
@@ -2502,6 +2525,25 @@ class CoordinatorService {
         await _publishStatusUpdate(failedOffer);
       }
       return 'Exception during taker payment for offer $offerId: $e';
+    }
+  }
+
+  /// Mark an offer as successfully paid to the taker and broadcast the update.
+  /// Shared by the direct success path and the reconciliation paths.
+  Future<void> _markTakerPaid(
+      String offerId, PayInvoiceResult result, int takerFees) async {
+    await Future.delayed(_kDebugDelayDuration);
+    await _dbService.updateOfferStatus(offerId, OfferStatus.takerPaid,
+        takerFees: takerFees);
+    await _dbService.updateTakerInvoiceFees(offerId, result.feeSat ?? 0);
+    AppLogger.info(
+        ' Updated taker invoice fees to ${result.feeSat ?? 0} sats for offer $offerId.',
+        offerId: offerId);
+
+    final paidOffer = await _dbService.getOfferById(offerId);
+    if (paidOffer != null) {
+      await _publishStatusUpdate(paidOffer);
+      await _nostrService?.broadcastNip69OrderFromOffer(paidOffer);
     }
   }
 
@@ -2523,6 +2565,22 @@ class CoordinatorService {
           offerId: offerId);
       return "No taker invoice in offer";
     }
+
+    // Guard against double-paying: a prior attempt may have actually settled
+    // even though it was recorded as failed (NWC pay_invoice timeouts are not
+    // idempotent). Reconcile before sending a fresh payment.
+    final reconciled = await _paymentBackend
+        ?.reconcileOutgoingPayment(invoice: offer.takerInvoice!);
+    if (reconciled != null && reconciled.isSuccess) {
+      AppLogger.info(
+          'Retry: offer $offerId already SETTLED on wallet. Finalizing instead of paying again.',
+          offerId: offerId);
+      final takerFees =
+          OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage);
+      await _markTakerPaid(offerId, reconciled, takerFees);
+      return null;
+    }
+
     return await _sendTakerPayment(offerId, offer.takerInvoice!);
   }
 

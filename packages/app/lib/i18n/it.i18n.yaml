@@ -584,7 +584,7 @@ taker:
 
     takerCharged:
       title: "Hai segnalato che il BLIK è stato addebitato"
-      message: "Il maker ha 60 minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin."
+      message: "Il maker ha ${minutes} minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin."
     expiredActions:
       reportConflict: "Il BLIK è stato addebitato sul mio conto bancario"
       renewReservation: "Riprova con un nuovo codice BLIK"

@@ -23,6 +23,12 @@ class NwcService implements PaymentService {
   static const int _holdInvoiceExpirySeconds = 86400;
 
   final String _nwcUri;
+
+  /// Timeout for the NWC `pay_invoice` request. NDK defaults to a mere 5s,
+  /// which is far too short for real Lightning routing/settlement and causes
+  /// legitimate taker payments to spuriously time out.
+  static const Duration _payInvoiceTimeout = Duration(seconds: 30);
+
   late final Ndk _ndk; // NDK instance managed by the service
   NwcConnection? _nwcConnection;
 
@@ -264,6 +270,7 @@ class NwcService implements PaymentService {
       final response = await _ndk.nwc.payInvoice(
         _nwcConnection!,
         invoice: invoice,
+        timeout: _payInvoiceTimeout,
       );
 
       if (response.errorCode != null) {
@@ -391,6 +398,52 @@ class NwcService implements PaymentService {
         paymentHash: paymentHashHex,
         error: 'Exception during NWC lookupInvoice: ${e.toString()}',
       );
+    }
+  }
+
+  @override
+  Future<PayInvoiceResult?> reconcileOutgoingPayment(
+      {required String invoice}) async {
+    if (_nwcConnection == null) {
+      AppLogger.info('NWC Service: reconcileOutgoingPayment: not connected.');
+      return null;
+    }
+    AppLogger.info('NWC Service: Reconciling outgoing payment via lookup...');
+    try {
+      // Look up by the BOLT11 invoice itself so we don't have to decode it for
+      // the payment hash. A non-null `settledAt` means the wallet completed the
+      // payment despite whatever error payInvoice reported.
+      final response = await _ndk.nwc.lookupInvoice(
+        _nwcConnection!,
+        invoice: invoice,
+      );
+
+      if (response.errorCode != null) {
+        // NOT_FOUND etc. — treat as "cannot confirm settled".
+        AppLogger.info(
+            'NWC Service: reconcileOutgoingPayment lookup error: ${response.errorCode} - ${response.errorMessage}');
+        return null;
+      }
+
+      final settled =
+          response.settledAt != null && response.settledAt! > 0;
+      if (settled && response.preimage.isNotEmpty) {
+        AppLogger.info(
+            'NWC Service: reconciliation found SETTLED payment. Preimage: ${response.preimage}');
+        return PayInvoiceResult(
+          paymentPreimage: response.preimage,
+          // NWC reports fees in msats; PayInvoiceResult.feeSat is in sats.
+          feeSat: (response.feesPaid / 1000).round(),
+        );
+      }
+
+      AppLogger.info(
+          'NWC Service: reconciliation: invoice not settled (settledAt=${response.settledAt}).');
+      return null;
+    } catch (e) {
+      AppLogger.info(
+          'NWC Service: Exception in reconcileOutgoingPayment: $e');
+      return null;
     }
   }
 }

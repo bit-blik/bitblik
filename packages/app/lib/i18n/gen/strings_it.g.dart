@@ -2106,7 +2106,7 @@ class _Translations$taker$waitConfirmation$takerCharged$it extends Translations$
 
 	// Translations
 	@override String get title => 'Hai segnalato che il BLIK è stato addebitato';
-	@override String get message => 'Il maker ha 60 minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin.';
+	@override String message({required Object minutes}) => 'Il maker ha ${minutes} minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin.';
 }
 
 // Path: taker.waitConfirmation.expiredActions
@@ -2865,7 +2865,7 @@ extension on TranslationsIt {
 			'taker.waitConfirmation.expiredInstruction2' => 'Se non vuoi più completare questa transazione, annulla la prenotazione.',
 			'taker.waitConfirmation.expiredInstruction3' => 'Se il pagamento BLIK è stato addebitato sul tuo conto bancario, non preoccuparti, i bitcoin sono ancora al sicuro presso il coordinatore.',
 			'taker.waitConfirmation.takerCharged.title' => 'Hai segnalato che il BLIK è stato addebitato',
-			'taker.waitConfirmation.takerCharged.message' => 'Il maker ha 60 minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin.',
+			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Il maker ha ${minutes} minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin.',
 			'taker.waitConfirmation.expiredActions.reportConflict' => 'Il BLIK è stato addebitato sul mio conto bancario',
 			'taker.waitConfirmation.expiredActions.renewReservation' => 'Riprova con un nuovo codice BLIK',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Annulla prenotazione',

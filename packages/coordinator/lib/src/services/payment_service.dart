@@ -54,4 +54,16 @@ abstract class PaymentService {
   /// [paymentHashHex]: The hex-encoded payment hash of the invoice.
   /// Returns an [InvoiceDetails] object.
   Future<InvoiceDetails> lookupInvoice({required String paymentHashHex});
+
+  /// Reconcile a possibly-completed outgoing payment for [invoice].
+  ///
+  /// [payInvoice] is not idempotent: a timeout or transport error does not
+  /// prove the payment failed — the wallet may have settled it anyway. This
+  /// queries the backend for the outgoing payment state and returns a
+  /// successful [PayInvoiceResult] (preimage + fee) when the invoice is
+  /// already settled, or `null` when it is not settled / cannot be confirmed.
+  /// Used before declaring failure and before retrying, to avoid marking a
+  /// paid offer as failed or double-paying the taker.
+  Future<PayInvoiceResult?> reconcileOutgoingPayment(
+      {required String invoice});
 }

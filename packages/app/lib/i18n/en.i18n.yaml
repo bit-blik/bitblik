@@ -600,7 +600,7 @@ taker:
 
     takerCharged:
       title: "You marked BLIK as charged"
-      message: "The maker has 60min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin."
+      message: "The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin."
     expiredActions:
       reportConflict: "BLIK was charged from my bank account"
       renewReservation: "Try again with new BLIK code"

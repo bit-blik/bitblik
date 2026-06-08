@@ -3382,8 +3382,8 @@ class Translations$taker$waitConfirmation$takerCharged$en {
 	/// en: 'You marked BLIK as charged'
 	String get title => 'You marked BLIK as charged';
 
-	/// en: 'The maker has 60min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.'
-	String get message => 'The maker has 60min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.';
+	/// en: 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.'
+	String message({required Object minutes}) => 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.';
 }
 
 // Path: taker.waitConfirmation.expiredActions
@@ -4313,7 +4313,7 @@ extension on Translations {
 			'taker.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
 			'taker.waitConfirmation.expiredInstruction3' => 'If the BLIK payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',
 			'taker.waitConfirmation.takerCharged.title' => 'You marked BLIK as charged',
-			'taker.waitConfirmation.takerCharged.message' => 'The maker has 60min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.',
+			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.',
 			'taker.waitConfirmation.expiredActions.reportConflict' => 'BLIK was charged from my bank account',
 			'taker.waitConfirmation.expiredActions.renewReservation' => 'Try again with new BLIK code',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Cancel reservation',
