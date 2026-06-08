@@ -613,64 +613,6 @@ class NostrService {
         caseSensitive: false,
       ).hasMatch(s);
 
-  /// GET /my-finished-offers - This will now query all coordinators
-  Future<List<Offer>> getMyFinishedOffers(String userPubkey) async {
-    if (!_isInitialized) {
-      await init();
-    }
-
-    final allOffers = <Offer>[];
-    final coordinators = coordinatorRegistry.enabled;
-    if (coordinators.isEmpty) {
-      Logger.log.w(
-        () => "No coordinators enabled, cannot get finished offers.",
-      );
-      return [];
-    }
-
-    final List<Future<List<Offer>>> offerFutures = [];
-
-    for (final coordinator in coordinators) {
-      offerFutures.add(
-        _getMyFinishedOffersFromCoordinator(userPubkey, coordinator.pubkeyHex),
-      );
-    }
-
-    final List<List<Offer>> results = await Future.wait(offerFutures);
-    for (final offerList in results) {
-      allOffers.addAll(offerList);
-    }
-
-    allOffers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return allOffers;
-  }
-
-  Future<List<Offer>> _getMyFinishedOffersFromCoordinator(
-    String userPubkey,
-    String coordinatorPubkey,
-  ) async {
-    try {
-      final request = NostrRequest(
-        method: kRpcGetMyFinishedOffers,
-        params: {},
-      );
-      final response = await sendRequest(request, coordinatorPubkey);
-      return _handleResponse(response, (result) {
-        final List<dynamic> jsonList = result['offers'] ?? [];
-        return jsonList.map((json) {
-          final offer = Offer.fromJson(json);
-          return offer.copyWith(coordinatorPubkey: coordinatorPubkey);
-        }).toList();
-      });
-    } catch (e) {
-      Logger.log.e(
-        () =>
-            "Error getting finished offers from coordinator $coordinatorPubkey: $e",
-      );
-      return [];
-    }
-  }
-
   /// DELETE /offers/{offerId}/cancel
   Future<void> cancelOffer(String offerId, String coordinatorPubkey) async {
     final request = NostrRequest(

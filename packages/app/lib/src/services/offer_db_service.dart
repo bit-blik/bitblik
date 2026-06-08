@@ -214,15 +214,41 @@ class OfferDbService {
     }
   }
 
-  Future<List<Offer>> listOffers({int? limit}) async {
+  Future<List<Offer>> listOffers({int? limit, String? userPubkey}) async {
     final db = await database;
-    final maps = await db.query(_table);
+    final List<Map<String, Object?>> maps;
+    if (userPubkey != null) {
+      maps = await db.query(
+        _table,
+        where: 'maker_pubkey = ? OR taker_pubkey = ?',
+        whereArgs: [userPubkey, userPubkey],
+      );
+    } else {
+      maps = await db.query(_table);
+    }
     final offers = _parseOffers(maps);
     offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     if (limit != null && offers.length > limit) {
       return offers.take(limit).toList();
     }
     return offers;
+  }
+
+  /// Count the user's successful (takerPaid) offers per coordinator, derived
+  /// from the local DB. Replaces the network `get_my_finished_offers` fan-out
+  /// for seeding the per-coordinator "your offers" reliability bonus.
+  Future<Map<String, int>> countFinishedByCoordinator(String userPubkey) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      'SELECT coordinator_pubkey AS pk, COUNT(*) AS c FROM $_table '
+      'WHERE status = ? AND (maker_pubkey = ? OR taker_pubkey = ?) '
+      "AND coordinator_pubkey IS NOT NULL AND coordinator_pubkey != '' "
+      'GROUP BY coordinator_pubkey',
+      [OfferStatus.takerPaid.name, userPubkey, userPubkey],
+    );
+    return {
+      for (final r in rows) (r['pk'] as String): (r['c'] as int),
+    };
   }
 
   /// Locally-cancelled offers created within [window]. Used by the boot-time

@@ -121,7 +121,7 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
       // Best-effort: refresh network usage counts to seed scoring.
       unawaited(registry.fetchNetworkFinishedCounts());
       // Best-effort: count the user's own successful offers per coordinator.
-      unawaited(_refreshLocalFinishedCounts(ref, apiService, registry));
+      unawaited(_refreshLocalFinishedCounts(ref, registry));
     } catch (e) {
       Logger.log.e(() => 'Initial coordinator discovery failed: $e');
     }
@@ -145,20 +145,12 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
 /// them to the registry so the "your offers" metric reflects real data.
 Future<void> _refreshLocalFinishedCounts(
   Ref ref,
-  ApiServiceNostr apiService,
   CoordinatorRegistry registry,
 ) async {
   try {
     final pubkey = ref.read(keyServiceProvider).publicKeyHex;
     if (pubkey == null) return;
-    final offers = await apiService.getMyFinishedOffers(pubkey);
-    final counts = <String, int>{};
-    for (final offer in offers) {
-      if (offer.status != OfferStatus.takerPaid) continue;
-      final c = offer.coordinatorPubkey;
-      if (c.isEmpty) continue;
-      counts[c] = (counts[c] ?? 0) + 1;
-    }
+    final counts = await OfferDbService().countFinishedByCoordinator(pubkey);
     registry.updateLocalFinishedCounts(counts);
   } catch (e) {
     Logger.log.w(() => 'Failed to refresh local finished counts: $e');
@@ -211,6 +203,24 @@ final coordinatorRecordByPubkeyProvider =
           }
           return null;
         },
+        orElse: () => null,
+      );
+    });
+
+/// Helper provider for the takerCharged auto-confirm duration of a coordinator.
+/// Returns Duration based on the coordinator's
+/// `takerChargedAutoConfirmSeconds`, or null if coordinator info unavailable.
+final coordinatorTakerChargedAutoConfirmDurationProvider =
+    Provider.family<Duration?, String>((ref, coordinatorPubkey) {
+      final coordinatorInfoAsync = ref.watch(
+        coordinatorInfoByPubkeyProvider(coordinatorPubkey),
+      );
+      return coordinatorInfoAsync.maybeWhen(
+        data:
+            (info) =>
+                info != null
+                    ? Duration(seconds: info.takerChargedAutoConfirmSeconds)
+                    : null,
         orElse: () => null,
       );
     });
@@ -363,6 +373,17 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// would have expired by then.
   static const Duration _cancelledLookbackWindow = Duration(hours: 24);
 
+  bool _isTakerOnlyOfferForUser(Offer offer, String? myPubkey) {
+    return myPubkey != null &&
+        offer.takerPubkey == myPubkey &&
+        offer.makerPubkey != myPubkey;
+  }
+
+  bool _userParticipatesInOffer(Offer offer, String? myPubkey) {
+    return myPubkey != null &&
+        (offer.makerPubkey == myPubkey || offer.takerPubkey == myPubkey);
+  }
+
   Future<void> _promoteMostRecentActiveOffer() async {
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
     final nextActive = await OfferDbService().getActiveOffer(
@@ -427,10 +448,76 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           !OfferDbService.terminalStatuses.contains(active.status)) {
         await _reconcileActiveOfferIfNeeded(active);
       }
+      await _reconcileTrackedUserOffersIfNeeded(activeOfferId: state?.id);
     } catch (e) {
       Logger.log.w(() => '[ActiveOfferNotifier] reconcileAll failed: $e');
     } finally {
       _reconcileInFlight = false;
+    }
+  }
+
+  Future<void> _reconcileTrackedUserOffersIfNeeded({
+    String? activeOfferId,
+  }) async {
+    final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
+    if (myPubkey == null || myPubkey.isEmpty) return;
+
+    final db = OfferDbService();
+    final offers = await db.listOffers(userPubkey: myPubkey);
+    if (offers.isEmpty) return;
+
+    final apiService = await _ref.read(initializedApiServiceProvider.future);
+    var changed = false;
+
+    for (final localOffer in offers) {
+      if (OfferDbService.terminalStatuses.contains(localOffer.status)) continue;
+      if (activeOfferId != null && localOffer.id == activeOfferId) continue;
+
+      try {
+        final remote = await apiService.getOfferDetails(
+          localOffer,
+          localOffer.coordinatorPubkey,
+          strict: true,
+        );
+
+        if (remote == null) {
+          if (_isTakerOnlyOfferForUser(localOffer, myPubkey)) {
+            Logger.log.i(
+              () =>
+                  '[ActiveOfferNotifier] deleting stale taker offer ${localOffer.id} (${localOffer.status.name}); coordinator no longer reports user participation',
+            );
+            await db.deleteOfferById(localOffer.id);
+            changed = true;
+          }
+          continue;
+        }
+
+        final hydrated = Offer.fromJson(remote);
+        if (_isTakerOnlyOfferForUser(localOffer, myPubkey) &&
+            !_userParticipatesInOffer(hydrated, myPubkey)) {
+          Logger.log.i(
+            () =>
+                '[ActiveOfferNotifier] deleting relisted taker offer ${localOffer.id}; coordinator cleared local user ownership',
+          );
+          await db.deleteOfferById(localOffer.id);
+          changed = true;
+          continue;
+        }
+        if (hydrated.id != localOffer.id) {
+          await db.deleteOfferById(localOffer.id);
+        }
+        await db.upsertOffer(hydrated);
+        changed = true;
+      } catch (e) {
+        Logger.log.w(
+          () =>
+              '[ActiveOfferNotifier] reconcile tracked offer ${localOffer.id} failed: $e',
+        );
+      }
+    }
+
+    if (changed) {
+      _ref.invalidate(myOffersProvider);
     }
   }
 
@@ -447,6 +534,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   Future<void> _reconcileActiveOfferIfNeeded(Offer localOffer) async {
     try {
       final apiService = await _ref.read(initializedApiServiceProvider.future);
+      final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
       Logger.log.i(
         () =>
             '[ActiveOfferNotifier] reconciling active offer ${localOffer.id} (local status=${localOffer.status.name})',
@@ -470,15 +558,40 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       }
 
       if (remote == null) {
-        // Coordinator has no active offer for this user — treat as cancelled.
+        if (_isTakerOnlyOfferForUser(localOffer, myPubkey)) {
+          Logger.log.i(
+            () =>
+                '[ActiveOfferNotifier] coordinator no longer reports taker-owned offer ${localOffer.id}; deleting local row',
+          );
+          await OfferDbService().deleteOfferById(localOffer.id);
+          if (state?.id == localOffer.id) {
+            await _promoteMostRecentActiveOffer();
+          }
+        } else {
+          // Coordinator has no active offer for this user — treat as cancelled.
+          Logger.log.i(
+            () =>
+                '[ActiveOfferNotifier] coordinator reports no active offer; marking local ${localOffer.id} cancelled',
+          );
+          final cancelled = localOffer.copyWith(status: OfferStatus.cancelled);
+          await OfferDbService().upsertOffer(cancelled);
+          // Only clear if this offer is still the in-memory active one.
+          if (state?.id == localOffer.id) state = null;
+        }
+        return;
+      }
+
+      final hydrated = Offer.fromJson(remote);
+      if (_isTakerOnlyOfferForUser(localOffer, myPubkey) &&
+          !_userParticipatesInOffer(hydrated, myPubkey)) {
         Logger.log.i(
           () =>
-              '[ActiveOfferNotifier] coordinator reports no active offer; marking local ${localOffer.id} cancelled',
+              '[ActiveOfferNotifier] coordinator relisted taker offer ${localOffer.id}; removing stale local active row',
         );
-        final cancelled = localOffer.copyWith(status: OfferStatus.cancelled);
-        await OfferDbService().upsertOffer(cancelled);
-        // Only clear if this offer is still the in-memory active one.
-        if (state?.id == localOffer.id) state = null;
+        await OfferDbService().deleteOfferById(localOffer.id);
+        if (state?.id == localOffer.id) {
+          await _promoteMostRecentActiveOffer();
+        }
         return;
       }
 
@@ -729,6 +842,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       id: update.offerId,
       status: newStatus,
       reservedAt: update.reservedAt,
+      // Anchor the BLIK confirmation countdown to the coordinator's
+      // blik_received_at when present. copyWith treats null as "keep", so an
+      // older coordinator that omits it leaves the local value intact instead
+      // of resetting the 2-min timer on the blikSentToMaker transition.
+      blikReceivedAt: update.blikReceivedAt?.toLocal(),
       updatedAt: update.timestamp.toLocal(),
     );
     // When matched by paymentHash the coordinator UUID differs from local id;
@@ -740,9 +858,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
     final takerLostOwnershipOnRelist =
-        myPubkey != null &&
-        existing.takerPubkey == myPubkey &&
-        existing.makerPubkey != myPubkey &&
+        _isTakerOnlyOfferForUser(existing, myPubkey) &&
         newStatus == OfferStatus.funded;
 
     if (takerLostOwnershipOnRelist) {
@@ -772,6 +888,28 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
             await _promoteMostRecentActiveOffer();
             _ref.read(appLifecycleProvider)._updateForegroundService();
           }
+          return;
+        }
+
+        final hydratedRemote = Offer.fromJson(remote);
+        if (!_userParticipatesInOffer(hydratedRemote, myPubkey)) {
+          Logger.log.i(
+            () =>
+                '[ActiveOfferNotifier] removing relisted taker offer ${updated.id}; coordinator cleared local user ownership',
+          );
+          await db.deleteOfferById(updated.id);
+          final currentState = state;
+          final isCurrent =
+              currentState != null &&
+              (currentState.id == updated.id ||
+                  (currentState.holdInvoicePaymentHash != null &&
+                      currentState.holdInvoicePaymentHash ==
+                          updated.holdInvoicePaymentHash));
+          if (isCurrent) {
+            await _promoteMostRecentActiveOffer();
+            _ref.read(appLifecycleProvider)._updateForegroundService();
+          }
+          _ref.invalidate(myOffersProvider);
           return;
         }
       } catch (e) {
@@ -935,7 +1073,8 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 /// stays current without manual invalidation.
 final myOffersProvider = FutureProvider<List<Offer>>((ref) async {
   ref.watch(activeOfferProvider);
-  return OfferDbService().listOffers();
+  final myPubkey = ref.watch(keyServiceProvider).publicKeyHex;
+  return OfferDbService().listOffers(userPubkey: myPubkey);
 });
 
 class OfferAlreadyFundedException implements Exception {

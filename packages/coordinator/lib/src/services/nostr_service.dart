@@ -38,6 +38,12 @@ class NostrService {
   // Subscription for incoming requests
   NdkResponse? _requestSubscription;
 
+  // NIP-69 offer events are parameterized replaceable. If two state changes for
+  // the same offer are published within the same second, some relays may keep
+  // the older one and reject the newer with "have newer event". Keep a
+  // monotonic created_at per offer id so every replacement wins deterministically.
+  final Map<String, int> _lastOfferEventCreatedAtById = {};
+
   NostrService(
     this._coordinatorService, {
     List<String> relays = const [
@@ -163,9 +169,11 @@ class NostrService {
   Future<void> _ensureMetadata() async {
     final hex = _signer.getPublicKey();
     try {
-      final existing = await _ndk.metadata.loadMetadata(hex, forceRefresh: true);
+      final existing =
+          await _ndk.metadata.loadMetadata(hex, forceRefresh: true);
       if (existing != null) {
-        AppLogger.info('Existing kind 0 metadata found (name=${existing.name})');
+        AppLogger.info(
+            'Existing kind 0 metadata found (name=${existing.name})');
         return;
       }
       final info = await _coordinatorService.getCoordinatorInfo();
@@ -218,10 +226,8 @@ class NostrService {
       forceRefresh: true,
     );
     if (list == null) return null;
-    final urls = list.urls
-        .map(normalizeRelayUrl)
-        .where((u) => u.isNotEmpty)
-        .toList();
+    final urls =
+        list.urls.map(normalizeRelayUrl).where((u) => u.isNotEmpty).toList();
     return urls.isEmpty ? null : urls;
   }
 
@@ -318,6 +324,7 @@ class NostrService {
     String? takerPubkey,
     DateTime? reservedAt,
     DateTime? createdAt,
+    DateTime? blikReceivedAt,
   }) async {
     try {
       final payload = <String, dynamic>{
@@ -328,6 +335,12 @@ class NostrService {
             createdAt != null ? createdAt.millisecondsSinceEpoch ~/ 1000 : null,
         'reserved_at': reservedAt != null
             ? reservedAt.millisecondsSinceEpoch ~/ 1000
+            : null,
+        // Carry blik_received_at so the taker/maker confirmation countdown
+        // reflects the real 2-min BLIK lifetime (anchored to this timestamp)
+        // and does not restart on the blikReceived -> blikSentToMaker transition.
+        'blik_received_at': blikReceivedAt != null
+            ? blikReceivedAt.millisecondsSinceEpoch ~/ 1000
             : null,
         'timestamp': timestamp.millisecondsSinceEpoch ~/ 1000,
       };
@@ -583,6 +596,11 @@ class NostrService {
           }
           return offer.toRpcJson();
 
+        // DEPRECATED: clients (>= local-db-counts change) no longer call this.
+        // The per-coordinator "your offers" count is now derived from the
+        // client's own local offer DB, so finished-offer history lives on the
+        // client and is not re-fetched from the coordinator. Kept for backward
+        // compatibility with older clients; safe to remove once those are gone.
         case kRpcGetMyFinishedOffers:
           final activeOffers =
               await _coordinatorService.getMyActiveOffers(userPubkey);
@@ -810,6 +828,10 @@ class NostrService {
     final status = _mapOfferStatusToNip69Status(offer.status);
     final premiumValue = premium ?? offer.premiumPercent;
     try {
+      final nowSecs = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final lastSecs = _lastOfferEventCreatedAtById[offer.id] ?? 0;
+      final eventCreatedAt = nowSecs <= lastSecs ? lastSecs + 1 : nowSecs;
+
       final tags = <List<String>>[
         ['d', offer.id],
         ['k', orderType],
@@ -859,11 +881,12 @@ class NostrService {
         pubKey: _signer.getPublicKey(),
         content: '',
         tags: tags,
-        createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        createdAt: eventCreatedAt,
       );
 
       await _ndk.broadcast.broadcast(
           nostrEvent: event, customSigner: _signer, specificRelays: _relays);
+      _lastOfferEventCreatedAtById[offer.id] = eventCreatedAt;
       // AppLogger.info(
       //     'Broadcasted NIP-69 order event for offer ${offer.id}, status: ${status} id:${event.id}',
       //     offerId: offer.id);

@@ -1000,6 +1000,8 @@ class _Translations$maker$confirmPayment$it extends Translations$maker$confirmPa
 	@override String get instruction2 => 'Attendi che il Taker confermi il pagamento nella sua app.';
 	@override String get instruction3 => 'Quando il pagamento va a buon fine, premi Conferma qui sotto:';
 	@override String get takerChargedWarning => 'Il taker ha segnalato che il pagamento BLIK è stato addebitato sul suo conto bancario. Se lo contrassegni come non valido, si creerà un conflitto.';
+	@override String get autoConfirmInfo => 'A meno che tu non contrassegni il BLIK come non valido, il pagamento sarà confermato automaticamente e il taker pagato allo scadere di questo timer.';
+	@override String autoConfirmCountdown({required Object time}) => 'Conferma automatica tra ${time}';
 	@override String get expiredTitle => 'Codice BLIK Scaduto';
 	@override String get expiredWarning => 'Il codice BLIK è scaduto. Devi confermare manualmente lo stato del pagamento:';
 	@override String get expiredInstruction1 => 'Se il pagamento BLIK è andato a buon fine e hai completato l\'acquisto, clicca "Conferma pagamento riuscito" qui sotto.';
@@ -2759,6 +2761,8 @@ extension on TranslationsIt {
 			'maker.confirmPayment.instruction2' => 'Attendi che il Taker confermi il pagamento nella sua app.',
 			'maker.confirmPayment.instruction3' => 'Quando il pagamento va a buon fine, premi Conferma qui sotto:',
 			'maker.confirmPayment.takerChargedWarning' => 'Il taker ha segnalato che il pagamento BLIK è stato addebitato sul suo conto bancario. Se lo contrassegni come non valido, si creerà un conflitto.',
+			'maker.confirmPayment.autoConfirmInfo' => 'A meno che tu non contrassegni il BLIK come non valido, il pagamento sarà confermato automaticamente e il taker pagato allo scadere di questo timer.',
+			'maker.confirmPayment.autoConfirmCountdown' => ({required Object time}) => 'Conferma automatica tra ${time}',
 			'maker.confirmPayment.expiredTitle' => 'Codice BLIK Scaduto',
 			'maker.confirmPayment.expiredWarning' => 'Il codice BLIK è scaduto. Devi confermare manualmente lo stato del pagamento:',
 			'maker.confirmPayment.expiredInstruction1' => 'Se il pagamento BLIK è andato a buon fine e hai completato l\'acquisto, clicca "Conferma pagamento riuscito" qui sotto.',
@@ -2965,10 +2969,10 @@ extension on TranslationsIt {
 			'backup.tooltips.backup' => 'Backup Neko',
 			'restore.title' => 'Ripristina',
 			'restore.labels.privateKey' => 'Chiave Privata',
-			'restore.buttons.restore' => 'Ripristina',
-			'restore.errors.invalidKey' => 'Deve essere una stringa esadecimale di 64 caratteri.',
 			_ => null,
 		} ?? switch (path) {
+			'restore.buttons.restore' => 'Ripristina',
+			'restore.errors.invalidKey' => 'Deve essere una stringa esadecimale di 64 caratteri.',
 			'restore.errors.failed' => 'Ripristino fallito',
 			'restore.feedback.success' => 'Neko ripristinato con successo! L\'app verrà riavviata.',
 			'restore.tooltips.restore' => 'Ripristina Neko',

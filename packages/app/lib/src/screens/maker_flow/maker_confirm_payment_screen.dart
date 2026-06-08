@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +21,11 @@ class MakerConfirmPaymentScreen extends ConsumerStatefulWidget {
 class _MakerConfirmPaymentScreenState
     extends ConsumerState<MakerConfirmPaymentScreen> {
   bool _fetchAttempted = false;
+
+  // Ticks once per second while in takerCharged to drive the auto-confirm
+  // countdown. The expiry itself is derived from offer.createdAt plus the
+  // coordinator-advertised duration, so the ticker only triggers repaints.
+  Timer? _autoConfirmTicker;
 
   bool _isPostBlikWindowStatus() {
     final offer = ref.read(activeOfferProvider);
@@ -58,6 +65,28 @@ class _MakerConfirmPaymentScreenState
         _fetchBlikCode();
       }
     }
+    // If we land here already in takerCharged (incl. app reopen), start the
+    // 1s repaint ticker. The displayed remaining time is always recomputed
+    // from the persisted offer.createdAt, so it reflects real elapsed time
+    // regardless of when this ticker started.
+    if (ref.read(activeOfferProvider)?.status == OfferStatus.takerCharged) {
+      _startAutoConfirmTicker();
+    }
+  }
+
+  // Ticker only schedules repaints; it carries no countdown state, so closing
+  // and reopening the app or navigating away and back cannot reset the timer.
+  void _startAutoConfirmTicker() {
+    if (_autoConfirmTicker != null) return;
+    _autoConfirmTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoConfirmTicker?.cancel();
+    super.dispose();
   }
 
   Future<void> _fetchBlikCode() async {
@@ -396,6 +425,9 @@ class _MakerConfirmPaymentScreenState
                         ],
                       ),
                     ),
+                    _buildAutoConfirmCountdown(
+                      ref.watch(activeOfferProvider)!,
+                    ),
                   ],
                   // Error message
                   if (errorMessage != null) ...[
@@ -647,6 +679,75 @@ class _MakerConfirmPaymentScreenState
     );
   }
 
+  Widget _buildAutoConfirmCountdown(Offer offer) {
+    // Expiry mirrors the coordinator's auto-confirm timer: createdAt plus the
+    // coordinator-advertised takerCharged auto-confirm duration. Computed from
+    // the persisted createdAt every repaint, so it survives app restarts.
+    final duration = ref.watch(
+      coordinatorTakerChargedAutoConfirmDurationProvider(
+        offer.coordinatorPubkey,
+      ),
+    );
+    if (duration == null || duration.inSeconds <= 0) {
+      return const SizedBox.shrink();
+    }
+    final expiresAt = offer.createdAt.toUtc().add(duration);
+    final remaining = expiresAt.difference(DateTime.now().toUtc());
+    final remainingSeconds = remaining.inSeconds.clamp(0, duration.inSeconds);
+    final progress = remainingSeconds / duration.inSeconds;
+    final minutes = remainingSeconds ~/ 60;
+    final seconds = remainingSeconds % 60;
+    final timeStr =
+        '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Icon(Icons.timer_outlined,
+                  size: 18, color: Colors.blueGrey),
+              Text(
+                t.maker.confirmPayment.autoConfirmCountdown(time: timeStr),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blueGrey,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: Colors.blueGrey.withValues(alpha: 0.15),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Colors.blueGrey),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            t.maker.confirmPayment.autoConfirmInfo,
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+            softWrap: true,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInstructionItem(String number, String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,17 +772,29 @@ class _MakerConfirmPaymentScreenState
   }
 
   void _handleStatusUpdate(OfferStatus statusEnum) {
-    if (statusEnum == OfferStatus.expiredBlik ||
-        statusEnum == OfferStatus.expiredSentBlik ||
-        statusEnum == OfferStatus.takerCharged) {
+    if (statusEnum == OfferStatus.takerCharged) {
+      // Begin the auto-confirm countdown repaint ticker (idempotent).
+      _startAutoConfirmTicker();
+      setState(() {});
+    } else if (statusEnum == OfferStatus.expiredBlik ||
+        statusEnum == OfferStatus.expiredSentBlik) {
       // No special action needed, UI will update accordingly
       Logger.log.i(
         () =>
             "[MakerConfirmPaymentScreen] Offer status updated to expired. UI will reflect this.",
       );
       setState(() {});
-    } else if (statusEnum == OfferStatus.takerCharged) {
-      context.go("/maker-invalid-blik");
+    } else if (statusEnum == OfferStatus.makerConfirmed ||
+        statusEnum == OfferStatus.settled ||
+        statusEnum == OfferStatus.payingTaker ||
+        statusEnum == OfferStatus.takerPaid) {
+      // Coordinator settled the hold invoice and is paying / has paid the
+      // taker (e.g. via auto-confirm). Jump to the maker success screen.
+      Logger.log.i(
+        () =>
+            "[MakerConfirmPaymentScreen] Offer ${statusEnum.name}; navigating to maker success.",
+      );
+      context.go('/maker-success', extra: ref.read(activeOfferProvider));
     } else if (statusEnum == OfferStatus.reserved) {
       context.go('/wait-blik');
     } else if (statusEnum == OfferStatus.funded) {

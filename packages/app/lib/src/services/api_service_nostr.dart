@@ -343,15 +343,6 @@ class ApiServiceNostr {
     }
   }
 
-  Future<List<Offer>> getMyFinishedOffers(String userPubkey) async {
-    try {
-      return await _nostrService.getMyFinishedOffers(userPubkey);
-    } catch (e) {
-      Logger.log.e(() => 'Error calling getMyFinishedOffers: $e');
-      return [];
-    }
-  }
-
   Future<void> cancelOffer(String offerId, String coordinatorPubkey) async {
     try {
       await _nostrService.cancelOffer(offerId, coordinatorPubkey);

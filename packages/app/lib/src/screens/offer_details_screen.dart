@@ -302,7 +302,13 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
 
           final bool isFunded = offer.status == OfferStatus.funded;
           final bool isReserved = offer.status == OfferStatus.reserved;
-          final bool isBlikReceived = offer.status == OfferStatus.blikReceived;
+          // BLIK confirmation countdown reflects the 2-min lifetime of the
+          // BLIK code, anchored to blik_received_at. It must keep running once
+          // the maker fetches the code (status -> blikSentToMaker) instead of
+          // disappearing/restarting, matching the taker wait-confirmation screen.
+          final bool isBlikReceived =
+              offer.status == OfferStatus.blikReceived ||
+              offer.status == OfferStatus.blikSentToMaker;
           final requiresAtmConsent = offer.category == OfferCategory.atm;
           final requiresEcommerceConsent =
               offer.category == OfferCategory.online;

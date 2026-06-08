@@ -31,10 +31,7 @@ const _activeStatuses = {
 
 const _completedStatuses = {OfferStatus.takerPaid};
 
-const _failedStatuses = {
-  OfferStatus.expired,
-  OfferStatus.cancelled,
-};
+const _failedStatuses = {OfferStatus.expired, OfferStatus.cancelled};
 
 class MyOffersScreen extends ConsumerStatefulWidget {
   const MyOffersScreen({super.key});
@@ -55,8 +52,15 @@ class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
     final db = OfferDbService();
     await Future.wait(
       offers.map((offer) async {
-        final remote = await apiService.getOfferDetails(offer, offer.coordinatorPubkey);
-        if (remote != null) await db.upsertOffer(Offer.fromJson(remote));
+        final remote = await apiService.getOfferDetails(
+          offer,
+          offer.coordinatorPubkey,
+        );
+        if (remote != null) {
+          await db.upsertOffer(Offer.fromJson(remote));
+        } else {
+          await db.deleteOfferById(offer.id);
+        }
       }),
     );
     ref.invalidate(myOffersProvider);
@@ -108,8 +112,7 @@ class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
                 child:
                     filtered.isEmpty
                         ? RefreshIndicator(
-                          onRefresh:
-                              _refreshAllOffers,
+                          onRefresh: _refreshAllOffers,
                           child: ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             children: [
@@ -122,8 +125,7 @@ class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
                           ),
                         )
                         : RefreshIndicator(
-                          onRefresh:
-                              _refreshAllOffers,
+                          onRefresh: _refreshAllOffers,
                           child: ListView.separated(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             itemCount: filtered.length,

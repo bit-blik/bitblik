@@ -1569,6 +1569,12 @@ class Translations$maker$confirmPayment$en {
 	/// en: 'The taker has reported that the BLIK payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.'
 	String get takerChargedWarning => 'The taker has reported that the BLIK payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.';
 
+	/// en: 'Unless you mark the BLIK as invalid, the payment will be auto-confirmed and the taker paid when this timer runs out.'
+	String get autoConfirmInfo => 'Unless you mark the BLIK as invalid, the payment will be auto-confirmed and the taker paid when this timer runs out.';
+
+	/// en: 'Auto-confirm in ${time}'
+	String autoConfirmCountdown({required Object time}) => 'Auto-confirm in ${time}';
+
 	/// en: 'BLIK Code Expired'
 	String get expiredTitle => 'BLIK Code Expired';
 
@@ -4203,6 +4209,8 @@ extension on Translations {
 			'maker.confirmPayment.instruction2' => 'Wait until Taker confirms the payment in their app.',
 			'maker.confirmPayment.instruction3' => 'When payment is succesful, press Confirm below:',
 			'maker.confirmPayment.takerChargedWarning' => 'The taker has reported that the BLIK payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.',
+			'maker.confirmPayment.autoConfirmInfo' => 'Unless you mark the BLIK as invalid, the payment will be auto-confirmed and the taker paid when this timer runs out.',
+			'maker.confirmPayment.autoConfirmCountdown' => ({required Object time}) => 'Auto-confirm in ${time}',
 			'maker.confirmPayment.expiredTitle' => 'BLIK Code Expired',
 			'maker.confirmPayment.expiredWarning' => 'The BLIK code has expired. You need to manually confirm the payment status:',
 			'maker.confirmPayment.expiredInstruction1' => 'If the BLIK payment was successful and you completed your purchase, click "Confirm successful payment" below.',
@@ -4396,10 +4404,10 @@ extension on Translations {
 			'nekoInfo.title' => 'What is a Neko?',
 			'nekoInfo.description' => 'Your Neko is your identity for using BitBlik. It\'s composed of a private and public key to ensure cryptographically secure communication with the coordinator.\n\nTo ensure greater anonymity, it is recommended to use a new, fresh Neko for each offer.\n\n⚠️ IMPORTANT: Your private key is only stored on your device (client-side). It is critically important to backup your private key, as losing access to it may prevent you from resolving disputes and recovering your funds.',
 			'nekoInfo.backupWarning' => 'Remember to backup your Neko',
-			'generateNewKey.title' => 'New',
-			'generateNewKey.description' => 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven\'t backed it up.',
 			_ => null,
 		} ?? switch (path) {
+			'generateNewKey.title' => 'New',
+			'generateNewKey.description' => 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven\'t backed it up.',
 			'generateNewKey.buttons.generate' => 'Generate',
 			'generateNewKey.errors.activeOffer' => 'You cannot generate a new Neko while you have an active offer.',
 			'generateNewKey.errors.failed' => 'Failed to generate new Neko',

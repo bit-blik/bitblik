@@ -425,6 +425,8 @@ maker:
     instruction3: "Quando il pagamento va a buon fine, premi Conferma qui sotto:"
 
     takerChargedWarning: "Il taker ha segnalato che il pagamento BLIK è stato addebitato sul suo conto bancario. Se lo contrassegni come non valido, si creerà un conflitto."
+    autoConfirmInfo: "A meno che tu non contrassegni il BLIK come non valido, il pagamento sarà confermato automaticamente e il taker pagato allo scadere di questo timer."
+    autoConfirmCountdown: "Conferma automatica tra ${time}"
 
     expiredTitle: Codice BLIK Scaduto
     expiredWarning: "Il codice BLIK è scaduto. Devi confermare manualmente lo stato del pagamento:"

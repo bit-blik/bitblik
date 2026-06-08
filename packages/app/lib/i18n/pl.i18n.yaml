@@ -425,7 +425,9 @@ maker:
     instruction3: "Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:"
     
     takerChargedWarning: "Pobierający zgłosił, że płatność BLIK została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt."
-    
+    autoConfirmInfo: "Jeśli nie oznaczysz kodu BLIK jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu."
+    autoConfirmCountdown: "Automatyczne potwierdzenie za ${time}"
+
     expiredTitle: Kod BLIK wygasł
     expiredWarning: "Kod BLIK wygasł. Musisz ręcznie potwierdzić status płatności:"
     expiredInstruction1: "Jeśli płatność BLIK zakończyła się sukcesem i zrealizowałeś zakup, kliknij \"Potwierdź udaną płatność\" poniżej."

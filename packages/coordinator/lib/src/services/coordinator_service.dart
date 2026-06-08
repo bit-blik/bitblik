@@ -1420,6 +1420,7 @@ class CoordinatorService {
       takerFee: _takerFeePercentage,
       minAmountSats: _minAmountSats,
       maxAmountSats: _maxAmountSats,
+      takerChargedAutoConfirmSeconds: _takerChargedAutoConfirmTimeoutSeconds,
       maxPremiumPercent: _maxPremiumPercent,
       currencies: List<String>.from(_supportedCurrencies),
       nostrNpub: null,
@@ -2649,6 +2650,7 @@ class CoordinatorService {
         timestamp: DateTime.now().toUtc(),
         createdAt: offer.createdAt,
         reservedAt: offer.reservedAt,
+        blikReceivedAt: offer.blikReceivedAt,
         makerPubkey: offer.makerPubkey,
         takerPubkey: offer.takerPubkey,
       );

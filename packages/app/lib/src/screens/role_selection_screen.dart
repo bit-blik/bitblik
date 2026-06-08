@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:bitblik_core/core.dart'; // Import Offer model
 import '../providers/providers.dart'; // Import providers
 import '../services/key_service.dart';
+import '../services/offer_db_service.dart';
 import '../widgets/offer_list_tile.dart';
 
 class RoleSelectionScreen extends ConsumerStatefulWidget {
@@ -31,6 +32,11 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
   AnimationController? _logoController;
 
   static const _kBffDismissedKey = 'bff_banner_dismissed';
+
+  bool _userParticipatesInOffer(Offer offer, String? pubkey) {
+    return pubkey != null &&
+        (offer.makerPubkey == pubkey || offer.takerPubkey == pubkey);
+  }
 
   @override
   void initState() {
@@ -145,6 +151,17 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
           () =>
               '[RoleSelectionScreen] No active offer found on coordinator. Clearing local active offer.',
         );
+        await OfferDbService().deleteOfferById(activeOffer.id);
+        await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
+        return;
+      }
+      if (!_userParticipatesInOffer(fetchedOfferObj, publicKey)) {
+        Logger.log.i(
+          () =>
+              '[RoleSelectionScreen] Coordinator offer ${fetchedOfferObj.id} no longer belongs to current user. Removing stale local active offer.',
+        );
+        await OfferDbService().deleteOfferById(activeOffer.id);
+        await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
         return;
       }
       if (fetchedOfferObj.statusEnum == OfferStatus.takerPaid ||

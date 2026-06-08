@@ -100,6 +100,8 @@ class LocalOfferDetailsScreen extends ConsumerWidget {
       offer.coordinatorPubkey,
     );
     if (remote == null) {
+      await OfferDbService().deleteOfferById(offer.id);
+      ref.invalidate(myOffersProvider);
       return;
     }
 

@@ -997,6 +997,8 @@ class _Translations$maker$confirmPayment$pl extends Translations$maker$confirmPa
 	@override String get instruction2 => 'Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.';
 	@override String get instruction3 => 'Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:';
 	@override String get takerChargedWarning => 'Pobierający zgłosił, że płatność BLIK została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.';
+	@override String get autoConfirmInfo => 'Jeśli nie oznaczysz kodu BLIK jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu.';
+	@override String autoConfirmCountdown({required Object time}) => 'Automatyczne potwierdzenie za ${time}';
 	@override String get expiredTitle => 'Kod BLIK wygasł';
 	@override String get expiredWarning => 'Kod BLIK wygasł. Musisz ręcznie potwierdzić status płatności:';
 	@override String get expiredInstruction1 => 'Jeśli płatność BLIK zakończyła się sukcesem i zrealizowałeś zakup, kliknij "Potwierdź udaną płatność" poniżej.';
@@ -2753,6 +2755,8 @@ extension on TranslationsPl {
 			'maker.confirmPayment.instruction2' => 'Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.',
 			'maker.confirmPayment.instruction3' => 'Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:',
 			'maker.confirmPayment.takerChargedWarning' => 'Pobierający zgłosił, że płatność BLIK została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.',
+			'maker.confirmPayment.autoConfirmInfo' => 'Jeśli nie oznaczysz kodu BLIK jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu.',
+			'maker.confirmPayment.autoConfirmCountdown' => ({required Object time}) => 'Automatyczne potwierdzenie za ${time}',
 			'maker.confirmPayment.expiredTitle' => 'Kod BLIK wygasł',
 			'maker.confirmPayment.expiredWarning' => 'Kod BLIK wygasł. Musisz ręcznie potwierdzić status płatności:',
 			'maker.confirmPayment.expiredInstruction1' => 'Jeśli płatność BLIK zakończyła się sukcesem i zrealizowałeś zakup, kliknij "Potwierdź udaną płatność" poniżej.',
@@ -2962,10 +2966,10 @@ extension on TranslationsPl {
 			'home.statistics.title' => 'Zakończone oferty',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
-			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}',
-			'home.statistics.errors.loading' => ({required Object error}) => 'Błąd ładowania statystyk: ${error}',
 			_ => null,
 		} ?? switch (path) {
+			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}',
+			'home.statistics.errors.loading' => ({required Object error}) => 'Błąd ładowania statystyk: ${error}',
 			'system.loadingPublicKey' => 'Ładowanie Twojego klucza publicznego...',
 			'system.errors.generic' => 'Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.',
 			'system.errors.loadingTimeoutConfig' => 'Błąd ładowania konfiguracji limitu czasu.',

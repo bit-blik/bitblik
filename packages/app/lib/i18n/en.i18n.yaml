@@ -441,7 +441,9 @@ maker:
     instruction3: "When payment is succesful, press Confirm below:"
     
     takerChargedWarning: "The taker has reported that the BLIK payment was charged from their bank account. If you mark this as invalid, this will cause a conflict."
-    
+    autoConfirmInfo: "Unless you mark the BLIK as invalid, the payment will be auto-confirmed and the taker paid when this timer runs out."
+    autoConfirmCountdown: "Auto-confirm in ${time}"
+
     expiredTitle: BLIK Code Expired
     expiredWarning: "The BLIK code has expired. You need to manually confirm the payment status:"
     expiredInstruction1: "If the BLIK payment was successful and you completed your purchase, click \"Confirm successful payment\" below."

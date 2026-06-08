@@ -9,6 +9,7 @@ import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
+import '../../services/offer_db_service.dart';
 import '../../widgets/progress_indicators.dart';
 
 class TakerWaitConfirmationScreen extends ConsumerStatefulWidget {
@@ -23,19 +24,18 @@ class TakerWaitConfirmationScreen extends ConsumerStatefulWidget {
 
 class _TakerWaitConfirmationScreenState
     extends ConsumerState<TakerWaitConfirmationScreen> {
+  static const Duration _confirmationDuration = Duration(seconds: 120);
   Timer? _confirmationTimer;
   Timer? _expiredBlikTimer;
-  int _confirmationCountdownSeconds = 120;
+  int _confirmationCountdownSeconds = _confirmationDuration.inSeconds;
   bool _timersInitialized = false;
   bool _timerExpired = false;
   bool _expiredBlikWindowExpired = false;
-  Duration? _maxConfirmationTime;
 
   @override
   void initState() {
     super.initState();
     _validateInitialState();
-    _fetchCoordinatorInfo();
   }
 
   void _validateInitialState() {
@@ -61,31 +61,6 @@ class _TakerWaitConfirmationScreenState
             ).taker.waitConfirmation.errors.invalidOfferStateReceived,
           );
         }
-      });
-    }
-  }
-
-  Future<void> _fetchCoordinatorInfo() async {
-    try {
-      final apiService = ref.read(apiServiceProvider);
-      final coordinatorInfo = apiService.getCoordinatorInfoByPubkey(
-        widget.offer.coordinatorPubkey,
-      );
-      if (coordinatorInfo != null) {
-        setState(() {
-          _maxConfirmationTime = const Duration(seconds: 120);
-        });
-      } else {
-        setState(() {
-          _maxConfirmationTime = const Duration(seconds: 120);
-        });
-      }
-    } catch (e) {
-      Logger.log.e(
-        () => "[TakerWaitConfirmation] Error fetching coordinator info: $e",
-      );
-      setState(() {
-        _maxConfirmationTime = const Duration(seconds: 120);
       });
     }
   }
@@ -120,7 +95,7 @@ class _TakerWaitConfirmationScreenState
           _expiredBlikWindowExpired = true;
         });
       }
-      _navigateToOfferDetails(offer.id);
+      unawaited(_handleExpiredBlikWindowElapsed(offer));
       return;
     }
 
@@ -135,8 +110,57 @@ class _TakerWaitConfirmationScreenState
       setState(() {
         _expiredBlikWindowExpired = true;
       });
-      _navigateToOfferDetails(offer.id);
+      unawaited(_handleExpiredBlikWindowElapsed(offer));
     });
+  }
+
+  Future<void> _handleExpiredBlikWindowElapsed(Offer offer) async {
+    try {
+      final apiService = await ref.read(initializedApiServiceProvider.future);
+      final remote = await apiService.getOfferDetails(
+        offer,
+        offer.coordinatorPubkey,
+      );
+
+      if (remote == null) {
+        await OfferDbService().deleteOfferById(offer.id);
+        if (offer.holdInvoicePaymentHash != null &&
+            offer.holdInvoicePaymentHash!.isNotEmpty &&
+            offer.holdInvoicePaymentHash != offer.id) {
+          await OfferDbService().deleteOfferById(offer.holdInvoicePaymentHash!);
+        }
+        await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
+        if (mounted) {
+          context.go('/offers');
+        }
+        return;
+      }
+
+      final refreshed = Offer.fromJson(remote);
+      await ref.read(activeOfferProvider.notifier).setActiveOffer(refreshed);
+      if (!mounted) return;
+
+      if (refreshed.statusEnum == OfferStatus.funded) {
+        await OfferDbService().deleteOfferById(refreshed.id);
+        await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
+        if (mounted) {
+          context.go('/offers');
+        }
+        return;
+      }
+
+      _navigateToOfferDetails(refreshed.id);
+    } catch (e) {
+      Logger.log.w(
+        () =>
+            '[TakerWaitConfirmation] Failed reconciling expiredBlik relist expiry for ${offer.id}: $e',
+      );
+      await OfferDbService().deleteOfferById(offer.id);
+      await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
+      if (mounted) {
+        context.go('/offers');
+      }
+    }
   }
 
   void _navigateToOfferDetails(String offerId) {
@@ -159,8 +183,8 @@ class _TakerWaitConfirmationScreenState
     _confirmationTimer?.cancel();
     if (!mounted) return;
 
-    final startTime = offer.blikReceivedAt ?? DateTime.now();
-    final expiresAt = startTime.add(const Duration(seconds: 120));
+    final startTime = _confirmationStartTime(offer);
+    final expiresAt = startTime.add(_confirmationDuration);
     final now = DateTime.now();
     final initialRemaining = expiresAt.difference(now);
 
@@ -175,7 +199,7 @@ class _TakerWaitConfirmationScreenState
       setState(() {
         _confirmationCountdownSeconds = initialRemaining.inSeconds.clamp(
           0,
-          120,
+          _confirmationDuration.inSeconds,
         );
       });
       _confirmationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -203,6 +227,13 @@ class _TakerWaitConfirmationScreenState
         _timerExpired = true;
       });
     }
+  }
+
+  DateTime _confirmationStartTime(Offer offer) {
+    return offer.blikReceivedAt ??
+        offer.updatedAt ??
+        offer.reservedAt ??
+        offer.createdAt;
   }
 
   Future<void> _resetToOfferList(String message) async {
@@ -285,11 +316,11 @@ class _TakerWaitConfirmationScreenState
     } else if (currentStatusEnum == OfferStatus.funded) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      _navigateToOfferDetails(offer.id);
+      unawaited(_handleExpiredBlikWindowElapsed(offer));
     } else if (currentStatusEnum == OfferStatus.expiredBlik &&
         _expiredBlikWindowExpired) {
       _confirmationTimer?.cancel();
-      _navigateToOfferDetails(offer.id);
+      unawaited(_handleExpiredBlikWindowElapsed(offer));
     } else if (currentStatusEnum == OfferStatus.invalidBlik) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
@@ -390,13 +421,15 @@ class _TakerWaitConfirmationScreenState
       case OfferStatus.blikReceived:
         return _BlikReceivedWidget(
           offer: offer,
-          maxConfirmationTime: _maxConfirmationTime,
+          confirmationStartTime: _confirmationStartTime(offer),
+          maxConfirmationTime: _confirmationDuration,
           timerExpired: _timerExpired,
         );
       case OfferStatus.blikSentToMaker:
         return _BlikSentToMakerWidget(
           offer: offer,
-          maxConfirmationTime: _maxConfirmationTime,
+          confirmationStartTime: _confirmationStartTime(offer),
+          maxConfirmationTime: _confirmationDuration,
           timerExpired: _timerExpired,
         );
       case OfferStatus.expiredBlik:
@@ -533,11 +566,13 @@ class _TakerWaitConfirmationScreenState
 
 class _BlikReceivedWidget extends StatelessWidget {
   final Offer offer;
-  final Duration? maxConfirmationTime;
+  final DateTime confirmationStartTime;
+  final Duration maxConfirmationTime;
   final bool timerExpired;
 
   const _BlikReceivedWidget({
     required this.offer,
+    required this.confirmationStartTime,
     required this.maxConfirmationTime,
     required this.timerExpired,
   });
@@ -556,14 +591,12 @@ class _BlikReceivedWidget extends StatelessWidget {
           ),
           const SizedBox(height: 20),
         ],
-        if (offer.blikReceivedAt != null &&
-            maxConfirmationTime != null &&
-            !timerExpired)
+        if (!timerExpired)
           CircularCountdownTimer(
             size: 200,
             key: ValueKey('confirmation_timer_${offer.id}'),
-            startTime: offer.blikReceivedAt!,
-            maxDuration: maxConfirmationTime!,
+            startTime: confirmationStartTime,
+            maxDuration: maxConfirmationTime,
             strokeWidth: 16,
             progressColor: Colors.blue,
             backgroundColor: Colors.white,
@@ -579,11 +612,13 @@ class _BlikReceivedWidget extends StatelessWidget {
 
 class _BlikSentToMakerWidget extends StatelessWidget {
   final Offer offer;
-  final Duration? maxConfirmationTime;
+  final DateTime confirmationStartTime;
+  final Duration maxConfirmationTime;
   final bool timerExpired;
 
   const _BlikSentToMakerWidget({
     required this.offer,
+    required this.confirmationStartTime,
     required this.maxConfirmationTime,
     required this.timerExpired,
   });
@@ -609,14 +644,12 @@ class _BlikSentToMakerWidget extends StatelessWidget {
           ),
           const SizedBox(height: 30),
         ],
-        if (offer.blikReceivedAt != null &&
-            maxConfirmationTime != null &&
-            !timerExpired)
+        if (!timerExpired)
           CircularCountdownTimer(
             size: 200,
             key: ValueKey('confirmation_timer_${offer.id}'),
-            startTime: offer.blikReceivedAt!,
-            maxDuration: maxConfirmationTime!,
+            startTime: confirmationStartTime,
+            maxDuration: maxConfirmationTime,
             strokeWidth: 16,
             progressColor: Colors.blue,
             backgroundColor: Colors.white,
