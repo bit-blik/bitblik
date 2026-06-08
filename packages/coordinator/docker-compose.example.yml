@@ -10,8 +10,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
   coordinator:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: packages/coordinator/Dockerfile
     container_name: coordinator
     extra_hosts:
       - "host.docker.internal:host-gateway"
