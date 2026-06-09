@@ -303,12 +303,7 @@ Future<void> main() async {
   await NotificationService().init();
   String? localeString = await asyncPrefs.getString('app_locale');
   if (localeString != null) {
-    appLocale = switch (localeString) {
-      'pl' => AppLocale.pl,
-      'it' => AppLocale.it,
-      'pt' => AppLocale.pt,
-      _ => AppLocale.en,
-    };
+    appLocale = localeString == 'pl' ? AppLocale.pl : AppLocale.en;
   } else {
     appLocale = AppLocaleUtils.findDeviceLocale();
   }
@@ -593,7 +588,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     final t = Translations.of(context);
 
     return MaterialApp.router(
-      title: t.app.title(app: ref.watch(selectedPaymentSystemProvider).brandName),
+      title: t.app.title(app: buildAppName),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -853,7 +848,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    t.altstore.step2Title(app: ref.watch(selectedPaymentSystemProvider).brandName),
+                                    t.altstore.step2Title(app: buildAppName),
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
@@ -915,7 +910,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                               ),
                                             ),
                                             child: Text(
-                                              t.altstore.step2Button(app: ref.watch(selectedPaymentSystemProvider).brandName),
+                                              t.altstore.step2Button(app: buildAppName),
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
@@ -1381,7 +1376,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                   AppLocale.en,
                   AppLocale.pl,
                   AppLocale.it,
-                  AppLocale.pt,
                 ];
                 return orderedLocales.map<Widget>((AppLocale locale) {
                   return Container(
@@ -1419,7 +1413,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                     AppLocale.en,
                     AppLocale.pl,
                     AppLocale.it,
-                    AppLocale.pt,
                   ].map<DropdownMenuItem<AppLocale>>((AppLocale locale) {
                     final String flagEmoji =
                         locale.languageCode == 'en'
@@ -1428,8 +1421,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                             ? '🇵🇱'
                             : locale.languageCode == 'it'
                             ? '🇮🇹'
-                            : locale.languageCode == 'pt'
-                            ? '🇵🇹'
                             : '';
                     final String displayName =
                         locale.languageCode == 'en'

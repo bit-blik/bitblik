@@ -2,6 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:bitblik_core/core.dart';
 
+import '../config/build_flavor.dart';
+
 enum BitcoinDisplayUnit { sats, bitcoin }
 
 class OfferCreationPreferences {
@@ -164,11 +166,15 @@ class AppPreferencesStore {
     );
   }
 
-  /// Active payment method (country/system). Defaults to BLIK so existing
-  /// Polish users are unaffected.
+  /// Active payment method (country/system). Uses the saved choice if present,
+  /// otherwise the build's default ([buildDefaultPaymentSystemId], resolved at
+  /// startup from the appId/flavor or `--dart-define=PAYMENT_SYSTEM`).
   static Future<PaymentSystem> loadSelectedPaymentSystem() async {
     final prefs = await SharedPreferences.getInstance();
-    return paymentSystemById(prefs.getString(_selectedPaymentSystemKey));
+    final saved = prefs.getString(_selectedPaymentSystemKey);
+    // ignore: avoid_print
+    print('BITFLAVOR loadSelected saved=$saved default=$buildDefaultPaymentSystemId');
+    return paymentSystemById(saved ?? buildDefaultPaymentSystemId);
   }
 
   static Future<void> saveSelectedPaymentSystem(PaymentSystem method) async {

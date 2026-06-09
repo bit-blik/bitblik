@@ -34,7 +34,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
             title: Text(t.notificationSettings.newOfferAlerts.label),
-            subtitle: Text(t.notificationSettings.newOfferAlerts.description(app: ref.watch(selectedPaymentSystemProvider).brandName)),
+            subtitle: Text(t.notificationSettings.newOfferAlerts.description(app: buildAppName)),
             value: _isAndroid && enabled,
             onChanged: _isAndroid
                 ? (value) =>
