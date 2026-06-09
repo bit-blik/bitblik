@@ -47,7 +47,7 @@ class _TakerInvalidBlikScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Text(
-                      t.taker.invalidBlik.message,
+                      t.taker.invalidBlik.message(code: ref.read(selectedPaymentSystemProvider).codeLabel),
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
@@ -58,7 +58,7 @@ class _TakerInvalidBlikScreenState
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      t.taker.invalidBlik.explanation,
+                      t.taker.invalidBlik.explanation(code: ref.read(selectedPaymentSystemProvider).codeLabel),
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                     ),
@@ -124,7 +124,7 @@ class _TakerInvalidBlikScreenState
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Text(
-                          t.taker.invalidBlik.actions.retry,
+                          t.taker.invalidBlik.actions.retry(code: ref.read(selectedPaymentSystemProvider).codeLabel),
                           style: TextStyle(fontSize: 16),
                         ),
                       ),

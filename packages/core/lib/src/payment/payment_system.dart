@@ -18,12 +18,20 @@ class PaymentSystem {
   /// User-facing brand name, e.g. `BLIK`, `MB WAY`. Brand names — not translated.
   final String label;
 
+  /// Name of the payment code as shown in UI text (e.g. `BLIK`, `MB WAY`).
+  /// Null falls back to a neutral word via [codeLabel].
+  final String? codeName;
+
   /// ISO 3166-1 alpha-2 country code this method serves, e.g. `PL`, `PT`.
   /// Used as the i18n key for the localized country name.
   final String country;
 
   /// Country flag emoji, e.g. 🇵🇱, 🇵🇹.
   final String flag;
+
+  /// Optional app asset path for the system's logo (e.g. `assets/bitway.png`).
+  /// Shown instead of [flag] where available.
+  final String? logoAsset;
 
   /// ISO currency code the method settles in, e.g. `PLN`, `EUR`. Used for
   /// rate lookups, offer tagging, and validation.
@@ -39,6 +47,13 @@ class PaymentSystem {
   /// How long the code stays valid, i.e. how long the maker has to use it.
   /// Drives the confirmation countdown on both client and coordinator.
   final int codeValidityMinutes;
+
+  /// Whether the taker has to actively approve/confirm the payment code in
+  /// their banking app (BLIK push confirmation). False for pull-style flows
+  /// like MB WAY ATM cash-out, where the maker simply enters the code at the
+  /// ATM and there is nothing for the taker to confirm — in that case all
+  /// "confirm in your banking app" prompts are suppressed.
+  final bool requiresCodeConfirmation;
 
   /// Offer categories this method supports. MB WAY ATM payouts only make sense
   /// for cash-out, so it is restricted to [OfferCategory.atm].
@@ -57,16 +72,23 @@ class PaymentSystem {
   const PaymentSystem({
     required this.id,
     required this.label,
+    this.codeName,
     required this.country,
     required this.flag,
+    this.logoAsset,
     required this.currency,
     required this.currencySymbol,
     required this.codeLength,
     required this.codeValidityMinutes,
+    this.requiresCodeConfirmation = true,
     required this.supportedCategories,
     required this.atmPresetAmounts,
     required this.atmBanknoteDenominations,
   });
+
+  /// Payment-code term for UI text; neutral `'code'` when [codeName] is unset.
+  String get codeLabel =>
+      (codeName == null || codeName!.isEmpty) ? 'code' : codeName!;
 
   /// Whether this method offers a choice of category (vs a single forced one).
   bool get hasCategoryChoice => supportedCategories.length > 1;
@@ -137,6 +159,7 @@ class PaymentSystem {
 const PaymentSystem kBlik = PaymentSystem(
   id: 'blik',
   label: 'BLIK',
+  codeName: 'BLIK',
   country: 'PL',
   flag: '🇵🇱',
   currency: 'PLN',
@@ -156,12 +179,17 @@ const PaymentSystem kBlik = PaymentSystem(
 const PaymentSystem kMbway = PaymentSystem(
   id: 'mbway',
   label: 'MBway',
+  codeName: 'MB WAY',
   country: 'PT',
   flag: '🇵🇹',
+  logoAsset: 'assets/bitway.png',
   currency: 'EUR',
   currencySymbol: '€',
   codeLength: 10,
   codeValidityMinutes: 30,
+  // ATM cash-out: the maker enters the code at the ATM; the taker has nothing
+  // to approve in a banking app.
+  requiresCodeConfirmation: false,
   supportedCategories: [OfferCategory.atm],
   atmPresetAmounts: [10, 20, 30, 50, 100, 200],
   atmBanknoteDenominations: [5, 10, 20, 50, 100, 200],

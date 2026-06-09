@@ -63,7 +63,7 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              Text(t.taker.conflict.body, textAlign: TextAlign.center),
+              Text(t.taker.conflict.body(code: ref.read(selectedPaymentSystemProvider).codeLabel), textAlign: TextAlign.center),
               CoordinatorNostrContactCard(npub: coordNpub),
               const SizedBox(height: 16),
               ElevatedButton(

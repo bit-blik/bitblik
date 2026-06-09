@@ -22,6 +22,18 @@ class _MakerConfirmPaymentScreenState
     extends ConsumerState<MakerConfirmPaymentScreen> {
   bool _fetchAttempted = false;
 
+  /// Active offer's payment method, resolved from its currency (falls back to
+  /// the app's selected method).
+  PaymentSystem get _method {
+    final o = ref.read(activeOfferProvider);
+    return o != null
+        ? (paymentSystemForCurrency(o.fiatCurrency) ?? kBlik)
+        : ref.read(selectedPaymentSystemProvider);
+  }
+
+  /// Active offer's payment-system code term (e.g. BLIK / MB WAY) for UI text.
+  String get _code => _method.codeLabel;
+
   // Ticks once per second while in takerCharged to drive the auto-confirm
   // countdown. The expiry itself is derived from offer.createdAt plus the
   // coordinator-advertised duration, so the ticker only triggers repaints.
@@ -119,7 +131,7 @@ class _MakerConfirmPaymentScreenState
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text(t.maker.confirmPayment.confirmDialog.title),
-          content: Text(t.maker.confirmPayment.confirmDialog.content),
+          content: Text(t.maker.confirmPayment.confirmDialog.content(code: _code)),
           actions: <Widget>[
             TextButton(
               child: Text(t.maker.confirmPayment.confirmDialog.cancel),
@@ -272,7 +284,7 @@ class _MakerConfirmPaymentScreenState
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(t.system.blik.copied),
+        content: Text(t.system.blik.copied(code: _code)),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -340,8 +352,11 @@ class _MakerConfirmPaymentScreenState
     );
     tp.text = TextSpan(text: formattedBlikCode, style: blikStyle);
     tp.layout();
-    // Add some padding budget for icon and inner paddings
-    final double copyButtonWidth = tp.width;
+    // Match the copy button to the code's on-screen width, but clamp to the
+    // available width so long codes (scaled down by the FittedBox above) don't
+    // make the button overflow the screen.
+    final double maxCodeWidth = MediaQuery.of(context).size.width - 32;
+    final double copyButtonWidth = tp.width.clamp(0.0, maxCodeWidth);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -414,7 +429,7 @@ class _MakerConfirmPaymentScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              t.maker.confirmPayment.takerChargedWarning,
+                              t.maker.confirmPayment.takerChargedWarning(code: _code),
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.orange,
@@ -501,7 +516,7 @@ class _MakerConfirmPaymentScreenState
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          t.maker.confirmPayment.actions.markInvalid,
+                          t.maker.confirmPayment.actions.markInvalid(code: _code),
                           style: const TextStyle(
                             color: Colors.red,
                             fontSize: 16,
@@ -534,7 +549,7 @@ class _MakerConfirmPaymentScreenState
         const SizedBox(height: 8),
         // BLIK code received text
         Text(
-          t.maker.confirmPayment.title,
+          t.maker.confirmPayment.title(code: _code),
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w400,
@@ -543,18 +558,27 @@ class _MakerConfirmPaymentScreenState
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
-        // Large BLIK code (with loading hint if needed)
+        // Large BLIK code (with loading hint if needed). Scale down to a single
+        // line so long codes (e.g. 10-digit MB WAY) never wrap.
         Column(
           children: [
-            Text(
-              formattedBlikCode,
-              style: blikStyle,
-              textAlign: TextAlign.center,
+            SizedBox(
+              width: double.infinity,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  formattedBlikCode,
+                  style: blikStyle,
+                  maxLines: 1,
+                  softWrap: false,
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ),
             if (isFetchingBlik) ...[
               const SizedBox(height: 8),
               Text(
-                t.maker.confirmPayment.retrieving,
+                t.maker.confirmPayment.retrieving(code: _code),
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
@@ -593,7 +617,7 @@ class _MakerConfirmPaymentScreenState
                     const Icon(Icons.copy, color: Colors.white, size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      t.maker.confirmPayment.actions.copyBlik,
+                      t.maker.confirmPayment.actions.copyBlik(code: _code),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
@@ -607,12 +631,11 @@ class _MakerConfirmPaymentScreenState
           ),
         ),
         const SizedBox(height: 32),
-        // Instructions
-        _buildInstructionItem('1', t.maker.confirmPayment.instruction1),
-        const SizedBox(height: 6),
-        _buildInstructionItem('2', t.maker.confirmPayment.instruction2),
-        const SizedBox(height: 6),
-        _buildInstructionItem('3', t.maker.confirmPayment.instruction3),
+        // Instructions. The "wait for the taker to confirm in their banking
+        // app" step only applies to push-confirmation methods like BLIK; for
+        // pull flows (MB WAY ATM) it is dropped and the remaining steps are
+        // renumbered.
+        ..._buildInstructionSteps(t),
         const SizedBox(height: 8),
       ],
     );
@@ -639,7 +662,7 @@ class _MakerConfirmPaymentScreenState
         const SizedBox(height: 24),
         // Expired title
         Text(
-          t.maker.confirmPayment.expiredTitle,
+          t.maker.confirmPayment.expiredTitle(code: _code),
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w600,
@@ -652,7 +675,7 @@ class _MakerConfirmPaymentScreenState
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
-            t.maker.confirmPayment.expiredWarning,
+            t.maker.confirmPayment.expiredWarning(code: _code),
             style: const TextStyle(fontSize: 16, color: Colors.black87),
             textAlign: TextAlign.center,
           ),
@@ -665,12 +688,12 @@ class _MakerConfirmPaymentScreenState
             children: [
               _buildInstructionItem(
                 '✓',
-                t.maker.confirmPayment.expiredInstruction1,
+                t.maker.confirmPayment.expiredInstruction1(code: _code),
               ),
               const SizedBox(height: 12),
               _buildInstructionItem(
                 '✗',
-                t.maker.confirmPayment.expiredInstruction2,
+                t.maker.confirmPayment.expiredInstruction2(code: _code),
               ),
             ],
           ),
@@ -739,13 +762,29 @@ class _MakerConfirmPaymentScreenState
           ),
           const SizedBox(height: 8),
           Text(
-            t.maker.confirmPayment.autoConfirmInfo,
+            t.maker.confirmPayment.autoConfirmInfo(code: _code),
             style: const TextStyle(fontSize: 12, color: Colors.black54),
             softWrap: true,
           ),
         ],
       ),
     );
+  }
+
+  /// Numbered confirm-payment steps. Drops the "wait for the taker to confirm
+  /// in their app" step for methods that don't require it, renumbering the rest.
+  List<Widget> _buildInstructionSteps(Translations t) {
+    final steps = <String>[
+      t.maker.confirmPayment.instruction1(code: _code),
+      if (_method.requiresCodeConfirmation) t.maker.confirmPayment.instruction2,
+      t.maker.confirmPayment.instruction3,
+    ];
+    final widgets = <Widget>[];
+    for (var i = 0; i < steps.length; i++) {
+      if (i > 0) widgets.add(const SizedBox(height: 6));
+      widgets.add(_buildInstructionItem('${i + 1}', steps[i]));
+    }
+    return widgets;
   }
 
   Widget _buildInstructionItem(String number, String text) {

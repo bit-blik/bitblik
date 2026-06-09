@@ -167,7 +167,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  t.maker.waitTaker.errorRetrievingBlik(details: e.toString()),
+                  t.maker.waitTaker.errorRetrievingBlik(
+                    details: e.toString(),
+                    code: ref.read(selectedPaymentSystemProvider).codeLabel,
+                  ),
                 ),
               ),
             );

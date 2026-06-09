@@ -2,18 +2,61 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ndk/shared/logger/logger.dart';
+import 'package:bitblik_core/core.dart';
 import '../providers/providers.dart'; // Needed for ref.invalidate
 import '../../i18n/gen/strings.g.dart';
 
 // Taker Progress Indicator Widget - reusable for taker flow screens
-class TakerProgressIndicator extends StatelessWidget {
-  final int activeStep; // 1, 2, or 3
+class TakerProgressIndicator extends ConsumerWidget {
+  /// Logical step: 1 = submit code, 2 = confirm/wait, 3 = get paid.
+  final int activeStep;
 
   const TakerProgressIndicator({super.key, this.activeStep = 1});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
+    // Resolve the method from the active offer (its currency) or fall back to
+    // the app's selected payment system, so step labels match the method.
+    final offer = ref.watch(activeOfferProvider);
+    final method = offer != null
+        ? (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik)
+        : ref.watch(selectedPaymentSystemProvider);
+    final code = method.codeLabel;
+
+    // Pull-style methods (e.g. MB WAY ATM) have no taker "Confirm" step — drop
+    // it and renumber. The incoming activeStep keeps its logical meaning, so
+    // map it onto the collapsed list (the wait phase falls onto "Get Paid").
+    final labels = <String>[
+      t.taker.progress.step1(code: code),
+      if (method.requiresCodeConfirmation) t.taker.progress.step2(code: code),
+      t.taker.progress.step3,
+    ];
+    final int active = method.requiresCodeConfirmation
+        ? activeStep
+        : (activeStep <= 1 ? 1 : 2);
+
+    final children = <Widget>[];
+    for (var i = 0; i < labels.length; i++) {
+      final number = i + 1;
+      if (i > 0) {
+        children.add(
+          const Text(' > ',
+              style: TextStyle(fontSize: 14, color: Colors.grey)),
+        );
+      }
+      children.add(
+        Text(
+          '$number. ${labels[i]}',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: number <= active ? FontWeight.w500 : FontWeight.w400,
+            color: number == active ? Colors.black : Colors.grey,
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Wrap(
@@ -21,37 +64,7 @@ class TakerProgressIndicator extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: 8.0,
         runSpacing: 4.0,
-        children: [
-          // Step 1: Submit BLIK
-          Text(
-            '1. ${t.taker.progress.step1}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: activeStep >= 1 ? FontWeight.w500 : FontWeight.w400,
-              color: activeStep == 1 ? Colors.black : Colors.grey,
-            ),
-          ),
-          const Text(' > ', style: TextStyle(fontSize: 14, color: Colors.grey)),
-          // Step 2: Confirm BLIK
-          Text(
-            '2. ${t.taker.progress.step2}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: activeStep >= 2 ? FontWeight.w500 : FontWeight.w400,
-              color: activeStep == 2 ? Colors.black : Colors.grey,
-            ),
-          ),
-          const Text(' > ', style: TextStyle(fontSize: 14, color: Colors.grey)),
-          // Step 3: Get Paid
-          Text(
-            '3. ${t.taker.progress.step3}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: activeStep == 3 ? FontWeight.w500 : FontWeight.w400,
-              color: activeStep >= 3 ? Colors.black : Colors.grey,
-            ),
-          ),
-        ],
+        children: children,
       ),
     );
   }
@@ -592,9 +605,13 @@ class _CircularCountdownTimerState extends State<CircularCountdownTimer> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate dynamic font size based on widget size (larger text)
-    final dynamicFontSize =
-        widget.size * 0.35; // 35% of circle size for bigger text
+    // Upper-bound font size based on widget size. The text is wrapped in a
+    // FittedBox constrained to the circle's inner width, so a short value like
+    // "24s" renders at this size while a longer "30:00" is scaled down to fit
+    // on one line — both stay legible regardless of digit count.
+    final dynamicFontSize = widget.size * 0.35;
+    // Usable width inside the ring (diameter minus both strokes and a margin).
+    final innerWidth = widget.size - widget.strokeWidth * 2 - 12;
 
     return SizedBox(
       width: widget.size,
@@ -622,13 +639,21 @@ class _CircularCountdownTimerState extends State<CircularCountdownTimer> {
               strokeWidth: widget.strokeWidth,
             ),
           ),
-          // Time display
-          Text(
-            _formatTime(_remainingSeconds),
-            style: TextStyle(
-              fontSize: dynamicFontSize,
-              fontWeight: FontWeight.normal,
-              color: Colors.black,
+          // Time display — scaled to fit the ring's inner width on one line.
+          SizedBox(
+            width: innerWidth,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                _formatTime(_remainingSeconds),
+                maxLines: 1,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: dynamicFontSize,
+                  fontWeight: FontWeight.normal,
+                  color: Colors.black,
+                ),
+              ),
             ),
           ),
         ],

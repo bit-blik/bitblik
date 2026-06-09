@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../config/group_links.dart';
 import 'package:bitblik_core/core.dart';
+import '../config/build_flavor.dart';
 import '../utils/category_icons.dart';
 import '../utils/bitcoin_display.dart';
 import '../providers/providers.dart';
@@ -566,7 +567,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  t.offers.details.noAvailableTip,
+                                  t.offers.details.noAvailableTip(app: buildAppName),
                                   textAlign: TextAlign.left,
                                   style: const TextStyle(
                                     color: Color(0xFF1D4ED8),
@@ -1334,7 +1335,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                t.offers.details.noAvailableTip,
+                                t.offers.details.noAvailableTip(app: buildAppName),
                                 textAlign: TextAlign.left,
                                 style: const TextStyle(
                                   color: Color(0xFF1D4ED8),
@@ -1544,6 +1545,9 @@ Widget _buildStatsSection(
                       avgPaidTime: _formatDurationFromSeconds(
                         last7DaysPaidTime?.round(),
                       ),
+                      code:
+                          (paymentSystemForCurrency(currency) ?? kBlik)
+                              .codeLabel,
                     ),
                     style: const TextStyle(fontSize: 13),
                   ),

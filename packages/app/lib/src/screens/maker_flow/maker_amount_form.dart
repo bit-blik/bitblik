@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
+import '../../config/build_flavor.dart';
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
 import '../../settings/app_preferences.dart';
@@ -16,14 +17,15 @@ import '../coordinator_details_screen.dart';
 // CoordinatorRecord comes from bitblik_core
 
 // Progress indicator widget for maker flow
-class MakerProgressIndicator extends StatelessWidget {
+class MakerProgressIndicator extends ConsumerWidget {
   final int activeStep; // 1, 2, or 3
 
   const MakerProgressIndicator({super.key, this.activeStep = 1});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
+    final code = ref.watch(selectedPaymentSystemProvider).codeLabel;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Wrap(
@@ -54,7 +56,7 @@ class MakerProgressIndicator extends StatelessWidget {
           const Text('>', style: TextStyle(fontSize: 14, color: Colors.grey)),
           // Step 3: Use BLIK
           Text(
-            t.maker.amountForm.progress.step3,
+            t.maker.amountForm.progress.step3(code: code),
             style: TextStyle(
               fontSize: 13,
               fontWeight: activeStep == 3 ? FontWeight.w500 : FontWeight.w400,
@@ -1168,11 +1170,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     OfferCategory.values.map((category) {
                       final hint = switch (category) {
                         OfferCategory.shop =>
-                          t.maker.amountForm.category.physicalShopHint,
+                          t.maker.amountForm.category.physicalShopHint(code: _method.codeLabel, app: buildAppName),
                         OfferCategory.atm =>
                           t.maker.amountForm.category.atmHint,
                         OfferCategory.online =>
-                          t.maker.amountForm.category.ecommerceWarningBody,
+                          t.maker.amountForm.category.ecommerceWarningBody(code: _method.codeLabel),
                       };
                       final name = switch (category) {
                         OfferCategory.shop =>
@@ -1409,7 +1411,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          t.maker.amountForm.category.physicalShopHint,
+                          t.maker.amountForm.category
+                              .physicalShopHint(code: _method.codeLabel, app: buildAppName),
                           style: const TextStyle(fontSize: 13, height: 1.4),
                         ),
                       ),
@@ -1470,7 +1473,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              t.maker.amountForm.category.ecommerceWarningBody,
+                              t.maker.amountForm.category.ecommerceWarningBody(code: _method.codeLabel),
                               style: const TextStyle(fontSize: 13, height: 1.4),
                             ),
                           ),

@@ -253,7 +253,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     if (mounted) {
       Logger.log.i(() => "[TakerSubmitBlikScreen] BLIK input timer expired.");
       await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
-      _resetToOfferList(t.taker.submitBlik.timeExpired);
+      _resetToOfferList(t.taker.submitBlik.timeExpired(code: _method.codeLabel));
     }
   }
 
@@ -299,7 +299,8 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     }
     if (!_method.isValidCode(blikCode)) {
       ref.read(errorProvider.notifier).state =
-          t.taker.submitBlik.validation.invalidFormat;
+          t.taker.submitBlik.validation
+              .invalidFormat(code: _method.codeLabel, digits: _method.codeLength);
       _startBlikInputTimer(offer);
       return;
     }
@@ -394,7 +395,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       }
     } catch (e) {
       ref.read(errorProvider.notifier).state = t.taker.submitBlik.errors
-          .submitting(details: e.toString());
+          .submitting(details: e.toString(), code: _method.codeLabel);
       if (mounted) {
         _startBlikInputTimer(offer);
       }
@@ -678,13 +679,13 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
           );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(t.taker.submitBlik.feedback.pasted),
+              content: Text(t.taker.submitBlik.feedback.pasted(code: _method.codeLabel)),
               duration: const Duration(seconds: 1),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(t.taker.submitBlik.errors.clipboardInvalid)),
+            SnackBar(content: Text(t.taker.submitBlik.errors.clipboardInvalid(code: _method.codeLabel, digits: _method.codeLength))),
           );
         }
       }
@@ -783,7 +784,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                     ),
                     SizedBox(width: 10),
                     Text(
-                      t.taker.submitBlik.instruction,
+                      t.taker.submitBlik.instruction(code: _method.codeLabel),
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
@@ -829,7 +830,8 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   ),
 
                   decoration: InputDecoration(
-                    hintText: t.taker.submitBlik.title,
+                    hintText: t.taker.submitBlik
+                        .title(code: _method.codeLabel, digits: _method.codeLength),
                     hintStyle: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w400,
@@ -872,7 +874,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildDetailRow(
-                      t.taker.submitBlik.details.requestedAmount,
+                      t.taker.submitBlik.details.requestedAmount(code: _method.codeLabel),
                       '${formatDouble(activeOffer.fiatAmount)} ${activeOffer.fiatCurrency}',
                     ),
                     // const SizedBox(height: 12),
@@ -956,7 +958,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                             const SizedBox(width: 8),
                           ],
                           Text(
-                            t.taker.submitBlik.actions.submit,
+                            t.taker.submitBlik.actions.submit(code: _method.codeLabel),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

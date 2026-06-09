@@ -5,9 +5,13 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ndk/shared/logger/logger.dart';
+import 'package:bitblik_core/core.dart';
 import '../../i18n/gen/strings.g.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:go_router/go_router.dart';
+
+import '../config/build_flavor.dart';
+import '../providers/providers.dart';
 
 class FaqScreen extends ConsumerStatefulWidget {
   const FaqScreen({super.key});
@@ -59,6 +63,25 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     super.dispose();
   }
 
+  /// Replace `{app}`, `{code}`, `{codeLength}`, `{country}`, `{validity}` in the
+  /// FAQ markdown with the active payment system's values.
+  String _applyTokens(String text) {
+    final ps = ref.read(selectedPaymentSystemProvider);
+    String countryName = ps.country;
+    try {
+      final c = Translations.of(
+        context,
+      )['settings.paymentSystem.countries.${ps.country}'];
+      if (c is String && c.isNotEmpty) countryName = c;
+    } catch (_) {}
+    return text
+        .replaceAll('{app}', buildAppName)
+        .replaceAll('{codeLength}', '${ps.codeLength}')
+        .replaceAll('{code}', ps.codeLabel)
+        .replaceAll('{country}', countryName)
+        .replaceAll('{validity}', '${ps.codeValidityMinutes}');
+  }
+
   Future<void> _loadFaqContent() async {
     // Use _currentLocale which is updated by the stream listener, or fallback to LocaleSettings.currentLocale
     // This ensures that if _loadFaqContent is called before the stream listener has a chance to update _currentLocale
@@ -97,10 +120,14 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
         }
       }
 
-      // Convert Markdown to HTML
-      final html = md.markdownToHtml(
-        markdownData,
-        inlineSyntaxes: [md.InlineHtmlSyntax()],
+      // Convert Markdown to HTML, then substitute payment-system tokens on the
+      // final string (BitBlik/BLIK/Poland/6-digit → BitWay/MB WAY/Portugal/
+      // 10-digit, etc.) so nothing can slip past the renderer.
+      final html = _applyTokens(
+        md.markdownToHtml(
+          markdownData,
+          inlineSyntaxes: [md.InlineHtmlSyntax()],
+        ),
       );
 
       setState(() {

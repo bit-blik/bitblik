@@ -1913,15 +1913,16 @@ class CoordinatorService {
           }
         }
       }
-      // Restart timer to continue monitoring for expiration even after maker gets the code
-      // The timer should still fire after 2 minutes from blikReceivedAt to check if maker confirmed
+      // Restart timer to continue monitoring for expiration even after maker gets the code.
+      // The timer should still fire after the method's confirmation window from
+      // blikReceivedAt to check if maker confirmed (BLIK 2 min, MB WAY 30 min).
       _blikConfirmationTimers[offerId]?.cancel();
       _blikConfirmationTimers.remove(offerId);
       // Restart the timer, but calculate remaining time from blikReceivedAt
       if (offer.blikReceivedAt != null) {
         final now = _clock.now().toUtc();
         final elapsed = now.difference(offer.blikReceivedAt!);
-        const timeoutDuration = Duration(seconds: 120);
+        final timeoutDuration = _paymentSystem.confirmationWindow;
         final remaining = timeoutDuration - elapsed;
         if (remaining > Duration.zero) {
           _blikConfirmationTimers[offerId] = Timer(remaining, () {

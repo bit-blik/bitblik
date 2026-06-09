@@ -38,7 +38,7 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text(t.maker.confirmPayment.confirmDialog.title),
-          content: Text(t.maker.confirmPayment.confirmDialog.content),
+          content: Text(t.maker.confirmPayment.confirmDialog.content(code: (paymentSystemForCurrency(widget.offer.fiatCurrency) ?? kBlik).codeLabel)),
           actions: <Widget>[
             TextButton(
               child: Text(t.maker.confirmPayment.confirmDialog.cancel),
@@ -200,7 +200,12 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
               Text(
                 _isDisputeOpened || widget.offer.isDispute
                     ? t.maker.conflict.feedback.disputeOpenedSuccess
-                    : t.maker.conflict.body,
+                    : t.maker.conflict.body(
+                      code:
+                          (paymentSystemForCurrency(widget.offer.fiatCurrency) ??
+                                  kBlik)
+                              .codeLabel,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -223,7 +228,7 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                         foregroundColor: Colors.white,
                       ),
                       onPressed: () => _showConfirmationDialog(context, ref),
-                      child: Text(t.maker.conflict.actions.confirmPayment),
+                      child: Text(t.maker.conflict.actions.confirmPayment(code: (paymentSystemForCurrency(widget.offer.fiatCurrency) ?? kBlik).codeLabel)),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -232,7 +237,7 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                         foregroundColor: Colors.white,
                       ),
                       onPressed: () => _openDispute(context, ref),
-                      child: Text(t.maker.conflict.actions.openDispute),
+                      child: Text(t.maker.conflict.actions.openDispute(code: (paymentSystemForCurrency(widget.offer.fiatCurrency) ?? kBlik).codeLabel)),
                     ),
                     // const SizedBox(height: 16),
                     // TextButton(

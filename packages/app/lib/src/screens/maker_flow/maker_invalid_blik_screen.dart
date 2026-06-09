@@ -68,7 +68,7 @@ class MakerInvalidBlikScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 30),
               Text(
-                t.maker.invalidBlik.info,
+                t.maker.invalidBlik.info(code: ref.read(selectedPaymentSystemProvider).codeLabel),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
               ),

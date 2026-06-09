@@ -9,6 +9,7 @@ import 'package:ndk/shared/nips/nip19/nip19.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../utils/offer_status_label.dart';
 import 'coordinator_details_screen.dart';
 import '../services/offer_db_service.dart';
 import '../utils/bitcoin_display.dart';
@@ -182,7 +183,8 @@ class _OfferDetailsBody extends ConsumerWidget {
                   Icon(_statusIcon(offer.status), color: statusColor, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    _statusLabel(t, offer.status),
+                    offerStatusLabel(t, offer.status,
+                        code: offerCodeLabel(offer)),
                     style: TextStyle(
                       color: statusColor,
                       fontWeight: FontWeight.w600,
@@ -513,49 +515,6 @@ class _OfferDetailsBody extends ConsumerWidget {
     };
 
     return activeStatuses.contains(status) || status == OfferStatus.takerPaid;
-  }
-
-  String _statusLabel(Translations t, OfferStatus status) {
-    switch (status) {
-      case OfferStatus.created:
-        return t.offers.status.created;
-      case OfferStatus.funded:
-        return t.offers.status.funded;
-      case OfferStatus.expired:
-        return t.offers.status.expired;
-      case OfferStatus.cancelled:
-        return t.offers.status.cancelled;
-      case OfferStatus.reserved:
-        return t.offers.status.reserved;
-      case OfferStatus.blikReceived:
-        return t.offers.status.blikReceived;
-      case OfferStatus.blikSentToMaker:
-        return t.offers.status.blikSentToMaker;
-      case OfferStatus.expiredBlik:
-        return t.offers.status.expiredBlik;
-      case OfferStatus.expiredSentBlik:
-        return t.offers.status.expiredSentBlik;
-      case OfferStatus.takerCharged:
-        return t.offers.status.takerCharged;
-      case OfferStatus.invalidBlik:
-        return t.offers.status.invalidBlik;
-      case OfferStatus.conflict:
-        return t.offers.status.conflict;
-      case OfferStatus.dispute:
-        return t.offers.status.dispute;
-      case OfferStatus.makerConfirmed:
-        return t.offers.status.makerConfirmed;
-      case OfferStatus.settled:
-        return t.offers.status.settled;
-      case OfferStatus.payingTaker:
-        return t.offers.status.payingTaker;
-      case OfferStatus.takerPaymentFailed:
-        return t.offers.status.takerPaymentFailed;
-      case OfferStatus.takerPaid:
-        return t.offers.status.takerPaid;
-      case OfferStatus.unknown:
-        return t.offers.status.unknownStatus;
-    }
   }
 
   IconData _statusIcon(OfferStatus status) {

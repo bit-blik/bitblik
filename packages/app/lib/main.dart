@@ -35,6 +35,7 @@ import 'package:markdown/markdown.dart' as md;
 
 import 'i18n/gen/strings.g.dart'; // Import Slang from new path
 import 'package:bitblik_core/core.dart'; // Needed for OfferStatus enum
+import 'src/config/build_flavor.dart';
 import 'src/providers/providers.dart';
 import 'src/services/notification_service.dart';
 import 'src/screens/coordinator_details_screen.dart';
@@ -298,6 +299,7 @@ Future<void> main() async {
   }
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
+  await initBuildFlavor();
   await NotificationService().init();
   String? localeString = await asyncPrefs.getString('app_locale');
   if (localeString != null) {
@@ -586,7 +588,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     final t = Translations.of(context);
 
     return MaterialApp.router(
-      title: t.app.title,
+      title: t.app.title(app: buildAppName),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -846,7 +848,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    t.altstore.step2Title,
+                                    t.altstore.step2Title(app: buildAppName),
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
@@ -908,7 +910,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                               ),
                                             ),
                                             child: Text(
-                                              t.altstore.step2Button,
+                                              t.altstore.step2Button(app: buildAppName),
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
@@ -1073,7 +1075,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
               ),
               ListTile(
                 leading: const Icon(Icons.flash_on, color: Color(0xFFFF0000)),
-                title: Text(t.landing.actions.payBlik),
+                title: Text(t.landing.actions.payBlik(code: ref.read(selectedPaymentSystemProvider).codeLabel)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -1330,9 +1332,13 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
             context.go('/');
           },
           child: Image.asset(
-            'assets/logo-horizontal.png',
-            height: 30,
-            fit: BoxFit.cover,
+            // BLIK → BitBlik logo; MB WAY → bitway logo (shown larger).
+            ref.watch(selectedPaymentSystemProvider).logoAsset ??
+                'assets/logo-horizontal.png',
+            height: ref.watch(selectedPaymentSystemProvider).logoAsset != null
+                ? 44
+                : 30,
+            fit: BoxFit.contain,
           ),
         ),
       );
