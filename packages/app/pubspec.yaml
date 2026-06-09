@@ -81,19 +81,19 @@ dependency_overrides:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk
-      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+      ref: a105f59eb6918ccf017e7c1b8ad3707c98bff1af
     #path: ../../../ndk/packages/ndk
   ndk_flutter:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk_flutter
-      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+      ref: a105f59eb6918ccf017e7c1b8ad3707c98bff1af
   #    path: ../../../ndk/packages/ndk_flutter
   ndk_drift:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/drift
-      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+      ref: a6c0b4fc71a0e22f322940addf7fe613a38078e9
 
 dev_dependencies:
   #build_runner: 2.4.15
@@ -163,7 +163,6 @@ flutter:
     - assets/nostr.png
     - assets/logo-horizontal.png
     - assets/sell-blik.png
-    - assets/bitway.png
     - assets/apk.png
     - assets/zapstore.png
     - assets/telegram.png

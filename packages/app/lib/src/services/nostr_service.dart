@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:ndk/domain_layer/entities/cashu/cashu_user_seedphrase.dart';
 import 'package:ndk/ndk.dart';
 import 'package:ndk/shared/isolates/isolate_manager.dart';
 import 'package:ndk_flutter/ndk_flutter.dart';
@@ -8,6 +9,7 @@ import 'package:ndk_flutter/ndk_flutter.dart';
 // import 'package:ndk_rust_verifier/ndk_rust_verifier.dart' as web_rust_verifier;
 
 import 'package:bitblik_core/core.dart';
+import 'package:ndk_flutter/repositories/cashu_seed_store.dart';
 import 'coordinator_prefs_store.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
@@ -175,6 +177,8 @@ class NostrService {
       eventVerifier = RustEventVerifier();
     }
 
+    final cashuSeedPhrase = await CashuSeedStore().loadOrCreate();
+
     // Initialize NDK with bootstrap relays config
     _ndk = Ndk(
       NdkConfig(
@@ -183,6 +187,9 @@ class NostrService {
         eventVerifier: eventVerifier,
         bootstrapRelays: _relayUrls,
         logLevel: kDebugMode ? LogLevel.debug : LogLevel.warning,
+        cashuUserSeedphrase: CashuUserSeedphrase(
+          seedPhrase: cashuSeedPhrase,
+        ),
       ),
     );
 

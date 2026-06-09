@@ -427,6 +427,7 @@ class Translations$wallet$en {
 	String get description => 'Manage your Lightning wallet settings';
 
 	late final Translations$wallet$missingReceiving$en missingReceiving = Translations$wallet$missingReceiving$en.internal(_root);
+	late final Translations$wallet$details$en details = Translations$wallet$details$en.internal(_root);
 }
 
 // Path: nwc
@@ -2392,6 +2393,24 @@ class Translations$wallet$missingReceiving$en {
 
 	/// en: 'Wallet settings'
 	String get openSettings => 'Wallet settings';
+}
+
+// Path: wallet.details
+class Translations$wallet$details$en {
+	Translations$wallet$details$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Wallet details'
+	String get title => 'Wallet details';
+
+	/// en: 'Pending transactions'
+	String get pendingTitle => 'Pending transactions';
+
+	/// en: 'Finished transactions'
+	String get finishedTitle => 'Finished transactions';
 }
 
 // Path: nwc.labels
@@ -4563,6 +4582,9 @@ extension on Translations {
 			'wallet.missingReceiving.title' => 'Receiving wallet required',
 			'wallet.missingReceiving.message' => 'No wallet configured for receiving. Add one in Wallet settings to take offers.',
 			'wallet.missingReceiving.openSettings' => 'Wallet settings',
+			'wallet.details.title' => 'Wallet details',
+			'wallet.details.pendingTitle' => 'Pending transactions',
+			'wallet.details.finishedTitle' => 'Finished transactions',
 			'nwc.title' => 'Nostr Wallet Connect (NWC)',
 			'nwc.description' => 'Connect your Lightning wallet via NWC',
 			'nwc.labels.connectionString' => 'NWC Connection String',
