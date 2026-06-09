@@ -919,6 +919,10 @@ wallet:
     title: Receiving wallet required
     message: No wallet configured for receiving. Add one in Wallet settings to take offers.
     openSettings: Wallet settings
+  details:
+    title: Wallet details
+    pendingTitle: Pending transactions
+    finishedTitle: Finished transactions
 
 nwc:
   title: Nostr Wallet Connect (NWC)

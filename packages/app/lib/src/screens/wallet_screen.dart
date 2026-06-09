@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ndk_flutter/ndk_flutter.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import 'wallet_details_screen.dart';
 
 const String kNwcWalletId = 'bitblik_nwc_wallet';
 
@@ -129,17 +131,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                             callback: 'bitblik://nwc-callback',
                           ),
                           onWalletSelected: (walletId) {
-                            // try {
-                            //   // ndk.wallets.setDefaultWallet(walletId);
-                            //   // ref.read(defaultWalletProvider.notifier).refresh();
-                            // } catch (e) {
-                            //   ScaffoldMessenger.of(context).showSnackBar(
-                            //     SnackBar(
-                            //       content: Text('Failed to set default wallet: $e'),
-                            //       backgroundColor: Colors.red,
-                            //     ),
-                            //   );
-                            // }
+                            context.push(
+                              WalletDetailsScreen.routeName,
+                              extra: walletId,
+                            );
                           },
                         );
                       },

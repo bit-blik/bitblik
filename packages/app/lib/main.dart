@@ -55,6 +55,7 @@ import 'src/screens/notification_settings_screen.dart';
 import 'src/screens/taker_flow/taker_conflict_screen.dart'; // Import the taker conflict screen
 import 'src/screens/taker_flow/taker_submit_blik_screen.dart';
 import 'src/screens/taker_flow/taker_wait_confirmation_screen.dart';
+import 'src/screens/wallet_details_screen.dart';
 import 'src/screens/wallet_screen.dart';
 import 'src/widgets/relay_dots.dart';
 // Import our platform detection utility
@@ -184,6 +185,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/wallet',
             builder: (context, state) => const WalletScreen(),
+          ),
+          GoRoute(
+            path: WalletDetailsScreen.routeName,
+            builder: (context, state) {
+              final walletId = state.extra as String?;
+              if (walletId == null) {
+                return const Center(child: Text('No wallet provided.'));
+              }
+              return WalletDetailsScreen(walletId: walletId);
+            },
           ),
           GoRoute(
             path: '/neko-management',

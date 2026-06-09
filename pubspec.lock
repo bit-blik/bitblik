@@ -1049,11 +1049,11 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/ndk"
-      ref: a6c0b4fc71a0e22f322940addf7fe613a38078e9
-      resolved-ref: a6c0b4fc71a0e22f322940addf7fe613a38078e9
+      ref: a105f59eb6918ccf017e7c1b8ad3707c98bff1af
+      resolved-ref: a105f59eb6918ccf017e7c1b8ad3707c98bff1af
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.8.4-dev.0"
+    version: "0.8.4-dev.2"
   ndk_bip32_keys:
     dependency: transitive
     description:
@@ -1075,11 +1075,11 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/ndk_flutter"
-      ref: a6c0b4fc71a0e22f322940addf7fe613a38078e9
-      resolved-ref: a6c0b4fc71a0e22f322940addf7fe613a38078e9
+      ref: a105f59eb6918ccf017e7c1b8ad3707c98bff1af
+      resolved-ref: a105f59eb6918ccf017e7c1b8ad3707c98bff1af
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.8.4-dev.0"
+    version: "0.8.4-dev.3"
   ndk_objectbox:
     dependency: transitive
     description:
@@ -1092,10 +1092,10 @@ packages:
     dependency: transitive
     description:
       name: nip07_event_signer
-      sha256: "5cdc14e3ee3ed8978ce4b0e8771535545a2047d8238f5616395380d8d6c6eb5c"
+      sha256: "529732e1aa2f7d8aebe528e65786672d6d4f2c25b83c8c91b2fe75a3f4eec314"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.0-dev.1"
+    version: "1.1.0-dev.2"
   nm:
     dependency: transitive
     description:
