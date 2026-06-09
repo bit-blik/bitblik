@@ -1346,8 +1346,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          //                          "${formatFiat(fiat)} + ${formatFiat(feeFiat)} fee = ${formatFiat(totalFiat)} PLN",
-                          "${formatFiat(fiat)} PLN",
+                          "${formatFiat(fiat)} ${offer.fiatCurrency}",
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: Colors.grey[700], fontSize: 14),
                           textAlign: TextAlign.center,

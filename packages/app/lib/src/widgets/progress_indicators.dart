@@ -338,13 +338,19 @@ class _ReservationProgressIndicatorState
   }
 }
 
-// Widget for 120s BLIK Confirmation Progress Bar
+// Widget for the BLIK/payment-code Confirmation Progress Bar. The window length
+// depends on the payment method (BLIK 2 min, MB WAY 30 min).
 class BlikConfirmationProgressIndicator extends ConsumerStatefulWidget {
   final DateTime blikReceivedAt;
+
+  /// Code-confirmation window for the offer's payment method. Defaults to the
+  /// legacy BLIK 120s window.
+  final Duration maxConfirmationTime;
 
   const BlikConfirmationProgressIndicator({
     super.key,
     required this.blikReceivedAt,
+    this.maxConfirmationTime = const Duration(seconds: 120),
   });
 
   @override
@@ -356,10 +362,8 @@ class _BlikConfirmationProgressIndicatorState
     extends ConsumerState<BlikConfirmationProgressIndicator> {
   Timer? _timer;
   double _progress = 1.0;
-  int _remainingSeconds = 120;
-  final Duration _maxConfirmationTime = const Duration(
-    seconds: 120,
-  ); // Define the constant
+  late int _remainingSeconds = _maxConfirmationTime.inSeconds;
+  Duration get _maxConfirmationTime => widget.maxConfirmationTime;
 
   @override
   void initState() {
@@ -409,7 +413,7 @@ class _BlikConfirmationProgressIndicatorState
         _progress = remainingDuration / totalDuration;
         _remainingSeconds = (remainingDuration / 1000).ceil().clamp(
           0,
-          120, // Clamp to 120 seconds
+          _maxConfirmationTime.inSeconds,
         );
       }
     });

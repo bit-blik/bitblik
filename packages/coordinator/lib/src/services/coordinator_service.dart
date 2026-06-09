@@ -66,6 +66,13 @@ class CoordinatorService {
   // Maximum maker premium (%) above market price. 0 = feature disabled.
   late final double _maxPremiumPercent;
 
+  // The single payment method this coordinator serves (BLIK, MB WAY, ...).
+  // Drives the code-confirmation window and the default currency.
+  late final PaymentSystem _paymentSystem;
+
+  // Test-only override for the payment method id, bypassing `.env`.
+  final String? _paymentSystemIdOverride;
+
   // Supported currencies
   late final List<String> _supportedCurrencies;
 
@@ -84,35 +91,38 @@ class CoordinatorService {
   // expiredBlik -> funded auto-relist timeout configuration
   static const int _expiredBlikRelistTimeoutSeconds = 60;
 
-  // Exchange rate cache
-  double? _cachedPlnRate;
-  DateTime? _cachedPlnRateTime;
+  // Exchange rate cache, keyed by uppercase currency code (e.g. PLN, EUR).
+  final Map<String, double> _cachedRates = {};
+  final Map<String, DateTime> _cachedRateTimes = {};
 
-  // Define a structure for exchange rate sources
-  static final List<Map<String, String>> _exchangeRateSources = [
-    {
-      'name': 'CoinGecko',
-      'url':
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=pln',
-      'parser': '_parseCoinGeckoResponse',
-    },
-    {
-      'name': 'Yadio',
-      'url': 'https://api.yadio.io/exrates/pln',
-      'parser': '_parseYadioResponse',
-    },
-    {
-      'name': 'Blockchain.info',
-      'url': 'https://blockchain.info/ticker',
-      'parser': '_parseBlockchainInfoResponse',
-    }
-  ];
+  // Build the exchange-rate sources for [currency] (case-insensitive).
+  static List<Map<String, String>> _exchangeRateSourcesFor(String currency) {
+    final lower = currency.toLowerCase();
+    return [
+      {
+        'name': 'CoinGecko',
+        'url':
+            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=$lower',
+        'parser': 'coingecko',
+      },
+      {
+        'name': 'Yadio',
+        'url': 'https://api.yadio.io/exrates/$lower',
+        'parser': 'yadio',
+      },
+      {
+        'name': 'Blockchain.info',
+        'url': 'https://blockchain.info/ticker',
+        'parser': 'blockchain',
+      },
+    ];
+  }
 
   // Parser for CoinGecko response
-  double? _parseCoinGeckoResponse(String responseBody) {
+  double? _parseCoinGeckoResponse(String responseBody, String currency) {
     try {
       final data = jsonDecode(responseBody);
-      final rate = data['bitcoin']['pln'];
+      final rate = data['bitcoin']?[currency.toLowerCase()];
       if (rate is num) {
         return rate.toDouble();
       }
@@ -122,12 +132,11 @@ class CoordinatorService {
     return null;
   }
 
-  // Parser for Yadio.io response
-  double? _parseYadioResponse(String responseBody) {
+  // Parser for Yadio.io response (BTC price in the requested base currency)
+  double? _parseYadioResponse(String responseBody, String currency) {
     try {
       final data = jsonDecode(responseBody);
-      final rate =
-          data['BTC']; // Yadio returns BTC in PLN directly with this key
+      final rate = data['BTC'];
       if (rate is num) {
         return rate.toDouble();
       }
@@ -138,10 +147,10 @@ class CoordinatorService {
   }
 
   // Parser for Blockchain.info response
-  double? _parseBlockchainInfoResponse(String responseBody) {
+  double? _parseBlockchainInfoResponse(String responseBody, String currency) {
     try {
       final data = jsonDecode(responseBody);
-      final rate = data['PLN']?['last'];
+      final rate = data[currency.toUpperCase()]?['last'];
       if (rate is num) {
         return rate.toDouble();
       }
@@ -151,17 +160,20 @@ class CoordinatorService {
     return null;
   }
 
-  Future<double> _getPlnRate() async {
+  Future<double> _getRate(String currency) async {
+    final cur = currency.toUpperCase();
     final now = DateTime.now();
-    if (_cachedPlnRate != null &&
-        _cachedPlnRateTime != null &&
-        now.difference(_cachedPlnRateTime!).inMinutes < 5) {
-      return _cachedPlnRate!;
+    final cached = _cachedRates[cur];
+    final cachedTime = _cachedRateTimes[cur];
+    if (cached != null &&
+        cachedTime != null &&
+        now.difference(cachedTime).inMinutes < 5) {
+      return cached;
     }
 
-    List<Future<double?>> fetchFutures = [];
-    for (var source in _exchangeRateSources) {
-      fetchFutures.add(_fetchRateFromSource(source));
+    final fetchFutures = <Future<double?>>[];
+    for (var source in _exchangeRateSourcesFor(cur)) {
+      fetchFutures.add(_fetchRateFromSource(source, cur));
     }
 
     final List<double?> results = await Future.wait(fetchFutures);
@@ -171,22 +183,23 @@ class CoordinatorService {
     if (validRates.isNotEmpty) {
       final averageRate =
           validRates.reduce((a, b) => a + b) / validRates.length;
-      _cachedPlnRate = averageRate;
-      _cachedPlnRateTime = now;
+      _cachedRates[cur] = averageRate;
+      _cachedRateTimes[cur] = now;
       AppLogger.info(
-          'Successfully fetched and averaged BTC/PLN rate: $averageRate from ${validRates.length} sources.');
+          'Successfully fetched and averaged BTC/$cur rate: $averageRate from ${validRates.length} sources.');
       return averageRate;
     } else {
-      if (_cachedPlnRate != null) {
+      if (cached != null) {
         AppLogger.info(
-            'Returning stale BTC/PLN rate due to all sources failing to fetch.');
-        return _cachedPlnRate!;
+            'Returning stale BTC/$cur rate due to all sources failing to fetch.');
+        return cached;
       }
-      throw Exception('Failed to fetch BTC/PLN rate from all sources.');
+      throw Exception('Failed to fetch BTC/$cur rate from all sources.');
     }
   }
 
-  Future<double?> _fetchRateFromSource(Map<String, String> source) async {
+  Future<double?> _fetchRateFromSource(
+      Map<String, String> source, String currency) async {
     final url = Uri.parse(source['url']!);
     final parserName = source['parser']!;
     final sourceName = source['name']!;
@@ -195,12 +208,12 @@ class CoordinatorService {
       final response = await _httpClient.get(url); // Use _httpClient
       if (response.statusCode == 200) {
         double? rate;
-        if (parserName == '_parseCoinGeckoResponse') {
-          rate = _parseCoinGeckoResponse(response.body);
-        } else if (parserName == '_parseYadioResponse') {
-          rate = _parseYadioResponse(response.body);
-        } else if (parserName == '_parseBlockchainInfoResponse') {
-          rate = _parseBlockchainInfoResponse(response.body);
+        if (parserName == 'coingecko') {
+          rate = _parseCoinGeckoResponse(response.body, currency);
+        } else if (parserName == 'yadio') {
+          rate = _parseYadioResponse(response.body, currency);
+        } else if (parserName == 'blockchain') {
+          rate = _parseBlockchainInfoResponse(response.body, currency);
         }
         if (rate != null) {
           AppLogger.info('Successfully fetched rate from $sourceName: $rate');
@@ -211,11 +224,11 @@ class CoordinatorService {
         }
       } else {
         AppLogger.info(
-            'Failed to fetch BTC/PLN rate from $sourceName: ${response.statusCode} ${response.body}');
+            'Failed to fetch BTC/$currency rate from $sourceName: ${response.statusCode} ${response.body}');
         return null;
       }
     } catch (e) {
-      AppLogger.info('Error fetching BTC/PLN rate from $sourceName: $e');
+      AppLogger.info('Error fetching BTC/$currency rate from $sourceName: $e');
       return null;
     }
   }
@@ -244,10 +257,12 @@ class CoordinatorService {
       {PaymentService? paymentServiceForTest,
       Clock? clock,
       http.Client? httpClient,
-      NostrService? nostrService})
+      NostrService? nostrService,
+      String? paymentSystemIdForTest})
       : _clock = clock ?? const Clock(),
         _httpClient = httpClient ?? http.Client(),
-        _nostrService = nostrService {
+        _nostrService = nostrService,
+        _paymentSystemIdOverride = paymentSystemIdForTest {
     // Initialize dotenv
     _env = DotEnv(includePlatformEnvironment: true)..load();
 
@@ -279,9 +294,17 @@ class CoordinatorService {
     // Maker premium cap (%). Default 0 = feature off; operator opts in.
     _maxPremiumPercent = double.tryParse(_env['MAX_PREMIUM'] ?? '') ?? 0;
 
-    _supportedCurrencies = (_env['CURRENCIES']?.split(',') ?? ['PLN'])
-        .map((c) => c.trim().toUpperCase())
-        .toList();
+    // One method per deployment. Default 'blik' keeps existing PL coordinators
+    // unchanged. The method's currency is the default when CURRENCIES is unset.
+    // Tests pin the method via [_paymentSystemIdOverride] so they don't depend
+    // on a local `.env`.
+    _paymentSystem = paymentSystemById(
+        _paymentSystemIdOverride ?? _env['PAYMENT_SYSTEM']?.trim());
+
+    _supportedCurrencies =
+        (_env['CURRENCIES']?.split(',') ?? [_paymentSystem.currency])
+            .map((c) => c.trim().toUpperCase())
+            .toList();
 
     _reservationTimeoutSeconds =
         int.tryParse(_env['RESERVATION_SECONDS'] ?? '') ?? 30;
@@ -704,7 +727,7 @@ class CoordinatorService {
       ];
 
       final now = _clock.now().toUtc();
-      const timeoutDuration = Duration(seconds: 120);
+      final timeoutDuration = _paymentSystem.confirmationWindow;
 
       int expiredCount = 0;
       for (final offer in offersToCheck) {
@@ -818,17 +841,33 @@ class CoordinatorService {
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
     required String makerId,
-    String fiatCurrency = 'PLN',
+    String? fiatCurrency,
     OfferCategory? category,
     double premiumPercent = 0,
   }) async {
+    // Resolve the currency: client-supplied, else this coordinator's method
+    // currency. Reject currencies this coordinator does not serve.
+    final currency =
+        (fiatCurrency ?? _paymentSystem.currency).toUpperCase();
+    if (!_supportedCurrencies.contains(currency)) {
+      throw Exception(
+          'Unsupported currency: $currency (supported: ${_supportedCurrencies.join(',')})');
+    }
+    fiatCurrency = currency;
+    // Reject categories this coordinator's payment method does not serve
+    // (e.g. MB WAY only supports ATM cash-out).
+    if (category != null &&
+        !_paymentSystem.supportedCategories.contains(category)) {
+      throw Exception(
+          'Unsupported category ${category.name} for ${_paymentSystem.id}');
+    }
     // Clamp premium to what this coordinator allows.
     final premium = premiumPercent.clamp(0, _maxPremiumPercent).toDouble();
     AppLogger.info(
         'Initiating offer: fiatAmount=$fiatAmount $fiatCurrency, maker=$makerId, category=${category?.name}, premium=$premium%');
-    final rate = await _getPlnRate();
-    final btcPerPln = 1 / rate;
-    final btcAmount = fiatAmount * btcPerPln;
+    final rate = await _getRate(fiatCurrency);
+    final btcPerFiat = 1 / rate;
+    final btcAmount = fiatAmount * btcPerFiat;
     // Market-value sats; range validation runs on this base amount.
     final baseSats = (btcAmount * 100000000).round();
 
@@ -1424,6 +1463,7 @@ class CoordinatorService {
       takerChargedAutoConfirmSeconds: _takerChargedAutoConfirmTimeoutSeconds,
       maxPremiumPercent: _maxPremiumPercent,
       currencies: List<String>.from(_supportedCurrencies),
+      paymentSystem: _paymentSystem.id,
       nostrNpub: null,
       icon: _coordinatorIconUrl.isNotEmpty ? _coordinatorIconUrl : null,
       version: (version != null && version.isNotEmpty) ? version : null,
@@ -1608,10 +1648,11 @@ class CoordinatorService {
 
   void _startBlikConfirmationTimer(String offerId) {
     _blikConfirmationTimers[offerId]?.cancel();
+    final window = _paymentSystem.confirmationWindow;
     AppLogger.info(
-        '### COORDINATOR: Starting 120s BLIK confirmation timer for offer $offerId',
+        '### COORDINATOR: Starting ${window.inSeconds}s BLIK confirmation timer for offer $offerId',
         offerId: offerId);
-    _blikConfirmationTimers[offerId] = Timer(const Duration(seconds: 120), () {
+    _blikConfirmationTimers[offerId] = Timer(window, () {
       AppLogger.info(
           '### COORDINATOR: Raw timer expired for offer $offerId. Calling handler...',
           offerId: offerId);

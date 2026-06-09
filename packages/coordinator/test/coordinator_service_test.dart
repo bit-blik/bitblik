@@ -227,6 +227,8 @@ void main() {
       paymentServiceForTest: mockPaymentService,
       clock: clock,
       httpClient: mockHttpClient, // Pass the mock client
+      // Pin to BLIK/PLN so tests stay deterministic regardless of local `.env`.
+      paymentSystemIdForTest: 'blik',
     );
 
     // Default stubs for common calls

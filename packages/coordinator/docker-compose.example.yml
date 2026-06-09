@@ -28,6 +28,17 @@ services:
       MAX_AMOUNT_SATS: 25000
       MAKER_FEE: 0.25
       TAKER_FEE: 0.75
+      # Payment method this coordinator serves (one per deployment).
+      # 'blik' (PL, PLN, 6-digit, 2-min codes) is the default.
+      # For Portugal/MB WAY (EUR, 10-digit, 30-min codes) use:
+      #   PAYMENT_SYSTEM: mbway
+      # The code-confirmation window is derived from the method (BLIK 120s,
+      # MB WAY 1800s); CURRENCIES defaults to the method's currency. Set the
+      # other timeouts to suit the longer MB WAY code lifetime, e.g.:
+      #   RESERVATION_SECONDS: 120
+      #   FUNDED_EXPIRY_SECONDS: 1800
+      #   TAKER_CHARGED_AUTO_CONFIRM_SECONDS: 3600
+      PAYMENT_SYSTEM: blik
       FRONTEND_DOMAIN: test.bitblik.app
       NAME: Example Coordinator
       ICON_URL: https://www.0xkishan.com/blogs/nostr/nostr.png

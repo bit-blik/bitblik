@@ -392,6 +392,7 @@ class Translations$settings$en {
 
 	late final Translations$settings$offerCreation$en offerCreation = Translations$settings$offerCreation$en.internal(_root);
 	late final Translations$settings$display$en display = Translations$settings$display$en.internal(_root);
+	late final Translations$settings$paymentSystem$en paymentSystem = Translations$settings$paymentSystem$en.internal(_root);
 }
 
 // Path: notificationSettings
@@ -1203,6 +1204,9 @@ class Translations$exchange$errors$en {
 
 	/// en: 'Amount is too high. Maximum is ${maxAmount} ${currency}.'
 	String tooHighFiat({required Object maxAmount, required Object currency}) => 'Amount is too high. Maximum is ${maxAmount} ${currency}.';
+
+	/// en: 'ATM can't dispense this amount. Use a combination of notes: ${notes}.'
+	String atmNotDispensable({required Object notes}) => 'ATM can\'t dispense this amount. Use a combination of notes: ${notes}.';
 }
 
 // Path: coordinator.info
@@ -1326,6 +1330,9 @@ class Translations$coordinator$details$en {
 
 	/// en: 'Currencies'
 	String get currencies => 'Currencies';
+
+	/// en: 'Payment system'
+	String get paymentSystem => 'Payment system';
 
 	/// en: 'Version'
 	String get version => 'Version';
@@ -2335,6 +2342,26 @@ class Translations$settings$display$en {
 	late final Translations$settings$display$unitOptions$en unitOptions = Translations$settings$display$unitOptions$en.internal(_root);
 }
 
+// Path: settings.paymentSystem
+class Translations$settings$paymentSystem$en {
+	Translations$settings$paymentSystem$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Country / Payment System'
+	String get title => 'Country / Payment System';
+
+	/// en: 'Choose your country's payment system.'
+	String get subtitle => 'Choose your country\'s payment system.';
+
+	/// en: 'Select payment system'
+	String get dialogTitle => 'Select payment system';
+
+	late final Translations$settings$paymentSystem$countries$en countries = Translations$settings$paymentSystem$countries$en.internal(_root);
+}
+
 // Path: notificationSettings.newOfferAlerts
 class Translations$notificationSettings$newOfferAlerts$en {
 	Translations$notificationSettings$newOfferAlerts$en.internal(this._root);
@@ -2823,6 +2850,9 @@ class Translations$maker$amountForm$labels$en {
 	/// en: 'Enter amount'
 	String get enterAmount => 'Enter amount';
 
+	/// en: 'Custom'
+	String get customAmount => 'Custom';
+
 	/// en: 'Tap to select'
 	String get tapToSelect => 'Tap to select';
 
@@ -2870,6 +2900,9 @@ class Translations$maker$amountForm$category$en {
 
 	/// en: 'Offer category'
 	String get label => 'Offer category';
+
+	/// en: '${system} does not support this category.'
+	String unsupportedForSystem({required Object system}) => '${system} does not support this category.';
 
 	late final Translations$maker$amountForm$category$options$en options = Translations$maker$amountForm$category$options$en.internal(_root);
 	late final Translations$maker$amountForm$category$shortLabels$en shortLabels = Translations$maker$amountForm$category$shortLabels$en.internal(_root);
@@ -3852,6 +3885,21 @@ class Translations$settings$display$unitOptions$en {
 	String get bitcoin => '₿ (BIP-177)';
 }
 
+// Path: settings.paymentSystem.countries
+class Translations$settings$paymentSystem$countries$en {
+	Translations$settings$paymentSystem$countries$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Poland'
+	String get PL => 'Poland';
+
+	/// en: 'Portugal'
+	String get PT => 'Portugal';
+}
+
 // Path: maker.amountForm.category.options
 class Translations$maker$amountForm$category$options$en {
 	Translations$maker$amountForm$category$options$en.internal(this._root);
@@ -4070,6 +4118,7 @@ extension on Translations {
 			'exchange.errors.invalidFeePercentage' => 'Invalid fee percentage',
 			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'Amount is too low. Minimum is ${minAmount} ${currency}.',
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Amount is too high. Maximum is ${maxAmount} ${currency}.',
+			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'ATM can\'t dispense this amount. Use a combination of notes: ${notes}.',
 			'coordinator.title' => 'Coordinators',
 			'coordinator.info.fee' => 'fee',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Amount: ${minAmount}-${maxAmount} ${currency}',
@@ -4100,6 +4149,7 @@ extension on Translations {
 			'coordinator.details.maxPremiumInfoBody' => 'A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers.',
 			'coordinator.details.reservationTime' => 'Reservation time',
 			'coordinator.details.currencies' => 'Currencies',
+			'coordinator.details.paymentSystem' => 'Payment system',
 			'coordinator.details.version' => 'Version',
 			'coordinator.details.yourOffers' => 'Your offers',
 			'coordinator.details.successfulOffers' => 'Successful offers (30d)',
@@ -4140,6 +4190,7 @@ extension on Translations {
 			'maker.amountForm.labels.fee' => 'Fee',
 			'maker.amountForm.labels.satoshisToPay' => 'Amount to Pay',
 			'maker.amountForm.labels.enterAmount' => 'Enter amount',
+			'maker.amountForm.labels.customAmount' => 'Custom',
 			'maker.amountForm.labels.tapToSelect' => 'Tap to select',
 			'maker.amountForm.labels.premium' => 'Premium',
 			'maker.amountForm.actions.generateInvoice' => 'Generate Invoice',
@@ -4147,6 +4198,7 @@ extension on Translations {
 			'maker.amountForm.tooltips.payInfo' => 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.',
 			'maker.amountForm.tooltips.premiumInfo' => 'An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator.',
 			'maker.amountForm.category.label' => 'Offer category',
+			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => '${system} does not support this category.',
 			'maker.amountForm.category.options.physicalShop' => 'Shop, café or restaurant',
 			'maker.amountForm.category.options.atmCashout' => 'ATM cash out',
 			'maker.amountForm.category.options.onlineService' => 'Online service/product',
@@ -4419,12 +4471,12 @@ extension on Translations {
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'All: ${count} transactions\nAvg wait for BLIK: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} transactions\nAvg wait for BLIK: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
 			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg BLIK: ${avgBlikTime}  |  Avg Paid: ${avgPaidTime}',
+			_ => null,
+		} ?? switch (path) {
 			'home.statistics.errors.loading' => ({required Object error}) => 'Error loading statistics: ${error}',
 			'nekoInfo.title' => 'What is a Neko?',
 			'nekoInfo.description' => 'Your Neko is your identity for using BitBlik. It\'s composed of a private and public key to ensure cryptographically secure communication with the coordinator.\n\nTo ensure greater anonymity, it is recommended to use a new, fresh Neko for each offer.\n\n⚠️ IMPORTANT: Your private key is only stored on your device (client-side). It is critically important to backup your private key, as losing access to it may prevent you from resolving disputes and recovering your funds.',
 			'nekoInfo.backupWarning' => 'Remember to backup your Neko',
-			_ => null,
-		} ?? switch (path) {
 			'generateNewKey.title' => 'New',
 			'generateNewKey.description' => 'Are you sure you want to generate a new Neko? Your current one will be lost forever if you haven\'t backed it up.',
 			'generateNewKey.buttons.generate' => 'Generate',
@@ -4516,6 +4568,11 @@ extension on Translations {
 			'settings.display.bitcoinUnitDescription' => 'Choose how bitcoin amounts are shown throughout the app.',
 			'settings.display.unitOptions.sats' => 'sats',
 			'settings.display.unitOptions.bitcoin' => '₿ (BIP-177)',
+			'settings.paymentSystem.title' => 'Country / Payment System',
+			'settings.paymentSystem.subtitle' => 'Choose your country\'s payment system.',
+			'settings.paymentSystem.dialogTitle' => 'Select payment system',
+			'settings.paymentSystem.countries.PL' => 'Poland',
+			'settings.paymentSystem.countries.PT' => 'Portugal',
 			'notificationSettings.title' => 'Notifications',
 			'notificationSettings.androidOnly' => 'Background notifications are currently only supported on Android.',
 			'notificationSettings.newOfferAlerts.label' => 'New offer alerts',

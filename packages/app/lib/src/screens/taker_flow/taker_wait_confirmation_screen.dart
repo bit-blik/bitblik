@@ -24,10 +24,17 @@ class TakerWaitConfirmationScreen extends ConsumerStatefulWidget {
 
 class _TakerWaitConfirmationScreenState
     extends ConsumerState<TakerWaitConfirmationScreen> {
-  static const Duration _confirmationDuration = Duration(seconds: 120);
+  /// Confirmation window for this offer's payment method (BLIK 2 min, MB WAY
+  /// 30 min), derived from the offer's currency.
+  Duration get _confirmationDuration {
+    final PaymentSystem method =
+        paymentSystemForCurrency(widget.offer.fiatCurrency) ??
+            ref.read(selectedPaymentSystemProvider);
+    return method.confirmationWindow;
+  }
   Timer? _confirmationTimer;
   Timer? _expiredBlikTimer;
-  int _confirmationCountdownSeconds = _confirmationDuration.inSeconds;
+  late int _confirmationCountdownSeconds = _confirmationDuration.inSeconds;
   bool _timersInitialized = false;
   bool _timerExpired = false;
   bool _expiredBlikWindowExpired = false;

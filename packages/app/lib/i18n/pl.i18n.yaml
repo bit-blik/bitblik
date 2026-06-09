@@ -231,6 +231,7 @@ exchange:
     invalidFeePercentage: Nieprawidłowy procent opłaty
     tooLowFiat: "Kwota jest za niska. Minimum to ${minAmount} ${currency}."
     tooHighFiat: "Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}."
+    atmNotDispensable: "Bankomat nie wypłaci tej kwoty. Użyj kombinacji nominałów: ${notes}."
 
 # =============================================================================
 # COORDINATOR INFORMATION
@@ -273,6 +274,7 @@ coordinator:
     maxPremiumInfoBody: "Premia to opcjonalna marża ponad kurs rynkowy, którą wystawiający (maker) może ustawić na ofercie. Przy premii maker blokuje mniej satoshi za tę samą kwotę fiat, więc biorący (taker) płaci powyżej rynku, a maker zatrzymuje różnicę. Ta wartość to najwyższa premia dozwolona przez tego koordynatora w jego ofertach."
     reservationTime: "Czas rezerwacji"
     currencies: "Waluty"
+    paymentSystem: "System płatności"
     version: "Wersja"
     yourOffers: "Twoje oferty"
     successfulOffers: "Udane oferty (30d)"
@@ -325,6 +327,7 @@ maker:
       fee: Opłata
       satoshisToPay: Do zapłaty
       enterAmount: Wprowadź kwotę
+      customAmount: Własna
       tapToSelect: Kliknij, aby wybrać
       premium: Premia
     actions:
@@ -337,6 +340,7 @@ maker:
 
     category:
       label: "Kategoria oferty"
+      unsupportedForSystem: "${system} nie obsługuje tej kategorii."
       options:
         physicalShop: "Sklep, kawiarnia lub restauracja"
         atmCashout: "Wypłata gotówki z bankomatu"
@@ -889,6 +893,13 @@ settings:
     unitOptions:
       sats: saty
       bitcoin: ₿ (BIP-177)
+  paymentSystem:
+    title: Kraj / System płatności
+    subtitle: "Wybierz system płatności swojego kraju."
+    dialogTitle: Wybierz system płatności
+    countries:
+      PL: Polska
+      PT: Portugalia
 
 notificationSettings:
   title: Powiadomienia

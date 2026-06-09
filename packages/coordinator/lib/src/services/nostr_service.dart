@@ -491,10 +491,12 @@ class NostrService {
 
           final premiumPercent =
               (params['premium_percent'] as num?)?.toDouble() ?? 0;
+          final fiatCurrency = params['fiat_currency'] as String?;
 
           return await _coordinatorService.initiateOfferFiat(
             fiatAmount: fiatAmount,
             makerId: makerId,
+            fiatCurrency: fiatCurrency,
             category: category,
             premiumPercent: premiumPercent,
           );
@@ -812,7 +814,7 @@ class NostrService {
   Future<void> broadcastNip69OrderFromOffer(
     Offer offer, {
     String orderType = 'sell',
-    List<String> paymentMethods = const ['BLIK'],
+    List<String> paymentSystems = const ['BLIK'],
     String platform = 'Bitblik',
     int? expiration,
     // Defaults to the offer's own premium so status re-broadcasts preserve it.
@@ -839,7 +841,7 @@ class NostrService {
         ['s', status],
         ['amt', offer.amountSats.toString()],
         ['fa', offer.fiatAmount.toString()],
-        ['pm', ...paymentMethods],
+        ['pm', ...paymentSystems],
         ['premium', premiumValue.toString()],
         if (ratingJson != null) ['rating', ratingJson],
         [

@@ -39,6 +39,12 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
   CoordinatorInfo? _coordinatorInfo; // Added
   int _previousBlikLength = 0; // Track previous length to detect paste
 
+  /// Payment method for the offer being taken, resolved from its currency
+  /// (falls back to the app's selected method). Drives the code length.
+  PaymentSystem get _method =>
+      paymentSystemForCurrency(widget.initialOffer.fiatCurrency) ??
+      ref.read(selectedPaymentSystemProvider);
+
   @override
   void initState() {
     super.initState();
@@ -47,11 +53,12 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     _blikController.addListener(() {
       final currentLength = _blikController.text.length;
 
-      // Detect paste: if length jumped from <6 to 6, dismiss keyboard
-      if (_previousBlikLength < 6 && currentLength == 6) {
+      // Detect paste: if length jumped to the full code length, dismiss keyboard
+      final codeLength = _method.codeLength;
+      if (_previousBlikLength < codeLength && currentLength == codeLength) {
         final text = _blikController.text;
         if (int.tryParse(text) != null) {
-          // Valid 6-digit code was entered at once (pasted), dismiss keyboard
+          // Valid full-length code was entered at once (pasted), dismiss keyboard
           _blikFocusNode.unfocus();
         }
       }
@@ -290,9 +297,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       _resetToOfferList(t.taker.submitBlik.errors.stateNotValid);
       return;
     }
-    if (blikCode.isEmpty ||
-        blikCode.length != 6 ||
-        int.tryParse(blikCode) == null) {
+    if (!_method.isValidCode(blikCode)) {
       ref.read(errorProvider.notifier).state =
           t.taker.submitBlik.validation.invalidFormat;
       _startBlikInputTimer(offer);
@@ -666,7 +671,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         Logger.log.d(() => "clipboard.getData:${textData.text}");
         final pastedText = textData.text!;
         final digitsOnly = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
-        if (digitsOnly.length == 6) {
+        if (digitsOnly.length == _method.codeLength) {
           _blikController.text = digitsOnly;
           _blikController.selection = TextSelection.fromPosition(
             TextPosition(offset: _blikController.text.length),
@@ -745,10 +750,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
 
     final blikCode = _blikController.text;
 
-    final validBlik =
-        !(blikCode.isEmpty ||
-            blikCode.length != 6 ||
-            int.tryParse(blikCode) == null);
+    final validBlik = _method.isValidCode(blikCode);
 
     // --- Main UI Build ---
     return Scaffold(
@@ -818,7 +820,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                     signed: false,
                   ),
                   // keyboardType: TextInputType.number,
-                  maxLength: 6,
+                  maxLength: _method.codeLength,
                   textAlign: TextAlign.left,
                   style: const TextStyle(
                     fontSize: 46,

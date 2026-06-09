@@ -167,12 +167,17 @@ final discoveredCoordinatorsProvider = StreamProvider<List<CoordinatorRecord>>((
   yield* registry.changes;
 });
 
-/// Enabled-only view for the maker create-offer flow.
+/// Enabled-only view for the maker create-offer flow, restricted to the active
+/// payment method so a PL user never creates an offer on a PT coordinator (and
+/// vice versa). Records pending discovery (no `info` yet) are excluded.
 final enabledCoordinatorsProvider =
     Provider<AsyncValue<List<CoordinatorRecord>>>((ref) {
       final async = ref.watch(discoveredCoordinatorsProvider);
+      final method = ref.watch(selectedPaymentSystemProvider);
       return async.whenData(
-        (records) => records.where((r) => r.enabled).toList(growable: false),
+        (records) => records
+            .where((r) => r.enabled && r.paymentSystem == method.id)
+            .toList(growable: false),
       );
     });
 
@@ -260,6 +265,7 @@ final offersSubscriptionInitializer = FutureProvider<void>((ref) async {
 
 Future<List<Offer>> refreshAvailableOffersCache(
   ApiServiceNostr apiService,
+  PaymentSystem method,
 ) async {
   final currentOffers = List<Offer>.from(apiService.knownOffers);
   final enabledCoordinatorPubkeys =
@@ -272,7 +278,8 @@ Future<List<Offer>> refreshAvailableOffersCache(
       apiService.knownOffers
           .where(
             (offer) =>
-                enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey),
+                enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+                offer.fiatCurrency == method.currency,
           )
           .toList()
           .reversed,
@@ -299,6 +306,7 @@ Future<List<Offer>> refreshAvailableOffersCache(
           .where(
             (offer) =>
                 enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+                offer.fiatCurrency == method.currency &&
                 (offer.status == OfferStatus.funded ||
                     offer.status == OfferStatus.reserved),
           )
@@ -313,6 +321,7 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   // Depend on single global initializer
   await ref.watch(offersSubscriptionInitializer.future);
   final apiService = ref.watch(apiServiceProvider);
+  final method = ref.watch(selectedPaymentSystemProvider);
   final discoveredCoordinators = ref.watch(discoveredCoordinatorsProvider);
   final enabledCoordinatorPubkeys = discoveredCoordinators.maybeWhen(
     data:
@@ -335,6 +344,7 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
           .where(
             (offer) =>
                 enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+                offer.fiatCurrency == method.currency &&
                 (offer.status == OfferStatus.funded ||
                     offer.status == OfferStatus.reserved),
           )
@@ -349,6 +359,7 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
                   enabledCoordinatorPubkeys.contains(
                     candidate.coordinatorPubkey,
                   ) &&
+                  candidate.fiatCurrency == method.currency &&
                   (candidate.status == OfferStatus.funded ||
                       candidate.status == OfferStatus.reserved),
             )
@@ -1471,6 +1482,29 @@ class BitcoinDisplayUnitNotifier extends StateNotifier<BitcoinDisplayUnit> {
     await AppPreferencesStore.saveDisplay(
       DisplayPreferences(bitcoinDisplayUnit: value),
     );
+  }
+}
+
+/// Active payment method (country/payment-system) selected by the user. Drives
+/// code-length validation, the confirmation countdown, currency labels, and the
+/// filtering of coordinators/offers shown in the app. Defaults to BLIK.
+final selectedPaymentSystemProvider =
+    StateNotifierProvider<SelectedPaymentSystemNotifier, PaymentSystem>(
+      (ref) => SelectedPaymentSystemNotifier(),
+    );
+
+class SelectedPaymentSystemNotifier extends StateNotifier<PaymentSystem> {
+  SelectedPaymentSystemNotifier() : super(kBlik) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    state = await AppPreferencesStore.loadSelectedPaymentSystem();
+  }
+
+  Future<void> set(PaymentSystem value) async {
+    state = value;
+    await AppPreferencesStore.saveSelectedPaymentSystem(value);
   }
 }
 

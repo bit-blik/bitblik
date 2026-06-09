@@ -110,6 +110,10 @@ class MakerAmountForm extends ConsumerStatefulWidget {
 }
 
 class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
+  /// Active payment method chosen by the user; drives the offer currency and
+  /// the fiat exchange-rate lookup.
+  PaymentSystem get _method => ref.read(selectedPaymentSystemProvider);
+
   static const _categoryOnboardingDismissedKey =
       'maker_category_onboarding_dismissed';
   static final _categoryOnboardingNewCutoff = DateTime(2026, 10, 1);
@@ -143,6 +147,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   bool _ecommerceRiskAccepted = false;
   bool _showCategoryOnboarding = false;
   bool _categoryOnboardingExpanded = false;
+
+  /// For the ATM category the amount is picked from preset buttons by default;
+  /// the "Custom" button flips this to the free-form text input.
+  bool _customAmountMode = false;
 
   @override
   void initState() {
@@ -239,7 +247,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         _bitcoinDisplayUnit = preferences.display.bitcoinDisplayUnit;
       });
 
-      final rate = await apiService.getBtcPlnRate();
+      final rate = await apiService.getBtcRate(_method.currency);
       if (!mounted) return;
       setState(() {
         _rate = rate;
@@ -322,9 +330,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final preferredPubkey = _preferredCoordinatorPubkey;
     if (preferredPubkey ==
         OfferCreationPreferences.cheapestCoordinatorSentinel) {
-      return candidates.reduce(
-        (a, b) => b.makerFee < a.makerFee ? b : a,
-      );
+      return candidates.reduce((a, b) => b.makerFee < a.makerFee ? b : a);
     }
     if (preferredPubkey != null) {
       for (final coordinator in candidates) {
@@ -351,8 +357,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       if (!supportsCategory) {
         _selectedCategory = null;
         _ecommerceRiskAccepted = false;
-      } else if (_selectedCategory == null) {
-        _selectedCategory = _defaultCategoryPreference;
+      } else {
+        // Clamp to categories the active payment method allows (MB WAY = ATM
+        // only). Falls back to the method's first supported category.
+        final supported = _method.supportedCategories;
+        if (_selectedCategory == null ||
+            !supported.contains(_selectedCategory)) {
+          _selectedCategory =
+              supported.contains(_defaultCategoryPreference)
+                  ? _defaultCategoryPreference
+                  : supported.first;
+        }
       }
       // Clamp premium to the newly selected coordinator's advertised max.
       final maxPremium = coordinator.maxPremium;
@@ -437,15 +452,27 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         if (parsedFiat! < minFiat) {
           currentError = t.exchange.errors.tooLowFiat(
             minAmount: minFiat.toStringAsFixed(2),
-            currency: "PLN",
+            currency: _method.currencySymbol,
           );
         } else if (parsedFiat > maxFiat) {
           currentError = t.exchange.errors.tooHighFiat(
             maxAmount: maxFiat.toStringAsFixed(0),
-            currency: "PLN",
+            currency: _method.currencySymbol,
           );
         }
       }
+    }
+
+    // ATM cash-out must be an amount the ATM can actually dispense (a
+    // combination of the method's banknote nominals).
+    if (currentError == null &&
+        parsedFiat != null &&
+        _selectedCategory == OfferCategory.atm &&
+        !_method.canDispenseAtmAmount(parsedFiat)) {
+      currentError = t.exchange.errors.atmNotDispensable(
+        notes:
+            '${_method.atmBanknoteDenominations.join(', ')} ${_method.currencySymbol}',
+      );
     }
 
     setState(() {
@@ -506,6 +533,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       final result = await apiService.initiateOfferFiat(
         fiatAmount: fiatAmount,
         makerId: makerId,
+        fiatCurrency: _method.currency,
         category: supportsCategory ? _selectedCategory : null,
         coordinatorPubkey: coordinatorPubkey,
         premiumPercent: _premiumPercent,
@@ -522,7 +550,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               makerFees: result['makerFees'],
               status: OfferStatus.created,
               fiatAmount: fiatAmount,
-              fiatCurrency: "PLN", // TODO
+              fiatCurrency: _method.currency,
               createdAt: DateTime.now(),
               holdInvoicePaymentHash: paymentHash,
               holdInvoice: result['holdInvoice'],
@@ -551,9 +579,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   /// over the kind-15125 info icon.
   Widget _buildSelectedCoordinatorLogo() {
     final pk = _selectedCoordinatorPubkey;
-    final icon = pk == null
-        ? null
-        : ref.watch(coordinatorRecordByPubkeyProvider(pk))?.icon;
+    final icon =
+        pk == null
+            ? null
+            : ref.watch(coordinatorRecordByPubkeyProvider(pk))?.icon;
     if (icon != null && icon.isNotEmpty) {
       return icon.startsWith('http')
           ? Image.network(icon, width: 22, height: 22)
@@ -619,7 +648,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 child: FutureBuilder<
                   ({Map<String, double?> rates, DateTime fetchedAt})
                 >(
-                  future: apiService.getSourceRates(),
+                  future: apiService.getSourceRates(_method.currency),
                   builder: (context, snapshot) {
                     final data = snapshot.data;
                     final rates = data?.rates;
@@ -643,7 +672,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               rates == null
                                   ? '…'
                                   : rate != null
-                                  ? '${_formatNumber(rate.round())} PLN/BTC'
+                                  ? '${_formatNumber(rate.round())} ${_method.currency}/BTC'
                                   : '—';
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -807,7 +836,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 t.coordinator.info.rangeDisplay(
                                   minAmount: minPln,
                                   maxAmount: maxPln,
-                                  currency: 'PLN',
+                                  currency: _method.currencySymbol,
                                 ),
                                 style: Theme.of(
                                   context,
@@ -1223,10 +1252,115 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     }
   }
 
-  Widget _categoryIconWidget(OfferCategory category, double size, Color color) {
+  Widget _buildAtmAmountPresets(Translations t) {
+    // Only show presets within the selected coordinator's amount range.
+    final rate = _rate;
+    final info = _selectedCoordinatorInfo;
+    double? minFiat;
+    double? maxFiat;
+    if (rate != null && info != null) {
+      minFiat = (info.minAmountSats / 100000000.0) * rate;
+      maxFiat = (info.maxAmountSats / 100000000.0) * rate;
+    }
+    final presets = _method.atmPresetAmounts
+        .where((amt) =>
+            (maxFiat == null || amt <= maxFiat) &&
+            (minFiat == null || amt >= minFiat))
+        .toList(growable: false);
+    final current = _fiatController.text.trim();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        alignment: WrapAlignment.center,
+        children: [
+          for (final amt in presets)
+            _amountPresetChip(
+              label: '$amt ${_method.currencySymbol}',
+              selected: current == '$amt',
+              // The controller listener recalculates and rebuilds.
+              onTap: () => _fiatController.text = '$amt',
+            ),
+          _amountPresetChip(
+            label: t.maker.amountForm.labels.customAmount,
+            selected: false,
+            icon: Icons.tune,
+            onTap: () {
+              setState(() => _customAmountMode = true);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _amountFocusNode.requestFocus();
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _amountPresetChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    IconData? icon,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? Colors.red : Colors.grey.shade300,
+            width: selected ? 1.6 : 1,
+          ),
+          color: selected ? const Color(0xFFFFF2F6) : Colors.white,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon,
+                  size: 18, color: selected ? Colors.red : Colors.grey[700]),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: selected ? Colors.red : Colors.grey[800],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _categoryIconWidget(
+    OfferCategory category,
+    double size,
+    Color color, {
+    bool grayscale = false,
+  }) {
     final asset = _categoryAsset(category);
     if (asset != null) {
-      return Image.asset(asset, width: size, height: size);
+      final image = Image.asset(asset, width: size, height: size);
+      if (!grayscale) return image;
+      // Desaturate the PNG logo for disabled categories (color is ignored by
+      // Image.asset, so apply a luminance grayscale matrix instead).
+      return ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0.2126, 0.7152, 0.0722, 0, 0, //
+          0.2126, 0.7152, 0.0722, 0, 0, //
+          0.2126, 0.7152, 0.0722, 0, 0, //
+          0, 0, 0, 1, 0, //
+        ]),
+        child: image,
+      );
     }
     return Icon(_categoryIcon(category), size: size, color: color);
   }
@@ -1407,27 +1541,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
   }
 
-  bool _supportsOfferCategory(String? version) {
-    if (version == null || version.trim().isEmpty) return false;
-    final parsed = _parseVersion(version);
-    if (parsed == null) return false;
-    const min = [0, 7, 0];
-    for (var i = 0; i < 3; i++) {
-      if (parsed[i] > min[i]) return true;
-      if (parsed[i] < min[i]) return false;
-    }
-    return true;
-  }
-
-  List<int>? _parseVersion(String raw) {
-    final match = RegExp(r'^v?(\d+)\.(\d+)\.(\d+)').firstMatch(raw.trim());
-    if (match == null) return null;
-    return [
-      int.parse(match.group(1)!),
-      int.parse(match.group(2)!),
-      int.parse(match.group(3)!),
-    ];
-  }
+  // Offer categories are always available; selectable categories are limited
+  // only by the chosen payment method's supportedCategories.
+  bool _supportsOfferCategory(String? version) => true;
 
   @override
   Widget build(BuildContext context) {
@@ -1491,133 +1607,109 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 ),
               ],
 
-              // Large amount input field
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 22.0,
-                  horizontal: 20,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        focusNode: _amountFocusNode,
-                        controller: _fiatController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                          signed: false,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 38,
-                          fontWeight: FontWeight.w400,
-                          height: 1.2,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: t.maker.amountForm.labels.enterAmount,
-                          hintStyle: TextStyle(
-                            fontSize: 36,
-                            color: Colors.grey[400],
-                            fontWeight: FontWeight.w300,
-                          ),
-                          border: InputBorder.none,
-                          errorText: null, // Error shown below
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'PLN',
-                      style: TextStyle(
-                        fontSize: 44,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (_amountErrorText != null) ...[
-                Text(
-                  _amountErrorText!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-
               if (supportsCategory) ...[
+                const SizedBox(height: 12),
                 Row(
                   children: OfferCategory.values
                       .map((category) {
-                        final selected = _selectedCategory == category;
+                        // Categories not served by the active payment method
+                        // (e.g. MB WAY supports ATM only) are shown but disabled.
+                        final isSupported = _method.supportedCategories
+                            .contains(category);
+                        final selected =
+                            isSupported && _selectedCategory == category;
+                        final Color accent =
+                            !isSupported
+                                ? Colors.grey.shade400
+                                : selected
+                                ? Colors.red
+                                : Colors.grey[700]!;
                         return Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(
                               right:
                                   category != OfferCategory.values.last ? 8 : 0,
                             ),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(999),
-                              onTap: () {
-                                setState(() {
-                                  _selectedCategory = category;
-                                  if (category != OfferCategory.online) {
-                                    _ecommerceRiskAccepted = false;
-                                  }
-                                });
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 120),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
+                            // Empty message for supported tiles: the InkWell
+                            // consumes the tap so the tooltip never fires. For
+                            // disabled tiles the InkWell is inert, so a tap
+                            // falls through and shows the explanation.
+                            child: Tooltip(
+                              message:
+                                  isSupported
+                                      ? ''
+                                      : t.maker.amountForm.category
+                                          .unsupportedForSystem(
+                                            system: _method.label,
+                                          ),
+                              triggerMode: TooltipTriggerMode.tap,
+                              child: Opacity(
+                                opacity: isSupported ? 1.0 : 0.5,
+                                child: InkWell(
                                   borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color:
-                                        selected
-                                            ? Colors.red
-                                            : Colors.grey.shade300,
-                                    width: selected ? 1.6 : 1,
-                                  ),
-                                  color:
-                                      selected
-                                          ? const Color(0xFFFFF2F6)
-                                          : Colors.white,
-                                ),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      _categoryIconWidget(
-                                        category,
-                                        28,
-                                        selected
-                                            ? Colors.red
-                                            : Colors.grey[700]!,
+                                  onTap:
+                                      isSupported
+                                          ? () {
+                                            setState(() {
+                                              _selectedCategory = category;
+                                              // ATM defaults to preset amounts.
+                                              _customAmountMode = false;
+                                              if (category !=
+                                                  OfferCategory.online) {
+                                                _ecommerceRiskAccepted = false;
+                                              }
+                                            });
+                                          }
+                                          : null,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 120),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color:
+                                            selected
+                                                ? Colors.red
+                                                : Colors.grey.shade300,
+                                        width: selected ? 1.6 : 1,
                                       ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        _categoryShortLabel(category, t),
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight:
-                                              selected
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w400,
-                                          color:
-                                              selected
-                                                  ? Colors.red
-                                                  : Colors.grey[700],
-                                        ),
+                                      color:
+                                          !isSupported
+                                              ? Colors.grey.shade100
+                                              : selected
+                                              ? const Color(0xFFFFF2F6)
+                                              : Colors.white,
+                                    ),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          _categoryIconWidget(
+                                            category,
+                                            28,
+                                            accent,
+                                            grayscale: !isSupported,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            _categoryShortLabel(category, t),
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight:
+                                                  selected
+                                                      ? FontWeight.w600
+                                                      : FontWeight.w400,
+                                              color: accent,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1744,8 +1836,69 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 //     padding: const EdgeInsets.only(top: 10),
                 //     child: _buildCategoryOnboardingCard(t),
                 //   ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
               ],
+              // Amount entry: ATM presets (default) or the traditional input.
+              if (_selectedCategory == OfferCategory.atm && !_customAmountMode)
+                _buildAtmAmountPresets(t)
+              else
+              // Large amount input field
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 22.0,
+                  horizontal: 20,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        focusNode: _amountFocusNode,
+                        controller: _fiatController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: false,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 38,
+                          fontWeight: FontWeight.w400,
+                          height: 1.2,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: t.maker.amountForm.labels.enterAmount,
+                          hintStyle: TextStyle(
+                            fontSize: 36,
+                            color: Colors.grey[400],
+                            fontWeight: FontWeight.w300,
+                          ),
+                          border: InputBorder.none,
+                          errorText: null, // Error shown below
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _method.currencySymbol,
+                      style: const TextStyle(
+                        fontSize: 44,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_amountErrorText != null) ...[
+                Text(
+                  _amountErrorText!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
 
               // Details section
               Container(
@@ -1840,7 +1993,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       t.maker.amountForm.labels.exchangeRate,
                       Text(
                         _rate != null
-                            ? '${_formatNumber(_rate!.round())} PLN / BTC'
+                            ? '${_formatNumber(_rate!.round())} ${_method.currency} / BTC'
                             : '-',
                         style: const TextStyle(
                           fontSize: 14,
@@ -2212,5 +2365,4 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         return '$prefix₿$formatted';
     }
   }
-
 }

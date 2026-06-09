@@ -232,6 +232,7 @@ exchange:
     invalidFeePercentage: Invalid fee percentage
     tooLowFiat: "Amount is too low. Minimum is ${minAmount} ${currency}."
     tooHighFiat: "Amount is too high. Maximum is ${maxAmount} ${currency}."
+    atmNotDispensable: "ATM can't dispense this amount. Use a combination of notes: ${notes}."
 
 # =============================================================================
 # COORDINATOR INFORMATION
@@ -274,6 +275,7 @@ coordinator:
     maxPremiumInfoBody: "A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers."
     reservationTime: "Reservation time"
     currencies: "Currencies"
+    paymentSystem: "Payment system"
     version: "Version"
     yourOffers: "Your offers"
     successfulOffers: "Successful offers (30d)"
@@ -326,6 +328,7 @@ maker:
       fee: Fee
       satoshisToPay: Amount to Pay
       enterAmount: Enter amount
+      customAmount: Custom
       tapToSelect: Tap to select
       premium: Premium
     actions:
@@ -338,6 +341,7 @@ maker:
 
     category:
       label: "Offer category"
+      unsupportedForSystem: "${system} does not support this category."
       options:
         physicalShop: "Shop, café or restaurant"
         atmCashout: "ATM cash out"
@@ -904,6 +908,13 @@ settings:
     unitOptions:
       sats: sats
       bitcoin: ₿ (BIP-177)
+  paymentSystem:
+    title: Country / Payment System
+    subtitle: "Choose your country's payment system."
+    dialogTitle: Select payment system
+    countries:
+      PL: Poland
+      PT: Portugal
 
 notificationSettings:
   title: Notifications

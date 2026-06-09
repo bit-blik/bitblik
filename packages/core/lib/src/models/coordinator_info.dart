@@ -1,6 +1,8 @@
 import 'package:meta/meta.dart';
 import 'package:ndk/ndk.dart';
 
+import '../payment/payment_system.dart';
+
 @immutable
 class CoordinatorInfo {
   final String name;
@@ -20,6 +22,12 @@ class CoordinatorInfo {
   /// `0` means the premium feature is disabled for this coordinator.
   final double maxPremiumPercent;
   final List<String> currencies;
+
+  /// The single payment method id this coordinator serves (e.g. `blik`,
+  /// `mbway`). One deployment = one market. Older coordinators that don't
+  /// advertise it fall back to the method derived from [currencies].
+  final String paymentSystem;
+
   final String? nostrNpub;
   final String? version;
   final String? icon;
@@ -35,6 +43,7 @@ class CoordinatorInfo {
     this.takerChargedAutoConfirmSeconds = 3600,
     this.maxPremiumPercent = 0,
     required this.currencies,
+    required this.paymentSystem,
     required this.nostrNpub,
     this.version,
     this.icon,
@@ -56,6 +65,8 @@ class CoordinatorInfo {
       currencies: (json['currencies'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      paymentSystem: (json['payment_system'] as String?) ??
+          _defaultMethodId(json['currencies']),
       nostrNpub: json['nostr_npub'] as String?,
       version: json['version'] as String?,
       icon: json['icon'] as String?,
@@ -74,6 +85,7 @@ class CoordinatorInfo {
       'taker_charged_auto_confirm_seconds': takerChargedAutoConfirmSeconds,
       'max_premium_percent': maxPremiumPercent,
       'currencies': currencies,
+      'payment_system': paymentSystem,
       'nostr_npub': nostrNpub,
       if (version != null) 'version': version,
       if (icon != null) 'icon': icon,
@@ -91,6 +103,12 @@ class CoordinatorInfo {
       if (tag.length >= 2) tags[tag[0]] = tag[1];
     }
 
+    final currencies = (tags['currencies'] ?? '')
+        .split(',')
+        .map((c) => c.trim())
+        .where((c) => c.isNotEmpty)
+        .toList();
+
     return CoordinatorInfo(
       name: tags['name'] ?? 'Unknown Coordinator',
       icon: _emptyToNull(tags['icon']),
@@ -105,11 +123,9 @@ class CoordinatorInfo {
       takerFee: double.tryParse(tags['taker_fee'] ?? '0') ?? 0.0,
       reservationSeconds:
           int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
-      currencies: (tags['currencies'] ?? '')
-          .split(',')
-          .map((c) => c.trim())
-          .where((c) => c.isNotEmpty)
-          .toList(),
+      currencies: currencies,
+      paymentSystem:
+          _emptyToNull(tags['payment_system']) ?? _defaultMethodId(currencies),
       version: _emptyToNull(tags['version']),
       nostrNpub: Nip19.encodePubKey(event.pubKey),
       termsOfUsageNaddr: _emptyToNull(tags['terms_of_usage_naddr']),
@@ -136,6 +152,7 @@ class CoordinatorInfo {
       ['taker_fee', takerFee.toString()],
       ['reservation_seconds', reservationSeconds.toString()],
       ['currencies', currencies.join(',')],
+      ['payment_system', paymentSystem],
       ['version', version ?? ''],
       ['terms_of_usage_naddr', termsOfUsageNaddr ?? ''],
     ];
@@ -143,4 +160,16 @@ class CoordinatorInfo {
 
   static String? _emptyToNull(String? v) =>
       v == null || v.isEmpty ? null : v;
+
+  /// Derive a payment method id from a legacy `currencies` value when a
+  /// coordinator doesn't advertise `payment_system`. Falls back to [kBlik].
+  static String _defaultMethodId(dynamic currencies) {
+    if (currencies is List && currencies.isNotEmpty) {
+      final first = currencies.first;
+      if (first is String) {
+        return paymentSystemForCurrency(first)?.id ?? kBlik.id;
+      }
+    }
+    return kBlik.id;
+  }
 }

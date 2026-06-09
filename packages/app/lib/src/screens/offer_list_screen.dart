@@ -376,9 +376,13 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
     final offersAsyncValue = ref.watch(availableOffersProvider);
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
     final myActiveOffer = ref.watch(activeOfferProvider);
+    final selectedSystem = ref.watch(selectedPaymentSystemProvider);
+    // Only coordinators serving the payment system selected in settings.
     final sortedAllCoordinators = ref
         .watch(discoveredCoordinatorsProvider)
-        .maybeWhen(data: (r) => r, orElse: () => <CoordinatorRecord>[]);
+        .maybeWhen(data: (r) => r, orElse: () => <CoordinatorRecord>[])
+        .where((r) => r.paymentSystem == selectedSystem.id)
+        .toList(growable: false);
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -587,6 +591,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                               (pk) => setState(
                                 () => _selectedStatsCoordinatorPubkey = pk,
                               ),
+                          currency: selectedSystem.currency,
                         ),
                       ),
                     ],
@@ -604,10 +609,15 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                   OfferStatus.invalidBlik,
                   OfferStatus.dispute,
                 ];
+                // Only finished offers for the payment system selected in
+                // settings (filters the coordinator dropdown too, since it is
+                // derived from these offers).
                 final finishedOffers =
                     offers
                         .where(
-                          (offer) => finishedStatuses.contains(offer.status),
+                          (offer) =>
+                              finishedStatuses.contains(offer.status) &&
+                              offer.fiatCurrency == selectedSystem.currency,
                         )
                         .toList();
                 final activeOffers =
@@ -633,7 +643,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                           final apiService = await ref.read(
                             initializedApiServiceProvider.future,
                           );
-                          await refreshAvailableOffersCache(apiService);
+                          await refreshAvailableOffersCache(
+                            apiService,
+                            ref.read(selectedPaymentSystemProvider),
+                          );
                           ref.invalidate(availableOffersProvider);
                           ref.invalidate(activeOfferProvider);
                           await ref.read(availableOffersProvider.future);
@@ -999,6 +1012,13 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     ),
                                                     blikReceivedAt:
                                                         offer.blikReceivedAt!,
+                                                    maxConfirmationTime:
+                                                        (paymentSystemForCurrency(
+                                                                  offer
+                                                                      .fiatCurrency,
+                                                                ) ??
+                                                                kBlik)
+                                                            .confirmationWindow,
                                                   ),
 
                                                 ListTile(
@@ -1332,6 +1352,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                         context,
                         ref.watch(successfulOffersStatsProvider),
                         t,
+                        currency: selectedSystem.currency,
                       ),
                     ),
                   ],
@@ -1445,6 +1466,7 @@ Widget _buildStatsSection(
   List<CoordinatorRecord> sortedCoordinators = const [],
   String? selectedCoordinatorPubkey,
   ValueChanged<String>? onCoordinatorChanged,
+  String? currency,
 }) {
   return statsAsyncValue.when(
     data: (data) {
@@ -1452,7 +1474,12 @@ Widget _buildStatsSection(
       final last7Days = statsMap['last_7_days'] as Map<String, dynamic>? ?? {};
 
       final recentOffersData = data['offers'] as List<dynamic>? ?? [];
-      final allRecentOffers = recentOffersData.cast<Offer>();
+      // Restrict to the selected payment system so the coordinator dropdown
+      // only lists coordinators that actually have finished offers for it.
+      final allRecentOffers = recentOffersData
+          .cast<Offer>()
+          .where((o) => currency == null || o.fiatCurrency == currency)
+          .toList();
 
       final localeTag = Localizations.localeOf(context).toLanguageTag();
       final numberFormat = NumberFormat.decimalPattern(localeTag);

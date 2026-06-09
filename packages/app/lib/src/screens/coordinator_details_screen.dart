@@ -111,6 +111,12 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
                         t.coordinator.details.reservationTime,
                         '${record.reservationSeconds}s',
                       ),
+                    if (record.paymentSystem != null)
+                      _infoRow(
+                        context,
+                        t.coordinator.details.paymentSystem,
+                        _paymentSystemDisplay(t, record.paymentSystem!),
+                      ),
                     if (record.currencies.isNotEmpty)
                       _infoRow(
                         context,
@@ -182,6 +188,15 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     final registry = ref.read(apiServiceProvider).coordinatorRegistry;
     await registry.discover();
     await registry.probeHealth(pubkey);
+  }
+
+  /// "🇵🇱 Poland · BLIK" for a coordinator's payment system id, with the
+  /// country name localized via its ISO code.
+  String _paymentSystemDisplay(Translations t, String id) {
+    final ps = paymentSystemById(id);
+    final country = t['settings.paymentSystem.countries.${ps.country}'];
+    final name = country is String ? country : ps.country;
+    return '${ps.flag} $name · ${ps.label}';
   }
 
   Widget _logo(String? icon, double size) {

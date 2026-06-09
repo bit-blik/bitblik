@@ -337,6 +337,7 @@ class _Translations$settings$pl extends Translations$settings$en {
 	@override String get title => 'Ustawienia';
 	@override late final _Translations$settings$offerCreation$pl offerCreation = _Translations$settings$offerCreation$pl._(_root);
 	@override late final _Translations$settings$display$pl display = _Translations$settings$display$pl._(_root);
+	@override late final _Translations$settings$paymentSystem$pl paymentSystem = _Translations$settings$paymentSystem$pl._(_root);
 }
 
 // Path: notificationSettings
@@ -805,6 +806,7 @@ class _Translations$exchange$errors$pl extends Translations$exchange$errors$en {
 	@override String get invalidFeePercentage => 'Nieprawidłowy procent opłaty';
 	@override String tooLowFiat({required Object minAmount, required Object currency}) => 'Kwota jest za niska. Minimum to ${minAmount} ${currency}.';
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}.';
+	@override String atmNotDispensable({required Object notes}) => 'Bankomat nie wypłaci tej kwoty. Użyj kombinacji nominałów: ${notes}.';
 }
 
 // Path: coordinator.info
@@ -870,6 +872,7 @@ class _Translations$coordinator$details$pl extends Translations$coordinator$deta
 	@override String get maxPremiumInfoBody => 'Premia to opcjonalna marża ponad kurs rynkowy, którą wystawiający (maker) może ustawić na ofercie. Przy premii maker blokuje mniej satoshi za tę samą kwotę fiat, więc biorący (taker) płaci powyżej rynku, a maker zatrzymuje różnicę. Ta wartość to najwyższa premia dozwolona przez tego koordynatora w jego ofertach.';
 	@override String get reservationTime => 'Czas rezerwacji';
 	@override String get currencies => 'Waluty';
+	@override String get paymentSystem => 'System płatności';
 	@override String get version => 'Wersja';
 	@override String get yourOffers => 'Twoje oferty';
 	@override String get successfulOffers => 'Udane oferty (30d)';
@@ -1476,6 +1479,19 @@ class _Translations$settings$display$pl extends Translations$settings$display$en
 	@override late final _Translations$settings$display$unitOptions$pl unitOptions = _Translations$settings$display$unitOptions$pl._(_root);
 }
 
+// Path: settings.paymentSystem
+class _Translations$settings$paymentSystem$pl extends Translations$settings$paymentSystem$en {
+	_Translations$settings$paymentSystem$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Kraj / System płatności';
+	@override String get subtitle => 'Wybierz system płatności swojego kraju.';
+	@override String get dialogTitle => 'Wybierz system płatności';
+	@override late final _Translations$settings$paymentSystem$countries$pl countries = _Translations$settings$paymentSystem$countries$pl._(_root);
+}
+
 // Path: notificationSettings.newOfferAlerts
 class _Translations$notificationSettings$newOfferAlerts$pl extends Translations$notificationSettings$newOfferAlerts$en {
 	_Translations$notificationSettings$newOfferAlerts$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -1775,6 +1791,7 @@ class _Translations$maker$amountForm$labels$pl extends Translations$maker$amount
 	@override String get fee => 'Opłata';
 	@override String get satoshisToPay => 'Do zapłaty';
 	@override String get enterAmount => 'Wprowadź kwotę';
+	@override String get customAmount => 'Własna';
 	@override String get tapToSelect => 'Kliknij, aby wybrać';
 	@override String get premium => 'Premia';
 }
@@ -1809,6 +1826,7 @@ class _Translations$maker$amountForm$category$pl extends Translations$maker$amou
 
 	// Translations
 	@override String get label => 'Kategoria oferty';
+	@override String unsupportedForSystem({required Object system}) => '${system} nie obsługuje tej kategorii.';
 	@override late final _Translations$maker$amountForm$category$options$pl options = _Translations$maker$amountForm$category$options$pl._(_root);
 	@override late final _Translations$maker$amountForm$category$shortLabels$pl shortLabels = _Translations$maker$amountForm$category$shortLabels$pl._(_root);
 	@override String get atmHint => 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
@@ -2411,6 +2429,17 @@ class _Translations$settings$display$unitOptions$pl extends Translations$setting
 	@override String get bitcoin => '₿ (BIP-177)';
 }
 
+// Path: settings.paymentSystem.countries
+class _Translations$settings$paymentSystem$countries$pl extends Translations$settings$paymentSystem$countries$en {
+	_Translations$settings$paymentSystem$countries$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get PL => 'Polska';
+	@override String get PT => 'Portugalia';
+}
+
 // Path: maker.amountForm.category.options
 class _Translations$maker$amountForm$category$options$pl extends Translations$maker$amountForm$category$options$en {
 	_Translations$maker$amountForm$category$options$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -2612,6 +2641,7 @@ extension on TranslationsPl {
 			'exchange.errors.invalidFeePercentage' => 'Nieprawidłowy procent opłaty',
 			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'Kwota jest za niska. Minimum to ${minAmount} ${currency}.',
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}.',
+			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Bankomat nie wypłaci tej kwoty. Użyj kombinacji nominałów: ${notes}.',
 			'coordinator.title' => 'Koordynatorzy',
 			'coordinator.info.fee' => 'opłata',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Kwota: ${minAmount}-${maxAmount} ${currency}',
@@ -2642,6 +2672,7 @@ extension on TranslationsPl {
 			'coordinator.details.maxPremiumInfoBody' => 'Premia to opcjonalna marża ponad kurs rynkowy, którą wystawiający (maker) może ustawić na ofercie. Przy premii maker blokuje mniej satoshi za tę samą kwotę fiat, więc biorący (taker) płaci powyżej rynku, a maker zatrzymuje różnicę. Ta wartość to najwyższa premia dozwolona przez tego koordynatora w jego ofertach.',
 			'coordinator.details.reservationTime' => 'Czas rezerwacji',
 			'coordinator.details.currencies' => 'Waluty',
+			'coordinator.details.paymentSystem' => 'System płatności',
 			'coordinator.details.version' => 'Wersja',
 			'coordinator.details.yourOffers' => 'Twoje oferty',
 			'coordinator.details.successfulOffers' => 'Udane oferty (30d)',
@@ -2682,6 +2713,7 @@ extension on TranslationsPl {
 			'maker.amountForm.labels.fee' => 'Opłata',
 			'maker.amountForm.labels.satoshisToPay' => 'Do zapłaty',
 			'maker.amountForm.labels.enterAmount' => 'Wprowadź kwotę',
+			'maker.amountForm.labels.customAmount' => 'Własna',
 			'maker.amountForm.labels.tapToSelect' => 'Kliknij, aby wybrać',
 			'maker.amountForm.labels.premium' => 'Premia',
 			'maker.amountForm.actions.generateInvoice' => 'Wygeneruj Fakturę',
@@ -2689,6 +2721,7 @@ extension on TranslationsPl {
 			'maker.amountForm.tooltips.payInfo' => 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Opcjonalna premia pozwala sprzedać saty powyżej ceny rynkowej. Premia zmniejsza liczbę satów zablokowanych w fakturze hold dla tej samej kwoty fiat, więc kupujący płaci powyżej rynku, a Ty zatrzymujesz różnicę. Domyślnie wyłączona (0%). Maksymalną premię ustala wybrany koordynator.',
 			'maker.amountForm.category.label' => 'Kategoria oferty',
+			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => '${system} nie obsługuje tej kategorii.',
 			'maker.amountForm.category.options.physicalShop' => 'Sklep, kawiarnia lub restauracja',
 			'maker.amountForm.category.options.atmCashout' => 'Wypłata gotówki z bankomatu',
 			'maker.amountForm.category.options.onlineService' => 'Produkt lub usługa online',
@@ -2962,12 +2995,12 @@ extension on TranslationsPl {
 			'home.notifications.telegram' => 'Telegram',
 			'home.notifications.simplex' => 'SimpleX',
 			'home.notifications.element' => 'Element',
+			_ => null,
+		} ?? switch (path) {
 			'home.notifications.signal' => 'Signal',
 			'home.statistics.title' => 'Zakończone oferty',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
-			_ => null,
-		} ?? switch (path) {
 			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Błąd ładowania statystyk: ${error}',
 			'system.loadingPublicKey' => 'Ładowanie Twojego klucza publicznego...',
@@ -3043,6 +3076,11 @@ extension on TranslationsPl {
 			'settings.display.bitcoinUnitDescription' => 'Wybierz, jak kwoty bitcoina są pokazywane w całej aplikacji.',
 			'settings.display.unitOptions.sats' => 'saty',
 			'settings.display.unitOptions.bitcoin' => '₿ (BIP-177)',
+			'settings.paymentSystem.title' => 'Kraj / System płatności',
+			'settings.paymentSystem.subtitle' => 'Wybierz system płatności swojego kraju.',
+			'settings.paymentSystem.dialogTitle' => 'Wybierz system płatności',
+			'settings.paymentSystem.countries.PL' => 'Polska',
+			'settings.paymentSystem.countries.PT' => 'Portugalia',
 			'notificationSettings.title' => 'Powiadomienia',
 			'notificationSettings.androidOnly' => 'Powiadomienia w tle są obecnie obsługiwane tylko na Androidzie.',
 			'notificationSettings.newOfferAlerts.label' => 'Alerty o nowych ofertach',

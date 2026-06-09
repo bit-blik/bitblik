@@ -324,6 +324,7 @@ class NostrService {
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
     required String makerId,
+    required String fiatCurrency,
     OfferCategory? category,
     required String coordinatorPubkey,
     double premiumPercent = 0,
@@ -332,6 +333,7 @@ class NostrService {
       method: kRpcInitiateOffer,
       params: {
         'fiat_amount': fiatAmount,
+        'fiat_currency': fiatCurrency,
         'maker_id': makerId,
         if (category != null) 'category': category.name,
         if (premiumPercent > 0) 'premium_percent': premiumPercent,
@@ -416,8 +418,10 @@ class NostrService {
     final filter = Filter(
       kinds: [kKindOffer],
       authors: enabledPubkeys.toList(growable: false),
+      // No `#f` (fiat) filter: offers of all currencies are received and then
+      // filtered by the user's selected payment method client-side
+      // (availableOffersProvider). Keeps one subscription valid across markets.
       tags: {
-        "#f": ["PLN"],
         "#y": ["Bitblik"],
       },
       since:

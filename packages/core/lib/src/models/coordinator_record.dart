@@ -83,6 +83,7 @@ class CoordinatorRecord {
   double get maxPremium => info?.maxPremiumPercent ?? 0.0;
   int get reservationSeconds => info?.reservationSeconds ?? 0;
   List<String> get currencies => info?.currencies ?? const [];
+  String? get paymentSystem => info?.paymentSystem;
   String get version => info?.version ?? '';
   String? get termsOfUsageNaddr => info?.termsOfUsageNaddr;
 

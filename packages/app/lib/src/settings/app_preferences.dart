@@ -69,6 +69,7 @@ class AppPreferencesStore {
   static const _preferredCoordinatorKey =
       'offer_creation_preferred_coordinator_pubkey';
   static const _bitcoinDisplayUnitKey = 'display_bitcoin_unit';
+  static const _selectedPaymentSystemKey = 'selected_payment_system_id';
 
   static const _defaultOfferCreation = OfferCreationPreferences(
     defaultCategory: OfferCategory.shop,
@@ -161,6 +162,18 @@ class AppPreferencesStore {
       bitcoinDisplayUnit:
           unit.isEmpty ? _defaultDisplay.bitcoinDisplayUnit : unit.first,
     );
+  }
+
+  /// Active payment method (country/system). Defaults to BLIK so existing
+  /// Polish users are unaffected.
+  static Future<PaymentSystem> loadSelectedPaymentSystem() async {
+    final prefs = await SharedPreferences.getInstance();
+    return paymentSystemById(prefs.getString(_selectedPaymentSystemKey));
+  }
+
+  static Future<void> saveSelectedPaymentSystem(PaymentSystem method) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selectedPaymentSystemKey, method.id);
   }
 
   static double _normalizePremium(double value) {

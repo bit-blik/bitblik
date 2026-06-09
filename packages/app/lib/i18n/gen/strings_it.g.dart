@@ -337,6 +337,7 @@ class _Translations$settings$it extends Translations$settings$en {
 	@override String get title => 'Impostazioni';
 	@override late final _Translations$settings$offerCreation$it offerCreation = _Translations$settings$offerCreation$it._(_root);
 	@override late final _Translations$settings$display$it display = _Translations$settings$display$it._(_root);
+	@override late final _Translations$settings$paymentSystem$it paymentSystem = _Translations$settings$paymentSystem$it._(_root);
 }
 
 // Path: notificationSettings
@@ -806,6 +807,7 @@ class _Translations$exchange$errors$it extends Translations$exchange$errors$en {
 	@override String get invalidFeePercentage => 'Percentuale commissione non valida';
 	@override String tooLowFiat({required Object minAmount, required Object currency}) => 'L\'importo è troppo basso. Il minimo è ${minAmount} ${currency}.';
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'L\'importo è troppo alto. Il massimo è ${maxAmount} ${currency}.';
+	@override String atmNotDispensable({required Object notes}) => 'Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}.';
 }
 
 // Path: coordinator.info
@@ -871,6 +873,7 @@ class _Translations$coordinator$details$it extends Translations$coordinator$deta
 	@override String get maxPremiumInfoBody => 'Il premio è un sovrapprezzo opzionale rispetto al tasso di mercato che un maker può impostare su un\'offerta. Con un premio, il maker blocca meno satoshi per lo stesso importo in fiat, quindi il taker paga sopra il mercato e il maker trattiene la differenza. Questo valore è il premio massimo che questo coordinatore consente sulle sue offerte.';
 	@override String get reservationTime => 'Tempo di prenotazione';
 	@override String get currencies => 'Valute';
+	@override String get paymentSystem => 'Sistema di pagamento';
 	@override String get version => 'Versione';
 	@override String get yourOffers => 'Le tue offerte';
 	@override String get successfulOffers => 'Offerte riuscite (30g)';
@@ -1479,6 +1482,19 @@ class _Translations$settings$display$it extends Translations$settings$display$en
 	@override late final _Translations$settings$display$unitOptions$it unitOptions = _Translations$settings$display$unitOptions$it._(_root);
 }
 
+// Path: settings.paymentSystem
+class _Translations$settings$paymentSystem$it extends Translations$settings$paymentSystem$en {
+	_Translations$settings$paymentSystem$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Paese / Sistema di pagamento';
+	@override String get subtitle => 'Scegli il sistema di pagamento del tuo paese.';
+	@override String get dialogTitle => 'Seleziona il sistema di pagamento';
+	@override late final _Translations$settings$paymentSystem$countries$it countries = _Translations$settings$paymentSystem$countries$it._(_root);
+}
+
 // Path: notificationSettings.newOfferAlerts
 class _Translations$notificationSettings$newOfferAlerts$it extends Translations$notificationSettings$newOfferAlerts$en {
 	_Translations$notificationSettings$newOfferAlerts$it._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -1778,6 +1794,7 @@ class _Translations$maker$amountForm$labels$it extends Translations$maker$amount
 	@override String get fee => 'Commissione';
 	@override String get satoshisToPay => 'Importo da Pagare';
 	@override String get enterAmount => 'Inserisci importo';
+	@override String get customAmount => 'Personalizzato';
 	@override String get tapToSelect => 'Tocca per selezionare';
 	@override String get premium => 'Premio';
 }
@@ -1812,6 +1829,7 @@ class _Translations$maker$amountForm$category$it extends Translations$maker$amou
 
 	// Translations
 	@override String get label => 'Categoria offerta';
+	@override String unsupportedForSystem({required Object system}) => '${system} non supporta questa categoria.';
 	@override late final _Translations$maker$amountForm$category$options$it options = _Translations$maker$amountForm$category$options$it._(_root);
 	@override late final _Translations$maker$amountForm$category$shortLabels$it shortLabels = _Translations$maker$amountForm$category$shortLabels$it._(_root);
 	@override String get atmHint => 'I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive.';
@@ -2414,6 +2432,17 @@ class _Translations$settings$display$unitOptions$it extends Translations$setting
 	@override String get bitcoin => '₿ (BIP-177)';
 }
 
+// Path: settings.paymentSystem.countries
+class _Translations$settings$paymentSystem$countries$it extends Translations$settings$paymentSystem$countries$en {
+	_Translations$settings$paymentSystem$countries$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get PL => 'Polonia';
+	@override String get PT => 'Portogallo';
+}
+
 // Path: maker.amountForm.category.options
 class _Translations$maker$amountForm$category$options$it extends Translations$maker$amountForm$category$options$en {
 	_Translations$maker$amountForm$category$options$it._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -2616,6 +2645,7 @@ extension on TranslationsIt {
 			'exchange.errors.invalidFeePercentage' => 'Percentuale commissione non valida',
 			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'L\'importo è troppo basso. Il minimo è ${minAmount} ${currency}.',
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'L\'importo è troppo alto. Il massimo è ${maxAmount} ${currency}.',
+			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}.',
 			'coordinator.title' => 'Coordinatori',
 			'coordinator.info.fee' => 'commissione',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Importo: ${minAmount}-${maxAmount} ${currency}',
@@ -2646,6 +2676,7 @@ extension on TranslationsIt {
 			'coordinator.details.maxPremiumInfoBody' => 'Il premio è un sovrapprezzo opzionale rispetto al tasso di mercato che un maker può impostare su un\'offerta. Con un premio, il maker blocca meno satoshi per lo stesso importo in fiat, quindi il taker paga sopra il mercato e il maker trattiene la differenza. Questo valore è il premio massimo che questo coordinatore consente sulle sue offerte.',
 			'coordinator.details.reservationTime' => 'Tempo di prenotazione',
 			'coordinator.details.currencies' => 'Valute',
+			'coordinator.details.paymentSystem' => 'Sistema di pagamento',
 			'coordinator.details.version' => 'Versione',
 			'coordinator.details.yourOffers' => 'Le tue offerte',
 			'coordinator.details.successfulOffers' => 'Offerte riuscite (30g)',
@@ -2686,6 +2717,7 @@ extension on TranslationsIt {
 			'maker.amountForm.labels.fee' => 'Commissione',
 			'maker.amountForm.labels.satoshisToPay' => 'Importo da Pagare',
 			'maker.amountForm.labels.enterAmount' => 'Inserisci importo',
+			'maker.amountForm.labels.customAmount' => 'Personalizzato',
 			'maker.amountForm.labels.tapToSelect' => 'Tocca per selezionare',
 			'maker.amountForm.labels.premium' => 'Premio',
 			'maker.amountForm.actions.generateInvoice' => 'Genera Fattura',
@@ -2693,6 +2725,7 @@ extension on TranslationsIt {
 			'maker.amountForm.tooltips.payInfo' => 'Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l\'importo esatto, e l\'importo della fattura sarà quello finale e definitivo da pagare.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Un premio opzionale ti permette di vendere i tuoi sat sopra il prezzo di mercato. Il premio riduce i sat bloccati nella tua fattura hold per lo stesso importo fiat, così il taker paga sopra il mercato e tu trattieni la differenza. Predefinito disattivato (0%). Il premio massimo è impostato dal coordinatore selezionato.',
 			'maker.amountForm.category.label' => 'Categoria offerta',
+			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => '${system} non supporta questa categoria.',
 			'maker.amountForm.category.options.physicalShop' => 'Negozio, caffè o ristorante',
 			'maker.amountForm.category.options.atmCashout' => 'Prelievo contanti da ATM',
 			'maker.amountForm.category.options.onlineService' => 'Prodotto o servizio online',
@@ -2965,12 +2998,12 @@ extension on TranslationsIt {
 			'generateNewKey.tooltips.generate' => 'Genera Nuovo Neko',
 			'backup.title' => 'Backup',
 			'backup.description' => 'Questa è la tua chiave privata. Protegge la comunicazione con il coordinatore. Non rivelarla mai a nessuno. Fai il backup in un luogo sicuro per prevenire problemi durante le dispute.',
+			_ => null,
+		} ?? switch (path) {
 			'backup.feedback.copied' => 'Chiave privata copiata negli appunti!',
 			'backup.tooltips.backup' => 'Backup Neko',
 			'restore.title' => 'Ripristina',
 			'restore.labels.privateKey' => 'Chiave Privata',
-			_ => null,
-		} ?? switch (path) {
 			'restore.buttons.restore' => 'Ripristina',
 			'restore.errors.invalidKey' => 'Deve essere una stringa esadecimale di 64 caratteri.',
 			'restore.errors.failed' => 'Ripristino fallito',
@@ -3049,6 +3082,11 @@ extension on TranslationsIt {
 			'settings.display.bitcoinUnitDescription' => 'Scegli come mostrare gli importi bitcoin in tutta l\'app.',
 			'settings.display.unitOptions.sats' => 'sat',
 			'settings.display.unitOptions.bitcoin' => '₿ (BIP-177)',
+			'settings.paymentSystem.title' => 'Paese / Sistema di pagamento',
+			'settings.paymentSystem.subtitle' => 'Scegli il sistema di pagamento del tuo paese.',
+			'settings.paymentSystem.dialogTitle' => 'Seleziona il sistema di pagamento',
+			'settings.paymentSystem.countries.PL' => 'Polonia',
+			'settings.paymentSystem.countries.PT' => 'Portogallo',
 			'notificationSettings.title' => 'Notifiche',
 			'notificationSettings.androidOnly' => 'Le notifiche in background sono attualmente supportate solo su Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Avvisi nuove offerte',

@@ -619,6 +619,12 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                         'progress_blik_${offer.id}',
                                       ),
                                       blikReceivedAt: offer.blikReceivedAt!,
+                                      maxConfirmationTime:
+                                          (paymentSystemForCurrency(
+                                                    offer.fiatCurrency,
+                                                  ) ??
+                                                  kBlik)
+                                              .confirmationWindow,
                                     ),
                                   const SizedBox(height: 20),
 
