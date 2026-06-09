@@ -16,12 +16,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
-import '../utils/offer_status_label.dart';
 import '../services/notification_service.dart';
 import '../services/offer_db_service.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../settings/app_preferences.dart';
-import '../config/build_flavor.dart';
 import '../utils/bitcoin_display.dart';
 
 final keyServiceProvider = Provider<KeyService>((ref) {
@@ -1024,7 +1022,6 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     final isMaker = offer.makerPubkey == myPubkey;
     final isTaker = offer.takerPubkey == myPubkey;
     final strings = t.offerNotifications;
-    final code = offerCodeLabel(offer);
     switch (newStatus) {
       case OfferStatus.funded:
         if (isMaker) {
@@ -1046,24 +1043,24 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         if (isMaker) {
           NotificationService().show(
             3,
-            strings.blikReady.title(code: code),
-            strings.blikReady.body(code: code),
+            strings.blikReady.title,
+            strings.blikReady.body,
           );
         }
       case OfferStatus.takerCharged:
         if (isMaker) {
           NotificationService().show(
             4,
-            strings.takerCharged.title(code: code),
-            strings.takerCharged.body(code: code),
+            strings.takerCharged.title,
+            strings.takerCharged.body,
           );
         }
       case OfferStatus.invalidBlik:
         if (isTaker) {
           NotificationService().show(
             5,
-            strings.invalidBlik.title(code: code),
-            strings.invalidBlik.body(code: code),
+            strings.invalidBlik.title,
+            strings.invalidBlik.body,
           );
         }
       case OfferStatus.takerPaid:
@@ -1241,8 +1238,6 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
   // Re-run when coordinator enablement changes so disabled coordinators
   // disappear from the recent successful offers section immediately.
   ref.watch(discoveredCoordinatorsProvider);
-  // Scope stats to the selected payment system's coordinators.
-  final selectedSystem = ref.watch(selectedPaymentSystemProvider);
 
   // Snapshot the registry once — do not subscribe to its change stream
   // here. This provider issues N RPCs per refresh; reacting to every
@@ -1253,9 +1248,7 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
         '📊 Stats Provider: ${registry.enabled.length} coordinators for stats',
   );
 
-  return apiService.getSuccessfulOffersStats(
-    paymentSystemId: selectedSystem.id,
-  );
+  return apiService.getSuccessfulOffersStats();
 });
 
 // Provider to expose the public key hex.
@@ -1501,8 +1494,7 @@ final selectedPaymentSystemProvider =
     );
 
 class SelectedPaymentSystemNotifier extends StateNotifier<PaymentSystem> {
-  SelectedPaymentSystemNotifier()
-      : super(paymentSystemById(buildDefaultPaymentSystemId)) {
+  SelectedPaymentSystemNotifier() : super(kBlik) {
     _load();
   }
 
@@ -1693,7 +1685,7 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       final strings = t.offerNotifications;
       NotificationService().startOfferForegroundService(
         strings.activeService.title,
-        strings.activeService.body(app: _ref.read(selectedPaymentSystemProvider).brandName),
+        strings.activeService.body,
       );
     } else {
       NotificationService().stopOfferForegroundService();
@@ -1864,10 +1856,9 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
             !OfferDbService.terminalStatuses.contains(offer.status);
         if (hasActiveOffer && offer.status == OfferStatus.blikSentToMaker) {
           final strings = t.offerNotifications;
-          final code = offerCodeLabel(offer);
           NotificationService().scheduleBlikReminder(
-            strings.blikPendingReminder.title(code: code),
-            strings.blikPendingReminder.body(code: code),
+            strings.blikPendingReminder.title,
+            strings.blikPendingReminder.body,
           );
         }
         break;

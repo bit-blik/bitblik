@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:ndk/domain_layer/entities/cashu/cashu_user_seedphrase.dart';
 import 'package:ndk/ndk.dart';
 import 'package:ndk/shared/isolates/isolate_manager.dart';
 import 'package:ndk_flutter/ndk_flutter.dart';
@@ -9,7 +8,6 @@ import 'package:ndk_flutter/ndk_flutter.dart';
 // import 'package:ndk_rust_verifier/ndk_rust_verifier.dart' as web_rust_verifier;
 
 import 'package:bitblik_core/core.dart';
-import 'package:ndk_flutter/repositories/cashu_seed_store.dart';
 import 'coordinator_prefs_store.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
@@ -177,8 +175,6 @@ class NostrService {
       eventVerifier = RustEventVerifier();
     }
 
-    final cashuSeedPhrase = await CashuSeedStore().loadOrCreate();
-
     // Initialize NDK with bootstrap relays config
     _ndk = Ndk(
       NdkConfig(
@@ -187,9 +183,6 @@ class NostrService {
         eventVerifier: eventVerifier,
         bootstrapRelays: _relayUrls,
         logLevel: kDebugMode ? LogLevel.debug : LogLevel.warning,
-        cashuUserSeedphrase: CashuUserSeedphrase(
-          seedPhrase: cashuSeedPhrase,
-        ),
       ),
     );
 
@@ -323,6 +316,7 @@ class NostrService {
   /// POST /initiate-offer (fiat version)
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
+    required String makerId,
     required String fiatCurrency,
     OfferCategory? category,
     required String coordinatorPubkey,
@@ -333,6 +327,7 @@ class NostrService {
       params: {
         'fiat_amount': fiatAmount,
         'fiat_currency': fiatCurrency,
+        'maker_id': makerId,
         if (category != null) 'category': category.name,
         if (premiumPercent > 0) 'premium_percent': premiumPercent,
       },
@@ -727,19 +722,12 @@ class NostrService {
       _coordinatorRegistry?.infoFor(coordinatorPubkey);
 
   /// GET /stats/successful-offers - This will now query all coordinators
-  Future<Map<String, dynamic>> getSuccessfulOffersStats({
-    String? paymentSystemId,
-  }) async {
+  Future<Map<String, dynamic>> getSuccessfulOffersStats() async {
     if (!_isInitialized) {
       await init();
     }
 
-    // Only aggregate coordinators serving the selected payment system.
-    final coordinators = paymentSystemId == null
-        ? coordinatorRegistry.enabled
-        : coordinatorRegistry.enabled
-            .where((c) => c.paymentSystem == paymentSystemId)
-            .toList();
+    final coordinators = coordinatorRegistry.enabled;
     if (coordinators.isEmpty) {
       Logger.log.w(() => "No coordinators enabled, cannot get stats.");
       return {

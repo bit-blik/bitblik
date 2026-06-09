@@ -47,6 +47,7 @@ class ApiServiceNostr {
 
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
+    required String makerId,
     required String fiatCurrency,
     OfferCategory? category,
     String? coordinatorPubkey,
@@ -58,6 +59,7 @@ class ApiServiceNostr {
       }
       return await _nostrService.initiateOfferFiat(
         fiatAmount: fiatAmount,
+        makerId: makerId,
         fiatCurrency: fiatCurrency,
         category: category,
         coordinatorPubkey: coordinatorPubkey,
@@ -464,13 +466,9 @@ class ApiServiceNostr {
   }
 
   // GET /stats/successful-offers - via Nostr
-  Future<Map<String, dynamic>> getSuccessfulOffersStats({
-    String? paymentSystemId,
-  }) async {
+  Future<Map<String, dynamic>> getSuccessfulOffersStats() async {
     try {
-      return await _nostrService.getSuccessfulOffersStats(
-        paymentSystemId: paymentSystemId,
-      );
+      return await _nostrService.getSuccessfulOffersStats();
     } catch (e) {
       Logger.log.e(() => 'Error calling getSuccessfulOffersStats: $e');
       rethrow;

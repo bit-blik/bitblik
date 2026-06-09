@@ -75,7 +75,7 @@ class _Translations$app$pl extends Translations$app$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object app}) => '${app}';
+	@override String get title => 'BitBlik';
 	@override String get greeting => 'Cześć!';
 	@override String get changelog => 'Historia zmian';
 }
@@ -218,7 +218,7 @@ class _Translations$nekoInfo$pl extends Translations$nekoInfo$en {
 
 	// Translations
 	@override String get title => 'Czym jest Neko?';
-	@override String description({required Object app}) => 'Twoje Neko to Twoja tożsamość do korzystania z ${app}. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków.';
+	@override String get description => 'Twoje Neko to Twoja tożsamość do korzystania z BitBlik. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków.';
 	@override String get backupWarning => 'Pamiętaj, aby zarchiwizować swoje Neko';
 }
 
@@ -310,8 +310,8 @@ class _Translations$landing$pl extends Translations$landing$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String mainTitle({required Object code}) => 'Wymiana\n ${code} ⇄ bitcoin';
-	@override String subtitle({required Object code}) => 'Płać lub sprzedawaj kod ${code} za bitcoin';
+	@override String get mainTitle => 'Wymiana\n BLIK ⇄ bitcoin';
+	@override String get subtitle => 'Płać lub sprzedawaj kod BLIK za bitcoin';
 	@override String get partnership => 'współpraca';
 	@override late final _Translations$landing$actions$pl actions = _Translations$landing$actions$pl._(_root);
 }
@@ -435,8 +435,8 @@ class _Translations$altstore$pl extends Translations$altstore$en {
 	@override String get step1Title => 'Pobierz i zainstaluj AltStore PAL';
 	@override String get step1Button => 'altstore.io/download';
 	@override String get step1Warning => 'Potrzebujesz Safari, aby zainstalować AltStore PAL!';
-	@override String step2Title({required Object app}) => 'Zainstaluj ${app}';
-	@override String step2Button({required Object app}) => 'Zainstaluj ${app}';
+	@override String get step2Title => 'Zainstaluj BitBlik';
+	@override String get step2Button => 'Zainstaluj BitBlik';
 	@override String get step2Fallback => 'Nie działa? Wklej źródło do AltStore';
 }
 
@@ -468,7 +468,7 @@ class _Translations$common$labels$pl extends Translations$common$labels$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String amount({required Object currency}) => 'Kwota (${currency})';
+	@override String get amount => 'Kwota (PLN)';
 	@override String status({required Object status}) => 'Status: ${status}';
 	@override String role({required Object role}) => 'Rola: ${role}';
 }
@@ -576,7 +576,7 @@ class _Translations$offers$details$pl extends Translations$offers$details$en {
 	@override String get activeOffer => 'Masz aktywną ofertę:';
 	@override String get finishedOffers => 'Zakończone oferty';
 	@override String get noAvailable => 'Brak dostępnych ofert.';
-	@override String noAvailableTip({required Object app}) => 'Wskazówka: udostępnij ${app} w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w ${app}.';
+	@override String get noAvailableTip => 'Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik.';
 	@override String get noSuccessfulTrades => 'Brak udanych transakcji.';
 	@override String get loadingDetails => 'Ładowanie szczegółów oferty...';
 	@override String amount({required Object amount}) => 'Kwota: ${amount} satoshi';
@@ -635,7 +635,7 @@ class _Translations$offers$actions$pl extends Translations$offers$actions$en {
 	// Translations
 	@override String get take => 'WEŹ';
 	@override String get takeOffer => 'Weź ofertę';
-	@override String resume({required Object code}) => 'Wprowadź ${code}';
+	@override String get resume => 'Wprowadź BLIK';
 	@override String get cancel => 'Anuluj ofertę';
 	@override String get view => 'Zobacz';
 }
@@ -652,12 +652,12 @@ class _Translations$offers$status$pl extends Translations$offers$status$en {
 	@override String get expired => 'Wygasła';
 	@override String get cancelled => 'Anulowana';
 	@override String get reserved => 'Zarezerwowana';
-	@override String blikReceived({required Object code}) => '${code} wysłany';
-	@override String blikSentToMaker({required Object code}) => 'Otrzymano ${code}';
-	@override String expiredBlik({required Object code}) => '${code} wygasł';
-	@override String expiredSentBlik({required Object code}) => '${code} wygasł';
+	@override String get blikReceived => 'BLIK wysłany';
+	@override String get blikSentToMaker => 'Otrzymano BLIK';
+	@override String get expiredBlik => 'BLIK wygasł';
+	@override String get expiredSentBlik => 'BLIK wygasł';
 	@override String get takerCharged => 'Taker obciążony';
-	@override String invalidBlik({required Object code}) => 'Nieprawidłowy ${code}';
+	@override String get invalidBlik => 'Nieprawidłowy BLIK';
 	@override String get conflict => 'Konflikt';
 	@override String get dispute => 'Spór';
 	@override String get makerConfirmed => 'Potwierdzona';
@@ -778,9 +778,9 @@ class _Translations$exchange$labels$pl extends Translations$exchange$labels$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String enterAmount({required Object currency}) => 'Wprowadź kwotę (${currency}) do zapłaty:';
+	@override String get enterAmount => 'Wprowadź kwotę (PLN) do zapłaty:';
 	@override String equivalent({required Object sats}) => '≈ ${sats} satoshi';
-	@override String rate({required Object rate, required Object currency}) => 'Kurs wymiany ≈ ${rate} ${currency}/BTC';
+	@override String rate({required Object rate}) => 'Kurs wymiany ≈ ${rate} PLN/BTC';
 }
 
 // Path: exchange.feedback
@@ -962,8 +962,8 @@ class _Translations$maker$waitTaker$pl extends Translations$maker$waitTaker$en {
 	// Translations
 	@override String get message => 'Oczekiwanie na rezerwację przez Kupującego...';
 	@override String get errorActiveOfferDetailsLost => 'Błąd: Utracono szczegóły aktywnej oferty.';
-	@override String errorFailedToRetrieveBlik({required Object code}) => 'Błąd: Nie udało się pobrać kodu ${code}.';
-	@override String errorRetrievingBlik({required Object code, required Object details}) => 'Błąd pobierania kodu ${code}: ${details}';
+	@override String get errorFailedToRetrieveBlik => 'Błąd: Nie udało się pobrać kodu BLIK.';
+	@override String errorRetrievingBlik({required Object details}) => 'Błąd pobierania kodu BLIK: ${details}';
 	@override String offerNoLongerAvailable({required Object status}) => 'Oferta nie jest już dostępna (Status: ${status}).';
 	@override String get errorCouldNotIdentifyOffer => 'Błąd: Nie można zidentyfikować oferty do anulowania.';
 	@override String offerCannotBeCancelled({required Object status}) => 'Oferty nie można anulować w obecnym stanie (${status}).';
@@ -981,9 +981,9 @@ class _Translations$maker$waitForBlik$pl extends Translations$maker$waitForBlik$
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object code}) => 'Oczekiwanie na ${code}';
+	@override String get title => 'Oczekiwanie na BLIK';
 	@override String get messageInfo => 'Ktoś zarezerwował twoją ofertę!';
-	@override String messageWaiting({required Object code}) => 'Oczekiwanie na kod ${code}...';
+	@override String get messageWaiting => 'Oczekiwanie na kod BLIK...';
 	@override String progressLabel({required Object seconds}) => 'Zarezerwowano: ${seconds} s pozostało';
 }
 
@@ -994,18 +994,18 @@ class _Translations$maker$confirmPayment$pl extends Translations$maker$confirmPa
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object code}) => 'Otrzymano kod ${code}!';
-	@override String retrieving({required Object code}) => 'Pobieranie kodu ${code}...';
-	@override String instruction1({required Object code}) => 'Wprowadź kod do systemu płatności ${code}.';
+	@override String get title => 'Otrzymano kod BLIK!';
+	@override String get retrieving => 'Pobieranie kodu BLIK...';
+	@override String get instruction1 => 'Wprowadź kod do systemu płatności BLIK.';
 	@override String get instruction2 => 'Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.';
 	@override String get instruction3 => 'Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:';
-	@override String takerChargedWarning({required Object code}) => 'Pobierający zgłosił, że płatność ${code} została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.';
-	@override String autoConfirmInfo({required Object code}) => 'Jeśli nie oznaczysz kodu ${code} jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu.';
+	@override String get takerChargedWarning => 'Pobierający zgłosił, że płatność BLIK została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.';
+	@override String get autoConfirmInfo => 'Jeśli nie oznaczysz kodu BLIK jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu.';
 	@override String autoConfirmCountdown({required Object time}) => 'Automatyczne potwierdzenie za ${time}';
-	@override String expiredTitle({required Object code}) => 'Kod ${code} wygasł';
-	@override String expiredWarning({required Object code}) => 'Kod ${code} wygasł. Musisz ręcznie potwierdzić status płatności:';
-	@override String expiredInstruction1({required Object code}) => 'Jeśli płatność ${code} zakończyła się sukcesem i zrealizowałeś zakup, kliknij "Potwierdź udaną płatność" poniżej.';
-	@override String expiredInstruction2({required Object code}) => 'Jeśli płatność ${code} nie powiodła się lub nie została zrealizowana, kliknij "Nieprawidłowy kod ${code}" poniżej.';
+	@override String get expiredTitle => 'Kod BLIK wygasł';
+	@override String get expiredWarning => 'Kod BLIK wygasł. Musisz ręcznie potwierdzić status płatności:';
+	@override String get expiredInstruction1 => 'Jeśli płatność BLIK zakończyła się sukcesem i zrealizowałeś zakup, kliknij "Potwierdź udaną płatność" poniżej.';
+	@override String get expiredInstruction2 => 'Jeśli płatność BLIK nie powiodła się lub nie została zrealizowana, kliknij "Nieprawidłowy kod BLIK" poniżej.';
 	@override late final _Translations$maker$confirmPayment$actions$pl actions = _Translations$maker$confirmPayment$actions$pl._(_root);
 	@override late final _Translations$maker$confirmPayment$confirmDialog$pl confirmDialog = _Translations$maker$confirmPayment$confirmDialog$pl._(_root);
 	@override late final _Translations$maker$confirmPayment$invalidBlikDisputeDialog$pl invalidBlikDisputeDialog = _Translations$maker$confirmPayment$invalidBlikDisputeDialog$pl._(_root);
@@ -1020,8 +1020,8 @@ class _Translations$maker$invalidBlik$pl extends Translations$maker$invalidBlik$
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object code}) => 'Nieprawidłowy kod ${code}';
-	@override String info({required Object code}) => 'Oznaczyłeś kod ${code} jako nieprawidłowy. Oczekiwanie na podanie nowego kodu przez takera lub rozpoczęcie sporu.';
+	@override String get title => 'Nieprawidłowy kod BLIK';
+	@override String get info => 'Oznaczyłeś kod BLIK jako nieprawidłowy. Oczekiwanie na podanie nowego kodu przez takera lub rozpoczęcie sporu.';
 }
 
 // Path: maker.conflict
@@ -1033,7 +1033,7 @@ class _Translations$maker$conflict$pl extends Translations$maker$conflict$en {
 	// Translations
 	@override String get title => 'Konflikt Oferty';
 	@override String get headline => 'Zgłoszono Konflikt Oferty';
-	@override String body({required Object code}) => 'Oznaczyłeś kod ${code} jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.';
+	@override String get body => 'Oznaczyłeś kod BLIK jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.';
 	@override String get instructions => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.';
 	@override late final _Translations$maker$conflict$actions$pl actions = _Translations$maker$conflict$actions$pl._(_root);
 	@override late final _Translations$maker$conflict$disputeDialog$pl disputeDialog = _Translations$maker$conflict$disputeDialog$pl._(_root);
@@ -1063,7 +1063,7 @@ class _Translations$taker$roleSelection$pl extends Translations$taker$roleSelect
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String button({required Object code}) => 'SPRZEDAJ kod ${code} za satoshi';
+	@override String get button => 'SPRZEDAJ kod BLIK za satoshi';
 }
 
 // Path: taker.progress
@@ -1073,8 +1073,8 @@ class _Translations$taker$progress$pl extends Translations$taker$progress$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String step1({required Object code}) => 'Wyślij ${code}';
-	@override String step2({required Object code}) => 'Potwierdź ${code}';
+	@override String get step1 => 'Wyślij BLIK';
+	@override String get step2 => 'Potwierdź BLIK';
 	@override String get step3 => 'Otrzymaj płatność';
 }
 
@@ -1085,11 +1085,11 @@ class _Translations$taker$submitBlik$pl extends Translations$taker$submitBlik$en
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object digits, required Object code}) => 'Wpisz ${digits}-cyfr ${code}';
-	@override String label({required Object code}) => 'Kod ${code}';
-	@override String instruction({required Object code}) => 'Wprowadź ${code} zanim upłynie czas...';
-	@override String timeLimit({required Object code, required Object seconds}) => 'Wprowadź ${code} w ciągu: ${seconds} s';
-	@override String timeExpired({required Object code}) => 'Czas na wprowadzenie kodu ${code} minął.';
+	@override String get title => 'Wpisz 6-cyfr BLIK';
+	@override String get label => 'Kod BLIK';
+	@override String get instruction => 'Wprowadź BLIK zanim upłynie czas...';
+	@override String timeLimit({required Object seconds}) => 'Wprowadź BLIK w ciągu: ${seconds} s';
+	@override String get timeExpired => 'Czas na wprowadzenie kodu BLIK minął.';
 	@override late final _Translations$taker$submitBlik$actions$pl actions = _Translations$taker$submitBlik$actions$pl._(_root);
 	@override late final _Translations$taker$submitBlik$feedback$pl feedback = _Translations$taker$submitBlik$feedback$pl._(_root);
 	@override late final _Translations$taker$submitBlik$validation$pl validation = _Translations$taker$submitBlik$validation$pl._(_root);
@@ -1107,25 +1107,24 @@ class _Translations$taker$waitConfirmation$pl extends Translations$taker$waitCon
 	@override String get title => 'Oczekiwanie na Makera';
 	@override String statusLabel({required Object status}) => 'Status oferty: ${status}';
 	@override String waitingMaker({required Object seconds}) => 'Oczekiwanie na potwierdzenie Makera: ${seconds} s';
-	@override String waitingMakerConfirmation({required Object code, required Object seconds}) => 'Oczekiwanie na potwierdzenie płatności ${code} przez Makera w jego aplikacji bankowej. Pozostały czas: ${seconds}s';
-	@override String importantNotice({required Object code, required Object amount, required Object currency}) => 'BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie ${code} tylko na kwotę ${amount} ${currency}';
-	@override String importantBlikAmountConfirmation({required Object code, required Object amount, required Object currency}) => 'BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność ${code} na kwotę dokładnie ${amount} ${currency}.';
-	@override String instructions({required Object code, required Object minutes}) => 'Osoba wystawiająca ofertę musi teraz wpisać kod ${code} w ciągu ${minutes} minut. Następnie musisz zaakceptować kod ${code} w swojej aplikacji bankowej.';
-	@override String instructionsNoConfirm({required Object code, required Object minutes}) => 'Osoba wystawiająca ofertę musi teraz wpisać Twój kod ${code} w bankomacie w ciągu ${minutes} minut.';
+	@override String waitingMakerConfirmation({required Object seconds}) => 'Oczekiwanie na potwierdzenie płatności BLIK przez Makera w jego aplikacji bankowej. Pozostały czas: ${seconds}s';
+	@override String importantNotice({required Object amount, required Object currency}) => 'BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie BLIK tylko na kwotę ${amount} ${currency}';
+	@override String importantBlikAmountConfirmation({required Object amount, required Object currency}) => 'BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność BLIK na kwotę dokładnie ${amount} ${currency}.';
+	@override String get instructions => 'Osoba wystawiająca ofertę musi teraz wpisać kod BLIK w ciągu 2 minut. Następnie musisz zaakceptować kod BLIK w swojej aplikacji bankowej.';
 	@override late final _Translations$taker$waitConfirmation$categoryReminder$pl categoryReminder = _Translations$taker$waitConfirmation$categoryReminder$pl._(_root);
-	@override String waitingForMakerToReceive({required Object code}) => 'Czekamy, aż twórca oferty otrzyma Twój kod ${code}...';
-	@override String makerReceivedBlik({required Object code}) => 'Twórca oferty otrzymał Twój kod ${code}';
-	@override String timerExpiredMessage({required Object code, required Object minutes}) => 'Minął termin ważności kodu ${code} ${minutes}m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.';
-	@override String timerExpiredActions({required Object code, required Object minutes}) => 'Minął termin ważności kodu ${code} ${minutes}m, ale wystawca nie otrzymał kodu ${code}. Możesz wysłać nowy kod ${code} lub anulować.';
-	@override String resendBlikButton({required Object code}) => 'Wyślij nowy kod ${code}';
+	@override String get waitingForMakerToReceive => 'Czekamy, aż twórca oferty otrzyma Twój kod BLIK...';
+	@override String get makerReceivedBlik => 'Twórca oferty otrzymał Twój kod BLIK';
+	@override String get timerExpiredMessage => 'Minął termin ważności kodu BLIK 2m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.';
+	@override String get timerExpiredActions => 'Minął termin ważności kodu BLIK 2m, ale wystawca nie otrzymał kodu BLIK. Możesz wysłać nowy kod BLIK lub anulować.';
+	@override String get resendBlikButton => 'Wyślij nowy kod BLIK';
 	@override String get navigatedHome => 'Przeniesiono na stronę główną.';
-	@override String expiredTitle({required Object code}) => 'Kod ${code} wygasł';
-	@override String expiredWarning({required Object code}) => 'Twórca oferty nie otrzymał kodu ${code}, więc nie mógł go użyć.';
+	@override String get expiredTitle => 'Kod BLIK wygasł';
+	@override String get expiredWarning => 'Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć.';
 	@override String get expiredRelistCountdownLabel => 'Koniec rezerwacji za';
 	@override String get expiredSentWarning => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?';
-	@override String expiredInstruction1({required Object code}) => 'Jeśli chcesz spróbować ponownie z nowym kodem ${code}, odnów rezerwację.';
+	@override String get expiredInstruction1 => 'Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację.';
 	@override String get expiredInstruction2 => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.';
-	@override String expiredInstruction3({required Object code}) => 'Jeśli płatność ${code} została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.';
+	@override String get expiredInstruction3 => 'Jeśli płatność BLIK została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.';
 	@override late final _Translations$taker$waitConfirmation$takerCharged$pl takerCharged = _Translations$taker$waitConfirmation$takerCharged$pl._(_root);
 	@override late final _Translations$taker$waitConfirmation$expiredActions$pl expiredActions = _Translations$taker$waitConfirmation$expiredActions$pl._(_root);
 	@override late final _Translations$taker$waitConfirmation$feedback$pl feedback = _Translations$taker$waitConfirmation$feedback$pl._(_root);
@@ -1184,14 +1183,12 @@ class _Translations$taker$invalidBlik$pl extends Translations$taker$invalidBlik$
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object code}) => 'Nieprawidłowy Kod ${code}';
-	@override String message({required Object code}) => 'Maker Odrzucił Kod ${code}';
-	@override String explanation({required Object code}) => 'Maker oferty wskazał, że podany przez Ciebie kod ${code} był nieprawidłowy lub nie zadziałał.\n\nCo chcesz zrobić?';
+	@override String get title => 'Nieprawidłowy Kod BLIK';
+	@override String get message => 'Maker Odrzucił Kod BLIK';
+	@override String get explanation => 'Maker oferty wskazał, że podany przez Ciebie kod BLIK był nieprawidłowy lub nie zadziałał.\n\nCo chcesz zrobić?';
 	@override String get werentCharged => 'Jeśli Twoje konto NIE zostało obciążone:';
 	@override String get wereCharged => 'Jeśli Twoje konto zostało obciążone:';
 	@override late final _Translations$taker$invalidBlik$actions$pl actions = _Translations$taker$invalidBlik$actions$pl._(_root);
-	@override late final _Translations$taker$invalidBlik$confirmDialog$pl confirmDialog = _Translations$taker$invalidBlik$confirmDialog$pl._(_root);
-	@override late final _Translations$taker$invalidBlik$disputeConfirmDialog$pl disputeConfirmDialog = _Translations$taker$invalidBlik$disputeConfirmDialog$pl._(_root);
 	@override late final _Translations$taker$invalidBlik$feedback$pl feedback = _Translations$taker$invalidBlik$feedback$pl._(_root);
 	@override late final _Translations$taker$invalidBlik$errors$pl errors = _Translations$taker$invalidBlik$errors$pl._(_root);
 }
@@ -1205,7 +1202,7 @@ class _Translations$taker$conflict$pl extends Translations$taker$conflict$en {
 	// Translations
 	@override String get title => 'Konflikt Oferty';
 	@override String get headline => 'Zgłoszono Konflikt Oferty';
-	@override String body({required Object code}) => 'Maker oznaczył kod ${code} jako nieprawidłowy, ale Ty zgłosiłeś konflikt, wskazując, że uważasz, iż płatność zakończyła się sukcesem.';
+	@override String get body => 'Maker oznaczył kod BLIK jako nieprawidłowy, ale Ty zgłosiłeś konflikt, wskazując, że uważasz, iż płatność zakończyła się sukcesem.';
 	@override String get instructions => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.';
 	@override late final _Translations$taker$conflict$actions$pl actions = _Translations$taker$conflict$actions$pl._(_root);
 	@override late final _Translations$taker$conflict$feedback$pl feedback = _Translations$taker$conflict$feedback$pl._(_root);
@@ -1220,7 +1217,7 @@ class _Translations$blik$instructions$pl extends Translations$blik$instructions$
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String taker({required Object code}) => 'Gdy Maker wprowadzi kod ${code}, będziesz musiał potwierdzić płatność w swojej aplikacji bankowej. Upewnij się, że kwota jest poprawna przed potwierdzeniem.';
+	@override String get taker => 'Gdy Maker wprowadzi kod BLIK, będziesz musiał potwierdzić płatność w swojej aplikacji bankowej. Upewnij się, że kwota jest poprawna przed potwierdzeniem.';
 }
 
 // Path: generateNewKey.buttons
@@ -1357,9 +1354,9 @@ class _Translations$home$statistics$pl extends Translations$home$statistics$en {
 
 	// Translations
 	@override String get title => 'Zakończone oferty';
-	@override String lifetimeCompact({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
-	@override String last7DaysCompact({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
-	@override String last7DaysSingleLine({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. ${code}: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}';
+	@override String lifetimeCompact({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
+	@override String last7DaysCompact({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
+	@override String last7DaysSingleLine({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}';
 	@override late final _Translations$home$statistics$errors$pl errors = _Translations$home$statistics$errors$pl._(_root);
 }
 
@@ -1385,7 +1382,7 @@ class _Translations$system$blik$pl extends Translations$system$blik$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String copied({required Object code}) => 'Kod ${code} skopiowany do schowka';
+	@override String get copied => 'Kod BLIK skopiowany do schowka';
 }
 
 // Path: myOffers.filter
@@ -1421,7 +1418,7 @@ class _Translations$myOffers$details$pl extends Translations$myOffers$details$en
 	@override String get coordinator => 'Koordynator';
 	@override String get createdAt => 'Utworzono';
 	@override String get reservedAt => 'Zarezerwowano';
-	@override String blikReceivedAt({required Object code}) => '${code} wysłany';
+	@override String get blikReceivedAt => 'BLIK wysłany';
 	@override String get makerConfirmedAt => 'Potwierdzono';
 	@override String get settledAt => 'Rozliczono';
 	@override String get takerPaidAt => 'Taker opłacony';
@@ -1439,10 +1436,10 @@ class _Translations$landing$actions$pl extends Translations$landing$actions$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String payBlik({required Object code}) => 'Zapłać ${code}';
+	@override String get payBlik => 'Zapłać BLIK';
 	@override String get payBlikSubtitle => 'używając bitcoin';
 	@override String get sellBlik => 'Kup bitcoin';
-	@override String sellBlikSubtitle({required Object code}) => 'używając ${code}';
+	@override String get sellBlikSubtitle => 'używając BLIK';
 	@override String get howItWorks => 'Jak to działa?';
 }
 
@@ -1503,7 +1500,7 @@ class _Translations$notificationSettings$newOfferAlerts$pl extends Translations$
 
 	// Translations
 	@override String get label => 'Alerty o nowych ofertach';
-	@override String description({required Object app}) => 'Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.';
+	@override String get description => 'Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.';
 }
 
 // Path: wallet.missingReceiving
@@ -1642,7 +1639,7 @@ class _Translations$offerNotifications$activeService$pl extends Translations$off
 
 	// Translations
 	@override String get title => 'Oczekiwanie na nowe oferty';
-	@override String body({required Object app}) => 'Usługa w tle monitorująca ofert ${app}.';
+	@override String get body => 'Usługa w tle monitorująca ofert BitBlik.';
 }
 
 // Path: offerNotifications.funded
@@ -1674,8 +1671,8 @@ class _Translations$offerNotifications$blikReady$pl extends Translations$offerNo
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object code}) => 'Kod ${code} gotowy';
-	@override String body({required Object code}) => 'Twój kod ${code} jest gotowy do wyświetlenia.';
+	@override String get title => 'Kod BLIK gotowy';
+	@override String get body => 'Twój kod BLIK jest gotowy do wyświetlenia.';
 }
 
 // Path: offerNotifications.newOffer
@@ -1709,8 +1706,8 @@ class _Translations$offerNotifications$blikPendingReminder$pl extends Translatio
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object code}) => '${code} czeka na Twoją akcję';
-	@override String body({required Object code}) => 'Potwierdź płatność lub oznacz kod ${code} jako nieprawidłowy.';
+	@override String get title => 'BLIK czeka na Twoją akcję';
+	@override String get body => 'Potwierdź płatność lub oznacz kod BLIK jako nieprawidłowy.';
 }
 
 // Path: offerNotifications.takerCharged
@@ -1720,8 +1717,8 @@ class _Translations$offerNotifications$takerCharged$pl extends Translations$offe
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object code}) => '${code} obciążony';
-	@override String body({required Object code}) => 'Taker zgłasza, że ${code} został obciążony. Potwierdź lub oznacz jako nieprawidłowy.';
+	@override String get title => 'BLIK obciążony';
+	@override String get body => 'Taker zgłasza, że BLIK został obciążony. Potwierdź lub oznacz jako nieprawidłowy.';
 }
 
 // Path: offerNotifications.invalidBlik
@@ -1731,8 +1728,8 @@ class _Translations$offerNotifications$invalidBlik$pl extends Translations$offer
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object code}) => '${code} oznaczony jako nieprawidłowy';
-	@override String body({required Object code}) => 'Maker oznaczył Twój kod ${code} jako nieprawidłowy.';
+	@override String get title => 'BLIK oznaczony jako nieprawidłowy';
+	@override String get body => 'Maker oznaczył Twój kod BLIK jako nieprawidłowy.';
 }
 
 // Path: offerNotifications.takerPaid
@@ -1766,7 +1763,7 @@ class _Translations$offers$details$consents$pl extends Translations$offers$detai
 
 	// Translations
 	@override String get atm => 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
-	@override String ecommerce({required Object code}) => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem ${code}. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.';
+	@override String get ecommerce => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.';
 }
 
 // Path: maker.amountForm.progress
@@ -1778,7 +1775,7 @@ class _Translations$maker$amountForm$progress$pl extends Translations$maker$amou
 	// Translations
 	@override String get step1 => '1. Utwórz Ofertę';
 	@override String get step2 => '2. Czekaj na zabranie';
-	@override String step3({required Object code}) => '3. Użyj ${code}';
+	@override String get step3 => '3. Użyj BLIK';
 }
 
 // Path: maker.amountForm.labels
@@ -1833,9 +1830,9 @@ class _Translations$maker$amountForm$category$pl extends Translations$maker$amou
 	@override late final _Translations$maker$amountForm$category$options$pl options = _Translations$maker$amountForm$category$options$pl._(_root);
 	@override late final _Translations$maker$amountForm$category$shortLabels$pl shortLabels = _Translations$maker$amountForm$category$shortLabels$pl._(_root);
 	@override String get atmHint => 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.';
-	@override String physicalShopHint({required Object app, required Object code}) => 'Idealne miejsce do użycia ${app} to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod ${code}, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.';
+	@override String get physicalShopHint => 'Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.';
 	@override String get ecommerceWarningTitle => 'Ryzyko zwrotu od sprzedawcy online';
-	@override String ecommerceWarningBody({required Object code}) => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem ${code}, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
+	@override String get ecommerceWarningBody => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.';
 	@override String get ecommerceConfirmation => 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.';
 	@override String get whyThisIsNeeded => 'dlaczego to jest potrzebne?';
 }
@@ -1924,8 +1921,8 @@ class _Translations$maker$confirmPayment$actions$pl extends Translations$maker$c
 
 	// Translations
 	@override String get confirm => 'Potwierdź udaną płatność';
-	@override String markInvalid({required Object code}) => 'Nieprawidłowy kod ${code}';
-	@override String copyBlik({required Object code}) => 'Kopiuj ${code}';
+	@override String get markInvalid => 'Nieprawidłowy kod BLIK';
+	@override String get copyBlik => 'Kopiuj BLIK';
 }
 
 // Path: maker.confirmPayment.confirmDialog
@@ -1936,7 +1933,7 @@ class _Translations$maker$confirmPayment$confirmDialog$pl extends Translations$m
 
 	// Translations
 	@override String get title => 'Potwierdzić płatność?';
-	@override String content({required Object code}) => 'Ta akcja jest nieodwracalna. Po potwierdzeniu:\n\n• Kupujący otrzyma środki natychmiast\n• Koordynator nie będzie mógł zakwestionować środków\n• Nie możesz cofnąć tej akcji\n\nPotwierdź tylko wtedy, gdy płatność ${code} zakończyła się sukcesem.';
+	@override String get content => 'Ta akcja jest nieodwracalna. Po potwierdzeniu:\n\n• Kupujący otrzyma środki natychmiast\n• Koordynator nie będzie mógł zakwestionować środków\n• Nie możesz cofnąć tej akcji\n\nPotwierdź tylko wtedy, gdy płatność BLIK zakończyła się sukcesem.';
 	@override String get cancel => 'Anuluj';
 	@override String get confirmButton => 'Tak, potwierdź płatność';
 }
@@ -1949,7 +1946,7 @@ class _Translations$maker$confirmPayment$invalidBlikDisputeDialog$pl extends Tra
 
 	// Translations
 	@override String get title => 'Otworzyć spór?';
-	@override String content({required Object code}) => 'Kupujący zgłosił, że płatność ${code} została pobrana z jego konta.\n\nOznaczenie tego jako nieprawidłowe natychmiast otworzy SPÓR wymagający interwencji koordynatora.\n\n• Opłata za spór może zostać naliczona, jeśli zostanie rozstrzygnięty na Twoją niekorzyść\n• Faktura hold zostanie rozliczona natychmiast\n• Wymagana będzie ręczna weryfikacja\n\nKontynuuj tylko wtedy, gdy masz pewność, że płatność ${code} NIE powiodła się.';
+	@override String get content => 'Kupujący zgłosił, że płatność BLIK została pobrana z jego konta.\n\nOznaczenie tego jako nieprawidłowe natychmiast otworzy SPÓR wymagający interwencji koordynatora.\n\n• Opłata za spór może zostać naliczona, jeśli zostanie rozstrzygnięty na Twoją niekorzyść\n• Faktura hold zostanie rozliczona natychmiast\n• Wymagana będzie ręczna weryfikacja\n\nKontynuuj tylko wtedy, gdy masz pewność, że płatność BLIK NIE powiodła się.';
 	@override String get cancel => 'Anuluj';
 	@override String get confirmButton => 'Tak, otwórz spór';
 }
@@ -1973,8 +1970,8 @@ class _Translations$maker$confirmPayment$errors$pl extends Translations$maker$co
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String failedToRetrieve({required Object code}) => 'Błąd: Nie udało się pobrać kodu ${code}.';
-	@override String retrieving({required Object code, required Object details}) => 'Błąd pobierania kodu ${code}: ${details}';
+	@override String get failedToRetrieve => 'Błąd: Nie udało się pobrać kodu BLIK.';
+	@override String retrieving({required Object details}) => 'Błąd pobierania kodu BLIK: ${details}';
 	@override String get missingHashOrKey => 'Błąd: Brakujący hash płatności lub klucz publiczny.';
 	@override String incorrectState({required Object status}) => 'Oferta nie jest w prawidłowym stanie do potwierdzenia (Status: ${status})';
 	@override String confirming({required Object details}) => 'Błąd potwierdzania płatności: ${details}';
@@ -1992,8 +1989,8 @@ class _Translations$maker$conflict$actions$pl extends Translations$maker$conflic
 
 	// Translations
 	@override String get back => 'Powrót do strony głównej';
-	@override String confirmPayment({required Object code}) => 'Mój błąd, potwierdź sukces płatności ${code}';
-	@override String openDispute({required Object code}) => 'Płatność ${code} NIE powiodła się, OTWÓRZ SPÓR';
+	@override String get confirmPayment => 'Mój błąd, potwierdź sukces płatności BLIK';
+	@override String get openDispute => 'Płatność BLIK NIE powiodła się, OTWÓRZ SPÓR';
 	@override String get submitDispute => 'Zgłoś Spór';
 }
 
@@ -2053,7 +2050,7 @@ class _Translations$taker$submitBlik$actions$pl extends Translations$taker$submi
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String submit({required Object code}) => 'Wyślij ${code}';
+	@override String get submit => 'Wyślij BLIK';
 }
 
 // Path: taker.submitBlik.feedback
@@ -2063,7 +2060,7 @@ class _Translations$taker$submitBlik$feedback$pl extends Translations$taker$subm
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String pasted({required Object code}) => 'Wklejono kod ${code}.';
+	@override String get pasted => 'Wklejono kod BLIK.';
 }
 
 // Path: taker.submitBlik.validation
@@ -2073,7 +2070,7 @@ class _Translations$taker$submitBlik$validation$pl extends Translations$taker$su
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String invalidFormat({required Object digits, required Object code}) => 'Wprowadź prawidłowy ${digits}-cyfrowy kod ${code}.';
+	@override String get invalidFormat => 'Wprowadź prawidłowy 6-cyfrowy kod BLIK.';
 }
 
 // Path: taker.submitBlik.errors
@@ -2083,8 +2080,8 @@ class _Translations$taker$submitBlik$errors$pl extends Translations$taker$submit
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String submitting({required Object code, required Object details}) => 'Błąd wysyłania kodu ${code}: ${details}';
-	@override String clipboardInvalid({required Object digits, required Object code}) => 'Schowek nie zawiera prawidłowego ${digits}-cyfrowego kodu ${code}.';
+	@override String submitting({required Object details}) => 'Błąd wysyłania kodu BLIK: ${details}';
+	@override String get clipboardInvalid => 'Schowek nie zawiera prawidłowego 6-cyfrowego kodu BLIK.';
 	@override String get stateChanged => 'Błąd: Stan oferty uległ zmianie.';
 	@override String get stateNotValid => 'Błąd: Stan oferty nie jest już ważny.';
 	@override String fetchedIdMismatch({required Object fetchedId, required Object initialId}) => 'Pobrane ID aktywnej oferty (${fetchedId}) nie pasuje do początkowego ID oferty (${initialId}). Niezgodność stanu?';
@@ -2098,7 +2095,7 @@ class _Translations$taker$submitBlik$details$pl extends Translations$taker$submi
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String requestedAmount({required Object code}) => 'Żądana kwota ${code}';
+	@override String get requestedAmount => 'Żądana kwota BLIK';
 	@override String get exchangeRate => 'Kurs wymiany';
 	@override String get takerFee => 'Opłata Taker';
 	@override String get status => 'Status';
@@ -2123,7 +2120,7 @@ class _Translations$taker$waitConfirmation$takerCharged$pl extends Translations$
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object code}) => 'Oznaczyłeś ${code} jako opłacony';
+	@override String get title => 'Oznaczyłeś BLIK jako opłacony';
 	@override String message({required Object minutes}) => 'Twórca oferty ma ${minutes} min na potwierdzenie płatności lub jej zakwestionowanie. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny.';
 }
 
@@ -2134,8 +2131,8 @@ class _Translations$taker$waitConfirmation$expiredActions$pl extends Translation
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String reportConflict({required Object code}) => '${code} został pobrany z mojego konta';
-	@override String renewReservation({required Object code}) => 'Spróbuj ponownie z nowym kodem ${code}';
+	@override String get reportConflict => 'BLIK został pobrany z mojego konta';
+	@override String get renewReservation => 'Spróbuj ponownie z nowym kodem BLIK';
 	@override String get cancelReservation => 'Anuluj rezerwację';
 }
 
@@ -2183,7 +2180,7 @@ class _Translations$taker$paymentProcess$steps$pl extends Translations$taker$pay
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String makerConfirmedBlik({required Object code}) => 'Maker potwierdził płatność ${code}';
+	@override String get makerConfirmedBlik => 'Maker potwierdził płatność BLIK';
 	@override String get makerInvoiceSettled => 'Faktura hold Makera rozliczona';
 	@override String get takerInvoicePaid => 'Opłacanie Twojej faktury Lightning';
 	@override String get takerPaymentFailed => 'Płatność na Twoją fakturę nie powiodła się';
@@ -2313,34 +2310,10 @@ class _Translations$taker$invalidBlik$actions$pl extends Translations$taker$inva
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String retry({required Object code}) => 'Wyślij nowy kod ${code}';
+	@override String get retry => 'Wyślij nowy kod BLIK';
 	@override String get cancelReservation => 'Anuluj Transakcję';
 	@override String get reportConflict => 'Rozpocząć Spór';
 	@override String get returnHome => 'Wróć do strony głównej';
-}
-
-// Path: taker.invalidBlik.confirmDialog
-class _Translations$taker$invalidBlik$confirmDialog$pl extends Translations$taker$invalidBlik$confirmDialog$en {
-	_Translations$taker$invalidBlik$confirmDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
-
-	final TranslationsPl _root; // ignore: unused_field
-
-	// Translations
-	@override String get title => 'Czy na pewno?';
-	@override String get content => 'Po kliknięciu nie ma odwrotu.\n\nJeśli kwota ZOSTAŁA faktycznie pobrana z Twojego konta bankowego, koordynator NIE będzie w stanie zagwarantować, że otrzymasz bitcoiny, i możesz stracić swoje środki.\n\nJeśli nie masz pewności, najlepiej chwilę poczekać i potwierdzić, że NIE zostałeś obciążony, zanim przejdziesz dalej.';
-	@override late final _Translations$taker$invalidBlik$confirmDialog$actions$pl actions = _Translations$taker$invalidBlik$confirmDialog$actions$pl._(_root);
-}
-
-// Path: taker.invalidBlik.disputeConfirmDialog
-class _Translations$taker$invalidBlik$disputeConfirmDialog$pl extends Translations$taker$invalidBlik$disputeConfirmDialog$en {
-	_Translations$taker$invalidBlik$disputeConfirmDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
-
-	final TranslationsPl _root; // ignore: unused_field
-
-	// Translations
-	@override String get title => 'Rozpocząć spór?';
-	@override String get content => 'Rozpocznij spór tylko wtedy, gdy kwota ZOSTAŁA pobrana z Twojego konta bankowego.\n\nKoordynator ręcznie rozpatrzy Twoją sprawę, co wymaga czasu. Będziesz musiał przedstawić dowód płatności.';
-	@override late final _Translations$taker$invalidBlik$disputeConfirmDialog$actions$pl actions = _Translations$taker$invalidBlik$disputeConfirmDialog$actions$pl._(_root);
 }
 
 // Path: taker.invalidBlik.feedback
@@ -2502,28 +2475,6 @@ class _Translations$maker$conflict$disputeDialog$actions$pl extends Translations
 	@override String get cancel => 'Anuluj';
 }
 
-// Path: taker.invalidBlik.confirmDialog.actions
-class _Translations$taker$invalidBlik$confirmDialog$actions$pl extends Translations$taker$invalidBlik$confirmDialog$actions$en {
-	_Translations$taker$invalidBlik$confirmDialog$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
-
-	final TranslationsPl _root; // ignore: unused_field
-
-	// Translations
-	@override String get proceed => 'Jestem pewien, kontynuuj';
-	@override String get cancel => 'Anuluj';
-}
-
-// Path: taker.invalidBlik.disputeConfirmDialog.actions
-class _Translations$taker$invalidBlik$disputeConfirmDialog$actions$pl extends Translations$taker$invalidBlik$disputeConfirmDialog$actions$en {
-	_Translations$taker$invalidBlik$disputeConfirmDialog$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
-
-	final TranslationsPl _root; // ignore: unused_field
-
-	// Translations
-	@override String get proceed => 'Tak, zostałem obciążony';
-	@override String get cancel => 'Anuluj';
-}
-
 /// The flat map containing all translations for locale <pl>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -2532,7 +2483,7 @@ class _Translations$taker$invalidBlik$disputeConfirmDialog$actions$pl extends Tr
 extension on TranslationsPl {
 	dynamic _flatMapFunction(String path) {
 		return switch (path) {
-			'app.title' => ({required Object app}) => '${app}',
+			'app.title' => 'BitBlik',
 			'app.greeting' => 'Cześć!',
 			'app.changelog' => 'Historia zmian',
 			'common.buttons.cancel' => 'Anuluj',
@@ -2547,7 +2498,7 @@ extension on TranslationsPl {
 			'common.buttons.close' => 'Zamknij',
 			'common.buttons.restore' => 'Przywróć',
 			'common.buttons.faq' => 'FAQ',
-			'common.labels.amount' => ({required Object currency}) => 'Kwota (${currency})',
+			'common.labels.amount' => 'Kwota (PLN)',
 			'common.labels.status' => ({required Object status}) => 'Status: ${status}',
 			'common.labels.role' => ({required Object role}) => 'Rola: ${role}',
 			'common.notifications.success' => 'Sukces',
@@ -2583,7 +2534,7 @@ extension on TranslationsPl {
 			'offers.details.activeOffer' => 'Masz aktywną ofertę:',
 			'offers.details.finishedOffers' => 'Zakończone oferty',
 			'offers.details.noAvailable' => 'Brak dostępnych ofert.',
-			'offers.details.noAvailableTip' => ({required Object app}) => 'Wskazówka: udostępnij ${app} w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w ${app}.',
+			'offers.details.noAvailableTip' => 'Wskazówka: udostępnij Bitblik w swojej społeczności i wśród znajomych, aby zwiększyć liczbę zamówień w Bitblik.',
 			'offers.details.noSuccessfulTrades' => 'Brak udanych transakcji.',
 			'offers.details.loadingDetails' => 'Ładowanie szczegółów oferty...',
 			'offers.details.amount' => ({required Object amount}) => 'Kwota: ${amount} satoshi',
@@ -2609,7 +2560,7 @@ extension on TranslationsPl {
 			'offers.details.categories.atmCashout' => 'Wypłata gotówki z bankomatu',
 			'offers.details.categories.onlineService' => 'Produkt lub usługa online',
 			'offers.details.consents.atm' => 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.',
-			'offers.details.consents.ecommerce' => ({required Object code}) => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem ${code}. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.',
+			'offers.details.consents.ecommerce' => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem BLIK. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.',
 			'offers.labels.premium' => 'Premia',
 			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% premii',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.',
@@ -2618,7 +2569,7 @@ extension on TranslationsPl {
 			'offers.tooltips.ratesSources' => 'Źródła średniego kursu',
 			'offers.actions.take' => 'WEŹ',
 			'offers.actions.takeOffer' => 'Weź ofertę',
-			'offers.actions.resume' => ({required Object code}) => 'Wprowadź ${code}',
+			'offers.actions.resume' => 'Wprowadź BLIK',
 			'offers.actions.cancel' => 'Anuluj ofertę',
 			'offers.actions.view' => 'Zobacz',
 			'offers.status.created' => 'Utworzona',
@@ -2626,12 +2577,12 @@ extension on TranslationsPl {
 			'offers.status.expired' => 'Wygasła',
 			'offers.status.cancelled' => 'Anulowana',
 			'offers.status.reserved' => 'Zarezerwowana',
-			'offers.status.blikReceived' => ({required Object code}) => '${code} wysłany',
-			'offers.status.blikSentToMaker' => ({required Object code}) => 'Otrzymano ${code}',
-			'offers.status.expiredBlik' => ({required Object code}) => '${code} wygasł',
-			'offers.status.expiredSentBlik' => ({required Object code}) => '${code} wygasł',
+			'offers.status.blikReceived' => 'BLIK wysłany',
+			'offers.status.blikSentToMaker' => 'Otrzymano BLIK',
+			'offers.status.expiredBlik' => 'BLIK wygasł',
+			'offers.status.expiredSentBlik' => 'BLIK wygasł',
 			'offers.status.takerCharged' => 'Taker obciążony',
-			'offers.status.invalidBlik' => ({required Object code}) => 'Nieprawidłowy ${code}',
+			'offers.status.invalidBlik' => 'Nieprawidłowy BLIK',
 			'offers.status.conflict' => 'Konflikt',
 			'offers.status.dispute' => 'Spór',
 			'offers.status.makerConfirmed' => 'Potwierdzona',
@@ -2680,9 +2631,9 @@ extension on TranslationsPl {
 			'reservations.errors.failedNoTimestamp' => 'Nie udało się zarezerwować oferty (brak znacznika czasu).',
 			'reservations.errors.timestampMissing' => 'Brak znacznika czasu rezerwacji oferty.',
 			'reservations.errors.notReserved' => ({required Object status}) => 'Oferta nie jest już w stanie zarezerwowanym (${status}).',
-			'exchange.labels.enterAmount' => ({required Object currency}) => 'Wprowadź kwotę (${currency}) do zapłaty:',
+			'exchange.labels.enterAmount' => 'Wprowadź kwotę (PLN) do zapłaty:',
 			'exchange.labels.equivalent' => ({required Object sats}) => '≈ ${sats} satoshi',
-			'exchange.labels.rate' => ({required Object rate, required Object currency}) => 'Kurs wymiany ≈ ${rate} ${currency}/BTC',
+			'exchange.labels.rate' => ({required Object rate}) => 'Kurs wymiany ≈ ${rate} PLN/BTC',
 			'exchange.feedback.fetching' => 'Pobieranie kursu wymiany...',
 			'exchange.errors.fetchingRate' => 'Nie udało się pobrać kursu wymiany.',
 			'exchange.errors.invalidFormat' => 'Nieprawidłowy format liczby',
@@ -2755,7 +2706,7 @@ extension on TranslationsPl {
 			'maker.roleSelection.button' => 'ZAPŁAĆ przez Lightning',
 			'maker.amountForm.progress.step1' => '1. Utwórz Ofertę',
 			'maker.amountForm.progress.step2' => '2. Czekaj na zabranie',
-			'maker.amountForm.progress.step3' => ({required Object code}) => '3. Użyj ${code}',
+			'maker.amountForm.progress.step3' => '3. Użyj BLIK',
 			'maker.amountForm.labels.coordinator' => 'Koordynator',
 			'maker.amountForm.labels.category' => 'Kategoria',
 			'maker.amountForm.labels.exchangeRate' => 'Kurs wymiany',
@@ -2778,9 +2729,9 @@ extension on TranslationsPl {
 			'maker.amountForm.category.shortLabels.atm' => 'Bankomat',
 			'maker.amountForm.category.shortLabels.online' => 'Online',
 			'maker.amountForm.category.atmHint' => 'Kupujący zobaczą, że oferta dotyczy wypłaty z bankomatu i mogą ją pominąć, jeśli ich bank dolicza dodatkowe opłaty.',
-			'maker.amountForm.category.physicalShopHint' => ({required Object app, required Object code}) => 'Idealne miejsce do użycia ${app} to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod ${code}, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.',
+			'maker.amountForm.category.physicalShopHint' => 'Idealne miejsce do użycia Bitblik to kasa samoobsługowa — ponieważ oczekiwanie na takera, który musi zarezerwować ofertę, wygenerować i potwierdzić kod BLIK, może zająć kilka minut. Sprawdza się świetnie w sklepach, kawiarniach i restauracjach. Jeśli czujesz się na tyle odważny, żeby kazać zwykłemu kasjerowi (i osobom stojącym za Tobą w kolejce) czekać te kilka minut — chwała Ci za to.',
 			'maker.amountForm.category.ecommerceWarningTitle' => 'Ryzyko zwrotu od sprzedawcy online',
-			'maker.amountForm.category.ecommerceWarningBody' => ({required Object code}) => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem ${code}, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.',
+			'maker.amountForm.category.ecommerceWarningBody' => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie wystawić zwrot na konto bankowe powiązane z kodem BLIK, czyli konto takera. Koordynator nie może wymusić, aby taker zwrócił te środki Tobie.',
 			'maker.amountForm.category.ecommerceConfirmation' => 'Rozumiem ryzyko zwrotu i dodam do zamówienia informację, aby sprzedawca w razie zwrotu przelał środki na inne konto.',
 			'maker.amountForm.category.whyThisIsNeeded' => 'dlaczego to jest potrzebne?',
 			'maker.amountForm.onboarding.titlePrefix' => 'Nowość',
@@ -2817,8 +2768,8 @@ extension on TranslationsPl {
 			'maker.payInvoice.errors.cancelFailed' => ({required Object details}) => 'Nie można anulować oferty: ${details}',
 			'maker.waitTaker.message' => 'Oczekiwanie na rezerwację przez Kupującego...',
 			'maker.waitTaker.errorActiveOfferDetailsLost' => 'Błąd: Utracono szczegóły aktywnej oferty.',
-			'maker.waitTaker.errorFailedToRetrieveBlik' => ({required Object code}) => 'Błąd: Nie udało się pobrać kodu ${code}.',
-			'maker.waitTaker.errorRetrievingBlik' => ({required Object code, required Object details}) => 'Błąd pobierania kodu ${code}: ${details}',
+			'maker.waitTaker.errorFailedToRetrieveBlik' => 'Błąd: Nie udało się pobrać kodu BLIK.',
+			'maker.waitTaker.errorRetrievingBlik' => ({required Object details}) => 'Błąd pobierania kodu BLIK: ${details}',
 			'maker.waitTaker.offerNoLongerAvailable' => ({required Object status}) => 'Oferta nie jest już dostępna (Status: ${status}).',
 			'maker.waitTaker.errorCouldNotIdentifyOffer' => 'Błąd: Nie można zidentyfikować oferty do anulowania.',
 			'maker.waitTaker.offerCannotBeCancelled' => ({required Object status}) => 'Oferty nie można anulować w obecnym stanie (${status}).',
@@ -2827,38 +2778,38 @@ extension on TranslationsPl {
 			'maker.waitTaker.offerExpiredTitle' => 'Oferta wygasła',
 			'maker.waitTaker.offerExpiredMessage' => 'Żaden taker nie zarezerwował oferty w czasie.',
 			'maker.waitTaker.recreateOffer' => 'Nowa oferta — ta sama kwota',
-			'maker.waitForBlik.title' => ({required Object code}) => 'Oczekiwanie na ${code}',
+			'maker.waitForBlik.title' => 'Oczekiwanie na BLIK',
 			'maker.waitForBlik.messageInfo' => 'Ktoś zarezerwował twoją ofertę!',
-			'maker.waitForBlik.messageWaiting' => ({required Object code}) => 'Oczekiwanie na kod ${code}...',
+			'maker.waitForBlik.messageWaiting' => 'Oczekiwanie na kod BLIK...',
 			'maker.waitForBlik.progressLabel' => ({required Object seconds}) => 'Zarezerwowano: ${seconds} s pozostało',
-			'maker.confirmPayment.title' => ({required Object code}) => 'Otrzymano kod ${code}!',
-			'maker.confirmPayment.retrieving' => ({required Object code}) => 'Pobieranie kodu ${code}...',
-			'maker.confirmPayment.instruction1' => ({required Object code}) => 'Wprowadź kod do systemu płatności ${code}.',
+			'maker.confirmPayment.title' => 'Otrzymano kod BLIK!',
+			'maker.confirmPayment.retrieving' => 'Pobieranie kodu BLIK...',
+			'maker.confirmPayment.instruction1' => 'Wprowadź kod do systemu płatności BLIK.',
 			'maker.confirmPayment.instruction2' => 'Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.',
 			'maker.confirmPayment.instruction3' => 'Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:',
-			'maker.confirmPayment.takerChargedWarning' => ({required Object code}) => 'Pobierający zgłosił, że płatność ${code} została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.',
-			'maker.confirmPayment.autoConfirmInfo' => ({required Object code}) => 'Jeśli nie oznaczysz kodu ${code} jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu.',
+			'maker.confirmPayment.takerChargedWarning' => 'Pobierający zgłosił, że płatność BLIK została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.',
+			'maker.confirmPayment.autoConfirmInfo' => 'Jeśli nie oznaczysz kodu BLIK jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu.',
 			'maker.confirmPayment.autoConfirmCountdown' => ({required Object time}) => 'Automatyczne potwierdzenie za ${time}',
-			'maker.confirmPayment.expiredTitle' => ({required Object code}) => 'Kod ${code} wygasł',
-			'maker.confirmPayment.expiredWarning' => ({required Object code}) => 'Kod ${code} wygasł. Musisz ręcznie potwierdzić status płatności:',
-			'maker.confirmPayment.expiredInstruction1' => ({required Object code}) => 'Jeśli płatność ${code} zakończyła się sukcesem i zrealizowałeś zakup, kliknij "Potwierdź udaną płatność" poniżej.',
-			'maker.confirmPayment.expiredInstruction2' => ({required Object code}) => 'Jeśli płatność ${code} nie powiodła się lub nie została zrealizowana, kliknij "Nieprawidłowy kod ${code}" poniżej.',
+			'maker.confirmPayment.expiredTitle' => 'Kod BLIK wygasł',
+			'maker.confirmPayment.expiredWarning' => 'Kod BLIK wygasł. Musisz ręcznie potwierdzić status płatności:',
+			'maker.confirmPayment.expiredInstruction1' => 'Jeśli płatność BLIK zakończyła się sukcesem i zrealizowałeś zakup, kliknij "Potwierdź udaną płatność" poniżej.',
+			'maker.confirmPayment.expiredInstruction2' => 'Jeśli płatność BLIK nie powiodła się lub nie została zrealizowana, kliknij "Nieprawidłowy kod BLIK" poniżej.',
 			'maker.confirmPayment.actions.confirm' => 'Potwierdź udaną płatność',
-			'maker.confirmPayment.actions.markInvalid' => ({required Object code}) => 'Nieprawidłowy kod ${code}',
-			'maker.confirmPayment.actions.copyBlik' => ({required Object code}) => 'Kopiuj ${code}',
+			'maker.confirmPayment.actions.markInvalid' => 'Nieprawidłowy kod BLIK',
+			'maker.confirmPayment.actions.copyBlik' => 'Kopiuj BLIK',
 			'maker.confirmPayment.confirmDialog.title' => 'Potwierdzić płatność?',
-			'maker.confirmPayment.confirmDialog.content' => ({required Object code}) => 'Ta akcja jest nieodwracalna. Po potwierdzeniu:\n\n• Kupujący otrzyma środki natychmiast\n• Koordynator nie będzie mógł zakwestionować środków\n• Nie możesz cofnąć tej akcji\n\nPotwierdź tylko wtedy, gdy płatność ${code} zakończyła się sukcesem.',
+			'maker.confirmPayment.confirmDialog.content' => 'Ta akcja jest nieodwracalna. Po potwierdzeniu:\n\n• Kupujący otrzyma środki natychmiast\n• Koordynator nie będzie mógł zakwestionować środków\n• Nie możesz cofnąć tej akcji\n\nPotwierdź tylko wtedy, gdy płatność BLIK zakończyła się sukcesem.',
 			'maker.confirmPayment.confirmDialog.cancel' => 'Anuluj',
 			'maker.confirmPayment.confirmDialog.confirmButton' => 'Tak, potwierdź płatność',
 			'maker.confirmPayment.invalidBlikDisputeDialog.title' => 'Otworzyć spór?',
-			'maker.confirmPayment.invalidBlikDisputeDialog.content' => ({required Object code}) => 'Kupujący zgłosił, że płatność ${code} została pobrana z jego konta.\n\nOznaczenie tego jako nieprawidłowe natychmiast otworzy SPÓR wymagający interwencji koordynatora.\n\n• Opłata za spór może zostać naliczona, jeśli zostanie rozstrzygnięty na Twoją niekorzyść\n• Faktura hold zostanie rozliczona natychmiast\n• Wymagana będzie ręczna weryfikacja\n\nKontynuuj tylko wtedy, gdy masz pewność, że płatność ${code} NIE powiodła się.',
+			'maker.confirmPayment.invalidBlikDisputeDialog.content' => 'Kupujący zgłosił, że płatność BLIK została pobrana z jego konta.\n\nOznaczenie tego jako nieprawidłowe natychmiast otworzy SPÓR wymagający interwencji koordynatora.\n\n• Opłata za spór może zostać naliczona, jeśli zostanie rozstrzygnięty na Twoją niekorzyść\n• Faktura hold zostanie rozliczona natychmiast\n• Wymagana będzie ręczna weryfikacja\n\nKontynuuj tylko wtedy, gdy masz pewność, że płatność BLIK NIE powiodła się.',
 			'maker.confirmPayment.invalidBlikDisputeDialog.cancel' => 'Anuluj',
 			'maker.confirmPayment.invalidBlikDisputeDialog.confirmButton' => 'Tak, otwórz spór',
 			'maker.confirmPayment.feedback.confirmed' => 'Maker potwierdził płatność.',
 			'maker.confirmPayment.feedback.confirmedTakerPaid' => 'Płatność potwierdzona! Taker otrzyma środki.',
 			'maker.confirmPayment.feedback.progressLabel' => ({required Object seconds}) => 'Potwierdzanie: ${seconds} s pozostało',
-			'maker.confirmPayment.errors.failedToRetrieve' => ({required Object code}) => 'Błąd: Nie udało się pobrać kodu ${code}.',
-			'maker.confirmPayment.errors.retrieving' => ({required Object code, required Object details}) => 'Błąd pobierania kodu ${code}: ${details}',
+			'maker.confirmPayment.errors.failedToRetrieve' => 'Błąd: Nie udało się pobrać kodu BLIK.',
+			'maker.confirmPayment.errors.retrieving' => ({required Object details}) => 'Błąd pobierania kodu BLIK: ${details}',
 			'maker.confirmPayment.errors.missingHashOrKey' => 'Błąd: Brakujący hash płatności lub klucz publiczny.',
 			'maker.confirmPayment.errors.incorrectState' => ({required Object status}) => 'Oferta nie jest w prawidłowym stanie do potwierdzenia (Status: ${status})',
 			'maker.confirmPayment.errors.confirming' => ({required Object details}) => 'Błąd potwierdzania płatności: ${details}',
@@ -2866,15 +2817,15 @@ extension on TranslationsPl {
 			'maker.confirmPayment.errors.internalIncomplete' => 'Błąd wewnętrzny: Niekompletne szczegóły oferty.',
 			'maker.confirmPayment.errors.notAwaitingConfirmation' => ({required Object status}) => 'Oferta nie oczekuje już na potwierdzenie (Status: ${status}).',
 			'maker.confirmPayment.errors.unexpectedStatus' => 'Otrzymano nieoczekiwany status oferty z serwera.',
-			'maker.invalidBlik.title' => ({required Object code}) => 'Nieprawidłowy kod ${code}',
-			'maker.invalidBlik.info' => ({required Object code}) => 'Oznaczyłeś kod ${code} jako nieprawidłowy. Oczekiwanie na podanie nowego kodu przez takera lub rozpoczęcie sporu.',
+			'maker.invalidBlik.title' => 'Nieprawidłowy kod BLIK',
+			'maker.invalidBlik.info' => 'Oznaczyłeś kod BLIK jako nieprawidłowy. Oczekiwanie na podanie nowego kodu przez takera lub rozpoczęcie sporu.',
 			'maker.conflict.title' => 'Konflikt Oferty',
 			'maker.conflict.headline' => 'Zgłoszono Konflikt Oferty',
-			'maker.conflict.body' => ({required Object code}) => 'Oznaczyłeś kod ${code} jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.',
+			'maker.conflict.body' => 'Oznaczyłeś kod BLIK jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.',
 			'maker.conflict.instructions' => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.',
 			'maker.conflict.actions.back' => 'Powrót do strony głównej',
-			'maker.conflict.actions.confirmPayment' => ({required Object code}) => 'Mój błąd, potwierdź sukces płatności ${code}',
-			'maker.conflict.actions.openDispute' => ({required Object code}) => 'Płatność ${code} NIE powiodła się, OTWÓRZ SPÓR',
+			'maker.conflict.actions.confirmPayment' => 'Mój błąd, potwierdź sukces płatności BLIK',
+			'maker.conflict.actions.openDispute' => 'Płatność BLIK NIE powiodła się, OTWÓRZ SPÓR',
 			'maker.conflict.actions.submitDispute' => 'Zgłoś Spór',
 			'maker.conflict.disputeDialog.title' => 'Otworzyć spór?',
 			'maker.conflict.disputeDialog.content' => 'Otwarcie sporu wymaga ręcznej weryfikacji przez koordynatora, co zajmie czas. Opłata za spór zostanie potrącona, jeśli spór zostanie rozstrzygnięty na Twoją niekorzyść. Faktura hold zostanie rozliczona, aby zapobiec jej wygaśnięciu. Jeśli spór zostanie rozstrzygnięty na Twoją korzyść, otrzymasz zwrot środków (pomniejszony o opłaty) do portfela według własnego wyboru.',
@@ -2895,25 +2846,25 @@ extension on TranslationsPl {
 			'maker.success.subtitle' => 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.',
 			'maker.success.detailsTitle' => 'Szczegóły oferty:',
 			'maker.success.duration' => ({required Object time}) => 'Oferta zajęła ${time}!',
-			'taker.roleSelection.button' => ({required Object code}) => 'SPRZEDAJ kod ${code} za satoshi',
-			'taker.progress.step1' => ({required Object code}) => 'Wyślij ${code}',
-			'taker.progress.step2' => ({required Object code}) => 'Potwierdź ${code}',
+			'taker.roleSelection.button' => 'SPRZEDAJ kod BLIK za satoshi',
+			'taker.progress.step1' => 'Wyślij BLIK',
+			'taker.progress.step2' => 'Potwierdź BLIK',
 			'taker.progress.step3' => 'Otrzymaj płatność',
-			'taker.submitBlik.title' => ({required Object digits, required Object code}) => 'Wpisz ${digits}-cyfr ${code}',
-			'taker.submitBlik.label' => ({required Object code}) => 'Kod ${code}',
-			'taker.submitBlik.instruction' => ({required Object code}) => 'Wprowadź ${code} zanim upłynie czas...',
-			'taker.submitBlik.timeLimit' => ({required Object code, required Object seconds}) => 'Wprowadź ${code} w ciągu: ${seconds} s',
-			'taker.submitBlik.timeExpired' => ({required Object code}) => 'Czas na wprowadzenie kodu ${code} minął.',
-			'taker.submitBlik.actions.submit' => ({required Object code}) => 'Wyślij ${code}',
-			'taker.submitBlik.feedback.pasted' => ({required Object code}) => 'Wklejono kod ${code}.',
-			'taker.submitBlik.validation.invalidFormat' => ({required Object digits, required Object code}) => 'Wprowadź prawidłowy ${digits}-cyfrowy kod ${code}.',
-			'taker.submitBlik.errors.submitting' => ({required Object code, required Object details}) => 'Błąd wysyłania kodu ${code}: ${details}',
-			'taker.submitBlik.errors.clipboardInvalid' => ({required Object digits, required Object code}) => 'Schowek nie zawiera prawidłowego ${digits}-cyfrowego kodu ${code}.',
+			'taker.submitBlik.title' => 'Wpisz 6-cyfr BLIK',
+			'taker.submitBlik.label' => 'Kod BLIK',
+			'taker.submitBlik.instruction' => 'Wprowadź BLIK zanim upłynie czas...',
+			'taker.submitBlik.timeLimit' => ({required Object seconds}) => 'Wprowadź BLIK w ciągu: ${seconds} s',
+			'taker.submitBlik.timeExpired' => 'Czas na wprowadzenie kodu BLIK minął.',
+			'taker.submitBlik.actions.submit' => 'Wyślij BLIK',
+			'taker.submitBlik.feedback.pasted' => 'Wklejono kod BLIK.',
+			'taker.submitBlik.validation.invalidFormat' => 'Wprowadź prawidłowy 6-cyfrowy kod BLIK.',
+			'taker.submitBlik.errors.submitting' => ({required Object details}) => 'Błąd wysyłania kodu BLIK: ${details}',
+			'taker.submitBlik.errors.clipboardInvalid' => 'Schowek nie zawiera prawidłowego 6-cyfrowego kodu BLIK.',
 			'taker.submitBlik.errors.stateChanged' => 'Błąd: Stan oferty uległ zmianie.',
 			'taker.submitBlik.errors.stateNotValid' => 'Błąd: Stan oferty nie jest już ważny.',
 			'taker.submitBlik.errors.fetchedIdMismatch' => ({required Object fetchedId, required Object initialId}) => 'Pobrane ID aktywnej oferty (${fetchedId}) nie pasuje do początkowego ID oferty (${initialId}). Niezgodność stanu?',
 			'taker.submitBlik.errors.paymentHashMissing' => 'Brak hasha płatności oferty po pobraniu.',
-			'taker.submitBlik.details.requestedAmount' => ({required Object code}) => 'Żądana kwota ${code}',
+			'taker.submitBlik.details.requestedAmount' => 'Żądana kwota BLIK',
 			'taker.submitBlik.details.exchangeRate' => 'Kurs wymiany',
 			'taker.submitBlik.details.takerFee' => 'Opłata Taker',
 			'taker.submitBlik.details.status' => 'Status',
@@ -2921,30 +2872,29 @@ extension on TranslationsPl {
 			'taker.waitConfirmation.title' => 'Oczekiwanie na Makera',
 			'taker.waitConfirmation.statusLabel' => ({required Object status}) => 'Status oferty: ${status}',
 			'taker.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'Oczekiwanie na potwierdzenie Makera: ${seconds} s',
-			'taker.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'Oczekiwanie na potwierdzenie płatności ${code} przez Makera w jego aplikacji bankowej. Pozostały czas: ${seconds}s',
-			'taker.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie ${code} tylko na kwotę ${amount} ${currency}',
-			'taker.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność ${code} na kwotę dokładnie ${amount} ${currency}.',
-			'taker.waitConfirmation.instructions' => ({required Object code, required Object minutes}) => 'Osoba wystawiająca ofertę musi teraz wpisać kod ${code} w ciągu ${minutes} minut. Następnie musisz zaakceptować kod ${code} w swojej aplikacji bankowej.',
-			'taker.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'Osoba wystawiająca ofertę musi teraz wpisać Twój kod ${code} w bankomacie w ciągu ${minutes} minut.',
+			'taker.waitConfirmation.waitingMakerConfirmation' => ({required Object seconds}) => 'Oczekiwanie na potwierdzenie płatności BLIK przez Makera w jego aplikacji bankowej. Pozostały czas: ${seconds}s',
+			'taker.waitConfirmation.importantNotice' => ({required Object amount, required Object currency}) => 'BARDZO WAŻNE: Upewnij się, że akceptujesz potwierdzenie BLIK tylko na kwotę ${amount} ${currency}',
+			'taker.waitConfirmation.importantBlikAmountConfirmation' => ({required Object amount, required Object currency}) => 'BARDZO WAŻNE: W swojej aplikacji bankowej upewnij się, że potwierdzasz płatność BLIK na kwotę dokładnie ${amount} ${currency}.',
+			'taker.waitConfirmation.instructions' => 'Osoba wystawiająca ofertę musi teraz wpisać kod BLIK w ciągu 2 minut. Następnie musisz zaakceptować kod BLIK w swojej aplikacji bankowej.',
 			'taker.waitConfirmation.categoryReminder.atm' => 'Przypomnienie dla oferty ATM: Twój bank może nadal poprosić o zatwierdzenie dodatkowej opłaty bankomatowej ponad główną kwotę.',
 			'taker.waitConfirmation.categoryReminder.ecommerce' => 'Przypomnienie dla zamówienia online: jeśli sprzedawca wyśle automatyczny zwrot na Twoje konto, skontaktuj się z koordynatorem i oddaj środki.',
-			'taker.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Czekamy, aż twórca oferty otrzyma Twój kod ${code}...',
-			'taker.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Twórca oferty otrzymał Twój kod ${code}',
-			'taker.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => 'Minął termin ważności kodu ${code} ${minutes}m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.',
-			'taker.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => 'Minął termin ważności kodu ${code} ${minutes}m, ale wystawca nie otrzymał kodu ${code}. Możesz wysłać nowy kod ${code} lub anulować.',
-			'taker.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Wyślij nowy kod ${code}',
+			'taker.waitConfirmation.waitingForMakerToReceive' => 'Czekamy, aż twórca oferty otrzyma Twój kod BLIK...',
+			'taker.waitConfirmation.makerReceivedBlik' => 'Twórca oferty otrzymał Twój kod BLIK',
+			'taker.waitConfirmation.timerExpiredMessage' => 'Minął termin ważności kodu BLIK 2m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.',
+			'taker.waitConfirmation.timerExpiredActions' => 'Minął termin ważności kodu BLIK 2m, ale wystawca nie otrzymał kodu BLIK. Możesz wysłać nowy kod BLIK lub anulować.',
+			'taker.waitConfirmation.resendBlikButton' => 'Wyślij nowy kod BLIK',
 			'taker.waitConfirmation.navigatedHome' => 'Przeniesiono na stronę główną.',
-			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => 'Kod ${code} wygasł',
-			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'Twórca oferty nie otrzymał kodu ${code}, więc nie mógł go użyć.',
+			'taker.waitConfirmation.expiredTitle' => 'Kod BLIK wygasł',
+			'taker.waitConfirmation.expiredWarning' => 'Twórca oferty nie otrzymał kodu BLIK, więc nie mógł go użyć.',
 			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Koniec rezerwacji za',
 			'taker.waitConfirmation.expiredSentWarning' => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?',
-			'taker.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Jeśli chcesz spróbować ponownie z nowym kodem ${code}, odnów rezerwację.',
+			'taker.waitConfirmation.expiredInstruction1' => 'Jeśli chcesz spróbować ponownie z nowym kodem BLIK, odnów rezerwację.',
 			'taker.waitConfirmation.expiredInstruction2' => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.',
-			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'Jeśli płatność ${code} została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.',
-			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Oznaczyłeś ${code} jako opłacony',
+			'taker.waitConfirmation.expiredInstruction3' => 'Jeśli płatność BLIK została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.',
+			'taker.waitConfirmation.takerCharged.title' => 'Oznaczyłeś BLIK jako opłacony',
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Twórca oferty ma ${minutes} min na potwierdzenie płatności lub jej zakwestionowanie. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny.',
-			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} został pobrany z mojego konta',
-			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Spróbuj ponownie z nowym kodem ${code}',
+			'taker.waitConfirmation.expiredActions.reportConflict' => 'BLIK został pobrany z mojego konta',
+			'taker.waitConfirmation.expiredActions.renewReservation' => 'Spróbuj ponownie z nowym kodem BLIK',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Anuluj rezerwację',
 			'taker.waitConfirmation.feedback.makerConfirmed' => 'Maker potwierdził płatność.',
 			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Płatność udana! Wkrótce otrzymasz środki.',
@@ -2958,7 +2908,7 @@ extension on TranslationsPl {
 			'taker.paymentProcess.states.received' => 'Płatność otrzymana!',
 			'taker.paymentProcess.states.failed' => 'Płatność nie powiodła się',
 			'taker.paymentProcess.states.waitingUpdate' => 'Oczekiwanie na aktualizację oferty...',
-			'taker.paymentProcess.steps.makerConfirmedBlik' => ({required Object code}) => 'Maker potwierdził płatność ${code}',
+			'taker.paymentProcess.steps.makerConfirmedBlik' => 'Maker potwierdził płatność BLIK',
 			'taker.paymentProcess.steps.makerInvoiceSettled' => 'Faktura hold Makera rozliczona',
 			'taker.paymentProcess.steps.takerInvoicePaid' => 'Opłacanie Twojej faktury Lightning',
 			'taker.paymentProcess.steps.takerPaymentFailed' => 'Płatność na Twoją fakturę nie powiodła się',
@@ -2993,29 +2943,21 @@ extension on TranslationsPl {
 			'taker.paymentSuccess.title' => 'Płatność Udana',
 			'taker.paymentSuccess.message' => 'Twoja płatność została przetworzona pomyślnie.',
 			'taker.paymentSuccess.actions.goHome' => 'Przejdź do strony głównej',
-			'taker.invalidBlik.title' => ({required Object code}) => 'Nieprawidłowy Kod ${code}',
-			'taker.invalidBlik.message' => ({required Object code}) => 'Maker Odrzucił Kod ${code}',
-			'taker.invalidBlik.explanation' => ({required Object code}) => 'Maker oferty wskazał, że podany przez Ciebie kod ${code} był nieprawidłowy lub nie zadziałał.\n\nCo chcesz zrobić?',
+			'taker.invalidBlik.title' => 'Nieprawidłowy Kod BLIK',
+			'taker.invalidBlik.message' => 'Maker Odrzucił Kod BLIK',
+			'taker.invalidBlik.explanation' => 'Maker oferty wskazał, że podany przez Ciebie kod BLIK był nieprawidłowy lub nie zadziałał.\n\nCo chcesz zrobić?',
 			'taker.invalidBlik.werentCharged' => 'Jeśli Twoje konto NIE zostało obciążone:',
 			'taker.invalidBlik.wereCharged' => 'Jeśli Twoje konto zostało obciążone:',
-			'taker.invalidBlik.actions.retry' => ({required Object code}) => 'Wyślij nowy kod ${code}',
+			'taker.invalidBlik.actions.retry' => 'Wyślij nowy kod BLIK',
 			'taker.invalidBlik.actions.cancelReservation' => 'Anuluj Transakcję',
 			'taker.invalidBlik.actions.reportConflict' => 'Rozpocząć Spór',
 			'taker.invalidBlik.actions.returnHome' => 'Wróć do strony głównej',
-			'taker.invalidBlik.confirmDialog.title' => 'Czy na pewno?',
-			'taker.invalidBlik.confirmDialog.content' => 'Po kliknięciu nie ma odwrotu.\n\nJeśli kwota ZOSTAŁA faktycznie pobrana z Twojego konta bankowego, koordynator NIE będzie w stanie zagwarantować, że otrzymasz bitcoiny, i możesz stracić swoje środki.\n\nJeśli nie masz pewności, najlepiej chwilę poczekać i potwierdzić, że NIE zostałeś obciążony, zanim przejdziesz dalej.',
-			'taker.invalidBlik.confirmDialog.actions.proceed' => 'Jestem pewien, kontynuuj',
-			'taker.invalidBlik.confirmDialog.actions.cancel' => 'Anuluj',
-			'taker.invalidBlik.disputeConfirmDialog.title' => 'Rozpocząć spór?',
-			'taker.invalidBlik.disputeConfirmDialog.content' => 'Rozpocznij spór tylko wtedy, gdy kwota ZOSTAŁA pobrana z Twojego konta bankowego.\n\nKoordynator ręcznie rozpatrzy Twoją sprawę, co wymaga czasu. Będziesz musiał przedstawić dowód płatności.',
-			'taker.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Tak, zostałem obciążony',
-			'taker.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Anuluj',
 			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Konflikt zgłoszony. Koordynator rozpatrzy sprawę.',
 			'taker.invalidBlik.errors.reservationFailed' => 'Nie udało się ponownie zarezerwować oferty',
 			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
 			'taker.conflict.title' => 'Konflikt Oferty',
 			'taker.conflict.headline' => 'Zgłoszono Konflikt Oferty',
-			'taker.conflict.body' => ({required Object code}) => 'Maker oznaczył kod ${code} jako nieprawidłowy, ale Ty zgłosiłeś konflikt, wskazując, że uważasz, iż płatność zakończyła się sukcesem.',
+			'taker.conflict.body' => 'Maker oznaczył kod BLIK jako nieprawidłowy, ale Ty zgłosiłeś konflikt, wskazując, że uważasz, iż płatność zakończyła się sukcesem.',
 			'taker.conflict.instructions' => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.',
 			'taker.conflict.actions.back' => 'Powrót do strony głównej',
 			'taker.conflict.feedback.reported' => 'Konflikt zgłoszony. Koordynator rozpatrzy sprawę.',
@@ -3027,9 +2969,9 @@ extension on TranslationsPl {
 			'taker.conflict.nostrContact.npubCopied' => 'Npub koordynatora skopiowany do schowka!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Zarządzaj Kluczami Neko',
-			'blik.instructions.taker' => ({required Object code}) => 'Gdy Maker wprowadzi kod ${code}, będziesz musiał potwierdzić płatność w swojej aplikacji bankowej. Upewnij się, że kwota jest poprawna przed potwierdzeniem.',
+			'blik.instructions.taker' => 'Gdy Maker wprowadzi kod BLIK, będziesz musiał potwierdzić płatność w swojej aplikacji bankowej. Upewnij się, że kwota jest poprawna przed potwierdzeniem.',
 			'nekoInfo.title' => 'Czym jest Neko?',
-			'nekoInfo.description' => ({required Object app}) => 'Twoje Neko to Twoja tożsamość do korzystania z ${app}. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków.',
+			'nekoInfo.description' => 'Twoje Neko to Twoja tożsamość do korzystania z BitBlik. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków.',
 			'nekoInfo.backupWarning' => 'Pamiętaj, aby zarchiwizować swoje Neko',
 			'generateNewKey.title' => 'Nowy',
 			'generateNewKey.description' => 'Czy na pewno chcesz wygenerować nowe Neko? Twoje obecne zostanie utracone na zawsze, jeśli go nie zarchiwizowałeś.',
@@ -3044,8 +2986,6 @@ extension on TranslationsPl {
 			'backup.tooltips.backup' => 'Zarchiwizuj Neko',
 			'restore.title' => 'Przywróć',
 			'restore.labels.privateKey' => 'Klucz prywatny',
-			_ => null,
-		} ?? switch (path) {
 			'restore.buttons.restore' => 'Przywróć',
 			'restore.errors.invalidKey' => 'Musi to być 64-znakowy ciąg szesnastkowy.',
 			'restore.errors.failed' => 'Przywracanie nie powiodło się',
@@ -3055,11 +2995,13 @@ extension on TranslationsPl {
 			'home.notifications.telegram' => 'Telegram',
 			'home.notifications.simplex' => 'SimpleX',
 			'home.notifications.element' => 'Element',
+			_ => null,
+		} ?? switch (path) {
 			'home.notifications.signal' => 'Signal',
 			'home.statistics.title' => 'Zakończone oferty',
-			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
-			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
-			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. ${code}: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}',
+			'home.statistics.lifetimeCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
+			'home.statistics.last7DaysCompact' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na BLIK: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
+			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. BLIK: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Błąd ładowania statystyk: ${error}',
 			'system.loadingPublicKey' => 'Ładowanie Twojego klucza publicznego...',
 			'system.errors.generic' => 'Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.',
@@ -3068,7 +3010,7 @@ extension on TranslationsPl {
 			'system.errors.noPublicKey' => 'Twój klucz publiczny nie jest dostępny. Nie można kontynuować.',
 			'system.errors.internalOfferIncomplete' => 'Błąd wewnętrzny: Szczegóły oferty są niekompletne. Spróbuj ponownie.',
 			'system.errors.loadingPublicKey' => 'Błąd ładowania Twojego klucza publicznego. Uruchom ponownie aplikację.',
-			'system.blik.copied' => ({required Object code}) => 'Kod ${code} skopiowany do schowka',
+			'system.blik.copied' => 'Kod BLIK skopiowany do schowka',
 			'myOffers.title' => 'Moje oferty',
 			'myOffers.empty' => 'Brak ofert.',
 			'myOffers.unknownCoordinator' => 'Nieznany koordynator',
@@ -3090,7 +3032,7 @@ extension on TranslationsPl {
 			'myOffers.details.coordinator' => 'Koordynator',
 			'myOffers.details.createdAt' => 'Utworzono',
 			'myOffers.details.reservedAt' => 'Zarezerwowano',
-			'myOffers.details.blikReceivedAt' => ({required Object code}) => '${code} wysłany',
+			'myOffers.details.blikReceivedAt' => 'BLIK wysłany',
 			'myOffers.details.makerConfirmedAt' => 'Potwierdzono',
 			'myOffers.details.settledAt' => 'Rozliczono',
 			'myOffers.details.takerPaidAt' => 'Taker opłacony',
@@ -3099,13 +3041,13 @@ extension on TranslationsPl {
 			'myOffers.details.holdInvoice' => 'Hold Invoice',
 			'myOffers.details.continueActiveOffer' => 'Przejdź do aktywnej oferty',
 			'myOffers.details.after' => ({required Object duration}) => 'po ${duration}',
-			'landing.mainTitle' => ({required Object code}) => 'Wymiana\n ${code} ⇄ bitcoin',
-			'landing.subtitle' => ({required Object code}) => 'Płać lub sprzedawaj kod ${code} za bitcoin',
+			'landing.mainTitle' => 'Wymiana\n BLIK ⇄ bitcoin',
+			'landing.subtitle' => 'Płać lub sprzedawaj kod BLIK za bitcoin',
 			'landing.partnership' => 'współpraca',
-			'landing.actions.payBlik' => ({required Object code}) => 'Zapłać ${code}',
+			'landing.actions.payBlik' => 'Zapłać BLIK',
 			'landing.actions.payBlikSubtitle' => 'używając bitcoin',
 			'landing.actions.sellBlik' => 'Kup bitcoin',
-			'landing.actions.sellBlikSubtitle' => ({required Object code}) => 'używając ${code}',
+			'landing.actions.sellBlikSubtitle' => 'używając BLIK',
 			'landing.actions.howItWorks' => 'Jak to działa?',
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
@@ -3142,7 +3084,7 @@ extension on TranslationsPl {
 			'notificationSettings.title' => 'Powiadomienia',
 			'notificationSettings.androidOnly' => 'Powiadomienia w tle są obecnie obsługiwane tylko na Androidzie.',
 			'notificationSettings.newOfferAlerts.label' => 'Alerty o nowych ofertach',
-			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.',
+			'notificationSettings.newOfferAlerts.description' => 'Po włączeniu BitBlik będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.',
 			'wallet.title' => 'Portfel',
 			'wallet.description' => 'Zarządzaj ustawieniami portfela Lightning',
 			'wallet.missingReceiving.title' => 'Wymagany portfel odbiorczy',
@@ -3199,33 +3141,33 @@ extension on TranslationsPl {
 			'relays.popup.title' => ({required Object connected, required Object total}) => 'Przekaźniki (${connected}/${total} połączonych)',
 			'relays.popup.connectingMessage' => 'Łączenie z przekaźnikami...',
 			'offerNotifications.activeService.title' => 'Oczekiwanie na nowe oferty',
-			'offerNotifications.activeService.body' => ({required Object app}) => 'Usługa w tle monitorująca ofert ${app}.',
+			'offerNotifications.activeService.body' => 'Usługa w tle monitorująca ofert BitBlik.',
 			'offerNotifications.funded.title' => 'Oferta zasilona',
 			'offerNotifications.funded.body' => 'Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.',
 			'offerNotifications.reserved.title' => 'Oferta zarezerwowana',
 			'offerNotifications.reserved.body' => 'Taker zarezerwował Twoją ofertę.',
-			'offerNotifications.blikReady.title' => ({required Object code}) => 'Kod ${code} gotowy',
-			'offerNotifications.blikReady.body' => ({required Object code}) => 'Twój kod ${code} jest gotowy do wyświetlenia.',
+			'offerNotifications.blikReady.title' => 'Kod BLIK gotowy',
+			'offerNotifications.blikReady.body' => 'Twój kod BLIK jest gotowy do wyświetlenia.',
 			'offerNotifications.newOffer.title' => 'Nowa oferta dostępna',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premii',
 			'offerNotifications.categories.shop' => 'Sklep',
 			'offerNotifications.categories.atm' => 'Bankomat',
 			'offerNotifications.categories.online' => 'Online',
-			'offerNotifications.blikPendingReminder.title' => ({required Object code}) => '${code} czeka na Twoją akcję',
-			'offerNotifications.blikPendingReminder.body' => ({required Object code}) => 'Potwierdź płatność lub oznacz kod ${code} jako nieprawidłowy.',
-			'offerNotifications.takerCharged.title' => ({required Object code}) => '${code} obciążony',
-			'offerNotifications.takerCharged.body' => ({required Object code}) => 'Taker zgłasza, że ${code} został obciążony. Potwierdź lub oznacz jako nieprawidłowy.',
-			'offerNotifications.invalidBlik.title' => ({required Object code}) => '${code} oznaczony jako nieprawidłowy',
-			'offerNotifications.invalidBlik.body' => ({required Object code}) => 'Maker oznaczył Twój kod ${code} jako nieprawidłowy.',
+			'offerNotifications.blikPendingReminder.title' => 'BLIK czeka na Twoją akcję',
+			'offerNotifications.blikPendingReminder.body' => 'Potwierdź płatność lub oznacz kod BLIK jako nieprawidłowy.',
+			'offerNotifications.takerCharged.title' => 'BLIK obciążony',
+			'offerNotifications.takerCharged.body' => 'Taker zgłasza, że BLIK został obciążony. Potwierdź lub oznacz jako nieprawidłowy.',
+			'offerNotifications.invalidBlik.title' => 'BLIK oznaczony jako nieprawidłowy',
+			'offerNotifications.invalidBlik.body' => 'Maker oznaczył Twój kod BLIK jako nieprawidłowy.',
 			'offerNotifications.takerPaid.title' => 'Płatność otrzymana',
 			'offerNotifications.takerPaid.body' => 'Twoja płatność Lightning została wysłana.',
 			'altstore.dialogTitle' => 'AltStore Nie Zainstalowany',
 			'altstore.step1Title' => 'Pobierz i zainstaluj AltStore PAL',
 			'altstore.step1Button' => 'altstore.io/download',
 			'altstore.step1Warning' => 'Potrzebujesz Safari, aby zainstalować AltStore PAL!',
-			'altstore.step2Title' => ({required Object app}) => 'Zainstaluj ${app}',
-			'altstore.step2Button' => ({required Object app}) => 'Zainstaluj ${app}',
+			'altstore.step2Title' => 'Zainstaluj BitBlik',
+			'altstore.step2Button' => 'Zainstaluj BitBlik',
 			'altstore.step2Fallback' => 'Nie działa? Wklej źródło do AltStore',
 			_ => null,
 		};

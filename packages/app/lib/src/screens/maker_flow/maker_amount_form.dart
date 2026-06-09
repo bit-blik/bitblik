@@ -9,7 +9,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
-import '../../config/build_flavor.dart';
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
 import '../../settings/app_preferences.dart';
@@ -17,15 +16,14 @@ import '../coordinator_details_screen.dart';
 // CoordinatorRecord comes from bitblik_core
 
 // Progress indicator widget for maker flow
-class MakerProgressIndicator extends ConsumerWidget {
+class MakerProgressIndicator extends StatelessWidget {
   final int activeStep; // 1, 2, or 3
 
   const MakerProgressIndicator({super.key, this.activeStep = 1});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final t = Translations.of(context);
-    final code = ref.watch(selectedPaymentSystemProvider).codeLabel;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Wrap(
@@ -56,7 +54,7 @@ class MakerProgressIndicator extends ConsumerWidget {
           const Text('>', style: TextStyle(fontSize: 14, color: Colors.grey)),
           // Step 3: Use BLIK
           Text(
-            t.maker.amountForm.progress.step3(code: code),
+            t.maker.amountForm.progress.step3,
             style: TextStyle(
               fontSize: 13,
               fontWeight: activeStep == 3 ? FontWeight.w500 : FontWeight.w400,
@@ -534,6 +532,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       final apiService = ref.read(apiServiceProvider);
       final result = await apiService.initiateOfferFiat(
         fiatAmount: fiatAmount,
+        makerId: makerId,
         fiatCurrency: _method.currency,
         category: supportsCategory ? _selectedCategory : null,
         coordinatorPubkey: coordinatorPubkey,
@@ -578,15 +577,6 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
   /// Logo for the selected coordinator. Prefers the kind-0 profile picture
   /// over the kind-15125 info icon.
-  // Kind-0 profile name when published (matches the rest of the app),
-  // falling back to the kind-15125 info name.
-  String _selectedCoordinatorName() {
-    final pk = _selectedCoordinatorPubkey;
-    final record =
-        pk == null ? null : ref.watch(coordinatorRecordByPubkeyProvider(pk));
-    return record?.name ?? _selectedCoordinatorInfo?.name ?? '';
-  }
-
   Widget _buildSelectedCoordinatorLogo() {
     final pk = _selectedCoordinatorPubkey;
     final icon =
@@ -1176,15 +1166,13 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children:
                     OfferCategory.values.map((category) {
-                      final supported =
-                          _method.supportedCategories.contains(category);
                       final hint = switch (category) {
                         OfferCategory.shop =>
-                          t.maker.amountForm.category.physicalShopHint(code: _method.codeLabel, app: _method.brandName),
+                          t.maker.amountForm.category.physicalShopHint,
                         OfferCategory.atm =>
                           t.maker.amountForm.category.atmHint,
                         OfferCategory.online =>
-                          t.maker.amountForm.category.ecommerceWarningBody(code: _method.codeLabel),
+                          t.maker.amountForm.category.ecommerceWarningBody,
                       };
                       final name = switch (category) {
                         OfferCategory.shop =>
@@ -1199,72 +1187,34 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           bottom:
                               category != OfferCategory.values.last ? 16 : 0,
                         ),
-                        child: Opacity(
-                          // Dim categories the chosen payment method can't serve.
-                          opacity: supported ? 1.0 : 0.5,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  _categoryIconWidget(
-                                    category,
-                                    22,
-                                    Colors.grey[700]!,
-                                    grayscale: !supported,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      name,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                        color: supported ? null : Colors.grey,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                hint,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  height: 1.4,
-                                  color: supported ? null : Colors.grey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _categoryIconWidget(
+                                  category,
+                                  22,
+                                  Colors.grey[700]!,
                                 ),
-                              ),
-                              if (!supported) ...[
-                                const SizedBox(height: 6),
-                                Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.block,
-                                      size: 14,
-                                      color: Colors.red[400],
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
                                     ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        t.maker.amountForm.category
-                                            .unsupportedForSystem(
-                                          system: _method.label,
-                                        ),
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.red[400],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ],
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              hint,
+                              style: const TextStyle(fontSize: 13, height: 1.4),
+                            ),
+                          ],
                         ),
                       );
                     }).toList(),
@@ -1459,8 +1409,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          t.maker.amountForm.category
-                              .physicalShopHint(code: _method.codeLabel, app: _method.brandName),
+                          t.maker.amountForm.category.physicalShopHint,
                           style: const TextStyle(fontSize: 13, height: 1.4),
                         ),
                       ),
@@ -1521,7 +1470,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              t.maker.amountForm.category.ecommerceWarningBody(code: _method.codeLabel),
+                              t.maker.amountForm.category.ecommerceWarningBody,
                               style: const TextStyle(fontSize: 13, height: 1.4),
                             ),
                           ),
@@ -1992,7 +1941,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               _buildSelectedCoordinatorLogo(),
                               const SizedBox(width: 8),
                               Text(
-                                _selectedCoordinatorName(),
+                                _selectedCoordinatorInfo!.name,
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w400,
