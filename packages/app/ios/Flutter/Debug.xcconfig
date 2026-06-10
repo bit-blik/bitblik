@@ -1,1 +1,2 @@
 #include "Generated.xcconfig"
+BUNDLE_DISPLAY_NAME = bitblik
