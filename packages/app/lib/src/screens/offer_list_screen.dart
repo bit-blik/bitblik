@@ -567,7 +567,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  t.offers.details.noAvailableTip(app: buildAppName),
+                                  t.offers.details.noAvailableTip(app: ref.watch(selectedPaymentSystemProvider).brandName),
                                   textAlign: TextAlign.left,
                                   style: const TextStyle(
                                     color: Color(0xFF1D4ED8),
@@ -1335,7 +1335,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                t.offers.details.noAvailableTip(app: buildAppName),
+                                t.offers.details.noAvailableTip(app: ref.watch(selectedPaymentSystemProvider).brandName),
                                 textAlign: TextAlign.left,
                                 style: const TextStyle(
                                   color: Color(0xFF1D4ED8),

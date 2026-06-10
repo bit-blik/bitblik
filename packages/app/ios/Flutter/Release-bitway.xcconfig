@@ -1,0 +1,3 @@
+#include "Release.xcconfig"
+PRODUCT_BUNDLE_IDENTIFIER = me.bitway
+PRODUCT_NAME = BitWay

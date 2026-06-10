@@ -18,6 +18,11 @@ class PaymentSystem {
   /// User-facing brand name, e.g. `BLIK`, `MB WAY`. Brand names — not translated.
   final String label;
 
+  /// App/product brand for this payment system, e.g. `BitBlik`, `BitWay`. Driven
+  /// by the *selected* method, not the build flavor, so a BitBlik build switched
+  /// to MB WAY in settings still shows `BitWay` in copy. Not translated.
+  final String brandName;
+
   /// Name of the payment code as shown in UI text (e.g. `BLIK`, `MB WAY`).
   /// Null falls back to a neutral word via [codeLabel].
   final String? codeName;
@@ -72,6 +77,7 @@ class PaymentSystem {
   const PaymentSystem({
     required this.id,
     required this.label,
+    required this.brandName,
     this.codeName,
     required this.country,
     required this.flag,
@@ -159,6 +165,7 @@ class PaymentSystem {
 const PaymentSystem kBlik = PaymentSystem(
   id: 'blik',
   label: 'BLIK',
+  brandName: 'BitBlik',
   codeName: 'BLIK',
   country: 'PL',
   flag: '🇵🇱',
@@ -179,6 +186,7 @@ const PaymentSystem kBlik = PaymentSystem(
 const PaymentSystem kMbway = PaymentSystem(
   id: 'mbway',
   label: 'MBway',
+  brandName: 'BitWay',
   codeName: 'MB WAY',
   country: 'PT',
   flag: '🇵🇹',

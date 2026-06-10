@@ -291,11 +291,14 @@ class _MakerConfirmPaymentScreenState
   }
 
   String _formatBlikCode(String code) {
-    // Format BLIK code with space: "987085" -> "987 085"
-    if (code.length == 6) {
-      return '${code.substring(0, 3)} ${code.substring(3)}';
+    // Group digits in threes from the left for readability, e.g.
+    // "987085" -> "987 085", "1234567890" -> "123 456 789 0".
+    final buffer = StringBuffer();
+    for (var i = 0; i < code.length; i++) {
+      if (i > 0 && i % 3 == 0) buffer.write(' ');
+      buffer.write(code[i]);
     }
-    return code;
+    return buffer.toString();
   }
 
   @override
@@ -337,7 +340,9 @@ class _MakerConfirmPaymentScreenState
         offerStatus != null && _canMarkBlikInvalid(offerStatus);
 
     final bool isFetchingBlik = receivedBlikCode == null && !isExpired;
-    final formattedBlikCode = _formatBlikCode(receivedBlikCode ?? '··· ···');
+    final formattedBlikCode = _formatBlikCode(
+      receivedBlikCode ?? ('·' * _method.codeLength),
+    );
     final blikFontSize =
         (MediaQuery.of(context).size.width * 0.19).clamp(32.0, 68.0);
     final TextStyle blikStyle = TextStyle(

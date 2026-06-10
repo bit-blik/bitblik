@@ -1168,6 +1168,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children:
                     OfferCategory.values.map((category) {
+                      final supported =
+                          _method.supportedCategories.contains(category);
                       final hint = switch (category) {
                         OfferCategory.shop =>
                           t.maker.amountForm.category.physicalShopHint(code: _method.codeLabel, app: buildAppName),
@@ -1189,34 +1191,72 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           bottom:
                               category != OfferCategory.values.last ? 16 : 0,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                _categoryIconWidget(
-                                  category,
-                                  22,
-                                  Colors.grey[700]!,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
+                        child: Opacity(
+                          // Dim categories the chosen payment method can't serve.
+                          opacity: supported ? 1.0 : 0.5,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  _categoryIconWidget(
+                                    category,
+                                    22,
+                                    Colors.grey[700]!,
+                                    grayscale: !supported,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        color: supported ? null : Colors.grey,
+                                      ),
                                     ),
                                   ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                hint,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  height: 1.4,
+                                  color: supported ? null : Colors.grey,
+                                ),
+                              ),
+                              if (!supported) ...[
+                                const SizedBox(height: 6),
+                                Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.block,
+                                      size: 14,
+                                      color: Colors.red[400],
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        t.maker.amountForm.category
+                                            .unsupportedForSystem(
+                                          system: _method.label,
+                                        ),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.red[400],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              hint,
-                              style: const TextStyle(fontSize: 13, height: 1.4),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     }).toList(),

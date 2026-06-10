@@ -33,6 +33,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="bitblik.app" android:pathPrefix="/" />
+                <data android:scheme="https" android:host="bitway.me" android:pathPrefix="/" />
             </intent-filter>
             <!-- Deep link for bitblik:// scheme -->
             <intent-filter>
