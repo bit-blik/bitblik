@@ -1241,6 +1241,8 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
   // Re-run when coordinator enablement changes so disabled coordinators
   // disappear from the recent successful offers section immediately.
   ref.watch(discoveredCoordinatorsProvider);
+  // Scope stats to the selected payment system's coordinators.
+  final selectedSystem = ref.watch(selectedPaymentSystemProvider);
 
   // Snapshot the registry once — do not subscribe to its change stream
   // here. This provider issues N RPCs per refresh; reacting to every
@@ -1251,7 +1253,9 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
         '📊 Stats Provider: ${registry.enabled.length} coordinators for stats',
   );
 
-  return apiService.getSuccessfulOffersStats();
+  return apiService.getSuccessfulOffersStats(
+    paymentSystemId: selectedSystem.id,
+  );
 });
 
 // Provider to expose the public key hex.
@@ -1689,7 +1693,7 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       final strings = t.offerNotifications;
       NotificationService().startOfferForegroundService(
         strings.activeService.title,
-        strings.activeService.body(app: buildAppName),
+        strings.activeService.body(app: _ref.read(selectedPaymentSystemProvider).brandName),
       );
     } else {
       NotificationService().stopOfferForegroundService();

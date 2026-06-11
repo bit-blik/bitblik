@@ -34,6 +34,12 @@ TODO
 
 #### Simplex  
 
+- install simplex-chat client in the server
+- create a new group
+  - TODO
+- set the group name 'Bitblik offers' into `SIMPLEX_GROUP`
+- make sure `SIMPLEX_CHAT_EXEC: ./simplex-chat` is added also
+
 #### Matrix
 
 #### Signal

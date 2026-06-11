@@ -468,7 +468,7 @@ class _Translations$common$labels$it extends Translations$common$labels$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get amount => 'Importo (PLN)';
+	@override String amount({required Object currency}) => 'Importo (${currency})';
 	@override String status({required Object status}) => 'Stato: ${status}';
 	@override String role({required Object role}) => 'Ruolo: ${role}';
 }
@@ -779,9 +779,9 @@ class _Translations$exchange$labels$it extends Translations$exchange$labels$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get enterAmount => 'Inserisci l\'importo (PLN) da pagare:';
+	@override String enterAmount({required Object currency}) => 'Inserisci l\'importo (${currency}) da pagare:';
 	@override String equivalent({required Object sats}) => '≈ ${sats} satoshi';
-	@override String rate({required Object rate}) => 'Tasso di cambio ≈ ${rate} PLN/BTC';
+	@override String rate({required Object rate, required Object currency}) => 'Tasso di cambio ≈ ${rate} ${currency}/BTC';
 }
 
 // Path: exchange.feedback
@@ -1193,6 +1193,8 @@ class _Translations$taker$invalidBlik$it extends Translations$taker$invalidBlik$
 	@override String get werentCharged => 'Se NON ti è stato addebitato:';
 	@override String get wereCharged => 'Se ti è stato addebitato:';
 	@override late final _Translations$taker$invalidBlik$actions$it actions = _Translations$taker$invalidBlik$actions$it._(_root);
+	@override late final _Translations$taker$invalidBlik$confirmDialog$it confirmDialog = _Translations$taker$invalidBlik$confirmDialog$it._(_root);
+	@override late final _Translations$taker$invalidBlik$disputeConfirmDialog$it disputeConfirmDialog = _Translations$taker$invalidBlik$disputeConfirmDialog$it._(_root);
 	@override late final _Translations$taker$invalidBlik$feedback$it feedback = _Translations$taker$invalidBlik$feedback$it._(_root);
 	@override late final _Translations$taker$invalidBlik$errors$it errors = _Translations$taker$invalidBlik$errors$it._(_root);
 }
@@ -2320,6 +2322,30 @@ class _Translations$taker$invalidBlik$actions$it extends Translations$taker$inva
 	@override String get returnHome => 'Torna alla home';
 }
 
+// Path: taker.invalidBlik.confirmDialog
+class _Translations$taker$invalidBlik$confirmDialog$it extends Translations$taker$invalidBlik$confirmDialog$en {
+	_Translations$taker$invalidBlik$confirmDialog$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Sei sicuro?';
+	@override String get content => 'Una volta toccato, non si può tornare indietro.\n\nSe l\'importo è STATO effettivamente addebitato dal tuo conto bancario, il coordinatore NON potrà garantirti la ricezione dei bitcoin e potresti perdere i tuoi fondi.\n\nSe non sei sicuro, è meglio attendere un po\' e verificare di NON essere stato addebitato prima di continuare.';
+	@override late final _Translations$taker$invalidBlik$confirmDialog$actions$it actions = _Translations$taker$invalidBlik$confirmDialog$actions$it._(_root);
+}
+
+// Path: taker.invalidBlik.disputeConfirmDialog
+class _Translations$taker$invalidBlik$disputeConfirmDialog$it extends Translations$taker$invalidBlik$disputeConfirmDialog$en {
+	_Translations$taker$invalidBlik$disputeConfirmDialog$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Aprire una disputa?';
+	@override String get content => 'Apri una disputa solo se l\'importo È STATO addebitato dal tuo conto bancario.\n\nIl coordinatore esaminerà manualmente il tuo caso, il che richiede tempo. Dovrai fornire una prova di pagamento.';
+	@override late final _Translations$taker$invalidBlik$disputeConfirmDialog$actions$it actions = _Translations$taker$invalidBlik$disputeConfirmDialog$actions$it._(_root);
+}
+
 // Path: taker.invalidBlik.feedback
 class _Translations$taker$invalidBlik$feedback$it extends Translations$taker$invalidBlik$feedback$en {
 	_Translations$taker$invalidBlik$feedback$it._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -2479,6 +2505,28 @@ class _Translations$maker$conflict$disputeDialog$actions$it extends Translations
 	@override String get cancel => 'Annulla';
 }
 
+// Path: taker.invalidBlik.confirmDialog.actions
+class _Translations$taker$invalidBlik$confirmDialog$actions$it extends Translations$taker$invalidBlik$confirmDialog$actions$en {
+	_Translations$taker$invalidBlik$confirmDialog$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get proceed => 'Sono sicuro, continua';
+	@override String get cancel => 'Annulla';
+}
+
+// Path: taker.invalidBlik.disputeConfirmDialog.actions
+class _Translations$taker$invalidBlik$disputeConfirmDialog$actions$it extends Translations$taker$invalidBlik$disputeConfirmDialog$actions$en {
+	_Translations$taker$invalidBlik$disputeConfirmDialog$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get proceed => 'Sì, sono stato addebitato';
+	@override String get cancel => 'Annulla';
+}
+
 /// The flat map containing all translations for locale <it>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -2502,7 +2550,7 @@ extension on TranslationsIt {
 			'common.buttons.close' => 'Chiudi',
 			'common.buttons.restore' => 'Ripristina',
 			'common.buttons.faq' => 'FAQ',
-			'common.labels.amount' => 'Importo (PLN)',
+			'common.labels.amount' => ({required Object currency}) => 'Importo (${currency})',
 			'common.labels.status' => ({required Object status}) => 'Stato: ${status}',
 			'common.labels.role' => ({required Object role}) => 'Ruolo: ${role}',
 			'common.notifications.success' => 'Successo',
@@ -2636,9 +2684,9 @@ extension on TranslationsIt {
 			'reservations.errors.failedNoTimestamp' => 'Impossibile riservare l\'offerta (timestamp mancante).',
 			'reservations.errors.timestampMissing' => 'Timestamp della prenotazione offerta mancante.',
 			'reservations.errors.notReserved' => ({required Object status}) => 'L\'offerta non è più nello stato riservato (${status}).',
-			'exchange.labels.enterAmount' => 'Inserisci l\'importo (PLN) da pagare:',
+			'exchange.labels.enterAmount' => ({required Object currency}) => 'Inserisci l\'importo (${currency}) da pagare:',
 			'exchange.labels.equivalent' => ({required Object sats}) => '≈ ${sats} satoshi',
-			'exchange.labels.rate' => ({required Object rate}) => 'Tasso di cambio ≈ ${rate} PLN/BTC',
+			'exchange.labels.rate' => ({required Object rate, required Object currency}) => 'Tasso di cambio ≈ ${rate} ${currency}/BTC',
 			'exchange.feedback.fetching' => 'Recupero tasso di cambio...',
 			'exchange.errors.fetchingRate' => 'Impossibile recuperare il tasso di cambio.',
 			'exchange.errors.invalidFormat' => 'Formato numero non valido',
@@ -2960,6 +3008,14 @@ extension on TranslationsIt {
 			'taker.invalidBlik.actions.cancelReservation' => 'Annulla Transazione',
 			'taker.invalidBlik.actions.reportConflict' => 'Avvia Disputa',
 			'taker.invalidBlik.actions.returnHome' => 'Torna alla home',
+			'taker.invalidBlik.confirmDialog.title' => 'Sei sicuro?',
+			'taker.invalidBlik.confirmDialog.content' => 'Una volta toccato, non si può tornare indietro.\n\nSe l\'importo è STATO effettivamente addebitato dal tuo conto bancario, il coordinatore NON potrà garantirti la ricezione dei bitcoin e potresti perdere i tuoi fondi.\n\nSe non sei sicuro, è meglio attendere un po\' e verificare di NON essere stato addebitato prima di continuare.',
+			'taker.invalidBlik.confirmDialog.actions.proceed' => 'Sono sicuro, continua',
+			'taker.invalidBlik.confirmDialog.actions.cancel' => 'Annulla',
+			'taker.invalidBlik.disputeConfirmDialog.title' => 'Aprire una disputa?',
+			'taker.invalidBlik.disputeConfirmDialog.content' => 'Apri una disputa solo se l\'importo È STATO addebitato dal tuo conto bancario.\n\nIl coordinatore esaminerà manualmente il tuo caso, il che richiede tempo. Dovrai fornire una prova di pagamento.',
+			'taker.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Sì, sono stato addebitato',
+			'taker.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Annulla',
 			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Conflitto segnalato. Il coordinatore lo esaminerà.',
 			'taker.invalidBlik.errors.reservationFailed' => 'Impossibile riservare nuovamente l\'offerta',
 			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
@@ -2991,6 +3047,8 @@ extension on TranslationsIt {
 			'nekoInfo.title' => 'Cos\'è un Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'Il tuo Neko è la tua identità per usare ${app}. È composto da una chiave privata e pubblica per garantire una comunicazione crittograficamente sicura con il coordinatore.\n\nPer garantire maggiore anonimato, si consiglia di usare un nuovo Neko per ogni offerta.\n\n⚠️ IMPORTANTE: La tua chiave privata è memorizzata solo sul tuo dispositivo (lato client). È fondamentale fare il backup della tua chiave privata, poiché perderla potrebbe impedirti di risolvere dispute e recuperare i tuoi fondi.',
 			'nekoInfo.backupWarning' => 'Ricorda di fare il backup del tuo Neko',
+			_ => null,
+		} ?? switch (path) {
 			'generateNewKey.title' => 'Nuovo',
 			'generateNewKey.description' => 'Sei sicuro di voler generare un nuovo Neko? Quello attuale andrà perso per sempre se non ne hai fatto il backup.',
 			'generateNewKey.buttons.generate' => 'Genera',
@@ -2999,8 +3057,6 @@ extension on TranslationsIt {
 			'generateNewKey.feedback.success' => 'Nuovo Neko generato con successo!',
 			'generateNewKey.tooltips.generate' => 'Genera Nuovo Neko',
 			'backup.title' => 'Backup',
-			_ => null,
-		} ?? switch (path) {
 			'backup.description' => 'Questa è la tua chiave privata. Protegge la comunicazione con il coordinatore. Non rivelarla mai a nessuno. Fai il backup in un luogo sicuro per prevenire problemi durante le dispute.',
 			'backup.feedback.copied' => 'Chiave privata copiata negli appunti!',
 			'backup.tooltips.backup' => 'Backup Neko',

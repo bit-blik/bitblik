@@ -167,6 +167,15 @@ void main() {
   const int testSatsAmount = 200000;
   const int testMakerFees = 1000;
   const int testTakerFees = 1000;
+  // Amount encoded in testValidTakerInvoice (1500 sats). Offers exercising the
+  // LNURL path must have amountSats = this + takerFees so the coordinator's
+  // invoice amount validation passes against the mocked LNURL response.
+  final int testValidTakerInvoiceSats =
+      (Bolt11PaymentRequest(testValidTakerInvoice).amount *
+              Decimal.fromInt(100000000))
+          .toBigInt()
+          .toInt();
+  final int lnurlAlignedAmountSats = testValidTakerInvoiceSats + testTakerFees;
 
   Offer createTestOffer({
     String id = testOfferId,
@@ -288,9 +297,12 @@ void main() {
       // final url = invocation.positionalArguments.first as Uri;
       // print('DEBUG: Specific mock hit for LNURL step 2: $url');
       // final amount = url.queryParameters['amount']; // Can use this to vary response
+      // Must be a real, parseable bolt11 invoice: the coordinator validates
+      // the resolved invoice amount against the offer's expected net amount,
+      // so tests exercising the LNURL path align offer.amountSats with this
+      // invoice's amount (1500 sats) plus taker fees.
       return http.Response(
-          '{"pr":"lnbc_test_invoice_from_lnurl_specific_mock","status":"OK"}',
-          200);
+          '{"pr":"$testValidTakerInvoice","status":"OK"}', 200);
     });
 
     // NOTE: The generic `when(mockHttpClient.get(any))` fallback has been removed
@@ -310,6 +322,19 @@ void main() {
       reservedAt: anyNamed('reservedAt'),
       blikReceivedAt: anyNamed('blikReceivedAt'),
       takerFees: anyNamed('takerFees'), // Added
+    )).thenAnswer((_) async => true);
+    when(mockDbService.updateOfferStatusIfCurrentStatus(
+      any,
+      any,
+      any,
+      takerPubkey: anyNamed('takerPubkey'),
+      blikCode: anyNamed('blikCode'),
+      takerInvoice: anyNamed('takerInvoice'),
+      takerLightningAddress: anyNamed('takerLightningAddress'),
+      reservedAt: anyNamed('reservedAt'),
+      blikReceivedAt: anyNamed('blikReceivedAt'),
+      takerFees: anyNamed('takerFees'),
+      expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
     )).thenAnswer((_) async => true);
     when(mockDbService.createOffer(any)).thenAnswer((invocation) async {
       final Offer offerToCreate = invocation.positionalArguments.first as Offer;
@@ -515,9 +540,10 @@ void main() {
       // Check if the time is roughly now + 1 second as per reserveOffer logic
       expect(reservationTime!.isAfter(clock.now().toUtc()), isTrue);
 
-      final captured = verify(mockDbService.updateOfferStatus(
+      final captured = verify(mockDbService.updateOfferStatusIfCurrentStatus(
         testOfferId,
         OfferStatus.reserved,
+        [OfferStatus.funded],
         takerPubkey: testTakerId,
         reservedAt: captureAnyNamed('reservedAt'),
       )).captured;
@@ -832,6 +858,259 @@ void main() {
         expect(currentOffer.status, OfferStatus.expired,
             reason:
                 'Recovered offer should still expire based on funded timeout, not stay funded because of a stale reserved snapshot.');
+      });
+    });
+
+    test(
+        'startup check restarts expiration timer for funded offers still within window',
+        () {
+      fakeAsync((async) {
+        final fundedTimeout = Duration(
+            seconds: CoordinatorService_static.getFundedExpireTimeoutSeconds(
+                coordinatorService));
+        final initialTime = clock.now().toUtc();
+        final offerId = 'startup-funded-within-window';
+        final holdInvoicePaymentHash = 'hash-for-$offerId';
+
+        Offer currentOffer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.funded,
+          createdAt: initialTime.subtract(fundedTimeout).add(
+                const Duration(seconds: 5),
+              ),
+          holdInvoicePaymentHash: holdInvoicePaymentHash,
+        );
+
+        when(mockDbService.getOffersByStatus(OfferStatus.funded, limit: 1000))
+            .thenAnswer((_) async => [currentOffer]);
+        when(mockDbService.getOffersByStatus(OfferStatus.reserved, limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.blikReceived,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.blikSentToMaker,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.takerCharged,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.invalidBlik,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.expiredSentBlik,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.conflict, limit: 1000))
+            .thenAnswer((_) async => []);
+
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => currentOffer);
+
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
+          offerId,
+          OfferStatus.expired,
+          [OfferStatus.funded],
+        )).thenAnswer((_) async {
+          currentOffer = currentOffer.copyWith(status: OfferStatus.expired);
+          return true;
+        });
+
+        when(mockPaymentService.cancelInvoice(
+                paymentHashHex: holdInvoicePaymentHash))
+            .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
+        when(mockPaymentService.lookupInvoice(
+                paymentHashHex: holdInvoicePaymentHash))
+            .thenAnswer((_) async => InvoiceDetails(
+                  paymentHash: holdInvoicePaymentHash,
+                  status: InvoiceStatus.CANCELED,
+                ));
+
+        var completed = false;
+        coordinatorService.doInitialCheckStatuses().then((_) {
+          completed = true;
+        });
+        async.flushMicrotasks();
+
+        expect(completed, isTrue);
+        expect(currentOffer.status, OfferStatus.funded,
+            reason:
+                'Offer still within funded window must not be expired by the startup check itself.');
+
+        async.elapse(const Duration(seconds: 6));
+        async.flushMicrotasks();
+
+        expect(currentOffer.status, OfferStatus.expired,
+            reason:
+                'Startup check should restart the funded expiration timer so the offer expires once the window elapses.');
+      });
+    });
+
+    test(
+        'startup check restarts reservation timer for reserved offers still within window',
+        () {
+      fakeAsync((async) {
+        final reservationTimeout = Duration(
+            seconds: CoordinatorService_static.getReservationTimeoutSeconds(
+                coordinatorService));
+        // _checkExpiredReservations uses DateTime.now(), not the injected
+        // clock, so the reservation timestamp must be relative to real time.
+        final realNow = DateTime.now().toUtc();
+        final offerId = 'startup-reserved-within-window';
+        final holdInvoicePaymentHash = 'hash-for-$offerId';
+
+        Offer currentOffer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.reserved,
+          createdAt: realNow,
+          reservedAt: realNow.subtract(reservationTimeout).add(
+                const Duration(seconds: 5),
+              ),
+          takerPubkey: testTakerId,
+          holdInvoicePaymentHash: holdInvoicePaymentHash,
+        );
+
+        when(mockDbService.getOffersByStatus(OfferStatus.funded, limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.reserved, limit: 1000))
+            .thenAnswer((_) async => [currentOffer]);
+        when(mockDbService.getOffersByStatus(OfferStatus.blikReceived,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.blikSentToMaker,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.takerCharged,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.invalidBlik,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.expiredSentBlik,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.conflict, limit: 1000))
+            .thenAnswer((_) async => []);
+
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => currentOffer);
+
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.funded,
+          takerPubkey: null,
+          blikCode: null,
+          takerLightningAddress: null,
+          reservedAt: null,
+        )).thenAnswer((_) async {
+          currentOffer = currentOffer.copyWith(
+            status: OfferStatus.funded,
+            takerPubkey: null,
+            reservedAt: null,
+            blikCode: null,
+            takerLightningAddress: null,
+          );
+          return true;
+        });
+
+        var completed = false;
+        coordinatorService.doInitialCheckStatuses().then((_) {
+          completed = true;
+        });
+        async.flushMicrotasks();
+
+        expect(completed, isTrue);
+        expect(currentOffer.status, OfferStatus.reserved,
+            reason:
+                'Offer still within reservation window must not be reverted by the startup check itself.');
+
+        async.elapse(const Duration(seconds: 6));
+        async.flushMicrotasks();
+
+        expect(currentOffer.status, OfferStatus.funded,
+            reason:
+                'Startup check should restart the reservation timer so the offer reverts to funded once the window elapses.');
+      });
+    });
+
+    test(
+        'startup check restarts BLIK confirmation timer for offers still within window',
+        () {
+      fakeAsync((async) {
+        final confirmationWindow = kBlik.confirmationWindow;
+        final initialTime = clock.now().toUtc();
+        final offerId = 'startup-blik-within-window';
+        final holdInvoicePaymentHash = 'hash-for-$offerId';
+
+        Offer currentOffer = createTestOffer(
+          id: offerId,
+          status: OfferStatus.blikReceived,
+          createdAt: initialTime,
+          blikReceivedAt: initialTime.subtract(confirmationWindow).add(
+                const Duration(seconds: 5),
+              ),
+          takerPubkey: testTakerId,
+          blikCode: '123456',
+          holdInvoicePaymentHash: holdInvoicePaymentHash,
+        );
+
+        when(mockDbService.getOffersByStatus(OfferStatus.funded, limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.reserved, limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.blikReceived,
+                limit: 1000))
+            .thenAnswer((_) async => [currentOffer]);
+        when(mockDbService.getOffersByStatus(OfferStatus.blikSentToMaker,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.takerCharged,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.invalidBlik,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.expiredSentBlik,
+                limit: 1000))
+            .thenAnswer((_) async => []);
+        when(mockDbService.getOffersByStatus(OfferStatus.conflict, limit: 1000))
+            .thenAnswer((_) async => []);
+
+        when(mockDbService.getOfferById(offerId))
+            .thenAnswer((_) async => currentOffer);
+
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.expiredBlik,
+          blikCode: null,
+          takerLightningAddress: null,
+          blikReceivedAt: null,
+        )).thenAnswer((_) async {
+          currentOffer = currentOffer.copyWith(
+            status: OfferStatus.expiredBlik,
+            blikCode: null,
+            takerLightningAddress: null,
+            blikReceivedAt: null,
+          );
+          return true;
+        });
+
+        var completed = false;
+        coordinatorService.doInitialCheckStatuses().then((_) {
+          completed = true;
+        });
+        async.flushMicrotasks();
+
+        expect(completed, isTrue);
+        expect(currentOffer.status, OfferStatus.blikReceived,
+            reason:
+                'Offer still within BLIK confirmation window must not be expired by the startup check itself.');
+
+        async.elapse(const Duration(seconds: 6));
+        async.flushMicrotasks();
+
+        expect(currentOffer.status, OfferStatus.expiredBlik,
+            reason:
+                'Startup check should restart the BLIK confirmation timer so the offer expires once the window elapses.');
       });
     });
 
@@ -1397,9 +1676,10 @@ void main() {
             .thenAnswer((_) async => reservedOffer);
 
         // Mock the update to reserved status
-        when(mockDbService.updateOfferStatus(
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
           offerIdForReservationTimeout,
           OfferStatus.reserved,
+          [OfferStatus.funded],
           takerPubkey: takerIdForReservationTimeout,
           reservedAt: anyNamed('reservedAt'),
         )).thenAnswer((invocation) async {
@@ -1493,6 +1773,7 @@ void main() {
           status: OfferStatus
               .reserved, // Start as reserved, then move to blikReceived
           takerPubkey: testTakerId,
+          amountSats: lnurlAlignedAmountSats,
           reservedAt: initialTime.subtract(Duration(minutes: 1)),
           createdAt: initialTime.subtract(Duration(minutes: 2)),
         );
@@ -1500,12 +1781,15 @@ void main() {
             .thenAnswer((_) async => blikReceivedOffer);
 
         // Mock the update to blikReceived status
-        when(mockDbService.updateOfferStatus(
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
           offerIdForBlikTimeout,
           OfferStatus.blikReceived,
+          [OfferStatus.reserved],
           blikCode: testBlikCode,
+          takerInvoice: anyNamed('takerInvoice'),
           takerLightningAddress: testTakerLnAddress,
           blikReceivedAt: anyNamed('blikReceivedAt'),
+          expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         )).thenAnswer((invocation) async {
           blikReceivedOffer =
               blikReceivedOffer.copyWith(status: OfferStatus.blikReceived);
@@ -1592,6 +1876,7 @@ void main() {
           status: OfferStatus.reserved,
           takerPubkey: testTakerId,
           makerPubkey: testMakerId,
+          amountSats: lnurlAlignedAmountSats,
           reservedAt: initialTime.subtract(Duration(minutes: 1)),
           createdAt: initialTime.subtract(Duration(minutes: 2)),
         );
@@ -1599,12 +1884,15 @@ void main() {
             .thenAnswer((_) async => offer);
 
         // Mock the update to blikReceived status
-        when(mockDbService.updateOfferStatus(
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
           offerId,
           OfferStatus.blikReceived,
+          [OfferStatus.reserved],
           blikCode: testBlikCode,
+          takerInvoice: anyNamed('takerInvoice'),
           takerLightningAddress: testTakerLnAddress,
           blikReceivedAt: anyNamed('blikReceivedAt'),
+          expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         )).thenAnswer((invocation) async {
           offer = offer.copyWith(status: OfferStatus.blikReceived);
           offer = offer.copyWith(blikCode: testBlikCode);
@@ -1680,18 +1968,22 @@ void main() {
           status: OfferStatus.reserved,
           takerPubkey: testTakerId,
           makerPubkey: testMakerId,
+          amountSats: lnurlAlignedAmountSats,
           reservedAt: initialTime.subtract(Duration(minutes: 1)),
           createdAt: initialTime.subtract(Duration(minutes: 2)),
         );
         when(mockDbService.getOfferById(offerId))
             .thenAnswer((_) async => offer);
 
-        when(mockDbService.updateOfferStatus(
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
           offerId,
           OfferStatus.blikReceived,
+          [OfferStatus.reserved],
           blikCode: testBlikCode,
+          takerInvoice: anyNamed('takerInvoice'),
           takerLightningAddress: testTakerLnAddress,
           blikReceivedAt: anyNamed('blikReceivedAt'),
+          expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         )).thenAnswer((invocation) async {
           offer = offer.copyWith(
             status: OfferStatus.blikReceived,
@@ -1842,6 +2134,7 @@ void main() {
           status: OfferStatus.reserved,
           takerPubkey: testTakerId,
           makerPubkey: testMakerId,
+          amountSats: lnurlAlignedAmountSats,
           reservedAt: initialTime.subtract(Duration(minutes: 1)),
           createdAt: initialTime.subtract(Duration(minutes: 2)),
         );
@@ -1849,12 +2142,15 @@ void main() {
             .thenAnswer((_) async => offer);
 
         // Mock the update to blikReceived status
-        when(mockDbService.updateOfferStatus(
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
           offerId,
           OfferStatus.blikReceived,
+          [OfferStatus.reserved],
           blikCode: testBlikCode,
+          takerInvoice: anyNamed('takerInvoice'),
           takerLightningAddress: testTakerLnAddress,
           blikReceivedAt: anyNamed('blikReceivedAt'),
+          expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         )).thenAnswer((invocation) async {
           offer = offer.copyWith(status: OfferStatus.blikReceived);
           offer = offer.copyWith(blikCode: testBlikCode);
@@ -1867,9 +2163,10 @@ void main() {
         });
 
         // Mock the update to blikSentToMaker status (when maker calls getBlik)
-        when(mockDbService.updateOfferStatus(
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
           offerId,
           OfferStatus.blikSentToMaker,
+          [OfferStatus.blikReceived],
         )).thenAnswer((_) async {
           offer = offer.copyWith(status: OfferStatus.blikSentToMaker);
           return true;
@@ -1958,7 +2255,9 @@ void main() {
         when(mockDbService.getOfferById(offerId))
             .thenAnswer((_) async => offer);
 
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.conflict))
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
+                offerId, OfferStatus.conflict, [OfferStatus.invalidBlik],
+                expectedTakerPubkey: anyNamed('expectedTakerPubkey')))
             .thenAnswer((_) async {
           offer = offer.copyWith(status: OfferStatus.conflict);
           offer = offer.copyWith(updatedAt: clock.now().toUtc());
@@ -2017,7 +2316,8 @@ void main() {
         when(mockDbService.getOfferById(offerId))
             .thenAnswer((_) async => offer);
 
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.invalidBlik))
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
+                offerId, OfferStatus.invalidBlik, [OfferStatus.blikSentToMaker]))
             .thenAnswer((_) async {
           offer = offer.copyWith(
               status: OfferStatus.invalidBlik, updatedAt: clock.now().toUtc());
@@ -2122,7 +2422,8 @@ void main() {
             .thenAnswer((_) async => offer);
 
         // takerCharged transition (via markBlikInvalid when already takerCharged)
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.conflict))
+        when(mockDbService.updateOfferStatusIfCurrentStatus(
+                offerId, OfferStatus.conflict, [OfferStatus.takerCharged]))
             .thenAnswer((_) async {
           offer = offer.copyWith(
               status: OfferStatus.conflict, updatedAt: clock.now().toUtc());
@@ -2379,6 +2680,7 @@ void main() {
       var offer = createTestOffer(
           status: OfferStatus.reserved,
           takerPubkey: testTakerId,
+          amountSats: lnurlAlignedAmountSats,
           reservedAt: clock.now().toUtc().subtract(Duration(seconds: 5)));
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
@@ -2394,12 +2696,15 @@ void main() {
       // Given the current structure, _resolveLnurlPay is internal.
       // We'll mock the DB update part.
 
-      when(mockDbService.updateOfferStatus(
+      when(mockDbService.updateOfferStatusIfCurrentStatus(
         testOfferId,
         OfferStatus.blikReceived,
+        [OfferStatus.reserved],
         blikCode: testBlikCode,
+        takerInvoice: anyNamed('takerInvoice'),
         takerLightningAddress: testTakerLnAddress,
         blikReceivedAt: anyNamed('blikReceivedAt'),
+        expectedTakerPubkey: testTakerId,
       )).thenAnswer((_) async => true);
 
       // To make submitBlikCode pass the _resolveLnurlPay step, we need to ensure it returns a non-null invoice.
@@ -2446,14 +2751,18 @@ void main() {
           testOfferId, testTakerId, testBlikCode, testTakerLnAddress, null);
 
       expect(result, isTrue); // Expect true now that HTTP is mocked
-      final captured = verify(mockDbService.updateOfferStatus(
+      final captured = verify(mockDbService.updateOfferStatusIfCurrentStatus(
         testOfferId,
         OfferStatus.blikReceived,
+        [OfferStatus.reserved],
         blikCode: testBlikCode,
+        takerInvoice: captureAnyNamed('takerInvoice'),
         takerLightningAddress: testTakerLnAddress,
         blikReceivedAt: captureAnyNamed('blikReceivedAt'),
+        expectedTakerPubkey: testTakerId,
       )).captured;
-      expect(captured.single, isA<DateTime>());
+      expect(captured[0], testValidTakerInvoice);
+      expect(captured[1], isA<DateTime>());
       // Assert reservation timer was cancelled and BLIK confirmation timer started. (Internal detail)
     });
 
@@ -2475,28 +2784,77 @@ void main() {
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
 
-      when(mockDbService.updateOfferStatus(
+      when(mockDbService.updateOfferStatusIfCurrentStatus(
         testOfferId,
         OfferStatus.blikReceived,
+        [OfferStatus.reserved],
         blikCode: testBlikCode,
+        takerInvoice: testValidTakerInvoice,
         takerLightningAddress: null,
         blikReceivedAt: anyNamed('blikReceivedAt'),
+        expectedTakerPubkey: testTakerId,
       )).thenAnswer((_) async => true);
 
       final result = await coordinatorService.submitBlikCode(
           testOfferId, testTakerId, testBlikCode, null, testValidTakerInvoice);
 
       expect(result, isTrue);
-      verify(mockDbService.updateTakerInvoice(
-              testOfferId, testValidTakerInvoice))
-          .called(1);
+      verifyNever(mockDbService.updateTakerInvoice(any, any));
       verifyNever(mockHttpClient.get(any));
-      verify(mockDbService.updateOfferStatus(
+      verify(mockDbService.updateOfferStatusIfCurrentStatus(
         testOfferId,
         OfferStatus.blikReceived,
+        [OfferStatus.reserved],
         blikCode: testBlikCode,
+        takerInvoice: testValidTakerInvoice,
         takerLightningAddress: null,
         blikReceivedAt: anyNamed('blikReceivedAt'),
+        expectedTakerPubkey: testTakerId,
+      )).called(1);
+    });
+
+    test(
+        'reserved --submit BLIK fails CAS transition--> does not persist invoice separately',
+        () async {
+      final parsedInvoice = Bolt11PaymentRequest(testValidTakerInvoice);
+      final invoiceAmountSats =
+          (parsedInvoice.amount * Decimal.fromInt(100000000))
+              .toBigInt()
+              .toInt();
+      final offer = createTestOffer(
+        status: OfferStatus.reserved,
+        takerPubkey: testTakerId,
+        reservedAt: clock.now().toUtc().subtract(Duration(seconds: 5)),
+        takerFees: testTakerFees,
+        amountSats: invoiceAmountSats + testTakerFees,
+      );
+      when(mockDbService.getOfferById(testOfferId))
+          .thenAnswer((_) async => offer);
+      when(mockDbService.updateOfferStatusIfCurrentStatus(
+        testOfferId,
+        OfferStatus.blikReceived,
+        [OfferStatus.reserved],
+        blikCode: testBlikCode,
+        takerInvoice: testValidTakerInvoice,
+        takerLightningAddress: null,
+        blikReceivedAt: anyNamed('blikReceivedAt'),
+        expectedTakerPubkey: testTakerId,
+      )).thenAnswer((_) async => false);
+
+      final result = await coordinatorService.submitBlikCode(
+          testOfferId, testTakerId, testBlikCode, null, testValidTakerInvoice);
+
+      expect(result, isFalse);
+      verifyNever(mockDbService.updateTakerInvoice(any, any));
+      verify(mockDbService.updateOfferStatusIfCurrentStatus(
+        testOfferId,
+        OfferStatus.blikReceived,
+        [OfferStatus.reserved],
+        blikCode: testBlikCode,
+        takerInvoice: testValidTakerInvoice,
+        takerLightningAddress: null,
+        blikReceivedAt: anyNamed('blikReceivedAt'),
+        expectedTakerPubkey: testTakerId,
       )).called(1);
     });
 
@@ -2508,16 +2866,20 @@ void main() {
           holdInvoicePreimage: testPreimage, // Crucial for settling
           takerLightningAddress: testTakerLnAddress, // Crucial for paying taker
           // Ensure fees are set for _payTakerAsync calculation
-          amountSats: testSatsAmount,
+          amountSats: lnurlAlignedAmountSats,
           makerFees: testMakerFees,
           takerFees: testTakerFees);
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
 
       // Mock sequence of status updates
-      when(mockDbService.updateOfferStatus(
-              testOfferId, OfferStatus.makerConfirmed))
-          .thenAnswer((_) async {
+      when(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.makerConfirmed, [
+        OfferStatus.conflict,
+        OfferStatus.takerCharged,
+        OfferStatus.blikSentToMaker,
+        OfferStatus.expiredSentBlik,
+      ])).thenAnswer((_) async {
         offer = offer.copyWith(
             status: OfferStatus.makerConfirmed); // Simulate DB update
         return true;
@@ -2570,9 +2932,13 @@ void main() {
       // Verify settlement
       verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
           .called(1);
-      verify(mockDbService.updateOfferStatus(
-              testOfferId, OfferStatus.makerConfirmed))
-          .called(1);
+      verify(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.makerConfirmed, [
+        OfferStatus.conflict,
+        OfferStatus.takerCharged,
+        OfferStatus.blikSentToMaker,
+        OfferStatus.expiredSentBlik,
+      ])).called(1);
 
       // Wait for async operations within confirmMakerPayment and _payTakerAsync to complete
       await untilCalled(
@@ -2622,9 +2988,13 @@ void main() {
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
 
-      when(mockDbService.updateOfferStatus(
-              testOfferId, OfferStatus.makerConfirmed))
-          .thenAnswer((_) async {
+      when(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.makerConfirmed, [
+        OfferStatus.conflict,
+        OfferStatus.takerCharged,
+        OfferStatus.blikSentToMaker,
+        OfferStatus.expiredSentBlik,
+      ])).thenAnswer((_) async {
         offer = offer.copyWith(status: OfferStatus.makerConfirmed);
         return true;
       });
@@ -2675,16 +3045,18 @@ void main() {
       var offer = createTestOffer(status: OfferStatus.blikSentToMaker);
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
-      when(mockDbService.updateOfferStatus(
-              testOfferId, OfferStatus.invalidBlik))
+      when(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.invalidBlik,
+              [OfferStatus.blikSentToMaker]))
           .thenAnswer((_) async => true);
 
       final result =
           await coordinatorService.markBlikInvalid(testOfferId, testMakerId);
 
       expect(result, isTrue);
-      verify(mockDbService.updateOfferStatus(
-              testOfferId, OfferStatus.invalidBlik))
+      verify(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.invalidBlik,
+              [OfferStatus.blikSentToMaker]))
           .called(1);
     });
 
@@ -2695,9 +3067,11 @@ void main() {
           );
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
-      when(mockDbService.updateOfferStatus(testOfferId, OfferStatus.reserved,
+      when(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.reserved, [OfferStatus.invalidBlik],
               takerPubkey: testTakerId, // Should be the same taker
-              reservedAt: anyNamed('reservedAt')))
+              reservedAt: anyNamed('reservedAt'),
+              expectedTakerPubkey: testTakerId))
           .thenAnswer((_) async => true);
 
       final reservationTime =
@@ -2705,9 +3079,11 @@ void main() {
 
       expect(reservationTime, isNotNull);
       expect(reservationTime, isA<DateTime>());
-      verify(mockDbService.updateOfferStatus(testOfferId, OfferStatus.reserved,
+      verify(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.reserved, [OfferStatus.invalidBlik],
               takerPubkey: testTakerId,
-              reservedAt: captureAnyNamed('reservedAt')))
+              reservedAt: captureAnyNamed('reservedAt'),
+              expectedTakerPubkey: testTakerId))
           .called(1);
     });
 
@@ -2726,7 +3102,8 @@ void main() {
 
       expect(reservationTime,
           isNull); // Should fail because taker ID doesn't match
-      verifyNever(mockDbService.updateOfferStatus(any, OfferStatus.reserved,
+      verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
+          any, OfferStatus.reserved, any,
           takerPubkey: anyNamed('takerPubkey'),
           reservedAt: anyNamed('reservedAt')));
     });
@@ -2736,14 +3113,18 @@ void main() {
           status: OfferStatus.invalidBlik, takerPubkey: testTakerId);
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
-      when(mockDbService.updateOfferStatus(testOfferId, OfferStatus.conflict))
+      when(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.conflict, [OfferStatus.invalidBlik],
+              expectedTakerPubkey: testTakerId))
           .thenAnswer((_) async => true);
 
       final result =
           await coordinatorService.markBlikCharged(testOfferId, testTakerId);
 
       expect(result, isTrue);
-      verify(mockDbService.updateOfferStatus(testOfferId, OfferStatus.conflict))
+      verify(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.conflict, [OfferStatus.invalidBlik],
+              expectedTakerPubkey: testTakerId))
           .called(1);
     });
 
@@ -2755,16 +3136,20 @@ void main() {
           holdInvoicePreimage: testPreimage,
           takerLightningAddress: testTakerLnAddress,
           makerPubkey: testMakerId, // Ensure maker is correct
-          amountSats: testSatsAmount,
+          amountSats: lnurlAlignedAmountSats,
           makerFees: testMakerFees,
           takerFees: testTakerFees);
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
 
       // Mock sequence of status updates
-      when(mockDbService.updateOfferStatus(
-              testOfferId, OfferStatus.makerConfirmed))
-          .thenAnswer((_) async {
+      when(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.makerConfirmed, [
+        OfferStatus.conflict,
+        OfferStatus.takerCharged,
+        OfferStatus.blikSentToMaker,
+        OfferStatus.expiredSentBlik,
+      ])).thenAnswer((_) async {
         offer = offer.copyWith(status: OfferStatus.makerConfirmed);
         return true;
       });
@@ -2806,9 +3191,13 @@ void main() {
 
       verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
           .called(1);
-      verify(mockDbService.updateOfferStatus(
-              testOfferId, OfferStatus.makerConfirmed))
-          .called(1);
+      verify(mockDbService.updateOfferStatusIfCurrentStatus(
+              testOfferId, OfferStatus.makerConfirmed, [
+        OfferStatus.conflict,
+        OfferStatus.takerCharged,
+        OfferStatus.blikSentToMaker,
+        OfferStatus.expiredSentBlik,
+      ])).called(1);
 
       await untilCalled(
           mockDbService.updateOfferStatus(testOfferId, OfferStatus.settled));
@@ -2839,13 +3228,18 @@ void main() {
     test(
         'takerPaymentFailed --enter new bolt11 invoice & retry --> payingTaker -> takerPaid',
         () async {
-      final newTakerInvoice = 'lnbc_new_taker_invoice_for_retry';
+      final newTakerInvoice = testValidTakerInvoice;
+      final parsedInvoice = Bolt11PaymentRequest(newTakerInvoice);
+      final invoiceAmountSats =
+          (parsedInvoice.amount * Decimal.fromInt(100000000))
+              .toBigInt()
+              .toInt();
       var offer = createTestOffer(
           status: OfferStatus.takerPaymentFailed,
           takerPubkey:
               testTakerId, // Needed for updateTakerInvoice and retryTakerPayment
           // Ensure other fields are present for payment logic
-          amountSats: testSatsAmount,
+          amountSats: invoiceAmountSats + testTakerFees,
           makerFees: testMakerFees,
           takerFees: testTakerFees,
           takerLightningAddress:
@@ -2883,8 +3277,8 @@ void main() {
       // Mock successful payment for the new invoice
       when(mockPaymentService.payInvoice(
               invoice: newTakerInvoice,
-              amountSat: offer.amountSats - (offer.takerFees ?? 0),
-              feeLimitSat: offer.makerFees + 100))
+              amountSat: invoiceAmountSats,
+              feeLimitSat: (offer.takerFees! * kTakerFeeLimitFactor).ceil()))
           .thenAnswer((_) async => PayInvoiceResult(
               paymentPreimage: 'retry_paid_preimage', feeSat: 7));
 
@@ -2909,9 +3303,54 @@ void main() {
       final expectedFeeLimit = (offer.takerFees! * kTakerFeeLimitFactor).ceil();
       verify(mockPaymentService.payInvoice(
               invoice: newTakerInvoice,
-              amountSat: offer.amountSats - (offer.takerFees ?? 0),
+              amountSat: invoiceAmountSats,
               feeLimitSat: expectedFeeLimit))
           .called(1);
+    });
+
+    test('Attempt to update taker invoice outside takerPaymentFailed state',
+        () async {
+      final offer = createTestOffer(
+        status: OfferStatus.settled,
+        takerPubkey: testTakerId,
+        takerInvoice: testValidTakerInvoice,
+      );
+      when(mockDbService.getOfferById(testOfferId))
+          .thenAnswer((_) async => offer);
+
+      final result = await coordinatorService.updateTakerInvoice(
+          testOfferId, testValidTakerInvoice, testTakerId);
+
+      expect(result, isFalse);
+      verifyNever(mockDbService.updateTakerInvoice(testOfferId, any));
+    });
+
+    test(
+        'Retry taker payment rejects legacy mismatched invoice before paying',
+        () async {
+      final parsedInvoice = Bolt11PaymentRequest(testValidTakerInvoice);
+      final invoiceAmountSats =
+          (parsedInvoice.amount * Decimal.fromInt(100000000))
+              .toBigInt()
+              .toInt();
+      final offer = createTestOffer(
+        status: OfferStatus.takerPaymentFailed,
+        takerPubkey: testTakerId,
+        takerInvoice: testValidTakerInvoice,
+        amountSats: invoiceAmountSats + testTakerFees + 500,
+        takerFees: testTakerFees,
+      );
+      when(mockDbService.getOfferById(testOfferId))
+          .thenAnswer((_) async => offer);
+
+      expect(
+        () => coordinatorService.retryTakerPayment(testOfferId, testTakerId),
+        throwsA(isA<Exception>()),
+      );
+      verifyNever(mockPaymentService.payInvoice(
+          invoice: anyNamed('invoice'),
+          amountSat: anyNamed('amountSat'),
+          feeLimitSat: anyNamed('feeLimitSat')));
     });
 
     // --- Cheating / Fund Stealing Attempts ---
@@ -2929,8 +3368,8 @@ void main() {
       expect(result, isFalse);
       verifyNever(mockPaymentService.settleInvoice(
           preimageHex: anyNamed('preimageHex')));
-      verifyNever(mockDbService.updateOfferStatus(
-          testOfferId, OfferStatus.makerConfirmed));
+      verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
+          testOfferId, OfferStatus.makerConfirmed, any));
     });
 
     test('Attempt to mark BLIK invalid by wrong maker', () async {
@@ -2944,8 +3383,8 @@ void main() {
           await coordinatorService.markBlikInvalid(testOfferId, wrongMakerId);
 
       expect(result, isFalse);
-      verifyNever(mockDbService.updateOfferStatus(
-          testOfferId, OfferStatus.invalidBlik));
+      verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
+          testOfferId, OfferStatus.invalidBlik, any));
     });
 
     test('Attempt to get BLIK code by wrong maker', () async {
@@ -2961,8 +3400,8 @@ void main() {
           testOfferId, wrongMakerId);
 
       expect(blikCodeResult, isNull);
-      verifyNever(mockDbService.updateOfferStatus(
-          testOfferId, OfferStatus.blikSentToMaker));
+      verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
+          testOfferId, OfferStatus.blikSentToMaker, any));
     });
 
     test('Attempt to submit BLIK code by wrong taker', () async {
@@ -2976,11 +3415,13 @@ void main() {
           testOfferId, wrongTakerId, testBlikCode, testTakerLnAddress, null);
 
       expect(result, isFalse);
-      verifyNever(mockDbService.updateOfferStatus(
-          testOfferId, OfferStatus.blikReceived,
+      verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
+          testOfferId, OfferStatus.blikReceived, any,
           blikCode: anyNamed('blikCode'),
+          takerInvoice: anyNamed('takerInvoice'),
           takerLightningAddress: anyNamed('takerLightningAddress'),
-          blikReceivedAt: anyNamed('blikReceivedAt')));
+          blikReceivedAt: anyNamed('blikReceivedAt'),
+          expectedTakerPubkey: anyNamed('expectedTakerPubkey')));
     });
 
     test('Attempt to cancel reservation by wrong taker', () async {
@@ -3025,8 +3466,9 @@ void main() {
           await coordinatorService.markBlikCharged(testOfferId, wrongTakerId);
 
       expect(result, isFalse);
-      verifyNever(
-          mockDbService.updateOfferStatus(testOfferId, OfferStatus.conflict));
+      verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
+          testOfferId, OfferStatus.conflict, any,
+          expectedTakerPubkey: anyNamed('expectedTakerPubkey')));
     });
 
     test('Attempt to update taker invoice by wrong user', () async {
@@ -3088,11 +3530,13 @@ void main() {
           testOfferId, testTakerId, testBlikCode, testTakerLnAddress, null);
 
       expect(result, isFalse);
-      verifyNever(mockDbService.updateOfferStatus(
-          testOfferId, OfferStatus.blikReceived,
+      verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
+          testOfferId, OfferStatus.blikReceived, any,
           blikCode: anyNamed('blikCode'),
+          takerInvoice: anyNamed('takerInvoice'),
           takerLightningAddress: anyNamed('takerLightningAddress'),
-          blikReceivedAt: anyNamed('blikReceivedAt')));
+          blikReceivedAt: anyNamed('blikReceivedAt'),
+          expectedTakerPubkey: anyNamed('expectedTakerPubkey')));
     });
 
     test('Taker tries to reserve an already reserved offer', () async {
@@ -3110,9 +3554,11 @@ void main() {
 
       expect(result, isNull); // reserveOffer returns null on failure
       // No change in status or taker
-      verifyNever(mockDbService.updateOfferStatus(
-          testOfferId, OfferStatus.reserved,
-          takerPubkey: secondTakerId, reservedAt: anyNamed('reservedAt')));
+      verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
+          testOfferId, OfferStatus.reserved, any,
+          takerPubkey: secondTakerId,
+          reservedAt: anyNamed('reservedAt'),
+          expectedTakerPubkey: anyNamed('expectedTakerPubkey')));
     });
 
     test('Maker tries to cancel an offer that is already reserved', () async {
@@ -3147,9 +3593,9 @@ class CoordinatorService_static {
   }
 
   static int getReservationTimeoutSeconds(CoordinatorService instance) {
-    return int.tryParse(String.fromEnvironment('RESERVATION_SECONDS',
-            defaultValue: '30')) ??
-        30;
+    // Use the service's actual runtime value: it loads RESERVATION_SECONDS
+    // from `.env`, which String.fromEnvironment (compile-time) cannot see.
+    return instance.reservationTimeoutSeconds;
   }
 }
 

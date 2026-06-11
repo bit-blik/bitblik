@@ -140,6 +140,51 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
       ) as _i9.Future<void>);
 
   @override
+  _i9.Future<void> saveTelegramOfferMessage({
+    required String? offerId,
+    required String? chatId,
+    required int? messageId,
+    required String? messageText,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveTelegramOfferMessage,
+          [],
+          {
+            #offerId: offerId,
+            #chatId: chatId,
+            #messageId: messageId,
+            #messageText: messageText,
+          },
+        ),
+        returnValue: _i9.Future<void>.value(),
+        returnValueForMissingStub: _i9.Future<void>.value(),
+      ) as _i9.Future<void>);
+
+  @override
+  _i9.Future<List<_i8.TelegramOfferMessage>> getTelegramOfferMessages(
+          String? offerId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getTelegramOfferMessages,
+          [offerId],
+        ),
+        returnValue: _i9.Future<List<_i8.TelegramOfferMessage>>.value(
+            <_i8.TelegramOfferMessage>[]),
+      ) as _i9.Future<List<_i8.TelegramOfferMessage>>);
+
+  @override
+  _i9.Future<void> deleteTelegramOfferMessages(String? offerId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteTelegramOfferMessages,
+          [offerId],
+        ),
+        returnValue: _i9.Future<void>.value(),
+        returnValueForMissingStub: _i9.Future<void>.value(),
+      ) as _i9.Future<void>);
+
+  @override
   _i9.Future<void> insertAuditLog({
     required String? level,
     required String? loggerName,
@@ -259,6 +304,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
     _i2.OfferStatus? newStatus, {
     String? takerPubkey,
     String? blikCode,
+    String? takerInvoice,
     String? takerLightningAddress,
     DateTime? reservedAt,
     DateTime? blikReceivedAt,
@@ -275,6 +321,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
           {
             #takerPubkey: takerPubkey,
             #blikCode: blikCode,
+            #takerInvoice: takerInvoice,
             #takerLightningAddress: takerLightningAddress,
             #reservedAt: reservedAt,
             #blikReceivedAt: blikReceivedAt,
@@ -292,11 +339,13 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
     List<_i2.OfferStatus>? expectedCurrentStatuses, {
     String? takerPubkey,
     String? blikCode,
+    String? takerInvoice,
     String? takerLightningAddress,
     DateTime? reservedAt,
     DateTime? blikReceivedAt,
     int? takerFees,
     String? failureReason,
+    String? expectedTakerPubkey,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -309,11 +358,13 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
           {
             #takerPubkey: takerPubkey,
             #blikCode: blikCode,
+            #takerInvoice: takerInvoice,
             #takerLightningAddress: takerLightningAddress,
             #reservedAt: reservedAt,
             #blikReceivedAt: blikReceivedAt,
             #takerFees: takerFees,
             #failureReason: failureReason,
+            #expectedTakerPubkey: expectedTakerPubkey,
           },
         ),
         returnValue: _i9.Future<bool>.value(false),

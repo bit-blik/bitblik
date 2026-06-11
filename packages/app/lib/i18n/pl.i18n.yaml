@@ -25,7 +25,7 @@ common:
     faq: FAQ
   
   labels:
-    amount: "Kwota (PLN)"
+    amount: "Kwota (${currency})"
     status: "Status: ${status}" # Używane przez taker.waitConfirmation
     role: "Rola: ${role}"
   
@@ -217,9 +217,9 @@ reservations:
 # =============================================================================
 exchange:
   labels:
-    enterAmount: "Wprowadź kwotę (PLN) do zapłaty:"
+    enterAmount: "Wprowadź kwotę (${currency}) do zapłaty:"
     equivalent: "≈ ${sats} satoshi"
-    rate: "Kurs wymiany ≈ ${rate} PLN/BTC"
+    rate: "Kurs wymiany ≈ ${rate} ${currency}/BTC"
 
   feedback:
     fetching: Pobieranie kursu wymiany...
@@ -684,6 +684,20 @@ taker:
       reportConflict: Rozpocząć Spór
       returnHome: Wróć do strony głównej
     
+    confirmDialog:
+      title: Czy na pewno?
+      content: "Po kliknięciu nie ma odwrotu.\n\nJeśli kwota ZOSTAŁA faktycznie pobrana z Twojego konta bankowego, koordynator NIE będzie w stanie zagwarantować, że otrzymasz bitcoiny, i możesz stracić swoje środki.\n\nJeśli nie masz pewności, najlepiej chwilę poczekać i potwierdzić, że NIE zostałeś obciążony, zanim przejdziesz dalej."
+      actions:
+        proceed: Jestem pewien, kontynuuj
+        cancel: Anuluj
+
+    disputeConfirmDialog:
+      title: Rozpocząć spór?
+      content: "Rozpocznij spór tylko wtedy, gdy kwota ZOSTAŁA pobrana z Twojego konta bankowego.\n\nKoordynator ręcznie rozpatrzy Twoją sprawę, co wymaga czasu. Będziesz musiał przedstawić dowód płatności."
+      actions:
+        proceed: Tak, zostałem obciążony
+        cancel: Anuluj
+
     feedback:
       conflictReportedSuccess: Konflikt zgłoszony. Koordynator rozpatrzy sprawę.
     

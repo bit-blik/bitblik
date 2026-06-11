@@ -25,7 +25,7 @@ common:
     faq: FAQ
   
   labels:
-    amount: "Amount (PLN)"
+    amount: "Amount (${currency})"
     status: "Status: ${status}" # Used by taker.waitConfirmation
     role: "Role: ${role}"
   
@@ -218,9 +218,9 @@ reservations:
 # =============================================================================
 exchange:
   labels:
-    enterAmount: "Enter amount (PLN) to pay:"
+    enterAmount: "Enter amount (${currency}) to pay:"
     equivalent: "≈ ${sats} satoshi"
-    rate: "Exchange rate ≈ ${rate} PLN/BTC"
+    rate: "Exchange rate ≈ ${rate} ${currency}/BTC"
 
   feedback:
     fetching: Fetching exchange rate...
@@ -699,9 +699,23 @@ taker:
       reportConflict: Start Dispute
       returnHome: Return to home
     
+    confirmDialog:
+      title: Are you sure?
+      content: "Once you tap this, there is no turning back.\n\nIf the amount WAS in fact charged from your bank account, the coordinator will NOT be able to guarantee you receive the bitcoin, and you may lose your funds.\n\nIf you are not sure, it is best to wait a bit and confirm that you did NOT get charged before continuing."
+      actions:
+        proceed: I'm sure, continue
+        cancel: Cancel
+
+    disputeConfirmDialog:
+      title: Start a dispute?
+      content: "Only start a dispute if the amount WAS charged from your bank account.\n\nThe coordinator will manually review your case, which takes time. You will need to provide proof of payment."
+      actions:
+        proceed: Yes, I was charged
+        cancel: Cancel
+
     feedback:
       conflictReportedSuccess: Conflict reported. Coordinator will review.
-    
+
     errors:
       reservationFailed: Failed to reserve offer again
       conflictReport: "Error reporting conflict: ${details}"

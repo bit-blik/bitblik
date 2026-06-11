@@ -75,7 +75,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       if (c is String && c.isNotEmpty) countryName = c;
     } catch (_) {}
     return text
-        .replaceAll('{app}', buildAppName)
+        .replaceAll('{app}', ps.brandName)
         .replaceAll('{codeLength}', '${ps.codeLength}')
         .replaceAll('{code}', ps.codeLabel)
         .replaceAll('{country}', countryName)

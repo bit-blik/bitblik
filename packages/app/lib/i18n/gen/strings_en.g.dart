@@ -587,8 +587,8 @@ class Translations$common$labels$en {
 
 	// Translations
 
-	/// en: 'Amount (PLN)'
-	String get amount => 'Amount (PLN)';
+	/// en: 'Amount (${currency})'
+	String amount({required Object currency}) => 'Amount (${currency})';
 
 	/// en: 'Status: ${status}'
 	String status({required Object status}) => 'Status: ${status}';
@@ -1157,14 +1157,14 @@ class Translations$exchange$labels$en {
 
 	// Translations
 
-	/// en: 'Enter amount (PLN) to pay:'
-	String get enterAmount => 'Enter amount (PLN) to pay:';
+	/// en: 'Enter amount (${currency}) to pay:'
+	String enterAmount({required Object currency}) => 'Enter amount (${currency}) to pay:';
 
 	/// en: '≈ ${sats} satoshi'
 	String equivalent({required Object sats}) => '≈ ${sats} satoshi';
 
-	/// en: 'Exchange rate ≈ ${rate} PLN/BTC'
-	String rate({required Object rate}) => 'Exchange rate ≈ ${rate} PLN/BTC';
+	/// en: 'Exchange rate ≈ ${rate} ${currency}/BTC'
+	String rate({required Object rate, required Object currency}) => 'Exchange rate ≈ ${rate} ${currency}/BTC';
 }
 
 // Path: exchange.feedback
@@ -1891,6 +1891,8 @@ class Translations$taker$invalidBlik$en {
 	String get wereCharged => 'If you were charged:';
 
 	late final Translations$taker$invalidBlik$actions$en actions = Translations$taker$invalidBlik$actions$en.internal(_root);
+	late final Translations$taker$invalidBlik$confirmDialog$en confirmDialog = Translations$taker$invalidBlik$confirmDialog$en.internal(_root);
+	late final Translations$taker$invalidBlik$disputeConfirmDialog$en disputeConfirmDialog = Translations$taker$invalidBlik$disputeConfirmDialog$en.internal(_root);
 	late final Translations$taker$invalidBlik$feedback$en feedback = Translations$taker$invalidBlik$feedback$en.internal(_root);
 	late final Translations$taker$invalidBlik$errors$en errors = Translations$taker$invalidBlik$errors$en.internal(_root);
 }
@@ -3729,6 +3731,40 @@ class Translations$taker$invalidBlik$actions$en {
 	String get returnHome => 'Return to home';
 }
 
+// Path: taker.invalidBlik.confirmDialog
+class Translations$taker$invalidBlik$confirmDialog$en {
+	Translations$taker$invalidBlik$confirmDialog$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Are you sure?'
+	String get title => 'Are you sure?';
+
+	/// en: 'Once you tap this, there is no turning back. If the amount WAS in fact charged from your bank account, the coordinator will NOT be able to guarantee you receive the bitcoin, and you may lose your funds. If you are not sure, it is best to wait a bit and confirm that you did NOT get charged before continuing.'
+	String get content => 'Once you tap this, there is no turning back.\n\nIf the amount WAS in fact charged from your bank account, the coordinator will NOT be able to guarantee you receive the bitcoin, and you may lose your funds.\n\nIf you are not sure, it is best to wait a bit and confirm that you did NOT get charged before continuing.';
+
+	late final Translations$taker$invalidBlik$confirmDialog$actions$en actions = Translations$taker$invalidBlik$confirmDialog$actions$en.internal(_root);
+}
+
+// Path: taker.invalidBlik.disputeConfirmDialog
+class Translations$taker$invalidBlik$disputeConfirmDialog$en {
+	Translations$taker$invalidBlik$disputeConfirmDialog$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Start a dispute?'
+	String get title => 'Start a dispute?';
+
+	/// en: 'Only start a dispute if the amount WAS charged from your bank account. The coordinator will manually review your case, which takes time. You will need to provide proof of payment.'
+	String get content => 'Only start a dispute if the amount WAS charged from your bank account.\n\nThe coordinator will manually review your case, which takes time. You will need to provide proof of payment.';
+
+	late final Translations$taker$invalidBlik$disputeConfirmDialog$actions$en actions = Translations$taker$invalidBlik$disputeConfirmDialog$actions$en.internal(_root);
+}
+
 // Path: taker.invalidBlik.feedback
 class Translations$taker$invalidBlik$feedback$en {
 	Translations$taker$invalidBlik$feedback$en.internal(this._root);
@@ -3954,6 +3990,36 @@ class Translations$maker$conflict$disputeDialog$actions$en {
 	String get cancel => 'Cancel';
 }
 
+// Path: taker.invalidBlik.confirmDialog.actions
+class Translations$taker$invalidBlik$confirmDialog$actions$en {
+	Translations$taker$invalidBlik$confirmDialog$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'I'm sure, continue'
+	String get proceed => 'I\'m sure, continue';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+}
+
+// Path: taker.invalidBlik.disputeConfirmDialog.actions
+class Translations$taker$invalidBlik$disputeConfirmDialog$actions$en {
+	Translations$taker$invalidBlik$disputeConfirmDialog$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Yes, I was charged'
+	String get proceed => 'Yes, I was charged';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+}
+
 /// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -3977,7 +4043,7 @@ extension on Translations {
 			'common.buttons.close' => 'Close',
 			'common.buttons.restore' => 'Restore',
 			'common.buttons.faq' => 'FAQ',
-			'common.labels.amount' => 'Amount (PLN)',
+			'common.labels.amount' => ({required Object currency}) => 'Amount (${currency})',
 			'common.labels.status' => ({required Object status}) => 'Status: ${status}',
 			'common.labels.role' => ({required Object role}) => 'Role: ${role}',
 			'common.notifications.success' => 'Success',
@@ -4111,9 +4177,9 @@ extension on Translations {
 			'reservations.errors.failedNoTimestamp' => 'Failed to reserve offer (no timestamp).',
 			'reservations.errors.timestampMissing' => 'Offer reservation timestamp missing.',
 			'reservations.errors.notReserved' => ({required Object status}) => 'Offer is no longer in reserved state (${status}).',
-			'exchange.labels.enterAmount' => 'Enter amount (PLN) to pay:',
+			'exchange.labels.enterAmount' => ({required Object currency}) => 'Enter amount (${currency}) to pay:',
 			'exchange.labels.equivalent' => ({required Object sats}) => '≈ ${sats} satoshi',
-			'exchange.labels.rate' => ({required Object rate}) => 'Exchange rate ≈ ${rate} PLN/BTC',
+			'exchange.labels.rate' => ({required Object rate, required Object currency}) => 'Exchange rate ≈ ${rate} ${currency}/BTC',
 			'exchange.feedback.fetching' => 'Fetching exchange rate...',
 			'exchange.errors.fetchingRate' => 'Failed to fetch exchange rate.',
 			'exchange.errors.invalidFormat' => 'Invalid number format',
@@ -4448,6 +4514,14 @@ extension on Translations {
 			'taker.invalidBlik.actions.cancelReservation' => 'Cancel Transaction',
 			'taker.invalidBlik.actions.reportConflict' => 'Start Dispute',
 			'taker.invalidBlik.actions.returnHome' => 'Return to home',
+			'taker.invalidBlik.confirmDialog.title' => 'Are you sure?',
+			'taker.invalidBlik.confirmDialog.content' => 'Once you tap this, there is no turning back.\n\nIf the amount WAS in fact charged from your bank account, the coordinator will NOT be able to guarantee you receive the bitcoin, and you may lose your funds.\n\nIf you are not sure, it is best to wait a bit and confirm that you did NOT get charged before continuing.',
+			'taker.invalidBlik.confirmDialog.actions.proceed' => 'I\'m sure, continue',
+			'taker.invalidBlik.confirmDialog.actions.cancel' => 'Cancel',
+			'taker.invalidBlik.disputeConfirmDialog.title' => 'Start a dispute?',
+			'taker.invalidBlik.disputeConfirmDialog.content' => 'Only start a dispute if the amount WAS charged from your bank account.\n\nThe coordinator will manually review your case, which takes time. You will need to provide proof of payment.',
+			'taker.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Yes, I was charged',
+			'taker.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Cancel',
 			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Conflict reported. Coordinator will review.',
 			'taker.invalidBlik.errors.reservationFailed' => 'Failed to reserve offer again',
 			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Error reporting conflict: ${details}',
@@ -4466,6 +4540,8 @@ extension on Translations {
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
 			'blik.instructions.taker' => ({required Object code}) => 'Once the Maker enters the ${code} code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.',
+			_ => null,
+		} ?? switch (path) {
 			'home.notifications.title' => 'Get notified about new offers via:',
 			'home.notifications.telegram' => 'Telegram',
 			'home.notifications.simplex' => 'SimpleX',
@@ -4474,8 +4550,6 @@ extension on Translations {
 			'home.statistics.title' => 'Finished Offers',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'All: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
-			_ => null,
-		} ?? switch (path) {
 			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg ${code}: ${avgBlikTime}  |  Avg Paid: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Error loading statistics: ${error}',
 			'nekoInfo.title' => 'What is a Neko?',

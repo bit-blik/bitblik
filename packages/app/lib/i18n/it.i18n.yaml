@@ -25,7 +25,7 @@ common:
     faq: FAQ
 
   labels:
-    amount: "Importo (PLN)"
+    amount: "Importo (${currency})"
     status: "Stato: ${status}"
     role: "Ruolo: ${role}"
 
@@ -218,9 +218,9 @@ reservations:
 # =============================================================================
 exchange:
   labels:
-    enterAmount: "Inserisci l'importo (PLN) da pagare:"
+    enterAmount: "Inserisci l'importo (${currency}) da pagare:"
     equivalent: "≈ ${sats} satoshi"
-    rate: "Tasso di cambio ≈ ${rate} PLN/BTC"
+    rate: "Tasso di cambio ≈ ${rate} ${currency}/BTC"
 
   feedback:
     fetching: Recupero tasso di cambio...
@@ -682,6 +682,20 @@ taker:
       cancelReservation: Annulla Transazione
       reportConflict: Avvia Disputa
       returnHome: Torna alla home
+
+    confirmDialog:
+      title: Sei sicuro?
+      content: "Una volta toccato, non si può tornare indietro.\n\nSe l'importo è STATO effettivamente addebitato dal tuo conto bancario, il coordinatore NON potrà garantirti la ricezione dei bitcoin e potresti perdere i tuoi fondi.\n\nSe non sei sicuro, è meglio attendere un po' e verificare di NON essere stato addebitato prima di continuare."
+      actions:
+        proceed: Sono sicuro, continua
+        cancel: Annulla
+
+    disputeConfirmDialog:
+      title: Aprire una disputa?
+      content: "Apri una disputa solo se l'importo È STATO addebitato dal tuo conto bancario.\n\nIl coordinatore esaminerà manualmente il tuo caso, il che richiede tempo. Dovrai fornire una prova di pagamento."
+      actions:
+        proceed: Sì, sono stato addebitato
+        cancel: Annulla
 
     feedback:
       conflictReportedSuccess: Conflitto segnalato. Il coordinatore lo esaminerà.

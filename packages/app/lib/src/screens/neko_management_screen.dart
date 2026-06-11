@@ -206,7 +206,7 @@ class _NekoManagementScreenState extends ConsumerState<NekoManagementScreen> {
                                 const SizedBox(height: 24),
                                 // Description - full width
                                 Text(
-                                  t.nekoInfo.description(app: buildAppName),
+                                  t.nekoInfo.description(app: ref.watch(selectedPaymentSystemProvider).brandName),
                                   style: Theme.of(context).textTheme.bodyMedium,
                                   textAlign: TextAlign.left,
                                 ),

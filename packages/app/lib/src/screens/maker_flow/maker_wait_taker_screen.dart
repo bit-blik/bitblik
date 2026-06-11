@@ -274,7 +274,6 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       final apiService = ref.read(apiServiceProvider);
       final result = await apiService.initiateOfferFiat(
         fiatAmount: offer.fiatAmount,
-        makerId: makerId,
         fiatCurrency: offer.fiatCurrency,
         category: offer.category,
         coordinatorPubkey: offer.coordinatorPubkey,

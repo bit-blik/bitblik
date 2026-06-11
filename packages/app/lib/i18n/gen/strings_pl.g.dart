@@ -468,7 +468,7 @@ class _Translations$common$labels$pl extends Translations$common$labels$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String get amount => 'Kwota (PLN)';
+	@override String amount({required Object currency}) => 'Kwota (${currency})';
 	@override String status({required Object status}) => 'Status: ${status}';
 	@override String role({required Object role}) => 'Rola: ${role}';
 }
@@ -778,9 +778,9 @@ class _Translations$exchange$labels$pl extends Translations$exchange$labels$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String get enterAmount => 'Wprowadź kwotę (PLN) do zapłaty:';
+	@override String enterAmount({required Object currency}) => 'Wprowadź kwotę (${currency}) do zapłaty:';
 	@override String equivalent({required Object sats}) => '≈ ${sats} satoshi';
-	@override String rate({required Object rate}) => 'Kurs wymiany ≈ ${rate} PLN/BTC';
+	@override String rate({required Object rate, required Object currency}) => 'Kurs wymiany ≈ ${rate} ${currency}/BTC';
 }
 
 // Path: exchange.feedback
@@ -1190,6 +1190,8 @@ class _Translations$taker$invalidBlik$pl extends Translations$taker$invalidBlik$
 	@override String get werentCharged => 'Jeśli Twoje konto NIE zostało obciążone:';
 	@override String get wereCharged => 'Jeśli Twoje konto zostało obciążone:';
 	@override late final _Translations$taker$invalidBlik$actions$pl actions = _Translations$taker$invalidBlik$actions$pl._(_root);
+	@override late final _Translations$taker$invalidBlik$confirmDialog$pl confirmDialog = _Translations$taker$invalidBlik$confirmDialog$pl._(_root);
+	@override late final _Translations$taker$invalidBlik$disputeConfirmDialog$pl disputeConfirmDialog = _Translations$taker$invalidBlik$disputeConfirmDialog$pl._(_root);
 	@override late final _Translations$taker$invalidBlik$feedback$pl feedback = _Translations$taker$invalidBlik$feedback$pl._(_root);
 	@override late final _Translations$taker$invalidBlik$errors$pl errors = _Translations$taker$invalidBlik$errors$pl._(_root);
 }
@@ -2317,6 +2319,30 @@ class _Translations$taker$invalidBlik$actions$pl extends Translations$taker$inva
 	@override String get returnHome => 'Wróć do strony głównej';
 }
 
+// Path: taker.invalidBlik.confirmDialog
+class _Translations$taker$invalidBlik$confirmDialog$pl extends Translations$taker$invalidBlik$confirmDialog$en {
+	_Translations$taker$invalidBlik$confirmDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Czy na pewno?';
+	@override String get content => 'Po kliknięciu nie ma odwrotu.\n\nJeśli kwota ZOSTAŁA faktycznie pobrana z Twojego konta bankowego, koordynator NIE będzie w stanie zagwarantować, że otrzymasz bitcoiny, i możesz stracić swoje środki.\n\nJeśli nie masz pewności, najlepiej chwilę poczekać i potwierdzić, że NIE zostałeś obciążony, zanim przejdziesz dalej.';
+	@override late final _Translations$taker$invalidBlik$confirmDialog$actions$pl actions = _Translations$taker$invalidBlik$confirmDialog$actions$pl._(_root);
+}
+
+// Path: taker.invalidBlik.disputeConfirmDialog
+class _Translations$taker$invalidBlik$disputeConfirmDialog$pl extends Translations$taker$invalidBlik$disputeConfirmDialog$en {
+	_Translations$taker$invalidBlik$disputeConfirmDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Rozpocząć spór?';
+	@override String get content => 'Rozpocznij spór tylko wtedy, gdy kwota ZOSTAŁA pobrana z Twojego konta bankowego.\n\nKoordynator ręcznie rozpatrzy Twoją sprawę, co wymaga czasu. Będziesz musiał przedstawić dowód płatności.';
+	@override late final _Translations$taker$invalidBlik$disputeConfirmDialog$actions$pl actions = _Translations$taker$invalidBlik$disputeConfirmDialog$actions$pl._(_root);
+}
+
 // Path: taker.invalidBlik.feedback
 class _Translations$taker$invalidBlik$feedback$pl extends Translations$taker$invalidBlik$feedback$en {
 	_Translations$taker$invalidBlik$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -2476,6 +2502,28 @@ class _Translations$maker$conflict$disputeDialog$actions$pl extends Translations
 	@override String get cancel => 'Anuluj';
 }
 
+// Path: taker.invalidBlik.confirmDialog.actions
+class _Translations$taker$invalidBlik$confirmDialog$actions$pl extends Translations$taker$invalidBlik$confirmDialog$actions$en {
+	_Translations$taker$invalidBlik$confirmDialog$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get proceed => 'Jestem pewien, kontynuuj';
+	@override String get cancel => 'Anuluj';
+}
+
+// Path: taker.invalidBlik.disputeConfirmDialog.actions
+class _Translations$taker$invalidBlik$disputeConfirmDialog$actions$pl extends Translations$taker$invalidBlik$disputeConfirmDialog$actions$en {
+	_Translations$taker$invalidBlik$disputeConfirmDialog$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get proceed => 'Tak, zostałem obciążony';
+	@override String get cancel => 'Anuluj';
+}
+
 /// The flat map containing all translations for locale <pl>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -2499,7 +2547,7 @@ extension on TranslationsPl {
 			'common.buttons.close' => 'Zamknij',
 			'common.buttons.restore' => 'Przywróć',
 			'common.buttons.faq' => 'FAQ',
-			'common.labels.amount' => 'Kwota (PLN)',
+			'common.labels.amount' => ({required Object currency}) => 'Kwota (${currency})',
 			'common.labels.status' => ({required Object status}) => 'Status: ${status}',
 			'common.labels.role' => ({required Object role}) => 'Rola: ${role}',
 			'common.notifications.success' => 'Sukces',
@@ -2632,9 +2680,9 @@ extension on TranslationsPl {
 			'reservations.errors.failedNoTimestamp' => 'Nie udało się zarezerwować oferty (brak znacznika czasu).',
 			'reservations.errors.timestampMissing' => 'Brak znacznika czasu rezerwacji oferty.',
 			'reservations.errors.notReserved' => ({required Object status}) => 'Oferta nie jest już w stanie zarezerwowanym (${status}).',
-			'exchange.labels.enterAmount' => 'Wprowadź kwotę (PLN) do zapłaty:',
+			'exchange.labels.enterAmount' => ({required Object currency}) => 'Wprowadź kwotę (${currency}) do zapłaty:',
 			'exchange.labels.equivalent' => ({required Object sats}) => '≈ ${sats} satoshi',
-			'exchange.labels.rate' => ({required Object rate}) => 'Kurs wymiany ≈ ${rate} PLN/BTC',
+			'exchange.labels.rate' => ({required Object rate, required Object currency}) => 'Kurs wymiany ≈ ${rate} ${currency}/BTC',
 			'exchange.feedback.fetching' => 'Pobieranie kursu wymiany...',
 			'exchange.errors.fetchingRate' => 'Nie udało się pobrać kursu wymiany.',
 			'exchange.errors.invalidFormat' => 'Nieprawidłowy format liczby',
@@ -2954,6 +3002,14 @@ extension on TranslationsPl {
 			'taker.invalidBlik.actions.cancelReservation' => 'Anuluj Transakcję',
 			'taker.invalidBlik.actions.reportConflict' => 'Rozpocząć Spór',
 			'taker.invalidBlik.actions.returnHome' => 'Wróć do strony głównej',
+			'taker.invalidBlik.confirmDialog.title' => 'Czy na pewno?',
+			'taker.invalidBlik.confirmDialog.content' => 'Po kliknięciu nie ma odwrotu.\n\nJeśli kwota ZOSTAŁA faktycznie pobrana z Twojego konta bankowego, koordynator NIE będzie w stanie zagwarantować, że otrzymasz bitcoiny, i możesz stracić swoje środki.\n\nJeśli nie masz pewności, najlepiej chwilę poczekać i potwierdzić, że NIE zostałeś obciążony, zanim przejdziesz dalej.',
+			'taker.invalidBlik.confirmDialog.actions.proceed' => 'Jestem pewien, kontynuuj',
+			'taker.invalidBlik.confirmDialog.actions.cancel' => 'Anuluj',
+			'taker.invalidBlik.disputeConfirmDialog.title' => 'Rozpocząć spór?',
+			'taker.invalidBlik.disputeConfirmDialog.content' => 'Rozpocznij spór tylko wtedy, gdy kwota ZOSTAŁA pobrana z Twojego konta bankowego.\n\nKoordynator ręcznie rozpatrzy Twoją sprawę, co wymaga czasu. Będziesz musiał przedstawić dowód płatności.',
+			'taker.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Tak, zostałem obciążony',
+			'taker.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Anuluj',
 			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Konflikt zgłoszony. Koordynator rozpatrzy sprawę.',
 			'taker.invalidBlik.errors.reservationFailed' => 'Nie udało się ponownie zarezerwować oferty',
 			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
@@ -2988,6 +3044,8 @@ extension on TranslationsPl {
 			'backup.tooltips.backup' => 'Zarchiwizuj Neko',
 			'restore.title' => 'Przywróć',
 			'restore.labels.privateKey' => 'Klucz prywatny',
+			_ => null,
+		} ?? switch (path) {
 			'restore.buttons.restore' => 'Przywróć',
 			'restore.errors.invalidKey' => 'Musi to być 64-znakowy ciąg szesnastkowy.',
 			'restore.errors.failed' => 'Przywracanie nie powiodło się',
@@ -2996,8 +3054,6 @@ extension on TranslationsPl {
 			'home.notifications.title' => 'Otrzymuj powiadomienia o nowych ofertach przez:',
 			'home.notifications.telegram' => 'Telegram',
 			'home.notifications.simplex' => 'SimpleX',
-			_ => null,
-		} ?? switch (path) {
 			'home.notifications.element' => 'Element',
 			'home.notifications.signal' => 'Signal',
 			'home.statistics.title' => 'Zakończone oferty',

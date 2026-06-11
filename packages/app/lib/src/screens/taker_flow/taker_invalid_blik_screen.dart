@@ -22,6 +22,73 @@ class _TakerInvalidBlikScreenState
     extends ConsumerState<TakerInvalidBlikScreen> {
   bool _isLoading = false; // State variable for loading indicator
 
+  /// Shows an irreversible-action warning. Returns true only if the user
+  /// explicitly confirms they were NOT charged and want to proceed.
+  Future<bool> _confirmNotCharged() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          icon: const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.orange,
+            size: 48,
+          ),
+          title: Text(t.taker.invalidBlik.confirmDialog.title),
+          content: Text(t.taker.invalidBlik.confirmDialog.content),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(t.taker.invalidBlik.confirmDialog.actions.cancel),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(t.taker.invalidBlik.confirmDialog.actions.proceed),
+            ),
+          ],
+        );
+      },
+    );
+    return confirmed ?? false;
+  }
+
+  /// Confirms the user really was charged before opening a dispute.
+  Future<bool> _confirmDispute() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          icon: const Icon(
+            Icons.gavel_rounded,
+            color: Colors.orange,
+            size: 48,
+          ),
+          title: Text(t.taker.invalidBlik.disputeConfirmDialog.title),
+          content: Text(t.taker.invalidBlik.disputeConfirmDialog.content),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                t.taker.invalidBlik.disputeConfirmDialog.actions.cancel,
+              ),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                t.taker.invalidBlik.disputeConfirmDialog.actions.proceed,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return confirmed ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final offer = widget.offer;
@@ -74,6 +141,9 @@ class _TakerInvalidBlikScreenState
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () async {
+                        if (!await _confirmNotCharged()) {
+                          return;
+                        }
                         Logger.log.d(
                           () =>
                               "[TakerInvalidBlikScreen] Retry selected for offer ${offer.id}",
@@ -135,6 +205,9 @@ class _TakerInvalidBlikScreenState
                           _isLoading
                               ? null
                               : () async {
+                                if (!await _confirmNotCharged()) {
+                                  return;
+                                }
                                 setState(() {
                                   _isLoading = true;
                                 });
@@ -253,6 +326,9 @@ class _TakerInvalidBlikScreenState
                           _isLoading
                               ? null
                               : () async {
+                                if (!await _confirmDispute()) {
+                                  return;
+                                }
                                 setState(() {
                                   _isLoading = true;
                                 });

@@ -534,7 +534,6 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       final apiService = ref.read(apiServiceProvider);
       final result = await apiService.initiateOfferFiat(
         fiatAmount: fiatAmount,
-        makerId: makerId,
         fiatCurrency: _method.currency,
         category: supportsCategory ? _selectedCategory : null,
         coordinatorPubkey: coordinatorPubkey,
@@ -579,6 +578,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
   /// Logo for the selected coordinator. Prefers the kind-0 profile picture
   /// over the kind-15125 info icon.
+  // Kind-0 profile name when published (matches the rest of the app),
+  // falling back to the kind-15125 info name.
+  String _selectedCoordinatorName() {
+    final pk = _selectedCoordinatorPubkey;
+    final record =
+        pk == null ? null : ref.watch(coordinatorRecordByPubkeyProvider(pk));
+    return record?.name ?? _selectedCoordinatorInfo?.name ?? '';
+  }
+
   Widget _buildSelectedCoordinatorLogo() {
     final pk = _selectedCoordinatorPubkey;
     final icon =
@@ -1172,7 +1180,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           _method.supportedCategories.contains(category);
                       final hint = switch (category) {
                         OfferCategory.shop =>
-                          t.maker.amountForm.category.physicalShopHint(code: _method.codeLabel, app: buildAppName),
+                          t.maker.amountForm.category.physicalShopHint(code: _method.codeLabel, app: _method.brandName),
                         OfferCategory.atm =>
                           t.maker.amountForm.category.atmHint,
                         OfferCategory.online =>
@@ -1452,7 +1460,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       Expanded(
                         child: Text(
                           t.maker.amountForm.category
-                              .physicalShopHint(code: _method.codeLabel, app: buildAppName),
+                              .physicalShopHint(code: _method.codeLabel, app: _method.brandName),
                           style: const TextStyle(fontSize: 13, height: 1.4),
                         ),
                       ),
@@ -1984,7 +1992,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               _buildSelectedCoordinatorLogo(),
                               const SizedBox(width: 8),
                               Text(
-                                _selectedCoordinatorInfo!.name,
+                                _selectedCoordinatorName(),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w400,

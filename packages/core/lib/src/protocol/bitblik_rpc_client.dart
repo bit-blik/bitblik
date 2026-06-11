@@ -31,8 +31,8 @@ class BitblikRpcClient {
   final List<String> relays;
   final Duration timeout;
 
-  final Map<String, Completer<NostrResponse>> _pending = {};
-  final Random _random = Random();
+  final Map<String, _PendingRpcRequest> _pending = {};
+  final Random _random = Random.secure();
   NdkResponse? _subscription;
 
   /// Relays the current response subscription listens on. Starts as [relays].
@@ -132,7 +132,10 @@ class BitblikRpcClient {
     }
 
     final completer = Completer<NostrResponse>();
-    _pending[id] = completer;
+    _pending[id] = _PendingRpcRequest(
+      completer: completer,
+      coordinatorPubkey: coordinatorPubkey,
+    );
 
     try {
       final event = await ProtocolCodec.encryptRequest(
@@ -198,14 +201,34 @@ class BitblikRpcClient {
       );
       final id = response.id;
       if (id == null) return;
-      final completer = _pending.remove(id);
-      if (completer != null && !completer.isCompleted) {
-        completer.complete(response);
+      final pending = _pending[id];
+      if (pending == null) return;
+      if (event.pubKey != pending.coordinatorPubkey) {
+        return;
+      }
+      _pending.remove(id);
+      if (!pending.completer.isCompleted) {
+        pending.completer.complete(response);
       }
     } catch (_) {
       // Malformed/foreign response — ignore.
     }
   }
 
-  String _nextId() => _random.nextInt(9999999).toString().padLeft(6, '0');
+  String _nextId() {
+    final bytes = List<int>.generate(16, (_) => _random.nextInt(256));
+    return bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+  }
+}
+
+class _PendingRpcRequest {
+  final Completer<NostrResponse> completer;
+  final String coordinatorPubkey;
+
+  const _PendingRpcRequest({
+    required this.completer,
+    required this.coordinatorPubkey,
+  });
 }
