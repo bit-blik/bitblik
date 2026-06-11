@@ -18,6 +18,12 @@ class PaymentSystem {
   /// User-facing brand name, e.g. `BLIK`, `MB WAY`. Brand names — not translated.
   final String label;
 
+  /// App/product brand name for this market, e.g. `Bitblik`, `Bitway`. Used in
+  /// UI copy that refers to the application itself (FAQ, tips, notifications)
+  /// rather than the payment method. Follows the selected payment system, so it
+  /// updates live when the user switches markets in settings.
+  final String brandName;
+
   /// Name of the payment code as shown in UI text (e.g. `BLIK`, `MB WAY`).
   /// Null falls back to a neutral word via [codeLabel].
   final String? codeName;
@@ -72,6 +78,7 @@ class PaymentSystem {
   const PaymentSystem({
     required this.id,
     required this.label,
+    required this.brandName,
     this.codeName,
     required this.country,
     required this.flag,
@@ -159,6 +166,7 @@ class PaymentSystem {
 const PaymentSystem kBlik = PaymentSystem(
   id: 'blik',
   label: 'BLIK',
+  brandName: 'Bitblik',
   codeName: 'BLIK',
   country: 'PL',
   flag: '🇵🇱',
@@ -179,6 +187,7 @@ const PaymentSystem kBlik = PaymentSystem(
 const PaymentSystem kMbway = PaymentSystem(
   id: 'mbway',
   label: 'MBway',
+  brandName: 'Bitway',
   codeName: 'MB WAY',
   country: 'PT',
   flag: '🇵🇹',
@@ -192,7 +201,7 @@ const PaymentSystem kMbway = PaymentSystem(
   requiresCodeConfirmation: false,
   supportedCategories: [OfferCategory.atm],
   atmPresetAmounts: [10, 20, 30, 50, 100, 200],
-  atmBanknoteDenominations: [5, 10, 20, 50, 100, 200],
+  atmBanknoteDenominations: [10, 20, 50, 100, 200],
 );
 
 /// All supported payment methods. Add a market by appending here.

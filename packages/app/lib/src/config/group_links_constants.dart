@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'build_flavor.dart';
-
-/// One set of community links for a (flavor, build-mode) combination.
+/// One set of community links for a (payment-system, build-mode) combination.
 class GroupLinkSet {
   final String telegram;
   final String element;
@@ -15,9 +13,15 @@ class GroupLinkSet {
     this.simplex = '',
     this.signal = '',
   });
+
+  bool get hasAnyLinks =>
+      telegram.isNotEmpty ||
+      element.isNotEmpty ||
+      simplex.isNotEmpty ||
+      signal.isNotEmpty;
 }
 
-const _bitblikRelease = GroupLinkSet(
+const _blikRelease = GroupLinkSet(
   telegram: 'https://t.me/+xSktv2JukXUxYmEx',
   element: 'https://matrix.to/#/#bitblik-offers:matrix.org',
   simplex:
@@ -26,7 +30,7 @@ const _bitblikRelease = GroupLinkSet(
       'https://signal.group/#CjQKIGcFyMrwHN1UPB57IhdkGmz23_64AhyIU5oBaZufe2hcEhCltosTHbc9ROywT0KETJbk',
 );
 
-const _bitblikDebug = GroupLinkSet(
+const _blikDebug = GroupLinkSet(
   telegram: 'https://t.me/+MmXPxSylJC0zNzIx',
   element: 'https://matrix.to/#/#test-bitblik-offers:matrix.org',
   simplex:
@@ -36,29 +40,30 @@ const _bitblikDebug = GroupLinkSet(
 );
 
 // Empty fields hide the corresponding community button.
-const _bitwayRelease = GroupLinkSet(
+const _mbwayRelease = GroupLinkSet(
   telegram: 'https://t.me/+LggNXOqCkWc0YmQx',
-  simplex: 'https://smp18.simplex.im/g#0c-6KAwTCR3_VxJKq_ovGSFsyzg_VMwmxiu5BIiOXTw'
+  simplex:
+      'https://smp18.simplex.im/g#0c-6KAwTCR3_VxJKq_ovGSFsyzg_VMwmxiu5BIiOXTw',
+    signal: 'https://signal.group/#CjQKIGMpV06PzUJRxcsFxgCZ3avqczApZbJPhZlqvIXMUInHEhCsvmTeDtLq0dJfMksWSxiF'
 );
 
-const _bitwayDebug = GroupLinkSet(
+const _mbwayDebug = GroupLinkSet(
   telegram: 'https://t.me/+LggNXOqCkWc0YmQx',
-  simplex: 'https://smp18.simplex.im/g#0c-6KAwTCR3_VxJKq_ovGSFsyzg_VMwmxiu5BIiOXTw'
+  simplex:
+      'https://smp18.simplex.im/g#0c-6KAwTCR3_VxJKq_ovGSFsyzg_VMwmxiu5BIiOXTw',
+  signal: 'https://signal.group/#CjQKIGMpV06PzUJRxcsFxgCZ3avqczApZbJPhZlqvIXMUInHEhCsvmTeDtLq0dJfMksWSxiF'
 );
 
-/// Default group link constants, resolved per flavor and build mode.
+/// Default group link constants, resolved per payment system and build mode.
 /// These are used as fallback values when no runtime configuration is
 /// provided.
 class GroupLinksConstants {
-  static GroupLinkSet get _current {
-    if (buildDefaultPaymentSystemId == 'mbway') {
-      return kDebugMode ? _bitwayDebug : _bitwayRelease;
+  /// Links for the given payment system id ('blik', 'mbway', ...), honoring
+  /// debug/release mode. Unknown ids fall back to the BLIK set.
+  static GroupLinkSet forPaymentSystem(String paymentSystemId) {
+    if (paymentSystemId == 'mbway') {
+      return kDebugMode ? _mbwayDebug : _mbwayRelease;
     }
-    return kDebugMode ? _bitblikDebug : _bitblikRelease;
+    return kDebugMode ? _blikDebug : _blikRelease;
   }
-
-  static String get defaultTelegram => _current.telegram;
-  static String get defaultElement => _current.element;
-  static String get defaultSimplex => _current.simplex;
-  static String get defaultSignal => _current.signal;
 }

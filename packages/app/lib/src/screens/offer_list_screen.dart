@@ -13,7 +13,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../config/group_links.dart';
 import 'package:bitblik_core/core.dart';
-import '../config/build_flavor.dart';
 import '../utils/category_icons.dart';
 import '../utils/bitcoin_display.dart';
 import '../providers/providers.dart';
@@ -385,6 +384,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
         .where((r) => r.paymentSystem == selectedSystem.id)
         .toList(growable: false);
 
+    // Community links follow the payment system selected in settings.
+    final links = GroupLinks.of(selectedSystem.id);
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -415,10 +417,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                 runSpacing: 4,
                 children: [
                   // Telegram - only show if link is configured
-                  if (GroupLinks.telegram.isNotEmpty)
+                  if (links.telegram.isNotEmpty)
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse(GroupLinks.telegram);
+                        final Uri url = Uri.parse(links.telegram);
                         await launchUrl(url);
                       },
                       child: Row(
@@ -444,10 +446,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                       ),
                     ),
                   // Element - only show if link is configured
-                  if (GroupLinks.element.isNotEmpty)
+                  if (links.element.isNotEmpty)
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse(GroupLinks.element);
+                        final Uri url = Uri.parse(links.element);
                         await launchUrl(url);
                       },
                       child: Row(
@@ -473,10 +475,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                       ),
                     ),
                   // SimpleX - only show if link is configured
-                  if (GroupLinks.simplex.isNotEmpty)
+                  if (links.simplex.isNotEmpty)
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse(GroupLinks.simplex);
+                        final Uri url = Uri.parse(links.simplex);
                         await launchUrl(url);
                       },
                       child: Row(
@@ -502,10 +504,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                       ),
                     ),
                   // Signal - only show if link is configured
-                  if (GroupLinks.signal.isNotEmpty)
+                  if (links.signal.isNotEmpty)
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse(GroupLinks.signal);
+                        final Uri url = Uri.parse(links.signal);
                         await launchUrl(url);
                       },
                       child: Row(
@@ -567,7 +569,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  t.offers.details.noAvailableTip(app: buildAppName),
+                                  t.offers.details.noAvailableTip(app: selectedSystem.brandName),
                                   textAlign: TextAlign.left,
                                   style: const TextStyle(
                                     color: Color(0xFF1D4ED8),
@@ -1335,7 +1337,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                t.offers.details.noAvailableTip(app: buildAppName),
+                                t.offers.details.noAvailableTip(app: selectedSystem.brandName),
                                 textAlign: TextAlign.left,
                                 style: const TextStyle(
                                   color: Color(0xFF1D4ED8),
