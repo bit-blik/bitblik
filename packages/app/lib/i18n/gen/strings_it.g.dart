@@ -3057,8 +3057,6 @@ extension on TranslationsIt {
 			'generateNewKey.feedback.success' => 'Nuovo Neko generato con successo!',
 			'generateNewKey.tooltips.generate' => 'Genera Nuovo Neko',
 			'backup.title' => 'Backup',
-			_ => null,
-		} ?? switch (path) {
 			'backup.description' => 'Questa è la tua chiave privata. Protegge la comunicazione con il coordinatore. Non rivelarla mai a nessuno. Fai il backup in un luogo sicuro per prevenire problemi durante le dispute.',
 			'backup.feedback.copied' => 'Chiave privata copiata negli appunti!',
 			'backup.tooltips.backup' => 'Backup Neko',

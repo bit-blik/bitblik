@@ -474,7 +474,6 @@ class NostrService {
 
         case kRpcInitiateOffer:
           final fiatAmount = (params['fiat_amount'] as num?)?.toDouble();
-          final makerId = params['maker_id'] as String? ?? userPubkey;
           final categoryRaw = params['category'] as String?;
           OfferCategory? category;
           if (categoryRaw != null && categoryRaw.trim().isNotEmpty) {
@@ -495,7 +494,7 @@ class NostrService {
 
           return await _coordinatorService.initiateOfferFiat(
             fiatAmount: fiatAmount,
-            makerId: makerId,
+            makerId: userPubkey,
             fiatCurrency: fiatCurrency,
             category: category,
             premiumPercent: premiumPercent,

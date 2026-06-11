@@ -323,7 +323,6 @@ class NostrService {
   /// POST /initiate-offer (fiat version)
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
-    required String makerId,
     required String fiatCurrency,
     OfferCategory? category,
     required String coordinatorPubkey,
@@ -334,7 +333,6 @@ class NostrService {
       params: {
         'fiat_amount': fiatAmount,
         'fiat_currency': fiatCurrency,
-        'maker_id': makerId,
         if (category != null) 'category': category.name,
         if (premiumPercent > 0) 'premium_percent': premiumPercent,
       },
@@ -729,12 +727,19 @@ class NostrService {
       _coordinatorRegistry?.infoFor(coordinatorPubkey);
 
   /// GET /stats/successful-offers - This will now query all coordinators
-  Future<Map<String, dynamic>> getSuccessfulOffersStats() async {
+  Future<Map<String, dynamic>> getSuccessfulOffersStats({
+    String? paymentSystemId,
+  }) async {
     if (!_isInitialized) {
       await init();
     }
 
-    final coordinators = coordinatorRegistry.enabled;
+    // Only aggregate coordinators serving the selected payment system.
+    final coordinators = paymentSystemId == null
+        ? coordinatorRegistry.enabled
+        : coordinatorRegistry.enabled
+            .where((c) => c.paymentSystem == paymentSystemId)
+            .toList();
     if (coordinators.isEmpty) {
       Logger.log.w(() => "No coordinators enabled, cannot get stats.");
       return {

@@ -35,6 +35,24 @@ const Duration _kDebugDelayDuration = Duration(seconds: 0);
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
 
+/// Bilingual (English/local language) wording used in chat notifications
+/// (Telegram/Matrix/SimpleX/Signal) for new-offer announcements.
+class OfferNotificationStrings {
+  final String newOffer;
+  final String premium;
+  final String shop;
+  final String atm;
+  final String online;
+
+  const OfferNotificationStrings({
+    required this.newOffer,
+    required this.premium,
+    required this.shop,
+    required this.atm,
+    required this.online,
+  });
+}
+
 class CoordinatorService {
   final DatabaseService _dbService;
   PaymentService? _paymentBackend; // Unified payment backend
@@ -78,6 +96,9 @@ class CoordinatorService {
 
   // Reservation timeout configuration
   late final int _reservationTimeoutSeconds;
+
+  /// Effective reservation timeout (env-configurable), exposed for tests.
+  int get reservationTimeoutSeconds => _reservationTimeoutSeconds;
 
   // Funded expire timeout configuration
   late final int _fundedExpireTimeoutSeconds;
@@ -537,11 +558,20 @@ class CoordinatorService {
               await _publishStatusUpdate(expiredOffer);
               await _nostrService?.broadcastNip69OrderFromOffer(expiredOffer);
             }
+
+            await _strikeTelegramOfferMessages(offer.id);
           } else {
             AppLogger.info(
                 'Failed to update offer ${offer.id} status to expired in DB after startup expiration check.',
                 offerId: offer.id);
           }
+        } else {
+          // Offer not yet expired: restart its expiration timer so it
+          // still expires after the coordinator restart.
+          AppLogger.info(
+              'Offer ${offer.id} still within funded window (expires at $expiryTime). Restarting timer.',
+              offerId: offer.id);
+          _startFundedOfferTimer(offer);
         }
       }
       AppLogger.info(
@@ -683,6 +713,14 @@ class CoordinatorService {
                   'Error reverting expired offer ${offer.id} on startup.',
                   offerId: offer.id);
             }
+          } else {
+            // Reservation not yet expired: restart its timer with the
+            // remaining duration so it still times out after the restart.
+            AppLogger.info(
+                'Offer ${offer.id} still within reservation window (expires at $expiryTime). Restarting timer.',
+                offerId: offer.id);
+            _startReservationTimer(offer.id,
+                duration: expiryTime.difference(now));
           }
         } else {
           AppLogger.info(
@@ -762,6 +800,14 @@ class CoordinatorService {
                   'Error updating expired BLIK confirmation for offer ${offer.id} on startup.',
                   offerId: offer.id);
             }
+          } else {
+            // Confirmation window not yet over: restart the timer with the
+            // remaining duration so it still expires after the restart.
+            AppLogger.info(
+                'Offer ${offer.id} still within BLIK confirmation window (expires at $expiryTime). Restarting timer.',
+                offerId: offer.id);
+            _startBlikConfirmationTimer(offer.id,
+                duration: expiryTime.difference(now));
           }
         } else {
           AppLogger.info(
@@ -1092,7 +1138,8 @@ class CoordinatorService {
 
       // Telegram notification
       if (_telegramService != null && _telegramService!.isConfigured) {
-        notificationFutures.add(_sendTelegramNotification(notificationText));
+        notificationFutures
+            .add(_sendTelegramNotification(notificationText, offer.id));
       }
 
       // Signal notification
@@ -1141,12 +1188,79 @@ class CoordinatorService {
     }
   }
 
-  /// Send Telegram notification (returns Future for parallel execution)
-  Future<void> _sendTelegramNotification(String notificationText) async {
+  /// Send Telegram notification (returns Future for parallel execution).
+  /// Persists the sent message ids so the message can be edited later
+  /// (struck out) if the offer is cancelled or expires.
+  Future<void> _sendTelegramNotification(
+      String notificationText, String offerId) async {
     try {
-      await _telegramService!.sendMessage(notificationText);
+      final result =
+          await _telegramService!.sendMessageDetailed(notificationText);
+      for (final sent in result.sentMessages) {
+        try {
+          await _dbService.saveTelegramOfferMessage(
+            offerId: offerId,
+            chatId: sent.chatId,
+            messageId: sent.messageId,
+            messageText: notificationText,
+          );
+        } catch (e) {
+          AppLogger.info(
+              'Error persisting Telegram message id for offer $offerId: $e',
+              offerId: offerId);
+        }
+      }
     } catch (e) {
       AppLogger.info('Error sending Telegram notification: $e');
+    }
+  }
+
+  /// Edit the Telegram notification(s) for an offer to strikethrough,
+  /// signalling the offer is no longer available (cancelled/expired).
+  Future<void> _strikeTelegramOfferMessages(String offerId) async {
+    if (_telegramService == null || !_telegramService!.isConfigured) {
+      return;
+    }
+    try {
+      final messages = await _dbService.getTelegramOfferMessages(offerId);
+      if (messages.isEmpty) return;
+
+      for (final message in messages) {
+        await _telegramService!.editMessage(
+          chatId: message.chatId,
+          messageId: message.messageId,
+          text: '<s>${message.messageText}</s>',
+        );
+      }
+      await _dbService.deleteTelegramOfferMessages(offerId);
+    } catch (e) {
+      AppLogger.info(
+          'Error striking out Telegram message(s) for offer $offerId: $e',
+          offerId: offerId);
+    }
+  }
+
+  /// Delete the Telegram notification(s) for an offer (e.g. once it has
+  /// been successfully paid and is no longer relevant to the channel).
+  Future<void> _deleteTelegramOfferMessages(String offerId) async {
+    if (_telegramService == null || !_telegramService!.isConfigured) {
+      return;
+    }
+    try {
+      final messages = await _dbService.getTelegramOfferMessages(offerId);
+      if (messages.isEmpty) return;
+
+      for (final message in messages) {
+        await _telegramService!.deleteMessage(
+          chatId: message.chatId,
+          messageId: message.messageId,
+        );
+      }
+      await _dbService.deleteTelegramOfferMessages(offerId);
+    } catch (e) {
+      AppLogger.info(
+          'Error deleting Telegram message(s) for offer $offerId: $e',
+          offerId: offerId);
     }
   }
 
@@ -1167,15 +1281,41 @@ class CoordinatorService {
   }
 
   String _buildFundedOfferNotification(Offer offer) {
+    final strings = _notificationStrings;
     final fiatText =
         '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
     final categoryText = _formatCategoryForNotification(offer.category);
     final categorySuffix = categoryText == null ? '' : ', $categoryText';
     final premiumSuffix = offer.premiumPercent > 0
-        ? ', +${_formatPremium(offer.premiumPercent)}% premium/premia'
+        ? ', +${_formatPremium(offer.premiumPercent)}% ${strings.premium}'
         : '';
-    return 'New offer/Nowa oferta: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
+    return '${strings.newOffer}: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
   }
+
+  /// Notification wording for the market served by the configured payment
+  /// system (English/local language), keyed by the system's country code.
+  /// Falls back to Poland's wording for unknown markets.
+  static const Map<String, OfferNotificationStrings>
+      _notificationStringsByCountry = {
+    'PL': OfferNotificationStrings(
+      newOffer: 'New offer/Nowa oferta',
+      premium: 'premium/premia',
+      shop: 'Shop/Sklep',
+      atm: 'ATM/Bankomat',
+      online: 'Online',
+    ),
+    'PT': OfferNotificationStrings(
+      newOffer: 'New offer/Nova oferta',
+      premium: 'premium',
+      shop: 'Shop/Loja',
+      atm: 'ATM/Multibanco',
+      online: 'Online',
+    ),
+  };
+
+  OfferNotificationStrings get _notificationStrings =>
+      _notificationStringsByCountry[_paymentSystem.country] ??
+      _notificationStringsByCountry['PL']!;
 
   /// Trim trailing ".0" so 5.0 -> "5" but 2.5 stays "2.5".
   String _formatPremium(double premium) {
@@ -1184,13 +1324,14 @@ class CoordinatorService {
   }
 
   String? _formatCategoryForNotification(OfferCategory? category) {
+    final strings = _notificationStrings;
     switch (category) {
       case OfferCategory.shop:
-        return 'Shop/Sklep';
+        return strings.shop;
       case OfferCategory.atm:
-        return 'ATM/Bankomat';
+        return strings.atm;
       case OfferCategory.online:
-        return 'Online';
+        return strings.online;
       case null:
         return null;
     }
@@ -1266,6 +1407,8 @@ class CoordinatorService {
           await _publishStatusUpdate(expiredOffer);
           await _nostrService?.broadcastNip69OrderFromOffer(expiredOffer);
         }
+
+        await _strikeTelegramOfferMessages(offer.id);
       } else {
         AppLogger.info(
             'Failed to update offer ${offer.id} status to expired in DB after expiration.',
@@ -1543,11 +1686,19 @@ class CoordinatorService {
     final now = DateTime.now().toUtc();
     final timestampToStore = now.add(const Duration(seconds: 1));
 
-    final success = await _dbService.updateOfferStatus(
+    // Atomic compare-and-set on the exact status validated above: if another
+    // taker (or a timer) changed the status since the read, no row matches and
+    // the reservation is rejected instead of double-booking the offer.
+    // expectedTakerPubkey pins the row to the taker observed in the read (null
+    // for funded offers, where the clause is skipped and taker_pubkey is
+    // cleared anyway), closing ABA cycles on re-take states.
+    final success = await _dbService.updateOfferStatusIfCurrentStatus(
       offerId,
       OfferStatus.reserved,
+      [offer.status],
       takerPubkey: takerId,
       reservedAt: timestampToStore,
+      expectedTakerPubkey: offer.takerPubkey,
     );
 
     if (success) {
@@ -1577,13 +1728,14 @@ class CoordinatorService {
     }
   }
 
-  void _startReservationTimer(String offerId) {
+  void _startReservationTimer(String offerId, {Duration? duration}) {
     _reservationTimers[offerId]?.cancel();
+    final timerDuration =
+        duration ?? Duration(seconds: _reservationTimeoutSeconds);
     AppLogger.info(
-        'Starting $_reservationTimeoutSeconds\s reservation timer for offer $offerId',
+        'Starting ${timerDuration.inSeconds}s reservation timer for offer $offerId',
         offerId: offerId);
-    _reservationTimers[offerId] =
-        Timer(Duration(seconds: _reservationTimeoutSeconds), () {
+    _reservationTimers[offerId] = Timer(timerDuration, () {
       AppLogger.info('Reservation timer expired for offer $offerId',
           offerId: offerId);
       _handleReservationTimeout(offerId);
@@ -1646,9 +1798,9 @@ class CoordinatorService {
     }
   }
 
-  void _startBlikConfirmationTimer(String offerId) {
+  void _startBlikConfirmationTimer(String offerId, {Duration? duration}) {
     _blikConfirmationTimers[offerId]?.cancel();
-    final window = _paymentSystem.confirmationWindow;
+    final window = duration ?? _paymentSystem.confirmationWindow;
     AppLogger.info(
         '### COORDINATOR: Starting ${window.inSeconds}s BLIK confirmation timer for offer $offerId',
         offerId: offerId);
@@ -1780,6 +1932,48 @@ class CoordinatorService {
     }
   }
 
+  int _expectedTakerNetAmountSats(Offer offer) {
+    return offer.amountSats -
+        (offer.takerFees ??
+            OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage));
+  }
+
+  int _effectiveTakerFeeSats(Offer offer) {
+    return offer.takerFees ??
+        OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage);
+  }
+
+  void _validateTakerInvoiceAmount(
+    Offer offer,
+    String takerInvoice, {
+    required String action,
+  }) {
+    final trimmed = takerInvoice.trim();
+    if (trimmed.isEmpty) {
+      throw Exception('Missing taker invoice for $action.');
+    }
+
+    final req = Bolt11PaymentRequest(trimmed);
+    final invoiceAmountSats =
+        (req.amount * Decimal.fromInt(100000000)).toBigInt().toInt();
+    final netAmountSats = _expectedTakerNetAmountSats(offer);
+
+    // Zero-amount invoices cannot be locally verified and are unsafe here,
+    // especially for NWC where the wallet pays the invoice's encoded amount.
+    if (invoiceAmountSats <= 0) {
+      throw Exception(
+          'Provided taker invoice for $action must encode an amount close to the expected net amount $netAmountSats sats.');
+    }
+    if (invoiceAmountSats > netAmountSats + 10) {
+      throw Exception(
+          'Provided taker invoice amount $invoiceAmountSats sats is greater than expected net amount $netAmountSats sats for $action.');
+    }
+    if (invoiceAmountSats < netAmountSats - 100) {
+      throw Exception(
+          'Provided taker invoice amount $invoiceAmountSats sats is much smaller than expected net amount $netAmountSats sats for $action.');
+    }
+  }
+
   Future<bool> submitBlikCode(String offerId, String takerId, String blikCode,
       String? takerLightningAddress, String? takerInvoice) async {
     AppLogger.info(
@@ -1795,9 +1989,7 @@ class CoordinatorService {
       return false;
     }
 
-    final netAmountSats = offer.amountSats -
-        (offer.takerFees ??
-            OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage));
+    final netAmountSats = _expectedTakerNetAmountSats(offer);
     AppLogger.info(
         'Calculated net amount for taker invoice: $netAmountSats sats (Original: ${offer.amountSats}, Fee: ${offer.takerFees})');
 
@@ -1811,25 +2003,22 @@ class CoordinatorService {
       takerInvoice =
           await _resolveLnurlPay(takerLightningAddress, netAmountSats);
     } else {
-      final req = Bolt11PaymentRequest(takerInvoice);
-      final invoiceAmountSats =
-          (req.amount * Decimal.fromInt(100000000)).toBigInt().toInt();
-      if (invoiceAmountSats > netAmountSats + 10) {
-        // Allow small rounding difference because of slight rate different between client/server
-        throw Exception(
-            'Provided taker invoice amount ${invoiceAmountSats} sats is greater than expected net amount $netAmountSats sats.');
-      }
-      if (invoiceAmountSats < netAmountSats - 100) {
-        // Allow small rounding difference because of slight rate different between client/server
-        throw Exception(
-            'Provided taker invoice amount ${invoiceAmountSats} sats is much smaller than expected net amount $netAmountSats sats.');
-      }
+      _validateTakerInvoiceAmount(
+        offer,
+        takerInvoice,
+        action: 'submit_blik',
+      );
     }
     if (takerInvoice == null || takerInvoice.isEmpty) {
       AppLogger.info(
           'Could not get an invoice for net amount $netAmountSats sats for LN address $takerLightningAddress');
       return false;
     }
+    _validateTakerInvoiceAmount(
+      offer,
+      takerInvoice,
+      action: 'submit_blik',
+    );
     // The following line seems to be a copy-paste error, the condition is already checked above.
     // AppLogger.info('Offer $offerId not found, not reserved, or taker mismatch.', offerId: offerId);
 
@@ -1841,20 +2030,16 @@ class CoordinatorService {
 
     final blikReceivedTime = DateTime.now().toUtc();
 
-    final invoiceStored =
-        await _dbService.updateTakerInvoice(offerId, takerInvoice);
-    if (!invoiceStored) {
-      AppLogger.info(
-          'Failed to persist taker invoice for offer $offerId. Rejecting BLIK submission.',
-          offerId: offerId);
-      return false;
-    }
-
-    final success = await _dbService.updateOfferStatus(
-        offerId, OfferStatus.blikReceived,
+    // expectedTakerPubkey guards the ABA case: reservation expired, offer was
+    // re-reserved by another taker, status is "reserved" again but the row no
+    // longer belongs to this taker.
+    final success = await _dbService.updateOfferStatusIfCurrentStatus(
+        offerId, OfferStatus.blikReceived, [OfferStatus.reserved],
         blikCode: blikCode,
+        takerInvoice: takerInvoice,
         takerLightningAddress: takerLightningAddress,
-        blikReceivedAt: blikReceivedTime);
+        blikReceivedAt: blikReceivedTime,
+        expectedTakerPubkey: takerId);
 
     if (success) {
       AppLogger.info('BLIK code for offer $offerId stored.', offerId: offerId);
@@ -1896,8 +2081,8 @@ class CoordinatorService {
     try {
       // Only update to blikSentToMaker if it's currently blikReceived
       if (offer.status == OfferStatus.blikReceived) {
-        final statusUpdated = await _dbService.updateOfferStatus(
-            offerId, OfferStatus.blikSentToMaker);
+        final statusUpdated = await _dbService.updateOfferStatusIfCurrentStatus(
+            offerId, OfferStatus.blikSentToMaker, [OfferStatus.blikReceived]);
         if (!statusUpdated) {
           AppLogger.info(
               'Warning: Failed to update offer $offerId status to blikSentToMaker, but returning code anyway.',
@@ -1982,7 +2167,11 @@ class CoordinatorService {
         ? OfferStatus.invalidBlik
         : OfferStatus.conflict;
 
-    final success = await _dbService.updateOfferStatus(offerId, newStatus);
+    // newStatus depends on the observed status, so CAS on exactly that status:
+    // if it changed since the read, the invalidBlik/conflict mapping would be
+    // stale — abort instead.
+    final success = await _dbService.updateOfferStatusIfCurrentStatus(
+        offerId, newStatus, [offer.status]);
 
     if (success) {
       AppLogger.info('Offer $offerId status updated to $newStatus.',
@@ -2025,7 +2214,12 @@ class CoordinatorService {
     final newStatus = offer.status == OfferStatus.invalidBlik
         ? OfferStatus.conflict
         : OfferStatus.takerCharged;
-    final success = await _dbService.updateOfferStatus(offerId, newStatus);
+    // newStatus depends on the observed status, so CAS on exactly that status.
+    // expectedTakerPubkey guards the ABA case where the status cycled back
+    // with a different taker on the row.
+    final success = await _dbService.updateOfferStatusIfCurrentStatus(
+        offerId, newStatus, [offer.status],
+        expectedTakerPubkey: takerId);
 
     if (success) {
       AppLogger.info('Offer $offerId status updated to $newStatus.',
@@ -2150,8 +2344,15 @@ class CoordinatorService {
         'Cancelled timers for offer $offerId during maker confirmation.',
         offerId: offerId);
 
-    bool success =
-        await _dbService.updateOfferStatus(offerId, OfferStatus.makerConfirmed);
+    // CAS on the states maker confirmation is allowed from; losing the race
+    // aborts before the hold invoice is settled below.
+    bool success = await _dbService.updateOfferStatusIfCurrentStatus(
+        offerId, OfferStatus.makerConfirmed, [
+      OfferStatus.conflict,
+      OfferStatus.takerCharged,
+      OfferStatus.blikSentToMaker,
+      OfferStatus.expiredSentBlik,
+    ]);
     if (!success) {
       AppLogger.info(
           'Failed to update offer $offerId status to makerConfirmed in DB.',
@@ -2218,6 +2419,17 @@ class CoordinatorService {
       AppLogger.info('User pubkey mismatch for updating taker invoice.');
       return false;
     }
+    if (offer.status != OfferStatus.takerPaymentFailed) {
+      AppLogger.info(
+          'Offer $offerId is in status ${offer.status}. Taker invoice updates are only allowed in takerPaymentFailed.',
+          offerId: offerId);
+      return false;
+    }
+    _validateTakerInvoiceAmount(
+      offer,
+      takerInvoice,
+      action: 'update_taker_invoice',
+    );
     final success = await _dbService.updateTakerInvoice(offerId, takerInvoice);
     if (success) {
       AppLogger.info('Taker invoice updated for offer $offerId.',
@@ -2344,6 +2556,8 @@ class CoordinatorService {
         await _nostrService?.broadcastNip69OrderFromOffer(cancelledOffer);
       }
 
+      await _strikeTelegramOfferMessages(offerId);
+
       _invoiceSubscriptions[offer.holdInvoicePaymentHash]?.cancel();
       _invoiceSubscriptions.remove(offer.holdInvoicePaymentHash);
       _pendingOffers.remove(offer.holdInvoicePaymentHash);
@@ -2373,8 +2587,7 @@ class CoordinatorService {
     }
 
     // Calculate net amount after taker fees
-    final takerFees =
-        OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage);
+    final takerFees = _effectiveTakerFeeSats(offer);
     final netAmountSats = offer.amountSats - takerFees;
     String? takerInvoice = offer.takerInvoice;
 
@@ -2429,6 +2642,11 @@ class CoordinatorService {
               offerId: offerId);
         }
       }
+      _validateTakerInvoiceAmount(
+        offer,
+        takerInvoice,
+        action: 'pay_taker',
+      );
       await _sendTakerPayment(offerId, takerInvoice);
     } catch (e) {
       AppLogger.info(
@@ -2467,8 +2685,7 @@ class CoordinatorService {
       }
 
       // Calculate taker fees (configurable % of the original offer amount)
-      final takerFees =
-          OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage);
+      final takerFees = _effectiveTakerFeeSats(offer);
       final netAmountSats = offer.amountSats - takerFees;
       AppLogger.info(
           'Calculated taker fees for offer $offerId: $takerFees sats. Paying net amount: $netAmountSats sats.',
@@ -2482,6 +2699,12 @@ class CoordinatorService {
             failureReason: 'No payment backend configured');
         return 'No payment backend configured.';
       }
+
+      _validateTakerInvoiceAmount(
+        offer,
+        takerInvoice,
+        action: 'pay_taker',
+      );
 
       final feeLimitSat = (offer.takerFees! * kTakerFeeLimitFactor).ceil();
       AppLogger.info(
@@ -2545,8 +2768,7 @@ class CoordinatorService {
         if (reconciled != null &&
             reconciled.isSuccess &&
             offerForFees != null) {
-          final takerFees = OfferQuote.takerFeeSats(
-              offerForFees.amountSats, _takerFeePercentage);
+          final takerFees = _effectiveTakerFeeSats(offerForFees);
           AppLogger.info(
               ' Taker payment for offer $offerId reconciled as SETTLED despite exception. Marking paid.',
               offerId: offerId);
@@ -2587,6 +2809,8 @@ class CoordinatorService {
       await _publishStatusUpdate(paidOffer);
       await _nostrService?.broadcastNip69OrderFromOffer(paidOffer);
     }
+
+    await _deleteTelegramOfferMessages(offerId);
   }
 
   Future<String?> retryTakerPayment(String offerId, String userPubkey) async {
@@ -2607,6 +2831,17 @@ class CoordinatorService {
           offerId: offerId);
       return "No taker invoice in offer";
     }
+    if (offer.status != OfferStatus.takerPaymentFailed) {
+      AppLogger.info(
+          'Offer $offerId is in status ${offer.status}. Retry is only allowed in takerPaymentFailed.',
+          offerId: offerId);
+      return "offer is not in takerPaymentFailed";
+    }
+    _validateTakerInvoiceAmount(
+      offer,
+      offer.takerInvoice!,
+      action: 'retry_taker_payment',
+    );
 
     // Guard against double-paying: a prior attempt may have actually settled
     // even though it was recorded as failed (NWC pay_invoice timeouts are not
@@ -2617,8 +2852,7 @@ class CoordinatorService {
       AppLogger.info(
           'Retry: offer $offerId already SETTLED on wallet. Finalizing instead of paying again.',
           offerId: offerId);
-      final takerFees =
-          OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage);
+      final takerFees = _effectiveTakerFeeSats(offer);
       await _markTakerPaid(offerId, reconciled, takerFees);
       return null;
     }
