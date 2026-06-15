@@ -20,8 +20,9 @@ String buildNwcIconUrl = 'https://bitblik.app/assets/assets/logo.png';
 bool _forced = false;
 
 /// Force the payment system synchronously from a flavor entrypoint
-/// (e.g. `lib/main_bitway.dart`). This is the authoritative, deterministic path
-/// — no defines, no async, no appId lookup. Call before `runApp`.
+/// (e.g. `lib/main_bitblik.dart` / `lib/main_bitway.dart`). This is the
+/// authoritative, deterministic path — no defines, no async, no appId lookup.
+/// Call before `runApp`.
 void forcePaymentSystem(String id) {
   _forced = true;
   _apply(id);

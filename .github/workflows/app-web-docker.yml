@@ -25,7 +25,13 @@ jobs:
       id-token: write
     strategy:
       matrix:
-        build_mode: [release, debug]
+        include:
+          - flavor: bitblik
+            flutter_target: lib/main_bitblik.dart
+            build_mode: release
+          - flavor: bitway
+            flutter_target: lib/main_bitway.dart
+            build_mode: release
 
     steps:
       - uses: actions/checkout@v4
@@ -47,11 +53,12 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGENAME }}
           tags: |
-            type=raw,value=${{ matrix.build_mode }}
-            type=raw,value=${{ matrix.build_mode }}-${{ github.sha }}
-            type=semver,pattern={{version}}-${{ matrix.build_mode }}
+            type=raw,value=${{ matrix.flavor }}-${{ matrix.build_mode }}
+            type=raw,value=${{ matrix.flavor }}-${{ matrix.build_mode }}-${{ github.sha }}
+            type=ref,event=branch,prefix=${{ matrix.flavor }}-,suffix=-${{ matrix.build_mode }}
+            type=semver,pattern={{version}}-${{ matrix.flavor }}-${{ matrix.build_mode }}
 
-      - name: Build and push Web Docker image (${{ matrix.build_mode }})
+      - name: Build and push Web Docker image (${{ matrix.flavor }} / ${{ matrix.build_mode }})
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -59,6 +66,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: BUILD_MODE=${{ matrix.build_mode }}
-          cache-from: type=gha,scope=${{ matrix.build_mode }}
-          cache-to: type=gha,scope=${{ matrix.build_mode }},mode=max
+          build-args: |
+            APP_FLAVOR=${{ matrix.flavor }}
+            FLUTTER_TARGET=${{ matrix.flutter_target }}
+            BUILD_MODE=${{ matrix.build_mode }}
+          cache-from: type=gha,scope=${{ matrix.flavor }}-${{ matrix.build_mode }}
+          cache-to: type=gha,scope=${{ matrix.flavor }}-${{ matrix.build_mode }},mode=max

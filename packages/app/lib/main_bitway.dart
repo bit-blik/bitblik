@@ -5,7 +5,7 @@
 // first frame):
 //   flutter run   --flavor bitway -t lib/main_bitway.dart
 //   flutter build apk --flavor bitway -t lib/main_bitway.dart
-import 'main.dart' as app;
+import 'main_bitblik.dart' as app;
 import 'src/config/build_flavor.dart';
 
 Future<void> main() async {

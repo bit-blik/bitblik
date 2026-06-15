@@ -1,11 +1,18 @@
-# Launcher icons for the `bitway` Android flavor (MB WAY build).
-# Generate with: dart run flutter_launcher_icons
-# Outputs to android/app/src/bitway/res/mipmap-*.
+# Launcher icons for the `bitway` flavor.
+# Generate with:
+#   dart run flutter_launcher_icons -f flutter_launcher_icons-bitway.yaml
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/bit.png"
+  image_path: "assets/bitway_launcher.png"
   adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: "assets/bit.png"
+  adaptive_icon_foreground: "assets/bitway_launcher.png"
   adaptive_icon_foreground_inset: 26
   min_sdk_android: 21
+  remove_alpha_ios: true
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false

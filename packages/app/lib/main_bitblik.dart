@@ -61,6 +61,12 @@ import 'src/screens/wallet_screen.dart';
 import 'src/widgets/relay_dots.dart';
 // Import our platform detection utility
 
+// BitBlik flavor entrypoint.
+//
+// Build/run with this entrypoint explicitly:
+//   flutter run   --flavor bitblik -t lib/main_bitblik.dart
+//   flutter build apk --flavor bitblik -t lib/main_bitblik.dart
+
 final double kMakerFeePercentage = 0.5;
 final double kTakerFeePercentage = 0.5;
 final SharedPreferencesAsync asyncPrefs = SharedPreferencesAsync();

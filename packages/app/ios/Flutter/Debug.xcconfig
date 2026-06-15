@@ -1,2 +1,3 @@
 #include "Generated.xcconfig"
 BUNDLE_DISPLAY_NAME = bitblik
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-bitblik

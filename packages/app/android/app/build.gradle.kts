@@ -112,10 +112,10 @@ android {
         }
     }
 
-    // Payment-system flavors. Pair each with the matching dart-define so the
-    // app's default payment system matches the build:
-    //   flutter build apk --flavor bitblik
-    //   flutter build apk --flavor bitway --dart-define=PAYMENT_SYSTEM=mbway
+    // Payment-system flavors. Use the matching entrypoint so the app's default
+    // payment system is deterministic from process start:
+    //   flutter build apk --flavor bitblik -t lib/main_bitblik.dart
+    //   flutter build apk --flavor bitway -t lib/main_bitway.dart
     flavorDimensions += "system"
     productFlavors {
         create("bitblik") {
