@@ -1286,16 +1286,23 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                       child: PrettyQrView.data(
                         data: holdInvoice.toUpperCase(),
                         errorCorrectLevel: QrErrorCorrectLevel.M,
-                        decoration: const PrettyQrDecoration(
+                        decoration: PrettyQrDecoration(
                           quietZone: PrettyQrQuietZone.standart,
                           background: Colors.white,
-                          shape: PrettyQrSmoothSymbol(
+                          shape: const PrettyQrSmoothSymbol(
                             color: Colors.black,
                             roundFactor: 0.3,
                           ),
                           image: PrettyQrDecorationImage(
                             scale: 0.3,
-                            image: AssetImage('assets/logo2.png'),
+                            image: AssetImage(
+                              ref
+                                          .watch(selectedPaymentSystemProvider)
+                                          .logoAsset !=
+                                      null
+                                  ? 'assets/bitway-icon.png'
+                                  : 'assets/logo2.png',
+                            ),
                           ),
                         ),
                       ),

@@ -32,7 +32,7 @@ void _apply(String id) {
   buildDefaultPaymentSystemId = id;
   buildAppName = id == 'mbway' ? 'BitWay' : 'BitBlik';
   buildNwcIconUrl = id == 'mbway'
-      ? 'https://bitblik.app/assets/assets/bit.png'
+      ? 'https://bitblik.app/assets/assets/bitway-icon.png'
       : 'https://bitblik.app/assets/assets/logo.png';
 }
 
