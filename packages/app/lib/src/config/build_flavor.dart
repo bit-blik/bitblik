@@ -17,6 +17,11 @@ String buildAppName = 'BitBlik';
 /// Public icon URL used for the Alby Go NWC connection prompt, per flavor.
 String buildNwcIconUrl = 'https://bitblik.app/assets/assets/logo.png';
 
+/// Brand logo embedded inside generated QR codes. Pinned to the build flavor
+/// (not the user's runtime payment-system selection) so a branded build always
+/// shows its own icon, even if the device has a stale saved selection.
+String buildQrLogoAsset = 'assets/logo2.png';
+
 bool _forced = false;
 
 /// Force the payment system synchronously from a flavor entrypoint
@@ -34,6 +39,9 @@ void _apply(String id) {
   buildNwcIconUrl = id == 'mbway'
       ? 'https://bitblik.app/assets/assets/bitway-icon.png'
       : 'https://bitblik.app/assets/assets/logo.png';
+  buildQrLogoAsset = id == 'mbway'
+      ? 'assets/bitway-icon.png'
+      : 'assets/logo2.png';
 }
 
 /// Fallback resolver for builds that didn't use a flavor entrypoint. Tries the

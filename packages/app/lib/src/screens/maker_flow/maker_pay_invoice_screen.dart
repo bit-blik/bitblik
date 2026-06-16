@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart'; // For launching URLs/Intents
 import 'package:android_intent_plus/android_intent.dart'; // For Android Intents
 import 'package:android_intent_plus/flag.dart'; // Import for flags enum
 import '../../providers/providers.dart'; // Import providers
+import '../../config/build_flavor.dart' show buildQrLogoAsset;
 import 'package:bitblik_core/core.dart'; // Import Offer model for status enum comparison
 import 'package:ndk/domain_layer/entities/wallet/wallet.dart';
 import 'package:ndk/domain_layer/entities/wallet/providers/nwc/nwc_wallet.dart';
@@ -1295,14 +1296,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                           ),
                           image: PrettyQrDecorationImage(
                             scale: 0.3,
-                            image: AssetImage(
-                              ref
-                                          .watch(selectedPaymentSystemProvider)
-                                          .logoAsset !=
-                                      null
-                                  ? 'assets/bitway-icon.png'
-                                  : 'assets/logo2.png',
-                            ),
+                            image: AssetImage(buildQrLogoAsset),
                           ),
                         ),
                       ),
