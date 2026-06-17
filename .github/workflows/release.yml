@@ -158,10 +158,18 @@ jobs:
           asset_name: bitblik-cli-linux-x64.deb
           asset_content_type: application/vnd.debian.binary-package
 
-  # ── 3. Android APK ────────────────────────────────────────────────────────
+  # ── 3. Android APK (both flavors: bitblik & bitway) ───────────────────────
   build_android:
     needs: release
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: bitblik
+            entrypoint: lib/main_bitblik.dart
+          - flavor: bitway
+            entrypoint: lib/main_bitway.dart
     defaults:
       run:
         working-directory: ./packages/app
@@ -189,7 +197,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEYSTORE_SHA256: ${{ secrets.KEYSTORE_SHA256 }}
-        run: flutter build apk --split-per-abi --release
+        run: flutter build apk --split-per-abi --release --flavor ${{ matrix.flavor }} -t ${{ matrix.entrypoint }}
 
       - name: Upload arm64-v8a APK
         uses: actions/upload-release-asset@v1
@@ -197,8 +205,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-          asset_name: bitblik-app-android-arm64-v8a.apk
+          asset_path: packages/app/build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-arm64-v8a-release.apk
+          asset_name: ${{ matrix.flavor }}-app-android-arm64-v8a.apk
           asset_content_type: application/vnd.android.package-archive
 
       - name: Upload armeabi-v7a APK
@@ -207,8 +215,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-          asset_name: bitblik-app-android-armeabi-v7a.apk
+          asset_path: packages/app/build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-armeabi-v7a-release.apk
+          asset_name: ${{ matrix.flavor }}-app-android-armeabi-v7a.apk
           asset_content_type: application/vnd.android.package-archive
 
       - name: Upload x86_64 APK
@@ -217,8 +225,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/app/build/app/outputs/flutter-apk/app-x86_64-release.apk
-          asset_name: bitblik-app-android-x86_64.apk
+          asset_path: packages/app/build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-x86_64-release.apk
+          asset_name: ${{ matrix.flavor }}-app-android-x86_64.apk
           asset_content_type: application/vnd.android.package-archive
 
   # ── 4. iOS IPA ────────────────────────────────────────────────────────────
