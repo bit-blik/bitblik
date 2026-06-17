@@ -134,6 +134,7 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
                       t.coordinator.details.successfulOffers,
                       '${record.networkFinishedCount}',
                     ),
+                    ..._notificationLinksSection(context, t, record),
                     const Divider(height: 32),
 
                     // ── Relays in use ────────────────────────────────────────
@@ -176,7 +177,6 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
                         onPressed: () => _openNjump(record.termsOfUsageNaddr!),
                       ),
                     ],
-                    ..._notificationLinksSection(context, t, record),
                   ],
                 ),
       ),
