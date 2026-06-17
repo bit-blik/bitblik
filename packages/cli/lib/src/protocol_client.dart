@@ -5,6 +5,7 @@ import 'package:bitblik_core/core.dart';
 import 'package:ndk/ndk.dart';
 import 'package:ndk/domain_layer/entities/cashu/cashu_user_seedphrase.dart';
 
+import 'cli_context.dart';
 import 'coordinator_file_store.dart';
 import 'secrets_store.dart';
 
@@ -23,6 +24,12 @@ class BitblikProtocolClient {
   final BitblikSecrets secrets;
   final CoordinatorStore coordinatorStore;
 
+  /// The market this client operates in. Drives discovery (which project
+  /// identity's NIP-65 yields the discovery relays + coordinator set) and the
+  /// default offer-listing filter (currency + platform tag), so a client only
+  /// ever sees coordinators and offers belonging to its own payment system.
+  final PaymentSystem paymentSystem;
+
   late final Ndk _ndk;
   late final Bip340EventSigner _signer;
   late final BitblikRpcClient _rpc;
@@ -33,8 +40,12 @@ class BitblikProtocolClient {
     List<String>? relays,
     this.timeout = const Duration(seconds: 5),
     CoordinatorStore? coordinatorStore,
+    PaymentSystem? paymentSystem,
   })  : relays = relays == null || relays.isEmpty ? defaultRelays : relays,
-        coordinatorStore = coordinatorStore ?? CoordinatorFileStore();
+        paymentSystem = paymentSystem ?? activePaymentSystem,
+        coordinatorStore = coordinatorStore ??
+            CoordinatorFileStore(
+                paymentSystem: paymentSystem ?? activePaymentSystem);
 
   Future<void> init() async {
     _ndk = Ndk(
@@ -69,11 +80,46 @@ class BitblikProtocolClient {
       rpcClient: _rpc,
       store: coordinatorStore,
       relays: relays,
+      // Discover this market's relays + coordinators from its own project
+      // identity (Bitblik for BLIK, Bitway for MB WAY).
+      discoveryPubkeyHex: paymentSystem.discoveryPubkeyHex,
     );
     await _registry.init();
   }
 
   CoordinatorRegistry get coordinatorRegistry => _registry;
+
+  /// The payment system id a coordinator advertises in its kind
+  /// [kKindCoordinatorInfo] event, or null when no info event can be fetched.
+  ///
+  /// Prefers the registry's cached info; otherwise queries the coordinator's
+  /// own relays (NIP-65 / discovery fallback) for its info event. Used to
+  /// refuse cross-market interactions (e.g. a `bitway` client talking to a BLIK
+  /// coordinator).
+  Future<String?> coordinatorPaymentSystemId(String coordinatorPubkey) async {
+    final cached = _registry.infoFor(coordinatorPubkey)?.paymentSystem;
+    if (cached != null) return cached;
+
+    final response = _ndk.requests.query(
+      name: 'coordinator-info-check',
+      filter: Filter(
+        kinds: [kKindCoordinatorInfo],
+        authors: [coordinatorPubkey],
+      ),
+      explicitRelays: _registry.relaysFor(coordinatorPubkey),
+      cacheRead: false,
+    );
+    Nip01Event? newest;
+    await for (final e in response.stream.timeout(
+      const Duration(seconds: 6),
+      onTimeout: (sink) => sink.close(),
+    )) {
+      if (e.pubKey != coordinatorPubkey) continue;
+      if (newest == null || e.createdAt > newest.createdAt) newest = e;
+    }
+    if (newest == null) return null;
+    return CoordinatorInfo.fromNostrEvent(newest).paymentSystem;
+  }
 
   /// Relays of all enabled coordinators (NIP-65 / fallback), falling back to
   /// discovery relays when none are known yet.
@@ -114,17 +160,20 @@ class BitblikProtocolClient {
   ///
   /// Returns the latest event per offer id (`d` tag), deduplicating across
   /// coordinator re-broadcasts. Optional filters narrow the result.
+  /// Query live public offers. [fiatCurrency] and [platform] default to the
+  /// client's [paymentSystem] (currency + platform tag), so a market only lists
+  /// offers belonging to its own payment system.
   Future<List<Offer>> listOffers({
-    String fiatCurrency = 'PLN',
-    String platform = 'Bitblik',
+    String? fiatCurrency,
+    String? platform,
     String? coordinatorPubkey,
     Duration window = const Duration(hours: 2),
   }) async {
     final filter = Filter(
       kinds: [kKindOffer],
       tags: {
-        '#f': [fiatCurrency],
-        '#y': [platform],
+        '#f': [fiatCurrency ?? paymentSystem.currency],
+        '#y': [platform ?? paymentSystem.platformTag],
       },
       authors: coordinatorPubkey == null ? null : [coordinatorPubkey],
       since:
@@ -203,6 +252,10 @@ class BitblikProtocolClient {
   }
 
   Future<void> dispose() async {
+    // Persist any pending coordinator changes before tearing down: the binary
+    // forces process exit right after dispose, so the registry's 200ms
+    // debounced save would otherwise be dropped.
+    await _registry.flushPersist();
     await _registry.dispose();
     await _rpc.stop();
     await _ndk.destroy();

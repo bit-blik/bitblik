@@ -38,6 +38,10 @@ jobs:
         working-directory: ./packages/cli
         run: dart analyze --no-fatal-warnings
 
-      - name: Build CLI
+      # Two declared executables (bitblik = BLIK market, bitway = MB WAY
+      # market), so each target must be built explicitly.
+      - name: Build CLI (both binaries)
         working-directory: ./packages/cli
-        run: dart build cli
+        run: |
+          dart build cli -t bin/bitblik.dart -o build/cli-bitblik
+          dart build cli -t bin/bitway.dart -o build/cli-bitway

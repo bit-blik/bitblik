@@ -7,7 +7,6 @@ import 'package:ndk/shared/nips/nip19/nip19.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart';
-import '../config/group_links.dart';
 import '../providers/providers.dart';
 import '../utils/bitcoin_display.dart';
 
@@ -325,19 +324,11 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     );
   }
 
-  /// Channel/notification links for this coordinator. Uses the coordinator's
-  /// advertised links, falling back to the app's bundled defaults for its
-  /// payment system when it advertises none.
+  /// Channel/notification links for this coordinator. Only the coordinator's
+  /// own advertised links — no bundled defaults, so a coordinator that
+  /// advertises none shows no notification section.
   Map<String, String> _resolveChannelLinks(CoordinatorRecord record) {
-    final advertised = record.channelLinks;
-    if (advertised.isNotEmpty) return advertised;
-    final d = GroupLinks.of(record.paymentSystem ?? '');
-    return {
-      if (d.telegram.isNotEmpty) 'telegram': d.telegram,
-      if (d.matrix.isNotEmpty) 'matrix': d.matrix,
-      if (d.simplex.isNotEmpty) 'simplex': d.simplex,
-      if (d.signal.isNotEmpty) 'signal': d.signal,
-    };
+    return record.channelLinks;
   }
 
   String _messengerLabel(Translations t, String id) {

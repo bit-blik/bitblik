@@ -84,25 +84,33 @@ jobs:
         run: flutter pub get
         working-directory: .
 
-      - name: Build CLI (x64 via Rosetta)
-        if: matrix.target == 'macos_x64'
-        run: arch -x86_64 dart build cli
-
-      - name: Build CLI
-        if: matrix.target != 'macos_x64'
-        run: dart build cli
+      # Two declared executables (bitblik = BLIK market, bitway = MB WAY
+      # market). Build each target into its own bundle, then merge bitway's
+      # binary into the bitblik bundle — both share the identical lib/ (NDK
+      # rust dylib) and reference it via the same relative ../lib rpath, so a
+      # single merged bundle ships both binaries for the platform.
+      - name: Build CLI (both binaries)
+        run: |
+          BUILD="dart build cli"
+          if [ "${{ matrix.target }}" = "macos_x64" ]; then
+            BUILD="arch -x86_64 dart build cli"
+          fi
+          $BUILD -t bin/bitblik.dart -o build/cli-bitblik
+          $BUILD -t bin/bitway.dart -o build/cli-bitway
+          # Glob covers the .exe suffix on Windows.
+          cp build/cli-bitway/bundle/bin/bitway* build/cli-bitblik/bundle/bin/
 
       - name: Package CLI bundle (Unix)
         if: matrix.target != 'windows_x64'
         run: |
           tar -czf "build/bitblik-cli-${{ matrix.platform_name }}.tar.gz" \
-            -C "build/cli/${{ matrix.target }}/bundle" .
+            -C "build/cli-bitblik/bundle" .
 
       - name: Package CLI bundle (Windows)
         if: matrix.target == 'windows_x64'
         run: |
-          cd "build/cli/${{ matrix.target }}/bundle"
-          7z a -tzip "../../../../build/bitblik-cli-${{ matrix.platform_name }}.zip" .
+          cd "build/cli-bitblik/bundle"
+          7z a -tzip "../../bitblik-cli-${{ matrix.platform_name }}.zip" .
 
       - name: Build Linux DEB package
         if: matrix.target == 'linux_x64'
@@ -110,8 +118,9 @@ jobs:
           deb_root="build/deb-root"
           rm -rf "$deb_root"
           mkdir -p "$deb_root/DEBIAN" "$deb_root/usr/lib/bitblik" "$deb_root/usr/bin"
-          cp -R "build/cli/${{ matrix.target }}/bundle/." "$deb_root/usr/lib/bitblik/"
+          cp -R "build/cli-bitblik/bundle/." "$deb_root/usr/lib/bitblik/"
           ln -s ../lib/bitblik/bin/bitblik "$deb_root/usr/bin/bitblik"
+          ln -s ../lib/bitblik/bin/bitway "$deb_root/usr/bin/bitway"
           pkg_version="$(grep -m1 '^version:' packages/cli/pubspec.yaml | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')"
           cat > "$deb_root/DEBIAN/control" <<EOF
           Package: bitblik
@@ -121,7 +130,7 @@ jobs:
           Architecture: amd64
           Maintainer: bitblik <noreply@github.com>
           Depends: libc6 (>= 2.27)
-          Description: BitBlik command line interface
+          Description: BitBlik command line interface (bitblik + bitway)
           EOF
           dpkg-deb --build "$deb_root" "build/bitblik-cli-linux-x64.deb"
 

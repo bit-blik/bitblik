@@ -5,6 +5,7 @@ import 'package:bip340/bip340.dart' as bip340;
 import 'package:bitblik_core/core.dart';
 import 'package:ndk/ndk.dart';
 
+import 'cli_context.dart';
 import 'offer_store.dart';
 import 'protocol_client.dart';
 import 'secrets_store.dart';
@@ -17,7 +18,7 @@ Future<int> runOfferList(List<String> args) async {
   final parsed = _parseFlags(args);
   final jsonOutput = parsed.containsKey('json');
   final relays = _collectMultiFlag(args, '--relay');
-  final currency = parsed['currency'] ?? 'PLN';
+  final currency = parsed['currency'] ?? activePaymentSystem.currency;
   final coordinatorArg = parsed['coordinator'];
 
   // ---- Local path (default) ----
@@ -58,6 +59,8 @@ Future<int> runOfferList(List<String> args) async {
 
   try {
     await client.init();
+    final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
+    if (mismatch != null) return mismatch;
     final offers = await client.listOffers(
       fiatCurrency: currency,
       coordinatorPubkey: coordinatorPubkey,
@@ -107,8 +110,9 @@ Future<int> runOfferCreate(List<String> args) async {
 
   if (fiatStr == null || coordinatorArg == null) {
     stderr.writeln(
-        'usage: bitblik offer create --fiat <amount> --coordinator <npub|hex> '
-        '[--currency PLN] [--json] [--relay <url>]');
+        'usage: ${activePaymentSystem.brandName.toLowerCase()} offer create '
+        '--fiat <amount> --coordinator <npub|hex> '
+        '[--currency ${activePaymentSystem.currency}] [--json] [--relay <url>]');
     return 64;
   }
 
@@ -157,12 +161,15 @@ Future<int> runOfferCreate(List<String> args) async {
 
   try {
     await client.init();
+    final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
+    if (mismatch != null) return mismatch;
+    final currency = parsed['currency'] ?? activePaymentSystem.currency;
     final response = await client.sendRequest(
       NostrRequest(
         method: kRpcInitiateOffer,
         params: {
           'fiat_amount': fiat,
-          if (parsed['currency'] != null) 'fiat_currency': parsed['currency']!,
+          'fiat_currency': currency,
         },
       ),
       coordinatorPubkey,
@@ -192,8 +199,7 @@ Future<int> runOfferCreate(List<String> args) async {
       amountSats: (result['amountSats'] as num?)?.toInt() ?? 0,
       makerFees: (result['makerFees'] as num?)?.toInt() ?? 0,
       fiatAmount: (result['fiatAmount'] as num?)?.toDouble() ?? fiat,
-      fiatCurrency:
-          result['fiatCurrency']?.toString() ?? parsed['currency'] ?? 'PLN',
+      fiatCurrency: result['fiatCurrency']?.toString() ?? currency,
       status: OfferStatus.created,
       createdAt: DateTime.now(),
       makerPubkey: bip340.getPublicKey(secrets.privateKeyHex),
@@ -297,6 +303,8 @@ Future<int> runOfferGetBlik(List<String> args) async {
     );
     try {
       await client.init();
+      final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
+      if (mismatch != null) return mismatch;
       return await _callGetBlikRpc(client, offerIdArg, coordinatorPubkey,
           jsonOutput: jsonOutput);
     } finally {
@@ -458,8 +466,11 @@ Future<int> _callGetBlikRpc(
       ...result,
     }));
   } else if (blikCode != null) {
-    stdout.writeln('\nBLIK code : $blikCode');
-    stdout.writeln('Enter this code in your banking app within 120 seconds.');
+    final ps = activePaymentSystem;
+    final where = ps.requiresCodeConfirmation ? 'your banking app' : 'the ATM';
+    final mins = ps.codeValidityMinutes;
+    stdout.writeln('\n${ps.codeLabel} code : $blikCode');
+    stdout.writeln('Enter this code at $where within $mins minute${mins == 1 ? '' : 's'}.');
   } else {
     stdout.writeln(const JsonEncoder.withIndent('  ').convert(result));
   }
@@ -522,6 +533,8 @@ Future<int> runOfferCancel(List<String> args) async {
     );
     try {
       await client.init();
+      final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
+      if (mismatch != null) return mismatch;
       return await _callCancelOfferRpc(client, offerIdArg, coordinatorPubkey);
     } finally {
       await client.dispose();
@@ -762,6 +775,8 @@ Future<int> runOfferMarkBlikInvalid(List<String> args) async {
     );
     try {
       await client.init();
+      final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
+      if (mismatch != null) return mismatch;
       return await _callMarkBlikInvalidRpc(
           client, offerIdArg, coordinatorPubkey);
     } finally {
@@ -909,6 +924,8 @@ Future<int> runOfferOpenDispute(List<String> args) async {
     );
     try {
       await client.init();
+      final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
+      if (mismatch != null) return mismatch;
       return await _callOpenDisputeRpc(client, offerIdArg, coordinatorPubkey);
     } finally {
       await client.dispose();
@@ -1047,6 +1064,8 @@ Future<int> runOfferConfirmPayment(List<String> args) async {
     );
     try {
       await client.init();
+      final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
+      if (mismatch != null) return mismatch;
       return await _callConfirmPaymentRpc(client, offerIdArg, coordinatorPubkey);
     } finally {
       await client.dispose();
@@ -1378,6 +1397,32 @@ List<String> _collectMultiFlag(List<String> args, String flag) {
   return out;
 }
 
+/// Verify a coordinator serves this binary's payment system before sending it
+/// any offer RPC. Returns null when OK; otherwise prints an error and returns
+/// the exit code to use. A coordinator on a different market settles in a
+/// different currency with different code rules, so cross-market RPCs are
+/// refused rather than silently mishandled.
+Future<int?> _ensureSameMarket(
+  BitblikProtocolClient client,
+  String coordinatorPubkey,
+) async {
+  final mine = activePaymentSystem;
+  final theirId = await client.coordinatorPaymentSystemId(coordinatorPubkey);
+  if (theirId == null) {
+    stderr.writeln(
+        'Could not verify coordinator payment system (offline or not '
+        'advertising info). Refusing to proceed.');
+    return 1;
+  }
+  if (theirId == mine.id) return null;
+  final theirs = paymentSystemById(theirId);
+  stderr.writeln(
+      'Coordinator serves ${theirs.label} (${theirs.currency}), but this is the '
+      '${mine.label} (${mine.currency}) client.\n'
+      'Use the ${theirs.brandName.toLowerCase()} binary for this coordinator.');
+  return 1;
+}
+
 /// Accept either 64-char hex pubkey or `npub1...` bech32. Returns hex.
 String _resolvePubkey(String input) {
   if (input.startsWith('npub1')) {
@@ -1403,7 +1448,7 @@ void _printOfferReceipt(Map<String, dynamic> result) {
   stdout.writeln('  Amount sats  : ${get('amountSats')}');
   stdout.writeln('  Maker fees   : ${get('makerFees')} sats');
   stdout.writeln('  Total to pay : ${get('totalAmountSats')} sats');
-  stdout.writeln('  Rate         : ${get('rate')} PLN/BTC');
+  stdout.writeln('  Rate         : ${get('rate')} ${activePaymentSystem.currency}/BTC');
   stdout.writeln('');
   stdout.writeln('Hold invoice (pay this to fund the offer):');
   stdout.writeln(get('holdInvoice') ?? '');
