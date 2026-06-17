@@ -1,6 +1,7 @@
 ## [0.8.0] - 2026-06-21
 
 - feat: choice of payment system per country
+- feat: portuguese translation
 - feat: wallets now can send/receive
 - fix: cashu wallet state backup/restore + seed phrase backup
 - fix: new expiredBlik timer to auto cancel reservation back to funded
