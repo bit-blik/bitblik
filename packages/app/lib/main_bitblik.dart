@@ -522,12 +522,18 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       }
     }
 
-    // Handle https://bitblik.app deep links
+    // Handle https deep links (bitblik.app / bitway.me)
     if (scheme == 'https') {
-      final path = uri.path;
-      final fragment = uri.fragment;
-      if (path == '/offers' || fragment == '/offers') {
-        router.push('/offers');
+      // Support both path-based (/offers/:id) and fragment-based (#/offers) links.
+      final segments = uri.pathSegments.isNotEmpty
+          ? uri.pathSegments
+          : Uri.parse(uri.fragment).pathSegments;
+      if (segments.isNotEmpty && segments.first == 'offers') {
+        if (segments.length >= 2 && segments[1].isNotEmpty) {
+          router.push('/offers/${segments[1]}');
+        } else {
+          router.push('/offers');
+        }
       }
     }
   }
