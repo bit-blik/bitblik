@@ -9,7 +9,9 @@ import 'package:ndk_flutter/ndk_flutter.dart';
 // import 'package:ndk_rust_verifier/ndk_rust_verifier.dart' as web_rust_verifier;
 
 import 'package:bitblik_core/core.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ndk_flutter/repositories/cashu_seed_store.dart';
+import '../config/build_flavor.dart';
 import 'coordinator_prefs_store.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
@@ -253,11 +255,24 @@ class NostrService {
       publicKey: _keyService.publicKeyHex!,
     );
 
+    // Brand is the BUILT flavor (buildAppName, set before runApp from the
+    // flavor entrypoint / appFlavor / appId), not the user's runtime
+    // payment-system preference. e.g. 'app-bitblik/0.8.0', 'app-bitway/0.8.0'.
+    final brand = buildAppName.toLowerCase();
+    String clientId = 'app-$brand';
+    try {
+      final pkgInfo = await PackageInfo.fromPlatform();
+      clientId = 'app-$brand/${pkgInfo.version}';
+    } catch (e) {
+      Logger.log.w(() => '⚠️ Could not resolve app version for clientId: $e');
+    }
+
     _rpcClient = BitblikRpcClient(
       ndk: _ndk!,
       signer: _clientSigner!,
       relays: _relayUrls,
       subscriptionName: 'client-responses',
+      clientId: clientId,
     );
     await _rpcClient!.start();
     Logger.log.i(() => '👂 Subscribed to coordinator responses');

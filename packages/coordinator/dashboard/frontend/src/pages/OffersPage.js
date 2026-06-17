@@ -426,6 +426,9 @@ const OffersPage = () => {
                   <th className="text-left px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Category
                   </th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
+                    Client
+                  </th>
                   <th className="text-right px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide">
                     Time to Reserve
                   </th>
@@ -446,14 +449,14 @@ const OffersPage = () => {
               <tbody>
                 {offers.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={11} className="px-4 py-12 text-center text-gray-500">
                       No offers found
                     </td>
                   </tr>
                 ) : (
                   groupOffersByDay(offers).flatMap((group) => [
                     <tr key={`day-${group.dayLabel}`}>
-                      <td colSpan={10} className="px-4 pt-4 pb-1">
+                      <td colSpan={11} className="px-4 pt-4 pb-1">
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">
                             {group.dayLabel}
@@ -513,6 +516,15 @@ const OffersPage = () => {
                               style={CATEGORY_INLINE_STYLES[offer.category] || {}}
                             >
                               {offer.category}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {offer.client_version ? (
+                            <span className="font-mono text-xs text-gray-700">
+                              {offer.client_version}
                             </span>
                           ) : (
                             <span className="text-gray-400 text-xs">-</span>

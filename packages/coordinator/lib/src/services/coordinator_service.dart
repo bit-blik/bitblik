@@ -890,6 +890,7 @@ class CoordinatorService {
     String? fiatCurrency,
     OfferCategory? category,
     double premiumPercent = 0,
+    String? clientVersion,
   }) async {
     // Resolve the currency: client-supplied, else this coordinator's method
     // currency. Reject currencies this coordinator does not serve.
@@ -977,6 +978,7 @@ class CoordinatorService {
       'fiatCurrency': fiatCurrency,
       'category': category?.name,
       'premiumPercent': premium,
+      'clientVersion': clientVersion,
       'actualPaymentHashForSubscription': returnedPaymentHashHex,
     };
     AppLogger.info(
@@ -1106,6 +1108,7 @@ class CoordinatorService {
         }(),
         premiumPercent:
             (pendingData['premiumPercent'] as num?)?.toDouble() ?? 0,
+        clientVersion: pendingData['clientVersion'] as String?,
       );
       await _dbService.createOffer(offer);
       // --- Begin: broadcast NIP-69 order event ---

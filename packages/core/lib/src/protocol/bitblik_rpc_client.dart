@@ -42,12 +42,19 @@ class BitblikRpcClient {
   /// multiple clients share an NDK instance).
   final String subscriptionName;
 
+  /// Client identifier stamped onto every outgoing request as
+  /// `NostrRequest.client` (e.g. `app/0.8.0`, `cli/0.1.0`). The coordinator
+  /// records this so it knows which client build issued each request. A
+  /// per-request `client` (rarely set) takes precedence over this default.
+  final String? clientId;
+
   BitblikRpcClient({
     required this.ndk,
     required this.signer,
     required this.relays,
     this.timeout = const Duration(seconds: 5),
     this.subscriptionName = 'bitblik-rpc-responses',
+    this.clientId,
   });
 
   /// Subscribe to incoming responses. Must be called before [send].
@@ -119,6 +126,7 @@ class BitblikRpcClient {
       method: request.method,
       params: request.params,
       id: id,
+      client: request.client ?? clientId,
     );
 
     // Ensure we are listening for the response on the relays we are about to

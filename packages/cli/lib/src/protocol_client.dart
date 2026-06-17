@@ -9,6 +9,10 @@ import 'coordinator_file_store.dart';
 import 'secrets_store.dart';
 
 
+/// CLI version, stamped onto every RPC request so the coordinator knows which
+/// client build issued it. Keep in sync with `version:` in cli/pubspec.yaml.
+const String kCliVersion = '0.1.0';
+
 class BitblikProtocolClient {
   /// Discovery relays — used only to find coordinators and bootstrap NDK.
   /// Per-coordinator communication is routed to each coordinator's own relays.
@@ -56,6 +60,7 @@ class BitblikProtocolClient {
       relays: relays,
       timeout: timeout,
       subscriptionName: 'cli-client-responses',
+      clientId: 'cli/$kCliVersion',
     );
     await _rpc.start();
 

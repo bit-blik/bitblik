@@ -449,8 +449,9 @@ class NostrService {
       return;
     }
     try {
-      final response =
-          await _processRequest(request.method, request.params, event.pubKey);
+      final response = await _processRequest(
+          request.method, request.params, event.pubKey,
+          clientVersion: request.client);
       await _sendResponse(event.pubKey, id, response);
     } catch (e) {
       AppLogger.info('Error handling request: $e');
@@ -461,7 +462,8 @@ class NostrService {
 
   /// Process a coordinator request
   Future<Map<String, dynamic>> _processRequest(
-      String method, Map<String, dynamic> params, String userPubkey) async {
+      String method, Map<String, dynamic> params, String userPubkey,
+      {String? clientVersion}) async {
     try {
       switch (method) {
         case kRpcGetInfo:
@@ -498,6 +500,7 @@ class NostrService {
             fiatCurrency: fiatCurrency,
             category: category,
             premiumPercent: premiumPercent,
+            clientVersion: clientVersion,
           );
 
         case kRpcReserveOffer:

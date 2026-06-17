@@ -79,6 +79,12 @@ class Offer {
   /// Persisted so wallet balance/budget can be refreshed after app restart.
   final String? paymentWalletId;
 
+  /// Client that created the offer, as `<app|cli>/<version>` (e.g. `app/0.8.0`).
+  /// Recorded coordinator-side from the maker's request envelope. Intentionally
+  /// NOT serialized in [toJson]/[toRpcJson] — it is a server-only field surfaced
+  /// only on the coordinator dashboard, never returned to clients.
+  final String? clientVersion;
+
   // Calculated getters for processing times
   int? get timeToReserveSeconds {
     if (reservedAt != null) {
@@ -156,6 +162,7 @@ class Offer {
     this.category,
     this.premiumPercent = 0,
     this.paymentWalletId,
+    this.clientVersion,
   });
 
   // Factory constructor to create an Offer from JSON data (Map).
@@ -411,6 +418,7 @@ class Offer {
     OfferCategory? category,
     double? premiumPercent,
     String? paymentWalletId,
+    String? clientVersion,
   }) {
     return Offer(
       id: id ?? this.id,
@@ -444,6 +452,7 @@ class Offer {
       category: category ?? this.category,
       premiumPercent: premiumPercent ?? this.premiumPercent,
       paymentWalletId: paymentWalletId ?? this.paymentWalletId,
+      clientVersion: clientVersion ?? this.clientVersion,
     );
   }
 
