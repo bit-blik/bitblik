@@ -7,6 +7,7 @@ import 'package:ndk/shared/nips/nip19/nip19.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart';
+import '../config/group_links.dart';
 import '../providers/providers.dart';
 import '../utils/bitcoin_display.dart';
 
@@ -175,6 +176,7 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
                         onPressed: () => _openNjump(record.termsOfUsageNaddr!),
                       ),
                     ],
+                    ..._notificationLinksSection(context, t, record),
                   ],
                 ),
       ),
@@ -321,6 +323,89 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Group/notification links for this coordinator. Uses the coordinator's
+  /// advertised links, falling back to the app's bundled defaults for its
+  /// payment system when it advertises none.
+  Map<String, String> _resolveGroupLinks(CoordinatorRecord record) {
+    final advertised = record.groupLinks;
+    if (advertised.isNotEmpty) return advertised;
+    final d = GroupLinks.of(record.paymentSystem ?? '');
+    return {
+      if (d.telegram.isNotEmpty) 'telegram': d.telegram,
+      if (d.element.isNotEmpty) 'element': d.element,
+      if (d.simplex.isNotEmpty) 'simplex': d.simplex,
+      if (d.signal.isNotEmpty) 'signal': d.signal,
+    };
+  }
+
+  String _messengerLabel(Translations t, String id) {
+    switch (id) {
+      case 'telegram':
+        return t.home.notifications.telegram;
+      case 'element':
+        return t.home.notifications.element;
+      case 'simplex':
+        return t.home.notifications.simplex;
+      case 'signal':
+        return t.home.notifications.signal;
+      default:
+        return id;
+    }
+  }
+
+  /// "Get notified" section: one tappable icon+label per configured messenger.
+  List<Widget> _notificationLinksSection(
+    BuildContext context,
+    Translations t,
+    CoordinatorRecord record,
+  ) {
+    final links = _resolveGroupLinks(record);
+    if (links.isEmpty) return const [];
+    return [
+      const Divider(height: 32),
+      Text(
+        t.home.notifications.title,
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 12),
+      Wrap(
+        spacing: 20,
+        runSpacing: 12,
+        children: [
+          for (final id in CoordinatorInfo.messengerIds)
+            if (links[id] != null && links[id]!.isNotEmpty)
+              InkWell(
+                onTap: () => launchUrl(
+                  Uri.parse(links[id]!),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/$id.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(_messengerLabel(t, id)),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.open_in_new, size: 14, color: Colors.grey),
+                  ],
+                ),
+              ),
+        ],
+      ),
+    ];
   }
 
   Future<void> _openNjump(String idOrAddr) async {

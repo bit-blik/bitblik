@@ -33,6 +33,12 @@ class CoordinatorInfo {
   final String? icon;
   final String? termsOfUsageNaddr;
 
+  /// Community/notification group links this coordinator advertises, keyed by
+  /// messenger id (`telegram`, `element`, `simplex`, `signal`, ...). Empty when
+  /// the coordinator doesn't advertise any; the app then falls back to its
+  /// bundled defaults for the payment system.
+  final Map<String, String> groupLinks;
+
   const CoordinatorInfo({
     required this.name,
     required this.reservationSeconds,
@@ -48,7 +54,16 @@ class CoordinatorInfo {
     this.version,
     this.icon,
     this.termsOfUsageNaddr,
+    this.groupLinks = const {},
   });
+
+  /// Known messenger ids advertised via group links, in display order.
+  static const List<String> messengerIds = [
+    'telegram',
+    'element',
+    'simplex',
+    'signal',
+  ];
 
   factory CoordinatorInfo.fromJson(Map<String, dynamic> json) {
     return CoordinatorInfo(
@@ -71,6 +86,7 @@ class CoordinatorInfo {
       version: json['version'] as String?,
       icon: json['icon'] as String?,
       termsOfUsageNaddr: json['terms_of_usage_naddr'] as String?,
+      groupLinks: _parseGroupLinks(json['group_links']),
     );
   }
 
@@ -90,6 +106,7 @@ class CoordinatorInfo {
       if (version != null) 'version': version,
       if (icon != null) 'icon': icon,
       if (termsOfUsageNaddr != null) 'terms_of_usage_naddr': termsOfUsageNaddr,
+      if (groupLinks.isNotEmpty) 'group_links': groupLinks,
     };
   }
 
@@ -129,6 +146,11 @@ class CoordinatorInfo {
       version: _emptyToNull(tags['version']),
       nostrNpub: Nip19.encodePubKey(event.pubKey),
       termsOfUsageNaddr: _emptyToNull(tags['terms_of_usage_naddr']),
+      groupLinks: {
+        for (final entry in tags.entries)
+          if (entry.key.startsWith('group_') && entry.value.isNotEmpty)
+            entry.key.substring('group_'.length): entry.value,
+      },
     );
   }
 
@@ -155,7 +177,19 @@ class CoordinatorInfo {
       ['payment_system', paymentSystem],
       ['version', version ?? ''],
       ['terms_of_usage_naddr', termsOfUsageNaddr ?? ''],
+      for (final entry in groupLinks.entries)
+        if (entry.value.isNotEmpty) ['group_${entry.key}', entry.value],
     ];
+  }
+
+  /// Parse the RPC `group_links` JSON value into a sanitized string map.
+  static Map<String, String> _parseGroupLinks(dynamic raw) {
+    if (raw is! Map) return const {};
+    final out = <String, String>{};
+    raw.forEach((k, v) {
+      if (k is String && v is String && v.isNotEmpty) out[k] = v;
+    });
+    return out;
   }
 
   static String? _emptyToNull(String? v) =>

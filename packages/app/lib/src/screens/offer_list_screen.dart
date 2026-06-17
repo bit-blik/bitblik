@@ -383,9 +383,6 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
         .where((r) => r.paymentSystem == selectedSystem.id)
         .toList(growable: false);
 
-    // Community links follow the payment system selected in settings.
-    final links = GroupLinks.of(selectedSystem.id);
-
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -410,128 +407,11 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                 style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 24),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 20,
-                runSpacing: 4,
-                children: [
-                  // Telegram - only show if link is configured
-                  if (links.telegram.isNotEmpty)
-                    InkWell(
-                      onTap: () async {
-                        final Uri url = Uri.parse(links.telegram);
-                        await launchUrl(url);
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 23,
-                            height: 23,
-                            decoration: BoxDecoration(shape: BoxShape.circle),
-                            child: ClipOval(
-                              child: Image.asset(
-                                'assets/telegram.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            t.home.notifications.telegram,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                  // Element - only show if link is configured
-                  if (links.element.isNotEmpty)
-                    InkWell(
-                      onTap: () async {
-                        final Uri url = Uri.parse(links.element);
-                        await launchUrl(url);
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 23,
-                            height: 23,
-                            decoration: BoxDecoration(shape: BoxShape.circle),
-                            child: ClipOval(
-                              child: Image.asset(
-                                'assets/element.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            t.home.notifications.element,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                  // SimpleX - only show if link is configured
-                  if (links.simplex.isNotEmpty)
-                    InkWell(
-                      onTap: () async {
-                        final Uri url = Uri.parse(links.simplex);
-                        await launchUrl(url);
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 23,
-                            height: 23,
-                            decoration: BoxDecoration(shape: BoxShape.circle),
-                            child: ClipOval(
-                              child: Image.asset(
-                                'assets/simplex.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            t.home.notifications.simplex,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                  // Signal - only show if link is configured
-                  if (links.signal.isNotEmpty)
-                    InkWell(
-                      onTap: () async {
-                        final Uri url = Uri.parse(links.signal);
-                        await launchUrl(url);
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 23,
-                            height: 23,
-                            decoration: BoxDecoration(shape: BoxShape.circle),
-                            child: ClipOval(
-                              child: Image.asset(
-                                'assets/signal.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            t.home.notifications.signal,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
+              _buildNotificationMessengers(
+                context,
+                t,
+                selectedSystem.id,
+                sortedAllCoordinators,
               ),
             ],
           ),
@@ -1437,6 +1317,158 @@ String _formatTimeAgo(DateTime dateTime) {
   } else {
     return '${difference.inDays}d ago';
   }
+}
+
+/// Asset icon path for a messenger id used by the notification links.
+String _messengerAsset(String id) => 'assets/$id.png';
+
+/// Localized display label for a messenger id.
+String _messengerLabel(Translations t, String id) {
+  switch (id) {
+    case 'telegram':
+      return t.home.notifications.telegram;
+    case 'element':
+      return t.home.notifications.element;
+    case 'simplex':
+      return t.home.notifications.simplex;
+    case 'signal':
+      return t.home.notifications.signal;
+    default:
+      return id;
+  }
+}
+
+/// Group links advertised by a coordinator, falling back to the app's bundled
+/// defaults for the payment system when the coordinator advertises none.
+Map<String, String> _groupLinksFor(
+  CoordinatorRecord c,
+  String selectedSystemId,
+) {
+  final advertised = c.groupLinks;
+  if (advertised.isNotEmpty) return advertised;
+  final d = GroupLinks.of(c.paymentSystem ?? selectedSystemId);
+  return {
+    if (d.telegram.isNotEmpty) 'telegram': d.telegram,
+    if (d.element.isNotEmpty) 'element': d.element,
+    if (d.simplex.isNotEmpty) 'simplex': d.simplex,
+    if (d.signal.isNotEmpty) 'signal': d.signal,
+  };
+}
+
+/// Notification messenger chips, driven by the enabled coordinators for the
+/// selected payment system. Tapping a chip opens a sheet listing every
+/// coordinator that supports that messenger with a link to its group.
+Widget _buildNotificationMessengers(
+  BuildContext context,
+  Translations t,
+  String selectedSystemId,
+  List<CoordinatorRecord> coordinators,
+) {
+  final byMessenger =
+      <String, List<({CoordinatorRecord coord, String url})>>{};
+  for (final c in coordinators.where((c) => c.enabled)) {
+    _groupLinksFor(c, selectedSystemId).forEach((messenger, url) {
+      if (url.isEmpty) return;
+      (byMessenger[messenger] ??= []).add((coord: c, url: url));
+    });
+  }
+  if (byMessenger.isEmpty) return const SizedBox.shrink();
+
+  return Wrap(
+    alignment: WrapAlignment.center,
+    spacing: 20,
+    runSpacing: 4,
+    children: [
+      for (final id in CoordinatorInfo.messengerIds)
+        if (byMessenger[id] != null)
+          InkWell(
+            onTap: () =>
+                _showMessengerCoordinators(context, t, id, byMessenger[id]!),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 23,
+                  height: 23,
+                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  child: ClipOval(
+                    child: Image.asset(
+                      _messengerAsset(id),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _messengerLabel(t, id),
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+    ],
+  );
+}
+
+/// Bottom sheet listing each coordinator that supports [messengerId], each with
+/// its logo/name and an external link to the coordinator's group.
+Future<void> _showMessengerCoordinators(
+  BuildContext context,
+  Translations t,
+  String messengerId,
+  List<({CoordinatorRecord coord, String url})> entries,
+) {
+  return showModalBottomSheet(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: ClipOval(
+                    child: Image.asset(
+                      _messengerAsset(messengerId),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _messengerLabel(t, messengerId),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          for (final e in entries)
+            ListTile(
+              leading: _buildCoordinatorIcon(e.coord, size: 28),
+              title: Text(e.coord.name),
+              trailing: const Icon(Icons.open_in_new, size: 20),
+              onTap: () async {
+                Navigator.of(ctx).pop();
+                await launchUrl(
+                  Uri.parse(e.url),
+                  mode: LaunchMode.externalApplication,
+                );
+              },
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
 }
 
 Widget _buildCoordinatorIcon(CoordinatorRecord c, {double size = 20}) {
