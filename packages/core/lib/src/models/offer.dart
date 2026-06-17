@@ -38,6 +38,14 @@ enum OfferCategory {
   online,
 }
 
+enum DisputeEscalationReason {
+  autoExpiredSentBlikTimeout,
+  autoInvalidBlikTimeout,
+  autoConflictTimeout,
+  makerOpenedDispute,
+  unknown,
+}
+
 // Represents an offer listed by the coordinator.
 class Offer {
   final String id;
@@ -64,6 +72,8 @@ class Offer {
   final DateTime? makerConfirmedAt;
   final DateTime? settledAt;
   final DateTime? disputeAt;
+  final DateTime? takerChargedAt;
+  final DisputeEscalationReason? disputeEscalationReason;
   final DateTime? takerPaidAt;
   final int? takerFees;
   final String? takerPaymentFailureReason;
@@ -156,6 +166,8 @@ class Offer {
     this.makerConfirmedAt,
     this.settledAt,
     this.disputeAt,
+    this.takerChargedAt,
+    this.disputeEscalationReason,
     this.takerPaidAt,
     this.takerFees,
     this.takerPaymentFailureReason,
@@ -280,6 +292,16 @@ class Offer {
       makerConfirmedAt: parseOptionalDateTime(json['maker_confirmed_at']),
       settledAt: parseOptionalDateTime(json['settled_at']),
       disputeAt: parseOptionalDateTime(json['dispute_at']),
+      takerChargedAt: parseOptionalDateTime(json['taker_charged_at']),
+      disputeEscalationReason: () {
+        final raw = json['dispute_escalation_reason'];
+        if (raw is! String || raw.trim().isEmpty) return null;
+        try {
+          return DisputeEscalationReason.values.byName(raw);
+        } catch (_) {
+          return DisputeEscalationReason.unknown;
+        }
+      }(),
       takerPaidAt: parseOptionalDateTime(json['taker_paid_at']),
       takerFees: json['taker_fees'] as int?,
       takerPaymentFailureReason:
@@ -323,6 +345,8 @@ class Offer {
       'maker_confirmed_at': makerConfirmedAt?.toUtc().toIso8601String(),
       'settled_at': settledAt?.toUtc().toIso8601String(),
       'dispute_at': disputeAt?.toUtc().toIso8601String(),
+      'taker_charged_at': takerChargedAt?.toUtc().toIso8601String(),
+      'dispute_escalation_reason': disputeEscalationReason?.name,
       'taker_paid_at': takerPaidAt?.toUtc().toIso8601String(),
       'taker_fees': takerFees,
       'taker_payment_failure_reason': takerPaymentFailureReason,
@@ -359,6 +383,8 @@ class Offer {
 
   bool get isDispute => status == OfferStatus.dispute;
 
+  bool get takerExplicitlyClaimedCharge => takerChargedAt != null;
+
   Map<String, dynamic> toJsonWithPubkeys() => toJson()
     ..addAll({
       'maker_pubkey': makerPubkey,
@@ -378,6 +404,8 @@ class Offer {
     bool includeHoldInvoicePreimage = false,
   }) {
     final json = toJsonWithPubkeys();
+    json.remove('taker_charged_at');
+    json.remove('dispute_escalation_reason');
     if (!includeBlikCode) {
       json.remove('blik_code');
     }
@@ -412,6 +440,8 @@ class Offer {
     DateTime? makerConfirmedAt,
     DateTime? settledAt,
     DateTime? disputeAt,
+    DateTime? takerChargedAt,
+    DisputeEscalationReason? disputeEscalationReason,
     DateTime? takerPaidAt,
     int? takerFees,
     String? takerPaymentFailureReason,
@@ -445,6 +475,9 @@ class Offer {
       makerConfirmedAt: makerConfirmedAt ?? this.makerConfirmedAt,
       settledAt: settledAt ?? this.settledAt,
       disputeAt: disputeAt ?? this.disputeAt,
+      takerChargedAt: takerChargedAt ?? this.takerChargedAt,
+      disputeEscalationReason:
+          disputeEscalationReason ?? this.disputeEscalationReason,
       takerPaidAt: takerPaidAt ?? this.takerPaidAt,
       takerFees: takerFees ?? this.takerFees,
       takerPaymentFailureReason:

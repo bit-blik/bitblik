@@ -48,6 +48,14 @@ const LEVEL_ICONS = {
   debug: <CheckCircle size={14} className="text-gray-400" />,
 };
 
+const DISPUTE_REASON_LABELS = {
+  autoExpiredSentBlikTimeout: 'Auto dispute after expiredSentBlik timeout',
+  autoInvalidBlikTimeout: 'Auto dispute after invalidBlik timeout',
+  autoConflictTimeout: 'Auto dispute after conflict timeout',
+  makerOpenedDispute: 'Opened manually by maker',
+  unknown: 'Unknown dispute reason',
+};
+
 // Display zone — render all timestamps in Budapest regardless of the
 // viewer's browser zone. The stored values are UTC instants (timestamptz).
 const DISPLAY_TZ = 'Europe/Budapest';
@@ -147,6 +155,11 @@ const calcDuration = (from, to) => {
   if (h > 0) return `${h}h ${m}m`;
   if (m > 0) return `${m}m ${s}s`;
   return `${s}s`;
+};
+
+const formatDisputeReason = (reason) => {
+  if (!reason) return '-';
+  return DISPUTE_REASON_LABELS[reason] || reason;
 };
 
 const OffersPage = () => {
@@ -477,13 +490,25 @@ const OffersPage = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                              STATUS_COLORS[offer.status] || 'bg-gray-100 text-gray-800 border-gray-300'
-                            }`}
-                          >
-                            {offer.status}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span
+                              className={`inline-flex w-fit items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                                STATUS_COLORS[offer.status] || 'bg-gray-100 text-gray-800 border-gray-300'
+                              }`}
+                            >
+                              {offer.status}
+                            </span>
+                            {(offer.taker_charged_at || offer.dispute_escalation_reason) && (
+                              <div className="text-[11px] leading-4 text-gray-500">
+                                {offer.taker_charged_at && (
+                                  <div>Taker charged: {formatDate(offer.taker_charged_at)}</div>
+                                )}
+                                {offer.dispute_escalation_reason && (
+                                  <div>{formatDisputeReason(offer.dispute_escalation_reason)}</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-right">
                           {(() => {
@@ -633,7 +658,7 @@ const OffersPage = () => {
 
               {/* Offer Summary */}
               <div className="px-6 py-3 bg-blue-50 border-b border-blue-100">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 text-sm">
                   <div>
                     <span className="text-gray-500">Amount:</span>
                     <span className="ml-2 font-medium text-gray-900">
@@ -662,6 +687,18 @@ const OffersPage = () => {
                     <span className="text-gray-500">Confirmed:</span>
                     <span className="ml-2 font-medium text-gray-900">
                       {formatDate(selectedOffer.maker_confirmed_at)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Taker charged:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      {formatDate(selectedOffer.taker_charged_at)}
+                    </span>
+                  </div>
+                  <div className="col-span-2 md:col-span-3 xl:col-span-2">
+                    <span className="text-gray-500">Dispute context:</span>
+                    <span className="ml-2 font-medium text-gray-900">
+                      {formatDisputeReason(selectedOffer.dispute_escalation_reason)}
                     </span>
                   </div>
                 </div>

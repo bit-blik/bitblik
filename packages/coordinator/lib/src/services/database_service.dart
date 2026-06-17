@@ -99,6 +99,8 @@ class DatabaseService {
         maker_confirmed_at TIMESTAMPTZ,
         settled_at TIMESTAMPTZ,
         dispute_at TIMESTAMPTZ,
+        taker_charged_at TIMESTAMPTZ,
+        dispute_escalation_reason TEXT,
         taker_paid_at TIMESTAMPTZ,
         taker_fees BIGINT NULL, -- Renamed
         taker_payment_failure_reason TEXT NULL,
@@ -123,6 +125,14 @@ class DatabaseService {
     await _connection!.execute('''
       ALTER TABLE offers
       ADD COLUMN IF NOT EXISTS dispute_at TIMESTAMPTZ;
+    ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS taker_charged_at TIMESTAMPTZ;
+    ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS dispute_escalation_reason TEXT;
     ''');
     // Client (app/cli + version) that created the offer. Server-only column,
     // surfaced on the dashboard; never returned to clients.
@@ -423,6 +433,8 @@ class DatabaseService {
       String? takerLightningAddress,
       DateTime? reservedAt,
       DateTime? blikReceivedAt,
+      DateTime? takerChargedAt,
+      DisputeEscalationReason? disputeEscalationReason,
       int? takerFees,
       String? failureReason}) async {
     return _updateOfferStatusInternal(
@@ -434,19 +446,23 @@ class DatabaseService {
       takerLightningAddress: takerLightningAddress,
       reservedAt: reservedAt,
       blikReceivedAt: blikReceivedAt,
+      takerChargedAt: takerChargedAt,
+      disputeEscalationReason: disputeEscalationReason,
       takerFees: takerFees,
       failureReason: failureReason,
     );
   }
 
-  Future<bool> updateOfferStatusIfCurrentStatus(
-      String id, OfferStatus newStatus, List<OfferStatus> expectedCurrentStatuses,
+  Future<bool> updateOfferStatusIfCurrentStatus(String id,
+      OfferStatus newStatus, List<OfferStatus> expectedCurrentStatuses,
       {String? takerPubkey,
       String? blikCode,
       String? takerInvoice,
       String? takerLightningAddress,
       DateTime? reservedAt,
       DateTime? blikReceivedAt,
+      DateTime? takerChargedAt,
+      DisputeEscalationReason? disputeEscalationReason,
       int? takerFees,
       String? failureReason,
       String? expectedTakerPubkey}) async {
@@ -459,6 +475,8 @@ class DatabaseService {
       takerLightningAddress: takerLightningAddress,
       reservedAt: reservedAt,
       blikReceivedAt: blikReceivedAt,
+      takerChargedAt: takerChargedAt,
+      disputeEscalationReason: disputeEscalationReason,
       takerFees: takerFees,
       failureReason: failureReason,
       expectedCurrentStatuses: expectedCurrentStatuses,
@@ -466,15 +484,15 @@ class DatabaseService {
     );
   }
 
-  Future<bool> _updateOfferStatusInternal(
-      String id,
-      OfferStatus newStatus,
+  Future<bool> _updateOfferStatusInternal(String id, OfferStatus newStatus,
       {String? takerPubkey,
       String? blikCode,
       String? takerInvoice,
       String? takerLightningAddress,
       DateTime? reservedAt,
       DateTime? blikReceivedAt,
+      DateTime? takerChargedAt,
+      DisputeEscalationReason? disputeEscalationReason,
       int? takerFees,
       String? failureReason,
       List<OfferStatus>? expectedCurrentStatuses,
@@ -501,13 +519,15 @@ class DatabaseService {
         params['reserved_at'] = reservedAt.toUtc(); // Use passed timestamp
         setClauses.add('taker_pubkey = @taker_pubkey');
         setClauses.add('reserved_at = @reserved_at');
+        setClauses.add('taker_charged_at = NULL');
+        setClauses.add('dispute_at = NULL');
+        setClauses.add('dispute_escalation_reason = NULL');
         break;
       case OfferStatus.blikReceived:
         if (blikCode == null)
           throw ArgumentError('blikCode required for blikReceived status');
         if (takerInvoice == null || takerInvoice.trim().isEmpty) {
-          throw ArgumentError(
-              'takerInvoice required for blikReceived status');
+          throw ArgumentError('takerInvoice required for blikReceived status');
         }
         if (blikReceivedAt == null)
           throw ArgumentError(
@@ -557,6 +577,9 @@ class DatabaseService {
         setClauses.add('taker_invoice = NULL');
         setClauses.add('taker_invoice_fees = NULL');
         setClauses.add('blik_received_at = NULL');
+        setClauses.add('taker_charged_at = NULL');
+        setClauses.add('dispute_at = NULL');
+        setClauses.add('dispute_escalation_reason = NULL');
         break;
       case OfferStatus.takerPaymentFailed:
         if (failureReason != null) {
@@ -574,9 +597,20 @@ class DatabaseService {
         // value if the status is ever re-applied.
         params['dispute_at'] = now;
         setClauses.add('dispute_at = COALESCE(dispute_at, @dispute_at)');
+        if (disputeEscalationReason != null) {
+          params['dispute_escalation_reason'] = disputeEscalationReason.name;
+          setClauses.add(
+              'dispute_escalation_reason = COALESCE(dispute_escalation_reason, @dispute_escalation_reason)');
+        }
         break;
       default:
         break;
+    }
+
+    if (takerChargedAt != null) {
+      params['taker_charged_at'] = takerChargedAt.toUtc();
+      setClauses.add(
+          'taker_charged_at = COALESCE(taker_charged_at, @taker_charged_at)');
     }
 
     // AppLogger.info(
@@ -730,13 +764,23 @@ class DatabaseService {
       takerPubkey: map['taker_pubkey'],
       takerLightningAddress: map['taker_lightning_address'],
       takerInvoice: map['taker_invoice'],
-            blikCode: map['blik_code'],
+      blikCode: map['blik_code'],
       updatedAt: (map['updated_at'] as DateTime?)?.toLocal(),
       reservedAt: (map['reserved_at'] as DateTime?)?.toLocal(),
       blikReceivedAt: (map['blik_received_at'] as DateTime?)?.toLocal(),
       makerConfirmedAt: (map['maker_confirmed_at'] as DateTime?)?.toLocal(),
       settledAt: (map['settled_at'] as DateTime?)?.toLocal(),
       disputeAt: (map['dispute_at'] as DateTime?)?.toLocal(),
+      takerChargedAt: (map['taker_charged_at'] as DateTime?)?.toLocal(),
+      disputeEscalationReason: () {
+        final raw = map['dispute_escalation_reason'];
+        if (raw is! String || raw.trim().isEmpty) return null;
+        try {
+          return DisputeEscalationReason.values.byName(raw);
+        } catch (_) {
+          return DisputeEscalationReason.unknown;
+        }
+      }(),
       takerPaidAt: (map['taker_paid_at'] as DateTime?)?.toLocal(),
       takerFees: map['taker_fees'],
       takerPaymentFailureReason: map['taker_payment_failure_reason'],
@@ -749,6 +793,5 @@ class DatabaseService {
       }(),
       clientVersion: map['client_version'] as String?,
     );
-}
-
+  }
 }

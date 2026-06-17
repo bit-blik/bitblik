@@ -197,6 +197,8 @@ void main() {
     String coordinatorPubkey = 'test-coordinator-pubkey',
     OfferCategory? category,
     DateTime? updatedAt,
+    DateTime? takerChargedAt,
+    DisputeEscalationReason? disputeEscalationReason,
   }) {
     return Offer(
       id: id,
@@ -219,6 +221,8 @@ void main() {
       coordinatorPubkey: coordinatorPubkey,
       category: category,
       updatedAt: updatedAt,
+      takerChargedAt: takerChargedAt,
+      disputeEscalationReason: disputeEscalationReason,
     );
   }
 
@@ -2257,16 +2261,27 @@ void main() {
 
         when(mockDbService.updateOfferStatusIfCurrentStatus(
                 offerId, OfferStatus.conflict, [OfferStatus.invalidBlik],
-                expectedTakerPubkey: anyNamed('expectedTakerPubkey')))
+                expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+                takerChargedAt: anyNamed('takerChargedAt')))
             .thenAnswer((_) async {
-          offer = offer.copyWith(status: OfferStatus.conflict);
+          offer = offer.copyWith(
+            status: OfferStatus.conflict,
+            takerChargedAt: clock.now().toUtc(),
+          );
           offer = offer.copyWith(updatedAt: clock.now().toUtc());
           return true;
         });
 
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .thenAnswer((_) async {
-          offer = offer.copyWith(status: OfferStatus.dispute);
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(
+            status: OfferStatus.dispute,
+            disputeEscalationReason:
+                DisputeEscalationReason.autoConflictTimeout,
+          );
           offer = offer.copyWith(updatedAt: clock.now().toUtc());
           return true;
         });
@@ -2286,16 +2301,22 @@ void main() {
 
         verifyNever(
             mockPaymentService.settleInvoice(preimageHex: testPreimage));
-        verifyNever(
-            mockDbService.updateOfferStatus(offerId, OfferStatus.dispute));
+        verifyNever(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        ));
 
         async.elapse(Duration(seconds: 2));
         async.flushMicrotasks();
 
         verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
             .called(1);
-        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .called(1);
+        verify(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: DisputeEscalationReason.autoConflictTimeout,
+        )).called(1);
         expect(offer.status, OfferStatus.dispute);
       });
     });
@@ -2317,15 +2338,23 @@ void main() {
             .thenAnswer((_) async => offer);
 
         when(mockDbService.updateOfferStatusIfCurrentStatus(
-                offerId, OfferStatus.invalidBlik, [OfferStatus.blikSentToMaker]))
-            .thenAnswer((_) async {
+            offerId,
+            OfferStatus.invalidBlik,
+            [OfferStatus.blikSentToMaker])).thenAnswer((_) async {
           offer = offer.copyWith(
               status: OfferStatus.invalidBlik, updatedAt: clock.now().toUtc());
           return true;
         });
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .thenAnswer((_) async {
-          offer = offer.copyWith(status: OfferStatus.dispute);
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(
+            status: OfferStatus.dispute,
+            disputeEscalationReason:
+                DisputeEscalationReason.autoInvalidBlikTimeout,
+          );
           return true;
         });
         when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
@@ -2341,16 +2370,23 @@ void main() {
         async.flushMicrotasks();
         verifyNever(
             mockPaymentService.settleInvoice(preimageHex: testPreimage));
-        verifyNever(
-            mockDbService.updateOfferStatus(offerId, OfferStatus.dispute));
+        verifyNever(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        ));
 
         async.elapse(const Duration(seconds: 2));
         async.flushMicrotasks();
 
         verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
             .called(1);
-        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .called(1);
+        verify(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason:
+              DisputeEscalationReason.autoInvalidBlikTimeout,
+        )).called(1);
         expect(offer.status, OfferStatus.dispute);
       });
     });
@@ -2375,9 +2411,16 @@ void main() {
             .thenAnswer((_) async => [offer]);
         when(mockDbService.getOfferById(offerId))
             .thenAnswer((_) async => offer);
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .thenAnswer((_) async {
-          offer = offer.copyWith(status: OfferStatus.dispute);
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(
+            status: OfferStatus.dispute,
+            disputeEscalationReason:
+                DisputeEscalationReason.autoExpiredSentBlikTimeout,
+          );
           return true;
         });
         when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
@@ -2391,16 +2434,23 @@ void main() {
         async.flushMicrotasks();
         verifyNever(
             mockPaymentService.settleInvoice(preimageHex: testPreimage));
-        verifyNever(
-            mockDbService.updateOfferStatus(offerId, OfferStatus.dispute));
+        verifyNever(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        ));
 
         async.elapse(const Duration(seconds: 2));
         async.flushMicrotasks();
 
         verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
             .called(1);
-        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .called(1);
+        verify(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason:
+              DisputeEscalationReason.autoExpiredSentBlikTimeout,
+        )).called(1);
         expect(offer.status, OfferStatus.dispute);
       });
     });
@@ -2429,9 +2479,16 @@ void main() {
               status: OfferStatus.conflict, updatedAt: clock.now().toUtc());
           return true;
         });
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .thenAnswer((_) async {
-          offer = offer.copyWith(status: OfferStatus.dispute);
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(
+            status: OfferStatus.dispute,
+            disputeEscalationReason:
+                DisputeEscalationReason.autoConflictTimeout,
+          );
           return true;
         });
         when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
@@ -2449,16 +2506,22 @@ void main() {
         async.flushMicrotasks();
         verifyNever(
             mockPaymentService.settleInvoice(preimageHex: testPreimage));
-        verifyNever(
-            mockDbService.updateOfferStatus(offerId, OfferStatus.dispute));
+        verifyNever(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        ));
 
         async.elapse(const Duration(seconds: 2));
         async.flushMicrotasks();
 
         verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
             .called(1);
-        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .called(1);
+        verify(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: DisputeEscalationReason.autoConflictTimeout,
+        )).called(1);
         expect(offer.status, OfferStatus.dispute);
       });
     });
@@ -2488,9 +2551,16 @@ void main() {
             .thenAnswer((_) async => [offer]);
         when(mockDbService.getOfferById(offerId))
             .thenAnswer((_) async => offer);
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .thenAnswer((_) async {
-          offer = offer.copyWith(status: OfferStatus.dispute);
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(
+            status: OfferStatus.dispute,
+            disputeEscalationReason:
+                DisputeEscalationReason.autoInvalidBlikTimeout,
+          );
           return true;
         });
         when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
@@ -2500,8 +2570,12 @@ void main() {
 
         verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
             .called(1);
-        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .called(1);
+        verify(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason:
+              DisputeEscalationReason.autoInvalidBlikTimeout,
+        )).called(1);
         expect(offer.status, OfferStatus.dispute);
       });
 
@@ -2524,9 +2598,16 @@ void main() {
             .thenAnswer((_) async => [offer]);
         when(mockDbService.getOfferById(offerId))
             .thenAnswer((_) async => offer);
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .thenAnswer((_) async {
-          offer = offer.copyWith(status: OfferStatus.dispute);
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(
+            status: OfferStatus.dispute,
+            disputeEscalationReason:
+                DisputeEscalationReason.autoExpiredSentBlikTimeout,
+          );
           return true;
         });
         when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
@@ -2536,8 +2617,12 @@ void main() {
 
         verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
             .called(1);
-        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .called(1);
+        verify(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason:
+              DisputeEscalationReason.autoExpiredSentBlikTimeout,
+        )).called(1);
         expect(offer.status, OfferStatus.dispute);
       });
 
@@ -2559,9 +2644,16 @@ void main() {
             .thenAnswer((_) async => [offer]);
         when(mockDbService.getOfferById(offerId))
             .thenAnswer((_) async => offer);
-        when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .thenAnswer((_) async {
-          offer = offer.copyWith(status: OfferStatus.dispute);
+        when(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: anyNamed('disputeEscalationReason'),
+        )).thenAnswer((_) async {
+          offer = offer.copyWith(
+            status: OfferStatus.dispute,
+            disputeEscalationReason:
+                DisputeEscalationReason.autoConflictTimeout,
+          );
           return true;
         });
         when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
@@ -2571,8 +2663,11 @@ void main() {
 
         verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
             .called(1);
-        verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-            .called(1);
+        verify(mockDbService.updateOfferStatus(
+          offerId,
+          OfferStatus.dispute,
+          disputeEscalationReason: DisputeEscalationReason.autoConflictTimeout,
+        )).called(1);
         expect(offer.status, OfferStatus.dispute);
       });
 
@@ -2598,9 +2693,16 @@ void main() {
               .thenAnswer((_) async => [offer]);
           when(mockDbService.getOfferById(offerId))
               .thenAnswer((_) async => offer);
-          when(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-              .thenAnswer((_) async {
-            offer = offer.copyWith(status: OfferStatus.dispute);
+          when(mockDbService.updateOfferStatus(
+            offerId,
+            OfferStatus.dispute,
+            disputeEscalationReason: anyNamed('disputeEscalationReason'),
+          )).thenAnswer((_) async {
+            offer = offer.copyWith(
+              status: OfferStatus.dispute,
+              disputeEscalationReason:
+                  DisputeEscalationReason.autoInvalidBlikTimeout,
+            );
             return true;
           });
           when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
@@ -2614,8 +2716,11 @@ void main() {
           async.flushMicrotasks();
           verifyNever(
               mockPaymentService.settleInvoice(preimageHex: testPreimage));
-          verifyNever(
-              mockDbService.updateOfferStatus(offerId, OfferStatus.dispute));
+          verifyNever(mockDbService.updateOfferStatus(
+            offerId,
+            OfferStatus.dispute,
+            disputeEscalationReason: anyNamed('disputeEscalationReason'),
+          ));
 
           // Past 30-min remaining → full 60-min elapsed from status change → fires
           async.elapse(const Duration(seconds: 2));
@@ -2623,8 +2728,12 @@ void main() {
 
           verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
               .called(1);
-          verify(mockDbService.updateOfferStatus(offerId, OfferStatus.dispute))
-              .called(1);
+          verify(mockDbService.updateOfferStatus(
+            offerId,
+            OfferStatus.dispute,
+            disputeEscalationReason:
+                DisputeEscalationReason.autoInvalidBlikTimeout,
+          )).called(1);
           expect(offer.status, OfferStatus.dispute);
         });
       });
@@ -2874,7 +2983,7 @@ void main() {
 
       // Mock sequence of status updates
       when(mockDbService.updateOfferStatusIfCurrentStatus(
-              testOfferId, OfferStatus.makerConfirmed, [
+          testOfferId, OfferStatus.makerConfirmed, [
         OfferStatus.conflict,
         OfferStatus.takerCharged,
         OfferStatus.blikSentToMaker,
@@ -2933,7 +3042,7 @@ void main() {
       verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
           .called(1);
       verify(mockDbService.updateOfferStatusIfCurrentStatus(
-              testOfferId, OfferStatus.makerConfirmed, [
+          testOfferId, OfferStatus.makerConfirmed, [
         OfferStatus.conflict,
         OfferStatus.takerCharged,
         OfferStatus.blikSentToMaker,
@@ -2989,7 +3098,7 @@ void main() {
           .thenAnswer((_) async => offer);
 
       when(mockDbService.updateOfferStatusIfCurrentStatus(
-              testOfferId, OfferStatus.makerConfirmed, [
+          testOfferId, OfferStatus.makerConfirmed, [
         OfferStatus.conflict,
         OfferStatus.takerCharged,
         OfferStatus.blikSentToMaker,
@@ -3046,18 +3155,16 @@ void main() {
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
       when(mockDbService.updateOfferStatusIfCurrentStatus(
-              testOfferId, OfferStatus.invalidBlik,
-              [OfferStatus.blikSentToMaker]))
-          .thenAnswer((_) async => true);
+          testOfferId,
+          OfferStatus.invalidBlik,
+          [OfferStatus.blikSentToMaker])).thenAnswer((_) async => true);
 
       final result =
           await coordinatorService.markBlikInvalid(testOfferId, testMakerId);
 
       expect(result, isTrue);
-      verify(mockDbService.updateOfferStatusIfCurrentStatus(
-              testOfferId, OfferStatus.invalidBlik,
-              [OfferStatus.blikSentToMaker]))
-          .called(1);
+      verify(mockDbService.updateOfferStatusIfCurrentStatus(testOfferId,
+          OfferStatus.invalidBlik, [OfferStatus.blikSentToMaker])).called(1);
     });
 
     test('invalidBlik --taker re-takes--> reserved (same taker)', () async {
@@ -3110,12 +3217,17 @@ void main() {
 
     test('invalidBlik --taker marks BLK as charged--> conflict', () async {
       var offer = createTestOffer(
-          status: OfferStatus.invalidBlik, takerPubkey: testTakerId);
+        status: OfferStatus.invalidBlik,
+        takerPubkey: testTakerId,
+        createdAt: clock.now().toUtc(),
+        updatedAt: clock.now().toUtc(),
+      );
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
       when(mockDbService.updateOfferStatusIfCurrentStatus(
               testOfferId, OfferStatus.conflict, [OfferStatus.invalidBlik],
-              expectedTakerPubkey: testTakerId))
+              expectedTakerPubkey: testTakerId,
+              takerChargedAt: anyNamed('takerChargedAt')))
           .thenAnswer((_) async => true);
 
       final result =
@@ -3124,7 +3236,8 @@ void main() {
       expect(result, isTrue);
       verify(mockDbService.updateOfferStatusIfCurrentStatus(
               testOfferId, OfferStatus.conflict, [OfferStatus.invalidBlik],
-              expectedTakerPubkey: testTakerId))
+              expectedTakerPubkey: testTakerId,
+              takerChargedAt: anyNamed('takerChargedAt')))
           .called(1);
     });
 
@@ -3144,7 +3257,7 @@ void main() {
 
       // Mock sequence of status updates
       when(mockDbService.updateOfferStatusIfCurrentStatus(
-              testOfferId, OfferStatus.makerConfirmed, [
+          testOfferId, OfferStatus.makerConfirmed, [
         OfferStatus.conflict,
         OfferStatus.takerCharged,
         OfferStatus.blikSentToMaker,
@@ -3192,7 +3305,7 @@ void main() {
       verify(mockPaymentService.settleInvoice(preimageHex: testPreimage))
           .called(1);
       verify(mockDbService.updateOfferStatusIfCurrentStatus(
-              testOfferId, OfferStatus.makerConfirmed, [
+          testOfferId, OfferStatus.makerConfirmed, [
         OfferStatus.conflict,
         OfferStatus.takerCharged,
         OfferStatus.blikSentToMaker,
@@ -3325,8 +3438,7 @@ void main() {
       verifyNever(mockDbService.updateTakerInvoice(testOfferId, any));
     });
 
-    test(
-        'Retry taker payment rejects legacy mismatched invoice before paying',
+    test('Retry taker payment rejects legacy mismatched invoice before paying',
         () async {
       final parsedInvoice = Bolt11PaymentRequest(testValidTakerInvoice);
       final invoiceAmountSats =

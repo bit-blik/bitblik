@@ -72,7 +72,7 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: (db, version) async {
         await db.execute(_createTableSql);
       },
@@ -148,7 +148,10 @@ class OfferDbService {
   Future<void> upsertOffer(Offer offer) async {
     try {
       final db = await database;
-      final jsonData = offer.toJson();
+      final jsonData =
+          offer.toJson()
+            ..remove('taker_charged_at')
+            ..remove('dispute_escalation_reason');
       Logger.log.d(
         () =>
             '[OfferDbService] Upserting offer ${offer.id} status=${offer.status.name}',
@@ -246,9 +249,7 @@ class OfferDbService {
       'GROUP BY coordinator_pubkey',
       [OfferStatus.takerPaid.name, userPubkey, userPubkey],
     );
-    return {
-      for (final r in rows) (r['pk'] as String): (r['c'] as int),
-    };
+    return {for (final r in rows) (r['pk'] as String): (r['c'] as int)};
   }
 
   /// Locally-cancelled offers created within [window]. Used by the boot-time

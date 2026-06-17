@@ -1252,12 +1252,15 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
   ref.watch(
     discoveredCoordinatorsProvider.select(
       (async) => async.maybeWhen(
-        data: (records) => (records
-                .where((r) => r.enabled && r.paymentSystem == selectedSystem.id)
-                .map((r) => r.pubkeyHex)
-                .toList()
-              ..sort())
-            .join(','),
+        data:
+            (records) => (records
+                    .where(
+                      (r) => r.enabled && r.paymentSystem == selectedSystem.id,
+                    )
+                    .map((r) => r.pubkeyHex)
+                    .toList()
+                  ..sort())
+                .join(','),
         orElse: () => '',
       ),
     ),
@@ -1521,7 +1524,7 @@ final selectedPaymentSystemProvider =
 
 class SelectedPaymentSystemNotifier extends StateNotifier<PaymentSystem> {
   SelectedPaymentSystemNotifier()
-      : super(paymentSystemById(buildDefaultPaymentSystemId)) {
+    : super(paymentSystemById(buildDefaultPaymentSystemId)) {
     _load();
   }
 
@@ -1712,7 +1715,9 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       final strings = t.offerNotifications;
       NotificationService().startOfferForegroundService(
         strings.activeService.title,
-        strings.activeService.body(app: _ref.read(selectedPaymentSystemProvider).brandName),
+        strings.activeService.body(
+          app: _ref.read(selectedPaymentSystemProvider).brandName,
+        ),
       );
     } else {
       NotificationService().stopOfferForegroundService();

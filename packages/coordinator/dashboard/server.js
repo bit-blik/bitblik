@@ -114,6 +114,8 @@ const fetchRecentOffers = async (limit = RECENT_OFFERS_DEFAULT_LIMIT, offset = 0
       reserved_at,
       maker_confirmed_at,
       settled_at,
+      taker_charged_at,
+      dispute_escalation_reason,
       taker_paid_at
     FROM offers
     ORDER BY created_at DESC
@@ -144,6 +146,8 @@ const fetchOfferById = async (offerId) => {
       reserved_at,
       maker_confirmed_at,
       settled_at,
+      taker_charged_at,
+      dispute_escalation_reason,
       taker_paid_at
     FROM offers
     WHERE id = $1

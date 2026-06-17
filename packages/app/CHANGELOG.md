@@ -4,6 +4,7 @@
 - feat: support MB WAY for Portugal with 10 digit codes for ATMs
 - feat: portuguese translation
 - feat: wallets now can send/receive
+- fix: notification links are now coordinator specific
 - fix: cashu wallet state backup/restore + seed phrase backup
 - fix: new expiredBlik timer to auto cancel reservation back to funded
 - fix: improve finished offers stats by doing it client-side

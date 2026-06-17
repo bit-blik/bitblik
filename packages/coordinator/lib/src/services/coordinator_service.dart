@@ -913,8 +913,7 @@ class CoordinatorService {
   }) async {
     // Resolve the currency: client-supplied, else this coordinator's method
     // currency. Reject currencies this coordinator does not serve.
-    final currency =
-        (fiatCurrency ?? _paymentSystem.currency).toUpperCase();
+    final currency = (fiatCurrency ?? _paymentSystem.currency).toUpperCase();
     if (!_supportedCurrencies.contains(currency)) {
       throw Exception(
           'Unsupported currency: $currency (supported: ${_supportedCurrencies.join(',')})');
@@ -1556,8 +1555,19 @@ class CoordinatorService {
       return;
     }
 
-    final success =
-        await _dbService.updateOfferStatus(offerId, OfferStatus.dispute);
+    final disputeReason = switch (offer.status) {
+      OfferStatus.expiredSentBlik =>
+        DisputeEscalationReason.autoExpiredSentBlikTimeout,
+      OfferStatus.invalidBlik => DisputeEscalationReason.autoInvalidBlikTimeout,
+      OfferStatus.conflict => DisputeEscalationReason.autoConflictTimeout,
+      _ => DisputeEscalationReason.unknown,
+    };
+
+    final success = await _dbService.updateOfferStatus(
+      offerId,
+      OfferStatus.dispute,
+      disputeEscalationReason: disputeReason,
+    );
     if (success) {
       AppLogger.info(
           'Offer $offerId status updated to dispute after escalation timeout.',
@@ -2193,8 +2203,8 @@ class CoordinatorService {
     // newStatus depends on the observed status, so CAS on exactly that status:
     // if it changed since the read, the invalidBlik/conflict mapping would be
     // stale — abort instead.
-    final success = await _dbService.updateOfferStatusIfCurrentStatus(
-        offerId, newStatus, [offer.status]);
+    final success = await _dbService
+        .updateOfferStatusIfCurrentStatus(offerId, newStatus, [offer.status]);
 
     if (success) {
       AppLogger.info('Offer $offerId status updated to $newStatus.',
@@ -2241,8 +2251,12 @@ class CoordinatorService {
     // expectedTakerPubkey guards the ABA case where the status cycled back
     // with a different taker on the row.
     final success = await _dbService.updateOfferStatusIfCurrentStatus(
-        offerId, newStatus, [offer.status],
-        expectedTakerPubkey: takerId);
+      offerId,
+      newStatus,
+      [offer.status],
+      expectedTakerPubkey: takerId,
+      takerChargedAt: _clock.now().toUtc(),
+    );
 
     if (success) {
       AppLogger.info('Offer $offerId status updated to $newStatus.',
@@ -2310,8 +2324,11 @@ class CoordinatorService {
       return false;
     }
 
-    final success =
-        await _dbService.updateOfferStatus(offerId, OfferStatus.dispute);
+    final success = await _dbService.updateOfferStatus(
+      offerId,
+      OfferStatus.dispute,
+      disputeEscalationReason: DisputeEscalationReason.makerOpenedDispute,
+    );
 
     if (success) {
       AppLogger.info('Offer $offerId status updated to dispute.',
@@ -2369,8 +2386,8 @@ class CoordinatorService {
 
     // CAS on the states maker confirmation is allowed from; losing the race
     // aborts before the hold invoice is settled below.
-    bool success = await _dbService.updateOfferStatusIfCurrentStatus(
-        offerId, OfferStatus.makerConfirmed, [
+    bool success = await _dbService
+        .updateOfferStatusIfCurrentStatus(offerId, OfferStatus.makerConfirmed, [
       OfferStatus.conflict,
       OfferStatus.takerCharged,
       OfferStatus.blikSentToMaker,
@@ -2785,8 +2802,8 @@ class CoordinatorService {
       // Same idempotency caveat as the failure branch: an exception doesn't
       // prove the payment didn't settle. Reconcile before marking failed.
       try {
-        final reconciled = await _paymentBackend
-            ?.reconcileOutgoingPayment(invoice: takerInvoice);
+        final reconciled = await _paymentBackend?.reconcileOutgoingPayment(
+            invoice: takerInvoice);
         final offerForFees = await _dbService.getOfferById(offerId);
         if (reconciled != null &&
             reconciled.isSuccess &&
@@ -2869,8 +2886,8 @@ class CoordinatorService {
     // Guard against double-paying: a prior attempt may have actually settled
     // even though it was recorded as failed (NWC pay_invoice timeouts are not
     // idempotent). Reconcile before sending a fresh payment.
-    final reconciled = await _paymentBackend
-        ?.reconcileOutgoingPayment(invoice: offer.takerInvoice!);
+    final reconciled = await _paymentBackend?.reconcileOutgoingPayment(
+        invoice: offer.takerInvoice!);
     if (reconciled != null && reconciled.isSuccess) {
       AppLogger.info(
           'Retry: offer $offerId already SETTLED on wallet. Finalizing instead of paying again.',
