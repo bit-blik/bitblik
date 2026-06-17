@@ -351,7 +351,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
 
                 // Main title
                 Text(
-                  t.landing.mainTitle,
+                  t.landing.mainTitle(code: ref.watch(selectedPaymentSystemProvider).codeLabel),
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
@@ -364,7 +364,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
 
                 // Subtitle
                 Text(
-                  t.landing.subtitle,
+                  t.landing.subtitle(code: ref.watch(selectedPaymentSystemProvider).codeLabel),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w400,
@@ -402,7 +402,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                             height: cardHeight,
                             child: _buildActionCard(
                               context: context,
-                              title: t.landing.actions.payBlik,
+                              title: t.landing.actions.payBlik(code: ref.watch(selectedPaymentSystemProvider).codeLabel),
                               subtitle: t.landing.actions.payBlikSubtitle,
                               icon: Icons.flash_on,
                               gradient: const LinearGradient(
@@ -433,7 +433,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                             child: _buildActionCard(
                               context: context,
                               title: t.landing.actions.sellBlik,
-                              subtitle: t.landing.actions.sellBlikSubtitle,
+                              subtitle: t.landing.actions.sellBlikSubtitle(code: ref.watch(selectedPaymentSystemProvider).codeLabel),
                               iconImage: 'assets/sell-blik.png',
                               backgroundColor: Colors.white,
                               textColor: const Color(0xFF000000),
@@ -759,10 +759,11 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
   }
 
   bool _isBffActive() {
-    final now = DateTime.now();
-    final start = DateTime(2026, 5, 31);
-    final end = DateTime(2026, 6, 13, 23, 59, 59);
-    return now.isAfter(start) && now.isBefore(end);
+    return false;
+    // final now = DateTime.now();
+    // final start = DateTime(2026, 5, 31);
+    // final end = DateTime(2026, 6, 13, 23, 59, 59);
+    // return now.isAfter(start) && now.isBefore(end);
   }
 
   Widget _buildMovieStripSeparator() {

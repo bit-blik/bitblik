@@ -167,7 +167,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  t.maker.waitTaker.errorRetrievingBlik(details: e.toString()),
+                  t.maker.waitTaker.errorRetrievingBlik(
+                    details: e.toString(),
+                    code: ref.read(selectedPaymentSystemProvider).codeLabel,
+                  ),
                 ),
               ),
             );
@@ -271,7 +274,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       final apiService = ref.read(apiServiceProvider);
       final result = await apiService.initiateOfferFiat(
         fiatAmount: offer.fiatAmount,
-        makerId: makerId,
+        fiatCurrency: offer.fiatCurrency,
         category: offer.category,
         coordinatorPubkey: offer.coordinatorPubkey,
         premiumPercent: offer.premiumPercent,

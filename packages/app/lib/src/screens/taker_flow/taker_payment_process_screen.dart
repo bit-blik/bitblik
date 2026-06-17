@@ -155,10 +155,10 @@ class _PaymentChecklist extends ConsumerWidget {
     // required this.paymentHash, // Add paymentHash to constructor
   });
 
-  String _getStepText(PaymentStep step) {
+  String _getStepText(PaymentStep step, String code) {
     switch (step) {
       case PaymentStep.makerConfirmed:
-        return t.taker.paymentProcess.steps.makerConfirmedBlik;
+        return t.taker.paymentProcess.steps.makerConfirmedBlik(code: code);
       case PaymentStep.makerSettled:
         return t.taker.paymentProcess.steps.makerInvoiceSettled;
       case PaymentStep.takerPaid:
@@ -209,11 +209,12 @@ class _PaymentChecklist extends ConsumerWidget {
             // --- End Refactored Status Logic ---
 
             // Determine the correct text based on failure state for the last item
+            final code = ref.read(selectedPaymentSystemProvider).codeLabel;
             String itemText;
             if (isFailed && stepOrderIndex == successfulStepsOrder.length - 1) {
-              itemText = _getStepText(PaymentStep.takerPaymentFailed);
+              itemText = _getStepText(PaymentStep.takerPaymentFailed, code);
             } else {
-              itemText = _getStepText(step);
+              itemText = _getStepText(step, code);
             }
 
             return _ChecklistItem(

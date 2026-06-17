@@ -1,13 +1,20 @@
 import 'dart:async'; // Import for StreamSubscription
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_html/flutter_html.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ndk/shared/logger/logger.dart';
+import 'package:bitblik_core/core.dart';
 import '../../i18n/gen/strings.g.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+
+import '../config/build_flavor.dart';
+import '../providers/providers.dart';
 
 class FaqScreen extends ConsumerStatefulWidget {
   const FaqScreen({super.key});
@@ -27,19 +34,33 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   @override
   void initState() {
     super.initState();
-    _currentLocale = LocaleSettings.currentLocale;
+    try {
+      _currentLocale = LocaleSettings.currentLocale;
+    } catch (e) {
+      Logger.log.w(
+        () => 'FAQ Screen: failed to read current locale during initState, '
+            'defaulting to English. Error: $e',
+      );
+      _currentLocale = AppLocale.en;
+    }
     _loadFaqContent(); // Initial load
 
-    _localeSubscription = LocaleSettings.getLocaleStream().listen((locale) {
-      // Check if the locale actually changed to avoid redundant loads if the stream emits the same locale
-      if (_currentLocale != locale) {
-        Logger.log.d(
-          () => "FAQ Screen: Locale changed to $locale, reloading content.",
-        );
-        _currentLocale = locale;
-        _loadFaqContent();
-      }
-    });
+    try {
+      _localeSubscription = LocaleSettings.getLocaleStream().listen((locale) {
+        // Check if the locale actually changed to avoid redundant loads if the stream emits the same locale
+        if (_currentLocale != locale) {
+          Logger.log.d(
+            () => "FAQ Screen: Locale changed to $locale, reloading content.",
+          );
+          _currentLocale = locale;
+          _loadFaqContent();
+        }
+      });
+    } catch (e) {
+      Logger.log.w(
+        () => 'FAQ Screen: failed to subscribe to locale stream. Error: $e',
+      );
+    }
   }
 
   // Remove didChangeDependencies as locale changes are now handled by the stream
@@ -57,6 +78,42 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   void dispose() {
     _localeSubscription?.cancel();
     super.dispose();
+  }
+
+  /// Replace `{app}`, `{code}`, `{codeLength}`, `{country}`, `{validity}` in the
+  /// FAQ markdown with the active payment system's values.
+  String _applyTokens(String text) {
+    final ps = ref.read(selectedPaymentSystemProvider);
+    String countryName = ps.country;
+    try {
+      final c = Translations.of(
+        context,
+      )['settings.paymentSystem.countries.${ps.country}'];
+      if (c is String && c.isNotEmpty) countryName = c;
+    } catch (_) {}
+    return text
+        .replaceAll('{app}', ps.brandName)
+        .replaceAll('{codeLength}', '${ps.codeLength}')
+        .replaceAll('{code}', ps.codeLabel)
+        .replaceAll('{country}', countryName)
+        .replaceAll('{validity}', '${ps.codeValidityMinutes}');
+  }
+
+  Future<String> _loadMarkdownAsset(String assetKey) async {
+    if (kIsWeb) {
+      final assetUri = Uri.base.resolve('assets/$assetKey');
+      final response = await http.get(assetUri);
+      if (response.statusCode != 200) {
+        throw Exception(
+          'HTTP load failed for $assetKey '
+          '(status ${response.statusCode})',
+        );
+      }
+
+      return utf8.decode(response.bodyBytes);
+    }
+
+    return await rootBundle.loadString(assetKey);
   }
 
   Future<void> _loadFaqContent() async {
@@ -77,7 +134,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       String markdownData;
 
       try {
-        markdownData = await rootBundle.loadString(filePath);
+        markdownData = await _loadMarkdownAsset(filePath);
       } catch (e) {
         Logger.log.w(
           () =>
@@ -86,7 +143,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
         langCode = 'en';
         filePath = 'assets/faq/faq_$langCode.md';
         try {
-          markdownData = await rootBundle.loadString(filePath);
+          markdownData = await _loadMarkdownAsset(filePath);
         } catch (fallbackError) {
           Logger.log.w(
             () => 'Could not load English fallback FAQ. Error: $fallbackError',
@@ -97,10 +154,14 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
         }
       }
 
-      // Convert Markdown to HTML
-      final html = md.markdownToHtml(
-        markdownData,
-        inlineSyntaxes: [md.InlineHtmlSyntax()],
+      // Convert Markdown to HTML, then substitute payment-system tokens on the
+      // final string (BitBlik/BLIK/Poland/6-digit → BitWay/MB WAY/Portugal/
+      // 10-digit, etc.) so nothing can slip past the renderer.
+      final html = _applyTokens(
+        md.markdownToHtml(
+          markdownData,
+          inlineSyntaxes: [md.InlineHtmlSyntax()],
+        ),
       );
 
       setState(() {

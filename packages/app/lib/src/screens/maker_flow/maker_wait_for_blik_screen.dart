@@ -332,7 +332,7 @@ class _MakerWaitForBlikScreenState
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        t.maker.waitForBlik.messageWaiting,
+                        t.maker.waitForBlik.messageWaiting(code: ref.read(selectedPaymentSystemProvider).codeLabel),
                         style: const TextStyle(
                           fontSize: 24,
                           color: Colors.black87,

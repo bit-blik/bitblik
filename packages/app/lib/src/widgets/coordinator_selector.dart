@@ -268,7 +268,9 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
                                 t.coordinator.info.rangeDisplay(
                                   minAmount: minPln,
                                   maxAmount: maxPln,
-                                  currency: 'PLN',
+                                  currency: paymentSystemById(
+                                    coordinator.paymentSystem,
+                                  ).currency,
                                 ),
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
@@ -471,7 +473,9 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
                         t.coordinator.info.rangeDisplay(
                           minAmount: minPln,
                           maxAmount: maxPln,
-                          currency: 'PLN',
+                          currency: paymentSystemById(
+                            displayCoordinator.paymentSystem,
+                          ).currency,
                         ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),

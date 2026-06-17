@@ -2,7 +2,7 @@
 # GLOBAL APPLICATION ELEMENTS
 # =============================================================================
 app:
-  title: BitBlik
+  title: ${app}
   greeting: Ciao!
   changelog: Registro modifiche
 
@@ -25,7 +25,7 @@ common:
     faq: FAQ
 
   labels:
-    amount: "Importo (PLN)"
+    amount: "Importo (${currency})"
     status: "Stato: ${status}"
     role: "Ruolo: ${role}"
 
@@ -85,7 +85,7 @@ offers:
     activeOffer: "Hai un'offerta attiva:"
     finishedOffers: Offerte completate
     noAvailable: Nessuna offerta disponibile.
-    noAvailableTip: "Suggerimento: condividi Bitblik nella tua community e tra i tuoi amici per aumentare gli ordini su Bitblik."
+    noAvailableTip: "Suggerimento: condividi ${app} nella tua community e tra i tuoi amici per aumentare gli ordini su ${app}."
     noSuccessfulTrades: Nessuna transazione completata.
     loadingDetails: "Caricamento dettagli offerta..."
 
@@ -115,7 +115,7 @@ offers:
       onlineService: "Prodotto o servizio online"
     consents:
       atm: "Alcuni ATM aggiungono una commissione extra oltre all'importo dell'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall'ATM."
-      ecommerce: "Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il commerciante online potrebbe automaticamente restituire denaro sul conto bancario collegato al BLIK che hai generato. Quei fondi arrivano sul tuo conto e non ti appartengono. Se succede, contatta il coordinatore in buona fede e organizza la restituzione dei fondi al maker. Accettando questa offerta, accetti questi termini e giuri solennemente di agire onestamente in tali situazioni."
+      ecommerce: "Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il commerciante online potrebbe automaticamente restituire denaro sul conto bancario collegato al ${code} che hai generato. Quei fondi arrivano sul tuo conto e non ti appartengono. Se succede, contatta il coordinatore in buona fede e organizza la restituzione dei fondi al maker. Accettando questa offerta, accetti questi termini e giuri solennemente di agire onestamente in tali situazioni."
 
   labels:
     premium: "Premio"
@@ -130,7 +130,7 @@ offers:
   actions:
     take: ACCETTA
     takeOffer: Accetta Offerta
-    resume: INSERISCI BLIK
+    resume: INSERISCI ${code}
     cancel: Annulla offerta
     view: Visualizza dettagli
 
@@ -140,12 +140,12 @@ offers:
     expired: "Scaduta"
     cancelled: "Annullata"
     reserved: "Riservata"
-    blikReceived: "BLIK Inviato"
-    blikSentToMaker: "BLIK Ricevuto"
-    expiredBlik: "BLIK Scaduto"
-    expiredSentBlik: "BLIK Scaduto"
+    blikReceived: "${code} Inviato"
+    blikSentToMaker: "${code} Ricevuto"
+    expiredBlik: "${code} Scaduto"
+    expiredSentBlik: "${code} Scaduto"
     takerCharged: "Taker Addebitato"
-    invalidBlik: "BLIK Non Valido"
+    invalidBlik: "${code} Non Valido"
     conflict: "Conflitto"
     dispute: "Disputa"
     makerConfirmed: "Confermata"
@@ -218,9 +218,9 @@ reservations:
 # =============================================================================
 exchange:
   labels:
-    enterAmount: "Inserisci l'importo (PLN) da pagare:"
+    enterAmount: "Inserisci l'importo (${currency}) da pagare:"
     equivalent: "≈ ${sats} satoshi"
-    rate: "Tasso di cambio ≈ ${rate} PLN/BTC"
+    rate: "Tasso di cambio ≈ ${rate} ${currency}/BTC"
 
   feedback:
     fetching: Recupero tasso di cambio...
@@ -232,6 +232,7 @@ exchange:
     invalidFeePercentage: Percentuale commissione non valida
     tooLowFiat: "L'importo è troppo basso. Il minimo è ${minAmount} ${currency}."
     tooHighFiat: "L'importo è troppo alto. Il massimo è ${maxAmount} ${currency}."
+    atmNotDispensable: "Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}."
 
 # =============================================================================
 # COORDINATOR INFORMATION
@@ -274,6 +275,7 @@ coordinator:
     maxPremiumInfoBody: "Il premio è un sovrapprezzo opzionale rispetto al tasso di mercato che un maker può impostare su un'offerta. Con un premio, il maker blocca meno satoshi per lo stesso importo in fiat, quindi il taker paga sopra il mercato e il maker trattiene la differenza. Questo valore è il premio massimo che questo coordinatore consente sulle sue offerte."
     reservationTime: "Tempo di prenotazione"
     currencies: "Valute"
+    paymentSystem: "Sistema di pagamento"
     version: "Versione"
     yourOffers: "Le tue offerte"
     successfulOffers: "Offerte riuscite (30g)"
@@ -318,7 +320,7 @@ maker:
     progress:
       step1: "1. Crea Offerta"
       step2: "2. Attendi Taker"
-      step3: "3. Usa BLIK"
+      step3: "3. Usa ${code}"
     labels:
       coordinator: Coordinatore
       category: Categoria
@@ -326,6 +328,7 @@ maker:
       fee: Commissione
       satoshisToPay: Importo da Pagare
       enterAmount: Inserisci importo
+      customAmount: Personalizzato
       tapToSelect: Tocca per selezionare
       premium: Premio
     actions:
@@ -338,6 +341,7 @@ maker:
 
     category:
       label: "Categoria offerta"
+      unsupportedForSystem: "${system} non supporta questa categoria."
       options:
         physicalShop: "Negozio, caffè o ristorante"
         atmCashout: "Prelievo contanti da ATM"
@@ -347,9 +351,9 @@ maker:
         atm: "ATM"
         online: "Online"
       atmHint: "I taker vedranno che questa offerta serve per un prelievo ATM e potrebbero evitarla se la loro banca applica commissioni aggiuntive."
-      physicalShopHint: "Il posto ideale per usare Bitblik è una cassa self-service — poiché aspettare che un taker riservi, generi e confermi il codice BLIK potrebbe richiedere un paio di minuti. Funziona benissimo in negozi, caffè e ristoranti. Se ti senti abbastanza coraggioso da far aspettare un cassiere normale (e le persone in coda dietro di te) quei pochi minuti, complimenti."
+      physicalShopHint: "Il posto ideale per usare ${app} è una cassa self-service — poiché aspettare che un taker riservi, generi e confermi il codice ${code} potrebbe richiedere un paio di minuti. Funziona benissimo in negozi, caffè e ristoranti. Se ti senti abbastanza coraggioso da far aspettare un cassiere normale (e le persone in coda dietro di te) quei pochi minuti, complimenti."
       ecommerceWarningTitle: "Rischio rimborso negozio online"
-      ecommerceWarningBody: "Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al BLIK, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te."
+      ecommerceWarningBody: "Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il negozio online potrebbe emettere automaticamente un rimborso sul conto bancario collegato al ${code}, che è il conto del taker. Il coordinatore non può obbligare il taker a restituire quei fondi a te."
       ecommerceConfirmation: "Capisco il rischio di rimborso e aggiungerò una nota all'ordine per chiedere al commerciante di rimborsare su un conto diverso se necessario."
       whyThisIsNeeded: "perché è necessario?"
     onboarding:
@@ -399,8 +403,8 @@ maker:
     message: In attesa che un Taker riservi la tua offerta...
     progressLabel: "In attesa del taker: ${time}"
     errorActiveOfferDetailsLost: "Errore: Dettagli dell'offerta attiva persi."
-    errorFailedToRetrieveBlik: "Errore: Impossibile recuperare il codice BLIK."
-    errorRetrievingBlik: "Errore nel recupero del codice BLIK: ${details}"
+    errorFailedToRetrieveBlik: "Errore: Impossibile recuperare il codice ${code}."
+    errorRetrievingBlik: "Errore nel recupero del codice ${code}: ${details}"
     offerNoLongerAvailable: "L'offerta non è più disponibile (Stato: ${status})."
     errorCouldNotIdentifyOffer: "Errore: Impossibile identificare l'offerta da annullare."
     offerCannotBeCancelled: "L'offerta non può essere annullata nello stato attuale (${status})."
@@ -411,42 +415,42 @@ maker:
     recreateOffer: "Nuova offerta — stesso importo"
 
   waitForBlik:
-    title: In attesa di BLIK
+    title: In attesa di ${code}
     messageInfo: Il Taker ha riservato l'offerta!
-    messageWaiting: In attesa del codice BLIK...
+    messageWaiting: In attesa del codice ${code}...
     progressLabel: "Riservata: ${seconds} s rimanenti"
 
   confirmPayment:
-    title: Codice BLIK ricevuto!
-    retrieving: Recupero codice BLIK...
+    title: Codice ${code} ricevuto!
+    retrieving: Recupero codice ${code}...
     instructions: Inserisci questo codice nel terminale di pagamento. Quando il Taker conferma nella sua app bancaria e il pagamento va a buon fine, premi Conferma qui sotto.
-    instruction1: Inserisci il codice nella richiesta di pagamento BLIK.
+    instruction1: Inserisci il codice nella richiesta di pagamento ${code}.
     instruction2: Attendi che il Taker confermi il pagamento nella sua app.
     instruction3: "Quando il pagamento va a buon fine, premi Conferma qui sotto:"
 
-    takerChargedWarning: "Il taker ha segnalato che il pagamento BLIK è stato addebitato sul suo conto bancario. Se lo contrassegni come non valido, si creerà un conflitto."
-    autoConfirmInfo: "A meno che tu non contrassegni il BLIK come non valido, il pagamento sarà confermato automaticamente e il taker pagato allo scadere di questo timer."
+    takerChargedWarning: "Il taker ha segnalato che il pagamento ${code} è stato addebitato sul suo conto bancario. Se lo contrassegni come non valido, si creerà un conflitto."
+    autoConfirmInfo: "A meno che tu non contrassegni il ${code} come non valido, il pagamento sarà confermato automaticamente e il taker pagato allo scadere di questo timer."
     autoConfirmCountdown: "Conferma automatica tra ${time}"
 
-    expiredTitle: Codice BLIK Scaduto
-    expiredWarning: "Il codice BLIK è scaduto. Devi confermare manualmente lo stato del pagamento:"
-    expiredInstruction1: "Se il pagamento BLIK è andato a buon fine e hai completato l'acquisto, clicca \"Conferma pagamento riuscito\" qui sotto."
-    expiredInstruction2: "Se il pagamento BLIK è fallito o non è stato completato, clicca \"Codice BLIK Non Valido\" qui sotto."
+    expiredTitle: Codice ${code} Scaduto
+    expiredWarning: "Il codice ${code} è scaduto. Devi confermare manualmente lo stato del pagamento:"
+    expiredInstruction1: "Se il pagamento ${code} è andato a buon fine e hai completato l'acquisto, clicca \"Conferma pagamento riuscito\" qui sotto."
+    expiredInstruction2: "Se il pagamento ${code} è fallito o non è stato completato, clicca \"Codice ${code} Non Valido\" qui sotto."
 
     actions:
       confirm: Conferma pagamento riuscito
-      markInvalid: Codice BLIK Non Valido
-      copyBlik: Copia BLIK
+      markInvalid: Codice ${code} Non Valido
+      copyBlik: Copia ${code}
 
     confirmDialog:
       title: Confermare il Pagamento?
-      content: "Questa azione è irreversibile. Dopo la conferma:\n\n• Il Taker riceverà i fondi immediatamente\n• Il coordinatore non potrà contestare i fondi\n• Non puoi annullare questa azione\n\nConferma solo se il pagamento BLIK è andato a buon fine."
+      content: "Questa azione è irreversibile. Dopo la conferma:\n\n• Il Taker riceverà i fondi immediatamente\n• Il coordinatore non potrà contestare i fondi\n• Non puoi annullare questa azione\n\nConferma solo se il pagamento ${code} è andato a buon fine."
       cancel: Annulla
       confirmButton: Sì, Conferma Pagamento
 
     invalidBlikDisputeDialog:
       title: Aprire una Disputa?
-      content: "Il taker ha segnalato che il pagamento BLIK è stato addebitato sul suo conto.\n\nContrassegnarlo come non valido aprirà immediatamente una DISPUTA che richiede l'intervento del coordinatore.\n\n• Potrebbe essere addebitata una commissione per disputa se il verdetto sarà contro di te\n• La fattura hold verrà saldata immediatamente\n• Sarà necessaria una verifica manuale\n\nProcedi solo se sei certo che il pagamento BLIK NON è andato a buon fine."
+      content: "Il taker ha segnalato che il pagamento ${code} è stato addebitato sul suo conto.\n\nContrassegnarlo come non valido aprirà immediatamente una DISPUTA che richiede l'intervento del coordinatore.\n\n• Potrebbe essere addebitata una commissione per disputa se il verdetto sarà contro di te\n• La fattura hold verrà saldata immediatamente\n• Sarà necessaria una verifica manuale\n\nProcedi solo se sei certo che il pagamento ${code} NON è andato a buon fine."
       cancel: Annulla
       confirmButton: Sì, Apri Disputa
 
@@ -456,8 +460,8 @@ maker:
       progressLabel: "Conferma in corso: ${seconds} s rimanenti"
 
     errors:
-      failedToRetrieve: "Errore: Impossibile recuperare il codice BLIK."
-      retrieving: "Errore nel recupero del codice BLIK: ${details}"
+      failedToRetrieve: "Errore: Impossibile recuperare il codice ${code}."
+      retrieving: "Errore nel recupero del codice ${code}: ${details}"
       missingHashOrKey: "Errore: Hash di pagamento o chiave pubblica mancante."
       incorrectState: "L'offerta non è nello stato corretto per la conferma (Stato: ${status})"
       confirming: "Errore nella conferma del pagamento: ${details}"
@@ -467,19 +471,19 @@ maker:
       unexpectedStatus: Stato dell'offerta inaspettato ricevuto dal server.
 
   invalidBlik:
-    title: Codice BLIK Non Valido
-    info: Hai contrassegnato il codice BLIK come non valido. In attesa che il taker fornisca un nuovo codice o avvii una disputa.
+    title: Codice ${code} Non Valido
+    info: Hai contrassegnato il codice ${code} come non valido. In attesa che il taker fornisca un nuovo codice o avvii una disputa.
 
   conflict:
     title: Conflitto Offerta
     headline: Conflitto Offerta Segnalato
-    body: Hai contrassegnato il codice BLIK come non valido, ma il Taker ha segnalato un conflitto, indicando che ritiene il pagamento andato a buon fine.
+    body: Hai contrassegnato il codice ${code} come non valido, ma il Taker ha segnalato un conflitto, indicando che ritiene il pagamento andato a buon fine.
     instructions: Attendi che il coordinatore esamini la situazione. Potrebbero esserti richiesti ulteriori dettagli. Controlla più tardi o contatta l'assistenza se necessario.
 
     actions:
       back: Torna alla Home
-      confirmPayment: Ho sbagliato, conferma che il pagamento BLIK è riuscito
-      openDispute: Il pagamento BLIK NON è riuscito, APRI DISPUTA
+      confirmPayment: Ho sbagliato, conferma che il pagamento ${code} è riuscito
+      openDispute: Il pagamento ${code} NON è riuscito, APRI DISPUTA
       submitDispute: Invia Disputa
 
     disputeDialog:
@@ -517,40 +521,40 @@ maker:
 # =============================================================================
 taker:
   roleSelection:
-    button: VENDI codice BLIK per satoshi
+    button: VENDI codice ${code} per satoshi
 
   progress:
-    step1: Invia BLIK
-    step2: Conferma BLIK
+    step1: Invia ${code}
+    step2: Conferma ${code}
     step3: Ricevi Pagamento
 
   submitBlik:
-    title: "Inserisci BLIK a 6 cifre"
-    label: Codice BLIK
-    instruction: "Inserisci BLIK prima che scada il tempo..."
+    title: "Inserisci ${code} a ${digits} cifre"
+    label: Codice ${code}
+    instruction: "Inserisci ${code} prima che scada il tempo..."
 
-    timeLimit: "Inserisci BLIK entro: ${seconds} s"
-    timeExpired: Il tempo per inserire il codice BLIK è scaduto.
+    timeLimit: "Inserisci ${code} entro: ${seconds} s"
+    timeExpired: Il tempo per inserire il codice ${code} è scaduto.
 
     actions:
-      submit: Invia BLIK
+      submit: Invia ${code}
 
     feedback:
-      pasted: Codice BLIK incollato.
+      pasted: Codice ${code} incollato.
 
     validation:
-      invalidFormat: Inserisci un codice BLIK valido a 6 cifre.
+      invalidFormat: Inserisci un codice ${code} valido a ${digits} cifre.
 
     errors:
-      submitting: "Errore nell'invio del codice BLIK: ${details}"
-      clipboardInvalid: Gli appunti non contengono un codice BLIK valido a 6 cifre.
+      submitting: "Errore nell'invio del codice ${code}: ${details}"
+      clipboardInvalid: Gli appunti non contengono un codice ${code} valido a ${digits} cifre.
       stateChanged: "Errore: Lo stato dell'offerta è cambiato."
       stateNotValid: "Errore: Lo stato dell'offerta non è più valido."
       fetchedIdMismatch: "L'ID dell'offerta attiva recuperata (${fetchedId}) non corrisponde all'ID iniziale (${initialId}). Mismatch di stato?"
       paymentHashMissing: Hash di pagamento dell'offerta mancante dopo il recupero.
 
     details:
-      requestedAmount: "Importo BLIK richiesto"
+      requestedAmount: "Importo ${code} richiesto"
       exchangeRate: "Tasso di Cambio"
       takerFee: "Commissione taker"
       status: "Stato"
@@ -560,34 +564,35 @@ taker:
     title: "In attesa del Maker"
     statusLabel: "Stato offerta: ${status}"
     waitingMaker: "In attesa della conferma del Maker: ${seconds} s"
-    waitingMakerConfirmation: "In attesa che il Maker confermi che il BLIK è corretto. Tempo rimanente: ${seconds}s"
-    importantNotice: "MOLTO IMPORTANTE: Assicurati di accettare solo la conferma BLIK per ${amount} ${currency}"
-    importantBlikAmountConfirmation: "MOLTO IMPORTANTE: Nella tua app bancaria, assicurati di confermare un pagamento BLIK per esattamente ${amount} ${currency}."
-    instructions: Il maker deve ora inserirlo nel terminale di pagamento entro 2 minuti. Dovrai poi accettare il codice BLIK nella tua app bancaria.
+    waitingMakerConfirmation: "In attesa che il Maker confermi che il ${code} è corretto. Tempo rimanente: ${seconds}s"
+    importantNotice: "MOLTO IMPORTANTE: Assicurati di accettare solo la conferma ${code} per ${amount} ${currency}"
+    importantBlikAmountConfirmation: "MOLTO IMPORTANTE: Nella tua app bancaria, assicurati di confermare un pagamento ${code} per esattamente ${amount} ${currency}."
+    instructions: Il maker deve ora inserirlo nel terminale di pagamento entro ${minutes} minuti. Dovrai poi accettare il codice ${code} nella tua app bancaria.
+    instructionsNoConfirm: Il maker deve ora inserire il tuo codice ${code} allo sportello ATM entro ${minutes} minuti.
     categoryReminder:
       atm: "Promemoria offerta ATM: la tua banca potrebbe ancora chiederti di approvare una commissione ATM extra oltre all'importo principale."
       ecommerce: "Promemoria ordine online: se il commerciante invia un rimborso automatico al tuo conto bancario, contatta il coordinatore e restituiscilo."
-    waitingForMakerToReceive: "In attesa che il maker riceva il tuo codice BLIK..."
-    makerReceivedBlik: "Il maker ha ricevuto il tuo codice BLIK."
-    timerExpiredMessage: "Il tempo di scadenza BLIK di 2 minuti è passato. In attesa che il maker confermi o contrassegni il codice come non valido."
-    timerExpiredActions: "Il tempo di scadenza BLIK di 2 minuti è passato ma il maker non ha ricevuto il codice BLIK. Puoi rinviare un nuovo codice BLIK o annullare."
-    resendBlikButton: "Rinvia Nuovo Codice BLIK"
+    waitingForMakerToReceive: "In attesa che il maker riceva il tuo codice ${code}..."
+    makerReceivedBlik: "Il maker ha ricevuto il tuo codice ${code}."
+    timerExpiredMessage: "Il tempo di scadenza ${code} di ${minutes} minuti è passato. In attesa che il maker confermi o contrassegni il codice come non valido."
+    timerExpiredActions: "Il tempo di scadenza ${code} di ${minutes} minuti è passato ma il maker non ha ricevuto il codice ${code}. Puoi rinviare un nuovo codice ${code} o annullare."
+    resendBlikButton: "Rinvia Nuovo Codice ${code}"
     navigatedHome: "Tornato alla home."
 
-    expiredTitle: "Codice BLIK Scaduto"
-    expiredWarning: "Il maker non ha ricevuto il codice BLIK quindi non ha potuto utilizzarlo."
+    expiredTitle: "Codice ${code} Scaduto"
+    expiredWarning: "Il maker non ha ricevuto il codice ${code} quindi non ha potuto utilizzarlo."
     expiredRelistCountdownLabel: "La prenotazione termina tra"
     expiredSentWarning: "Il maker non ha ancora confermato il pagamento. Cosa vuoi fare?"
-    expiredInstruction1: "Se vuoi riprovare con un nuovo codice BLIK, rinnova la prenotazione."
+    expiredInstruction1: "Se vuoi riprovare con un nuovo codice ${code}, rinnova la prenotazione."
     expiredInstruction2: "Se non vuoi più completare questa transazione, annulla la prenotazione."
-    expiredInstruction3: "Se il pagamento BLIK è stato addebitato sul tuo conto bancario, non preoccuparti, i bitcoin sono ancora al sicuro presso il coordinatore."
+    expiredInstruction3: "Se il pagamento ${code} è stato addebitato sul tuo conto bancario, non preoccuparti, i bitcoin sono ancora al sicuro presso il coordinatore."
 
     takerCharged:
-      title: "Hai segnalato che il BLIK è stato addebitato"
+      title: "Hai segnalato che il ${code} è stato addebitato"
       message: "Il maker ha ${minutes} minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin."
     expiredActions:
-      reportConflict: "Il BLIK è stato addebitato sul mio conto bancario"
-      renewReservation: "Riprova con un nuovo codice BLIK"
+      reportConflict: "Il ${code} è stato addebitato sul mio conto bancario"
+      renewReservation: "Riprova con un nuovo codice ${code}"
       cancelReservation: "Annulla prenotazione"
 
     feedback:
@@ -611,7 +616,7 @@ taker:
       waitingUpdate: In attesa dell'aggiornamento dell'offerta...
 
     steps:
-      makerConfirmedBlik: "Il Maker ha confermato il pagamento BLIK"
+      makerConfirmedBlik: "Il Maker ha confermato il pagamento ${code}"
       makerInvoiceSettled: "Fattura hold del Maker saldata"
       takerInvoicePaid: "Pagamento della tua fattura Lightning"
       takerPaymentFailed: "Pagamento alla tua fattura fallito"
@@ -665,18 +670,32 @@ taker:
       goHome: Vai alla home
 
   invalidBlik:
-    title: Codice BLIK Non Valido
-    message: Il Maker ha Rifiutato il Codice BLIK
-    explanation: Il maker dell'offerta ha indicato che il codice BLIK fornito non era valido o non ha funzionato.\n\nCosa vuoi fare?
+    title: Codice ${code} Non Valido
+    message: Il Maker ha Rifiutato il Codice ${code}
+    explanation: Il maker dell'offerta ha indicato che il codice ${code} fornito non era valido o non ha funzionato.\n\nCosa vuoi fare?
 
     werentCharged: "Se NON ti è stato addebitato:"
     wereCharged: "Se ti è stato addebitato:"
 
     actions:
-      retry: Invia nuovo codice BLIK
+      retry: Invia nuovo codice ${code}
       cancelReservation: Annulla Transazione
       reportConflict: Avvia Disputa
       returnHome: Torna alla home
+
+    confirmDialog:
+      title: Sei sicuro?
+      content: "Una volta toccato, non si può tornare indietro.\n\nSe l'importo è STATO effettivamente addebitato dal tuo conto bancario, il coordinatore NON potrà garantirti la ricezione dei bitcoin e potresti perdere i tuoi fondi.\n\nSe non sei sicuro, è meglio attendere un po' e verificare di NON essere stato addebitato prima di continuare."
+      actions:
+        proceed: Sono sicuro, continua
+        cancel: Annulla
+
+    disputeConfirmDialog:
+      title: Aprire una disputa?
+      content: "Apri una disputa solo se l'importo È STATO addebitato dal tuo conto bancario.\n\nIl coordinatore esaminerà manualmente il tuo caso, il che richiede tempo. Dovrai fornire una prova di pagamento."
+      actions:
+        proceed: Sì, sono stato addebitato
+        cancel: Annulla
 
     feedback:
       conflictReportedSuccess: Conflitto segnalato. Il coordinatore lo esaminerà.
@@ -688,7 +707,7 @@ taker:
   conflict:
     title: Conflitto Offerta
     headline: Conflitto Offerta Segnalato
-    body: Il Maker ha contrassegnato il codice BLIK come non valido, ma tu hai segnalato un conflitto, indicando che ritieni il pagamento andato a buon fine.
+    body: Il Maker ha contrassegnato il codice ${code} come non valido, ma tu hai segnalato un conflitto, indicando che ritieni il pagamento andato a buon fine.
     instructions: Attendi che il coordinatore esamini la situazione. Potrebbero esserti richiesti ulteriori dettagli. Controlla più tardi o contatta l'assistenza se necessario.
 
     actions:
@@ -710,11 +729,11 @@ taker:
       manageNekoKeys: Gestisci Chiavi Neko
 
 # =============================================================================
-# BLIK (General)
+# ${code} (General)
 # =============================================================================
 blik:
   instructions:
-    taker: "Una volta che il Maker inserisce il codice BLIK, dovrai confermare il pagamento nella tua app bancaria. Assicurati che l'importo sia corretto prima di confermare."
+    taker: "Una volta che il Maker inserisce il codice ${code}, dovrai confermare il pagamento nella tua app bancaria. Assicurati che l'importo sia corretto prima di confermare."
 
 # =============================================================================
 # HOME SCREEN / OFFER LIST
@@ -729,9 +748,9 @@ home:
 
   statistics:
     title: Offerte Completate
-    lifetimeCompact: "Totale: ${count} transazioni\nAttesa media per BLIK: ${avgBlikTime}\nTempo medio completamento: ${avgPaidTime}"
-    last7DaysCompact: "Ultimi 7g: ${count} transazioni\nAttesa media per BLIK: ${avgBlikTime}\nTempo medio completamento: ${avgPaidTime}"
-    last7DaysSingleLine: "Ultimi 7g: ${count} offerte  |  Media BLIK: ${avgBlikTime}  |  Media Pagato: ${avgPaidTime}"
+    lifetimeCompact: "Totale: ${count} transazioni\nAttesa media per ${code}: ${avgBlikTime}\nTempo medio completamento: ${avgPaidTime}"
+    last7DaysCompact: "Ultimi 7g: ${count} transazioni\nAttesa media per ${code}: ${avgBlikTime}\nTempo medio completamento: ${avgPaidTime}"
+    last7DaysSingleLine: "Ultimi 7g: ${count} offerte  |  Media prenot.: ${avgReservationTime}  |  Media Pagato: ${avgPaidTime}"
 
     errors:
       loading: "Errore nel caricamento delle statistiche: ${error}"
@@ -741,7 +760,7 @@ home:
 # =============================================================================
 nekoInfo:
   title: Cos'è un Neko?
-  description: "Il tuo Neko è la tua identità per usare BitBlik. È composto da una chiave privata e pubblica per garantire una comunicazione crittograficamente sicura con il coordinatore.\n\nPer garantire maggiore anonimato, si consiglia di usare un nuovo Neko per ogni offerta.\n\n⚠️ IMPORTANTE: La tua chiave privata è memorizzata solo sul tuo dispositivo (lato client). È fondamentale fare il backup della tua chiave privata, poiché perderla potrebbe impedirti di risolvere dispute e recuperare i tuoi fondi."
+  description: "Il tuo Neko è la tua identità per usare ${app}. È composto da una chiave privata e pubblica per garantire una comunicazione crittograficamente sicura con il coordinatore.\n\nPer garantire maggiore anonimato, si consiglia di usare un nuovo Neko per ogni offerta.\n\n⚠️ IMPORTANTE: La tua chiave privata è memorizzata solo sul tuo dispositivo (lato client). È fondamentale fare il backup della tua chiave privata, poiché perderla potrebbe impedirti di risolvere dispute e recuperare i tuoi fondi."
   backupWarning: "Ricorda di fare il backup del tuo Neko"
 
 generateNewKey:
@@ -796,7 +815,7 @@ system:
     loadingPublicKey: "Errore nel caricamento della tua chiave pubblica. Riavvia l'app."
 
   blik:
-    copied: Codice BLIK copiato negli appunti
+    copied: Codice ${code} copiato negli appunti
 
 # =============================================================================
 # MAIN LANDING PAGE
@@ -825,7 +844,7 @@ myOffers:
     coordinator: "Coordinatore"
     createdAt: "Creata"
     reservedAt: "Prenotata"
-    blikReceivedAt: "BLIK inviato"
+    blikReceivedAt: "${code} inviato"
     makerConfirmedAt: "Confermata"
     settledAt: "Liquidata"
     takerPaidAt: "Taker pagato"
@@ -836,15 +855,15 @@ myOffers:
     after: "dopo ${duration}"
 
 landing:
-  mainTitle: "Il tuo ponte BLIK ⇄ bitcoin"
-  subtitle: "Paga o vendi il tuo codice BLIK con bitcoin"
+  mainTitle: "Il tuo ponte ${code} ⇄ bitcoin"
+  subtitle: "Paga o vendi il tuo codice ${code} con bitcoin"
   partnership: "partnership"
 
   actions:
-    payBlik: "Paga BLIK"
+    payBlik: "Paga ${code}"
     payBlikSubtitle: "con bitcoin"
     sellBlik: "Compra bitcoin"
-    sellBlikSubtitle: "con BLIK"
+    sellBlikSubtitle: "con ${code}"
     howItWorks: "Come funziona?"
 
 # =============================================================================
@@ -888,13 +907,20 @@ settings:
     unitOptions:
       sats: sat
       bitcoin: ₿ (BIP-177)
+  paymentSystem:
+    title: Paese / Sistema di pagamento
+    subtitle: "Scegli il sistema di pagamento del tuo paese."
+    dialogTitle: Seleziona il sistema di pagamento
+    countries:
+      PL: Polonia
+      PT: Portogallo
 
 notificationSettings:
   title: Notifiche
   androidOnly: Le notifiche in background sono attualmente supportate solo su Android.
   newOfferAlerts:
     label: Avvisi nuove offerte
-    description: Se abilitato, BitBlik ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l'app è in background. Potrebbe essere più veloce dei messenger esterni.
+    description: Se abilitato, ${app} ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l'app è in background. Potrebbe essere più veloce dei messenger esterni.
 
 wallet:
   title: Portafoglio
@@ -977,7 +1003,7 @@ relays:
 offerNotifications:
   activeService:
     title: In attesa di nuove offerte
-    body: Servizio in background che monitora gli eventi Nostr delle offerte BitBlik.
+    body: Servizio in background che monitora gli eventi Nostr delle offerte ${app}.
   funded:
     title: Offerta finanziata
     body: La tua fattura hold è stata accettata. L'offerta è ora attiva.
@@ -985,8 +1011,8 @@ offerNotifications:
     title: Offerta prenotata
     body: Un taker ha prenotato la tua offerta.
   blikReady:
-    title: Codice BLIK pronto
-    body: Il tuo codice BLIK è pronto per essere visualizzato.
+    title: Codice ${code} pronto
+    body: Il tuo codice ${code} è pronto per essere visualizzato.
   newOffer:
     title: Nuova offerta disponibile
     body: "${amount} ${currency} · ${sats}"
@@ -996,14 +1022,14 @@ offerNotifications:
     atm: ATM
     online: Online
   blikPendingReminder:
-    title: BLIK in attesa di azione
-    body: Conferma il pagamento o segna il codice BLIK come non valido.
+    title: ${code} in attesa di azione
+    body: Conferma il pagamento o segna il codice ${code} come non valido.
   takerCharged:
-    title: BLIK addebitato
-    body: Il taker segnala che il BLIK è stato addebitato. Conferma o segna come non valido.
+    title: ${code} addebitato
+    body: Il taker segnala che il ${code} è stato addebitato. Conferma o segna come non valido.
   invalidBlik:
-    title: BLIK non valido
-    body: Il maker ha contrassegnato il tuo codice BLIK come non valido.
+    title: ${code} non valido
+    body: Il maker ha contrassegnato il tuo codice ${code} come non valido.
   takerPaid:
     title: Pagamento ricevuto
     body: Il tuo pagamento Lightning è stato inviato.
@@ -1016,6 +1042,6 @@ altstore:
   step1Title: "Scarica e installa AltStore PAL"
   step1Button: "altstore.io/download"
   step1Warning: "Hai bisogno di Safari per installare AltStore PAL!"
-  step2Title: "Installa BitBlik"
-  step2Button: "Installa BitBlik"
+  step2Title: "Installa ${app}"
+  step2Button: "Installa ${app}"
   step2Fallback: "Non funziona? Incolla la sorgente in AltStore"

@@ -7,7 +7,7 @@ resolution: workspace
 environment:
   sdk: ^3.6.0
 publish_to: none
-# Add regular dependencies here.
+# Add regular dependencies here.h
 dependencies:
   bitblik_core:
     path: ../core

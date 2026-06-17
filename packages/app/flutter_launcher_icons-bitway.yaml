@@ -1,0 +1,18 @@
+# Launcher icons for the `bitway` flavor.
+# Generate with:
+#   dart run flutter_launcher_icons -f flutter_launcher_icons-bitway.yaml
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/bitway-icon.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/bitway-icon.png"
+  adaptive_icon_foreground_inset: 26
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false

@@ -5,6 +5,21 @@ import 'package:dotenv/dotenv.dart';
 import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
 
+/// A Telegram message sent for an offer, tracked so it can be edited later.
+class TelegramOfferMessage {
+  final String offerId;
+  final String chatId;
+  final int messageId;
+  final String messageText;
+
+  const TelegramOfferMessage({
+    required this.offerId,
+    required this.chatId,
+    required this.messageId,
+    required this.messageText,
+  });
+}
+
 class DatabaseService {
   static final RegExp _uuidLikePattern = RegExp(
     r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
@@ -42,6 +57,7 @@ class DatabaseService {
           action: 'database.connection.opened');
       await _ensureOffersTable();
       await _ensureLogAuditTable();
+      await _ensureTelegramOfferMessagesTable();
     } catch (e) {
       AppLogger.severe(
         'Error connecting to database: $e',
@@ -177,6 +193,77 @@ class DatabaseService {
     _auditTableReady = true;
     AppLogger.info('log_audit table checked/created.',
         action: 'database.schema.log_audit.ready');
+  }
+
+  Future<void> _ensureTelegramOfferMessagesTable() async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute('''
+      CREATE TABLE IF NOT EXISTS telegram_offer_messages (
+        offer_id UUID NOT NULL,
+        chat_id TEXT NOT NULL,
+        message_id BIGINT NOT NULL,
+        message_text TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (offer_id, chat_id)
+      );
+    ''');
+    // Rows for offers that completed normally are never struck out and
+    // would accumulate forever; funded offers expire within hours, so
+    // anything older than 7 days can no longer need editing.
+    await _connection!.execute('''
+      DELETE FROM telegram_offer_messages
+      WHERE created_at < NOW() - INTERVAL '7 days';
+    ''');
+    AppLogger.info('telegram_offer_messages table checked/created.',
+        action: 'database.schema.telegram_offer_messages.ready');
+  }
+
+  Future<void> saveTelegramOfferMessage({
+    required String offerId,
+    required String chatId,
+    required int messageId,
+    required String messageText,
+  }) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute(
+      '''
+        INSERT INTO telegram_offer_messages (offer_id, chat_id, message_id, message_text)
+        VALUES (@offer_id, @chat_id, @message_id, @message_text)
+        ON CONFLICT (offer_id, chat_id)
+        DO UPDATE SET message_id = @message_id, message_text = @message_text
+      ''',
+      substitutionValues: {
+        'offer_id': offerId,
+        'chat_id': chatId,
+        'message_id': messageId,
+        'message_text': messageText,
+      },
+    );
+  }
+
+  Future<List<TelegramOfferMessage>> getTelegramOfferMessages(
+      String offerId) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final results = await _connection!.query(
+      'SELECT chat_id, message_id, message_text FROM telegram_offer_messages WHERE offer_id = @offer_id',
+      substitutionValues: {'offer_id': offerId},
+    );
+    return results
+        .map((row) => TelegramOfferMessage(
+              offerId: offerId,
+              chatId: row[0] as String,
+              messageId: row[1] as int,
+              messageText: row[2] as String,
+            ))
+        .toList();
+  }
+
+  Future<void> deleteTelegramOfferMessages(String offerId) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute(
+      'DELETE FROM telegram_offer_messages WHERE offer_id = @offer_id',
+      substitutionValues: {'offer_id': offerId},
+    );
   }
 
   Future<void> insertAuditLog({
@@ -325,6 +412,7 @@ class DatabaseService {
       OfferStatus newStatus,
       {String? takerPubkey,
       String? blikCode,
+      String? takerInvoice,
       String? takerLightningAddress,
       DateTime? reservedAt,
       DateTime? blikReceivedAt,
@@ -335,6 +423,7 @@ class DatabaseService {
       newStatus,
       takerPubkey: takerPubkey,
       blikCode: blikCode,
+      takerInvoice: takerInvoice,
       takerLightningAddress: takerLightningAddress,
       reservedAt: reservedAt,
       blikReceivedAt: blikReceivedAt,
@@ -347,22 +436,26 @@ class DatabaseService {
       String id, OfferStatus newStatus, List<OfferStatus> expectedCurrentStatuses,
       {String? takerPubkey,
       String? blikCode,
+      String? takerInvoice,
       String? takerLightningAddress,
       DateTime? reservedAt,
       DateTime? blikReceivedAt,
       int? takerFees,
-      String? failureReason}) async {
+      String? failureReason,
+      String? expectedTakerPubkey}) async {
     return _updateOfferStatusInternal(
       id,
       newStatus,
       takerPubkey: takerPubkey,
       blikCode: blikCode,
+      takerInvoice: takerInvoice,
       takerLightningAddress: takerLightningAddress,
       reservedAt: reservedAt,
       blikReceivedAt: blikReceivedAt,
       takerFees: takerFees,
       failureReason: failureReason,
       expectedCurrentStatuses: expectedCurrentStatuses,
+      expectedTakerPubkey: expectedTakerPubkey,
     );
   }
 
@@ -371,12 +464,14 @@ class DatabaseService {
       OfferStatus newStatus,
       {String? takerPubkey,
       String? blikCode,
+      String? takerInvoice,
       String? takerLightningAddress,
       DateTime? reservedAt,
       DateTime? blikReceivedAt,
       int? takerFees,
       String? failureReason,
-      List<OfferStatus>? expectedCurrentStatuses}) async {
+      List<OfferStatus>? expectedCurrentStatuses,
+      String? expectedTakerPubkey}) async {
     // Renamed parameter
     // Added takerFees
     if (_connection == null) throw StateError('Database not connected.');
@@ -403,6 +498,10 @@ class DatabaseService {
       case OfferStatus.blikReceived:
         if (blikCode == null)
           throw ArgumentError('blikCode required for blikReceived status');
+        if (takerInvoice == null || takerInvoice.trim().isEmpty) {
+          throw ArgumentError(
+              'takerInvoice required for blikReceived status');
+        }
         if (blikReceivedAt == null)
           throw ArgumentError(
               'blikReceivedAt required for blikReceived status'); // Ensure timestamp is passed
@@ -413,9 +512,11 @@ class DatabaseService {
           setClauses.add('taker_lightning_address = @taker_lightning_address');
         }
         params['blik_code'] = blikCode;
+        params['taker_invoice'] = takerInvoice;
         params['blik_received_at'] =
             blikReceivedAt.toUtc(); // Use passed timestamp
         setClauses.add('blik_code = @blik_code');
+        setClauses.add('taker_invoice = @taker_invoice');
         setClauses.add('blik_received_at = @blik_received_at');
         break;
       case OfferStatus.makerConfirmed:
@@ -483,6 +584,14 @@ class DatabaseService {
           expectedCurrentStatuses.map((status) => status.name).toList();
       whereClauses
           .add('status = ANY(CAST(@expected_current_statuses AS TEXT[]))');
+    }
+    if (expectedTakerPubkey != null) {
+      // Guards ABA races on taker-scoped transitions: the status can cycle
+      // back to the expected value (e.g. reserved -> funded -> reserved) with
+      // a different taker between the caller's read and this write. Status
+      // alone cannot detect that.
+      params['expected_taker_pubkey'] = expectedTakerPubkey;
+      whereClauses.add('taker_pubkey = @expected_taker_pubkey');
     }
 
     // Use query() (extended protocol) rather than execute() (simple protocol).

@@ -1,8 +1,7 @@
 import 'dart:async'; // Import async for Timer
 
+import 'package:bitblik_core/core.dart';
 import 'package:flutter/foundation.dart';
-
-import '../../i18n/gen/strings.g.dart'; // Import Slang
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,11 +10,11 @@ import 'package:ndk/shared/logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../i18n/gen/strings.g.dart'; // Import Slang
 import '../config/group_links.dart';
-import 'package:bitblik_core/core.dart';
-import '../utils/category_icons.dart';
-import '../utils/bitcoin_display.dart';
 import '../providers/providers.dart';
+import '../utils/bitcoin_display.dart';
+import '../utils/category_icons.dart';
 import '../widgets/lightning_address_widget.dart';
 import '../widgets/premium_info.dart';
 import '../widgets/progress_indicators.dart'; // Import the progress indicators
@@ -376,9 +375,16 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
     final offersAsyncValue = ref.watch(availableOffersProvider);
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
     final myActiveOffer = ref.watch(activeOfferProvider);
+    final selectedSystem = ref.watch(selectedPaymentSystemProvider);
+    // Only coordinators serving the payment system selected in settings.
     final sortedAllCoordinators = ref
         .watch(discoveredCoordinatorsProvider)
-        .maybeWhen(data: (r) => r, orElse: () => <CoordinatorRecord>[]);
+        .maybeWhen(data: (r) => r, orElse: () => <CoordinatorRecord>[])
+        .where((r) => r.paymentSystem == selectedSystem.id)
+        .toList(growable: false);
+
+    // Community links follow the payment system selected in settings.
+    final links = GroupLinks.of(selectedSystem.id);
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -410,10 +416,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                 runSpacing: 4,
                 children: [
                   // Telegram - only show if link is configured
-                  if (GroupLinks.telegram.isNotEmpty)
+                  if (links.telegram.isNotEmpty)
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse(GroupLinks.telegram);
+                        final Uri url = Uri.parse(links.telegram);
                         await launchUrl(url);
                       },
                       child: Row(
@@ -439,10 +445,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                       ),
                     ),
                   // Element - only show if link is configured
-                  if (GroupLinks.element.isNotEmpty)
+                  if (links.element.isNotEmpty)
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse(GroupLinks.element);
+                        final Uri url = Uri.parse(links.element);
                         await launchUrl(url);
                       },
                       child: Row(
@@ -468,10 +474,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                       ),
                     ),
                   // SimpleX - only show if link is configured
-                  if (GroupLinks.simplex.isNotEmpty)
+                  if (links.simplex.isNotEmpty)
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse(GroupLinks.simplex);
+                        final Uri url = Uri.parse(links.simplex);
                         await launchUrl(url);
                       },
                       child: Row(
@@ -497,10 +503,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                       ),
                     ),
                   // Signal - only show if link is configured
-                  if (GroupLinks.signal.isNotEmpty)
+                  if (links.signal.isNotEmpty)
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse(GroupLinks.signal);
+                        final Uri url = Uri.parse(links.signal);
                         await launchUrl(url);
                       },
                       child: Row(
@@ -562,7 +568,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  t.offers.details.noAvailableTip,
+                                  t.offers.details.noAvailableTip(app: selectedSystem.brandName),
                                   textAlign: TextAlign.left,
                                   style: const TextStyle(
                                     color: Color(0xFF1D4ED8),
@@ -587,6 +593,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                               (pk) => setState(
                                 () => _selectedStatsCoordinatorPubkey = pk,
                               ),
+                          currency: selectedSystem.currency,
                         ),
                       ),
                     ],
@@ -604,10 +611,15 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                   OfferStatus.invalidBlik,
                   OfferStatus.dispute,
                 ];
+                // Only finished offers for the payment system selected in
+                // settings (filters the coordinator dropdown too, since it is
+                // derived from these offers).
                 final finishedOffers =
                     offers
                         .where(
-                          (offer) => finishedStatuses.contains(offer.status),
+                          (offer) =>
+                              finishedStatuses.contains(offer.status) &&
+                              offer.fiatCurrency == selectedSystem.currency,
                         )
                         .toList();
                 final activeOffers =
@@ -633,7 +645,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                           final apiService = await ref.read(
                             initializedApiServiceProvider.future,
                           );
-                          await refreshAvailableOffersCache(apiService);
+                          await refreshAvailableOffersCache(
+                            apiService,
+                            ref.read(selectedPaymentSystemProvider),
+                          );
                           ref.invalidate(availableOffersProvider);
                           ref.invalidate(activeOfferProvider);
                           await ref.read(availableOffersProvider.future);
@@ -999,6 +1014,13 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     ),
                                                     blikReceivedAt:
                                                         offer.blikReceivedAt!,
+                                                    maxConfirmationTime:
+                                                        (paymentSystemForCurrency(
+                                                                  offer
+                                                                      .fiatCurrency,
+                                                                ) ??
+                                                                kBlik)
+                                                            .confirmationWindow,
                                                   ),
 
                                                 ListTile(
@@ -1314,7 +1336,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                t.offers.details.noAvailableTip,
+                                t.offers.details.noAvailableTip(app: selectedSystem.brandName),
                                 textAlign: TextAlign.left,
                                 style: const TextStyle(
                                   color: Color(0xFF1D4ED8),
@@ -1332,6 +1354,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                         context,
                         ref.watch(successfulOffersStatsProvider),
                         t,
+                        currency: selectedSystem.currency,
                       ),
                     ),
                   ],
@@ -1445,6 +1468,7 @@ Widget _buildStatsSection(
   List<CoordinatorRecord> sortedCoordinators = const [],
   String? selectedCoordinatorPubkey,
   ValueChanged<String>? onCoordinatorChanged,
+  String? currency,
 }) {
   return statsAsyncValue.when(
     data: (data) {
@@ -1452,13 +1476,18 @@ Widget _buildStatsSection(
       final last7Days = statsMap['last_7_days'] as Map<String, dynamic>? ?? {};
 
       final recentOffersData = data['offers'] as List<dynamic>? ?? [];
-      final allRecentOffers = recentOffersData.cast<Offer>();
+      // Restrict to the selected payment system so the coordinator dropdown
+      // only lists coordinators that actually have finished offers for it.
+      final allRecentOffers = recentOffersData
+          .cast<Offer>()
+          .where((o) => currency == null || o.fiatCurrency == currency)
+          .toList();
 
       final localeTag = Localizations.localeOf(context).toLanguageTag();
       final numberFormat = NumberFormat.decimalPattern(localeTag);
 
-      final last7DaysBlikTime =
-          last7Days['avg_time_blik_received_to_created_seconds'] as num?;
+      final last7DaysReservationTime =
+          last7Days['avg_time_reserved_to_created_seconds'] as num?;
       final last7DaysPaidTime =
           last7Days['avg_time_taker_paid_to_created_seconds'] as num?;
 
@@ -1511,8 +1540,8 @@ Widget _buildStatsSection(
                   Text(
                     t.home.statistics.last7DaysSingleLine(
                       count: numberFormat.format(last7Days['count'] ?? 0),
-                      avgBlikTime: _formatDurationFromSeconds(
-                        last7DaysBlikTime?.round(),
+                      avgReservationTime: _formatDurationFromSeconds(
+                        last7DaysReservationTime?.round(),
                       ),
                       avgPaidTime: _formatDurationFromSeconds(
                         last7DaysPaidTime?.round(),

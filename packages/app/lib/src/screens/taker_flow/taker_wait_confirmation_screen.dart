@@ -10,6 +10,7 @@ import 'package:ndk/shared/logger/logger.dart';
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 import '../../services/offer_db_service.dart';
+import '../../utils/offer_status_label.dart';
 import '../../widgets/progress_indicators.dart';
 
 class TakerWaitConfirmationScreen extends ConsumerStatefulWidget {
@@ -24,10 +25,19 @@ class TakerWaitConfirmationScreen extends ConsumerStatefulWidget {
 
 class _TakerWaitConfirmationScreenState
     extends ConsumerState<TakerWaitConfirmationScreen> {
-  static const Duration _confirmationDuration = Duration(seconds: 120);
+  /// Payment method for this offer, derived from its currency (falls back to
+  /// the app's selected method). Drives the confirmation window, validity text,
+  /// and whether banking-app confirmation prompts are shown.
+  PaymentSystem get _method =>
+      paymentSystemForCurrency(widget.offer.fiatCurrency) ??
+      ref.read(selectedPaymentSystemProvider);
+
+  /// Confirmation window for this offer's payment method (BLIK 2 min, MB WAY
+  /// 30 min).
+  Duration get _confirmationDuration => _method.confirmationWindow;
   Timer? _confirmationTimer;
   Timer? _expiredBlikTimer;
-  int _confirmationCountdownSeconds = _confirmationDuration.inSeconds;
+  late int _confirmationCountdownSeconds = _confirmationDuration.inSeconds;
   bool _timersInitialized = false;
   bool _timerExpired = false;
   bool _expiredBlikWindowExpired = false;
@@ -431,6 +441,8 @@ class _TakerWaitConfirmationScreenState
           confirmationStartTime: _confirmationStartTime(offer),
           maxConfirmationTime: _confirmationDuration,
           timerExpired: _timerExpired,
+          requiresConfirmation: _method.requiresCodeConfirmation,
+          validityMinutes: _method.codeValidityMinutes,
         );
       case OfferStatus.expiredBlik:
         return _ExpiredBlikWidget(
@@ -580,13 +592,14 @@ class _BlikReceivedWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
+    final code = offerCodeLabel(offer);
 
     return Column(
       children: [
         if (!timerExpired) ...[
           _buildStatusMessage(
             context,
-            t.taker.waitConfirmation.waitingForMakerToReceive,
+            t.taker.waitConfirmation.waitingForMakerToReceive(code: code),
             isLoading: true,
           ),
           const SizedBox(height: 20),
@@ -616,30 +629,44 @@ class _BlikSentToMakerWidget extends StatelessWidget {
   final Duration maxConfirmationTime;
   final bool timerExpired;
 
+  /// Whether the taker has to approve the code in their banking app. When
+  /// false (e.g. MB WAY ATM), banking-app prompts are suppressed.
+  final bool requiresConfirmation;
+
+  /// Code validity window in minutes, shown in the instruction/expiry text.
+  final int validityMinutes;
+
   const _BlikSentToMakerWidget({
     required this.offer,
     required this.confirmationStartTime,
     required this.maxConfirmationTime,
     required this.timerExpired,
+    required this.requiresConfirmation,
+    required this.validityMinutes,
   });
 
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
+    final code = offerCodeLabel(offer);
 
     return Column(
       children: [
         if (!timerExpired) ...[
           _buildInfoBox(
             context,
-            t.taker.waitConfirmation.makerReceivedBlik,
+            t.taker.waitConfirmation.makerReceivedBlik(code: code),
             Icons.info_outline,
             Colors.blue,
           ),
           const SizedBox(height: 20),
           _buildStatusMessage(
             context,
-            t.taker.waitConfirmation.instructions,
+            requiresConfirmation
+                ? t.taker.waitConfirmation
+                    .instructions(code: code, minutes: validityMinutes)
+                : t.taker.waitConfirmation
+                    .instructionsNoConfirm(code: code, minutes: validityMinutes),
             isLoading: true,
           ),
           const SizedBox(height: 30),
@@ -658,18 +685,20 @@ class _BlikSentToMakerWidget extends StatelessWidget {
         else if (timerExpired)
           const Icon(Icons.timer_off, size: 100, color: Colors.red),
         const SizedBox(height: 20),
-        if (!timerExpired)
+        if (!timerExpired && requiresConfirmation)
           _buildWarningBox(
             context,
             t.taker.waitConfirmation.importantBlikAmountConfirmation(
               amount: formatDouble(offer.fiatAmount),
               currency: offer.fiatCurrency,
+              code: code,
             ),
           ),
         if (timerExpired)
           _buildWarningBox(
             context,
-            t.taker.waitConfirmation.timerExpiredMessage,
+            t.taker.waitConfirmation
+                .timerExpiredMessage(code: code, minutes: validityMinutes),
           ),
       ],
     );
@@ -696,14 +725,16 @@ class _ExpiredBlikWidget extends ConsumerWidget {
     final errorMessage = ref.watch(errorProvider);
     final relistStart = offer.updatedAt ?? DateTime.now();
     final canCancel = !isLoading && !relistExpired;
+    final code = offerCodeLabel(offer);
 
     return Column(
       children: [
         _buildExpiredIcon(),
         const SizedBox(height: 12),
-        _buildExpiredTitle(t.taker.waitConfirmation.expiredTitle),
+        _buildExpiredTitle(t.taker.waitConfirmation.expiredTitle(code: code)),
         const SizedBox(height: 10),
-        _buildWarningBox(context, t.taker.waitConfirmation.expiredWarning),
+        _buildWarningBox(
+            context, t.taker.waitConfirmation.expiredWarning(code: code)),
         const SizedBox(height: 10),
         Text(
           t['taker.waitConfirmation.expiredRelistCountdownLabel'],
@@ -727,7 +758,7 @@ class _ExpiredBlikWidget extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         _buildInstructions(context, [
-          t.taker.waitConfirmation.expiredInstruction1,
+          t.taker.waitConfirmation.expiredInstruction1(code: code),
           t.taker.waitConfirmation.expiredInstruction2,
         ]),
         const SizedBox(height: 14),
@@ -737,7 +768,7 @@ class _ExpiredBlikWidget extends ConsumerWidget {
         ],
         _buildPrimaryButton(
           context,
-          t.taker.waitConfirmation.expiredActions.renewReservation,
+          t.taker.waitConfirmation.expiredActions.renewReservation(code: code),
           Icons.refresh,
           Colors.green,
           isLoading ? null : () => onResendBlik(offer),
@@ -772,18 +803,19 @@ class _ExpiredSentBlikWidget extends ConsumerWidget {
     final t = Translations.of(context);
     final isLoading = ref.watch(isLoadingProvider);
     final errorMessage = ref.watch(errorProvider);
+    final code = offerCodeLabel(offer);
 
     return Column(
       children: [
         _buildExpiredIcon(),
         const SizedBox(height: 20),
-        _buildExpiredTitle(t.taker.waitConfirmation.expiredTitle),
+        _buildExpiredTitle(t.taker.waitConfirmation.expiredTitle(code: code)),
         const SizedBox(height: 16),
         _buildWarningBox(context, t.taker.waitConfirmation.expiredSentWarning),
         const SizedBox(height: 20),
         _buildInstructions(context, [
-          t.taker.waitConfirmation.expiredInstruction1,
-          t.taker.waitConfirmation.expiredInstruction3,
+          t.taker.waitConfirmation.expiredInstruction1(code: code),
+          t.taker.waitConfirmation.expiredInstruction3(code: code),
         ]),
         const SizedBox(height: 24),
         if (errorMessage != null) ...[
@@ -792,7 +824,7 @@ class _ExpiredSentBlikWidget extends ConsumerWidget {
         ],
         _buildPrimaryButton(
           context,
-          t.taker.waitConfirmation.expiredActions.renewReservation,
+          t.taker.waitConfirmation.expiredActions.renewReservation(code: code),
           Icons.refresh,
           Colors.green,
           isLoading ? null : () => onResendBlik(offer),
@@ -801,7 +833,7 @@ class _ExpiredSentBlikWidget extends ConsumerWidget {
         const SizedBox(height: 12),
         _buildPrimaryButton(
           context,
-          t.taker.waitConfirmation.expiredActions.reportConflict,
+          t.taker.waitConfirmation.expiredActions.reportConflict(code: code),
           Icons.report_problem_outlined,
           Colors.red,
           isLoading ? null : () => onReportConflict(offer),
@@ -827,12 +859,13 @@ class _TakerChargedWidget extends ConsumerWidget {
         offer.coordinatorPubkey,
       ),
     );
+    final code = offerCodeLabel(offer);
 
     return Column(
       children: [
         _buildInfoBox(
           context,
-          t.taker.waitConfirmation.takerCharged.title,
+          t.taker.waitConfirmation.takerCharged.title(code: code),
           Icons.check_circle_outline,
           Colors.green,
         ),

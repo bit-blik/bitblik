@@ -152,7 +152,15 @@ class _CoordinatorManagementScreenState
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
-    final coordinatorsAsync = ref.watch(discoveredCoordinatorsProvider);
+    // Only show coordinators serving the user's selected payment method.
+    final method = ref.watch(selectedPaymentSystemProvider);
+    final coordinatorsAsync = ref
+        .watch(discoveredCoordinatorsProvider)
+        .whenData(
+          (records) => records
+              .where((r) => r.paymentSystem == method.id)
+              .toList(growable: false),
+        );
 
     return Scaffold(
       appBar: AppBar(

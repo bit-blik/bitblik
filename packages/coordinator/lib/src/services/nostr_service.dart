@@ -474,7 +474,6 @@ class NostrService {
 
         case kRpcInitiateOffer:
           final fiatAmount = (params['fiat_amount'] as num?)?.toDouble();
-          final makerId = params['maker_id'] as String? ?? userPubkey;
           final categoryRaw = params['category'] as String?;
           OfferCategory? category;
           if (categoryRaw != null && categoryRaw.trim().isNotEmpty) {
@@ -491,10 +490,12 @@ class NostrService {
 
           final premiumPercent =
               (params['premium_percent'] as num?)?.toDouble() ?? 0;
+          final fiatCurrency = params['fiat_currency'] as String?;
 
           return await _coordinatorService.initiateOfferFiat(
             fiatAmount: fiatAmount,
-            makerId: makerId,
+            makerId: userPubkey,
+            fiatCurrency: fiatCurrency,
             category: category,
             premiumPercent: premiumPercent,
           );
@@ -573,6 +574,9 @@ class NostrService {
                 'Failed to confirm payment. Check offer state, LND connection, or logs.');
           }
 
+        // DEPRECATED: clients now resolve a local-only offer (id == payment
+        // hash, no UUID yet) via `get_offer_details` with a `payment_hash`
+        // param instead of this dedicated lookup. Kept for old clients.
         case kRpcGetMyActiveOffer:
           final activeOffers =
               await _coordinatorService.getMyActiveOffers(userPubkey);
@@ -812,7 +816,7 @@ class NostrService {
   Future<void> broadcastNip69OrderFromOffer(
     Offer offer, {
     String orderType = 'sell',
-    List<String> paymentMethods = const ['BLIK'],
+    List<String> paymentSystems = const ['BLIK'],
     String platform = 'Bitblik',
     int? expiration,
     // Defaults to the offer's own premium so status re-broadcasts preserve it.
@@ -839,7 +843,7 @@ class NostrService {
         ['s', status],
         ['amt', offer.amountSats.toString()],
         ['fa', offer.fiatAmount.toString()],
-        ['pm', ...paymentMethods],
+        ['pm', ...paymentSystems],
         ['premium', premiumValue.toString()],
         if (ratingJson != null) ['rating', ratingJson],
         [

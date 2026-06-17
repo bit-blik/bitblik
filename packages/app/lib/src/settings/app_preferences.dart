@@ -2,6 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:bitblik_core/core.dart';
 
+import '../config/build_flavor.dart';
+
 enum BitcoinDisplayUnit { sats, bitcoin }
 
 class OfferCreationPreferences {
@@ -69,6 +71,7 @@ class AppPreferencesStore {
   static const _preferredCoordinatorKey =
       'offer_creation_preferred_coordinator_pubkey';
   static const _bitcoinDisplayUnitKey = 'display_bitcoin_unit';
+  static const _selectedPaymentSystemKey = 'selected_payment_system_id';
 
   static const _defaultOfferCreation = OfferCreationPreferences(
     defaultCategory: OfferCategory.shop,
@@ -161,6 +164,22 @@ class AppPreferencesStore {
       bitcoinDisplayUnit:
           unit.isEmpty ? _defaultDisplay.bitcoinDisplayUnit : unit.first,
     );
+  }
+
+  /// Active payment method (country/system). Uses the saved choice if present,
+  /// otherwise the build's default ([buildDefaultPaymentSystemId], resolved at
+  /// startup from the appId/flavor or `--dart-define=PAYMENT_SYSTEM`).
+  static Future<PaymentSystem> loadSelectedPaymentSystem() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_selectedPaymentSystemKey);
+    // ignore: avoid_print
+    print('BITFLAVOR loadSelected saved=$saved default=$buildDefaultPaymentSystemId');
+    return paymentSystemById(saved ?? buildDefaultPaymentSystemId);
+  }
+
+  static Future<void> saveSelectedPaymentSystem(PaymentSystem method) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selectedPaymentSystemKey, method.id);
   }
 
   static double _normalizePremium(double value) {

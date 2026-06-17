@@ -93,7 +93,12 @@ class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
         error:
             (err, _) =>
                 Center(child: Text('${t.coordinator.management.error}: $err')),
-        data: (offers) {
+        data: (allOffers) {
+          // Only show offers for the payment system selected in settings.
+          final selectedSystem = ref.watch(selectedPaymentSystemProvider);
+          final offers = allOffers
+              .where((o) => o.fiatCurrency == selectedSystem.currency)
+              .toList();
           if (!_defaultFilterResolved) {
             final hasActive = offers.any(
               (o) => _activeStatuses.contains(o.status),

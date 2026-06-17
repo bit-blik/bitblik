@@ -418,14 +418,46 @@ class CoordinatorRegistry {
   }
 
   /// Background query for `kind=kKindOffer` events with `#s=success`
-  /// within [networkFinishedWindow], grouped by event author. Updates
-  /// `networkFinishedCount` per known record. Unknown authors are
-  /// ignored — discovery will pick them up separately.
+  /// within [networkFinishedWindow]. Updates `networkFinishedCount` per
+  /// known record.
+  ///
+  /// Offer events are published to each coordinator's OWN relays (its
+  /// NIP-65 set), NOT to the discovery relays — so we query each
+  /// coordinator on [relaysFor] its pubkey rather than the discovery set.
+  /// Querying discovery relays here badly under-reports (only the few
+  /// stray offer events that happen to land there are visible).
   Future<void> fetchNetworkFinishedCounts() async {
+    final now = DateTime.now();
+    var changed = false;
+
+    // Snapshot pubkeys up front; the per-coordinator awaits below let other
+    // code mutate `_records`, so we don't iterate it live.
+    for (final pubkey in _records.keys.toList()) {
+      final count = await _fetchFinishedCountFor(pubkey);
+      final r = _records[pubkey];
+      if (r == null) continue;
+      if (r.networkFinishedCount == count) continue;
+      _records[pubkey] = r.copyWith(
+        networkFinishedCount: count,
+        lastFinishedCountUpdate: now,
+      );
+      changed = true;
+    }
+
+    if (changed) {
+      _schedulePersist();
+      _emit();
+    }
+  }
+
+  /// Count `#s=success` [kKindOffer] events for a single coordinator within
+  /// [networkFinishedWindow], querying that coordinator's own relays.
+  Future<int> _fetchFinishedCountFor(String pubkey) async {
     final since = DateTime.now()
             .subtract(networkFinishedWindow)
             .millisecondsSinceEpoch ~/
         1000;
+    final coordinatorRelays = relaysFor(pubkey);
 
     // Page size requested from relays. We paginate with an `until` cursor
     // because relays cap how many events a single REQ returns (commonly
@@ -433,11 +465,10 @@ class CoordinatorRegistry {
     // and badly under-reports coordinators with many finished offers.
     const pageSize = 500;
 
-    // Dedupe across pages by addressable coordinate (author + `d` offer id).
-    // kKindOffer (38383) is addressable, so each offer maps to one event; the
-    // same event can still surface in adjacent pages around the cursor.
+    // Dedupe across pages by addressable `d` offer id. kKindOffer (38383) is
+    // addressable, so each offer maps to one event; the same event can still
+    // surface in adjacent pages around the cursor.
     final seen = <String>{};
-    final counts = <String, int>{};
 
     var until = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     while (true) {
@@ -445,6 +476,7 @@ class CoordinatorRegistry {
         name: 'coordinator-network-finished',
         filter: Filter(
           kinds: [kKindOffer],
+          authors: [pubkey],
           tags: {
             '#s': ['success'],
           },
@@ -452,18 +484,17 @@ class CoordinatorRegistry {
           until: until,
           limit: pageSize,
         ),
-        explicitRelays: relays,
+        explicitRelays: coordinatorRelays,
       );
 
       var pageCount = 0;
       var oldest = until;
       await for (final event in response.stream) {
+        if (event.pubKey != pubkey) continue;
         pageCount++;
         if (event.createdAt < oldest) oldest = event.createdAt;
         final dTag = event.getDtag() ?? event.id;
-        final coordinate = '${event.pubKey}:$dTag';
-        if (!seen.add(coordinate)) continue;
-        counts[event.pubKey] = (counts[event.pubKey] ?? 0) + 1;
+        seen.add(dTag);
       }
 
       // Last page reached when the relay returned fewer than requested.
@@ -475,22 +506,7 @@ class CoordinatorRegistry {
       until = nextUntil;
     }
 
-    final now = DateTime.now();
-    var changed = false;
-    counts.forEach((pubkey, count) {
-      final r = _records[pubkey];
-      if (r == null) return;
-      if (r.networkFinishedCount == count) return;
-      _records[pubkey] = r.copyWith(
-        networkFinishedCount: count,
-        lastFinishedCountUpdate: now,
-      );
-      changed = true;
-    });
-    if (changed) {
-      _schedulePersist();
-      _emit();
-    }
+    return seen.length;
   }
 
   Future<void> dispose() async {

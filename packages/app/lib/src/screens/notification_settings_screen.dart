@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../config/build_flavor.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -33,7 +34,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
             title: Text(t.notificationSettings.newOfferAlerts.label),
-            subtitle: Text(t.notificationSettings.newOfferAlerts.description),
+            subtitle: Text(t.notificationSettings.newOfferAlerts.description(app: ref.watch(selectedPaymentSystemProvider).brandName)),
             value: _isAndroid && enabled,
             onChanged: _isAndroid
                 ? (value) =>

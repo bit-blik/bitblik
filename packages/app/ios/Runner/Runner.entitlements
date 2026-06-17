@@ -5,6 +5,7 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:bitblik.app</string>
+		<string>applinks:bitway.me</string>
 	</array>
 </dict>
 </plist>

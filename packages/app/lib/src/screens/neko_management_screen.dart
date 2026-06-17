@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import '../config/build_flavor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -205,7 +206,7 @@ class _NekoManagementScreenState extends ConsumerState<NekoManagementScreen> {
                                 const SizedBox(height: 24),
                                 // Description - full width
                                 Text(
-                                  t.nekoInfo.description,
+                                  t.nekoInfo.description(app: ref.watch(selectedPaymentSystemProvider).brandName),
                                   style: Theme.of(context).textTheme.bodyMedium,
                                   textAlign: TextAlign.left,
                                 ),

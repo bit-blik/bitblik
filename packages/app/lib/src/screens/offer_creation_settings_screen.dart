@@ -6,6 +6,7 @@ import 'package:bitblik_core/core.dart';
 import '../providers/providers.dart';
 import '../settings/app_preferences.dart';
 import '../utils/category_icons.dart';
+import '../widgets/premium_info.dart';
 
 class OfferCreationSettingsScreen extends ConsumerStatefulWidget {
   const OfferCreationSettingsScreen({super.key});
@@ -109,7 +110,12 @@ class _OfferCreationSettingsScreenState
               ListTile(
                 title: Text(t.settings.offerCreation.dialogs.selectCategory),
               ),
-              ...OfferCategory.values.map((category) {
+              // Only categories the selected payment system supports
+              // (e.g. MB WAY → ATM only).
+              ...ref
+                  .read(selectedPaymentSystemProvider)
+                  .supportedCategories
+                  .map((category) {
                 final selected = current.defaultCategory == category;
                 return ListTile(
                   leading: categoryIconWidget(category, 28),
@@ -235,7 +241,23 @@ class _OfferCreationSettingsScreenState
                       ),
                       SwitchListTile(
                         secondary: const Icon(Icons.tune),
-                        title: Text(t.settings.offerCreation.enablePremium),
+                        title: Row(
+                          children: [
+                            Flexible(
+                              child:
+                                  Text(t.settings.offerCreation.enablePremium),
+                            ),
+                            const SizedBox(width: 6),
+                            IconButton(
+                              icon: const Icon(Icons.info_outline, size: 18),
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              tooltip: '',
+                              onPressed: () => showPremiumInfoDialog(context),
+                            ),
+                          ],
+                        ),
                         subtitle: Text(
                           t.settings.offerCreation.enablePremiumDescription,
                         ),

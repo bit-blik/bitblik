@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.7.1+23
+version: 0.8.0+24
 resolution: workspace
 environment:
   sdk: ^3.7.2
@@ -81,19 +81,19 @@ dependency_overrides:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk
-      ref: a105f59eb6918ccf017e7c1b8ad3707c98bff1af
+      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
     #path: ../../../ndk/packages/ndk
   ndk_flutter:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk_flutter
-      ref: a105f59eb6918ccf017e7c1b8ad3707c98bff1af
+      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
   #    path: ../../../ndk/packages/ndk_flutter
   ndk_drift:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/drift
-      ref: a6c0b4fc71a0e22f322940addf7fe613a38078e9
+      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
 
 dev_dependencies:
   #build_runner: 2.4.15
@@ -112,26 +112,6 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
-
-# flutter_launcher_icons configuration
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/logo.png"
-  adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: "assets/logo.png"
-  adaptive_icon_foreground_inset: 26
-#  adaptive_icon_padding: true  # Add padding to prevent cropping
-  min_sdk_android: 21  # Ensures compatibility
-  remove_alpha_ios: true
-  web:
-    generate: true
-    image_path: "assets/logo.png"
-  windows:
-    generate: false
-  macos:
-    generate: true
-    image_path: "assets/logo.png"
 
 # flutter_native_splash configuration
 flutter_native_splash:
@@ -163,6 +143,8 @@ flutter:
     - assets/nostr.png
     - assets/logo-horizontal.png
     - assets/sell-blik.png
+    - assets/bitway.png
+    - assets/bitway-icon.png
     - assets/apk.png
     - assets/zapstore.png
     - assets/telegram.png

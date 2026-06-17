@@ -1,3 +1,4 @@
+import '../config/build_flavor.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -125,9 +126,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                           showRecentTransactions: false,
                           albyGoConnectConfig: AlbyGoConnectConfig(
                             connectMethod: AlbyGoConnectMethod.nostrNwcCallback,
-                            appName: 'BitBlik',
-                            appIconUrl:
-                                'https://bitblik.app/assets/assets/logo.png',
+                            appName: ref.watch(selectedPaymentSystemProvider).brandName,
+                            appIconUrl: buildNwcIconUrl,
                             callback: 'bitblik://nwc-callback',
                           ),
                           onWalletSelected: (walletId) {

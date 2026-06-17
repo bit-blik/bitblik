@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import '../providers/providers.dart';
+import '../utils/offer_status_label.dart';
 import '../services/api_service_nostr.dart';
 import '../utils/bitcoin_display.dart';
 import 'coordinator_details_screen.dart';
@@ -25,6 +26,14 @@ class OfferDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
+  /// Payment-system code term for the viewed offer (BLIK / MB WAY).
+  String get _code {
+    final o = ref.read(offerDetailsProvider(widget.offerId)).valueOrNull;
+    return o != null
+        ? offerCodeLabel(o)
+        : ref.read(selectedPaymentSystemProvider).codeLabel;
+  }
+
   bool _termsAccepted = false;
   bool _isLoadingTerms = true;
   bool _atmConsentAccepted = false;
@@ -619,6 +628,12 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                         'progress_blik_${offer.id}',
                                       ),
                                       blikReceivedAt: offer.blikReceivedAt!,
+                                      maxConfirmationTime:
+                                          (paymentSystemForCurrency(
+                                                    offer.fiatCurrency,
+                                                  ) ??
+                                                  kBlik)
+                                              .confirmationWindow,
                                     ),
                                   const SizedBox(height: 20),
 
@@ -964,7 +979,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                                                 .offers
                                                                 .details
                                                                 .consents
-                                                                .ecommerce,
+                                                                .ecommerce(code: offerCodeLabel(offer)),
                                                             style:
                                                                 const TextStyle(
                                                                   fontSize: 14,
@@ -979,7 +994,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                                       .offers
                                                       .details
                                                       .consents
-                                                      .ecommerce,
+                                                      .ecommerce(code: offerCodeLabel(offer)),
                                                   maxLines: 1,
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -1020,7 +1035,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                                               .offers
                                                               .details
                                                               .consents
-                                                              .ecommerce,
+                                                              .ecommerce(code: offerCodeLabel(offer)),
                                                           style:
                                                               const TextStyle(
                                                                 fontSize: 14,
@@ -1472,15 +1487,15 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
         break;
       case 'blikreceived':
         ribbonColor = Colors.blue;
-        ribbonText = t.offers.status.blikReceived.toUpperCase();
+        ribbonText = t.offers.status.blikReceived(code: _code).toUpperCase();
         break;
       case 'bliksenttomaker':
         ribbonColor = Colors.lightBlue;
-        ribbonText = t.offers.status.blikSentToMaker.toUpperCase();
+        ribbonText = t.offers.status.blikSentToMaker(code: _code).toUpperCase();
         break;
       case 'invalidblik':
         ribbonColor = Colors.deepOrange;
-        ribbonText = t.offers.status.invalidBlik.toUpperCase();
+        ribbonText = t.offers.status.invalidBlik(code: _code).toUpperCase();
         break;
       case 'conflict':
         ribbonColor = Colors.red[700]!;

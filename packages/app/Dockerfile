@@ -2,7 +2,9 @@
 # Stage 1: Build the Flutter web application
 FROM instrumentisto/flutter:3.41.6 AS build
 
+ARG APP_FLAVOR=bitblik
 ARG BUILD_MODE=release
+ARG FLUTTER_TARGET=lib/main_bitblik.dart
 
 WORKDIR /workspace
 
@@ -23,7 +25,22 @@ WORKDIR /workspace/packages/app
 
 RUN flutter config --enable-web
 
-RUN flutter build web --${BUILD_MODE} --no-web-resources-cdn
+RUN cp web_shells/${APP_FLAVOR}/index.html web/index.html \
+ && cp web_shells/${APP_FLAVOR}/manifest.json web/manifest.json \
+ && cp web_shells/${APP_FLAVOR}/favicon.png web/favicon.png \
+ && cp web_shells/${APP_FLAVOR}/icons/Icon-192.png web/icons/Icon-192.png \
+ && cp web_shells/${APP_FLAVOR}/icons/Icon-512.png web/icons/Icon-512.png \
+ && cp web_shells/${APP_FLAVOR}/icons/Icon-maskable-192.png web/icons/Icon-maskable-192.png \
+ && cp web_shells/${APP_FLAVOR}/icons/Icon-maskable-512.png web/icons/Icon-maskable-512.png \
+ && cp web_shells/${APP_FLAVOR}/splash/img/light-1x.png web/splash/img/light-1x.png \
+ && cp web_shells/${APP_FLAVOR}/splash/img/light-2x.png web/splash/img/light-2x.png \
+ && cp web_shells/${APP_FLAVOR}/splash/img/light-3x.png web/splash/img/light-3x.png \
+ && cp web_shells/${APP_FLAVOR}/splash/img/light-4x.png web/splash/img/light-4x.png \
+ && cp web_shells/${APP_FLAVOR}/splash/img/dark-1x.png web/splash/img/dark-1x.png \
+ && cp web_shells/${APP_FLAVOR}/splash/img/dark-2x.png web/splash/img/dark-2x.png \
+ && cp web_shells/${APP_FLAVOR}/splash/img/dark-3x.png web/splash/img/dark-3x.png \
+ && cp web_shells/${APP_FLAVOR}/splash/img/dark-4x.png web/splash/img/dark-4x.png \
+ && flutter build web --${BUILD_MODE} --target=${FLUTTER_TARGET} --no-web-resources-cdn
 #--wasm
 
 # Stage 2: Serve via Nginx

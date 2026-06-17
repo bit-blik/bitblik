@@ -16,10 +16,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
+import '../utils/offer_status_label.dart';
 import '../services/notification_service.dart';
 import '../services/offer_db_service.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../settings/app_preferences.dart';
+import '../config/build_flavor.dart';
 import '../utils/bitcoin_display.dart';
 
 final keyServiceProvider = Provider<KeyService>((ref) {
@@ -167,12 +169,17 @@ final discoveredCoordinatorsProvider = StreamProvider<List<CoordinatorRecord>>((
   yield* registry.changes;
 });
 
-/// Enabled-only view for the maker create-offer flow.
+/// Enabled-only view for the maker create-offer flow, restricted to the active
+/// payment method so a PL user never creates an offer on a PT coordinator (and
+/// vice versa). Records pending discovery (no `info` yet) are excluded.
 final enabledCoordinatorsProvider =
     Provider<AsyncValue<List<CoordinatorRecord>>>((ref) {
       final async = ref.watch(discoveredCoordinatorsProvider);
+      final method = ref.watch(selectedPaymentSystemProvider);
       return async.whenData(
-        (records) => records.where((r) => r.enabled).toList(growable: false),
+        (records) => records
+            .where((r) => r.enabled && r.paymentSystem == method.id)
+            .toList(growable: false),
       );
     });
 
@@ -260,6 +267,7 @@ final offersSubscriptionInitializer = FutureProvider<void>((ref) async {
 
 Future<List<Offer>> refreshAvailableOffersCache(
   ApiServiceNostr apiService,
+  PaymentSystem method,
 ) async {
   final currentOffers = List<Offer>.from(apiService.knownOffers);
   final enabledCoordinatorPubkeys =
@@ -272,7 +280,8 @@ Future<List<Offer>> refreshAvailableOffersCache(
       apiService.knownOffers
           .where(
             (offer) =>
-                enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey),
+                enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+                offer.fiatCurrency == method.currency,
           )
           .toList()
           .reversed,
@@ -299,6 +308,7 @@ Future<List<Offer>> refreshAvailableOffersCache(
           .where(
             (offer) =>
                 enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+                offer.fiatCurrency == method.currency &&
                 (offer.status == OfferStatus.funded ||
                     offer.status == OfferStatus.reserved),
           )
@@ -313,6 +323,7 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   // Depend on single global initializer
   await ref.watch(offersSubscriptionInitializer.future);
   final apiService = ref.watch(apiServiceProvider);
+  final method = ref.watch(selectedPaymentSystemProvider);
   final discoveredCoordinators = ref.watch(discoveredCoordinatorsProvider);
   final enabledCoordinatorPubkeys = discoveredCoordinators.maybeWhen(
     data:
@@ -335,6 +346,7 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
           .where(
             (offer) =>
                 enabledCoordinatorPubkeys.contains(offer.coordinatorPubkey) &&
+                offer.fiatCurrency == method.currency &&
                 (offer.status == OfferStatus.funded ||
                     offer.status == OfferStatus.reserved),
           )
@@ -349,6 +361,7 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
                   enabledCoordinatorPubkeys.contains(
                     candidate.coordinatorPubkey,
                   ) &&
+                  candidate.fiatCurrency == method.currency &&
                   (candidate.status == OfferStatus.funded ||
                       candidate.status == OfferStatus.reserved),
             )
@@ -1011,6 +1024,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     final isMaker = offer.makerPubkey == myPubkey;
     final isTaker = offer.takerPubkey == myPubkey;
     final strings = t.offerNotifications;
+    final code = offerCodeLabel(offer);
     switch (newStatus) {
       case OfferStatus.funded:
         if (isMaker) {
@@ -1032,24 +1046,24 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         if (isMaker) {
           NotificationService().show(
             3,
-            strings.blikReady.title,
-            strings.blikReady.body,
+            strings.blikReady.title(code: code),
+            strings.blikReady.body(code: code),
           );
         }
       case OfferStatus.takerCharged:
         if (isMaker) {
           NotificationService().show(
             4,
-            strings.takerCharged.title,
-            strings.takerCharged.body,
+            strings.takerCharged.title(code: code),
+            strings.takerCharged.body(code: code),
           );
         }
       case OfferStatus.invalidBlik:
         if (isTaker) {
           NotificationService().show(
             5,
-            strings.invalidBlik.title,
-            strings.invalidBlik.body,
+            strings.invalidBlik.title(code: code),
+            strings.invalidBlik.body(code: code),
           );
         }
       case OfferStatus.takerPaid:
@@ -1224,9 +1238,26 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
 ) async {
   // Wait for API service to be fully initialized
   final apiService = await ref.watch(initializedApiServiceProvider.future);
-  // Re-run when coordinator enablement changes so disabled coordinators
-  // disappear from the recent successful offers section immediately.
-  ref.watch(discoveredCoordinatorsProvider);
+  // Scope stats to the selected payment system's coordinators.
+  final selectedSystem = ref.watch(selectedPaymentSystemProvider);
+  // Re-run when the *set of enabled coordinators* for this payment system
+  // changes (so disabled coordinators drop out immediately), but NOT on every
+  // registry tick. Each run fans out one RPC per coordinator; reacting to
+  // health-probe / profile / finished-count emits would loop endlessly.
+  // `select` collapses to a value-equal String so unrelated emits are ignored.
+  ref.watch(
+    discoveredCoordinatorsProvider.select(
+      (async) => async.maybeWhen(
+        data: (records) => (records
+                .where((r) => r.enabled && r.paymentSystem == selectedSystem.id)
+                .map((r) => r.pubkeyHex)
+                .toList()
+              ..sort())
+            .join(','),
+        orElse: () => '',
+      ),
+    ),
+  );
 
   // Snapshot the registry once — do not subscribe to its change stream
   // here. This provider issues N RPCs per refresh; reacting to every
@@ -1237,7 +1268,9 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
         '📊 Stats Provider: ${registry.enabled.length} coordinators for stats',
   );
 
-  return apiService.getSuccessfulOffersStats();
+  return apiService.getSuccessfulOffersStats(
+    paymentSystemId: selectedSystem.id,
+  );
 });
 
 // Provider to expose the public key hex.
@@ -1474,6 +1507,30 @@ class BitcoinDisplayUnitNotifier extends StateNotifier<BitcoinDisplayUnit> {
   }
 }
 
+/// Active payment method (country/payment-system) selected by the user. Drives
+/// code-length validation, the confirmation countdown, currency labels, and the
+/// filtering of coordinators/offers shown in the app. Defaults to BLIK.
+final selectedPaymentSystemProvider =
+    StateNotifierProvider<SelectedPaymentSystemNotifier, PaymentSystem>(
+      (ref) => SelectedPaymentSystemNotifier(),
+    );
+
+class SelectedPaymentSystemNotifier extends StateNotifier<PaymentSystem> {
+  SelectedPaymentSystemNotifier()
+      : super(paymentSystemById(buildDefaultPaymentSystemId)) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    state = await AppPreferencesStore.loadSelectedPaymentSystem();
+  }
+
+  Future<void> set(PaymentSystem value) async {
+    state = value;
+    await AppPreferencesStore.saveSelectedPaymentSystem(value);
+  }
+}
+
 // Provider for app lifecycle management
 final appLifecycleProvider = Provider<AppLifecycleNotifier>((ref) {
   // Pass the ref to the notifier
@@ -1651,7 +1708,7 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       final strings = t.offerNotifications;
       NotificationService().startOfferForegroundService(
         strings.activeService.title,
-        strings.activeService.body,
+        strings.activeService.body(app: _ref.read(selectedPaymentSystemProvider).brandName),
       );
     } else {
       NotificationService().stopOfferForegroundService();
@@ -1822,9 +1879,10 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
             !OfferDbService.terminalStatuses.contains(offer.status);
         if (hasActiveOffer && offer.status == OfferStatus.blikSentToMaker) {
           final strings = t.offerNotifications;
+          final code = offerCodeLabel(offer);
           NotificationService().scheduleBlikReminder(
-            strings.blikPendingReminder.title,
-            strings.blikPendingReminder.body,
+            strings.blikPendingReminder.title(code: code),
+            strings.blikPendingReminder.body(code: code),
           );
         }
         break;

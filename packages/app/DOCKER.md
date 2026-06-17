@@ -1,6 +1,55 @@
-# Docker Runtime Configuration for Group Links
+# Docker Runtime Configuration for Group Links and Web Flavors
 
-This document explains how to configure group links (Telegram, Element, SimpleX, Signal) shown in the notifications bar at **runtime** when running the Docker container.
+This document explains:
+
+1. How to build Docker images for the two web flavors: `bitblik` and `bitway`
+2. How to configure group links (Telegram, Element, SimpleX, Signal) at **runtime**
+
+The web build now uses explicit Flutter entrypoints and committed web shell templates, including flavor-specific `index.html`, `manifest.json`, `favicon`, PWA icons, and splash/preloader images. It does not rely on scripts that mutate `web/` and then restore files.
+
+## Building Flavor-Specific Web Images
+
+Use the same Dockerfile for both flavors and pass explicit build args.
+
+### BitBlik
+
+```bash
+docker build \
+  -f packages/app/Dockerfile \
+  --build-arg APP_FLAVOR=bitblik \
+  --build-arg FLUTTER_TARGET=lib/main_bitblik.dart \
+  -t bitblik-client:latest \
+  .
+```
+
+### BitWay
+
+```bash
+docker build \
+  -f packages/app/Dockerfile \
+  --build-arg APP_FLAVOR=bitway \
+  --build-arg FLUTTER_TARGET=lib/main_bitway.dart \
+  -t bitway-client:latest \
+  .
+```
+
+### Build Args
+
+- `APP_FLAVOR`: selects the committed web shell assets under `web_shells/<flavor>/`
+- `FLUTTER_TARGET`: selects the Flutter entrypoint for the build
+- `BUILD_MODE`: optional, defaults to `release`
+
+Example:
+
+```bash
+docker build \
+  -f packages/app/Dockerfile \
+  --build-arg APP_FLAVOR=bitblik \
+  --build-arg FLUTTER_TARGET=lib/main_bitblik.dart \
+  --build-arg BUILD_MODE=release \
+  -t bitblik-client:latest \
+  .
+```
 
 ## Overview
 

@@ -1,25 +1,69 @@
 import 'package:flutter/foundation.dart';
 
-/// Default group link constants
-/// These are used as fallback values when no runtime configuration is provided
+/// One set of community links for a (payment-system, build-mode) combination.
+class GroupLinkSet {
+  final String telegram;
+  final String element;
+  final String simplex;
+  final String signal;
+
+  const GroupLinkSet({
+    this.telegram = '',
+    this.element = '',
+    this.simplex = '',
+    this.signal = '',
+  });
+
+  bool get hasAnyLinks =>
+      telegram.isNotEmpty ||
+      element.isNotEmpty ||
+      simplex.isNotEmpty ||
+      signal.isNotEmpty;
+}
+
+const _blikRelease = GroupLinkSet(
+  telegram: 'https://t.me/+xSktv2JukXUxYmEx',
+  element: 'https://matrix.to/#/#bitblik-offers:matrix.org',
+  simplex:
+      'https://simplex.chat/contact#/?v=2-7&smp=smp%3A%2F%2Fu2dS9sG8nMNURyZwqASV4yROM28Er0luVTx5X1CsMrU%3D%40smp4.simplex.im%2FjwS8YtivATVUtHogkN2QdhVkw2H6XmfX%23%2F%3Fv%3D1-3%26dh%3DMCowBQYDK2VuAyEAsNpGcPiALZKbKfIXTQdJAuFxOmvsuuxMLR9rwMIBUWY%253D%26srv%3Do5vmywmrnaxalvz6wi3zicyftgio6psuvyniis6gco6bp6ekl4cqj4id.onion&data=%7B%22groupLinkId%22%3A%22hCkt5Ph057tSeJdyEI0uug%3D%3D%22%7D',
+  signal:
+      'https://signal.group/#CjQKIGcFyMrwHN1UPB57IhdkGmz23_64AhyIU5oBaZufe2hcEhCltosTHbc9ROywT0KETJbk',
+);
+
+const _blikDebug = GroupLinkSet(
+  telegram: 'https://t.me/+MmXPxSylJC0zNzIx',
+  element: 'https://matrix.to/#/#test-bitblik-offers:matrix.org',
+  simplex:
+      'https://simplex.chat/contact#/?v=2-7&smp=smp%3A%2F%2Fu2dS9sG8nMNURyZwqASV4yROM28Er0luVTx5X1CsMrU%3D%40smp4.simplex.im%2F-FjYjoPVW323UWnxJ-ICEIvlUY0vnuRM%23%2F%3Fv%3D1-4%26dh%3DMCowBQYDK2VuAyEAX-eUfNzP4E_n0BkC-5A7iqHrchhcDC23FopK4JPXm3Q%253D%26q%3Dc%26srv%3Do5vmywmrnaxalvz6wi3zicyftgio6psuvyniis6gco6bp6ekl4cqj4id.onion&data=%7B%22groupLinkId%22%3A%22pG-_A9dIAhbdz8ZTTpbNdQ%3D%3D%22%7D',
+  signal:
+      'https://signal.group/#CjQKIIgYFxedCjVqrRIThiXtlvU26RLrrcL7D9Z9yrUc08rnEhD7BFT3pCt2JfxEQB3JZtaA',
+);
+
+// Empty fields hide the corresponding community button.
+const _mbwayRelease = GroupLinkSet(
+  telegram: 'https://t.me/+LggNXOqCkWc0YmQx',
+  simplex:
+      'https://smp18.simplex.im/g#0c-6KAwTCR3_VxJKq_ovGSFsyzg_VMwmxiu5BIiOXTw',
+    signal: 'https://signal.group/#CjQKIGMpV06PzUJRxcsFxgCZ3avqczApZbJPhZlqvIXMUInHEhCsvmTeDtLq0dJfMksWSxiF'
+);
+
+const _mbwayDebug = GroupLinkSet(
+  telegram: 'https://t.me/+LggNXOqCkWc0YmQx',
+  simplex:
+      'https://smp18.simplex.im/g#0c-6KAwTCR3_VxJKq_ovGSFsyzg_VMwmxiu5BIiOXTw',
+  signal: 'https://signal.group/#CjQKIGMpV06PzUJRxcsFxgCZ3avqczApZbJPhZlqvIXMUInHEhCsvmTeDtLq0dJfMksWSxiF'
+);
+
+/// Default group link constants, resolved per payment system and build mode.
+/// These are used as fallback values when no runtime configuration is
+/// provided.
 class GroupLinksConstants {
-  static const String defaultTelegram =
-      !kDebugMode
-          ? 'https://t.me/+xSktv2JukXUxYmEx'
-          : 'https://t.me/+MmXPxSylJC0zNzIx';
-
-  static const String defaultElement =
-      !kDebugMode
-          ? 'https://matrix.to/#/#bitblik-offers:matrix.org'
-          : 'https://matrix.to/#/#test-bitblik-offers:matrix.org';
-
-  static const String defaultSimplex =
-      !kDebugMode
-          ? 'https://simplex.chat/contact#/?v=2-7&smp=smp%3A%2F%2Fu2dS9sG8nMNURyZwqASV4yROM28Er0luVTx5X1CsMrU%3D%40smp4.simplex.im%2FjwS8YtivATVUtHogkN2QdhVkw2H6XmfX%23%2F%3Fv%3D1-3%26dh%3DMCowBQYDK2VuAyEAsNpGcPiALZKbKfIXTQdJAuFxOmvsuuxMLR9rwMIBUWY%253D%26srv%3Do5vmywmrnaxalvz6wi3zicyftgio6psuvyniis6gco6bp6ekl4cqj4id.onion&data=%7B%22groupLinkId%22%3A%22hCkt5Ph057tSeJdyEI0uug%3D%3D%22%7D'
-          : 'https://simplex.chat/contact#/?v=2-7&smp=smp%3A%2F%2Fu2dS9sG8nMNURyZwqASV4yROM28Er0luVTx5X1CsMrU%3D%40smp4.simplex.im%2F-FjYjoPVW323UWnxJ-ICEIvlUY0vnuRM%23%2F%3Fv%3D1-4%26dh%3DMCowBQYDK2VuAyEAX-eUfNzP4E_n0BkC-5A7iqHrchhcDC23FopK4JPXm3Q%253D%26q%3Dc%26srv%3Do5vmywmrnaxalvz6wi3zicyftgio6psuvyniis6gco6bp6ekl4cqj4id.onion&data=%7B%22groupLinkId%22%3A%22pG-_A9dIAhbdz8ZTTpbNdQ%3D%3D%22%7D';
-
-  static const String defaultSignal =
-      !kDebugMode
-          ? 'https://signal.group/#CjQKIGcFyMrwHN1UPB57IhdkGmz23_64AhyIU5oBaZufe2hcEhCltosTHbc9ROywT0KETJbk'
-          : 'https://signal.group/#CjQKIIgYFxedCjVqrRIThiXtlvU26RLrrcL7D9Z9yrUc08rnEhD7BFT3pCt2JfxEQB3JZtaA';
+  /// Links for the given payment system id ('blik', 'mbway', ...), honoring
+  /// debug/release mode. Unknown ids fall back to the BLIK set.
+  static GroupLinkSet forPaymentSystem(String paymentSystemId) {
+    if (paymentSystemId == 'mbway') {
+      return kDebugMode ? _mbwayDebug : _mbwayRelease;
+    }
+    return kDebugMode ? _blikDebug : _blikRelease;
+  }
 }

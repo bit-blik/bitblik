@@ -323,7 +323,7 @@ class NostrService {
   /// POST /initiate-offer (fiat version)
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
-    required String makerId,
+    required String fiatCurrency,
     OfferCategory? category,
     required String coordinatorPubkey,
     double premiumPercent = 0,
@@ -332,7 +332,7 @@ class NostrService {
       method: kRpcInitiateOffer,
       params: {
         'fiat_amount': fiatAmount,
-        'maker_id': makerId,
+        'fiat_currency': fiatCurrency,
         if (category != null) 'category': category.name,
         if (premiumPercent > 0) 'premium_percent': premiumPercent,
       },
@@ -416,8 +416,10 @@ class NostrService {
     final filter = Filter(
       kinds: [kKindOffer],
       authors: enabledPubkeys.toList(growable: false),
+      // No `#f` (fiat) filter: offers of all currencies are received and then
+      // filtered by the user's selected payment method client-side
+      // (availableOffersProvider). Keeps one subscription valid across markets.
       tags: {
-        "#f": ["PLN"],
         "#y": ["Bitblik"],
       },
       since:
@@ -724,171 +726,167 @@ class NostrService {
   CoordinatorInfo? getCoordinatorInfoByPubkey(String coordinatorPubkey) =>
       _coordinatorRegistry?.infoFor(coordinatorPubkey);
 
-  /// GET /stats/successful-offers - This will now query all coordinators
-  Future<Map<String, dynamic>> getSuccessfulOffersStats() async {
+  /// GET /stats/successful-offers — computed entirely client-side from the
+  /// coordinators' public `s=success` offer events (kind [kKindOffer]), which
+  /// already carry `created_at`, `reserved_at`, `blik_received_at` and
+  /// `paid_at`. No per-coordinator RPC fan-out: a single paginated query over
+  /// the union of the relevant coordinators' relays.
+  ///
+  /// Window is 30 days (the `lifetime` block is best-effort over that window —
+  /// relays prune old events, so true all-time totals live only in each
+  /// coordinator's DB). `last_7_days` is the recent subset shown in the UI.
+  Future<Map<String, dynamic>> getSuccessfulOffersStats({
+    String? paymentSystemId,
+  }) async {
     if (!_isInitialized) {
       await init();
     }
 
-    final coordinators = coordinatorRegistry.enabled;
+    // Only aggregate coordinators serving the selected payment system.
+    final coordinators = paymentSystemId == null
+        ? coordinatorRegistry.enabled
+        : coordinatorRegistry.enabled
+            .where((c) => c.paymentSystem == paymentSystemId)
+            .toList();
     if (coordinators.isEmpty) {
       Logger.log.w(() => "No coordinators enabled, cannot get stats.");
-      return {
-        'total_sats': 0,
-        'total_offers': 0,
-        'offers': <Offer>[],
-        'stats': {
-          'lifetime': {
-            'avg_time_blik_received_to_created_seconds': null,
-            'avg_time_taker_paid_to_created_seconds': null,
-            'count': 0,
-          },
-          'last_7_days': {
-            'avg_time_blik_received_to_created_seconds': null,
-            'avg_time_taker_paid_to_created_seconds': null,
-            'count': 0,
-          },
-        },
-      };
+      return _emptyStats();
     }
+
+    // Offer events live on each coordinator's own relays — query their union
+    // with an `authors` filter, paginated, instead of N point-to-point RPCs.
+    final relays = <String>{};
+    for (final c in coordinators) {
+      relays.addAll(_relaysForCoordinator(c.pubkeyHex));
+    }
+    final authors = coordinators.map((c) => c.pubkeyHex).toList();
+
+    final now = DateTime.now().toUtc();
+    final windowStart = now.subtract(const Duration(days: 30));
+    final sevenDaysAgo = now.subtract(const Duration(days: 7));
+
+    final offers = await _fetchSuccessOffers(
+      authors: authors,
+      relays: relays.toList(),
+      since: windowStart.millisecondsSinceEpoch ~/ 1000,
+    );
 
     int totalSats = 0;
-    int totalOffers = 0;
-    final allOffers = <Offer>[];
+    final recentOffers = <Offer>[];
 
-    // For aggregating stats
+    // Per-window timing accumulators. `blik_received_at` is not present in the
+    // public offer event, so we use `reserved_at` (created→reserved) as the
+    // headline "reserve" timing alongside the created→paid finishing time.
+    var lifetimeReserved = _Avg();
+    var lifetimePaid = _Avg();
+    var last7Reserved = _Avg();
+    var last7Paid = _Avg();
     int lifetimeCount = 0;
     int last7DaysCount = 0;
-    double lifetimeBlikTimeSum = 0;
-    double lifetimePaidTimeSum = 0;
-    double last7DaysBlikTimeSum = 0;
-    double last7DaysPaidTimeSum = 0;
-    int lifetimeBlikTimeValidEntries = 0;
-    int lifetimePaidTimeValidEntries = 0;
-    int last7DaysBlikTimeValidEntries = 0;
-    int last7DaysPaidTimeValidEntries = 0;
 
-    for (final coordinator in coordinators) {
-      try {
-        final request = NostrRequest(
-          method: kRpcGetSuccessfulOffersStats,
-          params: {},
-        );
-        final response = await sendRequest(request, coordinator.pubkeyHex);
-        final stats = _handleResponse(response, (result) {
-          if (result.containsKey('offers') && result['offers'] is List) {
-            final List<dynamic> offersJson = result['offers'];
-            result['offers'] = offersJson
-                .map((json) => Offer.fromJson(json)
-                    .copyWith(coordinatorPubkey: coordinator.pubkeyHex))
-                .toList();
-          }
-          return result;
-        });
-
-        // Aggregate basic totals
-        totalSats += (stats['total_sats'] as num?)?.toInt() ?? 0;
-        totalOffers += (stats['total_offers'] as num?)?.toInt() ?? 0;
-        if (stats['offers'] is List<Offer>) {
-          allOffers.addAll(stats['offers']);
-        }
-
-        // Aggregate nested stats if present
-        if (stats.containsKey('stats') &&
-            stats['stats'] is Map<String, dynamic>) {
-          final nestedStats = stats['stats'] as Map<String, dynamic>;
-
-          // Process lifetime stats
-          if (nestedStats.containsKey('lifetime') &&
-              nestedStats['lifetime'] is Map<String, dynamic>) {
-            final lifetimeStats =
-                nestedStats['lifetime'] as Map<String, dynamic>;
-            final count = (lifetimeStats['count'] as num?)?.toInt() ?? 0;
-            lifetimeCount += count;
-
-            final blikTime =
-                lifetimeStats['avg_time_blik_received_to_created_seconds']
-                    as num?;
-            if (blikTime != null && count > 0) {
-              lifetimeBlikTimeSum += blikTime.toDouble() * count;
-              lifetimeBlikTimeValidEntries += count;
-            }
-
-            final paidTime =
-                lifetimeStats['avg_time_taker_paid_to_created_seconds'] as num?;
-            if (paidTime != null && count > 0) {
-              lifetimePaidTimeSum += paidTime.toDouble() * count;
-              lifetimePaidTimeValidEntries += count;
-            }
-          }
-
-          // Process last_7_days stats
-          if (nestedStats.containsKey('last_7_days') &&
-              nestedStats['last_7_days'] is Map<String, dynamic>) {
-            final last7DaysStats =
-                nestedStats['last_7_days'] as Map<String, dynamic>;
-            final count = (last7DaysStats['count'] as num?)?.toInt() ?? 0;
-            last7DaysCount += count;
-
-            final blikTime =
-                last7DaysStats['avg_time_blik_received_to_created_seconds']
-                    as num?;
-            if (blikTime != null && count > 0) {
-              last7DaysBlikTimeSum += blikTime.toDouble() * count;
-              last7DaysBlikTimeValidEntries += count;
-            }
-
-            final paidTime =
-                last7DaysStats['avg_time_taker_paid_to_created_seconds']
-                    as num?;
-            if (paidTime != null && count > 0) {
-              last7DaysPaidTimeSum += paidTime.toDouble() * count;
-              last7DaysPaidTimeValidEntries += count;
-            }
-          }
-        }
-      } catch (e) {
-        Logger.log.e(
-          () =>
-              "Error getting stats from coordinator ${coordinator.pubkeyHex}: $e",
-        );
+    for (final offer in offers) {
+      lifetimeCount++;
+      final recent = offer.createdAt.toUtc().isAfter(sevenDaysAgo);
+      if (recent) {
+        last7DaysCount++;
+        totalSats += offer.amountSats;
+        recentOffers.add(offer);
       }
+
+      void add(DateTime? end, _Avg lifetime, _Avg last7) {
+        if (end == null) return;
+        final secs = end.difference(offer.createdAt).inSeconds.toDouble();
+        lifetime.add(secs);
+        if (recent) last7.add(secs);
+      }
+
+      add(offer.reservedAt, lifetimeReserved, last7Reserved);
+      add(offer.takerPaidAt, lifetimePaid, last7Paid);
     }
 
-    // Sort offers by creation date (most recent first)
-    allOffers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    // Most recent first.
+    recentOffers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return {
       'total_sats': totalSats,
-      'total_offers': totalOffers,
-      'offers': allOffers,
+      'total_offers': recentOffers.length,
+      'offers': recentOffers,
       'stats': {
         'lifetime': {
-          'avg_time_blik_received_to_created_seconds':
-              lifetimeBlikTimeValidEntries > 0
-                  ? (lifetimeBlikTimeSum / lifetimeBlikTimeValidEntries).round()
-                  : null,
-          'avg_time_taker_paid_to_created_seconds':
-              lifetimePaidTimeValidEntries > 0
-                  ? (lifetimePaidTimeSum / lifetimePaidTimeValidEntries).round()
-                  : null,
+          'avg_time_reserved_to_created_seconds': lifetimeReserved.avg,
+          'avg_time_taker_paid_to_created_seconds': lifetimePaid.avg,
           'count': lifetimeCount,
         },
         'last_7_days': {
-          'avg_time_blik_received_to_created_seconds':
-              last7DaysBlikTimeValidEntries > 0
-                  ? (last7DaysBlikTimeSum / last7DaysBlikTimeValidEntries)
-                      .round()
-                  : null,
-          'avg_time_taker_paid_to_created_seconds':
-              last7DaysPaidTimeValidEntries > 0
-                  ? (last7DaysPaidTimeSum / last7DaysPaidTimeValidEntries)
-                      .round()
-                  : null,
+          'avg_time_reserved_to_created_seconds': last7Reserved.avg,
+          'avg_time_taker_paid_to_created_seconds': last7Paid.avg,
           'count': last7DaysCount,
         },
       },
     };
+  }
+
+  Map<String, dynamic> _emptyStats() => {
+        'total_sats': 0,
+        'total_offers': 0,
+        'offers': <Offer>[],
+        'stats': {
+          for (final window in ['lifetime', 'last_7_days'])
+            window: {
+              'avg_time_reserved_to_created_seconds': null,
+              'avg_time_taker_paid_to_created_seconds': null,
+              'count': 0,
+            },
+        },
+      };
+
+  /// Paginated fetch of `s=success` [kKindOffer] events for [authors] from
+  /// [relays], newer than [since]. Dedupes by addressable coordinate
+  /// (author + `d` offer id) across pages. Relays cap how many events a single
+  /// REQ returns, so we page backwards with an `until` cursor.
+  Future<List<Offer>> _fetchSuccessOffers({
+    required List<String> authors,
+    required List<String> relays,
+    required int since,
+  }) async {
+    if (authors.isEmpty || relays.isEmpty) return const [];
+    const pageSize = 500;
+    final seen = <String>{};
+    final offers = <Offer>[];
+
+    var until = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    while (true) {
+      final response = _ndk!.requests.query(
+        name: 'successful-offers-stats',
+        filter: Filter(
+          kinds: [kKindOffer],
+          authors: authors,
+          tags: {
+            '#s': ['success'],
+          },
+          since: since,
+          until: until,
+          limit: pageSize,
+        ),
+        explicitRelays: relays,
+      );
+
+      var pageCount = 0;
+      var oldest = until;
+      await for (final event in response.stream) {
+        pageCount++;
+        if (event.createdAt < oldest) oldest = event.createdAt;
+        final dTag = event.getDtag() ?? event.id;
+        if (!seen.add('${event.pubKey}:$dTag')) continue;
+        offers.add(Offer.fromNostrEvent(event));
+      }
+
+      if (pageCount < pageSize) break;
+      final nextUntil = oldest - 1;
+      if (nextUntil >= until || nextUntil < since) break;
+      until = nextUntil;
+    }
+    return offers;
   }
 
   /// Start listening for offer status updates
@@ -1010,6 +1008,19 @@ class NostrService {
         .map((relays) => relays.values.any((r) => r.isConnected))
         .distinct();
   }
+}
+
+/// Running average accumulator: sum of seconds over a count of valid entries.
+class _Avg {
+  double _sum = 0;
+  int _n = 0;
+  void add(double seconds) {
+    _sum += seconds;
+    _n++;
+  }
+
+  /// Rounded average in seconds, or null when there are no entries.
+  int? get avg => _n > 0 ? (_sum / _n).round() : null;
 }
 
 /// Exception for Nostr-related errors

@@ -10,9 +10,12 @@ import 'nostr_service.dart';
 import 'offer_db_service.dart';
 
 class ApiServiceNostr {
-  static const _btcPlnCacheKey = 'btcPlnRate';
-  static const _btcPlnFetchedAtCacheKey = 'btcPlnFetchedAt';
-  static String _sourceRateCacheKey(String name) => 'btcPlnSource_$name';
+  static String _btcRateCacheKey(String currency) =>
+      'btcRate_${currency.toUpperCase()}';
+  static String _btcRateFetchedAtCacheKey(String currency) =>
+      'btcRateFetchedAt_${currency.toUpperCase()}';
+  static String _sourceRateCacheKey(String name, String currency) =>
+      'btcRateSource_${currency.toUpperCase()}_$name';
 
   final NostrService _nostrService;
   final KeyService _keyService;
@@ -44,7 +47,7 @@ class ApiServiceNostr {
 
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
-    required String makerId,
+    required String fiatCurrency,
     OfferCategory? category,
     String? coordinatorPubkey,
     double premiumPercent = 0,
@@ -55,7 +58,7 @@ class ApiServiceNostr {
       }
       return await _nostrService.initiateOfferFiat(
         fiatAmount: fiatAmount,
-        makerId: makerId,
+        fiatCurrency: fiatCurrency,
         category: category,
         coordinatorPubkey: coordinatorPubkey,
         premiumPercent: premiumPercent,
@@ -66,33 +69,38 @@ class ApiServiceNostr {
     }
   }
 
-  static final List<Map<String, String>> _exchangeRateSources = [
-    {
-      'name': 'CoinGecko',
-      'url':
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=pln',
-      'parser': '_parseCoinGeckoResponse',
-    },
-    {
-      'name': 'Yadio',
-      'url': 'https://api.yadio.io/exrates/pln',
-      'parser': '_parseYadioResponse',
-    },
-    {
-      'name': 'Blockchain.info',
-      'url': 'https://blockchain.info/ticker',
-      'parser': '_parseBlockchainInfoResponse',
-    },
-  ];
+  // Build the exchange-rate sources for [currency] (case-insensitive).
+  static List<Map<String, String>> _exchangeRateSourcesFor(String currency) {
+    final lower = currency.toLowerCase();
+    return [
+      {
+        'name': 'CoinGecko',
+        'url':
+            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=$lower',
+        'parser': 'coingecko',
+      },
+      {
+        'name': 'Yadio',
+        'url': 'https://api.yadio.io/exrates/$lower',
+        'parser': 'yadio',
+      },
+      {
+        'name': 'Blockchain.info',
+        'url': 'https://blockchain.info/ticker',
+        'parser': 'blockchain',
+      },
+    ];
+  }
 
+  // Source names are currency-independent.
   static List<String> get exchangeRateSourceNames =>
-      _exchangeRateSources.map((s) => s['name']!).toList();
+      _exchangeRateSourcesFor('PLN').map((s) => s['name']!).toList();
 
   // Parser for CoinGecko response
-  double? _parseCoinGeckoResponse(String responseBody) {
+  double? _parseCoinGeckoResponse(String responseBody, String currency) {
     try {
       final data = jsonDecode(responseBody);
-      final rate = data['bitcoin']['pln'];
+      final rate = data['bitcoin']?[currency.toLowerCase()];
       if (rate is num) {
         return rate.toDouble();
       }
@@ -102,7 +110,7 @@ class ApiServiceNostr {
     return null;
   }
 
-  double? _parseYadioResponse(String responseBody) {
+  double? _parseYadioResponse(String responseBody, String currency) {
     try {
       final data = jsonDecode(responseBody);
       final rate = data['BTC'];
@@ -115,12 +123,12 @@ class ApiServiceNostr {
     return null;
   }
 
-  double? _parseBlockchainInfoResponse(String responseBody) {
+  double? _parseBlockchainInfoResponse(String responseBody, String currency) {
     try {
       final data = jsonDecode(responseBody);
-      final plnData = data['PLN'];
-      if (plnData != null && plnData['last'] is num) {
-        return (plnData['last'] as num).toDouble();
+      final curData = data[currency.toUpperCase()];
+      if (curData != null && curData['last'] is num) {
+        return (curData['last'] as num).toDouble();
       }
     } catch (e) {
       Logger.log.e(() => 'Error parsing Blockchain.info response: $e');
@@ -128,32 +136,34 @@ class ApiServiceNostr {
     return null;
   }
 
-  Future<double> getBtcPlnRate() async {
-    final cachedRate = MemoryCache.instance.read<double>(_btcPlnCacheKey);
+  Future<double> getBtcRate(String currency) async {
+    final cachedRate =
+        MemoryCache.instance.read<double>(_btcRateCacheKey(currency));
     if (cachedRate != null) {
       return cachedRate;
     }
 
-    await _fetchAndCacheAllSources();
+    await _fetchAndCacheAllSources(currency);
 
-    final fresh = MemoryCache.instance.read<double>(_btcPlnCacheKey);
+    final fresh = MemoryCache.instance.read<double>(_btcRateCacheKey(currency));
     if (fresh != null) return fresh;
 
-    throw Exception('Failed to fetch BTC/PLN rate from all sources.');
+    throw Exception('Failed to fetch BTC/$currency rate from all sources.');
   }
 
-  Future<void> _fetchAndCacheAllSources() async {
+  Future<void> _fetchAndCacheAllSources(String currency) async {
     final fetchedAt = DateTime.now();
+    final sources = _exchangeRateSourcesFor(currency);
     final results = await Future.wait(
-      _exchangeRateSources.map(_fetchRateFromSource),
+      sources.map((s) => _fetchRateFromSource(s, currency)),
     );
 
-    for (var i = 0; i < _exchangeRateSources.length; i++) {
-      final name = _exchangeRateSources[i]['name']!;
+    for (var i = 0; i < sources.length; i++) {
+      final name = sources[i]['name']!;
       final rate = results[i];
       if (rate != null) {
         MemoryCache.instance.create(
-          _sourceRateCacheKey(name),
+          _sourceRateCacheKey(name, currency),
           rate,
           expiry: const Duration(minutes: 5),
         );
@@ -165,24 +175,27 @@ class ApiServiceNostr {
       final averageRate =
           validRates.reduce((a, b) => a + b) / validRates.length;
       MemoryCache.instance.create(
-        _btcPlnCacheKey,
+        _btcRateCacheKey(currency),
         averageRate,
         expiry: const Duration(minutes: 5),
       );
       MemoryCache.instance.create(
-        _btcPlnFetchedAtCacheKey,
+        _btcRateFetchedAtCacheKey(currency),
         fetchedAt,
         expiry: const Duration(minutes: 5),
       );
     } else {
       Logger.log.w(
         () =>
-            'Returning stale BTC/PLN rate due to all sources failing to fetch.',
+            'Returning stale BTC/$currency rate due to all sources failing to fetch.',
       );
     }
   }
 
-  Future<double?> _fetchRateFromSource(Map<String, String> source) async {
+  Future<double?> _fetchRateFromSource(
+    Map<String, String> source,
+    String currency,
+  ) async {
     final url = Uri.parse(source['url']!);
     final parserName = source['parser']!;
     final sourceName = source['name']!;
@@ -191,12 +204,12 @@ class ApiServiceNostr {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         double? rate;
-        if (parserName == '_parseCoinGeckoResponse') {
-          rate = _parseCoinGeckoResponse(response.body);
-        } else if (parserName == '_parseYadioResponse') {
-          rate = _parseYadioResponse(response.body);
-        } else if (parserName == '_parseBlockchainInfoResponse') {
-          rate = _parseBlockchainInfoResponse(response.body);
+        if (parserName == 'coingecko') {
+          rate = _parseCoinGeckoResponse(response.body, currency);
+        } else if (parserName == 'yadio') {
+          rate = _parseYadioResponse(response.body, currency);
+        } else if (parserName == 'blockchain') {
+          rate = _parseBlockchainInfoResponse(response.body, currency);
         }
         if (rate != null) {
           Logger.log.d(
@@ -210,29 +223,36 @@ class ApiServiceNostr {
       } else {
         Logger.log.w(
           () =>
-              'Failed to fetch BTC/PLN rate from $sourceName: ${response.statusCode} ${response.body}',
+              'Failed to fetch BTC/$currency rate from $sourceName: ${response.statusCode} ${response.body}',
         );
         return null;
       }
     } catch (e) {
-      Logger.log.e(() => 'Error fetching BTC/PLN rate from $sourceName: $e');
+      Logger.log.e(
+        () => 'Error fetching BTC/$currency rate from $sourceName: $e',
+      );
       return null;
     }
   }
 
-  Future<({Map<String, double?> rates, DateTime fetchedAt})>
-  getSourceRates() async {
-    if (MemoryCache.instance.read<double>(_btcPlnCacheKey) == null) {
-      await _fetchAndCacheAllSources();
+  Future<({Map<String, double?> rates, DateTime fetchedAt})> getSourceRates(
+    String currency,
+  ) async {
+    if (MemoryCache.instance.read<double>(_btcRateCacheKey(currency)) == null) {
+      await _fetchAndCacheAllSources(currency);
     }
     final fetchedAt =
-        MemoryCache.instance.read<DateTime>(_btcPlnFetchedAtCacheKey) ??
+        MemoryCache.instance.read<DateTime>(
+          _btcRateFetchedAtCacheKey(currency),
+        ) ??
         DateTime.now();
     final rates = Map.fromEntries(
-      _exchangeRateSources.map(
+      _exchangeRateSourcesFor(currency).map(
         (s) => MapEntry(
           s['name']!,
-          MemoryCache.instance.read<double>(_sourceRateCacheKey(s['name']!)),
+          MemoryCache.instance.read<double>(
+            _sourceRateCacheKey(s['name']!, currency),
+          ),
         ),
       ),
     );
@@ -444,9 +464,13 @@ class ApiServiceNostr {
   }
 
   // GET /stats/successful-offers - via Nostr
-  Future<Map<String, dynamic>> getSuccessfulOffersStats() async {
+  Future<Map<String, dynamic>> getSuccessfulOffersStats({
+    String? paymentSystemId,
+  }) async {
     try {
-      return await _nostrService.getSuccessfulOffersStats();
+      return await _nostrService.getSuccessfulOffersStats(
+        paymentSystemId: paymentSystemId,
+      );
     } catch (e) {
       Logger.log.e(() => 'Error calling getSuccessfulOffersStats: $e');
       rethrow;

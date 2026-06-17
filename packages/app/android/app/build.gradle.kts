@@ -111,6 +111,24 @@ android {
             signingConfig = cfg
         }
     }
+
+    // Payment-system flavors. Use the matching entrypoint so the app's default
+    // payment system is deterministic from process start:
+    //   flutter build apk --flavor bitblik -t lib/main_bitblik.dart
+    //   flutter build apk --flavor bitway -t lib/main_bitway.dart
+    flavorDimensions += "system"
+    productFlavors {
+        create("bitblik") {
+            dimension = "system"
+            resValue("string", "app_name", "bitblik")
+        }
+        create("bitway") {
+            dimension = "system"
+            // Distinct appId; debug build adds `.dev` → me.bitway.dev
+            applicationId = "me.bitway"
+            resValue("string", "app_name", "BitWay")
+        }
+    }
 }
 
 flutter {
