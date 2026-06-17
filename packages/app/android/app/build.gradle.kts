@@ -126,7 +126,7 @@ android {
             dimension = "system"
             // Distinct appId; debug build adds `.dev` → me.bitway.dev
             applicationId = "me.bitway"
-            resValue("string", "app_name", "BitWay")
+            resValue("string", "app_name", "bitway")
         }
     }
 }
