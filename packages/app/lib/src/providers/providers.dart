@@ -1238,11 +1238,26 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
 ) async {
   // Wait for API service to be fully initialized
   final apiService = await ref.watch(initializedApiServiceProvider.future);
-  // Re-run when coordinator enablement changes so disabled coordinators
-  // disappear from the recent successful offers section immediately.
-  ref.watch(discoveredCoordinatorsProvider);
   // Scope stats to the selected payment system's coordinators.
   final selectedSystem = ref.watch(selectedPaymentSystemProvider);
+  // Re-run when the *set of enabled coordinators* for this payment system
+  // changes (so disabled coordinators drop out immediately), but NOT on every
+  // registry tick. Each run fans out one RPC per coordinator; reacting to
+  // health-probe / profile / finished-count emits would loop endlessly.
+  // `select` collapses to a value-equal String so unrelated emits are ignored.
+  ref.watch(
+    discoveredCoordinatorsProvider.select(
+      (async) => async.maybeWhen(
+        data: (records) => (records
+                .where((r) => r.enabled && r.paymentSystem == selectedSystem.id)
+                .map((r) => r.pubkeyHex)
+                .toList()
+              ..sort())
+            .join(','),
+        orElse: () => '',
+      ),
+    ),
+  );
 
   // Snapshot the registry once — do not subscribe to its change stream
   // here. This provider issues N RPCs per refresh; reacting to every
