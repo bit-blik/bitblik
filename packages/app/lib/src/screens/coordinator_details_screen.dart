@@ -325,11 +325,11 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     );
   }
 
-  /// Group/notification links for this coordinator. Uses the coordinator's
+  /// Channel/notification links for this coordinator. Uses the coordinator's
   /// advertised links, falling back to the app's bundled defaults for its
   /// payment system when it advertises none.
-  Map<String, String> _resolveGroupLinks(CoordinatorRecord record) {
-    final advertised = record.groupLinks;
+  Map<String, String> _resolveChannelLinks(CoordinatorRecord record) {
+    final advertised = record.channelLinks;
     if (advertised.isNotEmpty) return advertised;
     final d = GroupLinks.of(record.paymentSystem ?? '');
     return {
@@ -361,7 +361,7 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     Translations t,
     CoordinatorRecord record,
   ) {
-    final links = _resolveGroupLinks(record);
+    final links = _resolveChannelLinks(record);
     if (links.isEmpty) return const [];
     return [
       const Divider(height: 32),

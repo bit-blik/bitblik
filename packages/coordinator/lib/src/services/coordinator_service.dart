@@ -77,9 +77,9 @@ class CoordinatorService {
   late final String _coordinatorIconUrl;
   late final String _termsOfUsageNaddr;
 
-  /// Community/notification group links advertised in get_info, keyed by
-  /// messenger id. Set from `GROUP_<MESSENGER>` env vars.
-  late final Map<String, String> _groupLinks;
+  /// Community/notification channel links advertised in get_info, keyed by
+  /// messenger id. Set from `<MESSENGER>_CHANNEL_LINK` env vars.
+  late final Map<String, String> _channelLinks;
 
   // Offer amount limits
   late final int _minAmountSats;
@@ -322,7 +322,7 @@ class CoordinatorService {
     // TELEGRAM_CHANNEL_LINK, MATRIX_CHANNEL_LINK, SIMPLEX_CHANNEL_LINK,
     // SIGNAL_CHANNEL_LINK. Unset = app falls back to its bundled defaults for
     // the payment system.
-    _groupLinks = {
+    _channelLinks = {
       for (final id in CoordinatorInfo.messengerIds)
         if ((_env['${id.toUpperCase()}_CHANNEL_LINK'] ?? '').trim().isNotEmpty)
           id: _env['${id.toUpperCase()}_CHANNEL_LINK']!.trim(),
@@ -1644,7 +1644,7 @@ class CoordinatorService {
       version: (version != null && version.isNotEmpty) ? version : null,
       termsOfUsageNaddr:
           _termsOfUsageNaddr.isNotEmpty ? _termsOfUsageNaddr : null,
-      groupLinks: _groupLinks,
+      channelLinks: _channelLinks,
     );
   }
 

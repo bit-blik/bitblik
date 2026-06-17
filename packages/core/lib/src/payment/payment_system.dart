@@ -1,5 +1,7 @@
 import 'package:meta/meta.dart';
+import 'package:ndk/ndk.dart' show Nip19;
 
+import '../constants/relays.dart';
 import '../models/offer.dart' show OfferCategory;
 
 /// A country/payment-system specification. Single source of truth for the
@@ -75,6 +77,13 @@ class PaymentSystem {
   /// notes — see [canDispenseAtmAmount].
   final List<int> atmBanknoteDenominations;
 
+  /// The project's Nostr identity (hex pubkey) whose profile NIP-65 defines the
+  /// **discovery relays** for this market, and against which coordinator
+  /// advertisements are resolved. Each market can advertise its own discovery
+  /// set + coordinator list under a separate key (e.g. Bitblik for BLIK,
+  /// Bitway for MB WAY). Stored as hex — the form Nostr filters need.
+  final String discoveryPubkeyHex;
+
   const PaymentSystem({
     required this.id,
     required this.label,
@@ -91,7 +100,12 @@ class PaymentSystem {
     required this.supportedCategories,
     required this.atmPresetAmounts,
     required this.atmBanknoteDenominations,
+    this.discoveryPubkeyHex = kBitblikPubkeyHex,
   });
+
+  /// The discovery identity as an `npub`, derived from [discoveryPubkeyHex].
+  /// Only needed for display (e.g. an external profile link).
+  String get discoveryNpub => Nip19.encodePubKey(discoveryPubkeyHex);
 
   /// Value carried on the wire under the NIP-69 `y` (platform) tag and used by
   /// clients as the `#y` subscription filter, so a market only receives offers
@@ -210,6 +224,8 @@ const PaymentSystem kMbway = PaymentSystem(
   supportedCategories: [OfferCategory.atm],
   atmPresetAmounts: [10, 20, 30, 50, 100, 200],
   atmBanknoteDenominations: [10, 20, 50, 100, 200],
+  // Bitway has its own Nostr identity for discovery (relays + coordinators).
+  discoveryPubkeyHex: kBitwayPubkeyHex,
 );
 
 /// All supported payment methods. Add a market by appending here.

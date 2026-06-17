@@ -33,11 +33,11 @@ class CoordinatorInfo {
   final String? icon;
   final String? termsOfUsageNaddr;
 
-  /// Community/notification group links this coordinator advertises, keyed by
+  /// Community/notification channel links this coordinator advertises, keyed by
   /// messenger id (`telegram`, `matrix`, `simplex`, `signal`, ...). Empty when
   /// the coordinator doesn't advertise any; the app then falls back to its
   /// bundled defaults for the payment system.
-  final Map<String, String> groupLinks;
+  final Map<String, String> channelLinks;
 
   const CoordinatorInfo({
     required this.name,
@@ -54,7 +54,7 @@ class CoordinatorInfo {
     this.version,
     this.icon,
     this.termsOfUsageNaddr,
-    this.groupLinks = const {},
+    this.channelLinks = const {},
   });
 
   /// Known messenger ids advertised via group links, in display order.
@@ -86,7 +86,7 @@ class CoordinatorInfo {
       version: json['version'] as String?,
       icon: json['icon'] as String?,
       termsOfUsageNaddr: json['terms_of_usage_naddr'] as String?,
-      groupLinks: _parseGroupLinks(json['group_links']),
+      channelLinks: _parseChannelLinks(json['channel_links']),
     );
   }
 
@@ -106,7 +106,7 @@ class CoordinatorInfo {
       if (version != null) 'version': version,
       if (icon != null) 'icon': icon,
       if (termsOfUsageNaddr != null) 'terms_of_usage_naddr': termsOfUsageNaddr,
-      if (groupLinks.isNotEmpty) 'group_links': groupLinks,
+      if (channelLinks.isNotEmpty) 'channel_links': channelLinks,
     };
   }
 
@@ -146,10 +146,11 @@ class CoordinatorInfo {
       version: _emptyToNull(tags['version']),
       nostrNpub: Nip19.encodePubKey(event.pubKey),
       termsOfUsageNaddr: _emptyToNull(tags['terms_of_usage_naddr']),
-      groupLinks: {
+      channelLinks: {
         for (final entry in tags.entries)
-          if (entry.key.startsWith('group_') && entry.value.isNotEmpty)
-            entry.key.substring('group_'.length): entry.value,
+          if (entry.key.endsWith('_channel_link') && entry.value.isNotEmpty)
+            entry.key.substring(
+                0, entry.key.length - '_channel_link'.length): entry.value,
       },
     );
   }
@@ -177,13 +178,13 @@ class CoordinatorInfo {
       ['payment_system', paymentSystem],
       ['version', version ?? ''],
       ['terms_of_usage_naddr', termsOfUsageNaddr ?? ''],
-      for (final entry in groupLinks.entries)
-        if (entry.value.isNotEmpty) ['group_${entry.key}', entry.value],
+      for (final entry in channelLinks.entries)
+        if (entry.value.isNotEmpty) ['${entry.key}_channel_link', entry.value],
     ];
   }
 
-  /// Parse the RPC `group_links` JSON value into a sanitized string map.
-  static Map<String, String> _parseGroupLinks(dynamic raw) {
+  /// Parse the RPC `channel_links` JSON value into a sanitized string map.
+  static Map<String, String> _parseChannelLinks(dynamic raw) {
     if (raw is! Map) return const {};
     final out = <String, String>{};
     raw.forEach((k, v) {

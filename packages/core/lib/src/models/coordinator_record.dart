@@ -86,7 +86,7 @@ class CoordinatorRecord {
   String? get paymentSystem => info?.paymentSystem;
   String get version => info?.version ?? '';
   String? get termsOfUsageNaddr => info?.termsOfUsageNaddr;
-  Map<String, String> get groupLinks => info?.groupLinks ?? const {};
+  Map<String, String> get channelLinks => info?.channelLinks ?? const {};
 
   /// True once this coordinator's relay set is known (NIP-65 or fallback).
   bool get hasRelays => relays.isNotEmpty;

@@ -36,6 +36,12 @@ class CoordinatorRegistry {
   /// fetched.
   late final List<String> _bootstrapRelays;
 
+  /// The project Nostr identity (hex) whose NIP-65 yields the discovery relays
+  /// and against which coordinator advertisements are matched. Defaults to
+  /// Bitblik; switched per active payment system (e.g. Bitway for MB WAY) via
+  /// [setDiscoveryPubkey] so each market discovers its own relays + coordinators.
+  String discoveryPubkeyHex;
+
   /// Records whose `lastHealthCheck` is older than this are eligible to
   /// be probed again by [probeAllEnabled].
   final Duration probeStaleAfter;
@@ -60,11 +66,20 @@ class CoordinatorRegistry {
     required this.rpcClient,
     required this.store,
     required this.relays,
+    this.discoveryPubkeyHex = kBitblikPubkeyHex,
     this.probeStaleAfter = const Duration(seconds: 60),
     this.manualAddTimeout = const Duration(seconds: 5),
     this.networkFinishedWindow = const Duration(days: 30),
   }) {
     _bootstrapRelays = List.from(relays);
+  }
+
+  /// Re-point discovery at a different project identity (hex pubkey), e.g. when
+  /// the active payment system changes. No-op when unchanged. The next
+  /// [discover] / [refreshDiscoveryRelays] resolves that identity's relays.
+  void setDiscoveryPubkey(String hex) {
+    if (hex == discoveryPubkeyHex) return;
+    discoveryPubkeyHex = hex;
   }
 
   /// Resolve the discovery relays from Bitblik's profile NIP-65
@@ -83,7 +98,7 @@ class CoordinatorRegistry {
         name: 'bitblik-discovery-relays',
         filter: Filter(
           kinds: [kKindRelayList],
-          authors: [kBitblikPubkeyHex],
+          authors: [discoveryPubkeyHex],
         ),
         explicitRelays: _bootstrapRelays,
         cacheRead: false,
@@ -92,7 +107,7 @@ class CoordinatorRegistry {
         const Duration(seconds: 6),
         onTimeout: (sink) => sink.close(),
       )) {
-        if (event.pubKey != kBitblikPubkeyHex) continue;
+        if (event.pubKey != discoveryPubkeyHex) continue;
         if (newest == null || event.createdAt > newest.createdAt) {
           newest = event;
         }

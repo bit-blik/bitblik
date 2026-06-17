@@ -114,6 +114,14 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
   final apiService = await ref.watch(initializedApiServiceProvider.future);
   final registry = apiService.coordinatorRegistry;
 
+  // Point discovery at the active payment system's project identity before the
+  // first sweep (Bitblik vs Bitway), so the initial discovery already resolves
+  // the right market's relays + coordinators. Later switches are handled by
+  // [discoveryIdentityInitializer].
+  registry.setDiscoveryPubkey(
+    ref.read(selectedPaymentSystemProvider).discoveryPubkeyHex,
+  );
+
   // Kick discovery + probes in background. Hydrated cache means
   // subscribers already see the previously-known list.
   unawaited(() async {
@@ -165,6 +173,9 @@ final discoveredCoordinatorsProvider = StreamProvider<List<CoordinatorRecord>>((
   ref,
 ) async* {
   final registry = await ref.watch(coordinatorRegistryProvider.future);
+  // Keep discovery pointed at the active market's identity; re-points + re-runs
+  // discovery on market switches (the registry then emits the new set).
+  ref.watch(discoveryIdentityInitializer);
   yield registry.all;
   yield* registry.changes;
 });
@@ -267,6 +278,20 @@ final offersSubscriptionInitializer = FutureProvider<void>((ref) async {
   final apiService = await ref.watch(initializedApiServiceProvider.future);
   final method = ref.watch(selectedPaymentSystemProvider);
   await apiService.startOfferSubscription(platformTag: method.platformTag);
+});
+
+// Keeps coordinator discovery pointed at the active payment system's project
+// identity (Bitblik for BLIK, Bitway for MB WAY). Re-points the registry and
+// re-runs discovery whenever the user switches markets, so each market resolves
+// its own discovery relays + coordinator set. The initial identity is set in
+// [coordinatorRegistryProvider]; this only reacts to later switches.
+final discoveryIdentityInitializer = FutureProvider<void>((ref) async {
+  final registry = await ref.watch(coordinatorRegistryProvider.future);
+  final method = ref.watch(selectedPaymentSystemProvider);
+  if (registry.discoveryPubkeyHex == method.discoveryPubkeyHex) return;
+  registry.setDiscoveryPubkey(method.discoveryPubkeyHex);
+  await registry.discover();
+  await registry.probeAllEnabled();
 });
 
 Future<List<Offer>> refreshAvailableOffersCache(

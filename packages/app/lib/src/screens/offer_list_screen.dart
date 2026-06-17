@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart'; // Import Slang
-import '../config/group_links.dart';
 import '../providers/providers.dart';
 import '../utils/bitcoin_display.dart';
 import '../utils/category_icons.dart';
@@ -410,7 +409,6 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
               _buildNotificationMessengers(
                 context,
                 t,
-                selectedSystem.id,
                 sortedAllCoordinators,
               ),
             ],
@@ -1338,36 +1336,20 @@ String _messengerLabel(Translations t, String id) {
   }
 }
 
-/// Group links advertised by a coordinator, falling back to the app's bundled
+/// Channel links advertised by a coordinator, falling back to the app's bundled
 /// defaults for the payment system when the coordinator advertises none.
-Map<String, String> _groupLinksFor(
-  CoordinatorRecord c,
-  String selectedSystemId,
-) {
-  final advertised = c.groupLinks;
-  if (advertised.isNotEmpty) return advertised;
-  final d = GroupLinks.of(c.paymentSystem ?? selectedSystemId);
-  return {
-    if (d.telegram.isNotEmpty) 'telegram': d.telegram,
-    if (d.matrix.isNotEmpty) 'matrix': d.matrix,
-    if (d.simplex.isNotEmpty) 'simplex': d.simplex,
-    if (d.signal.isNotEmpty) 'signal': d.signal,
-  };
-}
-
 /// Notification messenger chips, driven by the enabled coordinators for the
 /// selected payment system. Tapping a chip opens a sheet listing every
 /// coordinator that supports that messenger with a link to its group.
 Widget _buildNotificationMessengers(
   BuildContext context,
   Translations t,
-  String selectedSystemId,
   List<CoordinatorRecord> coordinators,
 ) {
   final byMessenger =
       <String, List<({CoordinatorRecord coord, String url})>>{};
   for (final c in coordinators.where((c) => c.enabled)) {
-    _groupLinksFor(c, selectedSystemId).forEach((messenger, url) {
+    c.channelLinks.forEach((messenger, url) {
       if (url.isEmpty) return;
       (byMessenger[messenger] ??= []).add((coord: c, url: url));
     });

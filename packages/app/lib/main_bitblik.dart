@@ -1562,9 +1562,11 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                         // const SizedBox(width: 8),
                         InkWell(
                           onTap: () async {
-                            final Uri url = Uri.parse(
-                              'https://njump.to/$kBitblikNpub',
-                            );
+                            final npub =
+                                ref
+                                    .read(selectedPaymentSystemProvider)
+                                    .discoveryNpub;
+                            final Uri url = Uri.parse('https://njump.to/$npub');
                             await launchUrl(
                               url,
                               mode: LaunchMode.externalApplication,

@@ -1,17 +1,26 @@
-/// The Bitblik project's Nostr identity. Its NIP-65 (kind [kKindRelayList])
-/// relay list defines the **discovery relays** — where coordinators publish
-/// their advertisement (kind [kKindCoordinatorInfo]) + NIP-65 events and where
-/// clients look for them. Editing Bitblik's published relay list re-points
-/// discovery for every client without shipping a new build.
-const String kBitblikNpub =
-    'npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3';
-
-/// Hex form of [kBitblikNpub] (decoded once, here, to avoid runtime decoding).
+/// The Bitblik project's Nostr identity (hex pubkey). Its NIP-65 (kind
+/// [kKindRelayList]) relay list defines the **discovery relays** — where
+/// coordinators publish their advertisement (kind [kKindCoordinatorInfo]) +
+/// NIP-65 events and where clients look for them. Editing Bitblik's published
+/// relay list re-points discovery for every client without shipping a new build.
+///
+/// Stored as hex because that is the form Nostr filters require (the hot path);
+/// the npub is derived on demand via `Nip19.encodePubKey` for the rare display
+/// case. npub: npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3
 const String kBitblikPubkeyHex =
     'b450f2a87f1327e9a5628c979286c6d4441f3e93bf8e3d5e4196e944c91e1ab0';
 
+/// The Bitway (MB WAY / Portugal market) Nostr identity (hex pubkey). Used
+/// instead of [kBitblikPubkeyHex] for discovery when the active payment system
+/// is MB WAY, so the Bitway market resolves its own discovery relays +
+/// coordinator set.
+///
+/// npub: npub180nj93uqjvvjksryaxaz8fk9gxwwtg06gxlkd5csrj6rqfg3phhs09n5s9
+const String kBitwayPubkeyHex =
+    '3be722c78093192b4064e9ba23a6c5419ce5a1fa41bf66d3101cb43025110def';
+
 /// Hardcoded **bootstrap** relays — used only to fetch Bitblik's profile
-/// NIP-65 ([kBitblikNpub]), which in turn yields the live discovery relays.
+/// NIP-65 ([kBitblikPubkeyHex]), which in turn yields the live discovery relays.
 /// Also the fallback discovery set when Bitblik's relay list can't be fetched.
 ///
 /// This is intentionally broad/common so the bootstrap fetch succeeds. It is
