@@ -750,7 +750,7 @@ home:
     title: Offerte Completate
     lifetimeCompact: "Totale: ${count} transazioni\nAttesa media per ${code}: ${avgBlikTime}\nTempo medio completamento: ${avgPaidTime}"
     last7DaysCompact: "Ultimi 7g: ${count} transazioni\nAttesa media per ${code}: ${avgBlikTime}\nTempo medio completamento: ${avgPaidTime}"
-    last7DaysSingleLine: "Ultimi 7g: ${count} offerte  |  Media ${code}: ${avgBlikTime}  |  Media Pagato: ${avgPaidTime}"
+    last7DaysSingleLine: "Ultimi 7g: ${count} offerte  |  Media prenot.: ${avgReservationTime}  |  Media Pagato: ${avgPaidTime}"
 
     errors:
       loading: "Errore nel caricamento delle statistiche: ${error}"

@@ -1252,7 +1252,7 @@ class _Translations$home$statistics$pt extends Translations$home$statistics$en {
 	@override String get title => 'Ofertas concluídas';
 	@override String lifetimeCompact({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Total: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}';
 	@override String last7DaysCompact({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}';
-	@override String last7DaysSingleLine({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} ofertas  |  ${code} méd.: ${avgBlikTime}  |  Pago méd.: ${avgPaidTime}';
+	@override String last7DaysSingleLine({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} ofertas  |  Reserva méd.: ${avgReservationTime}  |  Pago méd.: ${avgPaidTime}';
 	@override late final _Translations$home$statistics$errors$pt errors = _Translations$home$statistics$errors$pt._(_root);
 }
 
@@ -3093,7 +3093,7 @@ extension on TranslationsPt {
 			'home.statistics.title' => 'Ofertas concluídas',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Total: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}',
-			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} ofertas  |  ${code} méd.: ${avgBlikTime}  |  Pago méd.: ${avgPaidTime}',
+			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} ofertas  |  Reserva méd.: ${avgReservationTime}  |  Pago méd.: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Erro ao carregar estatísticas: ${error}',
 			'nekoInfo.title' => 'O que é um Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'O seu Neko é a sua identidade para usar o ${app}. É composto por uma chave privada e uma chave pública para garantir uma comunicação criptograficamente segura com o coordenador.\n\nPara garantir maior anonimato, recomenda-se usar um Neko novo para cada oferta.\n\n⚠️ IMPORTANTE: A sua chave privada é guardada apenas no seu dispositivo (no cliente). É de importância crítica fazer uma cópia de segurança da sua chave privada, já que perder o acesso a ela pode impedi-lo de resolver disputas e de recuperar os seus fundos.',

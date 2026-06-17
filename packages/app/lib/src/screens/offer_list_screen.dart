@@ -1487,8 +1487,8 @@ Widget _buildStatsSection(
       final localeTag = Localizations.localeOf(context).toLanguageTag();
       final numberFormat = NumberFormat.decimalPattern(localeTag);
 
-      final last7DaysBlikTime =
-          last7Days['avg_time_blik_received_to_created_seconds'] as num?;
+      final last7DaysReservationTime =
+          last7Days['avg_time_reserved_to_created_seconds'] as num?;
       final last7DaysPaidTime =
           last7Days['avg_time_taker_paid_to_created_seconds'] as num?;
 
@@ -1541,15 +1541,12 @@ Widget _buildStatsSection(
                   Text(
                     t.home.statistics.last7DaysSingleLine(
                       count: numberFormat.format(last7Days['count'] ?? 0),
-                      avgBlikTime: _formatDurationFromSeconds(
-                        last7DaysBlikTime?.round(),
+                      avgReservationTime: _formatDurationFromSeconds(
+                        last7DaysReservationTime?.round(),
                       ),
                       avgPaidTime: _formatDurationFromSeconds(
                         last7DaysPaidTime?.round(),
                       ),
-                      code:
-                          (paymentSystemForCurrency(currency) ?? kBlik)
-                              .codeLabel,
                     ),
                     style: const TextStyle(fontSize: 13),
                   ),

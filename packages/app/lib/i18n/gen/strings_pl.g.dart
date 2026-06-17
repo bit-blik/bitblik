@@ -1359,7 +1359,7 @@ class _Translations$home$statistics$pl extends Translations$home$statistics$en {
 	@override String get title => 'Zakończone oferty';
 	@override String lifetimeCompact({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
 	@override String last7DaysCompact({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}';
-	@override String last7DaysSingleLine({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. ${code}: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}';
+	@override String last7DaysSingleLine({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. rezerw.: ${avgReservationTime}  |  Śr. płatność: ${avgPaidTime}';
 	@override late final _Translations$home$statistics$errors$pl errors = _Translations$home$statistics$errors$pl._(_root);
 }
 
@@ -3059,7 +3059,7 @@ extension on TranslationsPl {
 			'home.statistics.title' => 'Zakończone oferty',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}',
-			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. ${code}: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}',
+			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Ost. 7 dni: ${count} ofert  |  Śr. rezerw.: ${avgReservationTime}  |  Śr. płatność: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Błąd ładowania statystyk: ${error}',
 			'system.loadingPublicKey' => 'Ładowanie Twojego klucza publicznego...',
 			'system.errors.generic' => 'Wystąpił nieoczekiwany błąd. Proszę spróbować ponownie.',

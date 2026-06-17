@@ -1976,8 +1976,8 @@ class Translations$home$statistics$en {
 	/// en: 'Last 7d: ${count} transactions Avg wait for ${code}: ${avgBlikTime} Avg completion time: ${avgPaidTime}'
 	String last7DaysCompact({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}';
 
-	/// en: 'Last 7d: ${count} offers | Avg ${code}: ${avgBlikTime} | Avg Paid: ${avgPaidTime}'
-	String last7DaysSingleLine({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg ${code}: ${avgBlikTime}  |  Avg Paid: ${avgPaidTime}';
+	/// en: 'Last 7d: ${count} offers | Avg reserve: ${avgReservationTime} | Avg Paid: ${avgPaidTime}'
+	String last7DaysSingleLine({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg reserve: ${avgReservationTime}  |  Avg Paid: ${avgPaidTime}';
 
 	late final Translations$home$statistics$errors$en errors = Translations$home$statistics$errors$en.internal(_root);
 }
@@ -4550,7 +4550,7 @@ extension on Translations {
 			'home.statistics.title' => 'Finished Offers',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'All: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
-			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg ${code}: ${avgBlikTime}  |  Avg Paid: ${avgPaidTime}',
+			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg reserve: ${avgReservationTime}  |  Avg Paid: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Error loading statistics: ${error}',
 			'nekoInfo.title' => 'What is a Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'Your Neko is your identity for using ${app}. It\'s composed of a private and public key to ensure cryptographically secure communication with the coordinator.\n\nTo ensure greater anonymity, it is recommended to use a new, fresh Neko for each offer.\n\n⚠️ IMPORTANT: Your private key is only stored on your device (client-side). It is critically important to backup your private key, as losing access to it may prevent you from resolving disputes and recovering your funds.',

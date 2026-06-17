@@ -766,7 +766,7 @@ home:
     title: Ofertas concluídas
     lifetimeCompact: "Total: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}"
     last7DaysCompact: "Últimos 7d: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}"
-    last7DaysSingleLine: "Últimos 7d: ${count} ofertas  |  ${code} méd.: ${avgBlikTime}  |  Pago méd.: ${avgPaidTime}"
+    last7DaysSingleLine: "Últimos 7d: ${count} ofertas  |  Reserva méd.: ${avgReservationTime}  |  Pago méd.: ${avgPaidTime}"
 
     errors:
       loading: "Erro ao carregar estatísticas: ${error}"

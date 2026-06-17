@@ -797,7 +797,7 @@ home:
     title: Zakończone oferty
     lifetimeCompact: "Wszystkie: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}"
     last7DaysCompact: "Ost. 7 dni: ${count} transakcji\nŚr. czas oczekiwania na ${code}: ${avgBlikTime}\nŚr. czas realizacji: ${avgPaidTime}"
-    last7DaysSingleLine: "Ost. 7 dni: ${count} ofert  |  Śr. ${code}: ${avgBlikTime}  |  Śr. płatność: ${avgPaidTime}"
+    last7DaysSingleLine: "Ost. 7 dni: ${count} ofert  |  Śr. rezerw.: ${avgReservationTime}  |  Śr. płatność: ${avgPaidTime}"
     
     errors:
       loading: "Błąd ładowania statystyk: ${error}"

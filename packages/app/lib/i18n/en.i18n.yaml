@@ -766,7 +766,7 @@ home:
     title: Finished Offers
     lifetimeCompact: "All: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}"
     last7DaysCompact: "Last 7d: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}"
-    last7DaysSingleLine: "Last 7d: ${count} offers  |  Avg ${code}: ${avgBlikTime}  |  Avg Paid: ${avgPaidTime}"
+    last7DaysSingleLine: "Last 7d: ${count} offers  |  Avg reserve: ${avgReservationTime}  |  Avg Paid: ${avgPaidTime}"
     
     errors:
       loading: "Error loading statistics: ${error}"
