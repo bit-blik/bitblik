@@ -25,8 +25,12 @@ const String kRpcRetryTakerPayment = 'retry_taker_payment';
 const String kRpcMarkBlikCharged = 'mark_blik_charged';
 
 // Queries
-const String kRpcGetMyActiveOffer = 'get_my_active_offer';
 const String kRpcGetOfferDetails = 'get_offer_details';
+
+// DEPRECATED: clients now resolve a local-only offer (id == payment hash, no
+// UUID yet) via `get_offer_details` with a `payment_hash` param. Coordinator
+// handler kept for old clients.
+const String kRpcGetMyActiveOffer = 'get_my_active_offer';
 // DEPRECATED: clients now count finished offers from their own local DB
 // instead of re-fetching from the coordinator. Only old clients still call it.
 const String kRpcGetMyFinishedOffers = 'get_my_finished_offers';
