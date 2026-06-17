@@ -759,7 +759,7 @@ home:
     title: "Get notified about new offers via:"
     telegram: Telegram
     simplex: SimpleX
-    element: Element
+    matrix: Matrix
     signal: Signal
   
   statistics:

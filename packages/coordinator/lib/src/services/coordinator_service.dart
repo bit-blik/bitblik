@@ -314,7 +314,7 @@ class CoordinatorService {
     _termsOfUsageNaddr = termsOfUsageEnv;
 
     // Community group/notification links, advertised in get_info. Operators set
-    // TELEGRAM_CHANNEL_LINK, ELEMENT_CHANNEL_LINK, SIMPLEX_CHANNEL_LINK,
+    // TELEGRAM_CHANNEL_LINK, MATRIX_CHANNEL_LINK, SIMPLEX_CHANNEL_LINK,
     // SIGNAL_CHANNEL_LINK. Unset = app falls back to its bundled defaults for
     // the payment system.
     _groupLinks = {

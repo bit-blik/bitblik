@@ -774,13 +774,36 @@ app.post('/api/offers-data', async (req, res) => {
       ORDER BY ${dateGrouping} ASC
     `;
 
-    const [groupedResult, groupedCountResult, totalsResult, weekdaySuccessResult, weekdayVolumeResult, categoryDistributionResult] = await Promise.all([
+    // Client-version distribution per period (one count per client build that
+    // created offers), restricted to the same paged window of periods so the
+    // lines line up with the other period charts.
+    const clientVersionDistributionQuery = `
+      WITH paged_periods AS (
+        SELECT DISTINCT ${dateGrouping} AS period_start
+        FROM offers
+        ${whereClause}
+        ORDER BY period_start DESC
+        ${pagingClause}
+      )
+      SELECT
+        TO_CHAR(${dateGrouping}, '${dateFormat}') AS date,
+        COALESCE(NULLIF(TRIM(client_version), ''), 'unknown') AS client,
+        COUNT(*)::INT AS count
+      FROM offers
+      WHERE ${dateGrouping} IN (SELECT period_start FROM paged_periods)
+      ${andClause}
+      GROUP BY ${dateGrouping}, COALESCE(NULLIF(TRIM(client_version), ''), 'unknown')
+      ORDER BY ${dateGrouping} ASC
+    `;
+
+    const [groupedResult, groupedCountResult, totalsResult, weekdaySuccessResult, weekdayVolumeResult, categoryDistributionResult, clientVersionDistributionResult] = await Promise.all([
       pool.query(groupedQuery, pagingParams),
       pool.query(groupedCountQuery),
       pool.query(totalsQuery),
       pool.query(weekdaySuccessQuery),
       pool.query(weekdayVolumeQuery),
-      pool.query(categoryDistributionQuery, pagingParams)
+      pool.query(categoryDistributionQuery, pagingParams),
+      pool.query(clientVersionDistributionQuery, pagingParams)
     ]);
 
     const totalPeriods = groupedCountResult.rows[0]?.total_periods || 0;
@@ -791,6 +814,7 @@ app.post('/api/offers-data', async (req, res) => {
       weekdaySuccess: weekdaySuccessResult.rows,
       weekdayVolume: weekdayVolumeResult.rows,
       categoryDistribution: categoryDistributionResult.rows,
+      clientVersionDistribution: clientVersionDistributionResult.rows,
       pagination: {
         page: usePaging ? page : 0,
         pageSize,

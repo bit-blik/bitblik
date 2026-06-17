@@ -34,7 +34,7 @@ class CoordinatorInfo {
   final String? termsOfUsageNaddr;
 
   /// Community/notification group links this coordinator advertises, keyed by
-  /// messenger id (`telegram`, `element`, `simplex`, `signal`, ...). Empty when
+  /// messenger id (`telegram`, `matrix`, `simplex`, `signal`, ...). Empty when
   /// the coordinator doesn't advertise any; the app then falls back to its
   /// bundled defaults for the payment system.
   final Map<String, String> groupLinks;
@@ -60,7 +60,7 @@ class CoordinatorInfo {
   /// Known messenger ids advertised via group links, in display order.
   static const List<String> messengerIds = [
     'telegram',
-    'element',
+    'matrix',
     'simplex',
     'signal',
   ];

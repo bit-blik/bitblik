@@ -18,6 +18,12 @@ const CATEGORY_FALLBACK_PALETTE = ['#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '
 const categoryColor = (key, index) =>
   CATEGORY_CHART_COLORS[key] || CATEGORY_FALLBACK_PALETTE[index % CATEGORY_FALLBACK_PALETTE.length];
 
+// One distinct line color per client build (app-bitblik/<v>, app-bitway/<v>,
+// cli/<v>, unknown, ...). Distinct from the category palette.
+const CLIENT_CHART_PALETTE = ['#2563eb', '#16a34a', '#db2777', '#f59e0b', '#7c3aed', '#0891b2', '#dc2626', '#65a30d'];
+const clientColor = (key, index) =>
+  key === 'unknown' ? '#94a3b8' : CLIENT_CHART_PALETTE[index % CLIENT_CHART_PALETTE.length];
+
 const Navigation = () => {
   const location = useLocation();
 
@@ -59,6 +65,8 @@ const AnalyticsDashboard = () => {
   const [categoryData, setCategoryData] = useState([]);
   const [categoryVolumeData, setCategoryVolumeData] = useState([]);
   const [categoryKeys, setCategoryKeys] = useState([]);
+  const [clientData, setClientData] = useState([]);
+  const [clientKeys, setClientKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -221,6 +229,28 @@ const AnalyticsDashboard = () => {
         setCategoryKeys(keys);
         setCategoryData(Array.from(byDate.values()).map(fillZeros));
         setCategoryVolumeData(Array.from(volByDate.values()).map(fillZeros));
+
+        // Pivot client-version distribution into per-period rows for a
+        // multi-line chart: { date, <client>: count, ... }. Client builds
+        // discovered dynamically so new app/cli versions appear automatically.
+        const clientRows = result.clientVersionDistribution || [];
+        const cKeys = [];
+        const cByDate = new Map();
+        clientRows.forEach((row) => {
+          const key = row.client || 'unknown';
+          if (!cKeys.includes(key)) cKeys.push(key);
+          if (!cByDate.has(row.date)) cByDate.set(row.date, { date: row.date });
+          cByDate.get(row.date)[key] = parseInt(row.count || 0, 10);
+        });
+        cKeys.sort();
+        const fillClientZeros = (entry) => {
+          cKeys.forEach((key) => {
+            if (entry[key] == null) entry[key] = 0;
+          });
+          return entry;
+        };
+        setClientKeys(cKeys);
+        setClientData(Array.from(cByDate.values()).map(fillClientZeros));
       } catch (err) {
         setError(err.message);
         console.error('Error fetching data:', err);
@@ -975,6 +1005,29 @@ const AnalyticsDashboard = () => {
                         <Bar key={key} dataKey={key} stackId="categories" fill={categoryColor(key, index)} name={key} />
                       ))}
                     </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {clientKeys.length > 0 && (
+              <div className={`grid grid-cols-1 gap-6 mb-6 ${contentLoadingClass}`}>
+                <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                    Offers by Client Version
+                  </h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={clientData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                      <YAxis allowDecimals={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                      <Tooltip formatter={(value) => formatNumber(value)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                      <Legend />
+                      {clientKeys.map((key, index) => (
+                        <Line key={key} type="monotone" dataKey={key} stroke={clientColor(key, index)} strokeWidth={2} name={key} dot={{ r: 3 }} connectNulls />
+                      ))}
+                    </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>

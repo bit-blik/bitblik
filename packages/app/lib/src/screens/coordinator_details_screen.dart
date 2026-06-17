@@ -334,7 +334,7 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     final d = GroupLinks.of(record.paymentSystem ?? '');
     return {
       if (d.telegram.isNotEmpty) 'telegram': d.telegram,
-      if (d.element.isNotEmpty) 'element': d.element,
+      if (d.matrix.isNotEmpty) 'matrix': d.matrix,
       if (d.simplex.isNotEmpty) 'simplex': d.simplex,
       if (d.signal.isNotEmpty) 'signal': d.signal,
     };
@@ -344,8 +344,8 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     switch (id) {
       case 'telegram':
         return t.home.notifications.telegram;
-      case 'element':
-        return t.home.notifications.element;
+      case 'matrix':
+        return t.home.notifications.matrix;
       case 'simplex':
         return t.home.notifications.simplex;
       case 'signal':

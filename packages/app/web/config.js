@@ -4,7 +4,7 @@
 
 window.appConfig = {
   telegramGroupLink: '',
-  elementGroupLink: '',
+  matrixGroupLink: '',
   simplexGroupLink: '',
   signalGroupLink: ''
 };
@@ -12,7 +12,7 @@ window.appConfig = {
 // Example configuration (uncomment and modify as needed):
 // window.appConfig = {
 //   telegramGroupLink: 'https://t.me/+xSktv2JukXUxYmEx',
-//   elementGroupLink: 'https://matrix.to/#/#bitblik-offers:matrix.org',
+//   matrixGroupLink: 'https://matrix.to/#/#bitblik-offers:matrix.org',
 //   simplexGroupLink: 'https://simplex.chat/contact#/?v=2-7&smp=...',
 //   signalGroupLink: 'https://signal.group/#...'
 // };

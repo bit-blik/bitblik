@@ -136,7 +136,7 @@ flutter:
   assets:
     - assets/github.png
     - assets/simplex.png
-    - assets/element.png
+    - assets/matrix.png
     - assets/logo.png
     - assets/logo2.png
     - assets/logo-trans.png

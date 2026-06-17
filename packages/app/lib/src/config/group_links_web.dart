@@ -6,7 +6,7 @@ import 'group_links_constants.dart';
 /// The config is loaded from /config.js which can be mounted/overwritten in Docker
 class GroupLinks {
   static String? _telegramOverride;
-  static String? _elementOverride;
+  static String? _matrixOverride;
   static String? _simplexOverride;
   static String? _signalOverride;
   static bool _initialized = false;
@@ -24,7 +24,7 @@ class GroupLinks {
 
       if (appConfig != null) {
         _telegramOverride = appConfig['telegramGroupLink'] as String?;
-        _elementOverride = appConfig['elementGroupLink'] as String?;
+        _matrixOverride = appConfig['matrixGroupLink'] as String?;
         _simplexOverride = appConfig['simplexGroupLink'] as String?;
         _signalOverride = appConfig['signalGroupLink'] as String?;
       }
@@ -44,9 +44,9 @@ class GroupLinks {
       telegram: _telegramOverride?.isNotEmpty == true
           ? _telegramOverride!
           : defaults.telegram,
-      element: _elementOverride?.isNotEmpty == true
-          ? _elementOverride!
-          : defaults.element,
+      matrix: _matrixOverride?.isNotEmpty == true
+          ? _matrixOverride!
+          : defaults.matrix,
       simplex: _simplexOverride?.isNotEmpty == true
           ? _simplexOverride!
           : defaults.simplex,

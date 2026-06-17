@@ -790,7 +790,7 @@ home:
     title: "Otrzymuj powiadomienia o nowych ofertach przez:"
     telegram: Telegram
     simplex: SimpleX
-    element: Element
+    matrix: Matrix
     signal: Signal
   
   statistics:

@@ -1238,7 +1238,7 @@ class _Translations$home$notifications$pt extends Translations$home$notification
 	@override String get title => 'Seja notificado sobre novas ofertas através de:';
 	@override String get telegram => 'Telegram';
 	@override String get simplex => 'SimpleX';
-	@override String get element => 'Element';
+	@override String get matrix => 'Matrix';
 	@override String get signal => 'Signal';
 }
 
@@ -3088,7 +3088,7 @@ extension on TranslationsPt {
 			'home.notifications.title' => 'Seja notificado sobre novas ofertas através de:',
 			'home.notifications.telegram' => 'Telegram',
 			'home.notifications.simplex' => 'SimpleX',
-			'home.notifications.element' => 'Element',
+			'home.notifications.matrix' => 'Matrix',
 			'home.notifications.signal' => 'Signal',
 			'home.statistics.title' => 'Ofertas concluídas',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Total: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}',

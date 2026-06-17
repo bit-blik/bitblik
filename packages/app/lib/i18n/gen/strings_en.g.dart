@@ -1952,8 +1952,8 @@ class Translations$home$notifications$en {
 	/// en: 'SimpleX'
 	String get simplex => 'SimpleX';
 
-	/// en: 'Element'
-	String get element => 'Element';
+	/// en: 'Matrix'
+	String get matrix => 'Matrix';
 
 	/// en: 'Signal'
 	String get signal => 'Signal';
@@ -4545,7 +4545,7 @@ extension on Translations {
 			'home.notifications.title' => 'Get notified about new offers via:',
 			'home.notifications.telegram' => 'Telegram',
 			'home.notifications.simplex' => 'SimpleX',
-			'home.notifications.element' => 'Element',
+			'home.notifications.matrix' => 'Matrix',
 			'home.notifications.signal' => 'Signal',
 			'home.statistics.title' => 'Finished Offers',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'All: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
