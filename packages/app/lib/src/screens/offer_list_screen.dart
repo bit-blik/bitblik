@@ -1,8 +1,7 @@
 import 'dart:async'; // Import async for Timer
 
+import 'package:bitblik_core/core.dart';
 import 'package:flutter/foundation.dart';
-
-import '../../i18n/gen/strings.g.dart'; // Import Slang
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,11 +10,11 @@ import 'package:ndk/shared/logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../i18n/gen/strings.g.dart'; // Import Slang
 import '../config/group_links.dart';
-import 'package:bitblik_core/core.dart';
-import '../utils/category_icons.dart';
-import '../utils/bitcoin_display.dart';
 import '../providers/providers.dart';
+import '../utils/bitcoin_display.dart';
+import '../utils/category_icons.dart';
 import '../widgets/lightning_address_widget.dart';
 import '../widgets/premium_info.dart';
 import '../widgets/progress_indicators.dart'; // Import the progress indicators

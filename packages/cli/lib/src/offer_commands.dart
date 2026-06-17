@@ -589,8 +589,14 @@ Future<int> runOfferCancel(List<String> args) async {
     }
 
     stdout.writeln('Offer has no coordinator UUID — syncing before cancel…');
+    // Resolve the coordinator's UUID + status by payment hash. Mirrors the
+    // app: `get_offer_details` is scoped to the requester pubkey and returns
+    // the offer (or {} if none), so no dedicated `get_my_active_offer` needed.
     final response = await client.sendRequest(
-      const NostrRequest(method: kRpcGetMyActiveOffer, params: {}),
+      NostrRequest(
+        method: kRpcGetOfferDetails,
+        params: {'payment_hash': paymentHash},
+      ),
       offer.coordinatorPubkey,
     );
 

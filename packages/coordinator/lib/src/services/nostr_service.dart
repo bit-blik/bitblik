@@ -574,6 +574,9 @@ class NostrService {
                 'Failed to confirm payment. Check offer state, LND connection, or logs.');
           }
 
+        // DEPRECATED: clients now resolve a local-only offer (id == payment
+        // hash, no UUID yet) via `get_offer_details` with a `payment_hash`
+        // param instead of this dedicated lookup. Kept for old clients.
         case kRpcGetMyActiveOffer:
           final activeOffers =
               await _coordinatorService.getMyActiveOffers(userPubkey);
