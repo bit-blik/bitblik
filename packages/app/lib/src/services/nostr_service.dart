@@ -37,6 +37,14 @@ class NostrService {
   StreamSubscription<List<CoordinatorRecord>>? _coordinatorRegistryChangesSub;
   Set<String> _offerSubscriptionAuthors = const {};
   bool _offerSubscriptionRequested = false;
+  /// `#y` platform tag the offers subscription filters on. Follows the active
+  /// payment system so each market only receives its own offers (and the
+  /// new-offer notifications derived from them). Defaults to the historical
+  /// `Bitblik` value until [startOfferSubscription] sets it.
+  String _offerPlatformTag = 'Bitblik';
+  /// The platform tag the currently-live subscription was built with, so a tag
+  /// change (payment-system switch) re-fires the REQ even if authors are equal.
+  String? _liveOfferSubscriptionPlatformTag;
 
   bool _isInitialized = false;
   Future<void>? _initInFlight;
@@ -116,7 +124,8 @@ class NostrService {
             Future.value(),
       );
       if (!_offerSubscriptionRequested ||
-          setEquals(enabledPubkeys, _offerSubscriptionAuthors)) {
+          (setEquals(enabledPubkeys, _offerSubscriptionAuthors) &&
+              _liveOfferSubscriptionPlatformTag == _offerPlatformTag)) {
         return;
       }
       unawaited(_syncOfferSubscription(enabledPubkeys));
@@ -373,11 +382,12 @@ class NostrService {
         ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
   /// Start listening for offers (subscribe to event kind 38383 from all coordinators)
-  Future<void> startOfferSubscription() async {
+  Future<void> startOfferSubscription({String platformTag = 'Bitblik'}) async {
     if (!_isInitialized) {
       await init();
     }
     _offerSubscriptionRequested = true;
+    _offerPlatformTag = platformTag;
     final enabledPubkeys =
         coordinatorRegistry.enabled.map((record) => record.pubkeyHex).toSet();
     await _syncOfferSubscription(enabledPubkeys);
@@ -401,6 +411,7 @@ class NostrService {
       _offerSubscription = null;
     }
     _offerSubscriptionAuthors = const {};
+    _liveOfferSubscriptionPlatformTag = null;
     await _offerStreamController.close();
     _offerStreamController =
         StreamController<Offer>.broadcast(); // so can restart
@@ -414,13 +425,15 @@ class NostrService {
         _offerSubscription = null;
       }
       _offerSubscriptionAuthors = const {};
+      _liveOfferSubscriptionPlatformTag = null;
       Logger.log.i(
         () => '🔎 Stopped offers subscription: no enabled coordinators',
       );
       return;
     }
     if (_offerSubscription != null &&
-        setEquals(enabledPubkeys, _offerSubscriptionAuthors)) {
+        setEquals(enabledPubkeys, _offerSubscriptionAuthors) &&
+        _liveOfferSubscriptionPlatformTag == _offerPlatformTag) {
       return;
     }
 
@@ -435,7 +448,7 @@ class NostrService {
       // filtered by the user's selected payment method client-side
       // (availableOffersProvider). Keeps one subscription valid across markets.
       tags: {
-        "#y": ["Bitblik"],
+        "#y": [_offerPlatformTag],
       },
       since:
           DateTime.now()
@@ -449,6 +462,7 @@ class NostrService {
       explicitRelays: _enabledCoordinatorRelays(),
     );
     _offerSubscriptionAuthors = enabledPubkeys;
+    _liveOfferSubscriptionPlatformTag = _offerPlatformTag;
     _offerSubscription!.stream.listen(_handleOfferEvent);
     Logger.log.i(
       () =>

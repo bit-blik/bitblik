@@ -523,10 +523,10 @@ class ApiServiceNostr {
   Stream<Offer> get offersStream => _nostrService.offersStream;
   List<Offer> get knownOffers => _nostrService.knownOffers;
 
-  Future<void> startOfferSubscription() async {
+  Future<void> startOfferSubscription({String platformTag = 'Bitblik'}) async {
     // Ensure KeyService/NDK are initialized before starting subscriptions.
     await init();
-    await _nostrService.startOfferSubscription();
+    await _nostrService.startOfferSubscription(platformTag: platformTag);
   }
 
   Future<Offer?> getOffer(String offerId) async {

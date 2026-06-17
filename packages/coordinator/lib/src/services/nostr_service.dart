@@ -819,8 +819,10 @@ class NostrService {
   Future<void> broadcastNip69OrderFromOffer(
     Offer offer, {
     String orderType = 'sell',
-    List<String> paymentSystems = const ['BLIK'],
-    String platform = 'Bitblik',
+    // Default to this coordinator's payment system so the `pm` (method) and `y`
+    // (platform) tags match the market it serves; clients filter on `#y`.
+    List<String>? paymentSystems,
+    String? platform,
     int? expiration,
     // Defaults to the offer's own premium so status re-broadcasts preserve it.
     double? premium,
@@ -834,6 +836,9 @@ class NostrService {
   }) async {
     final status = _mapOfferStatusToNip69Status(offer.status);
     final premiumValue = premium ?? offer.premiumPercent;
+    final ps = _coordinatorService.paymentSystem;
+    final resolvedPaymentSystems = paymentSystems ?? [ps.label];
+    final resolvedPlatform = platform ?? ps.platformTag;
     try {
       final nowSecs = DateTime.now().millisecondsSinceEpoch ~/ 1000;
       final lastSecs = _lastOfferEventCreatedAtById[offer.id] ?? 0;
@@ -846,7 +851,7 @@ class NostrService {
         ['s', status],
         ['amt', offer.amountSats.toString()],
         ['fa', offer.fiatAmount.toString()],
-        ['pm', ...paymentSystems],
+        ['pm', ...resolvedPaymentSystems],
         ['premium', premiumValue.toString()],
         if (ratingJson != null) ['rating', ratingJson],
         [
@@ -859,7 +864,7 @@ class NostrService {
         if (geohash != null) ['g', geohash],
         ['bond', bond],
         if (expiration != null) ['expiration', expiration.toString()],
-        ['y', platform],
+        ['y', resolvedPlatform],
         ['z', document],
         [
           'reserved_at',

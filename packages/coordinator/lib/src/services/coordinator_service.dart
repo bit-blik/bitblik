@@ -92,6 +92,11 @@ class CoordinatorService {
   // Drives the code-confirmation window and the default currency.
   late final PaymentSystem _paymentSystem;
 
+  /// The payment system this coordinator serves. Used by [NostrService] to tag
+  /// published offers with the matching `y` (platform) and `pm` values so each
+  /// market's clients filter to their own offers.
+  PaymentSystem get paymentSystem => _paymentSystem;
+
   // Test-only override for the payment method id, bypassing `.env`.
   final String? _paymentSystemIdOverride;
 

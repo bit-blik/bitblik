@@ -259,10 +259,14 @@ final coordinatorReservationDurationProvider =
       );
     });
 
-// Only initialize the Nostr offer subscription once (global for the app lifetime)
+// Initializes the Nostr offer subscription, scoping the `#y` filter to the
+// active payment system's wire tag. Re-runs (re-subscribes with the new tag)
+// when the user switches payment systems, so the offers list and the new-offer
+// notifications derived from it follow the selected market.
 final offersSubscriptionInitializer = FutureProvider<void>((ref) async {
   final apiService = await ref.watch(initializedApiServiceProvider.future);
-  await apiService.startOfferSubscription();
+  final method = ref.watch(selectedPaymentSystemProvider);
+  await apiService.startOfferSubscription(platformTag: method.platformTag);
 });
 
 Future<List<Offer>> refreshAvailableOffersCache(

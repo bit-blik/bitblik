@@ -93,6 +93,14 @@ class PaymentSystem {
     required this.atmBanknoteDenominations,
   });
 
+  /// Value carried on the wire under the NIP-69 `y` (platform) tag and used by
+  /// clients as the `#y` subscription filter, so a market only receives offers
+  /// and status updates belonging to its own payment system. Currently equals
+  /// [brandName] (`Bitblik`, `Bitway`) — historical offers were published with
+  /// `y=Bitblik`, so BLIK must keep that value. Wire-stable: never change an
+  /// existing system's tag or older peers become invisible to this filter.
+  String get platformTag => brandName;
+
   /// Payment-code term for UI text; neutral `'code'` when [codeName] is unset.
   String get codeLabel =>
       (codeName == null || codeName!.isEmpty) ? 'code' : codeName!;
