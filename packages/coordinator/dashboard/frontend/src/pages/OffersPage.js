@@ -695,6 +695,12 @@ const OffersPage = () => {
                       {formatDate(selectedOffer.taker_charged_at)}
                     </span>
                   </div>
+                  <div>
+                    <span className="text-gray-500">Client:</span>
+                    <span className="ml-2 font-mono font-medium text-gray-900">
+                      {selectedOffer.client_version || '-'}
+                    </span>
+                  </div>
                   <div className="col-span-2 md:col-span-3 xl:col-span-2">
                     <span className="text-gray-500">Dispute context:</span>
                     <span className="ml-2 font-medium text-gray-900">
