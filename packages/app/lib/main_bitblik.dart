@@ -732,6 +732,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
   }
 
   /// Shows the AltStore installation dialog for iOS web users
+  // ignore: unused_element
   void _showAltStoreDialog(BuildContext context) {
     final t = Translations.of(context);
     bool showFallback = false;
@@ -876,7 +877,9 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                     width: double.infinity,
                                     child: Link(
                                       uri: Uri.parse(
-                                        'altstore://source?url=https://bitblik.app/.well-known/sources/alt-store-source.json',
+                                        buildDefaultPaymentSystemId == 'mbway'
+                                            ? 'altstore://source?url=https://bitway.me/.well-known/sources/alt-store-source.json'
+                                            : 'altstore://source?url=https://bitblik.app/.well-known/sources/alt-store-source.json',
                                       ),
                                       // builder:
                                       //     (context, followLink) => InkWell(
@@ -951,9 +954,11 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                     GestureDetector(
                                       onTap: () {
                                         Clipboard.setData(
-                                          const ClipboardData(
-                                            text:
-                                                'https://bitblik.app/.well-known/sources/alt-store-source.json',
+                                          ClipboardData(
+                                            text: buildDefaultPaymentSystemId ==
+                                                    'mbway'
+                                                ? 'https://bitway.me/.well-known/sources/alt-store-source.json'
+                                                : 'https://bitblik.app/.well-known/sources/alt-store-source.json',
                                           ),
                                         );
                                         ScaffoldMessenger.of(
@@ -976,7 +981,9 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                           ),
                                         ),
                                         child: Text(
-                                          'bitblik.app/.well-known/sources/alt-store-source.json',
+                                          buildDefaultPaymentSystemId == 'mbway'
+                                              ? 'bitway.me/.well-known/sources/alt-store-source.json'
+                                              : 'bitblik.app/.well-known/sources/alt-store-source.json',
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontFamily: 'monospace',
@@ -1582,81 +1589,125 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                     ),
                     // Download buttons on the right (only when on web)
                     if (kIsWeb)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          // iOS section with icon, text, and AltStore button
-                          InkWell(
-                            onTap: () async {
-                              final uri = Uri.parse(
-                                'altstore://source?url=https://bitblik.app/.well-known/sources/alt-store-source.json',
-                              );
-
-                              try {
-                                // Try to launch with externalNonBrowserApplication mode
-                                // This prevents opening in Safari and only tries to open the app
-                                await launchUrl(
-                                  uri,
-                                  // mode: LaunchMode.externalNonBrowserApplication,
-                                  mode: LaunchMode.platformDefault,
-                                  webOnlyWindowName: '_self',
-                                );
-
-                                // If launch failed or always show dialog
-                                if (context.mounted) {
-                                  _showAltStoreDialog(context);
-                                }
-                              } catch (e) {
-                                // If the URL scheme is not supported, show the dialog
-                                if (context.mounted) {
-                                  _showAltStoreDialog(context);
-                                }
-                              }
-                            },
-                            child: Image.asset(
-                              'assets/altstore.png',
-                              width: 80,
-                              height: 25,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Android GitHub APK button
-                          Link(
-                            uri: Uri.parse(
-                              'https://github.com/bit-blik/bitblik/releases',
-                            ),
-                            target: LinkTarget.blank,
-                            builder:
-                                (context, followLink) => InkWell(
-                                  onTap: followLink,
+                      Builder(
+                        builder: (context) {
+                          // Download links follow the build flavor (pinned at
+                          // startup), not the user's runtime currency switch.
+                          final isMbway =
+                              buildDefaultPaymentSystemId == 'mbway';
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              // iOS section: AltStore install (blik) or "coming soon" (mbway)
+                              if (!isMbway)
+                                InkWell(
+                                  onTap: () async {
+                                    final uri = Uri.parse(
+                                      'altstore://source?url=https://bitblik.app/.well-known/sources/alt-store-source.json',
+                                    );
+                                    try {
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.platformDefault,
+                                        webOnlyWindowName: '_self',
+                                      );
+                                      if (context.mounted) {
+                                        _showAltStoreDialog(context);
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        _showAltStoreDialog(context);
+                                      }
+                                    }
+                                  },
                                   child: Image.asset(
-                                    'assets/apk.png',
+                                    'assets/altstore.png',
                                     width: 80,
                                     height: 25,
                                     fit: BoxFit.contain,
                                   ),
+                                )
+                              else
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Opacity(
+                                      opacity: 0.4,
+                                      child: Image.asset(
+                                        'assets/altstore.png',
+                                        width: 80,
+                                        height: 25,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: -6,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 1,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.redAccent,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'COMING SOON',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Android Zapstore button
-                          Link(
-                            uri: Uri.parse(
-                              'https://zapstore.dev/apps/app.bitblik',
-                            ),
-                            builder:
-                                (context, followLink) => InkWell(
-                                  onTap: followLink,
-                                  child: Image.asset(
-                                    'assets/zapstore.png',
-                                    width: 80,
-                                    height: 25,
-                                    fit: BoxFit.contain,
-                                  ),
+                              const SizedBox(width: 8),
+                              // Android GitHub APK button
+                              Link(
+                                uri: Uri.parse(
+                                  isMbway
+                                      ? 'https://github.com/bit-blik/bitway/releases'
+                                      : 'https://github.com/bit-blik/bitblik/releases',
                                 ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
+                                target: LinkTarget.blank,
+                                builder:
+                                    (context, followLink) => InkWell(
+                                      onTap: followLink,
+                                      child: Image.asset(
+                                        'assets/apk.png',
+                                        width: 80,
+                                        height: 25,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Android Zapstore button
+                              Link(
+                                uri: Uri.parse(
+                                  isMbway
+                                      ? 'https://zapstore.dev/apps/me.bitway'
+                                      : 'https://zapstore.dev/apps/app.bitblik',
+                                ),
+                                builder:
+                                    (context, followLink) => InkWell(
+                                      onTap: followLink,
+                                      child: Image.asset(
+                                        'assets/zapstore.png',
+                                        width: 80,
+                                        height: 25,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                          );
+                        },
                       ),
                   ],
                 ),
