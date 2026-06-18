@@ -203,7 +203,12 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
   Widget _logo(String? icon, double size) {
     if (icon != null && icon.isNotEmpty) {
       return icon.startsWith('http')
-          ? Image.network(icon, width: size, height: size)
+          ? Image.network(
+              icon,
+              width: size,
+              height: size,
+              errorBuilder: (_, _, _) => Icon(Icons.account_circle, size: size),
+            )
           : Image.asset(icon, width: size, height: size);
     }
     return Icon(Icons.account_circle, size: size);

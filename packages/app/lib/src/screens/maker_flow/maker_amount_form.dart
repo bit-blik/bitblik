@@ -595,7 +595,13 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
             : ref.watch(coordinatorRecordByPubkeyProvider(pk))?.icon;
     if (icon != null && icon.isNotEmpty) {
       return icon.startsWith('http')
-          ? Image.network(icon, width: 22, height: 22)
+          ? Image.network(
+              icon,
+              width: 22,
+              height: 22,
+              errorBuilder: (_, _, _) =>
+                  const Icon(Icons.account_circle, size: 24),
+            )
           : Image.asset(icon, width: 22, height: 22);
     }
     return const Icon(Icons.account_circle, size: 24);
@@ -788,6 +794,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                         coordinator.icon!,
                                         width: 32,
                                         height: 32,
+                                        errorBuilder: (_, _, _) => const Icon(
+                                          Icons.account_circle,
+                                          size: 32,
+                                        ),
                                       )
                                       : Image.asset(
                                         coordinator.icon!,
@@ -796,13 +806,16 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                       ))
                                   : const Icon(Icons.account_circle, size: 32),
                               const SizedBox(width: 8),
-                              Text(
-                                coordinator.name,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: disabled ? Colors.grey : null,
+                              Flexible(
+                                child: Text(
+                                  coordinator.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: disabled ? Colors.grey : null,
+                                  ),
                                 ),
                               ),
                               if (coordinator.responsive == true && !outOfRange)

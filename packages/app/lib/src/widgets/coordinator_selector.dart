@@ -157,6 +157,11 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
                                               coordinator.icon!,
                                               width: 32,
                                               height: 32,
+                                              errorBuilder: (_, _, _) =>
+                                                  const Icon(
+                                                    Icons.account_circle,
+                                                    size: 32,
+                                                  ),
                                             )
                                             : Image.asset(
                                               coordinator.icon!,
@@ -168,18 +173,22 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
                                           size: 32,
                                         ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      coordinator.name,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color:
-                                            (coordinator.responsive == false ||
-                                                    coordinator.responsive ==
-                                                        null)
-                                                ? Colors.grey
-                                                : null,
+                                    Flexible(
+                                      child: Text(
+                                        coordinator.name,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color:
+                                              (coordinator.responsive ==
+                                                          false ||
+                                                      coordinator.responsive ==
+                                                          null)
+                                                  ? Colors.grey
+                                                  : null,
+                                        ),
                                       ),
                                     ),
                                     const Icon(
@@ -432,6 +441,10 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
                                       displayCoordinator.icon!,
                                       width: 32,
                                       height: 32,
+                                      errorBuilder: (_, _, _) => const Icon(
+                                        Icons.account_circle,
+                                        size: 32,
+                                      ),
                                     )
                                     : Image.asset(
                                       displayCoordinator.icon!,
@@ -440,10 +453,13 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
                                     ))
                                 : const Icon(Icons.account_circle, size: 32),
                             const SizedBox(width: 8),
-                            Text(
-                              displayCoordinator.name,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            Flexible(
+                              child: Text(
+                                displayCoordinator.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
                             ),
                             const Icon(
                               Icons.chevron_right,
