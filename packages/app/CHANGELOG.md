@@ -1,4 +1,9 @@
-## [0.8.0] - 2026-06-21
+## [0.8.1]  - 2026-06-18
+
+- fix: extract code with digits amount from pasted text
+- fix: remove 10EUR bank note denomination
+
+## [0.8.0] - 2026-06-18
 
 - feat: choice of payment system per country
 - feat: support MB WAY for Portugal with 10 digit codes for ATMs

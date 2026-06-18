@@ -222,8 +222,8 @@ const PaymentSystem kMbway = PaymentSystem(
   // to approve in a banking app.
   requiresCodeConfirmation: false,
   supportedCategories: [OfferCategory.atm],
-  atmPresetAmounts: [10, 20, 30, 50, 100, 200],
-  atmBanknoteDenominations: [10, 20, 50, 100, 200],
+  atmPresetAmounts: [20, 50, 100, 150, 200, 250],
+  atmBanknoteDenominations: [20, 50, 100, 200],
   // Bitway has its own Nostr identity for discovery (relays + coordinators).
   discoveryPubkeyHex: kBitwayPubkeyHex,
 );

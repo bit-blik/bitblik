@@ -671,9 +671,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
           textData.text!.isNotEmpty) {
         Logger.log.d(() => "clipboard.getData:${textData.text}");
         final pastedText = textData.text!;
-        final digitsOnly = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
-        if (digitsOnly.length == _method.codeLength) {
-          _blikController.text = digitsOnly;
+        final code = extractBlikCode(pastedText, _method.codeLength);
+        if (code != null) {
+          _blikController.text = code;
           _blikController.selection = TextSelection.fromPosition(
             TextPosition(offset: _blikController.text.length),
           );
@@ -822,6 +822,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   ),
                   // keyboardType: TextInputType.number,
                   maxLength: _method.codeLength,
+                  inputFormatters: [BlikCodeInputFormatter(_method.codeLength)],
                   textAlign: TextAlign.left,
                   style: const TextStyle(
                     fontSize: 46,
@@ -1161,6 +1162,55 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
               ),
             ),
           ),
+    );
+  }
+}
+
+/// Extracts a [codeLength]-digit code from arbitrary text (e.g. the message
+/// shared from the mBWAY app). Returns the first run of digits whose length
+/// equals [codeLength], so amounts like "200 €" or "30 minutos" don't break
+/// the match. Falls back to digits-only when the whole text is just the code.
+/// Avoids regex lookbehind/lookahead (unsupported on some mobile RegExp engines).
+String? extractBlikCode(String text, int codeLength) {
+  for (final m in RegExp(r'[0-9]+').allMatches(text)) {
+    final g = m.group(0)!;
+    if (g.length == codeLength) return g;
+  }
+  final digitsOnly = text.replaceAll(RegExp(r'[^0-9]'), '');
+  return digitsOnly.length == codeLength ? digitsOnly : null;
+}
+
+/// Keeps the BLIK/mBWAY field digits-only while normally typing, but when a
+/// full message is pasted (e.g. from mBWAY), extracts the embedded code.
+class BlikCodeInputFormatter extends TextInputFormatter {
+  final int codeLength;
+
+  BlikCodeInputFormatter(this.codeLength);
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+
+    // Normal typing / clean numeric input within length: pass through.
+    final digitsOnly = text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly == text && digitsOnly.length <= codeLength) {
+      return newValue;
+    }
+
+    // Pasted free text (or extra chars): pull out the code.
+    final extracted = extractBlikCode(text, codeLength);
+    final result =
+        extracted ??
+        (digitsOnly.length > codeLength
+            ? digitsOnly.substring(0, codeLength)
+            : digitsOnly);
+
+    return TextEditingValue(
+      text: result,
+      selection: TextSelection.collapsed(offset: result.length),
     );
   }
 }
