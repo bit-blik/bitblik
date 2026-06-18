@@ -31,13 +31,39 @@ console.log('Database config:', {
   password: dbPassword ? '***hidden***' : 'NOT SET'
 });
 
+const fs = require('fs');
+
+// Optional favicon override for the generated HTML, configurable via env var
+// (e.g. for Docker deployments that want a coordinator-specific icon).
+const faviconUrl = stripQuotes(process.env.DASHBOARD_FAVICON_URL);
+
+const buildDir = path.join(__dirname, 'frontend/build');
+const indexHtmlPath = path.join(buildDir, 'index.html');
+
+// Read index.html once at startup and inject the configured favicon URL so the
+// served HTML points at it. Cached because the build is immutable at runtime.
+const indexHtml = (() => {
+  let html = fs.readFileSync(indexHtmlPath, 'utf8');
+  if (faviconUrl) {
+    const iconTag = `<link rel="icon" href="${faviconUrl}"/>`;
+    if (/<link rel="icon"[^>]*>/.test(html)) {
+      html = html.replace(/<link rel="icon"[^>]*>/, iconTag);
+    } else {
+      html = html.replace('</head>', `${iconTag}</head>`);
+    }
+    console.log(`Favicon override applied: ${faviconUrl}`);
+  }
+  return html;
+})();
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 const server = http.createServer(app);
 
-// Serve static files from the React app build directory
-app.use(express.static(path.join(__dirname, 'frontend/build')));
+// Serve static files from the React app build directory. index:false so the
+// root and SPA fallback go through our handler that injects the favicon.
+app.use(express.static(buildDir, { index: false }));
 
 //const pool = new Pool({
 //  host: process.env.DB_HOST,
@@ -800,19 +826,32 @@ app.post('/api/offers-data', async (req, res) => {
       ORDER BY ${dateGrouping} ASC
     `;
 
-    const [groupedResult, groupedCountResult, totalsResult, weekdaySuccessResult, weekdayVolumeResult, categoryDistributionResult, clientVersionDistributionResult] = await Promise.all([
+    // Dominant fiat currency across offers in scope, used to format all fiat
+    // values and to fetch the BTC/<currency> rate on the client.
+    const currencyQuery = `
+      SELECT COALESCE(NULLIF(TRIM(fiat_currency), ''), 'PLN') AS currency
+      FROM offers
+      ${whereClause}
+      GROUP BY COALESCE(NULLIF(TRIM(fiat_currency), ''), 'PLN')
+      ORDER BY COUNT(*) DESC
+      LIMIT 1
+    `;
+
+    const [groupedResult, groupedCountResult, totalsResult, weekdaySuccessResult, weekdayVolumeResult, categoryDistributionResult, clientVersionDistributionResult, currencyResult] = await Promise.all([
       pool.query(groupedQuery, pagingParams),
       pool.query(groupedCountQuery),
       pool.query(totalsQuery),
       pool.query(weekdaySuccessQuery),
       pool.query(weekdayVolumeQuery),
       pool.query(categoryDistributionQuery, pagingParams),
-      pool.query(clientVersionDistributionQuery, pagingParams)
+      pool.query(clientVersionDistributionQuery, pagingParams),
+      pool.query(currencyQuery)
     ]);
 
     const totalPeriods = groupedCountResult.rows[0]?.total_periods || 0;
 
     res.json({
+      currency: currencyResult.rows[0]?.currency || 'PLN',
       rows: groupedResult.rows,
       totals: totalsResult.rows[0],
       weekdaySuccess: weekdaySuccessResult.rows,
@@ -837,7 +876,7 @@ app.post('/api/offers-data', async (req, res) => {
 
 // Serve React app for all other routes (must be after API routes)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
+  res.type('html').send(indexHtml);
 });
 
 const PORT = process.env.PORT || 3001;

@@ -24,6 +24,39 @@ const CLIENT_CHART_PALETTE = ['#2563eb', '#16a34a', '#db2777', '#f59e0b', '#7c3a
 const clientColor = (key, index) =>
   key === 'unknown' ? '#94a3b8' : CLIENT_CHART_PALETTE[index % CLIENT_CHART_PALETTE.length];
 
+// Locale per currency for Intl number formatting. Falls back to the browser
+// default when a currency isn't listed.
+const CURRENCY_LOCALES = {
+  PLN: 'pl-PL', EUR: 'de-DE', USD: 'en-US', GBP: 'en-GB', CHF: 'de-CH',
+  CZK: 'cs-CZ', HUF: 'hu-HU', RON: 'ro-RO', SEK: 'sv-SE', NOK: 'nb-NO',
+  DKK: 'da-DK', BGN: 'bg-BG', UAH: 'uk-UA',
+};
+const localeForCurrency = (currency) => CURRENCY_LOCALES[currency] || undefined;
+
+// BTC/<currency> rate sources. Each builds its request URL and response parser
+// from the active currency so rate fetching follows the offers' currency.
+const buildExchangeRateSources = (currency) => {
+  const lower = currency.toLowerCase();
+  const upper = currency.toUpperCase();
+  return [
+    {
+      name: 'CoinGecko',
+      url: `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=${lower}`,
+      parser: (data) => data?.bitcoin?.[lower],
+    },
+    {
+      name: 'Yadio',
+      url: `https://api.yadio.io/exrates/${upper}`,
+      parser: (data) => data?.BTC,
+    },
+    {
+      name: 'Blockchain.info',
+      url: 'https://blockchain.info/ticker',
+      parser: (data) => data?.[upper]?.last,
+    },
+  ];
+};
+
 const Navigation = () => {
   const location = useLocation();
 
@@ -76,36 +109,21 @@ const AnalyticsDashboard = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [pagination, setPagination] = useState(null);
-  const [btcPlnRate, setBtcPlnRate] = useState(null);
+  // Currency is detected from the offers returned by the API and drives both
+  // fiat formatting and the BTC rate source below. Defaults to PLN.
+  const [currency, setCurrency] = useState('PLN');
+  const [btcFiatRate, setBtcFiatRate] = useState(null);
   const [rateLoading, setRateLoading] = useState(true);
   const [rateError, setRateError] = useState(null);
   const [lastRateFetchTime, setLastRateFetchTime] = useState(null);
 
-  // Exchange rate sources configuration (matching coordinator)
-  const exchangeRateSources = [
-    {
-      name: 'CoinGecko',
-      url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=pln',
-      parser: (data) => data?.bitcoin?.pln,
-    },
-    {
-      name: 'Yadio',
-      url: 'https://api.yadio.io/exrates/pln',
-      parser: (data) => data?.BTC,
-    },
-    {
-      name: 'Blockchain.info',
-      url: 'https://blockchain.info/ticker',
-      parser: (data) => data?.PLN?.last,
-    },
-  ];
-
-  // Fetch BTC/PLN rate from all sources and calculate average
-  const fetchBtcPlnRate = async () => {
+  // Fetch BTC/<currency> rate from all sources and calculate average
+  const fetchBtcFiatRate = async () => {
     setRateLoading(true);
     setRateError(null);
 
     try {
+      const exchangeRateSources = buildExchangeRateSources(currency);
       const fetchPromises = exchangeRateSources.map(async (source) => {
         try {
           const response = await fetch(source.url);
@@ -116,7 +134,7 @@ const AnalyticsDashboard = () => {
           const data = await response.json();
           const rate = source.parser(data);
           if (rate && typeof rate === 'number' && rate > 0) {
-            console.log(`Fetched rate from ${source.name}: ${rate} PLN/BTC`);
+            console.log(`Fetched rate from ${source.name}: ${rate} ${currency}/BTC`);
             return rate;
           }
           console.warn(`Invalid rate from ${source.name}: ${rate}`);
@@ -132,28 +150,28 @@ const AnalyticsDashboard = () => {
 
       if (validRates.length > 0) {
         const averageRate = validRates.reduce((a, b) => a + b, 0) / validRates.length;
-        setBtcPlnRate(averageRate);
+        setBtcFiatRate(averageRate);
         setLastRateFetchTime(new Date());
-        console.log(`Average BTC/PLN rate: ${averageRate} (from ${validRates.length} sources)`);
+        console.log(`Average BTC/${currency} rate: ${averageRate} (from ${validRates.length} sources)`);
       } else {
-        throw new Error('Failed to fetch BTC/PLN rate from all sources');
+        throw new Error(`Failed to fetch BTC/${currency} rate from all sources`);
       }
     } catch (err) {
-      console.error('Error fetching BTC/PLN rate:', err);
+      console.error(`Error fetching BTC/${currency} rate:`, err);
       setRateError(err.message);
     } finally {
       setRateLoading(false);
     }
   };
 
-  // Fetch rate on component mount
+  // Refetch the rate whenever the detected currency changes (and on mount).
   useEffect(() => {
-    fetchBtcPlnRate();
+    fetchBtcFiatRate();
     // Refresh rate every 5 minutes (matching coordinator cache time)
-    const interval = setInterval(fetchBtcPlnRate, 5 * 60 * 1000);
+    const interval = setInterval(fetchBtcFiatRate, 5 * 60 * 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currency]);
 
   // Fetch data from API
   useEffect(() => {
@@ -186,6 +204,7 @@ const AnalyticsDashboard = () => {
         }
 
         const result = await response.json();
+        if (result.currency) setCurrency(result.currency);
         setData(result.rows || []);
         setTotals(result.totals || null);
         setPagination(result.pagination || null);
@@ -269,9 +288,9 @@ const AnalyticsDashboard = () => {
   }, [groupBy, page, startDate, endDate]);
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pl-PL', {
+    return new Intl.NumberFormat(localeForCurrency(currency), {
       style: 'currency',
-      currency: 'PLN',
+      currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -282,9 +301,9 @@ const AnalyticsDashboard = () => {
   };
 
   const formatCurrencyChart = (value) => {
-    return new Intl.NumberFormat('pl-PL', {
+    return new Intl.NumberFormat(localeForCurrency(currency), {
       style: 'currency',
-      currency: 'PLN',
+      currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
@@ -320,11 +339,11 @@ const AnalyticsDashboard = () => {
     return `${formatPagerDate(data[0].date)} - ${formatPagerDate(data[data.length - 1].date)}`;
   };
 
-  // Convert sats to PLN using the fetched rate
-  const satsToPln = (sats) => {
-    if (!btcPlnRate || !sats) return 0;
+  // Convert sats to the active fiat currency using the fetched rate
+  const satsToFiat = (sats) => {
+    if (!btcFiatRate || !sats) return 0;
     const btc = sats / 100000000; // Convert sats to BTC
-    return btc * btcPlnRate;
+    return btc * btcFiatRate;
   };
 
   if (loading) {
@@ -374,8 +393,8 @@ const AnalyticsDashboard = () => {
     takerFeesPercentage: parseFloat(totals.overall_taker_fees_percentage || 0),
   } : {};
 
-  // Calculate profit in PLN
-  const totalProfitPln = satsToPln(stats.totalProfitSats);
+  // Calculate profit in the active fiat currency
+  const totalProfitFiat = satsToFiat(stats.totalProfitSats);
 
   const contentLoadingClass = refreshing ? 'opacity-60 transition-opacity duration-200' : 'opacity-100 transition-opacity duration-200';
 
@@ -403,7 +422,7 @@ const AnalyticsDashboard = () => {
                 <div className="flex items-center gap-1.5">
                   <Bitcoin size={14} className="text-amber-600 flex-shrink-0" />
                   <span className="text-xs font-semibold text-amber-700 whitespace-nowrap">
-                    {rateLoading ? 'Loading...' : rateError ? 'Error' : formatCurrency(btcPlnRate)}
+                    {rateLoading ? 'Loading...' : rateError ? 'Error' : formatCurrency(btcFiatRate)}
                   </span>
                 </div>
                 {!rateLoading && !rateError && lastRateFetchTime && (
@@ -569,9 +588,9 @@ const AnalyticsDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-xs font-bold text-blue-800 uppercase tracking-wide">Profit</p>
-                        {btcPlnRate && !rateLoading && (
+                        {btcFiatRate && !rateLoading && (
                           <span className="text-xs font-semibold text-indigo-500">
-                            ≈ {formatCurrency(totalProfitPln)}
+                            ≈ {formatCurrency(totalProfitFiat)}
                           </span>
                         )}
                       </div>
@@ -726,7 +745,7 @@ const AnalyticsDashboard = () => {
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                  Volume (PLN)
+                  Volume ({currency})
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={data}>
@@ -763,27 +782,27 @@ const AnalyticsDashboard = () => {
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-amber-500"></div>
-                  Profit Trend (Sats & PLN)
+                  Profit Trend (Sats & {currency})
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={data.map(d => ({
                     ...d,
-                    profit_pln: satsToPln(parseFloat(d.profit || 0))
+                    profit_fiat: satsToFiat(parseFloat(d.profit || 0))
                   }))}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
                     <YAxis yAxisId="left" tick={{ fill: '#6b7280', fontSize: 12 }} label={{ value: 'Sats', angle: -90, position: 'insideLeft', style: { fill: '#f59e0b' } }} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => value.toFixed(2)} label={{ value: 'PLN', angle: 90, position: 'insideRight', style: { fill: '#10b981' } }} />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => value.toFixed(2)} label={{ value: currency, angle: 90, position: 'insideRight', style: { fill: '#10b981' } }} />
                     <Tooltip
                       formatter={(value, name) => {
-                        if (name === 'Profit (PLN)') return [formatCurrencyChart(value), name];
+                        if (name === `Profit (${currency})`) return [formatCurrencyChart(value), name];
                         return [formatNumber(value) + ' sats', name];
                       }}
                       contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                     />
                     <Legend />
                     <Line yAxisId="left" type="monotone" dataKey="profit" stroke="#f59e0b" strokeWidth={2} name="Profit (Sats)" dot={{ fill: '#f59e0b', r: 4 }} />
-                    <Line yAxisId="right" type="monotone" dataKey="profit_pln" stroke="#10b981" strokeWidth={2} name="Profit (PLN)" dot={{ fill: '#10b981', r: 4 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="profit_fiat" stroke="#10b981" strokeWidth={2} name={`Profit (${currency})`} dot={{ fill: '#10b981', r: 4 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -918,14 +937,14 @@ const AnalyticsDashboard = () => {
                       yAxisId="left"
                       tick={{ fill: '#6b7280', fontSize: 12 }}
                       tickFormatter={(value) => formatCurrencyChart(value)}
-                      label={{ value: 'Total Volume (PLN)', angle: -90, position: 'insideLeft', style: { fill: '#10b981' } }}
+                      label={{ value: `Total Volume (${currency})`, angle: -90, position: 'insideLeft', style: { fill: '#10b981' } }}
                     />
                     <YAxis
                       yAxisId="right"
                       orientation="right"
                       tick={{ fill: '#6b7280', fontSize: 12 }}
                       tickFormatter={(value) => formatCurrencyChart(value)}
-                      label={{ value: 'Avg Volume (PLN)', angle: 90, position: 'insideRight', style: { fill: '#f59e0b' } }}
+                      label={{ value: `Avg Volume (${currency})`, angle: 90, position: 'insideRight', style: { fill: '#f59e0b' } }}
                     />
                     <Tooltip
                       formatter={(value, name) => {
@@ -934,14 +953,14 @@ const AnalyticsDashboard = () => {
                       contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                     />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="total_volume_fiat" fill="#10b981" name="Total Volume (PLN)" />
+                    <Bar yAxisId="left" dataKey="total_volume_fiat" fill="#10b981" name={`Total Volume (${currency})`} />
                     <Line
                       yAxisId="right"
                       type="monotone"
                       dataKey="avg_volume_fiat"
                       stroke="#f59e0b"
                       strokeWidth={2}
-                      name="Avg Volume (PLN)"
+                      name={`Avg Volume (${currency})`}
                       dot={{ fill: '#f59e0b', r: 4 }}
                     />
                   </BarChart>
@@ -992,7 +1011,7 @@ const AnalyticsDashboard = () => {
                 <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                   <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                    Category Distribution (Volume PLN)
+                    Category Distribution (Volume {currency})
                   </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={categoryVolumeData}>

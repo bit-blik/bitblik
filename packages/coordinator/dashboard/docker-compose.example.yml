@@ -11,6 +11,8 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=${DB_PASSWORD}
       - PORT=3001
+      # Optional: override the favicon in the served HTML (URL or path).
+      # - DASHBOARD_FAVICON_URL=https://example.com/favicon.ico
     networks:
       - app-network
     depends_on:

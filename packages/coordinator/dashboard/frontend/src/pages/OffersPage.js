@@ -668,7 +668,7 @@ const OffersPage = () => {
                   <div>
                     <span className="text-gray-500">Fiat:</span>
                     <span className="ml-2 font-medium text-emerald-700">
-                      {formatCurrency(selectedOffer.fiat_amount)}
+                      {formatCurrency(selectedOffer.fiat_amount, selectedOffer.fiat_currency)}
                     </span>
                   </div>
                   <div>
