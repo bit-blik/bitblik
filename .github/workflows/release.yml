@@ -208,13 +208,30 @@ jobs:
           KEYSTORE_SHA256: ${{ secrets.KEYSTORE_SHA256 }}
         run: flutter build apk --split-per-abi --release --flavor ${{ matrix.flavor }} -t ${{ matrix.entrypoint }}
 
+      # Flutter's flavored split-per-abi output location varies between versions
+      # (build/app/outputs/flutter-apk vs build/app/outputs/apk/<flavor>/release).
+      # Locate each ABI APK and copy it to a stable dir so upload paths are fixed.
+      - name: Locate APKs
+        run: |
+          set -euo pipefail
+          mkdir -p build/release-apks
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            src="$(find build/app/outputs -name "app-${{ matrix.flavor }}-${abi}-release.apk" -print -quit)"
+            if [ -z "$src" ]; then
+              echo "::error::APK not found for abi=${abi} flavor=${{ matrix.flavor }}"
+              find build/app/outputs -name '*.apk' || true
+              exit 1
+            fi
+            cp "$src" "build/release-apks/app-${{ matrix.flavor }}-${abi}-release.apk"
+          done
+
       - name: Upload arm64-v8a APK
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/app/build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-arm64-v8a-release.apk
+          asset_path: packages/app/build/release-apks/app-${{ matrix.flavor }}-arm64-v8a-release.apk
           asset_name: ${{ matrix.flavor }}-app-android-arm64-v8a.apk
           asset_content_type: application/vnd.android.package-archive
 
@@ -224,7 +241,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/app/build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-armeabi-v7a-release.apk
+          asset_path: packages/app/build/release-apks/app-${{ matrix.flavor }}-armeabi-v7a-release.apk
           asset_name: ${{ matrix.flavor }}-app-android-armeabi-v7a.apk
           asset_content_type: application/vnd.android.package-archive
 
@@ -234,7 +251,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/app/build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-x86_64-release.apk
+          asset_path: packages/app/build/release-apks/app-${{ matrix.flavor }}-x86_64-release.apk
           asset_name: ${{ matrix.flavor }}-app-android-x86_64.apk
           asset_content_type: application/vnd.android.package-archive
 
