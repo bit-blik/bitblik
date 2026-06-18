@@ -79,10 +79,9 @@ jobs:
         working-directory: .
 
       # Two declared executables (bitblik = BLIK market, bitway = MB WAY
-      # market). Build each target into its own bundle, then merge bitway's
-      # binary into the bitblik bundle — both share the identical lib/ (NDK
-      # rust dylib) and reference it via the same relative ../lib rpath, so a
-      # single merged bundle ships both binaries for the platform.
+      # market). Build each target into its own self-contained bundle. Each
+      # bundle carries its own bin/ + lib/ (NDK rust dylib) and ships as a
+      # separate downloadable asset per binary.
       - name: Build CLI (both binaries)
         run: |
           BUILD="dart build cli"
@@ -91,42 +90,45 @@ jobs:
           fi
           $BUILD -t bin/bitblik.dart -o build/cli-bitblik
           $BUILD -t bin/bitway.dart -o build/cli-bitway
-          # Glob covers the .exe suffix on Windows.
-          cp build/cli-bitway/bundle/bin/bitway* build/cli-bitblik/bundle/bin/
 
-      - name: Package CLI bundle (Unix)
+      - name: Package CLI bundles (Unix)
         if: matrix.target != 'windows_x64'
         run: |
-          tar -czf "build/bitblik-cli-${{ matrix.platform_name }}.tar.gz" \
-            -C "build/cli-bitblik/bundle" .
+          for app in bitblik bitway; do
+            tar -czf "build/${app}-cli-${{ matrix.platform_name }}.tar.gz" \
+              -C "build/cli-${app}/bundle" .
+          done
 
-      - name: Package CLI bundle (Windows)
+      - name: Package CLI bundles (Windows)
         if: matrix.target == 'windows_x64'
         run: |
-          cd "build/cli-bitblik/bundle"
-          7z a -tzip "../../bitblik-cli-${{ matrix.platform_name }}.zip" .
+          for app in bitblik bitway; do
+            ( cd "build/cli-${app}/bundle" \
+              && 7z a -tzip "../../${app}-cli-${{ matrix.platform_name }}.zip" . )
+          done
 
-      - name: Build Linux DEB package
+      - name: Build Linux DEB packages
         if: matrix.target == 'linux_x64'
         run: |
-          deb_root="build/deb-root"
-          rm -rf "$deb_root"
-          mkdir -p "$deb_root/DEBIAN" "$deb_root/usr/lib/bitblik" "$deb_root/usr/bin"
-          cp -R "build/cli-bitblik/bundle/." "$deb_root/usr/lib/bitblik/"
-          ln -s ../lib/bitblik/bin/bitblik "$deb_root/usr/bin/bitblik"
-          ln -s ../lib/bitblik/bin/bitway "$deb_root/usr/bin/bitway"
           pkg_version="$(grep -m1 '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')"
-          cat > "$deb_root/DEBIAN/control" <<EOF
-          Package: bitblik
+          for app in bitblik bitway; do
+            deb_root="build/deb-root-${app}"
+            rm -rf "$deb_root"
+            mkdir -p "$deb_root/DEBIAN" "$deb_root/usr/lib/${app}" "$deb_root/usr/bin"
+            cp -R "build/cli-${app}/bundle/." "$deb_root/usr/lib/${app}/"
+            ln -s "../lib/${app}/bin/${app}" "$deb_root/usr/bin/${app}"
+            cat > "$deb_root/DEBIAN/control" <<EOF
+          Package: ${app}
           Version: ${pkg_version}~${{ github.run_number }}
           Section: utils
           Priority: optional
           Architecture: amd64
           Maintainer: bitblik <noreply@github.com>
           Depends: libc6 (>= 2.27)
-          Description: BitBlik command line interface (bitblik + bitway)
+          Description: BitBlik ${app} command line interface
           EOF
-          dpkg-deb --build "$deb_root" "build/bitblik-cli-linux-x64.deb"
+            dpkg-deb --build "$deb_root" "build/${app}-cli-linux-x64.deb"
+          done
 
       # softprops uploads files under their on-disk names; missing patterns are
       # skipped (fail_on_unmatched_files defaults to false), so the same step
@@ -140,6 +142,9 @@ jobs:
             packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.tar.gz
             packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.zip
             packages/cli/build/bitblik-cli-linux-x64.deb
+            packages/cli/build/bitway-cli-${{ matrix.platform_name }}.tar.gz
+            packages/cli/build/bitway-cli-${{ matrix.platform_name }}.zip
+            packages/cli/build/bitway-cli-linux-x64.deb
 
   # ── 3. Android APK (both flavors: bitblik & bitway) ───────────────────────
   build_android:
