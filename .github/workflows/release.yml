@@ -121,7 +121,7 @@ jobs:
           cp -R "build/cli-bitblik/bundle/." "$deb_root/usr/lib/bitblik/"
           ln -s ../lib/bitblik/bin/bitblik "$deb_root/usr/bin/bitblik"
           ln -s ../lib/bitblik/bin/bitway "$deb_root/usr/bin/bitway"
-          pkg_version="$(grep -m1 '^version:' packages/cli/pubspec.yaml | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')"
+          pkg_version="$(grep -m1 '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')"
           cat > "$deb_root/DEBIAN/control" <<EOF
           Package: bitblik
           Version: ${pkg_version}~${{ github.run_number }}
