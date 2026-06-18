@@ -18,18 +18,12 @@ jobs:
   # ── 1. Create draft release ────────────────────────────────────────────────
   release:
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      id: ${{ steps.create_release.outputs.id }}
     steps:
       - name: Create draft release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           draft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
 
@@ -134,38 +128,18 @@ jobs:
           EOF
           dpkg-deb --build "$deb_root" "build/bitblik-cli-linux-x64.deb"
 
-      - name: Upload CLI tar.gz to release (Unix)
-        if: matrix.target != 'windows_x64'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # softprops uploads files under their on-disk names; missing patterns are
+      # skipped (fail_on_unmatched_files defaults to false), so the same step
+      # works for every matrix target.
+      - name: Upload CLI assets to release
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.tar.gz
-          asset_name: bitblik-cli-${{ matrix.platform_name }}.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Upload CLI zip to release (Windows)
-        if: matrix.target == 'windows_x64'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.zip
-          asset_name: bitblik-cli-${{ matrix.platform_name }}.zip
-          asset_content_type: application/zip
-
-      - name: Upload Linux DEB to release
-        if: matrix.target == 'linux_x64'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/cli/build/bitblik-cli-linux-x64.deb
-          asset_name: bitblik-cli-linux-x64.deb
-          asset_content_type: application/vnd.debian.binary-package
+          tag_name: ${{ github.ref_name }}
+          draft: true
+          files: |
+            packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.tar.gz
+            packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.zip
+            packages/cli/build/bitblik-cli-linux-x64.deb
 
   # ── 3. Android APK (both flavors: bitblik & bitway) ───────────────────────
   build_android:
@@ -210,7 +184,8 @@ jobs:
 
       # Flutter's flavored split-per-abi output location varies between versions
       # (build/app/outputs/flutter-apk vs build/app/outputs/apk/<flavor>/release).
-      # Locate each ABI APK and copy it to a stable dir so upload paths are fixed.
+      # Locate each ABI APK and copy it to a stable dir under its final asset
+      # name so the upload glob is fixed.
       - name: Locate APKs
         run: |
           set -euo pipefail
@@ -222,38 +197,15 @@ jobs:
               find build/app/outputs -name '*.apk' || true
               exit 1
             fi
-            cp "$src" "build/release-apks/app-${{ matrix.flavor }}-${abi}-release.apk"
+            cp "$src" "build/release-apks/${{ matrix.flavor }}-app-android-${abi}.apk"
           done
 
-      - name: Upload arm64-v8a APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload APKs to release
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/app/build/release-apks/app-${{ matrix.flavor }}-arm64-v8a-release.apk
-          asset_name: ${{ matrix.flavor }}-app-android-arm64-v8a.apk
-          asset_content_type: application/vnd.android.package-archive
-
-      - name: Upload armeabi-v7a APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/app/build/release-apks/app-${{ matrix.flavor }}-armeabi-v7a-release.apk
-          asset_name: ${{ matrix.flavor }}-app-android-armeabi-v7a.apk
-          asset_content_type: application/vnd.android.package-archive
-
-      - name: Upload x86_64 APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: packages/app/build/release-apks/app-${{ matrix.flavor }}-x86_64-release.apk
-          asset_name: ${{ matrix.flavor }}-app-android-x86_64.apk
-          asset_content_type: application/vnd.android.package-archive
+          tag_name: ${{ github.ref_name }}
+          draft: true
+          files: packages/app/build/release-apks/*.apk
 
   # ── 4. iOS IPA ────────────────────────────────────────────────────────────
 #  build_ios:
@@ -318,22 +270,20 @@ jobs:
 #          rm ExportOptions.plist
 #
 #      - name: Upload IPA to release
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        uses: softprops/action-gh-release@v2
 #        with:
-#          upload_url: ${{ needs.release.outputs.upload_url }}
-#          asset_path: packages/app/build/ipa/Runner.ipa
-#          asset_name: bitblik-${{ github.ref_name }}-ios.ipa
-#          asset_content_type: application/octet-stream
+#          tag_name: ${{ github.ref_name }}
+#          draft: true
+#          files: packages/app/build/ipa/Runner.ipa
 
   # ── 5. Publish release when all builds succeed ────────────────────────────
   publish_release:
     needs: [release, build_cli, build_android]
     runs-on: ubuntu-latest
     steps:
-      - uses: eregon/publish-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Flip draft → published
+        uses: softprops/action-gh-release@v2
         with:
-          release_id: ${{ needs.release.outputs.id }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
