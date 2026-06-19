@@ -812,41 +812,59 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 width: double.infinity,
-                child: TextField(
-                  controller: _blikController,
-                  focusNode: _blikFocusNode,
-                  autofocus: true,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: false,
-                  ),
-                  // keyboardType: TextInputType.number,
-                  maxLength: _method.codeLength,
-                  inputFormatters: [BlikCodeInputFormatter(_method.codeLength)],
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    fontSize: 46,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 16,
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final codeLength = _method.codeLength;
+                    // Reserve space for the paste suffix icon (~56px).
+                    final available =
+                        (constraints.maxWidth - 56.0).clamp(0.0, double.infinity);
+                    // Budget per character (glyph advance + trailing
+                    // letter-spacing). Approx glyph advance = fontSize*0.6 and
+                    // letterSpacing = fontSize*0.3, so perChar = fontSize*0.9.
+                    final perChar = codeLength > 0 ? available / codeLength : 0.0;
+                    final fontSize = (perChar / 0.9).clamp(16.0, 46.0);
+                    final letterSpacing = fontSize * 0.3;
+                    return TextField(
+                      controller: _blikController,
+                      focusNode: _blikFocusNode,
+                      autofocus: true,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: false,
+                      ),
+                      // keyboardType: TextInputType.number,
+                      maxLength: codeLength,
+                      inputFormatters: [BlikCodeInputFormatter(codeLength)],
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: letterSpacing,
+                      ),
 
-                  decoration: InputDecoration(
-                    hintText: t.taker.submitBlik
-                        .title(code: _method.codeLabel, digits: _method.codeLength),
-                    hintStyle: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 2,
-                      color: Colors.grey[400],
-                    ),
-                    border: InputBorder.none,
-                    counterText: "",
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.content_paste, size: 32),
-                      color: Colors.grey,
-                      onPressed: _pasteFromClipboard,
-                    ),
-                  ),
+                      decoration: InputDecoration(
+                        hintText: t.taker.submitBlik.title(
+                          code: _method.codeLabel,
+                          digits: codeLength,
+                        ),
+                        hintStyle: TextStyle(
+                          fontSize: (fontSize * 0.6).clamp(14.0, 28.0),
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 2,
+                          color: Colors.grey[400],
+                        ),
+                        border: InputBorder.none,
+                        counterText: "",
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.content_paste, size: 32),
+                          color: Colors.grey,
+                          onPressed: _pasteFromClipboard,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
 

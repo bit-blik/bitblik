@@ -427,6 +427,7 @@ maker:
     instruction1: Inserisci il codice nella richiesta di pagamento ${code}.
     instruction2: Attendi che il Taker confermi il pagamento nella sua app.
     instruction3: "Quando il pagamento va a buon fine, premi Conferma qui sotto:"
+    mbwayAtmInstructions: "Per prelevare ${amount} €, recati al MULTIBANCO più vicino, premi il tasto verde e scegli l'opzione \"Levantar Dinheiro\" (Preleva contante). Inserisci il codice. Questo codice è valido per ${minutes} minuti."
 
     takerChargedWarning: "Il taker ha segnalato che il pagamento ${code} è stato addebitato sul suo conto bancario. Se lo contrassegni come non valido, si creerà un conflitto."
     autoConfirmInfo: "A meno che tu non contrassegni il ${code} come non valido, il pagamento sarà confermato automaticamente e il taker pagato allo scadere di questo timer."

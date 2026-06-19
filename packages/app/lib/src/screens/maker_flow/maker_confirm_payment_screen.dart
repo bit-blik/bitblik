@@ -635,6 +635,9 @@ class _MakerConfirmPaymentScreenState
             ),
           ),
         ),
+        // Optional payment-system + language specific instructions (blue info
+        // box). Empty for methods that don't define any.
+        ..._buildAdditionalInstructions(t),
         const SizedBox(height: 32),
         // Instructions. The "wait for the taker to confirm in their banking
         // app" step only applies to push-confirmation methods like BLIK; for
@@ -778,6 +781,50 @@ class _MakerConfirmPaymentScreenState
 
   /// Numbered confirm-payment steps. Drops the "wait for the taker to confirm
   /// in their app" step for methods that don't require it, renumbering the rest.
+  /// Optional, payment-system + language specific instructions rendered in a
+  /// blue info box below the code. Returns an empty list for methods that don't
+  /// have any (e.g. BLIK).
+  List<Widget> _buildAdditionalInstructions(Translations t) {
+    final offer = ref.read(activeOfferProvider);
+    if (offer == null || _method.id != kMbway.id) return const [];
+
+    final fiat = offer.fiatAmount;
+    final amount =
+        (fiat * 100).round() % 100 == 0
+            ? fiat.toStringAsFixed(0)
+            : fiat.toStringAsFixed(2);
+    final text = t.maker.confirmPayment.mbwayAtmInstructions(
+      amount: amount,
+      minutes: _method.codeValidityMinutes,
+    );
+
+    return [
+      const SizedBox(height: 24),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.blue.shade200),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(fontSize: 14, color: Colors.blue.shade900),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
   List<Widget> _buildInstructionSteps(Translations t) {
     final steps = <String>[
       t.maker.confirmPayment.instruction1(code: _code),

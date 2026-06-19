@@ -427,7 +427,8 @@ maker:
     instruction1: Wprowadź kod do systemu płatności ${code}.
     instruction2: Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.
     instruction3: "Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:"
-    
+    mbwayAtmInstructions: "Aby wypłacić ${amount} €, udaj się do najbliższego bankomatu MULTIBANCO, naciśnij zielony klawisz i wybierz opcję \"Levantar Dinheiro\" (Wypłata gotówki). Wprowadź kod. Kod jest ważny przez ${minutes} minut."
+
     takerChargedWarning: "Pobierający zgłosił, że płatność ${code} została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt."
     autoConfirmInfo: "Jeśli nie oznaczysz kodu ${code} jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu."
     autoConfirmCountdown: "Automatyczne potwierdzenie za ${time}"

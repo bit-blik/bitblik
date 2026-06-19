@@ -1002,6 +1002,7 @@ class _Translations$maker$confirmPayment$it extends Translations$maker$confirmPa
 	@override String instruction1({required Object code}) => 'Inserisci il codice nella richiesta di pagamento ${code}.';
 	@override String get instruction2 => 'Attendi che il Taker confermi il pagamento nella sua app.';
 	@override String get instruction3 => 'Quando il pagamento va a buon fine, premi Conferma qui sotto:';
+	@override String mbwayAtmInstructions({required Object amount, required Object minutes}) => 'Per prelevare ${amount} €, recati al MULTIBANCO più vicino, premi il tasto verde e scegli l\'opzione "Levantar Dinheiro" (Preleva contante). Inserisci il codice. Questo codice è valido per ${minutes} minuti.';
 	@override String takerChargedWarning({required Object code}) => 'Il taker ha segnalato che il pagamento ${code} è stato addebitato sul suo conto bancario. Se lo contrassegni come non valido, si creerà un conflitto.';
 	@override String autoConfirmInfo({required Object code}) => 'A meno che tu non contrassegni il ${code} come non valido, il pagamento sarà confermato automaticamente e il taker pagato allo scadere di questo timer.';
 	@override String autoConfirmCountdown({required Object time}) => 'Conferma automatica tra ${time}';
@@ -2842,6 +2843,7 @@ extension on TranslationsIt {
 			'maker.confirmPayment.instruction1' => ({required Object code}) => 'Inserisci il codice nella richiesta di pagamento ${code}.',
 			'maker.confirmPayment.instruction2' => 'Attendi che il Taker confermi il pagamento nella sua app.',
 			'maker.confirmPayment.instruction3' => 'Quando il pagamento va a buon fine, premi Conferma qui sotto:',
+			'maker.confirmPayment.mbwayAtmInstructions' => ({required Object amount, required Object minutes}) => 'Per prelevare ${amount} €, recati al MULTIBANCO più vicino, premi il tasto verde e scegli l\'opzione "Levantar Dinheiro" (Preleva contante). Inserisci il codice. Questo codice è valido per ${minutes} minuti.',
 			'maker.confirmPayment.takerChargedWarning' => ({required Object code}) => 'Il taker ha segnalato che il pagamento ${code} è stato addebitato sul suo conto bancario. Se lo contrassegni come non valido, si creerà un conflitto.',
 			'maker.confirmPayment.autoConfirmInfo' => ({required Object code}) => 'A meno che tu non contrassegni il ${code} come non valido, il pagamento sarà confermato automaticamente e il taker pagato allo scadere di questo timer.',
 			'maker.confirmPayment.autoConfirmCountdown' => ({required Object time}) => 'Conferma automatica tra ${time}',
@@ -3046,9 +3048,9 @@ extension on TranslationsIt {
 			'home.statistics.errors.loading' => ({required Object error}) => 'Errore nel caricamento delle statistiche: ${error}',
 			'nekoInfo.title' => 'Cos\'è un Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'Il tuo Neko è la tua identità per usare ${app}. È composto da una chiave privata e pubblica per garantire una comunicazione crittograficamente sicura con il coordinatore.\n\nPer garantire maggiore anonimato, si consiglia di usare un nuovo Neko per ogni offerta.\n\n⚠️ IMPORTANTE: La tua chiave privata è memorizzata solo sul tuo dispositivo (lato client). È fondamentale fare il backup della tua chiave privata, poiché perderla potrebbe impedirti di risolvere dispute e recuperare i tuoi fondi.',
-			'nekoInfo.backupWarning' => 'Ricorda di fare il backup del tuo Neko',
 			_ => null,
 		} ?? switch (path) {
+			'nekoInfo.backupWarning' => 'Ricorda di fare il backup del tuo Neko',
 			'generateNewKey.title' => 'Nuovo',
 			'generateNewKey.description' => 'Sei sicuro di voler generare un nuovo Neko? Quello attuale andrà perso per sempre se non ne hai fatto il backup.',
 			'generateNewKey.buttons.generate' => 'Genera',

@@ -1004,6 +1004,7 @@ class _Translations$maker$confirmPayment$pt extends Translations$maker$confirmPa
 	@override String instruction1({required Object code}) => 'Introduza o código no pedido de pagamento ${code}.';
 	@override String get instruction2 => 'Aguarde até o taker confirmar o pagamento na app dele.';
 	@override String get instruction3 => 'Quando o pagamento for bem-sucedido, prima Confirmar abaixo:';
+	@override String mbwayAtmInstructions({required Object amount, required Object minutes}) => 'Para levantar ${amount} €, dirija-se ao MULTIBANCO mais próximo, carregue na tecla verde e escolha a opção "Levantar Dinheiro". Introduza o código. Este código é válido por ${minutes} minutos.';
 	@override String takerChargedWarning({required Object code}) => 'O taker reportou que o pagamento ${code} foi cobrado da conta bancária dele. Se marcar isto como inválido, vai causar um conflito.';
 	@override String autoConfirmInfo({required Object code}) => 'A menos que marque o ${code} como inválido, o pagamento será confirmado automaticamente e o taker pago quando este temporizador terminar.';
 	@override String autoConfirmCountdown({required Object time}) => 'Confirmação automática em ${time}';
@@ -2891,6 +2892,7 @@ extension on TranslationsPt {
 			'maker.confirmPayment.instruction1' => ({required Object code}) => 'Introduza o código no pedido de pagamento ${code}.',
 			'maker.confirmPayment.instruction2' => 'Aguarde até o taker confirmar o pagamento na app dele.',
 			'maker.confirmPayment.instruction3' => 'Quando o pagamento for bem-sucedido, prima Confirmar abaixo:',
+			'maker.confirmPayment.mbwayAtmInstructions' => ({required Object amount, required Object minutes}) => 'Para levantar ${amount} €, dirija-se ao MULTIBANCO mais próximo, carregue na tecla verde e escolha a opção "Levantar Dinheiro". Introduza o código. Este código é válido por ${minutes} minutos.',
 			'maker.confirmPayment.takerChargedWarning' => ({required Object code}) => 'O taker reportou que o pagamento ${code} foi cobrado da conta bancária dele. Se marcar isto como inválido, vai causar um conflito.',
 			'maker.confirmPayment.autoConfirmInfo' => ({required Object code}) => 'A menos que marque o ${code} como inválido, o pagamento será confirmado automaticamente e o taker pago quando este temporizador terminar.',
 			'maker.confirmPayment.autoConfirmCountdown' => ({required Object time}) => 'Confirmação automática em ${time}',
@@ -3082,9 +3084,9 @@ extension on TranslationsPt {
 			'taker.conflict.nostrContact.npubCopied' => 'npub do coordenador copiado para a área de transferência!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'Para enviar DMs, inicie sessão com a sua chave privada Neko (nsec) em qualquer cliente Nostr que suporte mensagens diretas.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Gerir chaves Neko',
-			'blik.instructions.taker' => ({required Object code}) => 'Assim que o maker introduzir o código ${code}, terá de confirmar o pagamento na app do seu banco. Certifique-se de que o montante está correto antes de confirmar.',
 			_ => null,
 		} ?? switch (path) {
+			'blik.instructions.taker' => ({required Object code}) => 'Assim que o maker introduzir o código ${code}, terá de confirmar o pagamento na app do seu banco. Certifique-se de que o montante está correto antes de confirmar.',
 			'home.notifications.title' => 'Seja notificado sobre novas ofertas através de:',
 			'home.notifications.telegram' => 'Telegram',
 			'home.notifications.simplex' => 'SimpleX',

@@ -443,7 +443,10 @@ maker:
     instruction1: Enter the code into the ${code} payment request.
     instruction2: Wait until Taker confirms the payment in their app.
     instruction3: "When payment is succesful, press Confirm below:"
-    
+    # Optional payment-system + language specific instructions shown in a blue
+    # info box below the code. Only rendered for methods that define one.
+    mbwayAtmInstructions: "To withdraw ${amount} €, go to the nearest MULTIBANCO ATM, press the green key and choose the \"Withdraw Cash\" (\"Levantar Dinheiro\") option. Enter the code. This code is valid for ${minutes} minutes."
+
     takerChargedWarning: "The taker has reported that the ${code} payment was charged from their bank account. If you mark this as invalid, this will cause a conflict."
     autoConfirmInfo: "Unless you mark the ${code} as invalid, the payment will be auto-confirmed and the taker paid when this timer runs out."
     autoConfirmCountdown: "Auto-confirm in ${time}"

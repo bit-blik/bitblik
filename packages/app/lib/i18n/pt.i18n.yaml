@@ -443,6 +443,7 @@ maker:
     instruction1: Introduza o código no pedido de pagamento ${code}.
     instruction2: Aguarde até o taker confirmar o pagamento na app dele.
     instruction3: "Quando o pagamento for bem-sucedido, prima Confirmar abaixo:"
+    mbwayAtmInstructions: "Para levantar ${amount} €, dirija-se ao MULTIBANCO mais próximo, carregue na tecla verde e escolha a opção \"Levantar Dinheiro\". Introduza o código. Este código é válido por ${minutes} minutos."
 
     takerChargedWarning: "O taker reportou que o pagamento ${code} foi cobrado da conta bancária dele. Se marcar isto como inválido, vai causar um conflito."
     autoConfirmInfo: "A menos que marque o ${code} como inválido, o pagamento será confirmado automaticamente e o taker pago quando este temporizador terminar."

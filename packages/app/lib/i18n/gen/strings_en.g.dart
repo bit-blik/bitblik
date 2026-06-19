@@ -1574,6 +1574,9 @@ class Translations$maker$confirmPayment$en {
 	/// en: 'When payment is succesful, press Confirm below:'
 	String get instruction3 => 'When payment is succesful, press Confirm below:';
 
+	/// en: 'To withdraw ${amount} €, go to the nearest MULTIBANCO ATM, press the green key and choose the "Withdraw Cash" ("Levantar Dinheiro") option. Enter the code. This code is valid for ${minutes} minutes.'
+	String mbwayAtmInstructions({required Object amount, required Object minutes}) => 'To withdraw ${amount} €, go to the nearest MULTIBANCO ATM, press the green key and choose the "Withdraw Cash" ("Levantar Dinheiro") option. Enter the code. This code is valid for ${minutes} minutes.';
+
 	/// en: 'The taker has reported that the ${code} payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.'
 	String takerChargedWarning({required Object code}) => 'The taker has reported that the ${code} payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.';
 
@@ -4348,6 +4351,7 @@ extension on Translations {
 			'maker.confirmPayment.instruction1' => ({required Object code}) => 'Enter the code into the ${code} payment request.',
 			'maker.confirmPayment.instruction2' => 'Wait until Taker confirms the payment in their app.',
 			'maker.confirmPayment.instruction3' => 'When payment is succesful, press Confirm below:',
+			'maker.confirmPayment.mbwayAtmInstructions' => ({required Object amount, required Object minutes}) => 'To withdraw ${amount} €, go to the nearest MULTIBANCO ATM, press the green key and choose the "Withdraw Cash" ("Levantar Dinheiro") option. Enter the code. This code is valid for ${minutes} minutes.',
 			'maker.confirmPayment.takerChargedWarning' => ({required Object code}) => 'The taker has reported that the ${code} payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.',
 			'maker.confirmPayment.autoConfirmInfo' => ({required Object code}) => 'Unless you mark the ${code} as invalid, the payment will be auto-confirmed and the taker paid when this timer runs out.',
 			'maker.confirmPayment.autoConfirmCountdown' => ({required Object time}) => 'Auto-confirm in ${time}',
@@ -4539,9 +4543,9 @@ extension on Translations {
 			'taker.conflict.nostrContact.npubCopied' => 'Coordinator npub copied to clipboard!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
-			'blik.instructions.taker' => ({required Object code}) => 'Once the Maker enters the ${code} code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.',
 			_ => null,
 		} ?? switch (path) {
+			'blik.instructions.taker' => ({required Object code}) => 'Once the Maker enters the ${code} code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.',
 			'home.notifications.title' => 'Get notified about new offers via:',
 			'home.notifications.telegram' => 'Telegram',
 			'home.notifications.simplex' => 'SimpleX',

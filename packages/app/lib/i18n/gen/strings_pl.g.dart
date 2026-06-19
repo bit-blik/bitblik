@@ -999,6 +999,7 @@ class _Translations$maker$confirmPayment$pl extends Translations$maker$confirmPa
 	@override String instruction1({required Object code}) => 'Wprowadź kod do systemu płatności ${code}.';
 	@override String get instruction2 => 'Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.';
 	@override String get instruction3 => 'Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:';
+	@override String mbwayAtmInstructions({required Object amount, required Object minutes}) => 'Aby wypłacić ${amount} €, udaj się do najbliższego bankomatu MULTIBANCO, naciśnij zielony klawisz i wybierz opcję "Levantar Dinheiro" (Wypłata gotówki). Wprowadź kod. Kod jest ważny przez ${minutes} minut.';
 	@override String takerChargedWarning({required Object code}) => 'Pobierający zgłosił, że płatność ${code} została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.';
 	@override String autoConfirmInfo({required Object code}) => 'Jeśli nie oznaczysz kodu ${code} jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu.';
 	@override String autoConfirmCountdown({required Object time}) => 'Automatyczne potwierdzenie za ${time}';
@@ -2836,6 +2837,7 @@ extension on TranslationsPl {
 			'maker.confirmPayment.instruction1' => ({required Object code}) => 'Wprowadź kod do systemu płatności ${code}.',
 			'maker.confirmPayment.instruction2' => 'Poczekaj, aż Kupujący potwierdzi płatność w swojej aplikacji banku.',
 			'maker.confirmPayment.instruction3' => 'Gdy płatność zakończy się sukcesem, naciśnij Potwierdź poniżej:',
+			'maker.confirmPayment.mbwayAtmInstructions' => ({required Object amount, required Object minutes}) => 'Aby wypłacić ${amount} €, udaj się do najbliższego bankomatu MULTIBANCO, naciśnij zielony klawisz i wybierz opcję "Levantar Dinheiro" (Wypłata gotówki). Wprowadź kod. Kod jest ważny przez ${minutes} minut.',
 			'maker.confirmPayment.takerChargedWarning' => ({required Object code}) => 'Pobierający zgłosił, że płatność ${code} została pobrana z jego konta bankowego. Oznaczenie tego jako nieprawidłowe spowoduje konflikt.',
 			'maker.confirmPayment.autoConfirmInfo' => ({required Object code}) => 'Jeśli nie oznaczysz kodu ${code} jako nieprawidłowego, płatność zostanie automatycznie potwierdzona, a Kupujący opłacony po upływie tego czasu.',
 			'maker.confirmPayment.autoConfirmCountdown' => ({required Object time}) => 'Automatyczne potwierdzenie za ${time}',
@@ -3043,9 +3045,9 @@ extension on TranslationsPl {
 			'backup.feedback.copied' => 'Klucz prywatny skopiowany do schowka!',
 			'backup.tooltips.backup' => 'Zarchiwizuj Neko',
 			'restore.title' => 'Przywróć',
-			'restore.labels.privateKey' => 'Klucz prywatny',
 			_ => null,
 		} ?? switch (path) {
+			'restore.labels.privateKey' => 'Klucz prywatny',
 			'restore.buttons.restore' => 'Przywróć',
 			'restore.errors.invalidKey' => 'Musi to być 64-znakowy ciąg szesnastkowy.',
 			'restore.errors.failed' => 'Przywracanie nie powiodło się',
