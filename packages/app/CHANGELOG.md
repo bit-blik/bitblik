@@ -1,10 +1,12 @@
-## [0.8.1]  - 2026-06-18
+## [0.8.1]  - 2026-06-19
+- fix: make code input flexible to amount of digits
+- fix: add mbway instructions for using the code
 
+## [0.8.1]  - 2026-06-18
 - fix: extract code with digits amount from pasted text
 - fix: remove 10EUR bank note denomination
 
 ## [0.8.0] - 2026-06-18
-
 - feat: choice of payment system per country
 - feat: support MB WAY for Portugal with 10 digit codes for ATMs
 - feat: portuguese translation
@@ -15,7 +17,6 @@
 - fix: improve finished offers stats by doing it client-side
 
 ## [0.7.0] - 2026-06-04
- 
 - feat: premium % option for makers
 - feat: nip-65 for dynamic coordinator relay discovery
 - feat: use kind 0 metadata for coordinator photo/name
@@ -25,7 +26,6 @@
 - feat: coordinator details screen
 
 ## [0.6.0] - 2026-06-01
-
 - feat: new category field: shop/atm/online
 - feat: local notifications for change of status
 - feat: optional background service monitoring new offers
@@ -38,7 +38,6 @@
 - fix: ios keyboard during takerPaymentFailed doesn't hide on un-focus
 
 ## [0.5.1] - 2026-04-02
-
 - fix: wallet initialization
 - fix: NWC cached permissions to improve UX
 - feat: Alby Go NWC connect available on iOS
@@ -74,7 +73,6 @@
 - fix offer's list state update bug
 
 ## [0.3.0]
-
 - use nostr relays & websockets for client/coordinator communication
 - backup/restore private keys
 - multi coordinators
