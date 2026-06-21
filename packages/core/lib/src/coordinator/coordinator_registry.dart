@@ -275,19 +275,27 @@ class CoordinatorRegistry {
   }
 
   /// Probe a single coordinator via `get_info` and update its record.
-  Future<void> probeHealth(String pubkey) async {
+  Future<void> probeHealth(
+    String pubkey, {
+    Duration? timeoutOverride,
+    bool refreshRelayList = true,
+  }) async {
     final hex = _normalize(pubkey);
-    final existing = _records[hex];
-    if (existing == null) return;
+    if (_records[hex] == null) return;
     // Refresh the NIP-65 relay list before probing so health checks track
     // coordinators that move relays, and the probe goes to current relays.
-    await _refreshRelayList(hex);
+    if (refreshRelayList) {
+      await _refreshRelayList(hex);
+    }
+    final existing = _records[hex];
+    if (existing == null) return;
     final coordRelays = relaysFor(hex);
     try {
       await rpcClient.send(
         const NostrRequest(method: kRpcGetInfo, params: {}),
         hex,
         relays: coordRelays,
+        timeoutOverride: timeoutOverride,
       );
       _records[hex] = existing.copyWith(
         responsive: true,
@@ -303,6 +311,59 @@ class CoordinatorRegistry {
     }
     _schedulePersist();
     _emit();
+  }
+
+  /// Fast refresh path for one coordinator details view.
+  ///
+  /// Refreshes discovery relays, fetches only this coordinator's latest
+  /// kind-15125 + NIP-65 from those discovery relays, then runs a `get_info`
+  /// health probe using the updated relay set.
+  Future<void> refreshCoordinator(
+    String pubkey, {
+    Duration discoveryTimeout = const Duration(seconds: 3),
+    Duration healthTimeout = const Duration(seconds: 3),
+  }) async {
+    final hex = _normalize(pubkey);
+    if (_records[hex] == null) return;
+
+    await refreshDiscoveryRelays();
+
+    Nip01Event? newest;
+    try {
+      final response = ndk.requests.query(
+        name: 'coordinator-single-refresh',
+        filter: Filter(
+          kinds: [kKindCoordinatorInfo],
+          authors: [hex],
+        ),
+        explicitRelays: relays,
+        cacheRead: false,
+      );
+      await for (final event in response.stream.timeout(
+        discoveryTimeout,
+        onTimeout: (sink) => sink.close(),
+      )) {
+        if (event.pubKey != hex) continue;
+        if (newest == null || event.createdAt > newest.createdAt) {
+          newest = event;
+        }
+      }
+    } catch (_) {
+      // Best-effort refresh; keep existing record when discovery relays fail.
+    }
+
+    if (newest != null) {
+      _upsertFromEvent(newest);
+      _schedulePersist();
+      _emit();
+    }
+
+    await _refreshRelayListFromDiscovery(hex, timeout: discoveryTimeout);
+    await probeHealth(
+      hex,
+      timeoutOverride: healthTimeout,
+      refreshRelayList: false,
+    );
   }
 
   /// Probe every enabled coordinator whose last probe is older than
@@ -605,6 +666,63 @@ class CoordinatorRegistry {
       return;
     }
     _records[hex] = existing.copyWith(relays: relayList);
+    _schedulePersist();
+    _emit();
+  }
+
+  /// Refresh [hex] relay list from its NIP-65 event found on discovery relays.
+  ///
+  /// This avoids full user-relay-list resolution when details screen requests a
+  /// fast, single-coordinator refresh.
+  Future<void> _refreshRelayListFromDiscovery(
+    String hex, {
+    Duration timeout = const Duration(seconds: 3),
+  }) async {
+    final existing = _records[hex];
+    if (existing == null) return;
+
+    Nip01Event? newest;
+    try {
+      final response = ndk.requests.query(
+        name: 'coordinator-single-nip65',
+        filter: Filter(
+          kinds: [kKindRelayList],
+          authors: [hex],
+        ),
+        explicitRelays: relays,
+        cacheRead: false,
+      );
+      await for (final event in response.stream.timeout(
+        timeout,
+        onTimeout: (sink) => sink.close(),
+      )) {
+        if (event.pubKey != hex) continue;
+        if (newest == null || event.createdAt > newest.createdAt) {
+          newest = event;
+        }
+      }
+    } catch (_) {
+      return;
+    }
+
+    if (newest == null) return;
+
+    final relayList = <String>{};
+    for (final tag in newest.tags) {
+      if (tag.length >= 2 && tag[0] == 'r') {
+        final url = normalizeRelayUrl(tag[1]);
+        if (url.isNotEmpty) relayList.add(url);
+      }
+    }
+    if (relayList.isEmpty) return;
+
+    final next = relayList.toList(growable: false);
+    if (existing.relays.length == next.length &&
+        existing.relays.toSet().containsAll(next)) {
+      return;
+    }
+
+    _records[hex] = existing.copyWith(relays: next);
     _schedulePersist();
     _emit();
   }

@@ -182,13 +182,14 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     );
   }
 
-  /// Pull-to-refresh: re-fetch discovery relays (Bitblik NIP-65) + coordinator
-  /// kind-15125 / NIP-65 via discovery, then run the health check for this
-  /// coordinator.
+  /// Pull-to-refresh for this coordinator only.
+  ///
+  /// Fast path: refresh discovery relays, re-fetch this coordinator's
+  /// kind-15125 + NIP-65 from discovery relays, then run a bounded-time
+  /// `get_info` health probe.
   Future<void> _refresh(WidgetRef ref) async {
     final registry = ref.read(apiServiceProvider).coordinatorRegistry;
-    await registry.discover();
-    await registry.probeHealth(pubkey);
+    await registry.refreshCoordinator(pubkey);
   }
 
   /// "🇵🇱 Poland · BLIK" for a coordinator's payment system id, with the
