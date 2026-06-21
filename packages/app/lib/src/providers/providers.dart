@@ -1472,10 +1472,13 @@ final discoveryRelaysProvider = Provider<List<String>>((ref) {
 /// relays. Reactive to registry changes via [discoveredCoordinatorsProvider].
 final coordinatorRelaysInUseProvider = Provider<Set<String>>((ref) {
   final async = ref.watch(discoveredCoordinatorsProvider);
+  final activeMethod = ref.watch(selectedPaymentSystemProvider);
   return async.maybeWhen(
     data: (records) {
       final out = <String>{};
-      for (final r in records.where((r) => r.enabled)) {
+      for (final r in records.where(
+        (r) => r.enabled && r.paymentSystem == activeMethod.id,
+      )) {
         if (r.relayListFromNip65 && r.relays.isNotEmpty) {
           out.addAll(r.relays.map(normalizeRelayUrl));
         }
