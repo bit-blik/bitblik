@@ -17,6 +17,8 @@ class NostrService {
   late final Ndk _ndk;
   late Bip340EventSigner _signer;
   final RustEventVerifier rustEventVerifier = RustEventVerifier();
+  static const Duration _relayRefreshInterval = Duration(seconds: 60);
+  static const Duration _relayChangeGracePeriod = Duration(minutes: 5);
 
   // Relay configuration.
   //
@@ -31,12 +33,17 @@ class NostrService {
   /// (fallback: hardcoded bootstrap). The coordinator publishes its info +
   /// NIP-65 here so clients find it on the same relays they discover from.
   List<String> _discoveryRelays = List.from(kDiscoveryRelays);
+  List<String> _graceRelays = const [];
 
   /// The relays currently used to communicate (resolved after [init]).
   List<String> get workingRelays => List.unmodifiable(_relays);
+  List<String> get _broadcastRelays =>
+      {..._graceRelays, ..._relays}.toList(growable: false);
 
   // Subscription for incoming requests
   NdkResponse? _requestSubscription;
+  Timer? _relayRefreshTimer;
+  Timer? _relayGraceTimer;
 
   // NIP-69 offer events are parameterized replaceable. If two state changes for
   // the same offer are published within the same second, some relays may keep
@@ -56,7 +63,7 @@ class NostrService {
   /// Relays the coordinator publishes its discovery events (info + NIP-65) to,
   /// so clients can find it on the discovery set as well as its own.
   List<String> get _discoveryTargets =>
-      {..._discoveryRelays, ..._relays}.toList();
+      {..._discoveryRelays, ..._broadcastRelays}.toList();
 
   String _shortKey(String value) {
     if (value.length <= 12) return value;
@@ -143,6 +150,9 @@ class NostrService {
 
     // Start listening for requests
     await _startRequestListener();
+
+    // Follow external NIP-65 updates without restart.
+    _startRelayRefreshLoop();
   }
 
   /// Determine the relays this coordinator uses. If a NIP-65 (kind
@@ -213,8 +223,8 @@ class NostrService {
       AppLogger.info(
         'No existing NIP-65 relay list found; using configured relays: $_relays',
       );
+      await _publishRelayList();
     }
-    await _publishRelayList();
   }
 
   /// Fetch the newest NIP-65 relay list authored by [hex] via NDK's
@@ -264,6 +274,55 @@ class NostrService {
     } catch (e) {
       AppLogger.info('Error publishing NIP-65 relay list: $e');
     }
+  }
+
+  void _startRelayRefreshLoop() {
+    _relayRefreshTimer?.cancel();
+    _relayRefreshTimer = Timer.periodic(_relayRefreshInterval, (_) {
+      _refreshWorkingRelays().catchError((e) {
+        AppLogger.info('Error refreshing working NIP-65 relays: $e');
+      });
+    });
+  }
+
+  Future<void> _refreshWorkingRelays() async {
+    final latest = await _fetchRelayListFor(_signer.getPublicKey());
+    if (latest == null || latest.isEmpty) return;
+    final next = latest
+        .map(normalizeRelayUrl)
+        .where((u) => u.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    final current = _relays.map(normalizeRelayUrl).toSet();
+    if (current.length == next.length && current.containsAll(next)) return;
+    await _applyWorkingRelayChange(next);
+  }
+
+  Future<void> _applyWorkingRelayChange(List<String> nextRelays) async {
+    final previousTargets = _broadcastRelays;
+    _relays = nextRelays;
+    _graceRelays = previousTargets;
+    AppLogger.info(
+      'Detected updated NIP-65 relays; switching runtime relays to $_relays and keeping previous relays active during grace period: $_graceRelays',
+    );
+    await _restartRequestListener(_broadcastRelays);
+
+    _relayGraceTimer?.cancel();
+    _relayGraceTimer = Timer(_relayChangeGracePeriod, () {
+      _finishRelayGracePeriod().catchError((e) {
+        AppLogger.info('Error ending relay grace period: $e');
+      });
+    });
+  }
+
+  Future<void> _finishRelayGracePeriod() async {
+    if (_graceRelays.isEmpty) return;
+    final expired = _graceRelays;
+    _graceRelays = const [];
+    AppLogger.info(
+      'Relay grace period ended; dropping previous relays: $expired',
+    );
+    await _restartRequestListener(_relays);
   }
 
   /// Decode nsec bech32 private key to hex format
@@ -389,7 +448,7 @@ class NostrService {
       await _ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: _signer,
-        specificRelays: _relays,
+        specificRelays: _broadcastRelays,
       );
       AppLogger.info(
         'Sent status update offer=$offerId status=${payload['status']} to=${_shortKey(recipientPubkey)} event=${event.id}',
@@ -403,7 +462,15 @@ class NostrService {
 
   /// Start listening for encrypted requests
   Future<void> _startRequestListener() async {
+    await _restartRequestListener(_broadcastRelays);
+  }
+
+  Future<void> _restartRequestListener(List<String> relays) async {
     try {
+      if (_requestSubscription != null) {
+        await _ndk.requests.closeSubscription(_requestSubscription!.requestId);
+        _requestSubscription = null;
+      }
       final filter = Filter(
         kinds: [kKindCoordinatorRequest],
         pTags: [_signer.getPublicKey()], // Events tagged with our pubkey
@@ -412,10 +479,10 @@ class NostrService {
 
       final response = _ndk.requests.subscription(
         name: "coordinator-requests",
-        filters: [filter],
+        filter: filter,
         // Listen on our working relays (NIP-65 set), which may differ from the
         // bootstrap/discovery relays.
-        explicitRelays: _relays,
+        explicitRelays: relays,
       );
       _requestSubscription = response;
 
@@ -425,7 +492,7 @@ class NostrService {
       });
 
       AppLogger.info(
-          'Started listening for coordinator requests on kind ${kKindCoordinatorRequest}');
+          'Started listening for coordinator requests on kind ${kKindCoordinatorRequest} via relays: $relays');
     } catch (e) {
       AppLogger.info('Error starting request listener: $e');
     }
@@ -780,7 +847,7 @@ class NostrService {
       await _ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: _signer,
-        specificRelays: _relays,
+        specificRelays: _broadcastRelays,
       );
 
       AppLogger.info(
@@ -803,6 +870,8 @@ class NostrService {
 
   /// Disconnect and cleanup
   Future<void> disconnect() async {
+    _relayRefreshTimer?.cancel();
+    _relayGraceTimer?.cancel();
     if (_requestSubscription != null) {
       await _ndk.requests.closeSubscription(_requestSubscription!.requestId);
     }
@@ -897,7 +966,9 @@ class NostrService {
       );
 
       await _ndk.broadcast.broadcast(
-          nostrEvent: event, customSigner: _signer, specificRelays: _relays);
+          nostrEvent: event,
+          customSigner: _signer,
+          specificRelays: _broadcastRelays);
       _lastOfferEventCreatedAtById[offer.id] = eventCreatedAt;
       // AppLogger.info(
       //     'Broadcasted NIP-69 order event for offer ${offer.id}, status: ${status} id:${event.id}',
