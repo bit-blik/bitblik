@@ -19,6 +19,7 @@ class NostrService {
   final RustEventVerifier rustEventVerifier = RustEventVerifier();
   static const Duration _relayRefreshInterval = Duration(seconds: 60);
   static const Duration _relayChangeGracePeriod = Duration(minutes: 5);
+  static const Duration _relayQueryTimeout = Duration(seconds: 6);
 
   // Relay configuration.
   //
@@ -166,7 +167,10 @@ class NostrService {
     // we publish where clients always look (bootstrap) plus any relays Bitblik
     // adds. Mirrors the client-side resolution.
     final resolved = <String>{...kDiscoveryRelays};
-    final list = await _fetchRelayListFor(kBitblikPubkeyHex);
+    final list = await _fetchRelayListFor(
+      kBitblikPubkeyHex,
+      queryRelays: kDiscoveryRelays,
+    );
     if (list != null) resolved.addAll(list);
     _discoveryRelays = resolved.toList();
     AppLogger.info('Resolved discovery relays: $_discoveryRelays');
@@ -205,7 +209,10 @@ class NostrService {
 
   Future<void> _resolveWorkingRelays() async {
     final hex = _signer.getPublicKey();
-    final existing = await _fetchRelayListFor(hex);
+    final existing = await _fetchRelayListFor(
+      hex,
+      queryRelays: {..._discoveryRelays, ..._relays},
+    );
     if (existing != null && existing.isNotEmpty) {
       _relays = existing;
       final configured = _envRelays.map(normalizeRelayUrl).toSet();
@@ -227,18 +234,54 @@ class NostrService {
     }
   }
 
-  /// Fetch the newest NIP-65 relay list authored by [hex] via NDK's
-  /// user-relay-list usecase (resolves over the bootstrap/discovery relays).
-  /// Returns `null` when none is found.
-  Future<List<String>?> _fetchRelayListFor(String hex) async {
-    final list = await _ndk.userRelayLists.getSingleUserRelayList(
-      hex,
-      forceRefresh: true,
-    );
-    if (list == null) return null;
-    final urls =
-        list.urls.map(normalizeRelayUrl).where((u) => u.isNotEmpty).toList();
-    return urls.isEmpty ? null : urls;
+  /// Fetch the newest NIP-65 relay list authored by [hex] directly from the
+  /// provided [queryRelays], bypassing cache. Discovery relays are the source
+  /// of truth for coordinator relay lists.
+  Future<List<String>?> _fetchRelayListFor(
+    String hex, {
+    required Iterable<String> queryRelays,
+  }) async {
+    final explicitRelays = queryRelays
+        .map(normalizeRelayUrl)
+        .where((u) => u.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (explicitRelays.isEmpty) return null;
+
+    Nip01Event? newest;
+    try {
+      final response = _ndk.requests.query(
+        name: 'coordinator-self-nip65',
+        filter: Filter(
+          kinds: [kKindRelayList],
+          authors: [hex],
+        ),
+        explicitRelays: explicitRelays,
+        cacheRead: false,
+      );
+      await for (final event in response.stream.timeout(
+        _relayQueryTimeout,
+        onTimeout: (sink) => sink.close(),
+      )) {
+        if (event.pubKey != hex) continue;
+        if (newest == null || event.createdAt > newest.createdAt) {
+          newest = event;
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+
+    if (newest == null) return null;
+
+    final urls = <String>{};
+    for (final tag in newest.tags) {
+      if (tag.length >= 2 && tag[0] == 'r') {
+        final url = normalizeRelayUrl(tag[1]);
+        if (url.isNotEmpty) urls.add(url);
+      }
+    }
+    return urls.isEmpty ? null : urls.toList(growable: false);
   }
 
   /// Publish the coordinator's CURRENT working relay list to both its working
@@ -286,7 +329,10 @@ class NostrService {
   }
 
   Future<void> _refreshWorkingRelays() async {
-    final latest = await _fetchRelayListFor(_signer.getPublicKey());
+    final latest = await _fetchRelayListFor(
+      _signer.getPublicKey(),
+      queryRelays: {..._discoveryRelays, ..._relays},
+    );
     if (latest == null || latest.isEmpty) return;
     final next = latest
         .map(normalizeRelayUrl)
