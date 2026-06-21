@@ -8,6 +8,8 @@ import '../constants/relays.dart';
 import 'protocol_codec.dart';
 import 'rpc_envelope.dart';
 
+const Duration kRelayRequestGrace = Duration(seconds: 3);
+
 /// Client-side transport for the Bitblik JSON-RPC over Nostr.
 ///
 /// Owns:
@@ -115,6 +117,7 @@ class BitblikRpcClient {
   }) async {
     final targetRelays =
         (relays == null || relays.isEmpty) ? this.relays : relays;
+    final effectiveTimeout = timeoutOverride ?? timeout;
     // Prefer relays that are currently connected to avoid paying a connect
     // timeout on dead relays. Fall back to the full set when none are
     // connected, so NDK still attempts to (re)connect and we never end up
@@ -157,7 +160,13 @@ class BitblikRpcClient {
         customSigner: signer,
         specificRelays: broadcastRelays,
       );
-      final relayResults = await broadcastResponse.broadcastDoneFuture;
+      final relayResults = await broadcastResponse.broadcastDoneFuture.timeout(
+        effectiveTimeout + kRelayRequestGrace,
+        onTimeout: () => throw TimeoutException(
+          'Bitblik RPC broadcast timed out',
+          effectiveTimeout + kRelayRequestGrace,
+        ),
+      );
       final anyRelayAccepted = relayResults.any(
         (response) => response.broadcastSuccessful,
       );
@@ -170,7 +179,6 @@ class BitblikRpcClient {
         );
       }
 
-      final effectiveTimeout = timeoutOverride ?? timeout;
       return await completer.future.timeout(
         effectiveTimeout,
         onTimeout: () {
@@ -225,9 +233,7 @@ class BitblikRpcClient {
 
   String _nextId() {
     final bytes = List<int>.generate(16, (_) => _random.nextInt(256));
-    return bytes
-        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-        .join();
+    return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
   }
 }
 

@@ -32,6 +32,11 @@ class CoordinatorRecord {
   /// offers, status) is routed to these.
   final List<String> relays;
 
+  /// True when [relays] were resolved from coordinator's own NIP-65 relay
+  /// list. False means [relays] currently come from fallback sources (for
+  /// example discovery relay `event.sources`).
+  final bool relayListFromNip65;
+
   /// Display name/picture from the coordinator's kind-0 profile metadata event,
   /// when published. Preferred over the kind-15125 info `name`/`icon`.
   final String? profileName;
@@ -60,6 +65,7 @@ class CoordinatorRecord {
     this.enabled = true,
     this.manualAdded = false,
     this.relays = const [],
+    this.relayListFromNip65 = false,
     this.profileName,
     this.profilePicture,
     this.responsive,
@@ -115,6 +121,7 @@ class CoordinatorRecord {
     bool? enabled,
     bool? manualAdded,
     List<String>? relays,
+    bool? relayListFromNip65,
     String? profileName,
     String? profilePicture,
     Object? responsive = _sentinel,
@@ -133,6 +140,7 @@ class CoordinatorRecord {
       enabled: enabled ?? this.enabled,
       manualAdded: manualAdded ?? this.manualAdded,
       relays: relays ?? this.relays,
+      relayListFromNip65: relayListFromNip65 ?? this.relayListFromNip65,
       profileName: profileName ?? this.profileName,
       profilePicture: profilePicture ?? this.profilePicture,
       responsive: identical(responsive, _sentinel)
@@ -156,6 +164,7 @@ class CoordinatorRecord {
         'enabled': enabled,
         'manual_added': manualAdded,
         if (relays.isNotEmpty) 'relays': relays,
+        if (relayListFromNip65) 'relay_list_from_nip65': relayListFromNip65,
         if (profileName != null) 'profile_name': profileName,
         if (profilePicture != null) 'profile_picture': profilePicture,
         if (responsive != null) 'responsive': responsive,
@@ -191,6 +200,7 @@ class CoordinatorRecord {
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      relayListFromNip65: json['relay_list_from_nip65'] as bool? ?? false,
       profileName: json['profile_name'] as String?,
       profilePicture: json['profile_picture'] as String?,
       responsive: json['responsive'] as bool?,

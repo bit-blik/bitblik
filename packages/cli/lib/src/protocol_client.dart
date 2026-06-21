@@ -9,7 +9,6 @@ import 'cli_context.dart';
 import 'coordinator_file_store.dart';
 import 'secrets_store.dart';
 
-
 /// CLI version, stamped onto every RPC request so the coordinator knows which
 /// client build issued it. Keep in sync with `version:` in cli/pubspec.yaml.
 const String kCliVersion = '0.1.0';
@@ -111,7 +110,7 @@ class BitblikProtocolClient {
     );
     Nip01Event? newest;
     await for (final e in response.stream.timeout(
-      const Duration(seconds: 6),
+      timeout + kRelayRequestGrace,
       onTimeout: (sink) => sink.close(),
     )) {
       if (e.pubKey != coordinatorPubkey) continue;
@@ -129,7 +128,14 @@ class BitblikProtocolClient {
   }
 
   Future<List<CoordinatorRecord>> discoverCoordinators() async {
-    await _registry.discover();
+    final effectiveTimeout = timeout + kRelayRequestGrace;
+    await _registry.discover().timeout(
+          effectiveTimeout,
+          onTimeout: () => throw TimeoutException(
+            'Coordinator discovery timed out',
+            effectiveTimeout,
+          ),
+        );
     await _rpc.updateResponseRelays(_registry.relaysForEnabled());
     return _registry.all;
   }
@@ -137,7 +143,12 @@ class BitblikProtocolClient {
   Future<void> checkCoordinatorHealth(
       List<CoordinatorRecord> coordinators) async {
     await Future.wait(
-      coordinators.map((c) => _registry.probeHealth(c.pubkeyHex)),
+      coordinators.map(
+        (c) => _registry.probeHealth(
+          c.pubkeyHex,
+          timeoutOverride: timeout,
+        ),
+      ),
     );
     await _rpc.updateResponseRelays(_registry.relaysForEnabled());
     await _registry.flushPersist();
@@ -149,12 +160,22 @@ class BitblikProtocolClient {
   Future<NostrResponse> sendRequest(
     NostrRequest request,
     String coordinatorPubkey,
-  ) =>
-      _rpc.send(
-        request,
-        coordinatorPubkey,
-        relays: _registry.relaysFor(coordinatorPubkey),
-      );
+  ) {
+    final effectiveTimeout = timeout + kRelayRequestGrace;
+    return _rpc
+        .send(
+          request,
+          coordinatorPubkey,
+          relays: _registry.relaysFor(coordinatorPubkey),
+        )
+        .timeout(
+          effectiveTimeout,
+          onTimeout: () => throw TimeoutException(
+            'Relay request timed out',
+            effectiveTimeout,
+          ),
+        );
+  }
 
   /// Query live public offers (kind 38383 NIP-69-ish events).
   ///
@@ -176,8 +197,7 @@ class BitblikProtocolClient {
         '#y': [platform ?? paymentSystem.platformTag],
       },
       authors: coordinatorPubkey == null ? null : [coordinatorPubkey],
-      since:
-          DateTime.now().subtract(window).millisecondsSinceEpoch ~/ 1000,
+      since: DateTime.now().subtract(window).millisecondsSinceEpoch ~/ 1000,
     );
 
     final response = _ndk.requests.query(
@@ -189,7 +209,10 @@ class BitblikProtocolClient {
     );
 
     final latestById = <String, Nip01Event>{};
-    await for (final event in response.stream) {
+    await for (final event in response.stream.timeout(
+      timeout + kRelayRequestGrace,
+      onTimeout: (sink) => sink.close(),
+    )) {
       final id = _offerId(event);
       final current = latestById[id];
       if (current == null || event.createdAt > current.createdAt) {

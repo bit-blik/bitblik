@@ -1466,21 +1466,18 @@ final discoveryRelaysProvider = Provider<List<String>>((ref) {
   );
 });
 
-/// Relays in active use to reach enabled coordinators (normalized, deduped).
-/// Mirrors [CoordinatorRegistry.relaysForEnabled]: each enabled coordinator's
-/// own relays, or the discovery relays as fallback when its set isn't known
-/// yet. Empty when there are no enabled coordinators. Reactive to registry
-/// changes via [discoveredCoordinatorsProvider].
+/// Relays declared by enabled coordinators and confirmed from their own
+/// NIP-65 lists, normalized and deduped. Discovery fallback relays are
+/// intentionally excluded so top-bar relay chips only show coordinator-owned
+/// relays. Reactive to registry changes via [discoveredCoordinatorsProvider].
 final coordinatorRelaysInUseProvider = Provider<Set<String>>((ref) {
   final async = ref.watch(discoveredCoordinatorsProvider);
   return async.maybeWhen(
     data: (records) {
       final out = <String>{};
       for (final r in records.where((r) => r.enabled)) {
-        if (r.relays.isNotEmpty) {
+        if (r.relayListFromNip65 && r.relays.isNotEmpty) {
           out.addAll(r.relays.map(normalizeRelayUrl));
-        } else {
-          out.addAll(kDiscoveryRelays.map(normalizeRelayUrl));
         }
       }
       return out;

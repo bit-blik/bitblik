@@ -74,6 +74,8 @@ class CoordinatorRegistry {
     _bootstrapRelays = List.from(relays);
   }
 
+  Duration get _queryTimeout => rpcClient.timeout + kRelayRequestGrace;
+
   /// Re-point discovery at a different project identity (hex pubkey), e.g. when
   /// the active payment system changes. No-op when unchanged. The next
   /// [discover] / [refreshDiscoveryRelays] resolves that identity's relays.
@@ -104,7 +106,7 @@ class CoordinatorRegistry {
         cacheRead: false,
       );
       await for (final event in response.stream.timeout(
-        const Duration(seconds: 6),
+        _queryTimeout,
         onTimeout: (sink) => sink.close(),
       )) {
         if (event.pubKey != discoveryPubkeyHex) continue;
@@ -149,11 +151,9 @@ class CoordinatorRegistry {
   List<CoordinatorRecord> get enabled =>
       all.where((r) => r.enabled).toList(growable: false);
 
-  CoordinatorRecord? recordFor(String pubkey) =>
-      _records[_normalize(pubkey)];
+  CoordinatorRecord? recordFor(String pubkey) => _records[_normalize(pubkey)];
 
-  CoordinatorInfo? infoFor(String pubkey) =>
-      recordFor(pubkey)?.info;
+  CoordinatorInfo? infoFor(String pubkey) => recordFor(pubkey)?.info;
 
   /// One-shot discovery query. Coalesces concurrent calls.
   Future<void> discover() async {
@@ -181,7 +181,10 @@ class CoordinatorRegistry {
         cacheRead: false,
       );
       final discovered = <String>{};
-      await for (final event in response.stream) {
+      await for (final event in response.stream.timeout(
+        _queryTimeout,
+        onTimeout: (sink) => sink.close(),
+      )) {
         _upsertFromEvent(event);
         discovered.add(event.pubKey);
       }
@@ -216,7 +219,10 @@ class CoordinatorRegistry {
       cacheRead: false,
     );
     final profiles = <String, Nip01Event>{};
-    await for (final event in response.stream) {
+    await for (final event in response.stream.timeout(
+      _queryTimeout,
+      onTimeout: (sink) => sink.close(),
+    )) {
       if (event.kind != Metadata.kKind) continue;
       final cur = profiles[event.pubKey];
       if (cur == null || event.createdAt > cur.createdAt) {
@@ -230,12 +236,11 @@ class CoordinatorRegistry {
       if (rec == null) return;
       final m = Metadata.fromEvent(event);
       // Prefer the kind-0 display_name; fall back to name (username).
-      final displayName =
-          (m.displayName != null && m.displayName!.isNotEmpty)
-              ? m.displayName
-              : null;
-      final name =
-          displayName ?? ((m.name != null && m.name!.isNotEmpty) ? m.name : null);
+      final displayName = (m.displayName != null && m.displayName!.isNotEmpty)
+          ? m.displayName
+          : null;
+      final name = displayName ??
+          ((m.name != null && m.name!.isNotEmpty) ? m.name : null);
       final picture =
           (m.picture != null && m.picture!.isNotEmpty) ? m.picture : null;
       if (name == null && picture == null) return;
@@ -529,10 +534,9 @@ class CoordinatorRegistry {
   /// Count `#s=success` [kKindOffer] events for a single coordinator within
   /// [networkFinishedWindow], querying that coordinator's own relays.
   Future<int> _fetchFinishedCountFor(String pubkey) async {
-    final since = DateTime.now()
-            .subtract(networkFinishedWindow)
-            .millisecondsSinceEpoch ~/
-        1000;
+    final since =
+        DateTime.now().subtract(networkFinishedWindow).millisecondsSinceEpoch ~/
+            1000;
     final coordinatorRelays = relaysFor(pubkey);
 
     // Page size requested from relays. We paginate with an `until` cursor
@@ -565,7 +569,10 @@ class CoordinatorRegistry {
 
       var pageCount = 0;
       var oldest = until;
-      await for (final event in response.stream) {
+      await for (final event in response.stream.timeout(
+        _queryTimeout,
+        onTimeout: (sink) => sink.close(),
+      )) {
         if (event.pubKey != pubkey) continue;
         pageCount++;
         if (event.createdAt < oldest) oldest = event.createdAt;
@@ -616,10 +623,11 @@ class CoordinatorRegistry {
         enabled: true,
         manualAdded: manualAdded,
         relays: fallbackRelays,
+        relayListFromNip65: false,
       );
     } else {
-      final newer = existing.lastSeen == null ||
-          existing.lastSeen!.isBefore(eventTime);
+      final newer =
+          existing.lastSeen == null || existing.lastSeen!.isBefore(eventTime);
       // kind 15125 is replaceable: different relays may hold different
       // versions. Only adopt info/lastSeen from a STRICTLY NEWER event so a
       // stale copy on one discovery relay can't clobber the current one.
@@ -632,14 +640,13 @@ class CoordinatorRegistry {
         relays: existing.relays.isNotEmpty
             ? existing.relays
             : (fallbackRelays.isNotEmpty ? fallbackRelays : existing.relays),
+        relayListFromNip65: existing.relayListFromNip65,
       );
     }
   }
 
-  /// Fetch the newest NIP-65 relay list for [hex] via NDK's user-relay-list
-  /// usecase (which resolves NIP-65/NIP-02 over the configured relays and
-  /// caches). Returns the advertised relay URLs, or `null` when none is found
-  /// (callers keep the existing/fallback relays in that case).
+  /// Fetch newest NIP-65 relay list for [hex] via NDK user-relay-list
+  /// resolution. Returns advertised relay URLs, or `null` when none is found.
   Future<List<String>?> _fetchRelayList(String hex) async {
     final list = await ndk.userRelayLists.getSingleUserRelayList(
       hex,
@@ -653,19 +660,22 @@ class CoordinatorRegistry {
     return urls.isEmpty ? null : urls;
   }
 
-  /// Refresh the relay list for [hex] from its NIP-65 event and store it on the
-  /// record. No-op when the coordinator is unknown or publishes no NIP-65 (the
-  /// `event.sources` fallback set by [_upsertFromEvent] is left intact).
+  /// Refresh [hex] relay list from coordinator's own NIP-65 publication.
+  /// Keeps existing/fallback relays when no NIP-65 list is found.
   Future<void> _refreshRelayList(String hex) async {
     final existing = _records[hex];
     if (existing == null) return;
     final relayList = await _fetchRelayList(hex);
     if (relayList == null) return;
-    if (existing.relays.length == relayList.length &&
-        existing.relays.toSet().containsAll(relayList)) {
+    final sameRelays = existing.relays.length == relayList.length &&
+        existing.relays.toSet().containsAll(relayList);
+    if (sameRelays && existing.relayListFromNip65) {
       return;
     }
-    _records[hex] = existing.copyWith(relays: relayList);
+    _records[hex] = existing.copyWith(
+      relays: relayList,
+      relayListFromNip65: true,
+    );
     _schedulePersist();
     _emit();
   }
@@ -717,12 +727,16 @@ class CoordinatorRegistry {
     if (relayList.isEmpty) return;
 
     final next = relayList.toList(growable: false);
-    if (existing.relays.length == next.length &&
-        existing.relays.toSet().containsAll(next)) {
+    final sameRelays = existing.relays.length == next.length &&
+        existing.relays.toSet().containsAll(next);
+    if (sameRelays && existing.relayListFromNip65) {
       return;
     }
 
-    _records[hex] = existing.copyWith(relays: next);
+    _records[hex] = existing.copyWith(
+      relays: next,
+      relayListFromNip65: true,
+    );
     _schedulePersist();
     _emit();
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -37,7 +38,9 @@ Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
     return runOfferCancel(args.sublist(2));
   }
 
-  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'mark-blik-invalid') {
+  if (args.length >= 2 &&
+      args[0] == 'offer' &&
+      args[1] == 'mark-blik-invalid') {
     return runOfferMarkBlikInvalid(args.sublist(2));
   }
 
@@ -61,24 +64,29 @@ Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
     final secrets = await SecretsStore.loadOrCreate();
     final client = BitblikProtocolClient(secrets: secrets, relays: relays);
     try {
-      await client.init();
-      var coordinators = _forThisMarket(await client.discoverCoordinators());
+      try {
+        await client.init();
+        var coordinators = _forThisMarket(await client.discoverCoordinators());
 
-      if (withHealth && coordinators.isNotEmpty) {
-        await client.checkCoordinatorHealth(coordinators);
-        // Re-snapshot after probing: records were replaced in-memory via copyWith
-        // and the pre-probe list still holds the old (responsive == null) objects.
-        coordinators = _forThisMarket(client.coordinatorRegistry.all);
-      }
+        if (withHealth && coordinators.isNotEmpty) {
+          await client.checkCoordinatorHealth(coordinators);
+          // Re-snapshot after probing: records were replaced in-memory via copyWith
+          // and the pre-probe list still holds the old (responsive == null) objects.
+          coordinators = _forThisMarket(client.coordinatorRegistry.all);
+        }
 
-      if (jsonOutput) {
-        stdout.writeln(
-          const JsonEncoder.withIndent('  ').convert(
-            coordinators.map(_coordinatorToCliJson).toList(),
-          ),
-        );
-      } else {
-        _printCoordinatorTable(coordinators, showHealth: withHealth);
+        if (jsonOutput) {
+          stdout.writeln(
+            const JsonEncoder.withIndent('  ').convert(
+              coordinators.map(_coordinatorToCliJson).toList(),
+            ),
+          );
+        } else {
+          _printCoordinatorTable(coordinators, showHealth: withHealth);
+        }
+      } on TimeoutException catch (e) {
+        stderr.writeln(e.message ?? 'Relay request timed out.');
+        return 1;
       }
     } finally {
       await client.dispose();
@@ -94,18 +102,19 @@ Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
 
 // ANSI helpers — no-op when stdout is not a terminal.
 final _ansi = stdout.hasTerminal;
-String _bold(String s)   => _ansi ? '\x1B[1m$s\x1B[0m' : s;
-String _cmd(String s)    => _ansi ? '\x1B[1;36m$s\x1B[0m' : s;   // bold cyan
-String _sub(String s)    => _ansi ? '\x1B[1;32m$s\x1B[0m' : s;   // bold green
-String _param(String s)  => _ansi ? '\x1B[90m$s\x1B[0m' : s;     // gray
+String _bold(String s) => _ansi ? '\x1B[1m$s\x1B[0m' : s;
+String _cmd(String s) => _ansi ? '\x1B[1;36m$s\x1B[0m' : s; // bold cyan
+String _sub(String s) => _ansi ? '\x1B[1;32m$s\x1B[0m' : s; // bold green
+String _param(String s) => _ansi ? '\x1B[90m$s\x1B[0m' : s; // gray
 String _yellow(String s) => _ansi ? '\x1B[33m$s\x1B[0m' : s;
-String _dim(String s)    => _ansi ? '\x1B[2m$s\x1B[0m' : s;
+String _dim(String s) => _ansi ? '\x1B[2m$s\x1B[0m' : s;
 
 void _printHelp(PaymentSystem ps) {
   final title = '${ps.brandName} CLI';
   final code = ps.codeLabel;
   final cur = ps.currency;
-  stdout.writeln('${_bold(title)} ${_dim('—')} peer-to-peer $code/Lightning exchange (${ps.flag} $cur)');
+  stdout.writeln(
+      '${_bold(title)} ${_dim('—')} peer-to-peer $code/Lightning exchange (${ps.flag} $cur)');
   stdout.writeln('');
   stdout.writeln(_bold('Commands:'));
   stdout.writeln('');
@@ -123,10 +132,12 @@ void _printHelp(PaymentSystem ps) {
 
   final p = _param;
 
-  cmd('${_cmd('coordinators')} ${_sub('list')} ${p('[--health] [--json] [--relay <url>]')}', [
-    'Discover coordinators broadcasting on Nostr.',
-    '--health probes each coordinator for liveness.',
-  ]);
+  cmd(
+      '${_cmd('coordinators')} ${_sub('list')} ${p('[--health] [--json] [--relay <url>]')}',
+      [
+        'Discover coordinators broadcasting on Nostr.',
+        '--health probes each coordinator for liveness.',
+      ]);
 
   cmd(
     '${_cmd('offer')} ${_sub('create')} ${p('--fiat <amount> --coordinator <npub|hex>')}\n'
@@ -142,46 +153,58 @@ void _printHelp(PaymentSystem ps) {
     '--finished includes cancelled/expired/completed offers.',
   ]);
 
-  cmd('${_cmd('offer')} ${_sub('list')} ${p('--coordinator <npub|hex> [--currency $cur] [--json] [--relay <url>]')}', [
-    'List live public offers fetched from relays for a given coordinator.',
-  ]);
+  cmd(
+      '${_cmd('offer')} ${_sub('list')} ${p('--coordinator <npub|hex> [--currency $cur] [--json] [--relay <url>]')}',
+      [
+        'List live public offers fetched from relays for a given coordinator.',
+      ]);
 
-  cmd('${_cmd('offer')} ${_sub('cancel')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
-    'Cancel an active (created/funded) offer.',
-    'Coordinator voids the hold invoice.',
-    'Uses the single cancellable local offer automatically; --offer required if multiple.',
-  ]);
+  cmd(
+      '${_cmd('offer')} ${_sub('cancel')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
+      [
+        'Cancel an active (created/funded) offer.',
+        'Coordinator voids the hold invoice.',
+        'Uses the single cancellable local offer automatically; --offer required if multiple.',
+      ]);
 
-  cmd('${_cmd('offer')} ${_sub('mark-blik-invalid')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
-    'Report that the received $code code was invalid / did not charge.',
-    'Coordinator notifies the taker and relists the offer for a new taker.',
-    'Use after get-blik when the code fails at the bank terminal.',
-  ]);
+  cmd(
+      '${_cmd('offer')} ${_sub('mark-blik-invalid')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
+      [
+        'Report that the received $code code was invalid / did not charge.',
+        'Coordinator notifies the taker and relists the offer for a new taker.',
+        'Use after get-blik when the code fails at the bank terminal.',
+      ]);
 
-  cmd('${_cmd('offer')} ${_sub('open-dispute')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
-    'Open a dispute after the taker raised a conflict.',
-    'Taker raises conflict when they believe the $code charged but maker marked it invalid.',
-    'Coordinator mediates and contacts both parties.',
-  ]);
+  cmd(
+      '${_cmd('offer')} ${_sub('open-dispute')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
+      [
+        'Open a dispute after the taker raised a conflict.',
+        'Taker raises conflict when they believe the $code charged but maker marked it invalid.',
+        'Coordinator mediates and contacts both parties.',
+      ]);
 
   cmd('${_cmd('offer')} ${_sub('sync')} ${p('[--relay <url>]')}', [
     'Refresh status of active local offers from each coordinator via RPC.',
     'Matched by payment hash; unmatched coordinator responses are ignored.',
   ]);
 
-  cmd('${_cmd('offer')} ${_sub('get-blik')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--no-wait] [--json] [--relay <url>]')}', [
-    'Wait for a taker to submit a $code code, then retrieve it via RPC.',
-    'Syncs local state first. Uses the single active local offer automatically;',
-    '--offer required when multiple active offers exist.',
-    '--no-wait: return immediately. Exit 0 = $code code in output.',
-    '          Exit 2 = not ready yet (poll again later).',
-  ]);
+  cmd(
+      '${_cmd('offer')} ${_sub('get-blik')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--no-wait] [--json] [--relay <url>]')}',
+      [
+        'Wait for a taker to submit a $code code, then retrieve it via RPC.',
+        'Syncs local state first. Uses the single active local offer automatically;',
+        '--offer required when multiple active offers exist.',
+        '--no-wait: return immediately. Exit 0 = $code code in output.',
+        '          Exit 2 = not ready yet (poll again later).',
+      ]);
 
-  cmd('${_cmd('offer')} ${_sub('confirm-payment')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}', [
-    'Confirm to the coordinator that the $code payment succeeded.',
-    'Coordinator settles the hold invoice and pays the taker.',
-    'Uses the single active local offer automatically; --offer required if multiple.',
-  ]);
+  cmd(
+      '${_cmd('offer')} ${_sub('confirm-payment')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
+      [
+        'Confirm to the coordinator that the $code payment succeeded.',
+        'Coordinator settles the hold invoice and pays the taker.',
+        'Uses the single active local offer automatically; --offer required if multiple.',
+      ]);
 
   stdout.writeln(_bold('Options:'));
   flag('--health', 'Probe each coordinator for liveness');
@@ -204,9 +227,7 @@ void _printHelp(PaymentSystem ps) {
 /// is not yet loaded are dropped — they can't be confirmed as this market's.
 List<CoordinatorRecord> _forThisMarket(List<CoordinatorRecord> records) {
   final id = activePaymentSystem.id;
-  return records
-      .where((r) => r.paymentSystem == id)
-      .toList(growable: false);
+  return records.where((r) => r.paymentSystem == id).toList(growable: false);
 }
 
 List<String>? _parseRelayArgs(List<String> args) {
@@ -254,11 +275,9 @@ void _printCoordinatorTable(List<CoordinatorRecord> coordinators,
         ? '-'
         : '${info.makerFee.toStringAsFixed(2)}/${info.takerFee.toStringAsFixed(2)}';
     final version = info?.version;
-    final versionStr =
-        version == null || version.isEmpty ? '-' : version;
-    final range = info == null
-        ? '-'
-        : '${info.minAmountSats}-${info.maxAmountSats}';
+    final versionStr = version == null || version.isEmpty ? '-' : version;
+    final range =
+        info == null ? '-' : '${info.minAmountSats}-${info.maxAmountSats}';
     final base =
         '${c.name} | ${c.pubkeyHex} | $curr | $range | $fees | $versionStr';
     if (!showHealth) {
