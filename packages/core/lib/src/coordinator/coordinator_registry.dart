@@ -15,6 +15,12 @@ import 'coordinator_store.dart';
 const int _coldStartDefaultEnabledCount = 3;
 const int _coldStartCandidatePoolSize = 8;
 
+/// Timeout for streaming discovery phases (kind 15125, NIP-65 batch, Bitblik
+/// relay-list resolution). Events stream live; if a relay hasn't sent data
+/// within this window it likely doesn't have the event, so we close early
+/// rather than waiting the full RPC timeout.
+const Duration _streamQueryTimeout = Duration(seconds: 4);
+
 enum CoordinatorColdStartPhase {
   loadingMuteList,
   discovering,
@@ -79,6 +85,7 @@ class CoordinatorRegistry {
   bool _initialized = false;
   Timer? _saveDebouncer;
   Future<void>? _discoveryInFlight;
+  Future<void>? _refreshDiscoveryRelaysInFlight;
   final Set<String> _mutedPubkeys = {};
   CoordinatorColdStartState? _coldStartState;
   bool _coldStartDismissed = false;
@@ -125,7 +132,25 @@ class CoordinatorRegistry {
   /// advertised relays: the bootstrap relays are always queried (so a missing
   /// or misconfigured Bitblik list can never hide coordinators), while Bitblik
   /// can add more relays without a new build.
+  ///
+  /// Concurrent calls are coalesced — [init] fires this fire-and-forget and
+  /// [discover] also calls it; the second caller awaits the first's result
+  /// instead of re-querying all bootstrap relays.
   Future<void> refreshDiscoveryRelays() async {
+    if (_refreshDiscoveryRelaysInFlight != null) {
+      return _refreshDiscoveryRelaysInFlight!;
+    }
+    final completer = Completer<void>();
+    _refreshDiscoveryRelaysInFlight = completer.future;
+    try {
+      await _doRefreshDiscoveryRelays();
+    } finally {
+      _refreshDiscoveryRelaysInFlight = null;
+      completer.complete();
+    }
+  }
+
+  Future<void> _doRefreshDiscoveryRelays() async {
     Nip01Event? newest;
     try {
       final response = ndk.requests.query(
@@ -138,7 +163,7 @@ class CoordinatorRegistry {
         cacheRead: false,
       );
       await for (final event in response.stream.timeout(
-        _queryTimeout,
+        _streamQueryTimeout,
         onTimeout: (sink) => sink.close(),
       )) {
         if (_normalize(event.pubKey) != _normalize(discoveryPubkeyHex)) {
@@ -261,7 +286,7 @@ class CoordinatorRegistry {
       );
       final discovered = <String>{};
       await for (final event in response.stream.timeout(
-        _queryTimeout,
+        _streamQueryTimeout,
         onTimeout: (sink) => sink.close(),
       )) {
         final eventPubkey = _normalize(event.pubKey);
@@ -294,7 +319,7 @@ class CoordinatorRegistry {
       // Resolve each coordinator's NIP-65 relays FIRST, then read their kind-0
       // profile from those relays (outbox model) — the canonical, most current
       // source, with discovery relays as fallback.
-      await Future.wait(discovered.map(_refreshRelayList));
+      await _batchRefreshRelayLists(discovered);
       await _refreshProfiles(discovered);
       if (runBootstrap) {
         _setColdStartState(
@@ -651,12 +676,22 @@ class CoordinatorRegistry {
   /// stray offer events that happen to land there are visible).
   Future<void> fetchNetworkFinishedCounts() async {
     final now = DateTime.now();
-    var changed = false;
 
     // Snapshot pubkeys up front; the per-coordinator awaits below let other
     // code mutate `_records`, so we don't iterate it live.
-    for (final pubkey in _records.keys.toList()) {
-      final stats = await _fetchFinishedStatsFor(pubkey);
+    final pubkeys = _records.keys.toList();
+
+    // Query all coordinators in parallel — each hits its own relays, so there
+    // is no shared-relay bottleneck. This replaces a sequential loop that
+    // summed per-coordinator latencies (potentially minutes for 20+ coords).
+    final results = await Future.wait(
+      pubkeys.map((pubkey) async => MapEntry(pubkey, await _fetchFinishedStatsFor(pubkey))),
+    );
+
+    var changed = false;
+    for (final entry in results) {
+      final pubkey = entry.key;
+      final stats = entry.value;
       final r = _records[pubkey];
       if (r == null) continue;
       if (r.networkFinishedCount == stats.count &&
@@ -1016,6 +1051,70 @@ class CoordinatorRegistry {
     final byCount = b.networkFinishedCount.compareTo(a.networkFinishedCount);
     if (byCount != 0) return byCount;
     return _compareColdStartAge(a, b);
+  }
+
+  /// Batch-resolve NIP-65 relay lists for all [pubkeys] in a single query
+  /// to the discovery relays. Much faster than N separate
+  /// [getSingleUserRelayList] calls during cold-start: one relay round-trip
+  /// instead of N.
+  ///
+  /// Falls through silently for pubkeys whose NIP-65 isn't found — their
+  /// records keep whatever relays they already have (seeded from event
+  /// sources as fallback).
+  Future<void> _batchRefreshRelayLists(Set<String> pubkeys) async {
+    if (pubkeys.isEmpty) return;
+    final response = ndk.requests.query(
+      name: 'coordinator-batch-nip65',
+      filter: Filter(
+        kinds: [kKindRelayList],
+        authors: pubkeys.toList(),
+      ),
+      explicitRelays: relays,
+      cacheRead: false,
+    );
+    final newestByPubkey = <String, Nip01Event>{};
+    try {
+      await for (final event in response.stream.timeout(
+        _streamQueryTimeout,
+        onTimeout: (sink) => sink.close(),
+      )) {
+        final hex = _normalize(event.pubKey);
+        if (!pubkeys.contains(hex)) continue;
+        final cur = newestByPubkey[hex];
+        if (cur == null || event.createdAt > cur.createdAt) {
+          newestByPubkey[hex] = event;
+        }
+      }
+    } catch (_) {
+      // Best-effort; records keep their fallback relays.
+      return;
+    }
+    var changed = false;
+    newestByPubkey.forEach((hex, event) {
+      final relayList = <String>{};
+      for (final tag in event.tags) {
+        if (tag.length >= 2 && tag[0] == 'r') {
+          final url = normalizeRelayUrl(tag[1]);
+          if (url.isNotEmpty) relayList.add(url);
+        }
+      }
+      if (relayList.isEmpty) return;
+      final existing = _records[hex];
+      if (existing == null) return;
+      final next = relayList.toList(growable: false);
+      final sameRelays = existing.relays.length == next.length &&
+          existing.relays.toSet().containsAll(next);
+      if (sameRelays && existing.relayListFromNip65) return;
+      _records[hex] = existing.copyWith(
+        relays: next,
+        relayListFromNip65: true,
+      );
+      changed = true;
+    });
+    if (changed) {
+      _schedulePersist();
+      _emit();
+    }
   }
 
   /// Fetch newest NIP-65 relay list for [hex] via NDK user-relay-list
