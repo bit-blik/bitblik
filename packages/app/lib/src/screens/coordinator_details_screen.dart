@@ -1,4 +1,5 @@
 import 'package:bitblik_core/core.dart';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +15,7 @@ import '../utils/bitcoin_display.dart';
 /// anywhere in the app. Shows metadata and — crucially — the **relays in use**
 /// (its NIP-65 list, or the discovery relays it was seen on as a fallback)
 /// with their live connection state.
-class CoordinatorDetailsScreen extends ConsumerWidget {
+class CoordinatorDetailsScreen extends ConsumerStatefulWidget {
   static const routeName = '/coordinator';
 
   final String pubkey;
@@ -22,14 +23,26 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
   const CoordinatorDetailsScreen({super.key, required this.pubkey});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CoordinatorDetailsScreen> createState() =>
+      _CoordinatorDetailsScreenState();
+}
+
+class _CoordinatorDetailsScreenState
+    extends ConsumerState<CoordinatorDetailsScreen> {
+  bool _showUntrustedLogo = false;
+
+  @override
+  Widget build(BuildContext context) {
     final t = Translations.of(context);
-    final record = ref.watch(coordinatorRecordByPubkeyProvider(pubkey));
+    final record = ref.watch(
+      coordinatorRecordByPubkeyProvider(widget.pubkey),
+    );
     final connectivity = ref.watch(relayConnectivityProvider);
     final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
 
     final name = record?.name ?? t.coordinator.details.title;
     final icon = record?.icon;
+    final allowLogo = record != null && (record.enabled || _showUntrustedLogo);
 
     return Scaffold(
       appBar: AppBar(title: Text(t.coordinator.details.title)),
@@ -49,8 +62,18 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _logo(icon, 48),
+                        _logoArea(
+                          context,
+                          icon,
+                          allowRemoteLogo: allowLogo,
+                          canReveal:
+                              record.icon != null &&
+                              record.icon!.isNotEmpty &&
+                              !record.enabled &&
+                              !_showUntrustedLogo,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -189,7 +212,7 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
   /// `get_info` health probe.
   Future<void> _refresh(WidgetRef ref) async {
     final registry = ref.read(apiServiceProvider).coordinatorRegistry;
-    await registry.refreshCoordinator(pubkey);
+    await registry.refreshCoordinator(widget.pubkey);
   }
 
   /// "🇵🇱 Poland · BLIK" for a coordinator's payment system id, with the
@@ -201,8 +224,26 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
     return '${ps.flag} $name · ${ps.label}';
   }
 
-  Widget _logo(String? icon, double size) {
-    if (icon != null && icon.isNotEmpty) {
+  Widget _logoArea(
+    BuildContext context,
+    String? icon, {
+    required bool allowRemoteLogo,
+    required bool canReveal,
+  }) {
+    return InkWell(
+      onTap: canReveal ? _confirmRevealLogo : null,
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        width: 56,
+        child: Center(
+          child: _logo(icon, 48, allowRemoteLogo: allowRemoteLogo),
+        ),
+      ),
+    );
+  }
+
+  Widget _logo(String? icon, double size, {required bool allowRemoteLogo}) {
+    if (allowRemoteLogo && icon != null && icon.isNotEmpty) {
       return icon.startsWith('http')
           ? Image.network(
               icon,
@@ -212,7 +253,56 @@ class CoordinatorDetailsScreen extends ConsumerWidget {
             )
           : Image.asset(icon, width: size, height: size);
     }
+    if (icon != null && icon.isNotEmpty) {
+      final image = icon.startsWith('http')
+          ? Image.network(
+              icon,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Icon(Icons.account_circle, size: size),
+            )
+          : Image.asset(
+              icon,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Icon(Icons.account_circle, size: size),
+            );
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: ImageFiltered(
+          imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: image,
+        ),
+      );
+    }
     return Icon(Icons.account_circle, size: size);
+  }
+
+  Future<void> _confirmRevealLogo() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Show coordinator logo?'),
+        content: const Text(
+          'This coordinator is disabled. Reveal its published logo anyway?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Show'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      setState(() => _showUntrustedLogo = true);
+    }
   }
 
   Widget _infoRow(

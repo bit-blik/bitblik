@@ -1,4 +1,7 @@
-## [0.8.1]  - 2026-06-19
+## [0.8.3] - 2026-06-22
+- feat: discover coordinators onboarding
+
+## [0.8.2]  - 2026-06-19
 - fix: make code input flexible to amount of digits
 - fix: add mbway instructions for using the code
 

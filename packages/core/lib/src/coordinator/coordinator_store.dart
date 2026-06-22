@@ -8,4 +8,11 @@ abstract class CoordinatorStore {
   Future<List<CoordinatorRecord>> load();
 
   Future<void> save(List<CoordinatorRecord> records);
+
+  Future<bool> loadBootstrapCompleted(String paymentSystemId) async => false;
+
+  Future<void> saveBootstrapCompleted(
+    String paymentSystemId,
+    bool value,
+  ) async {}
 }

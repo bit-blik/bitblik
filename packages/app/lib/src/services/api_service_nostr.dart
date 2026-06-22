@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -33,7 +34,11 @@ class ApiServiceNostr {
     final ndkInstance = _nostrService.ndk;
     if (ndkInstance != null) {
       _keyService.attachNdk(ndkInstance);
-      await _keyService.migrateLegacyWalletStorage();
+      unawaited(
+        _keyService.migrateLegacyWalletStorage().catchError((e) {
+          Logger.log.w(() => '⚠️ Failed migrating legacy wallet storage: $e');
+        }),
+      );
     }
   }
 

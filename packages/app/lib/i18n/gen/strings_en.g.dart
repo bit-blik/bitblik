@@ -171,6 +171,7 @@ class Translations$coordinator$en {
 	late final Translations$coordinator$selector$en selector = Translations$coordinator$selector$en.internal(_root);
 	late final Translations$coordinator$dialog$en dialog = Translations$coordinator$dialog$en.internal(_root);
 	late final Translations$coordinator$details$en details = Translations$coordinator$details$en.internal(_root);
+	late final Translations$coordinator$coldStart$en coldStart = Translations$coordinator$coldStart$en.internal(_root);
 	late final Translations$coordinator$management$en management = Translations$coordinator$management$en.internal(_root);
 }
 
@@ -1357,6 +1358,56 @@ class Translations$coordinator$details$en {
 
 	/// en: 'Terms of use'
 	String get termsOfUsage => 'Terms of use';
+}
+
+// Path: coordinator.coldStart
+class Translations$coordinator$coldStart$en {
+	Translations$coordinator$coldStart$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Discovering coordinators'
+	String get title => 'Discovering coordinators';
+
+	/// en: '${app} is finding public coordinators, checking which ones are reachable, and enabling a small default set for you.'
+	String body({required Object app}) => '${app} is finding public coordinators, checking which ones are reachable, and enabling a small default set for you.';
+
+	/// en: 'You can change enabled coordinators later in Settings.'
+	String get settingsHint => 'You can change enabled coordinators later in Settings.';
+
+	/// en: 'OK'
+	String get ok => 'OK';
+
+	/// en: 'Discovered'
+	String get discovered => 'Discovered';
+
+	/// en: 'Candidates'
+	String get candidates => 'Candidates';
+
+	/// en: 'Enabled'
+	String get enabled => 'Enabled';
+
+	/// en: 'Current coordinators'
+	String get recordsTitle => 'Current coordinators';
+
+	/// en: 'Enabled'
+	String get recordEnabled => 'Enabled';
+
+	/// en: 'Healthy candidate'
+	String get recordHealthyCandidate => 'Healthy candidate';
+
+	/// en: 'Candidate offline'
+	String get recordOfflineCandidate => 'Candidate offline';
+
+	/// en: 'Checking'
+	String get recordChecking => 'Checking';
+
+	/// en: 'Discovered'
+	String get recordDiscovered => 'Discovered';
+
+	late final Translations$coordinator$coldStart$phases$en phases = Translations$coordinator$coldStart$phases$en.internal(_root);
 }
 
 // Path: coordinator.management
@@ -2814,6 +2865,36 @@ class Translations$offers$details$consents$en {
 	String ecommerce({required Object code}) => 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the ${code} you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations.';
 }
 
+// Path: coordinator.coldStart.phases
+class Translations$coordinator$coldStart$phases$en {
+	Translations$coordinator$coldStart$phases$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Loading coordinator filters'
+	String get loadingMuteList => 'Loading coordinator filters';
+
+	/// en: 'Discovering coordinators on Nostr'
+	String get discovering => 'Discovering coordinators on Nostr';
+
+	/// en: 'Loading coordinator profiles'
+	String get loadingProfiles => 'Loading coordinator profiles';
+
+	/// en: 'Reading coordinator history'
+	String get loadingStats => 'Reading coordinator history';
+
+	/// en: 'Checking coordinator health'
+	String get checkingHealth => 'Checking coordinator health';
+
+	/// en: 'Enabling default coordinators'
+	String get finalizing => 'Enabling default coordinators';
+
+	/// en: 'Done'
+	String get completed => 'Done';
+}
+
 // Path: maker.amountForm.progress
 class Translations$maker$amountForm$progress$en {
 	Translations$maker$amountForm$progress$en.internal(this._root);
@@ -4230,6 +4311,26 @@ extension on Translations {
 			'coordinator.details.statusUnknown' => 'Unknown',
 			'coordinator.details.openNostrProfile' => 'Open Nostr profile',
 			'coordinator.details.termsOfUsage' => 'Terms of use',
+			'coordinator.coldStart.title' => 'Discovering coordinators',
+			'coordinator.coldStart.body' => ({required Object app}) => '${app} is finding public coordinators, checking which ones are reachable, and enabling a small default set for you.',
+			'coordinator.coldStart.settingsHint' => 'You can change enabled coordinators later in Settings.',
+			'coordinator.coldStart.ok' => 'OK',
+			'coordinator.coldStart.discovered' => 'Discovered',
+			'coordinator.coldStart.candidates' => 'Candidates',
+			'coordinator.coldStart.enabled' => 'Enabled',
+			'coordinator.coldStart.recordsTitle' => 'Current coordinators',
+			'coordinator.coldStart.recordEnabled' => 'Enabled',
+			'coordinator.coldStart.recordHealthyCandidate' => 'Healthy candidate',
+			'coordinator.coldStart.recordOfflineCandidate' => 'Candidate offline',
+			'coordinator.coldStart.recordChecking' => 'Checking',
+			'coordinator.coldStart.recordDiscovered' => 'Discovered',
+			'coordinator.coldStart.phases.loadingMuteList' => 'Loading coordinator filters',
+			'coordinator.coldStart.phases.discovering' => 'Discovering coordinators on Nostr',
+			'coordinator.coldStart.phases.loadingProfiles' => 'Loading coordinator profiles',
+			'coordinator.coldStart.phases.loadingStats' => 'Reading coordinator history',
+			'coordinator.coldStart.phases.checkingHealth' => 'Checking coordinator health',
+			'coordinator.coldStart.phases.finalizing' => 'Enabling default coordinators',
+			'coordinator.coldStart.phases.completed' => 'Done',
 			'coordinator.management.title' => 'Coordinator Management',
 			'coordinator.management.availableCoordinators' => 'Coordinators',
 			'coordinator.management.noCoordinators' => 'No coordinators discovered yet.',
@@ -4523,6 +4624,8 @@ extension on Translations {
 			'taker.invalidBlik.confirmDialog.actions.proceed' => 'I\'m sure, continue',
 			'taker.invalidBlik.confirmDialog.actions.cancel' => 'Cancel',
 			'taker.invalidBlik.disputeConfirmDialog.title' => 'Start a dispute?',
+			_ => null,
+		} ?? switch (path) {
 			'taker.invalidBlik.disputeConfirmDialog.content' => 'Only start a dispute if the amount WAS charged from your bank account.\n\nThe coordinator will manually review your case, which takes time. You will need to provide proof of payment.',
 			'taker.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Yes, I was charged',
 			'taker.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Cancel',
@@ -4543,8 +4646,6 @@ extension on Translations {
 			'taker.conflict.nostrContact.npubCopied' => 'Coordinator npub copied to clipboard!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
-			_ => null,
-		} ?? switch (path) {
 			'blik.instructions.taker' => ({required Object code}) => 'Once the Maker enters the ${code} code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.',
 			'home.notifications.title' => 'Get notified about new offers via:',
 			'home.notifications.telegram' => 'Telegram',

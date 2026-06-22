@@ -161,6 +161,7 @@ class _Translations$coordinator$it extends Translations$coordinator$en {
 	@override late final _Translations$coordinator$selector$it selector = _Translations$coordinator$selector$it._(_root);
 	@override late final _Translations$coordinator$dialog$it dialog = _Translations$coordinator$dialog$it._(_root);
 	@override late final _Translations$coordinator$details$it details = _Translations$coordinator$details$it._(_root);
+	@override late final _Translations$coordinator$coldStart$it coldStart = _Translations$coordinator$coldStart$it._(_root);
 	@override late final _Translations$coordinator$management$it management = _Translations$coordinator$management$it._(_root);
 }
 
@@ -882,6 +883,29 @@ class _Translations$coordinator$details$it extends Translations$coordinator$deta
 	@override String get statusUnknown => 'Sconosciuto';
 	@override String get openNostrProfile => 'Apri profilo Nostr';
 	@override String get termsOfUsage => 'Termini di utilizzo';
+}
+
+// Path: coordinator.coldStart
+class _Translations$coordinator$coldStart$it extends Translations$coordinator$coldStart$en {
+	_Translations$coordinator$coldStart$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Scoperta dei coordinatori';
+	@override String body({required Object app}) => '${app} sta trovando coordinatori pubblici, controllando quali sono raggiungibili e abilitando per te un piccolo set predefinito.';
+	@override String get settingsHint => 'Puoi cambiare i coordinatori abilitati più tardi nelle Impostazioni.';
+	@override String get ok => 'OK';
+	@override String get discovered => 'Scoperti';
+	@override String get candidates => 'Candidati';
+	@override String get enabled => 'Abilitati';
+	@override String get recordsTitle => 'Coordinatori attuali';
+	@override String get recordEnabled => 'Abilitato';
+	@override String get recordHealthyCandidate => 'Candidato raggiungibile';
+	@override String get recordOfflineCandidate => 'Candidato offline';
+	@override String get recordChecking => 'Controllo';
+	@override String get recordDiscovered => 'Scoperto';
+	@override late final _Translations$coordinator$coldStart$phases$it phases = _Translations$coordinator$coldStart$phases$it._(_root);
 }
 
 // Path: coordinator.management
@@ -1771,6 +1795,22 @@ class _Translations$offers$details$consents$it extends Translations$offers$detai
 	// Translations
 	@override String get atm => 'Alcuni ATM aggiungono una commissione extra oltre all\'importo dell\'offerta. Accettando questa offerta, accetti qualsiasi costo bancario aggiuntivo richiesto dall\'ATM.';
 	@override String ecommerce({required Object code}) => 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il commerciante online potrebbe automaticamente restituire denaro sul conto bancario collegato al ${code} che hai generato. Quei fondi arrivano sul tuo conto e non ti appartengono. Se succede, contatta il coordinatore in buona fede e organizza la restituzione dei fondi al maker. Accettando questa offerta, accetti questi termini e giuri solennemente di agire onestamente in tali situazioni.';
+}
+
+// Path: coordinator.coldStart.phases
+class _Translations$coordinator$coldStart$phases$it extends Translations$coordinator$coldStart$phases$en {
+	_Translations$coordinator$coldStart$phases$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get loadingMuteList => 'Caricamento filtri coordinatori';
+	@override String get discovering => 'Scoperta coordinatori su Nostr';
+	@override String get loadingProfiles => 'Caricamento profili coordinatori';
+	@override String get loadingStats => 'Lettura cronologia coordinatori';
+	@override String get checkingHealth => 'Controllo stato coordinatori';
+	@override String get finalizing => 'Abilitazione coordinatori predefiniti';
+	@override String get completed => 'Fatto';
 }
 
 // Path: maker.amountForm.progress
@@ -2735,6 +2775,26 @@ extension on TranslationsIt {
 			'coordinator.details.statusUnknown' => 'Sconosciuto',
 			'coordinator.details.openNostrProfile' => 'Apri profilo Nostr',
 			'coordinator.details.termsOfUsage' => 'Termini di utilizzo',
+			'coordinator.coldStart.title' => 'Scoperta dei coordinatori',
+			'coordinator.coldStart.body' => ({required Object app}) => '${app} sta trovando coordinatori pubblici, controllando quali sono raggiungibili e abilitando per te un piccolo set predefinito.',
+			'coordinator.coldStart.settingsHint' => 'Puoi cambiare i coordinatori abilitati più tardi nelle Impostazioni.',
+			'coordinator.coldStart.ok' => 'OK',
+			'coordinator.coldStart.discovered' => 'Scoperti',
+			'coordinator.coldStart.candidates' => 'Candidati',
+			'coordinator.coldStart.enabled' => 'Abilitati',
+			'coordinator.coldStart.recordsTitle' => 'Coordinatori attuali',
+			'coordinator.coldStart.recordEnabled' => 'Abilitato',
+			'coordinator.coldStart.recordHealthyCandidate' => 'Candidato raggiungibile',
+			'coordinator.coldStart.recordOfflineCandidate' => 'Candidato offline',
+			'coordinator.coldStart.recordChecking' => 'Controllo',
+			'coordinator.coldStart.recordDiscovered' => 'Scoperto',
+			'coordinator.coldStart.phases.loadingMuteList' => 'Caricamento filtri coordinatori',
+			'coordinator.coldStart.phases.discovering' => 'Scoperta coordinatori su Nostr',
+			'coordinator.coldStart.phases.loadingProfiles' => 'Caricamento profili coordinatori',
+			'coordinator.coldStart.phases.loadingStats' => 'Lettura cronologia coordinatori',
+			'coordinator.coldStart.phases.checkingHealth' => 'Controllo stato coordinatori',
+			'coordinator.coldStart.phases.finalizing' => 'Abilitazione coordinatori predefiniti',
+			'coordinator.coldStart.phases.completed' => 'Fatto',
 			'coordinator.management.title' => 'Gestione Coordinatori',
 			'coordinator.management.availableCoordinators' => 'Coordinatori',
 			'coordinator.management.noCoordinators' => 'Nessun coordinatore trovato.',
@@ -3028,6 +3088,8 @@ extension on TranslationsIt {
 			'taker.conflict.actions.back' => 'Torna alla Home',
 			'taker.conflict.feedback.reported' => 'Conflitto segnalato. Il coordinatore esaminerà.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.nostrContact.title' => 'Contatta il Coordinatore su Nostr',
 			'taker.conflict.nostrContact.description' => 'Puoi inviare un DM al coordinatore direttamente per assistenza con questa disputa.',
 			'taker.conflict.nostrContact.copyNpub' => 'Copia npub',
@@ -3048,8 +3110,6 @@ extension on TranslationsIt {
 			'home.statistics.errors.loading' => ({required Object error}) => 'Errore nel caricamento delle statistiche: ${error}',
 			'nekoInfo.title' => 'Cos\'è un Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'Il tuo Neko è la tua identità per usare ${app}. È composto da una chiave privata e pubblica per garantire una comunicazione crittograficamente sicura con il coordinatore.\n\nPer garantire maggiore anonimato, si consiglia di usare un nuovo Neko per ogni offerta.\n\n⚠️ IMPORTANTE: La tua chiave privata è memorizzata solo sul tuo dispositivo (lato client). È fondamentale fare il backup della tua chiave privata, poiché perderla potrebbe impedirti di risolvere dispute e recuperare i tuoi fondi.',
-			_ => null,
-		} ?? switch (path) {
 			'nekoInfo.backupWarning' => 'Ricorda di fare il backup del tuo Neko',
 			'generateNewKey.title' => 'Nuovo',
 			'generateNewKey.description' => 'Sei sicuro di voler generare un nuovo Neko? Quello attuale andrà perso per sempre se non ne hai fatto il backup.',

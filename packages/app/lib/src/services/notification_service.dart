@@ -30,9 +30,9 @@ class NotificationService {
       '@mipmap/ic_launcher',
     );
     final darwinSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
       notificationCategories: [
         DarwinNotificationCategory(
           _newOfferCategoryId,
@@ -62,13 +62,31 @@ class NotificationService {
         }
       },
     );
-    if (!kIsWeb && Platform.isAndroid) {
-      await _plugin
+    _initialized = true;
+  }
+
+  /// Requests notification permissions from the OS. Call this only when the
+  /// user explicitly opts in (e.g. toggling the background-service switch in
+  /// settings). Returns true if permissions were granted. On iOS/macOS this
+  /// shows the system permission dialog; on Android 13+ it requests the
+  /// POST_NOTIFICATIONS runtime permission.
+  Future<bool> requestPermissions() async {
+    if (!_initialized || kIsWeb) return false;
+    if (Platform.isAndroid) {
+      final granted = await _plugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
+      return granted ?? false;
     }
-    _initialized = true;
+    if (Platform.isIOS || Platform.isMacOS) {
+      final granted = await _plugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+      return granted ?? false;
+    }
+    return true;
   }
 
   Future<void> show(

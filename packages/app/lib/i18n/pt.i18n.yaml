@@ -285,6 +285,29 @@ coordinator:
     openNostrProfile: "Abrir perfil Nostr"
     termsOfUsage: "Termos de utilização"
 
+  coldStart:
+    title: "A descobrir coordenadores"
+    body: "O ${app} está a encontrar coordenadores públicos, a verificar quais estão acessíveis e a ativar um pequeno conjunto predefinido para si."
+    settingsHint: "Pode alterar os coordenadores ativados mais tarde nas Definições."
+    ok: "OK"
+    discovered: "Descobertos"
+    candidates: "Candidatos"
+    enabled: "Ativados"
+    recordsTitle: "Coordenadores atuais"
+    recordEnabled: "Ativado"
+    recordHealthyCandidate: "Candidato saudável"
+    recordOfflineCandidate: "Candidato offline"
+    recordChecking: "A verificar"
+    recordDiscovered: "Descoberto"
+    phases:
+      loadingMuteList: "A carregar filtros de coordenadores"
+      discovering: "A descobrir coordenadores no Nostr"
+      loadingProfiles: "A carregar perfis dos coordenadores"
+      loadingStats: "A ler o histórico dos coordenadores"
+      checkingHealth: "A verificar a saúde dos coordenadores"
+      finalizing: "A ativar coordenadores predefinidos"
+      completed: "Concluído"
+
   management:
     title: "Gestão de coordenadores"
     availableCoordinators: "Coordenadores"

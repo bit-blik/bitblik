@@ -285,6 +285,29 @@ coordinator:
     openNostrProfile: "Apri profilo Nostr"
     termsOfUsage: "Termini di utilizzo"
 
+  coldStart:
+    title: "Scoperta dei coordinatori"
+    body: "${app} sta trovando coordinatori pubblici, controllando quali sono raggiungibili e abilitando per te un piccolo set predefinito."
+    settingsHint: "Puoi cambiare i coordinatori abilitati più tardi nelle Impostazioni."
+    ok: "OK"
+    discovered: "Scoperti"
+    candidates: "Candidati"
+    enabled: "Abilitati"
+    recordsTitle: "Coordinatori attuali"
+    recordEnabled: "Abilitato"
+    recordHealthyCandidate: "Candidato raggiungibile"
+    recordOfflineCandidate: "Candidato offline"
+    recordChecking: "Controllo"
+    recordDiscovered: "Scoperto"
+    phases:
+      loadingMuteList: "Caricamento filtri coordinatori"
+      discovering: "Scoperta coordinatori su Nostr"
+      loadingProfiles: "Caricamento profili coordinatori"
+      loadingStats: "Lettura cronologia coordinatori"
+      checkingHealth: "Controllo stato coordinatori"
+      finalizing: "Abilitazione coordinatori predefiniti"
+      completed: "Fatto"
+
   management:
     title: "Gestione Coordinatori"
     availableCoordinators: "Coordinatori"

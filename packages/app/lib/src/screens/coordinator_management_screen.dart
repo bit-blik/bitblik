@@ -145,8 +145,44 @@ class _CoordinatorManagementScreenState
 
   Future<void> _refreshDiscovery() async {
     final registry = await ref.read(coordinatorRegistryProvider.future);
-    await registry.discover();
-    await registry.probeAllListed();
+    final enabledBefore = registry.enabled
+        .map((record) => record.pubkeyHex)
+        .toSet();
+    registry.showColdStartState(
+      CoordinatorColdStartPhase.loadingMuteList,
+      enabledPubkeys: enabledBefore,
+      origin: CoordinatorColdStartOrigin.settings,
+    );
+    try {
+      registry.showColdStartState(
+        CoordinatorColdStartPhase.discovering,
+        enabledPubkeys: enabledBefore,
+        origin: CoordinatorColdStartOrigin.settings,
+      );
+      await registry.discover();
+      final discovered = registry.all.map((record) => record.pubkeyHex).toSet();
+      final enabledAfterDiscovery = registry.enabled
+          .map((record) => record.pubkeyHex)
+          .toSet();
+      registry.showColdStartState(
+        CoordinatorColdStartPhase.checkingHealth,
+        discovered: discovered,
+        enabledPubkeys: enabledAfterDiscovery,
+        origin: CoordinatorColdStartOrigin.settings,
+      );
+      await registry.probeAllListed();
+      registry.showColdStartState(
+        CoordinatorColdStartPhase.completed,
+        discovered: discovered,
+        enabledPubkeys: registry.enabled
+            .map((record) => record.pubkeyHex)
+            .toSet(),
+        origin: CoordinatorColdStartOrigin.settings,
+      );
+    } catch (_) {
+      registry.dismissColdStartState();
+      rethrow;
+    }
   }
 
   @override
@@ -226,39 +262,18 @@ class _CoordinatorManagementScreenState
                       onRefresh: _refreshDiscovery,
                       child: ListView.separated(
                         itemCount: coordinators.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, index) =>
+                            const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final c = coordinators[index];
                           final pubkey = c.pubkeyHex;
                           final isDisabled = !c.enabled;
 
-                          final logo =
-                              c.icon != null && c.icon!.isNotEmpty
-                                  ? CachedNetworkImage(
-                                    imageUrl: c.icon!,
-                                    placeholder:
-                                        (context, url) => const SizedBox(
-                                          width: 40,
-                                          height: 40,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
-                                    errorWidget:
-                                        (context, url, error) => const Icon(
-                                          Icons.account_circle,
-                                          size: 40,
-                                          color: Colors.grey,
-                                        ),
-                                    width: 40,
-                                    height: 40,
-                                    fit: BoxFit.cover,
-                                  )
-                                  : const Icon(
-                                    Icons.account_circle,
-                                    size: 40,
-                                    color: Colors.grey,
-                                  );
+                          final logo = _buildCoordinatorLogo(
+                            c.icon,
+                            size: 40,
+                            revealLogo: c.enabled,
+                          );
 
                           // Tappable info area (logo + name + status + metrics)
                           // takes all available width so long names fit.
@@ -419,6 +434,41 @@ class _CoordinatorManagementScreenState
       ),
     );
   }
+}
+
+Widget _buildCoordinatorLogo(
+  String? icon, {
+  required double size,
+  required bool revealLogo,
+}) {
+  if (!revealLogo || icon == null || icon.isEmpty) {
+    return Icon(Icons.account_circle, size: size, color: Colors.grey);
+  }
+  if (icon.startsWith('http')) {
+    return CachedNetworkImage(
+      imageUrl: icon,
+      placeholder: (context, url) => SizedBox(
+        width: size,
+        height: size,
+        child: const CircularProgressIndicator(strokeWidth: 2),
+      ),
+      errorWidget: (context, url, error) =>
+          Icon(Icons.account_circle, size: size, color: Colors.grey),
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+    );
+  }
+  return Image.asset(
+    icon,
+    width: size,
+    height: size,
+    errorBuilder: (_, error, stackTrace) => Icon(
+      Icons.account_circle,
+      size: size,
+      color: Colors.grey,
+    ),
+  );
 }
 
 /// Compact breakdown of the four ranking signals fed into

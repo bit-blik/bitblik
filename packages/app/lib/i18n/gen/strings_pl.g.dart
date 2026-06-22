@@ -161,6 +161,7 @@ class _Translations$coordinator$pl extends Translations$coordinator$en {
 	@override late final _Translations$coordinator$selector$pl selector = _Translations$coordinator$selector$pl._(_root);
 	@override late final _Translations$coordinator$dialog$pl dialog = _Translations$coordinator$dialog$pl._(_root);
 	@override late final _Translations$coordinator$details$pl details = _Translations$coordinator$details$pl._(_root);
+	@override late final _Translations$coordinator$coldStart$pl coldStart = _Translations$coordinator$coldStart$pl._(_root);
 	@override late final _Translations$coordinator$management$pl management = _Translations$coordinator$management$pl._(_root);
 }
 
@@ -881,6 +882,29 @@ class _Translations$coordinator$details$pl extends Translations$coordinator$deta
 	@override String get statusUnknown => 'Nieznany';
 	@override String get openNostrProfile => 'Otwórz profil Nostr';
 	@override String get termsOfUsage => 'Warunki użytkowania';
+}
+
+// Path: coordinator.coldStart
+class _Translations$coordinator$coldStart$pl extends Translations$coordinator$coldStart$en {
+	_Translations$coordinator$coldStart$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Odkrywanie koordynatorów';
+	@override String body({required Object app}) => '${app} znajduje publicznych koordynatorów, sprawdza, którzy są osiągalni, i włącza dla Ciebie mały domyślny zestaw.';
+	@override String get settingsHint => 'Później możesz zmienić włączonych koordynatorów w Ustawieniach.';
+	@override String get ok => 'OK';
+	@override String get discovered => 'Odkryto';
+	@override String get candidates => 'Kandydaci';
+	@override String get enabled => 'Włączone';
+	@override String get recordsTitle => 'Bieżący koordynatorzy';
+	@override String get recordEnabled => 'Włączony';
+	@override String get recordHealthyCandidate => 'Zdrowy kandydat';
+	@override String get recordOfflineCandidate => 'Kandydat offline';
+	@override String get recordChecking => 'Sprawdzanie';
+	@override String get recordDiscovered => 'Odkryty';
+	@override late final _Translations$coordinator$coldStart$phases$pl phases = _Translations$coordinator$coldStart$phases$pl._(_root);
 }
 
 // Path: coordinator.management
@@ -1768,6 +1792,22 @@ class _Translations$offers$details$consents$pl extends Translations$offers$detai
 	// Translations
 	@override String get atm => 'Niektóre bankomaty doliczają dodatkową opłatę ponad kwotę oferty. Biorąc tę ofertę, akceptujesz wszelkie dodatkowe koszty bankowe wymagane przez bankomat.';
 	@override String ecommerce({required Object code}) => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem ${code}. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.';
+}
+
+// Path: coordinator.coldStart.phases
+class _Translations$coordinator$coldStart$phases$pl extends Translations$coordinator$coldStart$phases$en {
+	_Translations$coordinator$coldStart$phases$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get loadingMuteList => 'Ładowanie filtrów koordynatorów';
+	@override String get discovering => 'Odkrywanie koordynatorów na Nostr';
+	@override String get loadingProfiles => 'Ładowanie profili koordynatorów';
+	@override String get loadingStats => 'Odczytywanie historii koordynatorów';
+	@override String get checkingHealth => 'Sprawdzanie zdrowia koordynatorów';
+	@override String get finalizing => 'Włączanie domyślnych koordynatorów';
+	@override String get completed => 'Gotowe';
 }
 
 // Path: maker.amountForm.progress
@@ -2731,6 +2771,26 @@ extension on TranslationsPl {
 			'coordinator.details.statusUnknown' => 'Nieznany',
 			'coordinator.details.openNostrProfile' => 'Otwórz profil Nostr',
 			'coordinator.details.termsOfUsage' => 'Warunki użytkowania',
+			'coordinator.coldStart.title' => 'Odkrywanie koordynatorów',
+			'coordinator.coldStart.body' => ({required Object app}) => '${app} znajduje publicznych koordynatorów, sprawdza, którzy są osiągalni, i włącza dla Ciebie mały domyślny zestaw.',
+			'coordinator.coldStart.settingsHint' => 'Później możesz zmienić włączonych koordynatorów w Ustawieniach.',
+			'coordinator.coldStart.ok' => 'OK',
+			'coordinator.coldStart.discovered' => 'Odkryto',
+			'coordinator.coldStart.candidates' => 'Kandydaci',
+			'coordinator.coldStart.enabled' => 'Włączone',
+			'coordinator.coldStart.recordsTitle' => 'Bieżący koordynatorzy',
+			'coordinator.coldStart.recordEnabled' => 'Włączony',
+			'coordinator.coldStart.recordHealthyCandidate' => 'Zdrowy kandydat',
+			'coordinator.coldStart.recordOfflineCandidate' => 'Kandydat offline',
+			'coordinator.coldStart.recordChecking' => 'Sprawdzanie',
+			'coordinator.coldStart.recordDiscovered' => 'Odkryty',
+			'coordinator.coldStart.phases.loadingMuteList' => 'Ładowanie filtrów koordynatorów',
+			'coordinator.coldStart.phases.discovering' => 'Odkrywanie koordynatorów na Nostr',
+			'coordinator.coldStart.phases.loadingProfiles' => 'Ładowanie profili koordynatorów',
+			'coordinator.coldStart.phases.loadingStats' => 'Odczytywanie historii koordynatorów',
+			'coordinator.coldStart.phases.checkingHealth' => 'Sprawdzanie zdrowia koordynatorów',
+			'coordinator.coldStart.phases.finalizing' => 'Włączanie domyślnych koordynatorów',
+			'coordinator.coldStart.phases.completed' => 'Gotowe',
 			'coordinator.management.title' => 'Zarządzanie Koordynatorami',
 			'coordinator.management.availableCoordinators' => 'Koordynatorzy',
 			'coordinator.management.noCoordinators' => 'Nie odkryto jeszcze żadnych koordynatorów.',
@@ -3025,6 +3085,8 @@ extension on TranslationsPl {
 			'taker.conflict.nostrContact.title' => 'Skontaktuj się z Koordynatorem na Nostr',
 			'taker.conflict.nostrContact.description' => 'Możesz wysłać DM do koordynatora bezpośrednio, aby uzyskać pomoc w tym sporze.',
 			'taker.conflict.nostrContact.copyNpub' => 'Kopiuj npub',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.nostrContact.openProfile' => 'Zobacz Profil',
 			'taker.conflict.nostrContact.npubCopied' => 'Npub koordynatora skopiowany do schowka!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.',
@@ -3045,8 +3107,6 @@ extension on TranslationsPl {
 			'backup.feedback.copied' => 'Klucz prywatny skopiowany do schowka!',
 			'backup.tooltips.backup' => 'Zarchiwizuj Neko',
 			'restore.title' => 'Przywróć',
-			_ => null,
-		} ?? switch (path) {
 			'restore.labels.privateKey' => 'Klucz prywatny',
 			'restore.buttons.restore' => 'Przywróć',
 			'restore.errors.invalidKey' => 'Musi to być 64-znakowy ciąg szesnastkowy.',

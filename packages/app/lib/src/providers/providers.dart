@@ -106,8 +106,8 @@ final initializedApiServiceProvider = FutureProvider<ApiServiceNostr>((
 });
 
 /// Provider exposing the live [CoordinatorRegistry]. Kicks one-shot
-/// discovery + stale-only health probes in the background on first
-/// build; never blocks subscribers.
+/// discovery refresh timer in the background on first build; never blocks
+/// subscribers.
 final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
   ref,
 ) async {
@@ -118,24 +118,11 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
   // first sweep (Bitblik vs Bitway), so the initial discovery already resolves
   // the right market's relays + coordinators. Later switches are handled by
   // [discoveryIdentityInitializer].
-  registry.setDiscoveryPubkey(
-    ref.read(selectedPaymentSystemProvider).discoveryPubkeyHex,
+  final initialMethod = ref.read(selectedPaymentSystemProvider);
+  registry.setDiscoveryContext(
+    hex: initialMethod.discoveryPubkeyHex,
+    paymentSystemId: initialMethod.id,
   );
-
-  // Kick discovery + probes in background. Hydrated cache means
-  // subscribers already see the previously-known list.
-  unawaited(() async {
-    try {
-      await registry.discover();
-      await registry.probeAllEnabled();
-      // Best-effort: refresh network usage counts to seed scoring.
-      unawaited(registry.fetchNetworkFinishedCounts());
-      // Best-effort: count the user's own successful offers per coordinator.
-      unawaited(_refreshLocalFinishedCounts(ref, registry));
-    } catch (e) {
-      Logger.log.e(() => 'Initial coordinator discovery failed: $e');
-    }
-  }());
 
   // Periodic refresh — same 10min cadence as before.
   final timer = Timer.periodic(const Duration(seconds: 600), (_) async {
@@ -149,6 +136,24 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
   ref.onDispose(timer.cancel);
 
   return registry;
+});
+
+/// Starts the first discovery sweep only after the app has had a chance to
+/// subscribe to [coordinatorColdStartProvider], avoiding a startup race where
+/// release builds can emit and clear the cold-start state before the overlay is
+/// listening.
+final coordinatorDiscoveryBootstrapProvider = FutureProvider<void>((ref) async {
+  final registry = await ref.watch(coordinatorRegistryProvider.future);
+  try {
+    await registry.discover();
+    await registry.probeAllEnabled();
+    // Best-effort: refresh network usage counts to seed scoring.
+    unawaited(registry.fetchNetworkFinishedCounts());
+    // Best-effort: count the user's own successful offers per coordinator.
+    unawaited(_refreshLocalFinishedCounts(ref, registry));
+  } catch (e) {
+    Logger.log.e(() => 'Initial coordinator discovery failed: $e');
+  }
 });
 
 /// Count the user's own successful (takerPaid) offers per coordinator and feed
@@ -179,6 +184,13 @@ final discoveredCoordinatorsProvider = StreamProvider<List<CoordinatorRecord>>((
   yield registry.all;
   yield* registry.changes;
 });
+
+final coordinatorColdStartProvider =
+    StreamProvider<CoordinatorColdStartState?>((ref) async* {
+      final registry = await ref.watch(coordinatorRegistryProvider.future);
+      yield registry.coldStartState;
+      yield* registry.coldStartChanges;
+    });
 
 /// Enabled-only view for the maker create-offer flow, restricted to the active
 /// payment method so a PL user never creates an offer on a PT coordinator (and
@@ -288,8 +300,14 @@ final offersSubscriptionInitializer = FutureProvider<void>((ref) async {
 final discoveryIdentityInitializer = FutureProvider<void>((ref) async {
   final registry = await ref.watch(coordinatorRegistryProvider.future);
   final method = ref.watch(selectedPaymentSystemProvider);
-  if (registry.discoveryPubkeyHex == method.discoveryPubkeyHex) return;
-  registry.setDiscoveryPubkey(method.discoveryPubkeyHex);
+  if (registry.discoveryPubkeyHex == method.discoveryPubkeyHex &&
+      registry.activePaymentSystemId == method.id) {
+    return;
+  }
+  registry.setDiscoveryContext(
+    hex: method.discoveryPubkeyHex,
+    paymentSystemId: method.id,
+  );
   await registry.discover();
   await registry.probeAllEnabled();
 });

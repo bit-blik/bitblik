@@ -161,6 +161,7 @@ class _Translations$coordinator$pt extends Translations$coordinator$en {
 	@override late final _Translations$coordinator$selector$pt selector = _Translations$coordinator$selector$pt._(_root);
 	@override late final _Translations$coordinator$dialog$pt dialog = _Translations$coordinator$dialog$pt._(_root);
 	@override late final _Translations$coordinator$details$pt details = _Translations$coordinator$details$pt._(_root);
+	@override late final _Translations$coordinator$coldStart$pt coldStart = _Translations$coordinator$coldStart$pt._(_root);
 	@override late final _Translations$coordinator$management$pt management = _Translations$coordinator$management$pt._(_root);
 }
 
@@ -883,6 +884,29 @@ class _Translations$coordinator$details$pt extends Translations$coordinator$deta
 	@override String get statusUnknown => 'Desconhecido';
 	@override String get openNostrProfile => 'Abrir perfil Nostr';
 	@override String get termsOfUsage => 'Termos de utilização';
+}
+
+// Path: coordinator.coldStart
+class _Translations$coordinator$coldStart$pt extends Translations$coordinator$coldStart$en {
+	_Translations$coordinator$coldStart$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'A descobrir coordenadores';
+	@override String body({required Object app}) => 'O ${app} está a encontrar coordenadores públicos, a verificar quais estão acessíveis e a ativar um pequeno conjunto predefinido para si.';
+	@override String get settingsHint => 'Pode alterar os coordenadores ativados mais tarde nas Definições.';
+	@override String get ok => 'OK';
+	@override String get discovered => 'Descobertos';
+	@override String get candidates => 'Candidatos';
+	@override String get enabled => 'Ativados';
+	@override String get recordsTitle => 'Coordenadores atuais';
+	@override String get recordEnabled => 'Ativado';
+	@override String get recordHealthyCandidate => 'Candidato saudável';
+	@override String get recordOfflineCandidate => 'Candidato offline';
+	@override String get recordChecking => 'A verificar';
+	@override String get recordDiscovered => 'Descoberto';
+	@override late final _Translations$coordinator$coldStart$phases$pt phases = _Translations$coordinator$coldStart$phases$pt._(_root);
 }
 
 // Path: coordinator.management
@@ -1785,6 +1809,22 @@ class _Translations$offers$details$consents$pt extends Translations$offers$detai
 	// Translations
 	@override String get atm => 'Alguns multibancos cobram uma taxa extra para além do montante da oferta. Ao aceitar esta oferta, aceita quaisquer encargos bancários adicionais exigidos pelo multibanco.';
 	@override String ecommerce({required Object code}) => 'Por vários motivos — como um artigo esgotado, uma correção de pagamento em excesso, ou outros problemas do lado do comerciante — o comerciante online pode enviar automaticamente dinheiro de volta para a conta bancária associada ao ${code} que gerou. Esses fundos chegam à sua conta e não lhe pertencem. Se isto acontecer, contacte o coordenador de boa-fé e combine devolver os fundos ao maker. Ao aceitar esta oferta, aceita estes termos e compromete-se honradamente a agir com honestidade nestas situações.';
+}
+
+// Path: coordinator.coldStart.phases
+class _Translations$coordinator$coldStart$phases$pt extends Translations$coordinator$coldStart$phases$en {
+	_Translations$coordinator$coldStart$phases$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get loadingMuteList => 'A carregar filtros de coordenadores';
+	@override String get discovering => 'A descobrir coordenadores no Nostr';
+	@override String get loadingProfiles => 'A carregar perfis dos coordenadores';
+	@override String get loadingStats => 'A ler o histórico dos coordenadores';
+	@override String get checkingHealth => 'A verificar a saúde dos coordenadores';
+	@override String get finalizing => 'A ativar coordenadores predefinidos';
+	@override String get completed => 'Concluído';
 }
 
 // Path: maker.amountForm.progress
@@ -2771,6 +2811,26 @@ extension on TranslationsPt {
 			'coordinator.details.statusUnknown' => 'Desconhecido',
 			'coordinator.details.openNostrProfile' => 'Abrir perfil Nostr',
 			'coordinator.details.termsOfUsage' => 'Termos de utilização',
+			'coordinator.coldStart.title' => 'A descobrir coordenadores',
+			'coordinator.coldStart.body' => ({required Object app}) => 'O ${app} está a encontrar coordenadores públicos, a verificar quais estão acessíveis e a ativar um pequeno conjunto predefinido para si.',
+			'coordinator.coldStart.settingsHint' => 'Pode alterar os coordenadores ativados mais tarde nas Definições.',
+			'coordinator.coldStart.ok' => 'OK',
+			'coordinator.coldStart.discovered' => 'Descobertos',
+			'coordinator.coldStart.candidates' => 'Candidatos',
+			'coordinator.coldStart.enabled' => 'Ativados',
+			'coordinator.coldStart.recordsTitle' => 'Coordenadores atuais',
+			'coordinator.coldStart.recordEnabled' => 'Ativado',
+			'coordinator.coldStart.recordHealthyCandidate' => 'Candidato saudável',
+			'coordinator.coldStart.recordOfflineCandidate' => 'Candidato offline',
+			'coordinator.coldStart.recordChecking' => 'A verificar',
+			'coordinator.coldStart.recordDiscovered' => 'Descoberto',
+			'coordinator.coldStart.phases.loadingMuteList' => 'A carregar filtros de coordenadores',
+			'coordinator.coldStart.phases.discovering' => 'A descobrir coordenadores no Nostr',
+			'coordinator.coldStart.phases.loadingProfiles' => 'A carregar perfis dos coordenadores',
+			'coordinator.coldStart.phases.loadingStats' => 'A ler o histórico dos coordenadores',
+			'coordinator.coldStart.phases.checkingHealth' => 'A verificar a saúde dos coordenadores',
+			'coordinator.coldStart.phases.finalizing' => 'A ativar coordenadores predefinidos',
+			'coordinator.coldStart.phases.completed' => 'Concluído',
 			'coordinator.management.title' => 'Gestão de coordenadores',
 			'coordinator.management.availableCoordinators' => 'Coordenadores',
 			'coordinator.management.noCoordinators' => 'Ainda não foram descobertos coordenadores.',
@@ -3064,6 +3124,8 @@ extension on TranslationsPt {
 			'taker.invalidBlik.confirmDialog.actions.proceed' => 'Tenho a certeza, continuar',
 			'taker.invalidBlik.confirmDialog.actions.cancel' => 'Cancelar',
 			'taker.invalidBlik.disputeConfirmDialog.title' => 'Abrir uma disputa?',
+			_ => null,
+		} ?? switch (path) {
 			'taker.invalidBlik.disputeConfirmDialog.content' => 'Só abra uma disputa se o valor FOI cobrado da sua conta bancária.\n\nO coordenador irá analisar manualmente o seu caso, o que leva tempo. Você terá de fornecer um comprovativo de pagamento.',
 			'taker.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Sim, fui cobrado',
 			'taker.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Cancelar',
@@ -3084,8 +3146,6 @@ extension on TranslationsPt {
 			'taker.conflict.nostrContact.npubCopied' => 'npub do coordenador copiado para a área de transferência!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'Para enviar DMs, inicie sessão com a sua chave privada Neko (nsec) em qualquer cliente Nostr que suporte mensagens diretas.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Gerir chaves Neko',
-			_ => null,
-		} ?? switch (path) {
 			'blik.instructions.taker' => ({required Object code}) => 'Assim que o maker introduzir o código ${code}, terá de confirmar o pagamento na app do seu banco. Certifique-se de que o montante está correto antes de confirmar.',
 			'home.notifications.title' => 'Seja notificado sobre novas ofertas através de:',
 			'home.notifications.telegram' => 'Telegram',

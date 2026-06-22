@@ -7,9 +7,25 @@ import '../constants/relays.dart';
 import '../constants/rpc_methods.dart';
 import '../models/coordinator_info.dart';
 import '../models/coordinator_record.dart';
+import '../models/offer.dart';
 import '../protocol/bitblik_rpc_client.dart';
 import '../protocol/rpc_envelope.dart';
 import 'coordinator_store.dart';
+
+const int _coldStartDefaultEnabledCount = 3;
+const int _coldStartCandidatePoolSize = 8;
+
+enum CoordinatorColdStartPhase {
+  loadingMuteList,
+  discovering,
+  loadingProfiles,
+  loadingStats,
+  checkingHealth,
+  finalizing,
+  completed,
+}
+
+enum CoordinatorColdStartOrigin { onboarding, settings }
 
 /// Reusable coordinator discovery + health + persistence service.
 ///
@@ -41,6 +57,7 @@ class CoordinatorRegistry {
   /// Bitblik; switched per active payment system (e.g. Bitway for MB WAY) via
   /// [setDiscoveryPubkey] so each market discovers its own relays + coordinators.
   String discoveryPubkeyHex;
+  String activePaymentSystemId;
 
   /// Records whose `lastHealthCheck` is older than this are eligible to
   /// be probed again by [probeAllEnabled].
@@ -56,10 +73,15 @@ class CoordinatorRegistry {
   final Map<String, CoordinatorRecord> _records = {};
   final StreamController<List<CoordinatorRecord>> _changes =
       StreamController<List<CoordinatorRecord>>.broadcast();
+  final StreamController<CoordinatorColdStartState?> _coldStart =
+      StreamController<CoordinatorColdStartState?>.broadcast();
 
   bool _initialized = false;
   Timer? _saveDebouncer;
   Future<void>? _discoveryInFlight;
+  final Set<String> _mutedPubkeys = {};
+  CoordinatorColdStartState? _coldStartState;
+  bool _coldStartDismissed = false;
 
   CoordinatorRegistry({
     required this.ndk,
@@ -67,6 +89,7 @@ class CoordinatorRegistry {
     required this.store,
     required this.relays,
     this.discoveryPubkeyHex = kBitblikPubkeyHex,
+    this.activePaymentSystemId = 'blik',
     this.probeStaleAfter = const Duration(seconds: 60),
     this.manualAddTimeout = const Duration(seconds: 5),
     this.networkFinishedWindow = const Duration(days: 30),
@@ -82,6 +105,15 @@ class CoordinatorRegistry {
   void setDiscoveryPubkey(String hex) {
     if (hex == discoveryPubkeyHex) return;
     discoveryPubkeyHex = hex;
+    _mutedPubkeys.clear();
+  }
+
+  void setDiscoveryContext({
+    required String hex,
+    required String paymentSystemId,
+  }) {
+    activePaymentSystemId = paymentSystemId;
+    setDiscoveryPubkey(hex);
   }
 
   /// Resolve the discovery relays from Bitblik's profile NIP-65
@@ -109,7 +141,9 @@ class CoordinatorRegistry {
         _queryTimeout,
         onTimeout: (sink) => sink.close(),
       )) {
-        if (event.pubKey != discoveryPubkeyHex) continue;
+        if (_normalize(event.pubKey) != _normalize(discoveryPubkeyHex)) {
+          continue;
+        }
         if (newest == null || event.createdAt > newest.createdAt) {
           newest = event;
         }
@@ -138,20 +172,53 @@ class CoordinatorRegistry {
     }
     _initialized = true;
     _emit();
+    unawaited(() async {
+      try {
+        await refreshDiscoveryRelays();
+        await _refreshMutedPubkeys();
+      } catch (_) {
+        // Best-effort only. If network is unavailable, fall back to the stored
+        // state and let the next discovery refresh apply the hard mute filter.
+      }
+    }());
   }
 
   /// Broadcast stream of the sorted record list. Emits the initial state
   /// on subscribe via [all].
   Stream<List<CoordinatorRecord>> get changes => _changes.stream;
+  Stream<CoordinatorColdStartState?> get coldStartChanges => _coldStart.stream;
+  CoordinatorColdStartState? get coldStartState => _coldStartState;
+  void showColdStartState(
+    CoordinatorColdStartPhase phase, {
+    Set<String> discovered = const {},
+    Set<String> candidates = const {},
+    Set<String> enabledPubkeys = const {},
+    CoordinatorColdStartOrigin origin = CoordinatorColdStartOrigin.onboarding,
+  }) => _setColdStartState(
+    phase,
+    discovered: discovered,
+    candidates: candidates,
+    enabledPubkeys: enabledPubkeys,
+    origin: origin,
+  );
 
   /// All records (enabled and disabled), sorted by [_compare].
-  List<CoordinatorRecord> get all => _sorted(_records.values.toList());
+  List<CoordinatorRecord> get all => _sorted(
+      _records.values
+          .where((r) => !_mutedPubkeys.contains(r.pubkeyHex))
+          .where((r) => r.paymentSystem == activePaymentSystemId)
+          .toList(),
+    );
 
   /// Enabled records only — what the maker flow should show.
   List<CoordinatorRecord> get enabled =>
       all.where((r) => r.enabled).toList(growable: false);
 
-  CoordinatorRecord? recordFor(String pubkey) => _records[_normalize(pubkey)];
+  CoordinatorRecord? recordFor(String pubkey) {
+    final hex = _normalize(pubkey);
+    if (_mutedPubkeys.contains(hex)) return null;
+    return _records[hex];
+  }
 
   CoordinatorInfo? infoFor(String pubkey) => recordFor(pubkey)?.info;
 
@@ -162,10 +229,22 @@ class CoordinatorRegistry {
     }
     final completer = Completer<void>();
     _discoveryInFlight = completer.future;
+    var coldStartStarted = false;
     try {
+      final shouldBootstrap =
+          !await store.loadBootstrapCompleted(activePaymentSystemId);
+      if (shouldBootstrap) {
+        coldStartStarted = true;
+        _disableActivePaymentSystemRecords();
+        _setColdStartState(CoordinatorColdStartPhase.loadingMuteList);
+      }
       // Resolve the live discovery relays from Bitblik's profile NIP-65 first,
       // so coordinator lookups target the relays Bitblik currently advertises.
       await refreshDiscoveryRelays();
+      await _refreshMutedPubkeys();
+      if (shouldBootstrap) {
+        _setColdStartState(CoordinatorColdStartPhase.discovering);
+      }
       final response = ndk.requests.query(
         name: 'coordinator-discovery',
         // ONLY kind 15125 here. Adding kind 0 without an `authors` filter would
@@ -185,17 +264,59 @@ class CoordinatorRegistry {
         _queryTimeout,
         onTimeout: (sink) => sink.close(),
       )) {
+        final eventPubkey = _normalize(event.pubKey);
+        if (_mutedPubkeys.contains(eventPubkey)) continue;
+        if (CoordinatorInfo.fromNostrEvent(event).paymentSystem !=
+            activePaymentSystemId) {
+          continue;
+        }
         _upsertFromEvent(event);
-        discovered.add(event.pubKey);
+        discovered.add(eventPubkey);
+        if (shouldBootstrap) {
+          _setColdStartState(
+            CoordinatorColdStartPhase.discovering,
+            discovered: discovered,
+          );
+        }
+      }
+      final runBootstrap = discovered.isNotEmpty && shouldBootstrap;
+      if (runBootstrap) {
+        _applyColdStartDisabledDefaults(discovered);
       }
       _schedulePersist();
       _emit();
+      if (runBootstrap) {
+        _setColdStartState(
+          CoordinatorColdStartPhase.loadingProfiles,
+          discovered: discovered,
+        );
+      }
       // Resolve each coordinator's NIP-65 relays FIRST, then read their kind-0
       // profile from those relays (outbox model) — the canonical, most current
       // source, with discovery relays as fallback.
       await Future.wait(discovered.map(_refreshRelayList));
       await _refreshProfiles(discovered);
+      if (runBootstrap) {
+        _setColdStartState(
+          CoordinatorColdStartPhase.loadingStats,
+          discovered: discovered,
+        );
+        await fetchNetworkFinishedCounts();
+        final selection = await _finalizeColdStartDefaults(discovered);
+        await store.saveBootstrapCompleted(activePaymentSystemId, true);
+        _setColdStartState(
+          CoordinatorColdStartPhase.completed,
+          discovered: discovered,
+          candidates: selection.candidatePubkeys,
+          enabledPubkeys: selection.enabledPubkeys,
+        );
+      }
     } finally {
+      if (coldStartStarted &&
+          _coldStartState != null &&
+          _coldStartState!.phase != CoordinatorColdStartPhase.completed) {
+        _clearColdStartState();
+      }
       _discoveryInFlight = null;
       completer.complete();
     }
@@ -261,7 +382,11 @@ class CoordinatorRegistry {
   Set<String> relaysForEnabled() {
     final out = <String>{};
     for (final r in _records.values) {
-      if (!r.enabled) continue;
+      if (!r.enabled ||
+          r.paymentSystem != activePaymentSystemId ||
+          _mutedPubkeys.contains(r.pubkeyHex)) {
+        continue;
+      }
       if (r.relays.isNotEmpty) {
         out.addAll(r.relays);
       } else {
@@ -274,7 +399,11 @@ class CoordinatorRegistry {
   /// Relays for a single coordinator (NIP-65 or fallback). Falls back to the
   /// discovery relays when nothing is known yet.
   List<String> relaysFor(String pubkey) {
-    final r = _records[_normalize(pubkey)];
+    final hex = _normalize(pubkey);
+    if (_mutedPubkeys.contains(hex)) {
+      return const [];
+    }
+    final r = _records[hex];
     if (r != null && r.relays.isNotEmpty) return r.relays;
     return relays.map(normalizeRelayUrl).toList(growable: false);
   }
@@ -329,7 +458,7 @@ class CoordinatorRegistry {
     Duration healthTimeout = const Duration(seconds: 3),
   }) async {
     final hex = _normalize(pubkey);
-    if (_records[hex] == null) return;
+    if (_records[hex] == null || _mutedPubkeys.contains(hex)) return;
 
     await refreshDiscoveryRelays();
 
@@ -379,6 +508,8 @@ class CoordinatorRegistry {
     final due = _records.values
         .where((r) =>
             r.enabled &&
+            r.paymentSystem == activePaymentSystemId &&
+            !_mutedPubkeys.contains(r.pubkeyHex) &&
             (r.lastHealthCheck == null ||
                 now.difference(r.lastHealthCheck!) > probeStaleAfter))
         .map((r) => r.pubkeyHex)
@@ -409,6 +540,7 @@ class CoordinatorRegistry {
   /// Flip a coordinator's enabled flag.
   Future<void> setEnabled(String pubkey, bool value) async {
     final hex = _normalize(pubkey);
+    if (value && _mutedPubkeys.contains(hex)) return;
     final existing = _records[hex];
     if (existing == null) return;
     _records[hex] = existing.copyWith(enabled: value);
@@ -427,6 +559,9 @@ class CoordinatorRegistry {
       throw ArgumentError('Pubkey cannot be empty');
     }
     final hex = _normalize(trimmed);
+    if (_mutedPubkeys.contains(hex)) {
+      throw ArgumentError('Coordinator is muted by the active discovery list');
+    }
 
     final existing = _records[hex];
     if (existing?.info != null) {
@@ -452,6 +587,13 @@ class CoordinatorRegistry {
           .timeout(manualAddTimeout);
     } catch (_) {
       throw CoordinatorInfoUnavailable(hex);
+    }
+
+    final info = CoordinatorInfo.fromNostrEvent(event);
+    if (info.paymentSystem != activePaymentSystemId) {
+      throw ArgumentError(
+        'Coordinator payment system ${info.paymentSystem} does not match active payment system $activePaymentSystemId',
+      );
     }
 
     _upsertFromEvent(event, manualAdded: true);
@@ -514,12 +656,19 @@ class CoordinatorRegistry {
     // Snapshot pubkeys up front; the per-coordinator awaits below let other
     // code mutate `_records`, so we don't iterate it live.
     for (final pubkey in _records.keys.toList()) {
-      final count = await _fetchFinishedCountFor(pubkey);
+      final stats = await _fetchFinishedStatsFor(pubkey);
       final r = _records[pubkey];
       if (r == null) continue;
-      if (r.networkFinishedCount == count) continue;
+      if (r.networkFinishedCount == stats.count &&
+          r.networkDistinctCounterpartyCount ==
+              stats.distinctCounterpartyCount &&
+          r.networkFinishedVolumeSats == stats.volumeSats) {
+        continue;
+      }
       _records[pubkey] = r.copyWith(
-        networkFinishedCount: count,
+        networkFinishedCount: stats.count,
+        networkDistinctCounterpartyCount: stats.distinctCounterpartyCount,
+        networkFinishedVolumeSats: stats.volumeSats,
         lastFinishedCountUpdate: now,
       );
       changed = true;
@@ -533,7 +682,7 @@ class CoordinatorRegistry {
 
   /// Count `#s=success` [kKindOffer] events for a single coordinator within
   /// [networkFinishedWindow], querying that coordinator's own relays.
-  Future<int> _fetchFinishedCountFor(String pubkey) async {
+  Future<_FinishedOfferStats> _fetchFinishedStatsFor(String pubkey) async {
     final since =
         DateTime.now().subtract(networkFinishedWindow).millisecondsSinceEpoch ~/
             1000;
@@ -549,6 +698,8 @@ class CoordinatorRegistry {
     // addressable, so each offer maps to one event; the same event can still
     // surface in adjacent pages around the cursor.
     final seen = <String>{};
+    final counterpartyCounts = <String, int>{};
+    var volumeSats = 0;
 
     var until = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     while (true) {
@@ -577,7 +728,18 @@ class CoordinatorRegistry {
         pageCount++;
         if (event.createdAt < oldest) oldest = event.createdAt;
         final dTag = event.getDtag() ?? event.id;
-        seen.add(dTag);
+        if (!seen.add(dTag)) continue;
+        final offer = Offer.fromNostrEvent(event);
+        volumeSats += offer.amountSats;
+        for (final counterparty in <String?>[
+          offer.makerPubkey,
+          offer.takerPubkey,
+        ]) {
+          if (counterparty == null || counterparty.isEmpty) continue;
+          final count = counterpartyCounts[counterparty] ?? 0;
+          if (count >= 3) continue;
+          counterpartyCounts[counterparty] = count + 1;
+        }
       }
 
       // Last page reached when the relay returned fewer than requested.
@@ -589,11 +751,18 @@ class CoordinatorRegistry {
       until = nextUntil;
     }
 
-    return seen.length;
+    return _FinishedOfferStats(
+      count: seen.length,
+      distinctCounterpartyCount: counterpartyCounts.length,
+      volumeSats: volumeSats,
+    );
   }
 
   Future<void> dispose() async {
     _saveDebouncer?.cancel();
+    if (!_coldStart.isClosed) {
+      await _coldStart.close();
+    }
     if (!_changes.isClosed) {
       await _changes.close();
     }
@@ -602,8 +771,10 @@ class CoordinatorRegistry {
   // --- internals ---
 
   void _upsertFromEvent(Nip01Event event, {bool manualAdded = false}) {
+    final pubkey = _normalize(event.pubKey);
+    if (_mutedPubkeys.contains(pubkey)) return;
     final info = CoordinatorInfo.fromNostrEvent(event);
-    final pubkey = event.pubKey;
+    if (info.paymentSystem != activePaymentSystemId) return;
     final eventTime =
         DateTime.fromMillisecondsSinceEpoch(event.createdAt * 1000);
     final existing = _records[pubkey];
@@ -620,7 +791,8 @@ class CoordinatorRegistry {
         info: info,
         lastSeen: eventTime,
         firstSeenAt: now,
-        enabled: true,
+        oldestObservedEventAt: eventTime,
+        enabled: false,
         manualAdded: manualAdded,
         relays: fallbackRelays,
         relayListFromNip65: false,
@@ -635,6 +807,10 @@ class CoordinatorRegistry {
         info: newer ? info : existing.info,
         lastSeen: newer ? eventTime : existing.lastSeen,
         firstSeenAt: existing.firstSeenAt ?? now,
+        oldestObservedEventAt: _earliest(
+          existing.oldestObservedEventAt,
+          eventTime,
+        ),
         manualAdded: existing.manualAdded || manualAdded,
         // Keep known relays; only seed from sources when we have none yet.
         relays: existing.relays.isNotEmpty
@@ -643,6 +819,203 @@ class CoordinatorRegistry {
         relayListFromNip65: existing.relayListFromNip65,
       );
     }
+  }
+
+  Future<void> _refreshMutedPubkeys() async {
+    Nip01Event? newest;
+    final muteListRelays = <String>{
+      ..._bootstrapRelays.map(normalizeRelayUrl),
+      ...relays.map(normalizeRelayUrl),
+    }.where((u) => u.isNotEmpty).toList(growable: false);
+    try {
+      final response = ndk.requests.query(
+        name: 'bitblik-mute-list',
+        filter: Filter(
+          kinds: [Nip51List.kMute],
+          authors: [discoveryPubkeyHex],
+        ),
+        explicitRelays: muteListRelays,
+        cacheRead: false,
+      );
+      await for (final event in response.stream.timeout(
+        _queryTimeout,
+        onTimeout: (sink) => sink.close(),
+      )) {
+        if (_normalize(event.pubKey) != _normalize(discoveryPubkeyHex)) {
+          continue;
+        }
+        if (newest == null || event.createdAt > newest.createdAt) {
+          newest = event;
+        }
+      }
+    } catch (_) {
+      return;
+    }
+
+    final nextMuted = <String>{};
+    if (newest == null) {
+      return;
+    }
+    for (final tag in newest.tags) {
+      if (tag.length >= 2 && tag[0] == 'p') {
+        final pubkey = _normalize(tag[1]);
+        if (pubkey.isNotEmpty) nextMuted.add(pubkey);
+      }
+    }
+
+    if (_mutedPubkeys.length == nextMuted.length &&
+        _mutedPubkeys.containsAll(nextMuted)) {
+      return;
+    }
+
+    _mutedPubkeys
+      ..clear()
+      ..addAll(nextMuted);
+    if (_mutedPubkeys.isEmpty) return;
+    _records.removeWhere((pubkey, _) => _mutedPubkeys.contains(pubkey));
+    _schedulePersist();
+    _emit();
+  }
+
+  void _applyColdStartDisabledDefaults(Set<String> discovered) {
+    final candidates = discovered
+        .where((pubkey) => !_mutedPubkeys.contains(pubkey))
+        .map((pubkey) => _records[pubkey])
+        .whereType<CoordinatorRecord>()
+        .toList(growable: false);
+    if (candidates.isEmpty) return;
+    for (final record in candidates) {
+      if (record.enabled) {
+        _records[record.pubkeyHex] = record.copyWith(enabled: false);
+      }
+    }
+  }
+
+  void _disableActivePaymentSystemRecords() {
+    var changed = false;
+    for (final entry in _records.entries.toList()) {
+      final record = entry.value;
+      if (record.paymentSystem != activePaymentSystemId || !record.enabled) {
+        continue;
+      }
+      _records[entry.key] = record.copyWith(enabled: false);
+      changed = true;
+    }
+    if (changed) {
+      _schedulePersist();
+      _emit();
+    }
+  }
+
+  Future<_ColdStartSelection> _finalizeColdStartDefaults(
+    Set<String> discovered,
+  ) async {
+    final candidates = discovered
+        .where((pubkey) => !_mutedPubkeys.contains(pubkey))
+        .map((pubkey) => _records[pubkey])
+        .whereType<CoordinatorRecord>()
+        .toList(growable: false);
+    if (candidates.isEmpty) {
+      return const _ColdStartSelection(
+        candidatePubkeys: {},
+        enabledPubkeys: {},
+      );
+    }
+
+    candidates.sort(_compareColdStartAge);
+    final candidatePubkeys = candidates
+        .take(_coldStartCandidatePoolSize)
+        .map((record) => record.pubkeyHex)
+        .toList(growable: false);
+    _setColdStartState(
+      CoordinatorColdStartPhase.checkingHealth,
+      discovered: discovered,
+      candidates: candidatePubkeys.toSet(),
+    );
+    await Future.wait(
+      candidatePubkeys.map(
+        (pubkey) => probeHealth(pubkey, refreshRelayList: false),
+      ),
+    );
+
+    final refreshedCandidates = candidatePubkeys
+        .map((pubkey) => _records[pubkey])
+        .whereType<CoordinatorRecord>()
+        .toList(growable: false);
+    refreshedCandidates.sort(_compareColdStartSelection);
+    final enabledPubkeys = refreshedCandidates
+        .where((record) => record.responsive == true)
+        .take(_coldStartDefaultEnabledCount)
+        .map((record) => record.pubkeyHex)
+        .toSet();
+
+    if (enabledPubkeys.isEmpty) {
+      refreshedCandidates.sort(_compareColdStartAge);
+      enabledPubkeys.addAll(
+        refreshedCandidates
+            .take(_coldStartDefaultEnabledCount)
+            .map((record) => record.pubkeyHex),
+      );
+    }
+
+    _setColdStartState(
+      CoordinatorColdStartPhase.finalizing,
+      discovered: discovered,
+      candidates: candidatePubkeys.toSet(),
+      enabledPubkeys: enabledPubkeys,
+    );
+    for (final record in candidates) {
+      _records[record.pubkeyHex] = record.copyWith(
+        enabled: enabledPubkeys.contains(record.pubkeyHex),
+      );
+    }
+    await store.save(_records.values.toList());
+    _emit();
+    return _ColdStartSelection(
+      candidatePubkeys: candidatePubkeys.toSet(),
+      enabledPubkeys: enabledPubkeys,
+    );
+  }
+
+  static int _compareColdStartAge(CoordinatorRecord a, CoordinatorRecord b) {
+    final aObserved = a.oldestObservedEventAt;
+    final bObserved = b.oldestObservedEventAt;
+    if (aObserved != null && bObserved != null) {
+      final byObserved = aObserved.compareTo(bObserved);
+      if (byObserved != 0) return byObserved;
+    } else if (aObserved != null) {
+      return -1;
+    } else if (bObserved != null) {
+      return 1;
+    }
+    final aFirst = a.firstSeenAt;
+    final bFirst = b.firstSeenAt;
+    if (aFirst != null && bFirst != null) {
+      final byFirst = aFirst.compareTo(bFirst);
+      if (byFirst != 0) return byFirst;
+    }
+    return a.pubkeyHex.compareTo(b.pubkeyHex);
+  }
+
+  static int _compareColdStartSelection(
+    CoordinatorRecord a,
+    CoordinatorRecord b,
+  ) {
+    final aHealthy = a.responsive == true ? 1 : 0;
+    final bHealthy = b.responsive == true ? 1 : 0;
+    final byHealth = bHealthy.compareTo(aHealthy);
+    if (byHealth != 0) return byHealth;
+    final byDistinct = b.networkDistinctCounterpartyCount.compareTo(
+      a.networkDistinctCounterpartyCount,
+    );
+    if (byDistinct != 0) return byDistinct;
+    final byVolume = b.networkFinishedVolumeSats.compareTo(
+      a.networkFinishedVolumeSats,
+    );
+    if (byVolume != 0) return byVolume;
+    final byCount = b.networkFinishedCount.compareTo(a.networkFinishedCount);
+    if (byCount != 0) return byCount;
+    return _compareColdStartAge(a, b);
   }
 
   /// Fetch newest NIP-65 relay list for [hex] via NDK user-relay-list
@@ -784,12 +1157,73 @@ class CoordinatorRegistry {
     final trimmed = pubkey.trim();
     if (trimmed.startsWith('npub')) {
       try {
-        return Nip19.decode(trimmed);
+        return Nip19.decode(trimmed).toLowerCase();
       } catch (_) {
-        return trimmed;
+        return trimmed.toLowerCase();
       }
     }
-    return trimmed;
+    return trimmed.toLowerCase();
+  }
+
+  static DateTime? _earliest(DateTime? a, DateTime? b) {
+    if (a == null) return b;
+    if (b == null) return a;
+    return a.isBefore(b) ? a : b;
+  }
+
+  void _setColdStartState(
+    CoordinatorColdStartPhase phase, {
+    Set<String> discovered = const {},
+    Set<String> candidates = const {},
+    Set<String> enabledPubkeys = const {},
+    CoordinatorColdStartOrigin origin = CoordinatorColdStartOrigin.onboarding,
+  }) {
+    if (phase == CoordinatorColdStartPhase.loadingMuteList) {
+      _coldStartDismissed = false;
+    }
+    if (_coldStartDismissed) {
+      return;
+    }
+    final records = _sorted(
+      _records.values
+          .where((r) => !_mutedPubkeys.contains(r.pubkeyHex))
+          .where((r) => r.paymentSystem == activePaymentSystemId)
+          .toList(growable: false),
+    );
+    _coldStartState = CoordinatorColdStartState(
+      origin: origin,
+      phase: phase,
+      discoveredCount: discovered.length,
+      candidateCount: candidates.length,
+      enabledCount: enabledPubkeys.length,
+      records: records
+          .take(8)
+          .map(
+            (record) => CoordinatorColdStartRecord(
+              pubkeyHex: record.pubkeyHex,
+              name: record.name,
+              responsive: record.responsive,
+              enabled: record.enabled || enabledPubkeys.contains(record.pubkeyHex),
+              candidate: candidates.contains(record.pubkeyHex),
+            ),
+          )
+          .toList(growable: false),
+    );
+    if (!_coldStart.isClosed) {
+      _coldStart.add(_coldStartState);
+    }
+  }
+
+  void _clearColdStartState() {
+    _coldStartState = null;
+    if (!_coldStart.isClosed) {
+      _coldStart.add(null);
+    }
+  }
+
+  void dismissColdStartState() {
+    _coldStartDismissed = true;
+    _clearColdStartState();
   }
 }
 
@@ -803,4 +1237,60 @@ class CoordinatorInfoUnavailable implements Exception {
   @override
   String toString() =>
       'CoordinatorInfoUnavailable: no kind 38383 event from $pubkeyHex';
+}
+
+class _FinishedOfferStats {
+  final int count;
+  final int distinctCounterpartyCount;
+  final int volumeSats;
+
+  const _FinishedOfferStats({
+    required this.count,
+    required this.distinctCounterpartyCount,
+    required this.volumeSats,
+  });
+}
+
+class _ColdStartSelection {
+  final Set<String> candidatePubkeys;
+  final Set<String> enabledPubkeys;
+
+  const _ColdStartSelection({
+    required this.candidatePubkeys,
+    required this.enabledPubkeys,
+  });
+}
+
+class CoordinatorColdStartState {
+  final CoordinatorColdStartOrigin origin;
+  final CoordinatorColdStartPhase phase;
+  final int discoveredCount;
+  final int candidateCount;
+  final int enabledCount;
+  final List<CoordinatorColdStartRecord> records;
+
+  const CoordinatorColdStartState({
+    required this.origin,
+    required this.phase,
+    required this.discoveredCount,
+    required this.candidateCount,
+    required this.enabledCount,
+    required this.records,
+  });
+}
+
+class CoordinatorColdStartRecord {
+  final String pubkeyHex;
+  final String name;
+  final bool? responsive;
+  final bool enabled;
+  final bool candidate;
+
+  const CoordinatorColdStartRecord({
+    required this.pubkeyHex,
+    required this.name,
+    required this.responsive,
+    required this.enabled,
+    required this.candidate,
+  });
 }

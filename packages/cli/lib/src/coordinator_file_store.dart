@@ -48,4 +48,12 @@ class CoordinatorFileStore implements CoordinatorStore {
     );
     await _file.writeAsString(encoded);
   }
+
+  @override
+  Future<bool> loadBootstrapCompleted(String paymentSystemId) async {
+    return _file.exists();
+  }
+
+  @override
+  Future<void> saveBootstrapCompleted(String paymentSystemId, bool value) async {}
 }

@@ -12,8 +12,7 @@ import 'package:bitblik/src/screens/taker_flow/taker_invalid_blik_screen.dart';
 import 'package:bitblik/src/screens/taker_flow/taker_payment_failed_screen.dart';
 import 'package:bitblik/src/screens/taker_flow/taker_payment_process_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart'
-    show kIsWeb, kDebugMode; // Import kIsWeb
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; // Keep for GlobalMaterialLocalizations.delegates
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -375,8 +374,22 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
 
       try {
         await ref.read(initializedApiServiceProvider.future);
-        // Trigger coordinator discovery
-        ref.watch(discoveredCoordinatorsProvider);
+        // Prime the cold-start stream before discovery starts so the overlay
+        // cannot miss a short-lived bootstrap state in release builds.
+        ref.read(coordinatorColdStartProvider);
+        // Prime the coordinator stream without using `watch` outside build.
+        ref.read(discoveredCoordinatorsProvider);
+        final registry = await ref.read(coordinatorRegistryProvider.future);
+        unawaited(() async {
+          try {
+            await registry.discover();
+            await registry.probeAllEnabled();
+          } catch (e) {
+            Logger.log.e(
+              () => 'Initial coordinator discovery failed: $e',
+            );
+          }
+        }());
 
         // Initialize the offer status subscription manager
         ref.read(offerStatusSubscriptionManagerProvider);
@@ -617,7 +630,308 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         ...GlobalMaterialLocalizations.delegates,
         ndk_l10n.AppLocalizations.delegate,
       ],
+      builder: (context, child) => Stack(
+        children: [
+          if (child != null) child,
+          const _CoordinatorColdStartOverlay(),
+        ],
+      ),
       routerConfig: router,
+    );
+  }
+}
+
+class _CoordinatorColdStartOverlay extends ConsumerWidget {
+  const _CoordinatorColdStartOverlay();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(coordinatorColdStartProvider);
+    final state = async.valueOrNull;
+    if (state == null) return const SizedBox.shrink();
+
+    final t = Translations.of(context);
+    final method = ref.watch(selectedPaymentSystemProvider);
+    final brand = method.brandName;
+    final showInfoPanel =
+        state.origin == CoordinatorColdStartOrigin.onboarding;
+
+    void dismiss() {
+      ref
+          .read(coordinatorRegistryProvider.future)
+          .then((registry) => registry.dismissColdStartState());
+    }
+
+    return Stack(
+      children: [
+        const ModalBarrier(dismissible: false, color: Colors.black54),
+        Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            child: Material(
+              color: Colors.white,
+              elevation: 12,
+              borderRadius: BorderRadius.circular(20),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            t.coordinator.coldStart.title,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: dismiss,
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      t.coordinator.coldStart.body(app: brand),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    LinearProgressIndicator(value: _progressFor(state.phase)),
+                    const SizedBox(height: 10),
+                    Text(
+                      _phaseLabel(t, state.phase),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _ColdStartStatChip(
+                          label: t.coordinator.coldStart.discovered,
+                          value: '${state.discoveredCount}',
+                        ),
+                        _ColdStartStatChip(
+                          label: t.coordinator.coldStart.candidates,
+                          value: '${state.candidateCount}',
+                        ),
+                        _ColdStartStatChip(
+                          label: t.coordinator.coldStart.enabled,
+                          value: '${state.enabledCount}',
+                        ),
+                      ],
+                    ),
+                    if (state.records.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        t.coordinator.coldStart.recordsTitle,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 220),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: state.records.length,
+                          separatorBuilder: (_, index) =>
+                              const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final record = state.records[index];
+                            return ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                record.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                _recordLabel(t, record),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: _recordIcon(record),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                    if (showInfoPanel) ...[
+                      const SizedBox(height: 16),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEAF3FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFB8D4FF)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 1),
+                                child: Icon(
+                                  Icons.info_outline,
+                                  size: 18,
+                                  color: Color(0xFF1E5BB8),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  t.coordinator.coldStart.settingsHint,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: const Color(0xFF184A96),
+                                        height: 1.35,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton(
+                        onPressed: dismiss,
+                        child: Text(
+                          state.phase == CoordinatorColdStartPhase.completed
+                              ? t.coordinator.coldStart.ok
+                              : t.common.buttons.close,
+                        ),
+                      ),
+                    ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _progressFor(CoordinatorColdStartPhase phase) {
+    return switch (phase) {
+      CoordinatorColdStartPhase.loadingMuteList => 0.1,
+      CoordinatorColdStartPhase.discovering => 0.3,
+      CoordinatorColdStartPhase.loadingProfiles => 0.5,
+      CoordinatorColdStartPhase.loadingStats => 0.65,
+      CoordinatorColdStartPhase.checkingHealth => 0.82,
+      CoordinatorColdStartPhase.finalizing => 0.94,
+      CoordinatorColdStartPhase.completed => 1.0,
+    };
+  }
+
+  String _phaseLabel(Translations t, CoordinatorColdStartPhase phase) {
+    return switch (phase) {
+      CoordinatorColdStartPhase.loadingMuteList =>
+        t.coordinator.coldStart.phases.loadingMuteList,
+      CoordinatorColdStartPhase.discovering =>
+        t.coordinator.coldStart.phases.discovering,
+      CoordinatorColdStartPhase.loadingProfiles =>
+        t.coordinator.coldStart.phases.loadingProfiles,
+      CoordinatorColdStartPhase.loadingStats =>
+        t.coordinator.coldStart.phases.loadingStats,
+      CoordinatorColdStartPhase.checkingHealth =>
+        t.coordinator.coldStart.phases.checkingHealth,
+      CoordinatorColdStartPhase.finalizing =>
+        t.coordinator.coldStart.phases.finalizing,
+      CoordinatorColdStartPhase.completed =>
+        t.coordinator.coldStart.phases.completed,
+    };
+  }
+
+  String _recordLabel(Translations t, CoordinatorColdStartRecord record) {
+    if (record.enabled) {
+      return t.coordinator.coldStart.recordEnabled;
+    }
+    if (record.candidate && record.responsive == true) {
+      return t.coordinator.coldStart.recordHealthyCandidate;
+    }
+    if (record.candidate && record.responsive == false) {
+      return t.coordinator.coldStart.recordOfflineCandidate;
+    }
+    if (record.candidate) {
+      return t.coordinator.coldStart.recordChecking;
+    }
+    return t.coordinator.coldStart.recordDiscovered;
+  }
+
+  Widget _recordIcon(CoordinatorColdStartRecord record) {
+    if (record.enabled) {
+      return const Icon(Icons.check_circle, color: Colors.green, size: 18);
+    }
+    if (record.responsive == false) {
+      return const Icon(Icons.remove_circle_outline,
+          color: Colors.redAccent, size: 18);
+    }
+    if (record.candidate) {
+      return const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+    return const Icon(Icons.visibility_outlined, color: Colors.grey, size: 18);
+  }
+}
+
+class _ColdStartStatChip extends StatelessWidget {
+  const _ColdStartStatChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.grey[700],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1512,7 +1826,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                         )
                         : const SizedBox.shrink(),
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, error) => const SizedBox.shrink(),
           ),
         ],
       ),

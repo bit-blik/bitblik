@@ -284,6 +284,29 @@ coordinator:
     openNostrProfile: "Otwórz profil Nostr"
     termsOfUsage: "Warunki użytkowania"
 
+  coldStart:
+    title: "Odkrywanie koordynatorów"
+    body: "${app} znajduje publicznych koordynatorów, sprawdza, którzy są osiągalni, i włącza dla Ciebie mały domyślny zestaw."
+    settingsHint: "Później możesz zmienić włączonych koordynatorów w Ustawieniach."
+    ok: "OK"
+    discovered: "Odkryto"
+    candidates: "Kandydaci"
+    enabled: "Włączone"
+    recordsTitle: "Bieżący koordynatorzy"
+    recordEnabled: "Włączony"
+    recordHealthyCandidate: "Zdrowy kandydat"
+    recordOfflineCandidate: "Kandydat offline"
+    recordChecking: "Sprawdzanie"
+    recordDiscovered: "Odkryty"
+    phases:
+      loadingMuteList: "Ładowanie filtrów koordynatorów"
+      discovering: "Odkrywanie koordynatorów na Nostr"
+      loadingProfiles: "Ładowanie profili koordynatorów"
+      loadingStats: "Odczytywanie historii koordynatorów"
+      checkingHealth: "Sprawdzanie zdrowia koordynatorów"
+      finalizing: "Włączanie domyślnych koordynatorów"
+      completed: "Gotowe"
+
   management:
     title: "Zarządzanie Koordynatorami"
     availableCoordinators: "Koordynatorzy"

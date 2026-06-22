@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../services/notification_service.dart';
 
 bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
@@ -37,8 +38,21 @@ class NotificationSettingsScreen extends ConsumerWidget {
             subtitle: Text(t.notificationSettings.newOfferAlerts.description(app: ref.watch(selectedPaymentSystemProvider).brandName)),
             value: _isAndroid && enabled,
             onChanged: _isAndroid
-                ? (value) =>
-                    ref.read(newOfferNotificationsProvider.notifier).set(value)
+                ? (value) async {
+                    if (!value) {
+                      await ref
+                          .read(newOfferNotificationsProvider.notifier)
+                          .set(false);
+                      return;
+                    }
+                    final granted = await NotificationService()
+                        .requestPermissions();
+                    if (granted) {
+                      await ref
+                          .read(newOfferNotificationsProvider.notifier)
+                          .set(true);
+                    }
+                  }
                 : null,
           ),
         ],

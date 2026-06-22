@@ -16,6 +16,7 @@ class CoordinatorRecord {
   final CoordinatorInfo? info;
   final DateTime? lastSeen;
   final DateTime? firstSeenAt;
+  final DateTime? oldestObservedEventAt;
 
   /// User-visible flag. False = user has disabled this coordinator.
   /// New records default to true.
@@ -51,6 +52,8 @@ class CoordinatorRecord {
   /// Count of successful (`#s=success`) public offers signed by this
   /// coordinator within the last `networkFinishedWindow` (see [CoordinatorRegistry]).
   final int networkFinishedCount;
+  final int networkDistinctCounterpartyCount;
+  final int networkFinishedVolumeSats;
 
   /// Count of this user's own finished offers attributed to this coordinator.
   /// Currently optional/auxiliary — populated when the maker history flow runs.
@@ -62,6 +65,7 @@ class CoordinatorRecord {
     this.info,
     this.lastSeen,
     this.firstSeenAt,
+    this.oldestObservedEventAt,
     this.enabled = true,
     this.manualAdded = false,
     this.relays = const [],
@@ -73,6 +77,8 @@ class CoordinatorRecord {
     this.successfulProbes = 0,
     this.failedProbes = 0,
     this.networkFinishedCount = 0,
+    this.networkDistinctCounterpartyCount = 0,
+    this.networkFinishedVolumeSats = 0,
     this.localFinishedCount = 0,
     this.lastFinishedCountUpdate,
   });
@@ -101,23 +107,28 @@ class CoordinatorRecord {
 
   /// Composite reliability score (higher = better).
   ///
-  /// responsive tier dominates; within tier we mix global usage,
-  /// personal usage, and probe success ratio. Tuned for Phase 1; weights
-  /// expected to evolve.
+  /// responsive tier dominates; within tier we mix personal usage, network
+  /// success breadth/value, observed tenure, and probe success ratio.
   double get score {
     final responsiveTier = responsive == true ? 1000.0 : 0.0;
     final personal = math.min(localFinishedCount, 50) * 20.0;
-    final global = math.log(networkFinishedCount + 1) * 5.0;
+    final breadth = math.min(networkDistinctCounterpartyCount, 100) * 4.0;
+    final volume = math.log((networkFinishedVolumeSats / 1000) + 1) * 6.0;
     final totalProbes = successfulProbes + failedProbes;
     final ratio = totalProbes == 0 ? 0.5 : successfulProbes / totalProbes;
     final probeScore = ratio * 10.0;
-    return responsiveTier + personal + global + probeScore;
+    final observedAgeDays = oldestObservedEventAt == null
+        ? 0
+        : DateTime.now().difference(oldestObservedEventAt!).inDays;
+    final ageScore = math.min(observedAgeDays, 365) * 0.05;
+    return responsiveTier + personal + breadth + volume + probeScore + ageScore;
   }
 
   CoordinatorRecord copyWith({
     CoordinatorInfo? info,
     DateTime? lastSeen,
     DateTime? firstSeenAt,
+    DateTime? oldestObservedEventAt,
     bool? enabled,
     bool? manualAdded,
     List<String>? relays,
@@ -129,6 +140,8 @@ class CoordinatorRecord {
     int? successfulProbes,
     int? failedProbes,
     int? networkFinishedCount,
+    int? networkDistinctCounterpartyCount,
+    int? networkFinishedVolumeSats,
     int? localFinishedCount,
     DateTime? lastFinishedCountUpdate,
   }) {
@@ -137,6 +150,7 @@ class CoordinatorRecord {
       info: info ?? this.info,
       lastSeen: lastSeen ?? this.lastSeen,
       firstSeenAt: firstSeenAt ?? this.firstSeenAt,
+      oldestObservedEventAt: oldestObservedEventAt ?? this.oldestObservedEventAt,
       enabled: enabled ?? this.enabled,
       manualAdded: manualAdded ?? this.manualAdded,
       relays: relays ?? this.relays,
@@ -150,6 +164,10 @@ class CoordinatorRecord {
       successfulProbes: successfulProbes ?? this.successfulProbes,
       failedProbes: failedProbes ?? this.failedProbes,
       networkFinishedCount: networkFinishedCount ?? this.networkFinishedCount,
+      networkDistinctCounterpartyCount:
+          networkDistinctCounterpartyCount ?? this.networkDistinctCounterpartyCount,
+      networkFinishedVolumeSats:
+          networkFinishedVolumeSats ?? this.networkFinishedVolumeSats,
       localFinishedCount: localFinishedCount ?? this.localFinishedCount,
       lastFinishedCountUpdate:
           lastFinishedCountUpdate ?? this.lastFinishedCountUpdate,
@@ -161,6 +179,8 @@ class CoordinatorRecord {
         if (info != null) 'info': info!.toJson(),
         if (lastSeen != null) 'last_seen': lastSeen!.toIso8601String(),
         if (firstSeenAt != null) 'first_seen_at': firstSeenAt!.toIso8601String(),
+        if (oldestObservedEventAt != null)
+          'oldest_observed_event_at': oldestObservedEventAt!.toIso8601String(),
         'enabled': enabled,
         'manual_added': manualAdded,
         if (relays.isNotEmpty) 'relays': relays,
@@ -173,6 +193,8 @@ class CoordinatorRecord {
         'successful_probes': successfulProbes,
         'failed_probes': failedProbes,
         'network_finished_count': networkFinishedCount,
+        'network_distinct_counterparty_count': networkDistinctCounterpartyCount,
+        'network_finished_volume_sats': networkFinishedVolumeSats,
         'local_finished_count': localFinishedCount,
         if (lastFinishedCountUpdate != null)
           'last_finished_count_update':
@@ -194,6 +216,7 @@ class CoordinatorRecord {
           : null,
       lastSeen: parseDt(json['last_seen']),
       firstSeenAt: parseDt(json['first_seen_at']),
+      oldestObservedEventAt: parseDt(json['oldest_observed_event_at']),
       enabled: json['enabled'] as bool? ?? true,
       manualAdded: json['manual_added'] as bool? ?? false,
       relays: (json['relays'] as List<dynamic>?)
@@ -209,6 +232,10 @@ class CoordinatorRecord {
       failedProbes: (json['failed_probes'] as num?)?.toInt() ?? 0,
       networkFinishedCount:
           (json['network_finished_count'] as num?)?.toInt() ?? 0,
+      networkDistinctCounterpartyCount:
+          (json['network_distinct_counterparty_count'] as num?)?.toInt() ?? 0,
+      networkFinishedVolumeSats:
+          (json['network_finished_volume_sats'] as num?)?.toInt() ?? 0,
       localFinishedCount:
           (json['local_finished_count'] as num?)?.toInt() ?? 0,
       lastFinishedCountUpdate: parseDt(json['last_finished_count_update']),

@@ -285,6 +285,29 @@ coordinator:
     openNostrProfile: "Open Nostr profile"
     termsOfUsage: "Terms of use"
 
+  coldStart:
+    title: "Discovering coordinators"
+    body: "${app} is finding public coordinators, checking which ones are reachable, and enabling a small default set for you."
+    settingsHint: "You can change enabled coordinators later in Settings."
+    ok: "OK"
+    discovered: "Discovered"
+    candidates: "Candidates"
+    enabled: "Enabled"
+    recordsTitle: "Current coordinators"
+    recordEnabled: "Enabled"
+    recordHealthyCandidate: "Healthy candidate"
+    recordOfflineCandidate: "Candidate offline"
+    recordChecking: "Checking"
+    recordDiscovered: "Discovered"
+    phases:
+      loadingMuteList: "Loading coordinator filters"
+      discovering: "Discovering coordinators on Nostr"
+      loadingProfiles: "Loading coordinator profiles"
+      loadingStats: "Reading coordinator history"
+      checkingHealth: "Checking coordinator health"
+      finalizing: "Enabling default coordinators"
+      completed: "Done"
+
   management:
     title: "Coordinator Management"
     availableCoordinators: "Coordinators"

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bitblik_core/core.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import 'package:ndk/shared/nips/nip19/nip19.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,9 @@ class CoordinatorPrefsStore implements CoordinatorStore {
   static const String _legacyBlacklistKey = 'coordinators.blacklist';
   static const String _legacyCustomWhitelistKey =
       'coordinators.customWhitelist';
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static String _bootstrapKey(String paymentSystemId) =>
+      'coordinators.bootstrap.$paymentSystemId';
 
   @override
   Future<List<CoordinatorRecord>> load() async {
@@ -50,6 +54,20 @@ class CoordinatorPrefsStore implements CoordinatorStore {
     final encoded =
         jsonEncode(records.map((r) => r.toJson()).toList(growable: false));
     await prefs.setString(_key, encoded);
+  }
+
+  @override
+  Future<bool> loadBootstrapCompleted(String paymentSystemId) async {
+    final value = await _secureStorage.read(key: _bootstrapKey(paymentSystemId));
+    return value == 'true';
+  }
+
+  @override
+  Future<void> saveBootstrapCompleted(String paymentSystemId, bool value) async {
+    await _secureStorage.write(
+      key: _bootstrapKey(paymentSystemId),
+      value: value ? 'true' : 'false',
+    );
   }
 
   List<CoordinatorRecord> _migrateFromLegacy(SharedPreferences prefs) {
