@@ -1,6 +1,6 @@
 import 'package:bitblik_core/core.dart';
 import 'dart:ui' show ImageFilter;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -183,6 +183,64 @@ class _CoordinatorDetailsScreenState
                       ...record.relays.map(
                         (relay) => _relayTile(context, relay, connectivity),
                       ),
+
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.orange),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'DEBUG · 15125 sources',
+                              style: TextStyle(
+                                color: Colors.orange[700],
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Relays that served this coordinator\'s kind-15125 '
+                              'on the most recent live query. Pull to refresh to '
+                              're-fetch. Empty = record came from disk cache.',
+                              style: TextStyle(
+                                color: Colors.orange[700],
+                                fontSize: 11,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (record.discoverySources.isEmpty)
+                              const Text(
+                                '(none — no live query since startup)',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              )
+                            else
+                              ...record.discoverySources.map(
+                                (src) => Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 2),
+                                  child: Text(
+                                    src,
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(height: 24),
                     if (record.info?.nostrNpub != null)

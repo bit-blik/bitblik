@@ -831,6 +831,7 @@ class CoordinatorRegistry {
         manualAdded: manualAdded,
         relays: fallbackRelays,
         relayListFromNip65: false,
+        discoverySources: fallbackRelays,
       );
     } else {
       final newer =
@@ -852,6 +853,10 @@ class CoordinatorRegistry {
             ? existing.relays
             : (fallbackRelays.isNotEmpty ? fallbackRelays : existing.relays),
         relayListFromNip65: existing.relayListFromNip65,
+        // DEBUG-ONLY: always refresh with the relays that served this event
+        // on the most recent live query. Stale when read from disk cache.
+        discoverySources:
+            fallbackRelays.isNotEmpty ? fallbackRelays : existing.discoverySources,
       );
     }
   }

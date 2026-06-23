@@ -38,6 +38,13 @@ class CoordinatorRecord {
   /// example discovery relay `event.sources`).
   final bool relayListFromNip65;
 
+  /// DEBUG-ONLY: raw relays that actually served this coordinator's
+  /// kind-15125 info event on the most recent live query (from
+  /// `Nip01Event.sources`). Empty when the record was hydrated from disk
+  /// without a live re-fetch. Surfaced in the details screen under
+  /// `kDebugMode` to diagnose where a 15125 is coming from.
+  final List<String> discoverySources;
+
   /// Display name/picture from the coordinator's kind-0 profile metadata event,
   /// when published. Preferred over the kind-15125 info `name`/`icon`.
   final String? profileName;
@@ -70,6 +77,7 @@ class CoordinatorRecord {
     this.manualAdded = false,
     this.relays = const [],
     this.relayListFromNip65 = false,
+    this.discoverySources = const [],
     this.profileName,
     this.profilePicture,
     this.responsive,
@@ -133,6 +141,7 @@ class CoordinatorRecord {
     bool? manualAdded,
     List<String>? relays,
     bool? relayListFromNip65,
+    List<String>? discoverySources,
     String? profileName,
     String? profilePicture,
     Object? responsive = _sentinel,
@@ -155,6 +164,7 @@ class CoordinatorRecord {
       manualAdded: manualAdded ?? this.manualAdded,
       relays: relays ?? this.relays,
       relayListFromNip65: relayListFromNip65 ?? this.relayListFromNip65,
+      discoverySources: discoverySources ?? this.discoverySources,
       profileName: profileName ?? this.profileName,
       profilePicture: profilePicture ?? this.profilePicture,
       responsive: identical(responsive, _sentinel)
@@ -185,6 +195,8 @@ class CoordinatorRecord {
         'manual_added': manualAdded,
         if (relays.isNotEmpty) 'relays': relays,
         if (relayListFromNip65) 'relay_list_from_nip65': relayListFromNip65,
+        if (discoverySources.isNotEmpty)
+          'discovery_sources_debug': discoverySources,
         if (profileName != null) 'profile_name': profileName,
         if (profilePicture != null) 'profile_picture': profilePicture,
         if (responsive != null) 'responsive': responsive,
@@ -224,6 +236,10 @@ class CoordinatorRecord {
               .toList() ??
           const [],
       relayListFromNip65: json['relay_list_from_nip65'] as bool? ?? false,
+      discoverySources: (json['discovery_sources_debug'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       profileName: json['profile_name'] as String?,
       profilePicture: json['profile_picture'] as String?,
       responsive: json['responsive'] as bool?,
