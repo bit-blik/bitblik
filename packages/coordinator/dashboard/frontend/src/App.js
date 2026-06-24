@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { startTransition, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Calendar, TrendingUp, DollarSign, AlertCircle, Clock, Bitcoin, List, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
 import './App.css';
 import OffersPage from './pages/OffersPage';
+import { buildCoordinatorApiUrl, COORDINATOR_STORAGE_KEY } from './coordinators';
 
 // Stable, saturated colors for known categories; unknowns fall back to the
 // palette. Pill *background* pastels (lime-100/blue-100/...) are near-white and
@@ -57,40 +58,59 @@ const buildExchangeRateSources = (currency) => {
   ];
 };
 
-const Navigation = () => {
+const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorChange, loading }) => {
   const location = useLocation();
 
   return (
-    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
-      <div className="bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 px-2 py-1.5 flex gap-1">
-        <Link
-          to="/"
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-            location.pathname === '/'
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
-              : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          <BarChart3 size={16} />
-          Analytics
-        </Link>
-        <Link
-          to="/offers"
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-            location.pathname === '/offers'
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
-              : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          <List size={16} />
-          Offers
-        </Link>
+    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(96vw,56rem)]">
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 px-3 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-1">
+          <Link
+            to="/"
+            className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              location.pathname === '/'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <BarChart3 size={16} />
+            Analytics
+          </Link>
+          <Link
+            to="/offers"
+            className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              location.pathname === '/offers'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <List size={16} />
+            Offers
+          </Link>
+        </div>
+
+        <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Coordinator
+          <select
+            value={selectedCoordinatorId}
+            onChange={onCoordinatorChange}
+            disabled={loading || coordinators.length === 0}
+            className="min-w-44 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium normal-case tracking-normal text-gray-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-gray-100"
+          >
+            {loading && <option value="">Loading...</option>}
+            {!loading && coordinators.map((coordinator) => (
+              <option key={coordinator.id} value={coordinator.id}>
+                {coordinator.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
     </nav>
   );
 };
 
-const AnalyticsDashboard = () => {
+const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
   const [data, setData] = useState([]);
   const [totals, setTotals] = useState(null);
   const [weekdaySuccess, setWeekdaySuccess] = useState([]);
@@ -187,9 +207,8 @@ const AnalyticsDashboard = () => {
       try {
         // groupBy drives SQL grouping; optional startDate/endDate filter the
         // whole dashboard (charts + totals). Both dates required together.
-        const apiBase = process.env.REACT_APP_API_BASE || `${window.location.protocol}//${window.location.host}`;
         const rangeActive = startDate && endDate;
-        const response = await fetch(`${apiBase}/api/offers-data`, {
+        const response = await fetch(buildCoordinatorApiUrl('/api/offers-data', selectedCoordinatorId), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -281,11 +300,12 @@ const AnalyticsDashboard = () => {
 
     // `data`/`totals` intentionally omitted to avoid re-fetch loop.
     // Only refetch on range change once both bounds are set, or both cleared.
+    if (!selectedCoordinatorId) return;
     if (startDate && !endDate) return;
     if (endDate && !startDate) return;
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupBy, page, startDate, endDate]);
+  }, [groupBy, page, selectedCoordinatorId, startDate, endDate]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat(localeForCurrency(currency), {
@@ -1059,13 +1079,110 @@ const AnalyticsDashboard = () => {
 };
 
 const App = () => {
+  const [coordinators, setCoordinators] = useState([]);
+  const [selectedCoordinatorId, setSelectedCoordinatorId] = useState('');
+  const [coordinatorLoading, setCoordinatorLoading] = useState(true);
+  const [coordinatorError, setCoordinatorError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCoordinators = async () => {
+      setCoordinatorLoading(true);
+      setCoordinatorError(null);
+
+      try {
+        const response = await fetch(buildCoordinatorApiUrl('/api/coordinators'));
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        const nextCoordinators = result.coordinators || [];
+        const defaultId = result.defaultCoordinatorId || nextCoordinators[0]?.id || '';
+        const rememberedId = window.localStorage.getItem(COORDINATOR_STORAGE_KEY);
+        const availableIds = new Set(nextCoordinators.map((item) => item.id));
+        const nextSelectedId = availableIds.has(rememberedId) ? rememberedId : defaultId;
+
+        if (!nextSelectedId) {
+          throw new Error('No coordinators configured');
+        }
+
+        if (!cancelled) {
+          setCoordinators(nextCoordinators);
+          setSelectedCoordinatorId(nextSelectedId);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setCoordinatorError(error.message);
+        }
+      } finally {
+        if (!cancelled) {
+          setCoordinatorLoading(false);
+        }
+      }
+    };
+
+    loadCoordinators();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleCoordinatorChange = (event) => {
+    const nextCoordinatorId = event.target.value;
+    window.localStorage.setItem(COORDINATOR_STORAGE_KEY, nextCoordinatorId);
+    startTransition(() => {
+      setSelectedCoordinatorId(nextCoordinatorId);
+    });
+  };
+
+  if (coordinatorLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading coordinators...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (coordinatorError) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50 p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="text-red-600 mt-0.5 flex-shrink-0" size={24} />
+            <div>
+              <h3 className="text-red-800 font-semibold mb-2">Failed to load coordinators</h3>
+              <p className="text-red-700 text-sm mb-3">{coordinatorError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
-      <Navigation />
-      <div className="pt-16">
+      <Navigation
+        coordinators={coordinators}
+        selectedCoordinatorId={selectedCoordinatorId}
+        onCoordinatorChange={handleCoordinatorChange}
+        loading={coordinatorLoading}
+      />
+      <div className="pt-28 sm:pt-24">
         <Routes>
-          <Route path="/" element={<AnalyticsDashboard />} />
-          <Route path="/offers" element={<OffersPage />} />
+          <Route path="/" element={<AnalyticsDashboard key={selectedCoordinatorId} selectedCoordinatorId={selectedCoordinatorId} />} />
+          <Route path="/offers" element={<OffersPage key={selectedCoordinatorId} selectedCoordinatorId={selectedCoordinatorId} />} />
         </Routes>
       </div>
     </BrowserRouter>

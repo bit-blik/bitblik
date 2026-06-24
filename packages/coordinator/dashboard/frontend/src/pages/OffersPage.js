@@ -1,19 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { List, RefreshCw, Wifi, WifiOff, ChevronRight, X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
-
-// Use window.location to dynamically determine protocol and host
-const getWebSocketUrl = () => {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.host; // includes port if any
-  return process.env.REACT_APP_WS_URL || `${protocol}//${host}/ws/offers`;
-};
-
-const getApiBase = () => {
-  return process.env.REACT_APP_API_BASE || `${window.location.protocol}//${window.location.host}`;
-};
-
-const WS_URL = getWebSocketUrl();
-const API_BASE = getApiBase();
+import { buildCoordinatorApiUrl, buildCoordinatorWebSocketUrl } from '../coordinators';
 
 // Max offers returned per page by the dashboard API. Older offers load
 // incrementally as the operator scrolls past the end of the list.
@@ -162,7 +149,7 @@ const formatDisputeReason = (reason) => {
   return DISPUTE_REASON_LABELS[reason] || reason;
 };
 
-const OffersPage = () => {
+const OffersPage = ({ selectedCoordinatorId }) => {
   const [offers, setOffers] = useState([]);
   const [connected, setConnected] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState(null);
@@ -172,6 +159,7 @@ const OffersPage = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const shouldReconnectRef = useRef(true);
   const offersRef = useRef([]);
   const loadingMoreRef = useRef(false);
   const hasMoreRef = useRef(false);
@@ -193,7 +181,8 @@ const OffersPage = () => {
       return;
     }
 
-    const ws = new WebSocket(WS_URL);
+    shouldReconnectRef.current = true;
+    const ws = new WebSocket(buildCoordinatorWebSocketUrl(selectedCoordinatorId));
 
     ws.onopen = () => {
       setConnected(true);
@@ -205,9 +194,11 @@ const OffersPage = () => {
 
     ws.onclose = () => {
       setConnected(false);
-      reconnectTimeoutRef.current = setTimeout(() => {
-        connectWebSocket();
-      }, 3000);
+      if (shouldReconnectRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectWebSocket();
+        }, 3000);
+      }
     };
 
     ws.onerror = () => {
@@ -288,12 +279,13 @@ const OffersPage = () => {
     };
 
     wsRef.current = ws;
-  }, []);
+  }, [selectedCoordinatorId]);
 
   useEffect(() => {
     connectWebSocket();
 
     return () => {
+      shouldReconnectRef.current = false;
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
@@ -309,9 +301,7 @@ const OffersPage = () => {
     setLoadingMore(true);
     try {
       const offset = offersRef.current.length;
-      const response = await fetch(
-        `${API_BASE}/api/offers/recent?limit=${OFFERS_PAGE_SIZE}&offset=${offset}`
-      );
+      const response = await fetch(buildCoordinatorApiUrl(`/api/offers/recent?limit=${OFFERS_PAGE_SIZE}&offset=${offset}`, selectedCoordinatorId));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -332,7 +322,7 @@ const OffersPage = () => {
       loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, []);
+  }, [selectedCoordinatorId]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -349,7 +339,7 @@ const OffersPage = () => {
   const fetchAuditLogs = async (offerId) => {
     setAuditLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/api/offers/${offerId}/audit`);
+      const response = await fetch(buildCoordinatorApiUrl(`/api/offers/${offerId}/audit`, selectedCoordinatorId));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

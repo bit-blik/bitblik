@@ -7,6 +7,7 @@ Real-time offers monitoring dashboard with WebSocket support for live updates.
 - **Real-time Updates**: WebSocket-based live offer status updates
 - **Audit Logs**: View detailed audit logs for each offer
 - **Analytics Dashboard**: Comprehensive charts and statistics
+- **Multi-Coordinator Switcher**: Connect one dashboard to multiple coordinator databases and switch between them from the top bar
 - **Responsive Design**: Works on desktop and mobile devices
 
 ## Architecture
@@ -30,10 +31,39 @@ docker build -t offers-dashboard .
 
 ## Running the Container
 
+## Configuration Modes
+
+### Single Coordinator
+
+Legacy single-database env vars still work:
+
+```env
+COORDINATOR_ID=main
+COORDINATOR_LABEL=Main Coordinator
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=bitblik
+DB_USER=postgres
+DB_PASSWORD=your_password
+```
+
+### Multiple Coordinators
+
+Set `COORDINATORS_JSON` to a JSON array. Each entry becomes one option in the dashboard dropdown:
+
+```env
+COORDINATORS_JSON='[{"id":"main","label":"Main Coordinator","host":"postgres-main","port":5432,"database":"bitblik","user":"postgres","password":"your_password"},{"id":"staging","label":"Staging Coordinator","host":"postgres-staging","port":5432,"database":"bitblik_staging","user":"postgres","password":"your_password"}]'
+```
+
+When `COORDINATORS_JSON` is present, it overrides the single `DB_*` connection.
+In `.env` files loaded by `dotenv`, quote whole value and keep JSON on one line.
+
 ### Basic Run
 
 ```bash
 docker run -p 3001:3001 \
+  -e COORDINATOR_ID=main \
+  -e COORDINATOR_LABEL="Main Coordinator" \
   -e DB_HOST=your_db_host \
   -e DB_PORT=5432 \
   -e DB_NAME=bitblik \
@@ -47,6 +77,8 @@ docker run -p 3001:3001 \
 Create a `.env` file with your database configuration:
 
 ```env
+COORDINATOR_ID=main
+COORDINATOR_LABEL=Main Coordinator
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=bitblik
@@ -71,6 +103,8 @@ services:
     ports:
       - "3001:3001"
     environment:
+      - COORDINATOR_ID=main
+      - COORDINATOR_LABEL=Main Coordinator
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=bitblik
@@ -80,11 +114,34 @@ services:
       - postgres
 ```
 
+Multi-coordinator Compose example:
+
+```yaml
+services:
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "3001:3001"
+    environment:
+      COORDINATORS_JSON: >-
+        [
+          {"id":"main","label":"Main Coordinator","host":"postgres-main","port":5432,"database":"bitblik","user":"postgres","password":"${MAIN_DB_PASSWORD}"},
+          {"id":"backup","label":"Backup Coordinator","host":"postgres-backup","port":5432,"database":"bitblik_backup","user":"postgres","password":"${BACKUP_DB_PASSWORD}"}
+        ]
+```
+
 ## Accessing the Application
 
 Once running, access the dashboard at:
 - **Frontend**: http://localhost:3001
 - **API Endpoints**: http://localhost:3001/api/*
+
+Coordinator-specific API and WebSocket calls use the `coordinator` query parameter internally, for example:
+
+```text
+/api/offers/recent?coordinator=main
+/ws/offers?coordinator=staging
+```
 
 ## Port Configuration
 

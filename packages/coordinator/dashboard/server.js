@@ -3,6 +3,7 @@ const http = require('http');
 const { Pool, Client } = require('pg');
 const cors = require('cors');
 const path = require('path');
+const { URL } = require('url');
 const { WebSocketServer, WebSocket } = require('ws');
 require('dotenv').config();
 
@@ -16,20 +17,101 @@ const stripQuotes = (value) => {
   return str;
 };
 
-// Strip quotes from env vars that might have them
-const dbPassword = stripQuotes(process.env.DB_PASSWORD);
-const dbHost = stripQuotes(process.env.DB_HOST);
-const dbPort = stripQuotes(process.env.DB_PORT);
-const dbName = stripQuotes(process.env.DB_NAME);
-const dbUser = stripQuotes(process.env.DB_USER);
+const sanitizeCoordinatorId = (value) => {
+  const normalized = stripQuotes(value)
+    ?.trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-');
+  return normalized || null;
+};
 
-console.log('Database config:', {
-  host: dbHost,
-  port: dbPort,
-  database: dbName,
-  user: dbUser,
-  password: dbPassword ? '***hidden***' : 'NOT SET'
-});
+const buildConnectionString = ({ host, port, database, user, password }) => {
+  const encodedPassword = encodeURIComponent(password || '');
+  return `postgresql://${user}:${encodedPassword}@${host}:${port}/${database}`;
+};
+
+const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
+  const host = stripQuotes(rawConfig.host ?? rawConfig.dbHost ?? rawConfig.DB_HOST);
+  const port = stripQuotes(rawConfig.port ?? rawConfig.dbPort ?? rawConfig.DB_PORT ?? '5432');
+  const database = stripQuotes(rawConfig.database ?? rawConfig.dbName ?? rawConfig.DB_NAME);
+  const user = stripQuotes(rawConfig.user ?? rawConfig.dbUser ?? rawConfig.DB_USER);
+  const password = stripQuotes(rawConfig.password ?? rawConfig.dbPassword ?? rawConfig.DB_PASSWORD);
+  const fallbackId = database || `coordinator-${index + 1}`;
+  const id = sanitizeCoordinatorId(rawConfig.id ?? rawConfig.name ?? fallbackId);
+  const label = stripQuotes(rawConfig.label ?? rawConfig.name ?? database ?? id);
+
+  if (!id || !host || !port || !database || !user || password == null) {
+    throw new Error(`Invalid coordinator configuration at index ${index}`);
+  }
+
+  return {
+    id,
+    label,
+    host,
+    port,
+    database,
+    user,
+    password,
+  };
+};
+
+const loadCoordinatorConfigs = () => {
+  const rawMultiConfig = stripQuotes(process.env.COORDINATORS_JSON);
+  if (rawMultiConfig) {
+    let parsed;
+    try {
+      parsed = JSON.parse(rawMultiConfig);
+    } catch (error) {
+      throw new Error(
+        `Invalid COORDINATORS_JSON: ${error.message}. ` +
+        'If using .env with dotenv, quote whole value and keep JSON on one line: ' +
+        `COORDINATORS_JSON='[{"id":"main",...},{"id":"staging",...}]'`
+      );
+    }
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error('COORDINATORS_JSON must be a non-empty JSON array');
+    }
+
+    const coordinators = parsed.map((item, index) => normalizeCoordinatorConfig(item, index));
+    const seenIds = new Set();
+    for (const coordinator of coordinators) {
+      if (seenIds.has(coordinator.id)) {
+        throw new Error(`Duplicate coordinator id: ${coordinator.id}`);
+      }
+      seenIds.add(coordinator.id);
+    }
+    return coordinators;
+  }
+
+  return [
+    normalizeCoordinatorConfig(
+      {
+        id: process.env.COORDINATOR_ID,
+        label: process.env.COORDINATOR_LABEL,
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+      },
+      0
+    )
+  ];
+};
+
+const coordinatorConfigs = loadCoordinatorConfigs();
+const defaultCoordinatorId = coordinatorConfigs[0].id;
+
+for (const coordinator of coordinatorConfigs) {
+  console.log(`Coordinator ${coordinator.id} config:`, {
+    label: coordinator.label,
+    host: coordinator.host,
+    port: coordinator.port,
+    database: coordinator.database,
+    user: coordinator.user,
+    password: coordinator.password ? '***hidden***' : 'NOT SET'
+  });
+}
 
 const fs = require('fs');
 
@@ -65,30 +147,28 @@ const server = http.createServer(app);
 // root and SPA fallback go through our handler that injects the favicon.
 app.use(express.static(buildDir, { index: false }));
 
-//const pool = new Pool({
-//  host: process.env.DB_HOST,
-//  port: process.env.DB_PORT,
-//  database: process.env.DB_NAME,
-//  user: process.env.DB_USER,
-//  password: process.env.DB_PASSWORD,
-//});
-
-// Build connection string with encoded password
-const password = encodeURIComponent(dbPassword);
-const connectionString = `postgresql://${dbUser}:${password}@${dbHost}:${dbPort}/${dbName}`;
-
-console.log('Attempting connection to database...');
-
-const pool = new Pool({
-  connectionString: connectionString,
-  // Cap how long any dashboard query waits on a lock (e.g. table DDL elsewhere)
-  // so read paths like the offers snapshot fail fast instead of hanging.
-  // Does not limit query execution time, only lock acquisition.
-  options: '-c lock_timeout=5s',
-});
+const coordinators = new Map(
+  coordinatorConfigs.map((config) => {
+    console.log(`Attempting connection to coordinator ${config.id}...`);
+    return [
+      config.id,
+      {
+        ...config,
+        connectionString: buildConnectionString(config),
+        pool: new Pool({
+          connectionString: buildConnectionString(config),
+          // Cap how long any dashboard query waits on a lock (e.g. table DDL elsewhere)
+          // so read paths like the offers snapshot fail fast instead of hanging.
+          // Does not limit query execution time, only lock acquisition.
+          options: '-c lock_timeout=5s',
+        }),
+        wsClients: new Set(),
+      }
+    ];
+  })
+);
 
 const wsServer = new WebSocketServer({ server, path: '/ws/offers' });
-const wsClients = new Set();
 
 const RECENT_OFFERS_DEFAULT_LIMIT = 100;
 const RECENT_OFFERS_MAX_LIMIT = 100;
@@ -121,7 +201,33 @@ const isValidDateStr = (value) => {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
 };
 
-const fetchRecentOffers = async (limit = RECENT_OFFERS_DEFAULT_LIMIT, offset = 0) => {
+const getCoordinatorOptions = () =>
+  coordinatorConfigs.map(({ id, label }) => ({ id, label }));
+
+const resolveCoordinator = (requestedId) => {
+  const coordinatorId = sanitizeCoordinatorId(requestedId) || defaultCoordinatorId;
+  return coordinators.get(coordinatorId) || null;
+};
+
+const requireCoordinator = (req, res) => {
+  const coordinator = resolveCoordinator(req.query.coordinator);
+  if (!coordinator) {
+    res.status(400).json({
+      error: `Unknown coordinator: ${req.query.coordinator}`,
+      coordinators: getCoordinatorOptions(),
+    });
+    return null;
+  }
+
+  return coordinator;
+};
+
+const getCoordinatorIdFromRequest = (req) => {
+  const requestUrl = new URL(req.url, 'http://localhost');
+  return requestUrl.searchParams.get('coordinator');
+};
+
+const fetchRecentOffers = async (pool, limit = RECENT_OFFERS_DEFAULT_LIMIT, offset = 0) => {
   const query = `
     SELECT
       id,
@@ -153,7 +259,7 @@ const fetchRecentOffers = async (limit = RECENT_OFFERS_DEFAULT_LIMIT, offset = 0
   return result.rows;
 };
 
-const fetchOfferById = async (offerId) => {
+const fetchOfferById = async (pool, offerId) => {
   const query = `
     SELECT
       id,
@@ -184,7 +290,7 @@ const fetchOfferById = async (offerId) => {
   return result.rows[0] || null;
 };
 
-const fetchAuditByOfferId = async (offerId, limit = AUDIT_DEFAULT_LIMIT) => {
+const fetchAuditByOfferId = async (pool, offerId, limit = AUDIT_DEFAULT_LIMIT) => {
   const query = `
     SELECT
       id,
@@ -207,7 +313,7 @@ const fetchAuditByOfferId = async (offerId, limit = AUDIT_DEFAULT_LIMIT) => {
   return result.rows;
 };
 
-const fetchAuditById = async (auditId) => {
+const fetchAuditById = async (pool, auditId) => {
   const query = `
     SELECT
       id,
@@ -235,16 +341,17 @@ const sendToClient = (client, payload) => {
   }
 };
 
-const broadcast = (payload) => {
-  for (const client of wsClients) {
+const broadcast = (coordinator, payload) => {
+  for (const client of coordinator.wsClients) {
     sendToClient(client, payload);
   }
 };
 
-const sendRecentOffersSnapshot = async (client) => {
-  const offers = await fetchRecentOffers(RECENT_OFFERS_DEFAULT_LIMIT);
+const sendRecentOffersSnapshot = async (coordinator, client) => {
+  const offers = await fetchRecentOffers(coordinator.pool, RECENT_OFFERS_DEFAULT_LIMIT);
   sendToClient(client, {
     type: 'offers_snapshot',
+    coordinatorId: coordinator.id,
     offers
   });
 };
@@ -310,7 +417,7 @@ const TRIGGER_FUNCTIONS = `
 // block reads behind) the live coordinator's writes. Since the trigger
 // definition is stable, skip the work entirely when it already exists, and cap
 // the lock wait so a busy table never stalls startup for minutes.
-const ensureTrigger = async (table, triggerName, createSql) => {
+const ensureTrigger = async (pool, table, triggerName, createSql) => {
   const existing = await pool.query(
     `SELECT 1
        FROM pg_trigger t
@@ -338,10 +445,11 @@ const ensureTrigger = async (table, triggerName, createSql) => {
   }
 };
 
-const setupRealtimeTriggers = async () => {
+const setupRealtimeTriggers = async (pool) => {
   await pool.query(TRIGGER_FUNCTIONS);
 
   await ensureTrigger(
+    pool,
     'offers',
     'offers_changes_trigger',
     `CREATE TRIGGER offers_changes_trigger
@@ -351,6 +459,7 @@ const setupRealtimeTriggers = async () => {
   );
 
   await ensureTrigger(
+    pool,
     'log_audit',
     'log_audit_changes_trigger',
     `CREATE TRIGGER log_audit_changes_trigger
@@ -360,12 +469,12 @@ const setupRealtimeTriggers = async () => {
   );
 };
 
-const startRealtimeListener = async () => {
+const startRealtimeListener = async (coordinator) => {
   try {
-    await setupRealtimeTriggers();
+    await setupRealtimeTriggers(coordinator.pool);
 
     const listenerClient = new Client({
-      connectionString: connectionString
+      connectionString: coordinator.connectionString
     });
 
     await listenerClient.connect();
@@ -385,17 +494,19 @@ const startRealtimeListener = async () => {
             return;
           }
 
-          const offer = await fetchOfferById(payload.offer_id);
+          const offer = await fetchOfferById(coordinator.pool, payload.offer_id);
 
           if (offer) {
-            broadcast({
+            broadcast(coordinator, {
               type: 'offer_changed',
+              coordinatorId: coordinator.id,
               offer,
               operation: payload.operation
             });
           } else {
-            broadcast({
+            broadcast(coordinator, {
               type: 'offer_removed',
+              coordinatorId: coordinator.id,
               offerId: payload.offer_id,
               operation: payload.operation
             });
@@ -409,16 +520,17 @@ const startRealtimeListener = async () => {
 
           let auditEntry = null;
           if (payload.audit_id) {
-            auditEntry = await fetchAuditById(payload.audit_id);
+            auditEntry = await fetchAuditById(coordinator.pool, payload.audit_id);
           }
 
           if (!auditEntry && payload.operation !== 'DELETE') {
-            const latest = await fetchAuditByOfferId(payload.offer_id, 1);
+            const latest = await fetchAuditByOfferId(coordinator.pool, payload.offer_id, 1);
             auditEntry = latest[0] || null;
           }
 
-          broadcast({
+          broadcast(coordinator, {
             type: 'audit_changed',
+            coordinatorId: coordinator.id,
             offerId: payload.offer_id,
             operation: payload.operation,
             audit: auditEntry
@@ -430,27 +542,38 @@ const startRealtimeListener = async () => {
     });
 
     listenerClient.on('error', (error) => {
-      console.error('PostgreSQL LISTEN client error:', error);
+      console.error(`PostgreSQL LISTEN client error (${coordinator.id}):`, error);
     });
 
-    console.log('Realtime listener connected (LISTEN offers_changes, log_audit_changes)');
+    console.log(`Realtime listener connected for ${coordinator.id} (LISTEN offers_changes, log_audit_changes)`);
   } catch (error) {
-    console.error('Failed to start realtime listener:', error);
+    console.error(`Failed to start realtime listener for ${coordinator.id}:`, error);
   }
 };
 
-wsServer.on('connection', async (socket) => {
-  wsClients.add(socket);
+wsServer.on('connection', async (socket, req) => {
+  const coordinator = resolveCoordinator(getCoordinatorIdFromRequest(req));
+  if (!coordinator) {
+    sendToClient(socket, {
+      type: 'error',
+      message: 'Unknown coordinator'
+    });
+    socket.close(1008, 'Unknown coordinator');
+    return;
+  }
+
+  coordinator.wsClients.add(socket);
 
   sendToClient(socket, {
     type: 'connection',
-    status: 'connected'
+    status: 'connected',
+    coordinatorId: coordinator.id,
   });
 
   try {
-    await sendRecentOffersSnapshot(socket);
+    await sendRecentOffersSnapshot(coordinator, socket);
   } catch (error) {
-    console.error('Failed to send offers snapshot:', error);
+    console.error(`Failed to send offers snapshot for ${coordinator.id}:`, error);
     sendToClient(socket, {
       type: 'error',
       message: 'Failed to fetch latest offers snapshot'
@@ -461,7 +584,7 @@ wsServer.on('connection', async (socket) => {
     try {
       const parsed = JSON.parse(raw.toString());
       if (parsed.type === 'refresh_offers') {
-        await sendRecentOffersSnapshot(socket);
+        await sendRecentOffersSnapshot(coordinator, socket);
       }
     } catch (error) {
       console.error('Invalid websocket message:', error);
@@ -469,24 +592,29 @@ wsServer.on('connection', async (socket) => {
   });
 
   socket.on('close', () => {
-    wsClients.delete(socket);
+    coordinator.wsClients.delete(socket);
   });
 
   socket.on('error', (error) => {
     console.error('WebSocket client error:', error);
   });
 });
-//
-//const pool = new Pool({
-//  connectionString: `postgresql://${process.env.DB_USER}:${encodeURIComponent(process.env.DB_PASSWORD)}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
-//});
-
+app.get('/api/coordinators', (req, res) => {
+  res.json({
+    defaultCoordinatorId,
+    coordinators: getCoordinatorOptions(),
+  });
+});
 
 app.get('/api/offers/recent', async (req, res) => {
   try {
+    const coordinator = requireCoordinator(req, res);
+    if (!coordinator) {
+      return;
+    }
     const limit = parseLimit(req.query.limit, RECENT_OFFERS_DEFAULT_LIMIT, RECENT_OFFERS_MAX_LIMIT);
     const offset = parseOffset(req.query.offset);
-    const rows = await fetchRecentOffers(limit, offset);
+    const rows = await fetchRecentOffers(coordinator.pool, limit, offset);
     res.json({ rows, limit, offset, hasMore: rows.length === limit });
   } catch (error) {
     console.error('Database error:', error);
@@ -496,9 +624,13 @@ app.get('/api/offers/recent', async (req, res) => {
 
 app.get('/api/offers/:offerId/audit', async (req, res) => {
   try {
+    const coordinator = requireCoordinator(req, res);
+    if (!coordinator) {
+      return;
+    }
     const { offerId } = req.params;
     const limit = parseLimit(req.query.limit, AUDIT_DEFAULT_LIMIT, AUDIT_MAX_LIMIT);
-    const rows = await fetchAuditByOfferId(offerId, limit);
+    const rows = await fetchAuditByOfferId(coordinator.pool, offerId, limit);
     res.json({ rows });
   } catch (error) {
     console.error('Database error:', error);
@@ -509,6 +641,10 @@ app.get('/api/offers/:offerId/audit', async (req, res) => {
 
 app.post('/api/offers-data', async (req, res) => {
   try {
+    const coordinator = requireCoordinator(req, res);
+    if (!coordinator) {
+      return;
+    }
     const { groupBy, page = 0, startDate = null, endDate = null } = req.body;
 
     // Validate groupBy parameter
@@ -838,14 +974,14 @@ app.post('/api/offers-data', async (req, res) => {
     `;
 
     const [groupedResult, groupedCountResult, totalsResult, weekdaySuccessResult, weekdayVolumeResult, categoryDistributionResult, clientVersionDistributionResult, currencyResult] = await Promise.all([
-      pool.query(groupedQuery, pagingParams),
-      pool.query(groupedCountQuery),
-      pool.query(totalsQuery),
-      pool.query(weekdaySuccessQuery),
-      pool.query(weekdayVolumeQuery),
-      pool.query(categoryDistributionQuery, pagingParams),
-      pool.query(clientVersionDistributionQuery, pagingParams),
-      pool.query(currencyQuery)
+      coordinator.pool.query(groupedQuery, pagingParams),
+      coordinator.pool.query(groupedCountQuery),
+      coordinator.pool.query(totalsQuery),
+      coordinator.pool.query(weekdaySuccessQuery),
+      coordinator.pool.query(weekdayVolumeQuery),
+      coordinator.pool.query(categoryDistributionQuery, pagingParams),
+      coordinator.pool.query(clientVersionDistributionQuery, pagingParams),
+      coordinator.pool.query(currencyQuery)
     ]);
 
     const totalPeriods = groupedCountResult.rows[0]?.total_periods || 0;
@@ -885,5 +1021,6 @@ server.listen(PORT, '0.0.0.0', async () => {
   console.log(`- API endpoints: /api/*`);
   console.log(`- WebSocket: ws://0.0.0.0:${PORT}/ws/offers`);
   console.log(`- Frontend served from: ${path.join(__dirname, 'frontend/build')}`);
-  await startRealtimeListener();
+  console.log(`- Coordinators: ${getCoordinatorOptions().map((item) => `${item.id} (${item.label})`).join(', ')}`);
+  await Promise.all(Array.from(coordinators.values()).map((coordinator) => startRealtimeListener(coordinator)));
 });
