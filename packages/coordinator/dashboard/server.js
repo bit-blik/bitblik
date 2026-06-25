@@ -36,6 +36,7 @@ const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
   const database = stripQuotes(rawConfig.database ?? rawConfig.dbName ?? rawConfig.DB_NAME);
   const user = stripQuotes(rawConfig.user ?? rawConfig.dbUser ?? rawConfig.DB_USER);
   const password = stripQuotes(rawConfig.password ?? rawConfig.dbPassword ?? rawConfig.DB_PASSWORD);
+  const iconUrl = stripQuotes(rawConfig.iconUrl ?? rawConfig.iconURL ?? rawConfig.icon);
   const fallbackId = database || `coordinator-${index + 1}`;
   const id = sanitizeCoordinatorId(rawConfig.id ?? rawConfig.name ?? fallbackId);
   const label = stripQuotes(rawConfig.label ?? rawConfig.name ?? database ?? id);
@@ -52,6 +53,7 @@ const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
     database,
     user,
     password,
+    iconUrl: iconUrl || null,
   };
 };
 
@@ -202,7 +204,7 @@ const isValidDateStr = (value) => {
 };
 
 const getCoordinatorOptions = () =>
-  coordinatorConfigs.map(({ id, label }) => ({ id, label }));
+  coordinatorConfigs.map(({ id, label, iconUrl }) => ({ id, label, iconUrl }));
 
 const resolveCoordinator = (requestedId) => {
   const coordinatorId = sanitizeCoordinatorId(requestedId) || defaultCoordinatorId;

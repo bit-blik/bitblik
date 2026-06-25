@@ -63,52 +63,59 @@ const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorChange, 
 
   return (
     <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(96vw,56rem)]">
-      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 px-3 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-1">
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 px-2 py-1.5 flex items-center justify-between gap-1 sm:px-3 sm:py-2 sm:gap-2">
+        <div className="flex gap-1 min-w-0">
           <Link
             to="/"
-            className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
               location.pathname === '/'
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <BarChart3 size={16} />
+            <BarChart3 size={14} className="sm:h-4 sm:w-4" />
             Analytics
           </Link>
           <Link
             to="/offers"
-            className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
               location.pathname === '/offers'
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <List size={16} />
+            <List size={14} className="sm:h-4 sm:w-4" />
             Offers
           </Link>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Coordinator
-          </span>
-          <div className="bg-white/90 backdrop-blur-sm rounded-full border border-gray-200 px-1.5 py-1 flex gap-1">
+        <div className="flex items-center min-w-0">
+          <div className="bg-white/90 backdrop-blur-sm rounded-full border border-gray-200 px-1 py-0.5 flex gap-1 min-w-0 sm:px-1.5 sm:py-1">
             {loading && (
-              <span className="px-3 py-2 text-sm font-medium text-gray-500">Loading...</span>
+              <span className="px-2 py-1.5 text-xs font-medium text-gray-500 sm:px-3 sm:py-2 sm:text-sm">Loading...</span>
             )}
             {!loading && coordinators.map((coordinator) => (
               <button
                 key={coordinator.id}
                 type="button"
                 onClick={() => onCoordinatorChange(coordinator.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`max-w-[7.25rem] truncate px-2.5 py-1.5 rounded-full text-xs font-medium transition-all sm:max-w-none sm:px-4 sm:py-2 sm:text-sm ${
                   selectedCoordinatorId === coordinator.id
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
+                title={coordinator.label}
               >
-                {coordinator.label}
+                <span className="flex items-center gap-1.5 min-w-0">
+                  {coordinator.iconUrl && (
+                    <img
+                      src={coordinator.iconUrl}
+                      alt=""
+                      className="h-4 w-4 rounded-full object-cover flex-shrink-0"
+                    />
+                  )}
+                  <span className="truncate">{coordinator.label}</span>
+                </span>
               </button>
             ))}
           </div>
@@ -136,6 +143,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
   // Optional custom date-range filter (YYYY-MM-DD). Both set together or null.
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [showDateFilters, setShowDateFilters] = useState(false);
   const [pagination, setPagination] = useState(null);
   // Currency is detected from the offers returned by the API and drives both
   // fiat formatting and the BTC rate source below. Defaults to PLN.
@@ -367,6 +375,24 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
     return `${formatPagerDate(data[0].date)} - ${formatPagerDate(data[data.length - 1].date)}`;
   };
 
+  const formatCompactPeriodRange = () => {
+    if (!data.length) return 'No data';
+    const formatCompactDate = (value) => {
+      const date = new Date(`${value}T00:00:00`);
+      return new Intl.DateTimeFormat('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC',
+      }).format(date);
+    };
+    return `${formatCompactDate(data[0].date)} - ${formatCompactDate(data[data.length - 1].date)}`;
+  };
+
+  const hasPartialDateRange = Boolean(startDate || endDate);
+  const hasActiveDateRange = Boolean(startDate && endDate);
+  const metricValueClass = 'text-[clamp(0.8rem,4vw,1.5rem)] sm:text-2xl font-extrabold leading-tight tracking-tight';
+  const metricUnitClass = 'text-[clamp(0.7rem,2.8vw,0.875rem)] sm:text-sm font-medium';
+
   // Convert sats to the active fiat currency using the fetched rate
   const satsToFiat = (sats) => {
     if (!btcFiatRate || !sats) return 0;
@@ -427,45 +453,46 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
   const contentLoadingClass = refreshing ? 'opacity-60 transition-opacity duration-200' : 'opacity-100 transition-opacity duration-200';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 px-6 pb-6 pt-2 sm:px-6 sm:pb-6 sm:pt-3">
       <div className="max-w-7xl mx-auto">
         {/* Ultra-Compact Single-Line Header */}
         <div className="mb-4 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg blur-2xl opacity-10"></div>
           <div className="relative backdrop-blur-sm bg-white/80 rounded-lg shadow-lg border border-white/20 px-4 py-3">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
               {/* Title - Ultra Compact */}
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <TrendingUp size={18} className="text-blue-600 flex-shrink-0" />
-                <h1 className="text-lg font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent whitespace-nowrap">
+                <h1 className="text-lg font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent sm:whitespace-nowrap">
                   Offers Analytics
                 </h1>
+                <div className="flex items-center justify-center bg-amber-50 rounded px-2 py-1 border border-amber-200 sm:px-2.5 sm:py-1.5">
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1.5">
+                      <Bitcoin size={14} className="text-amber-600 flex-shrink-0" />
+                      <span className="text-xs font-semibold text-amber-700 whitespace-nowrap">
+                        {rateLoading ? 'Loading...' : rateError ? 'Error' : formatCurrency(btcFiatRate)}
+                      </span>
+                    </div>
+                    {!rateLoading && !rateError && lastRateFetchTime && (
+                      <span className="text-[9px] text-amber-500/70 leading-none mt-0.5">
+                        {formatRateTime(lastRateFetchTime)}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
               
               {/* Flexible Spacer */}
-              <div className="flex-1"></div>
-              
-              {/* BTC Rate - Inline */}
-              <div className="flex flex-col items-center bg-amber-50 rounded px-2.5 py-1.5 border border-amber-200">
-                <div className="flex items-center gap-1.5">
-                  <Bitcoin size={14} className="text-amber-600 flex-shrink-0" />
-                  <span className="text-xs font-semibold text-amber-700 whitespace-nowrap">
-                    {rateLoading ? 'Loading...' : rateError ? 'Error' : formatCurrency(btcFiatRate)}
-                  </span>
-                </div>
-                {!rateLoading && !rateError && lastRateFetchTime && (
-                  <span className="text-[9px] text-amber-500/70 leading-none mt-0.5">
-                    {formatRateTime(lastRateFetchTime)}
-                  </span>
-                )}
-              </div>
-              
-              {/* Separator */}
-              <div className="h-6 w-px bg-gray-300"></div>
-              
-              {/* Period Selector - Compact Pills */}
-                <div className="flex items-center gap-1.5 bg-blue-50 rounded px-2.5 py-1.5 border border-blue-200">
-                  <Calendar size={14} className="text-blue-600 flex-shrink-0" />
+              <div className="hidden lg:block flex-1"></div>
+
+              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:justify-end lg:overflow-visible lg:pb-0">
+                {/* Separator */}
+                <div className="hidden lg:block h-6 w-px bg-gray-300"></div>
+                
+                {/* Period Selector - Compact Pills */}
+                <div className="flex flex-shrink-0 items-center justify-center gap-1 bg-blue-50 rounded px-2 py-1 border border-blue-200 sm:justify-start sm:gap-1.5 sm:px-2.5 sm:py-1.5">
+                  <Calendar size={14} className="hidden text-blue-600 flex-shrink-0 sm:block" />
                   {['daily', 'weekly', 'monthly'].map((period) => (
                     <button
                       key={period}
@@ -473,96 +500,127 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                         setGroupBy(period);
                         setPage(0);
                       }}
-                      className={`px-2.5 py-1 rounded text-xs font-bold uppercase transition-all ${
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all sm:px-2.5 sm:py-1 sm:text-xs ${
                         groupBy === period
                           ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
-                        : 'bg-white text-gray-600 hover:bg-gray-100'
+                          : 'bg-white text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {period[0]}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="hidden lg:block h-6 w-px bg-gray-300"></div>
+
+                <div className="flex flex-shrink-0 items-center gap-2 sm:flex-none sm:justify-start">
+                  {/* Pager - hidden while a custom date range is active */}
+                  {!hasActiveDateRange && (
+                    <div className="flex flex-shrink-0 items-center gap-1 bg-slate-50 rounded px-1.5 py-1 border border-slate-200 sm:min-w-[260px] sm:flex-none sm:gap-1.5 sm:px-2 sm:py-1.5">
+                      <button
+                        onClick={() => setPage((current) => current + 1)}
+                        disabled={!pagination?.hasOlder || loading || refreshing}
+                        className="p-0.5 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed sm:p-1"
+                        aria-label="Older period"
+                      >
+                        <ChevronLeft size={14} />
+                      </button>
+                      <span className="flex-1 truncate text-[10px] font-semibold text-slate-700 text-center min-w-0 px-0.5 sm:px-1 sm:text-[11px]">
+                        <span className="sm:hidden">{formatCompactPeriodRange()}</span>
+                        <span className="hidden sm:inline">{formatPeriodRange()}</span>
+                      </span>
+                      <button
+                        onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                        disabled={!pagination?.hasNewer || loading || refreshing}
+                        className="p-0.5 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed sm:p-1"
+                        aria-label="Newer period"
+                      >
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowDateFilters((current) => !current)}
+                    className={`flex flex-shrink-0 items-center gap-1 rounded px-2 py-1 border transition-colors sm:gap-1.5 sm:px-2.5 sm:py-1.5 ${
+                      hasPartialDateRange || showDateFilters
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
+                    aria-label="Toggle date range filter"
+                    aria-expanded={showDateFilters}
                   >
-                    {period[0]}
-                  </button>
-                ))}
-              </div>
-
-              <div className="h-6 w-px bg-gray-300"></div>
-
-              {/* Pager - hidden while a custom date range is active */}
-              {!(startDate && endDate) && (
-                <div className="flex items-center gap-1.5 bg-slate-50 rounded px-2 py-1.5 border border-slate-200">
-                  <button
-                    onClick={() => setPage((current) => current + 1)}
-                    disabled={!pagination?.hasOlder || loading || refreshing}
-                    className="p-1 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                    aria-label="Older period"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <span className="text-[11px] font-semibold text-slate-700 min-w-[128px] text-center">
-                    {formatPeriodRange()}
-                  </span>
-                  <button
-                    onClick={() => setPage((current) => Math.max(current - 1, 0))}
-                    disabled={!pagination?.hasNewer || loading || refreshing}
-                    className="p-1 rounded bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                    aria-label="Newer period"
-                  >
-                    <ChevronRight size={14} />
+                    <Calendar size={14} className="flex-shrink-0" />
+                    {hasActiveDateRange && !showDateFilters && (
+                      <span className="hidden text-[11px] font-semibold whitespace-nowrap sm:inline">
+                        Filter on
+                      </span>
+                    )}
                   </button>
                 </div>
-              )}
 
-              <div className="h-6 w-px bg-gray-300"></div>
-
-              {/* Custom date-range filter (by days). Filters all charts + totals. */}
-              <div className="flex items-center gap-1.5 bg-emerald-50 rounded px-2.5 py-1.5 border border-emerald-200">
-                <Calendar size={14} className="text-emerald-600 flex-shrink-0" />
-                <input
-                  type="date"
-                  lang="en-GB"
-                  value={startDate}
-                  max={endDate || undefined}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    setPage(0);
-                  }}
-                  className="text-[11px] font-semibold text-emerald-800 bg-white rounded px-1.5 py-0.5 border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                  aria-label="Start date"
-                />
-                <span className="text-[11px] font-semibold text-emerald-600">→</span>
-                <input
-                  type="date"
-                  lang="en-GB"
-                  value={endDate}
-                  min={startDate || undefined}
-                  onChange={(e) => {
-                    setEndDate(e.target.value);
-                    setPage(0);
-                  }}
-                  className="text-[11px] font-semibold text-emerald-800 bg-white rounded px-1.5 py-0.5 border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                  aria-label="End date"
-                />
-                {(startDate || endDate) && (
-                  <button
-                    onClick={() => {
-                      setStartDate('');
-                      setEndDate('');
-                      setPage(0);
-                    }}
-                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 px-1"
-                    aria-label="Clear date range"
-                  >
-                    ✕
-                  </button>
+                {refreshing && (
+                  <>
+                    <div className="hidden lg:block h-6 w-px bg-gray-300"></div>
+                    <div className="hidden sm:block text-[11px] font-semibold text-blue-600 whitespace-nowrap text-center sm:text-left">
+                      Updating...
+                    </div>
+                  </>
                 )}
               </div>
 
-              {refreshing && (
-                <>
-                  <div className="h-6 w-px bg-gray-300"></div>
-                  <div className="text-[11px] font-semibold text-blue-600 whitespace-nowrap">
-                    Updating...
+              {showDateFilters && (
+                <div className="flex justify-end">
+                  <div className="flex min-w-0 flex-wrap items-center justify-center gap-1 bg-emerald-50 rounded px-2 py-1 border border-emerald-200 sm:justify-start sm:gap-1.5 sm:px-2.5 sm:py-1.5">
+                    <input
+                      type="date"
+                      lang="en-GB"
+                      value={startDate}
+                      max={endDate || undefined}
+                      onChange={(e) => {
+                        setStartDate(e.target.value);
+                        setPage(0);
+                      }}
+                      className="min-w-0 text-[10px] font-semibold text-emerald-800 bg-white rounded px-1 py-0.5 border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-400 sm:px-1.5 sm:text-[11px]"
+                      aria-label="Start date"
+                    />
+                    <span className="text-[10px] font-semibold text-emerald-600 sm:text-[11px]">→</span>
+                    <input
+                      type="date"
+                      lang="en-GB"
+                      value={endDate}
+                      min={startDate || undefined}
+                      onChange={(e) => {
+                        setEndDate(e.target.value);
+                        setPage(0);
+                      }}
+                      className="min-w-0 text-[10px] font-semibold text-emerald-800 bg-white rounded px-1 py-0.5 border border-emerald-200 focus:outline-none focus:ring-1 focus:ring-emerald-400 sm:px-1.5 sm:text-[11px]"
+                      aria-label="End date"
+                    />
+                    {hasPartialDateRange && (
+                      <button
+                        onClick={() => {
+                          setStartDate('');
+                          setEndDate('');
+                          setPage(0);
+                        }}
+                        className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 px-1 sm:text-[11px]"
+                        aria-label="Clear date range"
+                      >
+                        Clear
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowDateFilters(false)}
+                      className="text-[10px] font-bold text-gray-500 hover:text-gray-700 px-1 sm:text-[11px]"
+                      aria-label="Close date range filter"
+                    >
+                      Done
+                    </button>
                   </div>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -594,10 +652,10 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                         </span>
                       </div>
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-2xl font-extrabold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent truncate leading-tight">
+                        <p className={`${metricValueClass} bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent whitespace-nowrap`}>
                           {formatNumber(stats.totalVolumeSats)}
                         </p>
-                        <span className="text-sm font-medium text-green-600">sats</span>
+                        <span className={`${metricUnitClass} hidden text-green-600 sm:inline`}>sats</span>
                       </div>
                     </div>
                   </div>
@@ -623,10 +681,10 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                         )}
                       </div>
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate leading-tight">
+                        <p className={`${metricValueClass} bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent whitespace-nowrap`}>
                           {formatNumber(stats.totalProfitSats)}
                         </p>
-                        <span className="text-sm font-medium text-blue-600">sats</span>
+                        <span className={`${metricUnitClass} hidden text-blue-600 sm:inline`}>sats</span>
                       </div>
                     </div>
                   </div>
@@ -644,7 +702,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-purple-800 uppercase tracking-wide mb-1">Success Rate</p>
-                      <p className="text-2xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      <p className={`${metricValueClass} bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent`}>
                         {stats.avgSuccess?.toFixed(1)}%
                       </p>
                     </div>
@@ -663,7 +721,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-orange-800 uppercase tracking-wide mb-1">Success/Failed</p>
-                      <p className="text-2xl font-extrabold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                      <p className={`${metricValueClass} bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent`}>
                         {formatNumber(stats.totalSuccess)}/{formatNumber(stats.totalFailed)}
                       </p>
                     </div>
@@ -682,7 +740,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-cyan-800 uppercase tracking-wide mb-1">Time to Accept</p>
-                      <p className="text-2xl font-extrabold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+                      <p className={`${metricValueClass} bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent`}>
                         {formatTime(stats.avgTimeToAccept)}
                       </p>
                     </div>
@@ -701,7 +759,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-teal-800 uppercase tracking-wide mb-1">Time to Payment</p>
-                      <p className="text-2xl font-extrabold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
+                      <p className={`${metricValueClass} bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent`}>
                         {formatTime(stats.avgTimeToFullPayment)}
                       </p>
                     </div>
@@ -721,10 +779,10 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-rose-800 uppercase tracking-wide mb-1">Avg Taker Fees</p>
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-2xl font-extrabold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent truncate leading-tight">
+                        <p className={`${metricValueClass} bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent whitespace-nowrap`}>
                           {formatNumber(stats.avgTakerInvoiceFees)}
                         </p>
-                        <span className="text-sm font-medium text-rose-600">sats</span>
+                        <span className={`${metricUnitClass} hidden text-rose-600 sm:inline`}>sats</span>
                       </div>
                     </div>
                   </div>
@@ -742,7 +800,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-violet-800 uppercase tracking-wide mb-1">Fees % of Amount</p>
-                      <p className="text-2xl font-extrabold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+                      <p className={`${metricValueClass} bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent`}>
                         {stats.takerFeesPercentage?.toFixed(2)}%
                       </p>
                     </div>
@@ -1186,7 +1244,7 @@ const App = () => {
         onCoordinatorChange={handleCoordinatorChange}
         loading={coordinatorLoading}
       />
-      <div className="pt-28 sm:pt-24">
+      <div className="pt-16 sm:pt-20">
         <Routes>
           <Route path="/" element={<AnalyticsDashboard key={selectedCoordinatorId} selectedCoordinatorId={selectedCoordinatorId} />} />
           <Route path="/offers" element={<OffersPage key={selectedCoordinatorId} selectedCoordinatorId={selectedCoordinatorId} />} />

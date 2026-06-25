@@ -370,7 +370,7 @@ const OffersPage = ({ selectedCoordinatorId }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 px-6 pb-6 pt-2 sm:px-6 sm:pb-6 sm:pt-3">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6 relative">
