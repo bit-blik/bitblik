@@ -89,22 +89,30 @@ const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorChange, 
           </Link>
         </div>
 
-        <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Coordinator
-          <select
-            value={selectedCoordinatorId}
-            onChange={onCoordinatorChange}
-            disabled={loading || coordinators.length === 0}
-            className="min-w-44 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium normal-case tracking-normal text-gray-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-gray-100"
-          >
-            {loading && <option value="">Loading...</option>}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Coordinator
+          </span>
+          <div className="bg-white/90 backdrop-blur-sm rounded-full border border-gray-200 px-1.5 py-1 flex gap-1">
+            {loading && (
+              <span className="px-3 py-2 text-sm font-medium text-gray-500">Loading...</span>
+            )}
             {!loading && coordinators.map((coordinator) => (
-              <option key={coordinator.id} value={coordinator.id}>
+              <button
+                key={coordinator.id}
+                type="button"
+                onClick={() => onCoordinatorChange(coordinator.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedCoordinatorId === coordinator.id
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
                 {coordinator.label}
-              </option>
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+        </div>
       </div>
     </nav>
   );
@@ -1130,8 +1138,7 @@ const App = () => {
     };
   }, []);
 
-  const handleCoordinatorChange = (event) => {
-    const nextCoordinatorId = event.target.value;
+  const handleCoordinatorChange = (nextCoordinatorId) => {
     window.localStorage.setItem(COORDINATOR_STORAGE_KEY, nextCoordinatorId);
     startTransition(() => {
       setSelectedCoordinatorId(nextCoordinatorId);
