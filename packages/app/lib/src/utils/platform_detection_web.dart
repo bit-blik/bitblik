@@ -2,14 +2,19 @@ import 'dart:html';
 
 /// Web-specific implementation for platform detection using user agent
 
-bool isAndroidUserAgent() {
+String currentPlatformSlug() {
   final userAgent = window.navigator.userAgent?.toLowerCase() ?? '';
-  return userAgent.contains('android');
+  if (userAgent.contains('iphone') ||
+      userAgent.contains('ipad') ||
+      userAgent.contains('ipod')) {
+    return 'web-ios';
+  }
+  if (userAgent.contains('android')) {
+    return 'web-android';
+  }
+  return 'web';
 }
 
-bool isIOSUserAgent() {
-  final userAgent = window.navigator.userAgent?.toLowerCase() ?? '';
-  return userAgent.contains('iphone') ||
-      userAgent.contains('ipad') ||
-      userAgent.contains('ipod');
-}
+bool isAndroidUserAgent() => currentPlatformSlug() == 'web-android';
+
+bool isIOSUserAgent() => currentPlatformSlug() == 'web-ios';

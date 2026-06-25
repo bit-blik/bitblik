@@ -45,9 +45,10 @@ class BitblikRpcClient {
   final String subscriptionName;
 
   /// Client identifier stamped onto every outgoing request as
-  /// `NostrRequest.client` (e.g. `app/0.8.0`, `cli/0.1.0`). The coordinator
-  /// records this so it knows which client build issued each request. A
-  /// per-request `client` (rarely set) takes precedence over this default.
+  /// `NostrRequest.client` (e.g. `app-bitblik-android/0.8.0`,
+  /// `cli-bitway-linux/0.1.0`). The coordinator records this so it knows which
+  /// client build issued each request. A per-request `client` (rarely set)
+  /// takes precedence over this default.
   final String? clientId;
 
   BitblikRpcClient({

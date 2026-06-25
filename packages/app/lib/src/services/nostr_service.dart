@@ -12,6 +12,7 @@ import 'package:bitblik_core/core.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ndk_flutter/repositories/cashu_seed_store.dart';
 import '../config/build_flavor.dart';
+import '../utils/platform_detection.dart';
 import 'coordinator_prefs_store.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
@@ -266,15 +267,18 @@ class NostrService {
 
     // Brand is the BUILT flavor (buildAppName, set before runApp from the
     // flavor entrypoint / appFlavor / appId), not the user's runtime
-    // payment-system preference. e.g. 'app-bitblik/0.8.0', 'app-bitway/0.8.0'.
+    // payment-system preference. e.g.
+    // 'app-bitblik-android/0.8.0', 'app-bitway-web-ios/0.8.0'.
     final brand = buildAppName.toLowerCase();
-    String clientId = 'app-$brand';
+    final platform = PlatformDetection.platformSlug;
+    String version;
     try {
-      final pkgInfo = await PackageInfo.fromPlatform();
-      clientId = 'app-$brand/${pkgInfo.version}';
+      version = (await PackageInfo.fromPlatform()).version;
     } catch (e) {
       Logger.log.w(() => '⚠️ Could not resolve app version for clientId: $e');
+      version = 'unknown';
     }
+    final clientId = 'app-$brand-$platform/$version';
 
     _rpcClient = BitblikRpcClient(
       ndk: _ndk!,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:bip340/bip340.dart' as bip340;
 import 'package:bitblik_core/core.dart';
@@ -64,13 +65,14 @@ class BitblikProtocolClient {
       publicKey: bip340.getPublicKey(privateKey),
     );
 
+    final brand = paymentSystem.brandName.toLowerCase();
     _rpc = BitblikRpcClient(
       ndk: _ndk,
       signer: _signer,
       relays: relays,
       timeout: timeout,
       subscriptionName: 'cli-client-responses',
-      clientId: 'cli/$kCliVersion',
+      clientId: 'cli-$brand-${_platformSlug()}/$kCliVersion',
     );
     await _rpc.start();
 
@@ -283,4 +285,14 @@ class BitblikProtocolClient {
     await _rpc.stop();
     await _ndk.destroy();
   }
+}
+
+String _platformSlug() {
+  if (Platform.isLinux) return 'linux';
+  if (Platform.isMacOS) return 'macos';
+  if (Platform.isWindows) return 'windows';
+  if (Platform.isAndroid) return 'android';
+  if (Platform.isIOS) return 'ios';
+  if (Platform.isFuchsia) return 'fuchsia';
+  return 'unknown';
 }

@@ -6,9 +6,11 @@ class NostrRequest {
   final Map<String, dynamic> params;
   final String? id;
 
-  /// Identifies the client that issued the request, as `<app|cli>/<version>`
-  /// (e.g. `app/0.8.0`, `cli/0.1.0`). Set centrally by [BitblikRpcClient] so the
-  /// coordinator can attribute requests to a client build. Optional for
+  /// Identifies the client that issued the request, as
+  /// `app-<brand>-<platform>/<version>` or `cli-<brand>-<platform>/<version>`
+  /// (e.g. `app-bitblik-android/0.8.0`, `app-bitway-web-ios/0.8.0`,
+  /// `cli-bitblik-linux/0.1.0`). Set centrally by [BitblikRpcClient] so the
+  /// coordinator can attribute requests to a client build + OS. Optional for
   /// backward compatibility with older clients that don't send it.
   final String? client;
 

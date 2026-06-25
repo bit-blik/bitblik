@@ -31,7 +31,6 @@ const List<String> kDiscoveryRelays = [
   'wss://nos.lol',
   'wss://nostr.mom',
   'wss://relay.damus.io',
-  'wss://offchain.pub',
   'wss://user.kindpag.es',
 ];
 

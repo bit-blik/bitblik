@@ -7,6 +7,13 @@ import 'platform_detection_stub.dart'
 
 /// Utility class for platform detection, especially for web environments
 class PlatformDetection {
+  /// Short, stable identifier for the running platform, used in the RPC
+  /// `client` field so the coordinator can attribute requests to a build+OS.
+  ///
+  /// Native: `android`, `ios`, `linux`, `macos`, `windows`, `fuchsia`.
+  /// Web: `web-ios`, `web-android`, `web` (desktop/other).
+  static String get platformSlug => currentPlatformSlug();
+
   /// Checks if the current platform is a web browser running on Android
   static bool get isWebAndroid {
     if (!kIsWeb) {
