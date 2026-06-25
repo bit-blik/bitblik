@@ -554,7 +554,7 @@ class NostrService {
     final request = await ProtocolCodec.decryptRequest(event, privateKey);
     final id = request.id;
     AppLogger.info(
-      '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} params=${request.params.values.toList()..sort()}',
+        '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} params=${request.params.values.map((v) => v.toString()).toList()..sort()}',
     );
     if (id == null) {
       await _sendErrorResponse(
