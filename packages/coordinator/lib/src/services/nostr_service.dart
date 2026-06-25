@@ -554,7 +554,7 @@ class NostrService {
     final request = await ProtocolCodec.decryptRequest(event, privateKey);
     final id = request.id;
     AppLogger.info(
-      'Received RPC method=${request.method} id=${id ?? '-'} from=${_shortKey(event.pubKey)} params=${request.params.keys.toList()..sort()}',
+      '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} params=${request.params.values.toList()..sort()}',
     );
     if (id == null) {
       await _sendErrorResponse(
