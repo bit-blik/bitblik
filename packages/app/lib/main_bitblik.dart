@@ -1502,20 +1502,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     );
   }
 
-  /// Get the color for a relay connection state
-  Color _getStateColor(RelayConnectionState state) {
-    switch (state) {
-      case RelayConnectionState.connected:
-        return Colors.green;
-      case RelayConnectionState.connecting:
-        return Colors.blue;
-      case RelayConnectionState.reconnecting:
-        return Colors.orange;
-      case RelayConnectionState.disconnected:
-        return Colors.red;
-    }
-  }
-
   Widget _buildRelayConnectivityIndicator() {
     final coordinatorRelays = ref.watch(coordinatorRelaysInUseProvider);
     final raw = ref.watch(relayConnectivityProvider);
@@ -1544,16 +1530,10 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
       );
     }
 
-    // Show only the relays used to reach enabled coordinators (excludes NWC and
-    // discovery-only relays).
-    final relays = <String, RelayStatus>{
-      for (final e in raw.entries)
-        if (coordinatorRelays.contains(normalizeRelayUrl(e.key)))
-          e.key: e.value,
-    };
-
-    if (relays.isEmpty) {
-      // Coordinator relays known but NDK hasn't connected yet → loading.
+    // Coordinator relays known but NDK hasn't reported any of them yet → loading.
+    final hasAnyInPool = raw.entries
+        .any((e) => coordinatorRelays.contains(normalizeRelayUrl(e.key)));
+    if (!hasAnyInPool) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: SizedBox(
@@ -1564,83 +1544,13 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
       );
     }
 
-    final connectedCount = relays.values.where((r) => r.isConnected).length;
-    final totalCount = relays.length;
-    final allConnected = connectedCount == totalCount;
-    final someConnected = connectedCount > 0;
-
-    // Determine overall icon color based on connectivity
-    final Color overallColor;
-    if (allConnected) {
-      overallColor = Colors.green;
-    } else if (someConnected) {
-      overallColor = Colors.orange;
-    } else {
-      overallColor = Colors.red;
-    }
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap:
-          () => showRelayStatusOverlay(
-            context,
-            coordinatorRelays,
-            title: Translations.of(context).relays.coordinatorRelays,
-            onReconnect:
-                () =>
-                    ref
-                        .read(apiServiceProvider)
-                        .ndk
-                        ?.connectivity
-                        .tryReconnect(),
-          ),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Show individual state indicators for each relay
-              ...relays.entries.map((e) {
-                final stateColor = _getStateColor(e.value.state);
-                final isConnecting =
-                    e.value.state == RelayConnectionState.connecting ||
-                    e.value.state == RelayConnectionState.reconnecting;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 1.0),
-                  child:
-                      isConnecting
-                          ? SizedBox(
-                            width: 8,
-                            height: 8,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 1.5,
-                              color: stateColor,
-                            ),
-                          )
-                          : Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: stateColor,
-                            ),
-                          ),
-                );
-              }),
-              const SizedBox(width: 4),
-              Text(
-                '$connectedCount/$totalCount',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: overallColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    // Dots, count, and the tap → status overlay are all handled by RelayDots,
+    // which caps the visible dots so the AppBar doesn't crowd out other actions.
+    return RelayDots(
+      relays: coordinatorRelays,
+      size: 8,
+      showCount: true,
+      overlayTitle: Translations.of(context).relays.coordinatorRelays,
     );
   }
 

@@ -21,6 +21,11 @@ class RelayDots extends ConsumerWidget {
   /// Title for the default tap overlay. Defaults to the generic "Relays".
   final String? overlayTitle;
 
+  /// Maximum number of individual dots to render. When the relay count exceeds
+  /// this, the row collapses to a single aggregate dot (colored by the overall
+  /// connection state) so the indicator keeps a bounded width in crowded bars.
+  final int maxDots;
+
   const RelayDots({
     super.key,
     required this.relays,
@@ -28,6 +33,7 @@ class RelayDots extends ConsumerWidget {
     this.size = 8,
     this.showCount = false,
     this.overlayTitle,
+    this.maxDots = 7,
   });
 
   static Color colorFor(RelayConnectionState? state) {
@@ -44,6 +50,17 @@ class RelayDots extends ConsumerWidget {
     }
   }
 
+  /// Aggregate color for a set of statuses: green when all connected, orange
+  /// when some connected, red otherwise.
+  static Color overallColorFor(Iterable<RelayStatus> statuses) {
+    final list = statuses.toList();
+    if (list.isEmpty) return Colors.red;
+    final connected = list.where((s) => s.isConnected).length;
+    if (connected == list.length) return Colors.green;
+    if (connected > 0) return Colors.orange;
+    return Colors.red;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final conn = ref.watch(relayConnectivityProvider);
@@ -58,42 +75,62 @@ class RelayDots extends ConsumerWidget {
           RelayStatus(url: relay, state: RelayConnectionState.disconnected);
     }
 
+    final statusList = statuses.values.toList();
+    final overallColor = overallColorFor(statusList);
+    final showIndividual = statusList.length <= maxDots;
+
     final dots = <Widget>[];
-    for (final status in statuses.values) {
-      final color = colorFor(status.state);
-      final isConnecting = status.state == RelayConnectionState.connecting ||
-          status.state == RelayConnectionState.reconnecting;
+    if (showIndividual) {
+      for (final status in statusList) {
+        final color = colorFor(status.state);
+        final isConnecting = status.state == RelayConnectionState.connecting ||
+            status.state == RelayConnectionState.reconnecting;
+        dots.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 1.0),
+            child: isConnecting
+                ? SizedBox(
+                    width: size,
+                    height: size,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      color: color,
+                    ),
+                  )
+                : Container(
+                    width: size,
+                    height: size,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: color,
+                    ),
+                  ),
+          ),
+        );
+      }
+    } else {
+      // Too many relays → single aggregate dot so the bar width stays bounded.
+      // The count text (when shown) and the tap overlay still carry full detail.
       dots.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 1.0),
-          child: isConnecting
-              ? SizedBox(
-                  width: size,
-                  height: size,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 1.5,
-                    color: color,
-                  ),
-                )
-              : Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: color,
-                  ),
-                ),
+        Container(
+          width: size + 2,
+          height: size + 2,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: overallColor),
         ),
       );
     }
 
     if (showCount) {
-      final connected = statuses.values.where((s) => s.isConnected).length;
+      final connected = statusList.where((s) => s.isConnected).length;
       dots.add(const SizedBox(width: 4));
       dots.add(
         Text(
-          '$connected/${statuses.length}',
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+          '$connected/${statusList.length}',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: overallColor,
+          ),
         ),
       );
     }
