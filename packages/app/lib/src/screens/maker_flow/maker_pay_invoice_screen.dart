@@ -10,7 +10,6 @@ import 'package:url_launcher/url_launcher.dart'; // For launching URLs/Intents
 import 'package:android_intent_plus/android_intent.dart'; // For Android Intents
 import 'package:android_intent_plus/flag.dart'; // Import for flags enum
 import '../../providers/providers.dart'; // Import providers
-import '../../config/build_flavor.dart' show buildQrLogoAsset;
 import 'package:bitblik_core/core.dart'; // Import Offer model for status enum comparison
 import 'package:ndk/domain_layer/entities/wallet/wallet.dart';
 import 'package:ndk/domain_layer/entities/wallet/providers/nwc/nwc_wallet.dart';
@@ -78,6 +77,11 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
   bool _hasSendingWallet = false;
   bool _isCancelling = false;
   StreamSubscription<List<Wallet>>? _walletsSubscription;
+
+  String get _qrLogoAsset {
+    final method = ref.read(selectedPaymentSystemProvider);
+    return method.id == 'mbway' ? 'assets/bitway-icon.png' : 'assets/logo2.png';
+  }
 
   Future<void> _handleCancelPressed() async {
     final t = Translations.of(context);
@@ -1288,7 +1292,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                         data: holdInvoice.toUpperCase(),
                         errorCorrectLevel: QrErrorCorrectLevel.M,
                         decoration: PrettyQrDecoration(
-                          quietZone: PrettyQrQuietZone.standart,
+                          quietZone: PrettyQrQuietZone.standard,
                           background: Colors.white,
                           shape: const PrettyQrSmoothSymbol(
                             color: Colors.black,
@@ -1296,7 +1300,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                           ),
                           image: PrettyQrDecorationImage(
                             scale: 0.3,
-                            image: AssetImage(buildQrLogoAsset),
+                            image: AssetImage(_qrLogoAsset),
                           ),
                         ),
                       ),
