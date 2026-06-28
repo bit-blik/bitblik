@@ -848,13 +848,47 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        effectiveCode,
-                        style: const TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 6,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              effectiveCode,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 42,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 6,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            tooltip: 'Copy code',
+                            icon: const Icon(Icons.copy, size: 24),
+                            onPressed:
+                                effectiveCode.isEmpty
+                                    ? null
+                                    : () async {
+                                      await Clipboard.setData(
+                                        ClipboardData(text: effectiveCode),
+                                      );
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            t.system.blik.copied(
+                                              code: _method.codeLabel,
+                                            ),
+                                          ),
+                                          duration: const Duration(seconds: 1),
+                                        ),
+                                      );
+                                    },
+                          ),
+                        ],
                       ),
                     ],
                   ),
