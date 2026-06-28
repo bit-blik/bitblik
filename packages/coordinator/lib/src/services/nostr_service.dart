@@ -554,7 +554,7 @@ class NostrService {
     final request = await ProtocolCodec.decryptRequest(event, privateKey);
     final id = request.id;
     AppLogger.info(
-        '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} params=${request.params.values.map((v) => v.toString()).toList()..sort()}',
+      '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} params=${request.params.values.map((v) => v.toString()).toList()..sort()}',
     );
     if (id == null) {
       await _sendErrorResponse(
@@ -606,6 +606,7 @@ class NostrService {
           final premiumPercent =
               (params['premium_percent'] as num?)?.toDouble() ?? 0;
           final fiatCurrency = params['fiat_currency'] as String?;
+          final blikCode = params['blik_code'] as String?;
 
           return await _coordinatorService.initiateOfferFiat(
             fiatAmount: fiatAmount,
@@ -613,6 +614,7 @@ class NostrService {
             fiatCurrency: fiatCurrency,
             category: category,
             premiumPercent: premiumPercent,
+            blikCode: blikCode,
             clientVersion: clientVersion,
           );
 
@@ -642,10 +644,9 @@ class NostrService {
           final taker_invoice = params['taker_invoice'] as String?;
 
           if (offerId == null ||
-              blikCode == null ||
               (takerLightningAddress == null && taker_invoice == null)) {
             throw Exception(
-                'Missing required parameters: offer_id, blik_code, taker_lightning_address');
+                'Missing required parameters: offer_id and taker invoice/lightning address');
           }
 
           final success = await _coordinatorService.submitBlikCode(offerId,

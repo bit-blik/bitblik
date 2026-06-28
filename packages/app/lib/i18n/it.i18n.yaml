@@ -938,6 +938,7 @@ settings:
     countries:
       PL: Polonia
       PT: Portogallo
+      CH: Svizzera
 
 notificationSettings:
   title: Notifiche

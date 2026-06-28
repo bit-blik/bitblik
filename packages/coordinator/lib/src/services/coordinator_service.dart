@@ -909,6 +909,7 @@ class CoordinatorService {
     String? fiatCurrency,
     OfferCategory? category,
     double premiumPercent = 0,
+    String? blikCode,
     String? clientVersion,
   }) async {
     // Resolve the currency: client-supplied, else this coordinator's method
@@ -925,6 +926,14 @@ class CoordinatorService {
         !_paymentSystem.supportedCategories.contains(category)) {
       throw Exception(
           'Unsupported category ${category.name} for ${_paymentSystem.id}');
+    }
+    if (_paymentSystem.makerProvidesCodeAtOfferCreation) {
+      final normalizedCode = blikCode?.trim() ?? '';
+      if (!_paymentSystem.isValidCode(normalizedCode)) {
+        throw Exception(
+            'Invalid ${_paymentSystem.codeLabel} code. Expected exactly ${_paymentSystem.codeLength} digits.');
+      }
+      blikCode = normalizedCode;
     }
     // Clamp premium to what this coordinator allows.
     final premium = premiumPercent.clamp(0, _maxPremiumPercent).toDouble();
@@ -994,6 +1003,7 @@ class CoordinatorService {
       'preimageHex': preimageHex,
       'fiatAmount': fiatAmount,
       'fiatCurrency': fiatCurrency,
+      'blikCode': blikCode,
       'category': category?.name,
       'premiumPercent': premium,
       'clientVersion': clientVersion,
@@ -1113,6 +1123,7 @@ class CoordinatorService {
         holdInvoicePaymentHash: paymentHashHex,
         holdInvoicePreimage: pendingData['preimageHex'],
         status: OfferStatus.funded,
+        blikCode: pendingData['blikCode'] as String?,
         fiatAmount: pendingData['fiatAmount'],
         fiatCurrency: pendingData['fiatCurrency'],
         category: () {
@@ -2007,10 +2018,10 @@ class CoordinatorService {
     }
   }
 
-  Future<bool> submitBlikCode(String offerId, String takerId, String blikCode,
+  Future<bool> submitBlikCode(String offerId, String takerId, String? blikCode,
       String? takerLightningAddress, String? takerInvoice) async {
     AppLogger.info(
-        'Submitting BLIK $blikCode for offer $offerId by taker $takerId',
+        'Submitting ${_paymentSystem.codeLabel} flow for offer $offerId by taker $takerId',
         offerId: offerId);
     final offer = await _dbService.getOfferById(offerId);
     if (offer == null ||
@@ -2018,6 +2029,16 @@ class CoordinatorService {
         offer.takerPubkey != takerId) {
       AppLogger.info(
           'Offer $offerId not found, not reserved, or taker mismatch.',
+          offerId: offerId);
+      return false;
+    }
+
+    final effectiveCode = _paymentSystem.makerProvidesCodeAtOfferCreation
+        ? offer.blikCode
+        : blikCode?.trim();
+    if (effectiveCode == null || !_paymentSystem.isValidCode(effectiveCode)) {
+      AppLogger.info(
+          'Offer $offerId has no valid ${_paymentSystem.codeLabel} code available.',
           offerId: offerId);
       return false;
     }
@@ -2068,7 +2089,7 @@ class CoordinatorService {
     // longer belongs to this taker.
     final success = await _dbService.updateOfferStatusIfCurrentStatus(
         offerId, OfferStatus.blikReceived, [OfferStatus.reserved],
-        blikCode: blikCode,
+        blikCode: effectiveCode,
         takerInvoice: takerInvoice,
         takerLightningAddress: takerLightningAddress,
         blikReceivedAt: blikReceivedTime,

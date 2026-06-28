@@ -6,6 +6,7 @@
 	<array>
 		<string>applinks:bitblik.app</string>
 		<string>applinks:bitway.me</string>
+		<string>applinks:bittwint.app</string>
 	</array>
 </dict>
 </plist>

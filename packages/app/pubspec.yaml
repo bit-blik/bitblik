@@ -75,6 +75,7 @@ dependencies:
   connectivity_plus: ^7.0.0
   mobile_scanner: ^7.1.4
   flutter_local_notifications: ^20.1.0
+  google_mlkit_text_recognition: ^0.15.0
 
 dependency_overrides:
   ndk:
@@ -145,6 +146,8 @@ flutter:
     - assets/sell-blik.png
     - assets/bitway.png
     - assets/bitway-icon.png
+    - assets/bittwint.png
+    - assets/bittwint-icon.png
     - assets/apk.png
     - assets/zapstore.png
     - assets/telegram.png

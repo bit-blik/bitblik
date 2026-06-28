@@ -56,6 +56,7 @@ class ApiServiceNostr {
     OfferCategory? category,
     String? coordinatorPubkey,
     double premiumPercent = 0,
+    String? blikCode,
   }) async {
     try {
       if (coordinatorPubkey == null) {
@@ -67,6 +68,7 @@ class ApiServiceNostr {
         category: category,
         coordinatorPubkey: coordinatorPubkey,
         premiumPercent: premiumPercent,
+        blikCode: blikCode,
       );
     } catch (e) {
       Logger.log.e(() => 'Error calling initiateOfferFiat: $e');
@@ -142,8 +144,9 @@ class ApiServiceNostr {
   }
 
   Future<double> getBtcRate(String currency) async {
-    final cachedRate =
-        MemoryCache.instance.read<double>(_btcRateCacheKey(currency));
+    final cachedRate = MemoryCache.instance.read<double>(
+      _btcRateCacheKey(currency),
+    );
     if (cachedRate != null) {
       return cachedRate;
     }
@@ -295,7 +298,7 @@ class ApiServiceNostr {
   Future<void> submitBlikCode({
     required String offerId,
     required String takerId,
-    required String blikCode,
+    String? blikCode,
     required String takerInvoice,
     required String coordinatorPubkey,
   }) async {

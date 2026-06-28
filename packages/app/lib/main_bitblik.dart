@@ -36,6 +36,7 @@ import 'i18n/gen/strings.g.dart'; // Import Slang from new path
 import 'package:bitblik_core/core.dart'; // Needed for OfferStatus enum
 import 'src/config/build_flavor.dart';
 import 'src/providers/providers.dart';
+import 'src/settings/app_preferences.dart';
 import 'src/services/notification_service.dart';
 import 'src/screens/coordinator_details_screen.dart';
 import 'src/screens/coordinator_management_screen.dart';
@@ -305,6 +306,7 @@ Future<void> main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await initBuildFlavor();
+  await AppPreferencesStore.initializeSelectedPaymentSystemForFirstLaunch();
   await NotificationService().init();
   String? localeString = await asyncPrefs.getString('app_locale');
   if (localeString != null) {
@@ -385,9 +387,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
             await registry.discover();
             await registry.probeAllEnabled();
           } catch (e) {
-            Logger.log.e(
-              () => 'Initial coordinator discovery failed: $e',
-            );
+            Logger.log.e(() => 'Initial coordinator discovery failed: $e');
           }
         }());
 
@@ -510,9 +510,9 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       await _handleNwcDeepLink(uri.toString());
       return;
     }
-    // Handle bitblik:// scheme
-    if (scheme == 'bitblik') {
-      // Check if it's an NWC connection string passed via bitblik scheme
+    // Handle app-specific deep-link schemes (bitblik://, bitway://, bittwint://)
+    if (scheme == 'bitblik' || scheme == 'bitway' || scheme == 'bittwint') {
+      // Check if it's an NWC connection string passed via the branded scheme
       final path = uri.host + uri.path;
       if (path.startsWith('value') ||
           uri.queryParameters.containsKey('value')) {
@@ -528,19 +528,20 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         return;
       }
 
-      // Handle other bitblik:// paths
+      // Handle other app:// paths
       if (path == 'offers' || path == '/offers') {
         router.push('/offers');
         return;
       }
     }
 
-    // Handle https deep links (bitblik.app / bitway.me)
+    // Handle https deep links (bitblik.app / bitway.me / bittwint.app)
     if (scheme == 'https') {
       // Support both path-based (/offers/:id) and fragment-based (#/offers) links.
-      final segments = uri.pathSegments.isNotEmpty
-          ? uri.pathSegments
-          : Uri.parse(uri.fragment).pathSegments;
+      final segments =
+          uri.pathSegments.isNotEmpty
+              ? uri.pathSegments
+              : Uri.parse(uri.fragment).pathSegments;
       if (segments.isNotEmpty && segments.first == 'offers') {
         if (segments.length >= 2 && segments[1].isNotEmpty) {
           router.push('/offers/${segments[1]}');
@@ -618,7 +619,9 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     final t = Translations.of(context);
 
     return MaterialApp.router(
-      title: t.app.title(app: ref.watch(selectedPaymentSystemProvider).brandName),
+      title: t.app.title(
+        app: ref.watch(selectedPaymentSystemProvider).brandName,
+      ),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -630,12 +633,13 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         ...GlobalMaterialLocalizations.delegates,
         ndk_l10n.AppLocalizations.delegate,
       ],
-      builder: (context, child) => Stack(
-        children: [
-          if (child != null) child,
-          const _CoordinatorColdStartOverlay(),
-        ],
-      ),
+      builder:
+          (context, child) => Stack(
+            children: [
+              if (child != null) child,
+              const _CoordinatorColdStartOverlay(),
+            ],
+          ),
       routerConfig: router,
     );
   }
@@ -653,8 +657,7 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
     final t = Translations.of(context);
     final method = ref.watch(selectedPaymentSystemProvider);
     final brand = method.brandName;
-    final showInfoPanel =
-        state.origin == CoordinatorColdStartOrigin.onboarding;
+    final showInfoPanel = state.origin == CoordinatorColdStartOrigin.onboarding;
 
     void dismiss() {
       ref
@@ -682,147 +685,144 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            t.coordinator.coldStart.title,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              t.coordinator.coldStart.title,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: dismiss,
+                            visualDensity: VisualDensity.compact,
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        t.coordinator.coldStart.body(app: brand),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      LinearProgressIndicator(value: _progressFor(state.phase)),
+                      const SizedBox(height: 10),
+                      Text(
+                        _phaseLabel(t, state.phase),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _ColdStartStatChip(
+                            label: t.coordinator.coldStart.discovered,
+                            value: '${state.discoveredCount}',
+                          ),
+                          _ColdStartStatChip(
+                            label: t.coordinator.coldStart.candidates,
+                            value: '${state.candidateCount}',
+                          ),
+                          _ColdStartStatChip(
+                            label: t.coordinator.coldStart.enabled,
+                            value: '${state.enabledCount}',
+                          ),
+                        ],
+                      ),
+                      if (state.records.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          t.coordinator.coldStart.recordsTitle,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 220),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: state.records.length,
+                            separatorBuilder:
+                                (_, index) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final record = state.records[index];
+                              return ListTile(
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(
+                                  record.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  _recordLabel(t, record),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                trailing: _recordIcon(record),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                      if (showInfoPanel) ...[
+                        const SizedBox(height: 16),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAF3FF),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFB8D4FF)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 1),
+                                  child: Icon(
+                                    Icons.info_outline,
+                                    size: 18,
+                                    color: Color(0xFF1E5BB8),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    t.coordinator.coldStart.settingsHint,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall?.copyWith(
+                                      color: const Color(0xFF184A96),
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                        IconButton(
+                      ],
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: FilledButton(
                           onPressed: dismiss,
-                          visualDensity: VisualDensity.compact,
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      t.coordinator.coldStart.body(app: brand),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    LinearProgressIndicator(value: _progressFor(state.phase)),
-                    const SizedBox(height: 10),
-                    Text(
-                      _phaseLabel(t, state.phase),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _ColdStartStatChip(
-                          label: t.coordinator.coldStart.discovered,
-                          value: '${state.discoveredCount}',
-                        ),
-                        _ColdStartStatChip(
-                          label: t.coordinator.coldStart.candidates,
-                          value: '${state.candidateCount}',
-                        ),
-                        _ColdStartStatChip(
-                          label: t.coordinator.coldStart.enabled,
-                          value: '${state.enabledCount}',
-                        ),
-                      ],
-                    ),
-                    if (state.records.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        t.coordinator.coldStart.recordsTitle,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 220),
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          itemCount: state.records.length,
-                          separatorBuilder: (_, index) =>
-                              const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final record = state.records[index];
-                            return ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(
-                                record.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text(
-                                _recordLabel(t, record),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              trailing: _recordIcon(record),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                    if (showInfoPanel) ...[
-                      const SizedBox(height: 16),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAF3FF),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFB8D4FF)),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.only(top: 1),
-                                child: Icon(
-                                  Icons.info_outline,
-                                  size: 18,
-                                  color: Color(0xFF1E5BB8),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  t.coordinator.coldStart.settingsHint,
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: const Color(0xFF184A96),
-                                        height: 1.35,
-                                      ),
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            state.phase == CoordinatorColdStartPhase.completed
+                                ? t.coordinator.coldStart.ok
+                                : t.common.buttons.close,
                           ),
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: FilledButton(
-                        onPressed: dismiss,
-                        child: Text(
-                          state.phase == CoordinatorColdStartPhase.completed
-                              ? t.coordinator.coldStart.ok
-                              : t.common.buttons.close,
-                        ),
-                      ),
-                    ),
                     ],
                   ),
                 ),
@@ -886,8 +886,11 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
       return const Icon(Icons.check_circle, color: Colors.green, size: 18);
     }
     if (record.responsive == false) {
-      return const Icon(Icons.remove_circle_outline,
-          color: Colors.redAccent, size: 18);
+      return const Icon(
+        Icons.remove_circle_outline,
+        color: Colors.redAccent,
+        size: 18,
+      );
     }
     if (record.candidate) {
       return const SizedBox(
@@ -919,16 +922,16 @@ class _ColdStartStatChip extends StatelessWidget {
         children: [
           Text(
             value,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: 6),
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey[700],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
           ),
         ],
       ),
@@ -1180,7 +1183,14 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    t.altstore.step2Title(app: ref.watch(selectedPaymentSystemProvider).brandName),
+                                    t.altstore.step2Title(
+                                      app:
+                                          ref
+                                              .watch(
+                                                selectedPaymentSystemProvider,
+                                              )
+                                              .brandName,
+                                    ),
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
@@ -1191,9 +1201,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                     width: double.infinity,
                                     child: Link(
                                       uri: Uri.parse(
-                                        buildDefaultPaymentSystemId == 'mbway'
-                                            ? 'altstore://source?url=https://bitway.me/.well-known/sources/alt-store-source.json'
-                                            : 'altstore://source?url=https://bitblik.app/.well-known/sources/alt-store-source.json',
+                                        'altstore://source?url=$buildAltStoreSourceUrl',
                                       ),
                                       // builder:
                                       //     (context, followLink) => InkWell(
@@ -1244,7 +1252,14 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                               ),
                                             ),
                                             child: Text(
-                                              t.altstore.step2Button(app: ref.watch(selectedPaymentSystemProvider).brandName),
+                                              t.altstore.step2Button(
+                                                app:
+                                                    ref
+                                                        .watch(
+                                                          selectedPaymentSystemProvider,
+                                                        )
+                                                        .brandName,
+                                              ),
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
@@ -1269,10 +1284,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                       onTap: () {
                                         Clipboard.setData(
                                           ClipboardData(
-                                            text: buildDefaultPaymentSystemId ==
-                                                    'mbway'
-                                                ? 'https://bitway.me/.well-known/sources/alt-store-source.json'
-                                                : 'https://bitblik.app/.well-known/sources/alt-store-source.json',
+                                            text: buildAltStoreSourceUrl,
                                           ),
                                         );
                                         ScaffoldMessenger.of(
@@ -1295,9 +1307,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                           ),
                                         ),
                                         child: Text(
-                                          buildDefaultPaymentSystemId == 'mbway'
-                                              ? 'bitway.me/.well-known/sources/alt-store-source.json'
-                                              : 'bitblik.app/.well-known/sources/alt-store-source.json',
+                                          '$buildPrimaryHost/.well-known/sources/alt-store-source.json',
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontFamily: 'monospace',
@@ -1413,7 +1423,11 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
               ),
               ListTile(
                 leading: const Icon(Icons.flash_on, color: Color(0xFFFF0000)),
-                title: Text(t.landing.actions.payBlik(code: ref.read(selectedPaymentSystemProvider).codeLabel)),
+                title: Text(
+                  t.landing.actions.payBlik(
+                    code: ref.read(selectedPaymentSystemProvider).codeLabel,
+                  ),
+                ),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -1531,8 +1545,9 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     }
 
     // Coordinator relays known but NDK hasn't reported any of them yet → loading.
-    final hasAnyInPool = raw.entries
-        .any((e) => coordinatorRelays.contains(normalizeRelayUrl(e.key)));
+    final hasAnyInPool = raw.entries.any(
+      (e) => coordinatorRelays.contains(normalizeRelayUrl(e.key)),
+    );
     if (!hasAnyInPool) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -1583,9 +1598,10 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
             // BLIK → BitBlik logo; MB WAY → bitway logo (shown larger).
             ref.watch(selectedPaymentSystemProvider).logoAsset ??
                 'assets/logo-horizontal.png',
-            height: ref.watch(selectedPaymentSystemProvider).logoAsset != null
-                ? 44
-                : 30,
+            height:
+                ref.watch(selectedPaymentSystemProvider).logoAsset != null
+                    ? 44
+                    : 30,
             fit: BoxFit.contain,
           ),
         ),
@@ -1827,7 +1843,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                 InkWell(
                                   onTap: () async {
                                     final uri = Uri.parse(
-                                      'altstore://source?url=https://bitblik.app/.well-known/sources/alt-store-source.json',
+                                      'altstore://source?url=$buildAltStoreSourceUrl',
                                     );
                                     try {
                                       await launchUrl(
@@ -1874,8 +1890,9 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: Colors.redAccent,
-                                          borderRadius:
-                                              BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: const Text(
                                           'COMING SOON',
@@ -1895,6 +1912,8 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                 uri: Uri.parse(
                                   isMbway
                                       ? 'https://github.com/bit-blik/bitway/releases'
+                                      : buildDefaultPaymentSystemId == 'twint'
+                                      ? 'https://github.com/bit-blik/bittwint/releases'
                                       : 'https://github.com/bit-blik/bitblik/releases',
                                 ),
                                 target: LinkTarget.blank,
@@ -1915,6 +1934,8 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                 uri: Uri.parse(
                                   isMbway
                                       ? 'https://zapstore.dev/apps/me.bitway'
+                                      : buildDefaultPaymentSystemId == 'twint'
+                                      ? 'https://zapstore.dev/apps/app.bittwint'
                                       : 'https://zapstore.dev/apps/app.bitblik',
                                 ),
                                 builder:

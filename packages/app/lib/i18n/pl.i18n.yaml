@@ -939,6 +939,7 @@ settings:
     countries:
       PL: Polska
       PT: Portugalia
+      CH: Szwajcaria
 
 notificationSettings:
   title: Powiadomienia

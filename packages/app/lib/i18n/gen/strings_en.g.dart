@@ -4021,6 +4021,9 @@ class Translations$settings$paymentSystem$countries$en {
 
 	/// en: 'Portugal'
 	String get PT => 'Portugal';
+
+	/// en: 'Switzerland'
+	String get CH => 'Switzerland';
 }
 
 // Path: maker.amountForm.category.options
@@ -4756,6 +4759,7 @@ extension on Translations {
 			'settings.paymentSystem.dialogTitle' => 'Select payment system',
 			'settings.paymentSystem.countries.PL' => 'Poland',
 			'settings.paymentSystem.countries.PT' => 'Portugal',
+			'settings.paymentSystem.countries.CH' => 'Switzerland',
 			'notificationSettings.title' => 'Notifications',
 			'notificationSettings.androidOnly' => 'Background notifications are currently only supported on Android.',
 			'notificationSettings.newOfferAlerts.label' => 'New offer alerts',

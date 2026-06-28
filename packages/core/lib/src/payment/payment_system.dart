@@ -63,6 +63,10 @@ class PaymentSystem {
   /// "confirm in your banking app" prompts are suppressed.
   final bool requiresCodeConfirmation;
 
+  /// Whether the maker provides the payment code upfront when creating the
+  /// offer, instead of the taker generating/submitting one after reservation.
+  final bool makerProvidesCodeAtOfferCreation;
+
   /// Offer categories this method supports. MB WAY ATM payouts only make sense
   /// for cash-out, so it is restricted to [OfferCategory.atm].
   final List<OfferCategory> supportedCategories;
@@ -97,6 +101,7 @@ class PaymentSystem {
     required this.codeLength,
     required this.codeValidityMinutes,
     this.requiresCodeConfirmation = true,
+    this.makerProvidesCodeAtOfferCreation = false,
     required this.supportedCategories,
     required this.atmPresetAmounts,
     required this.atmBanknoteDenominations,
@@ -228,8 +233,28 @@ const PaymentSystem kMbway = PaymentSystem(
   discoveryPubkeyHex: kBitwayPubkeyHex,
 );
 
+/// Switzerland — TWINT. The maker creates a 5-digit payment code upfront and
+/// the taker enters it in the TWINT app after taking the offer.
+const PaymentSystem kTwint = PaymentSystem(
+  id: 'twint',
+  label: 'TWINT',
+  brandName: 'Bittwint',
+  codeName: 'TWINT',
+  country: 'CH',
+  flag: '🇨🇭',
+  logoAsset: 'assets/bittwint.png',
+  currency: 'CHF',
+  currencySymbol: 'CHF',
+  codeLength: 5,
+  codeValidityMinutes: 5,
+  makerProvidesCodeAtOfferCreation: true,
+  supportedCategories: [OfferCategory.shop, OfferCategory.online],
+  atmPresetAmounts: [],
+  atmBanknoteDenominations: [],
+);
+
 /// All supported payment methods. Add a market by appending here.
-const List<PaymentSystem> kPaymentSystems = [kBlik, kMbway];
+const List<PaymentSystem> kPaymentSystems = [kBlik, kMbway, kTwint];
 
 /// Resolve a method by [id]; falls back to [kBlik] for unknown/legacy ids so
 /// older peers keep working.

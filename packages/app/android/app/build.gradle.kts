@@ -116,6 +116,7 @@ android {
     // payment system is deterministic from process start:
     //   flutter build apk --flavor bitblik -t lib/main_bitblik.dart
     //   flutter build apk --flavor bitway -t lib/main_bitway.dart
+    //   flutter build apk --flavor bittwint -t lib/main_bittwint.dart
     flavorDimensions += "system"
     productFlavors {
         create("bitblik") {
@@ -127,6 +128,11 @@ android {
             // Distinct appId; debug build adds `.dev` → me.bitway.dev
             applicationId = "me.bitway"
             resValue("string", "app_name", "bitway")
+        }
+        create("bittwint") {
+            dimension = "system"
+            applicationId = "app.bittwint"
+            resValue("string", "app_name", "bittwint")
         }
     }
 }

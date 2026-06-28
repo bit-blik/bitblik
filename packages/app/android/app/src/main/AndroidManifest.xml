@@ -34,13 +34,16 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="bitblik.app" android:pathPrefix="/" />
                 <data android:scheme="https" android:host="bitway.me" android:pathPrefix="/" />
+                <data android:scheme="https" android:host="bittwint.app" android:pathPrefix="/" />
             </intent-filter>
-            <!-- Deep link for bitblik:// scheme -->
+            <!-- Deep links for app schemes -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="bitblik" />
+                <data android:scheme="bitway" />
+                <data android:scheme="bittwint" />
             </intent-filter>
             <!-- Deep link for nostr+walletconnect:// scheme (NWC) -->
             <intent-filter>

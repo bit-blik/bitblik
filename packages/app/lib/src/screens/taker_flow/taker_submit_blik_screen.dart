@@ -38,12 +38,17 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
   bool _isLoadingDetails = true; // Flag for initial loading
   CoordinatorInfo? _coordinatorInfo; // Added
   int _previousBlikLength = 0; // Track previous length to detect paste
+  Offer? _resolvedOffer;
 
   /// Payment method for the offer being taken, resolved from its currency
   /// (falls back to the app's selected method). Drives the code length.
   PaymentSystem get _method =>
       paymentSystemForCurrency(widget.initialOffer.fiatCurrency) ??
       ref.read(selectedPaymentSystemProvider);
+
+  bool get _makerProvidedCodeFlow => _method.makerProvidesCodeAtOfferCreation;
+
+  Offer get _currentOffer => _resolvedOffer ?? widget.initialOffer;
 
   @override
   void initState() {
@@ -160,6 +165,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
 
       // TODO is this really not necessary? then we don't need to getMyActiveOffer
       // await ref.read(activeOfferProvider.notifier).setActiveOffer(fullOffer);
+      _resolvedOffer = fullOffer;
       Logger.log.i(
         () =>
             "[TakerSubmitBlikScreen] Successfully fetched full offer details.",
@@ -253,7 +259,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     if (mounted) {
       Logger.log.i(() => "[TakerSubmitBlikScreen] BLIK input timer expired.");
       await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
-      _resetToOfferList(t.taker.submitBlik.timeExpired(code: _method.codeLabel));
+      _resetToOfferList(
+        t.taker.submitBlik.timeExpired(code: _method.codeLabel),
+      );
     }
   }
 
@@ -276,8 +284,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
   Future<void> _submitBlik() async {
     _blikInputTimer?.cancel();
 
-    final offer = widget.initialOffer;
-    final blikCode = _blikController.text;
+    final offer = _currentOffer;
+    final blikCode =
+        _makerProvidedCodeFlow ? offer.blikCode : _blikController.text;
     final takerId = ref.read(publicKeyProvider).value;
     final hasReceivingWallet = await ref.read(
       hasReceivingWalletProvider.future,
@@ -297,10 +306,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       _resetToOfferList(t.taker.submitBlik.errors.stateNotValid);
       return;
     }
-    if (!_method.isValidCode(blikCode)) {
-      ref.read(errorProvider.notifier).state =
-          t.taker.submitBlik.validation
-              .invalidFormat(code: _method.codeLabel, digits: _method.codeLength);
+    if (!_makerProvidedCodeFlow && !_method.isValidCode(blikCode ?? '')) {
+      ref.read(errorProvider.notifier).state = t.taker.submitBlik.validation
+          .invalidFormat(code: _method.codeLabel, digits: _method.codeLength);
       _startBlikInputTimer(offer);
       return;
     }
@@ -679,13 +687,22 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
           );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(t.taker.submitBlik.feedback.pasted(code: _method.codeLabel)),
+              content: Text(
+                t.taker.submitBlik.feedback.pasted(code: _method.codeLabel),
+              ),
               duration: const Duration(seconds: 1),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(t.taker.submitBlik.errors.clipboardInvalid(code: _method.codeLabel, digits: _method.codeLength))),
+            SnackBar(
+              content: Text(
+                t.taker.submitBlik.errors.clipboardInvalid(
+                  code: _method.codeLabel,
+                  digits: _method.codeLength,
+                ),
+              ),
+            ),
           );
         }
       }
@@ -750,8 +767,11 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     }
 
     final blikCode = _blikController.text;
-
-    final validBlik = _method.isValidCode(blikCode);
+    final effectiveCode =
+        _makerProvidedCodeFlow
+            ? (activeOffer.blikCode ?? _currentOffer.blikCode ?? '')
+            : blikCode;
+    final validBlik = _method.isValidCode(effectiveCode);
 
     // --- Main UI Build ---
     return Scaffold(
@@ -784,7 +804,11 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                     ),
                     SizedBox(width: 10),
                     Text(
-                      t.taker.submitBlik.instruction(code: _method.codeLabel),
+                      _makerProvidedCodeFlow
+                          ? 'Open ${_method.codeLabel}, enter this code, then continue before the timer ends.'
+                          : t.taker.submitBlik.instruction(
+                            code: _method.codeLabel,
+                          ),
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
@@ -808,65 +832,89 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
               else
                 const SizedBox(height: 200),
               const SizedBox(height: 20),
-              // Large BLIK Input Field
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                width: double.infinity,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final codeLength = _method.codeLength;
-                    // Reserve space for the paste suffix icon (~56px).
-                    final available =
-                        (constraints.maxWidth - 56.0).clamp(0.0, double.infinity);
-                    // Budget per character (glyph advance + trailing
-                    // letter-spacing). Approx glyph advance = fontSize*0.6 and
-                    // letterSpacing = fontSize*0.3, so perChar = fontSize*0.9.
-                    final perChar = codeLength > 0 ? available / codeLength : 0.0;
-                    final fontSize = (perChar / 0.9).clamp(16.0, 46.0);
-                    final letterSpacing = fontSize * 0.3;
-                    return TextField(
-                      controller: _blikController,
-                      focusNode: _blikFocusNode,
-                      autofocus: true,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: false,
+              if (_makerProvidedCodeFlow)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        '${_method.codeLabel} code',
+                        style: TextStyle(color: Colors.grey[700]),
                       ),
-                      // keyboardType: TextInputType.number,
-                      maxLength: codeLength,
-                      inputFormatters: [BlikCodeInputFormatter(codeLength)],
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: letterSpacing,
-                      ),
-
-                      decoration: InputDecoration(
-                        hintText: t.taker.submitBlik.title(
-                          code: _method.codeLabel,
-                          digits: codeLength,
-                        ),
-                        hintStyle: TextStyle(
-                          fontSize: (fontSize * 0.6).clamp(14.0, 28.0),
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 2,
-                          color: Colors.grey[400],
-                        ),
-                        border: InputBorder.none,
-                        counterText: "",
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.content_paste, size: 32),
-                          color: Colors.grey,
-                          onPressed: _pasteFromClipboard,
+                      const SizedBox(height: 8),
+                      Text(
+                        effectiveCode,
+                        style: const TextStyle(
+                          fontSize: 42,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 6,
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  width: double.infinity,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final codeLength = _method.codeLength;
+                      final available = (constraints.maxWidth - 56.0).clamp(
+                        0.0,
+                        double.infinity,
+                      );
+                      final perChar =
+                          codeLength > 0 ? available / codeLength : 0.0;
+                      final fontSize = (perChar / 0.9).clamp(16.0, 46.0);
+                      final letterSpacing = fontSize * 0.3;
+                      return TextField(
+                        controller: _blikController,
+                        focusNode: _blikFocusNode,
+                        autofocus: true,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: false,
+                        ),
+                        maxLength: codeLength,
+                        inputFormatters: [BlikCodeInputFormatter(codeLength)],
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: letterSpacing,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: t.taker.submitBlik.title(
+                            code: _method.codeLabel,
+                            digits: codeLength,
+                          ),
+                          hintStyle: TextStyle(
+                            fontSize: (fontSize * 0.6).clamp(14.0, 28.0),
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 2,
+                            color: Colors.grey[400],
+                          ),
+                          border: InputBorder.none,
+                          counterText: "",
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.content_paste, size: 32),
+                            color: Colors.grey,
+                            onPressed: _pasteFromClipboard,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
 
               if (errorMessage != null) ...[
                 const SizedBox(height: 16),
@@ -893,7 +941,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildDetailRow(
-                      t.taker.submitBlik.details.requestedAmount(code: _method.codeLabel),
+                      t.taker.submitBlik.details.requestedAmount(
+                        code: _method.codeLabel,
+                      ),
                       '${formatDouble(activeOffer.fiatAmount)} ${activeOffer.fiatCurrency}',
                     ),
                     // const SizedBox(height: 12),
@@ -977,7 +1027,11 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                             const SizedBox(width: 8),
                           ],
                           Text(
-                            t.taker.submitBlik.actions.submit(code: _method.codeLabel),
+                            _makerProvidedCodeFlow
+                                ? 'I entered the code'
+                                : t.taker.submitBlik.actions.submit(
+                                  code: _method.codeLabel,
+                                ),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

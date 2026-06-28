@@ -38,11 +38,13 @@ class NostrService {
   StreamSubscription<List<CoordinatorRecord>>? _coordinatorRegistryChangesSub;
   Set<String> _offerSubscriptionAuthors = const {};
   bool _offerSubscriptionRequested = false;
+
   /// `#y` platform tag the offers subscription filters on. Follows the active
   /// payment system so each market only receives its own offers (and the
   /// new-offer notifications derived from them). Defaults to the historical
   /// `Bitblik` value until [startOfferSubscription] sets it.
   String _offerPlatformTag = 'Bitblik';
+
   /// The platform tag the currently-live subscription was built with, so a tag
   /// change (payment-system switch) re-fires the REQ even if authors are equal.
   String? _liveOfferSubscriptionPlatformTag;
@@ -141,7 +143,8 @@ class NostrService {
   /// Relays to subscribe/query across all enabled coordinators, falling back to
   /// discovery relays when none are known yet.
   List<String> _enabledCoordinatorRelays() {
-    final relays = _coordinatorRegistry?.relaysForEnabled().toList() ?? const [];
+    final relays =
+        _coordinatorRegistry?.relaysForEnabled().toList() ?? const [];
     return relays.isEmpty ? _relayUrls : relays;
   }
 
@@ -199,9 +202,7 @@ class NostrService {
         eventVerifier: eventVerifier,
         bootstrapRelays: _relayUrls,
         logLevel: kDebugMode ? LogLevel.debug : LogLevel.warning,
-        cashuUserSeedphrase: CashuUserSeedphrase(
-          seedPhrase: cashuSeedPhrase,
-        ),
+        cashuUserSeedphrase: CashuUserSeedphrase(seedPhrase: cashuSeedPhrase),
       ),
     );
 
@@ -255,8 +256,7 @@ class NostrService {
 
   /// Subscribe to response events from coordinator (via [BitblikRpcClient]).
   Future<void> _subscribeToResponses() async {
-    if (_keyService.publicKeyHex == null ||
-        _keyService.privateKeyHex == null) {
+    if (_keyService.publicKeyHex == null || _keyService.privateKeyHex == null) {
       throw Exception('KeyService not initialized');
     }
 
@@ -355,6 +355,7 @@ class NostrService {
     OfferCategory? category,
     required String coordinatorPubkey,
     double premiumPercent = 0,
+    String? blikCode,
   }) async {
     final request = NostrRequest(
       method: kRpcInitiateOffer,
@@ -363,6 +364,7 @@ class NostrService {
         'fiat_currency': fiatCurrency,
         if (category != null) 'category': category.name,
         if (premiumPercent > 0) 'premium_percent': premiumPercent,
+        if (blikCode != null && blikCode.isNotEmpty) 'blik_code': blikCode,
       },
     );
 
@@ -546,7 +548,7 @@ class NostrService {
   Future<void> submitBlikCode({
     required String offerId,
     required String takerId,
-    required String blikCode,
+    String? blikCode,
     required String takerInvoice,
     required String coordinatorPubkey,
   }) async {
@@ -554,7 +556,7 @@ class NostrService {
       method: kRpcSubmitBlik,
       params: {
         'offer_id': offerId,
-        'blik_code': blikCode,
+        if (blikCode != null && blikCode.isNotEmpty) 'blik_code': blikCode,
         'taker_invoice': takerInvoice,
       },
     );
@@ -643,7 +645,8 @@ class NostrService {
       });
     } catch (e) {
       Logger.log.e(
-        () => "Error getting offer details from coordinator ${coordinatorPubkey}: $e",
+        () =>
+            "Error getting offer details from coordinator ${coordinatorPubkey}: $e",
       );
       if (strict) rethrow;
       return null;
@@ -651,9 +654,9 @@ class NostrService {
   }
 
   bool _looksLikeUuid(String s) => RegExp(
-        r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-        caseSensitive: false,
-      ).hasMatch(s);
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  ).hasMatch(s);
 
   /// DELETE /offers/{offerId}/cancel
   Future<void> cancelOffer(String offerId, String coordinatorPubkey) async {
@@ -776,11 +779,12 @@ class NostrService {
     }
 
     // Only aggregate coordinators serving the selected payment system.
-    final coordinators = paymentSystemId == null
-        ? coordinatorRegistry.enabled
-        : coordinatorRegistry.enabled
-            .where((c) => c.paymentSystem == paymentSystemId)
-            .toList();
+    final coordinators =
+        paymentSystemId == null
+            ? coordinatorRegistry.enabled
+            : coordinatorRegistry.enabled
+                .where((c) => c.paymentSystem == paymentSystemId)
+                .toList();
     if (coordinators.isEmpty) {
       Logger.log.w(() => "No coordinators enabled, cannot get stats.");
       return _emptyStats();
@@ -860,18 +864,18 @@ class NostrService {
   }
 
   Map<String, dynamic> _emptyStats() => {
-        'total_sats': 0,
-        'total_offers': 0,
-        'offers': <Offer>[],
-        'stats': {
-          for (final window in ['lifetime', 'last_7_days'])
-            window: {
-              'avg_time_reserved_to_created_seconds': null,
-              'avg_time_taker_paid_to_created_seconds': null,
-              'count': 0,
-            },
+    'total_sats': 0,
+    'total_offers': 0,
+    'offers': <Offer>[],
+    'stats': {
+      for (final window in ['lifetime', 'last_7_days'])
+        window: {
+          'avg_time_reserved_to_created_seconds': null,
+          'avg_time_taker_paid_to_created_seconds': null,
+          'count': 0,
         },
-      };
+    },
+  };
 
   /// Paginated fetch of `s=success` [kKindOffer] events for [authors] from
   /// [relays], newer than [since]. Dedupes by addressable coordinate

@@ -80,7 +80,11 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
 
   String get _qrLogoAsset {
     final method = ref.read(selectedPaymentSystemProvider);
-    return method.id == 'mbway' ? 'assets/bitway-icon.png' : 'assets/logo2.png';
+    return switch (method.id) {
+      'mbway' => 'assets/bitway-icon.png',
+      'twint' => 'assets/bittwint-icon.png',
+      _ => 'assets/logo2.png',
+    };
   }
 
   Future<void> _handleCancelPressed() async {

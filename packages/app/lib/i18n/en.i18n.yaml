@@ -956,6 +956,7 @@ settings:
     countries:
       PL: Poland
       PT: Portugal
+      CH: Switzerland
 
 notificationSettings:
   title: Notifications

@@ -3,15 +3,18 @@ import 'package:flutter/services.dart' show appFlavor;
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// `--dart-define=PAYMENT_SYSTEM=mbway` override; empty when not set.
-const String _dartDefinePaymentSystem =
-    String.fromEnvironment('PAYMENT_SYSTEM', defaultValue: '');
+const String _dartDefinePaymentSystem = String.fromEnvironment(
+  'PAYMENT_SYSTEM',
+  defaultValue: '',
+);
 
 /// Default payment system id for a fresh install. Set synchronously before
 /// `runApp` (via the flavor entrypoint or [initBuildFlavor]) so the very first
 /// frame renders the correct brand/logo. The user's saved choice still wins.
 String buildDefaultPaymentSystemId = 'blik';
 
-/// Brand name (BitBlik / BitWay), follows [buildDefaultPaymentSystemId].
+/// Brand name (BitBlik / BitWay / Bittwint), follows
+/// [buildDefaultPaymentSystemId].
 String buildAppName = 'BitBlik';
 
 /// Public icon URL used for the Alby Go NWC connection prompt, per flavor.
@@ -22,7 +25,26 @@ String buildNwcIconUrl = 'https://bitblik.app/assets/assets/logo.png';
 /// shows its own icon, even if the device has a stale saved selection.
 String buildQrLogoAsset = 'assets/logo2.png';
 
+String get buildAppScheme => switch (buildDefaultPaymentSystemId) {
+  'mbway' => 'bitway',
+  'twint' => 'bittwint',
+  _ => 'bitblik',
+};
+
+String get buildPrimaryHost => switch (buildDefaultPaymentSystemId) {
+  'mbway' => 'bitway.me',
+  'twint' => 'bittwint.app',
+  _ => 'bitblik.app',
+};
+
+String get buildAltStoreSourceUrl =>
+    'https://$buildPrimaryHost/.well-known/sources/alt-store-source.json';
+
 bool _forced = false;
+
+/// Whether the selected payment system is pinned by the flavor entrypoint.
+/// Branded builds should not auto-switch markets on first launch.
+bool get isBuildPaymentSystemForced => _forced;
 
 /// Force the payment system synchronously from a flavor entrypoint
 /// (e.g. `lib/main_bitblik.dart` / `lib/main_bitway.dart`). This is the
@@ -35,13 +57,21 @@ void forcePaymentSystem(String id) {
 
 void _apply(String id) {
   buildDefaultPaymentSystemId = id;
-  buildAppName = id == 'mbway' ? 'BitWay' : 'BitBlik';
-  buildNwcIconUrl = id == 'mbway'
-      ? 'https://bitblik.app/assets/assets/bitway-icon.png'
-      : 'https://bitblik.app/assets/assets/logo.png';
-  buildQrLogoAsset = id == 'mbway'
-      ? 'assets/bitway-icon.png'
-      : 'assets/logo2.png';
+  buildAppName = switch (id) {
+    'mbway' => 'BitWay',
+    'twint' => 'Bittwint',
+    _ => 'BitBlik',
+  };
+  buildNwcIconUrl = switch (id) {
+    'mbway' => 'https://bitblik.app/assets/assets/bitway-icon.png',
+    'twint' => 'https://bittwint.app/assets/assets/bittwint-icon.png',
+    _ => 'https://bitblik.app/assets/assets/logo.png',
+  };
+  buildQrLogoAsset = switch (id) {
+    'mbway' => 'assets/bitway-icon.png',
+    'twint' => 'assets/bittwint-icon.png',
+    _ => 'assets/logo2.png',
+  };
 }
 
 /// Fallback resolver for builds that didn't use a flavor entrypoint. Tries the
@@ -65,10 +95,14 @@ Future<void> initBuildFlavor() async {
     id = _dartDefinePaymentSystem;
   } else if (appFlavor == 'bitway' || pkg.contains('bitway')) {
     id = 'mbway';
+  } else if (appFlavor == 'bittwint' || pkg.contains('bittwint')) {
+    id = 'twint';
   } else {
     id = 'blik';
   }
   _apply(id);
-  print('BITFLAVOR resolved=$id appFlavor=$appFlavor pkg=$pkg '
-      'dartDefine="$_dartDefinePaymentSystem"');
+  print(
+    'BITFLAVOR resolved=$id appFlavor=$appFlavor pkg=$pkg '
+    'dartDefine="$_dartDefinePaymentSystem"',
+  );
 }
