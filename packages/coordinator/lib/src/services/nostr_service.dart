@@ -715,7 +715,10 @@ class NostrService {
           if (offer == null) {
             return {};
           }
-          return offer.toRpcJson();
+          final includeBlikCode = _coordinatorService
+                  .paymentSystem.makerProvidesCodeAtOfferCreation &&
+              offer.takerPubkey == userPubkey;
+          return offer.toRpcJson(includeBlikCode: includeBlikCode);
 
         // DEPRECATED: clients (>= local-db-counts change) no longer call this.
         // The per-coordinator "your offers" count is now derived from the
