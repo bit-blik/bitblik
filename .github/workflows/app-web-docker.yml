@@ -32,6 +32,9 @@ jobs:
           - flavor: bitway
             flutter_target: lib/main_bitway.dart
             build_mode: release
+          - flavor: bittwint
+            flutter_target: lib/main_bittwint.dart
+            build_mode: release
 
     steps:
       - uses: actions/checkout@v4
