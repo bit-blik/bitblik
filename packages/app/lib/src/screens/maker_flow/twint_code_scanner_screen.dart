@@ -70,7 +70,7 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
         amount = _extractAmount(ocrText);
       }
 
-      if (code != null) {
+      if (code != null || amount != null) {
         if (!mounted) return;
         Navigator.of(context).pop(TwintScanResult(code: code, amount: amount));
         return;

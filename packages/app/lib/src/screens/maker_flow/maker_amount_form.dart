@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -115,6 +116,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   /// Active payment method chosen by the user; drives the offer currency and
   /// the fiat exchange-rate lookup.
   PaymentSystem get _method => ref.read(selectedPaymentSystemProvider);
+  bool get _usesMakerProvidedCodeFlow =>
+      _method.makerProvidesCodeAtOfferCreation;
+  bool get _makerProvidedFieldsVisible =>
+      !_usesMakerProvidedCodeFlow ||
+      _showMakerProvidedEntryForm ||
+      _fiatController.text.trim().isNotEmpty ||
+      _makerCodeController.text.trim().isNotEmpty;
+  String get _makerCodePlaceholder =>
+      List.filled(_method.codeLength, '0').join();
 
   static const _categoryOnboardingDismissedKey =
       'maker_category_onboarding_dismissed';
@@ -123,9 +133,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   final _fiatController = TextEditingController();
   final _makerCodeController = TextEditingController();
   final _amountFocusNode = FocusNode(); // Add FocusNode for amount input
+  final _makerCodeFocusNode = FocusNode();
   double? _satsEquivalent;
   double? _rate;
   String? _amountErrorText;
+  bool _showMakerProvidedEntryForm = false;
 
   bool _isLoadingInitialData = true;
   String? _coordinatorInfoError;
@@ -169,7 +181,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     // Auto-focus the amount input field when screen is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (mounted && !_usesMakerProvidedCodeFlow) {
         _amountFocusNode.requestFocus();
       }
     });
@@ -182,6 +194,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     _fiatController.dispose();
     _makerCodeController.dispose();
     _amountFocusNode.dispose();
+    _makerCodeFocusNode.dispose();
     super.dispose();
   }
 
@@ -962,6 +975,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
     if (!mounted || result == null) return;
 
+    setState(() {
+      _showMakerProvidedEntryForm = true;
+    });
+
     if (result.code != null && result.code!.isNotEmpty) {
       _makerCodeController.text = result.code!;
     }
@@ -971,6 +988,205 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           .replaceFirst(RegExp(r'\.00$'), '');
       _fiatController.text = amountText;
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_makerCodeController.text.trim().isEmpty) {
+        _makerCodeFocusNode.requestFocus();
+      } else if (_fiatController.text.trim().isEmpty) {
+        _amountFocusNode.requestFocus();
+      } else {
+        FocusScope.of(context).unfocus();
+      }
+    });
+  }
+
+  void _showManualMakerProvidedEntry() {
+    setState(() {
+      _showMakerProvidedEntryForm = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_makerCodeController.text.trim().isEmpty) {
+        _makerCodeFocusNode.requestFocus();
+      } else {
+        _amountFocusNode.requestFocus();
+      }
+    });
+  }
+
+  Widget _buildMakerProvidedScanCard() {
+    final accent = const Color(0xFF0D8C7A);
+    return Container(
+      margin: const EdgeInsets.only(top: 10, bottom: 18),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFFF2FBF9),
+        border: Border.all(color: const Color(0xFFCFEDE7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDDF5F0),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.qr_code_scanner_rounded, color: accent),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Scan ${_method.codeLabel} QR and amount',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Point the camera at the payment screen. The app will prefill the code and, when visible, the amount.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildGradientButton(
+            onPressed: _scanTwintCodeAndAmount,
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.camera_alt_rounded, color: Colors.white),
+                SizedBox(width: 10),
+                Text(
+                  'Scan with camera',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: _showManualMakerProvidedEntry,
+              child: const Text('Enter manually instead'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMakerProvidedCodeField() {
+    final hasValue = _makerCodeController.text.trim().isNotEmpty;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+      padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '${_method.codeLabel} code',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: _scanTwintCodeAndAmount,
+                icon: const Icon(Icons.center_focus_strong, size: 16),
+                label: const Text('Rescan'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey[700],
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final available = constraints.maxWidth.clamp(
+                0.0,
+                double.infinity,
+              );
+              final perChar =
+                  _method.codeLength > 0 ? available / _method.codeLength : 0.0;
+              final fontSize = (perChar / 1.25).clamp(28.0, 52.0);
+              final letterSpacing = (fontSize * 0.22).clamp(4.0, 10.0);
+              return TextField(
+                controller: _makerCodeController,
+                focusNode: _makerCodeFocusNode,
+                keyboardType: TextInputType.number,
+                maxLength: _method.codeLength,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: letterSpacing,
+                  height: 1.1,
+                ),
+                decoration: InputDecoration(
+                  hintText: _makerCodePlaceholder,
+                  hintStyle: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: letterSpacing,
+                    color: Colors.grey[350],
+                    height: 1.1,
+                  ),
+                  border: InputBorder.none,
+                  counterText: '',
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasValue
+                ? 'The taker will see this code and enter it in ${_method.codeLabel}.'
+                : 'Scan to fill this automatically, or type the ${_method.codeLength}-digit code manually.',
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.35,
+              color: Colors.grey[700],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildCategoryOnboardingCard(Translations t) {
@@ -1911,8 +2127,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 //   ),
                 const SizedBox(height: 4),
               ],
+              if (_usesMakerProvidedCodeFlow && !_makerProvidedFieldsVisible)
+                _buildMakerProvidedScanCard()
               // Amount entry: ATM presets (default) or the traditional input.
-              if (_selectedCategory == OfferCategory.atm && !_customAmountMode)
+              else if (_selectedCategory == OfferCategory.atm &&
+                  !_customAmountMode)
                 _buildAtmAmountPresets(t)
               else
                 // Large amount input field
@@ -1962,43 +2181,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     ],
                   ),
                 ),
-              if (_method.makerProvidesCodeAtOfferCreation)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _makerCodeController,
-                              keyboardType: TextInputType.number,
-                              maxLength: _method.codeLength,
-                              decoration: InputDecoration(
-                                labelText:
-                                    '${_method.codeLabel} ${t.maker.amountForm.labels.enterAmount}',
-                                hintText: '12345',
-                                counterText: '',
-                                suffixIcon: IconButton(
-                                  tooltip: 'Scan with camera',
-                                  onPressed: _scanTwintCodeAndAmount,
-                                  icon: const Icon(Icons.qr_code_scanner),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        'Scan the ${_method.codeLabel} QR to prefill the code and amount. You can still correct both fields manually.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              if (_usesMakerProvidedCodeFlow && _makerProvidedFieldsVisible)
+                _buildMakerProvidedCodeField(),
               if (_amountErrorText != null) ...[
                 Text(
                   _amountErrorText!,
