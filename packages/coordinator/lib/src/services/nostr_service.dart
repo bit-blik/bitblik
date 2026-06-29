@@ -578,6 +578,15 @@ class NostrService {
       String method, Map<String, dynamic> params, String userPubkey,
       {String? clientVersion}) async {
     try {
+      // Generic (yaml-driven) flows enforce offer-action RPCs through the flow
+      // engine instead of the hardcoded enum handlers. Query/info RPCs and the
+      // payout-tail RPCs still fall through to the shared handlers below.
+      if (_coordinatorService.isGenericFlow &&
+          _coordinatorService.genericHandlesRpc(method)) {
+        return await _coordinatorService.handleGenericRpc(
+            method, params, userPubkey);
+      }
+
       switch (method) {
         case kRpcGetInfo:
           final info = await _coordinatorService.getCoordinatorInfo();
@@ -953,7 +962,7 @@ class NostrService {
     String document = 'order',
     String bond = "0",
   }) async {
-    final status = _mapOfferStatusToNip69Status(offer.status);
+    final status = _mapRawStatusToNip69Status(offer.statusRaw, offer.status);
     final premiumValue = premium ?? offer.premiumPercent;
     final ps = _coordinatorService.paymentSystem;
     final resolvedPaymentSystems = paymentSystems ?? [ps.label];
@@ -1063,6 +1072,30 @@ class NostrService {
       AppLogger.info('Completed rebroadcasting offers');
     } catch (e) {
       AppLogger.info('Error during rebroadcast of offers: $e');
+    }
+  }
+
+  /// Map a raw status string to a NIP-69 status, covering generic
+  /// (yaml-driven) state names that have no [OfferStatus] value. Falls back to
+  /// the enum mapping when the raw name is a known enum value.
+  String _mapRawStatusToNip69Status(String raw, OfferStatus enumStatus) {
+    if (enumStatus != OfferStatus.unknown) {
+      return _mapOfferStatusToNip69Status(enumStatus);
+    }
+    switch (raw) {
+      case 'funded':
+        return 'pending';
+      case 'taker_paid':
+        return 'success';
+      case 'cancelled':
+      case 'expired':
+        return 'canceled';
+      case 'dispute':
+        return 'dispute';
+      // reserved, twint_charged, expired_twint (retake-able), conflict, and any
+      // other live generic state.
+      default:
+        return 'in-progress';
     }
   }
 

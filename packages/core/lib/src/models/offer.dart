@@ -54,6 +54,16 @@ class Offer {
   final double fiatAmount;
   final String fiatCurrency;
   final OfferStatus status;
+
+  /// Verbatim status string as stored in the DB / received on the wire.
+  ///
+  /// For legacy enum flows this equals `status.name`. For generic
+  /// (yaml-driven) flows it holds the raw flow-state id (e.g. `twint_charged`,
+  /// `expired_twint`) that has no [OfferStatus] value — in that case [status]
+  /// parses to [OfferStatus.unknown] and the generic flow code reads
+  /// [statusRaw] instead. See [[project-dual-flow-engine]].
+  final String statusRaw;
+
   final DateTime createdAt;
   final String makerPubkey;
   final String coordinatorPubkey; // Added coordinator pubkey
@@ -148,6 +158,7 @@ class Offer {
     required this.amountSats,
     required this.makerFees,
     required this.status,
+    String? statusRaw,
     required this.fiatAmount,
     required this.fiatCurrency,
     required this.createdAt,
@@ -175,7 +186,7 @@ class Offer {
     this.premiumPercent = 0,
     this.paymentWalletId,
     this.clientVersion,
-  });
+  }) : statusRaw = statusRaw ?? status.name;
 
   // Factory constructor to create an Offer from JSON data (Map).
   factory Offer.fromJson(Map<String, dynamic> json) {
@@ -252,6 +263,7 @@ class Offer {
           return OfferStatus.unknown;
         }
       }(),
+      statusRaw: safeString(json['status'], OfferStatus.unknown.name),
       createdAt: () {
         final v = json['created_at'];
         if (v is int)
@@ -424,6 +436,7 @@ class Offer {
     int? amountSats,
     int? makerFees, // Renamed parameter
     OfferStatus? status,
+    String? statusRaw,
     DateTime? createdAt,
     String? makerPubkey,
     String? coordinatorPubkey,
@@ -455,6 +468,7 @@ class Offer {
       amountSats: amountSats ?? this.amountSats,
       makerFees: makerFees ?? this.makerFees, // Renamed parameter and field
       status: status ?? this.status,
+      statusRaw: statusRaw ?? (status != null ? status.name : this.statusRaw),
       fiatAmount: fiatAmount,
       fiatCurrency: fiatCurrency,
       createdAt: createdAt ?? this.createdAt,

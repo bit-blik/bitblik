@@ -267,6 +267,88 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
       ) as _i9.Future<List<_i2.Offer>>);
 
   @override
+  _i9.Future<List<_i2.Offer>> getOffersByRawStatus(
+    String? status, {
+    int? limit = 1000,
+    int? offset = 0,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOffersByRawStatus,
+          [status],
+          {
+            #limit: limit,
+            #offset: offset,
+          },
+        ),
+        returnValue: _i9.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+      ) as _i9.Future<List<_i2.Offer>>);
+
+  @override
+  _i9.Future<List<_i2.Offer>> getOffersNotInRawStatuses(
+    List<String>? terminalStatuses, {
+    int? limit = 5000,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOffersNotInRawStatuses,
+          [terminalStatuses],
+          {#limit: limit},
+        ),
+        returnValue: _i9.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+      ) as _i9.Future<List<_i2.Offer>>);
+
+  @override
+  _i9.Future<bool> updateOfferRawStatusIfCurrent(
+    String? id,
+    String? newStatus, {
+    List<String>? expectedCurrentStatuses,
+    String? expectedTakerPubkey,
+    String? takerPubkey,
+    String? code,
+    String? takerInvoice,
+    String? takerLightningAddress,
+    DateTime? reservedAt,
+    DateTime? codeReceivedAt,
+    DateTime? takerChargedAt,
+    DateTime? makerConfirmedAt,
+    DateTime? settledAt,
+    DateTime? takerPaidAt,
+    DateTime? disputeAt,
+    int? takerFees,
+    String? failureReason,
+    bool? clearTakerFields = false,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateOfferRawStatusIfCurrent,
+          [
+            id,
+            newStatus,
+          ],
+          {
+            #expectedCurrentStatuses: expectedCurrentStatuses,
+            #expectedTakerPubkey: expectedTakerPubkey,
+            #takerPubkey: takerPubkey,
+            #code: code,
+            #takerInvoice: takerInvoice,
+            #takerLightningAddress: takerLightningAddress,
+            #reservedAt: reservedAt,
+            #codeReceivedAt: codeReceivedAt,
+            #takerChargedAt: takerChargedAt,
+            #makerConfirmedAt: makerConfirmedAt,
+            #settledAt: settledAt,
+            #takerPaidAt: takerPaidAt,
+            #disputeAt: disputeAt,
+            #takerFees: takerFees,
+            #failureReason: failureReason,
+            #clearTakerFields: clearTakerFields,
+          },
+        ),
+        returnValue: _i9.Future<bool>.value(false),
+      ) as _i9.Future<bool>);
+
+  @override
   _i9.Future<bool> updateTakerInvoice(
     String? id,
     String? takerInvoice,

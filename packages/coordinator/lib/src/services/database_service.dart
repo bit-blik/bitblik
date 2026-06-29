@@ -396,6 +396,143 @@ class DatabaseService {
     return results.map(_mapRowToOffer).toList();
   }
 
+  // ─── Generic (yaml-driven) flow support ─────────────────────────────────
+  // These operate on raw status strings instead of [OfferStatus], for flows
+  // whose states are not enum-bound (see [[project-dual-flow-engine]]). They
+  // are intentionally dumb: the GenericFlowController decides which fields to
+  // set/clear; the DB just applies them.
+
+  Future<List<Offer>> getOffersByRawStatus(String status,
+      {int limit = 1000, int offset = 0}) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final results = await _connection!.query(
+      'SELECT * FROM offers WHERE status = @status ORDER BY created_at DESC LIMIT @limit OFFSET @offset',
+      substitutionValues: {
+        'status': status,
+        'limit': limit,
+        'offset': offset,
+      },
+    );
+    return results.map(_mapRowToOffer).toList();
+  }
+
+  /// All offers whose raw status is NOT one of [terminalStatuses]. Used by the
+  /// generic startup sweep to re-arm timers.
+  Future<List<Offer>> getOffersNotInRawStatuses(List<String> terminalStatuses,
+      {int limit = 5000}) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final results = await _connection!.query(
+      'SELECT * FROM offers WHERE NOT (status = ANY(CAST(@terminals AS TEXT[]))) '
+      'ORDER BY created_at DESC LIMIT @limit',
+      substitutionValues: {'terminals': terminalStatuses, 'limit': limit},
+    );
+    return results.map(_mapRowToOffer).toList();
+  }
+
+  /// Atomic compare-and-set on a raw status string. Applies any provided field
+  /// updates; when [clearTakerFields] is set, clears the taker/code/timestamp
+  /// columns (used by revert-to-open and terminal transitions).
+  Future<bool> updateOfferRawStatusIfCurrent(
+    String id,
+    String newStatus, {
+    List<String>? expectedCurrentStatuses,
+    String? expectedTakerPubkey,
+    String? takerPubkey,
+    String? code,
+    String? takerInvoice,
+    String? takerLightningAddress,
+    DateTime? reservedAt,
+    DateTime? codeReceivedAt,
+    DateTime? takerChargedAt,
+    DateTime? makerConfirmedAt,
+    DateTime? settledAt,
+    DateTime? takerPaidAt,
+    DateTime? disputeAt,
+    int? takerFees,
+    String? failureReason,
+    bool clearTakerFields = false,
+  }) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final now = DateTime.now().toUtc();
+    final params = <String, dynamic>{
+      'id': id,
+      'status': newStatus,
+      'updated_at': now,
+    };
+    final set = <String>['status = @status', 'updated_at = @updated_at'];
+
+    void put(String col, String key, dynamic value) {
+      params[key] = value;
+      set.add('$col = @$key');
+    }
+
+    if (clearTakerFields) {
+      set.addAll([
+        'taker_pubkey = NULL',
+        'reserved_at = NULL',
+        'blik_code = NULL',
+        'taker_lightning_address = NULL',
+        'taker_invoice = NULL',
+        'taker_invoice_fees = NULL',
+        'blik_received_at = NULL',
+        'taker_charged_at = NULL',
+        'dispute_at = NULL',
+        'dispute_escalation_reason = NULL',
+      ]);
+    } else {
+      if (takerPubkey != null) put('taker_pubkey', 'taker_pubkey', takerPubkey);
+      if (code != null) put('blik_code', 'blik_code', code);
+      if (takerInvoice != null) {
+        put('taker_invoice', 'taker_invoice', takerInvoice);
+      }
+      if (takerLightningAddress != null) {
+        put('taker_lightning_address', 'taker_lightning_address',
+            takerLightningAddress);
+      }
+      if (reservedAt != null) {
+        put('reserved_at', 'reserved_at', reservedAt.toUtc());
+      }
+      if (codeReceivedAt != null) {
+        put('blik_received_at', 'blik_received_at', codeReceivedAt.toUtc());
+      }
+      if (takerChargedAt != null) {
+        params['taker_charged_at'] = takerChargedAt.toUtc();
+        set.add(
+            'taker_charged_at = COALESCE(taker_charged_at, @taker_charged_at)');
+      }
+      if (makerConfirmedAt != null) {
+        put('maker_confirmed_at', 'maker_confirmed_at', makerConfirmedAt);
+      }
+      if (settledAt != null) put('settled_at', 'settled_at', settledAt);
+      if (takerPaidAt != null) put('taker_paid_at', 'taker_paid_at', takerPaidAt);
+      if (takerFees != null) put('taker_fees', 'taker_fees', takerFees);
+      if (failureReason != null) {
+        put('taker_payment_failure_reason', 'taker_payment_failure_reason',
+            failureReason);
+      }
+      if (disputeAt != null) {
+        params['dispute_at'] = disputeAt.toUtc();
+        set.add('dispute_at = COALESCE(dispute_at, @dispute_at)');
+      }
+    }
+
+    final where = <String>['id = @id'];
+    if (expectedCurrentStatuses != null && expectedCurrentStatuses.isNotEmpty) {
+      params['expected_current_statuses'] = expectedCurrentStatuses;
+      where.add('status = ANY(CAST(@expected_current_statuses AS TEXT[]))');
+    }
+    if (expectedTakerPubkey != null) {
+      params['expected_taker_pubkey'] = expectedTakerPubkey;
+      where.add('taker_pubkey = @expected_taker_pubkey');
+    }
+
+    final result = await _connection!.query(
+      'UPDATE offers SET ${set.join(', ')} WHERE ${where.join(' AND ')}',
+      substitutionValues: params,
+    );
+    return result.affectedRowCount == 1;
+  }
+
   Future<bool> updateTakerInvoice(String id, String takerInvoice) async {
     if (_connection == null) throw StateError('Database not connected.');
     final now = DateTime.now().toUtc();
@@ -758,7 +895,17 @@ class DatabaseService {
       coordinatorPubkey: map['coordinator_pubkey'] ?? '',
       holdInvoicePaymentHash: map['hold_invoice_payment_hash'],
       holdInvoicePreimage: map['hold_invoice_preimage'],
-      status: OfferStatus.values.byName(map['status']),
+      // Generic (yaml-driven) flows store raw state strings that have no
+      // OfferStatus value; keep the verbatim string in statusRaw and fall back
+      // to the unknown sentinel for the enum view.
+      status: () {
+        try {
+          return OfferStatus.values.byName(map['status'] as String);
+        } catch (_) {
+          return OfferStatus.unknown;
+        }
+      }(),
+      statusRaw: map['status'] as String,
       createdAt: (map['created_at'] as DateTime).toLocal(),
       fiatAmount: double.parse(map['fiat_amount']),
       fiatCurrency: map['fiat_currency'] ?? '?',

@@ -1,15 +1,23 @@
-# Bitblik / TWINT offer state machine (Swiss TWINT variant)
-# Transitions are enforced server-side. Each state lists its valid transitions.
-# Trigger types:
-#   user_action  — initiated explicitly by maker, taker, or coordinator
-#   timeout      — fired by server timer on state entry (seconds)
-#   auto         — fires immediately on state entry (no external trigger needed)
+# Bitblik / TWINT offer state machine (Switzerland) — GENERIC flow.
 #
-# Initial state: funded
-#   The server creates the offer record and enters this state as soon as it
-#   detects a settled hold invoice on the Lightning backend. Everything prior
-#   (maker creating an offer, obtaining a TWINT code from the merchant, paying
-#   the invoice) is client-side only.
+# Unlike blik.yml (legacy enum flow), this flow is enforced by the generic
+# FlowEngine executor and stores RAW state-name strings in the DB. The early
+# states (twint_charged, expired_twint) intentionally have NO OfferStatus enum
+# value — see [[project-dual-flow-engine]]. The payout-tail states
+# (maker_confirmed, settled, paying_taker, taker_paid, taker_payment_failed)
+# share their names with OfferStatus on purpose: once the flow reaches
+# maker_confirmed the coordinator hands off to the shared Lightning payout code.
+#
+# Trigger types:
+#   user_action  — from maker / taker. Its `event` IS the driving RPC method.
+#   timeout      — server timer on state entry (`duration_seconds`)
+#   auto         — fires on entry (server-internal; payout chaining)
+#
+# Initial state: funded. The maker supplies the TWINT code at offer creation
+# (PaymentSystem.makerProvidesCodeAtOfferCreation); the coordinator enters
+# `funded` once the hold invoice settles.
+
+id: twint
 
 states:
 
@@ -18,85 +26,83 @@ states:
   funded:
     initial: true
     description: >
-      Hold invoice confirmed on the LN backend. The offer carries the maker's
-      TWINT code (obtained from the merchant). Offer is live and open for takers.
-      Server sends new offer notifications on entry.
+      Hold invoice confirmed. Offer carries the maker's TWINT code and is open.
     on_entry: send_offer_notifications
     transitions:
       - trigger: user_action
-        event: maker_cancels
-        target: cancelled
+        event: cancel_offer
         actor: maker
+        target: cancelled
       - trigger: user_action
-        event: taker_reserves
-        target: reserved
+        event: reserve_offer
         actor: taker
+        target: reserved
       - trigger: timeout
-        duration_seconds: 300  # 5 min
+        duration_seconds: 300   # 5 min
         target: expired
-        reason: No taker reserved within 5 minutes
+        reason: No taker reserved in time.
 
   reserved:
     description: >
-      A taker has reserved the offer slot. The server reveals the maker's TWINT
-      code to the taker so they can pay it from their app.
+      Taker holds the slot; the coordinator reveals the TWINT code so the taker
+      can pay it in their app.
     on_entry: send_twint_code_to_taker
     transitions:
       - trigger: user_action
-        event: taker_marks_charged
+        event: mark_blik_charged
+        actor: taker
         target: twint_charged
-        actor: taker
-        note: Taker paid the TWINT code in their app and marked it charged
+        note: Taker paid the TWINT code and reports it charged.
       - trigger: user_action
-        event: taker_cancels
-        target: funded
+        event: cancel_reservation
         actor: taker
-        note: Re-opens the offer for other takers (returns to funded/available state)
+        target: funded
       - trigger: timeout
-        duration_seconds: 300   # 5 min — matches TWINT code lifespan
+        duration_seconds: 300   # matches TWINT code lifespan
         target: expired_twint
-        reason: Taker did not pay the TWINT code within its 5-minute lifespan
+        reason: Taker did not pay the code within its lifespan.
 
   twint_charged:
     description: >
-      Taker reports having paid the TWINT code. Server notifies the maker, who
-      must verify receipt against the merchant and render a verdict.
+      Taker reports payment. Maker must verify receipt and rule. Maker silence
+      auto-confirms in the taker's favour.
     on_entry: notify_maker_of_charge
     transitions:
       - trigger: user_action
-        event: maker_confirms_payment
+        event: confirm_payment
+        actor: maker
         target: maker_confirmed
-        actor: maker
-        note: Maker confirms the TWINT payment was received
       - trigger: user_action
-        event: maker_marks_invalid
-        target: conflict
+        event: mark_blik_invalid
         actor: maker
-        note: Maker reports the payment was not received / invalid
+        target: conflict
       - trigger: timeout
         duration_seconds: 3600  # 60 min
-        target: conflict
-        reason: Maker silent for 60 minutes; escalate to conflict
+        target: maker_confirmed
+        reason: Maker silent; auto-confirm in the taker's favour.
+
+  # ─── settlement & payout (shared with the enum payout tail) ─────────
 
   maker_confirmed:
-    description: Maker confirmed payment received. Settling hold invoice and paying out taker.
+    description: Maker confirmed. Settling hold invoice, paying out the taker.
     on_entry: settle_hold_invoice
     transitions:
       - trigger: auto
         target: settled
 
-  # ─── settlement & payout ────────────────────────────────────────────
-
   settled:
-    description: Hold invoice settled. Requesting taker's Lightning invoice for payout.
+    description: Hold invoice settled. Resolving taker invoice for payout.
     on_entry: request_taker_invoice
     transitions:
       - trigger: auto
         target: paying_taker
         action: send_payment
+      - trigger: auto
+        event: payout_setup_failed
+        target: taker_payment_failed
 
   paying_taker:
-    description: Server is sending the Lightning payment to the taker.
+    description: Sending the Lightning payout to the taker.
     transitions:
       - trigger: auto
         event: payment_success
@@ -106,98 +112,74 @@ states:
         target: taker_payment_failed
 
   taker_paid:
-    description: Taker has been paid. Trade complete.
+    description: Taker paid. Trade complete.
     terminal: true
 
   taker_payment_failed:
-    description: Payment to taker failed. Waiting for taker to provide a new invoice.
+    description: Payout failed. Awaiting a fresh invoice / retry.
     transitions:
       - trigger: user_action
-        event: taker_provides_new_invoice
-        target: paying_taker
+        event: update_taker_invoice
         actor: taker
+        target: paying_taker
+      - trigger: user_action
+        event: retry_taker_payment
+        actor: taker
+        target: paying_taker
 
   # ─── cancellation terminals ─────────────────────────────────────────
 
   cancelled:
-    description: Offer cancelled by maker while still in funded (open) state.
+    description: Maker cancelled while funded.
     terminal: true
     on_entry: cancel_hold_invoice
 
   expired:
-    description: Offer expired — no taker reserved within the allotted time.
+    description: Offer expired (no reservation / no payment).
     terminal: true
     on_entry: cancel_hold_invoice
 
-  # ─── TWINT failure states ────────────────────────────────────────────
+  # ─── TWINT failure / retake ──────────────────────────────────────────
 
   expired_twint:
     description: >
-      The taker's TWINT payment window expired (5-min timeout on reserved).
-      The taker may re-take; re-entering `reserved` mints a fresh code.
+      Taker's TWINT payment window expired. The same taker may re-take; entering
+      `reserved` re-reveals the code.
     transitions:
       - trigger: user_action
-        event: taker_retakes
-        target: reserved
+        event: reserve_offer
         actor: taker
+        target: reserved
       - trigger: timeout
         duration_seconds: 3600  # 60 min
         target: expired
-        reason: No re-take within 60 minutes
+        reason: No re-take in time.
 
   # ─── conflict & dispute ──────────────────────────────────────────────
 
   conflict:
     description: >
-      Maker reported the TWINT payment as not received/invalid (or timed out).
-      Maker may still confirm it as received, or open a formal dispute requiring
-      coordinator intervention. NOTE: in TWINT the taker holds definitive proof
-      of payment (their app's TWINT confirmation), so consider also allowing
-      `taker_opens_dispute` here to protect a taker who genuinely paid against a
-      maker who stalls — see the dispute state.
+      Maker reported the payment not received/invalid. Maker may reconsider or
+      open a formal dispute. Auto-escalates to dispute on silence.
     transitions:
       - trigger: user_action
-        event: maker_confirms_payment
+        event: confirm_payment
+        actor: maker
         target: maker_confirmed
-        actor: maker
-        note: Maker reconsiders and confirms the payment was received
       - trigger: user_action
-        event: maker_opens_dispute
-        target: dispute
+        event: open_dispute
         actor: maker
+        target: dispute
+        action: settle_hold_invoice
       - trigger: timeout
         duration_seconds: 3600  # 60 min
-        target: expired
-        reason: No action in 60 minutes; cancel
+        target: dispute
+        action: settle_hold_invoice
+        reason: Maker silent; settle and escalate to dispute.
 
   dispute:
     description: >
-      Formal dispute opened. Taker must provide evidence of the TWINT payment
-      (transaction reference / app confirmation). Coordinator reviews and
-      resolves. State stays here until coordinator acts; track evidence receipt
-      as a sub-field (e.g. evidence_received: true).
-    transitions:
-      - trigger: user_action
-        event: taker_provides_evidence
-        target: dispute
-        actor: taker
-        note: Evidence acknowledged; state remains dispute until coordinator resolves
-      - trigger: user_action
-        event: coordinator_resolves_for_maker
-        target: maker_confirmed
-        actor: coordinator
-        action: settle_hold_invoice
-      - trigger: user_action
-        event: coordinator_resolves_for_taker
-        target: refund_maker
-        actor: coordinator
-        action: cancel_hold_invoice
-      - trigger: timeout
-        duration_seconds: 172800  # 48 hours
-        target: refund_maker
-        reason: Dispute not resolved in 48 hours; refund maker
-
-  refund_maker:
-    description: Dispute timed out or resolved in taker's favour. Hold invoice cancelled/refunded.
+      Formal dispute. Hold invoice settled; coordinator resolves out of band.
+      Terminal to the engine (no automatic exit).
     terminal: true
-    on_entry: cancel_hold_invoice
+    on_entry: settle_hold_invoice

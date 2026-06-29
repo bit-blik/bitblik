@@ -27,6 +27,7 @@ import '../models/invoice_update.dart';
 import '../models/pay_invoice_result.dart';
 import 'nostr_service.dart';
 import 'telegram_service.dart';
+import '../flow/flow_loader.dart';
 import '../logging/app_logger.dart';
 
 // Set to Duration.zero for production
@@ -97,8 +98,41 @@ class CoordinatorService {
   /// market's clients filter to their own offers.
   PaymentSystem get paymentSystem => _paymentSystem;
 
+  /// Effective engine mode for this deployment: the method's
+  /// [PaymentSystem.flowEngineMode], optionally overridden by the FLOW_MODE env.
+  late final FlowEngineMode _flowEngineMode;
+
+  static FlowEngineMode? _parseFlowMode(String? raw) {
+    switch (raw?.toLowerCase()) {
+      case null:
+      case '':
+        return null;
+      case 'generic':
+        return FlowEngineMode.generic;
+      case 'legacy':
+      case 'legacyenum':
+      case 'enum':
+        return FlowEngineMode.legacyEnum;
+      default:
+        AppLogger.warning(
+            'Unrecognized FLOW_MODE "$raw"; using the method default.');
+        return null;
+    }
+  }
+
+  /// State-machine engine loaded from the active method's bundled flow
+  /// definition. Null when no faithful flow exists yet for this method.
+  ///
+  /// PHASE 1 (shadow mode): used only by [_shadowCheckTransition] to verify the
+  /// hardcoded transitions against the declarative flow; the hardcoded logic
+  /// remains authoritative. Phase 2 will make this the enforcement source.
+  FlowEngine? _flowEngine;
+
   // Test-only override for the payment method id, bypassing `.env`.
   final String? _paymentSystemIdOverride;
+
+  // Test-only override for the engine mode, bypassing the FLOW_MODE env.
+  final FlowEngineMode? _flowModeOverrideForTest;
 
   // Supported currencies
   late final List<String> _supportedCurrencies;
@@ -288,11 +322,13 @@ class CoordinatorService {
       Clock? clock,
       http.Client? httpClient,
       NostrService? nostrService,
-      String? paymentSystemIdForTest})
+      String? paymentSystemIdForTest,
+      FlowEngineMode? flowModeForTest})
       : _clock = clock ?? const Clock(),
         _httpClient = httpClient ?? http.Client(),
         _nostrService = nostrService,
-        _paymentSystemIdOverride = paymentSystemIdForTest {
+        _paymentSystemIdOverride = paymentSystemIdForTest,
+        _flowModeOverrideForTest = flowModeForTest {
     // Initialize dotenv
     _env = DotEnv(includePlatformEnvironment: true)..load();
 
@@ -340,6 +376,15 @@ class CoordinatorService {
     // on a local `.env`.
     _paymentSystem = paymentSystemById(
         _paymentSystemIdOverride ?? _env['PAYMENT_SYSTEM']?.trim());
+
+    // Engine mode defaults to the method's own [PaymentSystem.flowEngineMode],
+    // but FLOW_MODE (`legacy`/`legacyEnum` | `generic`) overrides it per
+    // deployment — e.g. to dry-run a method on the generic executor. The
+    // generic mode still requires a loadable flow definition (flowId); if none
+    // loads, [isGenericFlow] stays false regardless of this setting.
+    _flowEngineMode = _flowModeOverrideForTest ??
+        _parseFlowMode(_env['FLOW_MODE']?.trim()) ??
+        _paymentSystem.flowEngineMode;
 
     _supportedCurrencies =
         (_env['CURRENCIES']?.split(',') ?? [_paymentSystem.currency])
@@ -393,12 +438,461 @@ class CoordinatorService {
     if (_paymentBackend == null) {
       await _initializePaymentBackend();
     }
+    await _loadFlowEngine();
     AppLogger.info(
         'CoordinatorService initialized with $_paymentBackendType backend.');
   }
 
+  Future<void> _loadFlowEngine() async {
+    final flowId = _paymentSystem.flowId;
+    if (flowId == null) {
+      AppLogger.info(
+          'No flow definition for method "${_paymentSystem.id}"; shadow mode disabled.');
+      return;
+    }
+    _flowEngine = await FlowLoader.load(flowId);
+    if (_flowEngine != null) {
+      AppLogger.info('Flow engine loaded for "$flowId" (shadow mode).');
+    } else {
+      AppLogger.warning(
+          'Flow definition "$flowId" could not be loaded; shadow mode disabled.');
+    }
+  }
+
+  /// PHASE 1 shadow check: compare an about-to-be-applied transition against the
+  /// loaded [FlowEngine]. Logs loudly on divergence but never blocks — hardcoded
+  /// logic stays authoritative until Phase 2. No-op when no engine is loaded.
+  void _shadowCheckTransition({
+    required OfferStatus from,
+    required String event,
+    required FlowActor actor,
+    required OfferStatus to,
+  }) {
+    final engine = _flowEngine;
+    if (engine == null) return;
+    final fromState = flowStateForOfferStatus(from);
+    final res = engine.resolveUserAction(
+        fromState: fromState, event: event, actor: actor);
+    if (!res.allowed) {
+      AppLogger.warning(
+          'FLOW-SHADOW MISMATCH: legacy allows $from --$event/${actor.name}--> $to '
+          'but engine rejects (${res.rejectReason}).');
+      return;
+    }
+    final expected = offerStatusFromFlowState(res.target ?? '');
+    if (expected != to) {
+      AppLogger.warning(
+          'FLOW-SHADOW MISMATCH: $from --$event/${actor.name}--> legacy=$to engine=$expected.');
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  // Generic (yaml-driven) flow executor
+  //
+  // Active only when the payment system declares FlowEngineMode.generic (TWINT).
+  // Drives the early, non-enum states + their timers straight from the flow
+  // definition, storing raw state strings. On reaching `maker_confirmed` it
+  // hands off to the shared enum payout tail (settle -> settled ->
+  // _payTakerAsync), whose state names coincide with the generic ones.
+  // See [[project-dual-flow-engine]].
+  // ════════════════════════════════════════════════════════════════════
+
+  final Map<String, Timer> _genericStateTimers = {};
+
+  bool get isGenericFlow =>
+      _flowEngineMode == FlowEngineMode.generic && _flowEngine != null;
+
+  // Offer-action RPCs the generic executor enforces directly. The payout-tail
+  // RPCs (update_taker_invoice, retry_taker_payment) are delegated to the
+  // shared enum handlers, since their states map cleanly to OfferStatus.
+  static const Set<String> _genericOfferActionRpcs = {
+    kRpcReserveOffer,
+    kRpcSubmitBlik,
+    kRpcGetBlik,
+    kRpcCancelOffer,
+    kRpcCancelReservation,
+    kRpcMarkBlikCharged,
+    kRpcConfirmPayment,
+    kRpcMarkBlikInvalid,
+    kRpcOpenDispute,
+  };
+
+  bool genericHandlesRpc(String method) =>
+      _genericOfferActionRpcs.contains(method);
+
+  /// Enforce + apply an offer-action RPC against the generic flow. Throws on a
+  /// disallowed transition / identity mismatch (mapped to an error response).
+  Future<Map<String, dynamic>> handleGenericRpc(
+      String method, Map<String, dynamic> params, String userPubkey) async {
+    final engine = _flowEngine!;
+    final offerId = params['offer_id'] as String?;
+    if (offerId == null) throw Exception('Missing required parameter: offer_id');
+    final offer = await _dbService.getOfferById(offerId);
+    if (offer == null) throw Exception('Offer not found');
+
+    // get_blik is a read that may also advance the state once (blik_received ->
+    // blik_sent_to_maker). It returns the code rather than a plain ack, so it is
+    // handled outside the generic transition apply.
+    if (method == kRpcGetBlik) {
+      return await _genericGetBlik(offer, userPubkey);
+    }
+
+    // Resolve the transition for (state, event) regardless of actor, then
+    // enforce participant identity ourselves (the yaml actor role + pubkey
+    // ownership). User-action events ARE the RPC method names, so the wire
+    // method is the event key.
+    final res =
+        engine.resolveUserAction(fromState: offer.statusRaw, event: method);
+    final t = res.transition;
+    if (!res.allowed || t == null) {
+      throw Exception(
+          'Action $method not allowed from "${offer.statusRaw}": ${res.rejectReason}');
+    }
+    final isNewTaker = offer.takerPubkey == null;
+    if (!_genericIdentityOk(offer, userPubkey, t.actor, isNewTaker)) {
+      throw Exception('Actor not permitted for $method on offer $offerId');
+    }
+    if (t.actor == FlowActor.taker &&
+        isNewTaker &&
+        userPubkey == offer.makerPubkey) {
+      throw Exception('Maker cannot take their own offer');
+    }
+
+    final ok = await _genericApply(offer, t, params, userPubkey, isNewTaker);
+    if (!ok) {
+      throw Exception('Failed to apply $method (offer state changed).');
+    }
+    return {'message': 'ok', 'status': t.target};
+  }
+
+  /// get_blik handler: returns the code to the maker, advancing
+  /// blik_received -> blik_sent_to_maker the first time (a re-fetch from
+  /// blik_sent_to_maker just returns the code without re-transitioning).
+  Future<Map<String, dynamic>> _genericGetBlik(
+      Offer offer, String userPubkey) async {
+    if (offer.makerPubkey != userPubkey) {
+      throw Exception('Maker mismatch for get_blik on offer ${offer.id}');
+    }
+    final code = offer.blikCode;
+    if (code == null) {
+      throw Exception('No code available for offer ${offer.id}');
+    }
+    if (offer.statusRaw == 'blik_received') {
+      final ok = await _dbService.updateOfferRawStatusIfCurrent(
+        offer.id,
+        'blik_sent_to_maker',
+        expectedCurrentStatuses: ['blik_received'],
+      );
+      if (ok) {
+        _genericCancelTimer(offer.id);
+        final updated = await _dbService.getOfferById(offer.id);
+        if (updated != null) await _genericEnterState(updated, null);
+      }
+    } else if (offer.statusRaw != 'blik_sent_to_maker') {
+      throw Exception(
+          'Offer ${offer.id} not in a state to provide the code (${offer.statusRaw}).');
+    }
+    return {'blik_code': code};
+  }
+
+  bool _genericIdentityOk(
+      Offer offer, String userPubkey, FlowActor? actor, bool isNewTaker) {
+    switch (actor) {
+      case FlowActor.maker:
+        return userPubkey == offer.makerPubkey;
+      case FlowActor.taker:
+        return isNewTaker
+            ? userPubkey != offer.makerPubkey
+            : userPubkey == offer.takerPubkey;
+      case FlowActor.coordinator:
+      case FlowActor.server:
+      case null:
+        return true;
+    }
+  }
+
+  Future<bool> _genericApply(Offer offer, FlowTransition t,
+      Map<String, dynamic> params, String userPubkey, bool isNewTaker) async {
+    final now = _clock.now().toUtc();
+    String? takerPubkey;
+    String? expectedTakerPubkey;
+    DateTime? reservedAt;
+    DateTime? takerChargedAt;
+    DateTime? makerConfirmedAt;
+    String? code;
+    DateTime? codeReceivedAt;
+    String? takerInvoice;
+    String? takerLightningAddress;
+    bool clearTaker = false;
+
+    String? clean(Object? v) {
+      final s = (v as String?)?.trim();
+      return (s == null || s.isEmpty) ? null : s;
+    }
+
+    switch (t.event) {
+      case kRpcReserveOffer:
+        reservedAt = now.add(const Duration(seconds: 1));
+        if (isNewTaker) {
+          takerPubkey = userPubkey;
+        } else {
+          expectedTakerPubkey = offer.takerPubkey;
+        }
+        break;
+      case kRpcSubmitBlik:
+        // Mirrors the legacy submitBlikCode: validate the code, then either
+        // accept the taker's invoice or resolve one from their LN address for
+        // the expected net amount.
+        final providedCode = _paymentSystem.makerProvidesCodeAtOfferCreation
+            ? offer.blikCode
+            : clean(params['blik_code']);
+        if (providedCode == null || !_paymentSystem.isValidCode(providedCode)) {
+          throw Exception('Invalid ${_paymentSystem.codeLabel} code.');
+        }
+        final lnAddr = clean(params['taker_lightning_address']);
+        var inv = clean(params['taker_invoice']);
+        if (inv == null) {
+          if (lnAddr == null) {
+            throw Exception(
+                'Missing taker invoice and lightning address for submit.');
+          }
+          inv = await _resolveLnurlPay(
+              lnAddr, _expectedTakerNetAmountSats(offer));
+          if (inv == null || inv.isEmpty) {
+            throw Exception('Could not resolve a taker invoice from $lnAddr.');
+          }
+        } else {
+          _validateTakerInvoiceAmount(offer, inv, action: 'submit_blik');
+        }
+        code = providedCode;
+        takerInvoice = inv;
+        takerLightningAddress = lnAddr;
+        codeReceivedAt = now;
+        expectedTakerPubkey = offer.takerPubkey;
+        break;
+      case kRpcMarkBlikCharged:
+        takerChargedAt = now;
+        takerInvoice = clean(params['taker_invoice']);
+        takerLightningAddress = clean(params['taker_lightning_address']);
+        expectedTakerPubkey = offer.takerPubkey;
+        break;
+      case kRpcCancelReservation:
+        clearTaker = true;
+        expectedTakerPubkey = offer.takerPubkey;
+        break;
+      case kRpcCancelOffer:
+        clearTaker = true;
+        break;
+      case kRpcConfirmPayment:
+        if (t.target == 'maker_confirmed') makerConfirmedAt = now;
+        break;
+      default:
+        break;
+    }
+
+    final applied = await _dbService.updateOfferRawStatusIfCurrent(
+      offer.id,
+      t.target,
+      expectedCurrentStatuses: [offer.statusRaw],
+      expectedTakerPubkey: expectedTakerPubkey,
+      takerPubkey: takerPubkey,
+      reservedAt: reservedAt,
+      takerChargedAt: takerChargedAt,
+      makerConfirmedAt: makerConfirmedAt,
+      code: code,
+      codeReceivedAt: codeReceivedAt,
+      takerInvoice: takerInvoice,
+      takerLightningAddress: takerLightningAddress,
+      clearTakerFields: clearTaker,
+    );
+    if (!applied) return false;
+
+    _genericCancelTimer(offer.id);
+    final updated = await _dbService.getOfferById(offer.id);
+    if (updated != null) await _genericEnterState(updated, t.action);
+    return true;
+  }
+
+  /// Run actions, publish, then hand off (payout) / arm timer / settle terminal.
+  Future<void> _genericEnterState(Offer offer, String? transitionAction) async {
+    final engine = _flowEngine!;
+    final stateName = offer.statusRaw;
+    final state = engine.definition.state(stateName);
+
+    // Payout handoff: maker_confirmed settles + chains into the shared enum
+    // payout (settled -> paying_taker -> taker_paid), which shares these names.
+    if (stateName == 'maker_confirmed') {
+      await _genericStartPayout(offer);
+      return;
+    }
+
+    // Deduplicate so a transition action and an on_entry action that name the
+    // same side effect (e.g. both `settle_hold_invoice`) run once.
+    final actions = <String>{
+      if (transitionAction != null) transitionAction,
+      if (state?.onEntry != null) state!.onEntry!,
+    };
+    for (final a in actions) {
+      await _genericRunAction(offer, a);
+    }
+
+    await _publishStatusUpdate(offer);
+    await _nostrService?.broadcastNip69OrderFromOffer(offer);
+
+    if (state?.terminal ?? false) return;
+    _genericArmTimer(offer);
+  }
+
+  Future<void> _genericRunAction(Offer offer, String action) async {
+    switch (action) {
+      case 'settle_hold_invoice':
+        if (_paymentBackend != null && offer.holdInvoicePreimage != null) {
+          try {
+            await _paymentBackend!
+                .settleInvoice(preimageHex: offer.holdInvoicePreimage!);
+          } catch (e) {
+            AppLogger.warning(
+                'Generic settle_hold_invoice failed for ${offer.id}: $e',
+                offerId: offer.id);
+          }
+        }
+        break;
+      case 'cancel_hold_invoice':
+        if (_paymentBackend != null && offer.holdInvoicePaymentHash != null) {
+          try {
+            await _paymentBackend!
+                .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
+          } catch (e) {
+            AppLogger.warning(
+                'Generic cancel_hold_invoice failed for ${offer.id}: $e',
+                offerId: offer.id);
+          }
+        }
+        break;
+      // Notification / housekeeping actions are best-effort no-ops for now;
+      // clients poll get_offer_details for the code and status.
+      case 'send_offer_notifications':
+      case 'send_twint_code_to_taker':
+      case 'notify_maker_of_charge':
+      case 'request_taker_invoice':
+        break;
+      default:
+        AppLogger.warning('Generic flow: unknown on_entry action "$action".');
+    }
+  }
+
+  Future<void> _genericStartPayout(Offer offer) async {
+    if (_paymentBackend != null && offer.holdInvoicePreimage != null) {
+      try {
+        await _paymentBackend!
+            .settleInvoice(preimageHex: offer.holdInvoicePreimage!);
+      } catch (e) {
+        AppLogger.warning('Generic payout settle failed for ${offer.id}: $e',
+            offerId: offer.id);
+        return;
+      }
+    }
+    await _publishStatusUpdate(offer); // maker_confirmed
+    final ok = await _dbService.updateOfferRawStatusIfCurrent(
+      offer.id,
+      OfferStatus.settled.name,
+      expectedCurrentStatuses: ['maker_confirmed'],
+      settledAt: _clock.now().toUtc(),
+    );
+    if (!ok) return;
+    final settled = await _dbService.getOfferById(offer.id);
+    if (settled != null) await _publishStatusUpdate(settled);
+    // Shared payout tail (uses enum statuses whose names equal the raw ones).
+    Future.microtask(() => _payTakerAsync(offer.id));
+  }
+
+  void _genericArmTimer(Offer offer) {
+    final engine = _flowEngine!;
+    final t = engine.timeoutFor(offer.statusRaw);
+    if (t == null || t.durationSeconds == null) return;
+    _genericCancelTimer(offer.id);
+    // The window is normally measured from state entry (updated_at), but a
+    // transition may pin it to another timestamp (e.g. the BLIK confirmation
+    // window continues from when the code was submitted).
+    final DateTime base;
+    switch (t.fromField) {
+      case 'code_received_at':
+        base = (offer.blikReceivedAt ?? offer.updatedAt ?? offer.createdAt)
+            .toUtc();
+        break;
+      default:
+        base = (offer.updatedAt ?? offer.createdAt).toUtc();
+    }
+    final fireAt = base.add(Duration(seconds: t.durationSeconds!));
+    final remaining = fireAt.difference(_clock.now().toUtc());
+    final dur = remaining.isNegative ? Duration.zero : remaining;
+    final expectedState = offer.statusRaw;
+    _genericStateTimers[offer.id] = Timer(dur, () {
+      _genericStateTimers.remove(offer.id);
+      _genericFireTimeout(offer.id, expectedState, t.target, t.action);
+    });
+  }
+
+  void _genericCancelTimer(String offerId) {
+    _genericStateTimers[offerId]?.cancel();
+    _genericStateTimers.remove(offerId);
+  }
+
+  Future<void> _genericFireTimeout(
+      String offerId, String expectedState, String target, String? action) async {
+    final offer = await _dbService.getOfferById(offerId);
+    if (offer == null || offer.statusRaw != expectedState) return;
+    final now = _clock.now().toUtc();
+    final clearTaker =
+        target == 'expired' || target == 'funded' || target == 'cancelled';
+    final makerConfirmedAt = target == 'maker_confirmed' ? now : null;
+    final ok = await _dbService.updateOfferRawStatusIfCurrent(
+      offerId,
+      target,
+      expectedCurrentStatuses: [expectedState],
+      makerConfirmedAt: makerConfirmedAt,
+      clearTakerFields: clearTaker,
+    );
+    if (!ok) return;
+    final updated = await _dbService.getOfferById(offerId);
+    if (updated != null) await _genericEnterState(updated, action);
+  }
+
+  /// Arm a timer for the funded offer just created (generic mode entry point).
+  void genericOnOfferFunded(Offer offer) {
+    if (!isGenericFlow) return;
+    _genericArmTimer(offer);
+  }
+
+  /// Re-arm generic timers on startup for all non-terminal, non-payout offers.
+  Future<void> genericRecoverTimers() async {
+    if (!isGenericFlow) return;
+    final engine = _flowEngine!;
+    final excluded = <String>{
+      for (final s in engine.definition.states.values)
+        if (s.terminal) s.name,
+      // Payout-tail states are driven by the shared enum payout, not the engine.
+      OfferStatus.makerConfirmed.name,
+      OfferStatus.settled.name,
+      OfferStatus.payingTaker.name,
+      OfferStatus.takerPaid.name,
+      OfferStatus.takerPaymentFailed.name,
+    };
+    final offers =
+        await _dbService.getOffersNotInRawStatuses(excluded.toList());
+    for (final o in offers) {
+      if (engine.timeoutFor(o.statusRaw) != null) _genericArmTimer(o);
+    }
+  }
+
   Future<void> doInitialCheckStatuses() async {
     await _initializeMatrixClient();
+    if (isGenericFlow) {
+      // Generic flows manage their own (yaml-driven) timers; the enum sweeps
+      // below would otherwise also act on shared-named states like `funded`.
+      await genericRecoverTimers();
+      return;
+    }
     await _checkExpiredFundedOffers();
     await _checkExpiredReservations();
     await _checkExpiredBlikConfirmations();
@@ -1148,7 +1642,11 @@ class CoordinatorService {
       await _nostrService?.broadcastNip69OrderFromOffer(offer,
           expiration: expirationUnix, premium: offer.premiumPercent);
       // --- End: broadcast NIP-69 order event ---
-      _startFundedOfferTimer(offer);
+      if (isGenericFlow) {
+        genericOnOfferFunded(offer);
+      } else {
+        _startFundedOfferTimer(offer);
+      }
 
       // Publish status update
       await _publishStatusUpdate(offer);
@@ -1736,6 +2234,12 @@ class CoordinatorService {
     // expectedTakerPubkey pins the row to the taker observed in the read (null
     // for funded offers, where the clause is skipped and taker_pubkey is
     // cleared anyway), closing ABA cycles on re-take states.
+    _shadowCheckTransition(
+      from: offer.status,
+      event: kRpcReserveOffer,
+      actor: FlowActor.taker,
+      to: OfferStatus.reserved,
+    );
     final success = await _dbService.updateOfferStatusIfCurrentStatus(
       offerId,
       OfferStatus.reserved,
@@ -2087,6 +2591,12 @@ class CoordinatorService {
     // expectedTakerPubkey guards the ABA case: reservation expired, offer was
     // re-reserved by another taker, status is "reserved" again but the row no
     // longer belongs to this taker.
+    _shadowCheckTransition(
+      from: offer.status,
+      event: kRpcSubmitBlik,
+      actor: FlowActor.taker,
+      to: OfferStatus.blikReceived,
+    );
     final success = await _dbService.updateOfferStatusIfCurrentStatus(
         offerId, OfferStatus.blikReceived, [OfferStatus.reserved],
         blikCode: effectiveCode,
@@ -2135,6 +2645,12 @@ class CoordinatorService {
     try {
       // Only update to blikSentToMaker if it's currently blikReceived
       if (offer.status == OfferStatus.blikReceived) {
+        _shadowCheckTransition(
+          from: offer.status,
+          event: kRpcGetBlik,
+          actor: FlowActor.maker,
+          to: OfferStatus.blikSentToMaker,
+        );
         final statusUpdated = await _dbService.updateOfferStatusIfCurrentStatus(
             offerId, OfferStatus.blikSentToMaker, [OfferStatus.blikReceived]);
         if (!statusUpdated) {
@@ -2229,6 +2745,12 @@ class CoordinatorService {
     // newStatus depends on the observed status, so CAS on exactly that status:
     // if it changed since the read, the invalidBlik/conflict mapping would be
     // stale — abort instead.
+    _shadowCheckTransition(
+      from: offer.status,
+      event: kRpcMarkBlikInvalid,
+      actor: FlowActor.maker,
+      to: newStatus,
+    );
     final success = await _dbService
         .updateOfferStatusIfCurrentStatus(offerId, newStatus, [offer.status]);
 
@@ -2276,6 +2798,12 @@ class CoordinatorService {
     // newStatus depends on the observed status, so CAS on exactly that status.
     // expectedTakerPubkey guards the ABA case where the status cycled back
     // with a different taker on the row.
+    _shadowCheckTransition(
+      from: offer.status,
+      event: kRpcMarkBlikCharged,
+      actor: FlowActor.taker,
+      to: newStatus,
+    );
     final success = await _dbService.updateOfferStatusIfCurrentStatus(
       offerId,
       newStatus,
@@ -2350,6 +2878,12 @@ class CoordinatorService {
       return false;
     }
 
+    _shadowCheckTransition(
+      from: offer.status,
+      event: kRpcOpenDispute,
+      actor: FlowActor.maker,
+      to: OfferStatus.dispute,
+    );
     final success = await _dbService.updateOfferStatus(
       offerId,
       OfferStatus.dispute,
@@ -2416,6 +2950,12 @@ class CoordinatorService {
         'Cancelled timers for offer $offerId during maker confirmation.',
         offerId: offerId);
 
+    _shadowCheckTransition(
+      from: offer.status,
+      event: kRpcConfirmPayment,
+      actor: FlowActor.maker,
+      to: OfferStatus.makerConfirmed,
+    );
     // CAS on the states maker confirmation is allowed from; losing the race
     // aborts before the hold invoice is settled below.
     bool success = await _dbService
@@ -2545,6 +3085,12 @@ class CoordinatorService {
     _disputeEscalationTimers[offerId]?.cancel();
     _disputeEscalationTimers.remove(offerId);
 
+    _shadowCheckTransition(
+      from: offer.status,
+      event: kRpcCancelReservation,
+      actor: FlowActor.taker,
+      to: OfferStatus.funded,
+    );
     // Revert offer to funded using the new method
     final reverted = await _revertOfferToFunded(offerId);
 
@@ -2617,6 +3163,12 @@ class CoordinatorService {
           offerId: offerId);
     }
 
+    _shadowCheckTransition(
+      from: offer.status,
+      event: kRpcCancelOffer,
+      actor: FlowActor.maker,
+      to: OfferStatus.cancelled,
+    );
     final dbSuccess = await _dbService.cancelOffer(offerId, makerId);
     if (dbSuccess) {
       AppLogger.info('Offer $offerId status updated to cancelled in DB.',
@@ -3053,7 +3605,10 @@ class CoordinatorService {
       await _nostrService!.publishOfferStatusUpdate(
         offerId: offer.id,
         paymentHash: offer.holdInvoicePaymentHash ?? '',
-        status: offer.status.name,
+        // Use the raw status string so generic (yaml-driven) flows broadcast
+        // their real state (e.g. `twint_charged`) instead of the enum's
+        // `unknown` fallback. For legacy flows statusRaw == status.name.
+        status: offer.statusRaw,
         timestamp: DateTime.now().toUtc(),
         createdAt: offer.createdAt,
         reservedAt: offer.reservedAt,

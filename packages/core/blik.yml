@@ -1,14 +1,28 @@
-# Bitblik offer state machine
-# Transitions are enforced server-side. Each state lists its valid transitions.
+# Bitblik offer state machine — BLIK (Poland) flow.
+#
+# This file is the SINGLE SOURCE OF TRUTH for the BLIK flow and is parsed at
+# runtime by the FlowEngine (packages/core/lib/src/flow). It is reconciled to be
+# FAITHFUL to the historical hardcoded coordinator logic: every state name maps
+# 1:1 to an `OfferStatus` enum value (snake_case <-> camelCase), and every
+# transition reproduces a guard/transition that the hardcoded
+# `CoordinatorService` enforced. A golden test asserts this equivalence — do not
+# "tidy" transitions here without updating that test and the coordinator.
+#
 # Trigger types:
-#   user_action  — initiated explicitly by maker or taker
-#   timeout      — fired by server timer on state entry (seconds)
-#   auto         — fires immediately on state entry (no external trigger needed)
+#   user_action  — initiated explicitly by maker, taker, or coordinator. Its
+#                  `event` IS the RPC method that drives it (e.g. reserve_offer).
+#   timeout      — fired by a server timer; `duration_seconds` is the DEFAULT
+#                  (several are env-overridable on the coordinator)
+#   auto         — fires immediately on state entry (server-internal). `event`
+#                  is a free label, present only where an auto edge branches.
 #
 # Initial state: funded
-#   The server creates the offer record and enters this state as soon as it
-#   detects a settled hold invoice on the Lightning backend. Everything prior
-#   (maker creating an offer, paying the invoice) is client-side only.
+#   The coordinator creates the offer and enters `funded` once it detects a
+#   settled hold invoice. Everything prior (maker creating the offer, paying the
+#   invoice) is client-side; the pre-funded `created` OfferStatus is not modeled
+#   here because no coordinator-enforced transitions originate from it.
+
+id: blik
 
 states:
 
@@ -17,55 +31,79 @@ states:
   funded:
     initial: true
     description: >
-      Hold invoice confirmed on the LN backend. Offer is live and open for takers.
-      Server sends new offer notifications on entry.
+      Hold invoice confirmed. Offer is live and open for takers.
     on_entry: send_offer_notifications
     transitions:
       - trigger: user_action
-        event: maker_cancels
-        target: cancelled
+        event: cancel_offer
         actor: maker
+        target: cancelled
       - trigger: user_action
-        event: taker_reserves
-        target: reserved
+        event: reserve_offer
         actor: taker
+        target: reserved
       - trigger: timeout
-        duration_seconds: 600  # 10 min
+        duration_seconds: 600   # FUNDED_EXPIRY_SECONDS, default 600
         target: expired
-        reason: No taker reserved within 10 minutes
+        reason: No taker reserved in time
 
   reserved:
-    description: A taker has reserved the offer slot.
+    description: A taker holds the offer slot and must submit a BLIK code.
     transitions:
       - trigger: user_action
-        event: taker_enters_blik
+        event: submit_blik
+        actor: taker
         target: blik_received
-        actor: taker
       - trigger: user_action
-        event: taker_cancels
-        target: funded
+        event: cancel_reservation
         actor: taker
-        note: Re-opens the offer for other takers (returns to funded/available state)
+        target: funded
+        note: Re-opens the offer for other takers.
       - trigger: timeout
-        duration_seconds: 120   # 2 min
-        target: expired_blik
-        reason: Taker did not enter BLIK code in time
+        duration_seconds: 30    # RESERVATION_SECONDS, default 30
+        target: funded
+        reason: >
+          Taker did not submit a BLIK code in time; the offer is reverted to
+          funded (NOT expired) so it is re-listed for other takers.
 
   blik_received:
-    description: Taker has submitted a BLIK code. Server forwards it to the maker.
-    on_entry: send_blik_to_maker
+    description: >
+      Taker submitted a BLIK code. The maker has not yet fetched it.
     transitions:
       - trigger: user_action
-        event: taker_cancels
-        target: invalid_blik
-        actor: taker
+        event: get_blik
+        actor: maker
+        target: blik_sent_to_maker
+        note: >
+          Maker pulls the code. Modeled as an explicit state because the
+          confirmation-timeout target differs before vs after the pull.
       - trigger: timeout
-        duration_seconds: 120   # 2 min
+        duration_seconds: 120   # PaymentSystem.confirmationWindow (BLIK = 2 min)
+        target: expired_blik
+        reason: Maker never fetched the BLIK code within the confirmation window.
+
+  blik_sent_to_maker:
+    description: Maker has the BLIK code and must render a verdict.
+    transitions:
+      - trigger: user_action
+        event: confirm_payment
+        actor: maker
+        target: maker_confirmed
+      - trigger: user_action
+        event: mark_blik_invalid
+        actor: maker
+        target: invalid_blik
+      - trigger: timeout
+        duration_seconds: 120   # confirmation window, measured from blik_received_at
+        from_field: code_received_at
         target: expired_sent_blik
-        reason: Maker did not respond within 2 minutes
+        reason: >
+          Maker did not respond within the confirmation window. The window
+          continues from when the taker submitted the code (code_received_at),
+          NOT from when the maker fetched it — matching the legacy timer.
 
   maker_confirmed:
-    description: Maker confirmed good BLIK. Settling hold invoice and paying out taker.
+    description: Maker confirmed good BLIK. Settling hold invoice, paying out taker.
     on_entry: settle_hold_invoice
     transitions:
       - trigger: auto
@@ -74,12 +112,16 @@ states:
   # ─── settlement & payout ────────────────────────────────────────────
 
   settled:
-    description: Hold invoice settled. Requesting taker's Lightning invoice for payout.
+    description: Hold invoice settled. Resolving taker invoice for payout.
     on_entry: request_taker_invoice
     transitions:
       - trigger: auto
         target: paying_taker
         action: send_payment
+      - trigger: auto
+        event: payout_setup_failed
+        target: taker_payment_failed
+        reason: Missing/unresolvable taker invoice before payment was attempted.
 
   paying_taker:
     description: Server is sending the Lightning payment to the taker.
@@ -92,133 +134,149 @@ states:
         target: taker_payment_failed
 
   taker_paid:
-    description: Taker has been paid. Trade complete.
+    description: Taker paid. Trade complete.
     terminal: true
 
   taker_payment_failed:
-    description: Payment to taker failed. Waiting for taker to provide a new invoice.
+    description: Payout to taker failed. Awaiting a fresh invoice / retry.
     transitions:
       - trigger: user_action
-        event: taker_provides_new_invoice
-        target: paying_taker
+        event: update_taker_invoice
         actor: taker
+        target: paying_taker
+      - trigger: user_action
+        event: retry_taker_payment
+        actor: taker
+        target: paying_taker
 
   # ─── cancellation terminals ─────────────────────────────────────────
 
   cancelled:
-    description: Offer cancelled by maker while still in funded (open) state.
+    description: Maker cancelled while the offer was still funded (open).
     terminal: true
     on_entry: cancel_hold_invoice
 
   expired:
-    description: Offer expired — no taker reserved within the allotted time.
+    description: Offer expired — no taker reserved within the funded window.
     terminal: true
     on_entry: cancel_hold_invoice
 
-  # ─── BLIK failure states ─────────────────────────────────────────────
+  # ─── BLIK failure / retake states ────────────────────────────────────
 
   invalid_blik:
-    description: Taker cancelled mid-flow. Taker may re-take the offer.
+    description: >
+      Maker marked the BLIK invalid before the taker reported a charge. The same
+      taker may re-take, cancel, or report that they were in fact charged.
     transitions:
       - trigger: user_action
-        event: taker_retakes
-        target: reserved
+        event: mark_blik_charged
         actor: taker
+        target: conflict
+      - trigger: user_action
+        event: reserve_offer
+        actor: taker
+        target: reserved
+      - trigger: user_action
+        event: cancel_reservation
+        actor: taker
+        target: funded
       - trigger: timeout
-        duration_seconds: 3600  # 60 min
-        target: expired
-        reason: No re-take within 60 minutes
+        duration_seconds: 3600  # conflict/dispute escalation, 60 min
+        target: dispute
+        action: settle_hold_invoice
+        reason: autoInvalidBlikTimeout — taker silent; settle and escalate.
 
   expired_blik:
-    description: Taker's BLIK submission window expired (2 min timeout on reserved).
+    description: >
+      The maker never fetched the BLIK code (timeout from `blik_received`). The
+      same taker may re-take or cancel; otherwise the offer is re-listed.
     transitions:
       - trigger: user_action
-        event: taker_retakes
-        target: reserved
+        event: reserve_offer
         actor: taker
+        target: reserved
+      - trigger: user_action
+        event: cancel_reservation
+        actor: taker
+        target: funded
       - trigger: timeout
-        duration_seconds: 3600  # 60 min
-        target: expired
-        reason: No re-take within 60 minutes
+        duration_seconds: 60    # expiredBlik relist timeout
+        target: funded
+        reason: Grace period elapsed; re-list the offer as funded.
 
   expired_sent_blik:
     description: >
-      Maker did not respond to the forwarded BLIK within 2 minutes.
-      Taker must confirm whether the BLIK was actually charged.
+      Maker had the code but did not respond within the confirmation window. The
+      maker may still rule, the taker may report a charge or re-take.
     transitions:
       - trigger: user_action
-        event: taker_blik_charged
-        target: taker_charged
+        event: confirm_payment
+        actor: maker
+        target: maker_confirmed
+      - trigger: user_action
+        event: mark_blik_invalid
+        actor: maker
+        target: invalid_blik
+      - trigger: user_action
+        event: mark_blik_charged
         actor: taker
+        target: taker_charged
+      - trigger: user_action
+        event: reserve_offer
+        actor: taker
+        target: reserved
       - trigger: timeout
-        duration_seconds: 3600  # 60 min
-        target: expired
-        reason: No action within 60 minutes
+        duration_seconds: 3600  # dispute escalation, 60 min
+        target: dispute
+        action: settle_hold_invoice
+        reason: autoExpiredSentBlikTimeout — settle and escalate.
 
   taker_charged:
-    description: BLIK was charged from taker but maker has not confirmed. Awaiting maker verdict.
+    description: >
+      Taker reported the BLIK was charged but the maker has not confirmed.
+      Awaiting maker verdict; silence resolves in the taker's favour.
     transitions:
       - trigger: user_action
-        event: maker_good_blik
+        event: confirm_payment
+        actor: maker
         target: maker_confirmed
-        actor: maker
       - trigger: user_action
-        event: maker_bad_blik
-        target: conflict
+        event: mark_blik_invalid
         actor: maker
-      - trigger: timeout
-        duration_seconds: 3600  # 60 min
         target: conflict
-        reason: Maker silent for 60 minutes; escalate to conflict
+      - trigger: timeout
+        duration_seconds: 3600  # TAKER_CHARGED_AUTO_CONFIRM_SECONDS, default 3600
+        target: maker_confirmed
+        reason: >
+          Maker silent; auto-confirm in the taker's favour (settles the hold
+          invoice and pays the taker).
 
   # ─── conflict & dispute ──────────────────────────────────────────────
 
   conflict:
     description: >
-      Maker reported a bad BLIK (or timed out). Maker may still confirm as good,
+      Maker reported a bad BLIK (or it escalated here). Maker may still confirm,
       or open a formal dispute requiring coordinator intervention.
     transitions:
       - trigger: user_action
-        event: maker_good_blik
+        event: confirm_payment
+        actor: maker
         target: maker_confirmed
-        actor: maker
-        note: Maker reconsiders and confirms BLIK was valid
+        note: Maker reconsiders and confirms the BLIK was valid.
       - trigger: user_action
-        event: maker_opens_dispute
-        target: dispute
+        event: open_dispute
         actor: maker
+        target: dispute
+        action: settle_hold_invoice
       - trigger: timeout
-        duration_seconds: 3600  # 60 min
-        target: expired
-        reason: No action in 60 minutes; cancel
+        duration_seconds: 3600  # dispute escalation, 60 min
+        target: dispute
+        action: settle_hold_invoice
+        reason: autoConflictTimeout — settle and escalate to dispute.
 
   dispute:
     description: >
-      Formal dispute opened. Taker must provide evidence of BLIK payment.
-      Coordinator reviews and resolves. State stays here until coordinator acts;
-      track evidence receipt as a sub-field (e.g. evidence_received: true).
-    transitions:
-      - trigger: user_action
-        event: taker_provides_evidence
-        target: dispute
-        actor: taker
-        note: Evidence acknowledged; state remains dispute until coordinator resolves
-      - trigger: user_action
-        event: coordinator_resolves_for_maker
-        target: maker_confirmed
-        actor: coordinator
-        action: settle_hold_invoice
-      - trigger: user_action
-        event: coordinator_resolves_for_taker
-        target: refund_maker
-        actor: coordinator
-        action: cancel_hold_invoice
-      - trigger: timeout
-        duration_seconds: 172800  # 48 hours
-        target: refund_maker
-        reason: Dispute not resolved in 48 hours; refund maker
-
-  refund_maker:
-    description: Dispute timed out or resolved in taker's favour. Hold invoice cancelled/refunded.
+      Formal dispute. The hold invoice has been settled; the coordinator resolves
+      out of band (manual / admin). No coordinator-enforced automatic transition
+      leaves this state today, so it is treated as terminal by the engine.
     terminal: true
-    on_entry: cancel_hold_invoice
