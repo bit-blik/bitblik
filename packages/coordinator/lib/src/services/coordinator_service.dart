@@ -444,18 +444,44 @@ class CoordinatorService {
   }
 
   Future<void> _loadFlowEngine() async {
+    final method = _paymentSystem.id;
     final flowId = _paymentSystem.flowId;
+    // Was the mode set by FLOW_MODE, or by the method's own default?
+    final overridden = _flowEngineMode != _paymentSystem.flowEngineMode;
+    final source = overridden ? 'FLOW_MODE env override' : 'method default';
+
     if (flowId == null) {
-      AppLogger.info(
-          'No flow definition for method "${_paymentSystem.id}"; shadow mode disabled.');
+      if (_flowEngineMode == FlowEngineMode.generic) {
+        AppLogger.warning(
+            'FLOW ENGINE: GENERIC mode requested ($source) for method "$method" '
+            'but it has no flowId — falling back to legacy enum enforcement.');
+      } else {
+        AppLogger.info(
+            'FLOW ENGINE: method "$method" has no flow definition; legacy enum '
+            'enforcement only.');
+      }
       return;
     }
+
     _flowEngine = await FlowLoader.load(flowId);
-    if (_flowEngine != null) {
-      AppLogger.info('Flow engine loaded for "$flowId" (shadow mode).');
-    } else {
+    if (_flowEngine == null) {
       AppLogger.warning(
-          'Flow definition "$flowId" could not be loaded; shadow mode disabled.');
+          'FLOW ENGINE: flow "$flowId" failed to load for method "$method"; '
+          'falling back to legacy enum enforcement (generic/shadow disabled).');
+      return;
+    }
+
+    // isGenericFlow is now meaningful (engine != null).
+    if (isGenericFlow) {
+      AppLogger.warning(
+          'FLOW ENGINE: GENERIC ENFORCING mode ACTIVE for method "$method" '
+          '(flow=$flowId, $source). State transitions AND timers are enforced '
+          'from $flowId.yml; legacy enum handlers are bypassed.');
+    } else {
+      AppLogger.info(
+          'FLOW ENGINE: SHADOW mode for method "$method" (flow=$flowId, $source). '
+          'Legacy enum logic enforces; the engine only logs FLOW-SHADOW MISMATCH '
+          'divergences.');
     }
   }
 
@@ -880,9 +906,16 @@ class CoordinatorService {
     };
     final offers =
         await _dbService.getOffersNotInRawStatuses(excluded.toList());
+    var armed = 0;
     for (final o in offers) {
-      if (engine.timeoutFor(o.statusRaw) != null) _genericArmTimer(o);
+      if (engine.timeoutFor(o.statusRaw) != null) {
+        _genericArmTimer(o);
+        armed++;
+      }
     }
+    AppLogger.info(
+        'FLOW ENGINE: generic startup recovery armed $armed timer(s) across '
+        '${offers.length} live offer(s).');
   }
 
   Future<void> doInitialCheckStatuses() async {
