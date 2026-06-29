@@ -60,7 +60,7 @@ states:
         target: funded
         note: Re-opens the offer for other takers.
       - trigger: timeout
-        duration_seconds: 30    # RESERVATION_SECONDS, default 30
+        duration_seconds: 59    # RESERVATION_SECONDS, default 30
         target: funded
         reason: >
           Taker did not submit a BLIK code in time; the offer is reverted to

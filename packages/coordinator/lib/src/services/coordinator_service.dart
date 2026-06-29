@@ -143,8 +143,32 @@ class CoordinatorService {
   /// Effective reservation timeout (env-configurable), exposed for tests.
   int get reservationTimeoutSeconds => _reservationTimeoutSeconds;
 
+  /// Reservation window in seconds. Generic (yaml-driven) flows read it strictly
+  /// from the `reserved` state in the `.yml` and ignore the env override; enum
+  /// flows use the env-configurable [_reservationTimeoutSeconds].
+  int get _reservationSeconds {
+    if (isGenericFlow) {
+      return _flowEngine!.timeoutFor('reserved')?.durationSeconds ??
+          _reservationTimeoutSeconds;
+    }
+    return _reservationTimeoutSeconds;
+  }
+
   // Funded expire timeout configuration
   late final int _fundedExpireTimeoutSeconds;
+
+  /// Funded-state expiry window in seconds. Generic (yaml-driven) flows read it
+  /// strictly from the `.yml` state definition and ignore the env override;
+  /// enum flows use the env-configurable [_fundedExpireTimeoutSeconds].
+  int get fundedExpirySeconds => _fundedExpirySeconds;
+
+  int get _fundedExpirySeconds {
+    if (isGenericFlow) {
+      return _flowEngine!.timeoutFor(OfferStatus.funded.name)?.durationSeconds ??
+          _fundedExpireTimeoutSeconds;
+    }
+    return _fundedExpireTimeoutSeconds;
+  }
 
   // taker charged timeout configuration
   late final int _takerChargedAutoConfirmTimeoutSeconds;
@@ -392,7 +416,7 @@ class CoordinatorService {
             .toList();
 
     _reservationTimeoutSeconds =
-        int.tryParse(_env['RESERVATION_SECONDS'] ?? '') ?? 30;
+        int.tryParse(_env['RESERVATION_SECONDS'] ?? '') ?? 33;
     _fundedExpireTimeoutSeconds =
         int.tryParse(_env['FUNDED_EXPIRY_SECONDS'] ?? '') ?? 600;
     _takerChargedAutoConfirmTimeoutSeconds =
@@ -1669,7 +1693,7 @@ class CoordinatorService {
       await _dbService.createOffer(offer);
       // --- Begin: broadcast NIP-69 order event ---
       final expirationUnix = offer.createdAt
-              .add(Duration(seconds: _fundedExpireTimeoutSeconds))
+              .add(Duration(seconds: _fundedExpirySeconds))
               .millisecondsSinceEpoch ~/
           1000;
       await _nostrService?.broadcastNip69OrderFromOffer(offer,
@@ -2172,7 +2196,7 @@ class CoordinatorService {
 
     return CoordinatorInfo(
       name: _coordinatorName,
-      reservationSeconds: _reservationTimeoutSeconds,
+      reservationSeconds: _reservationSeconds,
       makerFee: _makerFeePercentage,
       takerFee: _takerFeePercentage,
       minAmountSats: _minAmountSats,

@@ -1053,9 +1053,11 @@ class NostrService {
         // Calculate expiration if the offer is still active
         int? expiration;
         if (offer.status == OfferStatus.funded) {
-          // Use the same expiration logic as in the original broadcast
+          // Same expiration logic as the original broadcast: generic flows read
+          // it strictly from the yaml state def, enum flows from the env value.
           expiration = offer.createdAt
-                  .add(Duration(seconds: 600)) // _fundedExpireTimeoutSeconds
+                  .add(Duration(
+                      seconds: _coordinatorService.fundedExpirySeconds))
                   .millisecondsSinceEpoch ~/
               1000;
         }
