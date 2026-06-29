@@ -58,6 +58,13 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         status == OfferStatus.funded;
   }
 
+  PaymentSystem get _method {
+    final offer = ref.read(activeOfferProvider);
+    return offer != null
+        ? (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik)
+        : ref.read(selectedPaymentSystemProvider);
+  }
+
   void _scheduleExpiryTimer(Offer? offer) {
     if (offer == null) return;
     final expiresAt = offer.createdAt.add(const Duration(minutes: 10));
@@ -97,7 +104,11 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
 
     if (status == OfferStatus.reserved) {
       if (mounted) {
-        context.go('/wait-blik');
+        context.go(
+          _method.makerProvidesCodeAtOfferCreation
+              ? '/confirm-blik'
+              : '/wait-blik',
+        );
       }
     } else if (status == OfferStatus.funded) {
       // Continue waiting
@@ -161,7 +172,8 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
           );
         } catch (e) {
           Logger.log.w(
-            () => '[MakerWaitTaker] BLIK fetch failed for offer ${offer.id}: $e',
+            () =>
+                '[MakerWaitTaker] BLIK fetch failed for offer ${offer.id}: $e',
           );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

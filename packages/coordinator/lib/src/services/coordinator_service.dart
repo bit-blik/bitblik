@@ -2202,7 +2202,12 @@ class CoordinatorService {
       return false;
     }
 
-    if (offer.status != OfferStatus.takerCharged &&
+    final allowDirectMakerConfirmationFromReserved =
+        _paymentSystem.makerProvidesCodeAtOfferCreation &&
+            offer.status == OfferStatus.reserved;
+
+    if (!allowDirectMakerConfirmationFromReserved &&
+        offer.status != OfferStatus.takerCharged &&
         offer.status != OfferStatus.blikSentToMaker &&
         offer.status != OfferStatus.expiredSentBlik) {
       AppLogger.warning(
@@ -2372,9 +2377,15 @@ class CoordinatorService {
     AppLogger.info('Maker $makerId confirming payment for offer $offerId',
         offerId: offerId);
     final offer = await _dbService.getOfferById(offerId);
+    final allowDirectMakerConfirmationFromReserved =
+        offer != null &&
+        _paymentSystem.makerProvidesCodeAtOfferCreation &&
+        offer.status == OfferStatus.reserved;
+
     if (offer == null ||
         offer.makerPubkey != makerId ||
-        (offer.status !=
+        (!allowDirectMakerConfirmationFromReserved &&
+            offer.status !=
                 OfferStatus
                     .conflict && // Allow confirmation from conflict state
             offer.status !=
@@ -2413,6 +2424,7 @@ class CoordinatorService {
       OfferStatus.takerCharged,
       OfferStatus.blikSentToMaker,
       OfferStatus.expiredSentBlik,
+      if (_paymentSystem.makerProvidesCodeAtOfferCreation) OfferStatus.reserved,
     ]);
     if (!success) {
       AppLogger.info(

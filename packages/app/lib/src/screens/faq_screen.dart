@@ -129,29 +129,34 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     });
     try {
       // final locale = LocaleSettings.currentLocale; // Use localeToLoad instead
-      String langCode = localeToLoad.languageCode.toLowerCase();
-      String filePath = 'assets/faq/faq_$langCode.md';
-      String markdownData;
+      final String langCode = localeToLoad.languageCode.toLowerCase();
 
-      try {
-        markdownData = await _loadMarkdownAsset(filePath);
-      } catch (e) {
-        Logger.log.w(
-          () =>
-              'Could not load FAQ for language: $langCode. Falling back to English. Error: $e',
-        );
-        langCode = 'en';
-        filePath = 'assets/faq/faq_$langCode.md';
+      // Brand slug (bitway / bittwint / bitblik). Branded flavors get their own
+      // FAQ (e.g. BitWay's Multibanco/ATM variant); fall back to the generic
+      // token-based FAQ when no per-flavor file exists for the brand/language.
+      final String slug = buildAppScheme;
+      final candidates = <String>[
+        if (slug != 'bitblik') 'assets/faq/faq_${slug}_$langCode.md',
+        if (slug != 'bitblik') 'assets/faq/faq_${slug}_en.md',
+        'assets/faq/faq_$langCode.md',
+        'assets/faq/faq_en.md',
+      ];
+
+      String? markdownData;
+      for (final filePath in candidates) {
         try {
           markdownData = await _loadMarkdownAsset(filePath);
-        } catch (fallbackError) {
+          break;
+        } catch (e) {
           Logger.log.w(
-            () => 'Could not load English fallback FAQ. Error: $fallbackError',
-          );
-          throw Exception(
-            'Failed to load FAQ content for $langCode and fallback en.',
+            () => 'Could not load FAQ asset $filePath. Trying next. Error: $e',
           );
         }
+      }
+      if (markdownData == null) {
+        throw Exception(
+          'Failed to load FAQ content for $slug/$langCode and fallbacks.',
+        );
       }
 
       // Convert Markdown to HTML, then substitute payment-system tokens on the

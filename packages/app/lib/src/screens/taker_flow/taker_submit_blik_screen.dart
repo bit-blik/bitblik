@@ -790,27 +790,35 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
               const SizedBox(height: 10),
 
               // Instructional text
-              Center(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 3),
+                      child: SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.grey,
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(width: 10),
-                    Text(
-                      _makerProvidedCodeFlow
-                          ? 'Open ${_method.codeLabel}, enter this code, then continue before the timer ends.'
-                          : t.taker.submitBlik.instruction(
-                            code: _method.codeLabel,
-                          ),
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      textAlign: TextAlign.center,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _makerProvidedCodeFlow
+                            ? 'Open ${_method.codeLabel}, enter this code, then continue before the timer ends.'
+                            : t.taker.submitBlik.instruction(
+                              code: _method.codeLabel,
+                            ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ],
                 ),

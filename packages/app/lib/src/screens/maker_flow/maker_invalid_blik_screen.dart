@@ -15,6 +15,9 @@ class MakerInvalidBlikScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final PaymentSystem method =
+        paymentSystemForCurrency(offer.fiatCurrency) ??
+        ref.read(selectedPaymentSystemProvider);
     // Listen to the active offer provider for status changes
     ref.listen<Offer?>(activeOfferProvider, (previous, next) {
       if (next != null && next.id == offer.id) {
@@ -30,7 +33,12 @@ class MakerInvalidBlikScreen extends ConsumerWidget {
             () =>
                 "[MakerInvalidBlikScreen] Offer status changed to reserved. Navigating back to wait-blik.",
           );
-          context.go('/wait-blik', extra: offer);
+          context.go(
+            method.makerProvidesCodeAtOfferCreation
+                ? '/confirm-blik'
+                : '/wait-blik',
+            extra: offer,
+          );
         } else if (status == OfferStatus.funded) {
           Logger.log.d(
             () =>
@@ -68,7 +76,9 @@ class MakerInvalidBlikScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 30),
               Text(
-                t.maker.invalidBlik.info(code: ref.read(selectedPaymentSystemProvider).codeLabel),
+                t.maker.invalidBlik.info(
+                  code: ref.read(selectedPaymentSystemProvider).codeLabel,
+                ),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
               ),

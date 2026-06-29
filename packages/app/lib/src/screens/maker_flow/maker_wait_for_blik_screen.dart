@@ -25,6 +25,13 @@ class _MakerWaitForBlikScreenState
   bool _isLoadingConfig = true;
   String? _configError;
 
+  PaymentSystem get _method {
+    final offer = ref.read(activeOfferProvider);
+    return offer != null
+        ? (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik)
+        : ref.read(selectedPaymentSystemProvider);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -95,6 +102,12 @@ class _MakerWaitForBlikScreenState
 
   void _handleStatusUpdate(OfferStatus? status) async {
     if (status == null) return;
+
+    if (_method.makerProvidesCodeAtOfferCreation &&
+        status == OfferStatus.reserved) {
+      if (mounted) context.go('/confirm-blik');
+      return;
+    }
 
     final offer = ref.read(activeOfferProvider);
     final makerId = ref.read(publicKeyProvider).value;
@@ -332,7 +345,10 @@ class _MakerWaitForBlikScreenState
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        t.maker.waitForBlik.messageWaiting(code: ref.read(selectedPaymentSystemProvider).codeLabel),
+                        t.maker.waitForBlik.messageWaiting(
+                          code:
+                              ref.read(selectedPaymentSystemProvider).codeLabel,
+                        ),
                         style: const TextStyle(
                           fontSize: 24,
                           color: Colors.black87,

@@ -183,8 +183,11 @@ class _OfferDetailsBody extends ConsumerWidget {
                   Icon(_statusIcon(offer.status), color: statusColor, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    offerStatusLabel(t, offer.status,
-                        code: offerCodeLabel(offer)),
+                    offerStatusLabel(
+                      t,
+                      offer.status,
+                      code: offerCodeLabel(offer),
+                    ),
                     style: TextStyle(
                       color: statusColor,
                       fontWeight: FontWeight.w600,
@@ -428,6 +431,7 @@ class _OfferDetailsBody extends ConsumerWidget {
   }
 
   void _navigateToMakerStep(BuildContext context, Offer offer, Translations t) {
+    final method = paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
     switch (offer.status) {
       case OfferStatus.created:
         context.go('/pay', extra: offer);
@@ -436,7 +440,12 @@ class _OfferDetailsBody extends ConsumerWidget {
         context.go('/wait-taker', extra: offer);
         return;
       case OfferStatus.reserved:
-        context.go('/wait-blik', extra: offer);
+        context.go(
+          method.makerProvidesCodeAtOfferCreation
+              ? '/confirm-blik'
+              : '/wait-blik',
+          extra: offer,
+        );
         return;
       case OfferStatus.conflict:
       case OfferStatus.dispute:
