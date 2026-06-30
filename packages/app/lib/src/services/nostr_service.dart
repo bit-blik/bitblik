@@ -536,9 +536,15 @@ class NostrService {
 
     final response = await sendRequest(request, coordinatorPubkey);
     return _handleResponse(response, (result) {
-      final timestamp = result['reserved_at'] as int?;
-      if (timestamp != null) {
-        return DateTime.fromMillisecondsSinceEpoch(timestamp, isUtc: true);
+      // Enum coordinators return reserved_at as epoch milliseconds; generic
+      // (yaml-driven) coordinators return the full offer json with an ISO-8601
+      // string. Accept both.
+      final raw = result['reserved_at'];
+      if (raw is int) {
+        return DateTime.fromMillisecondsSinceEpoch(raw, isUtc: true);
+      }
+      if (raw is String) {
+        return DateTime.tryParse(raw)?.toUtc();
       }
       return null;
     });

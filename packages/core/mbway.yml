@@ -24,7 +24,7 @@
 #
 # Initial state: funded.
 
-id: blik
+id: mbway
 
 states:
 
@@ -70,7 +70,7 @@ states:
         effects: [assign_taker, clear_taker_fields]
         note: Re-opens the offer for other takers.
       - trigger: timeout
-        duration_seconds: 559    # RESERVATION_SECONDS, default 30
+        duration_seconds: 60    # RESERVATION_SECONDS, default 30
         target: funded
         effects: [clear_taker_fields]
         reason: >
@@ -91,7 +91,7 @@ states:
           Maker pulls the code. Modeled as an explicit state because the
           confirmation-timeout target differs before vs after the pull.
       - trigger: timeout
-        duration_seconds: 120   # PaymentSystem.confirmationWindow (BLIK = 2 min)
+        duration_seconds: 1800   # PaymentSystem.confirmationWindow (MBway = 30 min)
         target: expiredBlik
         reason: Maker never fetched the BLIK code within the confirmation window.
 
@@ -109,7 +109,7 @@ states:
         actor: maker
         target: invalidBlik
       - trigger: timeout
-        duration_seconds: 120   # confirmation window, measured from code_received_at
+        duration_seconds: 1800   # PaymentSystem.confirmationWindow (MBway = 30 min)
         from_field: code_received_at
         target: expiredSentBlik
         reason: >
@@ -281,7 +281,7 @@ states:
         actor: maker
         target: conflict
       - trigger: timeout
-        duration_seconds: 1800  # TAKER_CHARGED_AUTO_CONFIRM_SECONDS, default 3600
+        duration_seconds: 3600  # TAKER_CHARGED_AUTO_CONFIRM_SECONDS, default 3600
         target: makerConfirmed
         effects: [stamp_maker_confirmed_at]
         reason: >

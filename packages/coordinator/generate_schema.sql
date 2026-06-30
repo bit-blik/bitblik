@@ -49,6 +49,26 @@ CREATE TABLE IF NOT EXISTS log_audit (
 CREATE INDEX IF NOT EXISTS idx_log_audit_offer_id ON log_audit (offer_id);
 CREATE INDEX IF NOT EXISTS idx_log_audit_action ON log_audit (action);
 
+-- Per-offer state transition trail for FLOW_MODE generic (yaml-driven flows).
+-- Records every transition an offer goes through: user actions, timer/timeout
+-- firings, and coordinator-driven (auto) follow-ups. Supersedes log_audit in
+-- that mode.
+CREATE TABLE IF NOT EXISTS offer_state_history (
+  id BIGSERIAL PRIMARY KEY,
+  offer_id UUID NOT NULL,
+  from_state TEXT,
+  to_state TEXT NOT NULL,
+  trigger_type TEXT NOT NULL, -- user_action | timeout | auto | coordinator
+  event TEXT,                 -- rpc/event or action name when known
+  actor TEXT,                 -- maker | taker | coordinator | server
+  actor_pubkey TEXT,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_offer_state_history_offer
+  ON offer_state_history (offer_id, created_at, id);
+
 -- Grant necessary privileges (adjust user 'user' if needed)
 -- GRANT ALL PRIVILEGES ON TABLE offers TO "user";
 -- GRANT USAGE, SELECT ON SEQUENCE offers_id_seq TO "user"; -- If using SERIAL instead of UUID

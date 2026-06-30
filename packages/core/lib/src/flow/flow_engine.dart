@@ -89,6 +89,20 @@ class FlowEngine {
   FlowTransition? timeoutFor(String state) =>
       definition.state(state)?.timeoutTransition;
 
+  /// The first transition leaving [state] whose [FlowTransition.event] equals
+  /// [event] (optionally constrained to [actor]). Lets the executor resolve a
+  /// transition by event without naming source/target states in code.
+  FlowTransition? transitionFor(String state, String event, {FlowActor? actor}) {
+    final s = definition.state(state);
+    if (s == null) return null;
+    for (final t in s.transitions) {
+      if (t.event != event) continue;
+      if (actor != null && t.actor != null && t.actor != actor) continue;
+      return t;
+    }
+    return null;
+  }
+
   /// Set of states from which [event] is a valid user action. Useful for
   /// building the expected-current-status list of a DB compare-and-set when an
   /// RPC is allowed from several states.

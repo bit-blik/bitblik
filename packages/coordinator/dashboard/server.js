@@ -315,6 +315,73 @@ const fetchAuditByOfferId = async (pool, offerId, limit = AUDIT_DEFAULT_LIMIT) =
   return result.rows;
 };
 
+const fetchStateHistoryByOfferId = async (pool, offerId) => {
+  const query = `
+    SELECT
+      from_state,
+      to_state,
+      trigger_type,
+      event,
+      actor,
+      actor_pubkey,
+      metadata,
+      created_at
+    FROM offer_state_history
+    WHERE offer_id = $1
+    ORDER BY created_at, id
+  `;
+
+  const result = await pool.query(query, [offerId]);
+  return result.rows;
+};
+
+const fetchRecentOffersByActorPubkey = async (pool, actorPubkey, limit = 20) => {
+  const query = `
+    SELECT
+      id,
+      status,
+      fiat_amount,
+      fiat_currency,
+      created_at,
+      CASE
+        WHEN maker_pubkey = $1 THEN 'maker'
+        WHEN taker_pubkey = $1 THEN 'taker'
+        ELSE NULL
+      END AS role
+    FROM offers
+    WHERE maker_pubkey = $1 OR taker_pubkey = $1
+    ORDER BY created_at DESC
+    LIMIT $2
+  `;
+
+  const result = await pool.query(query, [actorPubkey, limit]);
+  return result.rows;
+};
+
+const fetchActorOfferStats = async (pool, actorPubkey, role, days = 90) => {
+  const roleColumn = role === 'maker' ? 'maker_pubkey' : role === 'taker' ? 'taker_pubkey' : null;
+  if (!roleColumn) {
+    throw new Error(`Invalid actor role: ${role}`);
+  }
+
+  const query = `
+    SELECT
+      COUNT(*) FILTER (WHERE status = 'takerPaid')::INT AS success_count,
+      COUNT(*) FILTER (WHERE status IN ('expired', 'cancelled'))::INT AS failed_count
+    FROM offers
+    WHERE ${roleColumn} = $1
+      AND created_at >= NOW() - ($2::text || ' days')::interval
+  `;
+
+  const result = await pool.query(query, [actorPubkey, String(days)]);
+  return {
+    role,
+    days,
+    successCount: result.rows[0]?.success_count || 0,
+    failedCount: result.rows[0]?.failed_count || 0,
+  };
+};
+
 const fetchAuditById = async (pool, auditId) => {
   const query = `
     SELECT
@@ -634,6 +701,54 @@ app.get('/api/offers/:offerId/audit', async (req, res) => {
     const limit = parseLimit(req.query.limit, AUDIT_DEFAULT_LIMIT, AUDIT_MAX_LIMIT);
     const rows = await fetchAuditByOfferId(coordinator.pool, offerId, limit);
     res.json({ rows });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/offers/:offerId/state-history', async (req, res) => {
+  try {
+    const coordinator = requireCoordinator(req, res);
+    if (!coordinator) {
+      return;
+    }
+    const { offerId } = req.params;
+    const rows = await fetchStateHistoryByOfferId(coordinator.pool, offerId);
+    res.json({ rows });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/actors/:actorPubkey/offers', async (req, res) => {
+  try {
+    const coordinator = requireCoordinator(req, res);
+    if (!coordinator) {
+      return;
+    }
+    const { actorPubkey } = req.params;
+    const limit = parseLimit(req.query.limit, 20, 50);
+    const rows = await fetchRecentOffersByActorPubkey(coordinator.pool, actorPubkey, limit);
+    res.json({ rows });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/actors/:actorPubkey/stats', async (req, res) => {
+  try {
+    const coordinator = requireCoordinator(req, res);
+    if (!coordinator) {
+      return;
+    }
+    const { actorPubkey } = req.params;
+    const role = String(req.query.role || '');
+    const days = parseLimit(req.query.days, 90, 365);
+    const stats = await fetchActorOfferStats(coordinator.pool, actorPubkey, role, days);
+    res.json(stats);
   } catch (error) {
     console.error('Database error:', error);
     res.status(500).json({ error: error.message });

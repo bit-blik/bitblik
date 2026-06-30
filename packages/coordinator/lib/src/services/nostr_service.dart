@@ -578,13 +578,12 @@ class NostrService {
       String method, Map<String, dynamic> params, String userPubkey,
       {String? clientVersion}) async {
     try {
-      // Generic (yaml-driven) flows enforce offer-action RPCs through the flow
-      // engine instead of the hardcoded enum handlers. Query/info RPCs and the
-      // payout-tail RPCs still fall through to the shared handlers below.
-      if (_coordinatorService.isGenericFlow &&
-          _coordinatorService.genericHandlesRpc(method)) {
-        return await _coordinatorService.handleGenericRpc(
-            method, params, userPubkey);
+      // Offer-action RPCs (the state machine) are owned by the active flow
+      // strategy — generic (yaml-driven) or legacy enum. Query/info/payout RPCs
+      // fall through to the shared handlers below.
+      if (_coordinatorService.flow.handlesRpc(method)) {
+        return await _coordinatorService.flow
+            .handleRpc(method, params, userPubkey, clientVersion: clientVersion);
       }
 
       switch (method) {
@@ -626,79 +625,6 @@ class NostrService {
             blikCode: blikCode,
             clientVersion: clientVersion,
           );
-
-        case kRpcReserveOffer:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final reservationTimestamp =
-              await _coordinatorService.reserveOffer(offerId, userPubkey);
-          if (reservationTimestamp != null) {
-            return {
-              'message': 'Offer reserved successfully',
-              'reserved_at': reservationTimestamp.millisecondsSinceEpoch,
-            };
-          } else {
-            throw Exception(
-                'Failed to reserve offer. It might be unavailable or already reserved.');
-          }
-
-        case kRpcSubmitBlik:
-          final offerId = params['offer_id'] as String?;
-          final blikCode = params['blik_code'] as String?;
-          final takerLightningAddress =
-              params['taker_lightning_address'] as String?;
-          final taker_invoice = params['taker_invoice'] as String?;
-
-          if (offerId == null ||
-              (takerLightningAddress == null && taker_invoice == null)) {
-            throw Exception(
-                'Missing required parameters: offer_id and taker invoice/lightning address');
-          }
-
-          final success = await _coordinatorService.submitBlikCode(offerId,
-              userPubkey, blikCode, takerLightningAddress, taker_invoice);
-
-          if (success) {
-            return {'message': 'BLIK code submitted successfully'};
-          } else {
-            throw Exception(
-                'Failed to submit BLIK code. Offer state might be invalid or taker mismatch.');
-          }
-
-        case kRpcGetBlik:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final blikCode = await _coordinatorService.getBlikCodeForMaker(
-              offerId, userPubkey);
-          if (blikCode != null) {
-            return {'blik_code': blikCode};
-          } else {
-            throw Exception(
-                'BLIK code not found or not available for this offer/maker.');
-          }
-
-        case kRpcConfirmPayment:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success = await _coordinatorService.confirmMakerPayment(
-              offerId, userPubkey);
-          if (success) {
-            return {
-              'message': 'Payment confirmed, invoice settled, taker paid.'
-            };
-          } else {
-            throw Exception(
-                'Failed to confirm payment. Check offer state, LND connection, or logs.');
-          }
 
         // DEPRECATED: clients now resolve a local-only offer (id == payment
         // hash, no UUID yet) via `get_offer_details` with a `payment_hash`
@@ -749,82 +675,6 @@ class NostrService {
           final finishedList =
               finished.map((offer) => offer.toRpcJson()).toList();
           return {'offers': finishedList};
-
-        case kRpcCancelOffer:
-          //PILA Error handling request: Exception: Error processing request: PostgreSQLSeverity.error 22P02: invalid input syntax for type uuid: "unknown_id"
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.cancelOffer(offerId, userPubkey);
-          if (success) {
-            return {'message': 'Offer cancelled successfully'};
-          } else {
-            throw Exception(
-                'Failed to cancel offer. It might be in the wrong state or you are not the maker.');
-          }
-
-        case kRpcCancelReservation:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.cancelReservation(offerId, userPubkey);
-          if (success) {
-            return {'message': 'Reservation cancelled successfully'};
-          } else {
-            throw Exception(
-                'Failed to cancel reservation. It might be in the wrong state or you are not the taker.');
-          }
-
-        case kRpcMarkBlikInvalid:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.markBlikInvalid(offerId, userPubkey);
-          if (success) {
-            return {'message': 'BLIK code marked as invalid successfully'};
-          } else {
-            throw Exception(
-                'Failed to mark BLIK as invalid. Offer might be in the wrong state, not found, or maker ID mismatch.');
-          }
-
-        case kRpcMarkBlikCharged:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.markBlikCharged(offerId, userPubkey);
-          if (success) {
-            return {'message': 'Offer marked as conflict successfully'};
-          } else {
-            throw Exception(
-                'Failed to mark offer as conflict. Offer might be in the wrong state, not found, or taker ID mismatch.');
-          }
-
-        case kRpcOpenDispute:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.openDispute(offerId, userPubkey);
-          if (success) {
-            return {'message': 'Offer marked as open dispute successfully'};
-          } else {
-            throw Exception(
-                'Failed to mark offer as dispute. Offer might be in the wrong state, not found, or taker ID mismatch.');
-          }
 
         case kRpcUpdateTakerInvoice:
           final offerId = params['offer_id'] as String?;
@@ -962,7 +812,10 @@ class NostrService {
     String document = 'order',
     String bond = "0",
   }) async {
-    final status = _mapRawStatusToNip69Status(offer.statusRaw, offer.status);
+    // Generic flows declare the NIP-69 category in the yaml (`nip69:`); legacy
+    // falls back to the OfferStatus-based mapping.
+    final status = _coordinatorService.nip69CategoryForRaw(offer.statusRaw) ??
+        _mapRawStatusToNip69Status(offer.statusRaw, offer.status);
     final premiumValue = premium ?? offer.premiumPercent;
     final ps = _coordinatorService.paymentSystem;
     final resolvedPaymentSystems = paymentSystems ?? [ps.label];

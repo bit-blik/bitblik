@@ -120,6 +120,21 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
   }
 
   @override
+  bool get recordStateHistory => (super.noSuchMethod(
+        Invocation.getter(#recordStateHistory),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  set recordStateHistory(bool? value) => super.noSuchMethod(
+        Invocation.setter(
+          #recordStateHistory,
+          value,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
   _i9.Future<void> connect() => (super.noSuchMethod(
         Invocation.method(
           #connect,
@@ -138,6 +153,40 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
         returnValue: _i9.Future<void>.value(),
         returnValueForMissingStub: _i9.Future<void>.value(),
       ) as _i9.Future<void>);
+
+  @override
+  _i9.Future<void> recordOfferTransition({
+    required String? offerId,
+    required String? fromState,
+    required String? toState,
+    _i8.StateTransitionMeta? meta,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #recordOfferTransition,
+          [],
+          {
+            #offerId: offerId,
+            #fromState: fromState,
+            #toState: toState,
+            #meta: meta,
+          },
+        ),
+        returnValue: _i9.Future<void>.value(),
+        returnValueForMissingStub: _i9.Future<void>.value(),
+      ) as _i9.Future<void>);
+
+  @override
+  _i9.Future<List<Map<String, dynamic>>> getOfferStateHistory(
+          String? offerId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOfferStateHistory,
+          [offerId],
+        ),
+        returnValue: _i9.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+      ) as _i9.Future<List<Map<String, dynamic>>>);
 
   @override
   _i9.Future<void> saveTelegramOfferMessage({
@@ -318,6 +367,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
     int? takerFees,
     String? failureReason,
     bool? clearTakerFields = false,
+    _i8.StateTransitionMeta? transitionMeta,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -343,6 +393,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
             #takerFees: takerFees,
             #failureReason: failureReason,
             #clearTakerFields: clearTakerFields,
+            #transitionMeta: transitionMeta,
           },
         ),
         returnValue: _i9.Future<bool>.value(false),
@@ -394,6 +445,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
     _i2.DisputeEscalationReason? disputeEscalationReason,
     int? takerFees,
     String? failureReason,
+    _i8.StateTransitionMeta? transitionMeta,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -413,6 +465,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
             #disputeEscalationReason: disputeEscalationReason,
             #takerFees: takerFees,
             #failureReason: failureReason,
+            #transitionMeta: transitionMeta,
           },
         ),
         returnValue: _i9.Future<bool>.value(false),
@@ -434,6 +487,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
     int? takerFees,
     String? failureReason,
     String? expectedTakerPubkey,
+    _i8.StateTransitionMeta? transitionMeta,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -455,6 +509,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
             #takerFees: takerFees,
             #failureReason: failureReason,
             #expectedTakerPubkey: expectedTakerPubkey,
+            #transitionMeta: transitionMeta,
           },
         ),
         returnValue: _i9.Future<bool>.value(false),

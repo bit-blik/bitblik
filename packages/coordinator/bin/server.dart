@@ -60,6 +60,16 @@ Future<void> main(List<String> args) async {
     );
     await coordinatorService.init();
 
+    // FLOW_MODE generic records every offer transition in offer_state_history,
+    // which supersedes the log_audit trail — so persist state history and stop
+    // persisting log_audit in that mode.
+    final generic = coordinatorService.isGenericFlow;
+    dbService.recordStateHistory = generic;
+    // AppLogger.setAuditPersistenceEnabled(!generic);
+    // AppLogger.info(
+    //     'Flow mode: ${generic ? 'generic (offer_state_history on, log_audit off)' : 'enum (log_audit on)'}',
+    //     action: 'system.startup');
+
     await nostrService.init(privateKey: env['NOSTR_PRIVATE_KEY'] ?? '');
 
     // Set the Nostr service in the coordinator service for status updates

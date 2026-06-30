@@ -1203,6 +1203,9 @@ const App = () => {
     });
   };
 
+  const selectedCoordinator =
+    coordinators.find((coordinator) => coordinator.id === selectedCoordinatorId) || null;
+
   if (coordinatorLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -1247,7 +1250,16 @@ const App = () => {
       <div className="pt-16 sm:pt-20">
         <Routes>
           <Route path="/" element={<AnalyticsDashboard key={selectedCoordinatorId} selectedCoordinatorId={selectedCoordinatorId} />} />
-          <Route path="/offers" element={<OffersPage key={selectedCoordinatorId} selectedCoordinatorId={selectedCoordinatorId} />} />
+          <Route
+            path="/offers"
+            element={
+              <OffersPage
+                key={selectedCoordinatorId}
+                selectedCoordinatorId={selectedCoordinatorId}
+                selectedCoordinatorIconUrl={selectedCoordinator?.iconUrl || null}
+              />
+            }
+          />
         </Routes>
       </div>
     </BrowserRouter>

@@ -147,6 +147,11 @@ class _OfferIdEqualsDynamicValueMatcher extends Matcher {
   }
 }
 
+/// Legacy enum flow handlers moved to [LegacyEnumOfferFlow]; the coordinator
+/// exposes the active flow via `.flow`. These tests run in legacy mode.
+LegacyEnumOfferFlow _legacy(CoordinatorService s) =>
+    s.flow as LegacyEnumOfferFlow;
+
 void main() {
   late MockDatabaseService mockDbService;
   late MockPaymentService mockPaymentService;
@@ -518,7 +523,7 @@ void main() {
       // mockDbService.cancelOffer is already stubbed in setUp to return true
 
       final result =
-          await coordinatorService.cancelOffer(testOfferId, testMakerId);
+          await _legacy(coordinatorService).cancelOffer(testOfferId, testMakerId);
 
       expect(result, isTrue);
       verify(mockPaymentService.cancelInvoice(paymentHashHex: testPaymentHash))
@@ -537,7 +542,7 @@ void main() {
       // updateOfferStatus is stubbed in setUp to return true
 
       final reservationTime =
-          await coordinatorService.reserveOffer(testOfferId, testTakerId);
+          await _legacy(coordinatorService).reserveOffer(testOfferId, testTakerId);
 
       expect(reservationTime, isNotNull);
       expect(reservationTime, isA<DateTime>());
@@ -1209,7 +1214,7 @@ void main() {
                   status: InvoiceStatus.CANCELED));
 
           // 1. Reserve the offer
-          coordinatorService.reserveOffer(offerId, takerId);
+          _legacy(coordinatorService).reserveOffer(offerId, takerId);
           async.flushMicrotasks();
           expect(currentOffer?.status, OfferStatus.reserved);
 
@@ -1368,7 +1373,7 @@ void main() {
                   status: InvoiceStatus.CANCELED));
 
           // 1. Reserve the offer
-          coordinatorService.reserveOffer(offerId, takerId);
+          _legacy(coordinatorService).reserveOffer(offerId, takerId);
           async.flushMicrotasks();
           expect(currentOffer?.status, OfferStatus.reserved);
 
@@ -1377,7 +1382,7 @@ void main() {
           async.elapse(partialReservationTime);
 
           // 3. Taker cancels reservation
-          coordinatorService.cancelReservation(offerId, takerId);
+          _legacy(coordinatorService).cancelReservation(offerId, takerId);
           async.flushMicrotasks();
           expect(currentOffer?.status, OfferStatus.funded,
               reason: "Offer should revert to funded after taker cancels");
@@ -1576,14 +1581,14 @@ void main() {
                   status: InvoiceStatus.CANCELED));
 
           // 1. Reserve
-          coordinatorService.reserveOffer(offerId, takerId);
+          _legacy(coordinatorService).reserveOffer(offerId, takerId);
           async.flushMicrotasks();
           expect(currentOffer?.status, OfferStatus.reserved);
           expect(currentOffer?.takerPubkey, takerId);
           expect(currentOffer?.reservedAt, isNotNull);
 
           // 2. Submit BLIK
-          coordinatorService.submitBlikCode(
+          _legacy(coordinatorService).submitBlikCode(
               offerId, takerId, blikCode, takerLnAddr, null);
           async.flushMicrotasks();
           expect(currentOffer?.status, OfferStatus.blikReceived);
@@ -1716,8 +1721,7 @@ void main() {
         });
 
         // 2. Reserve the offer to start the timer
-        coordinatorService
-            .reserveOffer(
+        _legacy(coordinatorService).reserveOffer(
                 offerIdForReservationTimeout, takerIdForReservationTimeout)
             .then((_) {
           // verify timer started, by checking side effects or if service exposes info
@@ -1834,8 +1838,7 @@ void main() {
         //   argThat(startsWith('https://example.com/lnurlpay_bliktimeout?amount='))
         // )).thenAnswer((_) async => http.Response(lnurlpCallbackResponse, 200));
 
-        coordinatorService
-            .submitBlikCode(offerIdForBlikTimeout, testTakerId, testBlikCode,
+        _legacy(coordinatorService).submitBlikCode(offerIdForBlikTimeout, testTakerId, testBlikCode,
                 testTakerLnAddress, null)
             .then((success) {
           expect(success, isTrue,
@@ -1924,8 +1927,7 @@ void main() {
         });
 
         // 2. Taker submits blik code
-        coordinatorService
-            .submitBlikCode(
+        _legacy(coordinatorService).submitBlikCode(
                 offerId, testTakerId, testBlikCode, testTakerLnAddress, null)
             .then((success) {
           expect(success, isTrue, reason: "submitBlikCode should succeed");
@@ -2052,8 +2054,7 @@ void main() {
                   status: InvoiceStatus.CANCELED,
                 ));
 
-        coordinatorService
-            .submitBlikCode(
+        _legacy(coordinatorService).submitBlikCode(
                 offerId, testTakerId, testBlikCode, testTakerLnAddress, null)
             .then((success) {
           expect(success, isTrue);
@@ -2192,8 +2193,7 @@ void main() {
         });
 
         // 2. Taker submits blik code
-        coordinatorService
-            .submitBlikCode(
+        _legacy(coordinatorService).submitBlikCode(
                 offerId, testTakerId, testBlikCode, testTakerLnAddress, null)
             .then((success) {
           expect(success, isTrue, reason: "submitBlikCode should succeed");
@@ -2205,8 +2205,7 @@ void main() {
         expect(offer.blikReceivedAt, isNotNull);
 
         // 3. Maker calls getBlikCodeForMaker (this should transition to blikSentToMaker and restart timer)
-        coordinatorService
-            .getBlikCodeForMaker(offerId, testMakerId)
+        _legacy(coordinatorService).getBlikCodeForMaker(offerId, testMakerId)
             .then((blikCode) {
           expect(blikCode, testBlikCode,
               reason: "getBlikCodeForMaker should return the blik code");
@@ -2289,7 +2288,7 @@ void main() {
         when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
             .thenAnswer((_) async {});
 
-        coordinatorService.markBlikCharged(offerId, testTakerId).then((result) {
+        _legacy(coordinatorService).markBlikCharged(offerId, testTakerId).then((result) {
           expect(result, isTrue);
         });
         async.flushMicrotasks();
@@ -2360,8 +2359,7 @@ void main() {
         when(mockPaymentService.settleInvoice(preimageHex: testPreimage))
             .thenAnswer((_) async {});
 
-        coordinatorService
-            .markBlikInvalid(offerId, testMakerId)
+        _legacy(coordinatorService).markBlikInvalid(offerId, testMakerId)
             .then((r) => expect(r, isTrue));
         async.flushMicrotasks();
         expect(offer.status, OfferStatus.invalidBlik);
@@ -2496,8 +2494,7 @@ void main() {
 
         // markBlikInvalid on takerCharged offer → conflict
         offer = offer.copyWith(status: OfferStatus.takerCharged);
-        coordinatorService
-            .markBlikInvalid(offerId, testMakerId)
+        _legacy(coordinatorService).markBlikInvalid(offerId, testMakerId)
             .then((r) => expect(r, isTrue));
         async.flushMicrotasks();
         expect(offer.status, OfferStatus.conflict);
@@ -2765,7 +2762,7 @@ void main() {
       )).thenAnswer((_) async => true);
 
       final result =
-          await coordinatorService.cancelReservation(testOfferId, testTakerId);
+          await _legacy(coordinatorService).cancelReservation(testOfferId, testTakerId);
 
       expect(result, isTrue);
       final capturedArgs = verify(mockDbService.updateOfferStatus(
@@ -2856,7 +2853,7 @@ void main() {
       //   argThat(startsWith('https://example.com/lnurlpay?amount=')), // More robust matching for callback
       // )).thenAnswer((_) async => http.Response(lnurlpCallbackResponse, 200));
 
-      final result = await coordinatorService.submitBlikCode(
+      final result = await _legacy(coordinatorService).submitBlikCode(
           testOfferId, testTakerId, testBlikCode, testTakerLnAddress, null);
 
       expect(result, isTrue); // Expect true now that HTTP is mocked
@@ -2904,7 +2901,7 @@ void main() {
         expectedTakerPubkey: testTakerId,
       )).thenAnswer((_) async => true);
 
-      final result = await coordinatorService.submitBlikCode(
+      final result = await _legacy(coordinatorService).submitBlikCode(
           testOfferId, testTakerId, testBlikCode, null, testValidTakerInvoice);
 
       expect(result, isTrue);
@@ -2950,7 +2947,7 @@ void main() {
         expectedTakerPubkey: testTakerId,
       )).thenAnswer((_) async => false);
 
-      final result = await coordinatorService.submitBlikCode(
+      final result = await _legacy(coordinatorService).submitBlikCode(
           testOfferId, testTakerId, testBlikCode, null, testValidTakerInvoice);
 
       expect(result, isFalse);
@@ -3034,7 +3031,7 @@ void main() {
           .thenAnswer((_) async => PayInvoiceResult(
               paymentPreimage: 'taker_paid_preimage', feeSat: 5));
 
-      final result = await coordinatorService.confirmMakerPayment(
+      final result = await _legacy(coordinatorService).confirmMakerPayment(
           testOfferId, testMakerId);
       expect(result, isTrue);
 
@@ -3134,7 +3131,7 @@ void main() {
           .thenAnswer((_) async => PayInvoiceResult(
               paymentPreimage: 'taker_paid_preimage_invoice_only', feeSat: 4));
 
-      final result = await coordinatorService.confirmMakerPayment(
+      final result = await _legacy(coordinatorService).confirmMakerPayment(
           testOfferId, testMakerId);
       expect(result, isTrue);
 
@@ -3160,7 +3157,7 @@ void main() {
           [OfferStatus.blikSentToMaker])).thenAnswer((_) async => true);
 
       final result =
-          await coordinatorService.markBlikInvalid(testOfferId, testMakerId);
+          await _legacy(coordinatorService).markBlikInvalid(testOfferId, testMakerId);
 
       expect(result, isTrue);
       verify(mockDbService.updateOfferStatusIfCurrentStatus(testOfferId,
@@ -3182,7 +3179,7 @@ void main() {
           .thenAnswer((_) async => true);
 
       final reservationTime =
-          await coordinatorService.reserveOffer(testOfferId, testTakerId);
+          await _legacy(coordinatorService).reserveOffer(testOfferId, testTakerId);
 
       expect(reservationTime, isNotNull);
       expect(reservationTime, isA<DateTime>());
@@ -3205,7 +3202,7 @@ void main() {
           .thenAnswer((_) async => offer);
 
       final reservationTime =
-          await coordinatorService.reserveOffer(testOfferId, differentTakerId);
+          await _legacy(coordinatorService).reserveOffer(testOfferId, differentTakerId);
 
       expect(reservationTime,
           isNull); // Should fail because taker ID doesn't match
@@ -3231,7 +3228,7 @@ void main() {
           .thenAnswer((_) async => true);
 
       final result =
-          await coordinatorService.markBlikCharged(testOfferId, testTakerId);
+          await _legacy(coordinatorService).markBlikCharged(testOfferId, testTakerId);
 
       expect(result, isTrue);
       verify(mockDbService.updateOfferStatusIfCurrentStatus(
@@ -3298,7 +3295,7 @@ void main() {
           .thenAnswer((_) async => PayInvoiceResult(
               paymentPreimage: 'taker_paid_preimage_conflict', feeSat: 6));
 
-      final result = await coordinatorService.confirmMakerPayment(
+      final result = await _legacy(coordinatorService).confirmMakerPayment(
           testOfferId, testMakerId);
       expect(result, isTrue);
 
@@ -3474,7 +3471,7 @@ void main() {
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
 
-      final result = await coordinatorService.confirmMakerPayment(
+      final result = await _legacy(coordinatorService).confirmMakerPayment(
           testOfferId, wrongMakerId);
 
       expect(result, isFalse);
@@ -3492,7 +3489,7 @@ void main() {
           .thenAnswer((_) async => offer);
 
       final result =
-          await coordinatorService.markBlikInvalid(testOfferId, wrongMakerId);
+          await _legacy(coordinatorService).markBlikInvalid(testOfferId, wrongMakerId);
 
       expect(result, isFalse);
       verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
@@ -3508,7 +3505,7 @@ void main() {
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
 
-      final blikCodeResult = await coordinatorService.getBlikCodeForMaker(
+      final blikCodeResult = await _legacy(coordinatorService).getBlikCodeForMaker(
           testOfferId, wrongMakerId);
 
       expect(blikCodeResult, isNull);
@@ -3523,7 +3520,7 @@ void main() {
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
 
-      final result = await coordinatorService.submitBlikCode(
+      final result = await _legacy(coordinatorService).submitBlikCode(
           testOfferId, wrongTakerId, testBlikCode, testTakerLnAddress, null);
 
       expect(result, isFalse);
@@ -3544,7 +3541,7 @@ void main() {
           .thenAnswer((_) async => offer);
 
       final result =
-          await coordinatorService.cancelReservation(testOfferId, wrongTakerId);
+          await _legacy(coordinatorService).cancelReservation(testOfferId, wrongTakerId);
 
       expect(result, isFalse);
       verifyNever(
@@ -3559,7 +3556,7 @@ void main() {
           .thenAnswer((_) async => offer);
 
       final result =
-          await coordinatorService.cancelOffer(testOfferId, wrongMakerId);
+          await _legacy(coordinatorService).cancelOffer(testOfferId, wrongMakerId);
 
       expect(result, isFalse);
       verifyNever(mockPaymentService.cancelInvoice(
@@ -3575,7 +3572,7 @@ void main() {
           .thenAnswer((_) async => offer);
 
       final result =
-          await coordinatorService.markBlikCharged(testOfferId, wrongTakerId);
+          await _legacy(coordinatorService).markBlikCharged(testOfferId, wrongTakerId);
 
       expect(result, isFalse);
       verifyNever(mockDbService.updateOfferStatusIfCurrentStatus(
@@ -3623,7 +3620,7 @@ void main() {
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
 
-      final result = await coordinatorService.confirmMakerPayment(
+      final result = await _legacy(coordinatorService).confirmMakerPayment(
           testOfferId, testMakerId);
 
       expect(result, isFalse);
@@ -3638,7 +3635,7 @@ void main() {
       when(mockDbService.getOfferById(testOfferId))
           .thenAnswer((_) async => offer);
 
-      final result = await coordinatorService.submitBlikCode(
+      final result = await _legacy(coordinatorService).submitBlikCode(
           testOfferId, testTakerId, testBlikCode, testTakerLnAddress, null);
 
       expect(result, isFalse);
@@ -3662,7 +3659,7 @@ void main() {
           .thenAnswer((_) async => offer);
 
       final result =
-          await coordinatorService.reserveOffer(testOfferId, secondTakerId);
+          await _legacy(coordinatorService).reserveOffer(testOfferId, secondTakerId);
 
       expect(result, isNull); // reserveOffer returns null on failure
       // No change in status or taker
@@ -3682,7 +3679,7 @@ void main() {
           .thenAnswer((_) async => offer);
 
       final result =
-          await coordinatorService.cancelOffer(testOfferId, testMakerId);
+          await _legacy(coordinatorService).cancelOffer(testOfferId, testMakerId);
 
       expect(result, isFalse);
       verifyNever(mockPaymentService.cancelInvoice(

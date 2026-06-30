@@ -42,7 +42,7 @@ void main() {
                 event: 'confirm_payment',
                 actor: FlowActor.maker)
             .target,
-        'maker_confirmed');
+        'makerConfirmed');
   });
 
   test('twint-specific states are NOT OfferStatus values', () {
@@ -56,7 +56,7 @@ void main() {
   test('timeouts drive the documented targets', () {
     expect(engine.timeoutFor('funded')!.target, 'expired');
     expect(engine.timeoutFor('reserved')!.target, 'expired_twint');
-    expect(engine.timeoutFor('twint_charged')!.target, 'maker_confirmed');
+    expect(engine.timeoutFor('twint_charged')!.target, 'makerConfirmed');
     expect(engine.timeoutFor('expired_twint')!.target, 'expired');
     expect(engine.timeoutFor('conflict')!.target, 'dispute');
   });
@@ -72,8 +72,8 @@ void main() {
         isFalse);
   });
 
-  test('terminals: cancelled, expired, taker_paid, dispute', () {
-    for (final s in ['cancelled', 'expired', 'taker_paid', 'dispute']) {
+  test('terminals: cancelled, expired, takerPaid, dispute', () {
+    for (final s in ['cancelled', 'expired', 'takerPaid', 'dispute']) {
       expect(engine.isTerminal(s), isTrue, reason: s);
     }
   });

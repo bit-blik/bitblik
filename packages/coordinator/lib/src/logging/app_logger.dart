@@ -37,6 +37,15 @@ class AppLogger {
 
   static bool _initialized = false;
   static bool _isPersisting = false;
+
+  /// When false, log records are still written to stdout but NOT persisted to
+  /// the log_audit table. FLOW_MODE generic disables it: the offer_state_history
+  /// table is the authoritative per-offer trail there, so log_audit is redundant.
+  static bool _auditPersistenceEnabled = true;
+
+  static void setAuditPersistenceEnabled(bool enabled) {
+    _auditPersistenceEnabled = enabled;
+  }
   static Future<void> Function({
     required String level,
     required String loggerName,
@@ -222,7 +231,7 @@ class AppLogger {
   }
 
   static Future<void> _persist(LogRecord record) async {
-    if (_isPersisting || _auditSink == null) {
+    if (!_auditPersistenceEnabled || _isPersisting || _auditSink == null) {
       return;
     }
 

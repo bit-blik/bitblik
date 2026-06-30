@@ -76,7 +76,19 @@ class FlowTransition {
   final String? fromField;
 
   /// Optional server-side action keyword (e.g. `settle_hold_invoice`).
+  ///
+  /// DEPRECATED in favour of [effects]; retained for back-compat. When `effects`
+  /// is absent and `action` is present, [effects] is `[action]`.
   final String? action;
+
+  /// Ordered effect keywords applied when this transition fires. Resolved by the
+  /// generic executor against its effect registry (pre-commit effects shape the
+  /// atomic status write; post-commit effects run after it is durably applied).
+  final List<String> effects;
+
+  /// Optional offer field the RPC response should echo back (e.g. `blik_code`),
+  /// for transitions that return data rather than a plain ack.
+  final String? returns;
 
   const FlowTransition({
     required this.trigger,
@@ -86,9 +98,13 @@ class FlowTransition {
     this.durationSeconds,
     this.fromField,
     this.action,
+    this.effects = const [],
+    this.returns,
   });
 
   factory FlowTransition.fromYaml(YamlMap m) {
+    final action = m['action'] as String?;
+    final rawEffects = m['effects'];
     return FlowTransition(
       trigger: _triggerFromYaml(m['trigger'] as String),
       target: m['target'] as String,
@@ -96,9 +112,23 @@ class FlowTransition {
       actor: _actorFromYaml(m['actor'] as String?),
       durationSeconds: m['duration_seconds'] as int?,
       fromField: m['from_field'] as String?,
-      action: m['action'] as String?,
+      action: action,
+      effects: rawEffects != null
+          ? _stringList(rawEffects)
+          : (action != null ? [action] : const []),
+      returns: m['returns'] as String?,
     );
   }
+}
+
+/// Normalize a yaml value that may be a single string or a list of strings into
+/// a `List<String>`. Null yields the empty list.
+List<String> _stringList(dynamic v) {
+  if (v == null) return const [];
+  if (v is String) return [v];
+  if (v is YamlList) return v.map((e) => e as String).toList(growable: false);
+  if (v is List) return v.map((e) => e as String).toList(growable: false);
+  throw FormatException('Expected a string or list of strings, got: $v');
 }
 
 /// One node in a flow definition.
@@ -107,7 +137,20 @@ class FlowState {
   final String name;
   final bool initial;
   final bool terminal;
+
+  /// DEPRECATED single on-entry action; retained for back-compat. Non-null only
+  /// when `on_entry` is a scalar in the yaml. Prefer [onEntryEffects].
   final String? onEntry;
+
+  /// Ordered effect keywords run on entering this state (post-commit). Accepts a
+  /// scalar or a list in the yaml.
+  final List<String> onEntryEffects;
+
+  /// Optional NIP-69 status category for broadcast (`pending`, `in-progress`,
+  /// `success`, `canceled`, `dispute`). Lets the broadcast layer map state ->
+  /// NIP-69 from the flow definition instead of the OfferStatus enum.
+  final String? nip69;
+
   final List<FlowTransition> transitions;
 
   const FlowState({
@@ -115,6 +158,8 @@ class FlowState {
     this.initial = false,
     this.terminal = false,
     this.onEntry,
+    this.onEntryEffects = const [],
+    this.nip69,
     this.transitions = const [],
   });
 
@@ -128,11 +173,14 @@ class FlowState {
 
   factory FlowState.fromYaml(String name, YamlMap m) {
     final rawTransitions = m['transitions'] as YamlList?;
+    final rawOnEntry = m['on_entry'];
     return FlowState(
       name: name,
       initial: (m['initial'] as bool?) ?? false,
       terminal: (m['terminal'] as bool?) ?? false,
-      onEntry: m['on_entry'] as String?,
+      onEntry: rawOnEntry is String ? rawOnEntry : null,
+      onEntryEffects: _stringList(rawOnEntry),
+      nip69: m['nip69'] as String?,
       transitions: rawTransitions == null
           ? const []
           : rawTransitions

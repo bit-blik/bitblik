@@ -5,6 +5,31 @@ import 'package:dotenv/dotenv.dart';
 import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
 
+/// Context for a single offer state transition, recorded in
+/// `offer_state_history` when [DatabaseService.recordStateHistory] is on.
+///
+/// [trigger] is the cause class: `user_action` (an RPC from maker/taker),
+/// `timeout` (a server timer fired), `auto` (a coordinator-driven follow-up such
+/// as the settlement/payout tail) or `coordinator`. When a status-changing DB
+/// call supplies no meta, the transition is still recorded with trigger `auto`.
+class StateTransitionMeta {
+  final String trigger;
+  final String? event;
+  final String? actor;
+  final String? actorPubkey;
+  final Map<String, dynamic>? extra;
+
+  const StateTransitionMeta({
+    required this.trigger,
+    this.event,
+    this.actor,
+    this.actorPubkey,
+    this.extra,
+  });
+
+  static const StateTransitionMeta auto = StateTransitionMeta(trigger: 'auto');
+}
+
 /// A Telegram message sent for an offer, tracked so it can be edited later.
 class TelegramOfferMessage {
   final String offerId;
@@ -28,6 +53,11 @@ class DatabaseService {
   PostgreSQLConnection? _connection;
   late DotEnv _env;
   bool _auditTableReady = false;
+  bool _stateHistoryTableReady = false;
+
+  /// When true, every offer status change is appended to `offer_state_history`.
+  /// Enabled for FLOW_MODE generic (where it replaces the log_audit trail).
+  bool recordStateHistory = false;
 
   DatabaseService() {
     _env = DotEnv(includePlatformEnvironment: true)..load();
@@ -57,6 +87,7 @@ class DatabaseService {
           action: 'database.connection.opened');
       await _ensureOffersTable();
       await _ensureLogAuditTable();
+      await _ensureOfferStateHistoryTable();
       await _ensureTelegramOfferMessagesTable();
     } catch (e) {
       AppLogger.severe(
@@ -209,6 +240,109 @@ class DatabaseService {
     _auditTableReady = true;
     AppLogger.info('log_audit table checked/created.',
         action: 'database.schema.log_audit.ready');
+  }
+
+  Future<void> _ensureOfferStateHistoryTable() async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute('''
+      CREATE TABLE IF NOT EXISTS offer_state_history (
+        id BIGSERIAL PRIMARY KEY,
+        offer_id UUID NOT NULL,
+        from_state TEXT,
+        to_state TEXT NOT NULL,
+        trigger_type TEXT NOT NULL,
+        event TEXT,
+        actor TEXT,
+        actor_pubkey TEXT,
+        metadata JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    ''');
+    // Per-offer chronological read: WHERE offer_id = ? ORDER BY created_at, id.
+    await _connection!.execute('''
+      CREATE INDEX IF NOT EXISTS idx_offer_state_history_offer
+        ON offer_state_history (offer_id, created_at, id);
+    ''');
+    _stateHistoryTableReady = true;
+    AppLogger.info('offer_state_history table checked/created.',
+        action: 'database.schema.offer_state_history.ready');
+  }
+
+  /// Append one transition row. Best-effort: never throws into the caller's
+  /// main flow (a history write must not fail an offer transition).
+  Future<void> _recordStateTransition({
+    required String offerId,
+    required String? fromState,
+    required String toState,
+    StateTransitionMeta? meta,
+  }) async {
+    if (!recordStateHistory) return;
+    if (_connection == null || _connection!.isClosed) return;
+    final m = meta ?? StateTransitionMeta.auto;
+    try {
+      if (!_stateHistoryTableReady) {
+        await _ensureOfferStateHistoryTable();
+      }
+      await _connection!.execute(
+        '''
+          INSERT INTO offer_state_history
+            (offer_id, from_state, to_state, trigger_type, event, actor, actor_pubkey, metadata)
+          VALUES
+            (@offer_id, @from_state, @to_state, @trigger_type, @event, @actor, @actor_pubkey, CAST(@metadata AS JSONB))
+        ''',
+        substitutionValues: {
+          'offer_id': offerId,
+          'from_state': fromState,
+          'to_state': toState,
+          'trigger_type': m.trigger,
+          'event': m.event,
+          'actor': m.actor,
+          'actor_pubkey': m.actorPubkey,
+          'metadata': m.extra == null ? null : jsonEncode(m.extra),
+        },
+      );
+    } catch (e) {
+      AppLogger.warning('Failed to record offer_state_history for $offerId: $e',
+          offerId: offerId);
+    }
+  }
+
+  /// Public entry point for recording a transition the flow engine performed
+  /// outside the status-update methods (e.g. the genesis funded entry, which is
+  /// an INSERT rather than an UPDATE). No-op unless [recordStateHistory] is on.
+  Future<void> recordOfferTransition({
+    required String offerId,
+    required String? fromState,
+    required String toState,
+    StateTransitionMeta? meta,
+  }) =>
+      _recordStateTransition(
+          offerId: offerId, fromState: fromState, toState: toState, meta: meta);
+
+  /// Chronological transition history for an offer (oldest first).
+  Future<List<Map<String, dynamic>>> getOfferStateHistory(String offerId) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final rows = await _connection!.query(
+      '''
+        SELECT from_state, to_state, trigger_type, event, actor, actor_pubkey, metadata, created_at
+        FROM offer_state_history
+        WHERE offer_id = @offer_id
+        ORDER BY created_at, id
+      ''',
+      substitutionValues: {'offer_id': offerId},
+    );
+    return rows
+        .map((r) => {
+              'from_state': r[0],
+              'to_state': r[1],
+              'trigger_type': r[2],
+              'event': r[3],
+              'actor': r[4],
+              'actor_pubkey': r[5],
+              'metadata': r[6],
+              'created_at': (r[7] as DateTime?)?.toUtc().toIso8601String(),
+            })
+        .toList();
   }
 
   Future<void> _ensureTelegramOfferMessagesTable() async {
@@ -451,6 +585,7 @@ class DatabaseService {
     int? takerFees,
     String? failureReason,
     bool clearTakerFields = false,
+    StateTransitionMeta? transitionMeta,
   }) async {
     if (_connection == null) throw StateError('Database not connected.');
     final now = DateTime.now().toUtc();
@@ -526,6 +661,27 @@ class DatabaseService {
       where.add('taker_pubkey = @expected_taker_pubkey');
     }
 
+    // When recording history, capture the pre-update status atomically via a
+    // self-join subquery (evaluated against the statement-start snapshot) and
+    // RETURN it, so from_state is race-free.
+    if (recordStateHistory) {
+      final result = await _connection!.query(
+        'UPDATE offers AS o SET ${set.join(', ')} '
+        'FROM (SELECT status AS old_status FROM offers WHERE id = @id) AS prev '
+        'WHERE ${where.join(' AND ')} RETURNING prev.old_status',
+        substitutionValues: params,
+      );
+      final ok = result.affectedRowCount == 1;
+      if (ok) {
+        await _recordStateTransition(
+          offerId: id,
+          fromState: result.first.first as String?,
+          toState: newStatus,
+          meta: transitionMeta,
+        );
+      }
+      return ok;
+    }
     final result = await _connection!.query(
       'UPDATE offers SET ${set.join(', ')} WHERE ${where.join(' AND ')}',
       substitutionValues: params,
@@ -574,7 +730,8 @@ class DatabaseService {
       DateTime? takerChargedAt,
       DisputeEscalationReason? disputeEscalationReason,
       int? takerFees,
-      String? failureReason}) async {
+      String? failureReason,
+      StateTransitionMeta? transitionMeta}) async {
     return _updateOfferStatusInternal(
       id,
       newStatus,
@@ -588,6 +745,7 @@ class DatabaseService {
       disputeEscalationReason: disputeEscalationReason,
       takerFees: takerFees,
       failureReason: failureReason,
+      transitionMeta: transitionMeta,
     );
   }
 
@@ -603,7 +761,8 @@ class DatabaseService {
       DisputeEscalationReason? disputeEscalationReason,
       int? takerFees,
       String? failureReason,
-      String? expectedTakerPubkey}) async {
+      String? expectedTakerPubkey,
+      StateTransitionMeta? transitionMeta}) async {
     return _updateOfferStatusInternal(
       id,
       newStatus,
@@ -619,6 +778,7 @@ class DatabaseService {
       failureReason: failureReason,
       expectedCurrentStatuses: expectedCurrentStatuses,
       expectedTakerPubkey: expectedTakerPubkey,
+      transitionMeta: transitionMeta,
     );
   }
 
@@ -634,7 +794,8 @@ class DatabaseService {
       int? takerFees,
       String? failureReason,
       List<OfferStatus>? expectedCurrentStatuses,
-      String? expectedTakerPubkey}) async {
+      String? expectedTakerPubkey,
+      StateTransitionMeta? transitionMeta}) async {
     // Renamed parameter
     // Added takerFees
     if (_connection == null) throw StateError('Database not connected.');
@@ -778,6 +939,24 @@ class DatabaseService {
     // unquoted postgres array literal `{funded}`, producing
     // `CAST({funded} AS TEXT[])` -> 42601 syntax error at or near "{".
     // query() binds the array as a typed parameter correctly.
+    if (recordStateHistory) {
+      final result = await _connection!.query(
+        'UPDATE offers AS o SET ${setClauses.join(', ')} '
+        'FROM (SELECT status AS old_status FROM offers WHERE id = @id) AS prev '
+        'WHERE ${whereClauses.join(' AND ')} RETURNING prev.old_status',
+        substitutionValues: params,
+      );
+      final ok = result.affectedRowCount == 1;
+      if (ok) {
+        await _recordStateTransition(
+          offerId: id,
+          fromState: result.first.first as String?,
+          toState: newStatus.name,
+          meta: transitionMeta,
+        );
+      }
+      return ok;
+    }
     final result = await _connection!.query(
       'UPDATE offers SET ${setClauses.join(', ')} WHERE ${whereClauses.join(' AND ')}',
       substitutionValues: params,
