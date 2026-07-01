@@ -2,6 +2,9 @@ version: '3.8'
 
 services:
   dashboard:
+    # Run `npm run sync-flows` before building so ./flows (vendored from
+    # packages/core, gitignored) exists for the image. `npm run build:image`
+    # does both in one step.
     build: .
     container_name: offers-dashboard
     environment:

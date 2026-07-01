@@ -16,7 +16,9 @@ import {
   Bot,
   User,
   Globe,
+  Workflow,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { buildCoordinatorApiUrl, buildCoordinatorWebSocketUrl } from '../coordinators';
 
 // Max offers returned per page by the dashboard API. Older offers load
@@ -911,6 +913,15 @@ const OffersPage = ({ selectedCoordinatorId, selectedCoordinatorIconUrl = null }
                   {connected ? <Wifi size={14} /> : <WifiOff size={14} />}
                   <span className="text-xs font-medium">{connected ? 'Live' : 'Disconnected'}</span>
                 </div>
+
+                <Link
+                  to="/flow"
+                  title="Flow state diagram"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-100 transition-colors text-sm font-medium"
+                >
+                  <Workflow size={14} />
+                  Flow
+                </Link>
 
                 <button
                   onClick={handleRefresh}

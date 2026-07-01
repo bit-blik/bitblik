@@ -5,6 +5,8 @@ const cors = require('cors');
 const path = require('path');
 const { URL } = require('url');
 const { WebSocketServer, WebSocket } = require('ws');
+const fsSync = require('fs');
+const yaml = require('js-yaml');
 require('dotenv').config();
 
 // Helper to strip surrounding quotes from env vars (handles both Docker and non-Docker environments)
@@ -37,6 +39,10 @@ const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
   const user = stripQuotes(rawConfig.user ?? rawConfig.dbUser ?? rawConfig.DB_USER);
   const password = stripQuotes(rawConfig.password ?? rawConfig.dbPassword ?? rawConfig.DB_PASSWORD);
   const iconUrl = stripQuotes(rawConfig.iconUrl ?? rawConfig.iconURL ?? rawConfig.icon);
+  // Optional id of the flow yml (blik/twint/mbway) this coordinator runs, used
+  // by the dashboard to render its state diagram. Optional: when unset the
+  // flow page falls back to a picker.
+  const flowId = sanitizeCoordinatorId(rawConfig.flow ?? rawConfig.flowId ?? rawConfig.flowID);
   const fallbackId = database || `coordinator-${index + 1}`;
   const id = sanitizeCoordinatorId(rawConfig.id ?? rawConfig.name ?? fallbackId);
   const label = stripQuotes(rawConfig.label ?? rawConfig.name ?? database ?? id);
@@ -54,6 +60,7 @@ const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
     user,
     password,
     iconUrl: iconUrl || null,
+    flowId: flowId || null,
   };
 };
 
@@ -204,7 +211,64 @@ const isValidDateStr = (value) => {
 };
 
 const getCoordinatorOptions = () =>
-  coordinatorConfigs.map(({ id, label, iconUrl }) => ({ id, label, iconUrl }));
+  coordinatorConfigs.map(({ id, label, iconUrl, flowId }) => ({ id, label, iconUrl, flowId }));
+
+// ─── Flow definitions (state-machine ymls) ──────────────────────────────────
+// The flow ymls (blik/twint/mbway) are the single source of truth for the
+// coordinator state machine and live in packages/core. Resolve a directory that
+// exists across dev (monorepo) and Docker (FLOWS_DIR override / bundled copy)
+// layouts.
+const FLOWS_DIR = stripQuotes(process.env.FLOWS_DIR)
+  || [path.join(__dirname, '../../core'), path.join(__dirname, 'flows')].find((dir) => {
+       try { return fsSync.statSync(dir).isDirectory(); } catch { return false; }
+     })
+  || path.join(__dirname, '../../core');
+
+const flowCache = new Map();
+
+// Reshape a parsed yml flow doc into the minimal JSON the dashboard diagram
+// needs: ordered states with their initial/terminal flags and outgoing
+// transitions (event/trigger/target).
+const transformFlow = (id, doc) => {
+  const states = Object.entries(doc.states || {}).map(([name, def]) => ({
+    name,
+    initial: !!def.initial,
+    terminal: !!def.terminal,
+    nip69: def.nip69 || null,
+    description: typeof def.description === 'string' ? def.description.trim() : null,
+    transitions: (def.transitions || []).map((t) => ({
+      trigger: t.trigger || null,
+      event: t.event || null,
+      actor: t.actor || null,
+      target: t.target || null,
+      durationSeconds: t.duration_seconds ?? null,
+      reason: t.reason ? String(t.reason).trim() : null,
+    })),
+  }));
+  return { id: doc.id || id, label: doc.id || id, states };
+};
+
+const loadFlow = (id) => {
+  if (flowCache.has(id)) return flowCache.get(id);
+  const file = path.join(FLOWS_DIR, `${id}.yml`);
+  if (!fsSync.existsSync(file)) return null;
+  const flow = transformFlow(id, yaml.load(fsSync.readFileSync(file, 'utf8')));
+  flowCache.set(id, flow);
+  return flow;
+};
+
+const listFlows = () => {
+  let files = [];
+  try {
+    files = fsSync.readdirSync(FLOWS_DIR).filter((f) => f.endsWith('.yml'));
+  } catch {
+    return [];
+  }
+  return files
+    .map((f) => f.replace(/\.yml$/, ''))
+    .map((id) => ({ id, label: id }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+};
 
 const resolveCoordinator = (requestedId) => {
   const coordinatorId = sanitizeCoordinatorId(requestedId) || defaultCoordinatorId;
@@ -673,6 +737,22 @@ app.get('/api/coordinators', (req, res) => {
     defaultCoordinatorId,
     coordinators: getCoordinatorOptions(),
   });
+});
+
+app.get('/api/flows', (req, res) => {
+  res.json({ flows: listFlows() });
+});
+
+app.get('/api/flows/:flowId', (req, res) => {
+  const id = sanitizeCoordinatorId(req.params.flowId);
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid flow id' });
+  }
+  const flow = loadFlow(id);
+  if (!flow) {
+    return res.status(404).json({ error: `Unknown flow: ${id}`, flows: listFlows() });
+  }
+  res.json(flow);
 });
 
 app.get('/api/offers/recent', async (req, res) => {

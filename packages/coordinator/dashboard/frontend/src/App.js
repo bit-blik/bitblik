@@ -4,6 +4,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { Calendar, TrendingUp, DollarSign, AlertCircle, Clock, Bitcoin, List, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
 import './App.css';
 import OffersPage from './pages/OffersPage';
+import FlowPage from './pages/FlowPage';
 import { buildCoordinatorApiUrl, COORDINATOR_STORAGE_KEY } from './coordinators';
 
 // Stable, saturated colors for known categories; unknowns fall back to the
@@ -1257,6 +1258,16 @@ const App = () => {
                 key={selectedCoordinatorId}
                 selectedCoordinatorId={selectedCoordinatorId}
                 selectedCoordinatorIconUrl={selectedCoordinator?.iconUrl || null}
+              />
+            }
+          />
+          <Route
+            path="/flow"
+            element={
+              <FlowPage
+                key={selectedCoordinatorId}
+                selectedCoordinatorId={selectedCoordinatorId}
+                coordinators={coordinators}
               />
             }
           />
