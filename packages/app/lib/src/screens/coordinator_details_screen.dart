@@ -37,8 +37,16 @@ class _CoordinatorDetailsScreenState
     final record = ref.watch(
       coordinatorRecordByPubkeyProvider(widget.pubkey),
     );
+    final debugInfoSourcesAsync = ref.watch(
+      coordinatorInfoEventSourcesProvider(widget.pubkey),
+    );
     final connectivity = ref.watch(relayConnectivityProvider);
     final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
+    final debugInfoSources = debugInfoSourcesAsync.maybeWhen(
+      data: (sources) =>
+          sources.isNotEmpty ? sources : (record?.discoverySources ?? const []),
+      orElse: () => record?.discoverySources ?? const [],
+    );
 
     final name = record?.name ?? t.coordinator.details.title;
     final icon = record?.icon;
@@ -215,7 +223,7 @@ class _CoordinatorDetailsScreenState
                               ),
                             ),
                             const SizedBox(height: 8),
-                            if (record.discoverySources.isEmpty)
+                            if (debugInfoSources.isEmpty)
                               const Text(
                                 '(none — no live query since startup)',
                                 style: TextStyle(
@@ -224,7 +232,7 @@ class _CoordinatorDetailsScreenState
                                 ),
                               )
                             else
-                              ...record.discoverySources.map(
+                              ...debugInfoSources.map(
                                 (src) => Padding(
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 2),

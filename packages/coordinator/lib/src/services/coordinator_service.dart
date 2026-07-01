@@ -478,29 +478,54 @@ class CoordinatorService {
     final overridden = _flowEngineMode != _paymentSystem.flowEngineMode;
     final source = overridden ? 'FLOW_MODE env override' : 'method default';
 
+    // When generic mode is explicitly intended, any failure to obtain a valid
+    // engine is fatal: we must NOT silently downgrade to legacy enforcement.
+    final wantGeneric = _flowEngineMode == FlowEngineMode.generic;
+
     if (flowId == null) {
-      if (_flowEngineMode == FlowEngineMode.generic) {
-        AppLogger.warning(
+      if (wantGeneric) {
+        throw StateError(
             'FLOW ENGINE: GENERIC mode requested ($source) for method "$method" '
-            'but it has no flowId — falling back to legacy enum enforcement.');
-      } else {
-        AppLogger.info(
-            'FLOW ENGINE: method "$method" has no flow definition; legacy enum '
-            'enforcement only.');
+            'but it declares no flowId. Refusing to start; fix the config or '
+            'unset FLOW_MODE=generic.');
       }
+      AppLogger.info(
+          'FLOW ENGINE: method "$method" has no flow definition; legacy enum '
+          'enforcement only.');
       return;
     }
 
-    _flowEngine = await FlowLoader.load(flowId);
-    if (_flowEngine == null) {
+    try {
+      _flowEngine = await FlowLoader.load(flowId);
+    } catch (e) {
+      // Parse/validation error in the yml.
+      if (wantGeneric) {
+        throw StateError(
+            'FLOW ENGINE: GENERIC mode but "$flowId.yml" failed to parse/'
+            'validate: $e. Refusing to start.');
+      }
       AppLogger.warning(
-          'FLOW ENGINE: flow "$flowId" failed to load for method "$method"; '
-          'falling back to legacy enum enforcement (generic/shadow disabled).');
+          'FLOW ENGINE: "$flowId.yml" failed to parse ($e); shadow disabled, '
+          'legacy enum enforcement only.');
+      return;
+    }
+    if (_flowEngine == null) {
+      if (wantGeneric) {
+        throw StateError(
+            'FLOW ENGINE: GENERIC mode but flow "$flowId" could not be located. '
+            'Refusing to start.');
+      }
+      AppLogger.warning(
+          'FLOW ENGINE: flow "$flowId" not found for method "$method"; '
+          'legacy enum enforcement only.');
       return;
     }
 
     // isGenericFlow is now meaningful (engine != null).
     if (isGenericFlow) {
+      // Deep self-check beyond structural parse: effects, timer durations,
+      // payout wiring, nip69. Throws (fatal) on any inconsistency.
+      flow.validateDefinition();
       AppLogger.warning(
           'FLOW ENGINE: GENERIC ENFORCING mode ACTIVE for method "$method" '
           '(flow=$flowId, $source). State transitions AND timers are enforced '

@@ -30,8 +30,7 @@ const List<String> kDiscoveryRelays = [
   'wss://relay.primal.net',
   'wss://nos.lol',
   'wss://nostr.mom',
-  'wss://relay.damus.io',
-  'wss://user.kindpag.es',
+  'wss://relay.damus.io'
 ];
 
 /// Normalize a relay URL for comparison/dedup: trims whitespace and drops a

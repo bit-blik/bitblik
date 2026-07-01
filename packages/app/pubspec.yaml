@@ -82,20 +82,29 @@ dependency_overrides:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk
-      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+      #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
     #path: ../../../ndk/packages/ndk
   ndk_flutter:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk_flutter
-      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-  #    path: ../../../ndk/packages/ndk_flutter
+      #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
+     #path: ../../../ndk/packages/ndk_flutter
   ndk_drift:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/drift
-      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-
+      #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
+    #path: ../../../ndk/packages/drift
+  ndk_objectbox:
+    git:
+      url: https://github.com/relaystr/ndk.git
+      path: packages/objectbox
+      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
+    #path: ../../../ndk/packages/objectbox
 dev_dependencies:
   #build_runner: 2.4.15
   slang_build_runner: 4.15.0

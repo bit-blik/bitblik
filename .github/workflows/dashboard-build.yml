@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'packages/coordinator/dashboard/**'
+      # Flow ymls are vendored from packages/core into the image at build time,
+      # so changes there must rebuild the dashboard too.
+      - 'packages/core/*.yml'
       - '.github/workflows/dashboard-build.yml'
   release:
     types: [published]
@@ -23,6 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: Check out code
+
+      # flows/ is gitignored; vendor the flow ymls from packages/core into the
+      # build context so the Dockerfile's `COPY flows ./flows` succeeds.
+      - name: Sync flow definitions
+        run: npm run sync-flows
+        working-directory: packages/coordinator/dashboard
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

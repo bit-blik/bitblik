@@ -70,7 +70,7 @@ states:
         effects: [assign_taker, clear_taker_fields]
         note: Re-opens the offer for other takers.
       - trigger: timeout
-        duration_seconds: 559    # RESERVATION_SECONDS, default 30
+        duration_seconds: 59    # RESERVATION_SECONDS
         target: funded
         effects: [clear_taker_fields]
         reason: >

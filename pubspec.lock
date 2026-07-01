@@ -9,14 +9,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "99.0.0"
-  amberflutter:
-    dependency: transitive
-    description:
-      name: amberflutter
-      sha256: "5101b36419a93e0620a227ada25690286efc93ab9de59dc80e7c3a0c29ccd348"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.9"
   analyzer:
     dependency: transitive
     description:
@@ -1064,12 +1056,10 @@ packages:
   ndk:
     dependency: "direct overridden"
     description:
-      path: "packages/ndk"
-      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      resolved-ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      url: "https://github.com/relaystr/ndk.git"
-    source: git
-    version: "0.8.4-dev.2"
+      path: "../ndk/packages/ndk"
+      relative: true
+    source: path
+    version: "0.8.4-dev.8"
   ndk_bip32_keys:
     dependency: transitive
     description:
@@ -1081,37 +1071,24 @@ packages:
   ndk_drift:
     dependency: "direct overridden"
     description:
-      path: "packages/drift"
-      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      resolved-ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      url: "https://github.com/relaystr/ndk.git"
-    source: git
-    version: "0.1.1-dev.3"
+      path: "../ndk/packages/drift"
+      relative: true
+    source: path
+    version: "0.1.1-dev.10"
   ndk_flutter:
     dependency: "direct overridden"
     description:
-      path: "packages/ndk_flutter"
-      ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      resolved-ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      url: "https://github.com/relaystr/ndk.git"
-    source: git
-    version: "0.8.4-dev.3"
+      path: "../ndk/packages/ndk_flutter"
+      relative: true
+    source: path
+    version: "0.8.4-dev.11"
   ndk_objectbox:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: ndk_objectbox
-      sha256: "5839d2d8f2f6595c66f42b58036b7d01d27b28a1a3f58dc205c5f22976c57b15"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.12"
-  nip07_event_signer:
-    dependency: transitive
-    description:
-      name: nip07_event_signer
-      sha256: "529732e1aa2f7d8aebe528e65786672d6d4f2c25b83c8c91b2fe75a3f4eec314"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0-dev.2"
+      path: "../ndk/packages/objectbox"
+      relative: true
+    source: path
+    version: "0.2.12-dev.8"
   nm:
     dependency: transitive
     description:

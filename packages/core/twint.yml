@@ -44,9 +44,28 @@ states:
       - trigger: timeout
         duration_seconds: 300   # 5 min
         from_field: created_at  # total offer lifetime, NOT reset by reserve/revert
-        target: expired
+        target: invalidTwint
         effects: [clear_taker_fields]
         reason: No taker reserved in time.
+
+  invalidTwint:
+    nip69: in-progress
+    description: >
+      Offer expired or maker cancelled
+    transitions:
+      - trigger: user_action
+        event: enter_new_twint
+        actor: maker
+        target: funded
+#        effects: [assign_taker, accept_taker_invoice, stamp_taker_charged_at]
+      - trigger: user_action
+        event: cancel_offer
+        actor: maker
+        target: cancelled
+        effects: [clear_taker_fields]
+      - trigger: timeout
+        duration_seconds: 600  # conflict/dispute escalation, 60 min
+        target: cancelled
 
   reserved:
     nip69: in-progress
@@ -56,9 +75,9 @@ states:
     on_entry: [send_twint_code_to_taker]
     transitions:
       - trigger: user_action
-        event: mark_blik_charged
+        event: mark_twint_charged
         actor: taker
-        target: twint_charged
+        target: takerCharged
         effects: [assign_taker, accept_taker_invoice, stamp_taker_charged_at]
         note: Taker paid the TWINT code and reports it charged.
       - trigger: user_action
@@ -68,10 +87,30 @@ states:
         effects: [assign_taker, clear_taker_fields]
       - trigger: timeout
         duration_seconds: 300   # matches TWINT code lifespan
-        target: expired_twint
+        target: expiredBlik
         reason: Taker did not pay the code within its lifespan.
 
-  twint_charged:
+  expiredBlik:
+    nip69: in-progress
+    description: >
+      Reservation expired
+    transitions:
+      - trigger: user_action
+        event: enter_new_twint
+        actor: maker
+        target: funded
+      #        effects: [assign_taker, accept_taker_invoice, stamp_taker_charged_at]
+      - trigger: user_action
+        event: cancel_reservation
+        actor: taker
+        target: invalidTwint
+        effects: [assign_taker, clear_taker_fields]
+      - trigger: timeout
+        duration_seconds: 300   # matches TWINT code lifespan
+        target: invalidTwint
+        reason: Taker did not pay the code within its lifespan.
+
+  takerCharged:
     nip69: in-progress
     description: >
       Taker reports payment. Maker must verify receipt and rule. Maker silence
@@ -84,9 +123,9 @@ states:
         target: makerConfirmed
         effects: [stamp_maker_confirmed_at]
       - trigger: user_action
-        event: mark_blik_invalid
+        event: start_dispute
         actor: maker
-        target: conflict
+        target: dispute
       - trigger: timeout
         duration_seconds: 3600  # 60 min
         target: makerConfirmed
@@ -101,6 +140,7 @@ states:
     on_entry: [start_payout]
     transitions:
       - trigger: auto
+        effects: [ settle_hold_invoice ]
         target: settled
 
   settled:
@@ -152,54 +192,7 @@ states:
     terminal: true
     on_entry: [cancel_hold_invoice]
 
-  expired:
-    nip69: canceled
-    description: Offer expired (no reservation / no payment).
-    terminal: true
-    on_entry: [cancel_hold_invoice]
-
-  # ─── TWINT failure / retake ──────────────────────────────────────────
-
-  expired_twint:
-    nip69: in-progress
-    description: >
-      Taker's TWINT payment window expired. The same taker may re-take; entering
-      `reserved` re-reveals the code.
-    transitions:
-      - trigger: user_action
-        event: reserve_offer
-        actor: taker
-        target: reserved
-        effects: [assign_taker, stamp_reserved_at]
-      - trigger: timeout
-        duration_seconds: 3600  # 60 min
-        target: expired
-        effects: [clear_taker_fields]
-        reason: No re-take in time.
-
   # ─── conflict & dispute ──────────────────────────────────────────────
-
-  conflict:
-    nip69: dispute
-    description: >
-      Maker reported the payment not received/invalid. Maker may reconsider or
-      open a formal dispute. Auto-escalates to dispute on silence.
-    transitions:
-      - trigger: user_action
-        event: confirm_payment
-        actor: maker
-        target: makerConfirmed
-        effects: [stamp_maker_confirmed_at]
-      - trigger: user_action
-        event: open_dispute
-        actor: maker
-        target: dispute
-        effects: [settle_hold_invoice]
-      - trigger: timeout
-        duration_seconds: 3600  # 60 min
-        target: dispute
-        effects: [settle_hold_invoice]
-        reason: Maker silent; settle and escalate to dispute.
 
   dispute:
     nip69: dispute

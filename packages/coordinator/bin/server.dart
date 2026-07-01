@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dotenv/dotenv.dart';
@@ -8,6 +9,23 @@ import 'package:bitblik_coordinator/src/services/nostr_service.dart';
 import 'package:bitblik_coordinator/src/logging/app_logger.dart';
 
 Future<void> main(List<String> args) async {
+  // Run everything inside a guarded zone so an uncaught ASYNC error — e.g. the
+  // ndk relay manager throwing from a reconnect/resubscribe timer callback,
+  // which is outside any try/catch — is logged instead of terminating the
+  // coordinator process.
+  runZonedGuarded(() async {
+    await _runCoordinator(args);
+  }, (error, stack) {
+    AppLogger.warning(
+      'Uncaught async error — coordinator kept alive: $error',
+      action: 'system.uncaught',
+      error: error,
+      stackTrace: stack,
+    );
+  });
+}
+
+Future<void> _runCoordinator(List<String> args) async {
   AppLogger.initialize();
   // --- Configuration ---
   // Load environment variables from .env file and platform environment

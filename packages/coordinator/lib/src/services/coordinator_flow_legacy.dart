@@ -42,6 +42,9 @@ class LegacyEnumOfferFlow implements OfferFlow {
   bool handlesRpc(String method) => _actionRpcs.contains(method);
 
   @override
+  void validateDefinition() {/* legacy enum flow uses no yaml definition */}
+
+  @override
   void onOfferFunded(Offer offer) => _startFundedOfferTimer(offer);
 
   @override

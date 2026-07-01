@@ -82,10 +82,105 @@ class GenericOfferFlow implements OfferFlow {
     'stamp_maker_confirmed_at',
   };
 
+  /// Post-commit effects the registry handles (side effects + best-effort
+  /// no-ops). Used (with [_preCommitEffects]) to validate the yaml at startup.
+  static const Set<String> _postCommitEffects = {
+    'settle_hold_invoice',
+    'cancel_hold_invoice',
+    'start_payout',
+    'reveal_code_to_taker',
+    'send_offer_notifications',
+    'send_twint_code_to_taker',
+    'notify_maker_of_charge',
+    'request_taker_invoice',
+  };
+
+  static const Set<String> _validNip69 = {
+    'pending',
+    'in-progress',
+    'success',
+    'canceled',
+    'dispute',
+  };
+
   FlowEngine get _engine => _c._flowEngine!;
 
   @override
   bool handlesRpc(String method) => _offerActionRpcs.contains(method);
+
+  /// Deep startup validation of the loaded flow (beyond [FlowDefinition.parse]'s
+  /// structural checks). Throws [StateError] listing every problem found.
+  @override
+  void validateDefinition() {
+    final def = _engine.definition;
+    final known = {..._preCommitEffects, ..._postCommitEffects};
+    final problems = <String>[];
+
+    for (final s in def.states.values) {
+      if (s.nip69 != null && !_validNip69.contains(s.nip69)) {
+        problems.add('state "${s.name}": invalid nip69 "${s.nip69}" '
+            '(expected one of $_validNip69)');
+      }
+      for (final e in s.onEntryEffects) {
+        if (!known.contains(e)) {
+          problems.add('state "${s.name}" on_entry: unknown effect "$e"');
+        }
+      }
+      for (final t in s.transitions) {
+        final label = '${s.name} -[${t.event ?? t.trigger.name}]-> ${t.target}';
+        // `auto` transitions are documentation of the payout chain; the executor
+        // drives them via the payout driver, not the effect registry, so their
+        // effects/action are not validated against it.
+        if (t.trigger != FlowTriggerType.auto) {
+          for (final e in t.effects) {
+            if (!known.contains(e)) {
+              problems.add('$label: unknown effect "$e"');
+            }
+          }
+        }
+        if (t.trigger == FlowTriggerType.timeout && t.durationSeconds == null) {
+          problems.add('$label: timeout transition has no duration_seconds');
+        }
+      }
+    }
+
+    // Payout auto-wiring: the start_payout state must chain
+    // settle -> paying -> {payment_success, payment_failed} via auto edges.
+    FlowState? payoutState;
+    for (final s in def.states.values) {
+      if (s.onEntryEffects.contains('start_payout')) {
+        payoutState = s;
+        break;
+      }
+    }
+    if (payoutState != null) {
+      final settle = _autoTarget(payoutState.name);
+      if (settle == null) {
+        problems.add('start_payout state "${payoutState.name}" has no auto '
+            'transition to a settle state');
+      } else {
+        final paying = _autoTarget(settle);
+        if (paying == null) {
+          problems.add('settle state "$settle" has no auto transition to a '
+              'paying state');
+        } else {
+          if (_autoTargetByEvent(paying, 'payment_success') == null) {
+            problems.add('paying state "$paying" missing auto '
+                'payment_success target');
+          }
+          if (_autoTargetByEvent(paying, 'payment_failed') == null) {
+            problems.add('paying state "$paying" missing auto '
+                'payment_failed target');
+          }
+        }
+      }
+    }
+
+    if (problems.isNotEmpty) {
+      throw StateError('Generic flow "${def.id}" is invalid:\n - '
+          '${problems.join('\n - ')}');
+    }
+  }
 
   // ─── RPC entry ────────────────────────────────────────────────────────
 

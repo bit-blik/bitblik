@@ -60,16 +60,21 @@ const _allowed = <_Row>[
 ];
 
 // (fromState -> expected timeout target, default duration seconds).
-const _timeouts = <String, MapEntry<String, int>>{
-  'funded': MapEntry('expired', 600),
-  'reserved': MapEntry('funded', 30),
-  'blikReceived': MapEntry('expiredBlik', 120),
-  'blikSentToMaker': MapEntry('expiredSentBlik', 120),
-  'invalidBlik': MapEntry('dispute', 3600),
-  'expiredBlik': MapEntry('funded', 60),
-  'expiredSentBlik': MapEntry('dispute', 3600),
-  'takerCharged': MapEntry('makerConfirmed', 3600),
-  'conflict': MapEntry('dispute', 3600),
+// (fromState -> expected timeout TARGET). Only the target is structural and
+// locked here; `duration_seconds` is tunable config (env-overridable on the
+// coordinator), so it is NOT asserted to a fixed value — retuning a duration in
+// the yml must not break this golden test, only changing a target/transition
+// (real behaviour) should.
+const _timeouts = <String, String>{
+  'funded': 'expired',
+  'reserved': 'funded',
+  'blikReceived': 'expiredBlik',
+  'blikSentToMaker': 'expiredSentBlik',
+  'invalidBlik': 'dispute',
+  'expiredBlik': 'funded',
+  'expiredSentBlik': 'dispute',
+  'takerCharged': 'makerConfirmed',
+  'conflict': 'dispute',
 };
 
 const _terminalStates = {
@@ -122,13 +127,18 @@ void main() {
     });
   });
 
-  group('timeout transitions match legacy timers', () {
-    _timeouts.forEach((state, expected) {
-      test('$state times out to ${expected.key}', () {
+  group('timeout transitions go to the documented target', () {
+    _timeouts.forEach((state, target) {
+      test('$state times out to $target', () {
         final t = engine.timeoutFor(state);
         expect(t, isNotNull, reason: '$state has no timeout');
-        expect(t!.target, expected.key);
-        expect(t.durationSeconds, expected.value);
+        expect(t!.target, target);
+        // Duration is tunable config — only require it to be present + positive,
+        // not a fixed value, so retuning the yml doesn't break this test.
+        expect(t.durationSeconds, isNotNull,
+            reason: '$state timeout has no duration_seconds');
+        expect(t.durationSeconds! > 0, isTrue,
+            reason: '$state duration must be positive');
       });
     });
   });

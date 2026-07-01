@@ -23,6 +23,12 @@ abstract class OfferFlow {
       String method, Map<String, dynamic> params, String userPubkey,
       {String? clientVersion});
 
+  /// Validate the loaded flow definition at startup (beyond the structural
+  /// parse): unknown effects, timeout transitions without a duration, payout
+  /// auto-wiring, nip69 values, etc. Throws on any inconsistency. No-op for
+  /// flows that don't use a yaml definition.
+  void validateDefinition() {}
+
   /// Arm timer(s) for an offer that has just entered the funded state.
   void onOfferFunded(Offer offer);
 

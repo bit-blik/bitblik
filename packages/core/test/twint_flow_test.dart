@@ -31,49 +31,50 @@ void main() {
         engine
             .resolveUserAction(
                 fromState: 'reserved',
-                event: 'mark_blik_charged',
+                event: 'mark_twint_charged',
                 actor: FlowActor.taker)
             .target,
-        'twint_charged');
+        'takerCharged');
     expect(
         engine
             .resolveUserAction(
-                fromState: 'twint_charged',
+                fromState: 'takerCharged',
                 event: 'confirm_payment',
                 actor: FlowActor.maker)
             .target,
         'makerConfirmed');
   });
 
-  test('twint-specific states are NOT OfferStatus values', () {
-    expect(offerStatusFromFlowState('twint_charged'), OfferStatus.unknown);
-    expect(offerStatusFromFlowState('expired_twint'), OfferStatus.unknown);
-    // ...while the payout-tail states ARE shared with the enum.
-    expect(offerStatusFromFlowState('maker_confirmed'), OfferStatus.makerConfirmed);
-    expect(offerStatusFromFlowState('settled'), OfferStatus.settled);
+  test('every twint state maps to a known OfferStatus', () {
+    // The twint flow was aligned to the OfferStatus vocabulary (camelCase),
+    // so the raw state stored/broadcast equals status.name for every state.
+    for (final name in engine.definition.states.keys) {
+      expect(offerStatusFromFlowState(name), isNot(OfferStatus.unknown),
+          reason: 'flow state "$name" has no matching OfferStatus');
+    }
   });
 
   test('timeouts drive the documented targets', () {
-    expect(engine.timeoutFor('funded')!.target, 'expired');
-    expect(engine.timeoutFor('reserved')!.target, 'expired_twint');
-    expect(engine.timeoutFor('twint_charged')!.target, 'makerConfirmed');
-    expect(engine.timeoutFor('expired_twint')!.target, 'expired');
-    expect(engine.timeoutFor('conflict')!.target, 'dispute');
+    expect(engine.timeoutFor('funded')!.target, 'invalidBlik');
+    expect(engine.timeoutFor('reserved')!.target, 'expiredBlik');
+    expect(engine.timeoutFor('expiredBlik')!.target, 'invalidBlik');
+    expect(engine.timeoutFor('invalidBlik')!.target, 'cancelled');
+    expect(engine.timeoutFor('takerCharged')!.target, 'makerConfirmed');
   });
 
   test('wrong actor rejected', () {
     expect(
         engine
             .resolveUserAction(
-                fromState: 'twint_charged',
+                fromState: 'takerCharged',
                 event: 'confirm_payment',
                 actor: FlowActor.taker)
             .allowed,
         isFalse);
   });
 
-  test('terminals: cancelled, expired, takerPaid, dispute', () {
-    for (final s in ['cancelled', 'expired', 'takerPaid', 'dispute']) {
+  test('terminals: cancelled, takerPaid, dispute', () {
+    for (final s in ['cancelled', 'takerPaid', 'dispute']) {
       expect(engine.isTerminal(s), isTrue, reason: s);
     }
   });

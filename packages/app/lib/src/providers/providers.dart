@@ -237,6 +237,28 @@ final coordinatorRecordByPubkeyProvider =
       );
     });
 
+/// Debug-only helper that resolves which relays served the latest cached
+/// coordinator kind-15125 event for [pubkey], using cache provenance instead of
+/// the deprecated `event.sources`.
+final coordinatorInfoEventSourcesProvider =
+    FutureProvider.family<List<String>, String>((ref, pubkey) async {
+      final ndk = ref.watch(ndkProvider);
+      if (ndk == null) return const [];
+
+      final events = await ndk.config.cache.loadEvents(
+        pubKeys: [pubkey],
+        kinds: [kKindCoordinatorInfo],
+        limit: 1,
+      );
+      if (events.isEmpty) return const [];
+
+      final sources = await ndk.config.cache.loadEventSources(events.first.id);
+      final out = sources.map(normalizeRelayUrl).where((u) => u.isNotEmpty).toSet()
+        ..remove('');
+      final list = out.toList()..sort();
+      return list;
+    });
+
 /// Helper provider for the takerCharged auto-confirm duration of a coordinator.
 /// Returns Duration based on the coordinator's
 /// `takerChargedAutoConfirmSeconds`, or null if coordinator info unavailable.
