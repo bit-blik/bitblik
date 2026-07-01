@@ -1,6 +1,6 @@
 # Build context: repo root (required for Dart workspace resolution)
 # Stage 1: Build the Flutter web application
-FROM instrumentisto/flutter:3.41.6 AS build
+FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build
 
 ARG APP_FLAVOR=bitblik
 ARG BUILD_MODE=release
