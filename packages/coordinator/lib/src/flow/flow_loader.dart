@@ -9,6 +9,9 @@ import 'package:bitblik_core/core.dart';
 /// (single source of truth, also parsed by core's golden test). They are not
 /// under `lib/`, so they are located by resolving the package's `core.dart`
 /// library path and walking up to the package root.
+///
+/// In AOT deployments (Docker) there is no package config to resolve against,
+/// so `FLOW_DIR` must point at a directory containing the `*.yml` files.
 class FlowLoader {
   /// Resolve and parse the flow with [flowId]. Returns null (and never throws)
   /// if the file cannot be located or fails to parse/validate — the coordinator
@@ -18,6 +21,15 @@ class FlowLoader {
   /// NOT swallowed** — they propagate so the caller can fail loudly in generic
   /// mode instead of silently downgrading to legacy.
   static Future<FlowEngine?> load(String flowId) async {
+    // Explicit dir (Docker/AOT deployments, where Isolate.resolvePackageUri
+    // returns null) takes precedence over package resolution.
+    final flowDir = Platform.environment['FLOW_DIR'];
+    if (flowDir != null) {
+      final file = File('$flowDir/$flowId.yml');
+      if (!file.existsSync()) return null;
+      return FlowEngine.fromYaml(file.readAsStringSync());
+    }
+
     File file;
     try {
       final libUri = await Isolate.resolvePackageUri(
