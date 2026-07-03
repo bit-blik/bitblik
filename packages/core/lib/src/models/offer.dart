@@ -340,7 +340,10 @@ class Offer {
       'maker_fees': makerFees, // Renamed key and field
       'fiat_amount': fiatAmount,
       'fiat_currency': fiatCurrency,
-      'status': status.name,
+      // Emit the raw state string so generic (yaml-driven) flows round-trip
+      // their real state (e.g. `invalidTwint`) instead of the enum's `unknown`
+      // fallback. For legacy enum flows statusRaw == status.name (unchanged).
+      'status': statusRaw,
       'created_at': createdAt.toUtc().toIso8601String(),
       'maker_pubkey': makerPubkey,
       'coordinator_pubkey': coordinatorPubkey,

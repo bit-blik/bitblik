@@ -88,7 +88,7 @@ void main() {
   late FlowEngine engine;
 
   setUpAll(() {
-    final src = File('blik.yml').readAsStringSync();
+    final src = File('lib/flows/blik.yml').readAsStringSync();
     engine = FlowEngine.fromYaml(src);
   });
 

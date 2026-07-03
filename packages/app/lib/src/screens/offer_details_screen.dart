@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import '../providers/providers.dart';
+import '../flow/flow_provider.dart';
 import '../utils/offer_status_label.dart';
 import '../services/api_service_nostr.dart';
 import '../utils/bitcoin_display.dart';
@@ -137,10 +138,14 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     }
 
     try {
+      // Flow-driven markets that capture the payout invoice at reserve (TWINT)
+      // generate it here and send it with reserve_offer.
+      final takerInvoice = await reserveTakerInvoiceIfNeeded(ref, offer);
       final reservationTimestamp = await apiService.reserveOffer(
         offer.id,
         publicKey,
         offer.coordinatorPubkey,
+        takerInvoice: takerInvoice,
       );
       if (!mounted) return;
       if (reservationTimestamp != null) {
@@ -150,7 +155,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           reservedAt: reservationTimestamp,
         );
         ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
-        router.go('/submit-blik', extra: updatedOffer);
+        router.go(flowEntryRoute(ref, '/submit-blik'), extra: updatedOffer);
       } else {
         setState(() => _isTaking = false);
         ref.read(errorProvider.notifier).state =
@@ -507,7 +512,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                   ),
                   onPressed: () {
                     if (myActiveOffer.status == OfferStatus.reserved) {
-                      router.go("/submit-blik", extra: myActiveOffer);
+                      router.go(flowEntryRoute(ref, '/submit-blik'), extra: myActiveOffer);
                     } else {
                       router.go("/wait-confirmation", extra: myActiveOffer);
                     }

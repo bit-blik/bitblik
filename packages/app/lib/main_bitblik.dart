@@ -8,6 +8,7 @@ import 'package:bitblik/src/screens/maker_flow/maker_pay_invoice_screen.dart';
 import 'package:bitblik/src/screens/maker_flow/maker_success_screen.dart';
 import 'package:bitblik/src/screens/maker_flow/maker_wait_for_blik_screen.dart';
 import 'package:bitblik/src/screens/maker_flow/maker_wait_taker_screen.dart';
+import 'package:bitblik/src/flow/flow_screen.dart';
 import 'package:bitblik/src/screens/taker_flow/taker_invalid_blik_screen.dart';
 import 'package:bitblik/src/screens/taker_flow/taker_payment_failed_screen.dart';
 import 'package:bitblik/src/screens/taker_flow/taker_payment_process_screen.dart';
@@ -139,6 +140,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/wait-taker',
             builder: (context, state) => const MakerWaitTakerScreen(),
+          ),
+          // Single flow-driven screen for generic (yaml) flows (TWINT). Renders
+          // the body for the active offer's raw state + the user's role and
+          // re-renders as the coordinator advances the state.
+          GoRoute(
+            path: '/flow',
+            builder: (context, state) => const FlowScreen(),
           ),
           GoRoute(
             path: '/wait-blik',

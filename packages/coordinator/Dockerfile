@@ -46,7 +46,7 @@ RUN apk add signal-cli~=0.14
 COPY --from=dart-runtime /runtime/ /
 COPY --from=build /workspace/packages/coordinator/bin/server /app/bin/
 COPY --from=build /workspace/simplex-chat /app/
-COPY --from=build /workspace/packages/core/*.yml /app/flows/
+COPY --from=build /workspace/packages/core/lib/flows/*.yml /app/flows/
 ENV FLOW_DIR=/app/flows
 
 RUN ls -la /app/bin/

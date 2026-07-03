@@ -3,12 +3,13 @@ import 'dart:isolate';
 
 import 'package:bitblik_core/core.dart';
 
-/// Loads a bundled flow definition (`packages/core/<flowId>.yml`) at runtime.
+/// Loads a bundled flow definition (`packages/core/lib/flows/<flowId>.yml`) at
+/// runtime.
 ///
-/// The canonical `*.yml` files live at the root of the `bitblik_core` package
-/// (single source of truth, also parsed by core's golden test). They are not
-/// under `lib/`, so they are located by resolving the package's `core.dart`
-/// library path and walking up to the package root.
+/// The canonical `*.yml` files live under `bitblik_core/lib/flows/` — a single
+/// source of truth shared by the coordinator (this loader), the Flutter app
+/// (bundled as `packages/bitblik_core/flows/*.yml` assets), and core's tests.
+/// They resolve directly by package URI (`package:bitblik_core/flows/x.yml`).
 ///
 /// In AOT deployments (Docker) there is no package config to resolve against,
 /// so `FLOW_DIR` must point at a directory containing the `*.yml` files.
@@ -32,12 +33,13 @@ class FlowLoader {
 
     File file;
     try {
-      final libUri = await Isolate.resolvePackageUri(
-          Uri.parse('package:bitblik_core/core.dart'));
-      if (libUri == null) return null;
-      // libUri -> .../bitblik_core/lib/core.dart ; package root is two up.
-      final packageRoot = Directory.fromUri(libUri).parent.parent;
-      file = File.fromUri(packageRoot.uri.resolve('$flowId.yml'));
+      // The flow files live under core's lib/ (single source of truth, also
+      // bundled by the Flutter app as package assets), so they resolve directly
+      // by package URI.
+      final uri = await Isolate.resolvePackageUri(
+          Uri.parse('package:bitblik_core/flows/$flowId.yml'));
+      if (uri == null) return null;
+      file = File.fromUri(uri);
     } catch (_) {
       // Could not resolve the package/file location — treat as "not found".
       return null;

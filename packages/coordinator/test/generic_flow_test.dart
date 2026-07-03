@@ -48,10 +48,15 @@ void main() {
 
   test('twint coordinator runs in generic mode', () {
     expect(svc.isGenericFlow, isTrue);
+    // handlesRpc is now derived from the flow's user-action events, so every
+    // twint event routes to the generic controller — including the payout-tail
+    // retry events and twint-specific ones.
     expect(svc.flow.handlesRpc('reserve_offer'), isTrue);
-    // Query/info + payout-tail RPCs are not generic-handled.
+    expect(svc.flow.handlesRpc('mark_twint_charged'), isTrue);
+    expect(svc.flow.handlesRpc('enter_new_twint'), isTrue);
+    expect(svc.flow.handlesRpc('update_taker_invoice'), isTrue);
+    // Query/info RPCs are not flow events → not generic-handled.
     expect(svc.flow.handlesRpc('get_offer_details'), isFalse);
-    expect(svc.flow.handlesRpc('update_taker_invoice'), isFalse);
   });
 
   test('rejects an action from the wrong actor (taker confirming)', () async {

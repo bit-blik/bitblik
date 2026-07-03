@@ -89,6 +89,21 @@ class FlowEngine {
   FlowTransition? timeoutFor(String state) =>
       definition.state(state)?.timeoutTransition;
 
+  /// The user-action transitions available from [state] to [actor], in yaml
+  /// order. Drives the UI: a client renders exactly one button per returned
+  /// transition (labelled by its [FlowTransition.event]) and fires that event's
+  /// RPC. Empty when the state is terminal/unknown or the actor has no actions.
+  List<FlowTransition> userActionsFor(String state, FlowActor actor) {
+    final s = definition.state(state);
+    if (s == null) return const [];
+    return [
+      for (final t in s.transitions)
+        if (t.trigger == FlowTriggerType.userAction &&
+            (t.actor == null || t.actor == actor))
+          t,
+    ];
+  }
+
   /// The first transition leaving [state] whose [FlowTransition.event] equals
   /// [event] (optionally constrained to [actor]). Lets the executor resolve a
   /// transition by event without naming source/target states in code.

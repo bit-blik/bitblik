@@ -1,6 +1,5 @@
 import com.android.build.api.dsl.ApkSigningConfig
 import com.android.build.api.dsl.SigningConfig
-import org.jetbrains.kotlin.gradle.targets.js.toHex
 import java.io.FileInputStream
 import java.util.Base64
 import java.security.MessageDigest
@@ -8,7 +7,6 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -24,7 +22,7 @@ fun getKeystoreFile(base64String: String?, hash: String, fileName: String): File
 
     val digest = MessageDigest.getInstance("SHA-256")
     val tmpHash = digest.digest(decodedBytes)
-    if (tmpHash.toHex() != hash) {
+    if (tmpHash.joinToString("") { "%02x".format(it) } != hash) {
         throw GradleException("Keystore hash mismatch")
     }
     return tempFile
@@ -87,10 +85,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "app.bitblik"
@@ -134,6 +128,12 @@ android {
             applicationId = "app.bittwint"
             resValue("string", "app_name", "bittwint")
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
     }
 }
 

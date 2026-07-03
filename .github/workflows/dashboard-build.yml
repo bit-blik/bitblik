@@ -4,9 +4,9 @@ on:
   push:
     paths:
       - 'packages/coordinator/dashboard/**'
-      # Flow ymls are vendored from packages/core into the image at build time,
-      # so changes there must rebuild the dashboard too.
-      - 'packages/core/*.yml'
+      # Flow ymls are vendored from packages/core/lib/flows into the image at
+      # build time, so changes there must rebuild the dashboard too.
+      - 'packages/core/lib/flows/*.yml'
       - '.github/workflows/dashboard-build.yml'
   release:
     types: [published]

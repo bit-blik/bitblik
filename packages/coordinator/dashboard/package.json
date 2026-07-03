@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "sync-flows": "node -e \"const fs=require('fs'),p=require('path');const src=p.join('..','..','core'),dst='flows';fs.mkdirSync(dst,{recursive:true});for(const f of fs.readdirSync(src).filter(f=>f.endsWith('.yml')))fs.copyFileSync(p.join(src,f),p.join(dst,f));console.log('Synced flow ymls into ./flows');\"",
+    "sync-flows": "node -e \"const fs=require('fs'),p=require('path');const src=p.join('..','..','core','lib','flows'),dst='flows';fs.mkdirSync(dst,{recursive:true});for(const f of fs.readdirSync(src).filter(f=>f.endsWith('.yml')))fs.copyFileSync(p.join(src,f),p.join(dst,f));console.log('Synced flow ymls into ./flows');\"",
     "build:image": "npm run sync-flows && docker build -t offers-dashboard ."
   },
   "dependencies": {

@@ -933,6 +933,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     final updated = existing.copyWith(
       id: update.offerId,
       status: newStatus,
+      // Preserve the verbatim wire status so generic (yaml-driven) flows keep
+      // their real state (e.g. `invalidTwint`/`expiredTwint`) even though the
+      // OfferStatus enum parses them to `unknown`. Flow-driven navigation keys
+      // on statusRaw. For legacy flows this equals status.name.
+      statusRaw: update.status,
       reservedAt: update.reservedAt,
       // Anchor the BLIK confirmation countdown to the coordinator's
       // blik_received_at when present. copyWith treats null as "keep", so an

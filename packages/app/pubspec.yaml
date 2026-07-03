@@ -59,7 +59,7 @@ dependencies:
   go_router: ^17.0.0  # For specific Android Intents
   memory_cache: ^1.2.0 # For in-memory caching
   shared_preferences: ^2.5.3 # For storing user preferences
-  package_info_plus: ^8.3.1 # For getting app version at runtime
+  package_info_plus: ^10.2.0 # For getting app version at runtime
   slang: ^4.15.0
   slang_flutter: ^4.15.0
   markdown: ^7.3.0 # For parsing Markdown to HTML
@@ -86,12 +86,12 @@ dependency_overrides:
       ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
     #path: ../../../ndk/packages/ndk
   ndk_flutter:
-    git:
-      url: https://github.com/relaystr/ndk.git
-      path: packages/ndk_flutter
-      #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
-     #path: ../../../ndk/packages/ndk_flutter
+    #git:
+    #  url: https://github.com/relaystr/ndk.git
+    #  path: packages/ndk_flutter
+    #  #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+    #  ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
+    path: ../../../ndk/packages/ndk_flutter
   ndk_drift:
     git:
       url: https://github.com/relaystr/ndk.git
@@ -172,6 +172,11 @@ flutter:
     - assets/bff-rabbit.png
     - assets/bff-laurs.png
     - assets/faq/
+    # Flow definitions — single source of truth in bitblik_core/lib/flows,
+    # bundled here as package assets (no copy in this repo).
+    - packages/bitblik_core/flows/blik.yml
+    - packages/bitblik_core/flows/mbway.yml
+    - packages/bitblik_core/flows/twint.yml
     - CHANGELOG.md
 
   # An image asset can refer to one or more resolution-specific "variants", see

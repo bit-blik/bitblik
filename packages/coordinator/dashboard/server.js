@@ -215,14 +215,14 @@ const getCoordinatorOptions = () =>
 
 // ─── Flow definitions (state-machine ymls) ──────────────────────────────────
 // The flow ymls (blik/twint/mbway) are the single source of truth for the
-// coordinator state machine and live in packages/core. Resolve a directory that
-// exists across dev (monorepo) and Docker (FLOWS_DIR override / bundled copy)
-// layouts.
+// coordinator state machine and live in packages/core/lib/flows. Resolve a
+// directory that exists across dev (monorepo) and Docker (FLOWS_DIR override /
+// bundled copy) layouts.
 const FLOWS_DIR = stripQuotes(process.env.FLOWS_DIR)
-  || [path.join(__dirname, '../../core'), path.join(__dirname, 'flows')].find((dir) => {
+  || [path.join(__dirname, '../../core/lib/flows'), path.join(__dirname, 'flows')].find((dir) => {
        try { return fsSync.statSync(dir).isDirectory(); } catch { return false; }
      })
-  || path.join(__dirname, '../../core');
+  || path.join(__dirname, '../../core/lib/flows');
 
 const flowCache = new Map();
 

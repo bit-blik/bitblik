@@ -9,7 +9,8 @@ import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:url_launcher/url_launcher.dart'; // For launching URLs/Intents
 import 'package:android_intent_plus/android_intent.dart'; // For Android Intents
 import 'package:android_intent_plus/flag.dart'; // Import for flags enum
-import '../../providers/providers.dart'; // Import providers
+import '../../providers/providers.dart';
+import '../../flow/flow_provider.dart';
 import 'package:bitblik_core/core.dart'; // Import Offer model for status enum comparison
 import 'package:ndk/domain_layer/entities/wallet/wallet.dart';
 import 'package:ndk/domain_layer/entities/wallet/providers/nwc/nwc_wallet.dart';
@@ -102,7 +103,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
         ),
       );
       // Coordinator says we're funded — surface that flow.
-      context.go('/wait-taker');
+      context.go(flowEntryRoute(ref, '/wait-taker'));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -356,7 +357,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       final usedWalletId = ref.read(activeOfferProvider)?.paymentWalletId;
       unawaited(_refreshWalletBalanceAndBudget(walletId: usedWalletId));
       if (mounted) {
-        context.go("/wait-taker");
+        context.go(flowEntryRoute(ref, "/wait-taker"));
       }
       _isPayingWithWallet = false;
     } else {
@@ -1106,7 +1107,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       // Note: Code below is unreachable until payment is implemented
       // Logger.log.i(() => '[MakerPayInvoiceScreen] Invoice accepted');
       // if (mounted) {
-      //   context.go("/wait-taker");
+      //   context.go(flowEntryRoute(ref, "/wait-taker"));
       // }
     } catch (e) {
       if (mounted) {

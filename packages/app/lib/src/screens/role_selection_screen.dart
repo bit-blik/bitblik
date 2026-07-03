@@ -11,7 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer model
-import '../providers/providers.dart'; // Import providers
+import '../providers/providers.dart';
+import '../flow/flow_provider.dart'; // Import providers
 import '../services/key_service.dart';
 import '../services/offer_db_service.dart';
 import '../widgets/offer_list_tile.dart';
@@ -215,6 +216,14 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
     final offerStatus = offer.status;
     final method = paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
 
+    // Flow-driven markets (TWINT) have a single flow screen that renders the
+    // body for the current raw state — no per-status route to resume into.
+    if (isFlowDrivenFlow(method.flowId)) {
+      ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
+      context.go('/flow');
+      return;
+    }
+
     switch (offerStatus) {
       case OfferStatus.created:
         // Offer created but not yet funded - go to pay invoice screen
@@ -265,6 +274,14 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
   // Helper to navigate to the correct Taker step based on offer status
   void _navigateToTakerStep(BuildContext context, Offer offer) {
     final offerStatus = offer.status;
+    final method = paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
+
+    // Flow-driven markets (TWINT): resume into the single flow screen.
+    if (isFlowDrivenFlow(method.flowId)) {
+      ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
+      context.go('/flow');
+      return;
+    }
 
     if (offerStatus == OfferStatus.reserved) {
       // Pass the offer to the constructor using initialOffer

@@ -527,11 +527,22 @@ class NostrService {
   Future<DateTime?> reserveOffer(
     String offerId,
     String takerId,
-    String coordinatorPubkey,
-  ) async {
+    String coordinatorPubkey, {
+    String? takerLightningAddress,
+    String? takerInvoice,
+  }) async {
     final request = NostrRequest(
       method: kRpcReserveOffer,
-      params: {'offer_id': offerId},
+      params: {
+        'offer_id': offerId,
+        // D1: generic flows (TWINT) capture the taker's payout details at
+        // reserve via the `accept_taker_invoice` effect. Legacy enum flows
+        // (BLIK) ignore these extra params.
+        if (takerLightningAddress != null && takerLightningAddress.isNotEmpty)
+          'taker_lightning_address': takerLightningAddress,
+        if (takerInvoice != null && takerInvoice.isNotEmpty)
+          'taker_invoice': takerInvoice,
+      },
     );
 
     final response = await sendRequest(request, coordinatorPubkey);
@@ -548,6 +559,24 @@ class NostrService {
       }
       return null;
     });
+  }
+
+  /// Generic dispatcher for yaml-driven (generic) flows. The transition [event]
+  /// IS the RPC method name, so this sends it verbatim with `offer_id` plus any
+  /// [extraParams] a screen collected (e.g. `taker_invoice`, `blik_code`).
+  /// Returns the coordinator result map; throws [NostrException] on error.
+  Future<Map<String, dynamic>> sendFlowAction({
+    required String event,
+    required String offerId,
+    required String coordinatorPubkey,
+    Map<String, dynamic> extraParams = const {},
+  }) async {
+    final request = NostrRequest(
+      method: event,
+      params: {'offer_id': offerId, ...extraParams},
+    );
+    final response = await sendRequest(request, coordinatorPubkey);
+    return _handleResponse(response, (result) => result);
   }
 
   /// POST /offers/{offerId}/blik

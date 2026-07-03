@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart'; // Import Slang
 import '../providers/providers.dart';
+import '../flow/flow_provider.dart';
 import '../utils/bitcoin_display.dart';
 import '../utils/category_icons.dart';
 import '../widgets/lightning_address_widget.dart';
@@ -266,11 +267,14 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             );
 
                             try {
+                              final takerInvoice =
+                                  await reserveTakerInvoiceIfNeeded(ref, offer);
                               final reservationTimestamp = await apiService
                                   .reserveOffer(
                                     offer.id,
                                     takerId,
                                     offer.coordinatorPubkey,
+                                    takerInvoice: takerInvoice,
                                   );
 
                               if (reservationTimestamp != null) {
@@ -285,7 +289,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                     .setActiveOffer(updatedOffer);
 
                                 // Navigate to submit BLIK screen
-                                router.go("/submit-blik", extra: updatedOffer);
+                                router.go(flowEntryRoute(ref, "/submit-blik"), extra: updatedOffer);
                               } else {
                                 ref.read(errorProvider.notifier).state =
                                     t.reservations.errors.failedNoTimestamp;
@@ -635,6 +639,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     );
 
                                                 try {
+                                                  final takerInvoice =
+                                                      await reserveTakerInvoiceIfNeeded(
+                                                          ref, offer);
                                                   final reservationTimestamp =
                                                       await apiService
                                                           .reserveOffer(
@@ -642,6 +649,8 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                             takerId,
                                                             offer
                                                                 .coordinatorPubkey,
+                                                            takerInvoice:
+                                                                takerInvoice,
                                                           );
 
                                                   if (reservationTimestamp !=

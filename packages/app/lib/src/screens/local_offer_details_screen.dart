@@ -9,6 +9,7 @@ import 'package:ndk/shared/nips/nip19/nip19.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../flow/flow_provider.dart';
 import '../utils/offer_status_label.dart';
 import 'coordinator_details_screen.dart';
 import '../services/offer_db_service.dart';
@@ -424,14 +425,20 @@ class _OfferDetailsBody extends ConsumerWidget {
     }
 
     if (currentPubKey == activeOffer.makerPubkey) {
-      _navigateToMakerStep(context, activeOffer, t);
+      _navigateToMakerStep(context, ref, activeOffer, t);
     } else if (currentPubKey == activeOffer.takerPubkey) {
-      _navigateToTakerStep(context, activeOffer, t);
+      _navigateToTakerStep(context, ref, activeOffer, t);
     }
   }
 
-  void _navigateToMakerStep(BuildContext context, Offer offer, Translations t) {
+  void _navigateToMakerStep(
+      BuildContext context, WidgetRef ref, Offer offer, Translations t) {
     final method = paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
+    if (isFlowDrivenFlow(method.flowId)) {
+      ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
+      context.go('/flow');
+      return;
+    }
     switch (offer.status) {
       case OfferStatus.created:
         context.go('/pay', extra: offer);
@@ -465,8 +472,15 @@ class _OfferDetailsBody extends ConsumerWidget {
     }
   }
 
-  void _navigateToTakerStep(BuildContext context, Offer offer, Translations t) {
+  void _navigateToTakerStep(
+      BuildContext context, WidgetRef ref, Offer offer, Translations t) {
     final offerStatus = offer.status;
+    final method = paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
+    if (isFlowDrivenFlow(method.flowId)) {
+      ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
+      context.go('/flow');
+      return;
+    }
     if (offerStatus == OfferStatus.reserved) {
       context.go('/submit-blik', extra: offer);
     } else if (offerStatus == OfferStatus.blikReceived ||

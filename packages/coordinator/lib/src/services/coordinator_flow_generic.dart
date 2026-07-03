@@ -57,23 +57,12 @@ class GenericOfferFlow implements OfferFlow {
   final Map<String, Timer> _stateTimers = {};
   static const Duration _timeoutRetryBackoff = Duration(seconds: 30);
 
-  static const Set<String> _offerActionRpcs = {
-    kRpcReserveOffer,
-    kRpcSubmitBlik,
-    kRpcGetBlik,
-    kRpcCancelOffer,
-    kRpcCancelReservation,
-    kRpcMarkBlikCharged,
-    kRpcConfirmPayment,
-    kRpcMarkBlikInvalid,
-    kRpcOpenDispute,
-  };
-
   /// Effects that must run BEFORE the atomic status write (they shape it).
   static const Set<String> _preCommitEffects = {
     'assign_taker',
     'clear_taker_fields',
     'validate_code',
+    'set_new_code',
     'resolve_taker_invoice',
     'accept_taker_invoice',
     'stamp_reserved_at',
@@ -105,8 +94,18 @@ class GenericOfferFlow implements OfferFlow {
 
   FlowEngine get _engine => _c._flowEngine!;
 
+  /// Events (== RPC method names) the loaded flow declares as user actions.
+  /// Derived from the flow so ANY flow's events (e.g. TWINT's
+  /// `mark_twint_charged`, `start_dispute`, `enter_new_twint`) route to this
+  /// controller without a hardcoded per-flow list.
+  late final Set<String> _handledEvents = {
+    for (final s in _engine.definition.states.values)
+      for (final t in s.transitions)
+        if (t.trigger == FlowTriggerType.userAction && t.event != null) t.event!,
+  };
+
   @override
-  bool handlesRpc(String method) => _offerActionRpcs.contains(method);
+  bool handlesRpc(String method) => _handledEvents.contains(method);
 
   /// Deep startup validation of the loaded flow (beyond [FlowDefinition.parse]'s
   /// structural checks). Throws [StateError] listing every problem found.
@@ -450,6 +449,19 @@ class GenericOfferFlow implements OfferFlow {
           final provided = _c._paymentSystem.makerProvidesCodeAtOfferCreation
               ? offer.blikCode
               : _clean(ctx.params['blik_code']);
+          if (provided == null || !_c._paymentSystem.isValidCode(provided)) {
+            throw Exception('Invalid ${_c._paymentSystem.codeLabel} code.');
+          }
+          w.code = provided;
+        }
+        break;
+      case 'set_new_code':
+        {
+          // Maker supplies a fresh code from the params (e.g. enter_new_twint
+          // re-lists an expired offer). Unlike validate_code this always reads
+          // the param, even for maker-provides-code flows where the offer still
+          // holds the OLD code.
+          final provided = _clean(ctx.params['blik_code']);
           if (provided == null || !_c._paymentSystem.isValidCode(provided)) {
             throw Exception('Invalid ${_c._paymentSystem.codeLabel} code.');
           }

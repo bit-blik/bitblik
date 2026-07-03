@@ -40,7 +40,9 @@ states:
         event: reserve_offer
         actor: taker
         target: reserved
-        effects: [assign_taker, stamp_reserved_at]
+        # Capture the taker's payout invoice at reserve, so an early maker
+        # confirm_payment (allowed from `reserved`) already has an invoice.
+        effects: [assign_taker, stamp_reserved_at, accept_taker_invoice]
       - trigger: timeout
         duration_seconds: 300   # 5 min
         from_field: created_at  # total offer lifetime, NOT reset by reserve/revert
@@ -57,7 +59,8 @@ states:
         event: enter_new_twint
         actor: maker
         target: funded
-#        effects: [assign_taker, accept_taker_invoice, stamp_taker_charged_at]
+        # Swap in a fresh TWINT code and re-list on the existing hold invoice.
+        effects: [set_new_code, clear_taker_fields]
       - trigger: user_action
         event: cancel_offer
         actor: maker
@@ -75,10 +78,16 @@ states:
     on_entry: [send_twint_code_to_taker]
     transitions:
       - trigger: user_action
+        event: confirm_payment
+        actor: maker
+        target: makerConfirmed
+        effects: [stamp_maker_confirmed_at]
+      - trigger: user_action
         event: mark_twint_charged
         actor: taker
         target: takerCharged
-        effects: [assign_taker, accept_taker_invoice, stamp_taker_charged_at]
+        # Invoice already captured at reserve; just stamp the charge.
+        effects: [assign_taker, stamp_taker_charged_at]
         note: Taker paid the TWINT code and reports it charged.
       - trigger: user_action
         event: cancel_reservation
@@ -87,19 +96,20 @@ states:
         effects: [assign_taker, clear_taker_fields]
       - trigger: timeout
         duration_seconds: 300   # matches TWINT code lifespan
-        target: expiredBlik
+        target: expiredTwint
         reason: Taker did not pay the code within its lifespan.
 
-  expiredBlik:
+  expiredTwint:
     nip69: in-progress
     description: >
-      Reservation expired
+      Reservation expired. The maker has no action here (D2) — only the taker
+      may release it, or it times out back to invalidTwint.
     transitions:
       - trigger: user_action
-        event: enter_new_twint
+        event: confirm_payment
         actor: maker
-        target: funded
-      #        effects: [assign_taker, accept_taker_invoice, stamp_taker_charged_at]
+        target: makerConfirmed
+        effects: [stamp_maker_confirmed_at]
       - trigger: user_action
         event: cancel_reservation
         actor: taker
@@ -165,6 +175,10 @@ states:
       - trigger: auto
         event: payment_failed
         target: takerPaymentFailed
+      - trigger: timeout
+        duration_seconds: 300  # 5 min
+        target: takerPaymentFailed
+        reason: timed out while trying to pay the taker's invoice
 
   takerPaid:
     nip69: success
