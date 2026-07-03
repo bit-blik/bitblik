@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../../i18n/gen/strings.g.dart';
 
 class TwintScanResult {
   final String? code;
@@ -35,8 +36,7 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
   final TextRecognizer _textRecognizer = TextRecognizer();
 
   bool _isHandlingCapture = false;
-  String _status =
-      'Align the TWINT QR code and amount text inside the camera frame.';
+  _TwintScannerStatus _status = _TwintScannerStatus.align;
 
   @override
   void dispose() {
@@ -78,15 +78,13 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
 
       if (mounted) {
         setState(() {
-          _status =
-              'TWINT code not recognized yet. Keep the QR and amount text in view, or fill the form manually.';
+          _status = _TwintScannerStatus.notRecognized;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
-          _status =
-              'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.';
+          _status = _TwintScannerStatus.amountFailed;
         });
       }
     } finally {
@@ -111,8 +109,17 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = Translations.of(context);
+    const codeLabel = 'TWINT';
+    final statusText = switch (_status) {
+      _TwintScannerStatus.align => t.twint.scanner.status.align(code: codeLabel),
+      _TwintScannerStatus.notRecognized =>
+        t.twint.scanner.status.notRecognized(code: codeLabel),
+      _TwintScannerStatus.amountFailed =>
+        t.twint.scanner.status.amountFailed,
+    };
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan TWINT Code')),
+      appBar: AppBar(title: Text(t.twint.scanner.title(code: codeLabel))),
       body: Stack(
         children: [
           MobileScanner(controller: _controller, onDetect: _handleDetect),
@@ -123,7 +130,7 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
               color: Colors.black87,
               padding: const EdgeInsets.all(16),
               child: Text(
-                _status,
+                statusText,
                 style: const TextStyle(color: Colors.white),
                 textAlign: TextAlign.center,
               ),
@@ -134,3 +141,5 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     );
   }
 }
+
+enum _TwintScannerStatus { align, notRecognized, amountFailed }

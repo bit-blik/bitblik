@@ -1016,6 +1016,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   }
 
   Widget _buildMakerProvidedScanCard() {
+    final t = Translations.of(context);
     final accent = const Color(0xFF0D8C7A);
     return Container(
       margin: const EdgeInsets.only(top: 10, bottom: 18),
@@ -1046,7 +1047,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Scan ${_method.codeLabel} QR and amount',
+                      t.maker.amountForm.twintScan.cardTitle(
+                        code: _method.codeLabel,
+                      ),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -1054,7 +1057,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Point the camera at the payment screen. The app will prefill the code and, when visible, the amount.',
+                      t.maker.amountForm.twintScan.cardBody,
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
@@ -1069,14 +1072,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           const SizedBox(height: 16),
           _buildGradientButton(
             onPressed: _scanTwintCodeAndAmount,
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.camera_alt_rounded, color: Colors.white),
-                SizedBox(width: 10),
+                const Icon(Icons.camera_alt_rounded, color: Colors.white),
+                const SizedBox(width: 10),
                 Text(
-                  'Scan with camera',
-                  style: TextStyle(
+                  t.maker.amountForm.twintScan.scanButton,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
@@ -1089,7 +1092,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           Center(
             child: TextButton(
               onPressed: _showManualMakerProvidedEntry,
-              child: const Text('Enter manually instead'),
+              child: Text(t.maker.amountForm.twintScan.manualButton),
             ),
           ),
         ],
@@ -1098,6 +1101,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   }
 
   Widget _buildMakerProvidedCodeField() {
+    final t = Translations.of(context);
     final hasValue = _makerCodeController.text.trim().isNotEmpty;
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 4, 20, 14),
@@ -1113,7 +1117,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           Row(
             children: [
               Text(
-                '${_method.codeLabel} code',
+                t.maker.amountForm.twintScan.codeLabel(code: _method.codeLabel),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -1124,7 +1128,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               TextButton.icon(
                 onPressed: _scanTwintCodeAndAmount,
                 icon: const Icon(Icons.center_focus_strong, size: 16),
-                label: const Text('Rescan'),
+                label: Text(t.maker.amountForm.twintScan.rescan),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.grey[700],
                   visualDensity: VisualDensity.compact,
@@ -1176,8 +1180,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           const SizedBox(height: 8),
           Text(
             hasValue
-                ? 'The taker will see this code and enter it in ${_method.codeLabel}.'
-                : 'Scan to fill this automatically, or type the ${_method.codeLength}-digit code manually.',
+                ? t.maker.amountForm.twintScan.helperFilled(
+                  code: _method.codeLabel,
+                )
+                : t.maker.amountForm.twintScan.helperEmpty(
+                  digits: _method.codeLength,
+                ),
             style: TextStyle(
               fontSize: 12.5,
               height: 1.35,

@@ -1,6 +1,7 @@
 import 'package:bitblik_core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../i18n/gen/strings.g.dart';
 
 import '../providers/providers.dart'
     show activeOfferProvider, initializedApiServiceProvider;
@@ -93,18 +94,24 @@ Widget _codeBox(BuildContext context, String? code) {
 
 final FlowBody twintMakerWaitBody =
     (context, ref, offer, engine, role) {
+  final t = Translations.of(context);
   final waitingForTaker = offer.statusRaw == 'funded';
+  const codeLabel = 'TWINT';
   return _titled(
     context,
-    waitingForTaker ? 'Offer live' : 'Taker is paying',
+    waitingForTaker
+        ? t.twint.flow.makerWait.offerLive
+        : t.twint.flow.makerWait.takerPaying,
     [
       Text(_amount(offer), style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 16),
-      Text('Your TWINT code'),
+      Text(t.twint.flow.makerWait.yourCode(code: codeLabel)),
       const SizedBox(height: 8),
       _codeBox(context, offer.blikCode),
       flowCountdownFor(context, engine, offer,
-          caption: waitingForTaker ? 'Offer expires' : 'Auto-expires'),
+          caption: waitingForTaker
+              ? t.twint.flow.makerWait.offerExpires
+              : t.twint.flow.makerWait.autoExpires),
       const SizedBox(height: 24),
       // Only `funded` exposes cancel_offer in the yaml → the bar renders it
       // only there, automatically.
@@ -112,7 +119,7 @@ final FlowBody twintMakerWaitBody =
         offer: offer,
         engine: engine,
         role: role,
-        labels: const {'cancel_offer': 'Cancel offer'},
+        labels: {'cancel_offer': t.twint.flow.makerWait.cancelOffer},
         confirmEvents: const {'cancel_offer'},
       ),
     ],
@@ -123,25 +130,35 @@ final FlowBody twintMakerWaitBody =
 
 final FlowBody twintMakerVerifyBody =
     (context, ref, offer, engine, role) {
+  final t = Translations.of(context);
+  const codeLabel = 'TWINT';
   return _titled(
     context,
-    'Did you receive the payment?',
+    t.twint.flow.makerVerify.title,
     [
-      Text('The taker reports paying ${_amount(offer)} to your TWINT code.',
+      Text(t.twint.flow.makerVerify.body(
+            amount: _amount(offer),
+            code: codeLabel,
+          ),
           textAlign: TextAlign.center),
       const SizedBox(height: 8),
-      Text('Check your TWINT app, then confirm or open a dispute.',
+      Text(t.twint.flow.makerVerify.hint(code: codeLabel),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall),
-      flowCountdownFor(context, engine, offer, caption: 'Auto-confirms'),
+      flowCountdownFor(
+        context,
+        engine,
+        offer,
+        caption: t.twint.flow.makerVerify.autoConfirms,
+      ),
       const SizedBox(height: 24),
       FlowActionsBar(
         offer: offer,
         engine: engine,
         role: role,
-        labels: const {
-          'confirm_payment': 'Confirm received',
-          'start_dispute': 'Open dispute',
+        labels: {
+          'confirm_payment': t.twint.flow.makerVerify.confirmReceived,
+          'start_dispute': t.twint.flow.makerVerify.openDispute,
         },
         confirmEvents: const {'start_dispute'},
       ),
@@ -196,22 +213,28 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
 
   @override
   Widget build(BuildContext context) {
-    return _titled(context, 'Offer expired', [
-      const Text(
-        'No taker completed the trade. Enter a new TWINT code to re-list this '
-        'offer, or cancel it.',
+    final t = Translations.of(context);
+    const codeLabel = 'TWINT';
+    return _titled(context, t.twint.flow.makerRecode.title, [
+      Text(
+        t.twint.flow.makerRecode.body(code: codeLabel),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 20),
       TextField(
         controller: _controller,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: 'New TWINT code',
-          border: OutlineInputBorder(),
+        decoration: InputDecoration(
+          labelText: t.twint.flow.makerRecode.fieldLabel(code: codeLabel),
+          border: const OutlineInputBorder(),
         ),
       ),
-      flowCountdownFor(context, widget.engine, widget.offer, caption: 'Auto-cancels'),
+      flowCountdownFor(
+        context,
+        widget.engine,
+        widget.offer,
+        caption: t.twint.flow.makerRecode.autoCancels,
+      ),
       const SizedBox(height: 20),
       SizedBox(
         width: double.infinity,
@@ -220,7 +243,7 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
           child: _busy
               ? const SizedBox(
                   height: 18, width: 18, child: CircularProgressIndicator())
-              : const Text('Re-list with new code'),
+              : Text(t.twint.flow.makerRecode.relist),
         ),
       ),
       const SizedBox(height: 8),
@@ -229,7 +252,7 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
         offer: widget.offer,
         engine: widget.engine,
         role: widget.role,
-        labels: const {'cancel_offer': 'Cancel offer'},
+        labels: {'cancel_offer': t.twint.flow.makerRecode.cancelOffer},
         // enter_new_twint is handled by the custom field above.
         overrides: {'enter_new_twint': (_) => const SizedBox.shrink()},
         confirmEvents: const {'cancel_offer'},
@@ -292,21 +315,26 @@ class _TwintTakerPayBodyState extends ConsumerState<_TwintTakerPayBody> {
 
   @override
   Widget build(BuildContext context) {
-    return _titled(context, 'Pay with TWINT', [
-      Text('Open your TWINT app and pay ${_amount(widget.offer)} using:',
+    final t = Translations.of(context);
+    const codeLabel = 'TWINT';
+    return _titled(context, t.twint.flow.takerPay.title(code: codeLabel), [
+      Text(t.twint.flow.takerPay.body(
+            code: codeLabel,
+            amount: _amount(widget.offer),
+          ),
           textAlign: TextAlign.center),
       const SizedBox(height: 12),
       _codeBox(context, widget.offer.blikCode),
       flowCountdownFor(context, widget.engine, widget.offer,
-          caption: 'Code expires'),
+          caption: t.twint.flow.takerPay.codeExpires),
       const SizedBox(height: 24),
       FlowActionsBar(
         offer: widget.offer,
         engine: widget.engine,
         role: widget.role,
-        labels: const {
-          'mark_twint_charged': "I've paid",
-          'cancel_reservation': 'Cancel',
+        labels: {
+          'mark_twint_charged': t.twint.flow.takerPay.paid,
+          'cancel_reservation': t.twint.flow.takerPay.cancel,
         },
         confirmEvents: const {'cancel_reservation'},
         leaveEvents: const {'cancel_reservation'},
@@ -319,12 +347,19 @@ class _TwintTakerPayBodyState extends ConsumerState<_TwintTakerPayBody> {
 
 final FlowBody twintTakerWaitConfirmBody =
     (context, ref, offer, engine, role) {
-  return _titled(context, 'Waiting for the maker', [
+  final t = Translations.of(context);
+  const codeLabel = 'TWINT';
+  return _titled(context, t.twint.flow.takerWait.title, [
     const CircularProgressIndicator(),
     const SizedBox(height: 16),
-    const Text('The maker is verifying your TWINT payment.',
+    Text(t.twint.flow.takerWait.body(code: codeLabel),
         textAlign: TextAlign.center),
-    flowCountdownFor(context, engine, offer, caption: 'Auto-confirms'),
+    flowCountdownFor(
+      context,
+      engine,
+      offer,
+      caption: t.twint.flow.takerWait.autoConfirms,
+    ),
   ]);
 };
 
@@ -332,18 +367,25 @@ final FlowBody twintTakerWaitConfirmBody =
 
 final FlowBody twintTakerExpiredBody =
     (context, ref, offer, engine, role) {
-  return _titled(context, 'Reservation expired', [
-    const Text(
-      "The TWINT code wasn't paid in time. You can cancel to release the offer.",
+  final t = Translations.of(context);
+  const codeLabel = 'TWINT';
+  return _titled(context, t.twint.flow.takerExpired.title, [
+    Text(
+      t.twint.flow.takerExpired.body(code: codeLabel),
       textAlign: TextAlign.center,
     ),
-    flowCountdownFor(context, engine, offer, caption: 'Auto-releases'),
+    flowCountdownFor(
+      context,
+      engine,
+      offer,
+      caption: t.twint.flow.takerExpired.autoReleases,
+    ),
     const SizedBox(height: 24),
     FlowActionsBar(
       offer: offer,
       engine: engine,
       role: role,
-      labels: const {'cancel_reservation': 'Cancel'},
+      labels: {'cancel_reservation': t.twint.flow.takerExpired.cancel},
       leaveEvents: const {'cancel_reservation'},
     ),
   ]);

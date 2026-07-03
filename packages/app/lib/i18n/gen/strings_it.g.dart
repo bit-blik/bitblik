@@ -48,6 +48,7 @@ class TranslationsIt extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$coordinator$it coordinator = _Translations$coordinator$it._(_root);
 	@override late final _Translations$maker$it maker = _Translations$maker$it._(_root);
 	@override late final _Translations$taker$it taker = _Translations$taker$it._(_root);
+	@override late final _Translations$twint$it twint = _Translations$twint$it._(_root);
 	@override late final _Translations$blik$it blik = _Translations$blik$it._(_root);
 	@override late final _Translations$home$it home = _Translations$home$it._(_root);
 	@override late final _Translations$nekoInfo$it nekoInfo = _Translations$nekoInfo$it._(_root);
@@ -193,12 +194,23 @@ class _Translations$taker$it extends Translations$taker$en {
 	@override late final _Translations$taker$roleSelection$it roleSelection = _Translations$taker$roleSelection$it._(_root);
 	@override late final _Translations$taker$progress$it progress = _Translations$taker$progress$it._(_root);
 	@override late final _Translations$taker$submitBlik$it submitBlik = _Translations$taker$submitBlik$it._(_root);
-	@override late final _Translations$taker$waitConfirmation$it waitConfirmation = _Translations$taker$waitConfirmation$it._(_root);
-	@override late final _Translations$taker$paymentProcess$it paymentProcess = _Translations$taker$paymentProcess$it._(_root);
-	@override late final _Translations$taker$paymentFailed$it paymentFailed = _Translations$taker$paymentFailed$it._(_root);
-	@override late final _Translations$taker$paymentSuccess$it paymentSuccess = _Translations$taker$paymentSuccess$it._(_root);
-	@override late final _Translations$taker$invalidBlik$it invalidBlik = _Translations$taker$invalidBlik$it._(_root);
-	@override late final _Translations$taker$conflict$it conflict = _Translations$taker$conflict$it._(_root);
+}
+
+// Path: twint
+class _Translations$twint$it extends Translations$twint$en {
+	_Translations$twint$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$twint$scanner$it scanner = _Translations$twint$scanner$it._(_root);
+	@override late final _Translations$twint$flow$it flow = _Translations$twint$flow$it._(_root);
+	@override late final _Translations$twint$waitConfirmation$it waitConfirmation = _Translations$twint$waitConfirmation$it._(_root);
+	@override late final _Translations$twint$paymentProcess$it paymentProcess = _Translations$twint$paymentProcess$it._(_root);
+	@override late final _Translations$twint$paymentFailed$it paymentFailed = _Translations$twint$paymentFailed$it._(_root);
+	@override late final _Translations$twint$paymentSuccess$it paymentSuccess = _Translations$twint$paymentSuccess$it._(_root);
+	@override late final _Translations$twint$invalidBlik$it invalidBlik = _Translations$twint$invalidBlik$it._(_root);
+	@override late final _Translations$twint$conflict$it conflict = _Translations$twint$conflict$it._(_root);
 }
 
 // Path: blik
@@ -959,6 +971,7 @@ class _Translations$maker$amountForm$it extends Translations$maker$amountForm$en
 	@override late final _Translations$maker$amountForm$progress$it progress = _Translations$maker$amountForm$progress$it._(_root);
 	@override late final _Translations$maker$amountForm$labels$it labels = _Translations$maker$amountForm$labels$it._(_root);
 	@override late final _Translations$maker$amountForm$actions$it actions = _Translations$maker$amountForm$actions$it._(_root);
+	@override late final _Translations$maker$amountForm$twintScan$it twintScan = _Translations$maker$amountForm$twintScan$it._(_root);
 	@override late final _Translations$maker$amountForm$tooltips$it tooltips = _Translations$maker$amountForm$tooltips$it._(_root);
 	@override late final _Translations$maker$amountForm$category$it category = _Translations$maker$amountForm$category$it._(_root);
 	@override late final _Translations$maker$amountForm$onboarding$it onboarding = _Translations$maker$amountForm$onboarding$it._(_root);
@@ -1125,9 +1138,35 @@ class _Translations$taker$submitBlik$it extends Translations$taker$submitBlik$en
 	@override late final _Translations$taker$submitBlik$details$it details = _Translations$taker$submitBlik$details$it._(_root);
 }
 
-// Path: taker.waitConfirmation
-class _Translations$taker$waitConfirmation$it extends Translations$taker$waitConfirmation$en {
-	_Translations$taker$waitConfirmation$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.scanner
+class _Translations$twint$scanner$it extends Translations$twint$scanner$en {
+	_Translations$twint$scanner$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object code}) => 'Scansiona codice ${code}';
+	@override late final _Translations$twint$scanner$status$it status = _Translations$twint$scanner$status$it._(_root);
+}
+
+// Path: twint.flow
+class _Translations$twint$flow$it extends Translations$twint$flow$en {
+	_Translations$twint$flow$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$twint$flow$makerWait$it makerWait = _Translations$twint$flow$makerWait$it._(_root);
+	@override late final _Translations$twint$flow$makerVerify$it makerVerify = _Translations$twint$flow$makerVerify$it._(_root);
+	@override late final _Translations$twint$flow$makerRecode$it makerRecode = _Translations$twint$flow$makerRecode$it._(_root);
+	@override late final _Translations$twint$flow$takerPay$it takerPay = _Translations$twint$flow$takerPay$it._(_root);
+	@override late final _Translations$twint$flow$takerWait$it takerWait = _Translations$twint$flow$takerWait$it._(_root);
+	@override late final _Translations$twint$flow$takerExpired$it takerExpired = _Translations$twint$flow$takerExpired$it._(_root);
+}
+
+// Path: twint.waitConfirmation
+class _Translations$twint$waitConfirmation$it extends Translations$twint$waitConfirmation$en {
+	_Translations$twint$waitConfirmation$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -1140,7 +1179,7 @@ class _Translations$taker$waitConfirmation$it extends Translations$taker$waitCon
 	@override String importantBlikAmountConfirmation({required Object code, required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Nella tua app bancaria, assicurati di confermare un pagamento ${code} per esattamente ${amount} ${currency}.';
 	@override String instructions({required Object minutes, required Object code}) => 'Il maker deve ora inserirlo nel terminale di pagamento entro ${minutes} minuti. Dovrai poi accettare il codice ${code} nella tua app bancaria.';
 	@override String instructionsNoConfirm({required Object code, required Object minutes}) => 'Il maker deve ora inserire il tuo codice ${code} allo sportello ATM entro ${minutes} minuti.';
-	@override late final _Translations$taker$waitConfirmation$categoryReminder$it categoryReminder = _Translations$taker$waitConfirmation$categoryReminder$it._(_root);
+	@override late final _Translations$twint$waitConfirmation$categoryReminder$it categoryReminder = _Translations$twint$waitConfirmation$categoryReminder$it._(_root);
 	@override String waitingForMakerToReceive({required Object code}) => 'In attesa che il maker riceva il tuo codice ${code}...';
 	@override String makerReceivedBlik({required Object code}) => 'Il maker ha ricevuto il tuo codice ${code}.';
 	@override String timerExpiredMessage({required Object code, required Object minutes}) => 'Il tempo di scadenza ${code} di ${minutes} minuti è passato. In attesa che il maker confermi o contrassegni il codice come non valido.';
@@ -1154,60 +1193,60 @@ class _Translations$taker$waitConfirmation$it extends Translations$taker$waitCon
 	@override String expiredInstruction1({required Object code}) => 'Se vuoi riprovare con un nuovo codice ${code}, rinnova la prenotazione.';
 	@override String get expiredInstruction2 => 'Se non vuoi più completare questa transazione, annulla la prenotazione.';
 	@override String expiredInstruction3({required Object code}) => 'Se il pagamento ${code} è stato addebitato sul tuo conto bancario, non preoccuparti, i bitcoin sono ancora al sicuro presso il coordinatore.';
-	@override late final _Translations$taker$waitConfirmation$takerCharged$it takerCharged = _Translations$taker$waitConfirmation$takerCharged$it._(_root);
-	@override late final _Translations$taker$waitConfirmation$expiredActions$it expiredActions = _Translations$taker$waitConfirmation$expiredActions$it._(_root);
-	@override late final _Translations$taker$waitConfirmation$feedback$it feedback = _Translations$taker$waitConfirmation$feedback$it._(_root);
-	@override late final _Translations$taker$waitConfirmation$errors$it errors = _Translations$taker$waitConfirmation$errors$it._(_root);
+	@override late final _Translations$twint$waitConfirmation$takerCharged$it takerCharged = _Translations$twint$waitConfirmation$takerCharged$it._(_root);
+	@override late final _Translations$twint$waitConfirmation$expiredActions$it expiredActions = _Translations$twint$waitConfirmation$expiredActions$it._(_root);
+	@override late final _Translations$twint$waitConfirmation$feedback$it feedback = _Translations$twint$waitConfirmation$feedback$it._(_root);
+	@override late final _Translations$twint$waitConfirmation$errors$it errors = _Translations$twint$waitConfirmation$errors$it._(_root);
 }
 
-// Path: taker.paymentProcess
-class _Translations$taker$paymentProcess$it extends Translations$taker$paymentProcess$en {
-	_Translations$taker$paymentProcess$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentProcess
+class _Translations$twint$paymentProcess$it extends Translations$twint$paymentProcess$en {
+	_Translations$twint$paymentProcess$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Processo di Pagamento';
 	@override String get waitingForOfferUpdate => 'In attesa dell\'aggiornamento dello stato dell\'offerta...';
-	@override late final _Translations$taker$paymentProcess$states$it states = _Translations$taker$paymentProcess$states$it._(_root);
-	@override late final _Translations$taker$paymentProcess$steps$it steps = _Translations$taker$paymentProcess$steps$it._(_root);
-	@override late final _Translations$taker$paymentProcess$errors$it errors = _Translations$taker$paymentProcess$errors$it._(_root);
-	@override late final _Translations$taker$paymentProcess$loading$it loading = _Translations$taker$paymentProcess$loading$it._(_root);
-	@override late final _Translations$taker$paymentProcess$actions$it actions = _Translations$taker$paymentProcess$actions$it._(_root);
+	@override late final _Translations$twint$paymentProcess$states$it states = _Translations$twint$paymentProcess$states$it._(_root);
+	@override late final _Translations$twint$paymentProcess$steps$it steps = _Translations$twint$paymentProcess$steps$it._(_root);
+	@override late final _Translations$twint$paymentProcess$errors$it errors = _Translations$twint$paymentProcess$errors$it._(_root);
+	@override late final _Translations$twint$paymentProcess$loading$it loading = _Translations$twint$paymentProcess$loading$it._(_root);
+	@override late final _Translations$twint$paymentProcess$actions$it actions = _Translations$twint$paymentProcess$actions$it._(_root);
 }
 
-// Path: taker.paymentFailed
-class _Translations$taker$paymentFailed$it extends Translations$taker$paymentFailed$en {
-	_Translations$taker$paymentFailed$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentFailed
+class _Translations$twint$paymentFailed$it extends Translations$twint$paymentFailed$en {
+	_Translations$twint$paymentFailed$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Pagamento Fallito';
 	@override String instructions({required Object netAmount}) => 'Fornisci una nuova fattura Lightning per ${netAmount}';
-	@override late final _Translations$taker$paymentFailed$form$it form = _Translations$taker$paymentFailed$form$it._(_root);
-	@override late final _Translations$taker$paymentFailed$actions$it actions = _Translations$taker$paymentFailed$actions$it._(_root);
-	@override late final _Translations$taker$paymentFailed$errors$it errors = _Translations$taker$paymentFailed$errors$it._(_root);
-	@override late final _Translations$taker$paymentFailed$walletSection$it walletSection = _Translations$taker$paymentFailed$walletSection$it._(_root);
-	@override late final _Translations$taker$paymentFailed$loading$it loading = _Translations$taker$paymentFailed$loading$it._(_root);
-	@override late final _Translations$taker$paymentFailed$success$it success = _Translations$taker$paymentFailed$success$it._(_root);
+	@override late final _Translations$twint$paymentFailed$form$it form = _Translations$twint$paymentFailed$form$it._(_root);
+	@override late final _Translations$twint$paymentFailed$actions$it actions = _Translations$twint$paymentFailed$actions$it._(_root);
+	@override late final _Translations$twint$paymentFailed$errors$it errors = _Translations$twint$paymentFailed$errors$it._(_root);
+	@override late final _Translations$twint$paymentFailed$walletSection$it walletSection = _Translations$twint$paymentFailed$walletSection$it._(_root);
+	@override late final _Translations$twint$paymentFailed$loading$it loading = _Translations$twint$paymentFailed$loading$it._(_root);
+	@override late final _Translations$twint$paymentFailed$success$it success = _Translations$twint$paymentFailed$success$it._(_root);
 }
 
-// Path: taker.paymentSuccess
-class _Translations$taker$paymentSuccess$it extends Translations$taker$paymentSuccess$en {
-	_Translations$taker$paymentSuccess$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentSuccess
+class _Translations$twint$paymentSuccess$it extends Translations$twint$paymentSuccess$en {
+	_Translations$twint$paymentSuccess$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Pagamento Riuscito';
 	@override String get message => 'Il tuo pagamento è stato elaborato con successo.';
-	@override late final _Translations$taker$paymentSuccess$actions$it actions = _Translations$taker$paymentSuccess$actions$it._(_root);
+	@override late final _Translations$twint$paymentSuccess$actions$it actions = _Translations$twint$paymentSuccess$actions$it._(_root);
 }
 
-// Path: taker.invalidBlik
-class _Translations$taker$invalidBlik$it extends Translations$taker$invalidBlik$en {
-	_Translations$taker$invalidBlik$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.invalidBlik
+class _Translations$twint$invalidBlik$it extends Translations$twint$invalidBlik$en {
+	_Translations$twint$invalidBlik$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -1217,16 +1256,16 @@ class _Translations$taker$invalidBlik$it extends Translations$taker$invalidBlik$
 	@override String explanation({required Object code}) => 'Il maker dell\'offerta ha indicato che il codice ${code} fornito non era valido o non ha funzionato.\n\nCosa vuoi fare?';
 	@override String get werentCharged => 'Se NON ti è stato addebitato:';
 	@override String get wereCharged => 'Se ti è stato addebitato:';
-	@override late final _Translations$taker$invalidBlik$actions$it actions = _Translations$taker$invalidBlik$actions$it._(_root);
-	@override late final _Translations$taker$invalidBlik$confirmDialog$it confirmDialog = _Translations$taker$invalidBlik$confirmDialog$it._(_root);
-	@override late final _Translations$taker$invalidBlik$disputeConfirmDialog$it disputeConfirmDialog = _Translations$taker$invalidBlik$disputeConfirmDialog$it._(_root);
-	@override late final _Translations$taker$invalidBlik$feedback$it feedback = _Translations$taker$invalidBlik$feedback$it._(_root);
-	@override late final _Translations$taker$invalidBlik$errors$it errors = _Translations$taker$invalidBlik$errors$it._(_root);
+	@override late final _Translations$twint$invalidBlik$actions$it actions = _Translations$twint$invalidBlik$actions$it._(_root);
+	@override late final _Translations$twint$invalidBlik$confirmDialog$it confirmDialog = _Translations$twint$invalidBlik$confirmDialog$it._(_root);
+	@override late final _Translations$twint$invalidBlik$disputeConfirmDialog$it disputeConfirmDialog = _Translations$twint$invalidBlik$disputeConfirmDialog$it._(_root);
+	@override late final _Translations$twint$invalidBlik$feedback$it feedback = _Translations$twint$invalidBlik$feedback$it._(_root);
+	@override late final _Translations$twint$invalidBlik$errors$it errors = _Translations$twint$invalidBlik$errors$it._(_root);
 }
 
-// Path: taker.conflict
-class _Translations$taker$conflict$it extends Translations$taker$conflict$en {
-	_Translations$taker$conflict$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.conflict
+class _Translations$twint$conflict$it extends Translations$twint$conflict$en {
+	_Translations$twint$conflict$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -1235,10 +1274,10 @@ class _Translations$taker$conflict$it extends Translations$taker$conflict$en {
 	@override String get headline => 'Conflitto Offerta Segnalato';
 	@override String body({required Object code}) => 'Il Maker ha contrassegnato il codice ${code} come non valido, ma tu hai segnalato un conflitto, indicando che ritieni il pagamento andato a buon fine.';
 	@override String get instructions => 'Attendi che il coordinatore esamini la situazione. Potrebbero esserti richiesti ulteriori dettagli. Controlla più tardi o contatta l\'assistenza se necessario.';
-	@override late final _Translations$taker$conflict$actions$it actions = _Translations$taker$conflict$actions$it._(_root);
-	@override late final _Translations$taker$conflict$feedback$it feedback = _Translations$taker$conflict$feedback$it._(_root);
-	@override late final _Translations$taker$conflict$errors$it errors = _Translations$taker$conflict$errors$it._(_root);
-	@override late final _Translations$taker$conflict$nostrContact$it nostrContact = _Translations$taker$conflict$nostrContact$it._(_root);
+	@override late final _Translations$twint$conflict$actions$it actions = _Translations$twint$conflict$actions$it._(_root);
+	@override late final _Translations$twint$conflict$feedback$it feedback = _Translations$twint$conflict$feedback$it._(_root);
+	@override late final _Translations$twint$conflict$errors$it errors = _Translations$twint$conflict$errors$it._(_root);
+	@override late final _Translations$twint$conflict$nostrContact$it nostrContact = _Translations$twint$conflict$nostrContact$it._(_root);
 }
 
 // Path: blik.instructions
@@ -1853,6 +1892,23 @@ class _Translations$maker$amountForm$actions$it extends Translations$maker$amoun
 	@override String get generateInvoice => 'Genera Fattura';
 }
 
+// Path: maker.amountForm.twintScan
+class _Translations$maker$amountForm$twintScan$it extends Translations$maker$amountForm$twintScan$en {
+	_Translations$maker$amountForm$twintScan$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String cardTitle({required Object code}) => 'Scansiona QR e importo ${code}';
+	@override String get cardBody => 'Punta la fotocamera verso la schermata di pagamento. L\'app compilerà automaticamente il codice e, quando visibile, l\'importo.';
+	@override String get scanButton => 'Scansiona con la fotocamera';
+	@override String get manualButton => 'Inserisci manualmente';
+	@override String codeLabel({required Object code}) => 'Codice ${code}';
+	@override String get rescan => 'Scansiona di nuovo';
+	@override String helperFilled({required Object code}) => 'Il taker vedrà questo codice e lo inserirà in ${code}.';
+	@override String helperEmpty({required Object digits}) => 'Scansiona per compilare automaticamente, oppure inserisci manualmente il codice di ${digits} cifre.';
+}
+
 // Path: maker.amountForm.tooltips
 class _Translations$maker$amountForm$tooltips$it extends Translations$maker$amountForm$tooltips$en {
 	_Translations$maker$amountForm$tooltips$it._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -2149,9 +2205,105 @@ class _Translations$taker$submitBlik$details$it extends Translations$taker$submi
 	@override String get youllReceive => 'Riceverai';
 }
 
-// Path: taker.waitConfirmation.categoryReminder
-class _Translations$taker$waitConfirmation$categoryReminder$it extends Translations$taker$waitConfirmation$categoryReminder$en {
-	_Translations$taker$waitConfirmation$categoryReminder$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.scanner.status
+class _Translations$twint$scanner$status$it extends Translations$twint$scanner$status$en {
+	_Translations$twint$scanner$status$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String align({required Object code}) => 'Allinea il QR ${code} e il testo dell\'importo all\'interno dell\'inquadratura.';
+	@override String notRecognized({required Object code}) => 'Codice ${code} non ancora riconosciuto. Tieni in vista il QR e l\'importo, oppure compila manualmente il modulo.';
+	@override String get amountFailed => 'La scansione della fotocamera non è riuscita a estrarre l\'importo. Puoi comunque usare il risultato del QR e correggere i campi manualmente.';
+}
+
+// Path: twint.flow.makerWait
+class _Translations$twint$flow$makerWait$it extends Translations$twint$flow$makerWait$en {
+	_Translations$twint$flow$makerWait$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get offerLive => 'Offerta attiva';
+	@override String get takerPaying => 'Il taker sta pagando';
+	@override String yourCode({required Object code}) => 'Il tuo codice ${code}';
+	@override String get offerExpires => 'L\'offerta scade';
+	@override String get autoExpires => 'Scade automaticamente';
+	@override String get cancelOffer => 'Annulla offerta';
+}
+
+// Path: twint.flow.makerVerify
+class _Translations$twint$flow$makerVerify$it extends Translations$twint$flow$makerVerify$en {
+	_Translations$twint$flow$makerVerify$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Hai ricevuto il pagamento?';
+	@override String body({required Object amount, required Object code}) => 'Il taker segnala di aver pagato ${amount} al tuo codice ${code}.';
+	@override String hint({required Object code}) => 'Controlla la tua app ${code}, poi conferma oppure apri una disputa.';
+	@override String get autoConfirms => 'Conferma automatica';
+	@override String get confirmReceived => 'Conferma ricezione';
+	@override String get openDispute => 'Apri disputa';
+}
+
+// Path: twint.flow.makerRecode
+class _Translations$twint$flow$makerRecode$it extends Translations$twint$flow$makerRecode$en {
+	_Translations$twint$flow$makerRecode$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Offerta scaduta';
+	@override String body({required Object code}) => 'Nessun taker ha completato lo scambio. Inserisci un nuovo codice ${code} per ripubblicare questa offerta, oppure annullala.';
+	@override String fieldLabel({required Object code}) => 'Nuovo codice ${code}';
+	@override String get autoCancels => 'Annulla automaticamente';
+	@override String get relist => 'Ripubblica con un nuovo codice';
+	@override String get cancelOffer => 'Annulla offerta';
+}
+
+// Path: twint.flow.takerPay
+class _Translations$twint$flow$takerPay$it extends Translations$twint$flow$takerPay$en {
+	_Translations$twint$flow$takerPay$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object code}) => 'Paga con ${code}';
+	@override String body({required Object code, required Object amount}) => 'Apri la tua app ${code} e paga ${amount} usando:';
+	@override String get codeExpires => 'Il codice scade';
+	@override String get paid => 'Ho pagato';
+	@override String get cancel => 'Annulla';
+}
+
+// Path: twint.flow.takerWait
+class _Translations$twint$flow$takerWait$it extends Translations$twint$flow$takerWait$en {
+	_Translations$twint$flow$takerWait$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'In attesa del maker';
+	@override String body({required Object code}) => 'Il maker sta verificando il tuo pagamento ${code}.';
+	@override String get autoConfirms => 'Conferma automatica';
+}
+
+// Path: twint.flow.takerExpired
+class _Translations$twint$flow$takerExpired$it extends Translations$twint$flow$takerExpired$en {
+	_Translations$twint$flow$takerExpired$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Prenotazione scaduta';
+	@override String body({required Object code}) => 'Il codice ${code} non è stato pagato in tempo. Puoi annullare per liberare l\'offerta.';
+	@override String get autoReleases => 'Rilascio automatico';
+	@override String get cancel => 'Annulla';
+}
+
+// Path: twint.waitConfirmation.categoryReminder
+class _Translations$twint$waitConfirmation$categoryReminder$it extends Translations$twint$waitConfirmation$categoryReminder$en {
+	_Translations$twint$waitConfirmation$categoryReminder$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2160,9 +2312,9 @@ class _Translations$taker$waitConfirmation$categoryReminder$it extends Translati
 	@override String get ecommerce => 'Promemoria ordine online: se il commerciante invia un rimborso automatico al tuo conto bancario, contatta il coordinatore e restituiscilo.';
 }
 
-// Path: taker.waitConfirmation.takerCharged
-class _Translations$taker$waitConfirmation$takerCharged$it extends Translations$taker$waitConfirmation$takerCharged$en {
-	_Translations$taker$waitConfirmation$takerCharged$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.waitConfirmation.takerCharged
+class _Translations$twint$waitConfirmation$takerCharged$it extends Translations$twint$waitConfirmation$takerCharged$en {
+	_Translations$twint$waitConfirmation$takerCharged$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2171,9 +2323,9 @@ class _Translations$taker$waitConfirmation$takerCharged$it extends Translations$
 	@override String message({required Object minutes}) => 'Il maker ha ${minutes} minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin.';
 }
 
-// Path: taker.waitConfirmation.expiredActions
-class _Translations$taker$waitConfirmation$expiredActions$it extends Translations$taker$waitConfirmation$expiredActions$en {
-	_Translations$taker$waitConfirmation$expiredActions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.waitConfirmation.expiredActions
+class _Translations$twint$waitConfirmation$expiredActions$it extends Translations$twint$waitConfirmation$expiredActions$en {
+	_Translations$twint$waitConfirmation$expiredActions$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2183,9 +2335,9 @@ class _Translations$taker$waitConfirmation$expiredActions$it extends Translation
 	@override String get cancelReservation => 'Annulla prenotazione';
 }
 
-// Path: taker.waitConfirmation.feedback
-class _Translations$taker$waitConfirmation$feedback$it extends Translations$taker$waitConfirmation$feedback$en {
-	_Translations$taker$waitConfirmation$feedback$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.waitConfirmation.feedback
+class _Translations$twint$waitConfirmation$feedback$it extends Translations$twint$waitConfirmation$feedback$en {
+	_Translations$twint$waitConfirmation$feedback$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2195,9 +2347,9 @@ class _Translations$taker$waitConfirmation$feedback$it extends Translations$take
 	@override String get conflictReported => 'Conflitto segnalato. Il coordinatore esaminerà la situazione.';
 }
 
-// Path: taker.waitConfirmation.errors
-class _Translations$taker$waitConfirmation$errors$it extends Translations$taker$waitConfirmation$errors$en {
-	_Translations$taker$waitConfirmation$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.waitConfirmation.errors
+class _Translations$twint$waitConfirmation$errors$it extends Translations$twint$waitConfirmation$errors$en {
+	_Translations$twint$waitConfirmation$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2206,9 +2358,9 @@ class _Translations$taker$waitConfirmation$errors$it extends Translations$taker$
 	@override String reportingConflict({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}';
 }
 
-// Path: taker.paymentProcess.states
-class _Translations$taker$paymentProcess$states$it extends Translations$taker$paymentProcess$states$en {
-	_Translations$taker$paymentProcess$states$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentProcess.states
+class _Translations$twint$paymentProcess$states$it extends Translations$twint$paymentProcess$states$en {
+	_Translations$twint$paymentProcess$states$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2220,9 +2372,9 @@ class _Translations$taker$paymentProcess$states$it extends Translations$taker$pa
 	@override String get waitingUpdate => 'In attesa dell\'aggiornamento dell\'offerta...';
 }
 
-// Path: taker.paymentProcess.steps
-class _Translations$taker$paymentProcess$steps$it extends Translations$taker$paymentProcess$steps$en {
-	_Translations$taker$paymentProcess$steps$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentProcess.steps
+class _Translations$twint$paymentProcess$steps$it extends Translations$twint$paymentProcess$steps$en {
+	_Translations$twint$paymentProcess$steps$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2233,9 +2385,9 @@ class _Translations$taker$paymentProcess$steps$it extends Translations$taker$pay
 	@override String get takerPaymentFailed => 'Pagamento alla tua fattura fallito';
 }
 
-// Path: taker.paymentProcess.errors
-class _Translations$taker$paymentProcess$errors$it extends Translations$taker$paymentProcess$errors$en {
-	_Translations$taker$paymentProcess$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentProcess.errors
+class _Translations$twint$paymentProcess$errors$it extends Translations$twint$paymentProcess$errors$en {
+	_Translations$twint$paymentProcess$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2252,9 +2404,9 @@ class _Translations$taker$paymentProcess$errors$it extends Translations$taker$pa
 	@override String get missingPaymentHash => 'Errore: Dettagli di pagamento mancanti.';
 }
 
-// Path: taker.paymentProcess.loading
-class _Translations$taker$paymentProcess$loading$it extends Translations$taker$paymentProcess$loading$en {
-	_Translations$taker$paymentProcess$loading$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentProcess.loading
+class _Translations$twint$paymentProcess$loading$it extends Translations$twint$paymentProcess$loading$en {
+	_Translations$twint$paymentProcess$loading$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2262,9 +2414,9 @@ class _Translations$taker$paymentProcess$loading$it extends Translations$taker$p
 	@override String get publicKey => 'Caricamento dei tuoi dati...';
 }
 
-// Path: taker.paymentProcess.actions
-class _Translations$taker$paymentProcess$actions$it extends Translations$taker$paymentProcess$actions$en {
-	_Translations$taker$paymentProcess$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentProcess.actions
+class _Translations$twint$paymentProcess$actions$it extends Translations$twint$paymentProcess$actions$en {
+	_Translations$twint$paymentProcess$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2272,9 +2424,9 @@ class _Translations$taker$paymentProcess$actions$it extends Translations$taker$p
 	@override String get goToFailureDetails => 'Riprova con nuova fattura';
 }
 
-// Path: taker.paymentFailed.form
-class _Translations$taker$paymentFailed$form$it extends Translations$taker$paymentFailed$form$en {
-	_Translations$taker$paymentFailed$form$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentFailed.form
+class _Translations$twint$paymentFailed$form$it extends Translations$twint$paymentFailed$form$en {
+	_Translations$twint$paymentFailed$form$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2283,9 +2435,9 @@ class _Translations$taker$paymentFailed$form$it extends Translations$taker$payme
 	@override String get newInvoiceHint => 'Inserisci la tua fattura BOLT11';
 }
 
-// Path: taker.paymentFailed.actions
-class _Translations$taker$paymentFailed$actions$it extends Translations$taker$paymentFailed$actions$en {
-	_Translations$taker$paymentFailed$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentFailed.actions
+class _Translations$twint$paymentFailed$actions$it extends Translations$twint$paymentFailed$actions$en {
+	_Translations$twint$paymentFailed$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2293,9 +2445,9 @@ class _Translations$taker$paymentFailed$actions$it extends Translations$taker$pa
 	@override String get retryPayment => 'Invia Nuova Fattura';
 }
 
-// Path: taker.paymentFailed.errors
-class _Translations$taker$paymentFailed$errors$it extends Translations$taker$paymentFailed$errors$en {
-	_Translations$taker$paymentFailed$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentFailed.errors
+class _Translations$twint$paymentFailed$errors$it extends Translations$twint$paymentFailed$errors$en {
+	_Translations$twint$paymentFailed$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2307,9 +2459,9 @@ class _Translations$taker$paymentFailed$errors$it extends Translations$taker$pay
 	@override String generateFailed({required Object details}) => 'Impossibile generare la fattura: ${details}';
 }
 
-// Path: taker.paymentFailed.walletSection
-class _Translations$taker$paymentFailed$walletSection$it extends Translations$taker$paymentFailed$walletSection$en {
-	_Translations$taker$paymentFailed$walletSection$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentFailed.walletSection
+class _Translations$twint$paymentFailed$walletSection$it extends Translations$twint$paymentFailed$walletSection$en {
+	_Translations$twint$paymentFailed$walletSection$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2319,9 +2471,9 @@ class _Translations$taker$paymentFailed$walletSection$it extends Translations$ta
 	@override String tapToGenerate({required Object amountSats}) => 'Tocca per generare la fattura per ${amountSats}';
 }
 
-// Path: taker.paymentFailed.loading
-class _Translations$taker$paymentFailed$loading$it extends Translations$taker$paymentFailed$loading$en {
-	_Translations$taker$paymentFailed$loading$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentFailed.loading
+class _Translations$twint$paymentFailed$loading$it extends Translations$twint$paymentFailed$loading$en {
+	_Translations$twint$paymentFailed$loading$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2329,9 +2481,9 @@ class _Translations$taker$paymentFailed$loading$it extends Translations$taker$pa
 	@override String get processingPayment => 'Elaborazione del nuovo tentativo di pagamento...';
 }
 
-// Path: taker.paymentFailed.success
-class _Translations$taker$paymentFailed$success$it extends Translations$taker$paymentFailed$success$en {
-	_Translations$taker$paymentFailed$success$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentFailed.success
+class _Translations$twint$paymentFailed$success$it extends Translations$twint$paymentFailed$success$en {
+	_Translations$twint$paymentFailed$success$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2340,9 +2492,9 @@ class _Translations$taker$paymentFailed$success$it extends Translations$taker$pa
 	@override String get message => 'Il tuo pagamento è stato elaborato con successo.';
 }
 
-// Path: taker.paymentSuccess.actions
-class _Translations$taker$paymentSuccess$actions$it extends Translations$taker$paymentSuccess$actions$en {
-	_Translations$taker$paymentSuccess$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.paymentSuccess.actions
+class _Translations$twint$paymentSuccess$actions$it extends Translations$twint$paymentSuccess$actions$en {
+	_Translations$twint$paymentSuccess$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2350,9 +2502,9 @@ class _Translations$taker$paymentSuccess$actions$it extends Translations$taker$p
 	@override String get goHome => 'Vai alla home';
 }
 
-// Path: taker.invalidBlik.actions
-class _Translations$taker$invalidBlik$actions$it extends Translations$taker$invalidBlik$actions$en {
-	_Translations$taker$invalidBlik$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.invalidBlik.actions
+class _Translations$twint$invalidBlik$actions$it extends Translations$twint$invalidBlik$actions$en {
+	_Translations$twint$invalidBlik$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2363,33 +2515,33 @@ class _Translations$taker$invalidBlik$actions$it extends Translations$taker$inva
 	@override String get returnHome => 'Torna alla home';
 }
 
-// Path: taker.invalidBlik.confirmDialog
-class _Translations$taker$invalidBlik$confirmDialog$it extends Translations$taker$invalidBlik$confirmDialog$en {
-	_Translations$taker$invalidBlik$confirmDialog$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.invalidBlik.confirmDialog
+class _Translations$twint$invalidBlik$confirmDialog$it extends Translations$twint$invalidBlik$confirmDialog$en {
+	_Translations$twint$invalidBlik$confirmDialog$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Sei sicuro?';
 	@override String get content => 'Una volta toccato, non si può tornare indietro.\n\nSe l\'importo è STATO effettivamente addebitato dal tuo conto bancario, il coordinatore NON potrà garantirti la ricezione dei bitcoin e potresti perdere i tuoi fondi.\n\nSe non sei sicuro, è meglio attendere un po\' e verificare di NON essere stato addebitato prima di continuare.';
-	@override late final _Translations$taker$invalidBlik$confirmDialog$actions$it actions = _Translations$taker$invalidBlik$confirmDialog$actions$it._(_root);
+	@override late final _Translations$twint$invalidBlik$confirmDialog$actions$it actions = _Translations$twint$invalidBlik$confirmDialog$actions$it._(_root);
 }
 
-// Path: taker.invalidBlik.disputeConfirmDialog
-class _Translations$taker$invalidBlik$disputeConfirmDialog$it extends Translations$taker$invalidBlik$disputeConfirmDialog$en {
-	_Translations$taker$invalidBlik$disputeConfirmDialog$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.invalidBlik.disputeConfirmDialog
+class _Translations$twint$invalidBlik$disputeConfirmDialog$it extends Translations$twint$invalidBlik$disputeConfirmDialog$en {
+	_Translations$twint$invalidBlik$disputeConfirmDialog$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
 	@override String get title => 'Aprire una disputa?';
 	@override String get content => 'Apri una disputa solo se l\'importo È STATO addebitato dal tuo conto bancario.\n\nIl coordinatore esaminerà manualmente il tuo caso, il che richiede tempo. Dovrai fornire una prova di pagamento.';
-	@override late final _Translations$taker$invalidBlik$disputeConfirmDialog$actions$it actions = _Translations$taker$invalidBlik$disputeConfirmDialog$actions$it._(_root);
+	@override late final _Translations$twint$invalidBlik$disputeConfirmDialog$actions$it actions = _Translations$twint$invalidBlik$disputeConfirmDialog$actions$it._(_root);
 }
 
-// Path: taker.invalidBlik.feedback
-class _Translations$taker$invalidBlik$feedback$it extends Translations$taker$invalidBlik$feedback$en {
-	_Translations$taker$invalidBlik$feedback$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.invalidBlik.feedback
+class _Translations$twint$invalidBlik$feedback$it extends Translations$twint$invalidBlik$feedback$en {
+	_Translations$twint$invalidBlik$feedback$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2397,9 +2549,9 @@ class _Translations$taker$invalidBlik$feedback$it extends Translations$taker$inv
 	@override String get conflictReportedSuccess => 'Conflitto segnalato. Il coordinatore lo esaminerà.';
 }
 
-// Path: taker.invalidBlik.errors
-class _Translations$taker$invalidBlik$errors$it extends Translations$taker$invalidBlik$errors$en {
-	_Translations$taker$invalidBlik$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.invalidBlik.errors
+class _Translations$twint$invalidBlik$errors$it extends Translations$twint$invalidBlik$errors$en {
+	_Translations$twint$invalidBlik$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2408,9 +2560,9 @@ class _Translations$taker$invalidBlik$errors$it extends Translations$taker$inval
 	@override String conflictReport({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}';
 }
 
-// Path: taker.conflict.actions
-class _Translations$taker$conflict$actions$it extends Translations$taker$conflict$actions$en {
-	_Translations$taker$conflict$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.conflict.actions
+class _Translations$twint$conflict$actions$it extends Translations$twint$conflict$actions$en {
+	_Translations$twint$conflict$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2418,9 +2570,9 @@ class _Translations$taker$conflict$actions$it extends Translations$taker$conflic
 	@override String get back => 'Torna alla Home';
 }
 
-// Path: taker.conflict.feedback
-class _Translations$taker$conflict$feedback$it extends Translations$taker$conflict$feedback$en {
-	_Translations$taker$conflict$feedback$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.conflict.feedback
+class _Translations$twint$conflict$feedback$it extends Translations$twint$conflict$feedback$en {
+	_Translations$twint$conflict$feedback$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2428,9 +2580,9 @@ class _Translations$taker$conflict$feedback$it extends Translations$taker$confli
 	@override String get reported => 'Conflitto segnalato. Il coordinatore esaminerà.';
 }
 
-// Path: taker.conflict.errors
-class _Translations$taker$conflict$errors$it extends Translations$taker$conflict$errors$en {
-	_Translations$taker$conflict$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.conflict.errors
+class _Translations$twint$conflict$errors$it extends Translations$twint$conflict$errors$en {
+	_Translations$twint$conflict$errors$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2438,9 +2590,9 @@ class _Translations$taker$conflict$errors$it extends Translations$taker$conflict
 	@override String reporting({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}';
 }
 
-// Path: taker.conflict.nostrContact
-class _Translations$taker$conflict$nostrContact$it extends Translations$taker$conflict$nostrContact$en {
-	_Translations$taker$conflict$nostrContact$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.conflict.nostrContact
+class _Translations$twint$conflict$nostrContact$it extends Translations$twint$conflict$nostrContact$en {
+	_Translations$twint$conflict$nostrContact$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2547,9 +2699,9 @@ class _Translations$maker$conflict$disputeDialog$actions$it extends Translations
 	@override String get cancel => 'Annulla';
 }
 
-// Path: taker.invalidBlik.confirmDialog.actions
-class _Translations$taker$invalidBlik$confirmDialog$actions$it extends Translations$taker$invalidBlik$confirmDialog$actions$en {
-	_Translations$taker$invalidBlik$confirmDialog$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.invalidBlik.confirmDialog.actions
+class _Translations$twint$invalidBlik$confirmDialog$actions$it extends Translations$twint$invalidBlik$confirmDialog$actions$en {
+	_Translations$twint$invalidBlik$confirmDialog$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2558,9 +2710,9 @@ class _Translations$taker$invalidBlik$confirmDialog$actions$it extends Translati
 	@override String get cancel => 'Annulla';
 }
 
-// Path: taker.invalidBlik.disputeConfirmDialog.actions
-class _Translations$taker$invalidBlik$disputeConfirmDialog$actions$it extends Translations$taker$invalidBlik$disputeConfirmDialog$actions$en {
-	_Translations$taker$invalidBlik$disputeConfirmDialog$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
+// Path: twint.invalidBlik.disputeConfirmDialog.actions
+class _Translations$twint$invalidBlik$disputeConfirmDialog$actions$it extends Translations$twint$invalidBlik$disputeConfirmDialog$actions$en {
+	_Translations$twint$invalidBlik$disputeConfirmDialog$actions$it._(TranslationsIt root) : this._root = root, super.internal(root);
 
 	final TranslationsIt _root; // ignore: unused_field
 
@@ -2832,6 +2984,14 @@ extension on TranslationsIt {
 			'maker.amountForm.labels.tapToSelect' => 'Tocca per selezionare',
 			'maker.amountForm.labels.premium' => 'Premio',
 			'maker.amountForm.actions.generateInvoice' => 'Genera Fattura',
+			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Scansiona QR e importo ${code}',
+			'maker.amountForm.twintScan.cardBody' => 'Punta la fotocamera verso la schermata di pagamento. L\'app compilerà automaticamente il codice e, quando visibile, l\'importo.',
+			'maker.amountForm.twintScan.scanButton' => 'Scansiona con la fotocamera',
+			'maker.amountForm.twintScan.manualButton' => 'Inserisci manualmente',
+			'maker.amountForm.twintScan.codeLabel' => ({required Object code}) => 'Codice ${code}',
+			'maker.amountForm.twintScan.rescan' => 'Scansiona di nuovo',
+			'maker.amountForm.twintScan.helperFilled' => ({required Object code}) => 'Il taker vedrà questo codice e lo inserirà in ${code}.',
+			'maker.amountForm.twintScan.helperEmpty' => ({required Object digits}) => 'Scansiona per compilare automaticamente, oppure inserisci manualmente il codice di ${digits} cifre.',
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning.',
 			'maker.amountForm.tooltips.payInfo' => 'Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l\'importo esatto, e l\'importo della fattura sarà quello finale e definitivo da pagare.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Un premio opzionale ti permette di vendere i tuoi sat sopra il prezzo di mercato. Il premio riduce i sat bloccati nella tua fattura hold per lo stesso importo fiat, così il taker paga sopra il mercato e tu trattieni la differenza. Predefinito disattivato (0%). Il premio massimo è impostato dal coordinatore selezionato.',
@@ -2987,117 +3147,151 @@ extension on TranslationsIt {
 			'taker.submitBlik.details.takerFee' => 'Commissione taker',
 			'taker.submitBlik.details.status' => 'Stato',
 			'taker.submitBlik.details.youllReceive' => 'Riceverai',
-			'taker.waitConfirmation.title' => 'In attesa del Maker',
-			'taker.waitConfirmation.statusLabel' => ({required Object status}) => 'Stato offerta: ${status}',
-			'taker.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'In attesa della conferma del Maker: ${seconds} s',
-			'taker.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'In attesa che il Maker confermi che il ${code} è corretto. Tempo rimanente: ${seconds}s',
-			'taker.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Assicurati di accettare solo la conferma ${code} per ${amount} ${currency}',
-			'taker.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Nella tua app bancaria, assicurati di confermare un pagamento ${code} per esattamente ${amount} ${currency}.',
-			'taker.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'Il maker deve ora inserirlo nel terminale di pagamento entro ${minutes} minuti. Dovrai poi accettare il codice ${code} nella tua app bancaria.',
-			'taker.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'Il maker deve ora inserire il tuo codice ${code} allo sportello ATM entro ${minutes} minuti.',
-			'taker.waitConfirmation.categoryReminder.atm' => 'Promemoria offerta ATM: la tua banca potrebbe ancora chiederti di approvare una commissione ATM extra oltre all\'importo principale.',
-			'taker.waitConfirmation.categoryReminder.ecommerce' => 'Promemoria ordine online: se il commerciante invia un rimborso automatico al tuo conto bancario, contatta il coordinatore e restituiscilo.',
-			'taker.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'In attesa che il maker riceva il tuo codice ${code}...',
-			'taker.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Il maker ha ricevuto il tuo codice ${code}.',
-			'taker.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => 'Il tempo di scadenza ${code} di ${minutes} minuti è passato. In attesa che il maker confermi o contrassegni il codice come non valido.',
-			'taker.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => 'Il tempo di scadenza ${code} di ${minutes} minuti è passato ma il maker non ha ricevuto il codice ${code}. Puoi rinviare un nuovo codice ${code} o annullare.',
-			'taker.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Rinvia Nuovo Codice ${code}',
-			'taker.waitConfirmation.navigatedHome' => 'Tornato alla home.',
-			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => 'Codice ${code} Scaduto',
-			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'Il maker non ha ricevuto il codice ${code} quindi non ha potuto utilizzarlo.',
-			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'La prenotazione termina tra',
-			'taker.waitConfirmation.expiredSentWarning' => 'Il maker non ha ancora confermato il pagamento. Cosa vuoi fare?',
-			'taker.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Se vuoi riprovare con un nuovo codice ${code}, rinnova la prenotazione.',
-			'taker.waitConfirmation.expiredInstruction2' => 'Se non vuoi più completare questa transazione, annulla la prenotazione.',
-			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'Se il pagamento ${code} è stato addebitato sul tuo conto bancario, non preoccuparti, i bitcoin sono ancora al sicuro presso il coordinatore.',
-			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Hai segnalato che il ${code} è stato addebitato',
-			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Il maker ha ${minutes} minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin.',
-			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => 'Il ${code} è stato addebitato sul mio conto bancario',
-			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Riprova con un nuovo codice ${code}',
-			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Annulla prenotazione',
-			'taker.waitConfirmation.feedback.makerConfirmed' => 'Il Maker ha confermato il pagamento.',
-			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Pagamento riuscito! Riceverai i fondi a breve.',
-			'taker.waitConfirmation.feedback.conflictReported' => 'Conflitto segnalato. Il coordinatore esaminerà la situazione.',
-			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Ricevuta un\'offerta con stato non valido per questa schermata. Ripristino in corso.',
-			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
-			'taker.paymentProcess.title' => 'Processo di Pagamento',
-			'taker.paymentProcess.waitingForOfferUpdate' => 'In attesa dell\'aggiornamento dello stato dell\'offerta...',
-			'taker.paymentProcess.states.preparing' => 'Preparazione invio pagamento...',
-			'taker.paymentProcess.states.sending' => 'Invio pagamento...',
-			'taker.paymentProcess.states.received' => 'Pagamento ricevuto!',
-			'taker.paymentProcess.states.failed' => 'Pagamento fallito',
-			'taker.paymentProcess.states.waitingUpdate' => 'In attesa dell\'aggiornamento dell\'offerta...',
-			'taker.paymentProcess.steps.makerConfirmedBlik' => ({required Object code}) => 'Il Maker ha confermato il pagamento ${code}',
-			'taker.paymentProcess.steps.makerInvoiceSettled' => 'Fattura hold del Maker saldata',
-			'taker.paymentProcess.steps.takerInvoicePaid' => 'Pagamento della tua fattura Lightning',
-			'taker.paymentProcess.steps.takerPaymentFailed' => 'Pagamento alla tua fattura fallito',
-			'taker.paymentProcess.errors.sending' => ({required Object details}) => 'Errore nell\'invio del pagamento: ${details}',
-			'taker.paymentProcess.errors.notConfirmed' => 'Offerta non confermata dal Maker.',
-			'taker.paymentProcess.errors.expired' => 'Offerta scaduta.',
-			'taker.paymentProcess.errors.cancelled' => 'Offerta annullata.',
-			'taker.paymentProcess.errors.paymentFailed' => 'Pagamento dell\'offerta fallito.',
-			'taker.paymentProcess.errors.unknown' => 'Errore offerta sconosciuto.',
-			'taker.paymentProcess.errors.takerPaymentFailed' => 'Il pagamento alla tua fattura Lightning è fallito.',
-			'taker.paymentProcess.errors.noPublicKey' => 'Errore: Impossibile recuperare la tua chiave pubblica.',
-			'taker.paymentProcess.errors.loadingPublicKey' => 'Errore nel caricamento dei tuoi dati',
-			'taker.paymentProcess.errors.missingPaymentHash' => 'Errore: Dettagli di pagamento mancanti.',
-			'taker.paymentProcess.loading.publicKey' => 'Caricamento dei tuoi dati...',
-			'taker.paymentProcess.actions.goToFailureDetails' => 'Riprova con nuova fattura',
-			'taker.paymentFailed.title' => 'Pagamento Fallito',
-			'taker.paymentFailed.instructions' => ({required Object netAmount}) => 'Fornisci una nuova fattura Lightning per ${netAmount}',
-			'taker.paymentFailed.form.newInvoiceLabel' => 'Nuova fattura Lightning',
-			'taker.paymentFailed.form.newInvoiceHint' => 'Inserisci la tua fattura BOLT11',
-			'taker.paymentFailed.actions.retryPayment' => 'Invia Nuova Fattura',
-			'taker.paymentFailed.errors.enterValidInvoice' => 'Inserisci una fattura valida',
-			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Errore nell\'aggiornamento della fattura: ${details}',
-			'taker.paymentFailed.errors.paymentRetryFailed' => 'Nuovo tentativo di pagamento fallito. Controlla la fattura o riprova più tardi.',
-			'taker.paymentFailed.errors.takerPublicKeyNotFound' => 'Chiave pubblica del taker non trovata.',
-			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Impossibile generare la fattura: ${details}',
-			'taker.paymentFailed.walletSection.title' => 'Genera fattura dal portafoglio',
-			'taker.paymentFailed.walletSection.defaultLabel' => 'predefinito',
-			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tocca per generare la fattura per ${amountSats}',
-			'taker.paymentFailed.loading.processingPayment' => 'Elaborazione del nuovo tentativo di pagamento...',
-			'taker.paymentFailed.success.title' => 'Pagamento Riuscito',
-			'taker.paymentFailed.success.message' => 'Il tuo pagamento è stato elaborato con successo.',
-			'taker.paymentSuccess.title' => 'Pagamento Riuscito',
-			'taker.paymentSuccess.message' => 'Il tuo pagamento è stato elaborato con successo.',
-			'taker.paymentSuccess.actions.goHome' => 'Vai alla home',
-			'taker.invalidBlik.title' => ({required Object code}) => 'Codice ${code} Non Valido',
-			'taker.invalidBlik.message' => ({required Object code}) => 'Il Maker ha Rifiutato il Codice ${code}',
-			'taker.invalidBlik.explanation' => ({required Object code}) => 'Il maker dell\'offerta ha indicato che il codice ${code} fornito non era valido o non ha funzionato.\n\nCosa vuoi fare?',
-			'taker.invalidBlik.werentCharged' => 'Se NON ti è stato addebitato:',
-			'taker.invalidBlik.wereCharged' => 'Se ti è stato addebitato:',
-			'taker.invalidBlik.actions.retry' => ({required Object code}) => 'Invia nuovo codice ${code}',
-			'taker.invalidBlik.actions.cancelReservation' => 'Annulla Transazione',
-			'taker.invalidBlik.actions.reportConflict' => 'Avvia Disputa',
-			'taker.invalidBlik.actions.returnHome' => 'Torna alla home',
-			'taker.invalidBlik.confirmDialog.title' => 'Sei sicuro?',
-			'taker.invalidBlik.confirmDialog.content' => 'Una volta toccato, non si può tornare indietro.\n\nSe l\'importo è STATO effettivamente addebitato dal tuo conto bancario, il coordinatore NON potrà garantirti la ricezione dei bitcoin e potresti perdere i tuoi fondi.\n\nSe non sei sicuro, è meglio attendere un po\' e verificare di NON essere stato addebitato prima di continuare.',
-			'taker.invalidBlik.confirmDialog.actions.proceed' => 'Sono sicuro, continua',
-			'taker.invalidBlik.confirmDialog.actions.cancel' => 'Annulla',
-			'taker.invalidBlik.disputeConfirmDialog.title' => 'Aprire una disputa?',
-			'taker.invalidBlik.disputeConfirmDialog.content' => 'Apri una disputa solo se l\'importo È STATO addebitato dal tuo conto bancario.\n\nIl coordinatore esaminerà manualmente il tuo caso, il che richiede tempo. Dovrai fornire una prova di pagamento.',
-			'taker.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Sì, sono stato addebitato',
-			'taker.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Annulla',
-			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Conflitto segnalato. Il coordinatore lo esaminerà.',
-			'taker.invalidBlik.errors.reservationFailed' => 'Impossibile riservare nuovamente l\'offerta',
-			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
-			'taker.conflict.title' => 'Conflitto Offerta',
-			'taker.conflict.headline' => 'Conflitto Offerta Segnalato',
-			'taker.conflict.body' => ({required Object code}) => 'Il Maker ha contrassegnato il codice ${code} come non valido, ma tu hai segnalato un conflitto, indicando che ritieni il pagamento andato a buon fine.',
-			'taker.conflict.instructions' => 'Attendi che il coordinatore esamini la situazione. Potrebbero esserti richiesti ulteriori dettagli. Controlla più tardi o contatta l\'assistenza se necessario.',
-			'taker.conflict.actions.back' => 'Torna alla Home',
-			'taker.conflict.feedback.reported' => 'Conflitto segnalato. Il coordinatore esaminerà.',
-			'taker.conflict.errors.reporting' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
+			'twint.scanner.title' => ({required Object code}) => 'Scansiona codice ${code}',
+			'twint.scanner.status.align' => ({required Object code}) => 'Allinea il QR ${code} e il testo dell\'importo all\'interno dell\'inquadratura.',
+			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Codice ${code} non ancora riconosciuto. Tieni in vista il QR e l\'importo, oppure compila manualmente il modulo.',
+			'twint.scanner.status.amountFailed' => 'La scansione della fotocamera non è riuscita a estrarre l\'importo. Puoi comunque usare il risultato del QR e correggere i campi manualmente.',
+			'twint.flow.makerWait.offerLive' => 'Offerta attiva',
+			'twint.flow.makerWait.takerPaying' => 'Il taker sta pagando',
+			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Il tuo codice ${code}',
+			'twint.flow.makerWait.offerExpires' => 'L\'offerta scade',
+			'twint.flow.makerWait.autoExpires' => 'Scade automaticamente',
+			'twint.flow.makerWait.cancelOffer' => 'Annulla offerta',
+			'twint.flow.makerVerify.title' => 'Hai ricevuto il pagamento?',
+			'twint.flow.makerVerify.body' => ({required Object amount, required Object code}) => 'Il taker segnala di aver pagato ${amount} al tuo codice ${code}.',
+			'twint.flow.makerVerify.hint' => ({required Object code}) => 'Controlla la tua app ${code}, poi conferma oppure apri una disputa.',
+			'twint.flow.makerVerify.autoConfirms' => 'Conferma automatica',
+			'twint.flow.makerVerify.confirmReceived' => 'Conferma ricezione',
+			'twint.flow.makerVerify.openDispute' => 'Apri disputa',
+			'twint.flow.makerRecode.title' => 'Offerta scaduta',
+			'twint.flow.makerRecode.body' => ({required Object code}) => 'Nessun taker ha completato lo scambio. Inserisci un nuovo codice ${code} per ripubblicare questa offerta, oppure annullala.',
+			'twint.flow.makerRecode.fieldLabel' => ({required Object code}) => 'Nuovo codice ${code}',
+			'twint.flow.makerRecode.autoCancels' => 'Annulla automaticamente',
+			'twint.flow.makerRecode.relist' => 'Ripubblica con un nuovo codice',
+			'twint.flow.makerRecode.cancelOffer' => 'Annulla offerta',
+			'twint.flow.takerPay.title' => ({required Object code}) => 'Paga con ${code}',
+			'twint.flow.takerPay.body' => ({required Object code, required Object amount}) => 'Apri la tua app ${code} e paga ${amount} usando:',
+			'twint.flow.takerPay.codeExpires' => 'Il codice scade',
+			'twint.flow.takerPay.paid' => 'Ho pagato',
+			'twint.flow.takerPay.cancel' => 'Annulla',
+			'twint.flow.takerWait.title' => 'In attesa del maker',
+			'twint.flow.takerWait.body' => ({required Object code}) => 'Il maker sta verificando il tuo pagamento ${code}.',
+			'twint.flow.takerWait.autoConfirms' => 'Conferma automatica',
+			'twint.flow.takerExpired.title' => 'Prenotazione scaduta',
+			'twint.flow.takerExpired.body' => ({required Object code}) => 'Il codice ${code} non è stato pagato in tempo. Puoi annullare per liberare l\'offerta.',
+			'twint.flow.takerExpired.autoReleases' => 'Rilascio automatico',
+			'twint.flow.takerExpired.cancel' => 'Annulla',
+			'twint.waitConfirmation.title' => 'In attesa del Maker',
+			'twint.waitConfirmation.statusLabel' => ({required Object status}) => 'Stato offerta: ${status}',
+			'twint.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'In attesa della conferma del Maker: ${seconds} s',
+			'twint.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'In attesa che il Maker confermi che il ${code} è corretto. Tempo rimanente: ${seconds}s',
+			'twint.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Assicurati di accettare solo la conferma ${code} per ${amount} ${currency}',
+			'twint.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Nella tua app bancaria, assicurati di confermare un pagamento ${code} per esattamente ${amount} ${currency}.',
+			'twint.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'Il maker deve ora inserirlo nel terminale di pagamento entro ${minutes} minuti. Dovrai poi accettare il codice ${code} nella tua app bancaria.',
+			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'Il maker deve ora inserire il tuo codice ${code} allo sportello ATM entro ${minutes} minuti.',
+			'twint.waitConfirmation.categoryReminder.atm' => 'Promemoria offerta ATM: la tua banca potrebbe ancora chiederti di approvare una commissione ATM extra oltre all\'importo principale.',
+			'twint.waitConfirmation.categoryReminder.ecommerce' => 'Promemoria ordine online: se il commerciante invia un rimborso automatico al tuo conto bancario, contatta il coordinatore e restituiscilo.',
+			'twint.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'In attesa che il maker riceva il tuo codice ${code}...',
+			'twint.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Il maker ha ricevuto il tuo codice ${code}.',
+			'twint.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => 'Il tempo di scadenza ${code} di ${minutes} minuti è passato. In attesa che il maker confermi o contrassegni il codice come non valido.',
+			'twint.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => 'Il tempo di scadenza ${code} di ${minutes} minuti è passato ma il maker non ha ricevuto il codice ${code}. Puoi rinviare un nuovo codice ${code} o annullare.',
+			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Rinvia Nuovo Codice ${code}',
+			'twint.waitConfirmation.navigatedHome' => 'Tornato alla home.',
+			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => 'Codice ${code} Scaduto',
+			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'Il maker non ha ricevuto il codice ${code} quindi non ha potuto utilizzarlo.',
+			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'La prenotazione termina tra',
+			'twint.waitConfirmation.expiredSentWarning' => 'Il maker non ha ancora confermato il pagamento. Cosa vuoi fare?',
+			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Se vuoi riprovare con un nuovo codice ${code}, rinnova la prenotazione.',
+			'twint.waitConfirmation.expiredInstruction2' => 'Se non vuoi più completare questa transazione, annulla la prenotazione.',
+			'twint.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'Se il pagamento ${code} è stato addebitato sul tuo conto bancario, non preoccuparti, i bitcoin sono ancora al sicuro presso il coordinatore.',
+			'twint.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Hai segnalato che il ${code} è stato addebitato',
+			'twint.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Il maker ha ${minutes} minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin.',
+			'twint.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => 'Il ${code} è stato addebitato sul mio conto bancario',
+			'twint.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Riprova con un nuovo codice ${code}',
+			'twint.waitConfirmation.expiredActions.cancelReservation' => 'Annulla prenotazione',
+			'twint.waitConfirmation.feedback.makerConfirmed' => 'Il Maker ha confermato il pagamento.',
+			'twint.waitConfirmation.feedback.paymentSuccessful' => 'Pagamento riuscito! Riceverai i fondi a breve.',
+			'twint.waitConfirmation.feedback.conflictReported' => 'Conflitto segnalato. Il coordinatore esaminerà la situazione.',
+			'twint.waitConfirmation.errors.invalidOfferStateReceived' => 'Ricevuta un\'offerta con stato non valido per questa schermata. Ripristino in corso.',
+			'twint.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
+			'twint.paymentProcess.title' => 'Processo di Pagamento',
+			'twint.paymentProcess.waitingForOfferUpdate' => 'In attesa dell\'aggiornamento dello stato dell\'offerta...',
+			'twint.paymentProcess.states.preparing' => 'Preparazione invio pagamento...',
+			'twint.paymentProcess.states.sending' => 'Invio pagamento...',
+			'twint.paymentProcess.states.received' => 'Pagamento ricevuto!',
+			'twint.paymentProcess.states.failed' => 'Pagamento fallito',
+			'twint.paymentProcess.states.waitingUpdate' => 'In attesa dell\'aggiornamento dell\'offerta...',
+			'twint.paymentProcess.steps.makerConfirmedBlik' => ({required Object code}) => 'Il Maker ha confermato il pagamento ${code}',
+			'twint.paymentProcess.steps.makerInvoiceSettled' => 'Fattura hold del Maker saldata',
+			'twint.paymentProcess.steps.takerInvoicePaid' => 'Pagamento della tua fattura Lightning',
+			'twint.paymentProcess.steps.takerPaymentFailed' => 'Pagamento alla tua fattura fallito',
+			'twint.paymentProcess.errors.sending' => ({required Object details}) => 'Errore nell\'invio del pagamento: ${details}',
+			'twint.paymentProcess.errors.notConfirmed' => 'Offerta non confermata dal Maker.',
+			'twint.paymentProcess.errors.expired' => 'Offerta scaduta.',
+			'twint.paymentProcess.errors.cancelled' => 'Offerta annullata.',
+			'twint.paymentProcess.errors.paymentFailed' => 'Pagamento dell\'offerta fallito.',
+			'twint.paymentProcess.errors.unknown' => 'Errore offerta sconosciuto.',
+			'twint.paymentProcess.errors.takerPaymentFailed' => 'Il pagamento alla tua fattura Lightning è fallito.',
+			'twint.paymentProcess.errors.noPublicKey' => 'Errore: Impossibile recuperare la tua chiave pubblica.',
+			'twint.paymentProcess.errors.loadingPublicKey' => 'Errore nel caricamento dei tuoi dati',
+			'twint.paymentProcess.errors.missingPaymentHash' => 'Errore: Dettagli di pagamento mancanti.',
+			'twint.paymentProcess.loading.publicKey' => 'Caricamento dei tuoi dati...',
+			'twint.paymentProcess.actions.goToFailureDetails' => 'Riprova con nuova fattura',
+			'twint.paymentFailed.title' => 'Pagamento Fallito',
+			'twint.paymentFailed.instructions' => ({required Object netAmount}) => 'Fornisci una nuova fattura Lightning per ${netAmount}',
+			'twint.paymentFailed.form.newInvoiceLabel' => 'Nuova fattura Lightning',
+			'twint.paymentFailed.form.newInvoiceHint' => 'Inserisci la tua fattura BOLT11',
 			_ => null,
 		} ?? switch (path) {
-			'taker.conflict.nostrContact.title' => 'Contatta il Coordinatore su Nostr',
-			'taker.conflict.nostrContact.description' => 'Puoi inviare un DM al coordinatore direttamente per assistenza con questa disputa.',
-			'taker.conflict.nostrContact.copyNpub' => 'Copia npub',
-			'taker.conflict.nostrContact.openProfile' => 'Visualizza Profilo',
-			'taker.conflict.nostrContact.npubCopied' => 'Npub del coordinatore copiato negli appunti!',
-			'taker.conflict.nostrContact.yourIdentityDescription' => 'Per inviare DM, accedi con la tua chiave privata Neko (nsec) in qualsiasi client Nostr che supporta i messaggi diretti.',
-			'taker.conflict.nostrContact.manageNekoKeys' => 'Gestisci Chiavi Neko',
+			'twint.paymentFailed.actions.retryPayment' => 'Invia Nuova Fattura',
+			'twint.paymentFailed.errors.enterValidInvoice' => 'Inserisci una fattura valida',
+			'twint.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Errore nell\'aggiornamento della fattura: ${details}',
+			'twint.paymentFailed.errors.paymentRetryFailed' => 'Nuovo tentativo di pagamento fallito. Controlla la fattura o riprova più tardi.',
+			'twint.paymentFailed.errors.takerPublicKeyNotFound' => 'Chiave pubblica del taker non trovata.',
+			'twint.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Impossibile generare la fattura: ${details}',
+			'twint.paymentFailed.walletSection.title' => 'Genera fattura dal portafoglio',
+			'twint.paymentFailed.walletSection.defaultLabel' => 'predefinito',
+			'twint.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tocca per generare la fattura per ${amountSats}',
+			'twint.paymentFailed.loading.processingPayment' => 'Elaborazione del nuovo tentativo di pagamento...',
+			'twint.paymentFailed.success.title' => 'Pagamento Riuscito',
+			'twint.paymentFailed.success.message' => 'Il tuo pagamento è stato elaborato con successo.',
+			'twint.paymentSuccess.title' => 'Pagamento Riuscito',
+			'twint.paymentSuccess.message' => 'Il tuo pagamento è stato elaborato con successo.',
+			'twint.paymentSuccess.actions.goHome' => 'Vai alla home',
+			'twint.invalidBlik.title' => ({required Object code}) => 'Codice ${code} Non Valido',
+			'twint.invalidBlik.message' => ({required Object code}) => 'Il Maker ha Rifiutato il Codice ${code}',
+			'twint.invalidBlik.explanation' => ({required Object code}) => 'Il maker dell\'offerta ha indicato che il codice ${code} fornito non era valido o non ha funzionato.\n\nCosa vuoi fare?',
+			'twint.invalidBlik.werentCharged' => 'Se NON ti è stato addebitato:',
+			'twint.invalidBlik.wereCharged' => 'Se ti è stato addebitato:',
+			'twint.invalidBlik.actions.retry' => ({required Object code}) => 'Invia nuovo codice ${code}',
+			'twint.invalidBlik.actions.cancelReservation' => 'Annulla Transazione',
+			'twint.invalidBlik.actions.reportConflict' => 'Avvia Disputa',
+			'twint.invalidBlik.actions.returnHome' => 'Torna alla home',
+			'twint.invalidBlik.confirmDialog.title' => 'Sei sicuro?',
+			'twint.invalidBlik.confirmDialog.content' => 'Una volta toccato, non si può tornare indietro.\n\nSe l\'importo è STATO effettivamente addebitato dal tuo conto bancario, il coordinatore NON potrà garantirti la ricezione dei bitcoin e potresti perdere i tuoi fondi.\n\nSe non sei sicuro, è meglio attendere un po\' e verificare di NON essere stato addebitato prima di continuare.',
+			'twint.invalidBlik.confirmDialog.actions.proceed' => 'Sono sicuro, continua',
+			'twint.invalidBlik.confirmDialog.actions.cancel' => 'Annulla',
+			'twint.invalidBlik.disputeConfirmDialog.title' => 'Aprire una disputa?',
+			'twint.invalidBlik.disputeConfirmDialog.content' => 'Apri una disputa solo se l\'importo È STATO addebitato dal tuo conto bancario.\n\nIl coordinatore esaminerà manualmente il tuo caso, il che richiede tempo. Dovrai fornire una prova di pagamento.',
+			'twint.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Sì, sono stato addebitato',
+			'twint.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Annulla',
+			'twint.invalidBlik.feedback.conflictReportedSuccess' => 'Conflitto segnalato. Il coordinatore lo esaminerà.',
+			'twint.invalidBlik.errors.reservationFailed' => 'Impossibile riservare nuovamente l\'offerta',
+			'twint.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
+			'twint.conflict.title' => 'Conflitto Offerta',
+			'twint.conflict.headline' => 'Conflitto Offerta Segnalato',
+			'twint.conflict.body' => ({required Object code}) => 'Il Maker ha contrassegnato il codice ${code} come non valido, ma tu hai segnalato un conflitto, indicando che ritieni il pagamento andato a buon fine.',
+			'twint.conflict.instructions' => 'Attendi che il coordinatore esamini la situazione. Potrebbero esserti richiesti ulteriori dettagli. Controlla più tardi o contatta l\'assistenza se necessario.',
+			'twint.conflict.actions.back' => 'Torna alla Home',
+			'twint.conflict.feedback.reported' => 'Conflitto segnalato. Il coordinatore esaminerà.',
+			'twint.conflict.errors.reporting' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
+			'twint.conflict.nostrContact.title' => 'Contatta il Coordinatore su Nostr',
+			'twint.conflict.nostrContact.description' => 'Puoi inviare un DM al coordinatore direttamente per assistenza con questa disputa.',
+			'twint.conflict.nostrContact.copyNpub' => 'Copia npub',
+			'twint.conflict.nostrContact.openProfile' => 'Visualizza Profilo',
+			'twint.conflict.nostrContact.npubCopied' => 'Npub del coordinatore copiato negli appunti!',
+			'twint.conflict.nostrContact.yourIdentityDescription' => 'Per inviare DM, accedi con la tua chiave privata Neko (nsec) in qualsiasi client Nostr che supporta i messaggi diretti.',
+			'twint.conflict.nostrContact.manageNekoKeys' => 'Gestisci Chiavi Neko',
 			'blik.instructions.taker' => ({required Object code}) => 'Una volta che il Maker inserisce il codice ${code}, dovrai confermare il pagamento nella tua app bancaria. Assicurati che l\'importo sia corretto prima di confermare.',
 			'home.notifications.title' => 'Ricevi notifiche sulle nuove offerte tramite:',
 			'home.notifications.telegram' => 'Telegram',

@@ -355,6 +355,15 @@ maker:
       premium: Premia
     actions:
       generateInvoice: Wygeneruj Fakturę
+    twintScan:
+      cardTitle: "Zeskanuj QR ${code} i kwotę"
+      cardBody: "Skieruj kamerę na ekran płatności. Aplikacja uzupełni kod oraz, jeśli będzie widoczna, także kwotę."
+      scanButton: "Skanuj aparatem"
+      manualButton: "Wpisz ręcznie"
+      codeLabel: "Kod ${code}"
+      rescan: "Skanuj ponownie"
+      helperFilled: "Taker zobaczy ten kod i wpisze go w ${code}."
+      helperEmpty: "Zeskanuj, aby uzupełnić to automatycznie, albo wpisz ręcznie ${digits}-cyfrowy kod."
 
     tooltips:
       feeInfo: "Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning."
@@ -583,6 +592,51 @@ taker:
       takerFee: "Opłata Taker"
       status: "Status"
       youllReceive: "Otrzymasz"
+
+twint:
+  scanner:
+    title: "Skanuj kod ${code}"
+    status:
+      align: "Ustaw kod QR ${code} i tekst z kwotą wewnątrz kadru kamery."
+      notRecognized: "Kod ${code} nie został jeszcze rozpoznany. Trzymaj QR i kwotę w kadrze albo wypełnij formularz ręcznie."
+      amountFailed: "Skanowanie kamerą nie odczytało kwoty. Nadal możesz użyć wyniku QR i ręcznie poprawić pola."
+  flow:
+    makerWait:
+      offerLive: "Oferta aktywna"
+      takerPaying: "Taker płaci"
+      yourCode: "Twój kod ${code}"
+      offerExpires: "Oferta wygaśnie"
+      autoExpires: "Wygaśnie automatycznie"
+      cancelOffer: "Anuluj ofertę"
+    makerVerify:
+      title: "Czy otrzymałeś płatność?"
+      body: "Taker zgłasza, że zapłacił ${amount} na Twój kod ${code}."
+      hint: "Sprawdź aplikację ${code}, a następnie potwierdź lub otwórz spór."
+      autoConfirms: "Automatyczne potwierdzenie"
+      confirmReceived: "Potwierdź otrzymanie"
+      openDispute: "Otwórz spór"
+    makerRecode:
+      title: "Oferta wygasła"
+      body: "Żaden taker nie dokończył transakcji. Wpisz nowy kod ${code}, aby ponownie wystawić tę ofertę, albo ją anuluj."
+      fieldLabel: "Nowy kod ${code}"
+      autoCancels: "Automatyczne anulowanie"
+      relist: "Wystaw ponownie z nowym kodem"
+      cancelOffer: "Anuluj ofertę"
+    takerPay:
+      title: "Zapłać przez ${code}"
+      body: "Otwórz aplikację ${code} i zapłać ${amount}, używając:"
+      codeExpires: "Kod wygaśnie"
+      paid: "Zapłaciłem"
+      cancel: "Anuluj"
+    takerWait:
+      title: "Oczekiwanie na makera"
+      body: "Maker weryfikuje Twoją płatność ${code}."
+      autoConfirms: "Automatyczne potwierdzenie"
+    takerExpired:
+      title: "Rezerwacja wygasła"
+      body: "Kod ${code} nie został opłacony na czas. Możesz anulować, aby zwolnić ofertę."
+      autoReleases: "Automatyczne zwolnienie"
+      cancel: "Anuluj"
   
   waitConfirmation:
     title: "Oczekiwanie na Makera"

@@ -49,6 +49,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$coordinator$en coordinator = Translations$coordinator$en.internal(_root);
 	late final Translations$maker$en maker = Translations$maker$en.internal(_root);
 	late final Translations$taker$en taker = Translations$taker$en.internal(_root);
+	late final Translations$twint$en twint = Translations$twint$en.internal(_root);
 	late final Translations$blik$en blik = Translations$blik$en.internal(_root);
 	late final Translations$home$en home = Translations$home$en.internal(_root);
 	late final Translations$nekoInfo$en nekoInfo = Translations$nekoInfo$en.internal(_root);
@@ -209,6 +210,23 @@ class Translations$taker$en {
 	late final Translations$taker$paymentSuccess$en paymentSuccess = Translations$taker$paymentSuccess$en.internal(_root);
 	late final Translations$taker$invalidBlik$en invalidBlik = Translations$taker$invalidBlik$en.internal(_root);
 	late final Translations$taker$conflict$en conflict = Translations$taker$conflict$en.internal(_root);
+}
+
+// Path: twint
+class Translations$twint$en {
+	Translations$twint$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$twint$scanner$en scanner = Translations$twint$scanner$en.internal(_root);
+	late final Translations$twint$flow$en flow = Translations$twint$flow$en.internal(_root);
+	late final Translations$twint$waitConfirmation$en waitConfirmation = Translations$twint$waitConfirmation$en.internal(_root);
+	late final Translations$twint$paymentProcess$en paymentProcess = Translations$twint$paymentProcess$en.internal(_root);
+	late final Translations$twint$paymentFailed$en paymentFailed = Translations$twint$paymentFailed$en.internal(_root);
+	late final Translations$twint$paymentSuccess$en paymentSuccess = Translations$twint$paymentSuccess$en.internal(_root);
+	late final Translations$twint$invalidBlik$en invalidBlik = Translations$twint$invalidBlik$en.internal(_root);
+	late final Translations$twint$conflict$en conflict = Translations$twint$conflict$en.internal(_root);
 }
 
 // Path: blik
@@ -1507,6 +1525,7 @@ class Translations$maker$amountForm$en {
 	late final Translations$maker$amountForm$progress$en progress = Translations$maker$amountForm$progress$en.internal(_root);
 	late final Translations$maker$amountForm$labels$en labels = Translations$maker$amountForm$labels$en.internal(_root);
 	late final Translations$maker$amountForm$actions$en actions = Translations$maker$amountForm$actions$en.internal(_root);
+	late final Translations$maker$amountForm$twintScan$en twintScan = Translations$maker$amountForm$twintScan$en.internal(_root);
 	late final Translations$maker$amountForm$tooltips$en tooltips = Translations$maker$amountForm$tooltips$en.internal(_root);
 	late final Translations$maker$amountForm$category$en category = Translations$maker$amountForm$category$en.internal(_root);
 	late final Translations$maker$amountForm$onboarding$en onboarding = Translations$maker$amountForm$onboarding$en.internal(_root);
@@ -1975,6 +1994,230 @@ class Translations$taker$conflict$en {
 	late final Translations$taker$conflict$feedback$en feedback = Translations$taker$conflict$feedback$en.internal(_root);
 	late final Translations$taker$conflict$errors$en errors = Translations$taker$conflict$errors$en.internal(_root);
 	late final Translations$taker$conflict$nostrContact$en nostrContact = Translations$taker$conflict$nostrContact$en.internal(_root);
+}
+
+// Path: twint.scanner
+class Translations$twint$scanner$en {
+	Translations$twint$scanner$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Scan ${code} code'
+	String title({required Object code}) => 'Scan ${code} code';
+
+	late final Translations$twint$scanner$status$en status = Translations$twint$scanner$status$en.internal(_root);
+}
+
+// Path: twint.flow
+class Translations$twint$flow$en {
+	Translations$twint$flow$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$twint$flow$makerWait$en makerWait = Translations$twint$flow$makerWait$en.internal(_root);
+	late final Translations$twint$flow$makerVerify$en makerVerify = Translations$twint$flow$makerVerify$en.internal(_root);
+	late final Translations$twint$flow$makerRecode$en makerRecode = Translations$twint$flow$makerRecode$en.internal(_root);
+	late final Translations$twint$flow$takerPay$en takerPay = Translations$twint$flow$takerPay$en.internal(_root);
+	late final Translations$twint$flow$takerWait$en takerWait = Translations$twint$flow$takerWait$en.internal(_root);
+	late final Translations$twint$flow$takerExpired$en takerExpired = Translations$twint$flow$takerExpired$en.internal(_root);
+}
+
+// Path: twint.waitConfirmation
+class Translations$twint$waitConfirmation$en {
+	Translations$twint$waitConfirmation$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Waiting for Maker'
+	String get title => 'Waiting for Maker';
+
+	/// en: 'Offer status: ${status}'
+	String statusLabel({required Object status}) => 'Offer status: ${status}';
+
+	/// en: 'Waiting for Maker confirmation: ${seconds} s'
+	String waitingMaker({required Object seconds}) => 'Waiting for Maker confirmation: ${seconds} s';
+
+	/// en: 'Waiting for Maker to confirm ${code} is correct. Time remaining: ${seconds}s'
+	String waitingMakerConfirmation({required Object code, required Object seconds}) => 'Waiting for Maker to confirm ${code} is correct. Time remaining: ${seconds}s';
+
+	/// en: 'VERY IMPORTANT: Make sure you only accept ${code} confirmation for ${amount} ${currency}'
+	String importantNotice({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: Make sure you only accept ${code} confirmation for ${amount} ${currency}';
+
+	/// en: 'VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}.'
+	String importantBlikAmountConfirmation({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}.';
+
+	/// en: 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.'
+	String instructions({required Object minutes, required Object code}) => 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.';
+
+	/// en: 'The maker must now enter your ${code} code at the ATM within ${minutes} minutes.'
+	String instructionsNoConfirm({required Object code, required Object minutes}) => 'The maker must now enter your ${code} code at the ATM within ${minutes} minutes.';
+
+	late final Translations$twint$waitConfirmation$categoryReminder$en categoryReminder = Translations$twint$waitConfirmation$categoryReminder$en.internal(_root);
+
+	/// en: 'Waiting for maker to receive your ${code} code...'
+	String waitingForMakerToReceive({required Object code}) => 'Waiting for maker to receive your ${code} code...';
+
+	/// en: 'Maker has received your ${code} code.'
+	String makerReceivedBlik({required Object code}) => 'Maker has received your ${code} code.';
+
+	/// en: '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.'
+	String timerExpiredMessage({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.';
+
+	/// en: '${code} ${minutes}m expiration time has passed but the maker hasn't received the ${code} code. You can resend a new ${code} code or cancel.'
+	String timerExpiredActions({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.';
+
+	/// en: 'Resend New ${code} Code'
+	String resendBlikButton({required Object code}) => 'Resend New ${code} Code';
+
+	/// en: 'Navigated home.'
+	String get navigatedHome => 'Navigated home.';
+
+	/// en: '${code} Code Expired'
+	String expiredTitle({required Object code}) => '${code} Code Expired';
+
+	/// en: 'The maker did not receive the ${code} code so it couldn't have used it.'
+	String expiredWarning({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.';
+
+	/// en: 'Reservation ends in'
+	String get expiredRelistCountdownLabel => 'Reservation ends in';
+
+	/// en: 'The maker hasn't confirmed the payment yet. What would you like to do?'
+	String get expiredSentWarning => 'The maker hasn\'t confirmed the payment yet. What would you like to do?';
+
+	/// en: 'If you want to try again with a new ${code} code, renew the reservation.'
+	String expiredInstruction1({required Object code}) => 'If you want to try again with a new ${code} code, renew the reservation.';
+
+	/// en: 'If you no longer want to complete this transaction, cancel the reservation.'
+	String get expiredInstruction2 => 'If you no longer want to complete this transaction, cancel the reservation.';
+
+	/// en: 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.'
+	String expiredInstruction3({required Object code}) => 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.';
+
+	late final Translations$twint$waitConfirmation$takerCharged$en takerCharged = Translations$twint$waitConfirmation$takerCharged$en.internal(_root);
+	late final Translations$twint$waitConfirmation$expiredActions$en expiredActions = Translations$twint$waitConfirmation$expiredActions$en.internal(_root);
+	late final Translations$twint$waitConfirmation$feedback$en feedback = Translations$twint$waitConfirmation$feedback$en.internal(_root);
+	late final Translations$twint$waitConfirmation$errors$en errors = Translations$twint$waitConfirmation$errors$en.internal(_root);
+}
+
+// Path: twint.paymentProcess
+class Translations$twint$paymentProcess$en {
+	Translations$twint$paymentProcess$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Payment Process'
+	String get title => 'Payment Process';
+
+	/// en: 'Waiting for offer status update...'
+	String get waitingForOfferUpdate => 'Waiting for offer status update...';
+
+	late final Translations$twint$paymentProcess$states$en states = Translations$twint$paymentProcess$states$en.internal(_root);
+	late final Translations$twint$paymentProcess$steps$en steps = Translations$twint$paymentProcess$steps$en.internal(_root);
+	late final Translations$twint$paymentProcess$errors$en errors = Translations$twint$paymentProcess$errors$en.internal(_root);
+	late final Translations$twint$paymentProcess$loading$en loading = Translations$twint$paymentProcess$loading$en.internal(_root);
+	late final Translations$twint$paymentProcess$actions$en actions = Translations$twint$paymentProcess$actions$en.internal(_root);
+}
+
+// Path: twint.paymentFailed
+class Translations$twint$paymentFailed$en {
+	Translations$twint$paymentFailed$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Payment Failed'
+	String get title => 'Payment Failed';
+
+	/// en: 'Please provide a new Lightning invoice for ${netAmount}'
+	String instructions({required Object netAmount}) => 'Please provide a new Lightning invoice for ${netAmount}';
+
+	late final Translations$twint$paymentFailed$form$en form = Translations$twint$paymentFailed$form$en.internal(_root);
+	late final Translations$twint$paymentFailed$actions$en actions = Translations$twint$paymentFailed$actions$en.internal(_root);
+	late final Translations$twint$paymentFailed$errors$en errors = Translations$twint$paymentFailed$errors$en.internal(_root);
+	late final Translations$twint$paymentFailed$walletSection$en walletSection = Translations$twint$paymentFailed$walletSection$en.internal(_root);
+	late final Translations$twint$paymentFailed$loading$en loading = Translations$twint$paymentFailed$loading$en.internal(_root);
+	late final Translations$twint$paymentFailed$success$en success = Translations$twint$paymentFailed$success$en.internal(_root);
+}
+
+// Path: twint.paymentSuccess
+class Translations$twint$paymentSuccess$en {
+	Translations$twint$paymentSuccess$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Payment Successful'
+	String get title => 'Payment Successful';
+
+	/// en: 'Your payment has been processed successfully.'
+	String get message => 'Your payment has been processed successfully.';
+
+	late final Translations$twint$paymentSuccess$actions$en actions = Translations$twint$paymentSuccess$actions$en.internal(_root);
+}
+
+// Path: twint.invalidBlik
+class Translations$twint$invalidBlik$en {
+	Translations$twint$invalidBlik$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Invalid ${code} Code'
+	String title({required Object code}) => 'Invalid ${code} Code';
+
+	/// en: 'Maker Rejected ${code} Code'
+	String message({required Object code}) => 'Maker Rejected ${code} Code';
+
+	/// en: 'The offer maker indicated that the ${code} code you provided was invalid or didn't work.\n\nWhat would you like to do?'
+	String explanation({required Object code}) => 'The offer maker indicated that the ${code} code you provided was invalid or didn\'t work.\n\nWhat would you like to do?';
+
+	/// en: 'If you were NOT charged:'
+	String get werentCharged => 'If you were NOT charged:';
+
+	/// en: 'If you were charged:'
+	String get wereCharged => 'If you were charged:';
+
+	late final Translations$twint$invalidBlik$actions$en actions = Translations$twint$invalidBlik$actions$en.internal(_root);
+	late final Translations$twint$invalidBlik$confirmDialog$en confirmDialog = Translations$twint$invalidBlik$confirmDialog$en.internal(_root);
+	late final Translations$twint$invalidBlik$disputeConfirmDialog$en disputeConfirmDialog = Translations$twint$invalidBlik$disputeConfirmDialog$en.internal(_root);
+	late final Translations$twint$invalidBlik$feedback$en feedback = Translations$twint$invalidBlik$feedback$en.internal(_root);
+	late final Translations$twint$invalidBlik$errors$en errors = Translations$twint$invalidBlik$errors$en.internal(_root);
+}
+
+// Path: twint.conflict
+class Translations$twint$conflict$en {
+	Translations$twint$conflict$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Offer Conflict'
+	String get title => 'Offer Conflict';
+
+	/// en: 'Offer Conflict Reported'
+	String get headline => 'Offer Conflict Reported';
+
+	/// en: 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.'
+	String body({required Object code}) => 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.';
+
+	/// en: 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.'
+	String get instructions => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
+
+	late final Translations$twint$conflict$actions$en actions = Translations$twint$conflict$actions$en.internal(_root);
+	late final Translations$twint$conflict$feedback$en feedback = Translations$twint$conflict$feedback$en.internal(_root);
+	late final Translations$twint$conflict$errors$en errors = Translations$twint$conflict$errors$en.internal(_root);
+	late final Translations$twint$conflict$nostrContact$en nostrContact = Translations$twint$conflict$nostrContact$en.internal(_root);
 }
 
 // Path: blik.instructions
@@ -2961,6 +3204,39 @@ class Translations$maker$amountForm$actions$en {
 	String get generateInvoice => 'Generate Invoice';
 }
 
+// Path: maker.amountForm.twintScan
+class Translations$maker$amountForm$twintScan$en {
+	Translations$maker$amountForm$twintScan$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Scan ${code} QR and amount'
+	String cardTitle({required Object code}) => 'Scan ${code} QR and amount';
+
+	/// en: 'Point the camera at the payment screen. The app will prefill the code and, when visible, the amount.'
+	String get cardBody => 'Point the camera at the payment screen. The app will prefill the code and, when visible, the amount.';
+
+	/// en: 'Scan with camera'
+	String get scanButton => 'Scan with camera';
+
+	/// en: 'Enter manually instead'
+	String get manualButton => 'Enter manually instead';
+
+	/// en: '${code} code'
+	String codeLabel({required Object code}) => '${code} code';
+
+	/// en: 'Rescan'
+	String get rescan => 'Rescan';
+
+	/// en: 'The taker will see this code and enter it in ${code}.'
+	String helperFilled({required Object code}) => 'The taker will see this code and enter it in ${code}.';
+
+	/// en: 'Scan to fill this automatically, or type the ${digits}-digit code manually.'
+	String helperEmpty({required Object digits}) => 'Scan to fill this automatically, or type the ${digits}-digit code manually.';
+}
+
 // Path: maker.amountForm.tooltips
 class Translations$maker$amountForm$tooltips$en {
 	Translations$maker$amountForm$tooltips$en.internal(this._root);
@@ -3942,6 +4218,613 @@ class Translations$taker$conflict$nostrContact$en {
 	String get manageNekoKeys => 'Manage Neko Keys';
 }
 
+// Path: twint.scanner.status
+class Translations$twint$scanner$status$en {
+	Translations$twint$scanner$status$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Align the ${code} QR code and amount text inside the camera frame.'
+	String align({required Object code}) => 'Align the ${code} QR code and amount text inside the camera frame.';
+
+	/// en: '${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually.'
+	String notRecognized({required Object code}) => '${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually.';
+
+	/// en: 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.'
+	String get amountFailed => 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.';
+}
+
+// Path: twint.flow.makerWait
+class Translations$twint$flow$makerWait$en {
+	Translations$twint$flow$makerWait$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Offer live'
+	String get offerLive => 'Offer live';
+
+	/// en: 'Taker is paying'
+	String get takerPaying => 'Taker is paying';
+
+	/// en: 'Your ${code} code'
+	String yourCode({required Object code}) => 'Your ${code} code';
+
+	/// en: 'Offer expires'
+	String get offerExpires => 'Offer expires';
+
+	/// en: 'Auto-expires'
+	String get autoExpires => 'Auto-expires';
+
+	/// en: 'Cancel offer'
+	String get cancelOffer => 'Cancel offer';
+}
+
+// Path: twint.flow.makerVerify
+class Translations$twint$flow$makerVerify$en {
+	Translations$twint$flow$makerVerify$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Did you receive the payment?'
+	String get title => 'Did you receive the payment?';
+
+	/// en: 'The taker reports paying ${amount} to your ${code} code.'
+	String body({required Object amount, required Object code}) => 'The taker reports paying ${amount} to your ${code} code.';
+
+	/// en: 'Check your ${code} app, then confirm or open a dispute.'
+	String hint({required Object code}) => 'Check your ${code} app, then confirm or open a dispute.';
+
+	/// en: 'Auto-confirms'
+	String get autoConfirms => 'Auto-confirms';
+
+	/// en: 'Confirm received'
+	String get confirmReceived => 'Confirm received';
+
+	/// en: 'Open dispute'
+	String get openDispute => 'Open dispute';
+}
+
+// Path: twint.flow.makerRecode
+class Translations$twint$flow$makerRecode$en {
+	Translations$twint$flow$makerRecode$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Offer expired'
+	String get title => 'Offer expired';
+
+	/// en: 'No taker completed the trade. Enter a new ${code} code to re-list this offer, or cancel it.'
+	String body({required Object code}) => 'No taker completed the trade. Enter a new ${code} code to re-list this offer, or cancel it.';
+
+	/// en: 'New ${code} code'
+	String fieldLabel({required Object code}) => 'New ${code} code';
+
+	/// en: 'Auto-cancels'
+	String get autoCancels => 'Auto-cancels';
+
+	/// en: 'Re-list with new code'
+	String get relist => 'Re-list with new code';
+
+	/// en: 'Cancel offer'
+	String get cancelOffer => 'Cancel offer';
+}
+
+// Path: twint.flow.takerPay
+class Translations$twint$flow$takerPay$en {
+	Translations$twint$flow$takerPay$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Pay with ${code}'
+	String title({required Object code}) => 'Pay with ${code}';
+
+	/// en: 'Open your ${code} app and pay ${amount} using:'
+	String body({required Object code, required Object amount}) => 'Open your ${code} app and pay ${amount} using:';
+
+	/// en: 'Code expires'
+	String get codeExpires => 'Code expires';
+
+	/// en: 'I've paid'
+	String get paid => 'I\'ve paid';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+}
+
+// Path: twint.flow.takerWait
+class Translations$twint$flow$takerWait$en {
+	Translations$twint$flow$takerWait$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Waiting for the maker'
+	String get title => 'Waiting for the maker';
+
+	/// en: 'The maker is verifying your ${code} payment.'
+	String body({required Object code}) => 'The maker is verifying your ${code} payment.';
+
+	/// en: 'Auto-confirms'
+	String get autoConfirms => 'Auto-confirms';
+}
+
+// Path: twint.flow.takerExpired
+class Translations$twint$flow$takerExpired$en {
+	Translations$twint$flow$takerExpired$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Reservation expired'
+	String get title => 'Reservation expired';
+
+	/// en: 'The ${code} code wasn't paid in time. You can cancel to release the offer.'
+	String body({required Object code}) => 'The ${code} code wasn\'t paid in time. You can cancel to release the offer.';
+
+	/// en: 'Auto-releases'
+	String get autoReleases => 'Auto-releases';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+}
+
+// Path: twint.waitConfirmation.categoryReminder
+class Translations$twint$waitConfirmation$categoryReminder$en {
+	Translations$twint$waitConfirmation$categoryReminder$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.'
+	String get atm => 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.';
+
+	/// en: 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.'
+	String get ecommerce => 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.';
+}
+
+// Path: twint.waitConfirmation.takerCharged
+class Translations$twint$waitConfirmation$takerCharged$en {
+	Translations$twint$waitConfirmation$takerCharged$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'You marked ${code} as charged'
+	String title({required Object code}) => 'You marked ${code} as charged';
+
+	/// en: 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.'
+	String message({required Object minutes}) => 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.';
+}
+
+// Path: twint.waitConfirmation.expiredActions
+class Translations$twint$waitConfirmation$expiredActions$en {
+	Translations$twint$waitConfirmation$expiredActions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: '${code} was charged from my bank account'
+	String reportConflict({required Object code}) => '${code} was charged from my bank account';
+
+	/// en: 'Try again with new ${code} code'
+	String renewReservation({required Object code}) => 'Try again with new ${code} code';
+
+	/// en: 'Cancel reservation'
+	String get cancelReservation => 'Cancel reservation';
+}
+
+// Path: twint.waitConfirmation.feedback
+class Translations$twint$waitConfirmation$feedback$en {
+	Translations$twint$waitConfirmation$feedback$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Maker confirmed payment.'
+	String get makerConfirmed => 'Maker confirmed payment.';
+
+	/// en: 'Payment successful! You will receive funds shortly.'
+	String get paymentSuccessful => 'Payment successful! You will receive funds shortly.';
+
+	/// en: 'Conflict reported. Coordinator will review the situation.'
+	String get conflictReported => 'Conflict reported. Coordinator will review the situation.';
+}
+
+// Path: twint.waitConfirmation.errors
+class Translations$twint$waitConfirmation$errors$en {
+	Translations$twint$waitConfirmation$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Received an offer with an invalid state for this screen. Resetting.'
+	String get invalidOfferStateReceived => 'Received an offer with an invalid state for this screen. Resetting.';
+
+	/// en: 'Error reporting conflict: ${details}'
+	String reportingConflict({required Object details}) => 'Error reporting conflict: ${details}';
+}
+
+// Path: twint.paymentProcess.states
+class Translations$twint$paymentProcess$states$en {
+	Translations$twint$paymentProcess$states$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Preparing to send payment...'
+	String get preparing => 'Preparing to send payment...';
+
+	/// en: 'Sending payment...'
+	String get sending => 'Sending payment...';
+
+	/// en: 'Payment received!'
+	String get received => 'Payment received!';
+
+	/// en: 'Payment failed'
+	String get failed => 'Payment failed';
+
+	/// en: 'Waiting for offer update...'
+	String get waitingUpdate => 'Waiting for offer update...';
+}
+
+// Path: twint.paymentProcess.steps
+class Translations$twint$paymentProcess$steps$en {
+	Translations$twint$paymentProcess$steps$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Maker confirmed ${code} payment'
+	String makerConfirmedBlik({required Object code}) => 'Maker confirmed ${code} payment';
+
+	/// en: 'Maker's hold invoice settled'
+	String get makerInvoiceSettled => 'Maker\'s hold invoice settled';
+
+	/// en: 'Paying your Lightning invoice'
+	String get takerInvoicePaid => 'Paying your Lightning invoice';
+
+	/// en: 'Payment to your invoice failed'
+	String get takerPaymentFailed => 'Payment to your invoice failed';
+}
+
+// Path: twint.paymentProcess.errors
+class Translations$twint$paymentProcess$errors$en {
+	Translations$twint$paymentProcess$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Error sending payment: ${details}'
+	String sending({required Object details}) => 'Error sending payment: ${details}';
+
+	/// en: 'Offer not confirmed by Maker.'
+	String get notConfirmed => 'Offer not confirmed by Maker.';
+
+	/// en: 'Offer expired.'
+	String get expired => 'Offer expired.';
+
+	/// en: 'Offer cancelled.'
+	String get cancelled => 'Offer cancelled.';
+
+	/// en: 'Offer payment failed.'
+	String get paymentFailed => 'Offer payment failed.';
+
+	/// en: 'Unknown offer error.'
+	String get unknown => 'Unknown offer error.';
+
+	/// en: 'The payment to your Lightning invoice failed.'
+	String get takerPaymentFailed => 'The payment to your Lightning invoice failed.';
+
+	/// en: 'Error: Cannot fetch your public key.'
+	String get noPublicKey => 'Error: Cannot fetch your public key.';
+
+	/// en: 'Error loading your data'
+	String get loadingPublicKey => 'Error loading your data';
+
+	/// en: 'Error: Missing payment details.'
+	String get missingPaymentHash => 'Error: Missing payment details.';
+}
+
+// Path: twint.paymentProcess.loading
+class Translations$twint$paymentProcess$loading$en {
+	Translations$twint$paymentProcess$loading$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Loading your data...'
+	String get publicKey => 'Loading your data...';
+}
+
+// Path: twint.paymentProcess.actions
+class Translations$twint$paymentProcess$actions$en {
+	Translations$twint$paymentProcess$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Retry with new invoice'
+	String get goToFailureDetails => 'Retry with new invoice';
+}
+
+// Path: twint.paymentFailed.form
+class Translations$twint$paymentFailed$form$en {
+	Translations$twint$paymentFailed$form$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'New Lightning invoice'
+	String get newInvoiceLabel => 'New Lightning invoice';
+
+	/// en: 'Enter your BOLT11 invoice'
+	String get newInvoiceHint => 'Enter your BOLT11 invoice';
+}
+
+// Path: twint.paymentFailed.actions
+class Translations$twint$paymentFailed$actions$en {
+	Translations$twint$paymentFailed$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Submit New Invoice'
+	String get retryPayment => 'Submit New Invoice';
+}
+
+// Path: twint.paymentFailed.errors
+class Translations$twint$paymentFailed$errors$en {
+	Translations$twint$paymentFailed$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Please enter a valid invoice'
+	String get enterValidInvoice => 'Please enter a valid invoice';
+
+	/// en: 'Error updating invoice: ${details}'
+	String updatingInvoice({required Object details}) => 'Error updating invoice: ${details}';
+
+	/// en: 'Payment retry failed. Please check the invoice or try again later.'
+	String get paymentRetryFailed => 'Payment retry failed. Please check the invoice or try again later.';
+
+	/// en: 'Taker public key not found.'
+	String get takerPublicKeyNotFound => 'Taker public key not found.';
+
+	/// en: 'Failed to generate invoice: ${details}'
+	String generateFailed({required Object details}) => 'Failed to generate invoice: ${details}';
+}
+
+// Path: twint.paymentFailed.walletSection
+class Translations$twint$paymentFailed$walletSection$en {
+	Translations$twint$paymentFailed$walletSection$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Generate invoice from wallet'
+	String get title => 'Generate invoice from wallet';
+
+	/// en: 'default'
+	String get defaultLabel => 'default';
+
+	/// en: 'Tap to generate invoice for ${amountSats}'
+	String tapToGenerate({required Object amountSats}) => 'Tap to generate invoice for ${amountSats}';
+}
+
+// Path: twint.paymentFailed.loading
+class Translations$twint$paymentFailed$loading$en {
+	Translations$twint$paymentFailed$loading$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Processing your payment retry...'
+	String get processingPayment => 'Processing your payment retry...';
+}
+
+// Path: twint.paymentFailed.success
+class Translations$twint$paymentFailed$success$en {
+	Translations$twint$paymentFailed$success$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Payment Successful'
+	String get title => 'Payment Successful';
+
+	/// en: 'Your payment has been processed successfully.'
+	String get message => 'Your payment has been processed successfully.';
+}
+
+// Path: twint.paymentSuccess.actions
+class Translations$twint$paymentSuccess$actions$en {
+	Translations$twint$paymentSuccess$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Go to home'
+	String get goHome => 'Go to home';
+}
+
+// Path: twint.invalidBlik.actions
+class Translations$twint$invalidBlik$actions$en {
+	Translations$twint$invalidBlik$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Send new ${code} code'
+	String retry({required Object code}) => 'Send new ${code} code';
+
+	/// en: 'Cancel Transaction'
+	String get cancelReservation => 'Cancel Transaction';
+
+	/// en: 'Start Dispute'
+	String get reportConflict => 'Start Dispute';
+
+	/// en: 'Return to home'
+	String get returnHome => 'Return to home';
+}
+
+// Path: twint.invalidBlik.confirmDialog
+class Translations$twint$invalidBlik$confirmDialog$en {
+	Translations$twint$invalidBlik$confirmDialog$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Are you sure?'
+	String get title => 'Are you sure?';
+
+	/// en: 'Once you tap this, there is no turning back. If the amount WAS in fact charged from your bank account, the coordinator will NOT be able to guarantee you receive the bitcoin, and you may lose your funds. If you are not sure, it is best to wait a bit and confirm that you did NOT get charged before continuing.'
+	String get content => 'Once you tap this, there is no turning back.\n\nIf the amount WAS in fact charged from your bank account, the coordinator will NOT be able to guarantee you receive the bitcoin, and you may lose your funds.\n\nIf you are not sure, it is best to wait a bit and confirm that you did NOT get charged before continuing.';
+
+	late final Translations$twint$invalidBlik$confirmDialog$actions$en actions = Translations$twint$invalidBlik$confirmDialog$actions$en.internal(_root);
+}
+
+// Path: twint.invalidBlik.disputeConfirmDialog
+class Translations$twint$invalidBlik$disputeConfirmDialog$en {
+	Translations$twint$invalidBlik$disputeConfirmDialog$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Start a dispute?'
+	String get title => 'Start a dispute?';
+
+	/// en: 'Only start a dispute if the amount WAS charged from your bank account. The coordinator will manually review your case, which takes time. You will need to provide proof of payment.'
+	String get content => 'Only start a dispute if the amount WAS charged from your bank account.\n\nThe coordinator will manually review your case, which takes time. You will need to provide proof of payment.';
+
+	late final Translations$twint$invalidBlik$disputeConfirmDialog$actions$en actions = Translations$twint$invalidBlik$disputeConfirmDialog$actions$en.internal(_root);
+}
+
+// Path: twint.invalidBlik.feedback
+class Translations$twint$invalidBlik$feedback$en {
+	Translations$twint$invalidBlik$feedback$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Conflict reported. Coordinator will review.'
+	String get conflictReportedSuccess => 'Conflict reported. Coordinator will review.';
+}
+
+// Path: twint.invalidBlik.errors
+class Translations$twint$invalidBlik$errors$en {
+	Translations$twint$invalidBlik$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Failed to reserve offer again'
+	String get reservationFailed => 'Failed to reserve offer again';
+
+	/// en: 'Error reporting conflict: ${details}'
+	String conflictReport({required Object details}) => 'Error reporting conflict: ${details}';
+}
+
+// Path: twint.conflict.actions
+class Translations$twint$conflict$actions$en {
+	Translations$twint$conflict$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Back to Home'
+	String get back => 'Back to Home';
+}
+
+// Path: twint.conflict.feedback
+class Translations$twint$conflict$feedback$en {
+	Translations$twint$conflict$feedback$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Conflict reported. Coordinator will review.'
+	String get reported => 'Conflict reported. Coordinator will review.';
+}
+
+// Path: twint.conflict.errors
+class Translations$twint$conflict$errors$en {
+	Translations$twint$conflict$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Error reporting conflict: ${details}'
+	String reporting({required Object details}) => 'Error reporting conflict: ${details}';
+}
+
+// Path: twint.conflict.nostrContact
+class Translations$twint$conflict$nostrContact$en {
+	Translations$twint$conflict$nostrContact$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Contact Coordinator on Nostr'
+	String get title => 'Contact Coordinator on Nostr';
+
+	/// en: 'You can DM the coordinator directly for help with this dispute.'
+	String get description => 'You can DM the coordinator directly for help with this dispute.';
+
+	/// en: 'Copy npub'
+	String get copyNpub => 'Copy npub';
+
+	/// en: 'View Profile'
+	String get openProfile => 'View Profile';
+
+	/// en: 'Coordinator npub copied to clipboard!'
+	String get npubCopied => 'Coordinator npub copied to clipboard!';
+
+	/// en: 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.'
+	String get yourIdentityDescription => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.';
+
+	/// en: 'Manage Neko Keys'
+	String get manageNekoKeys => 'Manage Neko Keys';
+}
+
 // Path: home.statistics.errors
 class Translations$home$statistics$errors$en {
 	Translations$home$statistics$errors$en.internal(this._root);
@@ -4095,6 +4978,36 @@ class Translations$taker$invalidBlik$confirmDialog$actions$en {
 // Path: taker.invalidBlik.disputeConfirmDialog.actions
 class Translations$taker$invalidBlik$disputeConfirmDialog$actions$en {
 	Translations$taker$invalidBlik$disputeConfirmDialog$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Yes, I was charged'
+	String get proceed => 'Yes, I was charged';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+}
+
+// Path: twint.invalidBlik.confirmDialog.actions
+class Translations$twint$invalidBlik$confirmDialog$actions$en {
+	Translations$twint$invalidBlik$confirmDialog$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'I'm sure, continue'
+	String get proceed => 'I\'m sure, continue';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+}
+
+// Path: twint.invalidBlik.disputeConfirmDialog.actions
+class Translations$twint$invalidBlik$disputeConfirmDialog$actions$en {
+	Translations$twint$invalidBlik$disputeConfirmDialog$actions$en.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -4370,6 +5283,14 @@ extension on Translations {
 			'maker.amountForm.labels.tapToSelect' => 'Tap to select',
 			'maker.amountForm.labels.premium' => 'Premium',
 			'maker.amountForm.actions.generateInvoice' => 'Generate Invoice',
+			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Scan ${code} QR and amount',
+			'maker.amountForm.twintScan.cardBody' => 'Point the camera at the payment screen. The app will prefill the code and, when visible, the amount.',
+			'maker.amountForm.twintScan.scanButton' => 'Scan with camera',
+			'maker.amountForm.twintScan.manualButton' => 'Enter manually instead',
+			'maker.amountForm.twintScan.codeLabel' => ({required Object code}) => '${code} code',
+			'maker.amountForm.twintScan.rescan' => 'Rescan',
+			'maker.amountForm.twintScan.helperFilled' => ({required Object code}) => 'The taker will see this code and enter it in ${code}.',
+			'maker.amountForm.twintScan.helperEmpty' => ({required Object digits}) => 'Scan to fill this automatically, or type the ${digits}-digit code manually.',
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment.',
 			'maker.amountForm.tooltips.payInfo' => 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.',
 			'maker.amountForm.tooltips.premiumInfo' => 'An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator.',
@@ -4619,6 +5540,8 @@ extension on Translations {
 			'taker.invalidBlik.werentCharged' => 'If you were NOT charged:',
 			'taker.invalidBlik.wereCharged' => 'If you were charged:',
 			'taker.invalidBlik.actions.retry' => ({required Object code}) => 'Send new ${code} code',
+			_ => null,
+		} ?? switch (path) {
 			'taker.invalidBlik.actions.cancelReservation' => 'Cancel Transaction',
 			'taker.invalidBlik.actions.reportConflict' => 'Start Dispute',
 			'taker.invalidBlik.actions.returnHome' => 'Return to home',
@@ -4627,8 +5550,6 @@ extension on Translations {
 			'taker.invalidBlik.confirmDialog.actions.proceed' => 'I\'m sure, continue',
 			'taker.invalidBlik.confirmDialog.actions.cancel' => 'Cancel',
 			'taker.invalidBlik.disputeConfirmDialog.title' => 'Start a dispute?',
-			_ => null,
-		} ?? switch (path) {
 			'taker.invalidBlik.disputeConfirmDialog.content' => 'Only start a dispute if the amount WAS charged from your bank account.\n\nThe coordinator will manually review your case, which takes time. You will need to provide proof of payment.',
 			'taker.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Yes, I was charged',
 			'taker.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Cancel',
@@ -4649,6 +5570,149 @@ extension on Translations {
 			'taker.conflict.nostrContact.npubCopied' => 'Coordinator npub copied to clipboard!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
+			'twint.scanner.title' => ({required Object code}) => 'Scan ${code} code',
+			'twint.scanner.status.align' => ({required Object code}) => 'Align the ${code} QR code and amount text inside the camera frame.',
+			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually.',
+			'twint.scanner.status.amountFailed' => 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.',
+			'twint.flow.makerWait.offerLive' => 'Offer live',
+			'twint.flow.makerWait.takerPaying' => 'Taker is paying',
+			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Your ${code} code',
+			'twint.flow.makerWait.offerExpires' => 'Offer expires',
+			'twint.flow.makerWait.autoExpires' => 'Auto-expires',
+			'twint.flow.makerWait.cancelOffer' => 'Cancel offer',
+			'twint.flow.makerVerify.title' => 'Did you receive the payment?',
+			'twint.flow.makerVerify.body' => ({required Object amount, required Object code}) => 'The taker reports paying ${amount} to your ${code} code.',
+			'twint.flow.makerVerify.hint' => ({required Object code}) => 'Check your ${code} app, then confirm or open a dispute.',
+			'twint.flow.makerVerify.autoConfirms' => 'Auto-confirms',
+			'twint.flow.makerVerify.confirmReceived' => 'Confirm received',
+			'twint.flow.makerVerify.openDispute' => 'Open dispute',
+			'twint.flow.makerRecode.title' => 'Offer expired',
+			'twint.flow.makerRecode.body' => ({required Object code}) => 'No taker completed the trade. Enter a new ${code} code to re-list this offer, or cancel it.',
+			'twint.flow.makerRecode.fieldLabel' => ({required Object code}) => 'New ${code} code',
+			'twint.flow.makerRecode.autoCancels' => 'Auto-cancels',
+			'twint.flow.makerRecode.relist' => 'Re-list with new code',
+			'twint.flow.makerRecode.cancelOffer' => 'Cancel offer',
+			'twint.flow.takerPay.title' => ({required Object code}) => 'Pay with ${code}',
+			'twint.flow.takerPay.body' => ({required Object code, required Object amount}) => 'Open your ${code} app and pay ${amount} using:',
+			'twint.flow.takerPay.codeExpires' => 'Code expires',
+			'twint.flow.takerPay.paid' => 'I\'ve paid',
+			'twint.flow.takerPay.cancel' => 'Cancel',
+			'twint.flow.takerWait.title' => 'Waiting for the maker',
+			'twint.flow.takerWait.body' => ({required Object code}) => 'The maker is verifying your ${code} payment.',
+			'twint.flow.takerWait.autoConfirms' => 'Auto-confirms',
+			'twint.flow.takerExpired.title' => 'Reservation expired',
+			'twint.flow.takerExpired.body' => ({required Object code}) => 'The ${code} code wasn\'t paid in time. You can cancel to release the offer.',
+			'twint.flow.takerExpired.autoReleases' => 'Auto-releases',
+			'twint.flow.takerExpired.cancel' => 'Cancel',
+			'twint.waitConfirmation.title' => 'Waiting for Maker',
+			'twint.waitConfirmation.statusLabel' => ({required Object status}) => 'Offer status: ${status}',
+			'twint.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'Waiting for Maker confirmation: ${seconds} s',
+			'twint.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'Waiting for Maker to confirm ${code} is correct. Time remaining: ${seconds}s',
+			'twint.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: Make sure you only accept ${code} confirmation for ${amount} ${currency}',
+			'twint.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}.',
+			'twint.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.',
+			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'The maker must now enter your ${code} code at the ATM within ${minutes} minutes.',
+			'twint.waitConfirmation.categoryReminder.atm' => 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.',
+			'twint.waitConfirmation.categoryReminder.ecommerce' => 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.',
+			'twint.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Waiting for maker to receive your ${code} code...',
+			'twint.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Maker has received your ${code} code.',
+			'twint.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.',
+			'twint.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.',
+			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Resend New ${code} Code',
+			'twint.waitConfirmation.navigatedHome' => 'Navigated home.',
+			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => '${code} Code Expired',
+			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.',
+			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'Reservation ends in',
+			'twint.waitConfirmation.expiredSentWarning' => 'The maker hasn\'t confirmed the payment yet. What would you like to do?',
+			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'If you want to try again with a new ${code} code, renew the reservation.',
+			'twint.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
+			'twint.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',
+			'twint.waitConfirmation.takerCharged.title' => ({required Object code}) => 'You marked ${code} as charged',
+			'twint.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.',
+			'twint.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} was charged from my bank account',
+			'twint.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Try again with new ${code} code',
+			'twint.waitConfirmation.expiredActions.cancelReservation' => 'Cancel reservation',
+			'twint.waitConfirmation.feedback.makerConfirmed' => 'Maker confirmed payment.',
+			'twint.waitConfirmation.feedback.paymentSuccessful' => 'Payment successful! You will receive funds shortly.',
+			'twint.waitConfirmation.feedback.conflictReported' => 'Conflict reported. Coordinator will review the situation.',
+			'twint.waitConfirmation.errors.invalidOfferStateReceived' => 'Received an offer with an invalid state for this screen. Resetting.',
+			'twint.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Error reporting conflict: ${details}',
+			'twint.paymentProcess.title' => 'Payment Process',
+			'twint.paymentProcess.waitingForOfferUpdate' => 'Waiting for offer status update...',
+			'twint.paymentProcess.states.preparing' => 'Preparing to send payment...',
+			'twint.paymentProcess.states.sending' => 'Sending payment...',
+			'twint.paymentProcess.states.received' => 'Payment received!',
+			'twint.paymentProcess.states.failed' => 'Payment failed',
+			'twint.paymentProcess.states.waitingUpdate' => 'Waiting for offer update...',
+			'twint.paymentProcess.steps.makerConfirmedBlik' => ({required Object code}) => 'Maker confirmed ${code} payment',
+			'twint.paymentProcess.steps.makerInvoiceSettled' => 'Maker\'s hold invoice settled',
+			'twint.paymentProcess.steps.takerInvoicePaid' => 'Paying your Lightning invoice',
+			'twint.paymentProcess.steps.takerPaymentFailed' => 'Payment to your invoice failed',
+			'twint.paymentProcess.errors.sending' => ({required Object details}) => 'Error sending payment: ${details}',
+			'twint.paymentProcess.errors.notConfirmed' => 'Offer not confirmed by Maker.',
+			'twint.paymentProcess.errors.expired' => 'Offer expired.',
+			'twint.paymentProcess.errors.cancelled' => 'Offer cancelled.',
+			'twint.paymentProcess.errors.paymentFailed' => 'Offer payment failed.',
+			'twint.paymentProcess.errors.unknown' => 'Unknown offer error.',
+			'twint.paymentProcess.errors.takerPaymentFailed' => 'The payment to your Lightning invoice failed.',
+			'twint.paymentProcess.errors.noPublicKey' => 'Error: Cannot fetch your public key.',
+			'twint.paymentProcess.errors.loadingPublicKey' => 'Error loading your data',
+			'twint.paymentProcess.errors.missingPaymentHash' => 'Error: Missing payment details.',
+			'twint.paymentProcess.loading.publicKey' => 'Loading your data...',
+			'twint.paymentProcess.actions.goToFailureDetails' => 'Retry with new invoice',
+			'twint.paymentFailed.title' => 'Payment Failed',
+			'twint.paymentFailed.instructions' => ({required Object netAmount}) => 'Please provide a new Lightning invoice for ${netAmount}',
+			'twint.paymentFailed.form.newInvoiceLabel' => 'New Lightning invoice',
+			'twint.paymentFailed.form.newInvoiceHint' => 'Enter your BOLT11 invoice',
+			'twint.paymentFailed.actions.retryPayment' => 'Submit New Invoice',
+			'twint.paymentFailed.errors.enterValidInvoice' => 'Please enter a valid invoice',
+			'twint.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Error updating invoice: ${details}',
+			'twint.paymentFailed.errors.paymentRetryFailed' => 'Payment retry failed. Please check the invoice or try again later.',
+			'twint.paymentFailed.errors.takerPublicKeyNotFound' => 'Taker public key not found.',
+			'twint.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Failed to generate invoice: ${details}',
+			'twint.paymentFailed.walletSection.title' => 'Generate invoice from wallet',
+			'twint.paymentFailed.walletSection.defaultLabel' => 'default',
+			'twint.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tap to generate invoice for ${amountSats}',
+			'twint.paymentFailed.loading.processingPayment' => 'Processing your payment retry...',
+			'twint.paymentFailed.success.title' => 'Payment Successful',
+			'twint.paymentFailed.success.message' => 'Your payment has been processed successfully.',
+			'twint.paymentSuccess.title' => 'Payment Successful',
+			'twint.paymentSuccess.message' => 'Your payment has been processed successfully.',
+			'twint.paymentSuccess.actions.goHome' => 'Go to home',
+			'twint.invalidBlik.title' => ({required Object code}) => 'Invalid ${code} Code',
+			'twint.invalidBlik.message' => ({required Object code}) => 'Maker Rejected ${code} Code',
+			'twint.invalidBlik.explanation' => ({required Object code}) => 'The offer maker indicated that the ${code} code you provided was invalid or didn\'t work.\n\nWhat would you like to do?',
+			'twint.invalidBlik.werentCharged' => 'If you were NOT charged:',
+			'twint.invalidBlik.wereCharged' => 'If you were charged:',
+			'twint.invalidBlik.actions.retry' => ({required Object code}) => 'Send new ${code} code',
+			'twint.invalidBlik.actions.cancelReservation' => 'Cancel Transaction',
+			'twint.invalidBlik.actions.reportConflict' => 'Start Dispute',
+			'twint.invalidBlik.actions.returnHome' => 'Return to home',
+			'twint.invalidBlik.confirmDialog.title' => 'Are you sure?',
+			'twint.invalidBlik.confirmDialog.content' => 'Once you tap this, there is no turning back.\n\nIf the amount WAS in fact charged from your bank account, the coordinator will NOT be able to guarantee you receive the bitcoin, and you may lose your funds.\n\nIf you are not sure, it is best to wait a bit and confirm that you did NOT get charged before continuing.',
+			'twint.invalidBlik.confirmDialog.actions.proceed' => 'I\'m sure, continue',
+			'twint.invalidBlik.confirmDialog.actions.cancel' => 'Cancel',
+			'twint.invalidBlik.disputeConfirmDialog.title' => 'Start a dispute?',
+			'twint.invalidBlik.disputeConfirmDialog.content' => 'Only start a dispute if the amount WAS charged from your bank account.\n\nThe coordinator will manually review your case, which takes time. You will need to provide proof of payment.',
+			'twint.invalidBlik.disputeConfirmDialog.actions.proceed' => 'Yes, I was charged',
+			'twint.invalidBlik.disputeConfirmDialog.actions.cancel' => 'Cancel',
+			'twint.invalidBlik.feedback.conflictReportedSuccess' => 'Conflict reported. Coordinator will review.',
+			'twint.invalidBlik.errors.reservationFailed' => 'Failed to reserve offer again',
+			'twint.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Error reporting conflict: ${details}',
+			'twint.conflict.title' => 'Offer Conflict',
+			'twint.conflict.headline' => 'Offer Conflict Reported',
+			'twint.conflict.body' => ({required Object code}) => 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.',
+			'twint.conflict.instructions' => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.',
+			'twint.conflict.actions.back' => 'Back to Home',
+			'twint.conflict.feedback.reported' => 'Conflict reported. Coordinator will review.',
+			'twint.conflict.errors.reporting' => ({required Object details}) => 'Error reporting conflict: ${details}',
+			'twint.conflict.nostrContact.title' => 'Contact Coordinator on Nostr',
+			'twint.conflict.nostrContact.description' => 'You can DM the coordinator directly for help with this dispute.',
+			'twint.conflict.nostrContact.copyNpub' => 'Copy npub',
+			'twint.conflict.nostrContact.openProfile' => 'View Profile',
+			'twint.conflict.nostrContact.npubCopied' => 'Coordinator npub copied to clipboard!',
+			'twint.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
+			'twint.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
 			'blik.instructions.taker' => ({required Object code}) => 'Once the Maker enters the ${code} code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.',
 			'home.notifications.title' => 'Get notified about new offers via:',
 			'home.notifications.telegram' => 'Telegram',

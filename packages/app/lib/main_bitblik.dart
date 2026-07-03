@@ -322,6 +322,8 @@ Future<void> main() async {
       'pl' => AppLocale.pl,
       'it' => AppLocale.it,
       'pt' => AppLocale.pt,
+      'de' => AppLocale.de,
+      'fr' => AppLocale.fr,
       _ => AppLocale.en,
     };
   } else {
@@ -1649,6 +1651,8 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                   AppLocale.pl,
                   AppLocale.it,
                   AppLocale.pt,
+                  AppLocale.de,
+                  AppLocale.fr,
                 ];
                 return orderedLocales.map<Widget>((AppLocale locale) {
                   return Container(
@@ -1687,6 +1691,8 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                     AppLocale.pl,
                     AppLocale.it,
                     AppLocale.pt,
+                    AppLocale.de,
+                    AppLocale.fr,
                   ].map<DropdownMenuItem<AppLocale>>((AppLocale locale) {
                     final String flagEmoji =
                         locale.languageCode == 'en'
@@ -1697,12 +1703,18 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                             ? '🇮🇹'
                             : locale.languageCode == 'pt'
                             ? '🇵🇹'
+                            : locale.languageCode == 'de'
+                            ? '🇩🇪'
+                            : locale.languageCode == 'fr'
+                            ? '🇫🇷'
                             : '';
                     final String displayName =
                         locale.languageCode == 'en'
                             ? 'EN'
                             : locale.languageCode == 'pl'
                             ? 'PL'
+                            : locale.languageCode == 'fr'
+                            ? 'FR'
                             : locale.languageCode.toUpperCase();
                     return DropdownMenuItem<AppLocale>(
                       value: locale,

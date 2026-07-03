@@ -356,6 +356,15 @@ maker:
       premium: Premio
     actions:
       generateInvoice: Genera Fattura
+    twintScan:
+      cardTitle: "Scansiona QR e importo ${code}"
+      cardBody: "Punta la fotocamera verso la schermata di pagamento. L'app compilerà automaticamente il codice e, quando visibile, l'importo."
+      scanButton: "Scansiona con la fotocamera"
+      manualButton: "Inserisci manualmente"
+      codeLabel: "Codice ${code}"
+      rescan: "Scansiona di nuovo"
+      helperFilled: "Il taker vedrà questo codice e lo inserirà in ${code}."
+      helperEmpty: "Scansiona per compilare automaticamente, oppure inserisci manualmente il codice di ${digits} cifre."
 
     tooltips:
       feeInfo: "Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning."
@@ -583,6 +592,51 @@ taker:
       takerFee: "Commissione taker"
       status: "Stato"
       youllReceive: "Riceverai"
+
+twint:
+  scanner:
+    title: "Scansiona codice ${code}"
+    status:
+      align: "Allinea il QR ${code} e il testo dell'importo all'interno dell'inquadratura."
+      notRecognized: "Codice ${code} non ancora riconosciuto. Tieni in vista il QR e l'importo, oppure compila manualmente il modulo."
+      amountFailed: "La scansione della fotocamera non è riuscita a estrarre l'importo. Puoi comunque usare il risultato del QR e correggere i campi manualmente."
+  flow:
+    makerWait:
+      offerLive: "Offerta attiva"
+      takerPaying: "Il taker sta pagando"
+      yourCode: "Il tuo codice ${code}"
+      offerExpires: "L'offerta scade"
+      autoExpires: "Scade automaticamente"
+      cancelOffer: "Annulla offerta"
+    makerVerify:
+      title: "Hai ricevuto il pagamento?"
+      body: "Il taker segnala di aver pagato ${amount} al tuo codice ${code}."
+      hint: "Controlla la tua app ${code}, poi conferma oppure apri una disputa."
+      autoConfirms: "Conferma automatica"
+      confirmReceived: "Conferma ricezione"
+      openDispute: "Apri disputa"
+    makerRecode:
+      title: "Offerta scaduta"
+      body: "Nessun taker ha completato lo scambio. Inserisci un nuovo codice ${code} per ripubblicare questa offerta, oppure annullala."
+      fieldLabel: "Nuovo codice ${code}"
+      autoCancels: "Annulla automaticamente"
+      relist: "Ripubblica con un nuovo codice"
+      cancelOffer: "Annulla offerta"
+    takerPay:
+      title: "Paga con ${code}"
+      body: "Apri la tua app ${code} e paga ${amount} usando:"
+      codeExpires: "Il codice scade"
+      paid: "Ho pagato"
+      cancel: "Annulla"
+    takerWait:
+      title: "In attesa del maker"
+      body: "Il maker sta verificando il tuo pagamento ${code}."
+      autoConfirms: "Conferma automatica"
+    takerExpired:
+      title: "Prenotazione scaduta"
+      body: "Il codice ${code} non è stato pagato in tempo. Puoi annullare per liberare l'offerta."
+      autoReleases: "Rilascio automatico"
+      cancel: "Annulla"
 
   waitConfirmation:
     title: "In attesa del Maker"

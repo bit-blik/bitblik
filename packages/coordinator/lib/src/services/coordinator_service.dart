@@ -1028,6 +1028,13 @@ class CoordinatorService {
       atm: 'ATM/Multibanco',
       online: 'Online',
     ),
+    'CH': OfferNotificationStrings(
+      newOffer: 'New offer/Neues Angebot',
+      premium: 'premium/Premium',
+      shop: 'Shop/Geschäft',
+      atm: 'ATM/Bancomat',
+      online: 'Online',
+    ),
   };
 
   OfferNotificationStrings get _notificationStrings =>

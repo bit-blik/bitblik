@@ -3,10 +3,10 @@
 /// Source: lib/i18n
 /// To regenerate, run: `dart run slang`
 ///
-/// Locales: 4
-/// Strings: 2901 (725 per locale)
+/// Locales: 6
+/// Strings: 4730 (788 per locale)
 ///
-/// Built on 2026-06-28 at 11:21 UTC
+/// Built on 2026-07-03 at 12:08 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint, unused_import
@@ -18,6 +18,8 @@ import 'package:slang/generated.dart';
 import 'package:slang_flutter/slang_flutter.dart';
 export 'package:slang_flutter/slang_flutter.dart';
 
+import 'strings_de.g.dart' deferred as l_de;
+import 'strings_fr.g.dart' deferred as l_fr;
 import 'strings_it.g.dart' deferred as l_it;
 import 'strings_pl.g.dart' deferred as l_pl;
 import 'strings_pt.g.dart' deferred as l_pt;
@@ -31,6 +33,8 @@ part 'strings_en.g.dart';
 /// - if (LocaleSettings.currentLocale == AppLocale.en) // locale check
 enum AppLocale with BaseAppLocale<AppLocale, Translations> {
 	en(languageCode: 'en'),
+	de(languageCode: 'de'),
+	fr(languageCode: 'fr'),
 	it(languageCode: 'it'),
 	pl(languageCode: 'pl'),
 	pt(languageCode: 'pt');
@@ -54,6 +58,20 @@ enum AppLocale with BaseAppLocale<AppLocale, Translations> {
 		switch (this) {
 			case AppLocale.en:
 				return TranslationsEn(
+					overrides: overrides,
+					cardinalResolver: cardinalResolver,
+					ordinalResolver: ordinalResolver,
+				);
+			case AppLocale.de:
+				await l_de.loadLibrary();
+				return l_de.TranslationsDe(
+					overrides: overrides,
+					cardinalResolver: cardinalResolver,
+					ordinalResolver: ordinalResolver,
+				);
+			case AppLocale.fr:
+				await l_fr.loadLibrary();
+				return l_fr.TranslationsFr(
 					overrides: overrides,
 					cardinalResolver: cardinalResolver,
 					ordinalResolver: ordinalResolver,
@@ -91,6 +109,18 @@ enum AppLocale with BaseAppLocale<AppLocale, Translations> {
 		switch (this) {
 			case AppLocale.en:
 				return TranslationsEn(
+					overrides: overrides,
+					cardinalResolver: cardinalResolver,
+					ordinalResolver: ordinalResolver,
+				);
+			case AppLocale.de:
+				return l_de.TranslationsDe(
+					overrides: overrides,
+					cardinalResolver: cardinalResolver,
+					ordinalResolver: ordinalResolver,
+				);
+			case AppLocale.fr:
+				return l_fr.TranslationsFr(
 					overrides: overrides,
 					cardinalResolver: cardinalResolver,
 					ordinalResolver: ordinalResolver,
