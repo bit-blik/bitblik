@@ -607,7 +607,20 @@ twint:
       yourCode: "Il tuo codice ${code}"
       offerExpires: "L'offerta scade"
       autoExpires: "Scade automaticamente"
+      codeExpiresIn: "${code} scadrà tra..."
       cancelOffer: "Annulla offerta"
+      reservedInfo: "Un taker ha riservato la tua offerta e sta pagando il tuo codice ${code} nella sua app bancaria. Quando il pagamento arriva al tuo esercente, confermalo qui sotto."
+      confirmReceived: "Conferma pagamento ricevuto"
+      confirmDialog:
+        title: "Confermare il pagamento ricevuto?"
+        content: "Conferma solo se sei ASSOLUTAMENTE sicuro che il pagamento ${code} sia stato ricevuto con successo dal tuo esercente.\n\nLa conferma regola la hold invoice Lightning e invia immediatamente i sats al taker — non può essere annullata."
+        cancel: "Annulla"
+        confirmButton: "Sì, pagamento ricevuto"
+    makerExpired:
+      title: "${code} probabilmente scaduto"
+      warning: "Il codice ${code} è probabilmente scaduto — ma il taker potrebbe comunque essere riuscito a pagarlo. Controlla il tuo esercente: hai il tempo indicato sotto per confermare il pagamento."
+      timerCaption: "Tempo per confermare"
+      disputeHint: "Puoi anche lasciar scadere il timer. Se il taker dichiara di aver pagato, si apre un conflitto/disputa in cui entrambe le parti dovranno fornire prove al coordinatore per risolvere il problema."
     makerVerify:
       title: "Hai ricevuto il pagamento?"
       body: "Il taker segnala di aver pagato ${amount} al tuo codice ${code}."
@@ -618,6 +631,8 @@ twint:
     makerRecode:
       title: "Offerta scaduta"
       body: "Nessun taker ha completato lo scambio. Inserisci un nuovo codice ${code} per ripubblicare questa offerta, oppure annullala."
+      scanCardTitle: "Scansiona il nuovo QR ${code}"
+      scanCardBody: "Punta la fotocamera sulla schermata di pagamento. L'app precompilerà il nuovo codice — l'importo resta invariato."
       fieldLabel: "Nuovo codice ${code}"
       autoCancels: "Annulla automaticamente"
       relist: "Ripubblica con un nuovo codice"
@@ -633,10 +648,24 @@ twint:
       body: "Il maker sta verificando il tuo pagamento ${code}."
       autoConfirms: "Conferma automatica"
     takerExpired:
-      title: "Prenotazione scaduta"
-      body: "Il codice ${code} non è stato pagato in tempo. Puoi annullare per liberare l'offerta."
-      autoReleases: "Rilascio automatico"
-      cancel: "Annulla"
+      title: "${code} probabilmente scaduto"
+      warning: "Il codice ${code} è probabilmente scaduto. Ora devi prendere una decisione importante — scegli con attenzione."
+      optionPaid: "Se HAI pagato il codice ${code} nella tua app bancaria, segnalo come pagato. Questo ti impegna a tale dichiarazione: il maker dovrà confermare per sbloccare i bitcoin, oppure aprire una disputa in cui entrambe le parti forniranno prove al coordinatore."
+      optionCancel: "Se NON hai pagato, annulla la prenotazione. È irreversibile — se il pagamento è in realtà andato a buon fine, il coordinatore non potrà più garantirti i sats."
+      noDecision: "Se non prendi alcuna decisione prima della scadenza del timer, il coordinatore presumerà che tu NON abbia pagato il codice ${code}. Il maker potrà quindi annullare l'offerta — annullando la hold invoice — dopo di che il coordinatore non potrà più liquidarti i sats, anche se hai pagato."
+      timerCaption: "Tempo per decidere"
+      markPaid: "Ho pagato il codice ${code}"
+      cancel: "Annulla prenotazione"
+      markPaidDialog:
+        title: "Confermi di aver pagato?"
+        content: "Continua solo se sei sicuro che il pagamento ${code} sia stato addebitato nella tua app bancaria.\n\nAl maker verrà chiesto di confermare la ricezione per sbloccare i bitcoin. Se la nega, si apre una disputa ed entrambe le parti dovranno fornire prove al coordinatore."
+        cancel: "Indietro"
+        confirmButton: "Sì, ho pagato"
+      cancelDialog:
+        title: "Annullare la prenotazione?"
+        content: "Annulla solo se NON hai pagato il codice ${code}.\n\nNon può essere annullato: se il pagamento è in realtà andato a buon fine, il coordinatore NON potrà garantire che tu riceva i sats."
+        cancel: "Indietro"
+        confirmButton: "Sì, annulla"
 
   waitConfirmation:
     title: "In attesa del Maker"

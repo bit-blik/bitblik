@@ -9,10 +9,7 @@ import 'taker_receive_invoice.dart';
 /// Flow ids whose UI is driven by the yaml flow definition (state -> screen
 /// registry, engine-derived action buttons, yaml-timeout countdowns) instead of
 /// the legacy hardcoded per-screen navigation.
-///
-/// TWINT is the first. Add `'blik'` here (and register its screens in the flow
-/// screen registry) to migrate BLIK later — no other switch is required.
-const Set<String> kFlowDrivenFlowIds = {'twint'};
+const Set<String> kFlowDrivenFlowIds = {'twint', 'blik', 'mbway'};
 
 bool isFlowDrivenFlow(String? flowId) =>
     flowId != null && kFlowDrivenFlowIds.contains(flowId);
@@ -35,9 +32,14 @@ class AppFlowLoader {
   static Future<FlowEngine> load(String flowId) async {
     final cached = _cache[flowId];
     if (cached != null) return cached;
-    final src =
-        await rootBundle.loadString('packages/bitblik_core/flows/$flowId.yml');
-    final engine = FlowEngine.fromYaml(src);
+    final src = await rootBundle.loadString(
+      'packages/bitblik_core/flows/$flowId.yml',
+    );
+    final engine = await FlowEngine.fromYamlWithImports(
+      src,
+      (importPath) =>
+          rootBundle.loadString('packages/bitblik_core/flows/$importPath'),
+    );
     _cache[flowId] = engine;
     return engine;
   }
@@ -62,7 +64,7 @@ Future<String?> reserveTakerInvoiceIfNeeded(WidgetRef ref, Offer offer) async {
   if (!isFlowDrivenFlow(ps.flowId)) return null;
   final engine = await ref.read(flowEngineProvider.future);
   final t = engine?.transitionFor(engine.initialState, 'reserve_offer');
-  if (t == null || !t.effects.contains('accept_taker_invoice')) return null;
+  if (t == null || !t.actions.contains('accept_taker_invoice')) return null;
   final ndk = ref.read(ndkProvider);
   if (ndk == null) throw Exception('No wallet available to receive payout');
   final netSats = offer.amountSats - (offer.takerFees ?? 0);

@@ -226,9 +226,37 @@ const FLOWS_DIR = stripQuotes(process.env.FLOWS_DIR)
 
 const flowCache = new Map();
 
-// Reshape a parsed yml flow doc into the minimal JSON the dashboard diagram
-// needs: ordered states with their initial/terminal flags and outgoing
-// transitions (event/trigger/target).
+const readFlowDoc = (fileName) => yaml.load(fsSync.readFileSync(path.join(FLOWS_DIR, fileName), 'utf8'));
+
+// Expand `imports:` the same way core's FlowDefinition._expandImports does:
+// imported fragments (e.g. common.yml) are merged first, in import order and
+// recursively (cycle-guarded), then the flow's own states. A duplicate state
+// name is an error, matching the engine's strictness.
+const expandImports = (doc, stack = new Set()) => {
+  const imports = Array.isArray(doc.imports) ? doc.imports : [];
+  if (imports.length === 0) return doc;
+  const mergedStates = {};
+  for (const importPath of imports) {
+    if (stack.has(importPath)) throw new Error(`Circular flow import detected: ${importPath}`);
+    stack.add(importPath);
+    const imported = expandImports(readFlowDoc(importPath), stack);
+    stack.delete(importPath);
+    for (const [name, def] of Object.entries(imported.states || {})) {
+      if (mergedStates[name]) throw new Error(`Imported flow state "${name}" declared more than once.`);
+      mergedStates[name] = def;
+    }
+  }
+  for (const [name, def] of Object.entries(doc.states || {})) {
+    if (mergedStates[name]) throw new Error(`Flow definition re-declares imported state "${name}".`);
+    mergedStates[name] = def;
+  }
+  return { ...doc, states: mergedStates, imports: [] };
+};
+
+// Reshape a parsed schema-v2 flow doc into the minimal JSON the dashboard
+// diagram needs: ordered states with their initial/terminal flags, state-level
+// `do` actions, and outgoing transitions (`on`/`by`/`do`/`to`/`on_fail`,
+// timeouts carrying `after` seconds + optional `from` anchor field).
 const transformFlow = (id, doc) => {
   const states = Object.entries(doc.states || {}).map(([name, def]) => ({
     name,
@@ -236,12 +264,16 @@ const transformFlow = (id, doc) => {
     terminal: !!def.terminal,
     nip69: def.nip69 || null,
     description: typeof def.description === 'string' ? def.description.trim() : null,
+    do: Array.isArray(def.do) ? def.do : [],
     transitions: (def.transitions || []).map((t) => ({
-      trigger: t.trigger || null,
-      event: t.event || null,
-      actor: t.actor || null,
-      target: t.target || null,
-      durationSeconds: t.duration_seconds ?? null,
+      on: t.on || null,
+      by: t.by || null,
+      do: Array.isArray(t.do) ? t.do : [],
+      to: t.to || null,
+      onFail: t.on_fail || null,
+      after: t.after ?? null,
+      from: t.from || null,
+      returns: t.returns || null,
       reason: t.reason ? String(t.reason).trim() : null,
     })),
   }));
@@ -250,11 +282,24 @@ const transformFlow = (id, doc) => {
 
 const loadFlow = (id) => {
   if (flowCache.has(id)) return flowCache.get(id);
-  const file = path.join(FLOWS_DIR, `${id}.yml`);
-  if (!fsSync.existsSync(file)) return null;
-  const flow = transformFlow(id, yaml.load(fsSync.readFileSync(file, 'utf8')));
+  if (!fsSync.existsSync(path.join(FLOWS_DIR, `${id}.yml`))) return null;
+  const doc = expandImports(readFlowDoc(`${id}.yml`));
+  // Fragments (no top-level id, e.g. common.yml) are not standalone flows.
+  if (!doc.id) return null;
+  const flow = transformFlow(id, doc);
   flowCache.set(id, flow);
   return flow;
+};
+
+// A file is a listable flow only if it declares a top-level `id`; id-less
+// files are import fragments (common.yml).
+const isFlowFragment = (fileName) => {
+  try {
+    const doc = readFlowDoc(fileName);
+    return !doc || !doc.id;
+  } catch {
+    return true;
+  }
 };
 
 const listFlows = () => {
@@ -265,6 +310,7 @@ const listFlows = () => {
     return [];
   }
   return files
+    .filter((f) => !isFlowFragment(f))
     .map((f) => f.replace(/\.yml$/, ''))
     .map((id) => ({ id, label: id }))
     .sort((a, b) => a.id.localeCompare(b.id));
@@ -748,7 +794,12 @@ app.get('/api/flows/:flowId', (req, res) => {
   if (!id) {
     return res.status(400).json({ error: 'Invalid flow id' });
   }
-  const flow = loadFlow(id);
+  let flow;
+  try {
+    flow = loadFlow(id);
+  } catch (err) {
+    return res.status(500).json({ error: `Failed to load flow ${id}: ${err.message}` });
+  }
   if (!flow) {
     return res.status(404).json({ error: `Unknown flow: ${id}`, flows: listFlows() });
   }

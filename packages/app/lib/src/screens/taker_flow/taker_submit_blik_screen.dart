@@ -12,6 +12,7 @@ import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
 // Added
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
 import '../../utils/bitcoin_display.dart';
@@ -399,7 +400,8 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
             "[TakerSubmitBlikScreen] BLIK submitted. Navigating to WaitConfirmation.",
       );
       if (mounted) {
-        context.go('/wait-confirmation', extra: updatedOffer);
+        context.go(flowEntryRoute(ref, '/wait-confirmation'),
+            extra: updatedOffer);
       }
     } catch (e) {
       ref.read(errorProvider.notifier).state = t.taker.submitBlik.errors

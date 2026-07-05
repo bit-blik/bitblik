@@ -9,8 +9,14 @@ import 'package:test/test.dart';
 void main() {
   late FlowEngine engine;
 
-  setUpAll(() {
-    engine = FlowEngine.fromYaml(File('lib/flows/twint.yml').readAsStringSync());
+  Future<String> loadFlowImport(String importPath) async =>
+      File('lib/flows/$importPath').readAsStringSync();
+
+  setUpAll(() async {
+    engine = await FlowEngine.fromYamlWithImports(
+      File('lib/flows/twint.yml').readAsStringSync(),
+      loadFlowImport,
+    );
   });
 
   test('parses, single initial, all targets defined', () {
@@ -74,10 +80,10 @@ void main() {
     // reserved/expiredTwint) already has an invoice for the payout.
     final reserve =
         engine.transitionFor('funded', 'reserve_offer', actor: FlowActor.taker);
-    expect(reserve!.effects, contains('accept_taker_invoice'));
+    expect(reserve!.actions, contains('accept_taker_invoice'));
     final charged = engine.transitionFor('reserved', 'mark_twint_charged',
         actor: FlowActor.taker);
-    expect(charged!.effects, isNot(contains('accept_taker_invoice')));
+    expect(charged!.actions, isNot(contains('accept_taker_invoice')));
   });
 
   test('maker can confirm early from reserved and expiredTwint', () {
@@ -85,7 +91,9 @@ void main() {
       expect(
           engine
               .resolveUserAction(
-                  fromState: s, event: 'confirm_payment', actor: FlowActor.maker)
+                  fromState: s,
+                  event: 'confirm_payment',
+                  actor: FlowActor.maker)
               .target,
           'makerConfirmed',
           reason: 'maker confirm from $s');
@@ -96,7 +104,7 @@ void main() {
     final t = engine.transitionFor('invalidTwint', 'enter_new_twint',
         actor: FlowActor.maker);
     expect(t!.target, 'funded');
-    expect(t.effects, contains('set_new_code'));
+    expect(t.actions, contains('set_new_code'));
   });
 
   test('wrong actor rejected', () {
@@ -110,9 +118,17 @@ void main() {
         isFalse);
   });
 
-  test('terminals: cancelled, takerPaid, dispute', () {
-    for (final s in ['cancelled', 'takerPaid', 'dispute']) {
+  test('terminals: cancelled, takerPaid (dispute is resolvable)', () {
+    for (final s in ['cancelled', 'takerPaid']) {
       expect(engine.isTerminal(s), isTrue, reason: s);
     }
+    // Dispute is no longer terminal: the coordinator resolves it by refunding
+    // the maker (-> cancelled) or paying the taker (-> settled).
+    expect(engine.isTerminal('dispute'), isFalse);
+    expect(
+        engine.transitionFor('dispute', 'resolve_dispute_refund_maker')?.target,
+        'cancelled');
+    expect(engine.transitionFor('dispute', 'resolve_dispute_pay_taker')?.target,
+        'payingTaker');
   });
 }

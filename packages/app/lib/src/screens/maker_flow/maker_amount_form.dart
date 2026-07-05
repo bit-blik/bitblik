@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui show TextDirection;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1007,10 +1008,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (_makerCodeController.text.trim().isEmpty) {
-        _makerCodeFocusNode.requestFocus();
-      } else {
+      if (_fiatController.text.trim().isEmpty) {
         _amountFocusNode.requestFocus();
+      } else {
+        _makerCodeFocusNode.requestFocus();
       }
     });
   }
@@ -1147,32 +1148,49 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                   _method.codeLength > 0 ? available / _method.codeLength : 0.0;
               final fontSize = (perChar / 1.25).clamp(28.0, 52.0);
               final letterSpacing = (fontSize * 0.22).clamp(4.0, 10.0);
-              return TextField(
-                controller: _makerCodeController,
-                focusNode: _makerCodeFocusNode,
-                keyboardType: TextInputType.number,
-                maxLength: _method.codeLength,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: letterSpacing,
-                  height: 1.1,
-                ),
-                decoration: InputDecoration(
-                  hintText: _makerCodePlaceholder,
-                  hintStyle: TextStyle(
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: letterSpacing,
-                    color: Colors.grey[350],
-                    height: 1.1,
+              final textStyle = TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+                letterSpacing: letterSpacing,
+                height: 1.1,
+              );
+              // Size the field to exactly fit the full code and center that
+              // box, so the text block sits centered while the field itself
+              // stays left-aligned and the cursor starts at its left edge.
+              final placeholderPainter = TextPainter(
+                text: TextSpan(text: _makerCodePlaceholder, style: textStyle),
+                textDirection: ui.TextDirection.ltr,
+              )..layout();
+              final fieldWidth = (placeholderPainter.width + 4).clamp(
+                0.0,
+                available,
+              );
+              return Center(
+                child: SizedBox(
+                  width: fieldWidth,
+                  child: TextField(
+                    controller: _makerCodeController,
+                    focusNode: _makerCodeFocusNode,
+                    keyboardType: TextInputType.number,
+                    maxLength: _method.codeLength,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    textAlign: TextAlign.left,
+                    style: textStyle,
+                    decoration: InputDecoration(
+                      hintText: _makerCodePlaceholder,
+                      hintStyle: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: letterSpacing,
+                        color: Colors.grey[350],
+                        height: 1.1,
+                      ),
+                      border: InputBorder.none,
+                      counterText: '',
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
                   ),
-                  border: InputBorder.none,
-                  counterText: '',
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
                 ),
               );
             },

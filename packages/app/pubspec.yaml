@@ -175,6 +175,7 @@ flutter:
     # Flow definitions — single source of truth in bitblik_core/lib/flows,
     # bundled here as package assets (no copy in this repo).
     - packages/bitblik_core/flows/blik.yml
+    - packages/bitblik_core/flows/common.yml
     - packages/bitblik_core/flows/mbway.yml
     - packages/bitblik_core/flows/twint.yml
     - CHANGELOG.md

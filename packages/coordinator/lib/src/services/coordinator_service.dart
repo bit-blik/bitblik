@@ -36,6 +36,28 @@ import '../logging/app_logger.dart';
 part 'coordinator_flow.dart';
 part 'coordinator_flow_generic.dart';
 part 'coordinator_flow_legacy.dart';
+// Flow action implementations (one file per yml action keyword).
+part 'actions/all_actions.dart';
+part 'actions/common/accept_taker_invoice.dart';
+part 'actions/common/assert_assigned_taker.dart';
+part 'actions/common/cancel_hold_invoice.dart';
+part 'actions/common/cancel_reservation.dart';
+part 'actions/common/clear_taker_fields.dart';
+part 'actions/common/refund_maker.dart';
+part 'actions/common/require_maker_refund_invoice.dart';
+part 'actions/common/resolve_taker_invoice.dart';
+part 'actions/common/reserve_taker.dart';
+part 'actions/common/send_offer_notifications.dart';
+part 'actions/common/send_payment.dart';
+part 'actions/common/settle_offer_funds.dart';
+part 'actions/common/stamp_code_received_at.dart';
+part 'actions/common/stamp_maker_confirmed_at.dart';
+part 'actions/common/stamp_reserved_at.dart';
+part 'actions/common/stamp_taker_charged_at.dart';
+part 'actions/common/validate_code.dart';
+part 'actions/twint/notify_maker_of_charge.dart';
+part 'actions/twint/send_twint_code_to_taker.dart';
+part 'actions/twint/set_new_code.dart';
 
 // Set to Duration.zero for production
 const Duration _kDebugDelayDuration = Duration(seconds: 0);
@@ -809,6 +831,13 @@ class CoordinatorService {
         status: OfferStatus.funded,
         statusRaw: isGenericFlow ? _flowEngine!.initialState : null,
         blikCode: pendingData['blikCode'] as String?,
+        // Maker-provides-code flows (TWINT): the code is issued now — this
+        // stamp is the base for its yaml lifespan timeout (code_received_at),
+        // reset only when a fresh code is entered, not by reserve/revert.
+        blikReceivedAt: pendingData['blikCode'] != null &&
+                _paymentSystem.makerProvidesCodeAtOfferCreation
+            ? DateTime.now().toUtc()
+            : null,
         fiatAmount: pendingData['fiatAmount'],
         fiatCurrency: pendingData['fiatCurrency'],
         category: () {
@@ -837,37 +866,6 @@ class CoordinatorService {
 
       // Publish status update
       await _publishStatusUpdate(offer);
-
-      final notificationText = _buildFundedOfferNotification(offer);
-
-      // Send all notifications in parallel
-      final List<Future<void>> notificationFutures = [];
-
-      // SimpleX notification
-      if (_simplexChatExec != '') {
-        notificationFutures.add(_sendSimpleXNotification(notificationText));
-      }
-
-      // Matrix notification
-      if (_matrixClient != null && _matrixClient!.isLogged()) {
-        notificationFutures.add(_sendMatrixNotification(notificationText));
-      }
-
-      // Telegram notification
-      if (_telegramService != null && _telegramService!.isConfigured) {
-        notificationFutures
-            .add(_sendTelegramNotification(notificationText, offer.id));
-      }
-
-      // Signal notification
-      if (_signalCliExec != '' && _signalGroupId.isNotEmpty) {
-        notificationFutures.add(_sendSignalNotification(notificationText));
-      }
-
-      // Execute all notifications in parallel
-      if (notificationFutures.isNotEmpty) {
-        await Future.wait(notificationFutures, eagerError: false);
-      }
 
       AppLogger.info('Offer ${offer.id} created successfully in DB.',
           offerId: offer.id);
@@ -1007,6 +1005,32 @@ class CoordinatorService {
         ? ', +${_formatPremium(offer.premiumPercent)}% ${strings.premium}'
         : '';
     return '${strings.newOffer}: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
+  }
+
+  Future<void> _sendOfferNotifications(Offer offer) async {
+    final notificationText = _buildFundedOfferNotification(offer);
+    final notificationFutures = <Future<void>>[];
+
+    if (_simplexChatExec != '') {
+      notificationFutures.add(_sendSimpleXNotification(notificationText));
+    }
+
+    if (_matrixClient != null && _matrixClient!.isLogged()) {
+      notificationFutures.add(_sendMatrixNotification(notificationText));
+    }
+
+    if (_telegramService != null && _telegramService!.isConfigured) {
+      notificationFutures
+          .add(_sendTelegramNotification(notificationText, offer.id));
+    }
+
+    if (_signalCliExec != '' && _signalGroupId.isNotEmpty) {
+      notificationFutures.add(_sendSignalNotification(notificationText));
+    }
+
+    if (notificationFutures.isNotEmpty) {
+      await Future.wait(notificationFutures, eagerError: false);
+    }
   }
 
   /// Notification wording for the market served by the configured payment
@@ -1748,6 +1772,7 @@ class CoordinatorService {
       }
     };
   }
+
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
     required String makerId,
@@ -1869,6 +1894,7 @@ class CoordinatorService {
       'rate': rate,
     };
   }
+
   Future<CoordinatorInfo> getCoordinatorInfo() async {
     String? version = Platform.environment['APP_VERSION'];
     if (version == null || version.isEmpty) {
@@ -1940,5 +1966,4 @@ class CoordinatorService {
     }
     return offer;
   }
-
 }

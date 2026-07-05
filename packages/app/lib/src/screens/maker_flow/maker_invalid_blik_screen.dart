@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import 'maker_amount_form.dart'; // Import providers
 
@@ -27,16 +28,19 @@ class MakerInvalidBlikScreen extends ConsumerWidget {
             () =>
                 "[MakerInvalidBlikScreen] Offer status changed to conflict. Navigating...",
           );
-          context.go('/maker-conflict', extra: offer);
+          context.go(flowEntryRoute(ref, '/maker-conflict'), extra: offer);
         } else if (status == OfferStatus.reserved) {
           Logger.log.d(
             () =>
                 "[MakerInvalidBlikScreen] Offer status changed to reserved. Navigating back to wait-blik.",
           );
           context.go(
-            method.makerProvidesCodeAtOfferCreation
-                ? '/confirm-blik'
-                : '/wait-blik',
+            flowEntryRoute(
+              ref,
+              method.makerProvidesCodeAtOfferCreation
+                  ? '/confirm-blik'
+                  : '/wait-blik',
+            ),
             extra: offer,
           );
         } else if (status == OfferStatus.funded) {
@@ -44,7 +48,7 @@ class MakerInvalidBlikScreen extends ConsumerWidget {
             () =>
                 "[MakerInvalidBlikScreen] Offer status changed to funded. Navigating back to wait taker.",
           );
-          context.go('/wait-taker', extra: offer);
+          context.go(flowEntryRoute(ref, '/wait-taker'), extra: offer);
         } else if (status == OfferStatus.expired) {
           Logger.log.d(
             () =>

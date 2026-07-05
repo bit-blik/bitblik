@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer which contains OfferStatus
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import '../../widgets/progress_indicators.dart'; // Import for TakerProgressIndicator
 
@@ -348,7 +349,8 @@ class _ChecklistItem extends ConsumerWidget {
                   final offer = ref.read(activeOfferProvider);
 
                   if (offer != null) {
-                    context.go('/taker-failed', extra: offer);
+                    context.go(flowEntryRoute(ref, '/taker-failed'),
+                        extra: offer);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

@@ -17,12 +17,48 @@ import 'coordinator_prefs_store.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
 
+/// Result of a reserve_offer RPC. Generic (yaml-driven) coordinators return
+/// the full offer json ([offer] non-null); legacy enum coordinators return
+/// only the reservation timestamp.
+typedef ReserveOfferResult = ({DateTime? reservedAt, Offer? offer});
+
+/// The taker's local reserved offer after a successful reserve: prefer the
+/// coordinator's full offer json when present (server truth: raw flow state,
+/// blik_received_at as the code-lifespan countdown base, updated_at), falling
+/// back to patching the listed offer for legacy enum coordinators.
+Offer reservedOfferFromResult(
+  Offer listed,
+  String takerId,
+  ReserveOfferResult result,
+) {
+  final remote = result.offer;
+  if (remote != null) {
+    var merged = remote;
+    if (merged.takerPubkey == null) {
+      merged = merged.copyWith(takerPubkey: takerId);
+    }
+    // Never lose the coordinator routing: the response json may omit or blank
+    // it, and follow-up RPCs (e.g. the TWINT code fetch) route by it.
+    if (merged.coordinatorPubkey.isEmpty ||
+        merged.coordinatorPubkey == 'unknown_coordinator') {
+      merged = merged.copyWith(coordinatorPubkey: listed.coordinatorPubkey);
+    }
+    return merged;
+  }
+  return listed.copyWith(
+    status: OfferStatus.reserved,
+    takerPubkey: takerId,
+    reservedAt: result.reservedAt,
+  );
+}
+
 /// Service for Nostr-based communication with coordinators
 class NostrService {
   /// Discovery relays — used ONLY to find coordinators (their info + NIP-65
   /// events) and to bootstrap NDK. All per-coordinator communication is routed
   /// to each coordinator's own relays (see [CoordinatorRegistry.relaysFor]).
   static const List<String> _defaultRelayUrls = kDiscoveryRelays;
+
 
   final KeyService _keyService;
   Ndk? _ndk;
@@ -524,7 +560,7 @@ class NostrService {
   }
 
   /// POST /offers/{offerId}/reserve
-  Future<DateTime?> reserveOffer(
+  Future<ReserveOfferResult> reserveOffer(
     String offerId,
     String takerId,
     String coordinatorPubkey, {
@@ -547,17 +583,26 @@ class NostrService {
 
     final response = await sendRequest(request, coordinatorPubkey);
     return _handleResponse(response, (result) {
-      // Enum coordinators return reserved_at as epoch milliseconds; generic
-      // (yaml-driven) coordinators return the full offer json with an ISO-8601
-      // string. Accept both.
+      // Generic (yaml-driven) coordinators answer with the full offer json —
+      // keep it: it carries server truth the flow UI needs (raw state,
+      // blik_received_at as the code-lifespan countdown base, updated_at).
+      // Enum coordinators return only {reserved_at: epoch-ms}.
+      Offer? offer;
+      if (result['id'] is String && result['status'] is String) {
+        try {
+          offer = Offer.fromJson(result);
+        } catch (_) {
+          offer = null;
+        }
+      }
       final raw = result['reserved_at'];
+      DateTime? reservedAt;
       if (raw is int) {
-        return DateTime.fromMillisecondsSinceEpoch(raw, isUtc: true);
+        reservedAt = DateTime.fromMillisecondsSinceEpoch(raw, isUtc: true);
+      } else if (raw is String) {
+        reservedAt = DateTime.tryParse(raw)?.toUtc();
       }
-      if (raw is String) {
-        return DateTime.tryParse(raw)?.toUtc();
-      }
-      return null;
+      return (reservedAt: reservedAt, offer: offer);
     });
   }
 

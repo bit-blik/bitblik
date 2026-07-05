@@ -525,6 +525,19 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     }
   }
 
+  /// On-demand sync of the in-memory active offer against the coordinator.
+  /// Used by flow-driven screens when a yaml state deadline passes without a
+  /// pushed status update (missed relay event): the coordinator has advanced
+  /// the state server-side, so fetch and apply it.
+  Future<void> reconcileActiveOfferNow() async {
+    final active = state;
+    if (active == null ||
+        OfferDbService.terminalStatuses.contains(active.status)) {
+      return;
+    }
+    await _reconcileActiveOfferIfNeeded(active);
+  }
+
   /// Revive wrongly/locally-cancelled offers and sync the active one. Guarded
   /// so overlapping connectivity events don't run it concurrently.
   Future<void> _reconcileAll() async {
@@ -716,13 +729,26 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         return;
       }
 
-      if (remoteStatus == localOffer.status) return; // Already in sync.
+      // Compare raw wire states: generic (yaml-driven) flow states such as
+      // `invalidTwint` all parse to the enum's `unknown`, so an enum compare
+      // would miss transitions between them (and copyWith without statusRaw
+      // would overwrite the real state with the literal 'unknown').
+      if (remoteStatusRaw == localOffer.statusRaw) return; // Already in sync.
 
       Logger.log.i(
         () =>
-            '[ActiveOfferNotifier] syncing active offer $remoteId: local=${localOffer.status.name} -> remote=${remoteStatus.name}',
+            '[ActiveOfferNotifier] syncing active offer $remoteId: local=${localOffer.statusRaw} -> remote=$remoteStatusRaw',
       );
-      final updated = localOffer.copyWith(id: remoteId, status: remoteStatus);
+      final updated = localOffer.copyWith(
+        id: remoteId,
+        status: remoteStatus,
+        statusRaw: remoteStatusRaw,
+        // Keep the yaml-timeout countdown bases in sync (from_field:
+        // updated_at default, code_received_at, and reserved_at).
+        updatedAt: hydrated.updatedAt,
+        blikReceivedAt: hydrated.blikReceivedAt,
+        reservedAt: hydrated.reservedAt,
+      );
       await OfferDbService().upsertOffer(updated);
 
       if (OfferDbService.terminalStatuses.contains(remoteStatus) &&
@@ -768,13 +794,14 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           final remoteId = remote['id']?.toString();
           if (remoteId == null) continue;
 
+          final remoteStatusRaw = remote['status']?.toString() ?? '';
+          if (remoteStatusRaw.isEmpty) continue;
           OfferStatus remoteStatus;
           try {
-            remoteStatus = OfferStatus.values.byName(
-              remote['status']?.toString() ?? '',
-            );
+            remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
           } catch (_) {
-            continue;
+            // Generic (yaml-driven) flow state — legit, kept via statusRaw.
+            remoteStatus = OfferStatus.unknown;
           }
           if (OfferDbService.terminalStatuses.contains(remoteStatus)) {
             continue;
@@ -783,6 +810,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           final revived = localOffer.copyWith(
             id: remoteId,
             status: remoteStatus,
+            statusRaw: remoteStatusRaw,
           );
           await OfferDbService().upsertOffer(revived);
           Logger.log.i(
@@ -878,7 +906,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         // Coordinator already funded this offer while local state still says
         // `created`. Persist whatever the coordinator says, but refuse to
         // cancel locally from the pre-funding flow.
-        final updated = current.copyWith(id: remoteId, status: remoteStatus);
+        final updated = current.copyWith(
+          id: remoteId,
+          status: remoteStatus,
+          statusRaw: remoteStatusRaw,
+        );
         await OfferDbService().upsertOffer(updated);
         state = updated;
         throw OfferAlreadyFundedException(remoteStatus);
@@ -1266,22 +1298,16 @@ final offerStatusSubscriptionManagerProvider = Provider<void>((ref) {
         // Ensure the update is for the current active offer.
         if (statusUpdate.offerId == current.id ||
             statusUpdate.paymentHash == current.holdInvoicePaymentHash) {
-          OfferStatus? newStatus;
-          try {
-            newStatus = OfferStatus.values.byName(statusUpdate.status);
-          } catch (e) {
-            Logger.log.e(
-              () => "Error parsing status string '${statusUpdate.status}': $e",
-            );
-          }
-
-          if (newStatus != null) {
-            Logger.log.d(
-              () =>
-                  "Offer ${current.id} status updated to: $newStatus. Updating active offer provider.",
-            );
-            activeOfferNotifier.applyStatusUpdate(statusUpdate);
-          }
+          // Do NOT gate on OfferStatus enum parsing: generic (yaml-driven)
+          // flow states (e.g. `invalidTwint`, `expiredTwint`, `takerCharged`)
+          // have no enum value — dropping them here left flow screens frozen
+          // on a stale state. applyStatusUpdate handles unknown statuses via
+          // statusRaw.
+          Logger.log.d(
+            () =>
+                "Offer ${current.id} status updated to: ${statusUpdate.status}. Updating active offer provider.",
+          );
+          activeOfferNotifier.applyStatusUpdate(statusUpdate);
         }
       });
     } else {
@@ -1870,6 +1896,21 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         _ref.read(apiServiceProvider).knownOffers.map((o) => o.id).toSet();
     final apiService = _ref.read(apiServiceProvider);
     _newOfferSub = apiService.offersStream.listen((offer) async {
+      // Public-event consistency trigger: the coordinator re-broadcasts the
+      // NIP-69 order on every state change. If the event concerns OUR active
+      // offer and its (coarse) status disagrees with the local state — e.g.
+      // it flipped back to pending/funded because the maker relisted and we
+      // were dropped as taker, and the targeted push was missed — pull
+      // coordinator truth. The reconcile is authoritative and idempotent; the
+      // public event is only the trigger.
+      final active = _ref.read(activeOfferProvider);
+      if (active != null &&
+          offer.id == active.id &&
+          offer.statusRaw != active.statusRaw) {
+        unawaited(
+          _ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow(),
+        );
+      }
       if (offer.status != OfferStatus.funded) return;
       if (!apiService.isEnabled(offer.coordinatorPubkey)) return;
       if (_seenOfferIds.contains(offer.id)) return;

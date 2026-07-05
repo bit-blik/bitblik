@@ -2,12 +2,27 @@ import 'package:bitblik_core/core.dart';
 
 import '../../i18n/gen/strings.g.dart';
 
+/// `takerCharged` -> `Taker Charged`, `invalidTwint` -> `Invalid Twint`, ...
+String humanizeFlowState(String state) {
+  final humanized = state
+      .replaceAllMapped(RegExp('([A-Z])'), (m) => ' ${m[1]}')
+      .replaceAll('_', ' ')
+      .trim();
+  return humanized.isEmpty
+      ? state
+      : '${humanized[0].toUpperCase()}${humanized.substring(1)}';
+}
+
 /// Localized label for an [OfferStatus]. [code] is the active payment system's
 /// code term (e.g. `BLIK`, `MB WAY`) injected into the code-related statuses.
+/// [statusRaw] recovers generic (yaml-driven) flow states that parse to the
+/// enum's `unknown` (e.g. `invalidTwint`) — they render humanized instead of
+/// "Unknown".
 String offerStatusLabel(
   Translations t,
   OfferStatus status, {
   required String code,
+  String? statusRaw,
 }) {
   switch (status) {
     case OfferStatus.created:
@@ -47,6 +62,11 @@ String offerStatusLabel(
     case OfferStatus.takerPaid:
       return t.offers.status.takerPaid;
     case OfferStatus.unknown:
+      if (statusRaw != null &&
+          statusRaw.isNotEmpty &&
+          statusRaw != OfferStatus.unknown.name) {
+        return humanizeFlowState(statusRaw);
+      }
       return t.offers.status.unknownStatus;
   }
 }

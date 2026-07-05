@@ -1,6 +1,6 @@
 part of 'coordinator_service.dart';
 
-/// Mutable accumulator for the atomic status-update write. Pre-commit effects
+/// Mutable accumulator for the atomic status-update write. Pre-commit actions
 /// populate it; the executor folds it into a single
 /// `updateOfferRawStatusIfCurrent` compare-and-set.
 class OfferWriteSpec {
@@ -11,14 +11,66 @@ class OfferWriteSpec {
   DateTime? takerChargedAt;
   DateTime? makerConfirmedAt;
   DateTime? settledAt;
+  DateTime? takerPaidAt;
   String? code;
   String? takerInvoice;
   String? takerLightningAddress;
+  int? takerFees;
+  String? failureReason;
   bool clearTakerFields = false;
+  bool preserveCodeOnClear = false;
+  final Map<String, dynamic> audit = {};
 }
 
-/// Context handed to each effect. `offer` is the pre-write snapshot; `write` is
-/// shared across the pre-commit effects of one transition.
+/// Definitive transition failure: the attempt itself completed and determined
+/// it cannot reach its normal target. The executor routes to `on_fail` when the
+/// transition declares one; otherwise the offer remains in its current state.
+class FlowTransitionFailure implements Exception {
+  final String reason;
+  final Map<String, dynamic>? auditExtra;
+
+  const FlowTransitionFailure(this.reason, {this.auditExtra});
+}
+
+/// One yaml action keyword (`do:` entry), implemented as a self-describing
+/// class: it declares its own [name] (== the yaml keyword == its filename under
+/// `services/actions/`). Instances are listed once in `actions/all_actions.dart`
+/// (the compile-time anchor — Dart AOT has no reflection to discover
+/// subclasses); everything else derives from that list, and flow validation
+/// exits the coordinator when a yml references an action with no
+/// implementation.
+abstract class FlowAction {
+  /// The yml keyword this action implements.
+  String get name;
+
+  Future<void> run(GenericOfferFlow flow, FlowEffectContext ctx);
+
+  /// Optional startup wiring checks for each yml occurrence of this action
+  /// (`do:` on [edge]). Returned problems abort coordinator startup.
+  List<String> validate(
+          FlowEngine engine, FlowState fromState, FlowTransition edge) =>
+      const [];
+}
+
+/// Registry built from [allFlowActions]; throws on duplicate names.
+final Map<String, FlowAction> _flowActionRegistry = () {
+  final m = <String, FlowAction>{};
+  for (final a in allFlowActions) {
+    if (m.containsKey(a.name)) {
+      throw StateError('Duplicate flow action registered: "${a.name}".');
+    }
+    m[a.name] = a;
+  }
+  return m;
+}();
+
+String? _cleanParam(Object? v) {
+  final s = (v as String?)?.trim();
+  return (s == null || s.isEmpty) ? null : s;
+}
+
+/// Context handed to each action. `offer` is the pre-write snapshot; `write`
+/// is shared across all actions of one transition attempt.
 class FlowEffectContext {
   final Offer offer;
   final FlowTransition? transition;
@@ -27,10 +79,6 @@ class FlowEffectContext {
   final bool isNewTaker;
   final OfferWriteSpec write;
   final DateTime now;
-
-  /// Set by an effect (start_payout) that takes over publishing/advancing, so
-  /// the executor skips its default publish + timer-arm tail.
-  bool stop = false;
 
   FlowEffectContext({
     required this.offer,
@@ -44,10 +92,9 @@ class FlowEffectContext {
 }
 
 /// Generic, yaml-driven offer flow. The executor is state-name agnostic: every
-/// state-specific behaviour comes from the flow definition (transition `effects`
-/// and state `on_entry` effect keywords, resolved against [_effects]) — no
-/// `OfferStatus` constants. On reaching a state whose `on_entry` runs
-/// `start_payout` it hands off to the shared Lightning payout tail.
+/// state-specific behaviour comes from the flow definition (transition `do:`
+/// action keywords, resolved against [_flowActionRegistry]) — no `OfferStatus`
+/// constants.
 ///
 /// `part of` the coordinator library so it reaches shared services via `_c`.
 class GenericOfferFlow implements OfferFlow {
@@ -56,33 +103,6 @@ class GenericOfferFlow implements OfferFlow {
 
   final Map<String, Timer> _stateTimers = {};
   static const Duration _timeoutRetryBackoff = Duration(seconds: 30);
-
-  /// Effects that must run BEFORE the atomic status write (they shape it).
-  static const Set<String> _preCommitEffects = {
-    'assign_taker',
-    'clear_taker_fields',
-    'validate_code',
-    'set_new_code',
-    'resolve_taker_invoice',
-    'accept_taker_invoice',
-    'stamp_reserved_at',
-    'stamp_code_received_at',
-    'stamp_taker_charged_at',
-    'stamp_maker_confirmed_at',
-  };
-
-  /// Post-commit effects the registry handles (side effects + best-effort
-  /// no-ops). Used (with [_preCommitEffects]) to validate the yaml at startup.
-  static const Set<String> _postCommitEffects = {
-    'settle_hold_invoice',
-    'cancel_hold_invoice',
-    'start_payout',
-    'reveal_code_to_taker',
-    'send_offer_notifications',
-    'send_twint_code_to_taker',
-    'notify_maker_of_charge',
-    'request_taker_invoice',
-  };
 
   static const Set<String> _validNip69 = {
     'pending',
@@ -101,7 +121,8 @@ class GenericOfferFlow implements OfferFlow {
   late final Set<String> _handledEvents = {
     for (final s in _engine.definition.states.values)
       for (final t in s.transitions)
-        if (t.trigger == FlowTriggerType.userAction && t.event != null) t.event!,
+        if (t.trigger == FlowTriggerType.userAction && t.event != null)
+          t.event!,
   };
 
   @override
@@ -112,65 +133,39 @@ class GenericOfferFlow implements OfferFlow {
   @override
   void validateDefinition() {
     final def = _engine.definition;
-    final known = {..._preCommitEffects, ..._postCommitEffects};
     final problems = <String>[];
+
+    // Every yaml action must have a registered [FlowAction] implementation;
+    // each action may also contribute its own wiring checks. A missing
+    // implementation aborts coordinator startup.
+    void checkActions(String label, Iterable<String> names, FlowState state,
+        FlowTransition edge) {
+      for (final a in names) {
+        final impl = _flowActionRegistry[a];
+        if (impl == null) {
+          problems.add('$label: unknown action "$a"');
+        } else {
+          problems.addAll(impl.validate(_engine, state, edge));
+        }
+      }
+    }
 
     for (final s in def.states.values) {
       if (s.nip69 != null && !_validNip69.contains(s.nip69)) {
         problems.add('state "${s.name}": invalid nip69 "${s.nip69}" '
             '(expected one of $_validNip69)');
       }
-      for (final e in s.onEntryEffects) {
-        if (!known.contains(e)) {
-          problems.add('state "${s.name}" on_entry: unknown effect "$e"');
-        }
+      final autoCount =
+          s.transitions.where((t) => t.trigger == FlowTriggerType.auto).length;
+      if (autoCount > 1) {
+        problems.add(
+            'state "${s.name}": schema v2 allows at most one auto transition');
       }
       for (final t in s.transitions) {
         final label = '${s.name} -[${t.event ?? t.trigger.name}]-> ${t.target}';
-        // `auto` transitions are documentation of the payout chain; the executor
-        // drives them via the payout driver, not the effect registry, so their
-        // effects/action are not validated against it.
-        if (t.trigger != FlowTriggerType.auto) {
-          for (final e in t.effects) {
-            if (!known.contains(e)) {
-              problems.add('$label: unknown effect "$e"');
-            }
-          }
-        }
+        checkActions(label, t.actions, s, t);
         if (t.trigger == FlowTriggerType.timeout && t.durationSeconds == null) {
-          problems.add('$label: timeout transition has no duration_seconds');
-        }
-      }
-    }
-
-    // Payout auto-wiring: the start_payout state must chain
-    // settle -> paying -> {payment_success, payment_failed} via auto edges.
-    FlowState? payoutState;
-    for (final s in def.states.values) {
-      if (s.onEntryEffects.contains('start_payout')) {
-        payoutState = s;
-        break;
-      }
-    }
-    if (payoutState != null) {
-      final settle = _autoTarget(payoutState.name);
-      if (settle == null) {
-        problems.add('start_payout state "${payoutState.name}" has no auto '
-            'transition to a settle state');
-      } else {
-        final paying = _autoTarget(settle);
-        if (paying == null) {
-          problems.add('settle state "$settle" has no auto transition to a '
-              'paying state');
-        } else {
-          if (_autoTargetByEvent(paying, 'payment_success') == null) {
-            problems.add('paying state "$paying" missing auto '
-                'payment_success target');
-          }
-          if (_autoTargetByEvent(paying, 'payment_failed') == null) {
-            problems.add('paying state "$paying" missing auto '
-                'payment_failed target');
-          }
+          problems.add('$label: timeout transition has no after');
         }
       }
     }
@@ -188,7 +183,8 @@ class GenericOfferFlow implements OfferFlow {
       String method, Map<String, dynamic> params, String userPubkey,
       {String? clientVersion}) async {
     final offerId = params['offer_id'] as String?;
-    if (offerId == null) throw Exception('Missing required parameter: offer_id');
+    if (offerId == null)
+      throw Exception('Missing required parameter: offer_id');
     final offer = await _c._dbService.getOfferById(offerId);
     if (offer == null) throw Exception('Offer not found');
 
@@ -233,7 +229,18 @@ class GenericOfferFlow implements OfferFlow {
       return {t.returns!: _returnableField(updated, t.returns!)};
     }
 
-    final json = updated.toRpcJson();
+    // Taker-facing responses omit maker-private fields (maker pubkey, hold
+    // invoice, maker fees) — takers must not be able to harvest maker
+    // identities by reserving offers. The code itself goes to the ASSIGNED
+    // taker in maker-provides-code flows (TWINT): reserving entitles them to
+    // it (it's what they must pay), same gate as get_offer_details.
+    final revealCodeToTaker = t.actor == FlowActor.taker &&
+        _c._paymentSystem.makerProvidesCodeAtOfferCreation &&
+        updated.takerPubkey == userPubkey;
+    final json = updated.toRpcJson(
+      includeBlikCode: revealCodeToTaker,
+      forTaker: t.actor == FlowActor.taker,
+    );
     // toRpcJson serializes the enum status (unknown for generic-only states);
     // broadcast the raw state instead, matching _publishStatusUpdate.
     json['status'] = updated.statusRaw;
@@ -262,7 +269,8 @@ class GenericOfferFlow implements OfferFlow {
       throw Exception('Maker mismatch for get_blik on offer ${offer.id}');
     }
     final code = offer.blikCode;
-    if (code == null) throw Exception('No code available for offer ${offer.id}');
+    if (code == null)
+      throw Exception('No code available for offer ${offer.id}');
     final dst = _eventTargetState(kRpcGetBlik);
     if (dst == null || offer.statusRaw != dst) {
       throw Exception(
@@ -293,13 +301,17 @@ class GenericOfferFlow implements OfferFlow {
             ? userPubkey != offer.makerPubkey
             : userPubkey == offer.takerPubkey;
       case FlowActor.coordinator:
+        // Coordinator-actor RPCs (e.g. dispute resolutions) must be signed by
+        // the coordinator's own key — otherwise any client could fire them.
+        final coordinatorPubkey = _c._nostrService?.coordinatorPubkey;
+        return coordinatorPubkey != null && userPubkey == coordinatorPubkey;
       case FlowActor.server:
       case null:
         return true;
     }
   }
 
-  // ─── transition application (shared by user-action + timeout + advance) ──
+  // ─── transition application (shared by user-action + timeout + auto) ─────
 
   Future<bool> _applyTransition(
     Offer offer,
@@ -320,8 +332,18 @@ class GenericOfferFlow implements OfferFlow {
       now: _c._clock.now().toUtc(),
     );
 
-    for (final e in t.effects) {
-      if (_preCommitEffects.contains(e)) await _runEffect(e, ctx);
+    var targetState = t.target;
+    try {
+      for (final a in t.actions) {
+        await _runAction(a, ctx);
+      }
+    } on FlowTransitionFailure catch (e) {
+      if (t.onFailTarget == null) rethrow;
+      targetState = t.onFailTarget!;
+      ctx.write.failureReason ??= e.reason;
+      if (e.auditExtra != null) {
+        ctx.write.audit.addAll(e.auditExtra!);
+      }
     }
 
     final w = ctx.write;
@@ -329,14 +351,17 @@ class GenericOfferFlow implements OfferFlow {
     // plus the code for get_blik which serves it without changing it).
     final auditCtx = <String, dynamic>{
       'client': clientVersion,
-      'blik_code':
-          w.code ?? (t.returns == 'blik_code' ? offer.blikCode : null),
+      'blik_code': w.code ?? (t.returns == 'blik_code' ? offer.blikCode : null),
       'taker_invoice': w.takerInvoice,
       'taker_lightning_address': w.takerLightningAddress,
+      'taker_fees': w.takerFees,
+      'maker_invoice': _cleanParam(params['maker_invoice']),
+      'failure_reason': w.failureReason,
+      ...w.audit,
     };
     final applied = await _c._dbService.updateOfferRawStatusIfCurrent(
       offer.id,
-      t.target,
+      targetState,
       expectedCurrentStatuses: [offer.statusRaw],
       expectedTakerPubkey: w.expectedTakerPubkey,
       takerPubkey: w.takerPubkey,
@@ -344,335 +369,141 @@ class GenericOfferFlow implements OfferFlow {
       takerChargedAt: w.takerChargedAt,
       makerConfirmedAt: w.makerConfirmedAt,
       settledAt: w.settledAt,
+      takerPaidAt: w.takerPaidAt,
       code: w.code,
       codeReceivedAt: w.codeReceivedAt,
       takerInvoice: w.takerInvoice,
       takerLightningAddress: w.takerLightningAddress,
+      takerFees: w.takerFees,
+      failureReason: w.failureReason,
       clearTakerFields: w.clearTakerFields,
+      preserveCodeOnClear: w.preserveCodeOnClear,
       transitionMeta: StateTransitionMeta(
         trigger: trigger,
         event: t.event,
         actor: actorName,
         actorPubkey: actorPubkey.isEmpty ? null : actorPubkey,
-        extra: _meta(t, t.target, auditCtx),
+        extra: _meta(t, auditCtx),
       ),
     );
     if (!applied) return false;
 
     _cancelTimer(offer.id);
     final updated = await _c._dbService.getOfferById(offer.id);
-    if (updated != null) await _enterState(updated, t);
+    if (updated != null) await _enterState(updated);
     return true;
   }
 
-  /// Post-commit: run the transition's post effects + the new state's on_entry
-  /// effects (deduped), then publish/broadcast and arm the timer — unless an
-  /// effect took over (start_payout).
-  Future<void> _enterState(Offer offer, FlowTransition? t) async {
+  /// After a successful commit: publish/broadcast, arm the timer and drive any
+  /// detached `auto` transition leaving the new state.
+  Future<void> _enterState(Offer offer) async {
     final state = _engine.definition.state(offer.statusRaw);
-    final effects = <String>{
-      if (t != null)
-        for (final e in t.effects)
-          if (!_preCommitEffects.contains(e)) e,
-      ...?state?.onEntryEffects,
-    };
+
+    await _c._publishStatusUpdate(offer);
+    await _c._nostrService?.broadcastNip69OrderFromOffer(offer);
+    await _runStateActions(offer);
+
+    if (state?.terminal ?? false) return;
+    _armTimer(offer);
+    _driveAuto(offer);
+  }
+
+  Future<void> _runStateActions(Offer offer) async {
+    final state = _engine.definition.state(offer.statusRaw);
+    if (state == null || state.actions.isEmpty) return;
 
     final ctx = FlowEffectContext(
       offer: offer,
-      transition: t,
+      transition: null,
       params: const {},
       userPubkey: '',
       isNewTaker: offer.takerPubkey == null,
       write: OfferWriteSpec(),
       now: _c._clock.now().toUtc(),
     );
-    for (final e in effects) {
-      await _runEffect(e, ctx);
-      if (ctx.stop) return; // start_payout handled publish + handoff
+    for (final actionName in state.actions) {
+      try {
+        await _runAction(actionName, ctx);
+      } catch (e, st) {
+        AppLogger.warning(
+            'Generic state action "$actionName" failed for offer ${offer.id} '
+            'in state "${offer.statusRaw}": $e',
+            offerId: offer.id,
+            error: e,
+            stackTrace: st);
+      }
     }
-
-    await _c._publishStatusUpdate(offer);
-    await _c._nostrService?.broadcastNip69OrderFromOffer(offer);
-
-    if (state?.terminal ?? false) return;
-    _armTimer(offer);
   }
 
-  /// Metadata recorded in offer_state_history: the transition's effects + the
-  /// destination state's on_entry effects, plus any audit [ctx] (null entries
-  /// dropped). [ctx] carries event-relevant context — blik code, taker invoice,
-  /// amounts, fees, payment preimage, failure reason, etc.
-  Map<String, dynamic>? _meta(FlowTransition? t, String targetState,
-      [Map<String, dynamic>? ctx]) {
+  /// Starts the state's detached `auto` transition, if present.
+  void _driveAuto(Offer offer) {
+    final state = _engine.definition.state(offer.statusRaw);
+    if (state == null) return;
+    for (final tr in state.transitions) {
+      if (tr.trigger == FlowTriggerType.auto) {
+        unawaited(_runDetachedAuto(offer.id, offer.statusRaw, tr));
+        return;
+      }
+    }
+  }
+
+  Future<void> _runDetachedAuto(
+      String offerId, String expectedState, FlowTransition t) async {
+    final offer = await _c._dbService.getOfferById(offerId);
+    if (offer == null || offer.statusRaw != expectedState) return;
+    try {
+      await _applyTransition(offer, t, const {},
+          trigger: 'auto', actorName: 'coordinator');
+    } catch (e, st) {
+      AppLogger.warning(
+          'Generic auto transition failed for offer $offerId '
+          '(${offer.statusRaw} -> ${t.target}): $e',
+          offerId: offerId,
+          error: e,
+          stackTrace: st);
+    }
+  }
+
+  /// Metadata recorded in offer_state_history: transition `do:` actions plus
+  /// any audit [ctx] (null entries dropped). [ctx] carries event-relevant
+  /// context — blik code, invoices, fees, payment preimage, failure reason, etc.
+  Map<String, dynamic>? _meta(FlowTransition? t, [Map<String, dynamic>? ctx]) {
     final m = <String, dynamic>{};
-    final eff = t?.effects ?? const [];
-    if (eff.isNotEmpty) m['effects'] = eff;
-    final onEntry = _engine.definition.state(targetState)?.onEntryEffects;
-    if (onEntry != null && onEntry.isNotEmpty) m['on_entry'] = onEntry;
+    final acts = t?.actions ?? const [];
+    if (acts.isNotEmpty) m['do'] = acts;
+    if (t?.onFailTarget != null) m['on_fail'] = t!.onFailTarget;
     ctx?.forEach((k, v) {
       if (v != null) m[k] = v;
     });
     return m.isEmpty ? null : m;
   }
 
-  // ─── effect registry ────────────────────────────────────────────────────
+  // ─── action registry ─────────────────────────────────────────────────────
 
-  Future<void> _runEffect(String name, FlowEffectContext ctx) async {
-    final offer = ctx.offer;
-    final w = ctx.write;
-    switch (name) {
-      // ── pre-commit (shape the write) ──
-      case 'assign_taker':
-        if (ctx.isNewTaker) {
-          w.takerPubkey = ctx.userPubkey;
-        } else {
-          w.expectedTakerPubkey = offer.takerPubkey;
-        }
-        break;
-      case 'clear_taker_fields':
-        w.clearTakerFields = true;
-        break;
-      case 'stamp_reserved_at':
-        w.reservedAt = ctx.now.add(const Duration(seconds: 1));
-        break;
-      case 'stamp_code_received_at':
-        w.codeReceivedAt = ctx.now;
-        break;
-      case 'stamp_taker_charged_at':
-        w.takerChargedAt = ctx.now;
-        break;
-      case 'stamp_maker_confirmed_at':
-        w.makerConfirmedAt = ctx.now;
-        break;
-      case 'validate_code':
-        {
-          final provided = _c._paymentSystem.makerProvidesCodeAtOfferCreation
-              ? offer.blikCode
-              : _clean(ctx.params['blik_code']);
-          if (provided == null || !_c._paymentSystem.isValidCode(provided)) {
-            throw Exception('Invalid ${_c._paymentSystem.codeLabel} code.');
-          }
-          w.code = provided;
-        }
-        break;
-      case 'set_new_code':
-        {
-          // Maker supplies a fresh code from the params (e.g. enter_new_twint
-          // re-lists an expired offer). Unlike validate_code this always reads
-          // the param, even for maker-provides-code flows where the offer still
-          // holds the OLD code.
-          final provided = _clean(ctx.params['blik_code']);
-          if (provided == null || !_c._paymentSystem.isValidCode(provided)) {
-            throw Exception('Invalid ${_c._paymentSystem.codeLabel} code.');
-          }
-          w.code = provided;
-        }
-        break;
-      case 'resolve_taker_invoice':
-        {
-          final lnAddr = _clean(ctx.params['taker_lightning_address']);
-          var inv = _clean(ctx.params['taker_invoice']);
-          if (inv == null) {
-            if (lnAddr == null) {
-              throw Exception(
-                  'Missing taker invoice and lightning address for submit.');
-            }
-            inv = await _c._resolveLnurlPay(
-                lnAddr, _c._expectedTakerNetAmountSats(offer));
-            if (inv == null || inv.isEmpty) {
-              throw Exception('Could not resolve a taker invoice from $lnAddr.');
-            }
-          } else {
-            _c._validateTakerInvoiceAmount(offer, inv, action: 'submit_blik');
-          }
-          w.takerInvoice = inv;
-          w.takerLightningAddress = lnAddr;
-        }
-        break;
-      case 'accept_taker_invoice':
-        w.takerInvoice = _clean(ctx.params['taker_invoice']);
-        w.takerLightningAddress = _clean(ctx.params['taker_lightning_address']);
-        break;
-
-      // ── post-commit (side effects) ──
-      case 'settle_hold_invoice':
-        if (_c._paymentBackend != null && offer.holdInvoicePreimage != null) {
-          try {
-            await _c._paymentBackend!
-                .settleInvoice(preimageHex: offer.holdInvoicePreimage!);
-          } catch (e) {
-            AppLogger.warning(
-                'Generic settle_hold_invoice failed for ${offer.id}: $e',
-                offerId: offer.id);
-          }
-        }
-        break;
-      case 'cancel_hold_invoice':
-        if (_c._paymentBackend != null &&
-            offer.holdInvoicePaymentHash != null) {
-          try {
-            await _c._paymentBackend!
-                .cancelInvoice(paymentHashHex: offer.holdInvoicePaymentHash!);
-          } catch (e) {
-            AppLogger.warning(
-                'Generic cancel_hold_invoice failed for ${offer.id}: $e',
-                offerId: offer.id);
-          }
-        }
-        break;
-      case 'start_payout':
-        await _startPayout(offer);
-        ctx.stop = true;
-        break;
-
-      // Best-effort / informational no-ops; clients poll get_offer_details.
-      case 'reveal_code_to_taker':
-      case 'send_offer_notifications':
-      case 'send_twint_code_to_taker':
-      case 'notify_maker_of_charge':
-      case 'request_taker_invoice':
-        break;
-      default:
-        AppLogger.warning('Generic flow: unknown effect "$name".');
+  Future<void> _runAction(String name, FlowEffectContext ctx) async {
+    final action = _flowActionRegistry[name];
+    if (action == null) {
+      AppLogger.warning('Generic flow: unknown action "$name".');
+      return;
     }
+    await action.run(this, ctx);
   }
 
-  String? _clean(Object? v) {
-    final s = (v as String?)?.trim();
-    return (s == null || s.isEmpty) ? null : s;
-  }
-
-  /// Settle + hand off to the shared Lightning payout tail. Advances to the
-  /// `auto` target of the current state (the settle state), read from the flow.
-  Future<void> _startPayout(Offer offer) async {
-    if (_c._paymentBackend != null && offer.holdInvoicePreimage != null) {
-      try {
-        await _c._paymentBackend!
-            .settleInvoice(preimageHex: offer.holdInvoicePreimage!);
-      } catch (e) {
-        AppLogger.warning('Generic payout settle failed for ${offer.id}: $e',
-            offerId: offer.id);
-        return;
-      }
-    }
-    final settleTarget = _autoTarget(offer.statusRaw);
-    if (settleTarget == null) return;
-    await _c._publishStatusUpdate(offer); // current (maker-confirmed) state
-    final ok = await _c._dbService.updateOfferRawStatusIfCurrent(
-      offer.id,
-      settleTarget,
-      expectedCurrentStatuses: [offer.statusRaw],
-      settledAt: _c._clock.now().toUtc(),
-      transitionMeta: StateTransitionMeta(
-        trigger: 'auto',
-        event: 'start_payout',
-        actor: 'coordinator',
-        extra: _meta(null, settleTarget, {
-          'amount_sats': offer.amountSats,
-          'taker_fees': _c._effectiveTakerFeeSats(offer),
-        }),
-      ),
-    );
-    if (!ok) return;
-    final settled = await _c._dbService.getOfferById(offer.id);
-    if (settled != null) await _c._publishStatusUpdate(settled);
-    // Generic, yaml-driven payout tail (settled -> payingTaker -> takerPaid /
-    // takerPaymentFailed). Reuses the shared payment primitive; legacy keeps its
-    // own _payTakerAsync untouched.
-    Future.microtask(() => _runPayout(offer.id));
-  }
-
-  /// settled -> payingTaker -> takerPaid | takerPaymentFailed, with all target
-  /// state names read from the flow's `auto` transitions (no OfferStatus).
-  Future<void> _runPayout(String offerId) async {
-    try {
-      final offer = await _c._dbService.getOfferById(offerId);
-      if (offer == null) return;
-      final settledState = offer.statusRaw;
-      final payingTarget = _autoTarget(settledState);
-      if (payingTarget == null) return;
-      final setupFailTarget =
-          _autoTargetByEvent(settledState, 'payout_setup_failed');
-      final paidTarget = _autoTargetByEvent(payingTarget, 'payment_success');
-      final payFailTarget = _autoTargetByEvent(payingTarget, 'payment_failed');
-
-      final takerFees = _c._effectiveTakerFeeSats(offer);
-      final netAmountSats = offer.amountSats - takerFees;
-
-      // Ensure a taker invoice (resolve from LN address if needed).
-      var invoice = offer.takerInvoice;
-      if (invoice == null || invoice.isEmpty) {
-        final lnAddr = offer.takerLightningAddress;
-        if (lnAddr == null || lnAddr.isEmpty) {
-          await _failPayout(offer.id, setupFailTarget, settledState,
-              'Missing both taker invoice and Lightning Address');
-          return;
-        }
-        invoice = await _c._resolveLnurlPay(lnAddr, netAmountSats);
-        if (invoice == null || invoice.isEmpty) {
-          await _failPayout(offer.id, setupFailTarget, settledState,
-              'Failed to get invoice from lightning address (LNURL resolution failed)');
-          return;
-        }
-        await _c._dbService.updateTakerInvoice(offer.id, invoice);
-      }
-      _c._validateTakerInvoiceAmount(offer, invoice, action: 'pay_taker');
-
-      // settled -> payingTaker
-      final moved = await _c._dbService.updateOfferRawStatusIfCurrent(
-        offer.id,
-        payingTarget,
-        expectedCurrentStatuses: [settledState],
-        transitionMeta: StateTransitionMeta(
-          trigger: 'auto',
-          event: 'send_payment',
-          actor: 'coordinator',
-          extra: _meta(null, payingTarget, {
-            'net_amount_sats': netAmountSats,
-            'taker_fees': takerFees,
-            'taker_invoice': invoice,
-          }),
-        ),
-      );
-      if (!moved) return;
-      final paying = await _c._dbService.getOfferById(offer.id);
-      if (paying != null) await _c._publishStatusUpdate(paying);
-
-      final feeLimitSat = (offer.takerFees! * kTakerFeeLimitFactor).ceil();
-      final res =
-          await _c._attemptTakerPayment(invoice, netAmountSats, feeLimitSat);
-
-      if (res.ok) {
-        if (paidTarget == null) return;
-        await _markPaid(offer.id, payingTarget, paidTarget, takerFees,
-            res.result?.feeSat ?? 0,
-            preimage: res.result?.paymentPreimage);
-      } else {
-        await _failPayout(offer.id, payFailTarget, payingTarget,
-            res.error ?? 'Payment failed');
-      }
-    } catch (e, st) {
-      AppLogger.warning('Generic payout failed for offer $offerId: $e',
-          offerId: offerId, error: e, stackTrace: st);
-    }
-  }
-
-  /// Finalize a successful taker payment: [fromState] -> [paidState], record
-  /// fees, publish/broadcast, clean up. Shared by the live payout and the
-  /// startup reconciliation.
-  Future<void> _markPaid(String offerId, String fromState, String paidState,
-      int takerFees, int feeSat,
+  /// Finalize a reconciled successful taker payment from the payout-failed
+  /// state into the send_payment transition's success target.
+  Future<void> _markPaid(String offerId, String fromState,
+      FlowTransition sendPayment, int takerFees, int feeSat,
       {String? preimage}) async {
     await _c._dbService.updateOfferRawStatusIfCurrent(
       offerId,
-      paidState,
+      sendPayment.target,
       expectedCurrentStatuses: [fromState],
+      takerPaidAt: _c._clock.now().toUtc(),
       takerFees: takerFees,
       transitionMeta: StateTransitionMeta(
         trigger: 'auto',
-        event: 'payment_success',
         actor: 'coordinator',
-        extra: _meta(null, paidState, {
+        extra: _meta(sendPayment, {
           'taker_fees': takerFees,
           'fee_sats': feeSat,
           'preimage': preimage,
@@ -688,41 +519,18 @@ class GenericOfferFlow implements OfferFlow {
     await _c._deleteTelegramOfferMessages(offerId);
   }
 
-  Future<void> _failPayout(
-      String offerId, String? target, String fromState, String reason) async {
-    if (target == null) return;
-    await _c._dbService.updateOfferRawStatusIfCurrent(
-      offerId,
-      target,
-      expectedCurrentStatuses: [fromState],
-      failureReason: reason,
-      transitionMeta: StateTransitionMeta(
-        trigger: 'auto',
-        event: 'payment_failed',
-        actor: 'coordinator',
-        extra: _meta(null, target, {'failure_reason': reason}),
-      ),
-    );
-    final failed = await _c._dbService.getOfferById(offerId);
-    if (failed != null) await _c._publishStatusUpdate(failed);
-  }
-
-  /// Target of the FIRST `auto` transition leaving [state], if any.
-  String? _autoTarget(String state) {
-    final s = _engine.definition.state(state);
-    if (s == null) return null;
-    for (final t in s.transitions) {
-      if (t.trigger == FlowTriggerType.auto) return t.target;
-    }
-    return null;
-  }
-
-  /// Target of the `auto` transition leaving [state] tagged with [event].
-  String? _autoTargetByEvent(String state, String event) {
-    final s = _engine.definition.state(state);
-    if (s == null) return null;
-    for (final t in s.transitions) {
-      if (t.trigger == FlowTriggerType.auto && t.event == event) return t.target;
+  ({String payingState, String failedState, FlowTransition transition})?
+      _sendPaymentTail() {
+    for (final s in _engine.definition.states.values) {
+      for (final t in s.transitions) {
+        if (t.actions.contains('send_payment') && t.onFailTarget != null) {
+          return (
+            payingState: s.name,
+            failedState: t.onFailTarget!,
+            transition: t,
+          );
+        }
+      }
     }
     return null;
   }
@@ -799,7 +607,7 @@ class GenericOfferFlow implements OfferFlow {
         event: 'create_offer',
         actor: FlowActor.maker.name,
         actorPubkey: offer.makerPubkey,
-        extra: _meta(null, offer.statusRaw, {
+        extra: _meta(null, {
           'client': offer.clientVersion,
           'amount_sats': offer.amountSats,
           'maker_fees': offer.makerFees,
@@ -811,6 +619,7 @@ class GenericOfferFlow implements OfferFlow {
         }),
       ),
     );
+    unawaited(_runStateActions(offer));
     _armTimer(offer);
   }
 
@@ -831,6 +640,10 @@ class GenericOfferFlow implements OfferFlow {
         _armTimer(o);
         armed++;
       }
+      // Resume any auto chain interrupted by a crash (e.g. stuck in
+      // makerConfirmed before the settle edge ran, or in payingTaker before
+      // the detached send_payment attempt completed).
+      _driveAuto(o);
     }
     AppLogger.info(
         'FLOW ENGINE: generic startup recovery armed $armed timer(s) across '
@@ -845,18 +658,17 @@ class GenericOfferFlow implements OfferFlow {
   /// settled leaves the offer stuck in the payment-failed state). Re-check the
   /// wallet for every offer in that state and finalize the ones that paid.
   Future<void> _recoverFailedPayouts() async {
-    final failedState = _eventTargetState('payment_failed');
-    final paidState = _eventTargetState('payment_success');
-    if (failedState == null || paidState == null) return;
-    final offers = await _c._dbService.getOffersByRawStatus(failedState);
+    final tail = _sendPaymentTail();
+    if (tail == null) return;
+    final offers = await _c._dbService.getOffersByRawStatus(tail.failedState);
     var reconciled = 0;
     for (final o in offers) {
       final invoice = o.takerInvoice;
       if (invoice == null || invoice.isEmpty) continue;
       PayInvoiceResult? rec;
       try {
-        rec = await _c._paymentBackend?.reconcileOutgoingPayment(
-            invoice: invoice);
+        rec = await _c._paymentBackend
+            ?.reconcileOutgoingPayment(invoice: invoice);
       } catch (e) {
         AppLogger.warning(
             'Generic startup payout reconcile failed for offer ${o.id}: $e',
@@ -864,7 +676,7 @@ class GenericOfferFlow implements OfferFlow {
         continue;
       }
       if (rec != null && rec.isSuccess) {
-        await _markPaid(o.id, failedState, paidState,
+        await _markPaid(o.id, tail.failedState, tail.transition,
             _c._effectiveTakerFeeSats(o), rec.feeSat ?? 0);
         reconciled++;
         AppLogger.info(
@@ -875,7 +687,7 @@ class GenericOfferFlow implements OfferFlow {
     }
     if (reconciled > 0) {
       AppLogger.info(
-          'FLOW ENGINE: reconciled $reconciled stale $failedState offer(s) to '
+          'FLOW ENGINE: reconciled $reconciled stale ${tail.failedState} offer(s) to '
           'paid on startup.');
     }
   }

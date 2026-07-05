@@ -2,16 +2,8 @@ import 'dart:async';
 import 'dart:io' show Platform; // Import Platform
 
 import 'package:app_links/app_links.dart';
-import 'package:bitblik/src/screens/maker_flow/maker_confirm_payment_screen.dart';
-import 'package:bitblik/src/screens/maker_flow/maker_invalid_blik_screen.dart';
 import 'package:bitblik/src/screens/maker_flow/maker_pay_invoice_screen.dart';
-import 'package:bitblik/src/screens/maker_flow/maker_success_screen.dart';
-import 'package:bitblik/src/screens/maker_flow/maker_wait_for_blik_screen.dart';
-import 'package:bitblik/src/screens/maker_flow/maker_wait_taker_screen.dart';
 import 'package:bitblik/src/flow/flow_screen.dart';
-import 'package:bitblik/src/screens/taker_flow/taker_invalid_blik_screen.dart';
-import 'package:bitblik/src/screens/taker_flow/taker_payment_failed_screen.dart';
-import 'package:bitblik/src/screens/taker_flow/taker_payment_process_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -44,7 +36,6 @@ import 'src/screens/coordinator_management_screen.dart';
 import 'src/screens/display_settings_screen.dart';
 import 'src/screens/faq_screen.dart'; // Import the FAQ screen
 import 'src/screens/maker_flow/maker_amount_form.dart';
-import 'src/screens/maker_flow/maker_conflict_screen.dart'; // Import the maker conflict screen
 import 'src/screens/local_offer_details_screen.dart';
 import 'src/screens/my_offers_screen.dart';
 import 'src/screens/neko_management_screen.dart';
@@ -54,9 +45,6 @@ import 'src/screens/offer_creation_settings_screen.dart';
 import 'src/screens/role_selection_screen.dart';
 import 'src/screens/settings_screen.dart';
 import 'src/screens/notification_settings_screen.dart';
-import 'src/screens/taker_flow/taker_conflict_screen.dart'; // Import the taker conflict screen
-import 'src/screens/taker_flow/taker_submit_blik_screen.dart';
-import 'src/screens/taker_flow/taker_wait_confirmation_screen.dart';
 import 'src/screens/wallet_details_screen.dart';
 import 'src/screens/wallet_screen.dart';
 import 'src/widgets/relay_dots.dart';
@@ -137,35 +125,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/pay',
             builder: (context, state) => const MakerPayInvoiceScreen(),
           ),
-          GoRoute(
-            path: '/wait-taker',
-            builder: (context, state) => const MakerWaitTakerScreen(),
-          ),
           // Single flow-driven screen for generic (yaml) flows (TWINT). Renders
           // the body for the active offer's raw state + the user's role and
           // re-renders as the coordinator advances the state.
           GoRoute(
             path: '/flow',
             builder: (context, state) => const FlowScreen(),
-          ),
-          GoRoute(
-            path: '/wait-blik',
-            builder: (context, state) => const MakerWaitForBlikScreen(),
-          ),
-          GoRoute(
-            path: '/confirm-blik',
-            builder: (context, state) => const MakerConfirmPaymentScreen(),
-          ),
-          GoRoute(
-            path: '/maker-success',
-            builder: (context, state) {
-              if (state.extra == null) {
-                context.go("/");
-                return Container();
-              } else {
-                return MakerSuccessScreen(completedOffer: state.extra as Offer);
-              }
-            },
           ),
           GoRoute(
             path: '/coordinators',
@@ -214,84 +179,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/neko-management',
             builder: (context, state) => const NekoManagementScreen(),
-          ),
-          GoRoute(
-            path: '/submit-blik',
-            builder: (context, state) {
-              if (state.extra == null) {
-                context.go("/");
-                return Container();
-              } else {
-                return TakerSubmitBlikScreen(
-                  initialOffer: state.extra as Offer,
-                );
-              }
-            },
-          ),
-          GoRoute(
-            path: '/wait-confirmation',
-            builder: (context, state) {
-              if (state.extra == null) {
-                context.go("/");
-                return Container();
-              } else {
-                return TakerWaitConfirmationScreen(offer: state.extra as Offer);
-              }
-            },
-          ),
-          GoRoute(
-            path: '/taker-failed',
-            builder: (context, state) {
-              if (state.extra == null) {
-                context.go("/");
-                return Container();
-              } else {
-                return TakerPaymentFailedScreen(offer: state.extra as Offer);
-              }
-            },
-          ),
-          GoRoute(
-            path: '/paying-taker',
-            builder: (context, state) => TakerPaymentProcessScreen(),
-          ),
-          GoRoute(
-            path: '/taker-invalid-blik',
-            builder: (context, state) {
-              if (state.extra == null) {
-                context.go("/");
-                return Container();
-              } else {
-                return TakerInvalidBlikScreen(offer: state.extra as Offer);
-              }
-            },
-          ),
-          GoRoute(
-            path: '/taker-conflict',
-            builder:
-                (context, state) =>
-                    TakerConflictScreen(offerId: state.extra as String),
-          ),
-          GoRoute(
-            path: '/maker-invalid-blik',
-            builder: (context, state) {
-              if (state.extra == null) {
-                context.go("/");
-                return Container();
-              } else {
-                return MakerInvalidBlikScreen(offer: state.extra as Offer);
-              }
-            },
-          ),
-          GoRoute(
-            path: '/maker-conflict',
-            builder: (context, state) {
-              if (state.extra == null) {
-                context.go("/");
-                return Container();
-              } else {
-                return MakerConflictScreen(offer: state.extra as Offer);
-              }
-            },
           ),
           GoRoute(
             path: FaqScreen.routeName,

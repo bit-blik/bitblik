@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
 
@@ -227,7 +228,7 @@ class _MakerConfirmPaymentScreenState
           ), // Use Slang t
         );
       }
-      context.go('/maker-success', extra: offer);
+      context.go(flowEntryRoute(ref, '/maker-success'), extra: offer);
     } catch (e) {
       ref.read(errorProvider.notifier).state = t.maker.confirmPayment.errors
           .confirming(details: e.toString()); // Use Slang t
@@ -272,9 +273,9 @@ class _MakerConfirmPaymentScreenState
 
       if (context.mounted) {
         if (offer.statusEnum == OfferStatus.takerCharged) {
-          context.go('/maker-conflict', extra: offer);
+          context.go(flowEntryRoute(ref, '/maker-conflict'), extra: offer);
         } else {
-          context.go('/maker-invalid-blik', extra: offer);
+          context.go(flowEntryRoute(ref, '/maker-invalid-blik'), extra: offer);
         }
       }
     } catch (e) {
@@ -1025,11 +1026,13 @@ class _MakerConfirmPaymentScreenState
         () =>
             "[MakerConfirmPaymentScreen] Offer ${statusEnum.name}; navigating to maker success.",
       );
-      context.go('/maker-success', extra: ref.read(activeOfferProvider));
+      context.go(flowEntryRoute(ref, '/maker-success'),
+          extra: ref.read(activeOfferProvider));
     } else if (statusEnum == OfferStatus.reserved) {
-      context.go(_makerProvidedCodeFlow ? '/confirm-blik' : '/wait-blik');
+      context.go(
+          flowEntryRoute(ref, _makerProvidedCodeFlow ? '/confirm-blik' : '/wait-blik'));
     } else if (statusEnum == OfferStatus.funded) {
-      context.go('/wait-taker');
+      context.go(flowEntryRoute(ref, '/wait-taker'));
     } else if (statusEnum == OfferStatus.expired) {
       context.go('/');
     }

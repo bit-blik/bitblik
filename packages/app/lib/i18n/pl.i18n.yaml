@@ -607,7 +607,20 @@ twint:
       yourCode: "Twój kod ${code}"
       offerExpires: "Oferta wygaśnie"
       autoExpires: "Wygaśnie automatycznie"
+      codeExpiresIn: "${code} wygaśnie za..."
       cancelOffer: "Anuluj ofertę"
+      reservedInfo: "Taker zarezerwował Twoją ofertę i właśnie płaci Twój kod ${code} w swojej aplikacji bankowej. Gdy płatność dotrze do Twojego sprzedawcy, potwierdź ją poniżej."
+      confirmReceived: "Potwierdź otrzymanie płatności"
+      confirmDialog:
+        title: "Potwierdzić otrzymanie płatności?"
+        content: "Potwierdź tylko, jeśli masz ABSOLUTNĄ pewność, że płatność ${code} dotarła do Twojego sprzedawcy.\n\nPotwierdzenie rozlicza hold invoice Lightning i natychmiast wysyła satsy do takera — tego nie można cofnąć."
+        cancel: "Anuluj"
+        confirmButton: "Tak, płatność otrzymana"
+    makerExpired:
+      title: "${code} prawdopodobnie wygasł"
+      warning: "Kod ${code} prawdopodobnie już wygasł — ale taker mógł mimo to zdążyć go opłacić. Sprawdź u swojego sprzedawcy: masz poniższy czas na potwierdzenie płatności."
+      timerCaption: "Czas na potwierdzenie"
+      disputeHint: "Możesz też poczekać, aż licznik dobiegnie końca. Jeśli taker zgłosi, że zapłacił, sprawa staje się konfliktem/sporem, w którym obie strony muszą dostarczyć koordynatorowi dowody do rozstrzygnięcia."
     makerVerify:
       title: "Czy otrzymałeś płatność?"
       body: "Taker zgłasza, że zapłacił ${amount} na Twój kod ${code}."
@@ -618,6 +631,8 @@ twint:
     makerRecode:
       title: "Oferta wygasła"
       body: "Żaden taker nie dokończył transakcji. Wpisz nowy kod ${code}, aby ponownie wystawić tę ofertę, albo ją anuluj."
+      scanCardTitle: "Zeskanuj nowy kod QR ${code}"
+      scanCardBody: "Skieruj aparat na ekran płatności. Aplikacja uzupełni nowy kod — kwota pozostaje bez zmian."
       fieldLabel: "Nowy kod ${code}"
       autoCancels: "Automatyczne anulowanie"
       relist: "Wystaw ponownie z nowym kodem"
@@ -633,10 +648,24 @@ twint:
       body: "Maker weryfikuje Twoją płatność ${code}."
       autoConfirms: "Automatyczne potwierdzenie"
     takerExpired:
-      title: "Rezerwacja wygasła"
-      body: "Kod ${code} nie został opłacony na czas. Możesz anulować, aby zwolnić ofertę."
-      autoReleases: "Automatyczne zwolnienie"
-      cancel: "Anuluj"
+      title: "${code} prawdopodobnie wygasł"
+      warning: "Kod ${code} prawdopodobnie już wygasł. Musisz teraz podjąć ważną decyzję — wybierz rozważnie."
+      optionPaid: "Jeśli ZAPŁACIŁEŚ kod ${code} w swojej aplikacji bankowej, oznacz go jako opłacony. To zobowiązuje Cię do tego twierdzenia: maker musi je potwierdzić, aby odblokować bitcoin, albo rozpocząć spór, w którym obie strony dostarczą koordynatorowi dowody."
+      optionCancel: "Jeśli NIE zapłaciłeś, anuluj rezerwację. To nieodwracalne — jeśli płatność jednak przeszła, koordynator nie będzie już mógł zagwarantować Ci satsów."
+      noDecision: "Jeśli nie podejmiesz decyzji przed upływem licznika, koordynator uzna, że NIE zapłaciłeś kodu ${code}. Maker będzie mógł wtedy anulować ofertę — anulując hold invoice — po czym koordynator nie będzie już mógł rozliczyć satsów na Twoją rzecz, nawet jeśli zapłaciłeś."
+      timerCaption: "Czas na decyzję"
+      markPaid: "Zapłaciłem kod ${code}"
+      cancel: "Anuluj rezerwację"
+      markPaidDialog:
+        title: "Potwierdzasz zapłatę?"
+        content: "Kontynuuj tylko, jeśli masz pewność, że płatność ${code} została pobrana w Twojej aplikacji bankowej.\n\nMaker zostanie poproszony o potwierdzenie odbioru, aby odblokować bitcoin. Jeśli zaprzeczy, otwarty zostanie spór i obie strony będą musiały dostarczyć koordynatorowi dowody."
+        cancel: "Wstecz"
+        confirmButton: "Tak, zapłaciłem"
+      cancelDialog:
+        title: "Anulować rezerwację?"
+        content: "Anuluj tylko, jeśli NIE zapłaciłeś kodu ${code}.\n\nTego nie można cofnąć: jeśli płatność jednak przeszła, koordynator NIE będzie mógł zagwarantować, że otrzymasz satsy."
+        cancel: "Wstecz"
+        confirmButton: "Tak, anuluj"
   
   waitConfirmation:
     title: "Oczekiwanie na Makera"

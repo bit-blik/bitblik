@@ -12,7 +12,12 @@ class TwintScanResult {
 }
 
 class TwintCodeScannerScreen extends StatefulWidget {
-  const TwintCodeScannerScreen({super.key});
+  /// When false, only the 5-digit code is scanned (no amount OCR) and the
+  /// scanner keeps running until a code is found — used by the re-code flow
+  /// where the amount is fixed.
+  final bool scanAmount;
+
+  const TwintCodeScannerScreen({super.key, this.scanAmount = true});
 
   @override
   State<TwintCodeScannerScreen> createState() => _TwintCodeScannerScreenState();
@@ -67,7 +72,9 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
         );
         final ocrText = recognizedText.text;
         code ??= _extractCode(ocrText);
-        amount = _extractAmount(ocrText);
+        if (widget.scanAmount) {
+          amount = _extractAmount(ocrText);
+        }
       }
 
       if (code != null || amount != null) {

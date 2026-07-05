@@ -625,7 +625,20 @@ twint:
       yourCode: "Votre code ${code}"
       offerExpires: "L'offre expire"
       autoExpires: "Expire automatiquement"
+      codeExpiresIn: "${code} expirera dans..."
       cancelOffer: "Annuler l'offre"
+      reservedInfo: "Un taker a réservé votre offre et paie maintenant votre code ${code} dans son application bancaire. Dès que le paiement arrive chez votre commerçant, confirmez-le ci-dessous."
+      confirmReceived: "Confirmer le paiement reçu"
+      confirmDialog:
+        title: "Confirmer le paiement reçu ?"
+        content: "Ne confirmez que si vous êtes ABSOLUMENT sûr que le paiement ${code} a bien été reçu chez votre commerçant.\n\nLa confirmation règle la facture Lightning et envoie immédiatement les sats au taker — c'est irréversible."
+        cancel: "Annuler"
+        confirmButton: "Oui, paiement reçu"
+    makerExpired:
+      title: "${code} probablement expiré"
+      warning: "Le code ${code} a probablement expiré — mais le taker a peut-être quand même réussi à le payer. Vérifiez chez votre commerçant : vous disposez du temps ci-dessous pour confirmer le paiement."
+      timerCaption: "Temps pour confirmer"
+      disputeHint: "Vous pouvez aussi laisser le minuteur expirer. Si le taker déclare avoir payé, cela devient un conflit/litige où les deux parties devront fournir des preuves au coordinateur pour résoudre le problème."
     makerVerify:
       title: "Avez-vous reçu le paiement ?"
       body: "Le taker indique avoir payé ${amount} sur votre code ${code}."
@@ -636,6 +649,8 @@ twint:
     makerRecode:
       title: "Offre expirée"
       body: "Aucun taker n'a terminé l'échange. Saisissez un nouveau code ${code} pour republier cette offre, ou annulez-la."
+      scanCardTitle: "Scanner le nouveau QR ${code}"
+      scanCardBody: "Pointez la caméra vers l'écran de paiement. L'app préremplira le nouveau code — le montant reste le même."
       fieldLabel: "Nouveau code ${code}"
       autoCancels: "Annule automatiquement"
       relist: "Republier avec un nouveau code"
@@ -651,10 +666,24 @@ twint:
       body: "Le maker vérifie votre paiement ${code}."
       autoConfirms: "Confirme automatiquement"
     takerExpired:
-      title: "Réservation expirée"
-      body: "Le code ${code} n'a pas été payé à temps. Vous pouvez annuler pour libérer l'offre."
-      autoReleases: "Libère automatiquement"
-      cancel: "Annuler"
+      title: "${code} probablement expiré"
+      warning: "Le code ${code} a probablement expiré. Vous devez maintenant prendre une décision importante — choisissez avec soin."
+      optionPaid: "Si vous AVEZ payé le code ${code} dans votre application bancaire, marquez-le comme payé. Cela vous engage : le maker devra confirmer pour débloquer le bitcoin, ou ouvrir un litige où les deux parties fourniront des preuves au coordinateur."
+      optionCancel: "Si vous n'avez PAS payé, annulez la réservation. C'est irréversible — si le paiement est en fait passé, le coordinateur ne pourra plus garantir vos sats."
+      noDecision: "Si vous ne prenez aucune décision avant la fin du minuteur, le coordinateur supposera que vous n'avez PAS payé le code ${code}. Le maker pourra alors annuler l'offre — annulant la facture bloquée — après quoi le coordinateur ne pourra plus vous régler les sats, même si vous avez payé."
+      timerCaption: "Temps pour décider"
+      markPaid: "J'ai payé le code ${code}"
+      cancel: "Annuler la réservation"
+      markPaidDialog:
+        title: "Confirmer le paiement ?"
+        content: "Ne continuez que si vous êtes sûr que le paiement ${code} a été débité dans votre application bancaire.\n\nLe maker devra confirmer la réception pour débloquer le bitcoin. S'il la conteste, un litige est ouvert et les deux parties devront fournir des preuves au coordinateur."
+        cancel: "Retour"
+        confirmButton: "Oui, j'ai payé"
+      cancelDialog:
+        title: "Annuler la réservation ?"
+        content: "N'annulez que si vous n'avez PAS payé le code ${code}.\n\nC'est définitif : si le paiement est en fait passé, le coordinateur ne pourra PAS garantir que vous recevrez les sats."
+        cancel: "Retour"
+        confirmButton: "Oui, annuler"
 
   waitConfirmation:
     title: "En attente du maker"

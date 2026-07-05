@@ -634,7 +634,7 @@ class NostrService {
               await _coordinatorService.getMyActiveOffers(userPubkey);
           if (activeOffers.isNotEmpty) {
             final offer = activeOffers.first;
-            return offer.toRpcJson();
+            return offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey);
           } else {
             return {};
           }
@@ -653,7 +653,12 @@ class NostrService {
           final includeBlikCode = _coordinatorService
                   .paymentSystem.makerProvidesCodeAtOfferCreation &&
               offer.takerPubkey == userPubkey;
-          return offer.toRpcJson(includeBlikCode: includeBlikCode);
+          // Participant gate above guarantees requester is maker or taker;
+          // non-makers get the maker-private fields stripped.
+          return offer.toRpcJson(
+            includeBlikCode: includeBlikCode,
+            forTaker: offer.makerPubkey != userPubkey,
+          );
 
         // DEPRECATED: clients (>= local-db-counts change) no longer call this.
         // The per-coordinator "your offers" count is now derived from the
@@ -672,8 +677,10 @@ class NostrService {
                       now.difference(offer.takerPaidAt!.toUtc()).inHours < 24)
               .toList();
 
-          final finishedList =
-              finished.map((offer) => offer.toRpcJson()).toList();
+          final finishedList = finished
+              .map((offer) =>
+                  offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey))
+              .toList();
           return {'offers': finishedList};
 
         case kRpcUpdateTakerInvoice:

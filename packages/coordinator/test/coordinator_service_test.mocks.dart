@@ -367,6 +367,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
     int? takerFees,
     String? failureReason,
     bool? clearTakerFields = false,
+    bool? preserveCodeOnClear = false,
     _i8.StateTransitionMeta? transitionMeta,
   }) =>
       (super.noSuchMethod(
@@ -393,6 +394,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
             #takerFees: takerFees,
             #failureReason: failureReason,
             #clearTakerFields: clearTakerFields,
+            #preserveCodeOnClear: preserveCodeOnClear,
             #transitionMeta: transitionMeta,
           },
         ),

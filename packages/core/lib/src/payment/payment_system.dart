@@ -256,6 +256,7 @@ const PaymentSystem kMbway = PaymentSystem(
   atmBanknoteDenominations: [20, 50, 100, 200],
   // Bitway has its own Nostr identity for discovery (relays + coordinators).
   discoveryPubkeyHex: kBitwayPubkeyHex,
+  flowId: 'mbway',
 );
 
 /// Switzerland — TWINT. The maker creates a 5-digit payment code upfront and

@@ -14,6 +14,27 @@ import 'package:bitblik_core/core.dart';
 /// In AOT deployments (Docker) there is no package config to resolve against,
 /// so `FLOW_DIR` must point at a directory containing the `*.yml` files.
 class FlowLoader {
+  static Future<String> _loadFromDir(String dir, String fileName) async {
+    final file = File('$dir/$fileName');
+    if (!file.existsSync()) {
+      throw FileSystemException('Flow import not found', file.path);
+    }
+    return file.readAsStringSync();
+  }
+
+  static Future<String> _loadFromPackage(String fileName) async {
+    final uri = await Isolate.resolvePackageUri(
+        Uri.parse('package:bitblik_core/flows/$fileName'));
+    if (uri == null) {
+      throw FileSystemException('Flow import not found', fileName);
+    }
+    final file = File.fromUri(uri);
+    if (!file.existsSync()) {
+      throw FileSystemException('Flow import not found', file.path);
+    }
+    return file.readAsStringSync();
+  }
+
   /// Resolve and parse the flow with [flowId]. Returns null (and never throws)
   /// if the file cannot be located or fails to parse/validate — the coordinator
   /// then proceeds on hardcoded logic alone.
@@ -28,7 +49,10 @@ class FlowLoader {
     if (flowDir != null) {
       final file = File('$flowDir/$flowId.yml');
       if (!file.existsSync()) return null;
-      return FlowEngine.fromYaml(file.readAsStringSync());
+      return FlowEngine.fromYamlWithImports(
+        file.readAsStringSync(),
+        (importPath) => _loadFromDir(flowDir, importPath),
+      );
     }
 
     File file;
@@ -46,6 +70,9 @@ class FlowLoader {
     }
     if (!file.existsSync()) return null;
     // Let FormatException from parse/validation propagate to the caller.
-    return FlowEngine.fromYaml(file.readAsStringSync());
+    return FlowEngine.fromYamlWithImports(
+      file.readAsStringSync(),
+      _loadFromPackage,
+    );
   }
 }

@@ -471,8 +471,8 @@ class DatabaseService {
     final now = DateTime.now().toUtc();
     await _connection!.execute(
       '''
-        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, blik_code, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category, premium_percent, client_version)
-        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @blik_code, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category, @premium_percent, @client_version)
+        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, blik_code, blik_received_at, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category, premium_percent, client_version)
+        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @blik_code, @blik_received_at, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category, @premium_percent, @client_version)
       ''',
       substitutionValues: {
         'id': offer.id,
@@ -481,6 +481,7 @@ class DatabaseService {
         'taker_fees': offer.takerFees,
         'maker_pubkey': offer.makerPubkey,
         'blik_code': offer.blikCode,
+        'blik_received_at': offer.blikReceivedAt?.toUtc(),
         'hold_invoice_payment_hash': offer.holdInvoicePaymentHash,
         'hold_invoice_preimage': offer.holdInvoicePreimage,
         'status': offer.status.name,
@@ -566,6 +567,8 @@ class DatabaseService {
   /// Atomic compare-and-set on a raw status string. Applies any provided field
   /// updates; when [clearTakerFields] is set, clears the taker/code/timestamp
   /// columns (used by revert-to-open and terminal transitions).
+  /// [preserveCodeOnClear] keeps `blik_code` through such a clear — for flows
+  /// where the code belongs to the maker (e.g. TWINT), not the taker.
   Future<bool> updateOfferRawStatusIfCurrent(
     String id,
     String newStatus, {
@@ -585,6 +588,7 @@ class DatabaseService {
     int? takerFees,
     String? failureReason,
     bool clearTakerFields = false,
+    bool preserveCodeOnClear = false,
     StateTransitionMeta? transitionMeta,
   }) async {
     if (_connection == null) throw StateError('Database not connected.');
@@ -602,53 +606,59 @@ class DatabaseService {
     }
 
     if (clearTakerFields) {
+      // NULL the taker-owned columns, except those this same write explicitly
+      // sets — a transition may clear the taker AND write fresh values in one
+      // atomic update (e.g. enter_new_twint: clear_taker_fields + set_new_code
+      // + stamp_code_received_at). Explicit updates below always win.
       set.addAll([
-        'taker_pubkey = NULL',
-        'reserved_at = NULL',
-        'blik_code = NULL',
-        'taker_lightning_address = NULL',
-        'taker_invoice = NULL',
+        if (takerPubkey == null) 'taker_pubkey = NULL',
+        if (reservedAt == null) 'reserved_at = NULL',
+        // In maker-provides-code flows (preserveCodeOnClear) the code and its
+        // issued-at stamp belong to the maker and survive the clear.
+        if (code == null && !preserveCodeOnClear) 'blik_code = NULL',
+        if (takerLightningAddress == null) 'taker_lightning_address = NULL',
+        if (takerInvoice == null) 'taker_invoice = NULL',
         'taker_invoice_fees = NULL',
-        'blik_received_at = NULL',
-        'taker_charged_at = NULL',
-        'dispute_at = NULL',
+        if (codeReceivedAt == null && !preserveCodeOnClear)
+          'blik_received_at = NULL',
+        if (takerChargedAt == null) 'taker_charged_at = NULL',
+        if (disputeAt == null) 'dispute_at = NULL',
         'dispute_escalation_reason = NULL',
       ]);
-    } else {
-      if (takerPubkey != null) put('taker_pubkey', 'taker_pubkey', takerPubkey);
-      if (code != null) put('blik_code', 'blik_code', code);
-      if (takerInvoice != null) {
-        put('taker_invoice', 'taker_invoice', takerInvoice);
-      }
-      if (takerLightningAddress != null) {
-        put('taker_lightning_address', 'taker_lightning_address',
-            takerLightningAddress);
-      }
-      if (reservedAt != null) {
-        put('reserved_at', 'reserved_at', reservedAt.toUtc());
-      }
-      if (codeReceivedAt != null) {
-        put('blik_received_at', 'blik_received_at', codeReceivedAt.toUtc());
-      }
-      if (takerChargedAt != null) {
-        params['taker_charged_at'] = takerChargedAt.toUtc();
-        set.add(
-            'taker_charged_at = COALESCE(taker_charged_at, @taker_charged_at)');
-      }
-      if (makerConfirmedAt != null) {
-        put('maker_confirmed_at', 'maker_confirmed_at', makerConfirmedAt);
-      }
-      if (settledAt != null) put('settled_at', 'settled_at', settledAt);
-      if (takerPaidAt != null) put('taker_paid_at', 'taker_paid_at', takerPaidAt);
-      if (takerFees != null) put('taker_fees', 'taker_fees', takerFees);
-      if (failureReason != null) {
-        put('taker_payment_failure_reason', 'taker_payment_failure_reason',
-            failureReason);
-      }
-      if (disputeAt != null) {
-        params['dispute_at'] = disputeAt.toUtc();
-        set.add('dispute_at = COALESCE(dispute_at, @dispute_at)');
-      }
+    }
+    if (takerPubkey != null) put('taker_pubkey', 'taker_pubkey', takerPubkey);
+    if (code != null) put('blik_code', 'blik_code', code);
+    if (takerInvoice != null) {
+      put('taker_invoice', 'taker_invoice', takerInvoice);
+    }
+    if (takerLightningAddress != null) {
+      put('taker_lightning_address', 'taker_lightning_address',
+          takerLightningAddress);
+    }
+    if (reservedAt != null) {
+      put('reserved_at', 'reserved_at', reservedAt.toUtc());
+    }
+    if (codeReceivedAt != null) {
+      put('blik_received_at', 'blik_received_at', codeReceivedAt.toUtc());
+    }
+    if (takerChargedAt != null) {
+      params['taker_charged_at'] = takerChargedAt.toUtc();
+      set.add(
+          'taker_charged_at = COALESCE(taker_charged_at, @taker_charged_at)');
+    }
+    if (makerConfirmedAt != null) {
+      put('maker_confirmed_at', 'maker_confirmed_at', makerConfirmedAt);
+    }
+    if (settledAt != null) put('settled_at', 'settled_at', settledAt);
+    if (takerPaidAt != null) put('taker_paid_at', 'taker_paid_at', takerPaidAt);
+    if (takerFees != null) put('taker_fees', 'taker_fees', takerFees);
+    if (failureReason != null) {
+      put('taker_payment_failure_reason', 'taker_payment_failure_reason',
+          failureReason);
+    }
+    if (disputeAt != null) {
+      params['dispute_at'] = disputeAt.toUtc();
+      set.add('dispute_at = COALESCE(dispute_at, @dispute_at)');
     }
 
     final where = <String>['id = @id'];

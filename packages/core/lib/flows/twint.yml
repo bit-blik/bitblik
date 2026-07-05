@@ -1,22 +1,19 @@
-# Bitblik / TWINT offer state machine (Switzerland) — GENERIC flow.
+# Bitblik / TWINT offer state machine (Switzerland) — schema v2.
 #
-# Enforced by the generic FlowEngine executor; stores RAW state-name strings in
-# the DB. The early states (twint_charged, expired_twint) intentionally have NO
-# OfferStatus enum value — see [[project-dual-flow-engine]]. The payout-tail
-# states (makerConfirmed, settled, payingTaker, takerPaid, takerPaymentFailed)
-# share their names with OfferStatus on purpose: once the flow reaches
-# makerConfirmed the coordinator hands off to the shared Lightning payout code.
+# This file is the runtime source of truth for the TWINT flow.
 #
-# Trigger types:
-#   user_action  — from maker / taker. Its `event` IS the driving RPC method.
-#   timeout      — server timer on state entry (`duration_seconds`)
-#   auto         — fires on entry (server-internal; payout chaining)
-#
-# effects / on_entry: ordered effect keywords resolved against the executor's
-# registry (see blik.yml header).
+# v2 model:
+# - A transition is an attempt. When `on` fires, run `do`; if every action
+#   succeeds, commit and advance to `to`. If any action fails, the state does
+#   not advance and nothing is committed.
+# - `on_fail` routes definitive transition failure to another state.
+# - `on: auto` transitions are detached/internal attempts.
+# - State-level `do:` runs after the state commit, best-effort.
 #
 # Initial state: funded. The maker supplies the TWINT code at offer creation
 # (PaymentSystem.makerProvidesCodeAtOfferCreation).
+
+imports: [common.yml]
 
 id: twint
 
@@ -27,27 +24,23 @@ states:
   funded:
     nip69: pending
     initial: true
+    do: [send_offer_notifications]
     description: >
       Hold invoice confirmed. Offer carries the maker's TWINT code and is open.
-    on_entry: [send_offer_notifications]
     transitions:
-      - trigger: user_action
-        event: cancel_offer
-        actor: maker
-        target: cancelled
-        effects: [clear_taker_fields]
-      - trigger: user_action
-        event: reserve_offer
-        actor: taker
-        target: reserved
-        # Capture the taker's payout invoice at reserve, so an early maker
-        # confirm_payment (allowed from `reserved`) already has an invoice.
-        effects: [assign_taker, stamp_reserved_at, accept_taker_invoice]
-      - trigger: timeout
-        duration_seconds: 300   # 5 min
-        from_field: created_at  # total offer lifetime, NOT reset by reserve/revert
-        target: invalidTwint
-        effects: [clear_taker_fields]
+      - on: cancel_offer
+        by: maker
+        do: [clear_taker_fields, cancel_hold_invoice]
+        to: cancelled
+      - on: reserve_offer
+        by: taker
+        do: [reserve_taker, accept_taker_invoice, send_twint_code_to_taker]
+        to: reserved
+      - on: timeout
+        after: 300            # 5 min — the TWINT code's lifespan
+        from: code_received_at
+        do: [clear_taker_fields]
+        to: invalidTwint
         reason: No taker reserved in time.
 
   invalidTwint:
@@ -55,163 +48,83 @@ states:
     description: >
       Offer expired or maker cancelled
     transitions:
-      - trigger: user_action
-        event: enter_new_twint
-        actor: maker
-        target: funded
-        # Swap in a fresh TWINT code and re-list on the existing hold invoice.
-        effects: [set_new_code, clear_taker_fields]
-      - trigger: user_action
-        event: cancel_offer
-        actor: maker
-        target: cancelled
-        effects: [clear_taker_fields]
-      - trigger: timeout
-        duration_seconds: 600  # conflict/dispute escalation, 60 min
-        target: cancelled
+      - on: enter_new_twint
+        by: maker
+        do: [set_new_code, stamp_code_received_at, cancel_reservation]
+        to: funded
+      - on: cancel_offer
+        by: maker
+        do: [clear_taker_fields, cancel_hold_invoice]
+        to: cancelled
+      - on: timeout
+        after: 3600           # cancel
+        do: [cancel_hold_invoice]
+        to: cancelled
 
   reserved:
     nip69: in-progress
     description: >
       Taker holds the slot; the coordinator reveals the TWINT code so the taker
       can pay it in their app.
-    on_entry: [send_twint_code_to_taker]
     transitions:
-      - trigger: user_action
-        event: confirm_payment
-        actor: maker
-        target: makerConfirmed
-        effects: [stamp_maker_confirmed_at]
-      - trigger: user_action
-        event: mark_twint_charged
-        actor: taker
-        target: takerCharged
-        # Invoice already captured at reserve; just stamp the charge.
-        effects: [assign_taker, stamp_taker_charged_at]
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: mark_twint_charged
+        by: taker
+        do: [assert_assigned_taker, stamp_taker_charged_at, notify_maker_of_charge]
+        to: takerCharged
         note: Taker paid the TWINT code and reports it charged.
-      - trigger: user_action
-        event: cancel_reservation
-        actor: taker
-        target: funded
-        effects: [assign_taker, clear_taker_fields]
-      - trigger: timeout
-        duration_seconds: 300   # matches TWINT code lifespan
-        target: expiredTwint
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, cancel_reservation]
+        to: funded
+      - on: timeout
+        after: 300            # the TWINT code's lifespan
+        from: code_received_at
+        to: expiredTwint
         reason: Taker did not pay the code within its lifespan.
 
   expiredTwint:
     nip69: in-progress
     description: >
-      Reservation expired. The maker has no action here (D2) — only the taker
-      may release it, or it times out back to invalidTwint.
+      Reservation expired.
     transitions:
-      - trigger: user_action
-        event: confirm_payment
-        actor: maker
-        target: makerConfirmed
-        effects: [stamp_maker_confirmed_at]
-      - trigger: user_action
-        event: cancel_reservation
-        actor: taker
-        target: invalidTwint
-        effects: [assign_taker, clear_taker_fields]
-      - trigger: timeout
-        duration_seconds: 300   # matches TWINT code lifespan
-        target: invalidTwint
-        reason: Taker did not pay the code within its lifespan.
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, clear_taker_fields]
+        to: invalidTwint
+      - on: mark_twint_charged
+        by: taker
+        do: [assert_assigned_taker, stamp_taker_charged_at, notify_maker_of_charge]
+        to: takerCharged
+        note: Taker paid the TWINT code and reports it charged.
+      - on: timeout
+        after: 300            # grace window AFTER the code expired
+        to: invalidTwint
+        reason: Reservation lapsed after the code expired.
 
   takerCharged:
     nip69: in-progress
     description: >
       Taker reports payment. Maker must verify receipt and rule. Maker silence
       auto-confirms in the taker's favour.
-    on_entry: [notify_maker_of_charge]
     transitions:
-      - trigger: user_action
-        event: confirm_payment
-        actor: maker
-        target: makerConfirmed
-        effects: [stamp_maker_confirmed_at]
-      - trigger: user_action
-        event: start_dispute
-        actor: maker
-        target: dispute
-      - trigger: timeout
-        duration_seconds: 3600  # 60 min
-        target: makerConfirmed
-        effects: [stamp_maker_confirmed_at]
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: start_dispute
+        by: maker
+        do: [settle_offer_funds]
+        to: dispute
+      - on: timeout
+        after: 3600           # 60 min
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
         reason: Maker silent; auto-confirm in the taker's favour.
-
-  # ─── settlement & payout (shared with the enum payout tail) ─────────
-
-  makerConfirmed:
-    nip69: in-progress
-    description: Maker confirmed. Settling hold invoice, paying out the taker.
-    on_entry: [start_payout]
-    transitions:
-      - trigger: auto
-        effects: [ settle_hold_invoice ]
-        target: settled
-
-  settled:
-    nip69: in-progress
-    description: Hold invoice settled. Resolving taker invoice for payout.
-    on_entry: [request_taker_invoice]
-    transitions:
-      - trigger: auto
-        target: payingTaker
-        action: send_payment
-      - trigger: auto
-        event: payout_setup_failed
-        target: takerPaymentFailed
-
-  payingTaker:
-    nip69: in-progress
-    description: Sending the Lightning payout to the taker.
-    transitions:
-      - trigger: auto
-        event: payment_success
-        target: takerPaid
-      - trigger: auto
-        event: payment_failed
-        target: takerPaymentFailed
-      - trigger: timeout
-        duration_seconds: 300  # 5 min
-        target: takerPaymentFailed
-        reason: timed out while trying to pay the taker's invoice
-
-  takerPaid:
-    nip69: success
-    description: Taker paid. Trade complete.
-    terminal: true
-
-  takerPaymentFailed:
-    nip69: in-progress
-    description: Payout failed. Awaiting a fresh invoice / retry.
-    transitions:
-      - trigger: user_action
-        event: update_taker_invoice
-        actor: taker
-        target: payingTaker
-      - trigger: user_action
-        event: retry_taker_payment
-        actor: taker
-        target: payingTaker
-
-  # ─── cancellation terminals ─────────────────────────────────────────
-
-  cancelled:
-    nip69: canceled
-    description: Maker cancelled while funded.
-    terminal: true
-    on_entry: [cancel_hold_invoice]
-
-  # ─── conflict & dispute ──────────────────────────────────────────────
-
-  dispute:
-    nip69: dispute
-    description: >
-      Formal dispute. Hold invoice settled; coordinator resolves out of band.
-      Terminal to the engine (no automatic exit).
-    terminal: true
-    on_entry: [settle_hold_invoice]

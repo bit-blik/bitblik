@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import '../providers/providers.dart';
+import '../services/nostr_service.dart' show reservedOfferFromResult;
 import '../flow/flow_provider.dart';
 import '../utils/offer_status_label.dart';
 import '../services/api_service_nostr.dart';
@@ -141,18 +142,18 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
       // Flow-driven markets that capture the payout invoice at reserve (TWINT)
       // generate it here and send it with reserve_offer.
       final takerInvoice = await reserveTakerInvoiceIfNeeded(ref, offer);
-      final reservationTimestamp = await apiService.reserveOffer(
+      final reservation = await apiService.reserveOffer(
         offer.id,
         publicKey,
         offer.coordinatorPubkey,
         takerInvoice: takerInvoice,
       );
       if (!mounted) return;
-      if (reservationTimestamp != null) {
-        final updatedOffer = offer.copyWith(
-          status: OfferStatus.reserved,
-          takerPubkey: publicKey,
-          reservedAt: reservationTimestamp,
+      if (reservation.reservedAt != null || reservation.offer != null) {
+        final updatedOffer = reservedOfferFromResult(
+          offer,
+          publicKey,
+          reservation,
         );
         ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
         router.go(flowEntryRoute(ref, '/submit-blik'), extra: updatedOffer);
@@ -480,11 +481,10 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                   ),
                 ),
                 onPressed: () {
-                  if (myActiveOffer.isInvalidBlik) {
-                    router.go('/taker-invalid-blik', extra: myActiveOffer);
-                  } else if (myActiveOffer.isConflict) {
-                    router.go('/taker-conflict', extra: myActiveOffer.id);
-                  }
+                  ref
+                      .read(activeOfferProvider.notifier)
+                      .setActiveOffer(myActiveOffer);
+                  router.go('/flow');
                 },
               ),
             );
@@ -512,9 +512,15 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                   ),
                   onPressed: () {
                     if (myActiveOffer.status == OfferStatus.reserved) {
-                      router.go(flowEntryRoute(ref, '/submit-blik'), extra: myActiveOffer);
+                      router.go(
+                        flowEntryRoute(ref, '/submit-blik'),
+                        extra: myActiveOffer,
+                      );
                     } else {
-                      router.go("/wait-confirmation", extra: myActiveOffer);
+                      router.go(
+                        flowEntryRoute(ref, '/wait-confirmation'),
+                        extra: myActiveOffer,
+                      );
                     }
                   },
                 ),
@@ -984,7 +990,12 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                                                 .offers
                                                                 .details
                                                                 .consents
-                                                                .ecommerce(code: offerCodeLabel(offer)),
+                                                                .ecommerce(
+                                                                  code:
+                                                                      offerCodeLabel(
+                                                                        offer,
+                                                                      ),
+                                                                ),
                                                             style:
                                                                 const TextStyle(
                                                                   fontSize: 14,
@@ -995,11 +1006,12 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                                   );
                                                 },
                                                 child: Text(
-                                                  t
-                                                      .offers
-                                                      .details
-                                                      .consents
-                                                      .ecommerce(code: offerCodeLabel(offer)),
+                                                  t.offers.details.consents
+                                                      .ecommerce(
+                                                        code: offerCodeLabel(
+                                                          offer,
+                                                        ),
+                                                      ),
                                                   maxLines: 1,
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -1040,7 +1052,12 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                                               .offers
                                                               .details
                                                               .consents
-                                                              .ecommerce(code: offerCodeLabel(offer)),
+                                                              .ecommerce(
+                                                                code:
+                                                                    offerCodeLabel(
+                                                                      offer,
+                                                                    ),
+                                                              ),
                                                           style:
                                                               const TextStyle(
                                                                 fontSize: 14,

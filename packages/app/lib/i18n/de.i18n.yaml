@@ -625,7 +625,20 @@ twint:
       yourCode: "Dein ${code}-Code"
       offerExpires: "Angebot läuft ab"
       autoExpires: "Läuft automatisch ab"
+      codeExpiresIn: "${code} läuft ab in..."
       cancelOffer: "Angebot stornieren"
+      reservedInfo: "Ein Taker hat dein Angebot reserviert und bezahlt jetzt deinen ${code}-Code in seiner Banking-App. Sobald die Zahlung bei deinem Händler eingegangen ist, bestätige sie unten."
+      confirmReceived: "Zahlungseingang bestätigen"
+      confirmDialog:
+        title: "Zahlungseingang bestätigen?"
+        content: "Bestätige nur, wenn du dir ABSOLUT sicher bist, dass die ${code}-Zahlung bei deinem Händler erfolgreich eingegangen ist.\n\nDie Bestätigung wickelt die Lightning-Hold-Invoice ab und sendet die Sats sofort an den Taker — das kann nicht rückgängig gemacht werden."
+        cancel: "Abbrechen"
+        confirmButton: "Ja, Zahlung erhalten"
+    makerExpired:
+      title: "${code} wahrscheinlich abgelaufen"
+      warning: "Der ${code}-Code ist inzwischen wahrscheinlich abgelaufen — aber der Taker könnte ihn trotzdem noch bezahlt haben. Prüfe deinen Händler: du hast die unten angezeigte Zeit, um die Zahlung zu bestätigen."
+      timerCaption: "Zeit zum Bestätigen"
+      disputeHint: "Du kannst auch warten, bis der Timer abläuft. Meldet der Taker, bezahlt zu haben, wird daraus ein Konflikt/Disput, bei dem beide Parteien dem Koordinator Nachweise zur Klärung liefern müssen."
     makerVerify:
       title: "Hast du die Zahlung erhalten?"
       body: "Der Taker meldet, dass er ${amount} an deinen ${code}-Code bezahlt hat."
@@ -636,6 +649,8 @@ twint:
     makerRecode:
       title: "Angebot abgelaufen"
       body: "Kein Taker hat den Trade abgeschlossen. Gib einen neuen ${code}-Code ein, um dieses Angebot erneut zu veröffentlichen, oder storniere es."
+      scanCardTitle: "Neuen ${code}-QR scannen"
+      scanCardBody: "Richte die Kamera auf den Zahlungsbildschirm. Die App füllt den neuen Code automatisch aus — der Betrag bleibt gleich."
       fieldLabel: "Neuer ${code}-Code"
       autoCancels: "Wird automatisch storniert"
       relist: "Mit neuem Code erneut veröffentlichen"
@@ -651,10 +666,24 @@ twint:
       body: "Der Maker überprüft deine ${code}-Zahlung."
       autoConfirms: "Bestätigt automatisch"
     takerExpired:
-      title: "Reservierung abgelaufen"
-      body: "Der ${code}-Code wurde nicht rechtzeitig bezahlt. Du kannst abbrechen, um das Angebot freizugeben."
-      autoReleases: "Wird automatisch freigegeben"
-      cancel: "Abbrechen"
+      title: "${code} wahrscheinlich abgelaufen"
+      warning: "Der ${code}-Code ist inzwischen wahrscheinlich abgelaufen. Du musst jetzt eine wichtige Entscheidung treffen — wähle sorgfältig."
+      optionPaid: "Wenn du den ${code}-Code in deiner Banking-App BEZAHLT hast, markiere ihn als bezahlt. Damit verpflichtest du dich zu dieser Aussage: der Maker muss sie bestätigen, um die Bitcoin freizugeben, oder einen Disput starten, bei dem beide Parteien dem Koordinator Nachweise liefern."
+      optionCancel: "Wenn du NICHT bezahlt hast, storniere die Reservierung. Das ist unumkehrbar — falls die Zahlung doch durchging, kann der Koordinator deine Sats nicht mehr garantieren."
+      noDecision: "Triffst du vor Ablauf des Timers keine Entscheidung, geht der Koordinator davon aus, dass du den ${code}-Code NICHT bezahlt hast. Der Maker kann das Angebot dann stornieren — wodurch die Hold-Invoice storniert wird — und der Koordinator kann dir die Sats danach nicht mehr auszahlen, selbst wenn du bezahlt hast."
+      timerCaption: "Zeit zu entscheiden"
+      markPaid: "Ich habe den ${code}-Code bezahlt"
+      cancel: "Reservierung stornieren"
+      markPaidDialog:
+        title: "Zahlung bestätigen?"
+        content: "Fahre nur fort, wenn du sicher bist, dass die ${code}-Zahlung in deiner Banking-App abgebucht wurde.\n\nDer Maker wird gebeten, den Empfang zu bestätigen, um die Bitcoin freizugeben. Bestreitet er ihn, wird ein Disput eröffnet und beide Parteien müssen dem Koordinator Nachweise liefern."
+        cancel: "Zurück"
+        confirmButton: "Ja, ich habe bezahlt"
+      cancelDialog:
+        title: "Reservierung stornieren?"
+        content: "Storniere nur, wenn du den ${code}-Code NICHT bezahlt hast.\n\nDas kann nicht rückgängig gemacht werden: falls die Zahlung doch durchging, kann der Koordinator NICHT garantieren, dass du die Sats erhältst."
+        cancel: "Zurück"
+        confirmButton: "Ja, stornieren"
 
   waitConfirmation:
     title: "Warte auf den Maker"

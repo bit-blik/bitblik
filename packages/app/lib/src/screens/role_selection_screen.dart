@@ -12,7 +12,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer model
 import '../providers/providers.dart';
-import '../flow/flow_provider.dart'; // Import providers
 import '../services/key_service.dart';
 import '../services/offer_db_service.dart';
 import '../widgets/offer_list_tile.dart';
@@ -211,111 +210,11 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
     }
   }
 
-  // Helper to navigate to the correct Maker step based on status
-  void _navigateToMakerStep(BuildContext context, Offer offer) {
-    final offerStatus = offer.status;
-    final method = paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
-
-    // Flow-driven markets (TWINT) have a single flow screen that renders the
-    // body for the current raw state — no per-status route to resume into.
-    if (isFlowDrivenFlow(method.flowId)) {
-      ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
-      context.go('/flow');
-      return;
-    }
-
-    switch (offerStatus) {
-      case OfferStatus.created:
-        // Offer created but not yet funded - go to pay invoice screen
-        context.go("/pay", extra: offer);
-        break;
-      case OfferStatus.funded:
-        // Waiting for a taker to reserve
-        context.go("/wait-taker", extra: offer);
-        break;
-      case OfferStatus.reserved:
-        context.go(
-          method.makerProvidesCodeAtOfferCreation
-              ? "/confirm-blik"
-              : "/wait-blik",
-          extra: offer,
-        );
-        break;
-      // Removed blikReceived and blikSentToMaker cases here.
-      // They are now handled exclusively within the onTap handler
-      // where the BLIK code is fetched before navigation.
-      case OfferStatus.expiredBlik:
-      case OfferStatus.expiredSentBlik:
-        // BLIK expired, maker needs to confirm payment manually
-        // These are handled in the special onTap handler to fetch BLIK code
-        Logger.log.d(() => "Maker offer in expired BLIK state: $offerStatus");
-        break;
-      case OfferStatus.conflict:
-      case OfferStatus.dispute:
-        // Navigate to the maker conflict screen
-        context.go("/maker-conflict", extra: offer);
-        break;
-      case OfferStatus.invalidBlik:
-        context.go("/maker-invalid-blik", extra: offer);
-        break;
-      default:
-        Logger.log.w(() => "Cannot resume Maker offer in state: $offerStatus");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              t.offers.errors.cannotResume(status: offerStatus.name),
-            ),
-          ),
-        );
-        return; // Don't navigate
-    }
-  }
-
-  // Helper to navigate to the correct Taker step based on offer status
-  void _navigateToTakerStep(BuildContext context, Offer offer) {
-    final offerStatus = offer.status;
-    final method = paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
-
-    // Flow-driven markets (TWINT): resume into the single flow screen.
-    if (isFlowDrivenFlow(method.flowId)) {
-      ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
-      context.go('/flow');
-      return;
-    }
-
-    if (offerStatus == OfferStatus.reserved) {
-      // Pass the offer to the constructor using initialOffer
-      context.go('/submit-blik', extra: offer);
-    } else if (offerStatus == OfferStatus.blikReceived ||
-        offerStatus == OfferStatus.blikSentToMaker ||
-        offerStatus == OfferStatus.makerConfirmed ||
-        offerStatus == OfferStatus.expiredBlik ||
-        offerStatus == OfferStatus.expiredSentBlik ||
-        offerStatus == OfferStatus.takerCharged) {
-      context.go("/wait-confirmation", extra: offer);
-    } else if (offerStatus == OfferStatus.settled) {
-      context.go('/paying-taker', extra: offer);
-    } else if (offerStatus == OfferStatus.takerPaymentFailed) {
-      context.go('/taker-failed', extra: offer);
-    } else if (offerStatus == OfferStatus.invalidBlik) {
-      context.go('/taker-invalid-blik', extra: offer);
-    } else if (offerStatus == OfferStatus.conflict ||
-        offerStatus == OfferStatus.dispute) {
-      context.go('/taker-conflict', extra: offer.id);
-    } else {
-      Logger.log.e(
-        () =>
-            "[RoleSelectionScreen] Error: Resuming Taker offer in unexpected state: $offerStatus",
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            t.offers.errors.cannotResumeTaker(status: offerStatus.name),
-          ),
-        ),
-      );
-      return; // Don't navigate
-    }
+  // Every market is flow-driven: resume into the single flow screen, which
+  // renders the body for the offer's current state + role.
+  void _resumeIntoFlow(BuildContext context, Offer offer) {
+    ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
+    context.go('/flow');
   }
 
   @override
@@ -752,45 +651,9 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
           activeOffer.holdInvoicePaymentHash!;
     }
 
-    final offerStatus = activeOffer.status;
-
-    if (offerStatus == OfferStatus.blikReceived ||
-        offerStatus == OfferStatus.blikSentToMaker ||
-        offerStatus == OfferStatus.expiredBlik ||
-        offerStatus == OfferStatus.expiredSentBlik ||
-        offerStatus == OfferStatus.takerCharged) {
-      try {
-        ref.read(apiServiceProvider);
-        if (currentPubKey == activeOffer.makerPubkey) {
-          // Maker needs to go to confirm payment screen
-          if (kIsWeb) {
-            context.go('/confirm-blik');
-          } else {
-            context.push('/confirm-blik');
-          }
-        } else if (currentPubKey == activeOffer.takerPubkey) {
-          // Taker needs to wait for confirmation
-          if (kIsWeb) {
-            context.go('/wait-confirmation', extra: activeOffer);
-          } else {
-            context.push('/wait-confirmation', extra: activeOffer);
-          }
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(t.offers.errors.resuming(details: e.toString())),
-            backgroundColor: Colors.red,
-          ),
-        );
-        // ref.read(activeOfferProvider.notifier).setActiveOffer(null);
-      }
-    } else {
-      if (currentPubKey == activeOffer.makerPubkey) {
-        _navigateToMakerStep(context, activeOffer);
-      } else if (currentPubKey == activeOffer.takerPubkey) {
-        _navigateToTakerStep(context, activeOffer);
-      }
+    if (currentPubKey == activeOffer.makerPubkey ||
+        currentPubKey == activeOffer.takerPubkey) {
+      _resumeIntoFlow(context, activeOffer);
     }
   }
 

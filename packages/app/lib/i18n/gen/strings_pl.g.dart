@@ -1154,6 +1154,7 @@ class _Translations$twint$flow$pl extends Translations$twint$flow$en {
 
 	// Translations
 	@override late final _Translations$twint$flow$makerWait$pl makerWait = _Translations$twint$flow$makerWait$pl._(_root);
+	@override late final _Translations$twint$flow$makerExpired$pl makerExpired = _Translations$twint$flow$makerExpired$pl._(_root);
 	@override late final _Translations$twint$flow$makerVerify$pl makerVerify = _Translations$twint$flow$makerVerify$pl._(_root);
 	@override late final _Translations$twint$flow$makerRecode$pl makerRecode = _Translations$twint$flow$makerRecode$pl._(_root);
 	@override late final _Translations$twint$flow$takerPay$pl takerPay = _Translations$twint$flow$takerPay$pl._(_root);
@@ -2226,7 +2227,24 @@ class _Translations$twint$flow$makerWait$pl extends Translations$twint$flow$make
 	@override String yourCode({required Object code}) => 'Twój kod ${code}';
 	@override String get offerExpires => 'Oferta wygaśnie';
 	@override String get autoExpires => 'Wygaśnie automatycznie';
+	@override String codeExpiresIn({required Object code}) => '${code} wygaśnie za...';
 	@override String get cancelOffer => 'Anuluj ofertę';
+	@override String reservedInfo({required Object code}) => 'Taker zarezerwował Twoją ofertę i właśnie płaci Twój kod ${code} w swojej aplikacji bankowej. Gdy płatność dotrze do Twojego sprzedawcy, potwierdź ją poniżej.';
+	@override String get confirmReceived => 'Potwierdź otrzymanie płatności';
+	@override late final _Translations$twint$flow$makerWait$confirmDialog$pl confirmDialog = _Translations$twint$flow$makerWait$confirmDialog$pl._(_root);
+}
+
+// Path: twint.flow.makerExpired
+class _Translations$twint$flow$makerExpired$pl extends Translations$twint$flow$makerExpired$en {
+	_Translations$twint$flow$makerExpired$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object code}) => '${code} prawdopodobnie wygasł';
+	@override String warning({required Object code}) => 'Kod ${code} prawdopodobnie już wygasł — ale taker mógł mimo to zdążyć go opłacić. Sprawdź u swojego sprzedawcy: masz poniższy czas na potwierdzenie płatności.';
+	@override String get timerCaption => 'Czas na potwierdzenie';
+	@override String get disputeHint => 'Możesz też poczekać, aż licznik dobiegnie końca. Jeśli taker zgłosi, że zapłacił, sprawa staje się konfliktem/sporem, w którym obie strony muszą dostarczyć koordynatorowi dowody do rozstrzygnięcia.';
 }
 
 // Path: twint.flow.makerVerify
@@ -2253,6 +2271,8 @@ class _Translations$twint$flow$makerRecode$pl extends Translations$twint$flow$ma
 	// Translations
 	@override String get title => 'Oferta wygasła';
 	@override String body({required Object code}) => 'Żaden taker nie dokończył transakcji. Wpisz nowy kod ${code}, aby ponownie wystawić tę ofertę, albo ją anuluj.';
+	@override String scanCardTitle({required Object code}) => 'Zeskanuj nowy kod QR ${code}';
+	@override String get scanCardBody => 'Skieruj aparat na ekran płatności. Aplikacja uzupełni nowy kod — kwota pozostaje bez zmian.';
 	@override String fieldLabel({required Object code}) => 'Nowy kod ${code}';
 	@override String get autoCancels => 'Automatyczne anulowanie';
 	@override String get relist => 'Wystaw ponownie z nowym kodem';
@@ -2292,10 +2312,16 @@ class _Translations$twint$flow$takerExpired$pl extends Translations$twint$flow$t
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Rezerwacja wygasła';
-	@override String body({required Object code}) => 'Kod ${code} nie został opłacony na czas. Możesz anulować, aby zwolnić ofertę.';
-	@override String get autoReleases => 'Automatyczne zwolnienie';
-	@override String get cancel => 'Anuluj';
+	@override String title({required Object code}) => '${code} prawdopodobnie wygasł';
+	@override String warning({required Object code}) => 'Kod ${code} prawdopodobnie już wygasł. Musisz teraz podjąć ważną decyzję — wybierz rozważnie.';
+	@override String optionPaid({required Object code}) => 'Jeśli ZAPŁACIŁEŚ kod ${code} w swojej aplikacji bankowej, oznacz go jako opłacony. To zobowiązuje Cię do tego twierdzenia: maker musi je potwierdzić, aby odblokować bitcoin, albo rozpocząć spór, w którym obie strony dostarczą koordynatorowi dowody.';
+	@override String get optionCancel => 'Jeśli NIE zapłaciłeś, anuluj rezerwację. To nieodwracalne — jeśli płatność jednak przeszła, koordynator nie będzie już mógł zagwarantować Ci satsów.';
+	@override String noDecision({required Object code}) => 'Jeśli nie podejmiesz decyzji przed upływem licznika, koordynator uzna, że NIE zapłaciłeś kodu ${code}. Maker będzie mógł wtedy anulować ofertę — anulując hold invoice — po czym koordynator nie będzie już mógł rozliczyć satsów na Twoją rzecz, nawet jeśli zapłaciłeś.';
+	@override String get timerCaption => 'Czas na decyzję';
+	@override String markPaid({required Object code}) => 'Zapłaciłem kod ${code}';
+	@override String get cancel => 'Anuluj rezerwację';
+	@override late final _Translations$twint$flow$takerExpired$markPaidDialog$pl markPaidDialog = _Translations$twint$flow$takerExpired$markPaidDialog$pl._(_root);
+	@override late final _Translations$twint$flow$takerExpired$cancelDialog$pl cancelDialog = _Translations$twint$flow$takerExpired$cancelDialog$pl._(_root);
 }
 
 // Path: twint.waitConfirmation.categoryReminder
@@ -2694,6 +2720,45 @@ class _Translations$maker$conflict$disputeDialog$actions$pl extends Translations
 	// Translations
 	@override String get confirm => 'Otwórz Spór';
 	@override String get cancel => 'Anuluj';
+}
+
+// Path: twint.flow.makerWait.confirmDialog
+class _Translations$twint$flow$makerWait$confirmDialog$pl extends Translations$twint$flow$makerWait$confirmDialog$en {
+	_Translations$twint$flow$makerWait$confirmDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Potwierdzić otrzymanie płatności?';
+	@override String content({required Object code}) => 'Potwierdź tylko, jeśli masz ABSOLUTNĄ pewność, że płatność ${code} dotarła do Twojego sprzedawcy.\n\nPotwierdzenie rozlicza hold invoice Lightning i natychmiast wysyła satsy do takera — tego nie można cofnąć.';
+	@override String get cancel => 'Anuluj';
+	@override String get confirmButton => 'Tak, płatność otrzymana';
+}
+
+// Path: twint.flow.takerExpired.markPaidDialog
+class _Translations$twint$flow$takerExpired$markPaidDialog$pl extends Translations$twint$flow$takerExpired$markPaidDialog$en {
+	_Translations$twint$flow$takerExpired$markPaidDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Potwierdzasz zapłatę?';
+	@override String content({required Object code}) => 'Kontynuuj tylko, jeśli masz pewność, że płatność ${code} została pobrana w Twojej aplikacji bankowej.\n\nMaker zostanie poproszony o potwierdzenie odbioru, aby odblokować bitcoin. Jeśli zaprzeczy, otwarty zostanie spór i obie strony będą musiały dostarczyć koordynatorowi dowody.';
+	@override String get cancel => 'Wstecz';
+	@override String get confirmButton => 'Tak, zapłaciłem';
+}
+
+// Path: twint.flow.takerExpired.cancelDialog
+class _Translations$twint$flow$takerExpired$cancelDialog$pl extends Translations$twint$flow$takerExpired$cancelDialog$en {
+	_Translations$twint$flow$takerExpired$cancelDialog$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Anulować rezerwację?';
+	@override String content({required Object code}) => 'Anuluj tylko, jeśli NIE zapłaciłeś kodu ${code}.\n\nTego nie można cofnąć: jeśli płatność jednak przeszła, koordynator NIE będzie mógł zagwarantować, że otrzymasz satsy.';
+	@override String get cancel => 'Wstecz';
+	@override String get confirmButton => 'Tak, anuluj';
 }
 
 // Path: twint.invalidBlik.confirmDialog.actions
@@ -3150,7 +3215,18 @@ extension on TranslationsPl {
 			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Twój kod ${code}',
 			'twint.flow.makerWait.offerExpires' => 'Oferta wygaśnie',
 			'twint.flow.makerWait.autoExpires' => 'Wygaśnie automatycznie',
+			'twint.flow.makerWait.codeExpiresIn' => ({required Object code}) => '${code} wygaśnie za...',
 			'twint.flow.makerWait.cancelOffer' => 'Anuluj ofertę',
+			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Taker zarezerwował Twoją ofertę i właśnie płaci Twój kod ${code} w swojej aplikacji bankowej. Gdy płatność dotrze do Twojego sprzedawcy, potwierdź ją poniżej.',
+			'twint.flow.makerWait.confirmReceived' => 'Potwierdź otrzymanie płatności',
+			'twint.flow.makerWait.confirmDialog.title' => 'Potwierdzić otrzymanie płatności?',
+			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Potwierdź tylko, jeśli masz ABSOLUTNĄ pewność, że płatność ${code} dotarła do Twojego sprzedawcy.\n\nPotwierdzenie rozlicza hold invoice Lightning i natychmiast wysyła satsy do takera — tego nie można cofnąć.',
+			'twint.flow.makerWait.confirmDialog.cancel' => 'Anuluj',
+			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Tak, płatność otrzymana',
+			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} prawdopodobnie wygasł',
+			'twint.flow.makerExpired.warning' => ({required Object code}) => 'Kod ${code} prawdopodobnie już wygasł — ale taker mógł mimo to zdążyć go opłacić. Sprawdź u swojego sprzedawcy: masz poniższy czas na potwierdzenie płatności.',
+			'twint.flow.makerExpired.timerCaption' => 'Czas na potwierdzenie',
+			'twint.flow.makerExpired.disputeHint' => 'Możesz też poczekać, aż licznik dobiegnie końca. Jeśli taker zgłosi, że zapłacił, sprawa staje się konfliktem/sporem, w którym obie strony muszą dostarczyć koordynatorowi dowody do rozstrzygnięcia.',
 			'twint.flow.makerVerify.title' => 'Czy otrzymałeś płatność?',
 			'twint.flow.makerVerify.body' => ({required Object amount, required Object code}) => 'Taker zgłasza, że zapłacił ${amount} na Twój kod ${code}.',
 			'twint.flow.makerVerify.hint' => ({required Object code}) => 'Sprawdź aplikację ${code}, a następnie potwierdź lub otwórz spór.',
@@ -3159,6 +3235,8 @@ extension on TranslationsPl {
 			'twint.flow.makerVerify.openDispute' => 'Otwórz spór',
 			'twint.flow.makerRecode.title' => 'Oferta wygasła',
 			'twint.flow.makerRecode.body' => ({required Object code}) => 'Żaden taker nie dokończył transakcji. Wpisz nowy kod ${code}, aby ponownie wystawić tę ofertę, albo ją anuluj.',
+			'twint.flow.makerRecode.scanCardTitle' => ({required Object code}) => 'Zeskanuj nowy kod QR ${code}',
+			'twint.flow.makerRecode.scanCardBody' => 'Skieruj aparat na ekran płatności. Aplikacja uzupełni nowy kod — kwota pozostaje bez zmian.',
 			'twint.flow.makerRecode.fieldLabel' => ({required Object code}) => 'Nowy kod ${code}',
 			'twint.flow.makerRecode.autoCancels' => 'Automatyczne anulowanie',
 			'twint.flow.makerRecode.relist' => 'Wystaw ponownie z nowym kodem',
@@ -3171,10 +3249,22 @@ extension on TranslationsPl {
 			'twint.flow.takerWait.title' => 'Oczekiwanie na makera',
 			'twint.flow.takerWait.body' => ({required Object code}) => 'Maker weryfikuje Twoją płatność ${code}.',
 			'twint.flow.takerWait.autoConfirms' => 'Automatyczne potwierdzenie',
-			'twint.flow.takerExpired.title' => 'Rezerwacja wygasła',
-			'twint.flow.takerExpired.body' => ({required Object code}) => 'Kod ${code} nie został opłacony na czas. Możesz anulować, aby zwolnić ofertę.',
-			'twint.flow.takerExpired.autoReleases' => 'Automatyczne zwolnienie',
-			'twint.flow.takerExpired.cancel' => 'Anuluj',
+			'twint.flow.takerExpired.title' => ({required Object code}) => '${code} prawdopodobnie wygasł',
+			'twint.flow.takerExpired.warning' => ({required Object code}) => 'Kod ${code} prawdopodobnie już wygasł. Musisz teraz podjąć ważną decyzję — wybierz rozważnie.',
+			'twint.flow.takerExpired.optionPaid' => ({required Object code}) => 'Jeśli ZAPŁACIŁEŚ kod ${code} w swojej aplikacji bankowej, oznacz go jako opłacony. To zobowiązuje Cię do tego twierdzenia: maker musi je potwierdzić, aby odblokować bitcoin, albo rozpocząć spór, w którym obie strony dostarczą koordynatorowi dowody.',
+			'twint.flow.takerExpired.optionCancel' => 'Jeśli NIE zapłaciłeś, anuluj rezerwację. To nieodwracalne — jeśli płatność jednak przeszła, koordynator nie będzie już mógł zagwarantować Ci satsów.',
+			'twint.flow.takerExpired.noDecision' => ({required Object code}) => 'Jeśli nie podejmiesz decyzji przed upływem licznika, koordynator uzna, że NIE zapłaciłeś kodu ${code}. Maker będzie mógł wtedy anulować ofertę — anulując hold invoice — po czym koordynator nie będzie już mógł rozliczyć satsów na Twoją rzecz, nawet jeśli zapłaciłeś.',
+			'twint.flow.takerExpired.timerCaption' => 'Czas na decyzję',
+			'twint.flow.takerExpired.markPaid' => ({required Object code}) => 'Zapłaciłem kod ${code}',
+			'twint.flow.takerExpired.cancel' => 'Anuluj rezerwację',
+			'twint.flow.takerExpired.markPaidDialog.title' => 'Potwierdzasz zapłatę?',
+			'twint.flow.takerExpired.markPaidDialog.content' => ({required Object code}) => 'Kontynuuj tylko, jeśli masz pewność, że płatność ${code} została pobrana w Twojej aplikacji bankowej.\n\nMaker zostanie poproszony o potwierdzenie odbioru, aby odblokować bitcoin. Jeśli zaprzeczy, otwarty zostanie spór i obie strony będą musiały dostarczyć koordynatorowi dowody.',
+			'twint.flow.takerExpired.markPaidDialog.cancel' => 'Wstecz',
+			'twint.flow.takerExpired.markPaidDialog.confirmButton' => 'Tak, zapłaciłem',
+			'twint.flow.takerExpired.cancelDialog.title' => 'Anulować rezerwację?',
+			'twint.flow.takerExpired.cancelDialog.content' => ({required Object code}) => 'Anuluj tylko, jeśli NIE zapłaciłeś kodu ${code}.\n\nTego nie można cofnąć: jeśli płatność jednak przeszła, koordynator NIE będzie mógł zagwarantować, że otrzymasz satsy.',
+			'twint.flow.takerExpired.cancelDialog.cancel' => 'Wstecz',
+			'twint.flow.takerExpired.cancelDialog.confirmButton' => 'Tak, anuluj',
 			'twint.waitConfirmation.title' => 'Oczekiwanie na Makera',
 			'twint.waitConfirmation.statusLabel' => ({required Object status}) => 'Status oferty: ${status}',
 			'twint.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'Oczekiwanie na potwierdzenie Makera: ${seconds} s',
@@ -3213,6 +3303,8 @@ extension on TranslationsPl {
 			'twint.paymentProcess.states.preparing' => 'Przygotowywanie do wysłania płatności...',
 			'twint.paymentProcess.states.sending' => 'Wysyłanie płatności...',
 			'twint.paymentProcess.states.received' => 'Płatność otrzymana!',
+			_ => null,
+		} ?? switch (path) {
 			'twint.paymentProcess.states.failed' => 'Płatność nie powiodła się',
 			'twint.paymentProcess.states.waitingUpdate' => 'Oczekiwanie na aktualizację oferty...',
 			'twint.paymentProcess.steps.makerConfirmedBlik' => ({required Object code}) => 'Maker potwierdził płatność ${code}',
@@ -3238,8 +3330,6 @@ extension on TranslationsPl {
 			'twint.paymentFailed.actions.retryPayment' => 'Wyślij nową fakturę',
 			'twint.paymentFailed.errors.enterValidInvoice' => 'Proszę wprowadzić prawidłową fakturę',
 			'twint.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Błąd aktualizacji faktury: ${details}',
-			_ => null,
-		} ?? switch (path) {
 			'twint.paymentFailed.errors.paymentRetryFailed' => 'Ponowna próba płatności nie powiodła się. Sprawdź fakturę lub spróbuj ponownie później.',
 			'twint.paymentFailed.errors.takerPublicKeyNotFound' => 'Nie znaleziono klucza publicznego Kupującego.',
 			'twint.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Nie udało się wygenerować faktury: ${details}',

@@ -623,7 +623,20 @@ twint:
       yourCode: "O seu código ${code}"
       offerExpires: "A oferta expira"
       autoExpires: "Expira automaticamente"
+      codeExpiresIn: "${code} expira em..."
       cancelOffer: "Cancelar oferta"
+      reservedInfo: "Um taker reservou a sua oferta e está agora a pagar o seu código ${code} na app do banco. Quando o pagamento chegar ao seu comerciante, confirme-o abaixo."
+      confirmReceived: "Confirmar pagamento recebido"
+      confirmDialog:
+        title: "Confirmar pagamento recebido?"
+        content: "Confirme apenas se tiver a certeza ABSOLUTA de que o pagamento ${code} foi recebido com sucesso no seu comerciante.\n\nA confirmação liquida a hold invoice Lightning e envia imediatamente os sats ao taker — não pode ser desfeito."
+        cancel: "Cancelar"
+        confirmButton: "Sim, pagamento recebido"
+    makerExpired:
+      title: "${code} provavelmente expirado"
+      warning: "O código ${code} provavelmente já expirou — mas o taker ainda pode ter conseguido pagá-lo. Verifique o seu comerciante: tem o tempo abaixo para confirmar o pagamento."
+      timerCaption: "Tempo para confirmar"
+      disputeHint: "Também pode deixar o temporizador terminar. Se o taker declarar que pagou, isto torna-se um conflito/disputa em que ambas as partes terão de fornecer provas ao coordenador para resolver a questão."
     makerVerify:
       title: "Recebeu o pagamento?"
       body: "O taker indica que pagou ${amount} para o seu código ${code}."
@@ -634,6 +647,8 @@ twint:
     makerRecode:
       title: "Oferta expirada"
       body: "Nenhum taker concluiu a troca. Introduza um novo código ${code} para voltar a publicar esta oferta, ou cancele-a."
+      scanCardTitle: "Digitalizar novo QR ${code}"
+      scanCardBody: "Aponte a câmara para o ecrã de pagamento. A app preencherá o novo código — o montante mantém-se."
       fieldLabel: "Novo código ${code}"
       autoCancels: "Cancela automaticamente"
       relist: "Publicar novamente com novo código"
@@ -649,10 +664,24 @@ twint:
       body: "O maker está a verificar o seu pagamento ${code}."
       autoConfirms: "Confirma automaticamente"
     takerExpired:
-      title: "Reserva expirada"
-      body: "O código ${code} não foi pago a tempo. Pode cancelar para libertar a oferta."
-      autoReleases: "Liberta automaticamente"
-      cancel: "Cancelar"
+      title: "${code} provavelmente expirado"
+      warning: "O código ${code} provavelmente já expirou. Tem agora de tomar uma decisão importante — escolha com cuidado."
+      optionPaid: "Se PAGOU o código ${code} na app do seu banco, marque-o como pago. Isso compromete-o com essa declaração: o maker terá de confirmar para desbloquear o bitcoin, ou abrir uma disputa em que ambas as partes fornecem provas ao coordenador."
+      optionCancel: "Se NÃO pagou, cancele a reserva. É irreversível — se o pagamento tiver de facto passado, o coordenador deixa de poder garantir os seus sats."
+      noDecision: "Se não tomar nenhuma decisão antes de o temporizador terminar, o coordenador assumirá que NÃO pagou o código ${code}. O maker poderá então cancelar a oferta — cancelando a hold invoice — e depois disso o coordenador já não poderá liquidar os sats para si, mesmo que tenha pago."
+      timerCaption: "Tempo para decidir"
+      markPaid: "Paguei o código ${code}"
+      cancel: "Cancelar reserva"
+      markPaidDialog:
+        title: "Confirma que pagou?"
+        content: "Continue apenas se tiver a certeza de que o pagamento ${code} foi debitado na app do seu banco.\n\nO maker será convidado a confirmar a receção para desbloquear o bitcoin. Se negar, é aberta uma disputa e ambas as partes terão de fornecer provas ao coordenador."
+        cancel: "Voltar"
+        confirmButton: "Sim, paguei"
+      cancelDialog:
+        title: "Cancelar a reserva?"
+        content: "Cancele apenas se NÃO pagou o código ${code}.\n\nNão pode ser desfeito: se o pagamento tiver de facto passado, o coordenador NÃO poderá garantir que recebe os sats."
+        cancel: "Voltar"
+        confirmButton: "Sim, cancelar"
 
   waitConfirmation:
     title: "À espera do maker"

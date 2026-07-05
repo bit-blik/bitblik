@@ -267,7 +267,7 @@ class ApiServiceNostr {
     return (rates: rates, fetchedAt: fetchedAt);
   }
 
-  Future<DateTime?> reserveOffer(
+  Future<ReserveOfferResult> reserveOffer(
     String offerId,
     String takerId,
     String coordinatorPubkey, {

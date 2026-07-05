@@ -81,15 +81,17 @@ const _terminalStates = {
   'takerPaid',
   'cancelled',
   'expired',
-  'dispute',
 };
 
 void main() {
   late FlowEngine engine;
 
-  setUpAll(() {
+  Future<String> loadFlowImport(String importPath) async =>
+      File('lib/flows/$importPath').readAsStringSync();
+
+  setUpAll(() async {
     final src = File('lib/flows/blik.yml').readAsStringSync();
-    engine = FlowEngine.fromYaml(src);
+    engine = await FlowEngine.fromYamlWithImports(src, loadFlowImport);
   });
 
   test('parses and validates structurally', () {

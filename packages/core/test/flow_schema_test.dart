@@ -1,9 +1,8 @@
 import 'package:bitblik_core/core.dart';
 import 'package:test/test.dart';
 
-/// Phase 0 schema additions: list-valued effects / on_entry, nip69, returns,
-/// and the FlowEngine.transitionFor helper. Asserts back-compat so existing
-/// scalar yaml keeps parsing unchanged.
+/// Flow schema v2: `on/by/do/to/on_fail/after/from`, plus nip69, returns, and
+/// the FlowEngine.transitionFor helper.
 void main() {
   FlowEngine engineFrom(String body) => FlowEngine.fromYaml('''
 id: test
@@ -11,51 +10,65 @@ states:
 $body
 ''');
 
-  test('scalar on_entry / action stay back-compatible', () {
+  test('user-action transitions parse from on/by/do/to', () {
     final e = engineFrom('''
   a:
     initial: true
-    on_entry: send_offer_notifications
     transitions:
-      - trigger: user_action
-        event: go
-        target: b
-        action: settle_hold_invoice
+      - on: go
+        by: maker
+        to: b
+        do: [settle_offer_funds]
   b:
     terminal: true
 ''');
     final a = e.definition.state('a')!;
-    expect(a.onEntry, 'send_offer_notifications');
-    expect(a.onEntryEffects, ['send_offer_notifications']);
-    final t = a.transitions.first;
-    expect(t.action, 'settle_hold_invoice');
-    // effects falls back to [action] when no explicit `effects:`.
-    expect(t.effects, ['settle_hold_invoice']);
+    expect(a.transitions.first.actions, ['settle_offer_funds']);
+    expect(a.transitions.first.actor, FlowActor.maker);
+    expect(a.transitions.first.event, 'go');
   });
 
-  test('list-valued on_entry / effects, plus nip69 and returns', () {
+  test('do/on_fail/returns parse cleanly', () {
     final e = engineFrom('''
   a:
     initial: true
     nip69: in-progress
-    on_entry: [reveal_code_to_taker, notify_maker_of_charge]
+    do: [send_offer_notifications]
     transitions:
-      - trigger: user_action
-        event: get_blik
-        target: b
+      - on: get_blik
+        to: b
         returns: blik_code
-        effects: [validate_code, stamp_code_received_at]
+        do: [validate_code, stamp_code_received_at]
+        on_fail: failed
   b:
+    terminal: true
+  failed:
     terminal: true
 ''');
     final a = e.definition.state('a')!;
     expect(a.nip69, 'in-progress');
-    expect(a.onEntry, isNull); // list form -> scalar getter null
-    expect(a.onEntryEffects, ['reveal_code_to_taker', 'notify_maker_of_charge']);
+    expect(a.actions, ['send_offer_notifications']);
     final t = a.transitions.first;
     expect(t.returns, 'blik_code');
-    expect(t.effects, ['validate_code', 'stamp_code_received_at']);
-    expect(t.action, isNull);
+    expect(t.actions, ['validate_code', 'stamp_code_received_at']);
+    expect(t.onFailTarget, 'failed');
+  });
+
+  test('timeout uses after/from', () {
+    final e = engineFrom('''
+  a:
+    initial: true
+    transitions:
+      - on: timeout
+        after: 120
+        from: created_at
+        to: b
+  b:
+    terminal: true
+''');
+    final t = e.timeoutFor('a')!;
+    expect(t.durationSeconds, 120);
+    expect(t.fromField, 'created_at');
   });
 
   test('transitionFor resolves by event (and actor)', () {
@@ -63,10 +76,9 @@ $body
   a:
     initial: true
     transitions:
-      - trigger: user_action
-        event: go
-        actor: maker
-        target: b
+      - on: go
+        by: maker
+        to: b
   b:
     terminal: true
 ''');
@@ -74,5 +86,32 @@ $body
     expect(e.transitionFor('a', 'go', actor: FlowActor.maker)?.target, 'b');
     expect(e.transitionFor('a', 'go', actor: FlowActor.taker), isNull);
     expect(e.transitionFor('a', 'nope'), isNull);
+  });
+
+  test('imports merge shared states before validation', () async {
+    final engine = await FlowEngine.fromYamlWithImports(
+        '''
+id: imported
+imports: [common.yml]
+states:
+  funded:
+    initial: true
+    transitions:
+      - on: reserve_offer
+        by: taker
+        to: makerConfirmed
+''',
+        (importPath) async => '''
+states:
+  makerConfirmed:
+    transitions:
+      - on: auto
+        to: takerPaid
+  takerPaid:
+    terminal: true
+''');
+    expect(engine.transitionFor('funded', 'reserve_offer')?.target,
+        'makerConfirmed');
+    expect(engine.isTerminal('takerPaid'), isTrue);
   });
 }

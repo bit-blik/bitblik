@@ -413,10 +413,16 @@ class Offer {
   /// taker's invoice or the hold-invoice preimage on every poll, so omit them
   /// by default to preserve compatibility with older clients that still rely on
   /// `get_my_active_offer`.
+  ///
+  /// [forTaker] strips maker-private data from taker-facing responses: public
+  /// offer events deliberately hide the maker's pubkey, so reserving (or any
+  /// taker RPC) must not reveal it, nor the hold invoice / maker fees the
+  /// taker has no use for.
   Map<String, dynamic> toRpcJson({
     bool includeBlikCode = false,
     bool includeTakerInvoice = false,
     bool includeHoldInvoicePreimage = false,
+    bool forTaker = false,
   }) {
     final json = toJsonWithPubkeys();
     json.remove('taker_charged_at');
@@ -429,6 +435,12 @@ class Offer {
     }
     if (!includeHoldInvoicePreimage) {
       json.remove('hold_invoice_preimage');
+    }
+    if (forTaker) {
+      json.remove('maker_pubkey');
+      json.remove('hold_invoice');
+      json.remove('maker_fees');
+      json.remove('payment_wallet_id');
     }
     return json;
   }

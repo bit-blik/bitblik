@@ -72,11 +72,13 @@ const RhombusNode = ({ data }) => {
 
 const nodeTypes = { rhombus: RhombusNode };
 
+// Schema v2 transitions: `on` is the RPC event name, `timeout` or `auto`;
+// timeouts carry `after` seconds (optionally anchored to `from`).
 const transitionLabel = (t) => {
-  if (t.trigger === 'timeout') {
-    return t.durationSeconds != null ? `timeout ${t.durationSeconds}s` : 'timeout';
+  if (t.on === 'timeout') {
+    return t.after != null ? `timeout ${t.after}s` : 'timeout';
   }
-  return t.event || t.trigger || '';
+  return t.on || '';
 };
 
 // Build the (unpositioned) React Flow nodes/edges + layout metadata from a flow.
@@ -98,18 +100,23 @@ const buildBase = (flow) => {
   const rfEdges = [];
 
   // Merge parallel transitions (same source→target) into one labelled edge.
+  // v2 `on_fail:` failure routes are collected separately and rendered as
+  // dashed red edges so success and failure paths read apart at a glance.
   const merged = new Map();
+  const failMerged = new Map();
+  const collect = (map, source, target, label) => {
+    const key = `${source}->${target}`;
+    if (map.has(key)) {
+      const existing = map.get(key);
+      if (label && !existing.labels.includes(label)) existing.labels.push(label);
+    } else {
+      map.set(key, { source, target, labels: label ? [label] : [] });
+    }
+  };
   flow.states.forEach((state) => {
     state.transitions.forEach((t) => {
-      if (!t.target) return;
-      const key = `${state.name}->${t.target}`;
-      const label = transitionLabel(t);
-      if (merged.has(key)) {
-        const existing = merged.get(key);
-        if (label && !existing.labels.includes(label)) existing.labels.push(label);
-      } else {
-        merged.set(key, { source: state.name, target: t.target, labels: label ? [label] : [] });
-      }
+      if (t.to) collect(merged, state.name, t.to, transitionLabel(t));
+      if (t.onFail) collect(failMerged, state.name, t.onFail, `${transitionLabel(t)} ✗`);
     });
   });
   merged.forEach((e, key) => {
@@ -124,6 +131,20 @@ const buildBase = (flow) => {
       labelBgPadding: [4, 2],
       style: { stroke: '#94a3b8', strokeWidth: 1.5 },
       markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+    });
+  });
+  failMerged.forEach((e, key) => {
+    rfEdges.push({
+      id: `e-fail-${key}`,
+      source: e.source,
+      target: e.target,
+      type: 'smoothstep',
+      label: e.labels.join(' / '),
+      labelStyle: { fontSize: 12, fontWeight: 600, fill: '#b91c1c' },
+      labelBgStyle: { fill: '#ffffff', fillOpacity: 0.85 },
+      labelBgPadding: [4, 2],
+      style: { stroke: '#ef4444', strokeWidth: 1.5, strokeDasharray: '6 4' },
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' },
     });
   });
 
@@ -366,6 +387,10 @@ const FlowPage = ({ selectedCoordinatorId, coordinators = [] }) => {
           <span className="inline-flex items-center gap-1.5">
             <span className="inline-block h-3 w-3 rotate-45 border border-red-500 bg-red-100" />
             Terminal
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-block w-5 border-t-2 border-dashed border-red-500" />
+            on_fail
           </span>
           <span>{flow.states.length} states</span>
           <span>{flow.states.reduce((n, s) => n + s.transitions.length, 0)} transitions</span>

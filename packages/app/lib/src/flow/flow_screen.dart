@@ -1,9 +1,38 @@
+import 'dart:async';
+
 import 'package:bitblik_core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/providers.dart' show activeOfferProvider;
+import '../screens/maker_flow/maker_confirm_payment_screen.dart'
+    show MakerConfirmPaymentScreen;
+import '../screens/maker_flow/maker_conflict_screen.dart'
+    show MakerConflictScreen;
+import '../screens/maker_flow/maker_invalid_blik_screen.dart'
+    show MakerInvalidBlikScreen;
+import '../screens/maker_flow/maker_pay_invoice_screen.dart'
+    show MakerPayInvoiceScreen;
+import '../screens/maker_flow/maker_success_screen.dart'
+    show MakerSuccessScreen;
+import '../screens/maker_flow/maker_wait_for_blik_screen.dart'
+    show MakerWaitForBlikScreen;
+import '../screens/maker_flow/maker_wait_taker_screen.dart'
+    show MakerWaitTakerScreen;
+import '../screens/taker_flow/taker_conflict_screen.dart'
+    show TakerConflictScreen;
+import '../screens/taker_flow/taker_invalid_blik_screen.dart'
+    show TakerInvalidBlikScreen;
+import '../screens/taker_flow/taker_payment_failed_screen.dart'
+    show TakerPaymentFailedScreen;
+import '../screens/taker_flow/taker_payment_process_screen.dart'
+    show TakerPaymentProcessScreen;
+import '../screens/taker_flow/taker_submit_blik_screen.dart'
+    show TakerSubmitBlikScreen;
+import '../screens/taker_flow/taker_wait_confirmation_screen.dart'
+    show TakerWaitConfirmationScreen;
+import '../utils/offer_status_label.dart' show humanizeFlowState;
 import 'flow_actions_bar.dart';
 import 'flow_controller.dart';
 import 'flow_provider.dart';
@@ -18,12 +47,7 @@ import 'twint_bodies.dart';
 /// migrated onto the flow-driven UI.
 final FlowBody genericFlowBody = (context, ref, offer, engine, role) {
   final state = offer.statusRaw;
-  final humanized = state
-      .replaceAllMapped(RegExp('([A-Z])'), (m) => ' ${m[1]}')
-      .replaceAll('_', ' ')
-      .trim();
-  final title =
-      humanized.isEmpty ? state : '${humanized[0].toUpperCase()}${humanized.substring(1)}';
+  final title = humanizeFlowState(state);
   final actions = engine.userActionsFor(state, role);
   final terminal = engine.isTerminal(state);
   final hasTimeout = flowStateDeadline(engine, state, offer) != null;
@@ -32,19 +56,20 @@ final FlowBody genericFlowBody = (context, ref, offer, engine, role) {
   final waiting = !terminal && actions.isEmpty && !hasTimeout;
 
   Widget row(String label, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: Theme.of(context).textTheme.bodyMedium),
-            Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
-          ],
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
+        Text(
+          value,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
-      );
+      ],
+    ),
+  );
 
   return Center(
     child: SingleChildScrollView(
@@ -52,9 +77,11 @@ final FlowBody genericFlowBody = (context, ref, offer, engine, role) {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title,
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 20),
           row('Amount', '${offer.fiatAmount} ${offer.fiatCurrency}'),
           if ((offer.blikCode ?? '').isNotEmpty) row('Code', offer.blikCode!),
@@ -71,10 +98,144 @@ final FlowBody genericFlowBody = (context, ref, offer, engine, role) {
   );
 };
 
+/// BLIK and MB WAY share the legacy screen set as flow bodies — mbway.yml
+/// mirrors blik.yml's state names, and both use the same code-based screens.
+/// The screens' internal status navigation routes through flowEntryRoute,
+/// which resolves to '/flow' while the market is flow-driven — so FlowScreen
+/// stays the navigation owner and simply re-renders the body registered for
+/// the next state.
+final Map<String, Map<FlowActor, FlowBody>> _codeFlowBodies = {
+  // Client-side pre-funding status, same arrangement as TWINT.
+  'created': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) => const MakerPayInvoiceScreen(),
+  },
+  'funded': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) => const MakerWaitTakerScreen(),
+  },
+  'reserved': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) => const MakerWaitForBlikScreen(),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerSubmitBlikScreen(initialOffer: offer),
+  },
+  'blikReceived': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) => const MakerWaitForBlikScreen(),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerWaitConfirmationScreen(offer: offer),
+  },
+  'blikSentToMaker': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            const MakerConfirmPaymentScreen(),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerWaitConfirmationScreen(offer: offer),
+  },
+  'takerCharged': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            const MakerConfirmPaymentScreen(),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerWaitConfirmationScreen(offer: offer),
+  },
+  'expiredSentBlik': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            const MakerConfirmPaymentScreen(),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerWaitConfirmationScreen(offer: offer),
+  },
+  // expiredBlik: maker has no actions there → genericFlowBody; the taker
+  // keeps the wait screen (re-take / cancel handling).
+  'expiredBlik': {
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerWaitConfirmationScreen(offer: offer),
+  },
+  'invalidBlik': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerInvalidBlikScreen(offer: offer),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerInvalidBlikScreen(offer: offer),
+  },
+  'conflict': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerConflictScreen(offer: offer),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerConflictScreen(offerId: offer.id),
+  },
+  // Payout tail: the maker is done once the coordinator settles; the taker
+  // watches the payout progress.
+  'makerConfirmed': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerSuccessScreen(completedOffer: offer),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            const TakerPaymentProcessScreen(),
+  },
+  'settled': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerSuccessScreen(completedOffer: offer),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            const TakerPaymentProcessScreen(),
+  },
+  'payingTaker': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerSuccessScreen(completedOffer: offer),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            const TakerPaymentProcessScreen(),
+  },
+  'takerPaid': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerSuccessScreen(completedOffer: offer),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            const TakerPaymentProcessScreen(),
+  },
+  'takerPaymentFailed': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerSuccessScreen(completedOffer: offer),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerPaymentFailedScreen(offer: offer),
+  },
+  'dispute': {
+    FlowActor.maker: twintDisputeBody,
+    FlowActor.taker: twintDisputeBody,
+  },
+  // cancelled / expired terminals fall through to [genericFlowBody].
+};
+
 /// Bespoke bodies per (flowId, state, role). Anything not listed falls back to
-/// [genericFlowBody]. Add a `'blik'` block here to migrate BLIK later.
+/// [genericFlowBody].
 final Map<String, Map<String, Map<FlowActor, FlowBody>>> _flowBodies = {
   'twint': {
+    // `created` is a client-side pre-funding status (not a yaml state — the
+    // coordinator only learns of the offer once the hold invoice is paid), so
+    // the legacy invoice screen owns it; it re-enters `/flow` on funding via
+    // flowEntryRoute.
+    'created': {
+      FlowActor.maker:
+          (context, ref, offer, engine, role) => const MakerPayInvoiceScreen(),
+    },
     'funded': {FlowActor.maker: twintMakerWaitBody},
     'reserved': {
       FlowActor.maker: twintMakerWaitBody,
@@ -85,11 +246,20 @@ final Map<String, Map<String, Map<FlowActor, FlowBody>>> _flowBodies = {
       FlowActor.taker: twintTakerWaitConfirmBody,
     },
     'invalidTwint': {FlowActor.maker: twintMakerReCodeBody},
-    'expiredTwint': {FlowActor.taker: twintTakerExpiredBody},
+    'dispute': {
+      FlowActor.maker: twintDisputeBody,
+      FlowActor.taker: twintDisputeBody,
+    },
+    'expiredTwint': {
+      FlowActor.maker: twintMakerExpiredBody,
+      FlowActor.taker: twintTakerExpiredBody,
+    },
     // Payout-tail (makerConfirmed, settled, payingTaker, takerPaid,
     // takerPaymentFailed) + terminals (cancelled, dispute) intentionally have no
     // bespoke body — they fall through to [genericFlowBody].
   },
+  'blik': _codeFlowBodies,
+  'mbway': _codeFlowBodies,
 };
 
 FlowBody _bodyFor(String flowId, String state, FlowActor role) =>
@@ -131,10 +301,18 @@ class FlowScreen extends ConsumerWidget {
             }
             final state = offer.statusRaw;
             final body = _bodyFor(engine.definition.id, state, role)(
-                context, ref, offer, engine, role);
+              context,
+              ref,
+              offer,
+              engine,
+              role,
+            );
             final terminal = engine.isTerminal(state);
             return Column(
               children: [
+                // Invisible: re-fetches the offer from the coordinator when the
+                // state's yaml deadline passes without a pushed update.
+                _FlowDeadlineSync(engine: engine, offer: offer),
                 Expanded(child: body),
                 if (terminal)
                   Padding(
@@ -161,15 +339,93 @@ class FlowScreen extends ConsumerWidget {
   }
 
   Widget _homeError(BuildContext context, String msg) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(msg),
-            const SizedBox(height: 16),
-            ElevatedButton(
-                onPressed: () => context.go('/'),
-                child: const Text('Home')),
-          ],
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(msg),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () => context.go('/'),
+          child: const Text('Home'),
         ),
-      );
+      ],
+    ),
+  );
+}
+
+/// Client-side safety net for missed status pushes: when the current state's
+/// yaml deadline passes, the coordinator has advanced the offer server-side.
+/// If the pushed update never arrived (relay hiccup, app in background) the
+/// screen would sit on a 0:00 countdown forever — so shortly after the
+/// deadline, re-fetch the offer from the coordinator and keep retrying until
+/// the state moves (any change rebuilds this widget and re-arms).
+class _FlowDeadlineSync extends ConsumerStatefulWidget {
+  final FlowEngine engine;
+  final Offer offer;
+  const _FlowDeadlineSync({required this.engine, required this.offer});
+
+  @override
+  ConsumerState<_FlowDeadlineSync> createState() => _FlowDeadlineSyncState();
+}
+
+class _FlowDeadlineSyncState extends ConsumerState<_FlowDeadlineSync> {
+  Timer? _timer;
+  static const _postDeadlineGrace = Duration(seconds: 2);
+  static const _retryInterval = Duration(seconds: 10);
+
+  @override
+  void initState() {
+    super.initState();
+    _arm();
+    // One-shot sync on entering the flow screen: catches updates missed while
+    // the user was away (e.g. an ex-taker resuming an offer that was relisted
+    // without them — no push reaches ex-participants who were offline).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(_FlowDeadlineSync old) {
+    super.didUpdateWidget(old);
+    if (old.offer.id != widget.offer.id ||
+        old.offer.statusRaw != widget.offer.statusRaw ||
+        old.offer.updatedAt != widget.offer.updatedAt) {
+      _arm();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _arm() {
+    _timer?.cancel();
+    final deadline = flowStateDeadline(
+      widget.engine,
+      widget.offer.statusRaw,
+      widget.offer,
+    );
+    if (deadline == null) return;
+    final wait = deadline
+        .add(_postDeadlineGrace)
+        .difference(DateTime.now().toUtc());
+    _timer = Timer(wait.isNegative ? Duration.zero : wait, _sync);
+  }
+
+  Future<void> _sync() async {
+    if (!mounted) return;
+    await ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
+    if (!mounted) return;
+    // State still stale (coordinator timer lag / transient fetch failure) —
+    // retry until a status change re-arms or unmounts us.
+    _timer = Timer(_retryInterval, _sync);
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

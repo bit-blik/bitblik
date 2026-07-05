@@ -1159,6 +1159,7 @@ class _Translations$twint$flow$de extends Translations$twint$flow$en {
 
 	// Translations
 	@override late final _Translations$twint$flow$makerWait$de makerWait = _Translations$twint$flow$makerWait$de._(_root);
+	@override late final _Translations$twint$flow$makerExpired$de makerExpired = _Translations$twint$flow$makerExpired$de._(_root);
 	@override late final _Translations$twint$flow$makerVerify$de makerVerify = _Translations$twint$flow$makerVerify$de._(_root);
 	@override late final _Translations$twint$flow$makerRecode$de makerRecode = _Translations$twint$flow$makerRecode$de._(_root);
 	@override late final _Translations$twint$flow$takerPay$de takerPay = _Translations$twint$flow$takerPay$de._(_root);
@@ -2265,7 +2266,24 @@ class _Translations$twint$flow$makerWait$de extends Translations$twint$flow$make
 	@override String yourCode({required Object code}) => 'Dein ${code}-Code';
 	@override String get offerExpires => 'Angebot läuft ab';
 	@override String get autoExpires => 'Läuft automatisch ab';
+	@override String codeExpiresIn({required Object code}) => '${code} läuft ab in...';
 	@override String get cancelOffer => 'Angebot stornieren';
+	@override String reservedInfo({required Object code}) => 'Ein Taker hat dein Angebot reserviert und bezahlt jetzt deinen ${code}-Code in seiner Banking-App. Sobald die Zahlung bei deinem Händler eingegangen ist, bestätige sie unten.';
+	@override String get confirmReceived => 'Zahlungseingang bestätigen';
+	@override late final _Translations$twint$flow$makerWait$confirmDialog$de confirmDialog = _Translations$twint$flow$makerWait$confirmDialog$de._(_root);
+}
+
+// Path: twint.flow.makerExpired
+class _Translations$twint$flow$makerExpired$de extends Translations$twint$flow$makerExpired$en {
+	_Translations$twint$flow$makerExpired$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object code}) => '${code} wahrscheinlich abgelaufen';
+	@override String warning({required Object code}) => 'Der ${code}-Code ist inzwischen wahrscheinlich abgelaufen — aber der Taker könnte ihn trotzdem noch bezahlt haben. Prüfe deinen Händler: du hast die unten angezeigte Zeit, um die Zahlung zu bestätigen.';
+	@override String get timerCaption => 'Zeit zum Bestätigen';
+	@override String get disputeHint => 'Du kannst auch warten, bis der Timer abläuft. Meldet der Taker, bezahlt zu haben, wird daraus ein Konflikt/Disput, bei dem beide Parteien dem Koordinator Nachweise zur Klärung liefern müssen.';
 }
 
 // Path: twint.flow.makerVerify
@@ -2292,6 +2310,8 @@ class _Translations$twint$flow$makerRecode$de extends Translations$twint$flow$ma
 	// Translations
 	@override String get title => 'Angebot abgelaufen';
 	@override String body({required Object code}) => 'Kein Taker hat den Trade abgeschlossen. Gib einen neuen ${code}-Code ein, um dieses Angebot erneut zu veröffentlichen, oder storniere es.';
+	@override String scanCardTitle({required Object code}) => 'Neuen ${code}-QR scannen';
+	@override String get scanCardBody => 'Richte die Kamera auf den Zahlungsbildschirm. Die App füllt den neuen Code automatisch aus — der Betrag bleibt gleich.';
 	@override String fieldLabel({required Object code}) => 'Neuer ${code}-Code';
 	@override String get autoCancels => 'Wird automatisch storniert';
 	@override String get relist => 'Mit neuem Code erneut veröffentlichen';
@@ -2331,10 +2351,16 @@ class _Translations$twint$flow$takerExpired$de extends Translations$twint$flow$t
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Reservierung abgelaufen';
-	@override String body({required Object code}) => 'Der ${code}-Code wurde nicht rechtzeitig bezahlt. Du kannst abbrechen, um das Angebot freizugeben.';
-	@override String get autoReleases => 'Wird automatisch freigegeben';
-	@override String get cancel => 'Abbrechen';
+	@override String title({required Object code}) => '${code} wahrscheinlich abgelaufen';
+	@override String warning({required Object code}) => 'Der ${code}-Code ist inzwischen wahrscheinlich abgelaufen. Du musst jetzt eine wichtige Entscheidung treffen — wähle sorgfältig.';
+	@override String optionPaid({required Object code}) => 'Wenn du den ${code}-Code in deiner Banking-App BEZAHLT hast, markiere ihn als bezahlt. Damit verpflichtest du dich zu dieser Aussage: der Maker muss sie bestätigen, um die Bitcoin freizugeben, oder einen Disput starten, bei dem beide Parteien dem Koordinator Nachweise liefern.';
+	@override String get optionCancel => 'Wenn du NICHT bezahlt hast, storniere die Reservierung. Das ist unumkehrbar — falls die Zahlung doch durchging, kann der Koordinator deine Sats nicht mehr garantieren.';
+	@override String noDecision({required Object code}) => 'Triffst du vor Ablauf des Timers keine Entscheidung, geht der Koordinator davon aus, dass du den ${code}-Code NICHT bezahlt hast. Der Maker kann das Angebot dann stornieren — wodurch die Hold-Invoice storniert wird — und der Koordinator kann dir die Sats danach nicht mehr auszahlen, selbst wenn du bezahlt hast.';
+	@override String get timerCaption => 'Zeit zu entscheiden';
+	@override String markPaid({required Object code}) => 'Ich habe den ${code}-Code bezahlt';
+	@override String get cancel => 'Reservierung stornieren';
+	@override late final _Translations$twint$flow$takerExpired$markPaidDialog$de markPaidDialog = _Translations$twint$flow$takerExpired$markPaidDialog$de._(_root);
+	@override late final _Translations$twint$flow$takerExpired$cancelDialog$de cancelDialog = _Translations$twint$flow$takerExpired$cancelDialog$de._(_root);
 }
 
 // Path: twint.waitConfirmation.categoryReminder
@@ -2733,6 +2759,45 @@ class _Translations$maker$conflict$disputeDialog$actions$de extends Translations
 	// Translations
 	@override String get confirm => 'Streitfall eröffnen';
 	@override String get cancel => 'Abbrechen';
+}
+
+// Path: twint.flow.makerWait.confirmDialog
+class _Translations$twint$flow$makerWait$confirmDialog$de extends Translations$twint$flow$makerWait$confirmDialog$en {
+	_Translations$twint$flow$makerWait$confirmDialog$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Zahlungseingang bestätigen?';
+	@override String content({required Object code}) => 'Bestätige nur, wenn du dir ABSOLUT sicher bist, dass die ${code}-Zahlung bei deinem Händler erfolgreich eingegangen ist.\n\nDie Bestätigung wickelt die Lightning-Hold-Invoice ab und sendet die Sats sofort an den Taker — das kann nicht rückgängig gemacht werden.';
+	@override String get cancel => 'Abbrechen';
+	@override String get confirmButton => 'Ja, Zahlung erhalten';
+}
+
+// Path: twint.flow.takerExpired.markPaidDialog
+class _Translations$twint$flow$takerExpired$markPaidDialog$de extends Translations$twint$flow$takerExpired$markPaidDialog$en {
+	_Translations$twint$flow$takerExpired$markPaidDialog$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Zahlung bestätigen?';
+	@override String content({required Object code}) => 'Fahre nur fort, wenn du sicher bist, dass die ${code}-Zahlung in deiner Banking-App abgebucht wurde.\n\nDer Maker wird gebeten, den Empfang zu bestätigen, um die Bitcoin freizugeben. Bestreitet er ihn, wird ein Disput eröffnet und beide Parteien müssen dem Koordinator Nachweise liefern.';
+	@override String get cancel => 'Zurück';
+	@override String get confirmButton => 'Ja, ich habe bezahlt';
+}
+
+// Path: twint.flow.takerExpired.cancelDialog
+class _Translations$twint$flow$takerExpired$cancelDialog$de extends Translations$twint$flow$takerExpired$cancelDialog$en {
+	_Translations$twint$flow$takerExpired$cancelDialog$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Reservierung stornieren?';
+	@override String content({required Object code}) => 'Storniere nur, wenn du den ${code}-Code NICHT bezahlt hast.\n\nDas kann nicht rückgängig gemacht werden: falls die Zahlung doch durchging, kann der Koordinator NICHT garantieren, dass du die Sats erhältst.';
+	@override String get cancel => 'Zurück';
+	@override String get confirmButton => 'Ja, stornieren';
 }
 
 // Path: twint.invalidBlik.confirmDialog.actions
@@ -3205,7 +3270,18 @@ extension on TranslationsDe {
 			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Dein ${code}-Code',
 			'twint.flow.makerWait.offerExpires' => 'Angebot läuft ab',
 			'twint.flow.makerWait.autoExpires' => 'Läuft automatisch ab',
+			'twint.flow.makerWait.codeExpiresIn' => ({required Object code}) => '${code} läuft ab in...',
 			'twint.flow.makerWait.cancelOffer' => 'Angebot stornieren',
+			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Ein Taker hat dein Angebot reserviert und bezahlt jetzt deinen ${code}-Code in seiner Banking-App. Sobald die Zahlung bei deinem Händler eingegangen ist, bestätige sie unten.',
+			'twint.flow.makerWait.confirmReceived' => 'Zahlungseingang bestätigen',
+			'twint.flow.makerWait.confirmDialog.title' => 'Zahlungseingang bestätigen?',
+			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Bestätige nur, wenn du dir ABSOLUT sicher bist, dass die ${code}-Zahlung bei deinem Händler erfolgreich eingegangen ist.\n\nDie Bestätigung wickelt die Lightning-Hold-Invoice ab und sendet die Sats sofort an den Taker — das kann nicht rückgängig gemacht werden.',
+			'twint.flow.makerWait.confirmDialog.cancel' => 'Abbrechen',
+			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Ja, Zahlung erhalten',
+			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} wahrscheinlich abgelaufen',
+			'twint.flow.makerExpired.warning' => ({required Object code}) => 'Der ${code}-Code ist inzwischen wahrscheinlich abgelaufen — aber der Taker könnte ihn trotzdem noch bezahlt haben. Prüfe deinen Händler: du hast die unten angezeigte Zeit, um die Zahlung zu bestätigen.',
+			'twint.flow.makerExpired.timerCaption' => 'Zeit zum Bestätigen',
+			'twint.flow.makerExpired.disputeHint' => 'Du kannst auch warten, bis der Timer abläuft. Meldet der Taker, bezahlt zu haben, wird daraus ein Konflikt/Disput, bei dem beide Parteien dem Koordinator Nachweise zur Klärung liefern müssen.',
 			'twint.flow.makerVerify.title' => 'Hast du die Zahlung erhalten?',
 			'twint.flow.makerVerify.body' => ({required Object amount, required Object code}) => 'Der Taker meldet, dass er ${amount} an deinen ${code}-Code bezahlt hat.',
 			'twint.flow.makerVerify.hint' => ({required Object code}) => 'Prüfe deine ${code}-App und bestätige dann oder eröffne einen Streitfall.',
@@ -3214,6 +3290,8 @@ extension on TranslationsDe {
 			'twint.flow.makerVerify.openDispute' => 'Streitfall eröffnen',
 			'twint.flow.makerRecode.title' => 'Angebot abgelaufen',
 			'twint.flow.makerRecode.body' => ({required Object code}) => 'Kein Taker hat den Trade abgeschlossen. Gib einen neuen ${code}-Code ein, um dieses Angebot erneut zu veröffentlichen, oder storniere es.',
+			'twint.flow.makerRecode.scanCardTitle' => ({required Object code}) => 'Neuen ${code}-QR scannen',
+			'twint.flow.makerRecode.scanCardBody' => 'Richte die Kamera auf den Zahlungsbildschirm. Die App füllt den neuen Code automatisch aus — der Betrag bleibt gleich.',
 			'twint.flow.makerRecode.fieldLabel' => ({required Object code}) => 'Neuer ${code}-Code',
 			'twint.flow.makerRecode.autoCancels' => 'Wird automatisch storniert',
 			'twint.flow.makerRecode.relist' => 'Mit neuem Code erneut veröffentlichen',
@@ -3226,10 +3304,22 @@ extension on TranslationsDe {
 			'twint.flow.takerWait.title' => 'Warten auf den Maker',
 			'twint.flow.takerWait.body' => ({required Object code}) => 'Der Maker überprüft deine ${code}-Zahlung.',
 			'twint.flow.takerWait.autoConfirms' => 'Bestätigt automatisch',
-			'twint.flow.takerExpired.title' => 'Reservierung abgelaufen',
-			'twint.flow.takerExpired.body' => ({required Object code}) => 'Der ${code}-Code wurde nicht rechtzeitig bezahlt. Du kannst abbrechen, um das Angebot freizugeben.',
-			'twint.flow.takerExpired.autoReleases' => 'Wird automatisch freigegeben',
-			'twint.flow.takerExpired.cancel' => 'Abbrechen',
+			'twint.flow.takerExpired.title' => ({required Object code}) => '${code} wahrscheinlich abgelaufen',
+			'twint.flow.takerExpired.warning' => ({required Object code}) => 'Der ${code}-Code ist inzwischen wahrscheinlich abgelaufen. Du musst jetzt eine wichtige Entscheidung treffen — wähle sorgfältig.',
+			'twint.flow.takerExpired.optionPaid' => ({required Object code}) => 'Wenn du den ${code}-Code in deiner Banking-App BEZAHLT hast, markiere ihn als bezahlt. Damit verpflichtest du dich zu dieser Aussage: der Maker muss sie bestätigen, um die Bitcoin freizugeben, oder einen Disput starten, bei dem beide Parteien dem Koordinator Nachweise liefern.',
+			'twint.flow.takerExpired.optionCancel' => 'Wenn du NICHT bezahlt hast, storniere die Reservierung. Das ist unumkehrbar — falls die Zahlung doch durchging, kann der Koordinator deine Sats nicht mehr garantieren.',
+			'twint.flow.takerExpired.noDecision' => ({required Object code}) => 'Triffst du vor Ablauf des Timers keine Entscheidung, geht der Koordinator davon aus, dass du den ${code}-Code NICHT bezahlt hast. Der Maker kann das Angebot dann stornieren — wodurch die Hold-Invoice storniert wird — und der Koordinator kann dir die Sats danach nicht mehr auszahlen, selbst wenn du bezahlt hast.',
+			'twint.flow.takerExpired.timerCaption' => 'Zeit zu entscheiden',
+			'twint.flow.takerExpired.markPaid' => ({required Object code}) => 'Ich habe den ${code}-Code bezahlt',
+			'twint.flow.takerExpired.cancel' => 'Reservierung stornieren',
+			'twint.flow.takerExpired.markPaidDialog.title' => 'Zahlung bestätigen?',
+			'twint.flow.takerExpired.markPaidDialog.content' => ({required Object code}) => 'Fahre nur fort, wenn du sicher bist, dass die ${code}-Zahlung in deiner Banking-App abgebucht wurde.\n\nDer Maker wird gebeten, den Empfang zu bestätigen, um die Bitcoin freizugeben. Bestreitet er ihn, wird ein Disput eröffnet und beide Parteien müssen dem Koordinator Nachweise liefern.',
+			'twint.flow.takerExpired.markPaidDialog.cancel' => 'Zurück',
+			'twint.flow.takerExpired.markPaidDialog.confirmButton' => 'Ja, ich habe bezahlt',
+			'twint.flow.takerExpired.cancelDialog.title' => 'Reservierung stornieren?',
+			'twint.flow.takerExpired.cancelDialog.content' => ({required Object code}) => 'Storniere nur, wenn du den ${code}-Code NICHT bezahlt hast.\n\nDas kann nicht rückgängig gemacht werden: falls die Zahlung doch durchging, kann der Koordinator NICHT garantieren, dass du die Sats erhältst.',
+			'twint.flow.takerExpired.cancelDialog.cancel' => 'Zurück',
+			'twint.flow.takerExpired.cancelDialog.confirmButton' => 'Ja, stornieren',
 			'twint.waitConfirmation.title' => 'Warte auf den Maker',
 			'twint.waitConfirmation.statusLabel' => ({required Object status}) => 'Angebotsstatus: ${status}',
 			'twint.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'Warte auf Bestätigung des Makers: ${seconds} s',
@@ -3252,6 +3342,8 @@ extension on TranslationsDe {
 			'twint.waitConfirmation.expiredSentWarning' => 'Der Maker hat die Zahlung noch nicht bestätigt. Was möchtest du tun?',
 			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Wenn du es mit einem neuen ${code}-Code erneut versuchen möchtest, erneuere die Reservierung.',
 			'twint.waitConfirmation.expiredInstruction2' => 'Wenn du diese Transaktion nicht mehr abschließen möchtest, storniere die Reservierung.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'Falls die ${code}-Zahlung von deinem Bankkonto abgebucht wurde, keine Sorge — die Bitcoin sind weiterhin sicher beim Koordinator gesperrt.',
 			'twint.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Du hast ${code} als abgebucht markiert',
 			'twint.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Der Maker hat ${minutes} Min., um die Zahlung zu bestätigen oder anzufechten. Tut er nichts, wird die Zahlung automatisch bestätigt und du erhältst die Bitcoin.',
@@ -3277,8 +3369,6 @@ extension on TranslationsDe {
 			'twint.paymentProcess.errors.sending' => ({required Object details}) => 'Fehler beim Senden der Zahlung: ${details}',
 			'twint.paymentProcess.errors.notConfirmed' => 'Angebot nicht vom Maker bestätigt.',
 			'twint.paymentProcess.errors.expired' => 'Angebot abgelaufen.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.paymentProcess.errors.cancelled' => 'Angebot storniert.',
 			'twint.paymentProcess.errors.paymentFailed' => 'Angebotszahlung fehlgeschlagen.',
 			'twint.paymentProcess.errors.unknown' => 'Unbekannter Angebotsfehler.',

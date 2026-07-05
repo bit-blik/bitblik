@@ -41,10 +41,18 @@ class FlowEngine {
   factory FlowEngine.fromYaml(String yamlSource) =>
       FlowEngine(FlowDefinition.parse(yamlSource));
 
+  static Future<FlowEngine> fromYamlWithImports(
+    String yamlSource,
+    Future<String> Function(String importPath) importLoader,
+  ) async {
+    final definition =
+        await FlowDefinition.parseWithImports(yamlSource, importLoader);
+    return FlowEngine(definition);
+  }
+
   String get initialState => definition.initialState;
 
-  bool isTerminal(String state) =>
-      definition.state(state)?.terminal ?? false;
+  bool isTerminal(String state) => definition.state(state)?.terminal ?? false;
 
   /// Resolve a participant-driven action.
   ///
@@ -80,10 +88,8 @@ class FlowEngine {
           'Event "$event" in "$fromState" requires actor ${eventMatch.actor}, '
           'got $actor.');
     }
-    return FlowResolution.reject(
-        'No "$event" transition from "$fromState".');
+    return FlowResolution.reject('No "$event" transition from "$fromState".');
   }
-
 
   /// The timeout transition leaving [state], if the state has one.
   FlowTransition? timeoutFor(String state) =>
@@ -107,7 +113,8 @@ class FlowEngine {
   /// The first transition leaving [state] whose [FlowTransition.event] equals
   /// [event] (optionally constrained to [actor]). Lets the executor resolve a
   /// transition by event without naming source/target states in code.
-  FlowTransition? transitionFor(String state, String event, {FlowActor? actor}) {
+  FlowTransition? transitionFor(String state, String event,
+      {FlowActor? actor}) {
     final s = definition.state(state);
     if (s == null) return null;
     for (final t in s.transitions) {

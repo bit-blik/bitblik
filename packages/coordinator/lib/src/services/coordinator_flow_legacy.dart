@@ -780,10 +780,12 @@ class LegacyEnumOfferFlow implements OfferFlow {
             offerId: offerId);
         return;
       }
-    } catch (e) {
-      AppLogger.info(
-          'Error settling hold invoice for offer $offerId during dispute escalation: $e',
-          offerId: offerId);
+    } catch (e, st) {
+      AppLogger.severe(
+          'Error settling hold invoice for offer $offerId during dispute escalation',
+          offerId: offerId,
+          error: e,
+          stackTrace: st);
       return;
     }
 
@@ -1479,10 +1481,9 @@ class LegacyEnumOfferFlow implements OfferFlow {
             offerId: offerId);
         throw Exception("No payment backend to settle invoice.");
       }
-    } catch (e) {
-      AppLogger.info('Error settling hold invoice for offer $offerId: $e',
-          offerId: offerId);
-      // ....
+    } catch (e, st) {
+      AppLogger.severe('Error settling hold invoice for offer $offerId',
+          offerId: offerId, error: e, stackTrace: st);
       return false;
     }
 
@@ -1615,9 +1616,9 @@ class LegacyEnumOfferFlow implements OfferFlow {
           await _c._publishStatusUpdate(settledOffer);
         }
       }
-    } catch (e) {
-      AppLogger.info('Error settling hold invoice for offer $offerId: $e',
-          offerId: offerId);
+    } catch (e, st) {
+      AppLogger.severe('Error settling hold invoice for offer $offerId',
+          offerId: offerId, error: e, stackTrace: st);
       // Potentially revert makerConfirmed status or set to a failed state
       return false;
     }

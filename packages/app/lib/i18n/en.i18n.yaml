@@ -793,7 +793,20 @@ twint:
       yourCode: "Your ${code} code"
       offerExpires: "Offer expires"
       autoExpires: "Auto-expires"
+      codeExpiresIn: "${code} will expire in..."
       cancelOffer: "Cancel offer"
+      reservedInfo: "A taker reserved your offer and is now paying your ${code} code in their banking app. Once the payment arrives at your merchant, confirm it below."
+      confirmReceived: "Confirm payment received"
+      confirmDialog:
+        title: "Confirm payment received?"
+        content: "Only confirm if you are ABSOLUTELY sure the ${code} payment was successfully received at your merchant.\n\nConfirming settles the Lightning hold invoice and immediately sends the sats to the taker — this cannot be undone."
+        cancel: "Cancel"
+        confirmButton: "Yes, payment received"
+    makerExpired:
+      title: "${code} probably expired"
+      warning: "The ${code} code has most likely expired by now — but the taker may still have managed to pay it. Check your merchant: you have the time below to confirm the payment."
+      timerCaption: "Time to confirm"
+      disputeHint: "You can also wait for the timer to run out. If the taker reports having paid, this becomes a conflict/dispute where both peers must provide evidence to the coordinator to resolve the issue."
     makerVerify:
       title: "Did you receive the payment?"
       body: "The taker reports paying ${amount} to your ${code} code."
@@ -804,6 +817,8 @@ twint:
     makerRecode:
       title: "Offer expired"
       body: "No taker completed the trade. Enter a new ${code} code to re-list this offer, or cancel it."
+      scanCardTitle: "Scan new ${code} QR"
+      scanCardBody: "Point the camera at the payment screen. The app will prefill the new code — the amount stays the same."
       fieldLabel: "New ${code} code"
       autoCancels: "Auto-cancels"
       relist: "Re-list with new code"
@@ -819,10 +834,24 @@ twint:
       body: "The maker is verifying your ${code} payment."
       autoConfirms: "Auto-confirms"
     takerExpired:
-      title: "Reservation expired"
-      body: "The ${code} code wasn't paid in time. You can cancel to release the offer."
-      autoReleases: "Auto-releases"
-      cancel: "Cancel"
+      title: "${code} probably expired"
+      warning: "The ${code} code has probably expired by now. You must now make an important decision — choose carefully."
+      optionPaid: "If you DID pay the ${code} code in your banking app, mark it as paid. This commits you to that claim: the maker must confirm it to unlock the bitcoin, or start a dispute where both peers provide evidence to the coordinator."
+      optionCancel: "If you did NOT pay, cancel the reservation. This is irreversible — if the payment actually went through, the coordinator can no longer guarantee you receive the sats."
+      noDecision: "If you make no decision before the timer runs out, the coordinator will assume you did NOT pay the ${code} code. The maker will then be able to cancel the offer — cancelling the hold invoice — after which the coordinator can no longer settle the sats to you, even if you did pay."
+      timerCaption: "Time to decide"
+      markPaid: "I paid the ${code} code"
+      cancel: "Cancel reservation"
+      markPaidDialog:
+        title: "Confirm you paid?"
+        content: "Only continue if you are sure the ${code} payment was charged in your banking app.\n\nThe maker will be asked to confirm receipt to unlock the bitcoin. If they deny it, a dispute is opened and both peers must provide evidence to the coordinator."
+        cancel: "Back"
+        confirmButton: "Yes, I paid"
+      cancelDialog:
+        title: "Cancel reservation?"
+        content: "Only cancel if you did NOT pay the ${code} code.\n\nThis cannot be undone: if the payment actually went through, the coordinator will NOT be able to guarantee you receive the sats."
+        cancel: "Back"
+        confirmButton: "Yes, cancel"
   
   waitConfirmation:
     title: "Waiting for Maker"

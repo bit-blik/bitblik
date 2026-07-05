@@ -8,7 +8,9 @@ import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
+import '../../services/nostr_service.dart' show reservedOfferFromResult;
 import '../../services/offer_db_service.dart';
 import '../../utils/offer_status_label.dart';
 import '../../widgets/progress_indicators.dart';
@@ -322,7 +324,7 @@ class _TakerWaitConfirmationScreenState
             "[TakerWaitConfirmation] Status is $currentStatusEnum. Navigating to process screen.",
       );
       _confirmationTimer?.cancel();
-      context.go("/paying-taker");
+      context.go(flowEntryRoute(ref, '/paying-taker'));
     } else if (currentStatusEnum == OfferStatus.funded) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
@@ -334,15 +336,15 @@ class _TakerWaitConfirmationScreenState
     } else if (currentStatusEnum == OfferStatus.invalidBlik) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      context.go('/taker-invalid-blik', extra: offer);
+      context.go(flowEntryRoute(ref, '/taker-invalid-blik'), extra: offer);
     } else if (currentStatusEnum == OfferStatus.conflict) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      context.go('/taker-conflict', extra: offer.id);
+      context.go(flowEntryRoute(ref, '/taker-conflict'), extra: offer.id);
     } else if (currentStatusEnum == OfferStatus.takerPaymentFailed) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      context.go('/paying-taker');
+      context.go(flowEntryRoute(ref, '/paying-taker'));
     } else if (!_isValidStatusForThisScreen(currentStatusEnum)) {
       _resetToOfferList(
         t.offers.errors.unexpectedStateWithStatus(
@@ -472,22 +474,22 @@ class _TakerWaitConfirmationScreenState
     final userPublicKey = await ref.read(publicKeyProvider.future);
     final takerId = userPublicKey;
     final apiService = ref.read(apiServiceProvider);
-    final DateTime? reservationTimestamp = await apiService.reserveOffer(
+    final reservation = await apiService.reserveOffer(
       offer.id,
       takerId!,
       offer.coordinatorPubkey,
     );
 
-    if (reservationTimestamp != null) {
-      final Offer updatedOffer = offer.copyWith(
-        status: OfferStatus.reserved,
-        takerPubkey: takerId,
-        reservedAt: reservationTimestamp,
+    if (reservation.reservedAt != null || reservation.offer != null) {
+      final Offer updatedOffer = reservedOfferFromResult(
+        offer,
+        takerId,
+        reservation,
       );
 
       await ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
       if (mounted) {
-        context.go("/submit-blik", extra: updatedOffer);
+        context.go(flowEntryRoute(ref, '/submit-blik'), extra: updatedOffer);
       }
     } else {
       if (mounted) {

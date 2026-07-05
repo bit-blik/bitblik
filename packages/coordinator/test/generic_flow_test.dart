@@ -1,5 +1,6 @@
 import 'package:bitblik_core/core.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
+import 'package:bitblik_coordinator/src/models/cancel_invoice_result.dart';
 import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart';
 import 'package:clock/clock.dart';
 import 'package:mockito/mockito.dart';
@@ -44,6 +45,8 @@ void main() {
       paymentSystemIdForTest: 'twint',
     );
     await svc.init(); // loads twint.yml -> engine
+    when(pay.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
+        .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
   });
 
   test('twint coordinator runs in generic mode', () {
@@ -105,6 +108,7 @@ void main() {
       takerFees: anyNamed('takerFees'),
       failureReason: anyNamed('failureReason'),
       clearTakerFields: anyNamed('clearTakerFields'),
+      preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
       transitionMeta: anyNamed('transitionMeta'),
     )).thenAnswer((inv) async {
       currentStatus = inv.positionalArguments[1] as String;
@@ -134,12 +138,15 @@ void main() {
       takerFees: anyNamed('takerFees'),
       failureReason: anyNamed('failureReason'),
       clearTakerFields: captureAnyNamed('clearTakerFields'),
+      preserveCodeOnClear: captureAnyNamed('preserveCodeOnClear'),
       transitionMeta: anyNamed('transitionMeta'),
     )).captured;
 
     expect(captured[0], 'cancelled'); // target
     expect(captured[1], ['funded']); // expected-current CAS guard
     expect(captured[2], isTrue); // clearTakerFields
+    // TWINT: the code is the maker's — it survives taker-field clears.
+    expect(captured[3], isTrue); // preserveCodeOnClear
   });
 
   group('blik forced onto the generic engine (FLOW_MODE=generic)', () {

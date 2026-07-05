@@ -9,7 +9,6 @@ import 'package:ndk/shared/nips/nip19/nip19.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
-import '../flow/flow_provider.dart';
 import '../utils/offer_status_label.dart';
 import 'coordinator_details_screen.dart';
 import '../services/offer_db_service.dart';
@@ -188,6 +187,7 @@ class _OfferDetailsBody extends ConsumerWidget {
                       t,
                       offer.status,
                       code: offerCodeLabel(offer),
+                      statusRaw: offer.statusRaw,
                     ),
                     style: TextStyle(
                       color: statusColor,
@@ -292,15 +292,21 @@ class _OfferDetailsBody extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const Divider(height: 16),
-                _WidgetRow(
-                  label: t.myOffers.details.maker,
-                  child: _CounterpartyPreview(
-                    pubkey: offer.makerPubkey,
-                    statusColor: statusColor,
+                // Maker pubkey is stripped from taker-facing coordinator
+                // responses (privacy) — the local record then holds a
+                // non-hex sentinel; hide the row rather than crash npub
+                // encoding.
+                if (_isValidPubkeyHex(offer.makerPubkey)) ...[
+                  const Divider(height: 16),
+                  _WidgetRow(
+                    label: t.myOffers.details.maker,
+                    child: _CounterpartyPreview(
+                      pubkey: offer.makerPubkey,
+                      statusColor: statusColor,
+                    ),
                   ),
-                ),
-                if (takerPubkey != null && takerPubkey.isNotEmpty) ...[
+                ],
+                if (takerPubkey != null && _isValidPubkeyHex(takerPubkey)) ...[
                   const Divider(height: 16),
                   _WidgetRow(
                     label: t.myOffers.details.taker,
@@ -410,103 +416,12 @@ class _OfferDetailsBody extends ConsumerWidget {
           activeOffer.holdInvoicePaymentHash!;
     }
 
-    final offerStatus = activeOffer.status;
-    if (offerStatus == OfferStatus.blikReceived ||
-        offerStatus == OfferStatus.blikSentToMaker ||
-        offerStatus == OfferStatus.expiredBlik ||
-        offerStatus == OfferStatus.expiredSentBlik ||
-        offerStatus == OfferStatus.takerCharged) {
-      if (currentPubKey == activeOffer.makerPubkey) {
-        context.go('/confirm-blik');
-      } else if (currentPubKey == activeOffer.takerPubkey) {
-        context.go('/wait-confirmation', extra: activeOffer);
-      }
-      return;
-    }
-
-    if (currentPubKey == activeOffer.makerPubkey) {
-      _navigateToMakerStep(context, ref, activeOffer, t);
-    } else if (currentPubKey == activeOffer.takerPubkey) {
-      _navigateToTakerStep(context, ref, activeOffer, t);
-    }
-  }
-
-  void _navigateToMakerStep(
-      BuildContext context, WidgetRef ref, Offer offer, Translations t) {
-    final method = paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
-    if (isFlowDrivenFlow(method.flowId)) {
-      ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
+    // Every market is flow-driven: resume into the single flow screen, which
+    // renders the body for the offer's current state + role.
+    if (currentPubKey == activeOffer.makerPubkey ||
+        currentPubKey == activeOffer.takerPubkey) {
+      ref.read(activeOfferProvider.notifier).setActiveOffer(activeOffer);
       context.go('/flow');
-      return;
-    }
-    switch (offer.status) {
-      case OfferStatus.created:
-        context.go('/pay', extra: offer);
-        return;
-      case OfferStatus.funded:
-        context.go('/wait-taker', extra: offer);
-        return;
-      case OfferStatus.reserved:
-        context.go(
-          method.makerProvidesCodeAtOfferCreation
-              ? '/confirm-blik'
-              : '/wait-blik',
-          extra: offer,
-        );
-        return;
-      case OfferStatus.conflict:
-      case OfferStatus.dispute:
-        context.go('/maker-conflict', extra: offer);
-        return;
-      case OfferStatus.invalidBlik:
-        context.go('/maker-invalid-blik', extra: offer);
-        return;
-      default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              t.offers.errors.cannotResume(status: offer.status.name),
-            ),
-          ),
-        );
-    }
-  }
-
-  void _navigateToTakerStep(
-      BuildContext context, WidgetRef ref, Offer offer, Translations t) {
-    final offerStatus = offer.status;
-    final method = paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
-    if (isFlowDrivenFlow(method.flowId)) {
-      ref.read(activeOfferProvider.notifier).setActiveOffer(offer);
-      context.go('/flow');
-      return;
-    }
-    if (offerStatus == OfferStatus.reserved) {
-      context.go('/submit-blik', extra: offer);
-    } else if (offerStatus == OfferStatus.blikReceived ||
-        offerStatus == OfferStatus.blikSentToMaker ||
-        offerStatus == OfferStatus.makerConfirmed ||
-        offerStatus == OfferStatus.expiredBlik ||
-        offerStatus == OfferStatus.expiredSentBlik ||
-        offerStatus == OfferStatus.takerCharged) {
-      context.go('/wait-confirmation', extra: offer);
-    } else if (offerStatus == OfferStatus.settled) {
-      context.go('/paying-taker', extra: offer);
-    } else if (offerStatus == OfferStatus.takerPaymentFailed) {
-      context.go('/taker-failed', extra: offer);
-    } else if (offerStatus == OfferStatus.invalidBlik) {
-      context.go('/taker-invalid-blik', extra: offer);
-    } else if (offerStatus == OfferStatus.conflict ||
-        offerStatus == OfferStatus.dispute) {
-      context.go('/taker-conflict', extra: offer.id);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            t.offers.errors.cannotResumeTaker(status: offerStatus.name),
-          ),
-        ),
-      );
     }
   }
 
@@ -701,6 +616,11 @@ class _CoordinatorLogo extends StatelessWidget {
     );
   }
 }
+
+/// True for a 64-char hex nostr pubkey — false for empty values and
+/// placeholder sentinels like `unknown_maker` (see Offer.fromJson defaults).
+bool _isValidPubkeyHex(String pubkey) =>
+    RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(pubkey);
 
 class _CounterpartyPreview extends StatelessWidget {
   const _CounterpartyPreview({required this.pubkey, required this.statusColor});
