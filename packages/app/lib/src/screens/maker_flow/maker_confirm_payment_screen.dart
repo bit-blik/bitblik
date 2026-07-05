@@ -66,9 +66,9 @@ class _MakerConfirmPaymentScreenState
   @override
   void initState() {
     super.initState();
-    // Immediately reset any lingering loading state
-    ref.read(isLoadingProvider.notifier).state = false;
-    // Also reset in post frame to catch any async state changes
+    // Reset any lingering loading state in post-frame; modifying a provider
+    // synchronously inside initState throws
+    // "Tried to modify a provider while the widget tree was building".
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(isLoadingProvider.notifier).state = false;

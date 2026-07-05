@@ -141,6 +141,7 @@ class _MakerWaitForBlikScreenState
         );
 
         if (blikCode != null && blikCode.isNotEmpty) {
+          if (!mounted) return;
           Logger.log.d(
             () =>
                 "[MakerWaitForBlik] BLIK code is valid. Storing in provider...",
@@ -150,13 +151,11 @@ class _MakerWaitForBlikScreenState
             () => "[MakerWaitForBlik] Stored BLIK code from API: $blikCode",
           );
 
-          if (mounted) {
-            Logger.log.d(
-              () =>
-                  "[MakerWaitForBlik] Navigating to MakerConfirmPaymentScreen...",
-            );
-            context.go(flowEntryRoute(ref, '/confirm-blik'));
-          }
+          Logger.log.d(
+            () =>
+                "[MakerWaitForBlik] Navigating to MakerConfirmPaymentScreen...",
+          );
+          context.go(flowEntryRoute(ref, '/confirm-blik'));
         } else {
           Logger.log.e(
             () =>

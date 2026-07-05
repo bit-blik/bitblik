@@ -27,7 +27,7 @@ class NwcService implements PaymentService {
   /// Timeout for the NWC `pay_invoice` request. NDK defaults to a mere 5s,
   /// which is far too short for real Lightning routing/settlement and causes
   /// legitimate taker payments to spuriously time out.
-  static const Duration _payInvoiceTimeout = Duration(seconds: 30);
+  static const Duration _payInvoiceTimeout = Duration(seconds: 60);
 
   late final Ndk _ndk; // NDK instance managed by the service
   NwcConnection? _nwcConnection;
