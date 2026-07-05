@@ -175,9 +175,18 @@ class _PaymentChecklist extends ConsumerWidget {
 
     bool isFailed = currentStatus == OfferStatus.takerPaymentFailed;
 
+    // payingTaker sits between settled and takerPaid (coordinator is actively
+    // paying the taker's Lightning invoice). Map it onto the settled index so
+    // the "Paying your Lightning invoice" step renders as active rather than
+    // defaulting the "Maker confirmed" step to active.
+    final OfferStatus effectiveStatus =
+        currentStatus == OfferStatus.payingTaker
+        ? OfferStatus.settled
+        : currentStatus;
+
     // Find the index corresponding to the current status in the successful flow
     int currentStatusOrderIndex = successfulStepsOrder.indexWhere(
-      (s) => stepToStatusMapping[s] == currentStatus,
+      (s) => stepToStatusMapping[s] == effectiveStatus,
     );
 
     return IntrinsicWidth(
