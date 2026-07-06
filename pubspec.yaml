@@ -4,6 +4,25 @@ publish_to: none
 environment:
   sdk: ^3.11.0
 
+dependency_overrides:
+  ndk:
+    git: {
+      url: https://github.com/relaystr/ndk.git,
+      path: packages/ndk,
+      ref: 01ea7ce020cd3632de9d8dbefa96468967b3c66f
+    }
+  ndk_drift:
+    git: {
+      url: https://github.com/relaystr/ndk.git,
+      path: packages/drift,
+      ref: 01ea7ce020cd3632de9d8dbefa96468967b3c66f
+    }
+  ndk_objectbox:
+    git: {
+      url: https://github.com/relaystr/ndk.git,
+      path: packages/objectbox,
+      ref: 01ea7ce020cd3632de9d8dbefa96468967b3c66f
+    }
 workspace:
   - packages/app
   - packages/cli

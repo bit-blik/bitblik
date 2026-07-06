@@ -78,33 +78,33 @@ dependencies:
   google_mlkit_text_recognition: ^0.15.0
 
 dependency_overrides:
-  ndk:
-    git:
-      url: https://github.com/relaystr/ndk.git
-      path: packages/ndk
-      #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
-    #path: ../../../ndk/packages/ndk
+#  ndk:
+#    git:
+#      url: https://github.com/relaystr/ndk.git
+#      path: packages/ndk
+#      #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+#      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
+#    #path: ../../../ndk/packages/ndk
   ndk_flutter:
-    #git:
-    #  url: https://github.com/relaystr/ndk.git
-    #  path: packages/ndk_flutter
+    git:
+      url: https://github.com/relaystr/ndk.git
+      path: packages/ndk_flutter
     #  #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-    #  ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
-    path: ../../../ndk/packages/ndk_flutter
-  ndk_drift:
-    git:
-      url: https://github.com/relaystr/ndk.git
-      path: packages/drift
-      #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
-    #path: ../../../ndk/packages/drift
-  ndk_objectbox:
-    git:
-      url: https://github.com/relaystr/ndk.git
-      path: packages/objectbox
-      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
-    #path: ../../../ndk/packages/objectbox
+      ref: 01ea7ce020cd3632de9d8dbefa96468967b3c66f
+    #path: ../../../ndk/packages/ndk_flutter
+#  ndk_drift:
+#    git:
+#      url: https://github.com/relaystr/ndk.git
+#      path: packages/drift
+#      #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
+#      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
+#    #path: ../../../ndk/packages/drift
+#  ndk_objectbox:
+#    git:
+#      url: https://github.com/relaystr/ndk.git
+#      path: packages/objectbox
+#      ref: 06e3a4276a6834107d343e6ab58f4b4157c6ea04
+#    #path: ../../../ndk/packages/objectbox
 dev_dependencies:
   #build_runner: 2.4.15
   slang_build_runner: 4.15.0
