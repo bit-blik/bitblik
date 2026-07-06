@@ -403,7 +403,12 @@ class GenericOfferFlow implements OfferFlow {
     await _c._nostrService?.broadcastNip69OrderFromOffer(offer);
     await _runStateActions(offer);
 
-    if (state?.terminal ?? false) return;
+    if (state?.terminal ?? false) {
+      // Offer will never transition or broadcast again — drop the NostrService
+      // created_at-tracking entry so it can't accumulate across offer lifetime.
+      _c._nostrService?.forgetOfferTracking(offer.id);
+      return;
+    }
     _armTimer(offer);
     _driveAuto(offer);
   }

@@ -43,6 +43,11 @@ class NostrService {
 
   // Subscription for incoming requests
   NdkResponse? _requestSubscription;
+  // Dart-side listener over [_requestSubscription]. Must be cancelled when the
+  // ndk subscription is closed, otherwise the listener closure + any buffered
+  // events stay reachable until GC walks them. Each relay refresh/grace flip
+  // allocates a new one, so without explicit cancel the leak accumulates.
+  StreamSubscription<Nip01Event>? _requestListenerSub;
   Timer? _relayRefreshTimer;
   Timer? _relayGraceTimer;
 
@@ -50,6 +55,10 @@ class NostrService {
   // the same offer are published within the same second, some relays may keep
   // the older one and reject the newer with "have newer event". Keep a
   // monotonic created_at per offer id so every replacement wins deterministically.
+  //
+  // Write-heavy: every broadcast updates this map. Terminal offers never
+  // broadcast again, so callers must [forgetOfferTracking] once an offer
+  // reaches a terminal state to keep the map bounded.
   final Map<String, int> _lastOfferEventCreatedAtById = {};
 
   NostrService(
@@ -514,6 +523,8 @@ class NostrService {
   Future<void> _restartRequestListener(List<String> relays) async {
     try {
       if (_requestSubscription != null) {
+        await _requestListenerSub?.cancel();
+        _requestListenerSub = null;
         await _ndk.requests.closeSubscription(_requestSubscription!.requestId);
         _requestSubscription = null;
       }
@@ -532,10 +543,14 @@ class NostrService {
       );
       _requestSubscription = response;
 
-      response.stream.listen(_handleRequest).onError((e) {
-        AppLogger.info('!!!!!!!!!!!!!! Error in request listener: $e');
-        AppLogger.info('!!!!!!!!!!!!!! SHOULD RETRY subscription');
-      });
+      _requestListenerSub = response.stream.listen(
+        _handleRequest,
+        onError: (Object e) {
+          AppLogger.info('!!!!!!!!!!!!!! Error in request listener: $e');
+          AppLogger.info('!!!!!!!!!!!!!! SHOULD RETRY subscription');
+        },
+        cancelOnError: false,
+      );
 
       AppLogger.info(
           'Started listening for coordinator requests on kind ${kKindCoordinatorRequest} via relays: $relays');
@@ -788,10 +803,20 @@ class NostrService {
   Future<void> disconnect() async {
     _relayRefreshTimer?.cancel();
     _relayGraceTimer?.cancel();
+    await _requestListenerSub?.cancel();
+    _requestListenerSub = null;
     if (_requestSubscription != null) {
       await _ndk.requests.closeSubscription(_requestSubscription!.requestId);
     }
     await _ndk.destroy();
+  }
+
+  /// Drop in-memory tracking entries for [offerId]. Called by the flow layer
+  /// once an offer reaches a terminal state — terminal offers never broadcast
+  /// again, so the monotonic-created_at guard is dead weight from here on.
+  /// Keeps [_lastOfferEventCreatedAtById] bounded across the process lifetime.
+  void forgetOfferTracking(String offerId) {
+    _lastOfferEventCreatedAtById.remove(offerId);
   }
 
   /// Broadcast a NIP-69 peer-to-peer order event based on Offer data
