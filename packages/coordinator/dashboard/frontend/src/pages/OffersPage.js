@@ -58,6 +58,12 @@ const STATUS_COLORS = {
   failed: 'bg-red-100 text-red-800 border-red-300',
 };
 
+// Fallback status set (all known statuses) used only when a coordinator has no
+// flow definition — normally the pill list comes from the coordinator's flow
+// states, so systems the coordinator can't reach (e.g. BLIK states on a TWINT
+// coordinator) are never offered.
+const KNOWN_STATUSES = Object.keys(STATUS_COLORS);
+
 const LEVEL_ICONS = {
   error: <XCircle size={14} className="text-red-500" />,
   warn: <AlertTriangle size={14} className="text-amber-500" />,
@@ -468,7 +474,7 @@ const ActorAvatar = ({ actor, actorPubkey, coordinatorIconUrl = null, size = 24 
   );
 };
 
-const OffersPage = ({ selectedCoordinatorId, selectedCoordinatorIconUrl = null }) => {
+const OffersPage = ({ selectedCoordinatorId, selectedCoordinatorIconUrl = null, selectedCoordinatorFlowId = null }) => {
   const [offers, setOffers] = useState([]);
   const [connected, setConnected] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState(null);
@@ -485,6 +491,10 @@ const OffersPage = ({ selectedCoordinatorId, selectedCoordinatorIconUrl = null }
   const [actorStatsLoading, setActorStatsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  // Possible statuses for this coordinator, taken from its flow definition.
+  // null = no flow configured → fall back to KNOWN_STATUSES.
+  const [flowStatuses, setFlowStatuses] = useState(null);
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const shouldReconnectRef = useRef(true);
@@ -768,6 +778,44 @@ const OffersPage = ({ selectedCoordinatorId, selectedCoordinatorIconUrl = null }
     return () => window.removeEventListener('scroll', onScroll);
   }, [loadMoreOffers]);
 
+  // When filtering by a specific status, keep pulling more pages until enough
+  // matches are collected or all offers are loaded — matches may live on pages
+  // beyond the first.
+  useEffect(() => {
+    if (statusFilter === 'all' || !hasMore || loadingMore) return;
+    const matches = offers.filter((offer) => offer.status === statusFilter).length;
+    if (matches >= OFFERS_PAGE_SIZE) return;
+    loadMoreOffers();
+  }, [statusFilter, offers, hasMore, loadingMore, loadMoreOffers]);
+
+  // Load the coordinator's flow definition to know which statuses are possible.
+  // The flow states are the source of truth for the status filter pills.
+  useEffect(() => {
+    setStatusFilter('all');
+    if (!selectedCoordinatorFlowId) {
+      setFlowStatuses(null);
+      return undefined;
+    }
+    let cancelled = false;
+    fetch(buildCoordinatorApiUrl(`/api/flows/${selectedCoordinatorFlowId}`))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        const names = (data.states || []).map((state) => state.name);
+        setFlowStatuses(names.length > 0 ? names : null);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch flow definition:', error);
+        if (!cancelled) setFlowStatuses(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCoordinatorFlowId]);
+
   const fetchAuditLogs = async (offerId) => {
     setAuditLoading(true);
     try {
@@ -887,6 +935,12 @@ const OffersPage = ({ selectedCoordinatorId, selectedCoordinatorIconUrl = null }
     };
   }, [selectedCoordinatorId, selectedTransition]);
 
+  const filterStatuses = flowStatuses ?? KNOWN_STATUSES;
+  const filteredOffers =
+    statusFilter === 'all'
+      ? offers
+      : offers.filter((offer) => offer.status === statusFilter);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 px-6 pb-6 pt-2 sm:px-6 sm:pb-6 sm:pt-3">
       <div className="max-w-7xl mx-auto">
@@ -931,6 +985,37 @@ const OffersPage = ({ selectedCoordinatorId, selectedCoordinatorIconUrl = null }
                   Refresh
                 </button>
               </div>
+            </div>
+
+            {/* Status filter pills */}
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-2.5 py-1 rounded-full border text-xs font-medium transition-colors ${
+                  statusFilter === 'all'
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                All
+              </button>
+              {filterStatuses.map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-2.5 py-1 rounded-full border text-xs font-medium transition-colors ${
+                    statusFilter === status
+                      ? STATUS_COLORS[status]
+                        ? `${STATUS_COLORS[status]} ring-2 ring-offset-1 ring-current`
+                        : 'bg-gray-800 text-white border-gray-800'
+                      : STATUS_COLORS[status]
+                      ? `${STATUS_COLORS[status]} opacity-70 hover:opacity-100`
+                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -977,14 +1062,18 @@ const OffersPage = ({ selectedCoordinatorId, selectedCoordinatorIconUrl = null }
                 </tr>
               </thead>
               <tbody>
-                {offers.length === 0 ? (
+                {filteredOffers.length === 0 ? (
                   <tr>
                     <td colSpan={11} className="px-4 py-12 text-center text-gray-500">
-                      No offers found
+                      {offers.length === 0
+                        ? 'No offers found'
+                        : loadingMore && hasMore
+                        ? `Searching more pages for status "${statusFilter}"…`
+                        : `No offers with status "${statusFilter}"`}
                     </td>
                   </tr>
                 ) : (
-                  groupOffersByDay(offers).flatMap((group) => [
+                  groupOffersByDay(filteredOffers).flatMap((group) => [
                     <tr key={`day-${group.dayLabel}`}>
                       <td colSpan={11} className="px-4 pt-4 pb-1">
                         <div className="flex items-center gap-3">

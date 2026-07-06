@@ -1258,6 +1258,7 @@ const App = () => {
                 key={selectedCoordinatorId}
                 selectedCoordinatorId={selectedCoordinatorId}
                 selectedCoordinatorIconUrl={selectedCoordinator?.iconUrl || null}
+                selectedCoordinatorFlowId={selectedCoordinator?.flowId || null}
               />
             }
           />
