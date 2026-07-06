@@ -619,11 +619,17 @@ twint:
       notRecognized: "Le code ${code} n'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement."
       amountFailed: "Le scan caméra n'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement."
   flow:
+    progress:
+      step1: "1. Créer l'offre"
+      step2: "2. Attendre un taker"
+      step3: "3. Confirmer"
+    takerProgress:
+      step1: "1. Payer ${code}"
+      step2: "2. Recevoir des sats"
     makerWait:
-      offerLive: "Offre en ligne"
       takerPaying: "Le taker est en train de payer"
       yourCode: "Votre code ${code}"
-      offerExpires: "L'offre expire"
+      offerExpires: "Le ${code} expire"
       autoExpires: "Expire automatiquement"
       codeExpiresIn: "${code} expirera dans..."
       cancelOffer: "Annuler l'offre"
@@ -642,7 +648,7 @@ twint:
     makerVerify:
       title: "Avez-vous reçu le paiement ?"
       body: "Le taker indique avoir payé ${amount} sur votre code ${code}."
-      hint: "Vérifiez votre application ${code}, puis confirmez ou ouvrez un litige."
+      hint: "Vérifiez le statut du paiement auprès de votre commerçant (terminal de magasin ou transaction en ligne). En cas de doute, attendez et revérifiez plus tard avant de décider."
       autoConfirms: "Confirme automatiquement"
       confirmReceived: "Confirmer la réception"
       openDispute: "Ouvrir un litige"
@@ -663,7 +669,8 @@ twint:
       cancel: "Annuler"
     takerWait:
       title: "En attente du maker"
-      body: "Le maker vérifie votre paiement ${code}."
+      body: "Le maker vérifie si votre paiement ${code} est arrivé chez son commerçant. Il doit confirmer la réception ou ouvrir un litige."
+      info: "Si le maker n'agit pas avant l'expiration du minuteur, le paiement se confirme automatiquement et vous recevrez vos sats."
       autoConfirms: "Confirme automatiquement"
     takerExpired:
       title: "${code} probablement expiré"

@@ -619,11 +619,17 @@ twint:
       notRecognized: "${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus."
       amountFailed: "Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren."
   flow:
+    progress:
+      step1: "1. Angebot erstellen"
+      step2: "2. Auf Taker warten"
+      step3: "3. Bestätigen"
+    takerProgress:
+      step1: "1. ${code} bezahlen"
+      step2: "2. Sats erhalten"
     makerWait:
-      offerLive: "Angebot aktiv"
       takerPaying: "Taker bezahlt"
       yourCode: "Dein ${code}-Code"
-      offerExpires: "Angebot läuft ab"
+      offerExpires: "${code} läuft ab"
       autoExpires: "Läuft automatisch ab"
       codeExpiresIn: "${code} läuft ab in..."
       cancelOffer: "Angebot stornieren"
@@ -642,7 +648,7 @@ twint:
     makerVerify:
       title: "Hast du die Zahlung erhalten?"
       body: "Der Taker meldet, dass er ${amount} an deinen ${code}-Code bezahlt hat."
-      hint: "Prüfe deine ${code}-App und bestätige dann oder eröffne einen Streitfall."
+      hint: "Prüfe den Zahlungsstatus bei deinem Händler (Shop-Terminal oder Online-Transaktion). Im Zweifel warte ab und prüfe später nochmal, bevor du dich entscheidest."
       autoConfirms: "Bestätigt automatisch"
       confirmReceived: "Empfang bestätigen"
       openDispute: "Streitfall eröffnen"
@@ -663,7 +669,8 @@ twint:
       cancel: "Abbrechen"
     takerWait:
       title: "Warten auf den Maker"
-      body: "Der Maker überprüft deine ${code}-Zahlung."
+      body: "Der Maker prüft, ob deine ${code}-Zahlung bei seinem Händler angekommen ist. Er muss den Erhalt bestätigen oder einen Streitfall eröffnen."
+      info: "Wenn der Maker bis zum Ablauf des Timers nichts tut, wird die Zahlung automatisch bestätigt und du erhältst deine Sats."
       autoConfirms: "Bestätigt automatisch"
     takerExpired:
       title: "${code} wahrscheinlich abgelaufen"

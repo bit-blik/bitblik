@@ -38,6 +38,7 @@ class TakerPaymentProcessScreen extends ConsumerWidget {
     final t = Translations.of(context);
 
     return Scaffold(
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

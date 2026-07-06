@@ -105,7 +105,9 @@ states:
         to: takerCharged
         note: Taker paid the TWINT code and reports it charged.
       - on: timeout
-        after: 300            # grace window AFTER the code expired
+        after: 300
+        do: [clear_taker_fields]
+        # grace window AFTER the code expired
         to: invalidTwint
         reason: Reservation lapsed after the code expired.
 

@@ -787,11 +787,17 @@ twint:
       notRecognized: "${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually."
       amountFailed: "Camera scan could not extract the amount. You can still use the QR result and correct the fields manually."
   flow:
+    progress:
+      step1: "1. Create offer"
+      step2: "2. Wait for taker"
+      step3: "3. Confirm"
+    takerProgress:
+      step1: "1. Pay ${code}"
+      step2: "2. Get sats"
     makerWait:
-      offerLive: "Offer live"
       takerPaying: "Taker is paying"
       yourCode: "Your ${code} code"
-      offerExpires: "Offer expires"
+      offerExpires: "${code} expires"
       autoExpires: "Auto-expires"
       codeExpiresIn: "${code} will expire in..."
       cancelOffer: "Cancel offer"
@@ -810,7 +816,7 @@ twint:
     makerVerify:
       title: "Did you receive the payment?"
       body: "The taker reports paying ${amount} to your ${code} code."
-      hint: "Check your ${code} app, then confirm or open a dispute."
+      hint: "Check the payment status with your merchant (shop terminal or online transaction). If in doubt, wait and re-check later before deciding."
       autoConfirms: "Auto-confirms"
       confirmReceived: "Confirm received"
       openDispute: "Open dispute"
@@ -831,7 +837,8 @@ twint:
       cancel: "Cancel"
     takerWait:
       title: "Waiting for the maker"
-      body: "The maker is verifying your ${code} payment."
+      body: "The maker is checking if your ${code} payment arrived at their merchant. They must confirm receipt or open a dispute."
+      info: "If the maker takes no action before the timer expires, the payment auto-confirms and you will receive your sats."
       autoConfirms: "Auto-confirms"
     takerExpired:
       title: "${code} probably expired"

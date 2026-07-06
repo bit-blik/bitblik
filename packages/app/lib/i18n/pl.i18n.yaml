@@ -601,11 +601,17 @@ twint:
       notRecognized: "Kod ${code} nie został jeszcze rozpoznany. Trzymaj QR i kwotę w kadrze albo wypełnij formularz ręcznie."
       amountFailed: "Skanowanie kamerą nie odczytało kwoty. Nadal możesz użyć wyniku QR i ręcznie poprawić pola."
   flow:
+    progress:
+      step1: "1. Utwórz ofertę"
+      step2: "2. Czekaj na zabierającego"
+      step3: "3. Potwierdź"
+    takerProgress:
+      step1: "1. Zapłać ${code}"
+      step2: "2. Odbierz sats"
     makerWait:
-      offerLive: "Oferta aktywna"
       takerPaying: "Taker płaci"
       yourCode: "Twój kod ${code}"
-      offerExpires: "Oferta wygaśnie"
+      offerExpires: "${code} wygasa"
       autoExpires: "Wygaśnie automatycznie"
       codeExpiresIn: "${code} wygaśnie za..."
       cancelOffer: "Anuluj ofertę"
@@ -624,7 +630,7 @@ twint:
     makerVerify:
       title: "Czy otrzymałeś płatność?"
       body: "Taker zgłasza, że zapłacił ${amount} na Twój kod ${code}."
-      hint: "Sprawdź aplikację ${code}, a następnie potwierdź lub otwórz spór."
+      hint: "Sprawdź status płatności u sprzedawcy (terminal w sklepie lub transakcja online). W razie wątpliwości poczekaj i sprawdź ponownie później, zanim podejmiesz decyzję."
       autoConfirms: "Automatyczne potwierdzenie"
       confirmReceived: "Potwierdź otrzymanie"
       openDispute: "Otwórz spór"
@@ -645,7 +651,8 @@ twint:
       cancel: "Anuluj"
     takerWait:
       title: "Oczekiwanie na makera"
-      body: "Maker weryfikuje Twoją płatność ${code}."
+      body: "Maker sprawdza, czy Twoja płatność ${code} dotarła do jego sprzedawcy. Musi potwierdzić otrzymanie lub otworzyć spór."
+      info: "Jeśli maker nie podejmie działania przed upływem czasu, płatność potwierdzi się automatycznie, a Ty otrzymasz swoje satsy."
       autoConfirms: "Automatyczne potwierdzenie"
     takerExpired:
       title: "${code} prawdopodobnie wygasł"

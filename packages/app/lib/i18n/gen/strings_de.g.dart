@@ -1158,6 +1158,8 @@ class _Translations$twint$flow$de extends Translations$twint$flow$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$twint$flow$progress$de progress = _Translations$twint$flow$progress$de._(_root);
+	@override late final _Translations$twint$flow$takerProgress$de takerProgress = _Translations$twint$flow$takerProgress$de._(_root);
 	@override late final _Translations$twint$flow$makerWait$de makerWait = _Translations$twint$flow$makerWait$de._(_root);
 	@override late final _Translations$twint$flow$makerExpired$de makerExpired = _Translations$twint$flow$makerExpired$de._(_root);
 	@override late final _Translations$twint$flow$makerVerify$de makerVerify = _Translations$twint$flow$makerVerify$de._(_root);
@@ -2254,6 +2256,29 @@ class _Translations$twint$scanner$status$de extends Translations$twint$scanner$s
 	@override String get amountFailed => 'Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren.';
 }
 
+// Path: twint.flow.progress
+class _Translations$twint$flow$progress$de extends Translations$twint$flow$progress$en {
+	_Translations$twint$flow$progress$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get step1 => '1. Angebot erstellen';
+	@override String get step2 => '2. Auf Taker warten';
+	@override String get step3 => '3. Bestätigen';
+}
+
+// Path: twint.flow.takerProgress
+class _Translations$twint$flow$takerProgress$de extends Translations$twint$flow$takerProgress$en {
+	_Translations$twint$flow$takerProgress$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String step1({required Object code}) => '1. ${code} bezahlen';
+	@override String get step2 => '2. Sats erhalten';
+}
+
 // Path: twint.flow.makerWait
 class _Translations$twint$flow$makerWait$de extends Translations$twint$flow$makerWait$en {
 	_Translations$twint$flow$makerWait$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -2261,10 +2286,9 @@ class _Translations$twint$flow$makerWait$de extends Translations$twint$flow$make
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
-	@override String get offerLive => 'Angebot aktiv';
 	@override String get takerPaying => 'Taker bezahlt';
 	@override String yourCode({required Object code}) => 'Dein ${code}-Code';
-	@override String get offerExpires => 'Angebot läuft ab';
+	@override String offerExpires({required Object code}) => '${code} läuft ab';
 	@override String get autoExpires => 'Läuft automatisch ab';
 	@override String codeExpiresIn({required Object code}) => '${code} läuft ab in...';
 	@override String get cancelOffer => 'Angebot stornieren';
@@ -2295,7 +2319,7 @@ class _Translations$twint$flow$makerVerify$de extends Translations$twint$flow$ma
 	// Translations
 	@override String get title => 'Hast du die Zahlung erhalten?';
 	@override String body({required Object amount, required Object code}) => 'Der Taker meldet, dass er ${amount} an deinen ${code}-Code bezahlt hat.';
-	@override String hint({required Object code}) => 'Prüfe deine ${code}-App und bestätige dann oder eröffne einen Streitfall.';
+	@override String get hint => 'Prüfe den Zahlungsstatus bei deinem Händler (Shop-Terminal oder Online-Transaktion). Im Zweifel warte ab und prüfe später nochmal, bevor du dich entscheidest.';
 	@override String get autoConfirms => 'Bestätigt automatisch';
 	@override String get confirmReceived => 'Empfang bestätigen';
 	@override String get openDispute => 'Streitfall eröffnen';
@@ -2340,7 +2364,8 @@ class _Translations$twint$flow$takerWait$de extends Translations$twint$flow$take
 
 	// Translations
 	@override String get title => 'Warten auf den Maker';
-	@override String body({required Object code}) => 'Der Maker überprüft deine ${code}-Zahlung.';
+	@override String body({required Object code}) => 'Der Maker prüft, ob deine ${code}-Zahlung bei seinem Händler angekommen ist. Er muss den Erhalt bestätigen oder einen Streitfall eröffnen.';
+	@override String get info => 'Wenn der Maker bis zum Ablauf des Timers nichts tut, wird die Zahlung automatisch bestätigt und du erhältst deine Sats.';
 	@override String get autoConfirms => 'Bestätigt automatisch';
 }
 
@@ -3265,10 +3290,14 @@ extension on TranslationsDe {
 			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.',
 			'twint.scanner.status.amountFailed' => 'Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren.',
-			'twint.flow.makerWait.offerLive' => 'Angebot aktiv',
+			'twint.flow.progress.step1' => '1. Angebot erstellen',
+			'twint.flow.progress.step2' => '2. Auf Taker warten',
+			'twint.flow.progress.step3' => '3. Bestätigen',
+			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. ${code} bezahlen',
+			'twint.flow.takerProgress.step2' => '2. Sats erhalten',
 			'twint.flow.makerWait.takerPaying' => 'Taker bezahlt',
 			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Dein ${code}-Code',
-			'twint.flow.makerWait.offerExpires' => 'Angebot läuft ab',
+			'twint.flow.makerWait.offerExpires' => ({required Object code}) => '${code} läuft ab',
 			'twint.flow.makerWait.autoExpires' => 'Läuft automatisch ab',
 			'twint.flow.makerWait.codeExpiresIn' => ({required Object code}) => '${code} läuft ab in...',
 			'twint.flow.makerWait.cancelOffer' => 'Angebot stornieren',
@@ -3284,7 +3313,7 @@ extension on TranslationsDe {
 			'twint.flow.makerExpired.disputeHint' => 'Du kannst auch warten, bis der Timer abläuft. Meldet der Taker, bezahlt zu haben, wird daraus ein Konflikt/Disput, bei dem beide Parteien dem Koordinator Nachweise zur Klärung liefern müssen.',
 			'twint.flow.makerVerify.title' => 'Hast du die Zahlung erhalten?',
 			'twint.flow.makerVerify.body' => ({required Object amount, required Object code}) => 'Der Taker meldet, dass er ${amount} an deinen ${code}-Code bezahlt hat.',
-			'twint.flow.makerVerify.hint' => ({required Object code}) => 'Prüfe deine ${code}-App und bestätige dann oder eröffne einen Streitfall.',
+			'twint.flow.makerVerify.hint' => 'Prüfe den Zahlungsstatus bei deinem Händler (Shop-Terminal oder Online-Transaktion). Im Zweifel warte ab und prüfe später nochmal, bevor du dich entscheidest.',
 			'twint.flow.makerVerify.autoConfirms' => 'Bestätigt automatisch',
 			'twint.flow.makerVerify.confirmReceived' => 'Empfang bestätigen',
 			'twint.flow.makerVerify.openDispute' => 'Streitfall eröffnen',
@@ -3302,7 +3331,8 @@ extension on TranslationsDe {
 			'twint.flow.takerPay.paid' => 'Ich habe bezahlt',
 			'twint.flow.takerPay.cancel' => 'Abbrechen',
 			'twint.flow.takerWait.title' => 'Warten auf den Maker',
-			'twint.flow.takerWait.body' => ({required Object code}) => 'Der Maker überprüft deine ${code}-Zahlung.',
+			'twint.flow.takerWait.body' => ({required Object code}) => 'Der Maker prüft, ob deine ${code}-Zahlung bei seinem Händler angekommen ist. Er muss den Erhalt bestätigen oder einen Streitfall eröffnen.',
+			'twint.flow.takerWait.info' => 'Wenn der Maker bis zum Ablauf des Timers nichts tut, wird die Zahlung automatisch bestätigt und du erhältst deine Sats.',
 			'twint.flow.takerWait.autoConfirms' => 'Bestätigt automatisch',
 			'twint.flow.takerExpired.title' => ({required Object code}) => '${code} wahrscheinlich abgelaufen',
 			'twint.flow.takerExpired.warning' => ({required Object code}) => 'Der ${code}-Code ist inzwischen wahrscheinlich abgelaufen. Du musst jetzt eine wichtige Entscheidung treffen — wähle sorgfältig.',
@@ -3337,13 +3367,13 @@ extension on TranslationsDe {
 			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Neuen ${code}-Code senden',
 			'twint.waitConfirmation.navigatedHome' => 'Zur Startseite navigiert.',
 			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => '${code}-Code abgelaufen',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'Der Maker hat den ${code}-Code nicht erhalten und konnte ihn daher nicht verwenden.',
 			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'Reservierung endet in',
 			'twint.waitConfirmation.expiredSentWarning' => 'Der Maker hat die Zahlung noch nicht bestätigt. Was möchtest du tun?',
 			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Wenn du es mit einem neuen ${code}-Code erneut versuchen möchtest, erneuere die Reservierung.',
 			'twint.waitConfirmation.expiredInstruction2' => 'Wenn du diese Transaktion nicht mehr abschließen möchtest, storniere die Reservierung.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'Falls die ${code}-Zahlung von deinem Bankkonto abgebucht wurde, keine Sorge — die Bitcoin sind weiterhin sicher beim Koordinator gesperrt.',
 			'twint.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Du hast ${code} als abgebucht markiert',
 			'twint.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Der Maker hat ${minutes} Min., um die Zahlung zu bestätigen oder anzufechten. Tut er nichts, wird die Zahlung automatisch bestätigt und du erhältst die Bitcoin.',

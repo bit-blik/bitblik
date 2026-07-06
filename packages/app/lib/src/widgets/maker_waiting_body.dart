@@ -39,6 +39,10 @@ class MakerWaitingBody extends ConsumerWidget {
   /// Bottom action area (cancel button, FlowActionsBar, ...).
   final Widget? actions;
 
+  /// Breadcrumb / progress indicator at the top. Defaults to the BLIK
+  /// [MakerProgressIndicator] at step 2; TWINT passes its own indicator.
+  final Widget progressIndicator;
+
   const MakerWaitingBody({
     super.key,
     required this.offer,
@@ -47,6 +51,8 @@ class MakerWaitingBody extends ConsumerWidget {
     this.extra = const [],
     this.error,
     this.actions,
+    this.progressIndicator =
+        const MakerProgressIndicator(activeStep: 2),
   });
 
   @override
@@ -63,8 +69,8 @@ class MakerWaitingBody extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Progress indicator (Step 2: Wait for Taker)
-            const MakerProgressIndicator(activeStep: 2),
+            // Progress indicator (default: step 2)
+            progressIndicator,
             const SizedBox(height: 20),
             // Top section: Message with refresh icon
             if (message != null)

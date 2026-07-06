@@ -2017,6 +2017,8 @@ class Translations$twint$flow$en {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final Translations$twint$flow$progress$en progress = Translations$twint$flow$progress$en.internal(_root);
+	late final Translations$twint$flow$takerProgress$en takerProgress = Translations$twint$flow$takerProgress$en.internal(_root);
 	late final Translations$twint$flow$makerWait$en makerWait = Translations$twint$flow$makerWait$en.internal(_root);
 	late final Translations$twint$flow$makerExpired$en makerExpired = Translations$twint$flow$makerExpired$en.internal(_root);
 	late final Translations$twint$flow$makerVerify$en makerVerify = Translations$twint$flow$makerVerify$en.internal(_root);
@@ -4237,6 +4239,39 @@ class Translations$twint$scanner$status$en {
 	String get amountFailed => 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.';
 }
 
+// Path: twint.flow.progress
+class Translations$twint$flow$progress$en {
+	Translations$twint$flow$progress$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: '1. Create offer'
+	String get step1 => '1. Create offer';
+
+	/// en: '2. Wait for taker'
+	String get step2 => '2. Wait for taker';
+
+	/// en: '3. Confirm'
+	String get step3 => '3. Confirm';
+}
+
+// Path: twint.flow.takerProgress
+class Translations$twint$flow$takerProgress$en {
+	Translations$twint$flow$takerProgress$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: '1. Pay ${code}'
+	String step1({required Object code}) => '1. Pay ${code}';
+
+	/// en: '2. Get sats'
+	String get step2 => '2. Get sats';
+}
+
 // Path: twint.flow.makerWait
 class Translations$twint$flow$makerWait$en {
 	Translations$twint$flow$makerWait$en.internal(this._root);
@@ -4245,17 +4280,14 @@ class Translations$twint$flow$makerWait$en {
 
 	// Translations
 
-	/// en: 'Offer live'
-	String get offerLive => 'Offer live';
-
 	/// en: 'Taker is paying'
 	String get takerPaying => 'Taker is paying';
 
 	/// en: 'Your ${code} code'
 	String yourCode({required Object code}) => 'Your ${code} code';
 
-	/// en: 'Offer expires'
-	String get offerExpires => 'Offer expires';
+	/// en: '${code} expires'
+	String offerExpires({required Object code}) => '${code} expires';
 
 	/// en: 'Auto-expires'
 	String get autoExpires => 'Auto-expires';
@@ -4310,8 +4342,8 @@ class Translations$twint$flow$makerVerify$en {
 	/// en: 'The taker reports paying ${amount} to your ${code} code.'
 	String body({required Object amount, required Object code}) => 'The taker reports paying ${amount} to your ${code} code.';
 
-	/// en: 'Check your ${code} app, then confirm or open a dispute.'
-	String hint({required Object code}) => 'Check your ${code} app, then confirm or open a dispute.';
+	/// en: 'Check the payment status with your merchant (shop terminal or online transaction). If in doubt, wait and re-check later before deciding.'
+	String get hint => 'Check the payment status with your merchant (shop terminal or online transaction). If in doubt, wait and re-check later before deciding.';
 
 	/// en: 'Auto-confirms'
 	String get autoConfirms => 'Auto-confirms';
@@ -4391,8 +4423,11 @@ class Translations$twint$flow$takerWait$en {
 	/// en: 'Waiting for the maker'
 	String get title => 'Waiting for the maker';
 
-	/// en: 'The maker is verifying your ${code} payment.'
-	String body({required Object code}) => 'The maker is verifying your ${code} payment.';
+	/// en: 'The maker is checking if your ${code} payment arrived at their merchant. They must confirm receipt or open a dispute.'
+	String body({required Object code}) => 'The maker is checking if your ${code} payment arrived at their merchant. They must confirm receipt or open a dispute.';
+
+	/// en: 'If the maker takes no action before the timer expires, the payment auto-confirms and you will receive your sats.'
+	String get info => 'If the maker takes no action before the timer expires, the payment auto-confirms and you will receive your sats.';
 
 	/// en: 'Auto-confirms'
 	String get autoConfirms => 'Auto-confirms';
@@ -5691,10 +5726,14 @@ extension on Translations {
 			'twint.scanner.status.align' => ({required Object code}) => 'Align the ${code} QR code and amount text inside the camera frame.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually.',
 			'twint.scanner.status.amountFailed' => 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.',
-			'twint.flow.makerWait.offerLive' => 'Offer live',
+			'twint.flow.progress.step1' => '1. Create offer',
+			'twint.flow.progress.step2' => '2. Wait for taker',
+			'twint.flow.progress.step3' => '3. Confirm',
+			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. Pay ${code}',
+			'twint.flow.takerProgress.step2' => '2. Get sats',
 			'twint.flow.makerWait.takerPaying' => 'Taker is paying',
 			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Your ${code} code',
-			'twint.flow.makerWait.offerExpires' => 'Offer expires',
+			'twint.flow.makerWait.offerExpires' => ({required Object code}) => '${code} expires',
 			'twint.flow.makerWait.autoExpires' => 'Auto-expires',
 			'twint.flow.makerWait.codeExpiresIn' => ({required Object code}) => '${code} will expire in...',
 			'twint.flow.makerWait.cancelOffer' => 'Cancel offer',
@@ -5710,7 +5749,7 @@ extension on Translations {
 			'twint.flow.makerExpired.disputeHint' => 'You can also wait for the timer to run out. If the taker reports having paid, this becomes a conflict/dispute where both peers must provide evidence to the coordinator to resolve the issue.',
 			'twint.flow.makerVerify.title' => 'Did you receive the payment?',
 			'twint.flow.makerVerify.body' => ({required Object amount, required Object code}) => 'The taker reports paying ${amount} to your ${code} code.',
-			'twint.flow.makerVerify.hint' => ({required Object code}) => 'Check your ${code} app, then confirm or open a dispute.',
+			'twint.flow.makerVerify.hint' => 'Check the payment status with your merchant (shop terminal or online transaction). If in doubt, wait and re-check later before deciding.',
 			'twint.flow.makerVerify.autoConfirms' => 'Auto-confirms',
 			'twint.flow.makerVerify.confirmReceived' => 'Confirm received',
 			'twint.flow.makerVerify.openDispute' => 'Open dispute',
@@ -5728,7 +5767,8 @@ extension on Translations {
 			'twint.flow.takerPay.paid' => 'I\'ve paid',
 			'twint.flow.takerPay.cancel' => 'Cancel',
 			'twint.flow.takerWait.title' => 'Waiting for the maker',
-			'twint.flow.takerWait.body' => ({required Object code}) => 'The maker is verifying your ${code} payment.',
+			'twint.flow.takerWait.body' => ({required Object code}) => 'The maker is checking if your ${code} payment arrived at their merchant. They must confirm receipt or open a dispute.',
+			'twint.flow.takerWait.info' => 'If the maker takes no action before the timer expires, the payment auto-confirms and you will receive your sats.',
 			'twint.flow.takerWait.autoConfirms' => 'Auto-confirms',
 			'twint.flow.takerExpired.title' => ({required Object code}) => '${code} probably expired',
 			'twint.flow.takerExpired.warning' => ({required Object code}) => 'The ${code} code has probably expired by now. You must now make an important decision — choose carefully.',

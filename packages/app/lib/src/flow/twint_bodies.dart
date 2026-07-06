@@ -36,6 +36,94 @@ typedef FlowBody = Widget Function(
 
 String _amount(Offer o) => '${o.fiatAmount} ${o.fiatCurrency}';
 
+/// TWINT-specific maker breadcrumbs: "Create offer > Wait for taker > Confirm".
+/// Unlike [MakerProgressIndicator], step 3 is "Confirm" (not "Use ${code}"),
+/// because TWINT is a maker-provides-code flow.
+class TwintMakerProgressIndicator extends ConsumerWidget {
+  final int activeStep; // 1, 2, or 3
+
+  const TwintMakerProgressIndicator({super.key, this.activeStep = 1});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = Translations.of(context);
+    final labels = [
+      t.twint.flow.progress.step1,
+      t.twint.flow.progress.step2,
+      t.twint.flow.progress.step3,
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8.0,
+        runSpacing: 4.0,
+        children: [
+          for (var i = 0; i < labels.length; i++) ...[
+            if (i > 0)
+              const Text('>', style: TextStyle(fontSize: 14, color: Colors.grey)),
+            Text(
+              labels[i],
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: i + 1 <= activeStep ? FontWeight.w500 : FontWeight.w400,
+                color: i + 1 == activeStep ? Colors.black : Colors.grey,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// TWINT-specific taker breadcrumbs: "Pay TWINT > Get sats". A simpler 2-step
+/// flow because TWINT is a maker-provides-code method — the taker has no
+/// separate confirm step.
+class TwintTakerProgressIndicator extends ConsumerWidget {
+  final int activeStep; // 1 or 2
+
+  const TwintTakerProgressIndicator({super.key, this.activeStep = 1});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = Translations.of(context);
+    final offer = ref.watch(activeOfferProvider);
+    final method = offer != null
+        ? (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik)
+        : ref.watch(selectedPaymentSystemProvider);
+    final code = method.codeLabel;
+    final labels = [
+      t.twint.flow.takerProgress.step1(code: code),
+      t.twint.flow.takerProgress.step2,
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8.0,
+        runSpacing: 4.0,
+        children: [
+          for (var i = 0; i < labels.length; i++) ...[
+            if (i > 0)
+              const Text('>', style: TextStyle(fontSize: 14, color: Colors.grey)),
+            Text(
+              labels[i],
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: i + 1 <= activeStep ? FontWeight.w500 : FontWeight.w400,
+                color: i + 1 == activeStep ? Colors.black : Colors.grey,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// The shared circular countdown for the current state's yaml timeout, with an
 /// optional [caption] below it. Renders nothing when the state has no timeout.
 Widget flowCountdownFor(
@@ -47,6 +135,7 @@ Widget flowCountdownFor(
   double strokeWidth = 9,
   double fontSize = 26,
   Color? progressColor,
+  Color? backgroundColor,
 }) {
   final tm = flowStateTimer(engine, offer.statusRaw, offer);
   if (tm == null) return const SizedBox.shrink();
@@ -62,7 +151,7 @@ Widget flowCountdownFor(
           strokeWidth: strokeWidth,
           fontSize: fontSize,
           progressColor: progressColor ?? scheme.primary,
-          backgroundColor: scheme.surfaceContainerHighest,
+          backgroundColor: backgroundColor ?? scheme.surfaceContainerHighest,
         ),
         if (caption != null) ...[
           const SizedBox(height: 8),
@@ -73,13 +162,15 @@ Widget flowCountdownFor(
   );
 }
 
-Widget _titled(BuildContext context, String title, List<Widget> children) {
+Widget _titled(BuildContext context, String title, List<Widget> children,
+    {Widget? breadcrumb}) {
   return Center(
     child: SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          if (breadcrumb != null) ...[breadcrumb, const SizedBox(height: 20)],
           Text(title,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall),
@@ -142,8 +233,11 @@ final FlowBody twintMakerWaitBody =
   const codeLabel = 'TWINT';
   return MakerWaitingBody(
     offer: offer,
+    // Funded → step 2 (waiting for taker); reserved → step 3 (confirm).
+    progressIndicator: TwintMakerProgressIndicator(
+        activeStep: waitingForTaker ? 2 : 3),
     // Reserved: the info box below explains the state — no spinner line.
-    message: waitingForTaker ? t.twint.flow.makerWait.offerLive : null,
+    message: waitingForTaker ? t.maker.waitTaker.message : null,
     // Once reserved, explain what the taker is doing (BLIK-style info box).
     extra: waitingForTaker
         ? const []
@@ -172,24 +266,27 @@ final FlowBody twintMakerWaitBody =
               ),
             ),
           ],
-    // Countdown comes from the state's yaml timeout. Funded: big green offer
-    // expiry. Reserved: half-size, blue (matching the BLIK in-progress
-    // timers) — the trade is live, not merely waiting.
+    // Countdown comes from the state's yaml timeout. Funded: big green on
+    // white (matching the BLIK wait-taker screen). Reserved: half-size, blue
+    // (matching the BLIK in-progress timers) — the trade is live, not merely
+    // waiting.
     countdown: flowCountdownFor(
       context,
       engine,
       offer,
       caption: waitingForTaker
-          ? t.twint.flow.makerWait.offerExpires
+          ? t.twint.flow.makerWait.offerExpires(code: codeLabel)
           : t.twint.flow.makerWait.codeExpiresIn(code: codeLabel),
       size: waitingForTaker ? 200 : 100,
       strokeWidth: waitingForTaker ? 16 : 8,
       fontSize: waitingForTaker ? 48 : 24,
-      progressColor: waitingForTaker ? null : Colors.blue,
+      progressColor: waitingForTaker ? Colors.green : Colors.blue,
+      backgroundColor: waitingForTaker ? Colors.white : null,
     ),
     // funded exposes cancel_offer, reserved exposes confirm_payment — the bar
     // renders whatever the yaml allows; confirm_payment gets the bespoke green
-    // success button + irreversibility dialog.
+    // success button + irreversibility dialog; cancel_offer gets the BLIK-style
+    // red outlined button.
     actions: FlowActionsBar(
       offer: offer,
       engine: engine,
@@ -199,10 +296,66 @@ final FlowBody twintMakerWaitBody =
       overrides: {
         'confirm_payment': (_) =>
             _makerConfirmPaymentButton(context, ref, offer, t),
+        'cancel_offer': (_) =>
+            _makerCancelButton(context, ref, offer, t.twint.flow.makerWait.cancelOffer),
       },
     ),
   );
 };
+
+/// Red outlined cancel button matching the BLIK maker-wait-taker screen style:
+/// circular close icon + label, used for the maker's `cancel_offer` action.
+Widget _makerCancelButton(
+  BuildContext context,
+  WidgetRef ref,
+  Offer offer,
+  String label,
+) {
+  return SizedBox(
+    width: double.infinity,
+    child: OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Colors.red, width: 2),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      onPressed: () async {
+        try {
+          await fireFlowAction(ref, offer, 'cancel_offer');
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('$e'),
+                backgroundColor: Theme.of(context).colorScheme.error));
+          }
+        }
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.red,
+            ),
+            child: const Icon(Icons.close, size: 16, color: Colors.white),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.red,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
 /// Green success button (BLIK confirm-screen style) for the maker's
 /// `confirm_payment`, guarded by an explicit irreversibility dialog: confirming
@@ -280,11 +433,14 @@ final FlowBody twintMakerExpiredBody =
   final t = Translations.of(context);
   const codeLabel = 'TWINT';
   final strings = t.twint.flow.makerExpired;
-  return _titled(context, strings.title(code: codeLabel), [
-    Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
+  return _titled(
+    context,
+    strings.title(code: codeLabel),
+    [
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
       ),
@@ -336,7 +492,9 @@ final FlowBody twintMakerExpiredBody =
             _makerConfirmPaymentButton(context, ref, offer, t),
       },
     ),
-  ]);
+  ],
+  breadcrumb: const TwintMakerProgressIndicator(activeStep: 3),
+);
 };
 
 // ─── maker: takerCharged (verify receipt) ────────────────────────────────────
@@ -355,7 +513,7 @@ final FlowBody twintMakerVerifyBody =
           ),
           textAlign: TextAlign.center),
       const SizedBox(height: 8),
-      Text(t.twint.flow.makerVerify.hint(code: codeLabel),
+      Text(t.twint.flow.makerVerify.hint,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall),
       flowCountdownFor(
@@ -373,11 +531,14 @@ final FlowBody twintMakerVerifyBody =
           'confirm_payment': t.twint.flow.makerVerify.confirmReceived,
         },
         overrides: {
+          'confirm_payment': (_) =>
+              _makerConfirmPaymentButton(context, ref, offer, t),
           'start_dispute': (_) =>
               _makerStartDisputeButton(context, ref, offer, t),
         },
       ),
     ],
+    breadcrumb: const TwintMakerProgressIndicator(activeStep: 3),
   );
 };
 
@@ -747,50 +908,67 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
         _showManualEntry || _controller.text.trim().isNotEmpty;
     final code = _controller.text.trim();
     final codeComplete = code.length == _method.codeLength;
-    return _titled(context, t.twint.flow.makerRecode.title, [
-      Text(
-        t.twint.flow.makerRecode.body(code: codeLabel),
-        textAlign: TextAlign.center,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const TwintMakerProgressIndicator(activeStep: 2),
+          const SizedBox(height: 20),
+          Text(
+            t.twint.flow.makerRecode.title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            t.twint.flow.makerRecode.body(code: codeLabel),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          if (!manualVisible) _scanCard(t) else _codeField(t),
+          flowCountdownFor(
+            context,
+            widget.engine,
+            widget.offer,
+            caption: t.twint.flow.makerRecode.autoCancels,
+          ),
+          const SizedBox(height: 20),
+          if (manualVisible)
+            _gradientButton(
+              onPressed: _busy || !codeComplete ? null : _submit,
+              child: _busy
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(
+                      t.twint.flow.makerRecode.relist,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600),
+                    ),
+            ),
+          const SizedBox(height: 8),
+          // cancel_offer is the other yaml action from invalidTwint.
+          FlowActionsBar(
+            offer: widget.offer,
+            engine: widget.engine,
+            role: widget.role,
+            labels: {'cancel_offer': t.twint.flow.makerRecode.cancelOffer},
+            // enter_new_twint is handled by the custom field above.
+            overrides: {
+              'enter_new_twint': (_) => const SizedBox.shrink(),
+              'cancel_offer': (_) => _makerCancelButton(
+                  context, ref, widget.offer, t.twint.flow.makerRecode.cancelOffer),
+            },
+          ),
+        ],
       ),
-      const SizedBox(height: 12),
-      if (!manualVisible) _scanCard(t) else _codeField(t),
-      flowCountdownFor(
-        context,
-        widget.engine,
-        widget.offer,
-        caption: t.twint.flow.makerRecode.autoCancels,
-      ),
-      const SizedBox(height: 20),
-      if (manualVisible)
-        _gradientButton(
-          onPressed: _busy || !codeComplete ? null : _submit,
-          child: _busy
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
-                )
-              : Text(
-                  t.twint.flow.makerRecode.relist,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600),
-                ),
-        ),
-      const SizedBox(height: 8),
-      // cancel_offer is the other yaml action from invalidTwint.
-      FlowActionsBar(
-        offer: widget.offer,
-        engine: widget.engine,
-        role: widget.role,
-        labels: {'cancel_offer': t.twint.flow.makerRecode.cancelOffer},
-        // enter_new_twint is handled by the custom field above.
-        overrides: {'enter_new_twint': (_) => const SizedBox.shrink()},
-        confirmEvents: const {'cancel_offer'},
-      ),
-    ]);
+    );
   }
 }
 
@@ -850,30 +1028,208 @@ class _TwintTakerPayBodyState extends ConsumerState<_TwintTakerPayBody> {
   Widget build(BuildContext context) {
     final t = Translations.of(context);
     const codeLabel = 'TWINT';
-    return _titled(context, t.twint.flow.takerPay.title(code: codeLabel), [
-      Text(t.twint.flow.takerPay.body(
-            code: codeLabel,
-            amount: _amount(widget.offer),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const TwintTakerProgressIndicator(activeStep: 1),
+          const SizedBox(height: 20),
+          Text(
+            t.twint.flow.takerPay.title(code: codeLabel),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          textAlign: TextAlign.center),
-      const SizedBox(height: 12),
-      _codeBox(context, widget.offer.blikCode),
-      flowCountdownFor(context, widget.engine, widget.offer,
-          caption: t.twint.flow.takerPay.codeExpires),
-      const SizedBox(height: 24),
-      FlowActionsBar(
-        offer: widget.offer,
-        engine: widget.engine,
-        role: widget.role,
-        labels: {
-          'mark_twint_charged': t.twint.flow.takerPay.paid,
-          'cancel_reservation': t.twint.flow.takerPay.cancel,
-        },
-        confirmEvents: const {'cancel_reservation'},
-        leaveEvents: const {'cancel_reservation'},
+          const SizedBox(height: 8),
+          Text(
+            t.twint.flow.takerPay.body(
+              code: codeLabel,
+              amount: _amount(widget.offer),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Center(child: _codeBox(context, widget.offer.blikCode)),
+          flowCountdownFor(
+            context,
+            widget.engine,
+            widget.offer,
+            caption: t.twint.flow.takerPay.codeExpires,
+          ),
+          const SizedBox(height: 24),
+          FlowActionsBar(
+            offer: widget.offer,
+            engine: widget.engine,
+            role: widget.role,
+            labels: {
+              'mark_twint_charged': t.twint.flow.takerPay.paid,
+              'cancel_reservation': t.twint.flow.takerPay.cancel,
+            },
+            overrides: {
+              'mark_twint_charged': (_) =>
+                  _takerPaidButton(context, ref, widget.offer, t),
+              'cancel_reservation': (_) =>
+                  _takerCancelButton(context, ref, widget.offer, t),
+            },
+          ),
+        ],
       ),
-    ]);
+    );
   }
+}
+
+/// Green "I've paid" button for the taker's `mark_twint_charged` action,
+/// matching the style used in the expired-TWINT body and BLIK confirm buttons.
+/// Shows the same markPaidDialog as the expired-TWINT body: confirms the
+/// taker understands the maker must verify, and a dispute may follow.
+Widget _takerPaidButton(
+  BuildContext context,
+  WidgetRef ref,
+  Offer offer,
+  Translations t,
+) {
+  const codeLabel = 'TWINT';
+  final dialog = t.twint.flow.takerExpired.markPaidDialog;
+  return SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      onPressed: () async {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(dialog.title),
+            content: Text(dialog.content(code: codeLabel)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(dialog.cancel),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(dialog.confirmButton),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true || !context.mounted) return;
+        try {
+          await fireFlowAction(ref, offer, 'mark_twint_charged');
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('$e'),
+                backgroundColor: Theme.of(context).colorScheme.error));
+          }
+        }
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.check, color: Colors.white, size: 24),
+          const SizedBox(width: 8),
+          Text(
+            t.twint.flow.takerPay.paid,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Red outlined cancel button for the taker's `cancel_reservation` action,
+/// matching the BLIK taker-submit cancel button style. Shows the same
+/// irreversibility dialog as the expired-TWINT body, then clears the offer
+/// and returns to the offer list.
+Widget _takerCancelButton(
+  BuildContext context,
+  WidgetRef ref,
+  Offer offer,
+  Translations t,
+) {
+  const codeLabel = 'TWINT';
+  final dialog = t.twint.flow.takerExpired.cancelDialog;
+  return SizedBox(
+    width: double.infinity,
+    child: OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Colors.red, width: 2),
+        foregroundColor: Colors.red,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      onPressed: () async {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(dialog.title),
+            content: Text(dialog.content(code: codeLabel)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(dialog.cancel),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(dialog.confirmButton),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true || !context.mounted) return;
+        try {
+          await fireFlowAction(ref, offer, 'cancel_reservation');
+          await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
+          if (context.mounted) context.go('/offers');
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('$e'),
+                backgroundColor: Theme.of(context).colorScheme.error));
+          }
+        }
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.red,
+            ),
+            child: const Icon(Icons.close, size: 16, color: Colors.white),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            t.twint.flow.takerPay.cancel,
+            style: const TextStyle(
+              color: Colors.red,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 // ─── taker: takerCharged (wait for maker) ────────────────────────────────────
@@ -882,18 +1238,83 @@ final FlowBody twintTakerWaitConfirmBody =
     (context, ref, offer, engine, role) {
   final t = Translations.of(context);
   const codeLabel = 'TWINT';
-  return _titled(context, t.twint.flow.takerWait.title, [
-    const CircularProgressIndicator(),
-    const SizedBox(height: 16),
-    Text(t.twint.flow.takerWait.body(code: codeLabel),
-        textAlign: TextAlign.center),
-    flowCountdownFor(
-      context,
-      engine,
-      offer,
-      caption: t.twint.flow.takerWait.autoConfirms,
-    ),
-  ]);
+  return _titled(
+    context,
+    t.twint.flow.takerWait.title,
+    [
+      // Green info box: what's happening right now.
+      Container(
+        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.green.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Icon(Icons.check_circle_outline,
+                  color: Colors.green, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                t.twint.flow.takerWait.body(code: codeLabel),
+                style: const TextStyle(fontSize: 13, color: Colors.green),
+                softWrap: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 20),
+      // Big green/white countdown matching the BLIK takerCharged circle.
+      flowCountdownFor(
+        context,
+        engine,
+        offer,
+        caption: t.twint.flow.takerWait.autoConfirms,
+        size: 200,
+        strokeWidth: 16,
+        fontSize: 48,
+        progressColor: Colors.green,
+        backgroundColor: Colors.white,
+      ),
+      const SizedBox(height: 20),
+      // Blue info box: auto-confirm explanation.
+      Container(
+        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.blue.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child:
+                  Icon(Icons.info_outline, color: Colors.blue, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                t.twint.flow.takerWait.info,
+                style: const TextStyle(fontSize: 13, color: Colors.blue),
+                softWrap: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+    breadcrumb: const TwintTakerProgressIndicator(activeStep: 2),
+  );
 };
 
 // ─── taker: expiredTwint ─────────────────────────────────────────────────────
@@ -966,14 +1387,17 @@ final FlowBody twintTakerExpiredBody =
     }
   }
 
-  return _titled(context, strings.title(code: codeLabel), [
-    Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-      ),
+  return _titled(
+    context,
+    strings.title(code: codeLabel),
+    [
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1082,7 +1506,9 @@ final FlowBody twintTakerExpiredBody =
             ),
       },
     ),
-  ]);
+  ],
+  breadcrumb: const TwintTakerProgressIndicator(activeStep: 1),
+);
 };
 
 // ─── both roles: dispute ─────────────────────────────────────────────────────
