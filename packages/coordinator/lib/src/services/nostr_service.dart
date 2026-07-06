@@ -20,6 +20,30 @@ class NostrService {
   static const Duration _relayRefreshInterval = Duration(seconds: 60);
   static const Duration _relayChangeGracePeriod = Duration(minutes: 5);
   static const Duration _relayQueryTimeout = Duration(seconds: 6);
+  static const Duration _cacheEvictionStartupDelay = Duration(seconds: 30);
+  static const Duration _cacheEvictionInterval = Duration(minutes: 5);
+
+  // Requests/responses/status updates are ephemeral and should be discarded
+  // aggressively. Public offers are parameterized replaceable by `d`, but the
+  // in-memory cache keys by event id, so repeated state broadcasts accumulate.
+  // Metadata (kind 0) and NIP-65 relay lists (10002) are low-volume, but still
+  // need a cap here because the default protected set would otherwise exempt
+  // them from cap-based eviction entirely.
+  static final Set<int> _cacheEvictionProtectedKinds =
+      Set<int>.of(EvictionPolicy.kDefaultProtectedKinds)
+        ..remove(Metadata.kKind)
+        ..remove(Nip65.kKind);
+  static final EvictionPolicy _cacheEvictionPolicy = EvictionPolicy(
+    kindCaps: const {
+      kKindCoordinatorRequest: 0,
+      kKindCoordinatorResponse: 0,
+      kKindOfferStatusUpdate: 0,
+      kKindOffer: 500,
+      Metadata.kKind: 100,
+      Nip65.kKind: 50,
+    },
+    protectedKinds: _cacheEvictionProtectedKinds,
+  );
 
   // Relay configuration.
   //
@@ -100,10 +124,15 @@ class NostrService {
     final bootstrap = {...kDiscoveryRelays, ..._envRelays}.toList();
     _ndk = Ndk(
       NdkConfig(
-          cache: MemCacheManager(),
-          eventVerifier: rustEventVerifier,
-          bootstrapRelays: bootstrap,
-          logLevel: LogLevel.info),
+        cache: MemCacheManager(),
+        eventVerifier: rustEventVerifier,
+        bootstrapRelays: bootstrap,
+        logLevel: LogLevel.info,
+        cacheEvictionEnabled: true,
+        cacheEvictionPolicy: _cacheEvictionPolicy,
+        cacheEvictionStartupDelay: _cacheEvictionStartupDelay,
+        cacheEvictionInterval: _cacheEvictionInterval,
+      ),
     );
 
     // Generate or load coordinator keys
