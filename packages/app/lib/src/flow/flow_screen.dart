@@ -98,6 +98,38 @@ final FlowBody genericFlowBody = (context, ref, offer, engine, role) {
   );
 };
 
+/// Payout-tail bodies for the states defined in `common.yml` (makerConfirmed,
+/// settled, payingTaker, takerPaid, takerPaymentFailed) — shared verbatim by
+/// EVERY flow (twint/blik/mbway). The maker's work is done once they confirm,
+/// so they get the success screen (with confetti); the taker watches the
+/// payout checklist advance and, on failure, the retry/failure screen. Both
+/// screens read only [activeOfferProvider] + [selectedPaymentSystemProvider],
+/// so nothing here is flow-specific.
+final Map<String, Map<FlowActor, FlowBody>> _payoutTailBodies = {
+  for (final state in const [
+    'makerConfirmed',
+    'settled',
+    'payingTaker',
+    'takerPaid',
+  ])
+    state: {
+      FlowActor.maker:
+          (context, ref, offer, engine, role) =>
+              MakerSuccessScreen(completedOffer: offer),
+      FlowActor.taker:
+          (context, ref, offer, engine, role) =>
+              const TakerPaymentProcessScreen(),
+    },
+  'takerPaymentFailed': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerSuccessScreen(completedOffer: offer),
+    FlowActor.taker:
+        (context, ref, offer, engine, role) =>
+            TakerPaymentFailedScreen(offer: offer),
+  },
+};
+
 /// BLIK and MB WAY share the legacy screen set as flow bodies — mbway.yml
 /// mirrors blik.yml's state names, and both use the same code-based screens.
 /// The screens' internal status navigation routes through flowEntryRoute,
@@ -175,48 +207,9 @@ final Map<String, Map<FlowActor, FlowBody>> _codeFlowBodies = {
         (context, ref, offer, engine, role) =>
             TakerConflictScreen(offerId: offer.id),
   },
-  // Payout tail: the maker is done once the coordinator settles; the taker
-  // watches the payout progress.
-  'makerConfirmed': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
-            MakerSuccessScreen(completedOffer: offer),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
-            const TakerPaymentProcessScreen(),
-  },
-  'settled': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
-            MakerSuccessScreen(completedOffer: offer),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
-            const TakerPaymentProcessScreen(),
-  },
-  'payingTaker': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
-            MakerSuccessScreen(completedOffer: offer),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
-            const TakerPaymentProcessScreen(),
-  },
-  'takerPaid': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
-            MakerSuccessScreen(completedOffer: offer),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
-            const TakerPaymentProcessScreen(),
-  },
-  'takerPaymentFailed': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
-            MakerSuccessScreen(completedOffer: offer),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
-            TakerPaymentFailedScreen(offer: offer),
-  },
+  // Payout tail (makerConfirmed, settled, payingTaker, takerPaid,
+  // takerPaymentFailed) is shared across every flow.
+  ..._payoutTailBodies,
   'dispute': {
     FlowActor.maker: twintDisputeBody,
     FlowActor.taker: twintDisputeBody,
@@ -254,9 +247,11 @@ final Map<String, Map<String, Map<FlowActor, FlowBody>>> _flowBodies = {
       FlowActor.maker: twintMakerExpiredBody,
       FlowActor.taker: twintTakerExpiredBody,
     },
-    // Payout-tail (makerConfirmed, settled, payingTaker, takerPaid,
-    // takerPaymentFailed) + terminals (cancelled, dispute) intentionally have no
-    // bespoke body — they fall through to [genericFlowBody].
+    // Payout tail (makerConfirmed, settled, payingTaker, takerPaid,
+    // takerPaymentFailed) reuses the shared success / payout-checklist screens
+    // — identical for every flow since these are common.yml states.
+    ..._payoutTailBodies,
+    // cancelled terminal falls through to [genericFlowBody].
   },
   'blik': _codeFlowBodies,
   'mbway': _codeFlowBodies,
