@@ -9,7 +9,12 @@ environment:
 
 dependencies:
   meta: ^1.17.0
-  ndk: any
+  ndk:
+    git:
+      url: https://github.com/relaystr/ndk.git
+      path: packages/ndk
+      #ref: 18fdc6a4e1747f9675a5d730f53efd6cd2af888e
+      ref: 01ea7ce020cd3632de9d8dbefa96468967b3c66f
   yaml: ^3.1.3
 
 dev_dependencies:
