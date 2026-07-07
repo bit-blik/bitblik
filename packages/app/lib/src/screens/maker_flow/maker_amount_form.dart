@@ -183,12 +183,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     _loadEcommerceRiskAccepted();
     _loadCategoryOnboardingState();
 
-    // Auto-focus the amount input field when screen is created
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_usesMakerProvidedCodeFlow) {
-        _amountFocusNode.requestFocus();
-      }
-    });
+    // Auto-focus the amount input when the screen is created. The real focus
+    // usually lands after _loadInitialData finishes (see _focusAmountIfManual),
+    // since the form is replaced by a loader until then.
+    _focusAmountIfManual();
   }
 
   @override
@@ -292,7 +290,24 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       setState(() {
         _isLoadingInitialData = false;
       });
+      // Form is now built (was a loader until here); focus the amount input.
+      _focusAmountIfManual();
     }
+  }
+
+  /// Focus the amount input when the user will type the amount directly: always
+  /// for the standard flow, and for the maker-provided-code flow (TWINT) only
+  /// when the fields are shown for manual entry (e.g. on web, no camera scan)
+  /// and the amount is still empty.
+  void _focusAmountIfManual() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_usesMakerProvidedCodeFlow ||
+          (_makerProvidedFieldsVisible &&
+              _fiatController.text.trim().isEmpty)) {
+        _amountFocusNode.requestFocus();
+      }
+    });
   }
 
   void _autoSelectCoordinator() {
