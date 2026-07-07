@@ -2254,6 +2254,8 @@ class _Translations$twint$scanner$status$fr extends Translations$twint$scanner$s
 	@override String align({required Object code}) => 'Alignez le QR ${code} et le texte du montant dans le cadre de la caméra.';
 	@override String notRecognized({required Object code}) => 'Le code ${code} n\'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement.';
 	@override String get amountFailed => 'Le scan caméra n\'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement.';
+	@override String get scanningAmount => 'Code détecté. Gardez le texte du montant visible pendant sa lecture…';
+	@override String get useCodeOnly => 'Utiliser le code sans montant';
 }
 
 // Path: twint.flow.progress
@@ -3290,6 +3292,8 @@ extension on TranslationsFr {
 			'twint.scanner.status.align' => ({required Object code}) => 'Alignez le QR ${code} et le texte du montant dans le cadre de la caméra.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Le code ${code} n\'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement.',
 			'twint.scanner.status.amountFailed' => 'Le scan caméra n\'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement.',
+			'twint.scanner.status.scanningAmount' => 'Code détecté. Gardez le texte du montant visible pendant sa lecture…',
+			'twint.scanner.status.useCodeOnly' => 'Utiliser le code sans montant',
 			'twint.flow.progress.step1' => '1. Créer l\'offre',
 			'twint.flow.progress.step2' => '2. Attendre un taker',
 			'twint.flow.progress.step3' => '3. Confirmer',
@@ -3365,10 +3369,10 @@ extension on TranslationsFr {
 			'twint.waitConfirmation.timerExpiredMessage' => ({required Object minutes, required Object code}) => 'Le délai d\'expiration de ${minutes} min du ${code} est passé. En attente que le maker confirme ou marque le code comme invalide.',
 			'twint.waitConfirmation.timerExpiredActions' => ({required Object minutes, required Object code}) => 'Le délai d\'expiration de ${minutes} min du ${code} est passé mais le maker n\'a pas reçu le code ${code}. Vous pouvez renvoyer un nouveau code ${code} ou annuler.',
 			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Renvoyer un nouveau code ${code}',
-			'twint.waitConfirmation.navigatedHome' => 'Retour à l\'accueil.',
-			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => 'Code ${code} expiré',
 			_ => null,
 		} ?? switch (path) {
+			'twint.waitConfirmation.navigatedHome' => 'Retour à l\'accueil.',
+			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => 'Code ${code} expiré',
 			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'Le maker n\'a pas reçu le code ${code}, il n\'a donc pas pu l\'utiliser.',
 			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'La réservation se termine dans',
 			'twint.waitConfirmation.expiredSentWarning' => 'Le maker n\'a pas encore confirmé le paiement. Que souhaitez-vous faire ?',

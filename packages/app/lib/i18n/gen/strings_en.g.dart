@@ -4237,6 +4237,12 @@ class Translations$twint$scanner$status$en {
 
 	/// en: 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.'
 	String get amountFailed => 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.';
+
+	/// en: 'Code detected. Keep the amount text in view while it is read…'
+	String get scanningAmount => 'Code detected. Keep the amount text in view while it is read…';
+
+	/// en: 'Use code without amount'
+	String get useCodeOnly => 'Use code without amount';
 }
 
 // Path: twint.flow.progress
@@ -5726,6 +5732,8 @@ extension on Translations {
 			'twint.scanner.status.align' => ({required Object code}) => 'Align the ${code} QR code and amount text inside the camera frame.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually.',
 			'twint.scanner.status.amountFailed' => 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.',
+			'twint.scanner.status.scanningAmount' => 'Code detected. Keep the amount text in view while it is read…',
+			'twint.scanner.status.useCodeOnly' => 'Use code without amount',
 			'twint.flow.progress.step1' => '1. Create offer',
 			'twint.flow.progress.step2' => '2. Wait for taker',
 			'twint.flow.progress.step3' => '3. Confirm',
