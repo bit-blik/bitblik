@@ -55,11 +55,29 @@
 
     .center {
       margin: 0;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      -ms-transform: translate(-50%, -50%);
-      transform: translate(-50%, -50%);
+    }
+
+    #splash-wrap {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(24px, 6vh, 48px);
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    #splash {
+      display: block;
+      line-height: 0;
+    }
+
+    #splash img {
+      display: block;
+      width: clamp(150px, 44vw, 220px);
+      height: auto;
     }
 
     .contain {
@@ -100,24 +118,20 @@
     }
 
     #splash-branding {
-      position: fixed;
-      left: 50%;
-      top: calc(50% + 110px);
-      transform: translateX(-50%);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       color: #334155;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       z-index: 9999;
       text-align: center;
-      padding: 0 16px;
+      max-width: 320px;
     }
 
     .loader {
-      width: 34px;
-      height: 34px;
+      width: clamp(34px, 9vw, 44px);
+      height: clamp(34px, 9vw, 44px);
       border-radius: 50%;
       border: 3px solid #d7e3f3;
       border-top-color: #165ec9;
@@ -125,16 +139,16 @@
     }
 
     #loading-message {
-      font-size: 14px;
+      font-size: clamp(15px, 4.2vw, 18px);
       font-weight: 500;
       letter-spacing: 0.01em;
     }
 
     #loading-subtext {
-      font-size: 12px;
+      font-size: clamp(13px, 3.4vw, 15px);
       color: #64748b;
-      max-width: 280px;
-      line-height: 1.35;
+      max-width: 300px;
+      line-height: 1.4;
     }
 
     @keyframes spin {
@@ -143,14 +157,10 @@
       }
     }
 
-    @media (max-width: 640px) {
-      #splash-branding {
-        top: calc(50% + 92px);
-      }
-    }
   </style>
   <script id="splash-screen-script">
     function removeSplashFromWeb() {
+      document.getElementById("splash-wrap")?.remove();
       document.getElementById("splash")?.remove();
       document.getElementById("splash-branding")?.remove();
       document.body.style.background = "transparent";
@@ -216,6 +226,7 @@
   </script>
 </head>
 <body>
+  <div id="splash-wrap">
   <picture id="splash">
       <source srcset="splash/img/light-1x.png 1x, splash/img/light-2x.png 2x, splash/img/light-3x.png 3x, splash/img/light-4x.png 4x" media="(prefers-color-scheme: light)">
       <source srcset="splash/img/dark-1x.png 1x, splash/img/dark-2x.png 2x, splash/img/dark-3x.png 3x, splash/img/dark-4x.png 4x" media="(prefers-color-scheme: dark)">
@@ -227,15 +238,10 @@
     <div id="loading-message">Loading BitBlik...</div>
     <div id="loading-subtext">Only first time it will need to download app resources.</div>
   </div>
-  
-  
-  
-  
+  </div>
+
   <!-- Load runtime configuration for group links -->
   <script src="config.js"></script>
-  
+
   <script src="flutter_bootstrap.js" async=""></script>
-
-
-
 </body></html>
