@@ -29,8 +29,11 @@ class TwintCodeScannerScreen extends StatefulWidget {
 
 class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
   static final RegExp _codePattern = RegExp(r'(?<!\d)(\d{5})(?!\d)');
+  // Number with optional Swiss thousands separators (apostrophe/space) and an
+  // optional 1-2 digit decimal part, e.g. "12.34", "12,34", "1'234.50".
+  static const String _numberSub = r"[0-9]+(?:[’'\s][0-9]{3})*(?:[.,][0-9]{1,2})?";
   static final RegExp _amountPattern = RegExp(
-    r'(?:CHF|Fr\.?)\s*([0-9]+(?:[.,][0-9]{1,2})?)|([0-9]+(?:[.,][0-9]{1,2})?)\s*(?:CHF|Fr\.?)',
+    '(?:CHF|Fr\\.?)\\s*($_numberSub)|($_numberSub)\\s*(?:CHF|Fr\\.?)',
     caseSensitive: false,
   );
   static final RegExp _fallbackDecimalPattern = RegExp(
@@ -55,6 +58,9 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
   // the CPU on desktop, so OCR now runs single-shot, triggered by QR detection.
   String? _webCode;
   bool _webOcrRunning = false;
+  // Last OCR outcome (raw text or a capture-error marker), shown on screen when
+  // the amount could not be extracted so failures are diagnosable in the field.
+  String? _webDiag;
 
   @override
   void initState() {
@@ -152,12 +158,31 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
       _status = _TwintScannerStatus.scanningAmount;
     });
     try {
-      final text = await twintOcrSnapshot();
+      final raw = await twintOcrSnapshot();
       if (!mounted || _isFinished) return;
-      final amount = _extractAmount(text);
-      if (amount != null) {
-        await _finish(code: _webCode, amount: amount);
-        return;
+      // Capture-level diagnostics surfaced by the JS bridge.
+      if (raw == '__NOVIDEO__') {
+        _webDiag = 'no camera frame found';
+      } else if (raw.startsWith('__OCRERR__:')) {
+        _webDiag = 'ocr error: ${raw.substring('__OCRERR__:'.length)}';
+      } else {
+        // The bridge prefixes "<w>x<h>" (source frame size) before the
+        // OCR text so field failures show the capture resolution.
+        String meta = '';
+        String text = raw;
+        final delim = raw.indexOf('');
+        if (delim != -1) {
+          meta = '${raw.substring(0, delim)} ';
+          text = raw.substring(delim + 1);
+        }
+        _webDiag = text.trim().isEmpty
+            ? '${meta}ocr read no text'
+            : meta + text.replaceAll('\n', ' ').trim();
+        final amount = _extractAmount(text);
+        if (amount != null) {
+          await _finish(code: _webCode, amount: amount);
+          return;
+        }
       }
       setState(() => _status = _TwintScannerStatus.amountFailed);
     } catch (_) {
@@ -190,7 +215,15 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
         directMatch?.group(2) ??
         _fallbackDecimalPattern.firstMatch(text)?.group(1);
     if (raw == null) return null;
-    return double.tryParse(raw.replaceAll(',', '.'));
+    // Strip Swiss thousands separators (apostrophe / space), then normalise a
+    // comma decimal to a dot.
+    var normalized = raw.replaceAll(RegExp(r"[’'\s]"), '');
+    if (!normalized.contains('.') && normalized.contains(',')) {
+      normalized = normalized.replaceAll(',', '.');
+    } else {
+      normalized = normalized.replaceAll(',', '');
+    }
+    return double.tryParse(normalized);
   }
 
   @override
@@ -263,6 +296,19 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
                           child: Text(t.twint.scanner.status.useCodeOnly),
                         ),
                       ],
+                    ),
+                  ],
+                  if (kIsWeb &&
+                      _status == _TwintScannerStatus.amountFailed &&
+                      _webDiag != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'OCR: ${_webDiag!.length > 140 ? '${_webDiag!.substring(0, 140)}…' : _webDiag!}',
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 11,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ],

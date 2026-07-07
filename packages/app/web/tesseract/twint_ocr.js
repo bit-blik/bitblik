@@ -1,9 +1,9 @@
 // Web-only OCR bridge for the TWINT amount scanner.
 //
-// mobile_scanner on web renders the camera into a single <video> element but
-// never exposes frame pixels (no `returnImage` support) and google_mlkit is
-// native-only. So on web we snapshot that <video> ourselves and run the
-// amount OCR with a locally-bundled tesseract.js. See
+// mobile_scanner on web renders the camera into a <video> element but never
+// exposes frame pixels (no `returnImage` support) and google_mlkit is
+// native-only. So on web we snapshot that <video> ourselves and run the amount
+// OCR with a locally-bundled tesseract.js. See
 // lib/src/screens/maker_flow/twint_code_scanner_screen.dart.
 (function () {
   var _worker = null;
@@ -27,11 +27,9 @@
       langPath: _assetUrl(''),
       gzip: true,
     }).then(function (w) {
-      // Amount text is "CHF 12.34" / "Fr. 12.34"; restrict the alphabet to the
-      // characters that can appear so digits are read more reliably.
-      return w.setParameters({
-        tessedit_char_whitelist: '0123456789.,CHFr ',
-      }).then(function () {
+      // PSM 11 = sparse text: find text anywhere in a natural scene (a photo of
+      // a payment screen), rather than assuming a clean document page.
+      return w.setParameters({ tessedit_pageseg_mode: '11' }).then(function () {
         _worker = w;
         return w;
       });
@@ -43,48 +41,82 @@
     return _workerPromise;
   }
 
+  // Find the live camera <video>. Flutter web can place platform views inside
+  // shadow roots, so a plain document.querySelector('video') may miss it — walk
+  // shadow roots too and prefer an element that actually has decoded frames.
+  function _findVideo() {
+    function search(root) {
+      var vids = root.querySelectorAll ? root.querySelectorAll('video') : [];
+      for (var i = 0; i < vids.length; i++) {
+        if (vids[i].videoWidth > 0 && vids[i].videoHeight > 0) return vids[i];
+      }
+      var els = root.querySelectorAll ? root.querySelectorAll('*') : [];
+      for (var j = 0; j < els.length; j++) {
+        if (els[j].shadowRoot) {
+          var found = search(els[j].shadowRoot);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    return search(document);
+  }
+
   // Kick off worker + language load ahead of time so the first real snapshot
   // is fast. Safe to call repeatedly.
   window.twintOcrPreload = function () {
     _ensureWorker().catch(function () {});
   };
 
-  // Grab the current camera frame and return recognized text (or '' on any
-  // failure). Never rejects. OCR cost scales with pixel count, so crop to the
-  // centre band (where the amount text sits) and downscale before recognizing
-  // — this keeps a single pass fast even on phones.
+  // Grab the current camera frame and return recognized text. Never rejects.
+  // On capture problems returns a marker the Dart side can surface for
+  // diagnostics: '__NOVIDEO__' or '__OCRERR__:<message>'.
   window.twintOcrSnapshot = function () {
-    var video = document.querySelector('video');
-    if (!video || !video.videoWidth || !video.videoHeight) {
-      return Promise.resolve('');
-    }
+    var video = _findVideo();
+    if (!video) return Promise.resolve('__NOVIDEO__');
     var vw = video.videoWidth;
     var vh = video.videoHeight;
-    // Crop the middle 90% width / 60% height: drops the noisy edges and roughly
-    // halves the area tesseract has to scan.
-    var cropW = Math.round(vw * 0.9);
-    var cropH = Math.round(vh * 0.6);
-    var sx = Math.round((vw - cropW) / 2);
-    var sy = Math.round((vh - cropH) / 2);
-    // Cap the OCR width for speed; text stays legible at ~720px.
-    var maxWidth = 720;
-    var scale = cropW > maxWidth ? maxWidth / cropW : 1;
-    var w = Math.round(cropW * scale);
-    var h = Math.round(cropH * scale);
+    // OCR the full frame (not a crop) — we do not know where the amount sits on
+    // the payer's screen. Keep it fairly high-res so small digits survive: a
+    // photo of a screen loses a lot of detail, and over-downscaling made the
+    // amount unreadable.
+    var maxWidth = 1280;
+    var scale = vw > maxWidth ? maxWidth / vw : 1;
+    var w = Math.round(vw * scale);
+    var h = Math.round(vh * scale);
     var canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
     var ctx = canvas.getContext('2d');
-    ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, w, h);
+    ctx.drawImage(video, 0, 0, w, h);
+    // Grayscale + contrast stretch: a camera shot of a screen is noisy and
+    // low-contrast; this makes the text edges cleaner for tesseract.
+    try {
+      var img = ctx.getImageData(0, 0, w, h);
+      var d = img.data;
+      for (var i = 0; i < d.length; i += 4) {
+        var g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        g = (g - 128) * 1.6 + 128;
+        g = g < 0 ? 0 : g > 255 ? 255 : g;
+        d[i] = d[i + 1] = d[i + 2] = g;
+      }
+      ctx.putImageData(img, 0, 0);
+    } catch (_) {
+      // getImageData can throw on tainted canvas; fall back to the raw frame.
+    }
     return _ensureWorker()
       .then(function (worker) {
         return worker.recognize(canvas);
       })
       .then(function (result) {
-        return (result && result.data && result.data.text) || '';
+        var text = (result && result.data && result.data.text) || '';
+        // Prefix the source frame size (before scaling) so the Dart side can
+        // surface it for diagnostics: low native resolution is the usual reason
+        // small amount digits are unreadable. Delimiter is .
+        return vw + 'x' + vh + '' + text;
       })
-      .catch(function () {
-        return '';
+      .catch(function (e) {
+        return '__OCRERR__:' + (e && e.message ? e.message : e);
       });
   };
 })();
