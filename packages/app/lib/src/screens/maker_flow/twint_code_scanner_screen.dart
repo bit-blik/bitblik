@@ -36,7 +36,7 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
   final MobileScannerController _controller = MobileScannerController(
     formats: const [BarcodeFormat.qrCode],
     detectionSpeed: DetectionSpeed.noDuplicates,
-    returnImage: true,
+    returnImage: !kIsWeb,
   );
   final TextRecognizer _textRecognizer = TextRecognizer();
 
@@ -78,6 +78,11 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
       }
 
       if (code != null || amount != null) {
+        if (!mounted) return;
+        // On web the camera renders via an HtmlElementView platform view;
+        // stop it and let teardown settle before popping, otherwise mobile
+        // browsers leave the previous route painted white.
+        await _controller.stop();
         if (!mounted) return;
         Navigator.of(context).pop(TwintScanResult(code: code, amount: amount));
         return;
