@@ -1,12 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../i18n/gen/strings.g.dart';
-import 'twint_web_ocr_stub.dart'
-    if (dart.library.js_interop) 'twint_web_ocr.dart';
 
 class TwintScanResult {
   final String? code;
@@ -29,11 +25,8 @@ class TwintCodeScannerScreen extends StatefulWidget {
 
 class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
   static final RegExp _codePattern = RegExp(r'(?<!\d)(\d{5})(?!\d)');
-  // Number with optional Swiss thousands separators (apostrophe/space) and an
-  // optional 1-2 digit decimal part, e.g. "12.34", "12,34", "1'234.50".
-  static const String _numberSub = r"[0-9]+(?:[’'\s][0-9]{3})*(?:[.,][0-9]{1,2})?";
   static final RegExp _amountPattern = RegExp(
-    '(?:CHF|Fr\\.?)\\s*($_numberSub)|($_numberSub)\\s*(?:CHF|Fr\\.?)',
+    r'(?:CHF|Fr\.?)\s*([0-9]+(?:[.,][0-9]{1,2})?)|([0-9]+(?:[.,][0-9]{1,2})?)\s*(?:CHF|Fr\.?)',
     caseSensitive: false,
   );
   static final RegExp _fallbackDecimalPattern = RegExp(
@@ -48,32 +41,7 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
   final TextRecognizer _textRecognizer = TextRecognizer();
 
   bool _isHandlingCapture = false;
-  bool _isFinished = false;
   _TwintScannerStatus _status = _TwintScannerStatus.align;
-
-  // Web-only: mobile_scanner exposes no frame pixels and MLKit is native-only,
-  // so on web the QR code comes from mobile_scanner while the amount is OCR'd
-  // once (per attempt) from a snapshot of the <video> element via tesseract.js.
-  // A polling loop was too heavy: it starved the mobile-web camera and pegged
-  // the CPU on desktop, so OCR now runs single-shot, triggered by QR detection.
-  String? _webCode;
-  bool _webOcrRunning = false;
-  // Last OCR outcome (raw text or a capture-error marker), shown on screen when
-  // the amount could not be extracted so failures are diagnosable in the field.
-  String? _webDiag;
-
-  @override
-  void initState() {
-    super.initState();
-    if (kIsWeb && widget.scanAmount) {
-      // Warm the OCR worker (compiles ~3MB of wasm) AFTER the camera has had a
-      // chance to start. Doing it synchronously here blocks the mobile-web
-      // camera platform view and leaves the scanner painted grey.
-      Future.delayed(const Duration(milliseconds: 2000), () {
-        if (mounted && !_isFinished) twintOcrPreload();
-      });
-    }
-  }
 
   @override
   void dispose() {
@@ -83,7 +51,7 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
   }
 
   Future<void> _handleDetect(BarcodeCapture capture) async {
-    if (_isHandlingCapture || _isFinished || !mounted) return;
+    if (_isHandlingCapture || !mounted) return;
     _isHandlingCapture = true;
 
     try {
@@ -91,29 +59,10 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
           .map((barcode) => barcode.rawValue ?? '')
           .firstWhere((value) => value.trim().isNotEmpty, orElse: () => '');
 
-      final code = _extractCode(qrValue);
-
-      if (kIsWeb) {
-        if (code == null) return;
-        if (!widget.scanAmount) {
-          await _finish(code: code, amount: null);
-          return;
-        }
-        // Have the code. Run the amount OCR once on the current frame; the user
-        // can retry or proceed without the amount from the on-screen buttons.
-        final firstCode = _webCode == null;
-        _webCode ??= code;
-        if (firstCode && mounted) {
-          setState(() => _status = _TwintScannerStatus.scanningAmount);
-          unawaited(_runWebAmountOcr());
-        }
-        return;
-      }
-
-      // Native: single-shot OCR from the returned camera frame.
+      String? code = _extractCode(qrValue);
       double? amount;
-      String? resolvedCode = code;
-      if (capture.image != null && capture.size != Size.zero) {
+
+      if (!kIsWeb && capture.image != null && capture.size != Size.zero) {
         final recognizedText = await _textRecognizer.processImage(
           InputImage.fromBitmap(
             bitmap: capture.image!,
@@ -122,14 +71,20 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
           ),
         );
         final ocrText = recognizedText.text;
-        resolvedCode ??= _extractCode(ocrText);
+        code ??= _extractCode(ocrText);
         if (widget.scanAmount) {
           amount = _extractAmount(ocrText);
         }
       }
 
-      if (resolvedCode != null || amount != null) {
-        await _finish(code: resolvedCode, amount: amount);
+      if (code != null || amount != null) {
+        if (!mounted) return;
+        // On web the camera renders via an HtmlElementView platform view;
+        // stop it and let teardown settle before popping, otherwise mobile
+        // browsers leave the previous route painted white.
+        await _controller.stop();
+        if (!mounted) return;
+        Navigator.of(context).pop(TwintScanResult(code: code, amount: amount));
         return;
       }
 
@@ -149,60 +104,6 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     }
   }
 
-  /// Web single-shot amount OCR of the current camera frame. Triggered by QR
-  /// detection and by the manual "scan amount again" button.
-  Future<void> _runWebAmountOcr() async {
-    if (_webOcrRunning || _isFinished || !mounted) return;
-    setState(() {
-      _webOcrRunning = true;
-      _status = _TwintScannerStatus.scanningAmount;
-    });
-    try {
-      final raw = await twintOcrSnapshot();
-      if (!mounted || _isFinished) return;
-      // Capture-level diagnostics surfaced by the JS bridge.
-      if (raw == '__NOVIDEO__') {
-        _webDiag = 'no camera frame found';
-      } else if (raw.startsWith('__OCRERR__:')) {
-        _webDiag = 'ocr error: ${raw.substring('__OCRERR__:'.length)}';
-      } else {
-        // The bridge prefixes "<w>x<h>" (source frame size) before the
-        // OCR text so field failures show the capture resolution.
-        String meta = '';
-        String text = raw;
-        final delim = raw.indexOf('');
-        if (delim != -1) {
-          meta = '${raw.substring(0, delim)} ';
-          text = raw.substring(delim + 1);
-        }
-        _webDiag = text.trim().isEmpty
-            ? '${meta}ocr read no text'
-            : meta + text.replaceAll('\n', ' ').trim();
-        final amount = _extractAmount(text);
-        if (amount != null) {
-          await _finish(code: _webCode, amount: amount);
-          return;
-        }
-      }
-      setState(() => _status = _TwintScannerStatus.amountFailed);
-    } catch (_) {
-      if (mounted) setState(() => _status = _TwintScannerStatus.amountFailed);
-    } finally {
-      if (mounted && !_isFinished) setState(() => _webOcrRunning = false);
-    }
-  }
-
-  Future<void> _finish({String? code, double? amount}) async {
-    if (_isFinished || !mounted) return;
-    _isFinished = true;
-    // On web the camera renders via an HtmlElementView platform view; stop it
-    // and let teardown settle before popping, otherwise mobile browsers leave
-    // the previous route painted white.
-    await _controller.stop();
-    if (!mounted) return;
-    Navigator.of(context).pop(TwintScanResult(code: code, amount: amount));
-  }
-
   String? _extractCode(String text) {
     final match = _codePattern.firstMatch(text);
     return match?.group(1);
@@ -215,15 +116,7 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
         directMatch?.group(2) ??
         _fallbackDecimalPattern.firstMatch(text)?.group(1);
     if (raw == null) return null;
-    // Strip Swiss thousands separators (apostrophe / space), then normalise a
-    // comma decimal to a dot.
-    var normalized = raw.replaceAll(RegExp(r"[’'\s]"), '');
-    if (!normalized.contains('.') && normalized.contains(',')) {
-      normalized = normalized.replaceAll(',', '.');
-    } else {
-      normalized = normalized.replaceAll(',', '');
-    }
-    return double.tryParse(normalized);
+    return double.tryParse(raw.replaceAll(',', '.'));
   }
 
   @override
@@ -232,15 +125,11 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     const codeLabel = 'TWINT';
     final statusText = switch (_status) {
       _TwintScannerStatus.align => t.twint.scanner.status.align(code: codeLabel),
-      _TwintScannerStatus.scanningAmount =>
-        t.twint.scanner.status.scanningAmount,
       _TwintScannerStatus.notRecognized =>
         t.twint.scanner.status.notRecognized(code: codeLabel),
-      _TwintScannerStatus.amountFailed => t.twint.scanner.status.amountFailed,
+      _TwintScannerStatus.amountFailed =>
+        t.twint.scanner.status.amountFailed,
     };
-    // Once the code is known on web but the amount OCR has not resolved, let the
-    // user retry the amount scan or proceed with the code alone.
-    final showWebControls = kIsWeb && _webCode != null && !_isFinished;
     return Scaffold(
       appBar: AppBar(title: Text(t.twint.scanner.title(code: codeLabel))),
       body: Stack(
@@ -252,66 +141,10 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
               width: double.infinity,
               color: Colors.black87,
               padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    statusText,
-                    style: const TextStyle(color: Colors.white),
-                    textAlign: TextAlign.center,
-                  ),
-                  if (showWebControls) ...[
-                    const SizedBox(height: 12),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _webOcrRunning ? null : _runWebAmountOcr,
-                          icon: _webOcrRunning
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.refresh, color: Colors.white),
-                          label: Text(t.twint.scanner.status.scanAmountAgain),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white70),
-                          ),
-                        ),
-                        OutlinedButton(
-                          onPressed: _webOcrRunning
-                              ? null
-                              : () => _finish(code: _webCode, amount: null),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white70),
-                          ),
-                          child: Text(t.twint.scanner.status.useCodeOnly),
-                        ),
-                      ],
-                    ),
-                  ],
-                  if (kIsWeb &&
-                      _status == _TwintScannerStatus.amountFailed &&
-                      _webDiag != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'OCR: ${_webDiag!.length > 140 ? '${_webDiag!.substring(0, 140)}…' : _webDiag!}',
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 11,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ],
+              child: Text(
+                statusText,
+                style: const TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
               ),
             ),
           ),
@@ -321,4 +154,4 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
   }
 }
 
-enum _TwintScannerStatus { align, scanningAmount, notRecognized, amountFailed }
+enum _TwintScannerStatus { align, notRecognized, amountFailed }

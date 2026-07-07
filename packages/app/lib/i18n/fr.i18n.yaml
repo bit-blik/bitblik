@@ -618,9 +618,6 @@ twint:
       align: "Alignez le QR ${code} et le texte du montant dans le cadre de la caméra."
       notRecognized: "Le code ${code} n'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement."
       amountFailed: "Le scan caméra n'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement."
-      scanningAmount: "Code détecté. Gardez le texte du montant visible pendant sa lecture…"
-      useCodeOnly: "Utiliser le code sans montant"
-      scanAmountAgain: "Rescanner le montant"
   flow:
     progress:
       step1: "1. Créer l'offre"

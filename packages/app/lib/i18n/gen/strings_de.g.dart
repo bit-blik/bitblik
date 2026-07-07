@@ -2254,9 +2254,6 @@ class _Translations$twint$scanner$status$de extends Translations$twint$scanner$s
 	@override String align({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.';
 	@override String notRecognized({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.';
 	@override String get amountFailed => 'Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren.';
-	@override String get scanningAmount => 'Code erkannt. Halte den Betragstext im Bild, während er gelesen wird…';
-	@override String get useCodeOnly => 'Code ohne Betrag verwenden';
-	@override String get scanAmountAgain => 'Betrag erneut scannen';
 }
 
 // Path: twint.flow.progress
@@ -3293,9 +3290,6 @@ extension on TranslationsDe {
 			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.',
 			'twint.scanner.status.amountFailed' => 'Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren.',
-			'twint.scanner.status.scanningAmount' => 'Code erkannt. Halte den Betragstext im Bild, während er gelesen wird…',
-			'twint.scanner.status.useCodeOnly' => 'Code ohne Betrag verwenden',
-			'twint.scanner.status.scanAmountAgain' => 'Betrag erneut scannen',
 			'twint.flow.progress.step1' => '1. Angebot erstellen',
 			'twint.flow.progress.step2' => '2. Auf Taker warten',
 			'twint.flow.progress.step3' => '3. Bestätigen',
@@ -3370,11 +3364,11 @@ extension on TranslationsDe {
 			'twint.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Der Maker hat deinen ${code}-Code erhalten.',
 			'twint.waitConfirmation.timerExpiredMessage' => ({required Object minutes, required Object code}) => 'Die ${minutes}-minütige Gültigkeit des ${code} ist abgelaufen. Warte, bis der Maker bestätigt oder den Code als ungültig markiert.',
 			'twint.waitConfirmation.timerExpiredActions' => ({required Object minutes, required Object code}) => 'Die ${minutes}-minütige Gültigkeit des ${code} ist abgelaufen, aber der Maker hat den ${code}-Code nicht erhalten. Du kannst einen neuen ${code}-Code senden oder abbrechen.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Neuen ${code}-Code senden',
 			'twint.waitConfirmation.navigatedHome' => 'Zur Startseite navigiert.',
 			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => '${code}-Code abgelaufen',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'Der Maker hat den ${code}-Code nicht erhalten und konnte ihn daher nicht verwenden.',
 			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'Reservierung endet in',
 			'twint.waitConfirmation.expiredSentWarning' => 'Der Maker hat die Zahlung noch nicht bestätigt. Was möchtest du tun?',

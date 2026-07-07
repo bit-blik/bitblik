@@ -2218,9 +2218,6 @@ class _Translations$twint$scanner$status$it extends Translations$twint$scanner$s
 	@override String align({required Object code}) => 'Allinea il QR ${code} e il testo dell\'importo all\'interno dell\'inquadratura.';
 	@override String notRecognized({required Object code}) => 'Codice ${code} non ancora riconosciuto. Tieni in vista il QR e l\'importo, oppure compila manualmente il modulo.';
 	@override String get amountFailed => 'La scansione della fotocamera non è riuscita a estrarre l\'importo. Puoi comunque usare il risultato del QR e correggere i campi manualmente.';
-	@override String get scanningAmount => 'Codice rilevato. Mantieni il testo dell\'importo inquadrato mentre viene letto…';
-	@override String get useCodeOnly => 'Usa il codice senza importo';
-	@override String get scanAmountAgain => 'Scansiona di nuovo l\'importo';
 }
 
 // Path: twint.flow.progress
@@ -3244,9 +3241,6 @@ extension on TranslationsIt {
 			'twint.scanner.status.align' => ({required Object code}) => 'Allinea il QR ${code} e il testo dell\'importo all\'interno dell\'inquadratura.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Codice ${code} non ancora riconosciuto. Tieni in vista il QR e l\'importo, oppure compila manualmente il modulo.',
 			'twint.scanner.status.amountFailed' => 'La scansione della fotocamera non è riuscita a estrarre l\'importo. Puoi comunque usare il risultato del QR e correggere i campi manualmente.',
-			'twint.scanner.status.scanningAmount' => 'Codice rilevato. Mantieni il testo dell\'importo inquadrato mentre viene letto…',
-			'twint.scanner.status.useCodeOnly' => 'Usa il codice senza importo',
-			'twint.scanner.status.scanAmountAgain' => 'Scansiona di nuovo l\'importo',
 			'twint.flow.progress.step1' => '1. Crea offerta',
 			'twint.flow.progress.step2' => '2. Attendi taker',
 			'twint.flow.progress.step3' => '3. Conferma',
@@ -3334,11 +3328,11 @@ extension on TranslationsIt {
 			'twint.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Il maker ha ${minutes} minuti per confermare il pagamento o contestarlo. Se non fa nulla, il pagamento verrà confermato automaticamente e riceverai i bitcoin.',
 			'twint.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => 'Il ${code} è stato addebitato sul mio conto bancario',
 			'twint.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Riprova con un nuovo codice ${code}',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.expiredActions.cancelReservation' => 'Annulla prenotazione',
 			'twint.waitConfirmation.feedback.makerConfirmed' => 'Il Maker ha confermato il pagamento.',
 			'twint.waitConfirmation.feedback.paymentSuccessful' => 'Pagamento riuscito! Riceverai i fondi a breve.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.feedback.conflictReported' => 'Conflitto segnalato. Il coordinatore esaminerà la situazione.',
 			'twint.waitConfirmation.errors.invalidOfferStateReceived' => 'Ricevuta un\'offerta con stato non valido per questa schermata. Ripristino in corso.',
 			'twint.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
