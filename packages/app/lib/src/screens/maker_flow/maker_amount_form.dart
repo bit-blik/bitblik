@@ -121,6 +121,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       _method.makerProvidesCodeAtOfferCreation;
   bool get _makerProvidedFieldsVisible =>
       !_usesMakerProvidedCodeFlow ||
+      // Camera scanning is not offered on web — go straight to manual entry.
+      kIsWeb ||
       _showMakerProvidedEntryForm ||
       _fiatController.text.trim().isNotEmpty ||
       _makerCodeController.text.trim().isNotEmpty;
@@ -1126,15 +1128,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 ),
               ),
               const Spacer(),
-              TextButton.icon(
-                onPressed: _scanTwintCodeAndAmount,
-                icon: const Icon(Icons.center_focus_strong, size: 16),
-                label: Text(t.maker.amountForm.twintScan.rescan),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.grey[700],
-                  visualDensity: VisualDensity.compact,
+              // No camera scanning on web.
+              if (!kIsWeb)
+                TextButton.icon(
+                  onPressed: _scanTwintCodeAndAmount,
+                  icon: const Icon(Icons.center_focus_strong, size: 16),
+                  label: Text(t.maker.amountForm.twintScan.rescan),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey[700],
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 6),
