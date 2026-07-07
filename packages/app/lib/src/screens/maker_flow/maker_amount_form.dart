@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui show TextDirection;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

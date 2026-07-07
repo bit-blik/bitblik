@@ -1,6 +1,7 @@
 import 'dart:ui' as ui show TextDirection;
 
 import 'package:bitblik_core/core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show Clipboard, ClipboardData, FilteringTextInputFormatter;
@@ -819,15 +820,17 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
                     color: Colors.grey[700]),
               ),
               const Spacer(),
-              TextButton.icon(
-                onPressed: _scanCode,
-                icon: const Icon(Icons.center_focus_strong, size: 16),
-                label: Text(t.maker.amountForm.twintScan.rescan),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.grey[700],
-                  visualDensity: VisualDensity.compact,
+              // No camera scanning on web.
+              if (!kIsWeb)
+                TextButton.icon(
+                  onPressed: _scanCode,
+                  icon: const Icon(Icons.center_focus_strong, size: 16),
+                  label: Text(t.maker.amountForm.twintScan.rescan),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey[700],
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -904,8 +907,9 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
   Widget build(BuildContext context) {
     final t = Translations.of(context);
     const codeLabel = 'TWINT';
+    // Camera scanning is not offered on web — go straight to manual entry.
     final manualVisible =
-        _showManualEntry || _controller.text.trim().isNotEmpty;
+        kIsWeb || _showManualEntry || _controller.text.trim().isNotEmpty;
     final code = _controller.text.trim();
     final codeComplete = code.length == _method.codeLength;
     return SingleChildScrollView(
