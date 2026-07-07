@@ -171,7 +171,9 @@ flutter:
     - assets/bff-logo.png
     - assets/bff-rabbit.png
     - assets/bff-laurs.png
-    - assets/faq/
+    - assets/faq/bitblik/
+    - assets/faq/bitway/
+    - assets/faq/bittwint/
     # Flow definitions — single source of truth in bitblik_core/lib/flows,
     # bundled here as package assets (no copy in this repo).
     - packages/bitblik_core/flows/blik.yml

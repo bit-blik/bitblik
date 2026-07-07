@@ -1,0 +1,157 @@
+## {app} FAQ
+
+### General Questions
+
+#### What is {app}?
+
+{app} is free and open source software designed to facilitate the peer-to-peer exchange of Bitcoin for {code} payments — used in {country}.\
+The fundamental idea is to:
+- pay with Bitcoin everywhere where {code} payment is accepted
+- buy Bitcoin by paying {code} codes on behalf of someone spending Bitcoin
+
+#### Why another P2P tool? Why not just use existing ones like RoboSats, Bisq, or Hodl Hodl?
+
+While those P2P escrow services are excellent and should be used for larger and longer-term trades, {app} is intended to be used as a quick payment method using {code} codes in places/situations where it's appropriate, such as self-checkout stores, restaurants, online shopping, and even ATM machines.
+The entire exchange process shouldn't take more than a couple of minutes, depending on how quickly takers notice the new offer and are able to promptly pay and confirm the {code} code.
+- **Makers** are users looking to sell Bitcoin.
+- **Takers** are users looking to buy Bitcoin.
+
+#### Who provides the {code} code, the Maker or the Taker?
+
+The **Maker provides the {code} code**. When paying with {code} the code is shown to the payer by the merchant's terminal or checkout, so the Maker (who is at the merchant, spending Bitcoin) reads that {code} code and supplies it up front when creating the offer. The **Taker then enters that {code} code in their {code} app** and pays it. So the code always travels from Maker to Taker, and it is the Taker's account that is charged.
+
+#### How does the escrow process work?
+
+The process generally follows these steps:
+1.  **Offer Creation (Maker):** A Maker at the merchant reads the {code} code shown to them (on the payment terminal or checkout) and creates an offer carrying that {code} code, specifying the amount of fiat to be paid.
+2.  **Funding Escrow (Maker):** The Maker pays a Lightning Network "hold invoice" for the specified Bitcoin amount. This locks the Bitcoin with the coordinator but doesn't transfer it yet.
+3.  **Offer Acceptance (Taker):** A Taker finds an offer they like and accepts it. The coordinator then reveals the Maker's {code} code to the Taker.
+4.  **Fiat Payment (Taker):** The Taker enters the {code} code in their {code} app and pays it. This charges the Taker's account and settles the payment to the merchant.
+5.  **Payment Report (Taker):** Once paid, the Taker marks the {code} code as charged in the {app} app.
+6.  **Payment Confirmation (Maker):** The Maker verifies at the merchant that the {code} payment went through and confirms it within the {app} system.
+7.  **Bitcoin Release (Coordinator):** Upon the Maker's confirmation, the coordinator uses the secret preimage to "settle" the hold invoice. This action releases the locked Bitcoin to the Taker's provided Lightning address or invoice.
+
+#### How do takers are made aware of new offers?
+
+Takers can register on several messenger channels (SimpleX, Matrix, Telegram, Signal) to receive notifications about new offers.
+Whenever a Maker pays the hold invoice to create a new offer, the coordinator will send a message to all notification channels with the offer details and a link to the {app} app where they can accept the offer.
+
+#### What is {code}?
+
+{code} is a mobile payment system used in {country}. To pay, a {codeLength}-digit code is entered in the {code} app, which charges the payer's bank account. In {app}, the Maker supplies the {code} code and the Taker pays it in their {code} app to buy the Maker's Bitcoin.
+
+#### How long is a {code} code valid?
+
+A {code} code is only valid for about {validity} minutes. Because of this short lifespan, the Taker must enter and pay the code in their {code} app promptly after accepting the offer. If the code expires before it is paid, the Maker can supply a new {code} code so the trade can continue.
+
+#### What are Lightning Network "hold invoices"?
+
+Hold invoices are a special type of Lightning invoice. When a hold invoice is paid by the Maker (seller of Bitcoin), the funds are not immediately settled. Instead, they are "held" by the coordinator's Lightning node. The funds are only truly released (settled) to the recipient (Taker) when a secret "preimage" is revealed. If the preimage is not revealed within a certain time, or if the invoice is explicitly cancelled, the funds are returned to the payer (Maker). This is the core of {app}'s escrow mechanism.
+
+---
+
+### Security & Risks
+
+#### How are my Bitcoin funds secured as a Maker (seller)?
+
+As a Maker, your Bitcoin is locked via a hold invoice. The coordinator has the preimage required to settle this invoice. The system is designed to only settle (release your Bitcoin to the Taker) *after* you confirm the {code} payment has gone through. If the Taker fails to pay, or if there's an issue, the hold invoice is cancelled, and the Bitcoin is returned to your LN node's control.
+
+#### How am I protected as a Taker (buyer) when I pay a {code} code?
+
+As a Taker, your primary protection is that the Maker has already locked their Bitcoin into a hold invoice with the coordinator *before* the {code} code is revealed to you and you pay it. If the Maker confirms the {code} payment, the system is designed to automatically release the Bitcoin to you. There is a risk if the Maker falsely denies the {code} payment went through. (See "Disputes").
+
+#### What happens if the Maker doesn't confirm my {code} payment even though I paid it?
+
+This is a conflict scenario. Note that if the Maker stays silent, the offer auto-confirms in the Taker's favour after a timeout. (See "Disputes")
+
+#### What happens if the Taker accepts the offer but doesn't actually pay the {code} code?
+
+As a Maker, you should not confirm the payment until the {code} funds have actually gone through at the merchant. If the Taker fails to pay the {code} code, you would not confirm, and the reservation would expire, returning the offer to the open pool or letting the hold invoice be cancelled so your Bitcoin is returned.
+
+#### What if the {code} code provided by the Maker is invalid or expires before the Taker pays it?
+
+If the Taker cannot pay the {code} code because it is invalid or has expired, the reservation lapses. The Maker can supply a new {code} code so the trade can continue, or the offer can be cancelled.
+
+#### What are the risks of using this protocol?
+
+- **Counterparty Risk:** The primary risk is the other party not acting honestly (e.g., Taker not paying after Maker locks BTC, or Maker not confirming payment after Taker pays). The hold invoice mechanism mitigates this but doesn't eliminate it, especially around the fiat payment leg.
+- **Coordinator Trust:** You are trusting the {app} coordinator software and its operators to:
+  -   Securely manage hold invoice preimages.
+  -   Correctly trigger settlements or cancellations based on the process flow.
+  -   Operate the service reliably.
+- **LN Node Issues:** Both the coordinator's LN node and potentially users' LN nodes (if self-hosted and interacting directly) need to be online and operational. Issues with LN nodes can delay or complicate transactions.
+- **{code} System Issues:** Problems with the {code} payment system itself are outside {app}'s control. Resolution of such issues must be handled through the Taker's bank or {code} provider.
+- **Software Bugs:** As with any software, there's a risk of bugs in the {app} client or coordinator that could lead to errors or loss of funds. The software is open source, so users can audit it, but this requires technical expertise.
+- **Privacy:** Your public keys are stored by the coordinator. Transaction details are also stored in the database. **For better privacy you should generate a new key pair for each transaction.**
+
+#### Is the coordinator custodial?
+
+The coordinator is non-custodial in the traditional sense for the *final* Bitcoin settlement for the Taker, as it pays out to the Taker's invoice. However, during the escrow period, the Maker's funds are locked in a hold invoice that the coordinator has the power to settle (using the preimage) or instruct to be cancelled. So, there's a temporary control element by the coordinator over the locked funds. Both Maker and Taker trust the coordinator to release these funds according to the protocol.
+
+#### What motivates the Maker to act honestly?
+
+The Maker has already locked their Bitcoin in a Lightning Network hold invoice before the {code} code is paid by the Taker. This creates a strong incentive to complete the trade honestly:
+
+- **If the Maker confirms a valid {code} payment:** The coordinator settles the hold invoice, releasing the Bitcoin to the Taker. The Maker's purchase is paid—everyone is satisfied.
+- **If the Maker falsely denies a valid {code} payment:** The Taker can open a dispute and provide bank evidence proving the payment was made. If the coordinator finds in favor of the Taker, the hold invoice is settled anyway, and the Maker loses their Bitcoin without recourse. Note also that if the Maker simply goes silent, the trade auto-confirms in the Taker's favour after a timeout.
+- **If the Maker abandons the trade or becomes unresponsive:** The coordinator can settle the invoice in favor of the Taker (if payment evidence exists) or, in ambiguous cases, keep the funds locked until the dispute is resolved.
+
+Hold invoices have a limited validity window (typically a few hours), meaning the Maker cannot indefinitely stall. They must either complete the trade honestly or risk losing their Bitcoin through the dispute resolution process.
+
+With Bitcoin held in a Lightning Network hold invoice, the Maker (seller) is incentivized to act honestly. Without evidence to the contrary, the invoice will not be released back to the Maker.
+
+#### What motivates the Taker to act honestly?
+
+The Taker only enters the trade after the Maker has already locked Bitcoin in a hold invoice. While this protects the Taker from a Maker who might not have funds, the Taker also faces strong incentives to act honestly:
+
+- **If the Taker pays the {code} code and reports it charged:** The Maker's purchase goes through, the Maker confirms it, and the coordinator releases the Bitcoin to the Taker. Everyone is satisfied.
+- **If the Taker cannot pay because the {code} code is invalid or expired:** The trade cannot complete. The Maker supplies a new code or the offer is cancelled and the Maker's Bitcoin is returned via hold invoice cancellation. The Taker receives nothing.
+- **If the Taker falsely claims to have paid:** In a dispute, the Taker must provide bank evidence proving the {code} payment was deducted from their account. Without such evidence, the coordinator will cancel the hold invoice after 48 hours, returning the Bitcoin to the Maker. The Taker gains nothing and wastes everyone's time.
+- **If the Taker abandons the trade after reserving an offer:** The offer eventually expires or is cancelled, and the Maker's Bitcoin is returned. The Taker gains nothing.
+
+Since the Taker must provide verifiable evidence in any dispute, there is no viable path to fraudulently obtain Bitcoin. A dishonest Taker only succeeds in wasting time—their own, the Maker's, and the coordinator's.
+
+> **Note:** A bond system for Takers is planned for future implementation, which will add a financial penalty for Takers who waste coordinator time with frivolous disputes or abandoned trades.
+
+#### What motivates the coordinator to act honestly?
+
+The coordinator must provide a nostr key (profile) which users can tag and report bad experiences with a given coordinator. Before choosing to use a specific coordinator check its reputation on Nostr. Given the censorship-resistant nature of Nostr, anyone can flood or post invalid reports, so use a client that uses Web of Trust to determine the reputation of each user's reports. Preferably choose a coordinator that has good reputation among your Bitcoin community or your trusted friends. Ultimately, you as the user of this software are responsible for choosing a coordinator with good reputation. This is not a platform or service and we take no responsibility for the actions of any coordinator.
+
+---
+
+### Fees & Technicals
+
+#### Are there any fees for using {app}?
+
+Each coordinator sets its fees, both for makers as for takers. These are displayed in the client application, before an offer is created or taken.
+
+#### What happens if a Lightning payment (payout to Taker) fails?
+
+If the coordinator attempts to pay the Taker's Lightning invoice and it fails (e.g., Taker's node offline, no route), the transaction might enter this state. The Taker might need to provide a new invoice or resolve issues with their Lightning setup.
+
+#### What if I, as a Maker, want to cancel my offer after funding it but before a Taker accepts?
+
+You can cancel the hold invoice, and the Bitcoin should be returned to your LN wallet. This is typically possible if the offer is still in a `funded` state and not yet `reserved` or further along.
+
+#### Why aren't the mobile apps distributed in Google Play store or Apple App Store?
+These platforms are not merely marketplaces; they are walled gardens governed by corporate gatekeepers who exercise absolute authority over what software users can install. This centralized model creates a single point of failure and a chokepoint for censorship. Apps that promote privacy-enhancing technologies, controversial political speech, or alternative economic models can be, and often are, delisted at the sole discretion of the platform owners, stifling innovation and the free exchange of ideas.
+
+### Disputes
+
+If both the maker and taker disagree on the payment status or if there are issues with the transaction, the offer enters a `conflict` state, in which each party must provide evidence for the coordinator to resolve the dispute manually.
+
+> ⚠️ **Important:** Each coordinator may have different requirements and/or procedure for dispute resolution, so check the coordinator's documentation or contact them directly to be sure.
+
+#### What kind of evidence might be generally required from me as a Maker from the coordinator?
+If you claim the {code} payment did not go through, you should provide evidence of the failed payment at the merchant. This could include:
+- receipt or terminal message showing the {code} payment was not completed.
+- screenshot of the failed payment at the checkout or e-commerce site
+
+#### What kind of evidence might be generally required from me as a Taker by the coordinator?
+
+If the Maker denies your {code} payment went through, you should provide evidence that the {code} payment was successfully deducted from your bank account. This will typically be a payment receipt in your {code} app showing the transaction details, including the amount & timestamp.
+
+## Support
+
+For coordinator support or issues with offers or disputes, contact the coordinator operator directly using Nostr DMs, 
+their profile is accessible by their terms of use link in the {app} client app.

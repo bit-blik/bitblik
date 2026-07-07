@@ -60,21 +60,6 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
         () => 'FAQ Screen: failed to subscribe to locale stream. Error: $e',
       );
     }
-
-    // Reload when the user switches payment system (e.g. BLIK -> MB WAY), since
-    // the FAQ slug is derived from the active payment system's brand.
-    ref.listen<PaymentSystem>(
-      selectedPaymentSystemProvider,
-      (previous, next) {
-        if (previous?.id != next.id) {
-          Logger.log.d(
-            () => "FAQ Screen: payment system changed "
-                "${previous?.id} -> ${next.id}, reloading content.",
-          );
-          _loadFaqContent();
-        }
-      },
-    );
   }
 
   // Remove didChangeDependencies as locale changes are now handled by the stream
@@ -147,16 +132,16 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
 
       // Brand slug follows the *active payment system* (not the compile-time
       // app flavor), so e.g. a Bittwint user who switches to MB WAY sees the
-      // ATM-focused BitWay FAQ. Branded flavors get their own FAQ (e.g.
-      // BitWay's Multibanco/ATM variant); fall back to the generic token-based
-      // FAQ when no per-flavor file exists for the brand/language.
+      // ATM-focused BitWay FAQ. FAQs live under assets/faq/<slug>/faq_<lang>.md;
+      // fall back to the brand's English file, then to the generic Bitblik FAQ
+      // when no per-brand file exists for the language.
       final String slug =
           ref.read(selectedPaymentSystemProvider).brandName.toLowerCase();
       final candidates = <String>[
-        if (slug != 'bitblik') 'assets/faq/faq_${slug}_$langCode.md',
-        if (slug != 'bitblik') 'assets/faq/faq_${slug}_en.md',
-        'assets/faq/faq_$langCode.md',
-        'assets/faq/faq_en.md',
+        'assets/faq/$slug/faq_$langCode.md',
+        'assets/faq/$slug/faq_en.md',
+        'assets/faq/bitblik/faq_$langCode.md',
+        'assets/faq/bitblik/faq_en.md',
       ];
 
       String? markdownData;
@@ -203,6 +188,22 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Reload when the user switches payment system (e.g. BLIK -> MB WAY), since
+    // the FAQ slug is derived from the active payment system's brand. ref.listen
+    // must run inside build(), not initState().
+    ref.listen<PaymentSystem>(
+      selectedPaymentSystemProvider,
+      (previous, next) {
+        if (previous?.id != next.id) {
+          Logger.log.d(
+            () => "FAQ Screen: payment system changed "
+                "${previous?.id} -> ${next.id}, reloading content.",
+          );
+          _loadFaqContent();
+        }
+      },
+    );
+
     // final t = Translations.of(context); // Access translations if needed for other parts
 
     Widget backButton = Padding(
