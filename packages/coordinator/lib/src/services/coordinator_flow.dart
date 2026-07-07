@@ -34,4 +34,8 @@ abstract class OfferFlow {
 
   /// Re-arm timers / run expiry sweeps for live offers on coordinator startup.
   Future<void> recoverTimers();
+
+  /// Lightweight counts of long-lived flow-owned structures for memory
+  /// diagnostics.
+  Map<String, int> debugCounters();
 }

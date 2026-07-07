@@ -15,13 +15,14 @@ import '../logging/app_logger.dart';
 class NostrService {
   final CoordinatorService _coordinatorService;
   late final Ndk _ndk;
+  late final MemCacheManager _cacheManager;
   late Bip340EventSigner _signer;
   final RustEventVerifier rustEventVerifier = RustEventVerifier();
   static const Duration _relayRefreshInterval = Duration(seconds: 60);
   static const Duration _relayChangeGracePeriod = Duration(minutes: 5);
   static const Duration _relayQueryTimeout = Duration(seconds: 6);
   static const Duration _cacheEvictionStartupDelay = Duration(seconds: 30);
-  static const Duration _cacheEvictionInterval = Duration(minutes: 10);
+  static const Duration _cacheEvictionInterval = Duration(minutes: 1);
 
   // Requests/responses/status updates are ephemeral and should be discarded
   // aggressively. Public offers are parameterized replaceable by `d`, but the
@@ -74,6 +75,10 @@ class NostrService {
   StreamSubscription<Nip01Event>? _requestListenerSub;
   Timer? _relayRefreshTimer;
   Timer? _relayGraceTimer;
+  int _requestsReceived = 0;
+  int _responsesSent = 0;
+  int _responseErrors = 0;
+  final Map<String, int> _rpcMethodCounts = {};
 
   // NIP-69 offer events are parameterized replaceable. If two state changes for
   // the same offer are published within the same second, some relays may keep
@@ -122,9 +127,10 @@ class NostrService {
     // Bootstrap NDK on discovery + env relays so the self NIP-65 lookup can
     // succeed regardless of where a prior list was published.
     final bootstrap = {...kDiscoveryRelays, ..._envRelays}.toList();
+    _cacheManager = MemCacheManager();
     _ndk = Ndk(
       NdkConfig(
-        cache: MemCacheManager(),
+        cache: _cacheManager,
         eventVerifier: rustEventVerifier,
         bootstrapRelays: bootstrap,
         logLevel: LogLevel.info,
@@ -529,11 +535,14 @@ class NostrService {
       );
 
       await _signer.sign(event);
-      await _ndk.broadcast.broadcast(
+      final broadcastResponse = _ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: _signer,
         specificRelays: _broadcastRelays,
+        saveToCache: false,
       );
+      await broadcastResponse.broadcastDoneFuture;
+      await _clearEphemeralBroadcastTracking(event.id);
       AppLogger.info(
         'Sent status update offer=$offerId status=${payload['status']} to=${_shortKey(recipientPubkey)} event=${event.id}',
         offerId: offerId,
@@ -596,6 +605,9 @@ class NostrService {
     }
 
     final request = await ProtocolCodec.decryptRequest(event, privateKey);
+    _requestsReceived++;
+    _rpcMethodCounts.update(request.method, (count) => count + 1,
+        ifAbsent: () => 1);
     final id = request.id;
     AppLogger.info(
       '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} params=${request.params.values.map((v) => v.toString()).toList()..sort()}',
@@ -626,8 +638,9 @@ class NostrService {
       // strategy — generic (yaml-driven) or legacy enum. Query/info/payout RPCs
       // fall through to the shared handlers below.
       if (_coordinatorService.flow.handlesRpc(method)) {
-        return await _coordinatorService.flow
-            .handleRpc(method, params, userPubkey, clientVersion: clientVersion);
+        return await _coordinatorService.flow.handleRpc(
+            method, params, userPubkey,
+            clientVersion: clientVersion);
       }
 
       switch (method) {
@@ -804,16 +817,21 @@ class NostrService {
       );
 
       await _signer.sign(event);
-      await _ndk.broadcast.broadcast(
+      final broadcastResponse = _ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: _signer,
         specificRelays: _broadcastRelays,
+        saveToCache: false,
       );
+      await broadcastResponse.broadcastDoneFuture;
+      await _clearEphemeralBroadcastTracking(event.id);
+      _responsesSent++;
 
       AppLogger.info(
         'Sent RPC response id=${response.id ?? '-'} to=${_shortKey(recipientPubkey)}',
       );
     } catch (e) {
+      _responseErrors++;
       AppLogger.info(
         'Error sending encrypted message to ${_shortKey(recipientPubkey)} id=${response.id ?? '-'} ${_describeResponse(response)}: $e',
       );
@@ -846,6 +864,124 @@ class NostrService {
   /// Keeps [_lastOfferEventCreatedAtById] bounded across the process lifetime.
   void forgetOfferTracking(String offerId) {
     _lastOfferEventCreatedAtById.remove(offerId);
+  }
+
+  Map<String, dynamic> debugSnapshot() => {
+        'request_subscription_active': _requestSubscription != null,
+        'request_listener_active': _requestListenerSub != null,
+        'relay_refresh_timer_active': _relayRefreshTimer?.isActive ?? false,
+        'relay_grace_timer_active': _relayGraceTimer?.isActive ?? false,
+        'env_relay_count': _envRelays.length,
+        'working_relay_count': _relays.length,
+        'discovery_relay_count': _discoveryRelays.length,
+        'grace_relay_count': _graceRelays.length,
+        'offer_tracking_count': _lastOfferEventCreatedAtById.length,
+        'requests_received': _requestsReceived,
+        'responses_sent': _responsesSent,
+        'response_errors': _responseErrors,
+        'rpc_method_counts': Map<String, int>.from(_rpcMethodCounts),
+        'ndk_runtime': _ndkRuntimeSnapshot(),
+        'cache_event_count': _cacheManager.events.length,
+        'cache_event_source_count': _cacheManager.eventSources.length,
+        'cache_delivery_record_count':
+            _cacheManager.eventDeliveryRecords.length,
+        'cache_delivery_status_counts': _cacheDeliveryStatusCounts(),
+        'cache_event_kind_counts': _cacheEventKindCounts(),
+      };
+
+  Map<String, int> _cacheEventKindCounts() {
+    final counts = <String, int>{};
+    for (final event in _cacheManager.events.values) {
+      final key = event.kind.toString();
+      counts.update(key, (count) => count + 1, ifAbsent: () => 1);
+    }
+    return counts;
+  }
+
+  Map<String, int> _cacheDeliveryStatusCounts() {
+    final counts = <String, int>{};
+    for (final record in _cacheManager.eventDeliveryRecords.values) {
+      final key = record.status.name;
+      counts.update(key, (count) => count + 1, ifAbsent: () => 1);
+    }
+    return counts;
+  }
+
+  Map<String, dynamic> _ndkRuntimeSnapshot() {
+    final globalState = _ndk.relays.globalState;
+    final requestStates = globalState.inFlightRequests.values.toList();
+    final broadcastStates = globalState.inFlightBroadcasts.values.toList();
+    final relayStates = globalState.relays.values.toList();
+
+    final requestRelaySlots =
+        requestStates.fold<int>(0, (sum, state) => sum + state.requests.length);
+    final requestReturnedIds = requestStates.fold<int>(
+        0, (sum, state) => sum + state.returnedIds.length);
+    final requestSubscriptions =
+        requestStates.where((state) => state.isSubscription).length;
+    final requestOneShots = requestStates.length - requestSubscriptions;
+    final requestDoneCount =
+        requestStates.where((state) => state.didAllRequestsFinish).length;
+    final requestControllerOpenCount =
+        requestStates.where((state) => !state.controller.isClosed).length;
+    final requestNetworkControllerOpenCount = requestStates
+        .where((state) => !state.networkController.isClosed)
+        .length;
+    final requestCacheControllerOpenCount =
+        requestStates.where((state) => !state.cacheController.isClosed).length;
+
+    final broadcastRelaySlots = broadcastStates.fold<int>(
+      0,
+      (sum, state) => sum + state.broadcasts.length,
+    );
+    final broadcastDoneCount =
+        broadcastStates.where((state) => state.publishDone).length;
+    final broadcastControllerOpenCount = broadcastStates
+        .where((state) => !state.networkController.isClosed)
+        .length;
+
+    final connectedRelayCount =
+        relayStates.where((relay) => relay.isConnected).length;
+    final connectingRelayCount =
+        relayStates.where((relay) => relay.relay.connecting).length;
+    final disconnectedRelayCount =
+        relayStates.length - connectedRelayCount - connectingRelayCount;
+
+    final relaySourceCounts = <String, int>{};
+    for (final relay in relayStates) {
+      final key = relay.relay.connectionSource.name;
+      relaySourceCounts.update(key, (count) => count + 1, ifAbsent: () => 1);
+    }
+
+    return {
+      'inflight_request_count': requestStates.length,
+      'inflight_request_subscription_count': requestSubscriptions,
+      'inflight_request_one_shot_count': requestOneShots,
+      'inflight_request_done_count': requestDoneCount,
+      'inflight_request_relay_slots': requestRelaySlots,
+      'inflight_request_returned_ids': requestReturnedIds,
+      'inflight_request_controller_open_count': requestControllerOpenCount,
+      'inflight_request_network_controller_open_count':
+          requestNetworkControllerOpenCount,
+      'inflight_request_cache_controller_open_count':
+          requestCacheControllerOpenCount,
+      'inflight_broadcast_count': broadcastStates.length,
+      'inflight_broadcast_done_count': broadcastDoneCount,
+      'inflight_broadcast_relay_slots': broadcastRelaySlots,
+      'inflight_broadcast_controller_open_count': broadcastControllerOpenCount,
+      'inflight_negotiation_count': globalState.inFlightNegotiations.length,
+      'relay_total_count': relayStates.length,
+      'relay_connected_count': connectedRelayCount,
+      'relay_connecting_count': connectingRelayCount,
+      'relay_disconnected_count': disconnectedRelayCount,
+      'blocked_relay_count': globalState.blockedRelays.length,
+      'relay_connection_source_counts': relaySourceCounts,
+    };
+  }
+
+  Future<void> _clearEphemeralBroadcastTracking(String eventId) async {
+    await _cacheManager.removeRelayDeliveryTargets(eventId);
+    await _cacheManager.removeEventDeliveryRecord(eventId);
   }
 
   /// Broadcast a NIP-69 peer-to-peer order event based on Offer data
@@ -943,6 +1079,9 @@ class NostrService {
           customSigner: _signer,
           specificRelays: _broadcastRelays);
       _lastOfferEventCreatedAtById[offer.id] = eventCreatedAt;
+      if (_coordinatorService.isTerminalOffer(offer)) {
+        _lastOfferEventCreatedAtById.remove(offer.id);
+      }
       // AppLogger.info(
       //     'Broadcasted NIP-69 order event for offer ${offer.id}, status: ${status} id:${event.id}',
       //     offerId: offer.id);

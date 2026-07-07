@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dotenv/dotenv.dart';
 import 'package:bitblik_coordinator/src/services/database_service.dart';
-import 'package:bitblik_coordinator/src/services/lnd_service.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/services/nostr_service.dart';
+import 'package:bitblik_coordinator/src/diagnostics/memory_profiler.dart';
 import 'package:bitblik_coordinator/src/logging/app_logger.dart';
 
 Future<void> main(List<String> args) async {
@@ -54,9 +54,9 @@ Future<void> _runCoordinator(List<String> args) async {
   // --- Service Initialization ---
   final dbService = DatabaseService();
   AppLogger.initialize(auditSink: dbService.insertAuditLog);
-  final lndService = LndService();
   CoordinatorService? coordinatorService; // Nullable initially
   NostrService? nostrService; // Nullable initially
+  MemoryProfiler? memoryProfiler;
 
   try {
     // Connect to Database
@@ -93,6 +93,20 @@ Future<void> _runCoordinator(List<String> args) async {
     // Set the Nostr service in the coordinator service for status updates
     coordinatorService.setNostrService(nostrService);
 
+    final memoryProfilingEnabled =
+        (env['MEMORY_PROFILING'] ?? '').toLowerCase() == '1' ||
+            (env['MEMORY_PROFILING'] ?? '').toLowerCase() == 'true';
+    if (memoryProfilingEnabled) {
+      final intervalSeconds =
+          int.tryParse(env['MEMORY_PROFILING_INTERVAL_SECONDS'] ?? '') ?? 30;
+      memoryProfiler = MemoryProfiler(
+        coordinatorService: coordinatorService,
+        nostrService: nostrService,
+        interval: Duration(seconds: intervalSeconds),
+      );
+      memoryProfiler.start();
+    }
+
     await coordinatorService.doInitialCheckStatuses();
 
     // Rebroadcast offers from last hours if NostrService is available
@@ -114,8 +128,10 @@ Future<void> _runCoordinator(List<String> args) async {
     // Listen for termination signals
     ProcessSignal.sigint.watch().listen((signal) async {
       AppLogger.info('\nReceived SIGINT, shutting down...');
+      await memoryProfiler?.emitManualSnapshot('sigint');
+      await memoryProfiler?.stop();
+      await coordinatorService?.shutdown();
       await nostrService?.disconnect(); // Disconnect from Nostr
-      await lndService.disconnect(); // Disconnect from LND
       await dbService.disconnect(); // Disconnect from DB
       AppLogger.info('Shutdown complete.');
       exit(0);
@@ -123,8 +139,10 @@ Future<void> _runCoordinator(List<String> args) async {
 
     ProcessSignal.sigterm.watch().listen((signal) async {
       AppLogger.info('\nReceived SIGTERM, shutting down...');
+      await memoryProfiler?.emitManualSnapshot('sigterm');
+      await memoryProfiler?.stop();
+      await coordinatorService?.shutdown();
       await nostrService?.disconnect();
-      await lndService.disconnect();
       await dbService.disconnect();
       AppLogger.info('Shutdown complete.');
       exit(0);
@@ -135,8 +153,9 @@ Future<void> _runCoordinator(List<String> args) async {
   } catch (e) {
     AppLogger.info('❌ Error during server startup: $e');
     // Attempt cleanup even on startup error
+    await memoryProfiler?.stop();
+    await coordinatorService?.shutdown();
     await nostrService?.disconnect();
-    await lndService.disconnect();
     await dbService.disconnect();
     exit(1);
   }

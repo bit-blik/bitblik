@@ -657,6 +657,11 @@ class GenericOfferFlow implements OfferFlow {
     await _recoverFailedPayouts();
   }
 
+  @override
+  Map<String, int> debugCounters() => {
+        'state_timers': _stateTimers.length,
+      };
+
   /// Startup reconciliation: a payout may have actually SETTLED on the wallet
   /// even though it was recorded as failed (the NWC pay_invoice request is not
   /// idempotent — a timeout/transport error or a crash right after the wallet

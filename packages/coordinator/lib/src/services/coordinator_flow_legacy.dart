@@ -58,6 +58,16 @@ class LegacyEnumOfferFlow implements OfferFlow {
   }
 
   @override
+  Map<String, int> debugCounters() => {
+        'reservation_timers': _reservationTimers.length,
+        'blik_confirmation_timers': _blikConfirmationTimers.length,
+        'funded_offer_timers': _fundedOfferTimers.length,
+        'taker_charged_timers': _takerChargedTimers.length,
+        'dispute_escalation_timers': _disputeEscalationTimers.length,
+        'expired_blik_relist_timers': _expiredBlikRelistTimers.length,
+      };
+
+  @override
   Future<Map<String, dynamic>> handleRpc(
       String method, Map<String, dynamic> params, String userPubkey,
       {String? clientVersion}) async {
@@ -92,8 +102,8 @@ class LegacyEnumOfferFlow implements OfferFlow {
             throw Exception(
                 'Missing required parameters: offer_id and taker invoice/lightning address');
           }
-          final success = await submitBlikCode(
-              offerId, userPubkey, blikCode, takerLightningAddress, takerInvoice);
+          final success = await submitBlikCode(offerId, userPubkey, blikCode,
+              takerLightningAddress, takerInvoice);
           if (success) {
             return {'message': 'BLIK code submitted successfully'};
           }
@@ -123,7 +133,9 @@ class LegacyEnumOfferFlow implements OfferFlow {
           }
           final success = await confirmMakerPayment(offerId, userPubkey);
           if (success) {
-            return {'message': 'Payment confirmed, invoice settled, taker paid.'};
+            return {
+              'message': 'Payment confirmed, invoice settled, taker paid.'
+            };
           }
           throw Exception(
               'Failed to confirm payment. Check offer state, LND connection, or logs.');
@@ -213,10 +225,11 @@ class LegacyEnumOfferFlow implements OfferFlow {
       return;
     }
     try {
-      final fundedOffers =
-          await _c._dbService.getOffersByStatus(OfferStatus.funded, limit: 1000);
+      final fundedOffers = await _c._dbService
+          .getOffersByStatus(OfferStatus.funded, limit: 1000);
       final now = DateTime.now().toUtc();
-      final expirationDuration = Duration(seconds: _c._fundedExpireTimeoutSeconds);
+      final expirationDuration =
+          Duration(seconds: _c._fundedExpireTimeoutSeconds);
 
       int cancelledCount = 0;
       for (final offer in fundedOffers) {
@@ -250,8 +263,9 @@ class LegacyEnumOfferFlow implements OfferFlow {
                 offerId: offer.id);
             continue;
           }
-          final dbSuccess = await _c._dbService.updateOfferStatusIfCurrentStatus(
-              offer.id, OfferStatus.expired, [OfferStatus.funded]);
+          final dbSuccess = await _c._dbService
+              .updateOfferStatusIfCurrentStatus(
+                  offer.id, OfferStatus.expired, [OfferStatus.funded]);
           if (dbSuccess) {
             cancelledCount++;
             AppLogger.info(
@@ -262,7 +276,8 @@ class LegacyEnumOfferFlow implements OfferFlow {
             final expiredOffer = await _c._dbService.getOfferById(offer.id);
             if (expiredOffer != null) {
               await _c._publishStatusUpdate(expiredOffer);
-              await _c._nostrService?.broadcastNip69OrderFromOffer(expiredOffer);
+              await _c._nostrService
+                  ?.broadcastNip69OrderFromOffer(expiredOffer);
             }
 
             await _c._strikeTelegramOfferMessages(offer.id);
@@ -343,12 +358,12 @@ class LegacyEnumOfferFlow implements OfferFlow {
 
     try {
       final offers = [
-        ...await _c._dbService.getOffersByStatus(OfferStatus.invalidBlik,
-            limit: 1000),
-        ...await _c._dbService.getOffersByStatus(OfferStatus.expiredSentBlik,
-            limit: 1000),
-        ...await _c._dbService.getOffersByStatus(OfferStatus.conflict,
-            limit: 1000),
+        ...await _c._dbService
+            .getOffersByStatus(OfferStatus.invalidBlik, limit: 1000),
+        ...await _c._dbService
+            .getOffersByStatus(OfferStatus.expiredSentBlik, limit: 1000),
+        ...await _c._dbService
+            .getOffersByStatus(OfferStatus.conflict, limit: 1000),
       ];
       final now = _c._clock.now().toUtc();
       final timeoutDuration =
@@ -384,11 +399,11 @@ class LegacyEnumOfferFlow implements OfferFlow {
   Future<void> _checkExpiredReservations() async {
     AppLogger.info('Checking for expired reserved offers on startup...');
     try {
-      final reservedOffers =
-          await _c._dbService.getOffersByStatus(OfferStatus.reserved, limit: 1000);
+      final reservedOffers = await _c._dbService
+          .getOffersByStatus(OfferStatus.reserved, limit: 1000);
       final now = DateTime.now().toUtc();
-      final timeoutDuration =
-          Duration(seconds: _c._reservationTimeoutSeconds); // Reservation timeout
+      final timeoutDuration = Duration(
+          seconds: _c._reservationTimeoutSeconds); // Reservation timeout
 
       int revertedCount = 0;
       for (final offer in reservedOffers) {
@@ -464,10 +479,10 @@ class LegacyEnumOfferFlow implements OfferFlow {
         '### COORDINATOR: Running _checkExpiredBlikConfirmations on startup...');
     try {
       final offersToCheck = [
-        ...await _c._dbService.getOffersByStatus(OfferStatus.blikReceived,
-            limit: 1000),
-        ...await _c._dbService.getOffersByStatus(OfferStatus.blikSentToMaker,
-            limit: 1000),
+        ...await _c._dbService
+            .getOffersByStatus(OfferStatus.blikReceived, limit: 1000),
+        ...await _c._dbService
+            .getOffersByStatus(OfferStatus.blikSentToMaker, limit: 1000),
       ];
 
       final now = _c._clock.now().toUtc();
@@ -1132,6 +1147,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
       await _c._nostrService?.broadcastNip69OrderFromOffer(revertedOffer);
     }
   }
+
   Future<bool> submitBlikCode(String offerId, String takerId, String? blikCode,
       String? takerLightningAddress, String? takerInvoice) async {
     AppLogger.info(
@@ -1150,7 +1166,8 @@ class LegacyEnumOfferFlow implements OfferFlow {
     final effectiveCode = _c._paymentSystem.makerProvidesCodeAtOfferCreation
         ? offer.blikCode
         : blikCode?.trim();
-    if (effectiveCode == null || !_c._paymentSystem.isValidCode(effectiveCode)) {
+    if (effectiveCode == null ||
+        !_c._paymentSystem.isValidCode(effectiveCode)) {
       AppLogger.info(
           'Offer $offerId has no valid ${_c._paymentSystem.codeLabel} code available.',
           offerId: offerId);
@@ -1261,8 +1278,9 @@ class LegacyEnumOfferFlow implements OfferFlow {
           actor: FlowActor.maker,
           to: OfferStatus.blikSentToMaker,
         );
-        final statusUpdated = await _c._dbService.updateOfferStatusIfCurrentStatus(
-            offerId, OfferStatus.blikSentToMaker, [OfferStatus.blikReceived]);
+        final statusUpdated = await _c._dbService
+            .updateOfferStatusIfCurrentStatus(offerId,
+                OfferStatus.blikSentToMaker, [OfferStatus.blikReceived]);
         if (!statusUpdated) {
           AppLogger.info(
               'Warning: Failed to update offer $offerId status to blikSentToMaker, but returning code anyway.',
@@ -1520,8 +1538,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
     AppLogger.info('Maker $makerId confirming payment for offer $offerId',
         offerId: offerId);
     final offer = await _c._dbService.getOfferById(offerId);
-    final allowDirectMakerConfirmationFromReserved =
-        offer != null &&
+    final allowDirectMakerConfirmationFromReserved = offer != null &&
         _c._paymentSystem.makerProvidesCodeAtOfferCreation &&
         offer.status == OfferStatus.reserved;
 
@@ -1573,7 +1590,8 @@ class LegacyEnumOfferFlow implements OfferFlow {
       OfferStatus.takerCharged,
       OfferStatus.blikSentToMaker,
       OfferStatus.expiredSentBlik,
-      if (_c._paymentSystem.makerProvidesCodeAtOfferCreation) OfferStatus.reserved,
+      if (_c._paymentSystem.makerProvidesCodeAtOfferCreation)
+        OfferStatus.reserved,
     ]);
     if (!success) {
       AppLogger.info(
@@ -1626,6 +1644,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
     Future.microtask(() => _c._payTakerAsync(offerId));
     return true;
   }
+
   Future<bool> cancelReservation(String offerId, String takerId) async {
     AppLogger.info(
         'Taker $takerId attempting to cancel reservation for offer $offerId',

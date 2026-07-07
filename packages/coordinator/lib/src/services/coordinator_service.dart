@@ -83,6 +83,14 @@ class OfferNotificationStrings {
   });
 }
 
+class _PendingOfferRecord {
+  final Map<String, dynamic> data;
+
+  const _PendingOfferRecord({
+    required this.data,
+  });
+}
+
 class CoordinatorService {
   final DatabaseService _dbService;
   PaymentService? _paymentBackend; // Unified payment backend
@@ -350,8 +358,9 @@ class CoordinatorService {
     }
   }
 
-  final Map<String, Map<String, dynamic>> _pendingOffers = {};
+  final Map<String, _PendingOfferRecord> _pendingOffers = {};
   final Map<String, StreamSubscription> _invoiceSubscriptions = {};
+  final Map<String, Timer> _pendingOfferTimeouts = {};
   // Per-stage offer timers live in the flow strategies (LegacyEnumOfferFlow /
   // GenericOfferFlow). The coordinator keeps only the shared republish timer.
   final Map<String, Timer> _statusRepublishTimers = {};
@@ -359,6 +368,7 @@ class CoordinatorService {
   // Fee percentages, configurable via environment variables
   late final double _makerFeePercentage;
   late final double _takerFeePercentage;
+  late final int _pendingOfferTimeoutSeconds;
 
   late final _simplexGroup;
   late final _simplexChatExec;
@@ -453,6 +463,9 @@ class CoordinatorService {
         double.tryParse(_env['MAKER_FEE'] ?? '') ?? 0.5; // Default to 0.5%
     _takerFeePercentage =
         double.tryParse(_env['TAKER_FEE'] ?? '') ?? 0.5; // Default to 0.5%
+    _pendingOfferTimeoutSeconds =
+        int.tryParse(_env['PENDING_OFFER_TIMEOUT_SECONDS'] ?? '') ??
+            26 * 60 * 60;
 
     // Initialize Telegram service
     final telegramBotToken = _env['TELEGRAM_BOT_TOKEN'];
@@ -596,6 +609,21 @@ class CoordinatorService {
   bool get isGenericFlow =>
       _flowEngineMode == FlowEngineMode.generic && _flowEngine != null;
 
+  bool isTerminalOffer(Offer offer) {
+    if (isGenericFlow) {
+      return _flowEngine!.definition.state(offer.statusRaw)?.terminal ?? false;
+    }
+    switch (offer.status) {
+      case OfferStatus.takerPaid:
+      case OfferStatus.cancelled:
+      case OfferStatus.expired:
+      case OfferStatus.dispute:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   OfferFlow? _flow;
 
   /// Active offer-flow strategy, derived from [isGenericFlow] (meaningful once
@@ -729,14 +757,67 @@ class CoordinatorService {
     }
   }
 
+  Future<void> _removeInvoiceSubscription(String paymentHashHex) async {
+    final subscription = _invoiceSubscriptions.remove(paymentHashHex);
+    await subscription?.cancel();
+  }
+
+  void _armPendingOfferTimeout(String paymentHashHex) {
+    _pendingOfferTimeouts[paymentHashHex]?.cancel();
+    _pendingOfferTimeouts[paymentHashHex] = Timer(
+      Duration(seconds: _pendingOfferTimeoutSeconds),
+      () {
+        _pendingOfferTimeouts.remove(paymentHashHex);
+        unawaited(_expirePendingOffer(paymentHashHex));
+      },
+    );
+  }
+
+  Future<void> _expirePendingOffer(String paymentHashHex) async {
+    final pending = _pendingOffers[paymentHashHex];
+    if (pending == null) return;
+
+    AppLogger.info(
+      'Pending offer for $paymentHashHex exceeded the pre-funding retention '
+      'window (${_pendingOfferTimeoutSeconds}s). Cleaning up.',
+    );
+
+    try {
+      await _paymentBackend?.cancelInvoice(paymentHashHex: paymentHashHex);
+    } catch (e) {
+      AppLogger.info(
+        'Failed to cancel timed-out pending hold invoice $paymentHashHex: $e',
+      );
+    }
+
+    await _clearPendingOffer(paymentHashHex, reason: 'pending offer timeout');
+  }
+
+  Future<void> _clearPendingOffer(
+    String paymentHashHex, {
+    String? reason,
+  }) async {
+    _pendingOfferTimeouts.remove(paymentHashHex)?.cancel();
+    _pendingOffers.remove(paymentHashHex);
+    await _removeInvoiceSubscription(paymentHashHex);
+    if (reason != null && reason.isNotEmpty) {
+      AppLogger.info(
+        'Cleared pending offer resources for $paymentHashHex ($reason).',
+      );
+    }
+  }
+
   void _startInvoiceSubscription(String paymentHashHex) {
-    _invoiceSubscriptions[paymentHashHex]?.cancel();
+    unawaited(_removeInvoiceSubscription(paymentHashHex));
     AppLogger.info('Starting subscription for invoice: $paymentHashHex');
 
     if (_paymentBackend == null) {
       AppLogger.info(
           'CRITICAL: No payment backend configured for _startInvoiceSubscription.');
-      _pendingOffers.remove(paymentHashHex);
+      unawaited(_clearPendingOffer(
+        paymentHashHex,
+        reason: 'no payment backend available',
+      ));
       return;
     }
 
@@ -751,28 +832,35 @@ class CoordinatorService {
             AppLogger.info(
                 '$_paymentBackendType Invoice ACCEPTED (funded): $paymentHashHex');
             await _createOfferFromFundedInvoice(paymentHashHex);
-            _invoiceSubscriptions[paymentHashHex]?.cancel();
-            _invoiceSubscriptions.remove(paymentHashHex);
+            await _clearPendingOffer(
+              paymentHashHex,
+              reason: 'invoice accepted',
+            );
           } else if (update.status == InvoiceStatus.CANCELED) {
             AppLogger.info(
                 '$_paymentBackendType Invoice CANCELED: $paymentHashHex');
-            _pendingOffers.remove(paymentHashHex);
-            _invoiceSubscriptions[paymentHashHex]?.cancel();
-            _invoiceSubscriptions.remove(paymentHashHex);
+            await _clearPendingOffer(
+              paymentHashHex,
+              reason: 'invoice canceled',
+            );
           } else if (update.status == InvoiceStatus.SETTLED) {
             // This case might be less common for hold invoices before BLIK,
             // but good to handle if the backend sends it.
             AppLogger.info(
                 '$_paymentBackendType Invoice SETTLED: $paymentHashHex');
-            _invoiceSubscriptions[paymentHashHex]?.cancel();
-            _invoiceSubscriptions.remove(paymentHashHex);
+            await _clearPendingOffer(
+              paymentHashHex,
+              reason: 'invoice settled before offer creation',
+            );
           }
         },
         onError: (error) {
           AppLogger.info(
               'Error in $_paymentBackendType subscription stream for $paymentHashHex: $error');
-          _pendingOffers.remove(paymentHashHex);
-          _invoiceSubscriptions.remove(paymentHashHex);
+          unawaited(_clearPendingOffer(
+            paymentHashHex,
+            reason: 'invoice subscription error',
+          ));
         },
         onDone: () {
           AppLogger.info(
@@ -782,9 +870,10 @@ class CoordinatorService {
           // LND typically closes after final state.
           // To be safe, if it's not already removed by ACCEPTED/CANCELED/ERROR, remove it.
           if (_invoiceSubscriptions.containsKey(paymentHashHex)) {
-            _pendingOffers.remove(
-                paymentHashHex); // Clean up pending offer if stream closes unexpectedly
-            _invoiceSubscriptions.remove(paymentHashHex);
+            unawaited(_clearPendingOffer(
+              paymentHashHex,
+              reason: 'invoice subscription completed',
+            ));
           }
         },
         cancelOnError: true,
@@ -793,12 +882,17 @@ class CoordinatorService {
     } catch (e) {
       AppLogger.info(
           'Failed to initiate $_paymentBackendType subscription for $paymentHashHex: $e');
-      _pendingOffers.remove(paymentHashHex);
+      unawaited(_clearPendingOffer(
+        paymentHashHex,
+        reason: 'failed to start invoice subscription',
+      ));
     }
   }
 
   Future<void> _createOfferFromFundedInvoice(String paymentHashHex) async {
-    final pendingData = _pendingOffers.remove(paymentHashHex);
+    final pending = _pendingOffers.remove(paymentHashHex);
+    _pendingOfferTimeouts.remove(paymentHashHex)?.cancel();
+    final pendingData = pending?.data;
     if (pendingData == null) {
       AppLogger.info(
           'Warning: _createOfferFromFundedInvoice called for unknown or already processed payment hash: $paymentHashHex');
@@ -1675,6 +1769,46 @@ class CoordinatorService {
     });
   }
 
+  Future<void> shutdown() async {
+    for (final timer in _pendingOfferTimeouts.values) {
+      timer.cancel();
+    }
+    _pendingOfferTimeouts.clear();
+
+    for (final timer in _statusRepublishTimers.values) {
+      timer.cancel();
+    }
+    _statusRepublishTimers.clear();
+
+    for (final subscription in _invoiceSubscriptions.values) {
+      await subscription.cancel();
+    }
+    _invoiceSubscriptions.clear();
+    _pendingOffers.clear();
+
+    await _paymentBackend?.disconnect();
+    _httpClient.close();
+  }
+
+  Map<String, dynamic> debugSnapshot() {
+    final flowCounters = flow.debugCounters();
+    return {
+      'is_generic_flow': isGenericFlow,
+      'payment_backend_type': _paymentBackendType,
+      'payment_system': _paymentSystem.id,
+      'supported_currencies': _supportedCurrencies,
+      'pending_offers': _pendingOffers.length,
+      'invoice_subscriptions': _invoiceSubscriptions.length,
+      'pending_offer_timeouts': _pendingOfferTimeouts.length,
+      'status_republish_timers': _statusRepublishTimers.length,
+      'cached_rates': _cachedRates.length,
+      'cached_rate_timestamps': _cachedRateTimes.length,
+      'matrix_initialized': _matrixClient != null,
+      'telegram_configured': _telegramService?.isConfigured ?? false,
+      'flow_counters': flowCounters,
+    };
+  }
+
   Future<Map<String, dynamic>> getSuccessfulOffersWithStats() async {
     AppLogger.info('Fetching successful offers with stats...');
     final allSuccessfulOffers = await _dbService.getOffersByStatus(
@@ -1865,22 +1999,26 @@ class CoordinatorService {
 
     final preimageHex =
         preimage.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join('');
-    _pendingOffers[returnedPaymentHashHex] = {
-      'amountSats': satsAmount,
-      'makerFees': makerFees,
-      'takerFees': takerFees,
-      'makerId': makerId,
-      'preimageHex': preimageHex,
-      'fiatAmount': fiatAmount,
-      'fiatCurrency': fiatCurrency,
-      'blikCode': blikCode,
-      'category': category?.name,
-      'premiumPercent': premium,
-      'clientVersion': clientVersion,
-      'actualPaymentHashForSubscription': returnedPaymentHashHex,
-    };
+    _pendingOfferTimeouts.remove(returnedPaymentHashHex)?.cancel();
+    _pendingOffers[returnedPaymentHashHex] = _PendingOfferRecord(
+      data: {
+        'amountSats': satsAmount,
+        'makerFees': makerFees,
+        'takerFees': takerFees,
+        'makerId': makerId,
+        'preimageHex': preimageHex,
+        'fiatAmount': fiatAmount,
+        'fiatCurrency': fiatCurrency,
+        'blikCode': blikCode,
+        'category': category?.name,
+        'premiumPercent': premium,
+        'clientVersion': clientVersion,
+        'actualPaymentHashForSubscription': returnedPaymentHashHex,
+      },
+    );
     AppLogger.info(
         'Pending offer stored for payment hash $returnedPaymentHashHex');
+    _armPendingOfferTimeout(returnedPaymentHashHex);
     _startInvoiceSubscription(returnedPaymentHashHex);
     return {
       'holdInvoice': holdInvoice,
