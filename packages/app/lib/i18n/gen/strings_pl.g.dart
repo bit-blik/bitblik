@@ -2217,6 +2217,7 @@ class _Translations$twint$scanner$status$pl extends Translations$twint$scanner$s
 	@override String get amountFailed => 'Skanowanie kamerą nie odczytało kwoty. Nadal możesz użyć wyniku QR i ręcznie poprawić pola.';
 	@override String get scanningAmount => 'Wykryto kod. Trzymaj tekst kwoty w kadrze, aż zostanie odczytany…';
 	@override String get useCodeOnly => 'Użyj kodu bez kwoty';
+	@override String get scanAmountAgain => 'Zeskanuj kwotę ponownie';
 }
 
 // Path: twint.flow.progress
@@ -3239,6 +3240,7 @@ extension on TranslationsPl {
 			'twint.scanner.status.amountFailed' => 'Skanowanie kamerą nie odczytało kwoty. Nadal możesz użyć wyniku QR i ręcznie poprawić pola.',
 			'twint.scanner.status.scanningAmount' => 'Wykryto kod. Trzymaj tekst kwoty w kadrze, aż zostanie odczytany…',
 			'twint.scanner.status.useCodeOnly' => 'Użyj kodu bez kwoty',
+			'twint.scanner.status.scanAmountAgain' => 'Zeskanuj kwotę ponownie',
 			'twint.flow.progress.step1' => '1. Utwórz ofertę',
 			'twint.flow.progress.step2' => '2. Czekaj na zabierającego',
 			'twint.flow.progress.step3' => '3. Potwierdź',
@@ -3329,9 +3331,9 @@ extension on TranslationsPl {
 			'twint.waitConfirmation.expiredActions.cancelReservation' => 'Anuluj rezerwację',
 			'twint.waitConfirmation.feedback.makerConfirmed' => 'Maker potwierdził płatność.',
 			'twint.waitConfirmation.feedback.paymentSuccessful' => 'Płatność udana! Wkrótce otrzymasz środki.',
-			'twint.waitConfirmation.feedback.conflictReported' => 'Konflikt zgłoszony. Koordynator rozpatrzy sytuację.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.waitConfirmation.feedback.conflictReported' => 'Konflikt zgłoszony. Koordynator rozpatrzy sytuację.',
 			'twint.waitConfirmation.errors.invalidOfferStateReceived' => 'Otrzymano ofertę o nieprawidłowym stanie dla tego ekranu. Resetowanie.',
 			'twint.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
 			'twint.paymentProcess.title' => 'Proces Płatności',

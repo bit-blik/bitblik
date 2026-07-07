@@ -788,6 +788,7 @@ twint:
       amountFailed: "Camera scan could not extract the amount. You can still use the QR result and correct the fields manually."
       scanningAmount: "Code detected. Keep the amount text in view while it is read…"
       useCodeOnly: "Use code without amount"
+      scanAmountAgain: "Scan amount again"
   flow:
     progress:
       step1: "1. Create offer"

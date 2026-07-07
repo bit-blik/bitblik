@@ -242,9 +242,11 @@
   <!-- Load runtime configuration for group links -->
   <script src="config.js"></script>
 
-  <!-- Web-only OCR for the TWINT amount scanner (tesseract.js, bundled locally) -->
-  <script src="tesseract/tesseract.min.js"></script>
-  <script src="tesseract/twint_ocr.js"></script>
+  <!-- Web-only OCR for the TWINT amount scanner (tesseract.js, bundled locally).
+       defer so parsing/loading never blocks the Flutter bootstrap or the camera
+       platform view on mobile web. -->
+  <script defer src="tesseract/tesseract.min.js"></script>
+  <script defer src="tesseract/twint_ocr.js"></script>
 
   <script src="flutter_bootstrap.js" async=""></script>
 </body></html>

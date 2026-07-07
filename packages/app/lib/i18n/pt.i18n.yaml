@@ -618,6 +618,7 @@ twint:
       amountFailed: "A leitura pela câmara não conseguiu extrair o montante. Ainda pode usar o resultado do QR e corrigir os campos manualmente."
       scanningAmount: "Código detetado. Mantenha o texto do montante visível enquanto é lido…"
       useCodeOnly: "Usar código sem montante"
+      scanAmountAgain: "Ler o montante de novo"
   flow:
     progress:
       step1: "1. Criar oferta"

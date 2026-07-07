@@ -50,22 +50,32 @@
   };
 
   // Grab the current camera frame and return recognized text (or '' on any
-  // failure). Never rejects, so the Dart polling loop can just keep trying.
+  // failure). Never rejects. OCR cost scales with pixel count, so crop to the
+  // centre band (where the amount text sits) and downscale before recognizing
+  // — this keeps a single pass fast even on phones.
   window.twintOcrSnapshot = function () {
     var video = document.querySelector('video');
     if (!video || !video.videoWidth || !video.videoHeight) {
       return Promise.resolve('');
     }
-    // Cap width for speed; OCR does not need full sensor resolution.
-    var maxWidth = 1000;
-    var scale = video.videoWidth > maxWidth ? maxWidth / video.videoWidth : 1;
-    var w = Math.round(video.videoWidth * scale);
-    var h = Math.round(video.videoHeight * scale);
+    var vw = video.videoWidth;
+    var vh = video.videoHeight;
+    // Crop the middle 90% width / 60% height: drops the noisy edges and roughly
+    // halves the area tesseract has to scan.
+    var cropW = Math.round(vw * 0.9);
+    var cropH = Math.round(vh * 0.6);
+    var sx = Math.round((vw - cropW) / 2);
+    var sy = Math.round((vh - cropH) / 2);
+    // Cap the OCR width for speed; text stays legible at ~720px.
+    var maxWidth = 720;
+    var scale = cropW > maxWidth ? maxWidth / cropW : 1;
+    var w = Math.round(cropW * scale);
+    var h = Math.round(cropH * scale);
     var canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
     var ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, w, h);
+    ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, w, h);
     return _ensureWorker()
       .then(function (worker) {
         return worker.recognize(canvas);

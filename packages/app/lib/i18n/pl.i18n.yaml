@@ -602,6 +602,7 @@ twint:
       amountFailed: "Skanowanie kamerą nie odczytało kwoty. Nadal możesz użyć wyniku QR i ręcznie poprawić pola."
       scanningAmount: "Wykryto kod. Trzymaj tekst kwoty w kadrze, aż zostanie odczytany…"
       useCodeOnly: "Użyj kodu bez kwoty"
+      scanAmountAgain: "Zeskanuj kwotę ponownie"
   flow:
     progress:
       step1: "1. Utwórz ofertę"

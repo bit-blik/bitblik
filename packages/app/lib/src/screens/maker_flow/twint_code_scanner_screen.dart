@@ -50,26 +50,27 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
 
   // Web-only: mobile_scanner exposes no frame pixels and MLKit is native-only,
   // so on web the QR code comes from mobile_scanner while the amount is OCR'd
-  // from snapshots of the <video> element via tesseract.js on a polling loop.
-  Timer? _webOcrTimer;
-  bool _webOcrBusy = false;
+  // once (per attempt) from a snapshot of the <video> element via tesseract.js.
+  // A polling loop was too heavy: it starved the mobile-web camera and pegged
+  // the CPU on desktop, so OCR now runs single-shot, triggered by QR detection.
   String? _webCode;
+  bool _webOcrRunning = false;
 
   @override
   void initState() {
     super.initState();
     if (kIsWeb && widget.scanAmount) {
-      twintOcrPreload();
-      _webOcrTimer = Timer.periodic(
-        const Duration(milliseconds: 1500),
-        (_) => _webOcrTick(),
-      );
+      // Warm the OCR worker (compiles ~3MB of wasm) AFTER the camera has had a
+      // chance to start. Doing it synchronously here blocks the mobile-web
+      // camera platform view and leaves the scanner painted grey.
+      Future.delayed(const Duration(milliseconds: 2000), () {
+        if (mounted && !_isFinished) twintOcrPreload();
+      });
     }
   }
 
   @override
   void dispose() {
-    _webOcrTimer?.cancel();
     _controller.dispose();
     _textRecognizer.close();
     super.dispose();
@@ -92,15 +93,13 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
           await _finish(code: code, amount: null);
           return;
         }
-        // Have the code; the amount arrives from the OCR polling loop. Keep the
-        // scanner running until then (or the user taps "use code only").
-        if (mounted && _webCode == null) {
-          setState(() {
-            _webCode = code;
-            _status = _TwintScannerStatus.scanningAmount;
-          });
-        } else {
-          _webCode ??= code;
+        // Have the code. Run the amount OCR once on the current frame; the user
+        // can retry or proceed without the amount from the on-screen buttons.
+        final firstCode = _webCode == null;
+        _webCode ??= code;
+        if (firstCode && mounted) {
+          setState(() => _status = _TwintScannerStatus.scanningAmount);
+          unawaited(_runWebAmountOcr());
         }
         return;
       }
@@ -144,34 +143,33 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     }
   }
 
-  Future<void> _webOcrTick() async {
-    if (_webOcrBusy || _isFinished || !mounted) return;
-    _webOcrBusy = true;
+  /// Web single-shot amount OCR of the current camera frame. Triggered by QR
+  /// detection and by the manual "scan amount again" button.
+  Future<void> _runWebAmountOcr() async {
+    if (_webOcrRunning || _isFinished || !mounted) return;
+    setState(() {
+      _webOcrRunning = true;
+      _status = _TwintScannerStatus.scanningAmount;
+    });
     try {
       final text = await twintOcrSnapshot();
-      if (text.isEmpty || !mounted || _isFinished) return;
-      // mobile_scanner is more reliable for the QR code, but fall back to OCR
-      // for the code too in case the QR read never fired.
-      _webCode ??= _extractCode(text);
+      if (!mounted || _isFinished) return;
       final amount = _extractAmount(text);
-      if (_webCode != null && amount != null) {
+      if (amount != null) {
         await _finish(code: _webCode, amount: amount);
-      } else if (_webCode != null &&
-          _status != _TwintScannerStatus.scanningAmount &&
-          mounted) {
-        setState(() => _status = _TwintScannerStatus.scanningAmount);
+        return;
       }
+      setState(() => _status = _TwintScannerStatus.amountFailed);
     } catch (_) {
-      // Keep polling; a single failed frame should not stop the loop.
+      if (mounted) setState(() => _status = _TwintScannerStatus.amountFailed);
     } finally {
-      _webOcrBusy = false;
+      if (mounted && !_isFinished) setState(() => _webOcrRunning = false);
     }
   }
 
   Future<void> _finish({String? code, double? amount}) async {
     if (_isFinished || !mounted) return;
     _isFinished = true;
-    _webOcrTimer?.cancel();
     // On web the camera renders via an HtmlElementView platform view; stop it
     // and let teardown settle before popping, otherwise mobile browsers leave
     // the previous route painted white.
@@ -208,8 +206,8 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
       _TwintScannerStatus.amountFailed => t.twint.scanner.status.amountFailed,
     };
     // Once the code is known on web but the amount OCR has not resolved, let the
-    // user proceed with the code alone and fill the amount manually.
-    final showUseCodeOnly = kIsWeb && _webCode != null && !_isFinished;
+    // user retry the amount scan or proceed with the code alone.
+    final showWebControls = kIsWeb && _webCode != null && !_isFinished;
     return Scaffold(
       appBar: AppBar(title: Text(t.twint.scanner.title(code: codeLabel))),
       body: Stack(
@@ -229,16 +227,42 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
                     style: const TextStyle(color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
-                  if (showUseCodeOnly) ...[
+                  if (showWebControls) ...[
                     const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: () =>
-                          _finish(code: _webCode, amount: null),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white70),
-                      ),
-                      child: Text(t.twint.scanner.status.useCodeOnly),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 12,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _webOcrRunning ? null : _runWebAmountOcr,
+                          icon: _webOcrRunning
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.refresh, color: Colors.white),
+                          label: Text(t.twint.scanner.status.scanAmountAgain),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white70),
+                          ),
+                        ),
+                        OutlinedButton(
+                          onPressed: _webOcrRunning
+                              ? null
+                              : () => _finish(code: _webCode, amount: null),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white70),
+                          ),
+                          child: Text(t.twint.scanner.status.useCodeOnly),
+                        ),
+                      ],
                     ),
                   ],
                 ],
