@@ -1742,11 +1742,13 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                           // startup), not the user's runtime currency switch.
                           final isMbway =
                               buildDefaultPaymentSystemId == 'mbway';
+                          final isTwint =
+                              buildDefaultPaymentSystemId == 'twint';
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              // iOS section: AltStore install (blik) or "coming soon" (mbway)
-                              if (!isMbway)
+                              // iOS section: AltStore install (blik) or "coming soon" (mbway/twint)
+                              if (!isMbway && !isTwint)
                                 InkWell(
                                   onTap: () async {
                                     final uri = Uri.parse(
