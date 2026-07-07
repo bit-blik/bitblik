@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
+import '../services/relay_reconnect_gate.dart';
 import '../utils/offer_status_label.dart';
 import '../services/notification_service.dart';
 import '../services/offer_db_service.dart';
@@ -1870,7 +1871,16 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       Logger.log.i(
         () => '[AppLifecycleNotifier] forcing relay reconnect: $reason',
       );
-      await ndk.connectivity.tryReconnect();
+      if (kIsWeb) {
+        // iOS PWA: backgrounding silently kills the sockets while the transport
+        // still reports itself Connected (zombie), so tryReconnect() alone would
+        // skip them. Hard-reset every transport first, then reconnect. The gate
+        // also blocks in-flight sends (see NostrService.sendRequest) until this
+        // settles, so we never publish onto a dead socket on foreground.
+        await RelayReconnectGate.instance.forceReconnect(ndk);
+      } else {
+        await ndk.connectivity.tryReconnect();
+      }
 
       // Refresh coordinator-derived state after transport recovery so the
       // app rehydrates its custom Bitblik layer, not just the raw sockets.

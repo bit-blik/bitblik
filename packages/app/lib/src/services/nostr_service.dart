@@ -16,6 +16,7 @@ import '../utils/platform_detection.dart';
 import 'coordinator_prefs_store.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
+import 'relay_reconnect_gate.dart';
 
 /// Result of a reserve_offer RPC. Generic (yaml-driven) coordinators return
 /// the full offer json ([offer] non-null); legacy enum coordinators return
@@ -338,6 +339,13 @@ class NostrService {
     }
     if (_rpcClient == null) {
       throw Exception('RPC client not initialized');
+    }
+
+    // iOS PWA: if the app just came back to foreground, a relay reconnect may be
+    // in flight (see RelayReconnectGate / AppLifecycleNotifier). Wait for fresh
+    // sockets before writing so we never publish onto a zombie connection.
+    if (kIsWeb) {
+      await RelayReconnectGate.instance.ensureReady();
     }
 
     try {
