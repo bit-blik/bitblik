@@ -277,6 +277,8 @@ const PaymentSystem kTwint = PaymentSystem(
   supportedCategories: [OfferCategory.shop, OfferCategory.online],
   atmPresetAmounts: [],
   atmBanknoteDenominations: [],
+  // Bittwint has its own Nostr identity for discovery (relays + coordinators).
+  discoveryPubkeyHex: kTwintPubkeyHex,
   // TWINT is the first market on the generic yaml-driven engine. Its flow is
   // enforced entirely from twint.yml (transitions + timers), storing raw
   // flow-state strings rather than OfferStatus values.
