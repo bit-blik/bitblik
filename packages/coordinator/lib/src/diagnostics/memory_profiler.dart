@@ -47,8 +47,12 @@ class MemoryProfiler {
         'proc_status': await _readProcStatus(),
         'proc_statm_pages': await _readProcStatmPages(),
         'smaps_rollup_kb': await _readSmapsRollupKb(),
+        'smaps_categories_kb': await _readSmapsCategoriesKb(),
+        'smaps_top_regions': await _readSmapsTopRegions(),
         'fd_counts': await _readFdCounts(),
+        'sockstat': await _readSockstat(),
         'cgroup_memory': await _readCgroupMemory(),
+        'cgroup_memory_stat': await _readCgroupMemoryStat(),
         'coordinator': _coordinatorService.debugSnapshot(),
         'nostr': _nostrService?.debugSnapshot(),
       };
@@ -133,6 +137,117 @@ class MemoryProfiler {
     };
   }
 
+  Future<Map<String, int>> _readSmapsCategoriesKb() async {
+    final file = File('/proc/self/smaps');
+    if (!await file.exists()) return const {};
+
+    final out = <String, int>{
+      'anonymous_private_dirty': 0,
+      'anonymous_private_clean': 0,
+      'file_private_dirty': 0,
+      'file_private_clean': 0,
+      'heap_private_dirty': 0,
+      'heap_private_clean': 0,
+      'stack_private_dirty': 0,
+      'stack_private_clean': 0,
+      'shared_private_dirty': 0,
+      'shared_private_clean': 0,
+    };
+
+    String currentName = '';
+    await for (final rawLine in file
+        .openRead()
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())) {
+      if (_looksLikeSmapsHeader(rawLine)) {
+        currentName = _extractSmapsName(rawLine);
+        continue;
+      }
+
+      final colon = rawLine.indexOf(':');
+      if (colon <= 0) continue;
+      final key = rawLine.substring(0, colon);
+      if (key != 'Private_Dirty' && key != 'Private_Clean') continue;
+      final kb = _parseLeadingInt(rawLine.substring(colon + 1));
+      if (kb == null) continue;
+
+      final suffix = key == 'Private_Dirty' ? 'dirty' : 'clean';
+      final bucket = switch (_classifySmapsRegion(currentName)) {
+        _SmapsRegionClass.heap => 'heap_private_$suffix',
+        _SmapsRegionClass.stack => 'stack_private_$suffix',
+        _SmapsRegionClass.file => 'file_private_$suffix',
+        _SmapsRegionClass.shared => 'shared_private_$suffix',
+        _SmapsRegionClass.anonymous => 'anonymous_private_$suffix',
+      };
+      out[bucket] = (out[bucket] ?? 0) + kb;
+    }
+
+    return out;
+  }
+
+  Future<List<Map<String, Object>>> _readSmapsTopRegions() async {
+    final file = File('/proc/self/smaps');
+    if (!await file.exists()) return const [];
+
+    final regions = <_SmapsRegionStat>[];
+    _SmapsRegionStat? current;
+
+    await for (final rawLine in file
+        .openRead()
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())) {
+      if (_looksLikeSmapsHeader(rawLine)) {
+        if (current != null) {
+          regions.add(current);
+        }
+        current = _SmapsRegionStat(
+          name: _extractSmapsName(rawLine),
+          category: _classifySmapsRegion(_extractSmapsName(rawLine)).name,
+        );
+        continue;
+      }
+
+      final region = current;
+      if (region == null) continue;
+
+      final colon = rawLine.indexOf(':');
+      if (colon <= 0) continue;
+      final key = rawLine.substring(0, colon);
+      final kb = _parseLeadingInt(rawLine.substring(colon + 1));
+      if (kb == null) continue;
+
+      switch (key) {
+        case 'Size':
+          region.sizeKb = kb;
+        case 'Rss':
+          region.rssKb = kb;
+        case 'Private_Dirty':
+          region.privateDirtyKb = kb;
+        case 'Private_Clean':
+          region.privateCleanKb = kb;
+      }
+    }
+
+    if (current != null) {
+      regions.add(current);
+    }
+
+    regions.sort((a, b) {
+      final dirty = b.privateDirtyKb.compareTo(a.privateDirtyKb);
+      if (dirty != 0) return dirty;
+      return b.rssKb.compareTo(a.rssKb);
+    });
+
+    return regions
+        .where((region) =>
+            region.privateDirtyKb >= 512 ||
+            region.rssKb >= 1024 ||
+            region.category != _SmapsRegionClass.file.name)
+        .take(8)
+        .map((region) => region.toJson())
+        .toList(growable: false);
+  }
+
   Future<Map<String, int>> _readFdCounts() async {
     final dir = Directory('/proc/self/fd');
     if (!await dir.exists()) return const {};
@@ -165,6 +280,37 @@ class MemoryProfiler {
     };
   }
 
+  Future<Map<String, int>> _readSockstat() async {
+    final file = File('/proc/net/sockstat');
+    if (!await file.exists()) return const {};
+
+    final out = <String, int>{};
+    for (final line in await file.readAsLines()) {
+      final parts = line.split(RegExp(r'\s+'));
+      if (parts.isEmpty) continue;
+
+      if (parts.first == 'sockets:' && parts.length >= 3) {
+        final used = int.tryParse(parts[2]);
+        if (used != null) out['sockets_used'] = used;
+        continue;
+      }
+
+      if (parts.first == 'TCP:' ||
+          parts.first == 'UDP:' ||
+          parts.first == 'RAW:') {
+        final prefix =
+            parts.first.substring(0, parts.first.length - 1).toLowerCase();
+        for (var i = 1; i + 1 < parts.length; i += 2) {
+          final value = int.tryParse(parts[i + 1]);
+          if (value != null) {
+            out['${prefix}_${parts[i].toLowerCase()}'] = value;
+          }
+        }
+      }
+    }
+    return out;
+  }
+
   Future<Map<String, int>> _readCgroupMemory() async {
     Future<int?> readFirstInt(String path) async {
       final file = File(path);
@@ -187,5 +333,113 @@ class MemoryProfiler {
     if (peak != null) out['peak_bytes'] = peak;
     if (swapCurrent != null) out['swap_current_bytes'] = swapCurrent;
     return out;
+  }
+
+  Future<Map<String, int>> _readCgroupMemoryStat() async {
+    final candidates = [
+      '/sys/fs/cgroup/memory.stat',
+      '/sys/fs/cgroup/memory/memory.stat',
+    ];
+
+    File? file;
+    for (final path in candidates) {
+      final candidate = File(path);
+      if (await candidate.exists()) {
+        file = candidate;
+        break;
+      }
+    }
+    if (file == null) return const {};
+
+    const interestingKeys = {
+      'anon',
+      'file',
+      'kernel',
+      'kernel_stack',
+      'pagetables',
+      'percpu',
+      'sock',
+      'slab',
+      'slab_reclaimable',
+      'slab_unreclaimable',
+      'file_mapped',
+      'file_dirty',
+      'file_writeback',
+      'anon_thp',
+      'inactive_anon',
+      'active_anon',
+      'inactive_file',
+      'active_file',
+    };
+
+    final out = <String, int>{};
+    for (final line in await file.readAsLines()) {
+      final parts = line.split(RegExp(r'\s+'));
+      if (parts.length != 2) continue;
+      if (!interestingKeys.contains(parts[0])) continue;
+      final value = int.tryParse(parts[1]);
+      if (value != null) out[parts[0]] = value;
+    }
+    return out;
+  }
+
+  bool _looksLikeSmapsHeader(String line) {
+    return RegExp(r'^[0-9a-fA-F]+-[0-9a-fA-F]+\s').hasMatch(line);
+  }
+
+  String _extractSmapsName(String line) {
+    final match = RegExp(
+      r'^[0-9a-fA-F]+-[0-9a-fA-F]+\s+\S+\s+\S+\s+\S+\s+\S+\s*(.*)$',
+    ).firstMatch(line);
+    final tail = match?.group(1)?.trim() ?? '';
+    return tail.isEmpty ? '[anonymous]' : tail;
+  }
+
+  int? _parseLeadingInt(String text) {
+    final match = RegExp(r'(\d+)').firstMatch(text);
+    return match == null ? null : int.tryParse(match.group(1)!);
+  }
+
+  _SmapsRegionClass _classifySmapsRegion(String name) {
+    if (name == '[heap]') return _SmapsRegionClass.heap;
+    if (name.startsWith('[stack')) return _SmapsRegionClass.stack;
+    if (name == '[vdso]' ||
+        name == '[vvar]' ||
+        name == '[vsyscall]' ||
+        name == '[vectors]') {
+      return _SmapsRegionClass.shared;
+    }
+    if (name.startsWith('/')) return _SmapsRegionClass.file;
+    return _SmapsRegionClass.anonymous;
+  }
+}
+
+enum _SmapsRegionClass {
+  anonymous,
+  file,
+  heap,
+  shared,
+  stack,
+}
+
+final class _SmapsRegionStat {
+  _SmapsRegionStat({required this.name, required this.category});
+
+  final String name;
+  final String category;
+  int sizeKb = 0;
+  int rssKb = 0;
+  int privateDirtyKb = 0;
+  int privateCleanKb = 0;
+
+  Map<String, Object> toJson() {
+    return {
+      'name': name,
+      'category': category,
+      'size_kb': sizeKb,
+      'rss_kb': rssKb,
+      'private_dirty_kb': privateDirtyKb,
+      'private_clean_kb': privateCleanKb,
+    };
   }
 }
