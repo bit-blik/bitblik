@@ -180,7 +180,7 @@ void main() {
   late CoordinatorService coordinatorService;
 
   // Test constants
-  const String testOfferId = 'test-offer-id';
+  const String testOfferId = '00000000-0000-4000-8000-000000000001';
   const String testMakerId = 'test-maker-id';
   const String testTakerId = 'test-taker-id';
   const String testPaymentHash = 'test-payment-hash';
@@ -343,6 +343,8 @@ void main() {
     when(mockDbService.getOffersByStatus(any, limit: anyNamed('limit')))
         .thenAnswer((_) async => []);
     when(mockDbService.getOfferById(any)).thenAnswer((_) async => null);
+    when(mockDbService.getOfferByPaymentHash(any))
+        .thenAnswer((_) async => null);
     when(mockDbService.updateOfferStatus(
       any,
       any,
