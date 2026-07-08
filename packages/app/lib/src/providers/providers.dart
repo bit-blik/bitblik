@@ -855,20 +855,35 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
   /// Cancel the currently active offer, with a coordinator pre-check.
   ///
+  /// A `created` offer normally only exists in the local DB — the coordinator
+  /// learns about an offer once the maker pays the hold invoice (`funded`). We
+  /// cannot trust local status alone though: if the maker paid but we missed
+  /// the `funded` update, local still shows `created` while the coordinator
+  /// holds a live offer. So we ask the coordinator instead of guessing.
+  ///
   /// Flow:
-  ///   1. Ask coordinator for exact offer.
-  ///   2. If the local offer is still `created` but the coordinator reports
-  ///      the same offer as already `funded` (or later), throw
-  ///      [OfferAlreadyFundedException] without touching local state. Caller
-  ///      should redirect into the funded flow.
-  ///   3. Otherwise call `cancel_offer` RPC best-effort, mark the local
-  ///      row `cancelled`, and clear the in-memory active state. The
-  ///      DB row stays so a future status update can revive it.
+  ///   1. Ask the coordinator for this exact offer.
+  ///   2. Stale-`created`: local says `created` but the coordinator has the
+  ///      same offer live (`funded`+, non-terminal). Sync to the coordinator
+  ///      status and throw [OfferAlreadyFundedException] so the caller
+  ///      redirects into the funded flow instead of cancelling.
+  ///   3. Send `cancel_offer` only when the coordinator actually knows this
+  ///      offer (any funded+ local offer, or a `created` offer the coordinator
+  ///      returned). A `created` offer the coordinator never saw is cancelled
+  ///      purely locally — no RPC, nothing to cancel remotely.
+  ///   4. Mark the local row `cancelled`. The row stays so a later status
+  ///      update can revive it.
   Future<void> cancelActiveOffer() async {
     final current = state;
     if (current == null) return;
 
     final apiService = await _ref.read(initializedApiServiceProvider.future);
+
+    // Generic (yaml-driven) flows start at `funded` and never use `created`,
+    // so this is only true for legacy pre-payment offers. Compare the raw
+    // status string, not the enum, so generic flow states are handled correctly.
+    final isLocalOnly = current.statusRaw == OfferStatus.created.name;
+
     Map<String, dynamic>? coordinatorOffer;
     try {
       coordinatorOffer = await apiService.getOfferDetails(
@@ -881,52 +896,54 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       );
     }
 
-    if (coordinatorOffer != null) {
-      final remoteId = coordinatorOffer['id']?.toString();
-      final remoteStatusRaw = coordinatorOffer['status']?.toString();
-      OfferStatus? remoteStatus;
-      if (remoteStatusRaw != null) {
-        try {
-          remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
-        } catch (_) {
-          remoteStatus = OfferStatus.unknown;
-        }
-      }
-
-      final sameOffer =
-          remoteId != null &&
-          (remoteId == current.id ||
-              current.holdInvoicePaymentHash != null &&
-                  remoteId == current.holdInvoicePaymentHash);
-
-      if (sameOffer &&
-          remoteStatus != null &&
-          current.status == OfferStatus.created &&
-          remoteStatus.index >= OfferStatus.funded.index &&
-          !OfferDbService.terminalStatuses.contains(remoteStatus)) {
-        // Coordinator already funded this offer while local state still says
-        // `created`. Persist whatever the coordinator says, but refuse to
-        // cancel locally from the pre-funding flow.
-        final updated = current.copyWith(
-          id: remoteId,
-          status: remoteStatus,
-          statusRaw: remoteStatusRaw,
-        );
-        await OfferDbService().upsertOffer(updated);
-        state = updated;
-        throw OfferAlreadyFundedException(remoteStatus);
+    final remoteId = coordinatorOffer?['id']?.toString();
+    final remoteStatusRaw = coordinatorOffer?['status']?.toString();
+    OfferStatus? remoteStatus;
+    if (remoteStatusRaw != null) {
+      try {
+        remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
+      } catch (_) {
+        remoteStatus = OfferStatus.unknown;
       }
     }
+    final sameOffer =
+        remoteId != null &&
+        (remoteId == current.id ||
+            current.holdInvoicePaymentHash != null &&
+                remoteId == current.holdInvoicePaymentHash);
 
-    // Best-effort cancel RPC. Swallow errors — local row still moves to
-    // `cancelled` and a later status update can revive it.
-    // Use coordinator-provided UUID when available; local id may be a payment
-    // hash or the legacy "empty" placeholder which the coordinator rejects.
-    final cancelId = coordinatorOffer?['id']?.toString() ?? current.id;
-    try {
-      await apiService.cancelOffer(cancelId, current.coordinatorPubkey);
-    } catch (e) {
-      Logger.log.w(() => '[ActiveOfferNotifier] cancel_offer RPC failed: $e');
+    // Stale-`created`: coordinator already funded this offer while local state
+    // still says `created`. Persist the coordinator status and redirect into
+    // the funded flow instead of cancelling from the pre-funding path.
+    if (isLocalOnly &&
+        sameOffer &&
+        remoteStatus != null &&
+        remoteStatusRaw != null &&
+        remoteStatus.index >= OfferStatus.funded.index &&
+        !OfferDbService.terminalStatuses.contains(remoteStatus)) {
+      final updated = current.copyWith(
+        id: remoteId,
+        status: remoteStatus,
+        statusRaw: remoteStatusRaw,
+      );
+      await OfferDbService().upsertOffer(updated);
+      state = updated;
+      throw OfferAlreadyFundedException(remoteStatus);
+    }
+
+    // Cancel on the coordinator only when it knows this offer. A funded+ local
+    // offer was always published; a `created` offer only if the coordinator
+    // returned this same offer. Otherwise it never left the device — cancelling
+    // it remotely would hit the coordinator for an offer it has no record of.
+    if (!isLocalOnly || sameOffer) {
+      // Prefer the coordinator UUID; local id may be a payment hash or the
+      // legacy "empty" placeholder which the coordinator rejects.
+      final cancelId = remoteId ?? current.id;
+      try {
+        await apiService.cancelOffer(cancelId, current.coordinatorPubkey);
+      } catch (e) {
+        Logger.log.w(() => '[ActiveOfferNotifier] cancel_offer RPC failed: $e');
+      }
     }
 
     final cancelled = current.copyWith(status: OfferStatus.cancelled);
