@@ -654,17 +654,24 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
                               return ListTile(
                                 dense: true,
                                 contentPadding: EdgeInsets.zero,
+                                leading: ClipOval(
+                                  child: buildCoordinatorLogo(
+                                    record.icon,
+                                    size: 32,
+                                    revealLogo: true,
+                                  ),
+                                ),
                                 title: Text(
                                   record.name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Text(
-                                  _recordLabel(t, record),
+                                  _recordLabel(t, record, state.phase),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                trailing: _recordIcon(record),
+                                trailing: _recordIcon(record, state.phase),
                               );
                             },
                           ),
@@ -762,38 +769,55 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
     };
   }
 
-  String _recordLabel(Translations t, CoordinatorColdStartRecord record) {
+  String _recordLabel(
+    Translations t,
+    CoordinatorColdStartRecord record,
+    CoordinatorColdStartPhase phase,
+  ) {
     if (record.enabled) {
       return t.coordinator.coldStart.recordEnabled;
     }
     if (record.candidate && record.responsive == true) {
       return t.coordinator.coldStart.recordHealthyCandidate;
     }
-    if (record.candidate && record.responsive == false) {
-      return t.coordinator.coldStart.recordOfflineCandidate;
+    // Unknown responsiveness only counts as "checking" while the health phase
+    // is live. Once it's over, an unresolved candidate is offline.
+    if (record.candidate &&
+        record.responsive == null &&
+        phase == CoordinatorColdStartPhase.checkingHealth) {
+      return t.coordinator.coldStart.recordChecking;
     }
     if (record.candidate) {
-      return t.coordinator.coldStart.recordChecking;
+      return t.coordinator.coldStart.recordOfflineCandidate;
     }
     return t.coordinator.coldStart.recordDiscovered;
   }
 
-  Widget _recordIcon(CoordinatorColdStartRecord record) {
+  Widget _recordIcon(
+    CoordinatorColdStartRecord record,
+    CoordinatorColdStartPhase phase,
+  ) {
     if (record.enabled) {
       return const Icon(Icons.check_circle, color: Colors.green, size: 18);
     }
-    if (record.responsive == false) {
-      return const Icon(
-        Icons.remove_circle_outline,
-        color: Colors.redAccent,
-        size: 18,
-      );
-    }
-    if (record.candidate) {
+    // Spinner ONLY while the health phase is live and this candidate hasn't
+    // resolved yet. In any later phase an unresolved candidate is offline, so
+    // it can never spin forever.
+    if (record.candidate &&
+        record.responsive == null &&
+        phase == CoordinatorColdStartPhase.checkingHealth) {
       return const SizedBox(
         width: 18,
         height: 18,
         child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+    if (record.responsive == false ||
+        (record.candidate && record.responsive == null)) {
+      return const Icon(
+        Icons.remove_circle_outline,
+        color: Colors.redAccent,
+        size: 18,
       );
     }
     return const Icon(Icons.visibility_outlined, color: Colors.grey, size: 18);

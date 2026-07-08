@@ -21,6 +21,11 @@ const int _coldStartCandidatePoolSize = 8;
 /// rather than waiting the full RPC timeout.
 const Duration _streamQueryTimeout = Duration(seconds: 4);
 
+/// Health-probe timeout used during cold-start discovery. Kept short so the
+/// onboarding dialog doesn't hang on the slowest/unresponsive coordinator —
+/// `Future.wait` only finishes once every probe resolves.
+const Duration _coldStartHealthTimeout = Duration(seconds: 7);
+
 enum CoordinatorColdStartPhase {
   loadingMuteList,
   discovering,
@@ -449,13 +454,21 @@ class CoordinatorRegistry {
     final existing = _records[hex];
     if (existing == null) return;
     final coordRelays = relaysFor(hex);
+    // Hard outer cap: `rpcClient.send` only time-boxes the broadcast + response
+    // wait, NOT the relay (re)connect / encrypt steps that run first. A dead
+    // coordinator's relays can stall those awaits forever, hanging the probe —
+    // and with it the cold-start `Future.wait`, leaving the dialog spinner
+    // stuck. This guarantees the probe always resolves so we can mark it red.
+    final effectiveTimeout = timeoutOverride ?? rpcClient.timeout;
     try {
-      await rpcClient.send(
-        const NostrRequest(method: kRpcGetInfo, params: {}),
-        hex,
-        relays: coordRelays,
-        timeoutOverride: timeoutOverride,
-      );
+      await rpcClient
+          .send(
+            const NostrRequest(method: kRpcGetInfo, params: {}),
+            hex,
+            relays: coordRelays,
+            timeoutOverride: timeoutOverride,
+          )
+          .timeout(effectiveTimeout + kRelayRequestGrace);
       _records[hex] = existing.copyWith(
         responsive: true,
         lastHealthCheck: DateTime.now(),
@@ -974,8 +987,27 @@ class CoordinatorRegistry {
     );
     await Future.wait(
       candidatePubkeys.map(
-        (pubkey) => probeHealth(pubkey, refreshRelayList: false),
+        (pubkey) => probeHealth(
+          pubkey,
+          refreshRelayList: false,
+          timeoutOverride: _coldStartHealthTimeout,
+        ).then((_) {
+          // Re-emit so the onboarding dialog flips each coordinator from
+          // spinner to healthy/red as its probe resolves, instead of showing
+          // a spinner for all of them until every probe finishes.
+          _setColdStartState(
+            CoordinatorColdStartPhase.checkingHealth,
+            discovered: discovered,
+            candidates: candidatePubkeys.toSet(),
+          );
+        }),
       ),
+    ).timeout(
+      _coldStartHealthTimeout + kRelayRequestGrace,
+      // Belt-and-suspenders: never let a hung probe pin the phase on
+      // checkingHealth. Any candidate still unresolved is treated as offline
+      // by the selection below and rendered red by the dialog.
+      onTimeout: () => const [],
     );
 
     final refreshedCandidates = candidatePubkeys
@@ -1306,6 +1338,7 @@ class CoordinatorRegistry {
             (record) => CoordinatorColdStartRecord(
               pubkeyHex: record.pubkeyHex,
               name: record.name,
+              icon: record.icon,
               responsive: record.responsive,
               enabled: record.enabled || enabledPubkeys.contains(record.pubkeyHex),
               candidate: candidates.contains(record.pubkeyHex),
@@ -1386,6 +1419,7 @@ class CoordinatorColdStartState {
 class CoordinatorColdStartRecord {
   final String pubkeyHex;
   final String name;
+  final String? icon;
   final bool? responsive;
   final bool enabled;
   final bool candidate;
@@ -1393,6 +1427,7 @@ class CoordinatorColdStartRecord {
   const CoordinatorColdStartRecord({
     required this.pubkeyHex,
     required this.name,
+    required this.icon,
     required this.responsive,
     required this.enabled,
     required this.candidate,

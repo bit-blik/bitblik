@@ -269,7 +269,7 @@ class _CoordinatorManagementScreenState
                           final pubkey = c.pubkeyHex;
                           final isDisabled = !c.enabled;
 
-                          final logo = _buildCoordinatorLogo(
+                          final logo = buildCoordinatorLogo(
                             c.icon,
                             size: 40,
                             revealLogo: c.enabled,
@@ -436,7 +436,7 @@ class _CoordinatorManagementScreenState
   }
 }
 
-Widget _buildCoordinatorLogo(
+Widget buildCoordinatorLogo(
   String? icon, {
   required double size,
   required bool revealLogo,
