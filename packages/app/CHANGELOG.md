@@ -1,4 +1,4 @@
-## [0.9.0] - 2026-07-??
+## [0.9.0] - 2026-07-08
 - feat: support TWINT Swiss payment system
 - feat: add DE & FR language translations
 

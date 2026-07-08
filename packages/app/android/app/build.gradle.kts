@@ -99,6 +99,10 @@ android {
     buildTypes {
         release {
             signingConfig = cfg
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
         debug {
             applicationIdSuffix = ".dev"
