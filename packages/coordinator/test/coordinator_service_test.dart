@@ -11,6 +11,7 @@ import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart'; // Adde
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/services/database_service.dart';
 import 'package:bitblik_coordinator/src/services/payment_service.dart';
+import 'package:bitblik_coordinator/src/services/telegram_service.dart';
 import 'package:bolt11_decoder/bolt11_decoder.dart';
 // For MockClient if not using Mockito's for http
 import 'package:clock/clock.dart';
@@ -151,6 +152,26 @@ class _OfferIdEqualsDynamicValueMatcher extends Matcher {
 /// exposes the active flow via `.flow`. These tests run in legacy mode.
 LegacyEnumOfferFlow _legacy(CoordinatorService s) =>
     s.flow as LegacyEnumOfferFlow;
+
+class _FakeTelegramService extends TelegramService {
+  int sendCalls = 0;
+  String? lastMessage;
+
+  _FakeTelegramService()
+      : super(botToken: 'test-bot-token', chatIds: const ['test-chat-id']);
+
+  @override
+  Future<TelegramSendResult> sendMessageDetailed(String message) async {
+    sendCalls++;
+    lastMessage = message;
+    return const TelegramSendResult(
+      allSucceeded: true,
+      sentMessages: [
+        TelegramSentMessage(chatId: 'test-chat-id', messageId: 1),
+      ],
+    );
+  }
+}
 
 void main() {
   late MockDatabaseService mockDbService;
@@ -508,6 +529,90 @@ void main() {
       expect(createdOffer.category, category);
       // expect(createdOffer.amountSats, closeTo(satsAmountCalc, 100)); // Depending on rate
       // expect(createdOffer.makerFees, closeTo(makerFeesCalc, 10));   // Depending on rate
+    });
+
+    test('Invoice ACCEPTED in legacy mode sends external offer notifications',
+        () async {
+      final fakeTelegram = _FakeTelegramService();
+      coordinatorService = CoordinatorService(
+        mockDbService,
+        paymentServiceForTest: mockPaymentService,
+        clock: clock,
+        httpClient: mockHttpClient,
+        telegramServiceForTest: fakeTelegram,
+        paymentSystemIdForTest: 'mbway',
+        flowModeForTest: FlowEngineMode.legacyEnum,
+      );
+
+      final streamController = StreamController<InvoiceUpdate>();
+      when(mockPaymentService.createHoldInvoice(
+              amountSats: anyNamed('amountSats'),
+              memo: anyNamed('memo'),
+              paymentHashHex: anyNamed('paymentHashHex')))
+          .thenAnswer((realInvocation) async {
+        final dynamic pHash =
+            realInvocation.namedArguments[Symbol('paymentHashHex')];
+        return CreateHoldInvoiceResult(
+          invoice: 'lnbc_funded_invoice',
+          paymentHash: pHash as String,
+        );
+      });
+      when(mockPaymentService.subscribeToInvoiceUpdates(
+              paymentHashHex: anyNamed('paymentHashHex')))
+          .thenAnswer((_) => streamController.stream);
+      when(mockDbService.saveTelegramOfferMessage(
+        offerId: anyNamed('offerId'),
+        chatId: anyNamed('chatId'),
+        messageId: anyNamed('messageId'),
+        messageText: anyNamed('messageText'),
+      )).thenAnswer((_) async {});
+      when(mockHttpClient.get(argThat(predicate<Uri>((uri) =>
+              uri.toString() ==
+              'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur'))))
+          .thenAnswer((_) async {
+        return http.Response(
+            jsonEncode({
+              'bitcoin': {'eur': 54251.0}
+            }),
+            200);
+      });
+      when(mockHttpClient.get(argThat(predicate<Uri>(
+              (uri) => uri.toString() == 'https://api.yadio.io/exrates/eur'))))
+          .thenAnswer((_) async {
+        return http.Response(jsonEncode({'BTC': 54319.67}), 200);
+      });
+      when(mockHttpClient.get(argThat(predicate<Uri>((uri) =>
+              uri.toString() == 'https://blockchain.info/ticker'))))
+          .thenAnswer((_) async {
+        return http.Response(
+            jsonEncode({
+              'EUR': {'last': 54218.15}
+            }),
+            200);
+      });
+
+      final initResult = await coordinatorService.initiateOfferFiat(
+        fiatAmount: 20.0,
+        makerId: 'maker-for-funded',
+        category: OfferCategory.atm,
+      );
+
+      streamController.add(InvoiceUpdate(
+        status: InvoiceStatus.ACCEPTED,
+        paymentHash: initResult['paymentHash'] as String,
+      ));
+      await streamController.close();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fakeTelegram.sendCalls, 1);
+      expect(fakeTelegram.lastMessage, contains('Nova oferta'));
+      expect(fakeTelegram.lastMessage, contains('/offers/'));
+      verify(mockDbService.saveTelegramOfferMessage(
+        offerId: anyNamed('offerId'),
+        chatId: 'test-chat-id',
+        messageId: 1,
+        messageText: anyNamed('messageText'),
+      )).called(1);
     });
 
     // TODO: Add more tests based on the state machine

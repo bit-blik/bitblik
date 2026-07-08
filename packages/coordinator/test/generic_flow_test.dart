@@ -2,11 +2,42 @@ import 'package:bitblik_core/core.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/models/cancel_invoice_result.dart';
 import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart';
+import 'package:bitblik_coordinator/src/services/database_service.dart';
+import 'package:bitblik_coordinator/src/services/telegram_service.dart';
 import 'package:clock/clock.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
 import 'coordinator_service_test.mocks.dart';
+
+class _FakeTelegramService extends TelegramService {
+  int editCalls = 0;
+  int deleteCalls = 0;
+  String? lastEditedText;
+
+  _FakeTelegramService()
+      : super(botToken: 'test-bot-token', chatIds: const ['test-chat-id']);
+
+  @override
+  Future<bool> editMessage({
+    required String chatId,
+    required int messageId,
+    required String text,
+  }) async {
+    editCalls++;
+    lastEditedText = text;
+    return true;
+  }
+
+  @override
+  Future<bool> deleteMessage({
+    required String chatId,
+    required int messageId,
+  }) async {
+    deleteCalls++;
+    return true;
+  }
+}
 
 /// Coordinator-level tests for the generic (yaml-driven) TWINT executor.
 /// Verifies routing, enforcement and identity guards without the full payout
@@ -15,6 +46,7 @@ void main() {
   late MockDatabaseService db;
   late MockPaymentService pay;
   late CoordinatorService svc;
+  late _FakeTelegramService telegram;
 
   const maker = 'maker_pubkey';
   const taker = 'taker_pubkey';
@@ -38,15 +70,26 @@ void main() {
   setUp(() async {
     db = MockDatabaseService();
     pay = MockPaymentService();
+    telegram = _FakeTelegramService();
     svc = CoordinatorService(
       db,
       paymentServiceForTest: pay,
       clock: const Clock(),
+      telegramServiceForTest: telegram,
       paymentSystemIdForTest: 'twint',
     );
     await svc.init(); // loads twint.yml -> engine
     when(pay.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
         .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
+    when(db.deleteTelegramOfferMessages(any)).thenAnswer((_) async {});
+    when(db.getTelegramOfferMessages(any)).thenAnswer((_) async => [
+          TelegramOfferMessage(
+            offerId: 'o1',
+            chatId: 'test-chat-id',
+            messageId: 1,
+            messageText: 'New offer',
+          ),
+        ]);
   });
 
   test('twint coordinator runs in generic mode', () {
@@ -147,6 +190,9 @@ void main() {
     expect(captured[2], isTrue); // clearTakerFields
     // TWINT: the code is the maker's — it survives taker-field clears.
     expect(captured[3], isTrue); // preserveCodeOnClear
+    expect(telegram.editCalls, 1);
+    expect(telegram.lastEditedText, '<s>New offer</s>');
+    verify(db.deleteTelegramOfferMessages('o1')).called(1);
   });
 
   group('blik forced onto the generic engine (FLOW_MODE=generic)', () {
@@ -249,6 +295,7 @@ void main() {
     late MockDatabaseService gdb;
     late MockPaymentService gpay;
     late CoordinatorService gsvc;
+    late _FakeTelegramService gtelegram;
     late String current;
 
     Offer payoutOffer({String? takerInvoice, String? lnAddr}) => Offer(
@@ -308,10 +355,12 @@ void main() {
     setUp(() async {
       gdb = MockDatabaseService();
       gpay = MockPaymentService();
+      gtelegram = _FakeTelegramService();
       gsvc = CoordinatorService(
         gdb,
         paymentServiceForTest: gpay,
         clock: const Clock(),
+        telegramServiceForTest: gtelegram,
         paymentSystemIdForTest: 'blik',
         flowModeForTest: FlowEngineMode.generic,
       );
@@ -322,6 +371,14 @@ void main() {
       when(gdb.updateTakerInvoice(any, any)).thenAnswer((_) async => true);
       when(gdb.updateTakerInvoiceFees(any, any)).thenAnswer((_) async => true);
       when(gdb.deleteTelegramOfferMessages(any)).thenAnswer((_) async {});
+      when(gdb.getTelegramOfferMessages(any)).thenAnswer((_) async => [
+            TelegramOfferMessage(
+              offerId: 'p1',
+              chatId: 'test-chat-id',
+              messageId: 1,
+              messageText: 'New offer',
+            ),
+          ]);
     });
 
     test('confirm_payment -> settled -> payingTaker -> takerPaid on success',
@@ -347,6 +404,8 @@ void main() {
         feeLimitSat: anyNamed('feeLimitSat'),
       )).captured;
       expect(paidAmounts.single, 1500);
+      expect(gtelegram.deleteCalls, 1);
+      verify(gdb.deleteTelegramOfferMessages('p1')).called(1);
     });
 
     test('payment failure (no reconcile) -> takerPaymentFailed', () async {

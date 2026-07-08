@@ -381,6 +381,7 @@ class CoordinatorService {
       Clock? clock,
       http.Client? httpClient,
       NostrService? nostrService,
+      TelegramService? telegramServiceForTest,
       String? paymentSystemIdForTest,
       FlowEngineMode? flowModeForTest})
       : _clock = clock ?? const Clock(),
@@ -475,13 +476,17 @@ class CoordinatorService {
             .where((chatId) => chatId.isNotEmpty)
             .toSet()
             .toList();
-    if (telegramBotToken != null &&
+    _telegramService = telegramServiceForTest;
+    if (_telegramService != null) {
+      AppLogger.info('Telegram service initialized from test override.');
+    } else if (telegramBotToken != null &&
         telegramBotToken.isNotEmpty &&
         telegramChatIds.isNotEmpty) {
       _telegramService = TelegramService(
-          botToken: telegramBotToken,
-          chatIds: telegramChatIds,
-          httpClient: _httpClient);
+        botToken: telegramBotToken,
+        chatIds: telegramChatIds,
+        httpClient: _httpClient,
+      );
       AppLogger.info('Telegram service initialized.');
       // } else {
       //   AppLogger.info(
@@ -1070,6 +1075,20 @@ class CoordinatorService {
       AppLogger.info(
           'Error deleting Telegram message(s) for offer $offerId: $e',
           offerId: offerId);
+    }
+  }
+
+  Future<void> _syncTelegramOfferMessagesForState(Offer offer) async {
+    switch (offer.statusRaw) {
+      case 'cancelled':
+      case 'expired':
+        await _strikeTelegramOfferMessages(offer.id);
+        return;
+      case 'takerPaid':
+        await _deleteTelegramOfferMessages(offer.id);
+        return;
+      default:
+        return;
     }
   }
 

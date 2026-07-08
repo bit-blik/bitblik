@@ -401,6 +401,7 @@ class GenericOfferFlow implements OfferFlow {
 
     await _c._publishStatusUpdate(offer);
     await _c._nostrService?.broadcastNip69OrderFromOffer(offer);
+    await _c._syncTelegramOfferMessagesForState(offer);
     await _runStateActions(offer);
 
     if (state?.terminal ?? false) {

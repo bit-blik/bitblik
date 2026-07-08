@@ -45,7 +45,12 @@ class LegacyEnumOfferFlow implements OfferFlow {
   void validateDefinition() {/* legacy enum flow uses no yaml definition */}
 
   @override
-  void onOfferFunded(Offer offer) => _startFundedOfferTimer(offer);
+  void onOfferFunded(Offer offer) {
+    // Legacy mode inserts the funded row directly, so trigger the same
+    // post-funding channel fanout that generic flows run via state actions.
+    unawaited(_c._sendOfferNotifications(offer));
+    _startFundedOfferTimer(offer);
+  }
 
   @override
   Future<void> recoverTimers() async {
