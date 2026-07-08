@@ -23,6 +23,7 @@ class NostrService {
   static const Duration _relayQueryTimeout = Duration(seconds: 6);
   static const Duration _cacheEvictionStartupDelay = Duration(seconds: 30);
   static const Duration _cacheEvictionInterval = Duration(minutes: 1);
+  static const Duration _pendingDeliveryRetryInterval = Duration(minutes: 2);
 
   // Requests/responses/status updates are ephemeral and should be discarded
   // aggressively. Public offers are parameterized replaceable by `d`, but the
@@ -138,6 +139,9 @@ class NostrService {
         cacheEvictionPolicy: _cacheEvictionPolicy,
         cacheEvictionStartupDelay: _cacheEvictionStartupDelay,
         cacheEvictionInterval: _cacheEvictionInterval,
+        // Slow down NDK's local-first rebroadcast pump so relay.mostro.network
+        // does not get hammered by repeated pending-delivery retries.
+        pendingDeliveryRetryInterval: _pendingDeliveryRetryInterval,
       ),
     );
 
