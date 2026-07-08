@@ -1713,6 +1713,16 @@ class LegacyEnumOfferFlow implements OfferFlow {
   Future<bool> cancelOffer(String offerId, String makerId) async {
     AppLogger.info('Maker $makerId attempting to cancel offer $offerId',
         offerId: offerId);
+
+    // Pre-funding ("pending") offers have no DB row yet — the client identifies
+    // them by hold-invoice payment hash (64-hex), not by a UUID offer id.
+    // Feeding that hash into the UUID-typed offers lookup raises Postgres 22P02
+    // ("invalid input syntax for type uuid"), so branch on identifier shape and
+    // cancel the pending hold invoice directly.
+    if (!_looksLikeUuid(offerId)) {
+      return await _cancelPendingOffer(offerId, makerId);
+    }
+
     final offer = await _c._dbService.getOfferById(offerId);
     if (offer == null) {
       AppLogger.info('Offer $offerId not found.', offerId: offerId);
@@ -1789,5 +1799,59 @@ class LegacyEnumOfferFlow implements OfferFlow {
           offerId: offerId);
       return false;
     }
+  }
+
+  static final RegExp _uuidPattern = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+  );
+
+  bool _looksLikeUuid(String s) => _uuidPattern.hasMatch(s.trim());
+
+  /// Cancels a pre-funding pending offer identified by its hold-invoice payment
+  /// hash. If it is no longer pending (e.g. it funded into a real offer between
+  /// the client's decision and this call), falls back to a payment-hash DB
+  /// lookup so a funded offer can still be cancelled by hash.
+  Future<bool> _cancelPendingOffer(String paymentHashHex, String makerId) async {
+    final pending = _c._pendingOffers[paymentHashHex];
+    if (pending == null) {
+      final offer = await _c._dbService.getOfferByPaymentHash(paymentHashHex);
+      if (offer == null) {
+        AppLogger.info(
+            'No pending or persisted offer for payment hash $paymentHashHex to cancel.');
+        return false;
+      }
+      return await cancelOffer(offer.id, makerId);
+    }
+
+    if (pending.data['makerId'] != makerId) {
+      AppLogger.info(
+          'Maker mismatch for cancelling pending offer $paymentHashHex.');
+      return false;
+    }
+
+    AppLogger.info('Cancelling pending (pre-funding) offer $paymentHashHex.');
+    if (_c._paymentBackend != null) {
+      try {
+        final cancelResult = await _c._paymentBackend!
+            .cancelInvoice(paymentHashHex: paymentHashHex);
+        if (cancelResult.isAlreadyMissing) {
+          AppLogger.info(
+              'Hold invoice for pending offer $paymentHashHex already missing on ${_c._paymentBackendType}.');
+        } else {
+          AppLogger.info(
+              'Hold invoice for pending offer $paymentHashHex cancelled via ${_c._paymentBackendType}.');
+        }
+      } catch (e) {
+        AppLogger.info(
+            'Error cancelling hold invoice for pending offer $paymentHashHex: $e');
+      }
+    } else {
+      AppLogger.info(
+          'CRITICAL: No payment backend to cancel invoice for pending offer $paymentHashHex.');
+    }
+
+    await _c._clearPendingOffer(paymentHashHex,
+        reason: 'maker cancelled pending offer');
+    return true;
   }
 }
