@@ -38,10 +38,24 @@ jobs:
         working-directory: ./packages/cli
         run: dart analyze --no-fatal-warnings
 
-      # Two declared executables (bitblik = BLIK market, bitway = MB WAY
-      # market), so each target must be built explicitly.
-      - name: Build CLI (both binaries)
+      # Three declared executables (bitblik = BLIK market, bitway = MB WAY
+      # market, bittwint = TWINT market), so each target must be built
+      # explicitly.
+      - name: Build CLI (all binaries)
         working-directory: ./packages/cli
         run: |
           dart build cli -t bin/bitblik.dart -o build/cli-bitblik
           dart build cli -t bin/bitway.dart -o build/cli-bitway
+          dart build cli -t bin/bittwint.dart -o build/cli-bittwint
+
+      # The CLI resolves flow definitions at runtime. A standalone AOT bundle
+      # has no package config for `package:bitblik_core/flows/...`, so ship the
+      # canonical *.yml beside each executable (FlowFileLoader picks up
+      # `flows/` next to the binary).
+      - name: Bundle flow definitions
+        working-directory: ./packages/cli
+        run: |
+          for d in bitblik bitway bittwint; do
+            mkdir -p "build/cli-$d/bundle/bin/flows"
+            cp ../core/lib/flows/*.yml "build/cli-$d/bundle/bin/flows/"
+          done

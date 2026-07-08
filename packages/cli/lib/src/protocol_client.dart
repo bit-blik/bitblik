@@ -82,8 +82,12 @@ class BitblikProtocolClient {
       store: coordinatorStore,
       relays: relays,
       // Discover this market's relays + coordinators from its own project
-      // identity (Bitblik for BLIK, Bitway for MB WAY).
+      // identity (Bitblik for BLIK, Bitway for MB WAY, Bittwint for TWINT).
       discoveryPubkeyHex: paymentSystem.discoveryPubkeyHex,
+      // Scope discovery + the registry's `all`/`enabled` filters to this
+      // market. Without this the registry defaults to 'blik' and drops every
+      // MB WAY / TWINT coordinator during discovery and listing.
+      activePaymentSystemId: paymentSystem.id,
     );
     await _registry.init();
   }

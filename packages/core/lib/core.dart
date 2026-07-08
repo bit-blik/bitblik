@@ -6,6 +6,7 @@ export 'src/constants/rpc_methods.dart';
 export 'src/flow/flow_models.dart';
 export 'src/flow/flow_engine.dart';
 export 'src/flow/flow_status_map.dart';
+export 'src/flow/flow_file_loader.dart';
 export 'src/coordinator/coordinator_registry.dart';
 export 'src/coordinator/coordinator_store.dart';
 export 'src/models/coordinator_info.dart';

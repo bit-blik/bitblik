@@ -17,3 +17,4 @@ dependencies:
 executables:
   bitblik: bitblik
   bitway: bitway
+  bittwint: bittwint

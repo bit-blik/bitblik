@@ -6,6 +6,7 @@ import 'package:bitblik_core/core.dart';
 import 'package:ndk/ndk.dart';
 
 import 'cli_context.dart';
+import 'flow_cli.dart';
 import 'offer_store.dart';
 import 'protocol_client.dart';
 import 'secrets_store.dart';
@@ -24,10 +25,13 @@ Future<int> runOfferList(List<String> args) async {
   // ---- Local path (default) ----
   if (coordinatorArg == null) {
     final showAll = parsed.containsKey('finished');
+    final flow = await MakerFlow.load();
     final store = await OfferStore.open();
     try {
       final all = await store.all();
-      final offers = showAll ? all : all.where((o) => _isInProgress(o.status)).toList();
+      final offers = showAll
+          ? all
+          : all.where((o) => flow.isInProgress(MakerFlow.stateOf(o))).toList();
       if (jsonOutput) {
         stdout.writeln(
           const JsonEncoder.withIndent('  ')
@@ -90,8 +94,10 @@ void _printOfferTable(List<Offer> offers) {
     final coord = o.coordinatorPubkey.length > 12
         ? '${o.coordinatorPubkey}'
         : o.coordinatorPubkey;
+    // statusRaw, not status.name: generic flows (TWINT) carry states with no
+    // OfferStatus enum value that would otherwise print as "unknown".
     stdout.writeln(
-      '${o.id} | ${o.status.name} | ${o.fiatAmount} ${o.fiatCurrency} | '
+      '${o.id} | ${o.statusRaw} | ${o.fiatAmount} ${o.fiatCurrency} | '
       '${o.amountSats} | ${o.createdAt.toIso8601String()} | $coord',
     );
   }
@@ -107,11 +113,18 @@ Future<int> runOfferCreate(List<String> args) async {
   final coordinatorArg = parsed['coordinator'];
   final jsonOutput = parsed.containsKey('json');
   final relays = _collectMultiFlag(args, '--relay');
+  final exe = activePaymentSystem.brandName.toLowerCase();
+
+  // Flows where the maker supplies the payment code up front (TWINT) require
+  // it at creation; flows where the taker submits it (BLIK / MB WAY) reject it.
+  final providesCode = activePaymentSystem.makerProvidesCodeAtOfferCreation;
+  final codeArg = parsed['code'];
 
   if (fiatStr == null || coordinatorArg == null) {
+    final codeUsage = providesCode ? '--code <${activePaymentSystem.codeLabel}> ' : '';
     stderr.writeln(
-        'usage: ${activePaymentSystem.brandName.toLowerCase()} offer create '
-        '--fiat <amount> --coordinator <npub|hex> '
+        'usage: $exe offer create '
+        '--fiat <amount> --coordinator <npub|hex> $codeUsage'
         '[--currency ${activePaymentSystem.currency}] [--json] [--relay <url>]');
     return 64;
   }
@@ -119,6 +132,30 @@ Future<int> runOfferCreate(List<String> args) async {
   final fiat = double.tryParse(fiatStr);
   if (fiat == null || fiat <= 0) {
     stderr.writeln('Invalid --fiat value: $fiatStr');
+    return 64;
+  }
+
+  String? code;
+  if (providesCode) {
+    code = codeArg?.trim();
+    if (code == null || code.isEmpty) {
+      stderr.writeln(
+          '${activePaymentSystem.brandName} requires the maker to provide the '
+          '${activePaymentSystem.codeLabel} code up front. Pass --code <code>.');
+      return 64;
+    }
+    final want = activePaymentSystem.codeLength;
+    final digits = code.replaceAll(RegExp(r'\s'), '');
+    if (!RegExp(r'^\d+$').hasMatch(digits) || digits.length != want) {
+      stderr.writeln('Invalid --code: expected a $want-digit '
+          '${activePaymentSystem.codeLabel} code.');
+      return 64;
+    }
+    code = digits;
+  } else if (codeArg != null) {
+    stderr.writeln(
+        '--code is not used by ${activePaymentSystem.brandName}; the taker '
+        'submits the ${activePaymentSystem.codeLabel} code.');
     return 64;
   }
 
@@ -130,6 +167,8 @@ Future<int> runOfferCreate(List<String> args) async {
     return 64;
   }
 
+  final flow = await MakerFlow.load();
+
   // Guard: reject if there's already an active offer for this coordinator.
   {
     final store = await OfferStore.open();
@@ -138,14 +177,14 @@ Future<int> runOfferCreate(List<String> args) async {
       final active = all
           .where((o) =>
               o.coordinatorPubkey == coordinatorPubkey &&
-              _isInProgress(o.status))
+              flow.isInProgress(MakerFlow.stateOf(o)))
           .toList();
       if (active.isNotEmpty) {
         stderr.writeln(
             'Active offer already exists for this coordinator:\n'
-            '  ${active.first.id}  status=${active.first.status.name}  '
+            '  ${active.first.id}  status=${active.first.statusRaw}  '
             '${active.first.fiatAmount} ${active.first.fiatCurrency}\n'
-            'Cancel or finish it first, or run: bitblik offer cancel');
+            'Cancel or finish it first, or run: $exe offer cancel');
         return 1;
       }
     } finally {
@@ -170,6 +209,9 @@ Future<int> runOfferCreate(List<String> args) async {
         params: {
           'fiat_amount': fiat,
           'fiat_currency': currency,
+          // The maker's code (TWINT) rides the same `blik_code` param the app
+          // and coordinator use across every payment system.
+          if (code != null) 'blik_code': code,
         },
       ),
       coordinatorPubkey,
@@ -230,37 +272,6 @@ Future<int> runOfferCreate(List<String> args) async {
 }
 
 // ---------------------------------------------------------------------------
-// Helper sets
-// ---------------------------------------------------------------------------
-
-const _getblikWaitStatuses = {
-  OfferStatus.created,
-  OfferStatus.funded,
-  OfferStatus.reserved,
-};
-
-const _terminalStatuses = {
-  OfferStatus.cancelled,
-  OfferStatus.expired,
-  OfferStatus.takerPaid,
-};
-
-const _confirmPaymentStatuses = {
-  OfferStatus.blikSentToMaker,
-  OfferStatus.expiredSentBlik,
-  OfferStatus.takerCharged,
-  OfferStatus.conflict,
-};
-
-bool _canGetBlik(OfferStatus s) =>
-    _getblikWaitStatuses.contains(s) ||
-    s == OfferStatus.blikReceived ||
-    s == OfferStatus.blikSentToMaker;
-
-bool _isInProgress(OfferStatus s) =>
-    !_terminalStatuses.contains(s) && s != OfferStatus.unknown;
-
-// ---------------------------------------------------------------------------
 // CLI command: `bitblik offer get-blik`
 // ---------------------------------------------------------------------------
 
@@ -293,6 +304,19 @@ Future<int> runOfferGetBlik(List<String> args) async {
       return 64;
     }
   }
+
+  final flow = await MakerFlow.load();
+  if (!flow.supportsGetCode) {
+    final code = activePaymentSystem.codeLabel;
+    stderr.writeln(
+        '${activePaymentSystem.brandName} makers do not fetch a $code code — '
+        'the maker supplies it at offer creation and the taker enters it.\n'
+        'Nothing to get. Wait for the taker, then: '
+        '${activePaymentSystem.brandName.toLowerCase()} offer confirm-payment');
+    return 64;
+  }
+  final exe = activePaymentSystem.brandName.toLowerCase();
+  final code = activePaymentSystem.codeLabel;
 
   // ---- Fast path: offer id + coordinator supplied, skip local store ----
   if (offerIdArg != null && coordinatorPubkey != null) {
@@ -329,12 +353,13 @@ Future<int> runOfferGetBlik(List<String> args) async {
     final Offer offer;
     try {
       final all = await store.all();
-      final active = all.where((o) => _canGetBlik(o.status)).toList();
+      final active =
+          all.where((o) => flow.canAwaitCode(MakerFlow.stateOf(o))).toList();
 
       if (active.isEmpty) {
         stderr.writeln(
             'No active offers found locally. '
-            'Create one with: bitblik offer create\n'
+            'Create one with: $exe offer create\n'
             'Or pass --offer <id> --coordinator <npub|hex> to skip local lookup.');
         return 1;
       }
@@ -350,7 +375,7 @@ Future<int> runOfferGetBlik(List<String> args) async {
         stderr.writeln('Multiple active offers. Pass --offer <id> to select one:');
         for (final o in active) {
           stderr.writeln(
-              '  ${o.id}  status=${o.status.name}  '
+              '  ${o.id}  status=${o.statusRaw}  '
               '${o.fiatAmount} ${o.fiatCurrency}');
         }
         return 64;
@@ -369,39 +394,40 @@ Future<int> runOfferGetBlik(List<String> args) async {
 
     var currentOffer = offer;
 
-    if (offer.status != OfferStatus.blikReceived &&
-        offer.status != OfferStatus.blikSentToMaker) {
+    bool codeReady(String state) => flow.makerCan(state, kRpcGetBlik) ||
+        state == 'blikSentToMaker';
+
+    if (!codeReady(MakerFlow.stateOf(offer))) {
       // --no-wait: don't block, return 2 so the caller can poll.
       if (noWait) {
         if (jsonOutput) {
           stdout.writeln(const JsonEncoder.withIndent('  ').convert({
             'ready': false,
-            'status': offer.status.name,
+            'status': offer.statusRaw,
             'offer_id': offer.id,
             'payment_hash': offer.holdInvoicePaymentHash,
           }));
         } else {
-          stdout.writeln('Not ready yet: ${_waitMessage(offer.status)}');
+          stdout.writeln(
+              'Not ready yet: ${flow.waitMessage(MakerFlow.stateOf(offer))}');
         }
         return 2;
       }
 
       stdout.writeln(
-          'Offer ${offer.holdInvoicePaymentHash}: ${_waitMessage(offer.status)} (Ctrl+C to abort)');
+          'Offer ${offer.holdInvoicePaymentHash}: '
+          '${flow.waitMessage(MakerFlow.stateOf(offer))} (Ctrl+C to abort)');
 
       final updates = client.watchOfferStatus(paymentHash: paymentHash);
       await for (final update in updates) {
-        OfferStatus status;
-        try {
-          status = OfferStatus.values.byName(update.status);
-        } catch (_) {
-          status = OfferStatus.unknown;
-        }
-
-        stdout.writeln('  → ${_waitMessage(status)}');
+        final state = update.status;
+        stdout.writeln('  → ${flow.waitMessage(state)}');
 
         // Update id to coordinator UUID; store key (paymentHash) unchanged.
-        currentOffer = currentOffer.copyWith(id: update.offerId, status: status);
+        currentOffer = currentOffer.copyWith(
+            id: update.offerId,
+            status: _statusEnum(state),
+            statusRaw: state);
         final s2 = await OfferStore.open();
         try {
           await s2.upsert(currentOffer);
@@ -409,12 +435,9 @@ Future<int> runOfferGetBlik(List<String> args) async {
           await s2.close();
         }
 
-        if (status == OfferStatus.blikReceived ||
-            status == OfferStatus.blikSentToMaker) {
-          break;
-        }
-        if (_terminalStatuses.contains(status)) {
-          stderr.writeln('Offer ended: ${status.name}. BLIK no longer available.');
+        if (codeReady(state)) break;
+        if (flow.isTerminal(state)) {
+          stderr.writeln('Offer ended: $state. $code no longer available.');
           return 1;
         }
       }
@@ -425,6 +448,17 @@ Future<int> runOfferGetBlik(List<String> args) async {
         localOffer: currentOffer, jsonOutput: jsonOutput);
   } finally {
     await client.dispose();
+  }
+}
+
+/// Parse a wire/flow status string into an [OfferStatus]. Generic-flow states
+/// with no enum value (e.g. `invalidTwint`) fall back to [OfferStatus.unknown];
+/// the verbatim string is preserved separately in [Offer.statusRaw].
+OfferStatus _statusEnum(String raw) {
+  try {
+    return OfferStatus.values.byName(raw);
+  } catch (_) {
+    return OfferStatus.unknown;
   }
 }
 
@@ -542,11 +576,13 @@ Future<int> runOfferCancel(List<String> args) async {
   }
 
   // ---- Normal path: load from local store ----
+  final flow = await MakerFlow.load();
   final store = await OfferStore.open();
   final Offer offer;
   try {
     final all = await store.all();
-    final cancellable = all.where((o) => _isCancellable(o.status)).toList();
+    final cancellable =
+        all.where((o) => _isCancellable(flow, MakerFlow.stateOf(o))).toList();
 
     if (cancellable.isEmpty) {
       stderr.writeln(
@@ -567,7 +603,7 @@ Future<int> runOfferCancel(List<String> args) async {
       stderr.writeln('Multiple cancellable offers. Pass --offer <id>:');
       for (final o in cancellable) {
         stderr.writeln(
-            '  ${o.id}  status=${o.status.name}  '
+            '  ${o.id}  status=${o.statusRaw}  '
             '${o.fiatAmount} ${o.fiatCurrency}');
       }
       return 64;
@@ -634,21 +670,15 @@ Future<int> runOfferCancel(List<String> args) async {
     // Coordinator matched. Extract UUID and current status.
     final remoteId =
         result['id']?.toString() ?? result['offer_id']?.toString();
-    final remoteStatusStr = result['status']?.toString();
-
-    OfferStatus remoteStatus = offer.status;
-    if (remoteStatusStr != null) {
-      try {
-        remoteStatus = OfferStatus.values.byName(remoteStatusStr);
-      } catch (_) {
-        remoteStatus = OfferStatus.unknown;
-      }
-    }
+    final remoteStatusStr = result['status']?.toString() ?? offer.statusRaw;
 
     // Persist updated UUID + status before we do anything else.
     var updatedOffer = offer;
     if (remoteId != null) {
-      updatedOffer = offer.copyWith(id: remoteId, status: remoteStatus);
+      updatedOffer = offer.copyWith(
+          id: remoteId,
+          status: _statusEnum(remoteStatusStr),
+          statusRaw: remoteStatusStr);
       final s2 = await OfferStore.open();
       try {
         await s2.upsert(updatedOffer);
@@ -656,12 +686,12 @@ Future<int> runOfferCancel(List<String> args) async {
         await s2.close();
       }
       stdout.writeln(
-          'Synced: ${offer.id} → id=$remoteId  status=${remoteStatus.name}');
+          'Synced: ${offer.id} → id=$remoteId  status=$remoteStatusStr');
     }
 
-    if (!_isCancellable(remoteStatus)) {
+    if (!_isCancellable(flow, remoteStatusStr)) {
       stderr.writeln(
-          'Coordinator reports offer in "${remoteStatus.name}" — cannot cancel.');
+          'Coordinator reports offer in "$remoteStatusStr" — cannot cancel.');
       return 1;
     }
 
@@ -686,8 +716,11 @@ Future<int> _cancelLocalOnly(Offer offer) async {
   return 0;
 }
 
-bool _isCancellable(OfferStatus s) =>
-    s == OfferStatus.created || s == OfferStatus.funded;
+/// A maker may cancel from the flow's `cancel_offer` states, plus the local
+/// pre-funding [MakerFlow.localCreated] state (no coordinator RPC yet).
+bool _isCancellable(MakerFlow flow, String state) =>
+    state == MakerFlow.localCreated ||
+    flow.makerStatesFor(kRpcCancelOffer).contains(state);
 
 /// True when [s] looks like a coordinator UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).
 /// False = still a payment hash — offer has not been correlated with the coordinator yet.
@@ -766,6 +799,14 @@ Future<int> runOfferMarkBlikInvalid(List<String> args) async {
     }
   }
 
+  final flow = await MakerFlow.load();
+  if (!flow.supportsMarkInvalid) {
+    stderr.writeln(
+        '${activePaymentSystem.brandName} has no maker "mark invalid" action; '
+        'the maker supplies the ${activePaymentSystem.codeLabel} code.');
+    return 64;
+  }
+
   // ---- Fast path ----
   if (offerIdArg != null && coordinatorPubkey != null) {
     final secrets = await SecretsStore.loadOrCreate();
@@ -789,20 +830,16 @@ Future<int> runOfferMarkBlikInvalid(List<String> args) async {
   final Offer offer;
   try {
     final all = await store.all();
-    // Maker can mark invalid after receiving the BLIK code.
-    // Allow all BLIK-related and expired-BLIK states — coordinator is the
-    // final authority on whether mark_blik_invalid is accepted.
+    // States from which the flow permits the maker's mark_blik_invalid action —
+    // the coordinator is the final authority.
+    final eligibleStates = flow.makerStatesFor(kRpcMarkBlikInvalid);
     final eligible = all
-        .where((o) =>
-            o.status == OfferStatus.blikSentToMaker ||
-            o.status == OfferStatus.blikReceived ||
-            o.status == OfferStatus.expiredSentBlik ||
-            o.status == OfferStatus.expiredBlik)
+        .where((o) => eligibleStates.contains(MakerFlow.stateOf(o)))
         .toList();
 
     if (eligible.isEmpty) {
       stderr.writeln(
-          'No offers in a state where BLIK can be marked invalid.\n'
+          'No offers in a state where the code can be marked invalid.\n'
           'Or pass --offer <id> --coordinator <npub|hex> to skip local lookup.');
       return 1;
     }
@@ -819,7 +856,7 @@ Future<int> runOfferMarkBlikInvalid(List<String> args) async {
       stderr.writeln('Multiple eligible offers. Pass --offer <id>:');
       for (final o in eligible) {
         stderr.writeln(
-            '  ${o.id}  status=${o.status.name}  '
+            '  ${o.id}  status=${o.statusRaw}  '
             '${o.fiatAmount} ${o.fiatCurrency}');
       }
       return 64;
@@ -894,10 +931,11 @@ Future<int> _callMarkBlikInvalidRpc(
 // CLI command: `bitblik offer open-dispute`
 // ---------------------------------------------------------------------------
 
-/// CLI command: `bitblik offer open-dispute`.
+/// CLI command: `bitblik offer open-dispute` (a.k.a. `dispute`).
 ///
-/// Opens a dispute after the taker raised a conflict (taker claims BLIK charged
-/// but maker reported it invalid). Coordinator mediates.
+/// Opens a formal dispute. The driving flow event depends on the payment
+/// system: BLIK / MB WAY use `open_dispute` (after a taker conflict), TWINT uses
+/// `start_dispute` (from `takerCharged`). The coordinator then mediates.
 /// Fast path: `--offer <id> --coordinator <npub|hex>` skips local store.
 Future<int> runOfferOpenDispute(List<String> args) async {
   final parsed = _parseFlags(args);
@@ -915,6 +953,14 @@ Future<int> runOfferOpenDispute(List<String> args) async {
     }
   }
 
+  final flow = await MakerFlow.load();
+  final disputeEvent = flow.disputeEvent;
+  if (disputeEvent == null) {
+    stderr.writeln(
+        '${activePaymentSystem.brandName} gives the maker no dispute action.');
+    return 64;
+  }
+
   // ---- Fast path ----
   if (offerIdArg != null && coordinatorPubkey != null) {
     final secrets = await SecretsStore.loadOrCreate();
@@ -926,7 +972,8 @@ Future<int> runOfferOpenDispute(List<String> args) async {
       await client.init();
       final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
       if (mismatch != null) return mismatch;
-      return await _callOpenDisputeRpc(client, offerIdArg, coordinatorPubkey);
+      return await _callOpenDisputeRpc(
+          client, offerIdArg, coordinatorPubkey, disputeEvent);
     } finally {
       await client.dispose();
     }
@@ -937,13 +984,14 @@ Future<int> runOfferOpenDispute(List<String> args) async {
   final Offer offer;
   try {
     final all = await store.all();
+    final eligibleStates = flow.makerStatesFor(disputeEvent);
     final eligible = all
-        .where((o) => o.status == OfferStatus.conflict)
+        .where((o) => eligibleStates.contains(MakerFlow.stateOf(o)))
         .toList();
 
     if (eligible.isEmpty) {
       stderr.writeln(
-          'No offers in conflict status found locally.\n'
+          'No offers in a disputable status found locally.\n'
           'Or pass --offer <id> --coordinator <npub|hex> to skip local lookup.');
       return 1;
     }
@@ -952,15 +1000,15 @@ Future<int> runOfferOpenDispute(List<String> args) async {
       final found = eligible.where((o) => o.id == offerIdArg).firstOrNull;
       if (found == null) {
         stderr.writeln(
-            'Offer "$offerIdArg" not found or not in conflict status.');
+            'Offer "$offerIdArg" not found or not in a disputable status.');
         return 64;
       }
       offer = found;
     } else if (eligible.length > 1) {
-      stderr.writeln('Multiple offers in conflict. Pass --offer <id>:');
+      stderr.writeln('Multiple disputable offers. Pass --offer <id>:');
       for (final o in eligible) {
         stderr.writeln(
-            '  ${o.id}  status=${o.status.name}  '
+            '  ${o.id}  status=${o.statusRaw}  '
             '${o.fiatAmount} ${o.fiatCurrency}');
       }
       return 64;
@@ -979,7 +1027,7 @@ Future<int> runOfferOpenDispute(List<String> args) async {
   try {
     await client.init();
     return await _callOpenDisputeRpc(
-        client, offer.id, offer.coordinatorPubkey,
+        client, offer.id, offer.coordinatorPubkey, disputeEvent,
         localOffer: offer);
   } finally {
     await client.dispose();
@@ -989,13 +1037,14 @@ Future<int> runOfferOpenDispute(List<String> args) async {
 Future<int> _callOpenDisputeRpc(
   BitblikProtocolClient client,
   String offerId,
-  String coordinatorPubkey, {
+  String coordinatorPubkey,
+  String disputeEvent, {
   Offer? localOffer,
 }) async {
   stdout.writeln('Opening dispute…');
   final response = await client.sendRequest(
     NostrRequest(
-      method: kRpcOpenDispute,
+      method: disputeEvent,
       params: {'offer_id': offerId},
     ),
     coordinatorPubkey,
@@ -1073,12 +1122,15 @@ Future<int> runOfferConfirmPayment(List<String> args) async {
   }
 
   // ---- Normal path: load from local store ----
+  final flow = await MakerFlow.load();
   final store = await OfferStore.open();
   final Offer offer;
   try {
     final all = await store.all();
-    final eligible =
-        all.where((o) => _confirmPaymentStatuses.contains(o.status)).toList();
+    final eligibleStates = flow.makerStatesFor(kRpcConfirmPayment);
+    final eligible = all
+        .where((o) => eligibleStates.contains(MakerFlow.stateOf(o)))
+        .toList();
 
     if (eligible.isEmpty) {
       stderr.writeln(
@@ -1099,7 +1151,7 @@ Future<int> runOfferConfirmPayment(List<String> args) async {
       stderr.writeln('Multiple confirmable offers. Pass --offer <id>:');
       for (final o in eligible) {
         stderr.writeln(
-            '  ${o.id}  status=${o.status.name}  '
+            '  ${o.id}  status=${o.statusRaw}  '
             '${o.fiatAmount} ${o.fiatCurrency}');
       }
       return 64;
@@ -1163,6 +1215,163 @@ Future<int> _callConfirmPaymentRpc(
 }
 
 // ---------------------------------------------------------------------------
+// CLI command: `bitblik offer new-code`
+// ---------------------------------------------------------------------------
+
+/// CLI command: `<brand> offer new-code --code <code>`.
+///
+/// Supplies a fresh maker code after the previous one expired — the flow's
+/// `enter_new_twint` action, which re-lists the offer (TWINT only). Only
+/// available for payment systems whose maker provides the code up front.
+Future<int> runOfferNewCode(List<String> args) async {
+  final parsed = _parseFlags(args);
+  final offerIdArg = parsed['offer'];
+  final coordinatorArg = parsed['coordinator'];
+  final relays = _collectMultiFlag(args, '--relay');
+  final exe = activePaymentSystem.brandName.toLowerCase();
+
+  final flow = await MakerFlow.load();
+  final event = flow.newCodeEvent;
+  if (event == null) {
+    stderr.writeln(
+        '${activePaymentSystem.brandName} has no "new code" action.');
+    return 64;
+  }
+
+  final want = activePaymentSystem.codeLength;
+  final code = parsed['code']?.replaceAll(RegExp(r'\s'), '');
+  if (code == null || code.isEmpty) {
+    stderr.writeln('usage: $exe offer new-code --code <$want-digit code> '
+        '[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]');
+    return 64;
+  }
+  if (!RegExp(r'^\d+$').hasMatch(code) || code.length != want) {
+    stderr.writeln('Invalid --code: expected a $want-digit '
+        '${activePaymentSystem.codeLabel} code.');
+    return 64;
+  }
+
+  String? coordinatorPubkey;
+  if (coordinatorArg != null) {
+    try {
+      coordinatorPubkey = _resolvePubkey(coordinatorArg);
+    } on FormatException catch (e) {
+      stderr.writeln('Invalid --coordinator: ${e.message}');
+      return 64;
+    }
+  }
+
+  // ---- Fast path ----
+  if (offerIdArg != null && coordinatorPubkey != null) {
+    final secrets = await SecretsStore.loadOrCreate();
+    final client = BitblikProtocolClient(
+      secrets: secrets,
+      relays: relays.isEmpty ? null : relays,
+    );
+    try {
+      await client.init();
+      final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
+      if (mismatch != null) return mismatch;
+      return await _callNewCodeRpc(client, event, offerIdArg, coordinatorPubkey,
+          code: code);
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  // ---- Normal path: load from local store ----
+  final store = await OfferStore.open();
+  final Offer offer;
+  try {
+    final all = await store.all();
+    final eligibleStates = flow.makerStatesFor(event);
+    final eligible = all
+        .where((o) => eligibleStates.contains(MakerFlow.stateOf(o)))
+        .toList();
+
+    if (eligible.isEmpty) {
+      stderr.writeln(
+          'No offers awaiting a new code locally.\n'
+          'Or pass --offer <id> --coordinator <npub|hex> to skip local lookup.');
+      return 1;
+    }
+
+    if (offerIdArg != null) {
+      final found = eligible.where((o) => o.id == offerIdArg).firstOrNull;
+      if (found == null) {
+        stderr.writeln('Offer "$offerIdArg" not found or not awaiting a code.');
+        return 64;
+      }
+      offer = found;
+    } else if (eligible.length > 1) {
+      stderr.writeln('Multiple eligible offers. Pass --offer <id>:');
+      for (final o in eligible) {
+        stderr.writeln(
+            '  ${o.id}  status=${o.statusRaw}  '
+            '${o.fiatAmount} ${o.fiatCurrency}');
+      }
+      return 64;
+    } else {
+      offer = eligible.first;
+    }
+  } finally {
+    await store.close();
+  }
+
+  final secrets = await SecretsStore.loadOrCreate();
+  final client = BitblikProtocolClient(
+    secrets: secrets,
+    relays: relays.isEmpty ? null : relays,
+  );
+  try {
+    await client.init();
+    return await _callNewCodeRpc(
+        client, event, offer.id, offer.coordinatorPubkey,
+        code: code, localOffer: offer);
+  } finally {
+    await client.dispose();
+  }
+}
+
+Future<int> _callNewCodeRpc(
+  BitblikProtocolClient client,
+  String event,
+  String offerId,
+  String coordinatorPubkey, {
+  required String code,
+  Offer? localOffer,
+}) async {
+  stdout.writeln('Submitting new ${activePaymentSystem.codeLabel} code…');
+  final response = await client.sendRequest(
+    NostrRequest(
+      method: event,
+      params: {'offer_id': offerId, 'blik_code': code},
+    ),
+    coordinatorPubkey,
+  );
+
+  if (!response.isSuccess) {
+    stderr.writeln(
+        'Coordinator error: ${response.error?['message'] ?? response.error}');
+    return 1;
+  }
+
+  // Re-listed: the offer returns to the funded state.
+  if (localOffer != null) {
+    final store = await OfferStore.open();
+    try {
+      await store.upsert(localOffer.copyWith(
+          status: OfferStatus.funded, statusRaw: 'funded'));
+    } finally {
+      await store.close();
+    }
+  }
+
+  stdout.writeln('New code submitted. Offer re-listed for takers.');
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
 // CLI command: `bitblik offer sync`
 // ---------------------------------------------------------------------------
 
@@ -1173,11 +1382,13 @@ Future<int> _callConfirmPaymentRpc(
 Future<int> runOfferSync(List<String> args) async {
   final relays = _collectMultiFlag(args, '--relay');
 
+  final flow = await MakerFlow.load();
   final store = await OfferStore.open();
   final List<Offer> localActive;
   try {
     final all = await store.all();
-    localActive = all.where((o) => _isInProgress(o.status)).toList();
+    localActive =
+        all.where((o) => flow.isInProgress(MakerFlow.stateOf(o))).toList();
   } finally {
     await store.close();
   }
@@ -1215,11 +1426,13 @@ Future<int> runOfferSync(List<String> args) async {
 /// Silently syncs non-terminal local offers against each coordinator via
 /// [kRpcGetOfferDetails]. Errors are printed to stderr but never throw.
 Future<void> _syncActiveOffers(BitblikProtocolClient client) async {
+  final flow = await MakerFlow.load();
   final store = await OfferStore.open();
   final List<Offer> localActive;
   try {
     final all = await store.all();
-    localActive = all.where((o) => _isInProgress(o.status)).toList();
+    localActive =
+        all.where((o) => flow.isInProgress(MakerFlow.stateOf(o))).toList();
   } finally {
     await store.close();
   }
@@ -1276,14 +1489,14 @@ Future<int> _syncOfferWithCoordinator(
   if (result == null || result.isEmpty) {
     if (!_looksLikeUuid(local.id)) {
       if (verbose) {
-        stdout.writeln('  $identifier: unchanged (${local.status.name})');
+        stdout.writeln('  $identifier: unchanged (${local.statusRaw})');
       }
       return 0;
     }
     return _persistSyncedOffer(
       local,
       remoteId: local.id,
-      remoteStatus: OfferStatus.expired,
+      remoteStatusRaw: OfferStatus.expired.name,
       reason: 'not found on coordinator',
       verbose: verbose,
     );
@@ -1298,17 +1511,10 @@ Future<int> _syncOfferWithCoordinator(
     return 0;
   }
 
-  OfferStatus remoteStatus;
-  try {
-    remoteStatus = OfferStatus.values.byName(remoteStatusStr);
-  } catch (_) {
-    remoteStatus = OfferStatus.unknown;
-  }
-
   return _persistSyncedOffer(
     local,
     remoteId: remoteId,
-    remoteStatus: remoteStatus,
+    remoteStatusRaw: remoteStatusStr,
     reason: null,
     verbose: verbose,
   );
@@ -1317,20 +1523,23 @@ Future<int> _syncOfferWithCoordinator(
 Future<int> _persistSyncedOffer(
   Offer local, {
   required String remoteId,
-  required OfferStatus remoteStatus,
+  required String remoteStatusRaw,
   required String? reason,
   required bool verbose,
 }) async {
-  if (local.id == remoteId && local.status == remoteStatus) {
+  if (local.id == remoteId && local.statusRaw == remoteStatusRaw) {
     if (verbose) {
-      stdout.writeln('  ${_syncIdentifier(local)}: unchanged (${remoteStatus.name})');
+      stdout.writeln('  ${_syncIdentifier(local)}: unchanged ($remoteStatusRaw)');
     }
     return 0;
   }
 
   final store = await OfferStore.open();
   try {
-    await store.upsert(local.copyWith(id: remoteId, status: remoteStatus));
+    await store.upsert(local.copyWith(
+        id: remoteId,
+        status: _statusEnum(remoteStatusRaw),
+        statusRaw: remoteStatusRaw));
   } finally {
     await store.close();
   }
@@ -1338,7 +1547,7 @@ Future<int> _persistSyncedOffer(
   if (verbose) {
     final suffix = reason == null ? '' : ' ($reason)';
     stdout.writeln(
-        '  ${_syncIdentifier(local)}: ${local.status.name} → ${remoteStatus.name} '
+        '  ${_syncIdentifier(local)}: ${local.statusRaw} → $remoteStatusRaw '
         '(id: $remoteId)$suffix');
   }
   return 1;
@@ -1348,22 +1557,6 @@ String _syncIdentifier(Offer offer) {
   return _looksLikeUuid(offer.id)
       ? offer.id
       : (offer.holdInvoicePaymentHash ?? offer.id);
-}
-
-String _waitMessage(OfferStatus s) {
-  switch (s) {
-    case OfferStatus.created:
-      return 'Waiting for hold invoice to be funded…';
-    case OfferStatus.funded:
-      return 'Funded. Waiting for taker to reserve offer…';
-    case OfferStatus.reserved:
-      return 'Reserved. Waiting for taker to submit BLIK…';
-    case OfferStatus.blikReceived:
-    case OfferStatus.blikSentToMaker:
-      return 'BLIK received.';
-    default:
-      return 'Status: ${s.name}';
-  }
 }
 
 /// Parse `--key value` pairs. Boolean flags (e.g. `--json`) are stored with an
