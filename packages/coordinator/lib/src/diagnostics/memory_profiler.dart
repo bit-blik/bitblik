@@ -51,6 +51,7 @@ class MemoryProfiler {
         'smaps_top_regions': await _readSmapsTopRegions(),
         'fd_counts': await _readFdCounts(),
         'sockstat': await _readSockstat(),
+        'process_socket_summary': await _readProcessSocketSummary(),
         'cgroup_memory': await _readCgroupMemory(),
         'cgroup_memory_stat': await _readCgroupMemoryStat(),
         'coordinator': _coordinatorService.debugSnapshot(),
@@ -311,6 +312,53 @@ class MemoryProfiler {
     return out;
   }
 
+  Future<Map<String, Object>> _readProcessSocketSummary() async {
+    final socketInodes = await _readProcessSocketInodes();
+    if (socketInodes.isEmpty) {
+      return const {
+        'socket_fd_count': 0,
+        'tcp_state_counts': <String, int>{},
+        'tcp_remote_endpoints': <String, int>{},
+        'unmapped_socket_fd_count': 0,
+      };
+    }
+
+    final stateCounts = <String, int>{};
+    final remoteCounts = <String, int>{};
+    final matchedInodes = <String>{};
+
+    for (final path in ['/proc/net/tcp', '/proc/net/tcp6']) {
+      final file = File(path);
+      if (!await file.exists()) continue;
+      final lines = await file.readAsLines();
+      for (final line in lines.skip(1)) {
+        final parts = line.trim().split(RegExp(r'\s+'));
+        if (parts.length < 10) continue;
+        final inode = parts[9];
+        if (!socketInodes.contains(inode)) continue;
+
+        matchedInodes.add(inode);
+        final state = _tcpStateName(parts[3]);
+        stateCounts.update(state, (count) => count + 1, ifAbsent: () => 1);
+
+        final remote = _decodeProcNetAddress(parts[2]);
+        remoteCounts.update(remote, (count) => count + 1, ifAbsent: () => 1);
+      }
+    }
+
+    final sortedRemoteCounts = remoteCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return {
+      'socket_fd_count': socketInodes.length,
+      'tcp_state_counts': stateCounts,
+      'tcp_remote_endpoints': {
+        for (final entry in sortedRemoteCounts.take(10)) entry.key: entry.value,
+      },
+      'unmapped_socket_fd_count': socketInodes.length - matchedInodes.length,
+    };
+  }
+
   Future<Map<String, int>> _readCgroupMemory() async {
     Future<int?> readFirstInt(String path) async {
       final file = File(path);
@@ -398,6 +446,74 @@ class MemoryProfiler {
   int? _parseLeadingInt(String text) {
     final match = RegExp(r'(\d+)').firstMatch(text);
     return match == null ? null : int.tryParse(match.group(1)!);
+  }
+
+  Future<Set<String>> _readProcessSocketInodes() async {
+    final dir = Directory('/proc/self/fd');
+    if (!await dir.exists()) return const {};
+
+    final inodes = <String>{};
+    await for (final entity in dir.list(followLinks: false)) {
+      try {
+        final target = await Link(entity.path).target();
+        final match = RegExp(r'^socket:\[(\d+)\]$').firstMatch(target);
+        if (match != null) {
+          inodes.add(match.group(1)!);
+        }
+      } catch (_) {
+        // File descriptors can disappear while iterating; ignore races.
+      }
+    }
+    return inodes;
+  }
+
+  String _tcpStateName(String hexState) {
+    return switch (hexState.toUpperCase()) {
+      '01' => 'ESTABLISHED',
+      '02' => 'SYN_SENT',
+      '03' => 'SYN_RECV',
+      '04' => 'FIN_WAIT1',
+      '05' => 'FIN_WAIT2',
+      '06' => 'TIME_WAIT',
+      '07' => 'CLOSE',
+      '08' => 'CLOSE_WAIT',
+      '09' => 'LAST_ACK',
+      '0A' => 'LISTEN',
+      '0B' => 'CLOSING',
+      _ => 'UNKNOWN_$hexState',
+    };
+  }
+
+  String _decodeProcNetAddress(String raw) {
+    final parts = raw.split(':');
+    if (parts.length != 2) return raw;
+
+    final hostHex = parts[0];
+    final port = int.tryParse(parts[1], radix: 16);
+    if (port == null) return raw;
+
+    final host = switch (hostHex.length) {
+      8 => _decodeIpv4Hex(hostHex),
+      32 => _decodeIpv6Hex(hostHex),
+      _ => hostHex,
+    };
+    return '$host:$port';
+  }
+
+  String _decodeIpv4Hex(String hex) {
+    final bytes = <int>[];
+    for (var i = 0; i < hex.length; i += 2) {
+      bytes.add(int.parse(hex.substring(i, i + 2), radix: 16));
+    }
+    return bytes.reversed.join('.');
+  }
+
+  String _decodeIpv6Hex(String hex) {
+    final groups = <String>[];
+    for (var i = 0; i < hex.length; i += 4) {
+      groups.add(hex.substring(i, i + 4));
+    }
+    return groups.join(':');
   }
 
   _SmapsRegionClass _classifySmapsRegion(String name) {
