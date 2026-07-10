@@ -24,6 +24,10 @@ class NostrService {
   static const Duration _cacheEvictionStartupDelay = Duration(seconds: 30);
   static const Duration _cacheEvictionInterval = Duration(minutes: 1);
   static const Duration _pendingDeliveryRetryInterval = Duration(minutes: 1);
+  // relay.mostro.network rate-limits to 5 events per minute per IP, and
+  // several coordinators share the same egress IP, so startup rebroadcasts
+  // must leave most of that budget free for live offer traffic.
+  static const Duration _rebroadcastSpacing = Duration(seconds: 60);
 
   // Requests/responses/status updates are ephemeral and should be discarded
   // aggressively. Public offers are parameterized replaceable by `d`, but the
@@ -1096,14 +1100,22 @@ class NostrService {
     }
   }
 
-  /// Rebroadcast all offers to update their status on Nostr relays
+  /// Rebroadcast all offers to update their status on Nostr relays.
+  ///
+  /// Runs slowly in the background: active offers go out first, and events
+  /// are spaced [_rebroadcastSpacing] apart to respect shared-IP relay rate
+  /// limits. Terminal-status offers are only a safety net (their addressable
+  /// events normally already replaced the older state on the relays).
   Future<void> rebroadcastOffers(List<Offer> offers) async {
-    AppLogger.info('Starting rebroadcast of offers...');
+    AppLogger.info('Starting rebroadcast of ${offers.length} offers...');
+
+    final ordered = [
+      ...offers.where((o) => !_coordinatorService.isTerminalOffer(o)),
+      ...offers.where((o) => _coordinatorService.isTerminalOffer(o)),
+    ];
 
     try {
-      for (final offer in offers) {
-        // final status = _mapOfferStatusToNip69Status(offer.status);
-
+      for (final offer in ordered) {
         AppLogger.info(
             'Rebroadcasting offer ${offer.id} with status ${offer.status.name}',
             offerId: offer.id);
@@ -1124,8 +1136,7 @@ class NostrService {
           expiration: expiration,
         );
 
-        // Small delay between broadcasts to avoid overwhelming relays
-        await Future.delayed(Duration(milliseconds: 500));
+        await Future.delayed(_rebroadcastSpacing);
       }
 
       AppLogger.info('Completed rebroadcasting offers');

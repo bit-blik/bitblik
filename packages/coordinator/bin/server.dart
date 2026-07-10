@@ -109,14 +109,16 @@ Future<void> _runCoordinator(List<String> args) async {
 
     await coordinatorService.doInitialCheckStatuses();
 
-    // Rebroadcast offers from last hours if NostrService is available
+    // Rebroadcast offers from last hours if NostrService is available.
+    // Runs unawaited: events are spaced a minute apart to stay under shared-IP
+    // relay rate limits, so this can take a while and must not block startup.
     try {
       final offers = await dbService.getOffersFromLastHours();
       AppLogger.info(
-          'Found ${offers.length} offers from last 24 hours to rebroadcast');
-      await nostrService.rebroadcastOffers(offers);
+          'Found ${offers.length} offers from last hours to rebroadcast');
+      unawaited(nostrService.rebroadcastOffers(offers));
     } catch (e) {
-      AppLogger.info('Error during rebroadcast of last 24 hours offers: $e');
+      AppLogger.info('Error during rebroadcast of last hours offers: $e');
     }
 
     AppLogger.info(
