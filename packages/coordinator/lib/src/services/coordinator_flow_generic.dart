@@ -16,6 +16,10 @@ class OfferWriteSpec {
   String? takerInvoice;
   String? takerLightningAddress;
   int? takerFees;
+
+  /// Lightning routing fee (sats) charged when paying the taker's invoice —
+  /// persisted to `taker_invoice_fees`.
+  int? takerInvoiceFees;
   String? failureReason;
   bool clearTakerFields = false;
   bool preserveCodeOnClear = false;
@@ -375,6 +379,7 @@ class GenericOfferFlow implements OfferFlow {
       takerInvoice: w.takerInvoice,
       takerLightningAddress: w.takerLightningAddress,
       takerFees: w.takerFees,
+      takerInvoiceFees: w.takerInvoiceFees,
       failureReason: w.failureReason,
       clearTakerFields: w.clearTakerFields,
       preserveCodeOnClear: w.preserveCodeOnClear,
@@ -506,6 +511,7 @@ class GenericOfferFlow implements OfferFlow {
       expectedCurrentStatuses: [fromState],
       takerPaidAt: _c._clock.now().toUtc(),
       takerFees: takerFees,
+      takerInvoiceFees: feeSat,
       transitionMeta: StateTransitionMeta(
         trigger: 'auto',
         actor: 'coordinator',
@@ -516,7 +522,6 @@ class GenericOfferFlow implements OfferFlow {
         }),
       ),
     );
-    await _c._dbService.updateTakerInvoiceFees(offerId, feeSat);
     final paid = await _c._dbService.getOfferById(offerId);
     if (paid != null) {
       await _c._publishStatusUpdate(paid);

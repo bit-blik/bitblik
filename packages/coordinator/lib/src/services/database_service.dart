@@ -586,6 +586,7 @@ class DatabaseService {
     DateTime? takerPaidAt,
     DateTime? disputeAt,
     int? takerFees,
+    int? takerInvoiceFees,
     String? failureReason,
     bool clearTakerFields = false,
     bool preserveCodeOnClear = false,
@@ -618,7 +619,7 @@ class DatabaseService {
         if (code == null && !preserveCodeOnClear) 'blik_code = NULL',
         if (takerLightningAddress == null) 'taker_lightning_address = NULL',
         if (takerInvoice == null) 'taker_invoice = NULL',
-        'taker_invoice_fees = NULL',
+        if (takerInvoiceFees == null) 'taker_invoice_fees = NULL',
         if (codeReceivedAt == null && !preserveCodeOnClear)
           'blik_received_at = NULL',
         if (takerChargedAt == null) 'taker_charged_at = NULL',
@@ -652,6 +653,9 @@ class DatabaseService {
     if (settledAt != null) put('settled_at', 'settled_at', settledAt);
     if (takerPaidAt != null) put('taker_paid_at', 'taker_paid_at', takerPaidAt);
     if (takerFees != null) put('taker_fees', 'taker_fees', takerFees);
+    if (takerInvoiceFees != null) {
+      put('taker_invoice_fees', 'taker_invoice_fees', takerInvoiceFees);
+    }
     if (failureReason != null) {
       put('taker_payment_failure_reason', 'taker_payment_failure_reason',
           failureReason);

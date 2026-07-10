@@ -44,6 +44,7 @@ class SendPaymentAction extends FlowAction {
     }
 
     ctx.write.takerFees = takerFees;
+    ctx.write.takerInvoiceFees = res.result?.feeSat ?? 0;
     ctx.write.takerPaidAt = ctx.now;
     ctx.write.audit.addAll({
       'taker_fees': takerFees,
