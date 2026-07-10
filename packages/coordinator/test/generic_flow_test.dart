@@ -261,7 +261,6 @@ void main() {
         codeReceivedAt: anyNamed('codeReceivedAt'),
         disputeAt: anyNamed('disputeAt'),
         takerFees: anyNamed('takerFees'),
-      takerInvoiceFees: anyNamed('takerInvoiceFees'),
         takerInvoiceFees: anyNamed('takerInvoiceFees'),
         failureReason: anyNamed('failureReason'),
         clearTakerFields: anyNamed('clearTakerFields'),
@@ -341,7 +340,6 @@ void main() {
         codeReceivedAt: anyNamed('codeReceivedAt'),
         disputeAt: anyNamed('disputeAt'),
         takerFees: anyNamed('takerFees'),
-      takerInvoiceFees: anyNamed('takerInvoiceFees'),
         takerInvoiceFees: anyNamed('takerInvoiceFees'),
         failureReason: anyNamed('failureReason'),
         clearTakerFields: anyNamed('clearTakerFields'),
@@ -403,6 +401,31 @@ void main() {
       await pumpEventQueue(times: 100);
 
       expect(current, 'takerPaid');
+      // The Lightning routing fee reported by the backend is persisted to
+      // taker_invoice_fees as part of the takerPaid transition.
+      final capturedInvoiceFees = verify(gdb.updateOfferRawStatusIfCurrent(
+        any,
+        'takerPaid',
+        expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+        takerPubkey: anyNamed('takerPubkey'),
+        reservedAt: anyNamed('reservedAt'),
+        takerChargedAt: anyNamed('takerChargedAt'),
+        makerConfirmedAt: anyNamed('makerConfirmedAt'),
+        settledAt: anyNamed('settledAt'),
+        takerPaidAt: anyNamed('takerPaidAt'),
+        takerInvoice: anyNamed('takerInvoice'),
+        takerLightningAddress: anyNamed('takerLightningAddress'),
+        code: anyNamed('code'),
+        codeReceivedAt: anyNamed('codeReceivedAt'),
+        disputeAt: anyNamed('disputeAt'),
+        takerFees: anyNamed('takerFees'),
+        takerInvoiceFees: captureAnyNamed('takerInvoiceFees'),
+        failureReason: anyNamed('failureReason'),
+        clearTakerFields: anyNamed('clearTakerFields'),
+        transitionMeta: anyNamed('transitionMeta'),
+      )).captured;
+      expect(capturedInvoiceFees.single, 1);
       // Paid the net amount (offer 1550 - taker fee 50 = 1500).
       final paidAmounts = verify(gpay.payInvoice(
         invoice: anyNamed('invoice'),
