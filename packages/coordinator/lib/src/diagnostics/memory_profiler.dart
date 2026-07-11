@@ -38,25 +38,29 @@ class MemoryProfiler {
     await _emitSnapshot(reason: reason);
   }
 
+  Future<Map<String, dynamic>> collectSnapshot({required String reason}) async {
+    return {
+      'reason': reason,
+      'pid': pid,
+      'rss_bytes': ProcessInfo.currentRss,
+      'proc_status': await _readProcStatus(),
+      'proc_statm_pages': await _readProcStatmPages(),
+      'smaps_rollup_kb': await _readSmapsRollupKb(),
+      'smaps_categories_kb': await _readSmapsCategoriesKb(),
+      'smaps_top_regions': await _readSmapsTopRegions(),
+      'fd_counts': await _readFdCounts(),
+      'sockstat': await _readSockstat(),
+      'process_socket_summary': await _readProcessSocketSummary(),
+      'cgroup_memory': await _readCgroupMemory(),
+      'cgroup_memory_stat': await _readCgroupMemoryStat(),
+      'coordinator': _coordinatorService.debugSnapshot(),
+      'nostr': _nostrService?.debugSnapshot(),
+    };
+  }
+
   Future<void> _emitSnapshot({required String reason}) async {
     try {
-      final snapshot = <String, dynamic>{
-        'reason': reason,
-        'pid': pid,
-        'rss_bytes': ProcessInfo.currentRss,
-        'proc_status': await _readProcStatus(),
-        'proc_statm_pages': await _readProcStatmPages(),
-        'smaps_rollup_kb': await _readSmapsRollupKb(),
-        'smaps_categories_kb': await _readSmapsCategoriesKb(),
-        'smaps_top_regions': await _readSmapsTopRegions(),
-        'fd_counts': await _readFdCounts(),
-        'sockstat': await _readSockstat(),
-        'process_socket_summary': await _readProcessSocketSummary(),
-        'cgroup_memory': await _readCgroupMemory(),
-        'cgroup_memory_stat': await _readCgroupMemoryStat(),
-        'coordinator': _coordinatorService.debugSnapshot(),
-        'nostr': _nostrService?.debugSnapshot(),
-      };
+      final snapshot = await collectSnapshot(reason: reason);
       AppLogger.info(
         'MEMORY_SNAPSHOT ${jsonEncode(snapshot)}',
         action: 'system.memory_snapshot',

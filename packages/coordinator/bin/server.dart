@@ -6,6 +6,7 @@ import 'package:bitblik_coordinator/src/services/database_service.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/services/nostr_service.dart';
 import 'package:bitblik_coordinator/src/diagnostics/memory_profiler.dart';
+import 'package:bitblik_coordinator/src/diagnostics/prometheus_exporter.dart';
 import 'package:bitblik_coordinator/src/logging/app_logger.dart';
 
 Future<void> main(List<String> args) async {
@@ -57,6 +58,7 @@ Future<void> _runCoordinator(List<String> args) async {
   CoordinatorService? coordinatorService; // Nullable initially
   NostrService? nostrService; // Nullable initially
   MemoryProfiler? memoryProfiler;
+  PrometheusExporter? prometheusExporter;
 
   try {
     // Connect to Database
@@ -93,18 +95,43 @@ Future<void> _runCoordinator(List<String> args) async {
     // Set the Nostr service in the coordinator service for status updates
     coordinatorService.setNostrService(nostrService);
 
+    memoryProfiler = MemoryProfiler(
+      coordinatorService: coordinatorService,
+      nostrService: nostrService,
+      interval: Duration(
+        seconds:
+            int.tryParse(env['MEMORY_PROFILING_INTERVAL_SECONDS'] ?? '') ?? 30,
+      ),
+    );
+
     final memoryProfilingEnabled =
         (env['MEMORY_PROFILING'] ?? '').toLowerCase() == '1' ||
             (env['MEMORY_PROFILING'] ?? '').toLowerCase() == 'true';
     if (memoryProfilingEnabled) {
-      final intervalSeconds =
-          int.tryParse(env['MEMORY_PROFILING_INTERVAL_SECONDS'] ?? '') ?? 30;
-      memoryProfiler = MemoryProfiler(
-        coordinatorService: coordinatorService,
-        nostrService: nostrService,
-        interval: Duration(seconds: intervalSeconds),
-      );
       memoryProfiler.start();
+    }
+
+    final metricsPort = int.tryParse(
+      env['PROMETHEUS_PORT'] ?? env['METRICS_PORT'] ?? '',
+    );
+    if (metricsPort != null && metricsPort > 0) {
+      final host = InternetAddress.tryParse(
+            env['PROMETHEUS_HOST'] ?? env['METRICS_HOST'] ?? '',
+          ) ??
+          InternetAddress.anyIPv4;
+      final scrapeCacheSeconds = int.tryParse(
+            env['PROMETHEUS_SCRAPE_CACHE_SECONDS'] ??
+                env['METRICS_SCRAPE_CACHE_SECONDS'] ??
+                '',
+          ) ??
+          5;
+      prometheusExporter = PrometheusExporter(
+        memoryProfiler: memoryProfiler,
+        host: host,
+        port: metricsPort,
+        scrapeCacheTtl: Duration(seconds: scrapeCacheSeconds),
+      );
+      await prometheusExporter.start();
     }
 
     await coordinatorService.doInitialCheckStatuses();
@@ -131,6 +158,7 @@ Future<void> _runCoordinator(List<String> args) async {
     ProcessSignal.sigint.watch().listen((signal) async {
       AppLogger.info('\nReceived SIGINT, shutting down...');
       await memoryProfiler?.emitManualSnapshot('sigint');
+      await prometheusExporter?.stop();
       await memoryProfiler?.stop();
       await coordinatorService?.shutdown();
       await nostrService?.disconnect(); // Disconnect from Nostr
@@ -142,6 +170,7 @@ Future<void> _runCoordinator(List<String> args) async {
     ProcessSignal.sigterm.watch().listen((signal) async {
       AppLogger.info('\nReceived SIGTERM, shutting down...');
       await memoryProfiler?.emitManualSnapshot('sigterm');
+      await prometheusExporter?.stop();
       await memoryProfiler?.stop();
       await coordinatorService?.shutdown();
       await nostrService?.disconnect();
@@ -156,6 +185,7 @@ Future<void> _runCoordinator(List<String> args) async {
     AppLogger.info('❌ Error during server startup: $e');
     // Attempt cleanup even on startup error
     await memoryProfiler?.stop();
+    await prometheusExporter?.stop();
     await coordinatorService?.shutdown();
     await nostrService?.disconnect();
     await dbService.disconnect();
