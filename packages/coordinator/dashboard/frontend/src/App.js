@@ -1086,7 +1086,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
                       <YAxis allowDecimals={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                      <Tooltip formatter={(value) => formatNumber(value)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                      <Tooltip formatter={(value) => formatNumber(value)} itemSorter={(item) => -(item.value ?? 0)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
                       <Legend />
                       {categoryKeys.map((key, index) => (
                         <Bar key={key} dataKey={key} stackId="categories" fill={categoryColor(key, index)} name={key} />
@@ -1105,7 +1105,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
                       <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                      <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                      <Tooltip formatter={(value) => formatCurrency(value)} itemSorter={(item) => -(item.value ?? 0)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
                       <Legend />
                       {categoryKeys.map((key, index) => (
                         <Bar key={key} dataKey={key} stackId="categories" fill={categoryColor(key, index)} name={key} />
@@ -1128,7 +1128,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
                       <YAxis allowDecimals={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                      <Tooltip formatter={(value) => formatNumber(value)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                      <Tooltip formatter={(value) => formatNumber(value)} itemSorter={(item) => -(item.value ?? 0)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
                       <Legend />
                       {clientKeys.map((key, index) => (
                         <Line key={key} type="monotone" dataKey={key} stroke={clientColor(key, index)} strokeWidth={2} name={key} dot={{ r: 3 }} connectNulls />
