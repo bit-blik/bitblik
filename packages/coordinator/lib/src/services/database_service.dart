@@ -5,6 +5,31 @@ import 'package:dotenv/dotenv.dart';
 import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
 
+/// Context for a single offer state transition, recorded in
+/// `offer_state_history` when [DatabaseService.recordStateHistory] is on.
+///
+/// [trigger] is the cause class: `user_action` (an RPC from maker/taker),
+/// `timeout` (a server timer fired), `auto` (a coordinator-driven follow-up such
+/// as the settlement/payout tail) or `coordinator`. When a status-changing DB
+/// call supplies no meta, the transition is still recorded with trigger `auto`.
+class StateTransitionMeta {
+  final String trigger;
+  final String? event;
+  final String? actor;
+  final String? actorPubkey;
+  final Map<String, dynamic>? extra;
+
+  const StateTransitionMeta({
+    required this.trigger,
+    this.event,
+    this.actor,
+    this.actorPubkey,
+    this.extra,
+  });
+
+  static const StateTransitionMeta auto = StateTransitionMeta(trigger: 'auto');
+}
+
 /// A Telegram message sent for an offer, tracked so it can be edited later.
 class TelegramOfferMessage {
   final String offerId;
@@ -28,6 +53,11 @@ class DatabaseService {
   PostgreSQLConnection? _connection;
   late DotEnv _env;
   bool _auditTableReady = false;
+  bool _stateHistoryTableReady = false;
+
+  /// When true, every offer status change is appended to `offer_state_history`.
+  /// Enabled for FLOW_MODE generic (where it replaces the log_audit trail).
+  bool recordStateHistory = false;
 
   DatabaseService() {
     _env = DotEnv(includePlatformEnvironment: true)..load();
@@ -57,6 +87,7 @@ class DatabaseService {
           action: 'database.connection.opened');
       await _ensureOffersTable();
       await _ensureLogAuditTable();
+      await _ensureOfferStateHistoryTable();
       await _ensureTelegramOfferMessagesTable();
     } catch (e) {
       AppLogger.severe(
@@ -211,6 +242,109 @@ class DatabaseService {
         action: 'database.schema.log_audit.ready');
   }
 
+  Future<void> _ensureOfferStateHistoryTable() async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute('''
+      CREATE TABLE IF NOT EXISTS offer_state_history (
+        id BIGSERIAL PRIMARY KEY,
+        offer_id UUID NOT NULL,
+        from_state TEXT,
+        to_state TEXT NOT NULL,
+        trigger_type TEXT NOT NULL,
+        event TEXT,
+        actor TEXT,
+        actor_pubkey TEXT,
+        metadata JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    ''');
+    // Per-offer chronological read: WHERE offer_id = ? ORDER BY created_at, id.
+    await _connection!.execute('''
+      CREATE INDEX IF NOT EXISTS idx_offer_state_history_offer
+        ON offer_state_history (offer_id, created_at, id);
+    ''');
+    _stateHistoryTableReady = true;
+    AppLogger.info('offer_state_history table checked/created.',
+        action: 'database.schema.offer_state_history.ready');
+  }
+
+  /// Append one transition row. Best-effort: never throws into the caller's
+  /// main flow (a history write must not fail an offer transition).
+  Future<void> _recordStateTransition({
+    required String offerId,
+    required String? fromState,
+    required String toState,
+    StateTransitionMeta? meta,
+  }) async {
+    if (!recordStateHistory) return;
+    if (_connection == null || _connection!.isClosed) return;
+    final m = meta ?? StateTransitionMeta.auto;
+    try {
+      if (!_stateHistoryTableReady) {
+        await _ensureOfferStateHistoryTable();
+      }
+      await _connection!.execute(
+        '''
+          INSERT INTO offer_state_history
+            (offer_id, from_state, to_state, trigger_type, event, actor, actor_pubkey, metadata)
+          VALUES
+            (@offer_id, @from_state, @to_state, @trigger_type, @event, @actor, @actor_pubkey, CAST(@metadata AS JSONB))
+        ''',
+        substitutionValues: {
+          'offer_id': offerId,
+          'from_state': fromState,
+          'to_state': toState,
+          'trigger_type': m.trigger,
+          'event': m.event,
+          'actor': m.actor,
+          'actor_pubkey': m.actorPubkey,
+          'metadata': m.extra == null ? null : jsonEncode(m.extra),
+        },
+      );
+    } catch (e) {
+      AppLogger.warning('Failed to record offer_state_history for $offerId: $e',
+          offerId: offerId);
+    }
+  }
+
+  /// Public entry point for recording a transition the flow engine performed
+  /// outside the status-update methods (e.g. the genesis funded entry, which is
+  /// an INSERT rather than an UPDATE). No-op unless [recordStateHistory] is on.
+  Future<void> recordOfferTransition({
+    required String offerId,
+    required String? fromState,
+    required String toState,
+    StateTransitionMeta? meta,
+  }) =>
+      _recordStateTransition(
+          offerId: offerId, fromState: fromState, toState: toState, meta: meta);
+
+  /// Chronological transition history for an offer (oldest first).
+  Future<List<Map<String, dynamic>>> getOfferStateHistory(String offerId) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final rows = await _connection!.query(
+      '''
+        SELECT from_state, to_state, trigger_type, event, actor, actor_pubkey, metadata, created_at
+        FROM offer_state_history
+        WHERE offer_id = @offer_id
+        ORDER BY created_at, id
+      ''',
+      substitutionValues: {'offer_id': offerId},
+    );
+    return rows
+        .map((r) => {
+              'from_state': r[0],
+              'to_state': r[1],
+              'trigger_type': r[2],
+              'event': r[3],
+              'actor': r[4],
+              'actor_pubkey': r[5],
+              'metadata': r[6],
+              'created_at': (r[7] as DateTime?)?.toUtc().toIso8601String(),
+            })
+        .toList();
+  }
+
   Future<void> _ensureTelegramOfferMessagesTable() async {
     if (_connection == null) throw StateError('Database not connected.');
     await _connection!.execute('''
@@ -337,8 +471,8 @@ class DatabaseService {
     final now = DateTime.now().toUtc();
     await _connection!.execute(
       '''
-        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category, premium_percent, client_version)
-        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category, @premium_percent, @client_version)
+        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, blik_code, blik_received_at, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category, premium_percent, client_version)
+        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @blik_code, @blik_received_at, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category, @premium_percent, @client_version)
       ''',
       substitutionValues: {
         'id': offer.id,
@@ -346,6 +480,8 @@ class DatabaseService {
         'maker_fees': offer.makerFees,
         'taker_fees': offer.takerFees,
         'maker_pubkey': offer.makerPubkey,
+        'blik_code': offer.blikCode,
+        'blik_received_at': offer.blikReceivedAt?.toUtc(),
         'hold_invoice_payment_hash': offer.holdInvoicePaymentHash,
         'hold_invoice_preimage': offer.holdInvoicePreimage,
         'status': offer.status.name,
@@ -395,6 +531,178 @@ class DatabaseService {
     return results.map(_mapRowToOffer).toList();
   }
 
+  // ─── Generic (yaml-driven) flow support ─────────────────────────────────
+  // These operate on raw status strings instead of [OfferStatus], for flows
+  // whose states are not enum-bound (see [[project-dual-flow-engine]]). They
+  // are intentionally dumb: the GenericFlowController decides which fields to
+  // set/clear; the DB just applies them.
+
+  Future<List<Offer>> getOffersByRawStatus(String status,
+      {int limit = 1000, int offset = 0}) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final results = await _connection!.query(
+      'SELECT * FROM offers WHERE status = @status ORDER BY created_at DESC LIMIT @limit OFFSET @offset',
+      substitutionValues: {
+        'status': status,
+        'limit': limit,
+        'offset': offset,
+      },
+    );
+    return results.map(_mapRowToOffer).toList();
+  }
+
+  /// All offers whose raw status is NOT one of [terminalStatuses]. Used by the
+  /// generic startup sweep to re-arm timers.
+  Future<List<Offer>> getOffersNotInRawStatuses(List<String> terminalStatuses,
+      {int limit = 5000}) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final results = await _connection!.query(
+      'SELECT * FROM offers WHERE NOT (status = ANY(CAST(@terminals AS TEXT[]))) '
+      'ORDER BY created_at DESC LIMIT @limit',
+      substitutionValues: {'terminals': terminalStatuses, 'limit': limit},
+    );
+    return results.map(_mapRowToOffer).toList();
+  }
+
+  /// Atomic compare-and-set on a raw status string. Applies any provided field
+  /// updates; when [clearTakerFields] is set, clears the taker/code/timestamp
+  /// columns (used by revert-to-open and terminal transitions).
+  /// [preserveCodeOnClear] keeps `blik_code` through such a clear — for flows
+  /// where the code belongs to the maker (e.g. TWINT), not the taker.
+  Future<bool> updateOfferRawStatusIfCurrent(
+    String id,
+    String newStatus, {
+    List<String>? expectedCurrentStatuses,
+    String? expectedTakerPubkey,
+    String? takerPubkey,
+    String? code,
+    String? takerInvoice,
+    String? takerLightningAddress,
+    DateTime? reservedAt,
+    DateTime? codeReceivedAt,
+    DateTime? takerChargedAt,
+    DateTime? makerConfirmedAt,
+    DateTime? settledAt,
+    DateTime? takerPaidAt,
+    DateTime? disputeAt,
+    int? takerFees,
+    int? takerInvoiceFees,
+    String? failureReason,
+    bool clearTakerFields = false,
+    bool preserveCodeOnClear = false,
+    StateTransitionMeta? transitionMeta,
+  }) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final now = DateTime.now().toUtc();
+    final params = <String, dynamic>{
+      'id': id,
+      'status': newStatus,
+      'updated_at': now,
+    };
+    final set = <String>['status = @status', 'updated_at = @updated_at'];
+
+    void put(String col, String key, dynamic value) {
+      params[key] = value;
+      set.add('$col = @$key');
+    }
+
+    if (clearTakerFields) {
+      // NULL the taker-owned columns, except those this same write explicitly
+      // sets — a transition may clear the taker AND write fresh values in one
+      // atomic update (e.g. enter_new_twint: clear_taker_fields + set_new_code
+      // + stamp_code_received_at). Explicit updates below always win.
+      set.addAll([
+        if (takerPubkey == null) 'taker_pubkey = NULL',
+        if (reservedAt == null) 'reserved_at = NULL',
+        // In maker-provides-code flows (preserveCodeOnClear) the code and its
+        // issued-at stamp belong to the maker and survive the clear.
+        if (code == null && !preserveCodeOnClear) 'blik_code = NULL',
+        if (takerLightningAddress == null) 'taker_lightning_address = NULL',
+        if (takerInvoice == null) 'taker_invoice = NULL',
+        if (takerInvoiceFees == null) 'taker_invoice_fees = NULL',
+        if (codeReceivedAt == null && !preserveCodeOnClear)
+          'blik_received_at = NULL',
+        if (takerChargedAt == null) 'taker_charged_at = NULL',
+        if (disputeAt == null) 'dispute_at = NULL',
+        'dispute_escalation_reason = NULL',
+      ]);
+    }
+    if (takerPubkey != null) put('taker_pubkey', 'taker_pubkey', takerPubkey);
+    if (code != null) put('blik_code', 'blik_code', code);
+    if (takerInvoice != null) {
+      put('taker_invoice', 'taker_invoice', takerInvoice);
+    }
+    if (takerLightningAddress != null) {
+      put('taker_lightning_address', 'taker_lightning_address',
+          takerLightningAddress);
+    }
+    if (reservedAt != null) {
+      put('reserved_at', 'reserved_at', reservedAt.toUtc());
+    }
+    if (codeReceivedAt != null) {
+      put('blik_received_at', 'blik_received_at', codeReceivedAt.toUtc());
+    }
+    if (takerChargedAt != null) {
+      params['taker_charged_at'] = takerChargedAt.toUtc();
+      set.add(
+          'taker_charged_at = COALESCE(taker_charged_at, @taker_charged_at)');
+    }
+    if (makerConfirmedAt != null) {
+      put('maker_confirmed_at', 'maker_confirmed_at', makerConfirmedAt);
+    }
+    if (settledAt != null) put('settled_at', 'settled_at', settledAt);
+    if (takerPaidAt != null) put('taker_paid_at', 'taker_paid_at', takerPaidAt);
+    if (takerFees != null) put('taker_fees', 'taker_fees', takerFees);
+    if (takerInvoiceFees != null) {
+      put('taker_invoice_fees', 'taker_invoice_fees', takerInvoiceFees);
+    }
+    if (failureReason != null) {
+      put('taker_payment_failure_reason', 'taker_payment_failure_reason',
+          failureReason);
+    }
+    if (disputeAt != null) {
+      params['dispute_at'] = disputeAt.toUtc();
+      set.add('dispute_at = COALESCE(dispute_at, @dispute_at)');
+    }
+
+    final where = <String>['id = @id'];
+    if (expectedCurrentStatuses != null && expectedCurrentStatuses.isNotEmpty) {
+      params['expected_current_statuses'] = expectedCurrentStatuses;
+      where.add('status = ANY(CAST(@expected_current_statuses AS TEXT[]))');
+    }
+    if (expectedTakerPubkey != null) {
+      params['expected_taker_pubkey'] = expectedTakerPubkey;
+      where.add('taker_pubkey = @expected_taker_pubkey');
+    }
+
+    // When recording history, capture the pre-update status atomically via a
+    // self-join subquery (evaluated against the statement-start snapshot) and
+    // RETURN it, so from_state is race-free.
+    if (recordStateHistory) {
+      final result = await _connection!.query(
+        'UPDATE offers AS o SET ${set.join(', ')} '
+        'FROM (SELECT status AS old_status FROM offers WHERE id = @id) AS prev '
+        'WHERE ${where.join(' AND ')} RETURNING prev.old_status',
+        substitutionValues: params,
+      );
+      final ok = result.affectedRowCount == 1;
+      if (ok) {
+        await _recordStateTransition(
+          offerId: id,
+          fromState: result.first.first as String?,
+          toState: newStatus,
+          meta: transitionMeta,
+        );
+      }
+      return ok;
+    }
+    final result = await _connection!.query(
+      'UPDATE offers SET ${set.join(', ')} WHERE ${where.join(' AND ')}',
+      substitutionValues: params,
+    );
+    return result.affectedRowCount == 1;
+  }
+
   Future<bool> updateTakerInvoice(String id, String takerInvoice) async {
     if (_connection == null) throw StateError('Database not connected.');
     final now = DateTime.now().toUtc();
@@ -436,7 +744,8 @@ class DatabaseService {
       DateTime? takerChargedAt,
       DisputeEscalationReason? disputeEscalationReason,
       int? takerFees,
-      String? failureReason}) async {
+      String? failureReason,
+      StateTransitionMeta? transitionMeta}) async {
     return _updateOfferStatusInternal(
       id,
       newStatus,
@@ -450,6 +759,7 @@ class DatabaseService {
       disputeEscalationReason: disputeEscalationReason,
       takerFees: takerFees,
       failureReason: failureReason,
+      transitionMeta: transitionMeta,
     );
   }
 
@@ -465,7 +775,8 @@ class DatabaseService {
       DisputeEscalationReason? disputeEscalationReason,
       int? takerFees,
       String? failureReason,
-      String? expectedTakerPubkey}) async {
+      String? expectedTakerPubkey,
+      StateTransitionMeta? transitionMeta}) async {
     return _updateOfferStatusInternal(
       id,
       newStatus,
@@ -481,6 +792,7 @@ class DatabaseService {
       failureReason: failureReason,
       expectedCurrentStatuses: expectedCurrentStatuses,
       expectedTakerPubkey: expectedTakerPubkey,
+      transitionMeta: transitionMeta,
     );
   }
 
@@ -496,7 +808,8 @@ class DatabaseService {
       int? takerFees,
       String? failureReason,
       List<OfferStatus>? expectedCurrentStatuses,
-      String? expectedTakerPubkey}) async {
+      String? expectedTakerPubkey,
+      StateTransitionMeta? transitionMeta}) async {
     // Renamed parameter
     // Added takerFees
     if (_connection == null) throw StateError('Database not connected.');
@@ -640,6 +953,24 @@ class DatabaseService {
     // unquoted postgres array literal `{funded}`, producing
     // `CAST({funded} AS TEXT[])` -> 42601 syntax error at or near "{".
     // query() binds the array as a typed parameter correctly.
+    if (recordStateHistory) {
+      final result = await _connection!.query(
+        'UPDATE offers AS o SET ${setClauses.join(', ')} '
+        'FROM (SELECT status AS old_status FROM offers WHERE id = @id) AS prev '
+        'WHERE ${whereClauses.join(' AND ')} RETURNING prev.old_status',
+        substitutionValues: params,
+      );
+      final ok = result.affectedRowCount == 1;
+      if (ok) {
+        await _recordStateTransition(
+          offerId: id,
+          fromState: result.first.first as String?,
+          toState: newStatus.name,
+          meta: transitionMeta,
+        );
+      }
+      return ok;
+    }
     final result = await _connection!.query(
       'UPDATE offers SET ${setClauses.join(', ')} WHERE ${whereClauses.join(' AND ')}',
       substitutionValues: params,
@@ -757,7 +1088,17 @@ class DatabaseService {
       coordinatorPubkey: map['coordinator_pubkey'] ?? '',
       holdInvoicePaymentHash: map['hold_invoice_payment_hash'],
       holdInvoicePreimage: map['hold_invoice_preimage'],
-      status: OfferStatus.values.byName(map['status']),
+      // Generic (yaml-driven) flows store raw state strings that have no
+      // OfferStatus value; keep the verbatim string in statusRaw and fall back
+      // to the unknown sentinel for the enum view.
+      status: () {
+        try {
+          return OfferStatus.values.byName(map['status'] as String);
+        } catch (_) {
+          return OfferStatus.unknown;
+        }
+      }(),
+      statusRaw: map['status'] as String,
       createdAt: (map['created_at'] as DateTime).toLocal(),
       fiatAmount: double.parse(map['fiat_amount']),
       fiatCurrency: map['fiat_currency'] ?? '?',

@@ -15,6 +15,13 @@ void main() {
       expect(kMbway.currency, 'EUR');
     });
 
+    test('twint spec: 5 digits, 5 min, CHF, maker-provided code', () {
+      expect(kTwint.codeLength, 5);
+      expect(kTwint.confirmationWindow, const Duration(minutes: 5));
+      expect(kTwint.currency, 'CHF');
+      expect(kTwint.makerProvidesCodeAtOfferCreation, isTrue);
+    });
+
     test('isValidCode enforces exact length and digits-only', () {
       expect(kBlik.isValidCode('123456'), isTrue);
       expect(kBlik.isValidCode('12345'), isFalse);
@@ -22,13 +29,15 @@ void main() {
       expect(kBlik.isValidCode('12345a'), isFalse);
       expect(kMbway.isValidCode('1234567890'), isTrue);
       expect(kMbway.isValidCode('123456'), isFalse);
+      expect(kTwint.isValidCode('12345'), isTrue);
+      expect(kTwint.isValidCode('1234'), isFalse);
     });
 
     test('canDispenseAtmAmount respects banknote combinations', () {
-      // mbway notes: 5,10,20,50,100,200
-      expect(kMbway.canDispenseAtmAmount(15), isTrue); // 5+10
+      // mbway notes: 20,50,100,200
+      expect(kMbway.canDispenseAtmAmount(15), isFalse);
       expect(kMbway.canDispenseAtmAmount(70), isTrue); // 50+20
-      expect(kMbway.canDispenseAtmAmount(5), isTrue);
+      expect(kMbway.canDispenseAtmAmount(20), isTrue);
       expect(kMbway.canDispenseAtmAmount(3), isFalse); // below smallest note
       expect(kMbway.canDispenseAtmAmount(0), isFalse);
       expect(kMbway.canDispenseAtmAmount(-10), isFalse);
@@ -40,6 +49,7 @@ void main() {
     test('paymentSystemById falls back to blik for unknown/null', () {
       expect(paymentSystemById('mbway'), kMbway);
       expect(paymentSystemById('blik'), kBlik);
+      expect(paymentSystemById('twint'), kTwint);
       expect(paymentSystemById('nope'), kBlik);
       expect(paymentSystemById(null), kBlik);
     });
@@ -47,6 +57,7 @@ void main() {
     test('paymentSystemForCurrency maps currency to method', () {
       expect(paymentSystemForCurrency('PLN'), kBlik);
       expect(paymentSystemForCurrency('eur'), kMbway);
+      expect(paymentSystemForCurrency('chf'), kTwint);
       expect(paymentSystemForCurrency('USD'), isNull);
       expect(paymentSystemForCurrency(null), isNull);
     });

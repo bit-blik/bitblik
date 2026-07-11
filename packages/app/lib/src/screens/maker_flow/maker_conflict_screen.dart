@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:bitblik_core/core.dart';
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import '../../widgets/coordinator_nostr_contact.dart';
 
@@ -93,7 +94,7 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
           content: Text(t.maker.confirmPayment.feedback.confirmedTakerPaid),
         ),
       );
-      context.go('/maker-success', extra: widget.offer);
+      context.go(flowEntryRoute(ref, '/maker-success'), extra: widget.offer);
     } catch (e) {
       final errorMsg = t.maker.confirmPayment.errors.confirming(
         details: e.toString(),

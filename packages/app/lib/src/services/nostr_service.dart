@@ -16,6 +16,42 @@ import '../utils/platform_detection.dart';
 import 'coordinator_prefs_store.dart';
 import 'key_service.dart';
 import 'nostr_cache_factory.dart';
+import 'relay_reconnect_gate.dart';
+
+/// Result of a reserve_offer RPC. Generic (yaml-driven) coordinators return
+/// the full offer json ([offer] non-null); legacy enum coordinators return
+/// only the reservation timestamp.
+typedef ReserveOfferResult = ({DateTime? reservedAt, Offer? offer});
+
+/// The taker's local reserved offer after a successful reserve: prefer the
+/// coordinator's full offer json when present (server truth: raw flow state,
+/// blik_received_at as the code-lifespan countdown base, updated_at), falling
+/// back to patching the listed offer for legacy enum coordinators.
+Offer reservedOfferFromResult(
+  Offer listed,
+  String takerId,
+  ReserveOfferResult result,
+) {
+  final remote = result.offer;
+  if (remote != null) {
+    var merged = remote;
+    if (merged.takerPubkey == null) {
+      merged = merged.copyWith(takerPubkey: takerId);
+    }
+    // Never lose the coordinator routing: the response json may omit or blank
+    // it, and follow-up RPCs (e.g. the TWINT code fetch) route by it.
+    if (merged.coordinatorPubkey.isEmpty ||
+        merged.coordinatorPubkey == 'unknown_coordinator') {
+      merged = merged.copyWith(coordinatorPubkey: listed.coordinatorPubkey);
+    }
+    return merged;
+  }
+  return listed.copyWith(
+    status: OfferStatus.reserved,
+    takerPubkey: takerId,
+    reservedAt: result.reservedAt,
+  );
+}
 
 /// Service for Nostr-based communication with coordinators
 class NostrService {
@@ -23,6 +59,7 @@ class NostrService {
   /// events) and to bootstrap NDK. All per-coordinator communication is routed
   /// to each coordinator's own relays (see [CoordinatorRegistry.relaysFor]).
   static const List<String> _defaultRelayUrls = kDiscoveryRelays;
+
 
   final KeyService _keyService;
   Ndk? _ndk;
@@ -38,11 +75,13 @@ class NostrService {
   StreamSubscription<List<CoordinatorRecord>>? _coordinatorRegistryChangesSub;
   Set<String> _offerSubscriptionAuthors = const {};
   bool _offerSubscriptionRequested = false;
+
   /// `#y` platform tag the offers subscription filters on. Follows the active
   /// payment system so each market only receives its own offers (and the
   /// new-offer notifications derived from them). Defaults to the historical
   /// `Bitblik` value until [startOfferSubscription] sets it.
   String _offerPlatformTag = 'Bitblik';
+
   /// The platform tag the currently-live subscription was built with, so a tag
   /// change (payment-system switch) re-fires the REQ even if authors are equal.
   String? _liveOfferSubscriptionPlatformTag;
@@ -141,7 +180,8 @@ class NostrService {
   /// Relays to subscribe/query across all enabled coordinators, falling back to
   /// discovery relays when none are known yet.
   List<String> _enabledCoordinatorRelays() {
-    final relays = _coordinatorRegistry?.relaysForEnabled().toList() ?? const [];
+    final relays =
+        _coordinatorRegistry?.relaysForEnabled().toList() ?? const [];
     return relays.isEmpty ? _relayUrls : relays;
   }
 
@@ -199,9 +239,7 @@ class NostrService {
         eventVerifier: eventVerifier,
         bootstrapRelays: _relayUrls,
         logLevel: kDebugMode ? LogLevel.debug : LogLevel.warning,
-        cashuUserSeedphrase: CashuUserSeedphrase(
-          seedPhrase: cashuSeedPhrase,
-        ),
+        cashuUserSeedphrase: CashuUserSeedphrase(seedPhrase: cashuSeedPhrase),
       ),
     );
 
@@ -255,8 +293,7 @@ class NostrService {
 
   /// Subscribe to response events from coordinator (via [BitblikRpcClient]).
   Future<void> _subscribeToResponses() async {
-    if (_keyService.publicKeyHex == null ||
-        _keyService.privateKeyHex == null) {
+    if (_keyService.publicKeyHex == null || _keyService.privateKeyHex == null) {
       throw Exception('KeyService not initialized');
     }
 
@@ -302,6 +339,13 @@ class NostrService {
     }
     if (_rpcClient == null) {
       throw Exception('RPC client not initialized');
+    }
+
+    // iOS PWA: if the app just came back to foreground, a relay reconnect may be
+    // in flight (see RelayReconnectGate / AppLifecycleNotifier). Wait for fresh
+    // sockets before writing so we never publish onto a zombie connection.
+    if (kIsWeb) {
+      await RelayReconnectGate.instance.ensureReady();
     }
 
     try {
@@ -355,6 +399,7 @@ class NostrService {
     OfferCategory? category,
     required String coordinatorPubkey,
     double premiumPercent = 0,
+    String? blikCode,
   }) async {
     final request = NostrRequest(
       method: kRpcInitiateOffer,
@@ -363,6 +408,7 @@ class NostrService {
         'fiat_currency': fiatCurrency,
         if (category != null) 'category': category.name,
         if (premiumPercent > 0) 'premium_percent': premiumPercent,
+        if (blikCode != null && blikCode.isNotEmpty) 'blik_code': blikCode,
       },
     );
 
@@ -522,31 +568,75 @@ class NostrService {
   }
 
   /// POST /offers/{offerId}/reserve
-  Future<DateTime?> reserveOffer(
+  Future<ReserveOfferResult> reserveOffer(
     String offerId,
     String takerId,
-    String coordinatorPubkey,
-  ) async {
+    String coordinatorPubkey, {
+    String? takerLightningAddress,
+    String? takerInvoice,
+  }) async {
     final request = NostrRequest(
       method: kRpcReserveOffer,
-      params: {'offer_id': offerId},
+      params: {
+        'offer_id': offerId,
+        // D1: generic flows (TWINT) capture the taker's payout details at
+        // reserve via the `accept_taker_invoice` effect. Legacy enum flows
+        // (BLIK) ignore these extra params.
+        if (takerLightningAddress != null && takerLightningAddress.isNotEmpty)
+          'taker_lightning_address': takerLightningAddress,
+        if (takerInvoice != null && takerInvoice.isNotEmpty)
+          'taker_invoice': takerInvoice,
+      },
     );
 
     final response = await sendRequest(request, coordinatorPubkey);
     return _handleResponse(response, (result) {
-      final timestamp = result['reserved_at'] as int?;
-      if (timestamp != null) {
-        return DateTime.fromMillisecondsSinceEpoch(timestamp, isUtc: true);
+      // Generic (yaml-driven) coordinators answer with the full offer json —
+      // keep it: it carries server truth the flow UI needs (raw state,
+      // blik_received_at as the code-lifespan countdown base, updated_at).
+      // Enum coordinators return only {reserved_at: epoch-ms}.
+      Offer? offer;
+      if (result['id'] is String && result['status'] is String) {
+        try {
+          offer = Offer.fromJson(result);
+        } catch (_) {
+          offer = null;
+        }
       }
-      return null;
+      final raw = result['reserved_at'];
+      DateTime? reservedAt;
+      if (raw is int) {
+        reservedAt = DateTime.fromMillisecondsSinceEpoch(raw, isUtc: true);
+      } else if (raw is String) {
+        reservedAt = DateTime.tryParse(raw)?.toUtc();
+      }
+      return (reservedAt: reservedAt, offer: offer);
     });
+  }
+
+  /// Generic dispatcher for yaml-driven (generic) flows. The transition [event]
+  /// IS the RPC method name, so this sends it verbatim with `offer_id` plus any
+  /// [extraParams] a screen collected (e.g. `taker_invoice`, `blik_code`).
+  /// Returns the coordinator result map; throws [NostrException] on error.
+  Future<Map<String, dynamic>> sendFlowAction({
+    required String event,
+    required String offerId,
+    required String coordinatorPubkey,
+    Map<String, dynamic> extraParams = const {},
+  }) async {
+    final request = NostrRequest(
+      method: event,
+      params: {'offer_id': offerId, ...extraParams},
+    );
+    final response = await sendRequest(request, coordinatorPubkey);
+    return _handleResponse(response, (result) => result);
   }
 
   /// POST /offers/{offerId}/blik
   Future<void> submitBlikCode({
     required String offerId,
     required String takerId,
-    required String blikCode,
+    String? blikCode,
     required String takerInvoice,
     required String coordinatorPubkey,
   }) async {
@@ -554,7 +644,7 @@ class NostrService {
       method: kRpcSubmitBlik,
       params: {
         'offer_id': offerId,
-        'blik_code': blikCode,
+        if (blikCode != null && blikCode.isNotEmpty) 'blik_code': blikCode,
         'taker_invoice': takerInvoice,
       },
     );
@@ -643,7 +733,8 @@ class NostrService {
       });
     } catch (e) {
       Logger.log.e(
-        () => "Error getting offer details from coordinator ${coordinatorPubkey}: $e",
+        () =>
+            "Error getting offer details from coordinator ${coordinatorPubkey}: $e",
       );
       if (strict) rethrow;
       return null;
@@ -651,9 +742,9 @@ class NostrService {
   }
 
   bool _looksLikeUuid(String s) => RegExp(
-        r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-        caseSensitive: false,
-      ).hasMatch(s);
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  ).hasMatch(s);
 
   /// DELETE /offers/{offerId}/cancel
   Future<void> cancelOffer(String offerId, String coordinatorPubkey) async {
@@ -776,11 +867,12 @@ class NostrService {
     }
 
     // Only aggregate coordinators serving the selected payment system.
-    final coordinators = paymentSystemId == null
-        ? coordinatorRegistry.enabled
-        : coordinatorRegistry.enabled
-            .where((c) => c.paymentSystem == paymentSystemId)
-            .toList();
+    final coordinators =
+        paymentSystemId == null
+            ? coordinatorRegistry.enabled
+            : coordinatorRegistry.enabled
+                .where((c) => c.paymentSystem == paymentSystemId)
+                .toList();
     if (coordinators.isEmpty) {
       Logger.log.w(() => "No coordinators enabled, cannot get stats.");
       return _emptyStats();
@@ -860,18 +952,18 @@ class NostrService {
   }
 
   Map<String, dynamic> _emptyStats() => {
-        'total_sats': 0,
-        'total_offers': 0,
-        'offers': <Offer>[],
-        'stats': {
-          for (final window in ['lifetime', 'last_7_days'])
-            window: {
-              'avg_time_reserved_to_created_seconds': null,
-              'avg_time_taker_paid_to_created_seconds': null,
-              'count': 0,
-            },
+    'total_sats': 0,
+    'total_offers': 0,
+    'offers': <Offer>[],
+    'stats': {
+      for (final window in ['lifetime', 'last_7_days'])
+        window: {
+          'avg_time_reserved_to_created_seconds': null,
+          'avg_time_taker_paid_to_created_seconds': null,
+          'count': 0,
         },
-      };
+    },
+  };
 
   /// Paginated fetch of `s=success` [kKindOffer] events for [authors] from
   /// [relays], newer than [since]. Dedupes by addressable coordinate

@@ -1,0 +1,5 @@
+#include "Debug.xcconfig"
+BUNDLE_DISPLAY_NAME = Bittwint
+PRODUCT_BUNDLE_IDENTIFIER = app.bittwint
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-bittwint
+LAUNCH_SCREEN_STORYBOARD = LaunchScreen-bittwint

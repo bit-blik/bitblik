@@ -45,8 +45,12 @@ class OfferListTile extends ConsumerWidget {
     ).format(offer.fiatAmount);
     final dateLabel = formatLocalizedDateTime(context, offer.createdAt);
 
-    final statusLabel =
-        offerStatusLabel(t, offer.status, code: offerCodeLabel(offer));
+    final statusLabel = offerStatusLabel(
+      t,
+      offer.status,
+      code: offerCodeLabel(offer),
+      statusRaw: offer.statusRaw,
+    );
     final statusColor = _statusColor(offer.status);
 
     final isMaker = myPubkey != null && offer.makerPubkey == myPubkey;

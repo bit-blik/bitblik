@@ -1,0 +1,1184 @@
+# =============================================================================
+# GLOBAL APPLICATION ELEMENTS
+# =============================================================================
+app:
+  title: ${app}
+  greeting: Bonjour !
+  changelog: Journal des modifications
+
+# =============================================================================
+# COMMON UI ELEMENTS
+# =============================================================================
+common:
+  buttons:
+    cancel: Annuler
+    save: Enregistrer
+    done: Terminé
+    retry: Réessayer
+    goHome: Accueil
+    saveAndContinue: Enregistrer et continuer
+    reveal: Afficher
+    hide: Masquer
+    copy: Copier
+    close: Fermer
+    restore: Restaurer
+    faq: FAQ
+
+  labels:
+    amount: "Montant (${currency})"
+    status: "Statut : ${status}" # Used by taker.waitConfirmation
+    role: "Rôle : ${role}"
+
+  notifications:
+    success: Succès
+    error: Erreur
+    loading: Chargement...
+
+  clipboard:
+    copyToClipboard: Copier dans le presse-papiers
+    pasteFromClipboard: Coller depuis le presse-papiers
+    copied: Copié dans le presse-papiers !
+
+  actions:
+    cancelAndReturnToOffers: Annuler et revenir aux offres
+    cancelAndReturnHome: Annuler et revenir à l'accueil
+
+# =============================================================================
+# LIGHTNING ADDRESS MANAGEMENT
+# =============================================================================
+lightningAddress:
+  labels:
+    address: Adresse Lightning (LNURL)
+    hint: utilisateur@domaine.com
+    short: "Adresse Lightning : ${address}"
+    receivingAddress: "Votre adresse de réception :"
+
+  prompts:
+    enter: Saisissez votre adresse Lightning pour continuer
+    edit: Modifier
+    invalid: Saisissez une adresse Lightning valide
+    required: L'adresse Lightning est requise.
+    enterToTakeOffer: Vous devez définir une adresse Lightning pour accepter une offre.
+    missing: Adresse Lightning manquante. Veuillez en ajouter une pour pouvoir accepter des offres.
+    add: Ajouter
+    delete: Supprimer
+    confirmDelete: Voulez-vous vraiment supprimer votre adresse Lightning ?
+    howToGet: "Vous n'avez pas encore d'adresse Lightning ? Découvrez comment en obtenir une !"
+    learnMore: En savoir plus sur les adresses Lightning
+
+  feedback:
+    saved: Adresse Lightning enregistrée !
+    updated: Adresse Lightning mise à jour !
+    valid: Adresse Lightning valide
+
+  errors:
+    saving: "Erreur lors de l'enregistrement de l'adresse : ${details}"
+    loading: "Erreur lors du chargement de l'adresse Lightning : ${details}"
+
+# =============================================================================
+# OFFERS AND TRANSACTIONS
+# =============================================================================
+offers:
+  details:
+    yourOffer: "Votre offre :"
+    selectedOffer: "Offre :"
+    activeOffer: "Vous avez une offre active :"
+    finishedOffers: Offres terminées
+    noAvailable: Aucune offre disponible.
+    noAvailableTip: "Astuce : partagez ${app} dans votre communauté et parmi vos amis pour augmenter le nombre de commandes ${app}."
+    noSuccessfulTrades: Aucun échange réussi.
+    loadingDetails: "Chargement des détails de l'offre..." # Used by taker.paymentProcess & taker.waitConfirmation
+
+    amount: "Montant : ${amount} satoshi"
+    amountWithCurrency: "${amount} ${currency}"
+    makerFee: "Frais : ${fee} sats"
+    takerFee: "Frais : ${fee} sats"
+    subtitle: "${sats} + ${fee} (frais) satoshi\nStatut : ${status}"
+    subtitleWithDate: "${sats} + ${fee} (frais) satoshi\nStatut : ${status}\nPayé : ${date}"
+    activeSubtitle: "Statut : ${status}\nMontant : ${amount} satoshi"
+    id: "ID de l'offre : ${id}..."
+    created: "Créée : ${dateTime}"
+    takenAfter: "Acceptée après : ${duration}"
+    paidAfter: "Payée après : ${duration}"
+    exchangeRate: "Taux de change"
+    amountLabel: "Montant"
+    makerFeeLabel: "Frais maker"
+    takerFeeLabel: "Frais taker"
+    feeLabel: "Frais"
+    statusLabel: "Statut"
+    youllReceive: "Vous recevrez"
+    coordinator: "Coordinateur"
+    categoryLabel: "Catégorie"
+    categories:
+      physicalShop: "Magasin, café ou restaurant"
+      atmCashout: "Retrait au distributeur"
+      onlineService: "Service/produit en ligne"
+    consents:
+      atm: "Certains distributeurs ajoutent des frais supplémentaires au montant de l'offre. En acceptant cette offre, vous acceptez tous les frais bancaires supplémentaires exigés par le distributeur."
+      ecommerce: "Pour diverses raisons — article en rupture de stock, correction d'un trop-perçu ou autres problèmes côté commerçant — le commerçant en ligne peut automatiquement renvoyer de l'argent vers le compte bancaire lié au ${code} que vous avez généré. Ces fonds arrivent sur votre compte mais ne vous appartiennent pas. Si cela se produit, contactez le coordinateur de bonne foi et organisez la restitution des fonds au maker. En acceptant cette offre, vous acceptez ces conditions et vous engagez sur l'honneur à agir honnêtement dans de telles situations."
+
+  labels:
+    premium: "Prime"
+    premiumBadge: "+${percent}% de prime"
+
+  tooltips:
+    takerFeeInfo: "Le coordinateur facture des frais taker de ${feePercent}%. Ils incluent les frais de routage Lightning et sont déduits du montant que vous recevez."
+    premiumInfoTaker: "Une prime signifie que cette offre est au-dessus du prix du marché. Pour le même montant fiat, le maker verrouille moins de sats dans la facture hold : vous payez donc au-dessus du marché et recevez moins de sats qu'au taux du marché. La prime maximale est fixée par le coordinateur."
+    ratesFetchedAt: "Récupéré à"
+    ratesSources: "Sources du taux moyen"
+
+  actions:
+    take: ACCEPTER
+    takeOffer: Accepter l'offre
+    resume: SAISIR ${code}
+    cancel: Annuler l'offre
+    view: Voir les détails
+
+  status:
+    created: "Créée"
+    funded: "Financée"
+    expired: "Expirée"
+    cancelled: "Annulée"
+    reserved: "Réservée"
+    blikReceived: "${code} envoyé"
+    blikSentToMaker: "${code} reçu"
+    expiredBlik: "${code} expiré"
+    expiredSentBlik: "${code} expiré"
+    takerCharged: "Taker débité"
+    invalidBlik: "${code} invalide"
+    conflict: "Conflit"
+    dispute: "Litige"
+    makerConfirmed: "Confirmée"
+    settled: "Réglée"
+    payingTaker: "Paiement du taker"
+    takerPaymentFailed: "Échec du paiement au taker"
+    takerPaid: "Taker payé"
+    unknownStatus: "Inconnu"
+
+  statusMessages:
+    reserved: Offre réservée par un taker !
+    cancelled: Offre annulée avec succès.
+    cancelledOrExpired: L'offre a été annulée ou a expiré. # Used by taker.waitConfirmation
+    noLongerAvailable: "L'offre n'est plus disponible (Statut : ${status})."
+
+  progress:
+    waitingForTaker: "En attente d'un taker : ${time}"
+    reserved: "Réservée : ${seconds} s restantes"
+    confirming: "Confirmation : ${seconds} s restantes"
+
+  errors:
+    loading: "Erreur lors du chargement des offres : ${details}"
+    loadingDetails: "Erreur lors du chargement des détails de l'offre : ${details}"
+    detailsMissing: "Erreur : détails de l'offre manquants ou invalides."
+    detailsNotLoaded: Impossible de charger les détails de l'offre.
+    notFound: "Erreur : offre introuvable."
+    unexpectedState: "Erreur : l'offre est dans un état inattendu."
+    unexpectedStateWithStatus: "L'offre est dans un état inattendu (${status}). Veuillez réessayer ou contacter le support." # Used by taker.waitConfirmation
+    invalidStatus: L'offre a un statut invalide.
+    couldNotIdentify: "Erreur : impossible d'identifier l'offre à annuler."
+    cannotBeCancelled: "L'offre ne peut pas être annulée dans son état actuel (${status})."
+    failedToCancel: "Échec de l'annulation de l'offre : ${details}"
+    activeDetailsLost: "Erreur : détails de l'offre active perdus."
+    checkingActive: "Erreur lors de la vérification des offres actives : ${details}"
+    cannotResume: "Impossible de reprendre l'offre dans cet état : ${status}"
+    cannotResumeTaker: "Impossible de reprendre l'offre taker dans cet état : ${status}"
+    resuming: "Erreur lors de la reprise de l'offre : ${details}"
+    makerPublicKeyNotFound: Clé publique du maker introuvable
+    takerPublicKeyNotFound: Clé publique du taker introuvable.
+    atmConsentRequired: "Acceptez la condition relative aux frais de distributeur avant d'accepter cette offre."
+    ecommerceConsentRequired: "Acceptez la condition de restitution des remboursements e-commerce avant d'accepter cette offre."
+    cannotTakeOwnOffer: "Vous ne pouvez pas accepter votre propre offre."
+
+  success:
+    title: Offre terminée
+    headline: Paiement confirmé !
+    subtitle: Le taker va maintenant être payé.
+    detailsTitle: "Détails de l'offre :"
+    duration: "L'offre a pris ${time} pour se terminer."
+
+# =============================================================================
+# RESERVATIONS
+# =============================================================================
+reservations:
+  actions:
+    cancel: Annuler la réservation
+
+  feedback:
+    cancelled: Réservation annulée.
+
+  errors:
+    cancelling: "Échec de l'annulation de la réservation : ${error}"
+    failedToReserve: "Échec de la réservation de l'offre : ${details}"
+    failedNoTimestamp: Échec de la réservation de l'offre (pas d'horodatage).
+    timestampMissing: Horodatage de la réservation de l'offre manquant.
+    notReserved: "L'offre n'est plus à l'état réservé (${status})."
+
+# =============================================================================
+# EXCHANGE RATES AND AMOUNTS
+# =============================================================================
+exchange:
+  labels:
+    enterAmount: "Saisissez le montant (${currency}) à payer :"
+    equivalent: "≈ ${sats} satoshi"
+    rate: "Taux de change ≈ ${rate} ${currency}/BTC"
+
+  feedback:
+    fetching: Récupération du taux de change...
+
+  errors:
+    fetchingRate: Impossible de récupérer le taux de change.
+    invalidFormat: Format de nombre invalide
+    mustBePositive: Le montant doit être positif
+    invalidFeePercentage: Pourcentage de frais invalide
+    tooLowFiat: "Le montant est trop faible. Le minimum est ${minAmount} ${currency}."
+    tooHighFiat: "Le montant est trop élevé. Le maximum est ${maxAmount} ${currency}."
+    atmNotDispensable: "Le distributeur ne peut pas délivrer ce montant. Utilisez une combinaison de billets : ${notes}."
+
+# =============================================================================
+# COORDINATOR INFORMATION
+# =============================================================================
+coordinator:
+  title: "Coordinateurs"
+  info:
+    fee: "frais"
+    rangeDisplay: "Montant : ${minAmount}-${maxAmount} ${currency}"
+    feeDisplay: "${fee}% de frais"
+
+  selector:
+    loading: "Chargement des coordinateurs..."
+    errorLoading: "Erreur lors du chargement des coordinateurs"
+    choose: "Choisir un coordinateur"
+    viewNostrProfile: "Voir le profil Nostr"
+    unresponsive: "Ce coordinateur ne répond pas"
+    waitingResponse: "En attente de la réponse du coordinateur"
+    termsAccept: "J'accepte les "
+    termsOfUsage: "conditions d'utilisation du coordinateur"
+
+  dialog:
+    makerFee: "Frais maker"
+    takerFee: "Frais taker"
+    amountRange: "Plage de montants"
+    reservationTime: "Durée de réservation"
+    currencies: "Devises"
+    viewTerms: "Voir les conditions"
+
+  details:
+    title: "Coordinateur"
+    relaysInUse: "Relais utilisés"
+    relaysInUseHint: "Toute la communication avec ce coordinateur passe par ces relais (issus de sa liste NIP-65)."
+    noRelays: "Aucun relais connu pour l'instant"
+    makerFee: "Frais maker"
+    takerFee: "Frais taker"
+    amountRange: "Plage de montants"
+    maxPremium: "Prime max"
+    maxPremiumInfoTitle: "Prime"
+    maxPremiumInfoBody: "Une prime est une majoration facultative du prix au-dessus du taux du marché qu'un maker peut appliquer à une offre. Avec une prime, le maker verrouille moins de sats pour le même montant fiat : le taker paie donc au-dessus du marché et le maker garde la différence. Cette valeur est la prime la plus élevée que ce coordinateur autorise sur ses offres."
+    reservationTime: "Durée de réservation"
+    currencies: "Devises"
+    paymentSystem: "Système de paiement"
+    version: "Version"
+    yourOffers: "Vos offres"
+    successfulOffers: "Offres réussies (30 j)"
+    statusOnline: "En ligne"
+    statusOffline: "Hors ligne"
+    statusUnknown: "Inconnu"
+    openNostrProfile: "Ouvrir le profil Nostr"
+    termsOfUsage: "Conditions d'utilisation"
+
+  coldStart:
+    title: "Découverte des coordinateurs"
+    body: "${app} recherche des coordinateurs publics, vérifie lesquels sont joignables et active pour vous une petite sélection par défaut."
+    settingsHint: "Vous pourrez modifier les coordinateurs activés plus tard dans les Réglages."
+    ok: "OK"
+    discovered: "Découverts"
+    candidates: "Candidats"
+    enabled: "Activés"
+    recordsTitle: "Coordinateurs actuels"
+    recordEnabled: "Activé"
+    recordHealthyCandidate: "Candidat opérationnel"
+    recordOfflineCandidate: "Candidat hors ligne"
+    recordChecking: "Vérification"
+    recordDiscovered: "Découvert"
+    phases:
+      loadingMuteList: "Chargement des filtres de coordinateurs"
+      discovering: "Découverte des coordinateurs sur Nostr"
+      loadingProfiles: "Chargement des profils des coordinateurs"
+      loadingStats: "Lecture de l'historique des coordinateurs"
+      checkingHealth: "Vérification de la disponibilité des coordinateurs"
+      finalizing: "Activation des coordinateurs par défaut"
+      completed: "Terminé"
+
+  management:
+    title: "Gestion des coordinateurs"
+    availableCoordinators: "Coordinateurs"
+    noCoordinators: "Aucun coordinateur découvert pour l'instant."
+    online: "En ligne"
+    unknownOffline: "Inconnu/Hors ligne"
+    openNostrProfile: "Ouvrir le profil Nostr"
+    enable: "Activer"
+    remove: "Retirer"
+    addCustomWhitelist: "Ajouter un coordinateur personnalisé"
+    addCustomWhitelistHint: "npub1..."
+    add: "Ajouter"
+    coordinatorDisabled: "Coordinateur désactivé"
+    coordinatorEnabled: "Coordinateur activé"
+    coordinatorAdded: "Coordinateur ajouté à la liste blanche personnalisée"
+    coordinatorRemoved: "Coordinateur retiré de la liste blanche personnalisée"
+    coordinatorAddInfoUnavailable: "Aucune information sur ce coordinateur trouvée sur les relais. Coordinateur non ajouté."
+    pleaseEnterNpub: "Veuillez saisir un npub"
+    error: "Erreur"
+    metricYourOffers: "Vos offres"
+    metricYourOffersTooltip: "Nombre d'offres que vous avez menées à bien avec ce coordinateur."
+    metricNetworkOffers: "Offres (30 j)"
+    metricNetworkOffersTooltip: "Offres réussies réglées par ce coordinateur pour l'ensemble des utilisateurs au cours des 30 derniers jours."
+
+# =============================================================================
+# MAKER FLOW
+# =============================================================================
+maker:
+  roleSelection:
+    button: PAYER avec Lightning
+
+  amountForm:
+    progress:
+      step1: "1. Créer l'offre"
+      step2: "2. Attendre un taker"
+      step3: "3. Utiliser le ${code}"
+    labels:
+      coordinator: Coordinateur
+      category: Catégorie
+      exchangeRate: Taux de change
+      fee: Frais
+      satoshisToPay: Montant à payer
+      enterAmount: Saisir le montant
+      customAmount: Personnalisé
+      tapToSelect: Touchez pour sélectionner
+      premium: Prime
+    actions:
+      generateInvoice: Générer la facture
+    twintScan:
+      cardTitle: "Scanner le QR ${code} et le montant"
+      cardBody: "Pointez la caméra vers l'écran de paiement. L'application préremplira le code et, s'il est visible, le montant."
+      scanButton: "Scanner avec la caméra"
+      manualButton: "Saisir manuellement à la place"
+      codeLabel: "Code ${code}"
+      rescan: "Scanner à nouveau"
+      helperFilled: "Le taker verra ce code et le saisira dans ${code}."
+      helperEmpty: "Scannez pour remplir ceci automatiquement, ou saisissez manuellement le code à ${digits} chiffres."
+
+    tooltips:
+      feeInfo: "Le coordinateur facture des frais maker de ${feePercent}%. Ces frais sont déduits de votre paiement Lightning."
+      payInfo: "Ce calcul est basé sur des taux de change récupérés côté client. Le coordinateur calculera le montant exact, et le montant de la facture sera le montant final et exact à payer."
+      premiumInfo: "Une prime facultative vous permet de vendre vos sats au-dessus du prix du marché. La prime réduit les sats verrouillés dans votre facture hold pour le même montant fiat : le taker paie donc au-dessus du marché et vous gardez la différence. Désactivée par défaut (0%). La prime maximale est fixée par le coordinateur sélectionné."
+
+    category:
+      label: "Catégorie de l'offre"
+      unsupportedForSystem: "${system} ne prend pas en charge cette catégorie."
+      options:
+        physicalShop: "Magasin, café ou restaurant"
+        atmCashout: "Retrait au distributeur"
+        onlineService: "Service/produit en ligne"
+      shortLabels:
+        shop: "Magasin"
+        atm: "Distributeur"
+        online: "En ligne"
+      atmHint: "Les takers verront que cette offre concerne un retrait au distributeur et pourront l'éviter si leur banque facture des frais de distributeur supplémentaires."
+      physicalShopHint: "L'endroit idéal pour utiliser ${app} est une caisse en libre-service — car attendre qu'un taker réserve, génère et confirme un code ${code} peut prendre quelques minutes. Fonctionne très bien dans les magasins, cafés et restaurants. Si vous êtes assez courageux pour faire patienter un caissier ordinaire (et les personnes dans la file derrière vous) pendant ces quelques minutes, tant mieux pour vous."
+      ecommerceWarningTitle: "Risque de remboursement par le commerçant en ligne"
+      ecommerceWarningBody: "Pour diverses raisons — article en rupture de stock, correction d'un trop-perçu ou autres problèmes côté commerçant — le commerçant en ligne peut automatiquement émettre un remboursement vers le compte bancaire lié au ${code}, c'est-à-dire le compte du taker. Le coordinateur ne peut pas forcer le taker à vous restituer ces fonds."
+      ecommerceConfirmation: "Je comprends le risque de remboursement et j'ajouterai une note à la commande demandant au commerçant de rembourser un autre compte si un remboursement devient nécessaire."
+      whyThisIsNeeded: "pourquoi est-ce nécessaire ?"
+    onboarding:
+      titlePrefix: "Nouveau"
+      title: "Choisissez la catégorie de l'offre"
+      body: "Choisissez la catégorie qui correspond le mieux à ce que vous payez avant de générer la facture."
+      showWhy: "Pourquoi est-ce important ?"
+      hideWhy: "Masquer les détails"
+      whyTitle: "Choisir la bonne catégorie aide les takers à décider en toute sécurité"
+      whyBody: "Des situations différentes impliquent des attentes et des risques différents. Les retraits au distributeur peuvent inclure des frais bancaires supplémentaires, et les achats en ligne peuvent comporter des cas particuliers de remboursement. Indiquer la bonne catégorie donne aux takers le contexte dont ils ont besoin avant d'accepter votre offre."
+      cta: "Compris"
+
+    errors:
+      initiating: "Erreur lors de la création de l'offre : ${details}"
+      publicKeyNotLoaded: "Erreur : clé publique pas encore chargée."
+      noCoordinatorMatchesAmount: "Aucun coordinateur ne prend en charge ce montant. Essayez une autre valeur."
+      categoryRequired: "Sélectionnez une catégorie d'offre."
+      ecommerceConfirmationRequired: "Confirmez le risque de remboursement du commerçant en ligne avant de continuer."
+
+  payInvoice:
+    title: "Payez cette facture hold :"
+    actions:
+      copy: Copier la facture
+      payInWallet: Ouvrir dans un portefeuille externe
+      connectWallet: Connecter un portefeuille
+      payWithNwc: "Payer"
+      paying: Paiement en cours...
+
+    feedback:
+      copied: Facture copiée dans le presse-papiers !
+      waitingConfirmation: En attente de la confirmation du paiement...
+      nwcConnected: Portefeuille NWC connecté !
+      nwcPaymentSuccess: Paiement réussi !
+
+    errors:
+      couldNotOpenApp: Impossible d'ouvrir l'application Lightning pour la facture.
+      openingApp: "Erreur lors de l'ouverture de l'application Lightning : ${details}"
+      publicKeyNotAvailable: La clé publique n'est pas disponible.
+      couldNotFetchActive: Impossible de récupérer les détails de l'offre active. Elle a peut-être expiré.
+      nwcPaymentFailed: "Paiement échoué : ${details}"
+      nwcNotConnected: Portefeuille NWC non connecté
+      insufficientBalance: "Solde insuffisant. ${required} sats nécessaires, ${available} sats disponibles"
+      cancelOfferAlreadyFunded: "Le coordinateur indique que cette offre est déjà financée. Elle ne peut plus être annulée."
+      cancelFailed: "Impossible d'annuler l'offre : ${details}"
+
+    budgetWarning:
+      title: "Le paiement peut échouer"
+      balanceTooLow: "Votre portefeuille de dépense par défaut ${name} n'a pas un solde suffisant pour ce paiement."
+      budgetTooLow: "Votre portefeuille de dépense par défaut ${name} n'a pas un budget de dépense suffisant pour ce paiement."
+      balanceLine: "Solde : ${available}"
+      budgetLine: "Budget NWC restant : ${remaining}"
+      requiredLine: "Nécessaire : ${required}"
+      addFundsHint: "Ajoutez des fonds à ${name} pour couvrir ce montant."
+      increaseBudgetHint: "Augmentez le budget de dépense NWC de cette connexion dans votre application de portefeuille."
+      switchWalletLabel: "Ou utilisez un autre portefeuille :"
+      walletLowFundsTag: "Peut échouer"
+      payAnyway: "Essayer quand même"
+      cancel: "Annuler"
+      readyTitle: "Payer la facture"
+
+  waitTaker:
+    message: En attente d'un taker pour réserver votre offre...
+    progressLabel: "En attente d'un taker : ${time}"
+    errorActiveOfferDetailsLost: "Erreur : détails de l'offre active perdus."
+    errorFailedToRetrieveBlik: "Erreur : impossible de récupérer le code ${code}."
+    errorRetrievingBlik: "Erreur lors de la récupération du code ${code} : ${details}"
+    offerNoLongerAvailable: "L'offre n'est plus disponible (Statut : ${status})."
+    errorCouldNotIdentifyOffer: "Erreur : impossible d'identifier l'offre à annuler."
+    offerCannotBeCancelled: "L'offre ne peut pas être annulée dans son état actuel (${status})."
+    offerCancelledSuccessfully: "Offre annulée avec succès."
+    failedToCancelOffer: "Échec de l'annulation de l'offre : ${details}"
+    offerExpiredTitle: "Offre expirée"
+    offerExpiredMessage: "Aucun taker n'a réservé votre offre à temps."
+    recreateOffer: "Nouvelle offre — même montant"
+
+  waitForBlik:
+    title: En attente du ${code}
+    messageInfo: Un taker a réservé l'offre !
+    messageWaiting: En attente de la fourniture du code ${code}...
+    #timeLimitWithSeconds: "Taker has ${seconds} seconds to provide ${code} code."
+    progressLabel: "Réservée : ${seconds} s restantes"
+
+  confirmPayment:
+    title: Code ${code} reçu !
+    retrieving: Récupération du code ${code}...
+    instructions: Saisissez ce code dans le terminal de paiement. Lorsque le taker confirme dans son application bancaire et que le paiement est réussi, appuyez sur Confirmer ci-dessous.
+    instruction1: Saisissez le code dans la demande de paiement ${code}.
+    instruction2: Attendez que le taker confirme le paiement dans son application.
+    instruction3: "Lorsque le paiement est réussi, appuyez sur Confirmer ci-dessous :"
+    # Optional payment-system + language specific instructions shown in a blue
+    # info box below the code. Only rendered for methods that define one.
+    mbwayAtmInstructions: "Pour retirer ${amount} €, rendez-vous au distributeur MULTIBANCO le plus proche, appuyez sur la touche verte et choisissez l'option \"Retirer de l'argent\" (\"Levantar Dinheiro\"). Saisissez le code. Ce code est valable ${minutes} minutes."
+
+    takerChargedWarning: "Le taker a signalé que le paiement ${code} a été débité de son compte bancaire. Si vous le marquez comme invalide, cela créera un conflit."
+    autoConfirmInfo: "Sauf si vous marquez le ${code} comme invalide, le paiement sera confirmé automatiquement et le taker payé à la fin de ce compte à rebours."
+    autoConfirmCountdown: "Confirmation automatique dans ${time}"
+
+    expiredTitle: Code ${code} expiré
+    expiredWarning: "Le code ${code} a expiré. Vous devez confirmer manuellement le statut du paiement :"
+    expiredInstruction1: "Si le paiement ${code} a réussi et que vous avez terminé votre achat, cliquez sur \"Confirmer le paiement réussi\" ci-dessous."
+    expiredInstruction2: "Si le paiement ${code} a échoué ou n'a pas été effectué, cliquez sur \"Code ${code} invalide\" ci-dessous."
+
+    actions:
+      confirm: Confirmer le paiement réussi
+      markInvalid: Code ${code} invalide
+      copyBlik: Copier le ${code}
+
+    confirmDialog:
+      title: Confirmer le paiement ?
+      content: "Cette action est irréversible. Après confirmation :\n\n• Le taker recevra les fonds immédiatement\n• Le coordinateur ne pourra pas contester les fonds\n• Vous ne pourrez pas annuler cette action\n\nNe confirmez que si le paiement ${code} a réussi."
+      cancel: Annuler
+      confirmButton: Oui, confirmer le paiement
+
+    invalidBlikDisputeDialog:
+      title: Ouvrir un litige ?
+      content: "Le taker a signalé que le paiement ${code} a été débité de son compte.\n\nLe marquer comme invalide ouvrira immédiatement un LITIGE nécessitant l'intervention du coordinateur.\n\n• Des frais de litige peuvent être facturés si la décision est en votre défaveur\n• La facture hold sera réglée immédiatement\n• Une vérification manuelle sera nécessaire\n\nNe continuez que si vous êtes certain que le paiement ${code} n'a PAS réussi."
+      cancel: Annuler
+      confirmButton: Oui, ouvrir un litige
+
+    feedback:
+      confirmed: Le maker a confirmé le paiement.
+      confirmedTakerPaid: Paiement confirmé ! Le taker recevra les fonds.
+      progressLabel: "Confirmation : ${seconds} s restantes"
+
+    errors:
+      failedToRetrieve: "Erreur : impossible de récupérer le code ${code}."
+      retrieving: "Erreur lors de la récupération du code ${code} : ${details}"
+      missingHashOrKey: "Erreur : hash de paiement ou clé publique manquant."
+      incorrectState: "L'offre n'est pas dans le bon état pour une confirmation (Statut : ${status})"
+      confirming: "Erreur lors de la confirmation du paiement : ${details}"
+      invalidState: "Erreur : état d'offre invalide reçu."
+      internalIncomplete: "Erreur interne : détails de l'offre incomplets."
+      notAwaitingConfirmation: "L'offre n'attend plus de confirmation (Statut : ${status})."
+      unexpectedStatus: Statut d'offre inattendu reçu du serveur.
+
+  invalidBlik:
+    title: Code ${code} invalide
+    info: Vous avez marqué le code ${code} comme invalide. En attente que le taker fournisse un nouveau code ou ouvre un litige.
+
+  conflict:
+    title: Conflit sur l'offre
+    headline: Conflit sur l'offre signalé
+    body: Vous avez marqué le code ${code} comme invalide, mais le taker a signalé un conflit, indiquant qu'il estime que le paiement a réussi.
+    instructions: Attendez que le coordinateur examine la situation. Des détails supplémentaires pourront vous être demandés. Revenez plus tard ou contactez le support si nécessaire.
+
+    actions:
+      back: Retour à l'accueil
+      confirmPayment: Mon erreur, confirmer le succès du paiement ${code}
+      openDispute: Le paiement ${code} n'a PAS réussi, OUVRIR UN LITIGE
+      submitDispute: Soumettre le litige
+
+    disputeDialog:
+      title: Ouvrir un litige ?
+      content: L'ouverture d'un litige nécessite une vérification manuelle par le coordinateur, ce qui prend du temps. Des frais de litige seront déduits si la décision est en votre défaveur. La facture hold sera réglée pour éviter qu'elle n'expire. Si le litige est tranché en votre faveur, vous recevrez un remboursement (moins les frais) sur le portefeuille de votre choix.
+      contentDetailed: "L'ouverture d'un litige nécessitera une intervention manuelle du coordinateur, ce qui prend du temps et entraîne des frais de litige.\n\nLa facture hold sera immédiatement réglée pour éviter qu'elle n'expire avant la résolution du litige.\n\nSi le litige est tranché en votre faveur, le montant en satoshi sera remboursé sur le portefeuille de votre choix (moins les frais). Assurez-vous d'avoir un portefeuille prêt à recevoir."
+      actions:
+        confirm: Ouvrir un litige
+        cancel: Annuler
+
+    feedback:
+      disputeOpenedSuccess: Litige ouvert avec succès. Le coordinateur l'examinera. # Corrected
+
+    errors:
+      openingDispute: "Erreur lors de l'ouverture du litige : ${error}"
+
+    nostrContact:
+      title: Contacter le coordinateur sur Nostr
+      description: Vous pouvez envoyer un message privé au coordinateur pour obtenir de l'aide sur ce litige.
+      copyNpub: Copier le npub
+      openProfile: Voir le profil
+      npubCopied: npub du coordinateur copié dans le presse-papiers !
+      yourIdentityDescription: "Pour envoyer des messages privés, connectez-vous avec votre clé privée Neko (nsec) dans n'importe quel client Nostr prenant en charge les messages directs."
+      manageNekoKeys: Gérer les clés Neko
+
+  success:
+    title: Offre terminée
+    headline: Paiement confirmé !
+    subtitle: Le taker va maintenant être payé.
+    detailsTitle: "Détails de l'offre :"
+    duration: "L'offre a pris ${time} !"
+
+# =============================================================================
+# TAKER FLOW
+# =============================================================================
+taker:
+  roleSelection:
+    button: VENDRE un code ${code} contre des satoshi
+
+  progress:
+    step1: Envoyer le ${code}
+    step2: Confirmer le ${code}
+    step3: Être payé
+
+  submitBlik:
+    title: "Saisissez le ${code} à ${digits} chiffres"
+    label: Code ${code}
+    instruction: "Saisissez le ${code} avant la fin du délai..."
+
+    timeLimit: "Saisissez le ${code} dans les : ${seconds} s"
+    timeExpired: Le délai pour saisir le code ${code} a expiré.
+
+    actions:
+      submit: Envoyer le ${code}
+
+    feedback:
+      pasted: Code ${code} collé.
+
+    validation:
+      invalidFormat: Saisissez un code ${code} valide à ${digits} chiffres.
+
+    errors:
+      submitting: "Erreur lors de l'envoi du code ${code} : ${details}"
+      clipboardInvalid: Le presse-papiers ne contient pas de code ${code} valide à ${digits} chiffres.
+      stateChanged: "Erreur : l'état de l'offre a changé."
+      stateNotValid: "Erreur : l'état de l'offre n'est plus valide."
+      fetchedIdMismatch: "L'ID de l'offre active récupérée (${fetchedId}) ne correspond pas à l'ID initial (${initialId}). Incohérence d'état ?"
+      paymentHashMissing: Hash de paiement de l'offre manquant après récupération.
+
+    details:
+      requestedAmount: "Montant ${code} demandé"
+      exchangeRate: "Taux de change"
+      takerFee: "Frais taker"
+      status: "Statut"
+      youllReceive: "Vous recevrez"
+
+twint:
+  scanner:
+    title: "Scanner le code ${code}"
+    status:
+      align: "Alignez le QR ${code} et le texte du montant dans le cadre de la caméra."
+      notRecognized: "Le code ${code} n'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement."
+      amountFailed: "Le scan caméra n'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement."
+  flow:
+    progress:
+      step1: "1. Créer l'offre"
+      step2: "2. Attendre un taker"
+      step3: "3. Confirmer"
+    takerProgress:
+      step1: "1. Payer ${code}"
+      step2: "2. Recevoir des sats"
+    makerWait:
+      takerPaying: "Le taker est en train de payer"
+      yourCode: "Votre code ${code}"
+      offerExpires: "Le ${code} expire"
+      autoExpires: "Expire automatiquement"
+      codeExpiresIn: "${code} expirera dans..."
+      cancelOffer: "Annuler l'offre"
+      reservedInfo: "Un taker a réservé votre offre et paie maintenant votre code ${code} dans son application bancaire. Dès que le paiement arrive chez votre commerçant, confirmez-le ci-dessous."
+      confirmReceived: "Confirmer le paiement reçu"
+      confirmDialog:
+        title: "Confirmer le paiement reçu ?"
+        content: "Ne confirmez que si vous êtes ABSOLUMENT sûr que le paiement ${code} a bien été reçu chez votre commerçant.\n\nLa confirmation règle la facture Lightning et envoie immédiatement les sats au taker — c'est irréversible."
+        cancel: "Annuler"
+        confirmButton: "Oui, paiement reçu"
+    makerExpired:
+      title: "${code} probablement expiré"
+      warning: "Le code ${code} a probablement expiré — mais le taker a peut-être quand même réussi à le payer. Vérifiez chez votre commerçant : vous disposez du temps ci-dessous pour confirmer le paiement."
+      timerCaption: "Temps pour confirmer"
+      disputeHint: "Vous pouvez aussi laisser le minuteur expirer. Si le taker déclare avoir payé, cela devient un conflit/litige où les deux parties devront fournir des preuves au coordinateur pour résoudre le problème."
+    makerVerify:
+      title: "Avez-vous reçu le paiement ?"
+      body: "Le taker indique avoir payé ${amount} sur votre code ${code}."
+      hint: "Vérifiez le statut du paiement auprès de votre commerçant (terminal de magasin ou transaction en ligne). En cas de doute, attendez et revérifiez plus tard avant de décider."
+      autoConfirms: "Confirme automatiquement"
+      confirmReceived: "Confirmer la réception"
+      openDispute: "Ouvrir un litige"
+    makerRecode:
+      title: "Offre expirée"
+      body: "Aucun taker n'a terminé l'échange. Saisissez un nouveau code ${code} pour republier cette offre, ou annulez-la."
+      scanCardTitle: "Scanner le nouveau QR ${code}"
+      scanCardBody: "Pointez la caméra vers l'écran de paiement. L'app préremplira le nouveau code — le montant reste le même."
+      fieldLabel: "Nouveau code ${code}"
+      autoCancels: "Annule automatiquement"
+      relist: "Republier avec un nouveau code"
+      cancelOffer: "Annuler l'offre"
+    takerPay:
+      title: "Payer avec ${code}"
+      body: "Ouvrez votre application ${code} et payez ${amount} avec :"
+      codeExpires: "Le code expire"
+      paid: "J'ai payé"
+      cancel: "Annuler"
+    takerWait:
+      title: "En attente du maker"
+      body: "Le maker vérifie si votre paiement ${code} est arrivé chez son commerçant. Il doit confirmer la réception ou ouvrir un litige."
+      info: "Si le maker n'agit pas avant l'expiration du minuteur, le paiement se confirme automatiquement et vous recevrez vos sats."
+      autoConfirms: "Confirme automatiquement"
+    takerExpired:
+      title: "${code} probablement expiré"
+      warning: "Le code ${code} a probablement expiré. Vous devez maintenant prendre une décision importante — choisissez avec soin."
+      optionPaid: "Si vous AVEZ payé le code ${code} dans votre application bancaire, marquez-le comme payé. Cela vous engage : le maker devra confirmer pour débloquer le bitcoin, ou ouvrir un litige où les deux parties fourniront des preuves au coordinateur."
+      optionCancel: "Si vous n'avez PAS payé, annulez la réservation. C'est irréversible — si le paiement est en fait passé, le coordinateur ne pourra plus garantir vos sats."
+      noDecision: "Si vous ne prenez aucune décision avant la fin du minuteur, le coordinateur supposera que vous n'avez PAS payé le code ${code}. Le maker pourra alors annuler l'offre — annulant la facture bloquée — après quoi le coordinateur ne pourra plus vous régler les sats, même si vous avez payé."
+      timerCaption: "Temps pour décider"
+      markPaid: "J'ai payé le code ${code}"
+      cancel: "Annuler la réservation"
+      markPaidDialog:
+        title: "Confirmer le paiement ?"
+        content: "Ne continuez que si vous êtes sûr que le paiement ${code} a été débité dans votre application bancaire.\n\nLe maker devra confirmer la réception pour débloquer le bitcoin. S'il la conteste, un litige est ouvert et les deux parties devront fournir des preuves au coordinateur."
+        cancel: "Retour"
+        confirmButton: "Oui, j'ai payé"
+      cancelDialog:
+        title: "Annuler la réservation ?"
+        content: "N'annulez que si vous n'avez PAS payé le code ${code}.\n\nC'est définitif : si le paiement est en fait passé, le coordinateur ne pourra PAS garantir que vous recevrez les sats."
+        cancel: "Retour"
+        confirmButton: "Oui, annuler"
+
+  waitConfirmation:
+    title: "En attente du maker"
+    statusLabel: "Statut de l'offre : ${status}"
+    waitingMaker: "En attente de la confirmation du maker : ${seconds} s"
+    waitingMakerConfirmation: "En attente que le maker confirme que le ${code} est correct. Temps restant : ${seconds}s"
+    importantNotice: "TRÈS IMPORTANT : assurez-vous de n'accepter qu'une confirmation ${code} de ${amount} ${currency}"
+    importantBlikAmountConfirmation: "TRÈS IMPORTANT : dans votre application bancaire, assurez-vous de confirmer un paiement ${code} d'exactement ${amount} ${currency}."
+    instructions: Le maker doit maintenant le saisir dans le terminal de paiement dans les ${minutes} minutes. Vous devrez ensuite accepter le code ${code} dans votre application bancaire.
+    instructionsNoConfirm: Le maker doit maintenant saisir votre code ${code} au distributeur dans les ${minutes} minutes.
+    categoryReminder:
+      atm: "Rappel offre distributeur : votre banque peut encore vous demander d'approuver des frais de distributeur supplémentaires en plus du montant principal."
+      ecommerce: "Rappel commande en ligne : si le commerçant envoie un remboursement automatique sur votre compte bancaire, contactez le coordinateur et restituez-le."
+    waitingForMakerToReceive: "En attente que le maker reçoive votre code ${code}..."
+    makerReceivedBlik: "Le maker a reçu votre code ${code}."
+    timerExpiredMessage: "Le délai d'expiration de ${minutes} min du ${code} est passé. En attente que le maker confirme ou marque le code comme invalide."
+    timerExpiredActions: "Le délai d'expiration de ${minutes} min du ${code} est passé mais le maker n'a pas reçu le code ${code}. Vous pouvez renvoyer un nouveau code ${code} ou annuler."
+    resendBlikButton: "Renvoyer un nouveau code ${code}"
+    navigatedHome: "Retour à l'accueil."
+
+    expiredTitle: "Code ${code} expiré"
+    expiredWarning: "Le maker n'a pas reçu le code ${code}, il n'a donc pas pu l'utiliser."
+    expiredRelistCountdownLabel: "La réservation se termine dans"
+    expiredSentWarning: "Le maker n'a pas encore confirmé le paiement. Que souhaitez-vous faire ?"
+    expiredInstruction1: "Si vous voulez réessayer avec un nouveau code ${code}, renouvelez la réservation."
+    expiredInstruction2: "Si vous ne souhaitez plus effectuer cette transaction, annulez la réservation."
+    expiredInstruction3: "Si le paiement ${code} a été débité de votre compte bancaire, pas d'inquiétude : les bitcoins sont toujours verrouillés en sécurité chez le coordinateur."
+
+    takerCharged:
+      title: "Vous avez marqué le ${code} comme débité"
+      message: "Le maker a ${minutes} min pour confirmer ou contester le paiement. S'il ne fait rien, le paiement sera confirmé automatiquement et vous recevrez les bitcoins."
+    expiredActions:
+      reportConflict: "Le ${code} a été débité de mon compte bancaire"
+      renewReservation: "Réessayer avec un nouveau code ${code}"
+      cancelReservation: "Annuler la réservation"
+
+    feedback:
+      makerConfirmed: Le maker a confirmé le paiement.
+      paymentSuccessful: Paiement réussi ! Vous recevrez les fonds sous peu.
+      conflictReported: Conflit signalé. Le coordinateur examinera la situation.
+
+    errors:
+      invalidOfferStateReceived: "Offre reçue avec un état invalide pour cet écran. Réinitialisation."
+      reportingConflict: "Erreur lors du signalement du conflit : ${details}"
+
+  paymentProcess:
+    title: Processus de paiement
+    waitingForOfferUpdate: "En attente de la mise à jour du statut de l'offre..."
+
+    states:
+      preparing: Préparation de l'envoi du paiement...
+      sending: Envoi du paiement...
+      received: Paiement reçu !
+      failed: Paiement échoué
+      waitingUpdate: En attente de la mise à jour de l'offre...
+
+    steps:
+      makerConfirmedBlik: "Le maker a confirmé le paiement ${code}"
+      makerInvoiceSettled: "Facture hold du maker réglée"
+      takerInvoicePaid: "Paiement de votre facture Lightning"
+      takerPaymentFailed: "Le paiement vers votre facture a échoué"
+
+    errors:
+      sending: "Erreur lors de l'envoi du paiement : ${details}"
+      notConfirmed: Offre non confirmée par le maker.
+      expired: Offre expirée.
+      cancelled: Offre annulée.
+      paymentFailed: Le paiement de l'offre a échoué.
+      unknown: Erreur d'offre inconnue.
+      takerPaymentFailed: "Le paiement vers votre facture Lightning a échoué."
+      noPublicKey: "Erreur : impossible de récupérer votre clé publique."
+      loadingPublicKey: Erreur lors du chargement de vos données
+      missingPaymentHash: "Erreur : détails de paiement manquants."
+
+    loading:
+      publicKey: Chargement de vos données...
+
+    actions:
+      goToFailureDetails: "Réessayer avec une nouvelle facture"
+
+  paymentFailed:
+    title: Paiement échoué
+    instructions: "Veuillez fournir une nouvelle facture Lightning de ${netAmount}"
+    form:
+      newInvoiceLabel: "Nouvelle facture Lightning"
+      newInvoiceHint: "Saisissez votre facture BOLT11"
+    actions:
+      retryPayment: "Soumettre la nouvelle facture"
+    errors:
+      enterValidInvoice: "Veuillez saisir une facture valide"
+      updatingInvoice: "Erreur lors de la mise à jour de la facture : ${details}"
+      paymentRetryFailed: "Nouvelle tentative de paiement échouée. Veuillez vérifier la facture ou réessayer plus tard."
+      takerPublicKeyNotFound: "Clé publique du taker introuvable."
+      generateFailed: "Impossible de générer la facture : ${details}"
+    walletSection:
+      title: "Générer une facture depuis le portefeuille"
+      defaultLabel: "par défaut"
+      tapToGenerate: "Touchez pour générer une facture de ${amountSats}"
+    loading:
+      processingPayment: "Traitement de votre nouvelle tentative de paiement..."
+    success:
+      title: "Paiement réussi"
+      message: "Votre paiement a été traité avec succès."
+
+  paymentSuccess:
+    title: Paiement réussi
+    message: Votre paiement a été traité avec succès.
+    actions:
+      goHome: Aller à l'accueil
+
+  invalidBlik:
+    title: Code ${code} invalide
+    message: Le maker a rejeté le code ${code}
+    explanation: Le créateur de l'offre a indiqué que le code ${code} que vous avez fourni était invalide ou n'a pas fonctionné.\n\nQue souhaitez-vous faire ?
+
+    werentCharged: "Si vous n'avez PAS été débité :"
+    wereCharged: "Si vous avez été débité :"
+
+    actions:
+      retry: Envoyer un nouveau code ${code}
+      cancelReservation: Annuler la transaction
+      reportConflict: Ouvrir un litige
+      returnHome: Retour à l'accueil
+
+    confirmDialog:
+      title: Êtes-vous sûr ?
+      content: "Une fois que vous aurez appuyé, il n'y aura pas de retour en arrière.\n\nSi le montant a BEL ET BIEN été débité de votre compte bancaire, le coordinateur ne pourra PAS garantir que vous recevrez les bitcoins, et vous pourriez perdre vos fonds.\n\nEn cas de doute, mieux vaut attendre un peu et vérifier que vous n'avez PAS été débité avant de continuer."
+      actions:
+        proceed: Je suis sûr, continuer
+        cancel: Annuler
+
+    disputeConfirmDialog:
+      title: Ouvrir un litige ?
+      content: "N'ouvrez un litige que si le montant a BEL ET BIEN été débité de votre compte bancaire.\n\nLe coordinateur examinera votre cas manuellement, ce qui prend du temps. Vous devrez fournir une preuve de paiement."
+      actions:
+        proceed: Oui, j'ai été débité
+        cancel: Annuler
+
+    feedback:
+      conflictReportedSuccess: Conflit signalé. Le coordinateur l'examinera.
+
+    errors:
+      reservationFailed: Échec de la nouvelle réservation de l'offre
+      conflictReport: "Erreur lors du signalement du conflit : ${details}"
+
+  conflict:
+    title: Conflit sur l'offre
+    headline: Conflit sur l'offre signalé
+    body: Le maker a marqué le code ${code} comme invalide, mais vous avez signalé un conflit, indiquant que vous estimez que le paiement a réussi.
+    instructions: Attendez que le coordinateur examine la situation. Des détails supplémentaires pourront vous être demandés. Revenez plus tard ou contactez le support si nécessaire.
+
+    actions:
+      back: Retour à l'accueil
+
+    feedback:
+      reported: Conflit signalé. Le coordinateur l'examinera.
+
+    errors:
+      reporting: "Erreur lors du signalement du conflit : ${details}"
+
+    nostrContact:
+      title: Contacter le coordinateur sur Nostr
+      description: Vous pouvez envoyer un message privé au coordinateur pour obtenir de l'aide sur ce litige.
+      copyNpub: Copier le npub
+      openProfile: Voir le profil
+      npubCopied: npub du coordinateur copié dans le presse-papiers !
+      yourIdentityDescription: "Pour envoyer des messages privés, connectez-vous avec votre clé privée Neko (nsec) dans n'importe quel client Nostr prenant en charge les messages directs."
+      manageNekoKeys: Gérer les clés Neko
+
+# =============================================================================
+# ${code} (General)
+# =============================================================================
+blik:
+  instructions:
+    taker: "Dès que le maker saisit le code ${code}, vous devrez confirmer le paiement dans votre application bancaire. Vérifiez que le montant est correct avant de confirmer."
+
+# =============================================================================
+# HOME SCREEN / OFFER LIST
+# =============================================================================
+home:
+  notifications:
+    title: "Soyez notifié des nouvelles offres via :"
+    telegram: Telegram
+    simplex: SimpleX
+    matrix: Matrix
+    signal: Signal
+
+  statistics:
+    title: Offres terminées
+    lifetimeCompact: "Total : ${count} transactions\nAttente moyenne du ${code} : ${avgBlikTime}\nDurée moyenne de finalisation : ${avgPaidTime}"
+    last7DaysCompact: "7 derniers jours : ${count} transactions\nAttente moyenne du ${code} : ${avgBlikTime}\nDurée moyenne de finalisation : ${avgPaidTime}"
+    last7DaysSingleLine: "7 derniers jours : ${count} offres  |  Réservation moy. : ${avgReservationTime}  |  Paiement moy. : ${avgPaidTime}"
+
+    errors:
+      loading: "Erreur lors du chargement des statistiques : ${error}"
+
+# =============================================================================
+# KEY MANAGEMENT
+# =============================================================================
+nekoInfo:
+  title: Qu'est-ce qu'un Neko ?
+  description: "Votre Neko est votre identité pour utiliser ${app}. Il est composé d'une clé privée et d'une clé publique pour garantir une communication cryptographiquement sécurisée avec le coordinateur.\n\nPour plus d'anonymat, il est recommandé d'utiliser un nouveau Neko pour chaque offre.\n\n⚠️ IMPORTANT : votre clé privée n'est stockée que sur votre appareil (côté client). Il est essentiel de sauvegarder votre clé privée, car en perdre l'accès peut vous empêcher de résoudre des litiges et de récupérer vos fonds."
+  backupWarning: "Pensez à sauvegarder votre Neko"
+
+generateNewKey:
+  title: Nouveau
+  description: Voulez-vous vraiment générer un nouveau Neko ? Votre Neko actuel sera perdu pour toujours si vous ne l'avez pas sauvegardé.
+  buttons:
+    generate: Générer
+  errors:
+    activeOffer: Vous ne pouvez pas générer un nouveau Neko tant que vous avez une offre active.
+    failed: "Impossible de générer un nouveau Neko"
+  feedback:
+    success: Nouveau Neko généré avec succès !
+  tooltips:
+    generate: Générer un nouveau Neko
+
+# =============================================================================
+# BACKUP AND RESTORE
+# =============================================================================
+backup:
+  title: Sauvegarde
+  description: Ceci est votre clé privée. Elle sécurise la communication avec le coordinateur. Ne la révélez jamais à personne. Sauvegardez-la en lieu sûr pour éviter tout problème en cas de litige.
+  feedback:
+    copied: Clé privée copiée dans le presse-papiers !
+  tooltips:
+    backup: Sauvegarder le Neko
+
+restore:
+  title: Restaurer
+  labels:
+    privateKey: Clé privée
+  buttons:
+    restore: Restaurer
+  errors:
+    invalidKey: Doit être une chaîne hexadécimale de 64 caractères.
+    failed: "Échec de la restauration"
+  feedback:
+    success: Neko restauré avec succès ! L'application va redémarrer.
+  tooltips:
+    restore: Restaurer le Neko
+
+# =============================================================================
+# SYSTEM ERRORS AND CONFIGURATIONS
+# =============================================================================
+system:
+  loadingPublicKey: "Chargement de votre clé publique..."
+  errors:
+    generic: Une erreur inattendue s'est produite. Veuillez réessayer.
+    loadingTimeoutConfig: Erreur lors du chargement de la configuration des délais.
+    loadingCoordinatorConfig: Erreur lors du chargement de la configuration du coordinateur. Veuillez réessayer.
+    noPublicKey: "Votre clé publique n'est pas disponible. Impossible de continuer."
+    internalOfferIncomplete: "Erreur interne : les détails de l'offre sont incomplets. Veuillez réessayer."
+    loadingPublicKey: "Erreur lors du chargement de votre clé publique. Veuillez redémarrer l'application."
+
+  blik:
+    copied: Code ${code} copié dans le presse-papiers
+
+# =============================================================================
+# MAIN LANDING PAGE
+# =============================================================================
+myOffers:
+  title: "Mes offres"
+  empty: "Aucune offre pour l'instant."
+  unknownCoordinator: "Coordinateur inconnu"
+  menuLabel: "Mes offres"
+  filter:
+    all: "Toutes"
+    active: "Actives"
+    completed: "Terminées"
+    failed: "Échouées"
+  details:
+    title: "Détails de l'offre"
+    notFound: "Offre introuvable."
+    amount: "Montant"
+    fees: "Frais"
+    sats: "Satoshis"
+    maker: "Maker"
+    taker: "Taker"
+    yourFee: "Vos frais"
+    makerFee: "Frais maker"
+    takerFee: "Frais taker"
+    coordinator: "Coordinateur"
+    createdAt: "Créée"
+    reservedAt: "Réservée"
+    blikReceivedAt: "${code} envoyé"
+    makerConfirmedAt: "Confirmée"
+    settledAt: "Réglée"
+    takerPaidAt: "Taker payé"
+    id: "ID de l'offre"
+    paymentHash: "Hash de paiement"
+    holdInvoice: "Facture hold"
+    continueActiveOffer: "Reprendre l'offre active"
+    after: "après ${duration}"
+
+landing:
+  mainTitle: "Votre passerelle ${code} ⇄ bitcoin"
+  subtitle: "Payez ou vendez votre code ${code} avec du bitcoin"
+  partnership: "partenariat"
+
+  actions:
+    payBlik: "Payer en ${code}"
+    payBlikSubtitle: "avec du bitcoin"
+    sellBlik: "Acheter du bitcoin"
+    sellBlikSubtitle: "avec ${code}"
+    howItWorks: "Comment ça marche ?"
+
+# =============================================================================
+# FAQ
+# =============================================================================
+faq:
+  screenTitle: FAQ
+  tooltip: FAQ
+
+# =============================================================================
+# SETTINGS
+# =============================================================================
+settings:
+  title: Réglages
+  offerCreation:
+    title: Création d'offres
+    defaultCategory: Catégorie par défaut
+    preferredCoordinator: Coordinateur préféré
+    automaticCoordinator: Le plus fiable
+    automaticCoordinatorDescription: "Choisit le coordinateur avec le meilleur historique, en combinant vos propres offres terminées et l'activité globale du réseau."
+    cheapestCoordinator: Le moins cher
+    cheapestCoordinatorDescription: "Choisit pour chaque offre le coordinateur disponible avec les frais maker les plus bas."
+    enablePremium: Activer la tarification avec prime
+    enablePremiumDescription: Affiche le curseur de prime lors de la création d'offres maker.
+    defaultPremium: Prime par défaut
+    defaultPremiumDisabled: Activez la tarification avec prime pour définir une prime par défaut.
+    premiumPerCoordinatorNote: "Chaque coordinateur fixe sa propre prime maximale, votre valeur par défaut est donc plafonnée par le coordinateur utilisé pour une offre."
+    categoryOptions:
+      shop: Magasin, café ou restaurant
+      atm: Retrait au distributeur
+      online: Service/produit en ligne
+    dialogs:
+      selectCategory: Sélectionner la catégorie par défaut
+      selectCoordinator: Sélectionner le coordinateur préféré
+      premiumHint: Saisissez un pourcentage comme 1.5. Les valeurs sont arrondies par pas de 0.5%.
+      premiumHelper: Appliquée lorsque la tarification avec prime est activée et plafonnée par le maximum du coordinateur sélectionné.
+  display:
+    title: Affichage
+    bitcoinUnit: Unité bitcoin
+    bitcoinUnitDescription: Choisissez comment les montants en bitcoin sont affichés dans l'application.
+    unitOptions:
+      sats: sats
+      bitcoin: ₿ (BIP-177)
+  paymentSystem:
+    title: Pays / Système de paiement
+    subtitle: "Choisissez le système de paiement de votre pays."
+    dialogTitle: Sélectionner le système de paiement
+    countries:
+      PL: Pologne
+      PT: Portugal
+      CH: Suisse
+
+notificationSettings:
+  title: Notifications
+  androidOnly: Les notifications en arrière-plan ne sont actuellement prises en charge que sur Android.
+  newOfferAlerts:
+    label: Alertes de nouvelles offres
+    description: Lorsque cette option est activée, ${app} vous notifie des nouvelles offres disponibles auprès de vos coordinateurs activés pendant que l'application est en arrière-plan. Cela peut être plus rapide que les messageries externes.
+
+wallet:
+  title: Portefeuille
+  description: Gérez les réglages de votre portefeuille Lightning
+  missingReceiving:
+    title: Portefeuille de réception requis
+    message: Aucun portefeuille configuré pour la réception. Ajoutez-en un dans les réglages du portefeuille pour accepter des offres.
+    openSettings: Réglages du portefeuille
+  details:
+    title: Détails du portefeuille
+    pendingTitle: Transactions en attente
+    finishedTitle: Transactions terminées
+
+nwc:
+  title: Nostr Wallet Connect (NWC)
+  description: Connectez votre portefeuille Lightning via NWC
+  labels:
+    connectionString: Chaîne de connexion NWC
+    hint: "nostr+walletconnect://..."
+    status: État de la connexion
+    connected: Connecté
+    disconnected: Déconnecté
+    scanQrCode: Scannez le QR code avec votre connexion NWC
+    balance: "Solde"
+    budget: "Budget"
+    usedBudget: "Utilisé"
+    totalBudget: "Total"
+    renewsIn: "Renouvellement dans"
+    renewalPeriod: "Période de renouvellement"
+    relay: "Relais"
+    relays: "Relais"
+  prompts:
+    enter: Saisissez votre chaîne de connexion NWC
+    connect: Connecter le portefeuille
+    disconnect: Déconnecter
+    confirmDisconnect: Voulez-vous vraiment déconnecter votre portefeuille NWC ?
+    pasteConnection: Coller la chaîne de connexion
+    chooseMethod: Choisissez comment connecter votre portefeuille Lightning
+    howToGet: "Vous n'avez pas encore de connexion NWC ? Découvrez comment en obtenir une !"
+    learnMore: En savoir plus sur NWC
+  actions:
+    connectAlbyGo: Connecter avec Alby Go
+    connectNwc: Scanner le QR code NWC
+  feedback:
+    connected: Portefeuille NWC connecté avec succès !
+    disconnected: Portefeuille NWC déconnecté
+    connecting: Connexion au portefeuille NWC...
+    loadingWalletInfo: Chargement des informations du portefeuille...
+  errors:
+    connecting: "Erreur de connexion à NWC : ${details}"
+    disconnecting: "Erreur de déconnexion de NWC : ${details}"
+    invalid: Chaîne de connexion NWC invalide
+    required: La chaîne de connexion NWC est requise
+    loadingBalance: Impossible de charger le solde du portefeuille
+    loadingBudget: Impossible de charger le budget du portefeuille
+  time:
+    minutes: "${count} min"
+    hours: "${count} h"
+    days: "${count} j"
+    justNow: à l'instant
+
+nekoManagement:
+  title: Neko
+
+# =============================================================================
+# RELAY CONNECTIVITY
+# =============================================================================
+relays:
+  title: Relais
+  coordinatorRelays: Relais du coordinateur
+  discoveryRelays: Relais de découverte
+  status:
+    connected: Connecté
+    connecting: Connexion
+    reconnecting: Reconnexion
+    disconnected: Déconnecté
+  popup:
+    title: "Relais (${connected}/${total} connectés)"
+    connectingMessage: Connexion aux relais...
+
+# =============================================================================
+# LOCAL NOTIFICATIONS
+# =============================================================================
+offerNotifications:
+  activeService:
+    title: En attente de nouvelles offres
+    body: Service Nostr surveillant les événements des offres ${app}.
+  funded:
+    title: Offre financée
+    body: Votre facture hold a été acceptée. L'offre est maintenant en ligne.
+  reserved:
+    title: Offre réservée
+    body: Un taker a réservé votre offre.
+  blikReady:
+    title: Code ${code} prêt
+    body: Votre code ${code} est prêt à être consulté.
+  newOffer:
+    title: Nouvelle offre disponible
+    body: "${amount} ${currency} · ${sats}"
+    premiumSuffix: "+${percent}% de prime"
+  categories:
+    shop: Magasin
+    atm: Distributeur
+    online: En ligne
+  blikPendingReminder:
+    title: Le ${code} attend votre action
+    body: Confirmez le paiement ou marquez le code ${code} comme invalide.
+  takerCharged:
+    title: ${code} débité
+    body: Le taker signale que le ${code} a été débité. Confirmez ou marquez comme invalide.
+  invalidBlik:
+    title: ${code} marqué invalide
+    body: Le maker a marqué votre code ${code} comme invalide.
+  takerPaid:
+    title: Paiement reçu
+    body: Votre paiement Lightning a été envoyé.
+
+# =============================================================================
+# ALTSTORE INSTALLATION
+# =============================================================================
+altstore:
+  dialogTitle: "AltStore non installé"
+  step1Title: "Téléchargez et installez AltStore PAL"
+  step1Button: "altstore.io/download"
+  step1Warning: "Vous avez besoin de Safari pour installer AltStore PAL !"
+  step2Title: "Installer ${app}"
+  step2Button: "Installer ${app}"
+  step2Fallback: "Toujours pas de succès ? Collez la source dans AltStore"

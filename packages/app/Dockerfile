@@ -1,6 +1,6 @@
 # Build context: repo root (required for Dart workspace resolution)
 # Stage 1: Build the Flutter web application
-FROM instrumentisto/flutter:3.41.6 AS build
+FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build
 
 ARG APP_FLAVOR=bitblik
 ARG BUILD_MODE=release
@@ -30,6 +30,7 @@ RUN cp web_shells/${APP_FLAVOR}/index.html web/index.html \
  && cp web_shells/${APP_FLAVOR}/favicon.png web/favicon.png \
  && ([ -f web_shells/${APP_FLAVOR}/bitway-icon.png ] && cp web_shells/${APP_FLAVOR}/bitway-icon.png web/bitway-icon.png || true) \
  && ([ -f web_shells/${APP_FLAVOR}/bitblik-icon.png ] && cp web_shells/${APP_FLAVOR}/bitblik-icon.png web/bitblik-icon.png || true) \
+ && ([ -f web_shells/${APP_FLAVOR}/bittwint-icon.png ] && cp web_shells/${APP_FLAVOR}/bittwint-icon.png web/bittwint-icon.png || true) \
  && cp web_shells/${APP_FLAVOR}/icons/Icon-192.png web/icons/Icon-192.png \
  && cp web_shells/${APP_FLAVOR}/icons/Icon-512.png web/icons/Icon-512.png \
  && cp web_shells/${APP_FLAVOR}/icons/Icon-maskable-192.png web/icons/Icon-maskable-192.png \

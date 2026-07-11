@@ -1,0 +1,132 @@
+# Bitblik / TWINT offer state machine (Switzerland) — schema v2.
+#
+# This file is the runtime source of truth for the TWINT flow.
+#
+# v2 model:
+# - A transition is an attempt. When `on` fires, run `do`; if every action
+#   succeeds, commit and advance to `to`. If any action fails, the state does
+#   not advance and nothing is committed.
+# - `on_fail` routes definitive transition failure to another state.
+# - `on: auto` transitions are detached/internal attempts.
+# - State-level `do:` runs after the state commit, best-effort.
+#
+# Initial state: funded. The maker supplies the TWINT code at offer creation
+# (PaymentSystem.makerProvidesCodeAtOfferCreation).
+
+imports: [common.yml]
+
+id: twint
+
+states:
+
+  # ─── offer lifecycle ────────────────────────────────────────────────
+
+  funded:
+    nip69: pending
+    initial: true
+    do: [send_offer_notifications]
+    description: >
+      Hold invoice confirmed. Offer carries the maker's TWINT code and is open.
+    transitions:
+      - on: cancel_offer
+        by: maker
+        do: [clear_taker_fields, cancel_hold_invoice]
+        to: cancelled
+      - on: reserve_offer
+        by: taker
+        do: [reserve_taker, accept_taker_invoice, send_twint_code_to_taker]
+        to: reserved
+      - on: timeout
+        after: 300            # 5 min — the TWINT code's lifespan
+        from: code_received_at
+        do: [clear_taker_fields]
+        to: invalidTwint
+        reason: No taker reserved in time.
+
+  invalidTwint:
+    nip69: in-progress
+    description: >
+      Offer expired or maker cancelled
+    transitions:
+      - on: enter_new_twint
+        by: maker
+        do: [set_new_code, stamp_code_received_at, cancel_reservation]
+        to: funded
+      - on: cancel_offer
+        by: maker
+        do: [clear_taker_fields, cancel_hold_invoice]
+        to: cancelled
+      - on: timeout
+        after: 3600           # cancel
+        do: [cancel_hold_invoice]
+        to: cancelled
+
+  reserved:
+    nip69: in-progress
+    description: >
+      Taker holds the slot; the coordinator reveals the TWINT code so the taker
+      can pay it in their app.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: mark_twint_charged
+        by: taker
+        do: [assert_assigned_taker, stamp_taker_charged_at, notify_maker_of_charge]
+        to: takerCharged
+        note: Taker paid the TWINT code and reports it charged.
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, cancel_reservation]
+        to: funded
+      - on: timeout
+        after: 300            # the TWINT code's lifespan
+        from: code_received_at
+        to: expiredTwint
+        reason: Taker did not pay the code within its lifespan.
+
+  expiredTwint:
+    nip69: in-progress
+    description: >
+      Reservation expired.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, clear_taker_fields]
+        to: invalidTwint
+      - on: mark_twint_charged
+        by: taker
+        do: [assert_assigned_taker, stamp_taker_charged_at, notify_maker_of_charge]
+        to: takerCharged
+        note: Taker paid the TWINT code and reports it charged.
+      - on: timeout
+        after: 300
+        do: [clear_taker_fields]
+        # grace window AFTER the code expired
+        to: invalidTwint
+        reason: Reservation lapsed after the code expired.
+
+  takerCharged:
+    nip69: in-progress
+    description: >
+      Taker reports payment. Maker must verify receipt and rule. Maker silence
+      auto-confirms in the taker's favour.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: start_dispute
+        by: maker
+        do: [settle_offer_funds]
+        to: dispute
+      - on: timeout
+        after: 3600           # 60 min
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+        reason: Maker silent; auto-confirm in the taker's favour.

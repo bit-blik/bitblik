@@ -20,6 +20,11 @@ COPY package*.json ./
 # Install only production dependencies
 RUN npm install --omit=dev
 
+# Copy the flow state-machine ymls (vendored from packages/core via
+# `npm run sync-flows`) so the diagram API works without the monorepo present.
+# Keep them refreshed before building the image: `npm run sync-flows`.
+COPY flows ./flows
+
 # Copy built frontend from build stage
 COPY --from=frontend-build /app/frontend/build ./frontend/build
 

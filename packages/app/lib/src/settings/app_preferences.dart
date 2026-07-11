@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:bitblik_core/core.dart';
 
@@ -72,6 +75,8 @@ class AppPreferencesStore {
       'offer_creation_preferred_coordinator_pubkey';
   static const _bitcoinDisplayUnitKey = 'display_bitcoin_unit';
   static const _selectedPaymentSystemKey = 'selected_payment_system_id';
+  static const _paymentSystemAutoDetectAttemptedKey =
+      'selected_payment_system_auto_detect_attempted_v1';
 
   static const _defaultOfferCreation = OfferCreationPreferences(
     defaultCategory: OfferCategory.shop,
@@ -169,11 +174,33 @@ class AppPreferencesStore {
   /// Active payment method (country/system). Uses the saved choice if present,
   /// otherwise the build's default ([buildDefaultPaymentSystemId], resolved at
   /// startup from the appId/flavor or `--dart-define=PAYMENT_SYSTEM`).
+  static Future<void> initializeSelectedPaymentSystemForFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_selectedPaymentSystemKey);
+    if (saved != null && saved.isNotEmpty) return;
+    if (isBuildPaymentSystemForced) return;
+
+    final attempted = prefs.getBool(_paymentSystemAutoDetectAttemptedKey);
+    if (attempted == true) return;
+
+    await prefs.setBool(_paymentSystemAutoDetectAttemptedKey, true);
+    final detected = await _detectPaymentSystemFromIp();
+    if (detected != null) {
+      await prefs.setString(_selectedPaymentSystemKey, detected.id);
+      // ignore: avoid_print
+      print(
+        'BITFLAVOR autoDetected country=${detected.country} method=${detected.id}',
+      );
+    }
+  }
+
   static Future<PaymentSystem> loadSelectedPaymentSystem() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_selectedPaymentSystemKey);
     // ignore: avoid_print
-    print('BITFLAVOR loadSelected saved=$saved default=$buildDefaultPaymentSystemId');
+    print(
+      'BITFLAVOR loadSelected saved=$saved default=$buildDefaultPaymentSystemId',
+    );
     return paymentSystemById(saved ?? buildDefaultPaymentSystemId);
   }
 
@@ -187,4 +214,38 @@ class AppPreferencesStore {
     if (value < 0) return 0;
     return (value * 2).round() / 2;
   }
+
+  static Future<PaymentSystem?> _detectPaymentSystemFromIp() async {
+    try {
+      final countryCode = await getCountryFromIP();
+      if (countryCode == null || countryCode.isEmpty) return null;
+      final normalized = countryCode.toUpperCase();
+      for (final system in kPaymentSystems) {
+        if (system.country.toUpperCase() == normalized) {
+          return system;
+        }
+      }
+    } catch (_) {
+      // Keep the startup fallback deterministic when geo lookup fails.
+    }
+    return null;
+  }
+}
+
+Future<String?> getCountryFromIP() async {
+  try {
+    final response = await http
+        .get(Uri.parse('https://ipapi.co/json/'))
+        .timeout(const Duration(seconds: 5));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final countryCode = data['country_code'];
+      if (countryCode is String && countryCode.isNotEmpty) {
+        return countryCode;
+      }
+    }
+  } catch (_) {
+    // Network/cors/timeout failures should just fall back to the build default.
+  }
+  return null;
 }

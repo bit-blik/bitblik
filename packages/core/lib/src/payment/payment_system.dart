@@ -4,6 +4,19 @@ import 'package:ndk/ndk.dart' show Nip19;
 import '../constants/relays.dart';
 import '../models/offer.dart' show OfferCategory;
 
+/// Which coordinator state-machine implementation drives a payment method.
+enum FlowEngineMode {
+  /// Legacy path: hardcoded transitions keyed on the [OfferStatus] enum.
+  /// Deprecated but retained for existing markets (BLIK, MB WAY) and their
+  /// already-deployed clients. See [[project-dual-flow-engine]].
+  legacyEnum,
+
+  /// Generic path: transitions and timers are enforced purely from a yaml flow
+  /// definition via `FlowEngine`, storing raw flow-state strings. Not coupled
+  /// to [OfferStatus].
+  generic,
+}
+
 /// A country/payment-system specification. Single source of truth for the
 /// per-market parameters that used to be hardcoded to Poland's BLIK (6-digit
 /// codes, PLN, ~2 min validity).
@@ -63,6 +76,10 @@ class PaymentSystem {
   /// "confirm in your banking app" prompts are suppressed.
   final bool requiresCodeConfirmation;
 
+  /// Whether the maker provides the payment code upfront when creating the
+  /// offer, instead of the taker generating/submitting one after reservation.
+  final bool makerProvidesCodeAtOfferCreation;
+
   /// Offer categories this method supports. MB WAY ATM payouts only make sense
   /// for cash-out, so it is restricted to [OfferCategory.atm].
   final List<OfferCategory> supportedCategories;
@@ -76,6 +93,15 @@ class PaymentSystem {
   /// An ATM cash-out amount is only valid if it can be composed from these
   /// notes — see [canDispenseAtmAmount].
   final List<int> atmBanknoteDenominations;
+
+  /// Id of the flow definition (`packages/core/<flowId>.yml`) that models this
+  /// method's coordinator state machine. Null when no faithful flow definition
+  /// exists yet (the coordinator then relies solely on hardcoded logic). Used by
+  /// the coordinator to load a [FlowEngine] for shadow-mode / enforcement.
+  final String? flowId;
+
+  /// Which coordinator engine drives this method. Defaults to [FlowEngineMode.legacyEnum].
+  final FlowEngineMode flowEngineMode;
 
   /// The project's Nostr identity (hex pubkey) whose profile NIP-65 defines the
   /// **discovery relays** for this market, and against which coordinator
@@ -97,9 +123,12 @@ class PaymentSystem {
     required this.codeLength,
     required this.codeValidityMinutes,
     this.requiresCodeConfirmation = true,
+    this.makerProvidesCodeAtOfferCreation = false,
     required this.supportedCategories,
     required this.atmPresetAmounts,
     required this.atmBanknoteDenominations,
+    this.flowId,
+    this.flowEngineMode = FlowEngineMode.legacyEnum,
     this.discoveryPubkeyHex = kBitblikPubkeyHex,
   });
 
@@ -203,6 +232,7 @@ const PaymentSystem kBlik = PaymentSystem(
   ],
   atmPresetAmounts: [50, 100, 200, 300, 500],
   atmBanknoteDenominations: [10, 20, 50, 100, 200, 500],
+  flowId: 'blik',
 );
 
 /// Portugal — MB WAY ATM payout. 10-digit code, 30 min validity. ATM only.
@@ -226,10 +256,38 @@ const PaymentSystem kMbway = PaymentSystem(
   atmBanknoteDenominations: [20, 50, 100, 200],
   // Bitway has its own Nostr identity for discovery (relays + coordinators).
   discoveryPubkeyHex: kBitwayPubkeyHex,
+  flowId: 'mbway',
+);
+
+/// Switzerland — TWINT. The maker creates a 5-digit payment code upfront and
+/// the taker enters it in the TWINT app after taking the offer.
+const PaymentSystem kTwint = PaymentSystem(
+  id: 'twint',
+  label: 'TWINT',
+  brandName: 'Bittwint',
+  codeName: 'TWINT',
+  country: 'CH',
+  flag: '🇨🇭',
+  logoAsset: 'assets/bittwint.png',
+  currency: 'CHF',
+  currencySymbol: 'CHF',
+  codeLength: 5,
+  codeValidityMinutes: 5,
+  makerProvidesCodeAtOfferCreation: true,
+  supportedCategories: [OfferCategory.shop, OfferCategory.online],
+  atmPresetAmounts: [],
+  atmBanknoteDenominations: [],
+  // Bittwint has its own Nostr identity for discovery (relays + coordinators).
+  discoveryPubkeyHex: kTwintPubkeyHex,
+  // TWINT is the first market on the generic yaml-driven engine. Its flow is
+  // enforced entirely from twint.yml (transitions + timers), storing raw
+  // flow-state strings rather than OfferStatus values.
+  flowId: 'twint',
+  flowEngineMode: FlowEngineMode.generic,
 );
 
 /// All supported payment methods. Add a market by appending here.
-const List<PaymentSystem> kPaymentSystems = [kBlik, kMbway];
+const List<PaymentSystem> kPaymentSystems = [kBlik, kMbway, kTwint];
 
 /// Resolve a method by [id]; falls back to [kBlik] for unknown/legacy ids so
 /// older peers keep working.

@@ -6,6 +6,7 @@ import 'package:ndk/domain_layer/entities/wallet/wallet.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import '../../utils/bitcoin_display.dart';
 import '../../widgets/progress_indicators.dart';
@@ -72,7 +73,7 @@ class _TakerPaymentFailedScreenState
     if (status == OfferStatus.takerPaid) {
       _closeRetryDialog();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/paying-taker');
+        if (mounted) context.go(flowEntryRoute(ref, '/paying-taker'));
       });
     } else if (status == OfferStatus.takerPaymentFailed) {
       _closeRetryDialog();

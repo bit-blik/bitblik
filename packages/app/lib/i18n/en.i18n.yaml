@@ -356,6 +356,15 @@ maker:
       premium: Premium
     actions:
       generateInvoice: Generate Invoice
+    twintScan:
+      cardTitle: "Scan ${code} QR and amount"
+      cardBody: "Point the camera at the payment screen. The app will prefill the code and, when visible, the amount."
+      scanButton: "Scan with camera"
+      manualButton: "Enter manually instead"
+      codeLabel: "${code} code"
+      rescan: "Rescan"
+      helperFilled: "The taker will see this code and enter it in ${code}."
+      helperEmpty: "Scan to fill this automatically, or type the ${digits}-digit code manually."
 
     tooltips:
       feeInfo: "Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment."
@@ -601,6 +610,255 @@ taker:
       takerFee: "Taker fee"
       status: "Status"
       youllReceive: "You'll receive"
+
+  waitConfirmation:
+    title: "Waiting for Maker"
+    statusLabel: "Offer status: ${status}"
+    waitingMaker: "Waiting for Maker confirmation: ${seconds} s"
+    waitingMakerConfirmation: "Waiting for Maker to confirm ${code} is correct. Time remaining: ${seconds}s"
+    importantNotice: "VERY IMPORTANT: Make sure you only accept ${code} confirmation for ${amount} ${currency}"
+    importantBlikAmountConfirmation: "VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}."
+    instructions: The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.
+    instructionsNoConfirm: The maker must now enter your ${code} code at the ATM within ${minutes} minutes.
+    categoryReminder:
+      atm: "ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount."
+      ecommerce: "Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it."
+    waitingForMakerToReceive: "Waiting for maker to receive your ${code} code..."
+    makerReceivedBlik: "Maker has received your ${code} code."
+    timerExpiredMessage: "${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid."
+    timerExpiredActions: "${code} ${minutes}m expiration time has passed but the maker hasn't received the ${code} code. You can resend a new ${code} code or cancel."
+    resendBlikButton: "Resend New ${code} Code"
+    navigatedHome: "Navigated home."
+    
+    expiredTitle: "${code} Code Expired"
+    expiredWarning: "The maker did not receive the ${code} code so it couldn't have used it."
+    expiredRelistCountdownLabel: "Reservation ends in"
+    expiredSentWarning: "The maker hasn't confirmed the payment yet. What would you like to do?"
+    expiredInstruction1: "If you want to try again with a new ${code} code, renew the reservation."
+    expiredInstruction2: "If you no longer want to complete this transaction, cancel the reservation."
+    expiredInstruction3: "If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator."
+
+    takerCharged:
+      title: "You marked ${code} as charged"
+      message: "The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin."
+    expiredActions:
+      reportConflict: "${code} was charged from my bank account"
+      renewReservation: "Try again with new ${code} code"
+      cancelReservation: "Cancel reservation"
+    
+    feedback:
+      makerConfirmed: Maker confirmed payment.
+      paymentSuccessful: Payment successful! You will receive funds shortly.
+      conflictReported: Conflict reported. Coordinator will review the situation.
+
+    errors:
+      invalidOfferStateReceived: "Received an offer with an invalid state for this screen. Resetting."
+      reportingConflict: "Error reporting conflict: ${details}"
+
+  paymentProcess:
+    title: Payment Process
+    waitingForOfferUpdate: "Waiting for offer status update..."
+    
+    states:
+      preparing: Preparing to send payment...
+      sending: Sending payment...
+      received: Payment received!
+      failed: Payment failed
+      waitingUpdate: Waiting for offer update...
+    
+    steps:
+      makerConfirmedBlik: "Maker confirmed ${code} payment"
+      makerInvoiceSettled: "Maker's hold invoice settled"
+      takerInvoicePaid: "Paying your Lightning invoice"
+      takerPaymentFailed: "Payment to your invoice failed"
+
+    errors:
+      sending: "Error sending payment: ${details}"
+      notConfirmed: Offer not confirmed by Maker.
+      expired: Offer expired.
+      cancelled: Offer cancelled.
+      paymentFailed: Offer payment failed.
+      unknown: Unknown offer error.
+      takerPaymentFailed: "The payment to your Lightning invoice failed."
+      noPublicKey: "Error: Cannot fetch your public key."
+      loadingPublicKey: Error loading your data
+      missingPaymentHash: "Error: Missing payment details."
+    
+    loading:
+      publicKey: Loading your data...
+    
+    actions:
+      goToFailureDetails: "Retry with new invoice"
+  
+  paymentFailed:
+    title: Payment Failed
+    instructions: "Please provide a new Lightning invoice for ${netAmount}"
+    form:
+      newInvoiceLabel: "New Lightning invoice"
+      newInvoiceHint: "Enter your BOLT11 invoice"
+    actions:
+      retryPayment: "Submit New Invoice"
+    errors:
+      enterValidInvoice: "Please enter a valid invoice"
+      updatingInvoice: "Error updating invoice: ${details}"
+      paymentRetryFailed: "Payment retry failed. Please check the invoice or try again later."
+      takerPublicKeyNotFound: "Taker public key not found."
+      generateFailed: "Failed to generate invoice: ${details}"
+    walletSection:
+      title: "Generate invoice from wallet"
+      defaultLabel: "default"
+      tapToGenerate: "Tap to generate invoice for ${amountSats}"
+    loading:
+      processingPayment: "Processing your payment retry..."
+    success:
+      title: "Payment Successful"
+      message: "Your payment has been processed successfully."
+
+  paymentSuccess:
+    title: Payment Successful
+    message: Your payment has been processed successfully.
+    actions:
+      goHome: Go to home
+  
+  invalidBlik:
+    title: Invalid ${code} Code
+    message: Maker Rejected ${code} Code
+    explanation: The offer maker indicated that the ${code} code you provided was invalid or didn't work.\n\nWhat would you like to do?
+
+    werentCharged: "If you were NOT charged:"
+    wereCharged: "If you were charged:"
+
+    actions:
+      retry: Send new ${code} code
+      cancelReservation: Cancel Transaction
+      reportConflict: Start Dispute
+      returnHome: Return to home
+    
+    confirmDialog:
+      title: Are you sure?
+      content: "Once you tap this, there is no turning back.\n\nIf the amount WAS in fact charged from your bank account, the coordinator will NOT be able to guarantee you receive the bitcoin, and you may lose your funds.\n\nIf you are not sure, it is best to wait a bit and confirm that you did NOT get charged before continuing."
+      actions:
+        proceed: I'm sure, continue
+        cancel: Cancel
+
+    disputeConfirmDialog:
+      title: Start a dispute?
+      content: "Only start a dispute if the amount WAS charged from your bank account.\n\nThe coordinator will manually review your case, which takes time. You will need to provide proof of payment."
+      actions:
+        proceed: Yes, I was charged
+        cancel: Cancel
+
+    feedback:
+      conflictReportedSuccess: Conflict reported. Coordinator will review.
+
+    errors:
+      reservationFailed: Failed to reserve offer again
+      conflictReport: "Error reporting conflict: ${details}"
+  
+  conflict:
+    title: Offer Conflict
+    headline: Offer Conflict Reported
+    body: The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.
+    instructions: Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.
+    
+    actions:
+      back: Back to Home
+    
+    feedback:
+      reported: Conflict reported. Coordinator will review.
+    
+    errors:
+      reporting: "Error reporting conflict: ${details}"
+
+    nostrContact:
+      title: Contact Coordinator on Nostr
+      description: You can DM the coordinator directly for help with this dispute.
+      copyNpub: Copy npub
+      openProfile: View Profile
+      npubCopied: Coordinator npub copied to clipboard!
+      yourIdentityDescription: "To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages."
+      manageNekoKeys: Manage Neko Keys
+
+twint:
+  scanner:
+    title: "Scan ${code} code"
+    status:
+      align: "Align the ${code} QR code and amount text inside the camera frame."
+      notRecognized: "${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually."
+      amountFailed: "Camera scan could not extract the amount. You can still use the QR result and correct the fields manually."
+  flow:
+    progress:
+      step1: "1. Create offer"
+      step2: "2. Wait for taker"
+      step3: "3. Confirm"
+    takerProgress:
+      step1: "1. Pay ${code}"
+      step2: "2. Get sats"
+    makerWait:
+      takerPaying: "Taker is paying"
+      yourCode: "Your ${code} code"
+      offerExpires: "${code} expires"
+      autoExpires: "Auto-expires"
+      codeExpiresIn: "${code} will expire in..."
+      cancelOffer: "Cancel offer"
+      reservedInfo: "A taker reserved your offer and is now paying your ${code} code in their banking app. Once the payment arrives at your merchant, confirm it below."
+      confirmReceived: "Confirm payment received"
+      confirmDialog:
+        title: "Confirm payment received?"
+        content: "Only confirm if you are ABSOLUTELY sure the ${code} payment was successfully received at your merchant.\n\nConfirming settles the Lightning hold invoice and immediately sends the sats to the taker — this cannot be undone."
+        cancel: "Cancel"
+        confirmButton: "Yes, payment received"
+    makerExpired:
+      title: "${code} probably expired"
+      warning: "The ${code} code has most likely expired by now — but the taker may still have managed to pay it. Check your merchant: you have the time below to confirm the payment."
+      timerCaption: "Time to confirm"
+      disputeHint: "You can also wait for the timer to run out. If the taker reports having paid, this becomes a conflict/dispute where both peers must provide evidence to the coordinator to resolve the issue."
+    makerVerify:
+      title: "Did you receive the payment?"
+      body: "The taker reports paying ${amount} to your ${code} code."
+      hint: "Check the payment status with your merchant (shop terminal or online transaction). If in doubt, wait and re-check later before deciding."
+      autoConfirms: "Auto-confirms"
+      confirmReceived: "Confirm received"
+      openDispute: "Open dispute"
+    makerRecode:
+      title: "Offer expired"
+      body: "No taker completed the trade. Enter a new ${code} code to re-list this offer, or cancel it."
+      scanCardTitle: "Scan new ${code} QR"
+      scanCardBody: "Point the camera at the payment screen. The app will prefill the new code — the amount stays the same."
+      fieldLabel: "New ${code} code"
+      autoCancels: "Auto-cancels"
+      relist: "Re-list with new code"
+      cancelOffer: "Cancel offer"
+    takerPay:
+      title: "Pay with ${code}"
+      body: "Open your ${code} app and pay ${amount} using:"
+      codeExpires: "Code expires"
+      paid: "I've paid"
+      cancel: "Cancel"
+    takerWait:
+      title: "Waiting for the maker"
+      body: "The maker is checking if your ${code} payment arrived at their merchant. They must confirm receipt or open a dispute."
+      info: "If the maker takes no action before the timer expires, the payment auto-confirms and you will receive your sats."
+      autoConfirms: "Auto-confirms"
+    takerExpired:
+      title: "${code} probably expired"
+      warning: "The ${code} code has probably expired by now. You must now make an important decision — choose carefully."
+      optionPaid: "If you DID pay the ${code} code in your banking app, mark it as paid. This commits you to that claim: the maker must confirm it to unlock the bitcoin, or start a dispute where both peers provide evidence to the coordinator."
+      optionCancel: "If you did NOT pay, cancel the reservation. This is irreversible — if the payment actually went through, the coordinator can no longer guarantee you receive the sats."
+      noDecision: "If you make no decision before the timer runs out, the coordinator will assume you did NOT pay the ${code} code. The maker will then be able to cancel the offer — cancelling the hold invoice — after which the coordinator can no longer settle the sats to you, even if you did pay."
+      timerCaption: "Time to decide"
+      markPaid: "I paid the ${code} code"
+      cancel: "Cancel reservation"
+      markPaidDialog:
+        title: "Confirm you paid?"
+        content: "Only continue if you are sure the ${code} payment was charged in your banking app.\n\nThe maker will be asked to confirm receipt to unlock the bitcoin. If they deny it, a dispute is opened and both peers must provide evidence to the coordinator."
+        cancel: "Back"
+        confirmButton: "Yes, I paid"
+      cancelDialog:
+        title: "Cancel reservation?"
+        content: "Only cancel if you did NOT pay the ${code} code.\n\nThis cannot be undone: if the payment actually went through, the coordinator will NOT be able to guarantee you receive the sats."
+        cancel: "Back"
+        confirmButton: "Yes, cancel"
   
   waitConfirmation:
     title: "Waiting for Maker"
@@ -956,6 +1214,7 @@ settings:
     countries:
       PL: Poland
       PT: Portugal
+      CH: Switzerland
 
 notificationSettings:
   title: Notifications

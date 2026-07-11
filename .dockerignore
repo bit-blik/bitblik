@@ -31,4 +31,4 @@ packages/app/windows/
 # Docs / misc
 **/*.md
 !packages/app/CHANGELOG.md
-!packages/app/assets/faq/*.md
+!packages/app/assets/faq/**/*.md

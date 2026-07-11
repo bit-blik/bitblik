@@ -1,0 +1,10 @@
+repository: https://github.com/bit-blik/bittwint
+name: BitTwint
+description: Pay with Bitcoin using TWINT codes. Buy Bitcoin selling TWINT codes.
+summary: Bitcoin TWINT codes exchange app
+license: MIT
+website: https://bittwint.me
+release_notes: CHANGELOG.md
+changelog: CHANGELOG.md
+metadata_sources:
+    - github

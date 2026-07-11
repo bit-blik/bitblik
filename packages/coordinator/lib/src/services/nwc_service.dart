@@ -27,7 +27,7 @@ class NwcService implements PaymentService {
   /// Timeout for the NWC `pay_invoice` request. NDK defaults to a mere 5s,
   /// which is far too short for real Lightning routing/settlement and causes
   /// legitimate taker payments to spuriously time out.
-  static const Duration _payInvoiceTimeout = Duration(seconds: 30);
+  static const Duration _payInvoiceTimeout = Duration(seconds: 60);
 
   late final Ndk _ndk; // NDK instance managed by the service
   NwcConnection? _nwcConnection;
@@ -283,11 +283,11 @@ class NwcService implements PaymentService {
       }
 
       AppLogger.info(
-          'NWC Service: Invoice paid successfully. Preimage: ${response.preimage}');
+          'NWC Service: Invoice paid successfully. Preimage: ${response.preimage}, fees: ${response.feesPaid} msat');
       return PayInvoiceResult(
-        paymentPreimage: response.preimage, // Use paymentPreimage
-        // NWC typically does not return fee information for the payment itself
-        feeSat: null, // Or 0 if a value is strictly needed
+        paymentPreimage: response.preimage,
+        // NWC reports fees_paid in msats; PayInvoiceResult.feeSat is in sats.
+        feeSat: (response.feesPaid / 1000).round(),
       );
     } catch (e) {
       AppLogger.info('NWC Service: Exception in payInvoice: $e');

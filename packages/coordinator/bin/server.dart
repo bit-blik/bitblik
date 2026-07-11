@@ -1,13 +1,31 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dotenv/dotenv.dart';
 import 'package:bitblik_coordinator/src/services/database_service.dart';
-import 'package:bitblik_coordinator/src/services/lnd_service.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/services/nostr_service.dart';
+import 'package:bitblik_coordinator/src/diagnostics/memory_profiler.dart';
 import 'package:bitblik_coordinator/src/logging/app_logger.dart';
 
 Future<void> main(List<String> args) async {
+  // Run everything inside a guarded zone so an uncaught ASYNC error — e.g. the
+  // ndk relay manager throwing from a reconnect/resubscribe timer callback,
+  // which is outside any try/catch — is logged instead of terminating the
+  // coordinator process.
+  runZonedGuarded(() async {
+    await _runCoordinator(args);
+  }, (error, stack) {
+    AppLogger.warning(
+      'Uncaught async error — coordinator kept alive: $error',
+      action: 'system.uncaught',
+      error: error,
+      stackTrace: stack,
+    );
+  });
+}
+
+Future<void> _runCoordinator(List<String> args) async {
   AppLogger.initialize();
   // --- Configuration ---
   // Load environment variables from .env file and platform environment
@@ -36,9 +54,9 @@ Future<void> main(List<String> args) async {
   // --- Service Initialization ---
   final dbService = DatabaseService();
   AppLogger.initialize(auditSink: dbService.insertAuditLog);
-  final lndService = LndService();
   CoordinatorService? coordinatorService; // Nullable initially
   NostrService? nostrService; // Nullable initially
+  MemoryProfiler? memoryProfiler;
 
   try {
     // Connect to Database
@@ -60,21 +78,47 @@ Future<void> main(List<String> args) async {
     );
     await coordinatorService.init();
 
+    // FLOW_MODE generic records every offer transition in offer_state_history,
+    // which supersedes the log_audit trail — so persist state history and stop
+    // persisting log_audit in that mode.
+    final generic = coordinatorService.isGenericFlow;
+    dbService.recordStateHistory = generic;
+    // AppLogger.setAuditPersistenceEnabled(!generic);
+    // AppLogger.info(
+    //     'Flow mode: ${generic ? 'generic (offer_state_history on, log_audit off)' : 'enum (log_audit on)'}',
+    //     action: 'system.startup');
+
     await nostrService.init(privateKey: env['NOSTR_PRIVATE_KEY'] ?? '');
 
     // Set the Nostr service in the coordinator service for status updates
     coordinatorService.setNostrService(nostrService);
 
+    final memoryProfilingEnabled =
+        (env['MEMORY_PROFILING'] ?? '').toLowerCase() == '1' ||
+            (env['MEMORY_PROFILING'] ?? '').toLowerCase() == 'true';
+    if (memoryProfilingEnabled) {
+      final intervalSeconds =
+          int.tryParse(env['MEMORY_PROFILING_INTERVAL_SECONDS'] ?? '') ?? 30;
+      memoryProfiler = MemoryProfiler(
+        coordinatorService: coordinatorService,
+        nostrService: nostrService,
+        interval: Duration(seconds: intervalSeconds),
+      );
+      memoryProfiler.start();
+    }
+
     await coordinatorService.doInitialCheckStatuses();
 
-    // Rebroadcast offers from last hours if NostrService is available
+    // Rebroadcast offers from last hours if NostrService is available.
+    // Runs unawaited: events are spaced a minute apart to stay under shared-IP
+    // relay rate limits, so this can take a while and must not block startup.
     try {
       final offers = await dbService.getOffersFromLastHours();
       AppLogger.info(
-          'Found ${offers.length} offers from last 24 hours to rebroadcast');
-      await nostrService.rebroadcastOffers(offers);
+          'Found ${offers.length} offers from last hours to rebroadcast');
+      unawaited(nostrService.rebroadcastOffers(offers));
     } catch (e) {
-      AppLogger.info('Error during rebroadcast of last 24 hours offers: $e');
+      AppLogger.info('Error during rebroadcast of last hours offers: $e');
     }
 
     AppLogger.info(
@@ -86,8 +130,10 @@ Future<void> main(List<String> args) async {
     // Listen for termination signals
     ProcessSignal.sigint.watch().listen((signal) async {
       AppLogger.info('\nReceived SIGINT, shutting down...');
+      await memoryProfiler?.emitManualSnapshot('sigint');
+      await memoryProfiler?.stop();
+      await coordinatorService?.shutdown();
       await nostrService?.disconnect(); // Disconnect from Nostr
-      await lndService.disconnect(); // Disconnect from LND
       await dbService.disconnect(); // Disconnect from DB
       AppLogger.info('Shutdown complete.');
       exit(0);
@@ -95,8 +141,10 @@ Future<void> main(List<String> args) async {
 
     ProcessSignal.sigterm.watch().listen((signal) async {
       AppLogger.info('\nReceived SIGTERM, shutting down...');
+      await memoryProfiler?.emitManualSnapshot('sigterm');
+      await memoryProfiler?.stop();
+      await coordinatorService?.shutdown();
       await nostrService?.disconnect();
-      await lndService.disconnect();
       await dbService.disconnect();
       AppLogger.info('Shutdown complete.');
       exit(0);
@@ -107,8 +155,9 @@ Future<void> main(List<String> args) async {
   } catch (e) {
     AppLogger.info('❌ Error during server startup: $e');
     // Attempt cleanup even on startup error
+    await memoryProfiler?.stop();
+    await coordinatorService?.shutdown();
     await nostrService?.disconnect();
-    await lndService.disconnect();
     await dbService.disconnect();
     exit(1);
   }

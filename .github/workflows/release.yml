@@ -90,11 +90,12 @@ jobs:
           fi
           $BUILD -t bin/bitblik.dart -o build/cli-bitblik
           $BUILD -t bin/bitway.dart -o build/cli-bitway
+          $BUILD -t bin/bittwint.dart -o build/cli-bittwint
 
       - name: Package CLI bundles (Unix)
         if: matrix.target != 'windows_x64'
         run: |
-          for app in bitblik bitway; do
+          for app in bitblik bitway bittwint; do
             tar -czf "build/${app}-cli-${{ matrix.platform_name }}.tar.gz" \
               -C "build/cli-${app}/bundle" .
           done
@@ -102,7 +103,7 @@ jobs:
       - name: Package CLI bundles (Windows)
         if: matrix.target == 'windows_x64'
         run: |
-          for app in bitblik bitway; do
+          for app in bitblik bitway bittwint; do
             ( cd "build/cli-${app}/bundle" \
               && 7z a -tzip "../../${app}-cli-${{ matrix.platform_name }}.zip" . )
           done
@@ -111,7 +112,7 @@ jobs:
         if: matrix.target == 'linux_x64'
         run: |
           pkg_version="$(grep -m1 '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')"
-          for app in bitblik bitway; do
+          for app in bitblik bitway bittwint; do
             deb_root="build/deb-root-${app}"
             rm -rf "$deb_root"
             mkdir -p "$deb_root/DEBIAN" "$deb_root/usr/lib/${app}" "$deb_root/usr/bin"
@@ -145,6 +146,9 @@ jobs:
             packages/cli/build/bitway-cli-${{ matrix.platform_name }}.tar.gz
             packages/cli/build/bitway-cli-${{ matrix.platform_name }}.zip
             packages/cli/build/bitway-cli-linux-x64.deb
+            packages/cli/build/bittwint-cli-${{ matrix.platform_name }}.tar.gz
+            packages/cli/build/bittwint-cli-${{ matrix.platform_name }}.zip
+            packages/cli/build/bittwint-cli-linux-x64.deb
 
   # ── 3. Android APK (both flavors: bitblik & bitway) ───────────────────────
   build_android:

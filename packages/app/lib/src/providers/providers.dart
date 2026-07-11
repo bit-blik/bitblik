@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
+import '../services/relay_reconnect_gate.dart';
 import '../utils/offer_status_label.dart';
 import '../services/notification_service.dart';
 import '../services/offer_db_service.dart';
@@ -235,6 +236,28 @@ final coordinatorRecordByPubkeyProvider =
         },
         orElse: () => null,
       );
+    });
+
+/// Debug-only helper that resolves which relays served the latest cached
+/// coordinator kind-15125 event for [pubkey], using cache provenance instead of
+/// the deprecated `event.sources`.
+final coordinatorInfoEventSourcesProvider =
+    FutureProvider.family<List<String>, String>((ref, pubkey) async {
+      final ndk = ref.watch(ndkProvider);
+      if (ndk == null) return const [];
+
+      final events = await ndk.config.cache.loadEvents(
+        pubKeys: [pubkey],
+        kinds: [kKindCoordinatorInfo],
+        limit: 1,
+      );
+      if (events.isEmpty) return const [];
+
+      final sources = await ndk.config.cache.loadEventSources(events.first.id);
+      final out = sources.map(normalizeRelayUrl).where((u) => u.isNotEmpty).toSet()
+        ..remove('');
+      final list = out.toList()..sort();
+      return list;
     });
 
 /// Helper provider for the takerCharged auto-confirm duration of a coordinator.
@@ -503,6 +526,19 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     }
   }
 
+  /// On-demand sync of the in-memory active offer against the coordinator.
+  /// Used by flow-driven screens when a yaml state deadline passes without a
+  /// pushed status update (missed relay event): the coordinator has advanced
+  /// the state server-side, so fetch and apply it.
+  Future<void> reconcileActiveOfferNow() async {
+    final active = state;
+    if (active == null ||
+        OfferDbService.terminalStatuses.contains(active.status)) {
+      return;
+    }
+    await _reconcileActiveOfferIfNeeded(active);
+  }
+
   /// Revive wrongly/locally-cancelled offers and sync the active one. Guarded
   /// so overlapping connectivity events don't run it concurrently.
   Future<void> _reconcileAll() async {
@@ -694,13 +730,26 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         return;
       }
 
-      if (remoteStatus == localOffer.status) return; // Already in sync.
+      // Compare raw wire states: generic (yaml-driven) flow states such as
+      // `invalidTwint` all parse to the enum's `unknown`, so an enum compare
+      // would miss transitions between them (and copyWith without statusRaw
+      // would overwrite the real state with the literal 'unknown').
+      if (remoteStatusRaw == localOffer.statusRaw) return; // Already in sync.
 
       Logger.log.i(
         () =>
-            '[ActiveOfferNotifier] syncing active offer $remoteId: local=${localOffer.status.name} -> remote=${remoteStatus.name}',
+            '[ActiveOfferNotifier] syncing active offer $remoteId: local=${localOffer.statusRaw} -> remote=$remoteStatusRaw',
       );
-      final updated = localOffer.copyWith(id: remoteId, status: remoteStatus);
+      final updated = localOffer.copyWith(
+        id: remoteId,
+        status: remoteStatus,
+        statusRaw: remoteStatusRaw,
+        // Keep the yaml-timeout countdown bases in sync (from_field:
+        // updated_at default, code_received_at, and reserved_at).
+        updatedAt: hydrated.updatedAt,
+        blikReceivedAt: hydrated.blikReceivedAt,
+        reservedAt: hydrated.reservedAt,
+      );
       await OfferDbService().upsertOffer(updated);
 
       if (OfferDbService.terminalStatuses.contains(remoteStatus) &&
@@ -746,13 +795,14 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           final remoteId = remote['id']?.toString();
           if (remoteId == null) continue;
 
+          final remoteStatusRaw = remote['status']?.toString() ?? '';
+          if (remoteStatusRaw.isEmpty) continue;
           OfferStatus remoteStatus;
           try {
-            remoteStatus = OfferStatus.values.byName(
-              remote['status']?.toString() ?? '',
-            );
+            remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
           } catch (_) {
-            continue;
+            // Generic (yaml-driven) flow state — legit, kept via statusRaw.
+            remoteStatus = OfferStatus.unknown;
           }
           if (OfferDbService.terminalStatuses.contains(remoteStatus)) {
             continue;
@@ -761,6 +811,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           final revived = localOffer.copyWith(
             id: remoteId,
             status: remoteStatus,
+            statusRaw: remoteStatusRaw,
           );
           await OfferDbService().upsertOffer(revived);
           Logger.log.i(
@@ -804,20 +855,35 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
   /// Cancel the currently active offer, with a coordinator pre-check.
   ///
+  /// A `created` offer normally only exists in the local DB — the coordinator
+  /// learns about an offer once the maker pays the hold invoice (`funded`). We
+  /// cannot trust local status alone though: if the maker paid but we missed
+  /// the `funded` update, local still shows `created` while the coordinator
+  /// holds a live offer. So we ask the coordinator instead of guessing.
+  ///
   /// Flow:
-  ///   1. Ask coordinator for exact offer.
-  ///   2. If the local offer is still `created` but the coordinator reports
-  ///      the same offer as already `funded` (or later), throw
-  ///      [OfferAlreadyFundedException] without touching local state. Caller
-  ///      should redirect into the funded flow.
-  ///   3. Otherwise call `cancel_offer` RPC best-effort, mark the local
-  ///      row `cancelled`, and clear the in-memory active state. The
-  ///      DB row stays so a future status update can revive it.
+  ///   1. Ask the coordinator for this exact offer.
+  ///   2. Stale-`created`: local says `created` but the coordinator has the
+  ///      same offer live (`funded`+, non-terminal). Sync to the coordinator
+  ///      status and throw [OfferAlreadyFundedException] so the caller
+  ///      redirects into the funded flow instead of cancelling.
+  ///   3. Send `cancel_offer` only when the coordinator actually knows this
+  ///      offer (any funded+ local offer, or a `created` offer the coordinator
+  ///      returned). A `created` offer the coordinator never saw is cancelled
+  ///      purely locally — no RPC, nothing to cancel remotely.
+  ///   4. Mark the local row `cancelled`. The row stays so a later status
+  ///      update can revive it.
   Future<void> cancelActiveOffer() async {
     final current = state;
     if (current == null) return;
 
     final apiService = await _ref.read(initializedApiServiceProvider.future);
+
+    // Generic (yaml-driven) flows start at `funded` and never use `created`,
+    // so this is only true for legacy pre-payment offers. Compare the raw
+    // status string, not the enum, so generic flow states are handled correctly.
+    final isLocalOnly = current.statusRaw == OfferStatus.created.name;
+
     Map<String, dynamic>? coordinatorOffer;
     try {
       coordinatorOffer = await apiService.getOfferDetails(
@@ -830,48 +896,54 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       );
     }
 
-    if (coordinatorOffer != null) {
-      final remoteId = coordinatorOffer['id']?.toString();
-      final remoteStatusRaw = coordinatorOffer['status']?.toString();
-      OfferStatus? remoteStatus;
-      if (remoteStatusRaw != null) {
-        try {
-          remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
-        } catch (_) {
-          remoteStatus = OfferStatus.unknown;
-        }
-      }
-
-      final sameOffer =
-          remoteId != null &&
-          (remoteId == current.id ||
-              current.holdInvoicePaymentHash != null &&
-                  remoteId == current.holdInvoicePaymentHash);
-
-      if (sameOffer &&
-          remoteStatus != null &&
-          current.status == OfferStatus.created &&
-          remoteStatus.index >= OfferStatus.funded.index &&
-          !OfferDbService.terminalStatuses.contains(remoteStatus)) {
-        // Coordinator already funded this offer while local state still says
-        // `created`. Persist whatever the coordinator says, but refuse to
-        // cancel locally from the pre-funding flow.
-        final updated = current.copyWith(id: remoteId, status: remoteStatus);
-        await OfferDbService().upsertOffer(updated);
-        state = updated;
-        throw OfferAlreadyFundedException(remoteStatus);
+    final remoteId = coordinatorOffer?['id']?.toString();
+    final remoteStatusRaw = coordinatorOffer?['status']?.toString();
+    OfferStatus? remoteStatus;
+    if (remoteStatusRaw != null) {
+      try {
+        remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
+      } catch (_) {
+        remoteStatus = OfferStatus.unknown;
       }
     }
+    final sameOffer =
+        remoteId != null &&
+        (remoteId == current.id ||
+            current.holdInvoicePaymentHash != null &&
+                remoteId == current.holdInvoicePaymentHash);
 
-    // Best-effort cancel RPC. Swallow errors — local row still moves to
-    // `cancelled` and a later status update can revive it.
-    // Use coordinator-provided UUID when available; local id may be a payment
-    // hash or the legacy "empty" placeholder which the coordinator rejects.
-    final cancelId = coordinatorOffer?['id']?.toString() ?? current.id;
-    try {
-      await apiService.cancelOffer(cancelId, current.coordinatorPubkey);
-    } catch (e) {
-      Logger.log.w(() => '[ActiveOfferNotifier] cancel_offer RPC failed: $e');
+    // Stale-`created`: coordinator already funded this offer while local state
+    // still says `created`. Persist the coordinator status and redirect into
+    // the funded flow instead of cancelling from the pre-funding path.
+    if (isLocalOnly &&
+        sameOffer &&
+        remoteStatus != null &&
+        remoteStatusRaw != null &&
+        remoteStatus.index >= OfferStatus.funded.index &&
+        !OfferDbService.terminalStatuses.contains(remoteStatus)) {
+      final updated = current.copyWith(
+        id: remoteId,
+        status: remoteStatus,
+        statusRaw: remoteStatusRaw,
+      );
+      await OfferDbService().upsertOffer(updated);
+      state = updated;
+      throw OfferAlreadyFundedException(remoteStatus);
+    }
+
+    // Cancel on the coordinator only when it knows this offer. A funded+ local
+    // offer was always published; a `created` offer only if the coordinator
+    // returned this same offer. Otherwise it never left the device — cancelling
+    // it remotely would hit the coordinator for an offer it has no record of.
+    if (!isLocalOnly || sameOffer) {
+      // Prefer the coordinator UUID; local id may be a payment hash or the
+      // legacy "empty" placeholder which the coordinator rejects.
+      final cancelId = remoteId ?? current.id;
+      try {
+        await apiService.cancelOffer(cancelId, current.coordinatorPubkey);
+      } catch (e) {
+        Logger.log.w(() => '[ActiveOfferNotifier] cancel_offer RPC failed: $e');
+      }
     }
 
     final cancelled = current.copyWith(status: OfferStatus.cancelled);
@@ -911,6 +983,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     final updated = existing.copyWith(
       id: update.offerId,
       status: newStatus,
+      // Preserve the verbatim wire status so generic (yaml-driven) flows keep
+      // their real state (e.g. `invalidTwint`/`expiredTwint`) even though the
+      // OfferStatus enum parses them to `unknown`. Flow-driven navigation keys
+      // on statusRaw. For legacy flows this equals status.name.
+      statusRaw: update.status,
       reservedAt: update.reservedAt,
       // Anchor the BLIK confirmation countdown to the coordinator's
       // blik_received_at when present. copyWith treats null as "keep", so an
@@ -1239,22 +1316,16 @@ final offerStatusSubscriptionManagerProvider = Provider<void>((ref) {
         // Ensure the update is for the current active offer.
         if (statusUpdate.offerId == current.id ||
             statusUpdate.paymentHash == current.holdInvoicePaymentHash) {
-          OfferStatus? newStatus;
-          try {
-            newStatus = OfferStatus.values.byName(statusUpdate.status);
-          } catch (e) {
-            Logger.log.e(
-              () => "Error parsing status string '${statusUpdate.status}': $e",
-            );
-          }
-
-          if (newStatus != null) {
-            Logger.log.d(
-              () =>
-                  "Offer ${current.id} status updated to: $newStatus. Updating active offer provider.",
-            );
-            activeOfferNotifier.applyStatusUpdate(statusUpdate);
-          }
+          // Do NOT gate on OfferStatus enum parsing: generic (yaml-driven)
+          // flow states (e.g. `invalidTwint`, `expiredTwint`, `takerCharged`)
+          // have no enum value — dropping them here left flow screens frozen
+          // on a stale state. applyStatusUpdate handles unknown statuses via
+          // statusRaw.
+          Logger.log.d(
+            () =>
+                "Offer ${current.id} status updated to: ${statusUpdate.status}. Updating active offer provider.",
+          );
+          activeOfferNotifier.applyStatusUpdate(statusUpdate);
         }
       });
     } else {
@@ -1817,7 +1888,16 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       Logger.log.i(
         () => '[AppLifecycleNotifier] forcing relay reconnect: $reason',
       );
-      await ndk.connectivity.tryReconnect();
+      if (kIsWeb) {
+        // iOS PWA: backgrounding silently kills the sockets while the transport
+        // still reports itself Connected (zombie), so tryReconnect() alone would
+        // skip them. Hard-reset every transport first, then reconnect. The gate
+        // also blocks in-flight sends (see NostrService.sendRequest) until this
+        // settles, so we never publish onto a dead socket on foreground.
+        await RelayReconnectGate.instance.forceReconnect(ndk);
+      } else {
+        await ndk.connectivity.tryReconnect();
+      }
 
       // Refresh coordinator-derived state after transport recovery so the
       // app rehydrates its custom Bitblik layer, not just the raw sockets.
@@ -1843,6 +1923,21 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         _ref.read(apiServiceProvider).knownOffers.map((o) => o.id).toSet();
     final apiService = _ref.read(apiServiceProvider);
     _newOfferSub = apiService.offersStream.listen((offer) async {
+      // Public-event consistency trigger: the coordinator re-broadcasts the
+      // NIP-69 order on every state change. If the event concerns OUR active
+      // offer and its (coarse) status disagrees with the local state — e.g.
+      // it flipped back to pending/funded because the maker relisted and we
+      // were dropped as taker, and the targeted push was missed — pull
+      // coordinator truth. The reconcile is authoritative and idempotent; the
+      // public event is only the trigger.
+      final active = _ref.read(activeOfferProvider);
+      if (active != null &&
+          offer.id == active.id &&
+          offer.statusRaw != active.statusRaw) {
+        unawaited(
+          _ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow(),
+        );
+      }
       if (offer.status != OfferStatus.funded) return;
       if (!apiService.isEnabled(offer.coordinatorPubkey)) return;
       if (_seenOfferIds.contains(offer.id)) return;

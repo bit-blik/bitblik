@@ -120,6 +120,21 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
   }
 
   @override
+  bool get recordStateHistory => (super.noSuchMethod(
+        Invocation.getter(#recordStateHistory),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  set recordStateHistory(bool? value) => super.noSuchMethod(
+        Invocation.setter(
+          #recordStateHistory,
+          value,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
   _i9.Future<void> connect() => (super.noSuchMethod(
         Invocation.method(
           #connect,
@@ -138,6 +153,40 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
         returnValue: _i9.Future<void>.value(),
         returnValueForMissingStub: _i9.Future<void>.value(),
       ) as _i9.Future<void>);
+
+  @override
+  _i9.Future<void> recordOfferTransition({
+    required String? offerId,
+    required String? fromState,
+    required String? toState,
+    _i8.StateTransitionMeta? meta,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #recordOfferTransition,
+          [],
+          {
+            #offerId: offerId,
+            #fromState: fromState,
+            #toState: toState,
+            #meta: meta,
+          },
+        ),
+        returnValue: _i9.Future<void>.value(),
+        returnValueForMissingStub: _i9.Future<void>.value(),
+      ) as _i9.Future<void>);
+
+  @override
+  _i9.Future<List<Map<String, dynamic>>> getOfferStateHistory(
+          String? offerId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOfferStateHistory,
+          [offerId],
+        ),
+        returnValue: _i9.Future<List<Map<String, dynamic>>>.value(
+            <Map<String, dynamic>>[]),
+      ) as _i9.Future<List<Map<String, dynamic>>>);
 
   @override
   _i9.Future<void> saveTelegramOfferMessage({
@@ -267,6 +316,94 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
       ) as _i9.Future<List<_i2.Offer>>);
 
   @override
+  _i9.Future<List<_i2.Offer>> getOffersByRawStatus(
+    String? status, {
+    int? limit = 1000,
+    int? offset = 0,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOffersByRawStatus,
+          [status],
+          {
+            #limit: limit,
+            #offset: offset,
+          },
+        ),
+        returnValue: _i9.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+      ) as _i9.Future<List<_i2.Offer>>);
+
+  @override
+  _i9.Future<List<_i2.Offer>> getOffersNotInRawStatuses(
+    List<String>? terminalStatuses, {
+    int? limit = 5000,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOffersNotInRawStatuses,
+          [terminalStatuses],
+          {#limit: limit},
+        ),
+        returnValue: _i9.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+      ) as _i9.Future<List<_i2.Offer>>);
+
+  @override
+  _i9.Future<bool> updateOfferRawStatusIfCurrent(
+    String? id,
+    String? newStatus, {
+    List<String>? expectedCurrentStatuses,
+    String? expectedTakerPubkey,
+    String? takerPubkey,
+    String? code,
+    String? takerInvoice,
+    String? takerLightningAddress,
+    DateTime? reservedAt,
+    DateTime? codeReceivedAt,
+    DateTime? takerChargedAt,
+    DateTime? makerConfirmedAt,
+    DateTime? settledAt,
+    DateTime? takerPaidAt,
+    DateTime? disputeAt,
+    int? takerFees,
+    int? takerInvoiceFees,
+    String? failureReason,
+    bool? clearTakerFields = false,
+    bool? preserveCodeOnClear = false,
+    _i8.StateTransitionMeta? transitionMeta,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateOfferRawStatusIfCurrent,
+          [
+            id,
+            newStatus,
+          ],
+          {
+            #expectedCurrentStatuses: expectedCurrentStatuses,
+            #expectedTakerPubkey: expectedTakerPubkey,
+            #takerPubkey: takerPubkey,
+            #code: code,
+            #takerInvoice: takerInvoice,
+            #takerLightningAddress: takerLightningAddress,
+            #reservedAt: reservedAt,
+            #codeReceivedAt: codeReceivedAt,
+            #takerChargedAt: takerChargedAt,
+            #makerConfirmedAt: makerConfirmedAt,
+            #settledAt: settledAt,
+            #takerPaidAt: takerPaidAt,
+            #disputeAt: disputeAt,
+            #takerFees: takerFees,
+            #takerInvoiceFees: takerInvoiceFees,
+            #failureReason: failureReason,
+            #clearTakerFields: clearTakerFields,
+            #preserveCodeOnClear: preserveCodeOnClear,
+            #transitionMeta: transitionMeta,
+          },
+        ),
+        returnValue: _i9.Future<bool>.value(false),
+      ) as _i9.Future<bool>);
+
+  @override
   _i9.Future<bool> updateTakerInvoice(
     String? id,
     String? takerInvoice,
@@ -312,6 +449,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
     _i2.DisputeEscalationReason? disputeEscalationReason,
     int? takerFees,
     String? failureReason,
+    _i8.StateTransitionMeta? transitionMeta,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -331,6 +469,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
             #disputeEscalationReason: disputeEscalationReason,
             #takerFees: takerFees,
             #failureReason: failureReason,
+            #transitionMeta: transitionMeta,
           },
         ),
         returnValue: _i9.Future<bool>.value(false),
@@ -352,6 +491,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
     int? takerFees,
     String? failureReason,
     String? expectedTakerPubkey,
+    _i8.StateTransitionMeta? transitionMeta,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -373,6 +513,7 @@ class MockDatabaseService extends _i1.Mock implements _i8.DatabaseService {
             #takerFees: takerFees,
             #failureReason: failureReason,
             #expectedTakerPubkey: expectedTakerPubkey,
+            #transitionMeta: transitionMeta,
           },
         ),
         returnValue: _i9.Future<bool>.value(false),

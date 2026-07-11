@@ -9,7 +9,8 @@ import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:url_launcher/url_launcher.dart'; // For launching URLs/Intents
 import 'package:android_intent_plus/android_intent.dart'; // For Android Intents
 import 'package:android_intent_plus/flag.dart'; // Import for flags enum
-import '../../providers/providers.dart'; // Import providers
+import '../../providers/providers.dart';
+import '../../flow/flow_provider.dart';
 import 'package:bitblik_core/core.dart'; // Import Offer model for status enum comparison
 import 'package:ndk/domain_layer/entities/wallet/wallet.dart';
 import 'package:ndk/domain_layer/entities/wallet/providers/nwc/nwc_wallet.dart';
@@ -74,13 +75,18 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
   bool isWallet = false;
   bool _sentWeblnPayment = false;
   bool _isPayingWithWallet = false;
+  bool _attemptedPay = false;
   bool _hasSendingWallet = false;
   bool _isCancelling = false;
   StreamSubscription<List<Wallet>>? _walletsSubscription;
 
   String get _qrLogoAsset {
     final method = ref.read(selectedPaymentSystemProvider);
-    return method.id == 'mbway' ? 'assets/bitway-icon.png' : 'assets/logo2.png';
+    return switch (method.id) {
+      'mbway' => 'assets/bitway-icon.png',
+      'twint' => 'assets/bittwint-icon.png',
+      _ => 'assets/logo2.png',
+    };
   }
 
   Future<void> _handleCancelPressed() async {
@@ -98,7 +104,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
         ),
       );
       // Coordinator says we're funded — surface that flow.
-      context.go('/wait-taker');
+      context.go(flowEntryRoute(ref, '/wait-taker'));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -352,7 +358,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       final usedWalletId = ref.read(activeOfferProvider)?.paymentWalletId;
       unawaited(_refreshWalletBalanceAndBudget(walletId: usedWalletId));
       if (mounted) {
-        context.go("/wait-taker");
+        context.go(flowEntryRoute(ref, "/wait-taker"));
       }
       _isPayingWithWallet = false;
     } else {
@@ -365,10 +371,30 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
 
   // --- Budget check + warning dialog ---
 
+  /// True once the offer has reached `funded` or a later live status — i.e. the
+  /// hold invoice was accepted (HTLC locked). Excludes the dead-end terminals
+  /// (`cancelled`/`expired`) which mean the payment did NOT lock.
+  bool _paymentAccepted(OfferStatus? s) =>
+      s != null &&
+      s.index >= OfferStatus.funded.index &&
+      s != OfferStatus.cancelled &&
+      s != OfferStatus.expired;
+
   /// Called when the user taps Pay. Checks balance and (pre-fetched) NWC
   /// budget for the default wallet. If either is too low, shows a warning
   /// dialog that lets the user pick an alternate wallet or proceed anyway.
   Future<void> _checkBudgetAndPay(String invoice) async {
+    // Retry-safe: a previous attempt may have already locked the hold invoice
+    // (e.g. NWC pay_invoice timed out after the HTLC was accepted). Re-check the
+    // coordinator's authoritative status first; if already funded, advance
+    // instead of paying again (which would return "invoice already being paid").
+    if (_attemptedPay) {
+      await ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
+      // A funded status pushes a new offer into activeOfferProvider, firing the
+      // ref.listen in build() -> _handleStatusUpdate -> navigation.
+      if (_paymentAccepted(ref.read(activeOfferProvider)?.statusEnum)) return;
+    }
+
     final ndk = ref.read(ndkProvider);
     final offer = ref.read(activeOfferProvider);
 
@@ -1076,6 +1102,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
 
     setState(() {
       _isPayingWithWallet = true;
+      _attemptedPay = true;
     });
 
     // Persist which wallet is being used so other screens (e.g. wait-taker
@@ -1102,10 +1129,20 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       // Note: Code below is unreachable until payment is implemented
       // Logger.log.i(() => '[MakerPayInvoiceScreen] Invoice accepted');
       // if (mounted) {
-      //   context.go("/wait-taker");
+      //   context.go(flowEntryRoute(ref, "/wait-taker"));
       // }
     } catch (e) {
-      if (mounted) {
+      // pay_invoice blocks while the coordinator holds the HTLC, so a timeout
+      // (or an "invoice already being paid" error on retry) does NOT mean the
+      // payment failed — the HTLC may already be locked. Ask the coordinator
+      // for the authoritative offer status before surfacing an error.
+      await ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
+      final accepted =
+          _paymentAccepted(ref.read(activeOfferProvider)?.statusEnum);
+      // When accepted, reconcile pushed a new offer into activeOfferProvider,
+      // firing the ref.listen in build() -> _handleStatusUpdate -> navigation
+      // to /wait-taker. Suppress the error in that case.
+      if (!accepted && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Payment failed: $e'),

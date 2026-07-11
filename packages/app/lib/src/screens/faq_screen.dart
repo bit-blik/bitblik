@@ -13,7 +13,6 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 
-import '../config/build_flavor.dart';
 import '../providers/providers.dart';
 
 class FaqScreen extends ConsumerStatefulWidget {
@@ -129,29 +128,37 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     });
     try {
       // final locale = LocaleSettings.currentLocale; // Use localeToLoad instead
-      String langCode = localeToLoad.languageCode.toLowerCase();
-      String filePath = 'assets/faq/faq_$langCode.md';
-      String markdownData;
+      final String langCode = localeToLoad.languageCode.toLowerCase();
 
-      try {
-        markdownData = await _loadMarkdownAsset(filePath);
-      } catch (e) {
-        Logger.log.w(
-          () =>
-              'Could not load FAQ for language: $langCode. Falling back to English. Error: $e',
-        );
-        langCode = 'en';
-        filePath = 'assets/faq/faq_$langCode.md';
+      // Brand slug follows the *active payment system* (not the compile-time
+      // app flavor), so e.g. a Bittwint user who switches to MB WAY sees the
+      // ATM-focused BitWay FAQ. FAQs live under assets/faq/<slug>/faq_<lang>.md;
+      // fall back to the brand's English file, then to the generic Bitblik FAQ
+      // when no per-brand file exists for the language.
+      final String slug =
+          ref.read(selectedPaymentSystemProvider).brandName.toLowerCase();
+      final candidates = <String>[
+        'assets/faq/$slug/faq_$langCode.md',
+        'assets/faq/$slug/faq_en.md',
+        'assets/faq/bitblik/faq_$langCode.md',
+        'assets/faq/bitblik/faq_en.md',
+      ];
+
+      String? markdownData;
+      for (final filePath in candidates) {
         try {
           markdownData = await _loadMarkdownAsset(filePath);
-        } catch (fallbackError) {
+          break;
+        } catch (e) {
           Logger.log.w(
-            () => 'Could not load English fallback FAQ. Error: $fallbackError',
-          );
-          throw Exception(
-            'Failed to load FAQ content for $langCode and fallback en.',
+            () => 'Could not load FAQ asset $filePath. Trying next. Error: $e',
           );
         }
+      }
+      if (markdownData == null) {
+        throw Exception(
+          'Failed to load FAQ content for $slug/$langCode and fallbacks.',
+        );
       }
 
       // Convert Markdown to HTML, then substitute payment-system tokens on the
@@ -181,6 +188,22 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Reload when the user switches payment system (e.g. BLIK -> MB WAY), since
+    // the FAQ slug is derived from the active payment system's brand. ref.listen
+    // must run inside build(), not initState().
+    ref.listen<PaymentSystem>(
+      selectedPaymentSystemProvider,
+      (previous, next) {
+        if (previous?.id != next.id) {
+          Logger.log.d(
+            () => "FAQ Screen: payment system changed "
+                "${previous?.id} -> ${next.id}, reloading content.",
+          );
+          _loadFaqContent();
+        }
+      },
+    );
+
     // final t = Translations.of(context); // Access translations if needed for other parts
 
     Widget backButton = Padding(

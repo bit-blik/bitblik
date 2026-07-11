@@ -56,6 +56,7 @@ class ApiServiceNostr {
     OfferCategory? category,
     String? coordinatorPubkey,
     double premiumPercent = 0,
+    String? blikCode,
   }) async {
     try {
       if (coordinatorPubkey == null) {
@@ -67,6 +68,7 @@ class ApiServiceNostr {
         category: category,
         coordinatorPubkey: coordinatorPubkey,
         premiumPercent: premiumPercent,
+        blikCode: blikCode,
       );
     } catch (e) {
       Logger.log.e(() => 'Error calling initiateOfferFiat: $e');
@@ -142,8 +144,9 @@ class ApiServiceNostr {
   }
 
   Future<double> getBtcRate(String currency) async {
-    final cachedRate =
-        MemoryCache.instance.read<double>(_btcRateCacheKey(currency));
+    final cachedRate = MemoryCache.instance.read<double>(
+      _btcRateCacheKey(currency),
+    );
     if (cachedRate != null) {
       return cachedRate;
     }
@@ -264,11 +267,13 @@ class ApiServiceNostr {
     return (rates: rates, fetchedAt: fetchedAt);
   }
 
-  Future<DateTime?> reserveOffer(
+  Future<ReserveOfferResult> reserveOffer(
     String offerId,
     String takerId,
-    String coordinatorPubkey,
-  ) async {
+    String coordinatorPubkey, {
+    String? takerLightningAddress,
+    String? takerInvoice,
+  }) async {
     // Client-side guard: a maker cannot take their own offer. The public
     // NIP-69 offer event carries no maker pubkey (it falls back to the
     // coordinator's), so the only reliable source for the real maker is our
@@ -285,6 +290,8 @@ class ApiServiceNostr {
         offerId,
         takerId,
         coordinatorPubkey,
+        takerLightningAddress: takerLightningAddress,
+        takerInvoice: takerInvoice,
       );
     } catch (e) {
       Logger.log.e(() => 'Error calling reserveOffer: $e');
@@ -295,7 +302,7 @@ class ApiServiceNostr {
   Future<void> submitBlikCode({
     required String offerId,
     required String takerId,
-    required String blikCode,
+    String? blikCode,
     required String takerInvoice,
     required String coordinatorPubkey,
   }) async {
@@ -373,6 +380,28 @@ class ApiServiceNostr {
       await _nostrService.cancelOffer(offerId, coordinatorPubkey);
     } catch (e) {
       Logger.log.e(() => 'Error calling cancelOffer: $e');
+      rethrow;
+    }
+  }
+
+  /// Generic flow-action dispatcher for yaml-driven flows (see
+  /// [NostrService.sendFlowAction]). The [event] is the transition name, which
+  /// equals the coordinator RPC method.
+  Future<Map<String, dynamic>> sendFlowAction({
+    required String event,
+    required String offerId,
+    required String coordinatorPubkey,
+    Map<String, dynamic> extraParams = const {},
+  }) async {
+    try {
+      return await _nostrService.sendFlowAction(
+        event: event,
+        offerId: offerId,
+        coordinatorPubkey: coordinatorPubkey,
+        extraParams: extraParams,
+      );
+    } catch (e) {
+      Logger.log.e(() => 'Error calling flow action "$event": $e');
       rethrow;
     }
   }

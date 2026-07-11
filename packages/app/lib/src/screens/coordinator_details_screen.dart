@@ -30,6 +30,7 @@ class CoordinatorDetailsScreen extends ConsumerStatefulWidget {
 class _CoordinatorDetailsScreenState
     extends ConsumerState<CoordinatorDetailsScreen> {
   bool _showUntrustedLogo = false;
+  bool _refreshing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +38,16 @@ class _CoordinatorDetailsScreenState
     final record = ref.watch(
       coordinatorRecordByPubkeyProvider(widget.pubkey),
     );
+    final debugInfoSourcesAsync = ref.watch(
+      coordinatorInfoEventSourcesProvider(widget.pubkey),
+    );
     final connectivity = ref.watch(relayConnectivityProvider);
     final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
+    final debugInfoSources = debugInfoSourcesAsync.maybeWhen(
+      data: (sources) =>
+          sources.isNotEmpty ? sources : (record?.discoverySources ?? const []),
+      orElse: () => record?.discoverySources ?? const [],
+    );
 
     final name = record?.name ?? t.coordinator.details.title;
     final icon = record?.icon;
@@ -93,7 +102,48 @@ class _CoordinatorDetailsScreenState
                             ],
                           ),
                         ),
-                        _statusChip(context, t, record.responsive),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _statusChip(context, t, record.responsive),
+                            // Offline/unknown status may just be stale — offer
+                            // an explicit refresh (same as the pull-down
+                            // gesture) for mouse/desktop users.
+                            if (record.responsive != true)
+                              _refreshing
+                                  ? const Padding(
+                                      padding: EdgeInsets.only(left: 8),
+                                      child: SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    )
+                                  : IconButton(
+                                      icon: const Icon(Icons.refresh, size: 20),
+                                      visualDensity: VisualDensity.compact,
+                                      tooltip:
+                                          MaterialLocalizations.of(
+                                            context,
+                                          ).refreshIndicatorSemanticLabel,
+                                      onPressed: () async {
+                                        setState(() => _refreshing = true);
+                                        try {
+                                          await _refresh(ref);
+                                        } finally {
+                                          if (mounted) {
+                                            setState(
+                                              () => _refreshing = false,
+                                            );
+                                          }
+                                        }
+                                      },
+                                    ),
+                          ],
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -215,7 +265,7 @@ class _CoordinatorDetailsScreenState
                               ),
                             ),
                             const SizedBox(height: 8),
-                            if (record.discoverySources.isEmpty)
+                            if (debugInfoSources.isEmpty)
                               const Text(
                                 '(none — no live query since startup)',
                                 style: TextStyle(
@@ -224,7 +274,7 @@ class _CoordinatorDetailsScreenState
                                 ),
                               )
                             else
-                              ...record.discoverySources.map(
+                              ...debugInfoSources.map(
                                 (src) => Padding(
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 2),

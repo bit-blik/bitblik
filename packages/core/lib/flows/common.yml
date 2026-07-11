@@ -1,0 +1,75 @@
+# Shared flow states imported by concrete payment-method flows.
+#
+# This file intentionally has no top-level `id`; it is a state fragment meant
+# to be merged into a root flow definition via `imports:`.
+
+states:
+  makerConfirmed:
+    nip69: in-progress
+    description: Maker confirmed payment. Settling hold invoice, paying out the taker.
+    transitions:
+      - on: auto
+        do: [settle_offer_funds]
+        to: settled
+
+  settled:
+    nip69: in-progress
+    description: Hold invoice settled. Proceeding into the payout attempt.
+    transitions:
+      - on: auto
+        do: []
+        to: payingTaker
+
+  payingTaker:
+    nip69: in-progress
+    description: Sending the Lightning payout to the taker.
+    transitions:
+      - on: auto
+        do: [send_payment]
+        to: takerPaid
+        on_fail: takerPaymentFailed
+      - on: timeout
+        after: 300
+        to: takerPaymentFailed
+
+  takerPaid:
+    nip69: success
+    description: Taker paid. Trade complete.
+    terminal: true
+
+  takerPaymentFailed:
+    nip69: in-progress
+    description: Payout failed. Awaiting a fresh invoice / retry.
+    transitions:
+      - on: update_taker_invoice
+        by: taker
+        do: []
+        to: payingTaker
+      - on: retry_taker_payment
+        by: taker
+        do: []
+        to: payingTaker
+
+  cancelled:
+    nip69: canceled
+    description: Offer cancelled.
+    terminal: true
+
+  dispute:
+    nip69: dispute
+    description: >
+      Formal dispute. The hold invoice is settled on entry (funds secured by
+      the coordinator) while evidence is collected from both peers. The
+      coordinator then rules: refund the maker (a fresh Lightning payment to a
+      maker-provided invoice, offer cancelled) or pay the taker (payout tail).
+    transitions:
+      - on: resolve_dispute_refund_maker
+        by: coordinator
+        do: [require_maker_refund_invoice, refund_maker]
+        to: cancelled
+        reason: Coordinator ruled for the maker; refunded via maker invoice.
+      - on: resolve_dispute_pay_taker
+        by: coordinator
+        do: []
+        to: payingTaker
+        reason: Coordinator ruled for the taker.

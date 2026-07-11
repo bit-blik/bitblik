@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:bitblik_core/core.dart';
 
 import 'cli_context.dart';
+import 'flow_cli.dart';
 import 'offer_commands.dart';
 import 'protocol_client.dart';
 import 'secrets_store.dart';
@@ -18,7 +19,7 @@ Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
   final exe = paymentSystem.brandName.toLowerCase();
 
   if (args.isEmpty || args.contains('--help') || args.contains('-h')) {
-    _printHelp(paymentSystem);
+    await _printHelp(paymentSystem);
     return 0;
   }
 
@@ -44,8 +45,14 @@ Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
     return runOfferMarkBlikInvalid(args.sublist(2));
   }
 
-  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'open-dispute') {
+  if (args.length >= 2 &&
+      args[0] == 'offer' &&
+      (args[1] == 'open-dispute' || args[1] == 'dispute')) {
     return runOfferOpenDispute(args.sublist(2));
+  }
+
+  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'new-code') {
+    return runOfferNewCode(args.sublist(2));
   }
 
   if (args.length >= 2 && args[0] == 'offer' && args[1] == 'confirm-payment') {
@@ -96,7 +103,7 @@ Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
 
   stderr.writeln('Unknown command: ${args.join(' ')}');
   stderr.writeln('Run `$exe --help` for usage.');
-  _printHelp(paymentSystem);
+  await _printHelp(paymentSystem);
   return 64;
 }
 
@@ -109,10 +116,25 @@ String _param(String s) => _ansi ? '\x1B[90m$s\x1B[0m' : s; // gray
 String _yellow(String s) => _ansi ? '\x1B[33m$s\x1B[0m' : s;
 String _dim(String s) => _ansi ? '\x1B[2m$s\x1B[0m' : s;
 
-void _printHelp(PaymentSystem ps) {
+Future<void> _printHelp(PaymentSystem ps) async {
   final title = '${ps.brandName} CLI';
   final code = ps.codeLabel;
   final cur = ps.currency;
+
+  // The command set is derived from this market's flow, so only the maker
+  // actions the flow actually offers are shown. Best-effort: if the flow can't
+  // load, fall back to showing every command.
+  MakerFlow? flow;
+  try {
+    flow = await MakerFlow.load();
+  } catch (_) {
+    flow = null;
+  }
+  final providesCode = ps.makerProvidesCodeAtOfferCreation;
+  final showGetCode = flow?.supportsGetCode ?? true;
+  final showMarkInvalid = flow?.supportsMarkInvalid ?? true;
+  final showNewCode = flow?.newCodeEvent != null;
+
   stdout.writeln(
       '${_bold(title)} ${_dim('—')} peer-to-peer $code/Lightning exchange (${ps.flag} $cur)');
   stdout.writeln('');
@@ -139,11 +161,14 @@ void _printHelp(PaymentSystem ps) {
         '--health probes each coordinator for liveness.',
       ]);
 
+  final createCode = providesCode ? '--code <$code> ' : '';
   cmd(
-    '${_cmd('offer')} ${_sub('create')} ${p('--fiat <amount> --coordinator <npub|hex>')}\n'
+    '${_cmd('offer')} ${_sub('create')} ${p('--fiat <amount> --coordinator <npub|hex> $createCode')}\n'
     '               ${p('[--currency $cur] [--json] [--relay <url>]')}',
     [
       'Create a maker offer. Prints the hold invoice to pay.',
+      if (providesCode)
+        'Requires --code: you supply the $code code up front for the taker.',
       'Offer is saved locally; coordinator activates it after invoice is paid.',
     ],
   );
@@ -162,41 +187,40 @@ void _printHelp(PaymentSystem ps) {
   cmd(
       '${_cmd('offer')} ${_sub('cancel')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
       [
-        'Cancel an active (created/funded) offer.',
-        'Coordinator voids the hold invoice.',
+        'Cancel an active offer. Coordinator voids the hold invoice.',
         'Uses the single cancellable local offer automatically; --offer required if multiple.',
       ]);
 
-  cmd(
-      '${_cmd('offer')} ${_sub('mark-blik-invalid')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
-      [
-        'Report that the received $code code was invalid / did not charge.',
-        'Coordinator notifies the taker and relists the offer for a new taker.',
-        'Use after get-blik when the code fails at the bank terminal.',
-      ]);
+  if (showGetCode) {
+    cmd(
+        '${_cmd('offer')} ${_sub('get-blik')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--no-wait] [--json] [--relay <url>]')}',
+        [
+          'Wait for a taker to submit a $code code, then retrieve it via RPC.',
+          'Syncs local state first. Uses the single active local offer automatically;',
+          '--offer required when multiple active offers exist.',
+          '--no-wait: return immediately. Exit 0 = $code code in output.',
+          '          Exit 2 = not ready yet (poll again later).',
+        ]);
+  }
 
-  cmd(
-      '${_cmd('offer')} ${_sub('open-dispute')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
-      [
-        'Open a dispute after the taker raised a conflict.',
-        'Taker raises conflict when they believe the $code charged but maker marked it invalid.',
-        'Coordinator mediates and contacts both parties.',
-      ]);
+  if (showMarkInvalid) {
+    cmd(
+        '${_cmd('offer')} ${_sub('mark-blik-invalid')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
+        [
+          'Report that the received $code code was invalid / did not charge.',
+          'Coordinator notifies the taker and relists the offer for a new taker.',
+          'Use after get-blik when the code fails at the bank terminal.',
+        ]);
+  }
 
-  cmd('${_cmd('offer')} ${_sub('sync')} ${p('[--relay <url>]')}', [
-    'Refresh status of active local offers from each coordinator via RPC.',
-    'Matched by payment hash; unmatched coordinator responses are ignored.',
-  ]);
-
-  cmd(
-      '${_cmd('offer')} ${_sub('get-blik')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--no-wait] [--json] [--relay <url>]')}',
-      [
-        'Wait for a taker to submit a $code code, then retrieve it via RPC.',
-        'Syncs local state first. Uses the single active local offer automatically;',
-        '--offer required when multiple active offers exist.',
-        '--no-wait: return immediately. Exit 0 = $code code in output.',
-        '          Exit 2 = not ready yet (poll again later).',
-      ]);
+  if (showNewCode) {
+    cmd(
+        '${_cmd('offer')} ${_sub('new-code')} ${p('--code <$code> [--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
+        [
+          'Supply a fresh $code code after the previous one expired.',
+          'Re-lists the offer for takers.',
+        ]);
+  }
 
   cmd(
       '${_cmd('offer')} ${_sub('confirm-payment')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
@@ -206,6 +230,21 @@ void _printHelp(PaymentSystem ps) {
         'Uses the single active local offer automatically; --offer required if multiple.',
       ]);
 
+  cmd(
+      '${_cmd('offer')} ${_sub('dispute')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
+      [
+        'Open a formal dispute; the coordinator mediates and contacts both peers.',
+        if (showMarkInvalid)
+          'For a taker conflict after you marked the $code invalid. (alias: open-dispute)'
+        else
+          'Use when the taker reported payment you did not receive.',
+      ]);
+
+  cmd('${_cmd('offer')} ${_sub('sync')} ${p('[--relay <url>]')}', [
+    'Refresh status of active local offers from each coordinator via RPC.',
+    'Matched by payment hash; unmatched coordinator responses are ignored.',
+  ]);
+
   stdout.writeln(_bold('Options:'));
   flag('--health', 'Probe each coordinator for liveness');
   flag('--finished', 'Include terminal offers in list output');
@@ -214,6 +253,7 @@ void _printHelp(PaymentSystem ps) {
   flag('--fiat <amt>', 'Fiat amount for the offer');
   flag('--coordinator', 'Coordinator pubkey (hex or npub1...)');
   flag('--currency <c>', 'Fiat currency (default $cur)');
+  if (providesCode) flag('--code <code>', '$code code you provide to the taker');
   flag('--offer <id>', 'Offer payment hash or coordinator UUID');
   flag('-h, --help', 'Show this help');
   stdout.writeln('');

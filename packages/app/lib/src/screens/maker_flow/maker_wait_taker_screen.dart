@@ -9,10 +9,12 @@ import 'package:ndk/domain_layer/entities/wallet/providers/nwc/nwc_wallet.dart';
 import 'package:ndk/domain_layer/entities/wallet/wallet_balance.dart';
 
 import 'package:bitblik_core/core.dart'; // For OfferStatus enum
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import '../../utils/bitcoin_display.dart';
 import '../../widgets/progress_indicators.dart';
 import '../../widgets/premium_info.dart';
+import '../../widgets/maker_waiting_body.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
 
 class MakerWaitTakerScreen extends ConsumerStatefulWidget {
@@ -58,6 +60,13 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         status == OfferStatus.funded;
   }
 
+  PaymentSystem get _method {
+    final offer = ref.read(activeOfferProvider);
+    return offer != null
+        ? (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik)
+        : ref.read(selectedPaymentSystemProvider);
+  }
+
   void _scheduleExpiryTimer(Offer? offer) {
     if (offer == null) return;
     final expiresAt = offer.createdAt.add(const Duration(minutes: 10));
@@ -97,7 +106,14 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
 
     if (status == OfferStatus.reserved) {
       if (mounted) {
-        context.go('/wait-blik');
+        context.go(
+          flowEntryRoute(
+            ref,
+            _method.makerProvidesCodeAtOfferCreation
+                ? '/confirm-blik'
+                : '/wait-blik',
+          ),
+        );
       }
     } else if (status == OfferStatus.funded) {
       // Continue waiting
@@ -152,7 +168,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
           );
           if (blikCode != null && blikCode.isNotEmpty) {
             ref.read(receivedBlikCodeProvider.notifier).state = blikCode;
-            if (mounted) context.go('/confirm-blik');
+            if (mounted) context.go(flowEntryRoute(ref, '/confirm-blik'));
             return;
           }
           Logger.log.w(
@@ -161,7 +177,8 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
           );
         } catch (e) {
           Logger.log.w(
-            () => '[MakerWaitTaker] BLIK fetch failed for offer ${offer.id}: $e',
+            () =>
+                '[MakerWaitTaker] BLIK fetch failed for offer ${offer.id}: $e',
           );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -303,7 +320,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                   offer.premiumPercent,
             ),
           );
-      if (mounted) context.go('/pay');
+      if (mounted) context.go(flowEntryRoute(ref, '/pay'));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -524,180 +541,95 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Progress indicator (Step 2: Wait for Taker)
-                const MakerProgressIndicator(activeStep: 2),
-                const SizedBox(height: 20),
-                // Top section: Message with refresh icon
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-                      ),
+        child: MakerWaitingBody(
+          offer: offer,
+          message: t.maker.waitTaker.message,
+          countdown:
+              offer.status == OfferStatus.funded
+                  ? CircularCountdownTimer(
+                    startTime: offer.createdAt,
+                    maxDuration: const Duration(minutes: 10),
+                    size: 200,
+                    strokeWidth: 16,
+                    progressColor: Colors.green,
+                    backgroundColor: Colors.white,
+                    fontSize: 48,
+                  )
+                  : const CircularProgressIndicator(),
+          error: Consumer(
+            builder: (context, ref, _) {
+              final error = ref.watch(errorProvider);
+              if (error != null &&
+                  error.startsWith(
+                    t.maker.waitTaker
+                        .failedToCancelOffer(details: '')
+                        .split(' {details}')[0],
+                  )) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: Text(
+                    error,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
                     ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        t.maker.waitTaker.message,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                        ),
-                        textAlign: TextAlign.center,
-                        softWrap: true,
-                      ),
-                    ),
-                  ],
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          actions: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed:
+                  _isCancelling || (offer.status != OfferStatus.funded)
+                      ? null
+                      : _cancelOffer,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red, width: 2),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 30),
-
-                // Center: Large circular progress bar with time
-                Center(
-                  child:
-                      offer.status == OfferStatus.funded
-                          ? CircularCountdownTimer(
-                            startTime: offer.createdAt,
-                            maxDuration: const Duration(minutes: 10),
-                            size: 200,
-                            strokeWidth: 16,
-                            progressColor: Colors.green,
-                            backgroundColor: Colors.white,
-                            fontSize: 48,
-                          )
-                          : const CircularProgressIndicator(),
-                ),
-
-                const SizedBox(height: 30),
-
-                // Bottom section: Offer details and Cancel button
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Offer details (bottom left)
-                    _buildDetailRow(
-                      context,
-
-                      t.offers.details.amountLabel,
-                      '${(offer.fiatAmount * 100).round() % 100 == 0 ? offer.fiatAmount.toStringAsFixed(0) : offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildDetailRow(
-                      context,
-                      t.maker.amountForm.labels.fee,
-                      formatBitcoinAmount(
-                        context,
-                        bitcoinDisplayUnit,
-                        offer.makerFees,
-                      ),
-                    ),
-                    if (offer.premiumPercent > 0) ...[
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () => showPremiumInfoDialog(context),
-                        child: _buildDetailRow(
-                          context,
-                          t.offers.labels.premium,
-                          '+${formatPremium(offer.premiumPercent)}%',
+              ),
+              child:
+                  _isCancelling
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
                         ),
-                      ),
-                    ],
-                    const SizedBox(height: 30),
-
-                    // Error message
-                    Consumer(
-                      builder: (context, ref, _) {
-                        final error = ref.watch(errorProvider);
-                        if (error != null &&
-                            error.startsWith(
-                              t.maker.waitTaker
-                                  .failedToCancelOffer(details: '')
-                                  .split(' {details}')[0],
-                            )) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10.0),
-                            child: Text(
-                              error,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                              textAlign: TextAlign.center,
+                      )
+                      : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.red,
                             ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-
-                    // Cancel Offer button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed:
-                            _isCancelling ||
-                                    (offer.status != OfferStatus.funded)
-                                ? null
-                                : _cancelOffer,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.red, width: 2),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            child: const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                        child:
-                            _isCancelling
-                                ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.red,
-                                    ),
-                                  ),
-                                )
-                                : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.red,
-                                      ),
-                                      child: const Icon(
-                                        Icons.close,
-                                        size: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      t.offers.actions.cancel,
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                          const SizedBox(width: 8),
+                          Text(
+                            t.offers.actions.cancel,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ],
             ),
           ),
         ),

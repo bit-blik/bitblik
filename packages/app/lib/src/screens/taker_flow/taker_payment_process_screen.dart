@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:bitblik_core/core.dart'; // Import Offer which contains OfferStatus
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import '../../widgets/progress_indicators.dart'; // Import for TakerProgressIndicator
 
@@ -37,6 +38,7 @@ class TakerPaymentProcessScreen extends ConsumerWidget {
     final t = Translations.of(context);
 
     return Scaffold(
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -174,9 +176,18 @@ class _PaymentChecklist extends ConsumerWidget {
 
     bool isFailed = currentStatus == OfferStatus.takerPaymentFailed;
 
+    // payingTaker sits between settled and takerPaid (coordinator is actively
+    // paying the taker's Lightning invoice). Map it onto the settled index so
+    // the "Paying your Lightning invoice" step renders as active rather than
+    // defaulting the "Maker confirmed" step to active.
+    final OfferStatus effectiveStatus =
+        currentStatus == OfferStatus.payingTaker
+        ? OfferStatus.settled
+        : currentStatus;
+
     // Find the index corresponding to the current status in the successful flow
     int currentStatusOrderIndex = successfulStepsOrder.indexWhere(
-      (s) => stepToStatusMapping[s] == currentStatus,
+      (s) => stepToStatusMapping[s] == effectiveStatus,
     );
 
     return IntrinsicWidth(
@@ -348,7 +359,8 @@ class _ChecklistItem extends ConsumerWidget {
                   final offer = ref.read(activeOfferProvider);
 
                   if (offer != null) {
-                    context.go('/taker-failed', extra: offer);
+                    context.go(flowEntryRoute(ref, '/taker-failed'),
+                        extra: offer);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

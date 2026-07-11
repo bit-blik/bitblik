@@ -56,3 +56,78 @@ How to find out telegram bot token & chat id:
 - send a message to your group to see the chat id in the response
 - get chat id with https://api.telegram.org/bot<your-bot-token>/getUpdates
 - configure `TELEGRAM_CHAT_ID` with either a single destination or a comma-separated list to send to multiple groups/channels at once
+
+## Memory Profiling
+
+### Runtime snapshots
+
+Set:
+
+- `MEMORY_PROFILING=true`
+- `MEMORY_PROFILING_INTERVAL_SECONDS=30`
+
+The coordinator will emit periodic `MEMORY_SNAPSHOT {json}` log lines with:
+
+- process RSS and `/proc` memory fields
+- coordinator in-memory structure counts
+- flow-owned timer counts
+- Nostr relay / subscription / request counters
+
+### Profiling container
+
+For a VM-service-enabled container, build from the repo root:
+
+```bash
+docker build -f packages/coordinator/Dockerfile.profile -t coordinator-profile .
+```
+
+This exposes:
+
+- `8080` for the app
+- `8181` for Dart VM service / DevTools
+
+### get_info benchmark
+
+The benchmark tool supports two modes:
+
+1. Direct coordinator call path:
+
+```bash
+dart run tool/get_info_memory_bench.dart --mode=direct --requests=10000 --report-every=500
+```
+
+2. Full Nostr RPC path:
+
+```bash
+dart run tool/get_info_memory_bench.dart \
+  --mode=nostr \
+  --coordinator-pubkey=<hex-pubkey> \
+  --relays=wss://relay1,wss://relay2 \
+  --requests=10000 \
+  --report-every=500 \
+  --rate=10
+```
+
+The tool prints JSON samples with iteration count, elapsed time, and its own RSS.
+
+### One-command run
+
+If the coordinator is already running, you can collect both benchmark modes and
+the coordinator snapshots into one timestamped directory with:
+
+```bash
+bash tool/run_memory_profile.sh \
+  --coordinator-pubkey=<hex-pubkey> \
+  --relays=wss://relay1,wss://relay2 \
+  --container=coordinator
+```
+
+This writes:
+
+- `direct.jsonl`
+- `nostr.jsonl`
+- `docker_stats.jsonl`
+- `coordinator.log`
+- `memory_snapshots.log`
+- `docker_inspect.json`
+- `run_config.json`

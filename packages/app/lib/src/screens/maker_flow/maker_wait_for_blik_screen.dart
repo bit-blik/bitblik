@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import 'package:bitblik_core/core.dart';
 import '../../utils/bitcoin_display.dart';
@@ -24,6 +25,13 @@ class _MakerWaitForBlikScreenState
   Duration? _reservationDuration;
   bool _isLoadingConfig = true;
   String? _configError;
+
+  PaymentSystem get _method {
+    final offer = ref.read(activeOfferProvider);
+    return offer != null
+        ? (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik)
+        : ref.read(selectedPaymentSystemProvider);
+  }
 
   @override
   void initState() {
@@ -96,6 +104,12 @@ class _MakerWaitForBlikScreenState
   void _handleStatusUpdate(OfferStatus? status) async {
     if (status == null) return;
 
+    if (_method.makerProvidesCodeAtOfferCreation &&
+        status == OfferStatus.reserved) {
+      if (mounted) context.go(flowEntryRoute(ref, '/confirm-blik'));
+      return;
+    }
+
     final offer = ref.read(activeOfferProvider);
     final makerId = ref.read(publicKeyProvider).value;
     final coordinatorPubkey = offer?.coordinatorPubkey;
@@ -127,6 +141,7 @@ class _MakerWaitForBlikScreenState
         );
 
         if (blikCode != null && blikCode.isNotEmpty) {
+          if (!mounted) return;
           Logger.log.d(
             () =>
                 "[MakerWaitForBlik] BLIK code is valid. Storing in provider...",
@@ -136,13 +151,11 @@ class _MakerWaitForBlikScreenState
             () => "[MakerWaitForBlik] Stored BLIK code from API: $blikCode",
           );
 
-          if (mounted) {
-            Logger.log.d(
-              () =>
-                  "[MakerWaitForBlik] Navigating to MakerConfirmPaymentScreen...",
-            );
-            context.go('/confirm-blik');
-          }
+          Logger.log.d(
+            () =>
+                "[MakerWaitForBlik] Navigating to MakerConfirmPaymentScreen...",
+          );
+          context.go(flowEntryRoute(ref, '/confirm-blik'));
         } else {
           Logger.log.e(
             () =>
@@ -166,7 +179,7 @@ class _MakerWaitForBlikScreenState
             "[MakerWaitForBlik] Offer reverted to FUNDED (Taker likely timed out). Popping back.",
       );
       if (mounted) {
-        context.go('/wait-taker');
+        context.go(flowEntryRoute(ref, '/wait-taker'));
       }
     } else if (status == OfferStatus.reserved) {
       Logger.log.d(
@@ -332,7 +345,10 @@ class _MakerWaitForBlikScreenState
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        t.maker.waitForBlik.messageWaiting(code: ref.read(selectedPaymentSystemProvider).codeLabel),
+                        t.maker.waitForBlik.messageWaiting(
+                          code:
+                              ref.read(selectedPaymentSystemProvider).codeLabel,
+                        ),
                         style: const TextStyle(
                           fontSize: 24,
                           color: Colors.black87,

@@ -5,6 +5,8 @@ const cors = require('cors');
 const path = require('path');
 const { URL } = require('url');
 const { WebSocketServer, WebSocket } = require('ws');
+const fsSync = require('fs');
+const yaml = require('js-yaml');
 require('dotenv').config();
 
 // Helper to strip surrounding quotes from env vars (handles both Docker and non-Docker environments)
@@ -37,6 +39,10 @@ const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
   const user = stripQuotes(rawConfig.user ?? rawConfig.dbUser ?? rawConfig.DB_USER);
   const password = stripQuotes(rawConfig.password ?? rawConfig.dbPassword ?? rawConfig.DB_PASSWORD);
   const iconUrl = stripQuotes(rawConfig.iconUrl ?? rawConfig.iconURL ?? rawConfig.icon);
+  // Optional id of the flow yml (blik/twint/mbway) this coordinator runs, used
+  // by the dashboard to render its state diagram. Optional: when unset the
+  // flow page falls back to a picker.
+  const flowId = sanitizeCoordinatorId(rawConfig.flow ?? rawConfig.flowId ?? rawConfig.flowID);
   const fallbackId = database || `coordinator-${index + 1}`;
   const id = sanitizeCoordinatorId(rawConfig.id ?? rawConfig.name ?? fallbackId);
   const label = stripQuotes(rawConfig.label ?? rawConfig.name ?? database ?? id);
@@ -54,6 +60,7 @@ const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
     user,
     password,
     iconUrl: iconUrl || null,
+    flowId: flowId || null,
   };
 };
 
@@ -204,7 +211,110 @@ const isValidDateStr = (value) => {
 };
 
 const getCoordinatorOptions = () =>
-  coordinatorConfigs.map(({ id, label, iconUrl }) => ({ id, label, iconUrl }));
+  coordinatorConfigs.map(({ id, label, iconUrl, flowId }) => ({ id, label, iconUrl, flowId }));
+
+// ─── Flow definitions (state-machine ymls) ──────────────────────────────────
+// The flow ymls (blik/twint/mbway) are the single source of truth for the
+// coordinator state machine and live in packages/core/lib/flows. Resolve a
+// directory that exists across dev (monorepo) and Docker (FLOWS_DIR override /
+// bundled copy) layouts.
+const FLOWS_DIR = stripQuotes(process.env.FLOWS_DIR)
+  || [path.join(__dirname, '../../core/lib/flows'), path.join(__dirname, 'flows')].find((dir) => {
+       try { return fsSync.statSync(dir).isDirectory(); } catch { return false; }
+     })
+  || path.join(__dirname, '../../core/lib/flows');
+
+const flowCache = new Map();
+
+const readFlowDoc = (fileName) => yaml.load(fsSync.readFileSync(path.join(FLOWS_DIR, fileName), 'utf8'));
+
+// Expand `imports:` the same way core's FlowDefinition._expandImports does:
+// imported fragments (e.g. common.yml) are merged first, in import order and
+// recursively (cycle-guarded), then the flow's own states. A duplicate state
+// name is an error, matching the engine's strictness.
+const expandImports = (doc, stack = new Set()) => {
+  const imports = Array.isArray(doc.imports) ? doc.imports : [];
+  if (imports.length === 0) return doc;
+  const mergedStates = {};
+  for (const importPath of imports) {
+    if (stack.has(importPath)) throw new Error(`Circular flow import detected: ${importPath}`);
+    stack.add(importPath);
+    const imported = expandImports(readFlowDoc(importPath), stack);
+    stack.delete(importPath);
+    for (const [name, def] of Object.entries(imported.states || {})) {
+      if (mergedStates[name]) throw new Error(`Imported flow state "${name}" declared more than once.`);
+      mergedStates[name] = def;
+    }
+  }
+  for (const [name, def] of Object.entries(doc.states || {})) {
+    if (mergedStates[name]) throw new Error(`Flow definition re-declares imported state "${name}".`);
+    mergedStates[name] = def;
+  }
+  return { ...doc, states: mergedStates, imports: [] };
+};
+
+// Reshape a parsed schema-v2 flow doc into the minimal JSON the dashboard
+// diagram needs: ordered states with their initial/terminal flags, state-level
+// `do` actions, and outgoing transitions (`on`/`by`/`do`/`to`/`on_fail`,
+// timeouts carrying `after` seconds + optional `from` anchor field).
+const transformFlow = (id, doc) => {
+  const states = Object.entries(doc.states || {}).map(([name, def]) => ({
+    name,
+    initial: !!def.initial,
+    terminal: !!def.terminal,
+    nip69: def.nip69 || null,
+    description: typeof def.description === 'string' ? def.description.trim() : null,
+    do: Array.isArray(def.do) ? def.do : [],
+    transitions: (def.transitions || []).map((t) => ({
+      on: t.on || null,
+      by: t.by || null,
+      do: Array.isArray(t.do) ? t.do : [],
+      to: t.to || null,
+      onFail: t.on_fail || null,
+      after: t.after ?? null,
+      from: t.from || null,
+      returns: t.returns || null,
+      reason: t.reason ? String(t.reason).trim() : null,
+    })),
+  }));
+  return { id: doc.id || id, label: doc.id || id, states };
+};
+
+const loadFlow = (id) => {
+  if (flowCache.has(id)) return flowCache.get(id);
+  if (!fsSync.existsSync(path.join(FLOWS_DIR, `${id}.yml`))) return null;
+  const doc = expandImports(readFlowDoc(`${id}.yml`));
+  // Fragments (no top-level id, e.g. common.yml) are not standalone flows.
+  if (!doc.id) return null;
+  const flow = transformFlow(id, doc);
+  flowCache.set(id, flow);
+  return flow;
+};
+
+// A file is a listable flow only if it declares a top-level `id`; id-less
+// files are import fragments (common.yml).
+const isFlowFragment = (fileName) => {
+  try {
+    const doc = readFlowDoc(fileName);
+    return !doc || !doc.id;
+  } catch {
+    return true;
+  }
+};
+
+const listFlows = () => {
+  let files = [];
+  try {
+    files = fsSync.readdirSync(FLOWS_DIR).filter((f) => f.endsWith('.yml'));
+  } catch {
+    return [];
+  }
+  return files
+    .filter((f) => !isFlowFragment(f))
+    .map((f) => f.replace(/\.yml$/, ''))
+    .map((id) => ({ id, label: id }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+};
 
 const resolveCoordinator = (requestedId) => {
   const coordinatorId = sanitizeCoordinatorId(requestedId) || defaultCoordinatorId;
@@ -313,6 +423,73 @@ const fetchAuditByOfferId = async (pool, offerId, limit = AUDIT_DEFAULT_LIMIT) =
 
   const result = await pool.query(query, [offerId, limit]);
   return result.rows;
+};
+
+const fetchStateHistoryByOfferId = async (pool, offerId) => {
+  const query = `
+    SELECT
+      from_state,
+      to_state,
+      trigger_type,
+      event,
+      actor,
+      actor_pubkey,
+      metadata,
+      created_at
+    FROM offer_state_history
+    WHERE offer_id = $1
+    ORDER BY created_at, id
+  `;
+
+  const result = await pool.query(query, [offerId]);
+  return result.rows;
+};
+
+const fetchRecentOffersByActorPubkey = async (pool, actorPubkey, limit = 20) => {
+  const query = `
+    SELECT
+      id,
+      status,
+      fiat_amount,
+      fiat_currency,
+      created_at,
+      CASE
+        WHEN maker_pubkey = $1 THEN 'maker'
+        WHEN taker_pubkey = $1 THEN 'taker'
+        ELSE NULL
+      END AS role
+    FROM offers
+    WHERE maker_pubkey = $1 OR taker_pubkey = $1
+    ORDER BY created_at DESC
+    LIMIT $2
+  `;
+
+  const result = await pool.query(query, [actorPubkey, limit]);
+  return result.rows;
+};
+
+const fetchActorOfferStats = async (pool, actorPubkey, role, days = 90) => {
+  const roleColumn = role === 'maker' ? 'maker_pubkey' : role === 'taker' ? 'taker_pubkey' : null;
+  if (!roleColumn) {
+    throw new Error(`Invalid actor role: ${role}`);
+  }
+
+  const query = `
+    SELECT
+      COUNT(*) FILTER (WHERE status = 'takerPaid')::INT AS success_count,
+      COUNT(*) FILTER (WHERE status IN ('expired', 'cancelled'))::INT AS failed_count
+    FROM offers
+    WHERE ${roleColumn} = $1
+      AND created_at >= NOW() - ($2::text || ' days')::interval
+  `;
+
+  const result = await pool.query(query, [actorPubkey, String(days)]);
+  return {
+    role,
+    days,
+    successCount: result.rows[0]?.success_count || 0,
+    failedCount: result.rows[0]?.failed_count || 0,
+  };
 };
 
 const fetchAuditById = async (pool, auditId) => {
@@ -608,6 +785,27 @@ app.get('/api/coordinators', (req, res) => {
   });
 });
 
+app.get('/api/flows', (req, res) => {
+  res.json({ flows: listFlows() });
+});
+
+app.get('/api/flows/:flowId', (req, res) => {
+  const id = sanitizeCoordinatorId(req.params.flowId);
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid flow id' });
+  }
+  let flow;
+  try {
+    flow = loadFlow(id);
+  } catch (err) {
+    return res.status(500).json({ error: `Failed to load flow ${id}: ${err.message}` });
+  }
+  if (!flow) {
+    return res.status(404).json({ error: `Unknown flow: ${id}`, flows: listFlows() });
+  }
+  res.json(flow);
+});
+
 app.get('/api/offers/recent', async (req, res) => {
   try {
     const coordinator = requireCoordinator(req, res);
@@ -634,6 +832,54 @@ app.get('/api/offers/:offerId/audit', async (req, res) => {
     const limit = parseLimit(req.query.limit, AUDIT_DEFAULT_LIMIT, AUDIT_MAX_LIMIT);
     const rows = await fetchAuditByOfferId(coordinator.pool, offerId, limit);
     res.json({ rows });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/offers/:offerId/state-history', async (req, res) => {
+  try {
+    const coordinator = requireCoordinator(req, res);
+    if (!coordinator) {
+      return;
+    }
+    const { offerId } = req.params;
+    const rows = await fetchStateHistoryByOfferId(coordinator.pool, offerId);
+    res.json({ rows });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/actors/:actorPubkey/offers', async (req, res) => {
+  try {
+    const coordinator = requireCoordinator(req, res);
+    if (!coordinator) {
+      return;
+    }
+    const { actorPubkey } = req.params;
+    const limit = parseLimit(req.query.limit, 20, 50);
+    const rows = await fetchRecentOffersByActorPubkey(coordinator.pool, actorPubkey, limit);
+    res.json({ rows });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/actors/:actorPubkey/stats', async (req, res) => {
+  try {
+    const coordinator = requireCoordinator(req, res);
+    if (!coordinator) {
+      return;
+    }
+    const { actorPubkey } = req.params;
+    const role = String(req.query.role || '');
+    const days = parseLimit(req.query.days, 90, 365);
+    const stats = await fetchActorOfferStats(coordinator.pool, actorPubkey, role, days);
+    res.json(stats);
   } catch (error) {
     console.error('Database error:', error);
     res.status(500).json({ error: error.message });

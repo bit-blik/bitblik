@@ -4,12 +4,15 @@
   "description": "Backend API server for offers dashboard",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "sync-flows": "node -e \"const fs=require('fs'),p=require('path');const src=p.join('..','..','core','lib','flows'),dst='flows';fs.mkdirSync(dst,{recursive:true});for(const f of fs.readdirSync(src).filter(f=>f.endsWith('.yml')))fs.copyFileSync(p.join(src,f),p.join(dst,f));console.log('Synced flow ymls into ./flows');\"",
+    "build:image": "npm run sync-flows && docker build -t offers-dashboard ."
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "js-yaml": "^5.2.0",
     "pg": "^8.11.3",
     "ws": "^8.20.0"
   }

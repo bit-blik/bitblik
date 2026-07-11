@@ -126,9 +126,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                           showRecentTransactions: false,
                           albyGoConnectConfig: AlbyGoConnectConfig(
                             connectMethod: AlbyGoConnectMethod.nostrNwcCallback,
-                            appName: ref.watch(selectedPaymentSystemProvider).brandName,
+                            appName:
+                                ref
+                                    .watch(selectedPaymentSystemProvider)
+                                    .brandName,
                             appIconUrl: buildNwcIconUrl,
-                            callback: 'bitblik://nwc-callback',
+                            callback: '$buildAppScheme://nwc-callback',
                           ),
                           onWalletSelected: (walletId) {
                             context.push(

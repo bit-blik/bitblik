@@ -19,6 +19,15 @@ const String kBitblikPubkeyHex =
 const String kBitwayPubkeyHex =
     '3be722c78093192b4064e9ba23a6c5419ce5a1fa41bf66d3101cb43025110def';
 
+/// The Bittwint (TWINT / Switzerland market) Nostr identity (hex pubkey). Used
+/// instead of [kBitblikPubkeyHex] for discovery when the active payment system
+/// is TWINT, so the Bittwint market resolves its own discovery relays +
+/// coordinator set.
+///
+/// npub: npub1jwyfy9ah5g6p6r509vcesmyjwwa93p9qrk4kx365d7pynxfkmqysf5a66q
+const String kTwintPubkeyHex =
+    '93889217b7a2341d0e8f2b31986c9273ba5884a01dab6347546f82499936d809';
+
 /// Hardcoded **bootstrap** relays — used only to fetch Bitblik's profile
 /// NIP-65 ([kBitblikPubkeyHex]), which in turn yields the live discovery relays.
 /// Also the fallback discovery set when Bitblik's relay list can't be fetched.
@@ -30,8 +39,7 @@ const List<String> kDiscoveryRelays = [
   'wss://relay.primal.net',
   'wss://nos.lol',
   'wss://nostr.mom',
-  'wss://relay.damus.io',
-  'wss://user.kindpag.es',
+  'wss://relay.damus.io'
 ];
 
 /// Normalize a relay URL for comparison/dedup: trims whitespace and drops a

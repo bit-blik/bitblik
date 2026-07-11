@@ -1,0 +1,226 @@
+# Bitblik offer state machine — BLIK (Poland) flow, schema v2.
+#
+# This file is the runtime source of truth for the BLIK flow.
+#
+# v2 model:
+# - A transition is an attempt. When `on` fires, run `do`; if every action
+#   succeeds, commit and advance to `to`. If any action fails, the state does
+#   not advance and nothing is committed.
+# - `on_fail` routes definitive transition failure to another state.
+# - `on: auto` transitions are detached/internal attempts.
+# - State-level `do:` runs after the state commit, best-effort.
+#
+# Initial state: funded.
+
+imports: [common.yml]
+
+id: blik
+
+states:
+
+  # ─── offer lifecycle ────────────────────────────────────────────────
+
+  funded:
+    nip69: pending
+    initial: true
+    do: [send_offer_notifications]
+    description: >
+      Hold invoice confirmed. Offer is live and open for takers.
+    transitions:
+      - on: cancel_offer
+        by: maker
+        do: [clear_taker_fields, cancel_hold_invoice]
+        to: cancelled
+      - on: reserve_offer
+        by: taker
+        do: [reserve_taker]
+        to: reserved
+      - on: timeout
+        after: 600            # FUNDED_EXPIRY_SECONDS, default 600
+        from: created_at      # total offer lifetime, NOT reset by reserve/revert
+        do: [clear_taker_fields, cancel_hold_invoice]
+        to: expired
+        reason: No taker reserved in time
+
+  reserved:
+    nip69: in-progress
+    description: A taker holds the offer slot and must submit a BLIK code.
+    transitions:
+      - on: submit_blik
+        by: taker
+        do: [assert_assigned_taker, validate_code, resolve_taker_invoice, stamp_code_received_at]
+        to: blikReceived
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, cancel_reservation]
+        to: funded
+        note: Re-opens the offer for other takers.
+      - on: timeout
+        after: 61             # RESERVATION_SECONDS
+        do: [cancel_reservation]
+        to: funded
+        reason: >
+          Taker did not submit a BLIK code in time; the offer is reverted to
+          funded (NOT expired) so it is re-listed for other takers.
+
+  blikReceived:
+    nip69: in-progress
+    description: >
+      Taker submitted a BLIK code. The maker has not yet fetched it.
+    transitions:
+      - on: get_blik
+        by: maker
+        to: blikSentToMaker
+        returns: blik_code
+        note: >
+          Maker pulls the code. Modeled as an explicit state because the
+          confirmation-timeout target differs before vs after the pull.
+      - on: timeout
+        after: 120            # PaymentSystem.confirmationWindow (BLIK = 2 min)
+        to: expiredBlik
+        reason: Maker never fetched the BLIK code within the confirmation window.
+
+  blikSentToMaker:
+    nip69: in-progress
+    description: Maker has the BLIK code and must render a verdict.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: mark_blik_invalid
+        by: maker
+        do: []
+        to: invalidBlik
+      - on: timeout
+        after: 120            # confirmation window, measured from code_received_at
+        from: code_received_at
+        to: expiredSentBlik
+        reason: >
+          Maker did not respond within the confirmation window. The window
+          continues from when the taker submitted the code (code_received_at),
+          NOT from when the maker fetched it — matching the legacy timer.
+
+  expired:
+    nip69: canceled
+    description: Offer expired — no taker reserved within the funded window.
+    terminal: true
+
+  # ─── BLIK failure / retake states ───────────────────────────────────
+
+  invalidBlik:
+    nip69: in-progress
+    description: >
+      Maker marked the BLIK invalid before the taker reported a charge. The same
+      taker may re-take, cancel, or report that they were in fact charged.
+    transitions:
+      - on: mark_blik_charged
+        by: taker
+        do: [assert_assigned_taker, accept_taker_invoice, stamp_taker_charged_at]
+        to: conflict
+      - on: reserve_offer
+        by: taker
+        do: [assert_assigned_taker, stamp_reserved_at]
+        to: reserved
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, cancel_reservation]
+        to: funded
+      - on: timeout
+        after: 3600           # conflict/dispute escalation, 60 min
+        do: [settle_offer_funds]
+        to: dispute
+        reason: autoInvalidBlikTimeout — taker silent; settle and escalate.
+
+  expiredBlik:
+    nip69: in-progress
+    description: >
+      The maker never fetched the BLIK code (timeout from `blikReceived`). The
+      same taker may re-take or cancel; otherwise the offer is re-listed.
+    transitions:
+      - on: reserve_offer
+        by: taker
+        do: [assert_assigned_taker, stamp_reserved_at]
+        to: reserved
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, cancel_reservation]
+        to: funded
+      - on: timeout
+        after: 60             # expiredBlik relist timeout
+        do: [cancel_reservation]
+        to: funded
+        reason: Grace period elapsed; re-list the offer as funded.
+
+  expiredSentBlik:
+    nip69: in-progress
+    description: >
+      Maker had the code but did not respond within the confirmation window. The
+      maker may still rule, the taker may report a charge or re-take.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: mark_blik_invalid
+        by: maker
+        do: []
+        to: invalidBlik
+      - on: mark_blik_charged
+        by: taker
+        do: [assert_assigned_taker, accept_taker_invoice, stamp_taker_charged_at]
+        to: takerCharged
+      - on: reserve_offer
+        by: taker
+        do: [assert_assigned_taker, stamp_reserved_at]
+        to: reserved
+      - on: timeout
+        after: 3600           # dispute escalation, 60 min
+        do: [settle_offer_funds]
+        to: dispute
+        reason: autoExpiredSentBlikTimeout — settle and escalate.
+
+  takerCharged:
+    nip69: in-progress
+    description: >
+      Taker reported the BLIK was charged but the maker has not confirmed.
+      Awaiting maker verdict; silence resolves in the taker's favour.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: mark_blik_invalid
+        by: maker
+        do: []
+        to: conflict
+      - on: timeout
+        after: 1800           # TAKER_CHARGED_AUTO_CONFIRM_SECONDS, default 3600
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+        reason: >
+          Maker silent; auto-confirm in the taker's favour (settles the hold
+          invoice and pays the taker).
+
+  # ─── conflict & dispute ─────────────────────────────────────────────
+
+  conflict:
+    nip69: dispute
+    description: >
+      Maker reported a bad BLIK (or it escalated here). Maker may still confirm,
+      or open a formal dispute requiring coordinator intervention.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+        note: Maker reconsiders and confirms the BLIK was valid.
+      - on: open_dispute
+        by: maker
+        do: [settle_offer_funds]
+        to: dispute
+      - on: timeout
+        after: 3600           # dispute escalation, 60 min
+        do: [settle_offer_funds]
+        to: dispute
+        reason: autoConflictTimeout — settle and escalate to dispute.

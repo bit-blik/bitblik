@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
 
@@ -34,6 +35,8 @@ class _MakerConfirmPaymentScreenState
   /// Active offer's payment-system code term (e.g. BLIK / MB WAY) for UI text.
   String get _code => _method.codeLabel;
 
+  bool get _makerProvidedCodeFlow => _method.makerProvidesCodeAtOfferCreation;
+
   // Ticks once per second while in takerCharged to drive the auto-confirm
   // countdown. The expiry itself is derived from offer.createdAt plus the
   // coordinator-advertised duration, so the ticker only triggers repaints.
@@ -48,12 +51,14 @@ class _MakerConfirmPaymentScreenState
   }
 
   bool _canConfirmPayment(OfferStatus status) =>
+      (_makerProvidedCodeFlow && status == OfferStatus.reserved) ||
       status == OfferStatus.blikSentToMaker ||
       status == OfferStatus.expiredSentBlik ||
       status == OfferStatus.takerCharged ||
       status == OfferStatus.conflict;
 
   bool _canMarkBlikInvalid(OfferStatus status) =>
+      (_makerProvidedCodeFlow && status == OfferStatus.reserved) ||
       status == OfferStatus.blikSentToMaker ||
       status == OfferStatus.expiredSentBlik ||
       status == OfferStatus.takerCharged;
@@ -61,16 +66,16 @@ class _MakerConfirmPaymentScreenState
   @override
   void initState() {
     super.initState();
-    // Immediately reset any lingering loading state
-    ref.read(isLoadingProvider.notifier).state = false;
-    // Also reset in post frame to catch any async state changes
+    // Reset any lingering loading state in post-frame; modifying a provider
+    // synchronously inside initState throws
+    // "Tried to modify a provider while the widget tree was building".
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(isLoadingProvider.notifier).state = false;
       }
     });
     // Only attempt to fetch BLIK code if status is NOT expired
-    if (!_isPostBlikWindowStatus()) {
+    if (!_isPostBlikWindowStatus() && !_makerProvidedCodeFlow) {
       // Attempt immediately if key is already available
       final pkNow = ref.read(publicKeyProvider).value;
       if (pkNow != null) {
@@ -131,7 +136,11 @@ class _MakerConfirmPaymentScreenState
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text(t.maker.confirmPayment.confirmDialog.title),
-          content: Text(t.maker.confirmPayment.confirmDialog.content(code: _code)),
+          content: Text(
+            _makerProvidedCodeFlow
+                ? 'This action is irreversible.\n\nOnly confirm if the taker really completed the $_code payment for the requested amount. Once confirmed, the taker will be paid and the coordinator will not be able to undo it.'
+                : t.maker.confirmPayment.confirmDialog.content(code: _code),
+          ),
           actions: <Widget>[
             TextButton(
               child: Text(t.maker.confirmPayment.confirmDialog.cancel),
@@ -219,7 +228,7 @@ class _MakerConfirmPaymentScreenState
           ), // Use Slang t
         );
       }
-      context.go('/maker-success', extra: offer);
+      context.go(flowEntryRoute(ref, '/maker-success'), extra: offer);
     } catch (e) {
       ref.read(errorProvider.notifier).state = t.maker.confirmPayment.errors
           .confirming(details: e.toString()); // Use Slang t
@@ -264,9 +273,9 @@ class _MakerConfirmPaymentScreenState
 
       if (context.mounted) {
         if (offer.statusEnum == OfferStatus.takerCharged) {
-          context.go('/maker-conflict', extra: offer);
+          context.go(flowEntryRoute(ref, '/maker-conflict'), extra: offer);
         } else {
-          context.go('/maker-invalid-blik', extra: offer);
+          context.go(flowEntryRoute(ref, '/maker-invalid-blik'), extra: offer);
         }
       }
     } catch (e) {
@@ -316,7 +325,10 @@ class _MakerConfirmPaymentScreenState
     // Listen for public key availability (must be done during build)
     // Only fetch BLIK code if status is not expired
     ref.listen(publicKeyProvider, (previous, next) {
-      if (!_fetchAttempted && next.value != null && !_isPostBlikWindowStatus()) {
+      if (!_fetchAttempted &&
+          next.value != null &&
+          !_isPostBlikWindowStatus() &&
+          !_makerProvidedCodeFlow) {
         _fetchBlikCode();
       }
     });
@@ -334,17 +346,19 @@ class _MakerConfirmPaymentScreenState
     final receivedBlikCode = ref.watch(receivedBlikCodeProvider);
     final isExpired = _isPostBlikWindowStatus();
     final offerStatus = ref.watch(activeOfferProvider)?.statusEnum;
-    final canConfirm =
-        offerStatus != null && _canConfirmPayment(offerStatus);
+    final canConfirm = offerStatus != null && _canConfirmPayment(offerStatus);
     final canMarkInvalid =
         offerStatus != null && _canMarkBlikInvalid(offerStatus);
 
-    final bool isFetchingBlik = receivedBlikCode == null && !isExpired;
+    final bool isFetchingBlik =
+        !_makerProvidedCodeFlow && receivedBlikCode == null && !isExpired;
     final formattedBlikCode = _formatBlikCode(
       receivedBlikCode ?? ('·' * _method.codeLength),
     );
-    final blikFontSize =
-        (MediaQuery.of(context).size.width * 0.19).clamp(32.0, 68.0);
+    final blikFontSize = (MediaQuery.of(context).size.width * 0.19).clamp(
+      32.0,
+      68.0,
+    );
     final TextStyle blikStyle = TextStyle(
       fontSize: blikFontSize,
       fontWeight: FontWeight.w600,
@@ -381,6 +395,8 @@ class _MakerConfirmPaymentScreenState
                     final upperContent =
                         isExpired
                             ? _buildExpiredContent(t)
+                            : _makerProvidedCodeFlow
+                            ? _buildMakerProvidedContent(t)
                             : _buildNormalContent(
                               t,
                               formattedBlikCode,
@@ -434,7 +450,9 @@ class _MakerConfirmPaymentScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              t.maker.confirmPayment.takerChargedWarning(code: _code),
+                              t.maker.confirmPayment.takerChargedWarning(
+                                code: _code,
+                              ),
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.orange,
@@ -445,9 +463,7 @@ class _MakerConfirmPaymentScreenState
                         ],
                       ),
                     ),
-                    _buildAutoConfirmCountdown(
-                      ref.watch(activeOfferProvider)!,
-                    ),
+                    _buildAutoConfirmCountdown(ref.watch(activeOfferProvider)!),
                   ],
                   // Error message
                   if (errorMessage != null) ...[
@@ -495,7 +511,9 @@ class _MakerConfirmPaymentScreenState
                   // Invalid BLIK code button (red outlined)
                   OutlinedButton(
                     onPressed:
-                        canMarkInvalid ? () => _markBlikInvalid(context, ref) : null,
+                        canMarkInvalid
+                            ? () => _markBlikInvalid(context, ref)
+                            : null,
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.red, width: 2),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -521,7 +539,9 @@ class _MakerConfirmPaymentScreenState
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          t.maker.confirmPayment.actions.markInvalid(code: _code),
+                          t.maker.confirmPayment.actions.markInvalid(
+                            code: _code,
+                          ),
                           style: const TextStyle(
                             color: Colors.red,
                             fontSize: 16,
@@ -649,6 +669,125 @@ class _MakerConfirmPaymentScreenState
     );
   }
 
+  Widget _buildMakerProvidedContent(Translations t) {
+    final offer = ref.read(activeOfferProvider);
+    final amountText =
+        offer == null
+            ? ''
+            : '${offer.fiatAmount.toStringAsFixed((offer.fiatAmount * 100).round() % 100 == 0 ? 0 : 2)} ${offer.fiatCurrency}';
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        Text(
+          'Waiting for taker to complete $_code',
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w400,
+            color: Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 18),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.blue.shade100),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'The taker already received your $_code code and must enter it in their app.',
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 1.4,
+                  color: Colors.blue.shade900,
+                ),
+              ),
+              if (amountText.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Text(
+                      'Requested amount',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.blueGrey.shade700,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      amountText,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.28)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.rule_folder_outlined,
+                    color: Colors.orange,
+                    size: 20,
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Before you confirm',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildInstructionItem(
+                '1',
+                'Confirm only after you see the payment actually succeeded on the merchant or terminal side.',
+              ),
+              const SizedBox(height: 8),
+              _buildInstructionItem(
+                '2',
+                'If the payment did not go through, mark the $_code code as invalid so the taker is not paid incorrectly.',
+              ),
+              const SizedBox(height: 8),
+              _buildInstructionItem(
+                '3',
+                'If you are unsure, do not confirm yet.',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
   Widget _buildExpiredContent(Translations t) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -745,8 +884,11 @@ class _MakerConfirmPaymentScreenState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.timer_outlined,
-                  size: 18, color: Colors.blueGrey),
+              const Icon(
+                Icons.timer_outlined,
+                size: 18,
+                color: Colors.blueGrey,
+              ),
               Text(
                 t.maker.confirmPayment.autoConfirmCountdown(time: timeStr),
                 style: const TextStyle(
@@ -764,8 +906,7 @@ class _MakerConfirmPaymentScreenState
               value: progress,
               minHeight: 8,
               backgroundColor: Colors.blueGrey.withValues(alpha: 0.15),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Colors.blueGrey),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueGrey),
             ),
           ),
           const SizedBox(height: 8),
@@ -885,11 +1026,13 @@ class _MakerConfirmPaymentScreenState
         () =>
             "[MakerConfirmPaymentScreen] Offer ${statusEnum.name}; navigating to maker success.",
       );
-      context.go('/maker-success', extra: ref.read(activeOfferProvider));
+      context.go(flowEntryRoute(ref, '/maker-success'),
+          extra: ref.read(activeOfferProvider));
     } else if (statusEnum == OfferStatus.reserved) {
-      context.go('/wait-blik');
+      context.go(
+          flowEntryRoute(ref, _makerProvidedCodeFlow ? '/confirm-blik' : '/wait-blik'));
     } else if (statusEnum == OfferStatus.funded) {
-      context.go('/wait-taker');
+      context.go(flowEntryRoute(ref, '/wait-taker'));
     } else if (statusEnum == OfferStatus.expired) {
       context.go('/');
     }

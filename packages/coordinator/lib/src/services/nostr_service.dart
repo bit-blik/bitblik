@@ -15,11 +15,41 @@ import '../logging/app_logger.dart';
 class NostrService {
   final CoordinatorService _coordinatorService;
   late final Ndk _ndk;
+  late final MemCacheManager _cacheManager;
   late Bip340EventSigner _signer;
   final RustEventVerifier rustEventVerifier = RustEventVerifier();
   static const Duration _relayRefreshInterval = Duration(seconds: 60);
   static const Duration _relayChangeGracePeriod = Duration(minutes: 5);
   static const Duration _relayQueryTimeout = Duration(seconds: 6);
+  static const Duration _cacheEvictionStartupDelay = Duration(seconds: 30);
+  static const Duration _cacheEvictionInterval = Duration(minutes: 1);
+  static const Duration _pendingDeliveryRetryInterval = Duration(minutes: 1);
+  // relay.mostro.network rate-limits to 5 events per minute per IP, and
+  // several coordinators share the same egress IP, so startup rebroadcasts
+  // must leave most of that budget free for live offer traffic.
+  static const Duration _rebroadcastSpacing = Duration(seconds: 60);
+
+  // Requests/responses/status updates are ephemeral and should be discarded
+  // aggressively. Public offers are parameterized replaceable by `d`, but the
+  // in-memory cache keys by event id, so repeated state broadcasts accumulate.
+  // Metadata (kind 0) and NIP-65 relay lists (10002) are low-volume, but still
+  // need a cap here because the default protected set would otherwise exempt
+  // them from cap-based eviction entirely.
+  static final Set<int> _cacheEvictionProtectedKinds =
+      Set<int>.of(EvictionPolicy.kDefaultProtectedKinds)
+        ..remove(Metadata.kKind)
+        ..remove(Nip65.kKind);
+  static final EvictionPolicy _cacheEvictionPolicy = EvictionPolicy(
+    kindCaps: const {
+      kKindCoordinatorRequest: 0,
+      kKindCoordinatorResponse: 0,
+      kKindOfferStatusUpdate: 0,
+      kKindOffer: 500,
+      Metadata.kKind: 100,
+      Nip65.kKind: 50,
+    },
+    protectedKinds: _cacheEvictionProtectedKinds,
+  );
 
   // Relay configuration.
   //
@@ -43,13 +73,26 @@ class NostrService {
 
   // Subscription for incoming requests
   NdkResponse? _requestSubscription;
+  // Dart-side listener over [_requestSubscription]. Must be cancelled when the
+  // ndk subscription is closed, otherwise the listener closure + any buffered
+  // events stay reachable until GC walks them. Each relay refresh/grace flip
+  // allocates a new one, so without explicit cancel the leak accumulates.
+  StreamSubscription<Nip01Event>? _requestListenerSub;
   Timer? _relayRefreshTimer;
   Timer? _relayGraceTimer;
+  int _requestsReceived = 0;
+  int _responsesSent = 0;
+  int _responseErrors = 0;
+  final Map<String, int> _rpcMethodCounts = {};
 
   // NIP-69 offer events are parameterized replaceable. If two state changes for
   // the same offer are published within the same second, some relays may keep
   // the older one and reject the newer with "have newer event". Keep a
   // monotonic created_at per offer id so every replacement wins deterministically.
+  //
+  // Write-heavy: every broadcast updates this map. Terminal offers never
+  // broadcast again, so callers must [forgetOfferTracking] once an offer
+  // reaches a terminal state to keep the map bounded.
   final Map<String, int> _lastOfferEventCreatedAtById = {};
 
   NostrService(
@@ -89,12 +132,21 @@ class NostrService {
     // Bootstrap NDK on discovery + env relays so the self NIP-65 lookup can
     // succeed regardless of where a prior list was published.
     final bootstrap = {...kDiscoveryRelays, ..._envRelays}.toList();
+    _cacheManager = MemCacheManager();
     _ndk = Ndk(
       NdkConfig(
-          cache: MemCacheManager(),
-          eventVerifier: rustEventVerifier,
-          bootstrapRelays: bootstrap,
-          logLevel: LogLevel.info),
+        cache: _cacheManager,
+        eventVerifier: rustEventVerifier,
+        bootstrapRelays: bootstrap,
+        logLevel: LogLevel.info,
+        cacheEvictionEnabled: true,
+        cacheEvictionPolicy: _cacheEvictionPolicy,
+        cacheEvictionStartupDelay: _cacheEvictionStartupDelay,
+        cacheEvictionInterval: _cacheEvictionInterval,
+        // Slow down NDK's local-first rebroadcast pump so relay.mostro.network
+        // does not get hammered by repeated pending-delivery retries.
+        pendingDeliveryRetryInterval: _pendingDeliveryRetryInterval,
+      ),
     );
 
     // Generate or load coordinator keys
@@ -491,11 +543,14 @@ class NostrService {
       );
 
       await _signer.sign(event);
-      await _ndk.broadcast.broadcast(
+      final broadcastResponse = _ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: _signer,
         specificRelays: _broadcastRelays,
+        saveToCache: false,
       );
+      await broadcastResponse.broadcastDoneFuture;
+      await _clearEphemeralBroadcastTracking(event.id);
       AppLogger.info(
         'Sent status update offer=$offerId status=${payload['status']} to=${_shortKey(recipientPubkey)} event=${event.id}',
         offerId: offerId,
@@ -514,6 +569,8 @@ class NostrService {
   Future<void> _restartRequestListener(List<String> relays) async {
     try {
       if (_requestSubscription != null) {
+        await _requestListenerSub?.cancel();
+        _requestListenerSub = null;
         await _ndk.requests.closeSubscription(_requestSubscription!.requestId);
         _requestSubscription = null;
       }
@@ -532,10 +589,14 @@ class NostrService {
       );
       _requestSubscription = response;
 
-      response.stream.listen(_handleRequest).onError((e) {
-        AppLogger.info('!!!!!!!!!!!!!! Error in request listener: $e');
-        AppLogger.info('!!!!!!!!!!!!!! SHOULD RETRY subscription');
-      });
+      _requestListenerSub = response.stream.listen(
+        _handleRequest,
+        onError: (Object e) {
+          AppLogger.info('!!!!!!!!!!!!!! Error in request listener: $e');
+          AppLogger.info('!!!!!!!!!!!!!! SHOULD RETRY subscription');
+        },
+        cancelOnError: false,
+      );
 
       AppLogger.info(
           'Started listening for coordinator requests on kind ${kKindCoordinatorRequest} via relays: $relays');
@@ -552,9 +613,12 @@ class NostrService {
     }
 
     final request = await ProtocolCodec.decryptRequest(event, privateKey);
+    _requestsReceived++;
+    _rpcMethodCounts.update(request.method, (count) => count + 1,
+        ifAbsent: () => 1);
     final id = request.id;
     AppLogger.info(
-        '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} params=${request.params.values.map((v) => v.toString()).toList()..sort()}',
+      '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} params=${request.params.values.map((v) => v.toString()).toList()..sort()}',
     );
     if (id == null) {
       await _sendErrorResponse(
@@ -578,6 +642,15 @@ class NostrService {
       String method, Map<String, dynamic> params, String userPubkey,
       {String? clientVersion}) async {
     try {
+      // Offer-action RPCs (the state machine) are owned by the active flow
+      // strategy — generic (yaml-driven) or legacy enum. Query/info/payout RPCs
+      // fall through to the shared handlers below.
+      if (_coordinatorService.flow.handlesRpc(method)) {
+        return await _coordinatorService.flow.handleRpc(
+            method, params, userPubkey,
+            clientVersion: clientVersion);
+      }
+
       switch (method) {
         case kRpcGetInfo:
           final info = await _coordinatorService.getCoordinatorInfo();
@@ -606,6 +679,7 @@ class NostrService {
           final premiumPercent =
               (params['premium_percent'] as num?)?.toDouble() ?? 0;
           final fiatCurrency = params['fiat_currency'] as String?;
+          final blikCode = params['blik_code'] as String?;
 
           return await _coordinatorService.initiateOfferFiat(
             fiatAmount: fiatAmount,
@@ -613,82 +687,9 @@ class NostrService {
             fiatCurrency: fiatCurrency,
             category: category,
             premiumPercent: premiumPercent,
+            blikCode: blikCode,
             clientVersion: clientVersion,
           );
-
-        case kRpcReserveOffer:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final reservationTimestamp =
-              await _coordinatorService.reserveOffer(offerId, userPubkey);
-          if (reservationTimestamp != null) {
-            return {
-              'message': 'Offer reserved successfully',
-              'reserved_at': reservationTimestamp.millisecondsSinceEpoch,
-            };
-          } else {
-            throw Exception(
-                'Failed to reserve offer. It might be unavailable or already reserved.');
-          }
-
-        case kRpcSubmitBlik:
-          final offerId = params['offer_id'] as String?;
-          final blikCode = params['blik_code'] as String?;
-          final takerLightningAddress =
-              params['taker_lightning_address'] as String?;
-          final taker_invoice = params['taker_invoice'] as String?;
-
-          if (offerId == null ||
-              blikCode == null ||
-              (takerLightningAddress == null && taker_invoice == null)) {
-            throw Exception(
-                'Missing required parameters: offer_id, blik_code, taker_lightning_address');
-          }
-
-          final success = await _coordinatorService.submitBlikCode(offerId,
-              userPubkey, blikCode, takerLightningAddress, taker_invoice);
-
-          if (success) {
-            return {'message': 'BLIK code submitted successfully'};
-          } else {
-            throw Exception(
-                'Failed to submit BLIK code. Offer state might be invalid or taker mismatch.');
-          }
-
-        case kRpcGetBlik:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final blikCode = await _coordinatorService.getBlikCodeForMaker(
-              offerId, userPubkey);
-          if (blikCode != null) {
-            return {'blik_code': blikCode};
-          } else {
-            throw Exception(
-                'BLIK code not found or not available for this offer/maker.');
-          }
-
-        case kRpcConfirmPayment:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success = await _coordinatorService.confirmMakerPayment(
-              offerId, userPubkey);
-          if (success) {
-            return {
-              'message': 'Payment confirmed, invoice settled, taker paid.'
-            };
-          } else {
-            throw Exception(
-                'Failed to confirm payment. Check offer state, LND connection, or logs.');
-          }
 
         // DEPRECATED: clients now resolve a local-only offer (id == payment
         // hash, no UUID yet) via `get_offer_details` with a `payment_hash`
@@ -698,7 +699,7 @@ class NostrService {
               await _coordinatorService.getMyActiveOffers(userPubkey);
           if (activeOffers.isNotEmpty) {
             final offer = activeOffers.first;
-            return offer.toRpcJson();
+            return offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey);
           } else {
             return {};
           }
@@ -714,7 +715,15 @@ class NostrService {
           if (offer == null) {
             return {};
           }
-          return offer.toRpcJson();
+          final includeBlikCode = _coordinatorService
+                  .paymentSystem.makerProvidesCodeAtOfferCreation &&
+              offer.takerPubkey == userPubkey;
+          // Participant gate above guarantees requester is maker or taker;
+          // non-makers get the maker-private fields stripped.
+          return offer.toRpcJson(
+            includeBlikCode: includeBlikCode,
+            forTaker: offer.makerPubkey != userPubkey,
+          );
 
         // DEPRECATED: clients (>= local-db-counts change) no longer call this.
         // The per-coordinator "your offers" count is now derived from the
@@ -733,85 +742,11 @@ class NostrService {
                       now.difference(offer.takerPaidAt!.toUtc()).inHours < 24)
               .toList();
 
-          final finishedList =
-              finished.map((offer) => offer.toRpcJson()).toList();
+          final finishedList = finished
+              .map((offer) =>
+                  offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey))
+              .toList();
           return {'offers': finishedList};
-
-        case kRpcCancelOffer:
-          //PILA Error handling request: Exception: Error processing request: PostgreSQLSeverity.error 22P02: invalid input syntax for type uuid: "unknown_id"
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.cancelOffer(offerId, userPubkey);
-          if (success) {
-            return {'message': 'Offer cancelled successfully'};
-          } else {
-            throw Exception(
-                'Failed to cancel offer. It might be in the wrong state or you are not the maker.');
-          }
-
-        case kRpcCancelReservation:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.cancelReservation(offerId, userPubkey);
-          if (success) {
-            return {'message': 'Reservation cancelled successfully'};
-          } else {
-            throw Exception(
-                'Failed to cancel reservation. It might be in the wrong state or you are not the taker.');
-          }
-
-        case kRpcMarkBlikInvalid:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.markBlikInvalid(offerId, userPubkey);
-          if (success) {
-            return {'message': 'BLIK code marked as invalid successfully'};
-          } else {
-            throw Exception(
-                'Failed to mark BLIK as invalid. Offer might be in the wrong state, not found, or maker ID mismatch.');
-          }
-
-        case kRpcMarkBlikCharged:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.markBlikCharged(offerId, userPubkey);
-          if (success) {
-            return {'message': 'Offer marked as conflict successfully'};
-          } else {
-            throw Exception(
-                'Failed to mark offer as conflict. Offer might be in the wrong state, not found, or taker ID mismatch.');
-          }
-
-        case kRpcOpenDispute:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final success =
-              await _coordinatorService.openDispute(offerId, userPubkey);
-          if (success) {
-            return {'message': 'Offer marked as open dispute successfully'};
-          } else {
-            throw Exception(
-                'Failed to mark offer as dispute. Offer might be in the wrong state, not found, or taker ID mismatch.');
-          }
 
         case kRpcUpdateTakerInvoice:
           final offerId = params['offer_id'] as String?;
@@ -890,16 +825,21 @@ class NostrService {
       );
 
       await _signer.sign(event);
-      await _ndk.broadcast.broadcast(
+      final broadcastResponse = _ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: _signer,
         specificRelays: _broadcastRelays,
+        saveToCache: false,
       );
+      await broadcastResponse.broadcastDoneFuture;
+      await _clearEphemeralBroadcastTracking(event.id);
+      _responsesSent++;
 
       AppLogger.info(
         'Sent RPC response id=${response.id ?? '-'} to=${_shortKey(recipientPubkey)}',
       );
     } catch (e) {
+      _responseErrors++;
       AppLogger.info(
         'Error sending encrypted message to ${_shortKey(recipientPubkey)} id=${response.id ?? '-'} ${_describeResponse(response)}: $e',
       );
@@ -918,10 +858,138 @@ class NostrService {
   Future<void> disconnect() async {
     _relayRefreshTimer?.cancel();
     _relayGraceTimer?.cancel();
+    await _requestListenerSub?.cancel();
+    _requestListenerSub = null;
     if (_requestSubscription != null) {
       await _ndk.requests.closeSubscription(_requestSubscription!.requestId);
     }
     await _ndk.destroy();
+  }
+
+  /// Drop in-memory tracking entries for [offerId]. Called by the flow layer
+  /// once an offer reaches a terminal state — terminal offers never broadcast
+  /// again, so the monotonic-created_at guard is dead weight from here on.
+  /// Keeps [_lastOfferEventCreatedAtById] bounded across the process lifetime.
+  void forgetOfferTracking(String offerId) {
+    _lastOfferEventCreatedAtById.remove(offerId);
+  }
+
+  Map<String, dynamic> debugSnapshot() => {
+        'request_subscription_active': _requestSubscription != null,
+        'request_listener_active': _requestListenerSub != null,
+        'relay_refresh_timer_active': _relayRefreshTimer?.isActive ?? false,
+        'relay_grace_timer_active': _relayGraceTimer?.isActive ?? false,
+        'env_relay_count': _envRelays.length,
+        'working_relay_count': _relays.length,
+        'discovery_relay_count': _discoveryRelays.length,
+        'grace_relay_count': _graceRelays.length,
+        'offer_tracking_count': _lastOfferEventCreatedAtById.length,
+        'requests_received': _requestsReceived,
+        'responses_sent': _responsesSent,
+        'response_errors': _responseErrors,
+        'rpc_method_counts': Map<String, int>.from(_rpcMethodCounts),
+        'ndk_runtime': _ndkRuntimeSnapshot(),
+        'cache_event_count': _cacheManager.events.length,
+        'cache_event_source_count': _cacheManager.eventSources.length,
+        'cache_delivery_record_count':
+            _cacheManager.eventDeliveryRecords.length,
+        'cache_delivery_status_counts': _cacheDeliveryStatusCounts(),
+        'cache_event_kind_counts': _cacheEventKindCounts(),
+      };
+
+  Map<String, int> _cacheEventKindCounts() {
+    final counts = <String, int>{};
+    for (final event in _cacheManager.events.values) {
+      final key = event.kind.toString();
+      counts.update(key, (count) => count + 1, ifAbsent: () => 1);
+    }
+    return counts;
+  }
+
+  Map<String, int> _cacheDeliveryStatusCounts() {
+    final counts = <String, int>{};
+    for (final record in _cacheManager.eventDeliveryRecords.values) {
+      final key = record.status.name;
+      counts.update(key, (count) => count + 1, ifAbsent: () => 1);
+    }
+    return counts;
+  }
+
+  Map<String, dynamic> _ndkRuntimeSnapshot() {
+    final globalState = _ndk.relays.globalState;
+    final requestStates = globalState.inFlightRequests.values.toList();
+    final broadcastStates = globalState.inFlightBroadcasts.values.toList();
+    final relayStates = globalState.relays.values.toList();
+
+    final requestRelaySlots =
+        requestStates.fold<int>(0, (sum, state) => sum + state.requests.length);
+    final requestReturnedIds = requestStates.fold<int>(
+        0, (sum, state) => sum + state.returnedIds.length);
+    final requestSubscriptions =
+        requestStates.where((state) => state.isSubscription).length;
+    final requestOneShots = requestStates.length - requestSubscriptions;
+    final requestDoneCount =
+        requestStates.where((state) => state.didAllRequestsFinish).length;
+    final requestControllerOpenCount =
+        requestStates.where((state) => !state.controller.isClosed).length;
+    final requestNetworkControllerOpenCount = requestStates
+        .where((state) => !state.networkController.isClosed)
+        .length;
+    final requestCacheControllerOpenCount =
+        requestStates.where((state) => !state.cacheController.isClosed).length;
+
+    final broadcastRelaySlots = broadcastStates.fold<int>(
+      0,
+      (sum, state) => sum + state.broadcasts.length,
+    );
+    final broadcastDoneCount =
+        broadcastStates.where((state) => state.publishDone).length;
+    final broadcastControllerOpenCount = broadcastStates
+        .where((state) => !state.networkController.isClosed)
+        .length;
+
+    final connectedRelayCount =
+        relayStates.where((relay) => relay.isConnected).length;
+    final connectingRelayCount =
+        relayStates.where((relay) => relay.relay.connecting).length;
+    final disconnectedRelayCount =
+        relayStates.length - connectedRelayCount - connectingRelayCount;
+
+    final relaySourceCounts = <String, int>{};
+    for (final relay in relayStates) {
+      final key = relay.relay.connectionSource.name;
+      relaySourceCounts.update(key, (count) => count + 1, ifAbsent: () => 1);
+    }
+
+    return {
+      'inflight_request_count': requestStates.length,
+      'inflight_request_subscription_count': requestSubscriptions,
+      'inflight_request_one_shot_count': requestOneShots,
+      'inflight_request_done_count': requestDoneCount,
+      'inflight_request_relay_slots': requestRelaySlots,
+      'inflight_request_returned_ids': requestReturnedIds,
+      'inflight_request_controller_open_count': requestControllerOpenCount,
+      'inflight_request_network_controller_open_count':
+          requestNetworkControllerOpenCount,
+      'inflight_request_cache_controller_open_count':
+          requestCacheControllerOpenCount,
+      'inflight_broadcast_count': broadcastStates.length,
+      'inflight_broadcast_done_count': broadcastDoneCount,
+      'inflight_broadcast_relay_slots': broadcastRelaySlots,
+      'inflight_broadcast_controller_open_count': broadcastControllerOpenCount,
+      'inflight_negotiation_count': globalState.inFlightNegotiations.length,
+      'relay_total_count': relayStates.length,
+      'relay_connected_count': connectedRelayCount,
+      'relay_connecting_count': connectingRelayCount,
+      'relay_disconnected_count': disconnectedRelayCount,
+      'blocked_relay_count': globalState.blockedRelays.length,
+      'relay_connection_source_counts': relaySourceCounts,
+    };
+  }
+
+  Future<void> _clearEphemeralBroadcastTracking(String eventId) async {
+    await _cacheManager.removeRelayDeliveryTargets(eventId);
+    await _cacheManager.removeEventDeliveryRecord(eventId);
   }
 
   /// Broadcast a NIP-69 peer-to-peer order event based on Offer data
@@ -949,7 +1017,10 @@ class NostrService {
     String document = 'order',
     String bond = "0",
   }) async {
-    final status = _mapOfferStatusToNip69Status(offer.status);
+    // Generic flows declare the NIP-69 category in the yaml (`nip69:`); legacy
+    // falls back to the OfferStatus-based mapping.
+    final status = _coordinatorService.nip69CategoryForRaw(offer.statusRaw) ??
+        _mapRawStatusToNip69Status(offer.statusRaw, offer.status);
     final premiumValue = premium ?? offer.premiumPercent;
     final ps = _coordinatorService.paymentSystem;
     final resolvedPaymentSystems = paymentSystems ?? [ps.label];
@@ -1016,6 +1087,9 @@ class NostrService {
           customSigner: _signer,
           specificRelays: _broadcastRelays);
       _lastOfferEventCreatedAtById[offer.id] = eventCreatedAt;
+      if (_coordinatorService.isTerminalOffer(offer)) {
+        _lastOfferEventCreatedAtById.remove(offer.id);
+      }
       // AppLogger.info(
       //     'Broadcasted NIP-69 order event for offer ${offer.id}, status: ${status} id:${event.id}',
       //     offerId: offer.id);
@@ -1026,23 +1100,33 @@ class NostrService {
     }
   }
 
-  /// Rebroadcast all offers to update their status on Nostr relays
+  /// Rebroadcast all offers to update their status on Nostr relays.
+  ///
+  /// Runs slowly in the background: active offers go out first, and events
+  /// are spaced [_rebroadcastSpacing] apart to respect shared-IP relay rate
+  /// limits. Terminal-status offers are only a safety net (their addressable
+  /// events normally already replaced the older state on the relays).
   Future<void> rebroadcastOffers(List<Offer> offers) async {
-    AppLogger.info('Starting rebroadcast of offers...');
+    AppLogger.info('Starting rebroadcast of ${offers.length} offers...');
+
+    final ordered = [
+      ...offers.where((o) => !_coordinatorService.isTerminalOffer(o)),
+      ...offers.where((o) => _coordinatorService.isTerminalOffer(o)),
+    ];
 
     try {
-      for (final offer in offers) {
-        // final status = _mapOfferStatusToNip69Status(offer.status);
-
+      for (final offer in ordered) {
         AppLogger.info(
             'Rebroadcasting offer ${offer.id} with status ${offer.status.name}',
             offerId: offer.id);
         // Calculate expiration if the offer is still active
         int? expiration;
         if (offer.status == OfferStatus.funded) {
-          // Use the same expiration logic as in the original broadcast
+          // Same expiration logic as the original broadcast: generic flows read
+          // it strictly from the yaml state def, enum flows from the env value.
           expiration = offer.createdAt
-                  .add(Duration(seconds: 600)) // _fundedExpireTimeoutSeconds
+                  .add(Duration(
+                      seconds: _coordinatorService.fundedExpirySeconds))
                   .millisecondsSinceEpoch ~/
               1000;
         }
@@ -1052,13 +1136,36 @@ class NostrService {
           expiration: expiration,
         );
 
-        // Small delay between broadcasts to avoid overwhelming relays
-        await Future.delayed(Duration(milliseconds: 500));
+        await Future.delayed(_rebroadcastSpacing);
       }
 
       AppLogger.info('Completed rebroadcasting offers');
     } catch (e) {
       AppLogger.info('Error during rebroadcast of offers: $e');
+    }
+  }
+
+  /// Map a raw status string to a NIP-69 status, covering generic
+  /// (yaml-driven) state names that have no [OfferStatus] value. Falls back to
+  /// the enum mapping when the raw name is a known enum value.
+  String _mapRawStatusToNip69Status(String raw, OfferStatus enumStatus) {
+    if (enumStatus != OfferStatus.unknown) {
+      return _mapOfferStatusToNip69Status(enumStatus);
+    }
+    switch (raw) {
+      case 'funded':
+        return 'pending';
+      case 'taker_paid':
+        return 'success';
+      case 'cancelled':
+      case 'expired':
+        return 'canceled';
+      case 'dispute':
+        return 'dispute';
+      // reserved, twint_charged, expired_twint (retake-able), conflict, and any
+      // other live generic state.
+      default:
+        return 'in-progress';
     }
   }
 

@@ -54,6 +54,16 @@ class Offer {
   final double fiatAmount;
   final String fiatCurrency;
   final OfferStatus status;
+
+  /// Verbatim status string as stored in the DB / received on the wire.
+  ///
+  /// For legacy enum flows this equals `status.name`. For generic
+  /// (yaml-driven) flows it holds the raw flow-state id (e.g. `twint_charged`,
+  /// `expired_twint`) that has no [OfferStatus] value — in that case [status]
+  /// parses to [OfferStatus.unknown] and the generic flow code reads
+  /// [statusRaw] instead. See [[project-dual-flow-engine]].
+  final String statusRaw;
+
   final DateTime createdAt;
   final String makerPubkey;
   final String coordinatorPubkey; // Added coordinator pubkey
@@ -148,6 +158,7 @@ class Offer {
     required this.amountSats,
     required this.makerFees,
     required this.status,
+    String? statusRaw,
     required this.fiatAmount,
     required this.fiatCurrency,
     required this.createdAt,
@@ -175,7 +186,7 @@ class Offer {
     this.premiumPercent = 0,
     this.paymentWalletId,
     this.clientVersion,
-  });
+  }) : statusRaw = statusRaw ?? status.name;
 
   // Factory constructor to create an Offer from JSON data (Map).
   factory Offer.fromJson(Map<String, dynamic> json) {
@@ -252,6 +263,7 @@ class Offer {
           return OfferStatus.unknown;
         }
       }(),
+      statusRaw: safeString(json['status'], OfferStatus.unknown.name),
       createdAt: () {
         final v = json['created_at'];
         if (v is int)
@@ -328,7 +340,10 @@ class Offer {
       'maker_fees': makerFees, // Renamed key and field
       'fiat_amount': fiatAmount,
       'fiat_currency': fiatCurrency,
-      'status': status.name,
+      // Emit the raw state string so generic (yaml-driven) flows round-trip
+      // their real state (e.g. `invalidTwint`) instead of the enum's `unknown`
+      // fallback. For legacy enum flows statusRaw == status.name (unchanged).
+      'status': statusRaw,
       'created_at': createdAt.toUtc().toIso8601String(),
       'maker_pubkey': makerPubkey,
       'coordinator_pubkey': coordinatorPubkey,
@@ -398,10 +413,16 @@ class Offer {
   /// taker's invoice or the hold-invoice preimage on every poll, so omit them
   /// by default to preserve compatibility with older clients that still rely on
   /// `get_my_active_offer`.
+  ///
+  /// [forTaker] strips maker-private data from taker-facing responses: public
+  /// offer events deliberately hide the maker's pubkey, so reserving (or any
+  /// taker RPC) must not reveal it, nor the hold invoice / maker fees the
+  /// taker has no use for.
   Map<String, dynamic> toRpcJson({
     bool includeBlikCode = false,
     bool includeTakerInvoice = false,
     bool includeHoldInvoicePreimage = false,
+    bool forTaker = false,
   }) {
     final json = toJsonWithPubkeys();
     json.remove('taker_charged_at');
@@ -415,6 +436,12 @@ class Offer {
     if (!includeHoldInvoicePreimage) {
       json.remove('hold_invoice_preimage');
     }
+    if (forTaker) {
+      json.remove('maker_pubkey');
+      json.remove('hold_invoice');
+      json.remove('maker_fees');
+      json.remove('payment_wallet_id');
+    }
     return json;
   }
 
@@ -424,6 +451,7 @@ class Offer {
     int? amountSats,
     int? makerFees, // Renamed parameter
     OfferStatus? status,
+    String? statusRaw,
     DateTime? createdAt,
     String? makerPubkey,
     String? coordinatorPubkey,
@@ -455,6 +483,7 @@ class Offer {
       amountSats: amountSats ?? this.amountSats,
       makerFees: makerFees ?? this.makerFees, // Renamed parameter and field
       status: status ?? this.status,
+      statusRaw: statusRaw ?? (status != null ? status.name : this.statusRaw),
       fiatAmount: fiatAmount,
       fiatCurrency: fiatCurrency,
       createdAt: createdAt ?? this.createdAt,

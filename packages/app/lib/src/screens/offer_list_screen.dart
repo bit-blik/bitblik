@@ -12,6 +12,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/gen/strings.g.dart'; // Import Slang
 import '../providers/providers.dart';
+import '../services/nostr_service.dart' show reservedOfferFromResult;
+import '../flow/flow_provider.dart';
 import '../utils/bitcoin_display.dart';
 import '../utils/category_icons.dart';
 import '../widgets/lightning_address_widget.dart';
@@ -76,9 +78,10 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
     final t = Translations.of(context);
     final router = GoRouter.of(context);
     // Prefer the kind-0 profile picture over the kind-15125 info icon.
-    final coordIcon = ref
-        .read(coordinatorRecordByPubkeyProvider(offer.coordinatorPubkey))
-        ?.icon;
+    final coordIcon =
+        ref
+            .read(coordinatorRecordByPubkeyProvider(offer.coordinatorPubkey))
+            ?.icon;
     bool termsAccepted = false;
     bool isLoadingTerms = true;
 
@@ -266,26 +269,33 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             );
 
                             try {
-                              final reservationTimestamp = await apiService
-                                  .reserveOffer(
-                                    offer.id,
-                                    takerId,
-                                    offer.coordinatorPubkey,
-                                  );
+                              final takerInvoice =
+                                  await reserveTakerInvoiceIfNeeded(ref, offer);
+                              final reservation = await apiService.reserveOffer(
+                                offer.id,
+                                takerId,
+                                offer.coordinatorPubkey,
+                                takerInvoice: takerInvoice,
+                              );
 
-                              if (reservationTimestamp != null) {
-                                final Offer updatedOffer = offer.copyWith(
-                                  status: OfferStatus.reserved,
-                                  takerPubkey: takerId,
-                                  reservedAt: reservationTimestamp,
-                                );
+                              if (reservation.reservedAt != null ||
+                                  reservation.offer != null) {
+                                final Offer updatedOffer =
+                                    reservedOfferFromResult(
+                                      offer,
+                                      takerId,
+                                      reservation,
+                                    );
 
                                 await ref
                                     .read(activeOfferProvider.notifier)
                                     .setActiveOffer(updatedOffer);
 
                                 // Navigate to submit BLIK screen
-                                router.go("/submit-blik", extra: updatedOffer);
+                                router.go(
+                                  flowEntryRoute(ref, "/submit-blik"),
+                                  extra: updatedOffer,
+                                );
                               } else {
                                 ref.read(errorProvider.notifier).state =
                                     t.reservations.errors.failedNoTimestamp;
@@ -406,11 +416,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                 style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 24),
-              _buildNotificationMessengers(
-                context,
-                t,
-                sortedAllCoordinators,
-              ),
+              _buildNotificationMessengers(context, t, sortedAllCoordinators),
             ],
           ),
           const SizedBox(height: 16),
@@ -446,7 +452,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  t.offers.details.noAvailableTip(app: selectedSystem.brandName),
+                                  t.offers.details.noAvailableTip(
+                                    app: selectedSystem.brandName,
+                                  ),
                                   textAlign: TextAlign.left,
                                   style: const TextStyle(
                                     color: Color(0xFF1D4ED8),
@@ -635,25 +643,32 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     );
 
                                                 try {
-                                                  final reservationTimestamp =
+                                                  final takerInvoice =
+                                                      await reserveTakerInvoiceIfNeeded(
+                                                        ref,
+                                                        offer,
+                                                      );
+                                                  final reservation =
                                                       await apiService
                                                           .reserveOffer(
                                                             offer.id,
                                                             takerId,
                                                             offer
                                                                 .coordinatorPubkey,
+                                                            takerInvoice:
+                                                                takerInvoice,
                                                           );
 
-                                                  if (reservationTimestamp !=
-                                                      null) {
-                                                    final Offer
-                                                    updatedOffer = offer.copyWith(
-                                                      status:
-                                                          OfferStatus.reserved,
-                                                      takerPubkey: takerId,
-                                                      reservedAt:
-                                                          reservationTimestamp,
-                                                    );
+                                                  if (reservation.reservedAt !=
+                                                          null ||
+                                                      reservation.offer !=
+                                                          null) {
+                                                    final Offer updatedOffer =
+                                                        reservedOfferFromResult(
+                                                          offer,
+                                                          takerId,
+                                                          reservation,
+                                                        );
 
                                                     ref
                                                         .read(
@@ -664,9 +679,11 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                           updatedOffer,
                                                         );
 
-                                                    // Navigate to submit BLIK screen
                                                     router.go(
-                                                      "/submit-blik",
+                                                      flowEntryRoute(
+                                                        ref,
+                                                        '/submit-blik',
+                                                      ),
                                                       extra: updatedOffer,
                                                     );
                                                   } else {
@@ -746,18 +763,12 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                       trailingWidget = ElevatedButton(
                                         child: Text(t.offers.actions.view),
                                         onPressed: () {
-                                          if (myActiveOffer.isInvalidBlik) {
-                                            router.go(
-                                              '/taker-invalid-blik',
-                                              extra: myActiveOffer,
-                                            );
-                                          } else if (myActiveOffer.isConflict ||
-                                              myActiveOffer.isDispute) {
-                                            router.go(
-                                              '/taker-conflict',
-                                              extra: myActiveOffer.id,
-                                            );
-                                          }
+                                          ref
+                                              .read(
+                                                activeOfferProvider.notifier,
+                                              )
+                                              .setActiveOffer(myActiveOffer);
+                                          router.go('/flow');
                                         },
                                       );
                                     } else if (isReserved || isBlikReceived) {
@@ -1214,7 +1225,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                t.offers.details.noAvailableTip(app: selectedSystem.brandName),
+                                t.offers.details.noAvailableTip(
+                                  app: selectedSystem.brandName,
+                                ),
                                 textAlign: TextAlign.left,
                                 style: const TextStyle(
                                   color: Color(0xFF1D4ED8),
@@ -1346,8 +1359,7 @@ Widget _buildNotificationMessengers(
   Translations t,
   List<CoordinatorRecord> coordinators,
 ) {
-  final byMessenger =
-      <String, List<({CoordinatorRecord coord, String url})>>{};
+  final byMessenger = <String, List<({CoordinatorRecord coord, String url})>>{};
   for (final c in coordinators.where((c) => c.enabled)) {
     c.channelLinks.forEach((messenger, url) {
       if (url.isEmpty) return;
@@ -1364,8 +1376,13 @@ Widget _buildNotificationMessengers(
       for (final id in CoordinatorInfo.messengerIds)
         if (byMessenger[id] != null)
           InkWell(
-            onTap: () =>
-                _showMessengerCoordinators(context, t, id, byMessenger[id]!),
+            onTap:
+                () => _showMessengerCoordinators(
+                  context,
+                  t,
+                  id,
+                  byMessenger[id]!,
+                ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1402,54 +1419,55 @@ Future<void> _showMessengerCoordinators(
 ) {
   return showModalBottomSheet(
     context: context,
-    builder: (ctx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: ClipOval(
-                    child: Image.asset(
-                      _messengerAsset(messengerId),
-                      fit: BoxFit.contain,
+    builder:
+        (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: ClipOval(
+                        child: Image.asset(
+                          _messengerAsset(messengerId),
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _messengerLabel(t, messengerId),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  _messengerLabel(t, messengerId),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              const Divider(height: 1),
+              for (final e in entries)
+                ListTile(
+                  leading: _buildCoordinatorIcon(e.coord, size: 28),
+                  title: Text(e.coord.name),
+                  trailing: const Icon(Icons.open_in_new, size: 20),
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    await launchUrl(
+                      Uri.parse(e.url),
+                      mode: LaunchMode.externalApplication,
+                    );
+                  },
                 ),
-              ],
-            ),
+              const SizedBox(height: 8),
+            ],
           ),
-          const Divider(height: 1),
-          for (final e in entries)
-            ListTile(
-              leading: _buildCoordinatorIcon(e.coord, size: 28),
-              title: Text(e.coord.name),
-              trailing: const Icon(Icons.open_in_new, size: 20),
-              onTap: () async {
-                Navigator.of(ctx).pop();
-                await launchUrl(
-                  Uri.parse(e.url),
-                  mode: LaunchMode.externalApplication,
-                );
-              },
-            ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    ),
+        ),
   );
 }
 
@@ -1492,10 +1510,11 @@ Widget _buildStatsSection(
       final recentOffersData = data['offers'] as List<dynamic>? ?? [];
       // Restrict to the selected payment system so the coordinator dropdown
       // only lists coordinators that actually have finished offers for it.
-      final allRecentOffers = recentOffersData
-          .cast<Offer>()
-          .where((o) => currency == null || o.fiatCurrency == currency)
-          .toList();
+      final allRecentOffers =
+          recentOffersData
+              .cast<Offer>()
+              .where((o) => currency == null || o.fiatCurrency == currency)
+              .toList();
 
       final localeTag = Localizations.localeOf(context).toLanguageTag();
       final numberFormat = NumberFormat.decimalPattern(localeTag);

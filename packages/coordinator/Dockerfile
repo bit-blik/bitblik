@@ -1,6 +1,7 @@
 # Build context: repo root (required for Dart workspace resolution)
 # Flutter image needed: workspace includes Flutter packages, dart pub get alone can't resolve them
-FROM instrumentisto/flutter:3.41.6 AS build
+#FROM instrumentisto/flutter:3.41.6 AS build
+FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build
 
 WORKDIR /workspace
 
@@ -46,6 +47,8 @@ RUN apk add signal-cli~=0.14
 COPY --from=dart-runtime /runtime/ /
 COPY --from=build /workspace/packages/coordinator/bin/server /app/bin/
 COPY --from=build /workspace/simplex-chat /app/
+COPY --from=build /workspace/packages/core/lib/flows/*.yml /app/flows/
+ENV FLOW_DIR=/app/flows
 
 RUN ls -la /app/bin/
 

@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
+import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
+import '../../services/nostr_service.dart' show reservedOfferFromResult;
 import '../../widgets/progress_indicators.dart'; // Import providers
 
 class TakerInvalidBlikScreen extends ConsumerStatefulWidget {
@@ -155,25 +157,26 @@ class _TakerInvalidBlikScreenState
 
                         final takerId = userPublicKey;
                         final apiService = ref.read(apiServiceProvider);
-                        final DateTime? reservationTimestamp = await apiService
-                            .reserveOffer(
-                              offer.id,
-                              takerId!,
-                              offer.coordinatorPubkey,
-                            );
+                        final reservation = await apiService.reserveOffer(
+                          offer.id,
+                          takerId!,
+                          offer.coordinatorPubkey,
+                        );
 
-                        if (reservationTimestamp != null) {
-                          final Offer updatedOffer = offer.copyWith(
-                            status: OfferStatus.reserved,
-                            takerPubkey: takerId,
-                            reservedAt: reservationTimestamp,
+                        if (reservation.reservedAt != null ||
+                            reservation.offer != null) {
+                          final Offer updatedOffer = reservedOfferFromResult(
+                            offer,
+                            takerId,
+                            reservation,
                           );
 
                           await ref
                               .read(activeOfferProvider.notifier)
                               .setActiveOffer(updatedOffer);
 
-                          context.go("/submit-blik", extra: updatedOffer);
+                          context.go(flowEntryRoute(ref, '/submit-blik'),
+                              extra: updatedOffer);
                         } else {
                           // Handle reservation failure
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -382,7 +385,7 @@ class _TakerInvalidBlikScreenState
 
                                   if (mounted) {
                                     context.go(
-                                      '/taker-conflict',
+                                      flowEntryRoute(ref, '/taker-conflict'),
                                       extra: offer.id,
                                     );
                                   }

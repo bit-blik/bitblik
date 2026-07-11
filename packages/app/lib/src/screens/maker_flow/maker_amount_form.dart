@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui' as ui show TextDirection;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -9,11 +11,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
-import '../../config/build_flavor.dart';
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
 import '../../settings/app_preferences.dart';
 import '../coordinator_details_screen.dart';
+import 'twint_code_scanner_screen.dart';
 // CoordinatorRecord comes from bitblik_core
 
 // Progress indicator widget for maker flow
@@ -115,16 +117,28 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   /// Active payment method chosen by the user; drives the offer currency and
   /// the fiat exchange-rate lookup.
   PaymentSystem get _method => ref.read(selectedPaymentSystemProvider);
+  bool get _usesMakerProvidedCodeFlow =>
+      _method.makerProvidesCodeAtOfferCreation;
+  bool get _makerProvidedFieldsVisible =>
+      !_usesMakerProvidedCodeFlow ||
+      _showMakerProvidedEntryForm ||
+      _fiatController.text.trim().isNotEmpty ||
+      _makerCodeController.text.trim().isNotEmpty;
+  String get _makerCodePlaceholder =>
+      List.filled(_method.codeLength, '0').join();
 
   static const _categoryOnboardingDismissedKey =
       'maker_category_onboarding_dismissed';
   static final _categoryOnboardingNewCutoff = DateTime(2026, 10, 1);
 
   final _fiatController = TextEditingController();
+  final _makerCodeController = TextEditingController();
   final _amountFocusNode = FocusNode(); // Add FocusNode for amount input
+  final _makerCodeFocusNode = FocusNode();
   double? _satsEquivalent;
   double? _rate;
   String? _amountErrorText;
+  bool _showMakerProvidedEntryForm = false;
 
   bool _isLoadingInitialData = true;
   String? _coordinatorInfoError;
@@ -158,17 +172,18 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   void initState() {
     super.initState();
     _fiatController.addListener(_validateAndRecalculate);
+    _makerCodeController.addListener(() {
+      if (mounted) setState(() {});
+    });
     _amountFocusNode.addListener(_onAmountFocusChange);
     _loadInitialData();
     _loadEcommerceRiskAccepted();
     _loadCategoryOnboardingState();
 
-    // Auto-focus the amount input field when screen is created
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _amountFocusNode.requestFocus();
-      }
-    });
+    // Auto-focus the amount input when the screen is created. The real focus
+    // usually lands after _loadInitialData finishes (see _focusAmountIfManual),
+    // since the form is replaced by a loader until then.
+    _focusAmountIfManual();
   }
 
   @override
@@ -176,7 +191,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     _fiatController.removeListener(_validateAndRecalculate);
     _amountFocusNode.removeListener(_onAmountFocusChange);
     _fiatController.dispose();
+    _makerCodeController.dispose();
     _amountFocusNode.dispose();
+    _makerCodeFocusNode.dispose();
     super.dispose();
   }
 
@@ -270,7 +287,24 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       setState(() {
         _isLoadingInitialData = false;
       });
+      // Form is now built (was a loader until here); focus the amount input.
+      _focusAmountIfManual();
     }
+  }
+
+  /// Focus the amount input when the user will type the amount directly: always
+  /// for the standard flow, and for the maker-provided-code flow (TWINT) only
+  /// when the fields are shown for manual entry (e.g. on web, no camera scan)
+  /// and the amount is still empty.
+  void _focusAmountIfManual() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_usesMakerProvidedCodeFlow ||
+          (_makerProvidedFieldsVisible &&
+              _fiatController.text.trim().isEmpty)) {
+        _amountFocusNode.requestFocus();
+      }
+    });
   }
 
   void _autoSelectCoordinator() {
@@ -526,6 +560,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     final fiatString = _fiatController.text.replaceAll(',', '.');
     final fiatAmount = double.parse(fiatString);
+    final makerCode = _makerCodeController.text.trim();
+    if (_method.makerProvidesCodeAtOfferCreation &&
+        !_method.isValidCode(makerCode)) {
+      ref
+          .read(errorProvider.notifier)
+          .state = t.maker.amountForm.errors.initiating(
+        details:
+            'Invalid ${_method.codeLabel} code. Expected ${_method.codeLength} digits.',
+      );
+      return;
+    }
 
     ref.read(isLoadingProvider.notifier).state = true;
     ref.read(errorProvider.notifier).state = null;
@@ -538,6 +583,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         category: supportsCategory ? _selectedCategory : null,
         coordinatorPubkey: coordinatorPubkey,
         premiumPercent: _premiumPercent,
+        blikCode: _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
       );
       final paymentHash = result['paymentHash'] as String;
       ref.read(holdInvoiceProvider.notifier).state = result['holdInvoice'];
@@ -558,6 +604,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               makerPubkey: makerId,
               coordinatorPubkey: coordinatorPubkey,
               category: supportsCategory ? _selectedCategory : null,
+              blikCode:
+                  _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
               premiumPercent:
                   (result['premiumPercent'] as num?)?.toDouble() ??
                   _premiumPercent,
@@ -596,12 +644,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     if (icon != null && icon.isNotEmpty) {
       return icon.startsWith('http')
           ? Image.network(
-              icon,
-              width: 22,
-              height: 22,
-              errorBuilder: (_, _, _) =>
-                  const Icon(Icons.account_circle, size: 24),
-            )
+            icon,
+            width: 22,
+            height: 22,
+            errorBuilder:
+                (_, _, _) => const Icon(Icons.account_circle, size: 24),
+          )
           : Image.asset(icon, width: 22, height: 22);
     }
     return const Icon(Icons.account_circle, size: 24);
@@ -794,10 +842,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                         coordinator.icon!,
                                         width: 32,
                                         height: 32,
-                                        errorBuilder: (_, _, _) => const Icon(
-                                          Icons.account_circle,
-                                          size: 32,
-                                        ),
+                                        errorBuilder:
+                                            (_, _, _) => const Icon(
+                                              Icons.account_circle,
+                                              size: 32,
+                                            ),
                                       )
                                       : Image.asset(
                                         coordinator.icon!,
@@ -932,6 +981,251 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           borderRadius: BorderRadius.circular(24),
           child: Center(child: child),
         ),
+      ),
+    );
+  }
+
+  Future<void> _scanTwintCodeAndAmount() async {
+    final result = await Navigator.of(context).push<TwintScanResult>(
+      MaterialPageRoute(builder: (_) => const TwintCodeScannerScreen()),
+    );
+    if (!mounted || result == null) return;
+
+    setState(() {
+      _showMakerProvidedEntryForm = true;
+    });
+
+    if (result.code != null && result.code!.isNotEmpty) {
+      _makerCodeController.text = result.code!;
+    }
+    if (result.amount != null && result.amount! > 0) {
+      final amountText = result.amount!
+          .toStringAsFixed(2)
+          .replaceFirst(RegExp(r'\.00$'), '');
+      _fiatController.text = amountText;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_makerCodeController.text.trim().isEmpty) {
+        _makerCodeFocusNode.requestFocus();
+      } else if (_fiatController.text.trim().isEmpty) {
+        _amountFocusNode.requestFocus();
+      } else {
+        FocusScope.of(context).unfocus();
+      }
+    });
+  }
+
+  void _showManualMakerProvidedEntry() {
+    setState(() {
+      _showMakerProvidedEntryForm = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_fiatController.text.trim().isEmpty) {
+        _amountFocusNode.requestFocus();
+      } else {
+        _makerCodeFocusNode.requestFocus();
+      }
+    });
+  }
+
+  Widget _buildMakerProvidedScanCard() {
+    final t = Translations.of(context);
+    final accent = const Color(0xFF0D8C7A);
+    return Container(
+      margin: const EdgeInsets.only(top: 10, bottom: 18),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFFF2FBF9),
+        border: Border.all(color: const Color(0xFFCFEDE7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDDF5F0),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.qr_code_scanner_rounded, color: accent),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.maker.amountForm.twintScan.cardTitle(
+                        code: _method.codeLabel,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      t.maker.amountForm.twintScan.cardBody,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildGradientButton(
+            onPressed: _scanTwintCodeAndAmount,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.camera_alt_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                Text(
+                  t.maker.amountForm.twintScan.scanButton,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: _showManualMakerProvidedEntry,
+              child: Text(t.maker.amountForm.twintScan.manualButton),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMakerProvidedCodeField() {
+    final t = Translations.of(context);
+    final hasValue = _makerCodeController.text.trim().isNotEmpty;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+      padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                t.maker.amountForm.twintScan.codeLabel(code: _method.codeLabel),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: _scanTwintCodeAndAmount,
+                icon: const Icon(Icons.center_focus_strong, size: 16),
+                label: Text(t.maker.amountForm.twintScan.rescan),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey[700],
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final available = constraints.maxWidth.clamp(
+                0.0,
+                double.infinity,
+              );
+              final perChar =
+                  _method.codeLength > 0 ? available / _method.codeLength : 0.0;
+              final fontSize = (perChar / 1.25).clamp(28.0, 52.0);
+              final letterSpacing = (fontSize * 0.22).clamp(4.0, 10.0);
+              final textStyle = TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+                letterSpacing: letterSpacing,
+                height: 1.1,
+              );
+              // Size the field to exactly fit the full code and center that
+              // box, so the text block sits centered while the field itself
+              // stays left-aligned and the cursor starts at its left edge.
+              final placeholderPainter = TextPainter(
+                text: TextSpan(text: _makerCodePlaceholder, style: textStyle),
+                textDirection: ui.TextDirection.ltr,
+              )..layout();
+              final fieldWidth = (placeholderPainter.width + 4).clamp(
+                0.0,
+                available,
+              );
+              return Center(
+                child: SizedBox(
+                  width: fieldWidth,
+                  child: TextField(
+                    controller: _makerCodeController,
+                    focusNode: _makerCodeFocusNode,
+                    keyboardType: TextInputType.number,
+                    maxLength: _method.codeLength,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    textAlign: TextAlign.left,
+                    style: textStyle,
+                    decoration: InputDecoration(
+                      hintText: _makerCodePlaceholder,
+                      hintStyle: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: letterSpacing,
+                        color: Colors.grey[350],
+                        height: 1.1,
+                      ),
+                      border: InputBorder.none,
+                      counterText: '',
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasValue
+                ? t.maker.amountForm.twintScan.helperFilled(
+                  code: _method.codeLabel,
+                )
+                : t.maker.amountForm.twintScan.helperEmpty(
+                  digits: _method.codeLength,
+                ),
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.35,
+              color: Colors.grey[700],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1190,12 +1484,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 children:
                     OfferCategory.values.map((category) {
                       final hint = switch (category) {
-                        OfferCategory.shop =>
-                          t.maker.amountForm.category.physicalShopHint(code: _method.codeLabel, app: _method.brandName),
+                        OfferCategory.shop => t.maker.amountForm.category
+                            .physicalShopHint(
+                              code: _method.codeLabel,
+                              app: _method.brandName,
+                            ),
                         OfferCategory.atm =>
                           t.maker.amountForm.category.atmHint,
-                        OfferCategory.online =>
-                          t.maker.amountForm.category.ecommerceWarningBody(code: _method.codeLabel),
+                        OfferCategory.online => t.maker.amountForm.category
+                            .ecommerceWarningBody(code: _method.codeLabel),
                       };
                       final name = switch (category) {
                         OfferCategory.shop =>
@@ -1286,9 +1583,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       maxFiat = (info.maxAmountSats / 100000000.0) * rate;
     }
     final presets = _method.atmPresetAmounts
-        .where((amt) =>
-            (maxFiat == null || amt <= maxFiat) &&
-            (minFiat == null || amt >= minFiat))
+        .where(
+          (amt) =>
+              (maxFiat == null || amt <= maxFiat) &&
+              (minFiat == null || amt >= minFiat),
+        )
         .toList(growable: false);
     final current = _fiatController.text.trim();
     return Padding(
@@ -1345,8 +1644,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon,
-                  size: 18, color: selected ? Colors.red : Colors.grey[700]),
+              Icon(
+                icon,
+                size: 18,
+                color: selected ? Colors.red : Colors.grey[700],
+              ),
               const SizedBox(width: 6),
             ],
             Text(
@@ -1432,8 +1734,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          t.maker.amountForm.category
-                              .physicalShopHint(code: _method.codeLabel, app: _method.brandName),
+                          t.maker.amountForm.category.physicalShopHint(
+                            code: _method.codeLabel,
+                            app: _method.brandName,
+                          ),
                           style: const TextStyle(fontSize: 13, height: 1.4),
                         ),
                       ),
@@ -1494,7 +1798,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              t.maker.amountForm.category.ecommerceWarningBody(code: _method.codeLabel),
+                              t.maker.amountForm.category.ecommerceWarningBody(
+                                code: _method.codeLabel,
+                              ),
                               style: const TextStyle(fontSize: 13, height: 1.4),
                             ),
                           ),
@@ -1862,57 +2168,62 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 //   ),
                 const SizedBox(height: 4),
               ],
+              if (_usesMakerProvidedCodeFlow && !_makerProvidedFieldsVisible)
+                _buildMakerProvidedScanCard()
               // Amount entry: ATM presets (default) or the traditional input.
-              if (_selectedCategory == OfferCategory.atm && !_customAmountMode)
+              else if (_selectedCategory == OfferCategory.atm &&
+                  !_customAmountMode)
                 _buildAtmAmountPresets(t)
               else
-              // Large amount input field
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 22.0,
-                  horizontal: 20,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        focusNode: _amountFocusNode,
-                        controller: _fiatController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                          signed: false,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 38,
-                          fontWeight: FontWeight.w400,
-                          height: 1.2,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: t.maker.amountForm.labels.enterAmount,
-                          hintStyle: TextStyle(
-                            fontSize: 36,
-                            color: Colors.grey[400],
-                            fontWeight: FontWeight.w300,
+                // Large amount input field
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 22.0,
+                    horizontal: 20,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          focusNode: _amountFocusNode,
+                          controller: _fiatController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                            signed: false,
                           ),
-                          border: InputBorder.none,
-                          errorText: null, // Error shown below
-                          contentPadding: EdgeInsets.zero,
+                          style: const TextStyle(
+                            fontSize: 38,
+                            fontWeight: FontWeight.w400,
+                            height: 1.2,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: t.maker.amountForm.labels.enterAmount,
+                            hintStyle: TextStyle(
+                              fontSize: 36,
+                              color: Colors.grey[400],
+                              fontWeight: FontWeight.w300,
+                            ),
+                            border: InputBorder.none,
+                            errorText: null, // Error shown below
+                            contentPadding: EdgeInsets.zero,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _method.currencySymbol,
-                      style: const TextStyle(
-                        fontSize: 44,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black,
+                      const SizedBox(width: 8),
+                      Text(
+                        _method.currencySymbol,
+                        style: const TextStyle(
+                          fontSize: 44,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              if (_usesMakerProvidedCodeFlow && _makerProvidedFieldsVisible)
+                _buildMakerProvidedCodeField(),
               if (_amountErrorText != null) ...[
                 Text(
                   _amountErrorText!,
@@ -2310,6 +2621,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             publicKeyAsyncValue.isLoading ||
                             _amountErrorText != null ||
                             _fiatController.text.isEmpty ||
+                            (_method.makerProvidesCodeAtOfferCreation &&
+                                !_method.isValidCode(
+                                  _makerCodeController.text.trim(),
+                                )) ||
                             _rate == null ||
                             (_selectedCategory == OfferCategory.online &&
                                 !_ecommerceRiskAccepted) ||
