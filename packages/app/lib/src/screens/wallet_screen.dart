@@ -1,12 +1,15 @@
 import '../config/build_flavor.dart';
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk_flutter/ndk_flutter.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../services/nfc_lnurl_service.dart';
 import 'wallet_details_screen.dart';
 
 const String kNwcWalletId = 'bitblik_nwc_wallet';
@@ -85,7 +88,45 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
     final ndkFlutter = ref.watch(ndkFlutterProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.wallet.title)),
+      appBar: AppBar(
+        title: Text(t.wallet.title),
+        actions: [
+          if (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
+            IconButton(
+              tooltip: t.nfc.actions.scan,
+              onPressed: () async {
+                final service = ref.read(nfcLnurlServiceProvider);
+                final result = await service.startManualScan();
+                if (!context.mounted) return;
+
+                final messenger = ScaffoldMessenger.of(context);
+                switch (result) {
+                  case NfcScanStartResult.started:
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(t.nfc.feedback.readyToScan)),
+                    );
+                    break;
+                  case NfcScanStartResult.alreadyRunning:
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(t.nfc.feedback.alreadyScanning)),
+                    );
+                    break;
+                  case NfcScanStartResult.disabled:
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(t.nfc.errors.disabled)),
+                    );
+                    break;
+                  case NfcScanStartResult.unsupported:
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(t.nfc.errors.unsupported)),
+                    );
+                    break;
+                }
+              },
+              icon: const Icon(Icons.nfc),
+            ),
+        ],
+      ),
       body: apiInit.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error:

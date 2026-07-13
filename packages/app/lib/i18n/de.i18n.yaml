@@ -75,6 +75,23 @@ lightningAddress:
     saving: "Fehler beim Speichern der Adresse: ${details}"
     loading: "Fehler beim Laden der Lightning-Adresse: ${details}"
 
+nfc:
+  actions:
+    scan: Scan NFC
+    addWallet: Add wallet
+  prompts:
+    addTitle: Add Lightning wallet?
+    addMessage: "Found this Lightning address on an NFC tag: ${address}\n\nAdd it as your LNURL wallet?"
+  feedback:
+    readyToScan: Hold your phone near the NFC tag
+    alreadyScanning: NFC scan already running
+    alreadyAdded: This Lightning address is already configured
+    walletAdded: Lightning wallet added from NFC tag
+  errors:
+    disabled: NFC is turned off on this device
+    unsupported: NFC is not available on this device
+    reading: "NFC scan failed: ${details}"
+
 # =============================================================================
 # OFFERS AND TRANSACTIONS
 # =============================================================================

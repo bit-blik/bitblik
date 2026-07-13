@@ -43,6 +43,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$app$en app = Translations$app$en.internal(_root);
 	late final Translations$common$en common = Translations$common$en.internal(_root);
 	late final Translations$lightningAddress$en lightningAddress = Translations$lightningAddress$en.internal(_root);
+	late final Translations$nfc$en nfc = Translations$nfc$en.internal(_root);
 	late final Translations$offers$en offers = Translations$offers$en.internal(_root);
 	late final Translations$reservations$en reservations = Translations$reservations$en.internal(_root);
 	late final Translations$exchange$en exchange = Translations$exchange$en.internal(_root);
@@ -113,6 +114,19 @@ class Translations$lightningAddress$en {
 	late final Translations$lightningAddress$prompts$en prompts = Translations$lightningAddress$prompts$en.internal(_root);
 	late final Translations$lightningAddress$feedback$en feedback = Translations$lightningAddress$feedback$en.internal(_root);
 	late final Translations$lightningAddress$errors$en errors = Translations$lightningAddress$errors$en.internal(_root);
+}
+
+// Path: nfc
+class Translations$nfc$en {
+	Translations$nfc$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$nfc$actions$en actions = Translations$nfc$actions$en.internal(_root);
+	late final Translations$nfc$prompts$en prompts = Translations$nfc$prompts$en.internal(_root);
+	late final Translations$nfc$feedback$en feedback = Translations$nfc$feedback$en.internal(_root);
+	late final Translations$nfc$errors$en errors = Translations$nfc$errors$en.internal(_root);
 }
 
 // Path: offers
@@ -761,6 +775,75 @@ class Translations$lightningAddress$errors$en {
 
 	/// en: 'Error loading Lightning address: ${details}'
 	String loading({required Object details}) => 'Error loading Lightning address: ${details}';
+}
+
+// Path: nfc.actions
+class Translations$nfc$actions$en {
+	Translations$nfc$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Scan NFC'
+	String get scan => 'Scan NFC';
+
+	/// en: 'Add wallet'
+	String get addWallet => 'Add wallet';
+}
+
+// Path: nfc.prompts
+class Translations$nfc$prompts$en {
+	Translations$nfc$prompts$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Add Lightning wallet?'
+	String get addTitle => 'Add Lightning wallet?';
+
+	/// en: 'Found this Lightning address on an NFC tag: ${address} Add it as your LNURL wallet?'
+	String addMessage({required Object address}) => 'Found this Lightning address on an NFC tag: ${address}\n\nAdd it as your LNURL wallet?';
+}
+
+// Path: nfc.feedback
+class Translations$nfc$feedback$en {
+	Translations$nfc$feedback$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Hold your phone near the NFC tag'
+	String get readyToScan => 'Hold your phone near the NFC tag';
+
+	/// en: 'NFC scan already running'
+	String get alreadyScanning => 'NFC scan already running';
+
+	/// en: 'This Lightning address is already configured'
+	String get alreadyAdded => 'This Lightning address is already configured';
+
+	/// en: 'Lightning wallet added from NFC tag'
+	String get walletAdded => 'Lightning wallet added from NFC tag';
+}
+
+// Path: nfc.errors
+class Translations$nfc$errors$en {
+	Translations$nfc$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'NFC is turned off on this device'
+	String get disabled => 'NFC is turned off on this device';
+
+	/// en: 'NFC is not available on this device'
+	String get unsupported => 'NFC is not available on this device';
+
+	/// en: 'NFC scan failed: ${details}'
+	String reading({required Object details}) => 'NFC scan failed: ${details}';
 }
 
 // Path: offers.details
@@ -5226,6 +5309,17 @@ extension on Translations {
 			'lightningAddress.feedback.valid' => 'Valid Lightning address',
 			'lightningAddress.errors.saving' => ({required Object details}) => 'Error saving address: ${details}',
 			'lightningAddress.errors.loading' => ({required Object details}) => 'Error loading Lightning address: ${details}',
+			'nfc.actions.scan' => 'Scan NFC',
+			'nfc.actions.addWallet' => 'Add wallet',
+			'nfc.prompts.addTitle' => 'Add Lightning wallet?',
+			'nfc.prompts.addMessage' => ({required Object address}) => 'Found this Lightning address on an NFC tag: ${address}\n\nAdd it as your LNURL wallet?',
+			'nfc.feedback.readyToScan' => 'Hold your phone near the NFC tag',
+			'nfc.feedback.alreadyScanning' => 'NFC scan already running',
+			'nfc.feedback.alreadyAdded' => 'This Lightning address is already configured',
+			'nfc.feedback.walletAdded' => 'Lightning wallet added from NFC tag',
+			'nfc.errors.disabled' => 'NFC is turned off on this device',
+			'nfc.errors.unsupported' => 'NFC is not available on this device',
+			'nfc.errors.reading' => ({required Object details}) => 'NFC scan failed: ${details}',
 			'offers.details.yourOffer' => 'Your offer:',
 			'offers.details.selectedOffer' => 'Offer:',
 			'offers.details.activeOffer' => 'You have an active offer:',
@@ -5681,6 +5775,8 @@ extension on Translations {
 			'taker.paymentFailed.walletSection.defaultLabel' => 'default',
 			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tap to generate invoice for ${amountSats}',
 			'taker.paymentFailed.loading.processingPayment' => 'Processing your payment retry...',
+			_ => null,
+		} ?? switch (path) {
 			'taker.paymentFailed.success.title' => 'Payment Successful',
 			'taker.paymentFailed.success.message' => 'Your payment has been processed successfully.',
 			'taker.paymentSuccess.title' => 'Payment Successful',
@@ -5692,8 +5788,6 @@ extension on Translations {
 			'taker.invalidBlik.werentCharged' => 'If you were NOT charged:',
 			'taker.invalidBlik.wereCharged' => 'If you were charged:',
 			'taker.invalidBlik.actions.retry' => ({required Object code}) => 'Send new ${code} code',
-			_ => null,
-		} ?? switch (path) {
 			'taker.invalidBlik.actions.cancelReservation' => 'Cancel Transaction',
 			'taker.invalidBlik.actions.reportConflict' => 'Start Dispute',
 			'taker.invalidBlik.actions.returnHome' => 'Return to home',

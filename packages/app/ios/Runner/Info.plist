@@ -43,6 +43,8 @@
 		</array>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to scan QR codes for payments and wallet connections.</string>
+	<key>NFCReaderUsageDescription</key>
+	<string>This app uses NFC to read Lightning wallet tags and add them as receiving wallets.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>

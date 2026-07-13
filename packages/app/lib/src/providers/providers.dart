@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
+import '../services/nfc_lnurl_service.dart';
 import '../services/relay_reconnect_gate.dart';
 import '../utils/offer_status_label.dart';
 import '../services/notification_service.dart';
@@ -27,6 +28,12 @@ import '../utils/bitcoin_display.dart';
 
 final keyServiceProvider = Provider<KeyService>((ref) {
   final service = KeyService();
+  return service;
+});
+
+final nfcLnurlServiceProvider = Provider<NfcLnurlService>((ref) {
+  final service = NfcLnurlService();
+  ref.onDispose(service.dispose);
   return service;
 });
 
@@ -186,12 +193,13 @@ final discoveredCoordinatorsProvider = StreamProvider<List<CoordinatorRecord>>((
   yield* registry.changes;
 });
 
-final coordinatorColdStartProvider =
-    StreamProvider<CoordinatorColdStartState?>((ref) async* {
-      final registry = await ref.watch(coordinatorRegistryProvider.future);
-      yield registry.coldStartState;
-      yield* registry.coldStartChanges;
-    });
+final coordinatorColdStartProvider = StreamProvider<CoordinatorColdStartState?>(
+  (ref) async* {
+    final registry = await ref.watch(coordinatorRegistryProvider.future);
+    yield registry.coldStartState;
+    yield* registry.coldStartChanges;
+  },
+);
 
 /// Enabled-only view for the maker create-offer flow, restricted to the active
 /// payment method so a PL user never creates an offer on a PT coordinator (and
@@ -254,8 +262,9 @@ final coordinatorInfoEventSourcesProvider =
       if (events.isEmpty) return const [];
 
       final sources = await ndk.config.cache.loadEventSources(events.first.id);
-      final out = sources.map(normalizeRelayUrl).where((u) => u.isNotEmpty).toSet()
-        ..remove('');
+      final out =
+          sources.map(normalizeRelayUrl).where((u) => u.isNotEmpty).toSet()
+            ..remove('');
       final list = out.toList()..sort();
       return list;
     });

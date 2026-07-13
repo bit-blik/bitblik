@@ -60,11 +60,13 @@ final double kMakerFeePercentage = 0.5;
 final double kTakerFeePercentage = 0.5;
 final SharedPreferencesAsync asyncPrefs = SharedPreferencesAsync();
 late AppLocale appLocale;
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     debugLogDiagnostics: true,
     initialLocation: '/',
+    navigatorKey: rootNavigatorKey,
     routes: [
       ShellRoute(
         builder: (context, state, child) {
@@ -236,11 +238,14 @@ class MyApp extends ConsumerStatefulWidget {
 class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   StreamSubscription<Uri>? _sub;
   StreamSubscription<NotificationTap>? _notificationTapSub;
+  StreamSubscription<String>? _nfcLightningAddressSub;
   final AppLinks _appLinks = AppLinks();
   bool _routerReady = false;
   String? _pendingRouteNavigation;
+  String? _pendingNfcLightningAddress;
   final List<Uri> _pendingDeepLinks = [];
   AppLifecycleState? _appLifecycleState;
+  bool _showingNfcDialog = false;
 
   @override
   void initState() {
@@ -250,6 +255,10 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     try {
       ref.read(keyServiceProvider);
       ref.read(apiServiceProvider);
+      _nfcLightningAddressSub = ref
+          .read(nfcLnurlServiceProvider)
+          .lightningAddresses
+          .listen(_handleNfcLightningAddressFound);
 
       Logger.log.i(
         () =>
@@ -296,6 +305,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
 
         // Warm up wallets (especially NWC) in background regardless of route.
         ref.read(walletWarmupProvider);
+        unawaited(ref.read(nfcLnurlServiceProvider).ensureForegroundScanning());
 
         // // Start listening to connectivity changes
         // _connectivitySubscription = listenToConnectivityChanges(ref);
@@ -344,6 +354,11 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     _appLifecycleState = state;
     if (state == AppLifecycleState.resumed) {
       _tryHandlePendingRouteNavigation();
+      _tryHandlePendingNfcLightningAddress();
+      unawaited(ref.read(nfcLnurlServiceProvider).ensureForegroundScanning());
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      unawaited(ref.read(nfcLnurlServiceProvider).stopScanning());
     }
   }
 
@@ -355,6 +370,16 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
 
     _pendingRouteNavigation = null;
     _goToRoute(route);
+  }
+
+  void _tryHandlePendingNfcLightningAddress() {
+    final address = _pendingNfcLightningAddress;
+    if (address == null) return;
+    if (!_routerReady) return;
+    if (_appLifecycleState != AppLifecycleState.resumed) return;
+
+    _pendingNfcLightningAddress = null;
+    unawaited(_showNfcLightningAddressDialog(address));
   }
 
   Future<void> _checkInitialLink() async {
@@ -389,6 +414,98 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       if (currentPath == route) return;
       goRouter.go(route);
     });
+  }
+
+  Future<void> _handleNfcLightningAddressFound(String address) async {
+    if (!_routerReady || _appLifecycleState != AppLifecycleState.resumed) {
+      _pendingNfcLightningAddress = address;
+      return;
+    }
+
+    await _showNfcLightningAddressDialog(address);
+  }
+
+  Future<void> _showNfcLightningAddressDialog(String address) async {
+    if (_showingNfcDialog) {
+      _pendingNfcLightningAddress = address;
+      return;
+    }
+
+    final initialDialogContext = rootNavigatorKey.currentContext;
+    if (initialDialogContext == null || !mounted) {
+      _pendingNfcLightningAddress = address;
+      return;
+    }
+
+    _showingNfcDialog = true;
+    final t = Translations.of(initialDialogContext);
+    final keyService = ref.read(keyServiceProvider);
+
+    try {
+      final currentAddress = await keyService.getLightningAddress();
+      if (!mounted) return;
+
+      if (currentAddress?.toLowerCase() == address.toLowerCase()) {
+        final messengerContext = rootNavigatorKey.currentContext;
+        if (messengerContext != null) {
+          ScaffoldMessenger.of(
+            messengerContext,
+          ).showSnackBar(SnackBar(content: Text(t.nfc.feedback.alreadyAdded)));
+        }
+        return;
+      }
+
+      final dialogContext = rootNavigatorKey.currentContext;
+      if (dialogContext == null) {
+        _pendingNfcLightningAddress = address;
+        return;
+      }
+
+      final shouldSave = await showDialog<bool>(
+        context: dialogContext,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(t.nfc.prompts.addTitle),
+            content: Text(t.nfc.prompts.addMessage(address: address)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(t.common.buttons.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(t.nfc.actions.addWallet),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldSave == true) {
+        await keyService.saveLightningAddress(address);
+        ref.invalidate(lightningAddressProvider);
+        if (!mounted) return;
+        final messengerContext = rootNavigatorKey.currentContext;
+        if (messengerContext != null) {
+          ScaffoldMessenger.of(
+            messengerContext,
+          ).showSnackBar(SnackBar(content: Text(t.nfc.feedback.walletAdded)));
+        }
+      }
+    } catch (error) {
+      if (!mounted) return;
+      final messengerContext = rootNavigatorKey.currentContext;
+      if (messengerContext != null) {
+        ScaffoldMessenger.of(messengerContext).showSnackBar(
+          SnackBar(
+            content: Text(t.nfc.errors.reading(details: error.toString())),
+          ),
+        );
+      }
+    } finally {
+      _showingNfcDialog = false;
+      _tryHandlePendingNfcLightningAddress();
+    }
   }
 
   Future<void> _handleDeepLink(Uri uri) async {
@@ -507,6 +624,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _sub?.cancel();
     _notificationTapSub?.cancel();
+    _nfcLightningAddressSub?.cancel();
     super.dispose();
   }
 

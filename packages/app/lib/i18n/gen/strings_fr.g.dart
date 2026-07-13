@@ -42,6 +42,7 @@ class TranslationsFr extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$app$fr app = _Translations$app$fr._(_root);
 	@override late final _Translations$common$fr common = _Translations$common$fr._(_root);
 	@override late final _Translations$lightningAddress$fr lightningAddress = _Translations$lightningAddress$fr._(_root);
+	@override late final _Translations$nfc$fr nfc = _Translations$nfc$fr._(_root);
 	@override late final _Translations$offers$fr offers = _Translations$offers$fr._(_root);
 	@override late final _Translations$reservations$fr reservations = _Translations$reservations$fr._(_root);
 	@override late final _Translations$exchange$fr exchange = _Translations$exchange$fr._(_root);
@@ -106,6 +107,19 @@ class _Translations$lightningAddress$fr extends Translations$lightningAddress$en
 	@override late final _Translations$lightningAddress$prompts$fr prompts = _Translations$lightningAddress$prompts$fr._(_root);
 	@override late final _Translations$lightningAddress$feedback$fr feedback = _Translations$lightningAddress$feedback$fr._(_root);
 	@override late final _Translations$lightningAddress$errors$fr errors = _Translations$lightningAddress$errors$fr._(_root);
+}
+
+// Path: nfc
+class _Translations$nfc$fr extends Translations$nfc$en {
+	_Translations$nfc$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$nfc$actions$fr actions = _Translations$nfc$actions$fr._(_root);
+	@override late final _Translations$nfc$prompts$fr prompts = _Translations$nfc$prompts$fr._(_root);
+	@override late final _Translations$nfc$feedback$fr feedback = _Translations$nfc$feedback$fr._(_root);
+	@override late final _Translations$nfc$errors$fr errors = _Translations$nfc$errors$fr._(_root);
 }
 
 // Path: offers
@@ -576,6 +590,53 @@ class _Translations$lightningAddress$errors$fr extends Translations$lightningAdd
 	// Translations
 	@override String saving({required Object details}) => 'Erreur lors de l\'enregistrement de l\'adresse : ${details}';
 	@override String loading({required Object details}) => 'Erreur lors du chargement de l\'adresse Lightning : ${details}';
+}
+
+// Path: nfc.actions
+class _Translations$nfc$actions$fr extends Translations$nfc$actions$en {
+	_Translations$nfc$actions$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get scan => 'Scan NFC';
+	@override String get addWallet => 'Add wallet';
+}
+
+// Path: nfc.prompts
+class _Translations$nfc$prompts$fr extends Translations$nfc$prompts$en {
+	_Translations$nfc$prompts$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get addTitle => 'Add Lightning wallet?';
+	@override String addMessage({required Object address}) => 'Found this Lightning address on an NFC tag: ${address}\n\nAdd it as your LNURL wallet?';
+}
+
+// Path: nfc.feedback
+class _Translations$nfc$feedback$fr extends Translations$nfc$feedback$en {
+	_Translations$nfc$feedback$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get readyToScan => 'Hold your phone near the NFC tag';
+	@override String get alreadyScanning => 'NFC scan already running';
+	@override String get alreadyAdded => 'This Lightning address is already configured';
+	@override String get walletAdded => 'Lightning wallet added from NFC tag';
+}
+
+// Path: nfc.errors
+class _Translations$nfc$errors$fr extends Translations$nfc$errors$en {
+	_Translations$nfc$errors$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get disabled => 'NFC is turned off on this device';
+	@override String get unsupported => 'NFC is not available on this device';
+	@override String reading({required Object details}) => 'NFC scan failed: ${details}';
 }
 
 // Path: offers.details
@@ -2901,6 +2962,17 @@ extension on TranslationsFr {
 			'lightningAddress.feedback.valid' => 'Adresse Lightning valide',
 			'lightningAddress.errors.saving' => ({required Object details}) => 'Erreur lors de l\'enregistrement de l\'adresse : ${details}',
 			'lightningAddress.errors.loading' => ({required Object details}) => 'Erreur lors du chargement de l\'adresse Lightning : ${details}',
+			'nfc.actions.scan' => 'Scan NFC',
+			'nfc.actions.addWallet' => 'Add wallet',
+			'nfc.prompts.addTitle' => 'Add Lightning wallet?',
+			'nfc.prompts.addMessage' => ({required Object address}) => 'Found this Lightning address on an NFC tag: ${address}\n\nAdd it as your LNURL wallet?',
+			'nfc.feedback.readyToScan' => 'Hold your phone near the NFC tag',
+			'nfc.feedback.alreadyScanning' => 'NFC scan already running',
+			'nfc.feedback.alreadyAdded' => 'This Lightning address is already configured',
+			'nfc.feedback.walletAdded' => 'Lightning wallet added from NFC tag',
+			'nfc.errors.disabled' => 'NFC is turned off on this device',
+			'nfc.errors.unsupported' => 'NFC is not available on this device',
+			'nfc.errors.reading' => ({required Object details}) => 'NFC scan failed: ${details}',
 			'offers.details.yourOffer' => 'Votre offre :',
 			'offers.details.selectedOffer' => 'Offre :',
 			'offers.details.activeOffer' => 'Vous avez une offre active :',
@@ -3356,6 +3428,8 @@ extension on TranslationsFr {
 			'twint.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'En attente que le maker confirme que le ${code} est correct. Temps restant : ${seconds}s',
 			'twint.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'TRÈS IMPORTANT : assurez-vous de n\'accepter qu\'une confirmation ${code} de ${amount} ${currency}',
 			'twint.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'TRÈS IMPORTANT : dans votre application bancaire, assurez-vous de confirmer un paiement ${code} d\'exactement ${amount} ${currency}.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'Le maker doit maintenant le saisir dans le terminal de paiement dans les ${minutes} minutes. Vous devrez ensuite accepter le code ${code} dans votre application bancaire.',
 			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'Le maker doit maintenant saisir votre code ${code} au distributeur dans les ${minutes} minutes.',
 			'twint.waitConfirmation.categoryReminder.atm' => 'Rappel offre distributeur : votre banque peut encore vous demander d\'approuver des frais de distributeur supplémentaires en plus du montant principal.',
@@ -3367,8 +3441,6 @@ extension on TranslationsFr {
 			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Renvoyer un nouveau code ${code}',
 			'twint.waitConfirmation.navigatedHome' => 'Retour à l\'accueil.',
 			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => 'Code ${code} expiré',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'Le maker n\'a pas reçu le code ${code}, il n\'a donc pas pu l\'utiliser.',
 			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'La réservation se termine dans',
 			'twint.waitConfirmation.expiredSentWarning' => 'Le maker n\'a pas encore confirmé le paiement. Que souhaitez-vous faire ?',
