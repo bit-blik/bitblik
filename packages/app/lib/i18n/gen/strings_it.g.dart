@@ -598,8 +598,8 @@ class _Translations$nfc$actions$it extends Translations$nfc$actions$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get scan => 'Scan NFC';
-	@override String get addWallet => 'Add wallet';
+	@override String get scan => 'Scansiona NFC';
+	@override String get addWallet => 'Aggiungi wallet';
 }
 
 // Path: nfc.prompts
@@ -609,8 +609,8 @@ class _Translations$nfc$prompts$it extends Translations$nfc$prompts$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get addTitle => 'Add Lightning wallet?';
-	@override String addMessage({required Object address}) => 'Found this Lightning address on an NFC tag: ${address}\n\nAdd it as your LNURL wallet?';
+	@override String get addTitle => 'Aggiungere il wallet Lightning?';
+	@override String addMessage({required Object address}) => 'Trovato questo indirizzo Lightning su un tag NFC: ${address}\n\nVuoi aggiungerlo come wallet LNURL?';
 }
 
 // Path: nfc.feedback
@@ -620,10 +620,10 @@ class _Translations$nfc$feedback$it extends Translations$nfc$feedback$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get readyToScan => 'Hold your phone near the NFC tag';
-	@override String get alreadyScanning => 'NFC scan already running';
-	@override String get alreadyAdded => 'This Lightning address is already configured';
-	@override String get walletAdded => 'Lightning wallet added from NFC tag';
+	@override String get readyToScan => 'Avvicina il telefono al tag NFC';
+	@override String get alreadyScanning => 'Scansione NFC già in corso';
+	@override String get alreadyAdded => 'Questo indirizzo Lightning è già configurato';
+	@override String get walletAdded => 'Wallet Lightning aggiunto dal tag NFC';
 }
 
 // Path: nfc.errors
@@ -633,9 +633,9 @@ class _Translations$nfc$errors$it extends Translations$nfc$errors$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
-	@override String get disabled => 'NFC is turned off on this device';
-	@override String get unsupported => 'NFC is not available on this device';
-	@override String reading({required Object details}) => 'NFC scan failed: ${details}';
+	@override String get disabled => 'NFC disattivato su questo dispositivo';
+	@override String get unsupported => 'NFC non disponibile su questo dispositivo';
+	@override String reading({required Object details}) => 'Scansione NFC non riuscita: ${details}';
 }
 
 // Path: offers.details
@@ -2926,17 +2926,17 @@ extension on TranslationsIt {
 			'lightningAddress.feedback.valid' => 'Indirizzo Lightning valido',
 			'lightningAddress.errors.saving' => ({required Object details}) => 'Errore nel salvataggio dell\'indirizzo: ${details}',
 			'lightningAddress.errors.loading' => ({required Object details}) => 'Errore nel caricamento dell\'indirizzo Lightning: ${details}',
-			'nfc.actions.scan' => 'Scan NFC',
-			'nfc.actions.addWallet' => 'Add wallet',
-			'nfc.prompts.addTitle' => 'Add Lightning wallet?',
-			'nfc.prompts.addMessage' => ({required Object address}) => 'Found this Lightning address on an NFC tag: ${address}\n\nAdd it as your LNURL wallet?',
-			'nfc.feedback.readyToScan' => 'Hold your phone near the NFC tag',
-			'nfc.feedback.alreadyScanning' => 'NFC scan already running',
-			'nfc.feedback.alreadyAdded' => 'This Lightning address is already configured',
-			'nfc.feedback.walletAdded' => 'Lightning wallet added from NFC tag',
-			'nfc.errors.disabled' => 'NFC is turned off on this device',
-			'nfc.errors.unsupported' => 'NFC is not available on this device',
-			'nfc.errors.reading' => ({required Object details}) => 'NFC scan failed: ${details}',
+			'nfc.actions.scan' => 'Scansiona NFC',
+			'nfc.actions.addWallet' => 'Aggiungi wallet',
+			'nfc.prompts.addTitle' => 'Aggiungere il wallet Lightning?',
+			'nfc.prompts.addMessage' => ({required Object address}) => 'Trovato questo indirizzo Lightning su un tag NFC: ${address}\n\nVuoi aggiungerlo come wallet LNURL?',
+			'nfc.feedback.readyToScan' => 'Avvicina il telefono al tag NFC',
+			'nfc.feedback.alreadyScanning' => 'Scansione NFC già in corso',
+			'nfc.feedback.alreadyAdded' => 'Questo indirizzo Lightning è già configurato',
+			'nfc.feedback.walletAdded' => 'Wallet Lightning aggiunto dal tag NFC',
+			'nfc.errors.disabled' => 'NFC disattivato su questo dispositivo',
+			'nfc.errors.unsupported' => 'NFC non disponibile su questo dispositivo',
+			'nfc.errors.reading' => ({required Object details}) => 'Scansione NFC non riuscita: ${details}',
 			'offers.details.yourOffer' => 'La tua offerta:',
 			'offers.details.selectedOffer' => 'Offerta:',
 			'offers.details.activeOffer' => 'Hai un\'offerta attiva:',

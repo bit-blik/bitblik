@@ -77,20 +77,20 @@ lightningAddress:
 
 nfc:
   actions:
-    scan: Scan NFC
-    addWallet: Add wallet
+    scan: Scansiona NFC
+    addWallet: Aggiungi wallet
   prompts:
-    addTitle: Add Lightning wallet?
-    addMessage: "Found this Lightning address on an NFC tag: ${address}\n\nAdd it as your LNURL wallet?"
+    addTitle: Aggiungere il wallet Lightning?
+    addMessage: "Trovato questo indirizzo Lightning su un tag NFC: ${address}\n\nVuoi aggiungerlo come wallet LNURL?"
   feedback:
-    readyToScan: Hold your phone near the NFC tag
-    alreadyScanning: NFC scan already running
-    alreadyAdded: This Lightning address is already configured
-    walletAdded: Lightning wallet added from NFC tag
+    readyToScan: Avvicina il telefono al tag NFC
+    alreadyScanning: Scansione NFC già in corso
+    alreadyAdded: Questo indirizzo Lightning è già configurato
+    walletAdded: Wallet Lightning aggiunto dal tag NFC
   errors:
-    disabled: NFC is turned off on this device
-    unsupported: NFC is not available on this device
-    reading: "NFC scan failed: ${details}"
+    disabled: NFC disattivato su questo dispositivo
+    unsupported: NFC non disponibile su questo dispositivo
+    reading: "Scansione NFC non riuscita: ${details}"
 
 # =============================================================================
 # OFFERS AND TRANSACTIONS
