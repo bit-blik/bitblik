@@ -51,6 +51,7 @@ class TranslationsPl extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$taker$pl taker = _Translations$taker$pl._(_root);
 	@override late final _Translations$twint$pl twint = _Translations$twint$pl._(_root);
 	@override late final _Translations$blik$pl blik = _Translations$blik$pl._(_root);
+	@override late final _Translations$onboarding$pl onboarding = _Translations$onboarding$pl._(_root);
 	@override late final _Translations$nekoInfo$pl nekoInfo = _Translations$nekoInfo$pl._(_root);
 	@override late final _Translations$generateNewKey$pl generateNewKey = _Translations$generateNewKey$pl._(_root);
 	@override late final _Translations$backup$pl backup = _Translations$backup$pl._(_root);
@@ -89,6 +90,7 @@ class _Translations$common$pl extends Translations$common$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override String get code => 'kod';
 	@override late final _Translations$common$buttons$pl buttons = _Translations$common$buttons$pl._(_root);
 	@override late final _Translations$common$labels$pl labels = _Translations$common$labels$pl._(_root);
 	@override late final _Translations$common$notifications$pl notifications = _Translations$common$notifications$pl._(_root);
@@ -235,6 +237,17 @@ class _Translations$blik$pl extends Translations$blik$en {
 
 	// Translations
 	@override late final _Translations$blik$instructions$pl instructions = _Translations$blik$instructions$pl._(_root);
+}
+
+// Path: onboarding
+class _Translations$onboarding$pl extends Translations$onboarding$en {
+	_Translations$onboarding$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Wybierz swój rynek';
+	@override String get subtitle => 'Wybierz kraj i system płatności, którego będziesz używać. Możesz to zmienić w każdej chwili w Ustawieniach.';
 }
 
 // Path: nekoInfo
@@ -2771,6 +2784,7 @@ class _Translations$settings$paymentSystem$countries$pl extends Translations$set
 	@override String get PL => 'Polska';
 	@override String get PT => 'Portugalia';
 	@override String get CH => 'Szwajcaria';
+	@override String get SK => 'Słowacja';
 }
 
 // Path: maker.amountForm.category.options
@@ -2880,6 +2894,7 @@ extension on TranslationsPl {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Cześć!',
 			'app.changelog' => 'Historia zmian',
+			'common.code' => 'kod',
 			'common.buttons.cancel' => 'Anuluj',
 			'common.buttons.save' => 'Zapisz',
 			'common.buttons.done' => 'Gotowe',
@@ -3388,9 +3403,9 @@ extension on TranslationsPl {
 			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'Koniec rezerwacji za',
 			'twint.waitConfirmation.expiredSentWarning' => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?',
 			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Jeśli chcesz spróbować ponownie z nowym kodem ${code}, odnów rezerwację.',
-			'twint.waitConfirmation.expiredInstruction2' => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.waitConfirmation.expiredInstruction2' => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.',
 			'twint.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'Jeśli płatność ${code} została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.',
 			'twint.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Oznaczyłeś ${code} jako opłacony',
 			'twint.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Twórca oferty ma ${minutes} min na potwierdzenie płatności lub jej zakwestionowanie. Jeśli nic nie zrobi, płatność zostanie automatycznie potwierdzona, a Ty otrzymasz bitcoiny.',
@@ -3479,6 +3494,8 @@ extension on TranslationsPl {
 			'twint.conflict.nostrContact.yourIdentityDescription' => 'Aby wysyłać DM, zaloguj się swoim kluczem prywatnym Neko (nsec) w dowolnym kliencie Nostr obsługującym wiadomości bezpośrednie.',
 			'twint.conflict.nostrContact.manageNekoKeys' => 'Zarządzaj Kluczami Neko',
 			'blik.instructions.taker' => ({required Object code}) => 'Gdy Maker wprowadzi kod ${code}, będziesz musiał potwierdzić płatność w swojej aplikacji bankowej. Upewnij się, że kwota jest poprawna przed potwierdzeniem.',
+			'onboarding.title' => 'Wybierz swój rynek',
+			'onboarding.subtitle' => 'Wybierz kraj i system płatności, którego będziesz używać. Możesz to zmienić w każdej chwili w Ustawieniach.',
 			'nekoInfo.title' => 'Czym jest Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'Twoje Neko to Twoja tożsamość do korzystania z ${app}. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków.',
 			'nekoInfo.backupWarning' => 'Pamiętaj, aby zarchiwizować swoje Neko',
@@ -3589,6 +3606,7 @@ extension on TranslationsPl {
 			'settings.paymentSystem.countries.PL' => 'Polska',
 			'settings.paymentSystem.countries.PT' => 'Portugalia',
 			'settings.paymentSystem.countries.CH' => 'Szwajcaria',
+			'settings.paymentSystem.countries.SK' => 'Słowacja',
 			'notificationSettings.title' => 'Powiadomienia',
 			'notificationSettings.androidOnly' => 'Powiadomienia w tle są obecnie obsługiwane tylko na Androidzie.',
 			'notificationSettings.newOfferAlerts.label' => 'Alerty o nowych ofertach',

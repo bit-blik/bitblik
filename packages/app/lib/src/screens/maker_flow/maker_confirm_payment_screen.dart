@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../flow/flow_provider.dart' show flowEntryRoute;
 import '../../providers/providers.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
@@ -23,17 +25,17 @@ class _MakerConfirmPaymentScreenState
     extends ConsumerState<MakerConfirmPaymentScreen> {
   bool _fetchAttempted = false;
 
-  /// Active offer's payment method, resolved from its currency (falls back to
-  /// the app's selected method).
+  /// Active offer's payment method, resolved from its payment-system id (falls
+  /// back to the app's selected method when there is no active offer).
   PaymentSystem get _method {
     final o = ref.read(activeOfferProvider);
     return o != null
-        ? (paymentSystemForCurrency(o.fiatCurrency) ?? kBlik)
+        ? paymentSystemForOffer(o)
         : ref.read(selectedPaymentSystemProvider);
   }
 
   /// Active offer's payment-system code term (e.g. BLIK / MB WAY) for UI text.
-  String get _code => _method.codeLabel;
+  String get _code => _method.localizedCodeLabel;
 
   bool get _makerProvidedCodeFlow => _method.makerProvidesCodeAtOfferCreation;
 
@@ -927,17 +929,33 @@ class _MakerConfirmPaymentScreenState
   /// have any (e.g. BLIK).
   List<Widget> _buildAdditionalInstructions(Translations t) {
     final offer = ref.read(activeOfferProvider);
-    if (offer == null || _method.id != kMbway.id) return const [];
+    if (offer == null) return const [];
 
     final fiat = offer.fiatAmount;
     final amount =
         (fiat * 100).round() % 100 == 0
             ? fiat.toStringAsFixed(0)
             : fiat.toStringAsFixed(2);
-    final text = t.maker.confirmPayment.mbwayAtmInstructions(
-      amount: amount,
-      minutes: _method.codeValidityMinutes,
-    );
+
+    // MB WAY has its own MULTIBANCO wording; the cardless-ATM markets (Tatra
+    // banka / SLSP / VÚB) share a generic bank-named instruction + ATM map link.
+    String? text;
+    if (_method.id == kMbway.id) {
+      text = t.maker.confirmPayment.mbwayAtmInstructions(
+        amount: amount,
+        minutes: _method.codeValidityMinutes,
+      );
+    } else if (offer.category == OfferCategory.atm) {
+      text = t.maker.confirmPayment.cardlessAtmInstructions(
+        amount: amount,
+        currency: _method.currencySymbol,
+        bank: _method.label,
+        minutes: _method.codeValidityMinutes,
+      );
+    }
+    if (text == null) return const [];
+
+    final mapUrl = _method.atmMapUrl;
 
     return [
       const SizedBox(height: 24),
@@ -963,6 +981,21 @@ class _MakerConfirmPaymentScreenState
           ],
         ),
       ),
+      if (mapUrl != null) ...[
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed:
+                () => launchUrl(
+                  Uri.parse(mapUrl),
+                  mode: LaunchMode.externalApplication,
+                ),
+            icon: const Icon(Icons.map_outlined, size: 18),
+            label: Text(t.maker.confirmPayment.findAtms(bank: _method.label)),
+          ),
+        ),
+      ],
     ];
   }
 
@@ -1026,11 +1059,17 @@ class _MakerConfirmPaymentScreenState
         () =>
             "[MakerConfirmPaymentScreen] Offer ${statusEnum.name}; navigating to maker success.",
       );
-      context.go(flowEntryRoute(ref, '/maker-success'),
-          extra: ref.read(activeOfferProvider));
+      context.go(
+        flowEntryRoute(ref, '/maker-success'),
+        extra: ref.read(activeOfferProvider),
+      );
     } else if (statusEnum == OfferStatus.reserved) {
       context.go(
-          flowEntryRoute(ref, _makerProvidedCodeFlow ? '/confirm-blik' : '/wait-blik'));
+        flowEntryRoute(
+          ref,
+          _makerProvidedCodeFlow ? '/confirm-blik' : '/wait-blik',
+        ),
+      );
     } else if (statusEnum == OfferStatus.funded) {
       context.go(flowEntryRoute(ref, '/wait-taker'));
     } else if (statusEnum == OfferStatus.expired) {

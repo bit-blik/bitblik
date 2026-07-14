@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import '../../../i18n/gen/strings.g.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,11 +64,7 @@ class _TakerInvalidBlikScreenState
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          icon: const Icon(
-            Icons.gavel_rounded,
-            color: Colors.orange,
-            size: 48,
-          ),
+          icon: const Icon(Icons.gavel_rounded, color: Colors.orange, size: 48),
           title: Text(t.taker.invalidBlik.disputeConfirmDialog.title),
           content: Text(t.taker.invalidBlik.disputeConfirmDialog.content),
           actions: <Widget>[
@@ -116,7 +113,12 @@ class _TakerInvalidBlikScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Text(
-                      t.taker.invalidBlik.message(code: ref.read(selectedPaymentSystemProvider).codeLabel),
+                      t.taker.invalidBlik.message(
+                        code:
+                            ref
+                                .read(selectedPaymentSystemProvider)
+                                .localizedCodeLabel,
+                      ),
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
@@ -127,7 +129,12 @@ class _TakerInvalidBlikScreenState
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      t.taker.invalidBlik.explanation(code: ref.read(selectedPaymentSystemProvider).codeLabel),
+                      t.taker.invalidBlik.explanation(
+                        code:
+                            ref
+                                .read(selectedPaymentSystemProvider)
+                                .localizedCodeLabel,
+                      ),
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                     ),
@@ -175,8 +182,10 @@ class _TakerInvalidBlikScreenState
                               .read(activeOfferProvider.notifier)
                               .setActiveOffer(updatedOffer);
 
-                          context.go(flowEntryRoute(ref, '/submit-blik'),
-                              extra: updatedOffer);
+                          context.go(
+                            flowEntryRoute(ref, '/submit-blik'),
+                            extra: updatedOffer,
+                          );
                         } else {
                           // Handle reservation failure
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -197,7 +206,12 @@ class _TakerInvalidBlikScreenState
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Text(
-                          t.taker.invalidBlik.actions.retry(code: ref.read(selectedPaymentSystemProvider).codeLabel),
+                          t.taker.invalidBlik.actions.retry(
+                            code:
+                                ref
+                                    .read(selectedPaymentSystemProvider)
+                                    .localizedCodeLabel,
+                          ),
                           style: TextStyle(fontSize: 16),
                         ),
                       ),

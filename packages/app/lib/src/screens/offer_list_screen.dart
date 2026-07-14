@@ -904,12 +904,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     blikReceivedAt:
                                                         offer.blikReceivedAt!,
                                                     maxConfirmationTime:
-                                                        (paymentSystemForCurrency(
-                                                                  offer
-                                                                      .fiatCurrency,
-                                                                ) ??
-                                                                kBlik)
-                                                            .confirmationWindow,
+                                                        paymentSystemForOffer(
+                                                          offer,
+                                                        ).confirmationWindow,
                                                   ),
 
                                                 ListTile(

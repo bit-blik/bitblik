@@ -3,10 +3,10 @@
 /// Source: lib/i18n
 /// To regenerate, run: `dart run slang`
 ///
-/// Locales: 6
-/// Strings: 4976 (829 per locale)
+/// Locales: 7
+/// Strings: 5736 (819 per locale)
 ///
-/// Built on 2026-07-13 at 17:06 UTC
+/// Built on 2026-07-17 at 08:12 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint, unused_import
@@ -23,6 +23,7 @@ import 'strings_fr.g.dart' deferred as l_fr;
 import 'strings_it.g.dart' deferred as l_it;
 import 'strings_pl.g.dart' deferred as l_pl;
 import 'strings_pt.g.dart' deferred as l_pt;
+import 'strings_sk.g.dart' deferred as l_sk;
 part 'strings_en.g.dart';
 
 /// Supported locales.
@@ -37,7 +38,8 @@ enum AppLocale with BaseAppLocale<AppLocale, Translations> {
 	fr(languageCode: 'fr'),
 	it(languageCode: 'it'),
 	pl(languageCode: 'pl'),
-	pt(languageCode: 'pt');
+	pt(languageCode: 'pt'),
+	sk(languageCode: 'sk');
 
 	const AppLocale({
 		required this.languageCode,
@@ -97,6 +99,13 @@ enum AppLocale with BaseAppLocale<AppLocale, Translations> {
 					cardinalResolver: cardinalResolver,
 					ordinalResolver: ordinalResolver,
 				);
+			case AppLocale.sk:
+				await l_sk.loadLibrary();
+				return l_sk.TranslationsSk(
+					overrides: overrides,
+					cardinalResolver: cardinalResolver,
+					ordinalResolver: ordinalResolver,
+				);
 		}
 	}
 
@@ -139,6 +148,12 @@ enum AppLocale with BaseAppLocale<AppLocale, Translations> {
 				);
 			case AppLocale.pt:
 				return l_pt.TranslationsPt(
+					overrides: overrides,
+					cardinalResolver: cardinalResolver,
+					ordinalResolver: ordinalResolver,
+				);
+			case AppLocale.sk:
+				return l_sk.TranslationsSk(
 					overrides: overrides,
 					cardinalResolver: cardinalResolver,
 					ordinalResolver: ordinalResolver,

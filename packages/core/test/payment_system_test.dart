@@ -157,7 +157,8 @@ void main() {
   });
 
   group('paymentSystemForOffer', () {
-    Offer offerWith({String? paymentSystemId, String currency = 'EUR'}) => Offer(
+    Offer offerWith({String? paymentSystemId, String currency = 'EUR'}) =>
+        Offer(
           id: 'o1',
           amountSats: 1000,
           makerFees: 0,
@@ -177,7 +178,8 @@ void main() {
           kTatraBanka);
       expect(paymentSystemForOffer(offerWith(paymentSystemId: 'slsp')), kSlsp);
       expect(paymentSystemForOffer(offerWith(paymentSystemId: 'vub')), kVub);
-      expect(paymentSystemForOffer(offerWith(paymentSystemId: 'mbway')), kMbway);
+      expect(
+          paymentSystemForOffer(offerWith(paymentSystemId: 'mbway')), kMbway);
     });
 
     test('falls back to currency for legacy offers without an id', () {

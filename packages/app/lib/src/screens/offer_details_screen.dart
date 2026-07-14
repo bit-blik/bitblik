@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,7 +34,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     final o = ref.read(offerDetailsProvider(widget.offerId)).valueOrNull;
     return o != null
         ? offerCodeLabel(o)
-        : ref.read(selectedPaymentSystemProvider).codeLabel;
+        : ref.read(selectedPaymentSystemProvider).localizedCodeLabel;
   }
 
   bool _termsAccepted = false;
@@ -640,11 +641,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       ),
                                       blikReceivedAt: offer.blikReceivedAt!,
                                       maxConfirmationTime:
-                                          (paymentSystemForCurrency(
-                                                    offer.fiatCurrency,
-                                                  ) ??
-                                                  kBlik)
-                                              .confirmationWindow,
+                                          paymentSystemForOffer(
+                                            offer,
+                                          ).confirmationWindow,
                                     ),
                                   const SizedBox(height: 20),
 

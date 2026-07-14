@@ -10,6 +10,7 @@ app:
 # COMMON UI ELEMENTS
 # =============================================================================
 common:
+  code: código
   buttons:
     cancel: Cancelar
     save: Guardar
@@ -905,6 +906,10 @@ home:
 # =============================================================================
 # KEY MANAGEMENT
 # =============================================================================
+onboarding:
+  title: Escolha o seu mercado
+  subtitle: Selecione o país e o sistema de pagamento que vai usar. Pode alterá-lo a qualquer momento nas Definições.
+
 nekoInfo:
   title: O que é um Neko?
   description: "O seu Neko é a sua identidade para usar o ${app}. É composto por uma chave privada e uma chave pública para garantir uma comunicação criptograficamente segura com o coordenador.\n\nPara garantir maior anonimato, recomenda-se usar um Neko novo para cada oferta.\n\n⚠️ IMPORTANTE: A sua chave privada é guardada apenas no seu dispositivo (no cliente). É de importância crítica fazer uma cópia de segurança da sua chave privada, já que perder o acesso a ela pode impedi-lo de resolver disputas e de recuperar os seus fundos."
@@ -1062,6 +1067,7 @@ settings:
       PL: Polónia
       PT: Portugal
       CH: Suíça
+      SK: Eslováquia
 
 notificationSettings:
   title: Notificações

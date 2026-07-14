@@ -209,6 +209,14 @@ class AppPreferencesStore {
     await prefs.setString(_selectedPaymentSystemKey, method.id);
   }
 
+  /// Whether the user has ever explicitly chosen a market/country. False on a
+  /// fresh install, which triggers the first-launch market-selection onboarding
+  /// (instead of silently defaulting to the build's [buildDefaultPaymentSystemId]).
+  static Future<bool> hasSelectedPaymentSystem() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_selectedPaymentSystemKey) != null;
+  }
+
   static double _normalizePremium(double value) {
     if (value.isNaN || value.isInfinite) return 0;
     if (value < 0) return 0;

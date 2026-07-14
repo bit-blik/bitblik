@@ -60,4 +60,3 @@ String normalizeRelayUrl(String url) {
   if (u.endsWith('/')) u = u.substring(0, u.length - 1);
   return u;
 }
-

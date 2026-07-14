@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,13 +17,14 @@ class TakerProgressIndicator extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
-    // Resolve the method from the active offer (its currency) or fall back to
-    // the app's selected payment system, so step labels match the method.
+    // Resolve the method from the active offer (its payment-system id) or fall
+    // back to the app's selected payment system, so step labels match.
     final offer = ref.watch(activeOfferProvider);
-    final method = offer != null
-        ? (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik)
-        : ref.watch(selectedPaymentSystemProvider);
-    final code = method.codeLabel;
+    final method =
+        offer != null
+            ? paymentSystemForOffer(offer)
+            : ref.watch(selectedPaymentSystemProvider);
+    final code = method.localizedCodeLabel;
 
     // Pull-style methods (e.g. MB WAY ATM) have no taker "Confirm" step — drop
     // it and renumber. The incoming activeStep keeps its logical meaning, so
@@ -32,17 +34,17 @@ class TakerProgressIndicator extends ConsumerWidget {
       if (method.requiresCodeConfirmation) t.taker.progress.step2(code: code),
       t.taker.progress.step3,
     ];
-    final int active = method.requiresCodeConfirmation
-        ? activeStep
-        : (activeStep <= 1 ? 1 : 2);
+    final int active =
+        method.requiresCodeConfirmation
+            ? activeStep
+            : (activeStep <= 1 ? 1 : 2);
 
     final children = <Widget>[];
     for (var i = 0; i < labels.length; i++) {
       final number = i + 1;
       if (i > 0) {
         children.add(
-          const Text(' > ',
-              style: TextStyle(fontSize: 14, color: Colors.grey)),
+          const Text(' > ', style: TextStyle(fontSize: 14, color: Colors.grey)),
         );
       }
       children.add(

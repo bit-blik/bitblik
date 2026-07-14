@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async';
 import 'dart:ui' as ui show TextDirection;
 import 'package:flutter/gestures.dart';
@@ -27,7 +28,7 @@ class MakerProgressIndicator extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
-    final code = ref.watch(selectedPaymentSystemProvider).codeLabel;
+    final code = ref.watch(selectedPaymentSystemProvider).localizedCodeLabel;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Wrap(
@@ -603,6 +604,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               holdInvoice: result['holdInvoice'],
               makerPubkey: makerId,
               coordinatorPubkey: coordinatorPubkey,
+              paymentSystemId: _method.id,
               category: supportsCategory ? _selectedCategory : null,
               blikCode:
                   _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
@@ -1486,13 +1488,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       final hint = switch (category) {
                         OfferCategory.shop => t.maker.amountForm.category
                             .physicalShopHint(
-                              code: _method.codeLabel,
+                              code: _method.localizedCodeLabel,
                               app: _method.brandName,
                             ),
                         OfferCategory.atm =>
                           t.maker.amountForm.category.atmHint,
                         OfferCategory.online => t.maker.amountForm.category
-                            .ecommerceWarningBody(code: _method.codeLabel),
+                            .ecommerceWarningBody(
+                              code: _method.localizedCodeLabel,
+                            ),
                       };
                       final name = switch (category) {
                         OfferCategory.shop =>
@@ -1735,7 +1739,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       Expanded(
                         child: Text(
                           t.maker.amountForm.category.physicalShopHint(
-                            code: _method.codeLabel,
+                            code: _method.localizedCodeLabel,
                             app: _method.brandName,
                           ),
                           style: const TextStyle(fontSize: 13, height: 1.4),
@@ -1799,7 +1803,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           Expanded(
                             child: Text(
                               t.maker.amountForm.category.ecommerceWarningBody(
-                                code: _method.codeLabel,
+                                code: _method.localizedCodeLabel,
                               ),
                               style: const TextStyle(fontSize: 13, height: 1.4),
                             ),

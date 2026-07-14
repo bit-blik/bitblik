@@ -1,13 +1,15 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'package:bitblik_core/core.dart';
 
 import '../../i18n/gen/strings.g.dart';
 
 /// `takerCharged` -> `Taker Charged`, `invalidTwint` -> `Invalid Twint`, ...
 String humanizeFlowState(String state) {
-  final humanized = state
-      .replaceAllMapped(RegExp('([A-Z])'), (m) => ' ${m[1]}')
-      .replaceAll('_', ' ')
-      .trim();
+  final humanized =
+      state
+          .replaceAllMapped(RegExp('([A-Z])'), (m) => ' ${m[1]}')
+          .replaceAll('_', ' ')
+          .trim();
   return humanized.isEmpty
       ? state
       : '${humanized[0].toUpperCase()}${humanized.substring(1)}';
@@ -71,6 +73,7 @@ String offerStatusLabel(
   }
 }
 
-/// Code term for an offer, resolved from its currency, falling back to [kBlik].
+/// Code term for an offer, resolved from its payment-system id (via
+/// [paymentSystemForOffer]).
 String offerCodeLabel(Offer offer) =>
-    (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik).codeLabel;
+    paymentSystemForOffer(offer).localizedCodeLabel;

@@ -10,6 +10,7 @@ app:
 # COMMON UI ELEMENTS
 # =============================================================================
 common:
+  code: kod
   buttons:
     cancel: Anuluj
     save: Zapisz
@@ -870,6 +871,10 @@ blik:
 # =============================================================================
 # KEY MANAGEMENT
 # =============================================================================
+onboarding:
+  title: Wybierz swój rynek
+  subtitle: Wybierz kraj i system płatności, którego będziesz używać. Możesz to zmienić w każdej chwili w Ustawieniach.
+
 nekoInfo:
   title: Czym jest Neko?
   description: "Twoje Neko to Twoja tożsamość do korzystania z ${app}. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków."
@@ -1047,6 +1052,7 @@ settings:
       PL: Polska
       PT: Portugalia
       CH: Szwajcaria
+      SK: Słowacja
 
 notificationSettings:
   title: Powiadomienia

@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async'; // Import for StreamSubscription
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -37,7 +38,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       _currentLocale = LocaleSettings.currentLocale;
     } catch (e) {
       Logger.log.w(
-        () => 'FAQ Screen: failed to read current locale during initState, '
+        () =>
+            'FAQ Screen: failed to read current locale during initState, '
             'defaulting to English. Error: $e',
       );
       _currentLocale = AppLocale.en;
@@ -85,15 +87,16 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     final ps = ref.read(selectedPaymentSystemProvider);
     String countryName = ps.country;
     try {
-      final c = Translations.of(
-        context,
-      )['settings.paymentSystem.countries.${ps.country}'];
+      final c =
+          Translations.of(
+            context,
+          )['settings.paymentSystem.countries.${ps.country}'];
       if (c is String && c.isNotEmpty) countryName = c;
     } catch (_) {}
     return text
         .replaceAll('{app}', ps.brandName)
         .replaceAll('{codeLength}', '${ps.codeLength}')
-        .replaceAll('{code}', ps.codeLabel)
+        .replaceAll('{code}', ps.localizedCodeLabel)
         .replaceAll('{country}', countryName)
         .replaceAll('{validity}', '${ps.codeValidityMinutes}');
   }
@@ -191,18 +194,16 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     // Reload when the user switches payment system (e.g. BLIK -> MB WAY), since
     // the FAQ slug is derived from the active payment system's brand. ref.listen
     // must run inside build(), not initState().
-    ref.listen<PaymentSystem>(
-      selectedPaymentSystemProvider,
-      (previous, next) {
-        if (previous?.id != next.id) {
-          Logger.log.d(
-            () => "FAQ Screen: payment system changed "
-                "${previous?.id} -> ${next.id}, reloading content.",
-          );
-          _loadFaqContent();
-        }
-      },
-    );
+    ref.listen<PaymentSystem>(selectedPaymentSystemProvider, (previous, next) {
+      if (previous?.id != next.id) {
+        Logger.log.d(
+          () =>
+              "FAQ Screen: payment system changed "
+              "${previous?.id} -> ${next.id}, reloading content.",
+        );
+        _loadFaqContent();
+      }
+    });
 
     // final t = Translations.of(context); // Access translations if needed for other parts
 

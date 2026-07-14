@@ -52,6 +52,7 @@ class TranslationsIt extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$twint$it twint = _Translations$twint$it._(_root);
 	@override late final _Translations$blik$it blik = _Translations$blik$it._(_root);
 	@override late final _Translations$home$it home = _Translations$home$it._(_root);
+	@override late final _Translations$onboarding$it onboarding = _Translations$onboarding$it._(_root);
 	@override late final _Translations$nekoInfo$it nekoInfo = _Translations$nekoInfo$it._(_root);
 	@override late final _Translations$generateNewKey$it generateNewKey = _Translations$generateNewKey$it._(_root);
 	@override late final _Translations$backup$it backup = _Translations$backup$it._(_root);
@@ -89,6 +90,7 @@ class _Translations$common$it extends Translations$common$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override String get code => 'codice';
 	@override late final _Translations$common$buttons$it buttons = _Translations$common$buttons$it._(_root);
 	@override late final _Translations$common$labels$it labels = _Translations$common$labels$it._(_root);
 	@override late final _Translations$common$notifications$it notifications = _Translations$common$notifications$it._(_root);
@@ -246,6 +248,17 @@ class _Translations$home$it extends Translations$home$en {
 	// Translations
 	@override late final _Translations$home$notifications$it notifications = _Translations$home$notifications$it._(_root);
 	@override late final _Translations$home$statistics$it statistics = _Translations$home$statistics$it._(_root);
+}
+
+// Path: onboarding
+class _Translations$onboarding$it extends Translations$onboarding$en {
+	_Translations$onboarding$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Scegli il tuo mercato';
+	@override String get subtitle => 'Seleziona il paese e il sistema di pagamento che userai. Puoi cambiarlo in qualsiasi momento nelle Impostazioni.';
 }
 
 // Path: nekoInfo
@@ -2774,6 +2787,7 @@ class _Translations$settings$paymentSystem$countries$it extends Translations$set
 	@override String get PL => 'Polonia';
 	@override String get PT => 'Portogallo';
 	@override String get CH => 'Svizzera';
+	@override String get SK => 'Slovacchia';
 }
 
 // Path: maker.amountForm.category.options
@@ -2883,6 +2897,7 @@ extension on TranslationsIt {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Ciao!',
 			'app.changelog' => 'Registro modifiche',
+			'common.code' => 'codice',
 			'common.buttons.cancel' => 'Annulla',
 			'common.buttons.save' => 'Salva',
 			'common.buttons.done' => 'Fatto',
@@ -3391,9 +3406,9 @@ extension on TranslationsIt {
 			'twint.waitConfirmation.navigatedHome' => 'Tornato alla home.',
 			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => 'Codice ${code} Scaduto',
 			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'Il maker non ha ricevuto il codice ${code} quindi non ha potuto utilizzarlo.',
-			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'La prenotazione termina tra',
 			_ => null,
 		} ?? switch (path) {
+			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'La prenotazione termina tra',
 			'twint.waitConfirmation.expiredSentWarning' => 'Il maker non ha ancora confermato il pagamento. Cosa vuoi fare?',
 			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Se vuoi riprovare con un nuovo codice ${code}, rinnova la prenotazione.',
 			'twint.waitConfirmation.expiredInstruction2' => 'Se non vuoi più completare questa transazione, annulla la prenotazione.',
@@ -3495,6 +3510,8 @@ extension on TranslationsIt {
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Ultimi 7g: ${count} transazioni\nAttesa media per ${code}: ${avgBlikTime}\nTempo medio completamento: ${avgPaidTime}',
 			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Ultimi 7g: ${count} offerte  |  Media prenot.: ${avgReservationTime}  |  Media Pagato: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Errore nel caricamento delle statistiche: ${error}',
+			'onboarding.title' => 'Scegli il tuo mercato',
+			'onboarding.subtitle' => 'Seleziona il paese e il sistema di pagamento che userai. Puoi cambiarlo in qualsiasi momento nelle Impostazioni.',
 			'nekoInfo.title' => 'Cos\'è un Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'Il tuo Neko è la tua identità per usare ${app}. È composto da una chiave privata e pubblica per garantire una comunicazione crittograficamente sicura con il coordinatore.\n\nPer garantire maggiore anonimato, si consiglia di usare un nuovo Neko per ogni offerta.\n\n⚠️ IMPORTANTE: La tua chiave privata è memorizzata solo sul tuo dispositivo (lato client). È fondamentale fare il backup della tua chiave privata, poiché perderla potrebbe impedirti di risolvere dispute e recuperare i tuoi fondi.',
 			'nekoInfo.backupWarning' => 'Ricorda di fare il backup del tuo Neko',
@@ -3595,6 +3612,7 @@ extension on TranslationsIt {
 			'settings.paymentSystem.countries.PL' => 'Polonia',
 			'settings.paymentSystem.countries.PT' => 'Portogallo',
 			'settings.paymentSystem.countries.CH' => 'Svizzera',
+			'settings.paymentSystem.countries.SK' => 'Slovacchia',
 			'notificationSettings.title' => 'Notifiche',
 			'notificationSettings.androidOnly' => 'Le notifiche in background sono attualmente supportate solo su Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Avvisi nuove offerte',

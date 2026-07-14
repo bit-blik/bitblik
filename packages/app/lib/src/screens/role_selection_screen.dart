@@ -1,4 +1,5 @@
 // RoleSelectionScreen: Modern landing page with centralized design matching the provided layout
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -273,7 +274,10 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                 // Main title
                 Text(
                   t.landing.mainTitle(
-                    code: ref.watch(selectedPaymentSystemProvider).codeLabel,
+                    code:
+                        ref
+                            .watch(selectedPaymentSystemProvider)
+                            .localizedCodeLabel,
                   ),
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -288,7 +292,10 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                 // Subtitle
                 Text(
                   t.landing.subtitle(
-                    code: ref.watch(selectedPaymentSystemProvider).codeLabel,
+                    code:
+                        ref
+                            .watch(selectedPaymentSystemProvider)
+                            .localizedCodeLabel,
                   ),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Colors.grey[600],
@@ -331,7 +338,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                                 code:
                                     ref
                                         .watch(selectedPaymentSystemProvider)
-                                        .codeLabel,
+                                        .localizedCodeLabel,
                               ),
                               subtitle: t.landing.actions.payBlikSubtitle,
                               icon: Icons.flash_on,
@@ -367,7 +374,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                                 code:
                                     ref
                                         .watch(selectedPaymentSystemProvider)
-                                        .codeLabel,
+                                        .localizedCodeLabel,
                               ),
                               iconImage: 'assets/sell-blik.png',
                               backgroundColor: Colors.white,

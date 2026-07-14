@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -186,7 +187,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                 content: Text(
                   t.maker.waitTaker.errorRetrievingBlik(
                     details: e.toString(),
-                    code: ref.read(selectedPaymentSystemProvider).codeLabel,
+                    code:
+                        ref
+                            .read(selectedPaymentSystemProvider)
+                            .localizedCodeLabel,
                   ),
                 ),
               ),
@@ -314,6 +318,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
               holdInvoice: result['holdInvoice'],
               makerPubkey: makerId,
               coordinatorPubkey: offer.coordinatorPubkey,
+              paymentSystemId: offer.paymentSystemId,
               category: offer.category,
               premiumPercent:
                   (result['premiumPercent'] as num?)?.toDouble() ??

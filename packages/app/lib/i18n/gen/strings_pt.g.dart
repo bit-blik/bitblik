@@ -52,6 +52,7 @@ class TranslationsPt extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$twint$pt twint = _Translations$twint$pt._(_root);
 	@override late final _Translations$blik$pt blik = _Translations$blik$pt._(_root);
 	@override late final _Translations$home$pt home = _Translations$home$pt._(_root);
+	@override late final _Translations$onboarding$pt onboarding = _Translations$onboarding$pt._(_root);
 	@override late final _Translations$nekoInfo$pt nekoInfo = _Translations$nekoInfo$pt._(_root);
 	@override late final _Translations$generateNewKey$pt generateNewKey = _Translations$generateNewKey$pt._(_root);
 	@override late final _Translations$backup$pt backup = _Translations$backup$pt._(_root);
@@ -89,6 +90,7 @@ class _Translations$common$pt extends Translations$common$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override String get code => 'código';
 	@override late final _Translations$common$buttons$pt buttons = _Translations$common$buttons$pt._(_root);
 	@override late final _Translations$common$labels$pt labels = _Translations$common$labels$pt._(_root);
 	@override late final _Translations$common$notifications$pt notifications = _Translations$common$notifications$pt._(_root);
@@ -246,6 +248,17 @@ class _Translations$home$pt extends Translations$home$en {
 	// Translations
 	@override late final _Translations$home$notifications$pt notifications = _Translations$home$notifications$pt._(_root);
 	@override late final _Translations$home$statistics$pt statistics = _Translations$home$statistics$pt._(_root);
+}
+
+// Path: onboarding
+class _Translations$onboarding$pt extends Translations$onboarding$en {
+	_Translations$onboarding$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Escolha o seu mercado';
+	@override String get subtitle => 'Selecione o país e o sistema de pagamento que vai usar. Pode alterá-lo a qualquer momento nas Definições.';
 }
 
 // Path: nekoInfo
@@ -2810,6 +2823,7 @@ class _Translations$settings$paymentSystem$countries$pt extends Translations$set
 	@override String get PL => 'Polónia';
 	@override String get PT => 'Portugal';
 	@override String get CH => 'Suíça';
+	@override String get SK => 'Eslováquia';
 }
 
 // Path: maker.amountForm.category.options
@@ -2919,6 +2933,7 @@ extension on TranslationsPt {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Olá!',
 			'app.changelog' => 'Registo de alterações',
+			'common.code' => 'código',
 			'common.buttons.cancel' => 'Cancelar',
 			'common.buttons.save' => 'Guardar',
 			'common.buttons.done' => 'Concluído',
@@ -3427,9 +3442,9 @@ extension on TranslationsPt {
 			'twint.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'À espera da confirmação do maker: ${seconds} s',
 			'twint.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'À espera que o maker confirme que o ${code} está correto. Tempo restante: ${seconds}s',
 			'twint.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'MUITO IMPORTANTE: certifique-se de que só aceita a confirmação ${code} para ${amount} ${currency}',
-			'twint.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'MUITO IMPORTANTE: na app do seu banco, certifique-se de que está a confirmar um pagamento ${code} de exatamente ${amount} ${currency}.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'MUITO IMPORTANTE: na app do seu banco, certifique-se de que está a confirmar um pagamento ${code} de exatamente ${amount} ${currency}.',
 			'twint.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'O maker tem agora de o introduzir no terminal de pagamento dentro de ${minutes} minutos. Depois tem de aceitar o código ${code} na app do seu banco.',
 			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'O maker tem agora de introduzir o seu código ${code} no multibanco dentro de ${minutes} minutos.',
 			'twint.waitConfirmation.categoryReminder.atm' => 'Lembrete da oferta de multibanco: o seu banco pode ainda pedir-lhe para aprovar uma taxa extra de multibanco para além do montante principal.',
@@ -3544,6 +3559,8 @@ extension on TranslationsPt {
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}',
 			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} ofertas  |  Reserva méd.: ${avgReservationTime}  |  Pago méd.: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Erro ao carregar estatísticas: ${error}',
+			'onboarding.title' => 'Escolha o seu mercado',
+			'onboarding.subtitle' => 'Selecione o país e o sistema de pagamento que vai usar. Pode alterá-lo a qualquer momento nas Definições.',
 			'nekoInfo.title' => 'O que é um Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'O seu Neko é a sua identidade para usar o ${app}. É composto por uma chave privada e uma chave pública para garantir uma comunicação criptograficamente segura com o coordenador.\n\nPara garantir maior anonimato, recomenda-se usar um Neko novo para cada oferta.\n\n⚠️ IMPORTANTE: A sua chave privada é guardada apenas no seu dispositivo (no cliente). É de importância crítica fazer uma cópia de segurança da sua chave privada, já que perder o acesso a ela pode impedi-lo de resolver disputas e de recuperar os seus fundos.',
 			'nekoInfo.backupWarning' => 'Lembre-se de fazer uma cópia de segurança do seu Neko',
@@ -3644,6 +3661,7 @@ extension on TranslationsPt {
 			'settings.paymentSystem.countries.PL' => 'Polónia',
 			'settings.paymentSystem.countries.PT' => 'Portugal',
 			'settings.paymentSystem.countries.CH' => 'Suíça',
+			'settings.paymentSystem.countries.SK' => 'Eslováquia',
 			'notificationSettings.title' => 'Notificações',
 			'notificationSettings.androidOnly' => 'As notificações em segundo plano são atualmente suportadas apenas no Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Alertas de novas ofertas',

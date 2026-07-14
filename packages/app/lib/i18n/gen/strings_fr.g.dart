@@ -2810,6 +2810,7 @@ class _Translations$settings$paymentSystem$countries$fr extends Translations$set
 	@override String get PL => 'Pologne';
 	@override String get PT => 'Portugal';
 	@override String get CH => 'Suisse';
+	@override String get SK => 'Slovaquie';
 }
 
 // Path: maker.amountForm.category.options
@@ -3644,6 +3645,7 @@ extension on TranslationsFr {
 			'settings.paymentSystem.countries.PL' => 'Pologne',
 			'settings.paymentSystem.countries.PT' => 'Portugal',
 			'settings.paymentSystem.countries.CH' => 'Suisse',
+			'settings.paymentSystem.countries.SK' => 'Slovaquie',
 			'notificationSettings.title' => 'Notifications',
 			'notificationSettings.androidOnly' => 'Les notifications en arrière-plan ne sont actuellement prises en charge que sur Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Alertes de nouvelles offres',
