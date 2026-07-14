@@ -699,7 +699,12 @@ class NostrService {
               await _coordinatorService.getMyActiveOffers(userPubkey);
           if (activeOffers.isNotEmpty) {
             final offer = activeOffers.first;
-            return offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey);
+            return <String, dynamic>{
+              ...offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey),
+              // Stamp this coordinator's market so clients resolve the right
+              // method (EUR alone is ambiguous across the Slovak banks).
+              'payment_system': _coordinatorService.paymentSystem.id,
+            };
           } else {
             return {};
           }
@@ -720,10 +725,13 @@ class NostrService {
               offer.takerPubkey == userPubkey;
           // Participant gate above guarantees requester is maker or taker;
           // non-makers get the maker-private fields stripped.
-          return offer.toRpcJson(
-            includeBlikCode: includeBlikCode,
-            forTaker: offer.makerPubkey != userPubkey,
-          );
+          return <String, dynamic>{
+            ...offer.toRpcJson(
+              includeBlikCode: includeBlikCode,
+              forTaker: offer.makerPubkey != userPubkey,
+            ),
+            'payment_system': _coordinatorService.paymentSystem.id,
+          };
 
         // DEPRECATED: clients (>= local-db-counts change) no longer call this.
         // The per-coordinator "your offers" count is now derived from the
@@ -743,8 +751,11 @@ class NostrService {
               .toList();
 
           final finishedList = finished
-              .map((offer) =>
-                  offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey))
+              .map((offer) => <String, dynamic>{
+                    ...offer.toRpcJson(
+                        forTaker: offer.makerPubkey != userPubkey),
+                    'payment_system': _coordinatorService.paymentSystem.id,
+                  })
               .toList();
           return {'offers': finishedList};
 
