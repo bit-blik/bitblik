@@ -28,6 +28,16 @@ const String kBitwayPubkeyHex =
 const String kTwintPubkeyHex =
     '93889217b7a2341d0e8f2b31986c9273ba5884a01dab6347546f82499936d809';
 
+/// The Slovak (SK bank markets) Nostr discovery identity (hex pubkey), shared by
+/// all Slovak bank markets. Coordinators for tatrabanka / slsp / vub publish
+/// their advertisements to this identity's discovery relays; clients resolve SK
+/// discovery relays + coordinator set from it. Its NIP-65 (kind 10002) relay
+/// list is published to primal/nos.lol/damus/nostr.mom.
+/// npub: npub1lvmxt5vp9jwsq2wq7uc28537nra7x0awqn696wuxrlqeudcr557su7x6j6
+/// (nsec kept in private/bitblik-setup/sk-discovery-identity.md — operator-held.)
+const String kSlovakiaPubkeyHex =
+    'fb3665d1812c9d0029c0f730a3d23e98fbe33fae04f45d3b861fc19e3703a53d';
+
 /// Hardcoded **bootstrap** relays — used only to fetch Bitblik's profile
 /// NIP-65 ([kBitblikPubkeyHex]), which in turn yields the live discovery relays.
 /// Also the fallback discovery set when Bitblik's relay list can't be fetched.

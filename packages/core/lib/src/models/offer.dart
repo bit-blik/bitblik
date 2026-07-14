@@ -1,5 +1,7 @@
 import 'package:ndk/ndk.dart';
 
+import '../payment/payment_system.dart' show paymentSystemForPlatformTag;
+
 enum OfferStatus {
   created, // Initial state, invoice generated but not paid
   funded, // Hold invoice paid by maker, offer listed
@@ -99,6 +101,13 @@ class Offer {
   /// Persisted so wallet balance/budget can be refreshed after app restart.
   final String? paymentWalletId;
 
+  /// Stable payment-system id for this offer (e.g. `tatrabanka`, `slsp`, `vub`,
+  /// `mbway`, `blik`), carried on the wire so clients resolve the right method
+  /// even when several markets share a currency (all EUR). Null for legacy
+  /// offers that predate the field — callers fall back to the currency mapping
+  /// via [paymentSystemForOffer].
+  final String? paymentSystemId;
+
   /// Client that created the offer, as `<app|cli>/<version>` (e.g. `app/0.8.0`).
   /// Recorded coordinator-side from the maker's request envelope. Intentionally
   /// NOT serialized in [toJson]/[toRpcJson] — it is a server-only field surfaced
@@ -185,6 +194,7 @@ class Offer {
     this.category,
     this.premiumPercent = 0,
     this.paymentWalletId,
+    this.paymentSystemId,
     this.clientVersion,
   }) : statusRaw = statusRaw ?? status.name;
 
@@ -329,6 +339,7 @@ class Offer {
       }(),
       premiumPercent: safeDouble(json['premium_percent'], 0),
       paymentWalletId: json['payment_wallet_id'] as String?,
+      paymentSystemId: json['payment_system'] as String?,
     );
   }
 
@@ -368,6 +379,7 @@ class Offer {
       'category': category?.name,
       'premium_percent': premiumPercent,
       'payment_wallet_id': paymentWalletId,
+      'payment_system': paymentSystemId,
     };
   }
 
@@ -476,6 +488,7 @@ class Offer {
     OfferCategory? category,
     double? premiumPercent,
     String? paymentWalletId,
+    String? paymentSystemId,
     String? clientVersion,
   }) {
     return Offer(
@@ -514,6 +527,7 @@ class Offer {
       category: category ?? this.category,
       premiumPercent: premiumPercent ?? this.premiumPercent,
       paymentWalletId: paymentWalletId ?? this.paymentWalletId,
+      paymentSystemId: paymentSystemId ?? this.paymentSystemId,
       clientVersion: clientVersion ?? this.clientVersion,
     );
   }
@@ -567,6 +581,9 @@ class Offer {
         }
       }(),
       premiumPercent: double.tryParse(tagMap['premium'] ?? '0') ?? 0,
+      // Derive the method from the wire platform tag (`y`), e.g.
+      // `BitblikSK-Tatra` → `tatrabanka`. Unambiguous across the EUR markets.
+      paymentSystemId: paymentSystemForPlatformTag(tagMap['y'])?.id,
     );
   }
 }

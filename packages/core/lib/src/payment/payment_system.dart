@@ -2,7 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:ndk/ndk.dart' show Nip19;
 
 import '../constants/relays.dart';
-import '../models/offer.dart' show OfferCategory;
+import '../models/offer.dart' show OfferCategory, Offer;
 
 /// Which coordinator state-machine implementation drives a payment method.
 enum FlowEngineMode {
@@ -110,6 +110,17 @@ class PaymentSystem {
   /// Bitway for MB WAY). Stored as hex — the form Nostr filters need.
   final String discoveryPubkeyHex;
 
+  /// Overrides [platformTag] when set; otherwise [platformTag] falls back to
+  /// [brandName], preserving the historical `y`-tag value for BLIK/MB WAY.
+  /// Used when several markets share one app brand but must stay isolated on
+  /// the wire (e.g. the Slovak per-bank markets all brand as BitBlik).
+  /// Wire-stable: never change an existing market's effective tag.
+  final String? platformTagOverride;
+
+  /// Map/locator URL for this market's ATM network, shown on the "use code"
+  /// screen so the maker can find a nearby ATM. Null when no locator is curated.
+  final String? atmMapUrl;
+
   const PaymentSystem({
     required this.id,
     required this.label,
@@ -130,6 +141,8 @@ class PaymentSystem {
     this.flowId,
     this.flowEngineMode = FlowEngineMode.legacyEnum,
     this.discoveryPubkeyHex = kBitblikPubkeyHex,
+    this.platformTagOverride,
+    this.atmMapUrl,
   });
 
   /// The discovery identity as an `npub`, derived from [discoveryPubkeyHex].
@@ -142,7 +155,7 @@ class PaymentSystem {
   /// [brandName] (`Bitblik`, `Bitway`) — historical offers were published with
   /// `y=Bitblik`, so BLIK must keep that value. Wire-stable: never change an
   /// existing system's tag or older peers become invisible to this filter.
-  String get platformTag => brandName;
+  String get platformTag => platformTagOverride ?? brandName;
 
   /// Payment-code term for UI text; neutral `'code'` when [codeName] is unset.
   String get codeLabel =>
@@ -286,8 +299,83 @@ const PaymentSystem kTwint = PaymentSystem(
   flowEngineMode: FlowEngineMode.generic,
 );
 
+/// Slovakia — Tatra banka cardless ATM withdrawal. 6-digit code, 20 min. ATM only.
+const PaymentSystem kTatraBanka = PaymentSystem(
+  id: 'tatrabanka',
+  label: 'Tatra banka',
+  brandName: 'BitBlik',
+  platformTagOverride: 'BitblikSK-Tatra',
+  country: 'SK',
+  flag: '🇸🇰',
+  currency: 'EUR',
+  currencySymbol: '€',
+  codeLength: 6,
+  codeValidityMinutes: 20,
+  requiresCodeConfirmation: false,
+  supportedCategories: [OfferCategory.atm],
+  atmPresetAmounts: [10, 20, 30, 50, 100, 200],
+  atmBanknoteDenominations: [10, 20, 50, 100],
+  discoveryPubkeyHex: kSlovakiaPubkeyHex,
+  atmMapUrl: 'https://www.google.com/maps/search/Tatra+banka+bankomat',
+);
+
+/// Slovakia — Slovenská sporiteľňa (George) cardless ATM withdrawal.
+/// 6-digit code, 15 min. ATM only.
+const PaymentSystem kSlsp = PaymentSystem(
+  id: 'slsp',
+  label: 'Slovenská sporiteľňa',
+  atmMapUrl: 'https://www.google.com/maps/search/Slovenska+sporitelna+bankomat',
+  brandName: 'BitBlik',
+  platformTagOverride: 'BitblikSK-SLSP',
+  country: 'SK',
+  flag: '🇸🇰',
+  currency: 'EUR',
+  currencySymbol: '€',
+  codeLength: 6,
+  codeValidityMinutes: 15,
+  requiresCodeConfirmation: false,
+  supportedCategories: [OfferCategory.atm],
+  atmPresetAmounts: [20, 50, 100, 150, 200],
+  atmBanknoteDenominations: [10, 20, 50, 100],
+  discoveryPubkeyHex: kSlovakiaPubkeyHex,
+);
+
+/// Slovakia — VÚB banka cardless ATM withdrawal ("Výber mobilom"). 6-digit code,
+/// **3 min** validity (confirmed on vub.sk FAQ; the code is generated server-side
+/// and expires fast). ATM only. NOTE: the 3-minute window is very tight for a
+/// two-person P2P flow — the taker must already be at a VÚB ATM.
+const PaymentSystem kVub = PaymentSystem(
+  id: 'vub',
+  label: 'VÚB banka',
+  atmMapUrl: 'https://www.google.com/maps/search/VUB+banka+bankomat',
+  brandName: 'BitBlik',
+  platformTagOverride: 'BitblikSK-VUB',
+  country: 'SK',
+  flag: '🇸🇰',
+  currency: 'EUR',
+  currencySymbol: '€',
+  codeLength: 6,
+  codeValidityMinutes: 3,
+  requiresCodeConfirmation: false,
+  supportedCategories: [OfferCategory.atm],
+  atmPresetAmounts: [20, 50, 100, 150, 200],
+  atmBanknoteDenominations: [10, 20, 50, 100],
+  discoveryPubkeyHex: kSlovakiaPubkeyHex,
+);
+
 /// All supported payment methods. Add a market by appending here.
-const List<PaymentSystem> kPaymentSystems = [kBlik, kMbway, kTwint];
+///
+/// Slovak banks are appended **after** [kMbway] so the currency→method fallback
+/// ([paymentSystemForCurrency]) keeps resolving EUR to MB WAY for legacy
+/// coordinators that don't advertise a `payment_system` id.
+const List<PaymentSystem> kPaymentSystems = [
+  kBlik,
+  kMbway,
+  kTwint,
+  kTatraBanka,
+  kSlsp,
+  kVub,
+];
 
 /// Resolve a method by [id]; falls back to [kBlik] for unknown/legacy ids so
 /// older peers keep working.
@@ -298,8 +386,10 @@ PaymentSystem paymentSystemById(String? id) {
   return kBlik;
 }
 
-/// Resolve the method that settles in [currency] (1:1 with currency today).
-/// Returns null if no method matches.
+/// Resolve the method that settles in [currency]. Ambiguous once several markets
+/// share a currency: EUR maps to the first EUR entry ([kMbway]) because the
+/// Slovak banks are appended after it. Prefer [paymentSystemForOffer] whenever an
+/// [Offer] is in hand. Returns null if no method matches.
 PaymentSystem? paymentSystemForCurrency(String? currency) {
   if (currency == null) return null;
   final upper = currency.toUpperCase();
@@ -307,4 +397,26 @@ PaymentSystem? paymentSystemForCurrency(String? currency) {
     if (m.currency == upper) return m;
   }
   return null;
+}
+
+/// Resolve the method whose wire platform tag (`y`) equals [tag], e.g.
+/// `BitblikSK-Tatra` → [kTatraBanka]. The platform tag is a 1:1 key, so unlike
+/// currency it disambiguates the EUR markets. Returns null for unknown tags.
+PaymentSystem? paymentSystemForPlatformTag(String? tag) {
+  if (tag == null || tag.isEmpty) return null;
+  for (final m in kPaymentSystems) {
+    if (m.platformTag == tag) return m;
+  }
+  return null;
+}
+
+/// Resolve the payment method for [offer]. Prefers the offer's explicit
+/// [Offer.paymentSystemId] (carried on the wire), which is unambiguous even when
+/// several markets share a currency (EUR: MB WAY, Tatra banka, SLSP, VÚB). Falls
+/// back to the currency mapping for legacy offers that predate the id. Never
+/// null — defaults to [kBlik] via [paymentSystemById].
+PaymentSystem paymentSystemForOffer(Offer offer) {
+  final id = offer.paymentSystemId;
+  if (id != null && id.isNotEmpty) return paymentSystemById(id);
+  return paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik;
 }
