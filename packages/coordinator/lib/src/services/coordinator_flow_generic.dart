@@ -403,20 +403,31 @@ class GenericOfferFlow implements OfferFlow {
   /// detached `auto` transition leaving the new state.
   Future<void> _enterState(Offer offer) async {
     final state = _engine.definition.state(offer.statusRaw);
+    final isTerminal = state?.terminal ?? false;
+
+    // Arm the entered state's timeout before slow side effects so a stale
+    // earlier enterState() cannot later overwrite a newer state's timer.
+    if (!isTerminal) {
+      _armTimer(offer);
+    }
 
     await _c._publishStatusUpdate(offer);
     await _c._nostrService?.broadcastNip69OrderFromOffer(offer);
     await _c._syncTelegramOfferMessagesForState(offer);
     await _runStateActions(offer);
 
-    if (state?.terminal ?? false) {
+    if (isTerminal) {
       // Offer will never transition or broadcast again — drop the NostrService
       // created_at-tracking entry so it can't accumulate across offer lifetime.
       _c._nostrService?.forgetOfferTracking(offer.id);
       return;
     }
-    _armTimer(offer);
-    _driveAuto(offer);
+
+    // Side effects above may take long enough for a newer transition to commit.
+    // Only launch detached auto edges if this state is still current.
+    final current = await _c._dbService.getOfferById(offer.id);
+    if (current == null || current.statusRaw != offer.statusRaw) return;
+    _driveAuto(current);
   }
 
   Future<void> _runStateActions(Offer offer) async {

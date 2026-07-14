@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bitblik_core/core.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/models/cancel_invoice_result.dart';
@@ -5,6 +7,7 @@ import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart';
 import 'package:bitblik_coordinator/src/services/database_service.dart';
 import 'package:bitblik_coordinator/src/services/telegram_service.dart';
 import 'package:clock/clock.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
@@ -36,6 +39,28 @@ class _FakeTelegramService extends TelegramService {
   }) async {
     deleteCalls++;
     return true;
+  }
+}
+
+class _BlockingTelegramService extends TelegramService {
+  final Completer<TelegramSendResult> _sendCompleter =
+      Completer<TelegramSendResult>();
+
+  _BlockingTelegramService()
+      : super(botToken: 'test-bot-token', chatIds: const ['test-chat-id']);
+
+  @override
+  Future<TelegramSendResult> sendMessageDetailed(String message) =>
+      _sendCompleter.future;
+
+  void complete() {
+    if (_sendCompleter.isCompleted) return;
+    _sendCompleter.complete(const TelegramSendResult(
+      allSucceeded: true,
+      sentMessages: [
+        TelegramSentMessage(chatId: 'test-chat-id', messageId: 1),
+      ],
+    ));
   }
 }
 
@@ -106,8 +131,8 @@ void main() {
   });
 
   test('rejects an action from the wrong actor (taker confirming)', () async {
-    when(db.getOfferById('o1'))
-        .thenAnswer((_) async => twintOffer('twint_charged', takerPubkey: taker));
+    when(db.getOfferById('o1')).thenAnswer(
+        (_) async => twintOffer('twint_charged', takerPubkey: taker));
 
     expect(
       () => svc.flow.handleRpc('confirm_payment', {'offer_id': 'o1'}, taker),
@@ -241,8 +266,8 @@ void main() {
 
     test('get_blik advances blikReceived -> blikSentToMaker, returns code',
         () async {
-      var offer = blikOffer('blikReceived',
-          takerPubkey: taker, blikCode: '123456');
+      var offer =
+          blikOffer('blikReceived', takerPubkey: taker, blikCode: '123456');
       when(bdb.getOfferById('b1')).thenAnswer((_) async => offer);
       when(bdb.updateOfferRawStatusIfCurrent(
         'b1',
@@ -283,6 +308,128 @@ void main() {
         () => bsvc.flow.handleRpc('get_blik', {'offer_id': 'b1'}, taker),
         throwsA(isA<Exception>()),
       );
+    });
+
+    test(
+        'stale funded enterState cannot overwrite a newer reserved timer after timeout relist',
+        () {
+      fakeAsync((async) {
+        final testClock = async.getClock(DateTime.utc(2026, 7, 14, 13, 45, 0));
+        final blockingTelegram = _BlockingTelegramService();
+        final timerDb = MockDatabaseService();
+        final timerSvc = CoordinatorService(
+          timerDb,
+          paymentServiceForTest: MockPaymentService(),
+          clock: Clock(() => testClock.now()),
+          telegramServiceForTest: blockingTelegram,
+          paymentSystemIdForTest: 'blik',
+          flowModeForTest: FlowEngineMode.generic,
+        );
+
+        var currentStatus = 'reserved';
+        var currentUpdatedAt = testClock.now().toUtc();
+        var currentReservedAt = testClock.now().toUtc();
+        String? currentTakerPubkey = taker;
+        final createdAt =
+            testClock.now().toUtc().subtract(const Duration(minutes: 1));
+
+        Offer currentOffer() => Offer(
+              id: 'b-race',
+              amountSats: 10000,
+              makerFees: 50,
+              takerFees: 50,
+              status: OfferStatus.unknown,
+              statusRaw: currentStatus,
+              fiatAmount: 10,
+              fiatCurrency: 'PLN',
+              createdAt: createdAt,
+              updatedAt: currentUpdatedAt,
+              reservedAt: currentReservedAt,
+              makerPubkey: maker,
+              coordinatorPubkey: 'coord',
+              takerPubkey: currentTakerPubkey,
+              holdInvoicePaymentHash: 'hash',
+              holdInvoicePreimage: 'preimage',
+            );
+
+        when(timerDb.getOffersNotInRawStatuses(any))
+            .thenAnswer((_) async => [currentOffer()]);
+        when(timerDb.getOffersByRawStatus(any, limit: anyNamed('limit')))
+            .thenAnswer((_) async => []);
+        when(timerDb.getOfferById('b-race'))
+            .thenAnswer((_) async => currentOffer());
+        when(timerDb.updateOfferRawStatusIfCurrent(
+          any,
+          any,
+          expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+          expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+          takerPubkey: anyNamed('takerPubkey'),
+          reservedAt: anyNamed('reservedAt'),
+          takerChargedAt: anyNamed('takerChargedAt'),
+          makerConfirmedAt: anyNamed('makerConfirmedAt'),
+          settledAt: anyNamed('settledAt'),
+          takerPaidAt: anyNamed('takerPaidAt'),
+          takerInvoice: anyNamed('takerInvoice'),
+          takerLightningAddress: anyNamed('takerLightningAddress'),
+          code: anyNamed('code'),
+          codeReceivedAt: anyNamed('codeReceivedAt'),
+          disputeAt: anyNamed('disputeAt'),
+          takerFees: anyNamed('takerFees'),
+          takerInvoiceFees: anyNamed('takerInvoiceFees'),
+          failureReason: anyNamed('failureReason'),
+          clearTakerFields: anyNamed('clearTakerFields'),
+          preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
+          transitionMeta: anyNamed('transitionMeta'),
+        )).thenAnswer((inv) async {
+          final expected =
+              inv.namedArguments[const Symbol('expectedCurrentStatuses')]
+                  as List<String>?;
+          if (expected != null && !expected.contains(currentStatus)) {
+            return false;
+          }
+
+          currentStatus = inv.positionalArguments[1] as String;
+          currentUpdatedAt = testClock.now().toUtc();
+
+          final takerPubkey =
+              inv.namedArguments[const Symbol('takerPubkey')] as String?;
+          final reservedAt =
+              inv.namedArguments[const Symbol('reservedAt')] as DateTime?;
+          final clearTakerFields =
+              inv.namedArguments[const Symbol('clearTakerFields')] as bool? ??
+                  false;
+
+          if (takerPubkey != null) currentTakerPubkey = takerPubkey;
+          if (reservedAt != null) currentReservedAt = reservedAt.toUtc();
+          if (clearTakerFields) currentTakerPubkey = null;
+
+          return true;
+        });
+
+        timerSvc.init();
+        async.flushMicrotasks();
+
+        timerSvc.flow.recoverTimers();
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(seconds: 61));
+        async.flushMicrotasks();
+
+        expect(currentStatus, 'funded');
+
+        timerSvc.flow.handleRpc('reserve_offer', {'offer_id': 'b-race'}, taker);
+        async.flushMicrotasks();
+
+        expect(currentStatus, 'reserved');
+
+        blockingTelegram.complete();
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(seconds: 61));
+        async.flushMicrotasks();
+
+        expect(currentStatus, 'funded');
+      });
     });
   });
 
@@ -346,8 +493,9 @@ void main() {
         transitionMeta: anyNamed('transitionMeta'),
       )).thenAnswer((inv) async {
         final target = inv.positionalArguments[1] as String;
-        final expected = inv.namedArguments[const Symbol('expectedCurrentStatuses')]
-            as List<String>?;
+        final expected =
+            inv.namedArguments[const Symbol('expectedCurrentStatuses')]
+                as List<String>?;
         if (expected == null || expected.contains(current)) {
           current = target;
           return true;
@@ -445,8 +593,7 @@ void main() {
         invoice: anyNamed('invoice'),
         amountSat: anyNamed('amountSat'),
         feeLimitSat: anyNamed('feeLimitSat'),
-      )).thenAnswer(
-          (_) async => PayInvoiceResult(paymentError: 'no route'));
+      )).thenAnswer((_) async => PayInvoiceResult(paymentError: 'no route'));
       when(gpay.reconcileOutgoingPayment(invoice: anyNamed('invoice')))
           .thenAnswer((_) async => null);
 
@@ -475,8 +622,7 @@ void main() {
     test('startup reconcile: wallet-settled takerPaymentFailed -> takerPaid',
         () async {
       current = 'takerPaymentFailed';
-      when(gdb.getOffersNotInRawStatuses(any))
-          .thenAnswer((_) async => []);
+      when(gdb.getOffersNotInRawStatuses(any)).thenAnswer((_) async => []);
       when(gdb.getOffersByRawStatus('takerPaymentFailed',
               limit: anyNamed('limit')))
           .thenAnswer((_) async => [payoutOffer(takerInvoice: invoice)]);
@@ -495,8 +641,7 @@ void main() {
 
     test('startup reconcile: still-unpaid stays takerPaymentFailed', () async {
       current = 'takerPaymentFailed';
-      when(gdb.getOffersNotInRawStatuses(any))
-          .thenAnswer((_) async => []);
+      when(gdb.getOffersNotInRawStatuses(any)).thenAnswer((_) async => []);
       when(gdb.getOffersByRawStatus('takerPaymentFailed',
               limit: anyNamed('limit')))
           .thenAnswer((_) async => [payoutOffer(takerInvoice: invoice)]);
