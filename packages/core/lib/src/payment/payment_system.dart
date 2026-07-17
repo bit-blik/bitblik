@@ -315,7 +315,6 @@ const PaymentSystem kTatraBanka = PaymentSystem(
   supportedCategories: [OfferCategory.atm],
   atmPresetAmounts: [10, 20, 30, 50, 100, 200],
   atmBanknoteDenominations: [10, 20, 50, 100],
-  discoveryPubkeyHex: kSlovakiaPubkeyHex,
   atmMapUrl: 'https://www.google.com/maps/search/Tatra+banka+bankomat',
 );
 
@@ -337,7 +336,6 @@ const PaymentSystem kSlsp = PaymentSystem(
   supportedCategories: [OfferCategory.atm],
   atmPresetAmounts: [20, 50, 100, 150, 200],
   atmBanknoteDenominations: [10, 20, 50, 100],
-  discoveryPubkeyHex: kSlovakiaPubkeyHex,
 );
 
 /// Slovakia — VÚB banka cardless ATM withdrawal ("Výber mobilom"). 6-digit code,
@@ -360,7 +358,6 @@ const PaymentSystem kVub = PaymentSystem(
   supportedCategories: [OfferCategory.atm],
   atmPresetAmounts: [20, 50, 100, 150, 200],
   atmBanknoteDenominations: [10, 20, 50, 100],
-  discoveryPubkeyHex: kSlovakiaPubkeyHex,
 );
 
 /// All supported payment methods. Add a market by appending here.
