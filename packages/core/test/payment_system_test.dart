@@ -123,8 +123,10 @@ void main() {
       expect(_skAtm.canDispenseAtmAmount(500, bank: slsp), isTrue); // 5x100
       expect(_skAtm.canDispenseAtmAmount(5, bank: slsp), isFalse);
       expect(_skAtm.canDispenseAtmAmount(15, bank: slsp), isFalse);
-      expect(_skAtm.presetsFor(_skBank('tatrabanka')),
-          [10, 20, 30, 50, 100, 200]);
+      // All SK banks share the same quick-pick presets, starting at 10 EUR.
+      expect(_skAtm.presetsFor(_skBank('tatrabanka')), [10, 20, 50, 100, 200]);
+      expect(_skAtm.presetsFor(_skBank('slsp')), [10, 20, 50, 100, 200]);
+      expect(_skAtm.presetsFor(_skBank('vub')), [10, 20, 50, 100, 200]);
     });
 
     test('registry: market ids and platform tags are unique', () {

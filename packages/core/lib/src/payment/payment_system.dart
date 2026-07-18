@@ -510,7 +510,12 @@ const PaymentSystem kSlovakia = PaymentSystem(
       validity: Duration(minutes: 15),
       codeLength: 6,
       requiresCodeConfirmation: false,
+      // Shared across all SK banks (10 EUR floor). The banks below intentionally
+      // do NOT override atmBanknoteDenominations or atmPresetAmounts, so both
+      // dispensability and the quick-pick chips are identical for Tatra / SLSP /
+      // VÚB — starting at the 10 EUR note.
       atmBanknoteDenominations: [10, 20, 50, 100],
+      atmPresetAmounts: [10, 20, 50, 100, 200],
       banks: [
         BankSpec(
           id: 'tatrabanka',
@@ -518,7 +523,6 @@ const PaymentSystem kSlovakia = PaymentSystem(
           validity: Duration(minutes: 20),
           atmMapUrl:
               'https://www.google.com/maps/search/Tatra+banka+bankomat',
-          atmPresetAmounts: [10, 20, 30, 50, 100, 200],
         ),
         BankSpec(
           id: 'slsp',
@@ -526,7 +530,6 @@ const PaymentSystem kSlovakia = PaymentSystem(
           validity: Duration(minutes: 15),
           atmMapUrl:
               'https://www.google.com/maps/search/Slovenska+sporitelna+bankomat',
-          atmPresetAmounts: [20, 50, 100, 150, 200],
         ),
         BankSpec(
           id: 'vub',
@@ -536,7 +539,6 @@ const PaymentSystem kSlovakia = PaymentSystem(
           // a VÚB ATM.
           validity: Duration(minutes: 3),
           atmMapUrl: 'https://www.google.com/maps/search/VUB+banka+bankomat',
-          atmPresetAmounts: [20, 50, 100, 150, 200],
         ),
       ],
     ),
