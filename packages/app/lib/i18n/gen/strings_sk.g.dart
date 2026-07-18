@@ -1133,6 +1133,7 @@ class _Translations$taker$submitBlik$sk extends Translations$taker$submitBlik$en
 	// Translations
 	@override String title({required Object digits, required Object code}) => 'Zadaj ${digits}-miestny ${code}';
 	@override String label({required Object code}) => 'Kód ${code}';
+	@override String generateInBank({required Object bank}) => 'Vygeneruj kód na výber v aplikácii ${bank}.';
 	@override String instruction({required Object code}) => 'Zadaj ${code}, kým vyprší čas...';
 	@override String timeLimit({required Object code, required Object seconds}) => 'Zadaj ${code} do: ${seconds} s';
 	@override String timeExpired({required Object code}) => 'Čas na zadanie ${code} vypršal.';
@@ -1501,6 +1502,8 @@ class _Translations$settings$offerCreation$sk extends Translations$settings$offe
 	// Translations
 	@override String get title => 'Vytváranie ponúk';
 	@override String get defaultCategory => 'Predvolená kategória';
+	@override String get defaultBank => 'Predvolená banka';
+	@override String get defaultBankNone => 'Žiadna (vyber pri každej ponuke)';
 	@override String get preferredCoordinator => 'Preferovaný koordinátor';
 	@override String get automaticCoordinator => 'Najspoľahlivejší';
 	@override String get automaticCoordinatorDescription => 'Vyberie koordinátora s najlepšou históriou, pričom kombinuje tvoje vlastné dokončené ponuky a celkovú aktivitu v sieti.';
@@ -2548,6 +2551,7 @@ class _Translations$settings$offerCreation$dialogs$sk extends Translations$setti
 
 	// Translations
 	@override String get selectCategory => 'Vyber predvolenú kategóriu';
+	@override String get selectBank => 'Vyber predvolenú banku';
 	@override String get selectCoordinator => 'Vyber preferovaného koordinátora';
 	@override String get premiumHint => 'Zadaj percento, napríklad 1.5. Hodnoty sa zaokrúhľujú na kroky po 0.5%.';
 	@override String get premiumHelper => 'Uplatní sa, keď sú zapnuté prémiové ceny, a je obmedzená maximom vybraného koordinátora.';
@@ -3054,6 +3058,7 @@ extension on TranslationsSk {
 			'taker.progress.step3' => 'Dostať zaplatené',
 			'taker.submitBlik.title' => ({required Object digits, required Object code}) => 'Zadaj ${digits}-miestny ${code}',
 			'taker.submitBlik.label' => ({required Object code}) => 'Kód ${code}',
+			'taker.submitBlik.generateInBank' => ({required Object bank}) => 'Vygeneruj kód na výber v aplikácii ${bank}.',
 			'taker.submitBlik.instruction' => ({required Object code}) => 'Zadaj ${code}, kým vyprší čas...',
 			'taker.submitBlik.timeLimit' => ({required Object code, required Object seconds}) => 'Zadaj ${code} do: ${seconds} s',
 			'taker.submitBlik.timeExpired' => ({required Object code}) => 'Čas na zadanie ${code} vypršal.',
@@ -3153,9 +3158,9 @@ extension on TranslationsSk {
 			'taker.invalidBlik.wereCharged' => 'Ak ti bolo strhnuté:',
 			'taker.invalidBlik.actions.retry' => ({required Object code}) => 'Poslať nový ${code}',
 			'taker.invalidBlik.actions.cancelReservation' => 'Zrušiť transakciu',
-			'taker.invalidBlik.actions.reportConflict' => 'Začať spor',
 			_ => null,
 		} ?? switch (path) {
+			'taker.invalidBlik.actions.reportConflict' => 'Začať spor',
 			'taker.invalidBlik.actions.returnHome' => 'Vrátiť sa domov',
 			'taker.invalidBlik.confirmDialog.title' => 'Naozaj?',
 			'taker.invalidBlik.confirmDialog.content' => 'Keď na to ťukneš, niet cesty späť.\n\nAk ti suma naozaj BOLA strhnutá z bankového účtu, koordinátor NEbude môcť zaručiť, že dostaneš bitcoin, a môžeš prísť o svoje prostriedky.\n\nAk si nie si istý, je najlepšie chvíľu počkať a potvrdiť si, že ti NEbolo strhnuté, skôr než budeš pokračovať.',
@@ -3267,6 +3272,8 @@ extension on TranslationsSk {
 			'settings.title' => 'Nastavenia',
 			'settings.offerCreation.title' => 'Vytváranie ponúk',
 			'settings.offerCreation.defaultCategory' => 'Predvolená kategória',
+			'settings.offerCreation.defaultBank' => 'Predvolená banka',
+			'settings.offerCreation.defaultBankNone' => 'Žiadna (vyber pri každej ponuke)',
 			'settings.offerCreation.preferredCoordinator' => 'Preferovaný koordinátor',
 			'settings.offerCreation.automaticCoordinator' => 'Najspoľahlivejší',
 			'settings.offerCreation.automaticCoordinatorDescription' => 'Vyberie koordinátora s najlepšou históriou, pričom kombinuje tvoje vlastné dokončené ponuky a celkovú aktivitu v sieti.',
@@ -3281,6 +3288,7 @@ extension on TranslationsSk {
 			'settings.offerCreation.categoryOptions.atm' => 'Výber z bankomatu',
 			'settings.offerCreation.categoryOptions.online' => 'Online služba/produkt',
 			'settings.offerCreation.dialogs.selectCategory' => 'Vyber predvolenú kategóriu',
+			'settings.offerCreation.dialogs.selectBank' => 'Vyber predvolenú banku',
 			'settings.offerCreation.dialogs.selectCoordinator' => 'Vyber preferovaného koordinátora',
 			'settings.offerCreation.dialogs.premiumHint' => 'Zadaj percento, napríklad 1.5. Hodnoty sa zaokrúhľujú na kroky po 0.5%.',
 			'settings.offerCreation.dialogs.premiumHelper' => 'Uplatní sa, keď sú zapnuté prémiové ceny, a je obmedzená maximom vybraného koordinátora.',

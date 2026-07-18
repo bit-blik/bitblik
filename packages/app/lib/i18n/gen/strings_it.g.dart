@@ -1045,6 +1045,7 @@ class _Translations$maker$amountForm$it extends Translations$maker$amountForm$en
 	@override late final _Translations$maker$amountForm$progress$it progress = _Translations$maker$amountForm$progress$it._(_root);
 	@override late final _Translations$maker$amountForm$labels$it labels = _Translations$maker$amountForm$labels$it._(_root);
 	@override late final _Translations$maker$amountForm$actions$it actions = _Translations$maker$amountForm$actions$it._(_root);
+	@override late final _Translations$maker$amountForm$bank$it bank = _Translations$maker$amountForm$bank$it._(_root);
 	@override late final _Translations$maker$amountForm$twintScan$it twintScan = _Translations$maker$amountForm$twintScan$it._(_root);
 	@override late final _Translations$maker$amountForm$tooltips$it tooltips = _Translations$maker$amountForm$tooltips$it._(_root);
 	@override late final _Translations$maker$amountForm$category$it category = _Translations$maker$amountForm$category$it._(_root);
@@ -1200,6 +1201,7 @@ class _Translations$taker$submitBlik$it extends Translations$taker$submitBlik$en
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override String generateInBank({required Object bank}) => 'Genera il codice di prelievo nell\'app ${bank}.';
 	@override String title({required Object code, required Object digits}) => 'Inserisci ${code} a ${digits} cifre';
 	@override String label({required Object code}) => 'Codice ${code}';
 	@override String instruction({required Object code}) => 'Inserisci ${code} prima che scada il tempo...';
@@ -1599,6 +1601,8 @@ class _Translations$settings$offerCreation$it extends Translations$settings$offe
 	// Translations
 	@override String get title => 'Creazione offerte';
 	@override String get defaultCategory => 'Categoria predefinita';
+	@override String get defaultBank => 'Banca predefinita';
+	@override String get defaultBankNone => 'Nessuna (scegli per offerta)';
 	@override String get preferredCoordinator => 'Coordinatore preferito';
 	@override String get automaticCoordinator => 'Più affidabile';
 	@override String get automaticCoordinatorDescription => 'Sceglie il coordinatore con la migliore reputazione, combinando le tue offerte completate e l\'attività complessiva della rete.';
@@ -1967,6 +1971,18 @@ class _Translations$maker$amountForm$actions$it extends Translations$maker$amoun
 
 	// Translations
 	@override String get generateInvoice => 'Genera Fattura';
+}
+
+// Path: maker.amountForm.bank
+class _Translations$maker$amountForm$bank$it extends Translations$maker$amountForm$bank$en {
+	_Translations$maker$amountForm$bank$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Banca';
+	@override String get required => 'Scegli una banca';
+	@override String shortValidityWarning({required Object minutes}) => 'Il codice di questa banca è valido solo ${minutes} min — vai al bancomat prima di prenotare.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -2761,6 +2777,7 @@ class _Translations$settings$offerCreation$dialogs$it extends Translations$setti
 
 	// Translations
 	@override String get selectCategory => 'Seleziona la categoria predefinita';
+	@override String get selectBank => 'Seleziona la banca predefinita';
 	@override String get selectCoordinator => 'Seleziona il coordinatore preferito';
 	@override String get premiumHint => 'Inserisci una percentuale come 1.5. I valori vengono arrotondati a passi di 0.5%.';
 	@override String get premiumHelper => 'Applicato quando il premio di prezzo è abilitato e limitato al massimo del coordinatore selezionato.';
@@ -3161,6 +3178,9 @@ extension on TranslationsIt {
 			'maker.amountForm.labels.tapToSelect' => 'Tocca per selezionare',
 			'maker.amountForm.labels.premium' => 'Premio',
 			'maker.amountForm.actions.generateInvoice' => 'Genera Fattura',
+			'maker.amountForm.bank.label' => 'Banca',
+			'maker.amountForm.bank.required' => 'Scegli una banca',
+			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Il codice di questa banca è valido solo ${minutes} min — vai al bancomat prima di prenotare.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Scansiona QR e importo ${code}',
 			'maker.amountForm.twintScan.cardBody' => 'Punta la fotocamera verso la schermata di pagamento. L\'app compilerà automaticamente il codice e, quando visibile, l\'importo.',
 			'maker.amountForm.twintScan.scanButton' => 'Scansiona con la fotocamera',
@@ -3305,6 +3325,7 @@ extension on TranslationsIt {
 			'taker.progress.step1' => ({required Object code}) => 'Invia ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Conferma ${code}',
 			'taker.progress.step3' => 'Ricevi Pagamento',
+			'taker.submitBlik.generateInBank' => ({required Object bank}) => 'Genera il codice di prelievo nell\'app ${bank}.',
 			'taker.submitBlik.title' => ({required Object code, required Object digits}) => 'Inserisci ${code} a ${digits} cifre',
 			'taker.submitBlik.label' => ({required Object code}) => 'Codice ${code}',
 			'taker.submitBlik.instruction' => ({required Object code}) => 'Inserisci ${code} prima che scada il tempo...',
@@ -3402,12 +3423,12 @@ extension on TranslationsIt {
 			'twint.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Il maker ha ricevuto il tuo codice ${code}.',
 			'twint.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => 'Il tempo di scadenza ${code} di ${minutes} minuti è passato. In attesa che il maker confermi o contrassegni il codice come non valido.',
 			'twint.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => 'Il tempo di scadenza ${code} di ${minutes} minuti è passato ma il maker non ha ricevuto il codice ${code}. Puoi rinviare un nuovo codice ${code} o annullare.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Rinvia Nuovo Codice ${code}',
 			'twint.waitConfirmation.navigatedHome' => 'Tornato alla home.',
 			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => 'Codice ${code} Scaduto',
 			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'Il maker non ha ricevuto il codice ${code} quindi non ha potuto utilizzarlo.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'La prenotazione termina tra',
 			'twint.waitConfirmation.expiredSentWarning' => 'Il maker non ha ancora confermato il pagamento. Cosa vuoi fare?',
 			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Se vuoi riprovare con un nuovo codice ${code}, rinnova la prenotazione.',
@@ -3584,6 +3605,8 @@ extension on TranslationsIt {
 			'settings.title' => 'Impostazioni',
 			'settings.offerCreation.title' => 'Creazione offerte',
 			'settings.offerCreation.defaultCategory' => 'Categoria predefinita',
+			'settings.offerCreation.defaultBank' => 'Banca predefinita',
+			'settings.offerCreation.defaultBankNone' => 'Nessuna (scegli per offerta)',
 			'settings.offerCreation.preferredCoordinator' => 'Coordinatore preferito',
 			'settings.offerCreation.automaticCoordinator' => 'Più affidabile',
 			'settings.offerCreation.automaticCoordinatorDescription' => 'Sceglie il coordinatore con la migliore reputazione, combinando le tue offerte completate e l\'attività complessiva della rete.',
@@ -3598,6 +3621,7 @@ extension on TranslationsIt {
 			'settings.offerCreation.categoryOptions.atm' => 'Prelievo ATM',
 			'settings.offerCreation.categoryOptions.online' => 'Servizio/prodotto online',
 			'settings.offerCreation.dialogs.selectCategory' => 'Seleziona la categoria predefinita',
+			'settings.offerCreation.dialogs.selectBank' => 'Seleziona la banca predefinita',
 			'settings.offerCreation.dialogs.selectCoordinator' => 'Seleziona il coordinatore preferito',
 			'settings.offerCreation.dialogs.premiumHint' => 'Inserisci una percentuale come 1.5. I valori vengono arrotondati a passi di 0.5%.',
 			'settings.offerCreation.dialogs.premiumHelper' => 'Applicato quando il premio di prezzo è abilitato e limitato al massimo del coordinatore selezionato.',

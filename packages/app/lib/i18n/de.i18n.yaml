@@ -373,6 +373,10 @@ maker:
       premium: Premium
     actions:
       generateInvoice: Invoice erstellen
+    bank:
+      label: "Bank"
+      required: "Bitte wähle eine Bank"
+      shortValidityWarning: "Der Code dieser Bank ist nur ${minutes} Min gültig — sei vor dem Reservieren am Geldautomaten."
     twintScan:
       cardTitle: "${code}-QR und Betrag scannen"
       cardBody: "Richte die Kamera auf den Zahlungsbildschirm. Die App füllt den Code und, wenn sichtbar, den Betrag automatisch aus."
@@ -597,6 +601,7 @@ taker:
     step3: Bezahlt werden
 
   submitBlik:
+    generateInBank: "Erstelle den Auszahlungscode in deiner ${bank}-App."
     title: "${digits}-stelligen ${code} eingeben"
     label: ${code}-Code
     instruction: "Gib den ${code} ein, bevor die Zeit abläuft..."
@@ -1030,6 +1035,8 @@ settings:
   offerCreation:
     title: Angebotserstellung
     defaultCategory: Standardkategorie
+    defaultBank: Standardbank
+    defaultBankNone: "Keine (pro Angebot wählen)"
     preferredCoordinator: Bevorzugter Koordinator
     automaticCoordinator: Zuverlässigster
     automaticCoordinatorDescription: "Wählt den Koordinator mit der besten Erfolgsbilanz, basierend auf deinen eigenen abgeschlossenen Angeboten und der gesamten Netzwerkaktivität."
@@ -1046,6 +1053,7 @@ settings:
       online: Online-Dienst/-Produkt
     dialogs:
       selectCategory: Standardkategorie wählen
+      selectBank: Standardbank wählen
       selectCoordinator: Bevorzugten Koordinator wählen
       premiumHint: Gib einen Prozentsatz wie 1.5 ein. Werte werden auf 0.5%-Schritte gerundet.
       premiumHelper: Wird angewendet, wenn Premium-Preise aktiviert sind, und durch das Maximum des gewählten Koordinators begrenzt.

@@ -580,6 +580,7 @@ taker:
   submitBlik:
     title: "Zadaj ${digits}-miestny ${code}"
     label: Kód ${code}
+    generateInBank: "Vygeneruj kód na výber v aplikácii ${bank}."
     instruction: "Zadaj ${code}, kým vyprší čas..."
 
     timeLimit: "Zadaj ${code} do: ${seconds} s"
@@ -937,6 +938,8 @@ settings:
   offerCreation:
     title: Vytváranie ponúk
     defaultCategory: Predvolená kategória
+    defaultBank: Predvolená banka
+    defaultBankNone: "Žiadna (vyber pri každej ponuke)"
     preferredCoordinator: Preferovaný koordinátor
     automaticCoordinator: Najspoľahlivejší
     automaticCoordinatorDescription: "Vyberie koordinátora s najlepšou históriou, pričom kombinuje tvoje vlastné dokončené ponuky a celkovú aktivitu v sieti."
@@ -953,6 +956,7 @@ settings:
       online: Online služba/produkt
     dialogs:
       selectCategory: Vyber predvolenú kategóriu
+      selectBank: Vyber predvolenú banku
       selectCoordinator: Vyber preferovaného koordinátora
       premiumHint: Zadaj percento, napríklad 1.5. Hodnoty sa zaokrúhľujú na kroky po 0.5%.
       premiumHelper: Uplatní sa, keď sú zapnuté prémiové ceny, a je obmedzená maximom vybraného koordinátora.

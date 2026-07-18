@@ -606,6 +606,7 @@ taker:
   submitBlik:
     title: "Enter ${digits}-digit ${code}"
     label: ${code} Code
+    generateInBank: "Generate the withdrawal code in your ${bank} app."
     instruction: "Enter ${code} before time ends..."
     
     timeLimit: "Enter ${code} within: ${seconds} s"
@@ -1212,6 +1213,8 @@ settings:
   offerCreation:
     title: Offer creation
     defaultCategory: Default category
+    defaultBank: Default bank
+    defaultBankNone: "None (choose per offer)"
     preferredCoordinator: Preferred coordinator
     automaticCoordinator: Most reliable
     automaticCoordinatorDescription: "Picks the coordinator with the best track record, combining your own completed offers and overall network activity."
@@ -1228,6 +1231,7 @@ settings:
       online: Online service/product
     dialogs:
       selectCategory: Select default category
+      selectBank: Select default bank
       selectCoordinator: Select preferred coordinator
       premiumHint: Enter a percentage like 1.5. Values are rounded to 0.5% steps.
       premiumHelper: Applied when premium pricing is enabled and clamped by the selected coordinator maximum.

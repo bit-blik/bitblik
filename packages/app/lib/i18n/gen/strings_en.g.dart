@@ -1895,6 +1895,9 @@ class Translations$taker$submitBlik$en {
 	/// en: '${code} Code'
 	String label({required Object code}) => '${code} Code';
 
+	/// en: 'Generate the withdrawal code in your ${bank} app.'
+	String generateInBank({required Object bank}) => 'Generate the withdrawal code in your ${bank} app.';
+
 	/// en: 'Enter ${code} before time ends...'
 	String instruction({required Object code}) => 'Enter ${code} before time ends...';
 
@@ -2702,6 +2705,12 @@ class Translations$settings$offerCreation$en {
 
 	/// en: 'Default category'
 	String get defaultCategory => 'Default category';
+
+	/// en: 'Default bank'
+	String get defaultBank => 'Default bank';
+
+	/// en: 'None (choose per offer)'
+	String get defaultBankNone => 'None (choose per offer)';
 
 	/// en: 'Preferred coordinator'
 	String get preferredCoordinator => 'Preferred coordinator';
@@ -5083,6 +5092,9 @@ class Translations$settings$offerCreation$dialogs$en {
 	/// en: 'Select default category'
 	String get selectCategory => 'Select default category';
 
+	/// en: 'Select default bank'
+	String get selectBank => 'Select default bank';
+
 	/// en: 'Select preferred coordinator'
 	String get selectCoordinator => 'Select preferred coordinator';
 
@@ -5742,6 +5754,7 @@ extension on Translations {
 			'taker.progress.step3' => 'Get Paid',
 			'taker.submitBlik.title' => ({required Object digits, required Object code}) => 'Enter ${digits}-digit ${code}',
 			'taker.submitBlik.label' => ({required Object code}) => '${code} Code',
+			'taker.submitBlik.generateInBank' => ({required Object bank}) => 'Generate the withdrawal code in your ${bank} app.',
 			'taker.submitBlik.instruction' => ({required Object code}) => 'Enter ${code} before time ends...',
 			'taker.submitBlik.timeLimit' => ({required Object code, required Object seconds}) => 'Enter ${code} within: ${seconds} s',
 			'taker.submitBlik.timeExpired' => ({required Object code}) => 'Time to enter ${code} has expired.',
@@ -5822,9 +5835,9 @@ extension on Translations {
 			'taker.paymentFailed.actions.retryPayment' => 'Submit New Invoice',
 			'taker.paymentFailed.errors.enterValidInvoice' => 'Please enter a valid invoice',
 			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Error updating invoice: ${details}',
-			'taker.paymentFailed.errors.paymentRetryFailed' => 'Payment retry failed. Please check the invoice or try again later.',
 			_ => null,
 		} ?? switch (path) {
+			'taker.paymentFailed.errors.paymentRetryFailed' => 'Payment retry failed. Please check the invoice or try again later.',
 			'taker.paymentFailed.errors.takerPublicKeyNotFound' => 'Taker public key not found.',
 			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Failed to generate invoice: ${details}',
 			'taker.paymentFailed.walletSection.title' => 'Generate invoice from wallet',
@@ -6128,6 +6141,8 @@ extension on Translations {
 			'settings.title' => 'Settings',
 			'settings.offerCreation.title' => 'Offer creation',
 			'settings.offerCreation.defaultCategory' => 'Default category',
+			'settings.offerCreation.defaultBank' => 'Default bank',
+			'settings.offerCreation.defaultBankNone' => 'None (choose per offer)',
 			'settings.offerCreation.preferredCoordinator' => 'Preferred coordinator',
 			'settings.offerCreation.automaticCoordinator' => 'Most reliable',
 			'settings.offerCreation.automaticCoordinatorDescription' => 'Picks the coordinator with the best track record, combining your own completed offers and overall network activity.',
@@ -6142,6 +6157,7 @@ extension on Translations {
 			'settings.offerCreation.categoryOptions.atm' => 'ATM cash out',
 			'settings.offerCreation.categoryOptions.online' => 'Online service/product',
 			'settings.offerCreation.dialogs.selectCategory' => 'Select default category',
+			'settings.offerCreation.dialogs.selectBank' => 'Select default bank',
 			'settings.offerCreation.dialogs.selectCoordinator' => 'Select preferred coordinator',
 			'settings.offerCreation.dialogs.premiumHint' => 'Enter a percentage like 1.5. Values are rounded to 0.5% steps.',
 			'settings.offerCreation.dialogs.premiumHelper' => 'Applied when premium pricing is enabled and clamped by the selected coordinator maximum.',

@@ -374,6 +374,10 @@ maker:
       premium: Premio
     actions:
       generateInvoice: Genera Fattura
+    bank:
+      label: "Banca"
+      required: "Scegli una banca"
+      shortValidityWarning: "Il codice di questa banca è valido solo ${minutes} min — vai al bancomat prima di prenotare."
     twintScan:
       cardTitle: "Scansiona QR e importo ${code}"
       cardBody: "Punta la fotocamera verso la schermata di pagamento. L'app compilerà automaticamente il codice e, quando visibile, l'importo."
@@ -580,6 +584,7 @@ taker:
     step3: Ricevi Pagamento
 
   submitBlik:
+    generateInBank: "Genera il codice di prelievo nell'app ${bank}."
     title: "Inserisci ${code} a ${digits} cifre"
     label: Codice ${code}
     instruction: "Inserisci ${code} prima che scada il tempo..."
@@ -1017,6 +1022,8 @@ settings:
   offerCreation:
     title: Creazione offerte
     defaultCategory: Categoria predefinita
+    defaultBank: Banca predefinita
+    defaultBankNone: "Nessuna (scegli per offerta)"
     preferredCoordinator: Coordinatore preferito
     automaticCoordinator: Più affidabile
     automaticCoordinatorDescription: "Sceglie il coordinatore con la migliore reputazione, combinando le tue offerte completate e l'attività complessiva della rete."
@@ -1033,6 +1040,7 @@ settings:
       online: Servizio/prodotto online
     dialogs:
       selectCategory: Seleziona la categoria predefinita
+      selectBank: Seleziona la banca predefinita
       selectCoordinator: Seleziona il coordinatore preferito
       premiumHint: Inserisci una percentuale come 1.5. I valori vengono arrotondati a passi di 0.5%.
       premiumHelper: Applicato quando il premio di prezzo è abilitato e limitato al massimo del coordinatore selezionato.

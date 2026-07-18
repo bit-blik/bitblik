@@ -1044,6 +1044,7 @@ class _Translations$maker$amountForm$pl extends Translations$maker$amountForm$en
 	@override late final _Translations$maker$amountForm$progress$pl progress = _Translations$maker$amountForm$progress$pl._(_root);
 	@override late final _Translations$maker$amountForm$labels$pl labels = _Translations$maker$amountForm$labels$pl._(_root);
 	@override late final _Translations$maker$amountForm$actions$pl actions = _Translations$maker$amountForm$actions$pl._(_root);
+	@override late final _Translations$maker$amountForm$bank$pl bank = _Translations$maker$amountForm$bank$pl._(_root);
 	@override late final _Translations$maker$amountForm$twintScan$pl twintScan = _Translations$maker$amountForm$twintScan$pl._(_root);
 	@override late final _Translations$maker$amountForm$tooltips$pl tooltips = _Translations$maker$amountForm$tooltips$pl._(_root);
 	@override late final _Translations$maker$amountForm$category$pl category = _Translations$maker$amountForm$category$pl._(_root);
@@ -1197,6 +1198,7 @@ class _Translations$taker$submitBlik$pl extends Translations$taker$submitBlik$en
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override String generateInBank({required Object bank}) => 'Wygeneruj kod wypłaty w aplikacji ${bank}.';
 	@override String title({required Object digits, required Object code}) => 'Wpisz ${digits}-cyfr ${code}';
 	@override String label({required Object code}) => 'Kod ${code}';
 	@override String instruction({required Object code}) => 'Wprowadź ${code} zanim upłynie czas...';
@@ -1596,6 +1598,8 @@ class _Translations$settings$offerCreation$pl extends Translations$settings$offe
 	// Translations
 	@override String get title => 'Tworzenie ofert';
 	@override String get defaultCategory => 'Domyślna kategoria';
+	@override String get defaultBank => 'Domyślny bank';
+	@override String get defaultBankNone => 'Brak (wybierz przy każdej ofercie)';
 	@override String get preferredCoordinator => 'Preferowany koordynator';
 	@override String get automaticCoordinator => 'Najbardziej niezawodny';
 	@override String get automaticCoordinatorDescription => 'Wybiera koordynatora z najlepszą historią, uwzględniając Twoje własne zrealizowane oferty oraz ogólną aktywność w sieci.';
@@ -1964,6 +1968,18 @@ class _Translations$maker$amountForm$actions$pl extends Translations$maker$amoun
 
 	// Translations
 	@override String get generateInvoice => 'Wygeneruj Fakturę';
+}
+
+// Path: maker.amountForm.bank
+class _Translations$maker$amountForm$bank$pl extends Translations$maker$amountForm$bank$en {
+	_Translations$maker$amountForm$bank$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Bank';
+	@override String get required => 'Wybierz bank';
+	@override String shortValidityWarning({required Object minutes}) => 'Kod tego banku jest ważny tylko ${minutes} min — bądź przy bankomacie, zanim zarezerwujesz.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -2758,6 +2774,7 @@ class _Translations$settings$offerCreation$dialogs$pl extends Translations$setti
 
 	// Translations
 	@override String get selectCategory => 'Wybierz domyślną kategorię';
+	@override String get selectBank => 'Wybierz domyślny bank';
 	@override String get selectCoordinator => 'Wybierz preferowanego koordynatora';
 	@override String get premiumHint => 'Wpisz wartość procentową, np. 1.5. Wartości są zaokrąglane do kroków co 0.5%.';
 	@override String get premiumHelper => 'Stosowane po włączeniu premii cenowej i ograniczane do maksimum wybranego koordynatora.';
@@ -3157,6 +3174,9 @@ extension on TranslationsPl {
 			'maker.amountForm.labels.tapToSelect' => 'Kliknij, aby wybrać',
 			'maker.amountForm.labels.premium' => 'Premia',
 			'maker.amountForm.actions.generateInvoice' => 'Wygeneruj Fakturę',
+			'maker.amountForm.bank.label' => 'Bank',
+			'maker.amountForm.bank.required' => 'Wybierz bank',
+			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Kod tego banku jest ważny tylko ${minutes} min — bądź przy bankomacie, zanim zarezerwujesz.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Zeskanuj QR ${code} i kwotę',
 			'maker.amountForm.twintScan.cardBody' => 'Skieruj kamerę na ekran płatności. Aplikacja uzupełni kod oraz, jeśli będzie widoczna, także kwotę.',
 			'maker.amountForm.twintScan.scanButton' => 'Skanuj aparatem',
@@ -3299,6 +3319,7 @@ extension on TranslationsPl {
 			'taker.progress.step1' => ({required Object code}) => 'Wyślij ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Potwierdź ${code}',
 			'taker.progress.step3' => 'Otrzymaj płatność',
+			'taker.submitBlik.generateInBank' => ({required Object bank}) => 'Wygeneruj kod wypłaty w aplikacji ${bank}.',
 			'taker.submitBlik.title' => ({required Object digits, required Object code}) => 'Wpisz ${digits}-cyfr ${code}',
 			'taker.submitBlik.label' => ({required Object code}) => 'Kod ${code}',
 			'taker.submitBlik.instruction' => ({required Object code}) => 'Wprowadź ${code} zanim upłynie czas...',
@@ -3399,12 +3420,12 @@ extension on TranslationsPl {
 			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Wyślij nowy kod ${code}',
 			'twint.waitConfirmation.navigatedHome' => 'Przeniesiono na stronę główną.',
 			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => 'Kod ${code} wygasł',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'Twórca oferty nie otrzymał kodu ${code}, więc nie mógł go użyć.',
 			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'Koniec rezerwacji za',
 			'twint.waitConfirmation.expiredSentWarning' => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?',
 			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Jeśli chcesz spróbować ponownie z nowym kodem ${code}, odnów rezerwację.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.expiredInstruction2' => 'Jeśli nie chcesz już dokończyć tej transakcji, anuluj rezerwację.',
 			'twint.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'Jeśli płatność ${code} została pobrana z Twojego konta bankowego, nie martw się, bitcoin jest nadal bezpiecznie zablokowany u koordynatora.',
 			'twint.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Oznaczyłeś ${code} jako opłacony',
@@ -3578,6 +3599,8 @@ extension on TranslationsPl {
 			'settings.title' => 'Ustawienia',
 			'settings.offerCreation.title' => 'Tworzenie ofert',
 			'settings.offerCreation.defaultCategory' => 'Domyślna kategoria',
+			'settings.offerCreation.defaultBank' => 'Domyślny bank',
+			'settings.offerCreation.defaultBankNone' => 'Brak (wybierz przy każdej ofercie)',
 			'settings.offerCreation.preferredCoordinator' => 'Preferowany koordynator',
 			'settings.offerCreation.automaticCoordinator' => 'Najbardziej niezawodny',
 			'settings.offerCreation.automaticCoordinatorDescription' => 'Wybiera koordynatora z najlepszą historią, uwzględniając Twoje własne zrealizowane oferty oraz ogólną aktywność w sieci.',
@@ -3592,6 +3615,7 @@ extension on TranslationsPl {
 			'settings.offerCreation.categoryOptions.atm' => 'Wypłata z bankomatu',
 			'settings.offerCreation.categoryOptions.online' => 'Usługa/produkt online',
 			'settings.offerCreation.dialogs.selectCategory' => 'Wybierz domyślną kategorię',
+			'settings.offerCreation.dialogs.selectBank' => 'Wybierz domyślny bank',
 			'settings.offerCreation.dialogs.selectCoordinator' => 'Wybierz preferowanego koordynatora',
 			'settings.offerCreation.dialogs.premiumHint' => 'Wpisz wartość procentową, np. 1.5. Wartości są zaokrąglane do kroków co 0.5%.',
 			'settings.offerCreation.dialogs.premiumHelper' => 'Stosowane po włączeniu premii cenowej i ograniczane do maksimum wybranego koordynatora.',

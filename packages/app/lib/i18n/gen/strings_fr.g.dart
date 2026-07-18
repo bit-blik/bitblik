@@ -1033,6 +1033,7 @@ class _Translations$maker$amountForm$fr extends Translations$maker$amountForm$en
 	@override late final _Translations$maker$amountForm$progress$fr progress = _Translations$maker$amountForm$progress$fr._(_root);
 	@override late final _Translations$maker$amountForm$labels$fr labels = _Translations$maker$amountForm$labels$fr._(_root);
 	@override late final _Translations$maker$amountForm$actions$fr actions = _Translations$maker$amountForm$actions$fr._(_root);
+	@override late final _Translations$maker$amountForm$bank$fr bank = _Translations$maker$amountForm$bank$fr._(_root);
 	@override late final _Translations$maker$amountForm$twintScan$fr twintScan = _Translations$maker$amountForm$twintScan$fr._(_root);
 	@override late final _Translations$maker$amountForm$tooltips$fr tooltips = _Translations$maker$amountForm$tooltips$fr._(_root);
 	@override late final _Translations$maker$amountForm$category$fr category = _Translations$maker$amountForm$category$fr._(_root);
@@ -1189,6 +1190,7 @@ class _Translations$taker$submitBlik$fr extends Translations$taker$submitBlik$en
 	final TranslationsFr _root; // ignore: unused_field
 
 	// Translations
+	@override String generateInBank({required Object bank}) => 'Générez le code de retrait dans votre application ${bank}.';
 	@override String title({required Object code, required Object digits}) => 'Saisissez le ${code} à ${digits} chiffres';
 	@override String label({required Object code}) => 'Code ${code}';
 	@override String instruction({required Object code}) => 'Saisissez le ${code} avant la fin du délai...';
@@ -1588,6 +1590,8 @@ class _Translations$settings$offerCreation$fr extends Translations$settings$offe
 	// Translations
 	@override String get title => 'Création d\'offres';
 	@override String get defaultCategory => 'Catégorie par défaut';
+	@override String get defaultBank => 'Banque par défaut';
+	@override String get defaultBankNone => 'Aucune (choisir par offre)';
 	@override String get preferredCoordinator => 'Coordinateur préféré';
 	@override String get automaticCoordinator => 'Le plus fiable';
 	@override String get automaticCoordinatorDescription => 'Choisit le coordinateur avec le meilleur historique, en combinant vos propres offres terminées et l\'activité globale du réseau.';
@@ -1968,6 +1972,18 @@ class _Translations$maker$amountForm$actions$fr extends Translations$maker$amoun
 
 	// Translations
 	@override String get generateInvoice => 'Générer la facture';
+}
+
+// Path: maker.amountForm.bank
+class _Translations$maker$amountForm$bank$fr extends Translations$maker$amountForm$bank$en {
+	_Translations$maker$amountForm$bank$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Banque';
+	@override String get required => 'Veuillez choisir une banque';
+	@override String shortValidityWarning({required Object minutes}) => 'Le code de cette banque n\'est valable que ${minutes} min — soyez au distributeur avant de réserver.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -2784,6 +2800,7 @@ class _Translations$settings$offerCreation$dialogs$fr extends Translations$setti
 
 	// Translations
 	@override String get selectCategory => 'Sélectionner la catégorie par défaut';
+	@override String get selectBank => 'Sélectionner la banque par défaut';
 	@override String get selectCoordinator => 'Sélectionner le coordinateur préféré';
 	@override String get premiumHint => 'Saisissez un pourcentage comme 1.5. Les valeurs sont arrondies par pas de 0.5%.';
 	@override String get premiumHelper => 'Appliquée lorsque la tarification avec prime est activée et plafonnée par le maximum du coordinateur sélectionné.';
@@ -3183,6 +3200,9 @@ extension on TranslationsFr {
 			'maker.amountForm.labels.tapToSelect' => 'Touchez pour sélectionner',
 			'maker.amountForm.labels.premium' => 'Prime',
 			'maker.amountForm.actions.generateInvoice' => 'Générer la facture',
+			'maker.amountForm.bank.label' => 'Banque',
+			'maker.amountForm.bank.required' => 'Veuillez choisir une banque',
+			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Le code de cette banque n\'est valable que ${minutes} min — soyez au distributeur avant de réserver.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Scanner le QR ${code} et le montant',
 			'maker.amountForm.twintScan.cardBody' => 'Pointez la caméra vers l\'écran de paiement. L\'application préremplira le code et, s\'il est visible, le montant.',
 			'maker.amountForm.twintScan.scanButton' => 'Scanner avec la caméra',
@@ -3340,6 +3360,7 @@ extension on TranslationsFr {
 			'taker.progress.step1' => ({required Object code}) => 'Envoyer le ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Confirmer le ${code}',
 			'taker.progress.step3' => 'Être payé',
+			'taker.submitBlik.generateInBank' => ({required Object bank}) => 'Générez le code de retrait dans votre application ${bank}.',
 			'taker.submitBlik.title' => ({required Object code, required Object digits}) => 'Saisissez le ${code} à ${digits} chiffres',
 			'taker.submitBlik.label' => ({required Object code}) => 'Code ${code}',
 			'taker.submitBlik.instruction' => ({required Object code}) => 'Saisissez le ${code} avant la fin du délai...',
@@ -3425,12 +3446,12 @@ extension on TranslationsFr {
 			'twint.flow.takerExpired.cancelDialog.confirmButton' => 'Oui, annuler',
 			'twint.waitConfirmation.title' => 'En attente du maker',
 			'twint.waitConfirmation.statusLabel' => ({required Object status}) => 'Statut de l\'offre : ${status}',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'En attente de la confirmation du maker : ${seconds} s',
 			'twint.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'En attente que le maker confirme que le ${code} est correct. Temps restant : ${seconds}s',
 			'twint.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'TRÈS IMPORTANT : assurez-vous de n\'accepter qu\'une confirmation ${code} de ${amount} ${currency}',
 			'twint.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'TRÈS IMPORTANT : dans votre application bancaire, assurez-vous de confirmer un paiement ${code} d\'exactement ${amount} ${currency}.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'Le maker doit maintenant le saisir dans le terminal de paiement dans les ${minutes} minutes. Vous devrez ensuite accepter le code ${code} dans votre application bancaire.',
 			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'Le maker doit maintenant saisir votre code ${code} au distributeur dans les ${minutes} minutes.',
 			'twint.waitConfirmation.categoryReminder.atm' => 'Rappel offre distributeur : votre banque peut encore vous demander d\'approuver des frais de distributeur supplémentaires en plus du montant principal.',
@@ -3617,6 +3638,8 @@ extension on TranslationsFr {
 			'settings.title' => 'Réglages',
 			'settings.offerCreation.title' => 'Création d\'offres',
 			'settings.offerCreation.defaultCategory' => 'Catégorie par défaut',
+			'settings.offerCreation.defaultBank' => 'Banque par défaut',
+			'settings.offerCreation.defaultBankNone' => 'Aucune (choisir par offre)',
 			'settings.offerCreation.preferredCoordinator' => 'Coordinateur préféré',
 			'settings.offerCreation.automaticCoordinator' => 'Le plus fiable',
 			'settings.offerCreation.automaticCoordinatorDescription' => 'Choisit le coordinateur avec le meilleur historique, en combinant vos propres offres terminées et l\'activité globale du réseau.',
@@ -3631,6 +3654,7 @@ extension on TranslationsFr {
 			'settings.offerCreation.categoryOptions.atm' => 'Retrait au distributeur',
 			'settings.offerCreation.categoryOptions.online' => 'Service/produit en ligne',
 			'settings.offerCreation.dialogs.selectCategory' => 'Sélectionner la catégorie par défaut',
+			'settings.offerCreation.dialogs.selectBank' => 'Sélectionner la banque par défaut',
 			'settings.offerCreation.dialogs.selectCoordinator' => 'Sélectionner le coordinateur préféré',
 			'settings.offerCreation.dialogs.premiumHint' => 'Saisissez un pourcentage comme 1.5. Les valeurs sont arrondies par pas de 0.5%.',
 			'settings.offerCreation.dialogs.premiumHelper' => 'Appliquée lorsque la tarification avec prime est activée et plafonnée par le maximum du coordinateur sélectionné.',

@@ -44,6 +44,19 @@ Offer reservedOfferFromResult(
         merged.coordinatorPubkey == 'unknown_coordinator') {
       merged = merged.copyWith(coordinatorPubkey: listed.coordinatorPubkey);
     }
+    // The coordinator doesn't persist the market id / bank in a column, so its
+    // RPC response can come back with them null. Keep the values resolved from
+    // the listed offer's wire tags (`y` → market, `bank`), otherwise
+    // paymentSystemForOffer falls back to currency and an SK (EUR) offer
+    // wrongly resolves to MB WAY (10-digit codes).
+    if ((merged.paymentSystemId == null || merged.paymentSystemId!.isEmpty) &&
+        listed.paymentSystemId != null) {
+      merged = merged.copyWith(paymentSystemId: listed.paymentSystemId);
+    }
+    if ((merged.bankId == null || merged.bankId!.isEmpty) &&
+        listed.bankId != null) {
+      merged = merged.copyWith(bankId: listed.bankId);
+    }
     return merged;
   }
   return listed.copyWith(

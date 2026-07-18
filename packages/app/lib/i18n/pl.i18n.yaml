@@ -373,6 +373,10 @@ maker:
       premium: Premia
     actions:
       generateInvoice: Wygeneruj Fakturę
+    bank:
+      label: "Bank"
+      required: "Wybierz bank"
+      shortValidityWarning: "Kod tego banku jest ważny tylko ${minutes} min — bądź przy bankomacie, zanim zarezerwujesz."
     twintScan:
       cardTitle: "Zeskanuj QR ${code} i kwotę"
       cardBody: "Skieruj kamerę na ekran płatności. Aplikacja uzupełni kod oraz, jeśli będzie widoczna, także kwotę."
@@ -580,6 +584,7 @@ taker:
     step3: Otrzymaj płatność
   
   submitBlik:
+    generateInBank: "Wygeneruj kod wypłaty w aplikacji ${bank}."
     title: "Wpisz ${digits}-cyfr ${code}"
     label: Kod ${code}
     instruction: "Wprowadź ${code} zanim upłynie czas..."
@@ -1018,6 +1023,8 @@ settings:
   offerCreation:
     title: Tworzenie ofert
     defaultCategory: Domyślna kategoria
+    defaultBank: Domyślny bank
+    defaultBankNone: "Brak (wybierz przy każdej ofercie)"
     preferredCoordinator: Preferowany koordynator
     automaticCoordinator: Najbardziej niezawodny
     automaticCoordinatorDescription: "Wybiera koordynatora z najlepszą historią, uwzględniając Twoje własne zrealizowane oferty oraz ogólną aktywność w sieci."
@@ -1034,6 +1041,7 @@ settings:
       online: Usługa/produkt online
     dialogs:
       selectCategory: Wybierz domyślną kategorię
+      selectBank: Wybierz domyślny bank
       selectCoordinator: Wybierz preferowanego koordynatora
       premiumHint: Wpisz wartość procentową, np. 1.5. Wartości są zaokrąglane do kroków co 0.5%.
       premiumHelper: Stosowane po włączeniu premii cenowej i ograniczane do maksimum wybranego koordynatora.

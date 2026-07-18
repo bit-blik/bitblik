@@ -280,7 +280,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     try {
       final preferences = await AppPreferencesStore.load();
+      // Explicit default (offer-creation settings) wins over the last-used bank.
       final rememberedBank =
+          await AppPreferencesStore.loadDefaultBank(_method.id) ??
           await AppPreferencesStore.loadLastBank(_method.id);
       if (!mounted) return;
       setState(() {

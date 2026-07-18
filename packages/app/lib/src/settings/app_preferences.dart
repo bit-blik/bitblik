@@ -219,6 +219,9 @@ class AppPreferencesStore {
   static String _lastBankKey(String marketId) =>
       'offer_creation_last_bank_$marketId';
 
+  static String _defaultBankKey(String marketId) =>
+      'offer_creation_default_bank_$marketId';
+
   /// The bank the maker last used for [marketId] (bank-scoped markets), so the
   /// bank picker can default to it. Null if never chosen.
   static Future<String?> loadLastBank(String marketId) async {
@@ -230,6 +233,24 @@ class AppPreferencesStore {
   static Future<void> saveLastBank(String marketId, String bankId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_lastBankKey(marketId), bankId);
+  }
+
+  /// An explicit default bank for [marketId] set in offer-creation settings.
+  /// When set it takes precedence over the last-used bank for the new-offer
+  /// picker. Null when the user hasn't pinned one.
+  static Future<String?> loadDefaultBank(String marketId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getString(_defaultBankKey(marketId));
+    return (v == null || v.isEmpty) ? null : v;
+  }
+
+  static Future<void> saveDefaultBank(String marketId, String? bankId) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (bankId == null || bankId.isEmpty) {
+      await prefs.remove(_defaultBankKey(marketId));
+    } else {
+      await prefs.setString(_defaultBankKey(marketId), bankId);
+    }
   }
 
   /// Whether the user has ever explicitly chosen a market/country. False on a

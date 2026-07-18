@@ -977,9 +977,32 @@ class _MakerConfirmPaymentScreenState
             Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                text,
-                style: TextStyle(fontSize: 14, color: Colors.blue.shade900),
+              child: Builder(
+                builder: (context) {
+                  final base = TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue.shade900,
+                  );
+                  final bankName = bank?.label ?? _method.label;
+                  final idx = text!.indexOf(bankName);
+                  // Bold only the bank name inside the instruction, if present.
+                  if (idx < 0) return Text(text, style: base);
+                  return Text.rich(
+                    TextSpan(
+                      style: base,
+                      children: [
+                        TextSpan(text: text.substring(0, idx)),
+                        TextSpan(
+                          text: bankName,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        TextSpan(
+                          text: text.substring(idx + bankName.length),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -996,7 +1019,11 @@ class _MakerConfirmPaymentScreenState
                   mode: LaunchMode.externalApplication,
                 ),
             icon: const Icon(Icons.map_outlined, size: 18),
-            label: Text(t.maker.confirmPayment.findAtms(bank: _method.label)),
+            label: Text(
+              t.maker.confirmPayment.findAtms(
+                bank: bank?.label ?? _method.label,
+              ),
+            ),
           ),
         ),
       ],

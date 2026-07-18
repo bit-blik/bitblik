@@ -255,6 +255,8 @@ final Map<String, Map<String, Map<FlowActor, FlowBody>>> _flowBodies = {
   },
   'blik': _codeFlowBodies,
   'mbway': _codeFlowBodies,
+  // Slovak cardless ATM: same pull-style code flow + state names as MB WAY.
+  'sk_atm': _codeFlowBodies,
 };
 
 FlowBody _bodyFor(String flowId, String state, FlowActor role) =>

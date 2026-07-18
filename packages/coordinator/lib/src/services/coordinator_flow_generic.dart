@@ -257,6 +257,10 @@ class GenericOfferFlow implements OfferFlow {
     // toRpcJson serializes the enum status (unknown for generic-only states);
     // broadcast the raw state instead, matching _publishStatusUpdate.
     json['status'] = updated.statusRaw;
+    // The market id isn't a DB column, so a re-fetched offer serializes it null;
+    // stamp this coordinator's market so the taker resolves the right method
+    // (EUR alone is ambiguous — SK vs MB WAY).
+    json['payment_system'] = _c._paymentSystem.id;
     // Back-compat: legacy reserve returned reserved_at as epoch ms (int); old
     // clients parse it as int. toRpcJson emits ISO; echo the int form too.
     if (updated.reservedAt != null) {

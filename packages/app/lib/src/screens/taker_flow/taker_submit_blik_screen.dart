@@ -831,6 +831,81 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   ],
                 ),
               ),
+
+              // Which bank the taker must generate the withdrawal code in
+              // (bank-scoped markets, e.g. SK cardless ATM).
+              ...(() {
+                final bank = bankForOffer(activeOffer);
+                if (bank == null) return const <Widget>[];
+                return [
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Builder(
+                            builder: (context) {
+                              final color =
+                                  Theme.of(context).colorScheme.primary;
+                              final full = t.taker.submitBlik.generateInBank(
+                                bank: bank.label,
+                              );
+                              // Bold only the bank name; the rest stays normal.
+                              final idx = full.indexOf(bank.label);
+                              final base = TextStyle(fontSize: 14, color: color);
+                              if (idx < 0) {
+                                return Text(full, style: base);
+                              }
+                              return Text.rich(
+                                TextSpan(
+                                  style: base,
+                                  children: [
+                                    TextSpan(text: full.substring(0, idx)),
+                                    TextSpan(
+                                      text: bank.label,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: full.substring(
+                                        idx + bank.label.length,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ];
+              })(),
               const SizedBox(height: 30),
 
               // Circular Countdown Timer

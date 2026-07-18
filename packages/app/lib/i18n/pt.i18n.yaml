@@ -374,6 +374,10 @@ maker:
       premium: Premium
     actions:
       generateInvoice: Gerar invoice
+    bank:
+      label: "Banco"
+      required: "Escolhe um banco"
+      shortValidityWarning: "O código deste banco é válido apenas ${minutes} min — está no multibanco antes de reservar."
     twintScan:
       cardTitle: "Ler QR ${code} e montante"
       cardBody: "Aponte a câmara para o ecrã de pagamento. A app preencherá automaticamente o código e, quando visível, o montante."
@@ -596,6 +600,7 @@ taker:
     step3: Receber pagamento
 
   submitBlik:
+    generateInBank: "Gera o código de levantamento na app ${bank}."
     title: "Introduza o ${code} de ${digits} dígitos"
     label: Código ${code}
     instruction: "Introduza o ${code} antes de o tempo terminar..."
@@ -1033,6 +1038,8 @@ settings:
   offerCreation:
     title: Criação de ofertas
     defaultCategory: Categoria predefinida
+    defaultBank: Banco predefinido
+    defaultBankNone: "Nenhum (escolher por oferta)"
     preferredCoordinator: Coordenador preferido
     automaticCoordinator: Mais fiável
     automaticCoordinatorDescription: "Escolhe o coordenador com o melhor historial, combinando as suas próprias ofertas concluídas e a atividade global da rede."
@@ -1049,6 +1056,7 @@ settings:
       online: Serviço/produto online
     dialogs:
       selectCategory: Selecionar categoria predefinida
+      selectBank: Selecionar banco predefinido
       selectCoordinator: Selecionar coordenador preferido
       premiumHint: Introduza uma percentagem como 1,5. Os valores são arredondados a passos de 0,5%.
       premiumHelper: Aplicado quando os preços premium estão ativados e limitado pelo máximo do coordenador selecionado.
