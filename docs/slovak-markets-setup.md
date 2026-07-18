@@ -9,12 +9,17 @@ sats. Návod je pre bežných používateľov aj pre operátorov koordinátora.
 ## 1. Ako to funguje (prehľad)
 
 BitBlik je P2P burza: jedna strana dá **Lightning sats**, druhá **hotovosť z
-bankomatu**. Slovenské trhy kopírujú model MB WAY (Portugalsko) — výber z
-bankomatu bez karty jednorazovým **6‑miestnym kódom**, ktorý je **zdieľateľný
-tretej osobe** a funguje **len v bankomatoch danej banky**.
+bankomatu**. Slovenský trh (**Bitvýber**) kopíruje model MB WAY (Portugalsko) —
+výber z bankomatu bez karty jednorazovým **6‑miestnym kódom**, ktorý je
+**zdieľateľný tretej osobe** a funguje **len v bankomatoch danej banky**.
 
-Preto je každá banka **samostatný trh** (Tatra banka / SLSP / VÚB) — kód z
-Tatra banky funguje len v Tatra bankomatoch, atď.
+Slovensko je **jeden trh** (`sk`, wire tag `Bitvyber`) obsluhovaný **jedným
+koordinátorom**, ktorý pokrýva Tatra banku, Slovenskú sporiteľňu aj VÚB. **Banku
+vyberá maker pri vytváraní ponuky** — on stojí pri bankomate danej banky, takže
+sieť bankomatov je vlastnosťou ponuky. Každá banka má vlastnú platnosť kódu
+(Tatra 20 min, SLSP 15 min, VÚB 3 min); jeden flow obsluhuje všetky. Kód z Tatra
+banky funguje len v Tatra bankomatoch, atď., takže taker berie len ponuky banky,
+ktorej appku má.
 
 ### Dve roly a tok peňazí (ATM výber)
 
@@ -56,14 +61,15 @@ Odkazy na stiahnutie:
   ```
 
 Inštalácia + overenie integrity: viď [`dist/README.md`](../dist/README.md).
-Appka sa otvorí rovno na trhu **Tatra banka**; SLSP/VÚB prepneš v Settings.
+Appka sa otvorí rovno na trhu **Slovensko (Bitvýber)**; banku vyberá maker pri ponuke.
 
 **B) Build zo zdrojáku** (iOS/desktop/web alebo vlastná úprava) — viď sekcia 4.
 
-### 2.2 Výber banky
-V appke: **Settings → Country / Payment System** → vyber
-**🇸🇰 Tatra banka / Slovenská sporiteľňa / VÚB banka**. Tým sa prepne mena na
-**EUR**, dĺžka kódu na 6 a ponuky sa filtrujú len na daný trh.
+### 2.2 Výber trhu
+V appke: **Settings → Country / Payment System** → vyber **🇸🇰 Slovensko
+(Bitvýber)**. Tým sa prepne mena na **EUR** a dĺžka kódu na 6. Banku tu už
+nevyberáš — **maker ju volí pri každej ponuke** a taker ju vidí ako odznak pri
+ponuke v zozname.
 
 ### 2.3 Lightning peňaženka
 Pripoj peňaženku cez **NWC** (Nostr Wallet Connect) — napr. Alby Go:
@@ -80,7 +86,9 @@ Pripoj peňaženku cez **NWC** (Nostr Wallet Connect) — napr. Alby Go:
 4. Kód má obmedzenú platnosť (SLSP 15 min, Tatra 20 min) — koordinuj s makerom.
 
 ### 2.5 Maker (nákup hotovosti za sats)
-1. **Create offer** → suma v EUR, kategória ATM, vyber koordinátora danej banky.
+1. **Create offer** → suma v EUR, kategória ATM, **vyber banku**, ktorej
+   bankomat máš po ruke (Tatra banka / SLSP / VÚB). Banka je fixná pre ponuku;
+   prednastavené sumy sa prispôsobia bankomatovým nominálom danej banky.
 2. Zaplať **hold invoice** zo svojej Lightning peňaženky (sats sa uzamknú).
 3. Počkaj, kým taker odovzdá kód (`blikReceived`), a **vyzdvihni kód** v appke.
 4. Choď k **bankomatu danej banky**, zvoľ výber bez karty / mobilom a **zadaj
@@ -91,11 +99,13 @@ Pripoj peňaženku cez **NWC** (Nostr Wallet Connect) — napr. Alby Go:
 
 ---
 
-## 3. Pre operátora koordinátora (jeden na banku)
+## 3. Pre operátora koordinátora (jeden pre všetky slovenské banky)
 
-Každá banka = **jedno nasadenie koordinátora** s vlastným `PAYMENT_SYSTEM`.
-Klienti ho nájdu na spoločných discovery relayoch a filtrujú podľa
-`payment_system`, takže netreba nič extra na strane discovery.
+Slovensko = **jedno nasadenie koordinátora** (`PAYMENT_SYSTEM=sk`) obsluhujúce
+všetky banky. Klienti ho nájdu na spoločných discovery relayoch a filtrujú podľa
+`payment_system`, takže netreba nič extra na strane discovery. Operátor môže
+voliteľne obmedziť obsluhované banky cez `BANKS=tatrabanka,slsp` (nenastavené =
+všetky tri).
 
 ### 3.1 Požiadavky
 - **Lightning node**: LND (`admin.macaroon` + `tls.cert`) alebo NWC connection s
@@ -119,7 +129,6 @@ nak encode nsec `nak key generate`
 a vlož ho do `NOSTR_PRIVATE_KEY`.
 
 ### 3.3 Kľúčová konfigurácia (`docker-compose.yml`)
-Pre **Tatra banku** (analogicky `slsp` / `vub`):
 ```yaml
     environment:
       # --- Lightning ---
@@ -129,8 +138,10 @@ Pre **Tatra banku** (analogicky `slsp` / `vub`):
       DB_PORT: 5432
       DB_USER: user
       DB_PASSWORD: password
-      # --- Trh (JEDEN na nasadenie) ---
-      PAYMENT_SYSTEM: tatrabanka             # alebo: slsp | vub
+      # --- Trh (jedno nasadenie obsluhuje všetky slovenské banky) ---
+      PAYMENT_SYSTEM: sk
+      # Voliteľné: obmedz banky (nenastavené = tatrabanka + slsp + vub).
+      # BANKS: tatrabanka,slsp
       # CURRENCIES sa odvodí na EUR z trhu (netreba nastavovať)
       # --- Časovače prispôsobené dlhšiemu EUR kódu (15–20 min) ---
       RESERVATION_SECONDS: 120
@@ -144,7 +155,7 @@ Pre **Tatra banku** (analogicky `slsp` / `vub`):
       MAKER_FEE: 0.25
       TAKER_FEE: 0.75
       # --- Identita a relaye ---
-      NAME: Tatra banka koordinátor
+      NAME: Bitvýber koordinátor
       ICON_URL: https://.../icon.png
       NOSTR_PRIVATE_KEY: <TVOJ NSEC>
       NOSTR_RELAYS: wss://relay.primal.net,wss://nos.lol,wss://relay.damus.io
@@ -157,8 +168,8 @@ LND súbory pripoj cez volumes (`./tls.cert`, `./admin.macaroon`), ako v example
 docker compose up -d
 docker compose logs -f coordinator     # over: "Resolved discovery relays", "Published coordinator info"
 ```
-Po štarte koordinátor publikuje inzerciu (kind 15125, `payment_system=tatrabanka`)
-na discovery relaye. SK appka ho zaradí do trhu „Tatra banka".
+Po štarte koordinátor publikuje inzerciu (kind 15125, `payment_system=sk`, `banks=tatrabanka,slsp,vub`)
+na discovery relaye. SK appka ho zaradí do jediného trhu **Slovensko (Bitvýber)**.
 
 ### 3.5 (Voliteľné) vlastná SK discovery identita
 V kóde je `kSlovakiaPubkeyHex` placeholder. Nahradenie **nie je nutné** pre
@@ -186,16 +197,16 @@ flutter analyze
 # Android APK — default trh = Tatra banka (pri 1. spustení appka ukáže výber trhu):
 flutter build apk --release \
   --flavor bitblik -t lib/main_bitblik.dart \
-  --dart-define=PAYMENT_SYSTEM=tatrabanka
+  --dart-define=PAYMENT_SYSTEM=sk
 # menšie APK per architektúru (arm64 ~44 MB, armeabi ~40 MB, x86_64 ~47 MB):
 flutter build apk --release --split-per-abi \
   --flavor bitblik -t lib/main_bitblik.dart \
-  --dart-define=PAYMENT_SYSTEM=tatrabanka
+  --dart-define=PAYMENT_SYSTEM=sk
 # Web:
-flutter build web   --dart-define=PAYMENT_SYSTEM=tatrabanka
+flutter build web   --dart-define=PAYMENT_SYSTEM=sk
 # Desktop (linux):
 flutter run -d linux --flavor bitblik -t lib/main_bitblik.dart \
-  --dart-define=PAYMENT_SYSTEM=tatrabanka
+  --dart-define=PAYMENT_SYSTEM=sk
 ```
 Výstup APK: `build/app/outputs/flutter-apk/`.
 
@@ -251,8 +262,9 @@ Overenie: stav prejde `settled → takerPaid`, takerovi prídu sats.
 ## 6. Poznámky a limity
 - **Nominály:** slovenské bankomaty bežne 10/20/50/100 € (€5 len Tatra/ČSOB).
   Sumy musia byť zložiteľné z týchto nominálov (napr. 30, 70, 500 áno; 15 nie).
-- **VÚB platnosť kódu** je nastavená provizórne na 15 min (research ju
-  nepotvrdil) — jednoriadková zmena v `payment_system.dart`, keď sa overí.
+- **VÚB platnosť kódu** je **3 min** (podľa FAQ na vub.sk) — veľmi tesné pre
+  dvojicu, taker nech je pri bankomate skôr, než rezervuje. Jednoriadková zmena
+  `BankSpec.validity` v `payment_system.dart`. Tatra 20 min, SLSP 15 min.
 - **Limit banky:** cardless výber máva strop ~€500 na výber; drž sumy pod ním.
 - **Discovery:** funguje cez spoločné bootstrap relaye aj s placeholder
   `kSlovakiaPubkeyHex`.
@@ -263,7 +275,7 @@ Overenie: stav prejde `settled → takerPaid`, takerovi prídu sats.
 
 ## 7. Zdroje / kód
 - Trhy: `packages/core/lib/src/payment/payment_system.dart`
-  (`kTatraBanka`, `kSlsp`, `kVub`).
+  (`kSlovakia` s per-bank `BankSpec` pre Tatra banku / SLSP / VÚB).
 - Discovery kľúč: `packages/core/lib/src/constants/relays.dart`.
 - Koordinátor: `packages/coordinator/README.md` + `docker-compose.example.yml`.
 - CLI: `skills/bitblik/references/` (commands, workflow).

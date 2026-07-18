@@ -682,7 +682,10 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: [
         ...GlobalMaterialLocalizations.delegates,
-        ndk_l10n.AppLocalizations.delegate,
+        // Wrapped so a market/device locale ndk doesn't translate (e.g. sk)
+        // falls back to English for ndk's own strings instead of warning
+        // "locale not supported by all localization delegates".
+        const _NdkLocalizationsFallbackDelegate(),
       ],
       builder:
           (context, child) => Stack(
@@ -2068,4 +2071,28 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     }
     return const RoleSelectionScreen();
   }
+}
+
+/// Wraps ndk_flutter's [ndk_l10n.AppLocalizations] delegate so it accepts any
+/// locale: for a locale ndk doesn't translate (it ships en/es/fr/ja/ru/zh —
+/// not sk), it loads its English strings instead of reporting the locale
+/// unsupported, which otherwise triggers Flutter's "not supported by all of its
+/// localization delegates" warning.
+class _NdkLocalizationsFallbackDelegate
+    extends LocalizationsDelegate<ndk_l10n.AppLocalizations> {
+  const _NdkLocalizationsFallbackDelegate();
+
+  @override
+  bool isSupported(Locale locale) => true;
+
+  @override
+  Future<ndk_l10n.AppLocalizations> load(Locale locale) {
+    final supported = ndk_l10n.AppLocalizations.supportedLocales
+        .any((l) => l.languageCode == locale.languageCode);
+    return ndk_l10n.AppLocalizations.delegate
+        .load(supported ? locale : const Locale('en'));
+  }
+
+  @override
+  bool shouldReload(_NdkLocalizationsFallbackDelegate old) => false;
 }

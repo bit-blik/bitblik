@@ -119,6 +119,12 @@ class CoordinatorService {
   /// messenger id. Set from `<MESSENGER>_CHANNEL_LINK` env vars.
   late final Map<String, String> _channelLinks;
 
+  /// Bank-scoped channel links advertised in get_info, `bankId → (messenger →
+  /// url)`. Set from `<MESSENGER>_CHANNEL_LINK_<BANKID>` env vars (e.g.
+  /// `TELEGRAM_CHANNEL_LINK_TATRABANKA`). Lets takers subscribe only to the
+  /// banks they hold; falls back to [_channelLinks] client-side.
+  late final Map<String, Map<String, String>> _bankChannelLinks;
+
   // Offer amount limits
   late final int _minAmountSats;
   late final int _maxAmountSats;
@@ -135,8 +141,95 @@ class CoordinatorService {
   /// market's clients filter to their own offers.
   PaymentSystem get paymentSystem => _paymentSystem;
 
-  /// Effective engine mode for this deployment: the method's
-  /// [PaymentSystem.flowEngineMode], optionally overridden by the FLOW_MODE env.
+  /// The bank ids this coordinator serves within a bank-scoped market. Empty
+  /// means it serves every bank the market's instrument defines. Set from the
+  /// `BANKS` env (comma list), validated against the instrument's bank list.
+  late final List<String> _servedBanks;
+
+  /// The instrument driving offers of [category], falling back to the market's
+  /// primary (first) instrument when the category is null or unmapped. The
+  /// fallback preserves pre-split behavior for legacy/older clients that omit a
+  /// category on markets with a single effective instrument (BLIK, MB WAY) or
+  /// several identical ones (TWINT shop/online) — the old market-level scalars
+  /// always resolved to that instrument regardless of category.
+  InstrumentSpec _instrumentForCategory(OfferCategory? category) =>
+      _paymentSystem.instrumentFor(category) ??
+      _paymentSystem.instruments.values.first;
+
+  /// The market's primary instrument — drives deployment-level flow config
+  /// (engine mode, flowId). Current markets have one flow across their
+  /// categories; a market with per-category flows would need the FlowRegistry
+  /// (deferred to the QR phase).
+  InstrumentSpec get _primaryInstrument => _paymentSystem.instruments.values.first;
+
+  /// Whether [offer]'s instrument has the maker supply the payment code upfront
+  /// (TWINT). Public so the RPC layer can gate code reveal without reaching for
+  /// deprecated market-level scalars.
+  bool offerUsesMakerProvidedCode(Offer offer) =>
+      _instrumentForCategory(offer.category).makerProvidesCode;
+
+  /// Bank ids this coordinator will accept on new offers: the configured
+  /// [_servedBanks] subset, or all of the market ATM instrument's banks when
+  /// unset. Empty for bank-agnostic markets.
+  List<String> get servedBanks {
+    if (_servedBanks.isNotEmpty) return _servedBanks;
+    return [for (final b in _instrumentForCategory(OfferCategory.atm).banks) b.id];
+  }
+
+  /// Flow timeout parameters this coordinator can resolve (yaml `after: $name`).
+  static const Set<String> _knownFlowDurationParams = {'code_validity'};
+
+  /// Resolve a timeout edge's duration for [offer]: a fixed `after:` int, or a
+  /// `$param` resolved per offer (today only `$code_validity`, from the offer's
+  /// bank). Null when the edge has neither (no timer) or an unknown param.
+  int? _resolveTimeoutSeconds(Offer offer, FlowTransition t) {
+    if (t.durationSeconds != null) return t.durationSeconds;
+    final param = t.durationParam;
+    if (param == null) return null;
+    switch (param) {
+      case 'code_validity':
+        return _codeValidityForOffer(offer).inSeconds;
+      default:
+        AppLogger.warning(
+            'FLOW ENGINE: unknown timeout param "\$$param" for offer '
+            '${offer.id}; no timer armed.');
+        return null;
+    }
+  }
+
+  /// The code-validity window for [offer] — its bank's override, else the
+  /// instrument default. Drives the `$code_validity` flow timeouts so Tatra /
+  /// SLSP / VÚB get 20 / 15 / 3 minutes from one flow.
+  Duration _codeValidityForOffer(Offer offer) {
+    final instrument = _instrumentForCategory(offer.category);
+    return instrument.validityFor(instrument.bankById(offer.bankId));
+  }
+
+  /// Validate the maker-chosen [bank] for a new offer in [category]. Returns the
+  /// bank id to store (null for bank-agnostic instruments). Throws when a
+  /// bank-scoped instrument is missing a valid, served bank.
+  String? _resolveOfferBank(String? bank, OfferCategory? category) {
+    final instrument = _instrumentForCategory(category);
+    if (!instrument.hasBanks) return null;
+    final normalized = bank?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      throw Exception(
+          'A bank is required for ${_paymentSystem.id} offers (one of: '
+          '${servedBanks.join(', ')}).');
+    }
+    if (instrument.bankById(normalized) == null) {
+      throw Exception('Unknown bank "$normalized" for ${_paymentSystem.id}.');
+    }
+    if (!servedBanks.contains(normalized)) {
+      throw Exception(
+          'This coordinator does not serve bank "$normalized" '
+          '(served: ${servedBanks.join(', ')}).');
+    }
+    return normalized;
+  }
+
+  /// Effective engine mode for this deployment: the primary instrument's
+  /// [InstrumentSpec.flowEngineMode], optionally overridden by the FLOW_MODE env.
   late final FlowEngineMode _flowEngineMode;
 
   static FlowEngineMode? _parseFlowMode(String? raw) {
@@ -437,6 +530,41 @@ class CoordinatorService {
     _paymentSystem = paymentSystemById(
         _paymentSystemIdOverride ?? _env['PAYMENT_SYSTEM']?.trim());
 
+    // Bank subset served by this deployment (bank-scoped markets only, e.g. SK).
+    // `BANKS=tatrabanka,slsp` serves those; unset serves every bank the market's
+    // ATM instrument defines. Unknown ids are rejected at startup.
+    final atmInstrument = _paymentSystem.instrumentFor(OfferCategory.atm) ??
+        _paymentSystem.instrumentFor(null);
+    final knownBankIds = {
+      for (final b in atmInstrument?.banks ?? const []) b.id,
+    };
+    _servedBanks = (_env['BANKS']?.split(',') ?? const <String>[])
+        .map((b) => b.trim())
+        .where((b) => b.isNotEmpty)
+        .toList();
+    final unknownBanks =
+        _servedBanks.where((b) => !knownBankIds.contains(b)).toList();
+    if (unknownBanks.isNotEmpty) {
+      throw StateError(
+          'BANKS lists unknown bank(s) ${unknownBanks.join(', ')} for market '
+          '"${_paymentSystem.id}" (known: ${knownBankIds.join(', ')}).');
+    }
+
+    // Per-bank channel links from `<MESSENGER>_CHANNEL_LINK_<BANKID>` envs, only
+    // for the banks this deployment serves.
+    final servedBankIds =
+        _servedBanks.isNotEmpty ? _servedBanks : knownBankIds.toList();
+    _bankChannelLinks = {};
+    for (final bankId in servedBankIds) {
+      final links = <String, String>{};
+      for (final id in CoordinatorInfo.messengerIds) {
+        final envKey = '${id.toUpperCase()}_CHANNEL_LINK_${bankId.toUpperCase()}';
+        final url = (_env[envKey] ?? '').trim();
+        if (url.isNotEmpty) links[id] = url;
+      }
+      if (links.isNotEmpty) _bankChannelLinks[bankId] = links;
+    }
+
     // Engine mode defaults to the method's own [PaymentSystem.flowEngineMode],
     // but FLOW_MODE (`legacy`/`legacyEnum` | `generic`) overrides it per
     // deployment — e.g. to dry-run a method on the generic executor. The
@@ -444,7 +572,7 @@ class CoordinatorService {
     // loads, [isGenericFlow] stays false regardless of this setting.
     _flowEngineMode = _flowModeOverrideForTest ??
         _parseFlowMode(_env['FLOW_MODE']?.trim()) ??
-        _paymentSystem.flowEngineMode;
+        _primaryInstrument.flowEngineMode;
 
     _supportedCurrencies =
         (_env['CURRENCIES']?.split(',') ?? [_paymentSystem.currency])
@@ -513,9 +641,9 @@ class CoordinatorService {
 
   Future<void> _loadFlowEngine() async {
     final method = _paymentSystem.id;
-    final flowId = _paymentSystem.flowId;
+    final flowId = _primaryInstrument.flowId;
     // Was the mode set by FLOW_MODE, or by the method's own default?
-    final overridden = _flowEngineMode != _paymentSystem.flowEngineMode;
+    final overridden = _flowEngineMode != _primaryInstrument.flowEngineMode;
     final source = overridden ? 'FLOW_MODE env override' : 'method default';
 
     // When generic mode is explicitly intended, any failure to obtain a valid
@@ -934,7 +1062,7 @@ class CoordinatorService {
         // stamp is the base for its yaml lifespan timeout (code_received_at),
         // reset only when a fresh code is entered, not by reserve/revert.
         blikReceivedAt: pendingData['blikCode'] != null &&
-                _paymentSystem.makerProvidesCodeAtOfferCreation
+                _primaryInstrument.makerProvidesCode
             ? DateTime.now().toUtc()
             : null,
         fiatAmount: pendingData['fiatAmount'],
@@ -950,6 +1078,10 @@ class CoordinatorService {
         }(),
         premiumPercent:
             (pendingData['premiumPercent'] as num?)?.toDouble() ?? 0,
+        // Market id + maker-chosen bank, so per-offer instrument/bank
+        // resolution (validity windows, labels) works everywhere downstream.
+        paymentSystemId: _paymentSystem.id,
+        bankId: pendingData['bank'] as String?,
         clientVersion: pendingData['clientVersion'] as String?,
       );
       await _dbService.createOffer(offer);
@@ -1933,6 +2065,7 @@ class CoordinatorService {
     OfferCategory? category,
     double premiumPercent = 0,
     String? blikCode,
+    String? bank,
     String? clientVersion,
   }) async {
     // Resolve the currency: client-supplied, else this coordinator's method
@@ -1950,11 +2083,18 @@ class CoordinatorService {
       throw Exception(
           'Unsupported category ${category.name} for ${_paymentSystem.id}');
     }
-    if (_paymentSystem.makerProvidesCodeAtOfferCreation) {
+    // Resolve the payment instrument for this offer's category. Bank-scoped
+    // markets (SK ATM) require the maker to pick a served bank up front — they
+    // withdraw at that bank's ATM, so the bank is fixed for the offer.
+    final instrument = _instrumentForCategory(category);
+    final resolvedBank = _resolveOfferBank(bank, category);
+    if (instrument.makerProvidesCode) {
       final normalizedCode = blikCode?.trim() ?? '';
-      if (!_paymentSystem.isValidCode(normalizedCode)) {
+      final bankSpec = instrument.bankById(resolvedBank);
+      if (!instrument.validate(normalizedCode, bank: bankSpec)) {
         throw Exception(
-            'Invalid ${_paymentSystem.codeLabel} code. Expected exactly ${_paymentSystem.codeLength} digits.');
+            'Invalid ${instrument.codeLabel} code. Expected exactly '
+            '${instrument.codeLengthFor(bankSpec)} digits.');
       }
       blikCode = normalizedCode;
     }
@@ -2030,6 +2170,7 @@ class CoordinatorService {
         'fiatCurrency': fiatCurrency,
         'blikCode': blikCode,
         'category': category?.name,
+        'bank': resolvedBank,
         'premiumPercent': premium,
         'clientVersion': clientVersion,
         'actualPaymentHashForSubscription': returnedPaymentHashHex,
@@ -2077,12 +2218,14 @@ class CoordinatorService {
       maxPremiumPercent: _maxPremiumPercent,
       currencies: List<String>.from(_supportedCurrencies),
       paymentSystem: _paymentSystem.id,
+      banks: List<String>.from(_servedBanks),
       nostrNpub: null,
       icon: _coordinatorIconUrl.isNotEmpty ? _coordinatorIconUrl : null,
       version: (version != null && version.isNotEmpty) ? version : null,
       termsOfUsageNaddr:
           _termsOfUsageNaddr.isNotEmpty ? _termsOfUsageNaddr : null,
       channelLinks: _channelLinks,
+      bankChannelLinks: _bankChannelLinks,
     );
   }
 

@@ -138,7 +138,8 @@ class DatabaseService {
         fiat_amount NUMERIC,
         fiat_currency TEXT,
         category TEXT,
-        premium_percent NUMERIC NOT NULL DEFAULT 0
+        premium_percent NUMERIC NOT NULL DEFAULT 0,
+        bank TEXT
       );
     ''');
     await _connection!.execute('''
@@ -170,6 +171,13 @@ class DatabaseService {
     await _connection!.execute('''
       ALTER TABLE offers
       ADD COLUMN IF NOT EXISTS client_version TEXT;
+    ''');
+    // Bank the offer runs on, for bank-scoped markets (SK ATM: tatrabanka /
+    // slsp / vub). Chosen by the maker at creation; null for bank-agnostic
+    // markets. Drives the per-offer code-validity timeout.
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS bank TEXT;
     ''');
     // Composite (status, created_at DESC) serves both the status-equality
     // lookups (getOffersByStatus) AND their `ORDER BY created_at DESC LIMIT`
@@ -471,8 +479,8 @@ class DatabaseService {
     final now = DateTime.now().toUtc();
     await _connection!.execute(
       '''
-        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, blik_code, blik_received_at, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category, premium_percent, client_version)
-        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @blik_code, @blik_received_at, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category, @premium_percent, @client_version)
+        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, blik_code, blik_received_at, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category, premium_percent, client_version, bank)
+        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @blik_code, @blik_received_at, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category, @premium_percent, @client_version, @bank)
       ''',
       substitutionValues: {
         'id': offer.id,
@@ -492,6 +500,7 @@ class DatabaseService {
         'category': offer.category?.name,
         'premium_percent': offer.premiumPercent,
         'client_version': offer.clientVersion,
+        'bank': offer.bankId,
       },
     );
     return offer.copyWith(updatedAt: now);
@@ -1132,6 +1141,9 @@ class DatabaseService {
         if (v is String) return double.tryParse(v) ?? 0.0;
         return 0.0;
       }(),
+      // `bank` column exists only after migration; older rows / other markets
+      // return null via the column map.
+      bankId: map.containsKey('bank') ? map['bank'] as String? : null,
       clientVersion: map['client_version'] as String?,
     );
   }

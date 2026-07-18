@@ -32,9 +32,10 @@ class _TakerWaitConfirmationScreenState
   /// validity text, and whether banking-app confirmation prompts are shown.
   PaymentSystem get _method => paymentSystemForOffer(widget.offer);
 
-  /// Confirmation window for this offer's payment method (BLIK 2 min, MB WAY
-  /// 30 min).
-  Duration get _confirmationDuration => _method.confirmationWindow;
+  /// Confirmation window for this offer — resolved per bank for bank-scoped
+  /// markets (SK: Tatra 20 / SLSP 15 / VÚB 3 min), else the method default
+  /// (BLIK 2 min, MB WAY 30 min).
+  Duration get _confirmationDuration => validityForOffer(widget.offer);
   Timer? _confirmationTimer;
   Timer? _expiredBlikTimer;
   late int _confirmationCountdownSeconds = _confirmationDuration.inSeconds;
@@ -442,7 +443,7 @@ class _TakerWaitConfirmationScreenState
           maxConfirmationTime: _confirmationDuration,
           timerExpired: _timerExpired,
           requiresConfirmation: _method.requiresCodeConfirmation,
-          validityMinutes: _method.codeValidityMinutes,
+          validityMinutes: _confirmationDuration.inMinutes,
         );
       case OfferStatus.expiredBlik:
         return _ExpiredBlikWidget(

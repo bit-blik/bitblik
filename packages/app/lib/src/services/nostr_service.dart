@@ -400,6 +400,7 @@ class NostrService {
     required String coordinatorPubkey,
     double premiumPercent = 0,
     String? blikCode,
+    String? bank,
   }) async {
     final request = NostrRequest(
       method: kRpcInitiateOffer,
@@ -409,6 +410,7 @@ class NostrService {
         if (category != null) 'category': category.name,
         if (premiumPercent > 0) 'premium_percent': premiumPercent,
         if (blikCode != null && blikCode.isNotEmpty) 'blik_code': blikCode,
+        if (bank != null && bank.isNotEmpty) 'bank': bank,
       },
     );
 

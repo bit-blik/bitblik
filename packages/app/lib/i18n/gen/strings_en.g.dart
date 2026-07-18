@@ -1628,6 +1628,7 @@ class Translations$maker$amountForm$en {
 	late final Translations$maker$amountForm$progress$en progress = Translations$maker$amountForm$progress$en.internal(_root);
 	late final Translations$maker$amountForm$labels$en labels = Translations$maker$amountForm$labels$en.internal(_root);
 	late final Translations$maker$amountForm$actions$en actions = Translations$maker$amountForm$actions$en.internal(_root);
+	late final Translations$maker$amountForm$bank$en bank = Translations$maker$amountForm$bank$en.internal(_root);
 	late final Translations$maker$amountForm$twintScan$en twintScan = Translations$maker$amountForm$twintScan$en.internal(_root);
 	late final Translations$maker$amountForm$tooltips$en tooltips = Translations$maker$amountForm$tooltips$en.internal(_root);
 	late final Translations$maker$amountForm$category$en category = Translations$maker$amountForm$category$en.internal(_root);
@@ -3314,6 +3315,24 @@ class Translations$maker$amountForm$actions$en {
 
 	/// en: 'Generate Invoice'
 	String get generateInvoice => 'Generate Invoice';
+}
+
+// Path: maker.amountForm.bank
+class Translations$maker$amountForm$bank$en {
+	Translations$maker$amountForm$bank$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Bank'
+	String get label => 'Bank';
+
+	/// en: 'Please choose a bank'
+	String get required => 'Please choose a bank';
+
+	/// en: 'This bank's code is valid for only ${minutes} min — be at the ATM before you reserve.'
+	String shortValidityWarning({required Object minutes}) => 'This bank\'s code is valid for only ${minutes} min — be at the ATM before you reserve.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -5559,6 +5578,9 @@ extension on Translations {
 			'maker.amountForm.labels.tapToSelect' => 'Tap to select',
 			'maker.amountForm.labels.premium' => 'Premium',
 			'maker.amountForm.actions.generateInvoice' => 'Generate Invoice',
+			'maker.amountForm.bank.label' => 'Bank',
+			'maker.amountForm.bank.required' => 'Please choose a bank',
+			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'This bank\'s code is valid for only ${minutes} min — be at the ATM before you reserve.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Scan ${code} QR and amount',
 			'maker.amountForm.twintScan.cardBody' => 'Point the camera at the payment screen. The app will prefill the code and, when visible, the amount.',
 			'maker.amountForm.twintScan.scanButton' => 'Scan with camera',
@@ -5801,11 +5823,11 @@ extension on Translations {
 			'taker.paymentFailed.errors.enterValidInvoice' => 'Please enter a valid invoice',
 			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Error updating invoice: ${details}',
 			'taker.paymentFailed.errors.paymentRetryFailed' => 'Payment retry failed. Please check the invoice or try again later.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.paymentFailed.errors.takerPublicKeyNotFound' => 'Taker public key not found.',
 			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Failed to generate invoice: ${details}',
 			'taker.paymentFailed.walletSection.title' => 'Generate invoice from wallet',
-			_ => null,
-		} ?? switch (path) {
 			'taker.paymentFailed.walletSection.defaultLabel' => 'default',
 			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tap to generate invoice for ${amountSats}',
 			'taker.paymentFailed.loading.processingPayment' => 'Processing your payment retry...',

@@ -973,6 +973,7 @@ class _Translations$maker$amountForm$sk extends Translations$maker$amountForm$en
 	@override late final _Translations$maker$amountForm$progress$sk progress = _Translations$maker$amountForm$progress$sk._(_root);
 	@override late final _Translations$maker$amountForm$labels$sk labels = _Translations$maker$amountForm$labels$sk._(_root);
 	@override late final _Translations$maker$amountForm$actions$sk actions = _Translations$maker$amountForm$actions$sk._(_root);
+	@override late final _Translations$maker$amountForm$bank$sk bank = _Translations$maker$amountForm$bank$sk._(_root);
 	@override late final _Translations$maker$amountForm$tooltips$sk tooltips = _Translations$maker$amountForm$tooltips$sk._(_root);
 	@override late final _Translations$maker$amountForm$category$sk category = _Translations$maker$amountForm$category$sk._(_root);
 	@override late final _Translations$maker$amountForm$onboarding$sk onboarding = _Translations$maker$amountForm$onboarding$sk._(_root);
@@ -1880,6 +1881,18 @@ class _Translations$maker$amountForm$actions$sk extends Translations$maker$amoun
 
 	// Translations
 	@override String get generateInvoice => 'Vygenerovať faktúru';
+}
+
+// Path: maker.amountForm.bank
+class _Translations$maker$amountForm$bank$sk extends Translations$maker$amountForm$bank$en {
+	_Translations$maker$amountForm$bank$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Banka';
+	@override String get required => 'Vyber si banku';
+	@override String shortValidityWarning({required Object minutes}) => 'Kód tejto banky platí len ${minutes} min — buď pri bankomate skôr, než rezervuješ.';
 }
 
 // Path: maker.amountForm.tooltips
@@ -2885,6 +2898,9 @@ extension on TranslationsSk {
 			'maker.amountForm.labels.tapToSelect' => 'Ťukni na výber',
 			'maker.amountForm.labels.premium' => 'Prémia',
 			'maker.amountForm.actions.generateInvoice' => 'Vygenerovať faktúru',
+			'maker.amountForm.bank.label' => 'Banka',
+			'maker.amountForm.bank.required' => 'Vyber si banku',
+			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Kód tejto banky platí len ${minutes} min — buď pri bankomate skôr, než rezervuješ.',
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Koordinátor si účtuje ${feePercent}% poplatok predávajúceho. Tento poplatok sa odpočíta z tvojej Lightning platby.',
 			'maker.amountForm.tooltips.payInfo' => 'Tento výpočet vychádza z výmenných kurzov načítaných na strane klienta. Koordinátor vypočíta presnú sumu a suma na faktúre bude konečná a presná suma na zaplatenie.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Voliteľná prémia ti umožňuje predať sats nad trhovú cenu. Prémia zníži počet sats uzamknutých v tvojej hold faktúre za rovnakú sumu vo fiate, takže kupujúci platí nad trh a ty si ponecháš rozdiel. Predvolene je vypnutá (0%). Maximálnu prémiu určuje vybraný koordinátor.',
@@ -3138,11 +3154,11 @@ extension on TranslationsSk {
 			'taker.invalidBlik.actions.retry' => ({required Object code}) => 'Poslať nový ${code}',
 			'taker.invalidBlik.actions.cancelReservation' => 'Zrušiť transakciu',
 			'taker.invalidBlik.actions.reportConflict' => 'Začať spor',
+			_ => null,
+		} ?? switch (path) {
 			'taker.invalidBlik.actions.returnHome' => 'Vrátiť sa domov',
 			'taker.invalidBlik.confirmDialog.title' => 'Naozaj?',
 			'taker.invalidBlik.confirmDialog.content' => 'Keď na to ťukneš, niet cesty späť.\n\nAk ti suma naozaj BOLA strhnutá z bankového účtu, koordinátor NEbude môcť zaručiť, že dostaneš bitcoin, a môžeš prísť o svoje prostriedky.\n\nAk si nie si istý, je najlepšie chvíľu počkať a potvrdiť si, že ti NEbolo strhnuté, skôr než budeš pokračovať.',
-			_ => null,
-		} ?? switch (path) {
 			'taker.invalidBlik.confirmDialog.actions.proceed' => 'Som si istý, pokračovať',
 			'taker.invalidBlik.confirmDialog.actions.cancel' => 'Zrušiť',
 			'taker.invalidBlik.disputeConfirmDialog.title' => 'Začať spor?',

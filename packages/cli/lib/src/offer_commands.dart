@@ -21,6 +21,13 @@ Future<int> runOfferList(List<String> args) async {
   final relays = _collectMultiFlag(args, '--relay');
   final currency = parsed['currency'] ?? activePaymentSystem.currency;
   final coordinatorArg = parsed['coordinator'];
+  // Optional bank filter (bank-scoped markets): only show offers for this bank.
+  final bankFilter = parsed['bank']?.trim();
+
+  List<Offer> applyBankFilter(List<Offer> offers) => bankFilter == null ||
+          bankFilter.isEmpty
+      ? offers
+      : offers.where((o) => o.bankId == bankFilter).toList();
 
   // ---- Local path (default) ----
   if (coordinatorArg == null) {
@@ -29,9 +36,9 @@ Future<int> runOfferList(List<String> args) async {
     final store = await OfferStore.open();
     try {
       final all = await store.all();
-      final offers = showAll
+      final offers = applyBankFilter(showAll
           ? all
-          : all.where((o) => flow.isInProgress(MakerFlow.stateOf(o))).toList();
+          : all.where((o) => flow.isInProgress(MakerFlow.stateOf(o))).toList());
       if (jsonOutput) {
         stdout.writeln(
           const JsonEncoder.withIndent('  ')
@@ -65,10 +72,10 @@ Future<int> runOfferList(List<String> args) async {
     await client.init();
     final mismatch = await _ensureSameMarket(client, coordinatorPubkey);
     if (mismatch != null) return mismatch;
-    final offers = await client.listOffers(
+    final offers = applyBankFilter(await client.listOffers(
       fiatCurrency: currency,
       coordinatorPubkey: coordinatorPubkey,
-    );
+    ));
 
     if (jsonOutput) {
       stdout.writeln(
@@ -89,16 +96,23 @@ void _printOfferTable(List<Offer> offers) {
     stdout.writeln('No offers found.');
     return;
   }
-  stdout.writeln('ID | STATUS | FIAT | SATS | CREATED | COORDINATOR');
+  // Only show the BANK column when at least one offer is bank-scoped (SK), so
+  // BLIK / MB WAY / TWINT listings stay unchanged.
+  final showBank = offers.any((o) => bankForOffer(o) != null);
+  stdout.writeln('ID | STATUS | FIAT | SATS |${showBank ? ' BANK |' : ''} '
+      'CREATED | COORDINATOR');
   for (final o in offers) {
     final coord = o.coordinatorPubkey.length > 12
         ? '${o.coordinatorPubkey}'
         : o.coordinatorPubkey;
+    final bankCol = showBank
+        ? ' ${bankForOffer(o)?.label ?? '-'} |'
+        : '';
     // statusRaw, not status.name: generic flows (TWINT) carry states with no
     // OfferStatus enum value that would otherwise print as "unknown".
     stdout.writeln(
       '${o.id} | ${o.statusRaw} | ${o.fiatAmount} ${o.fiatCurrency} | '
-      '${o.amountSats} | ${o.createdAt.toIso8601String()} | $coord',
+      '${o.amountSats} |$bankCol ${o.createdAt.toIso8601String()} | $coord',
     );
   }
 }
@@ -120,11 +134,19 @@ Future<int> runOfferCreate(List<String> args) async {
   final providesCode = activePaymentSystem.makerProvidesCodeAtOfferCreation;
   final codeArg = parsed['code'];
 
+  // Bank-scoped markets (SK cardless ATM) require the maker to pick the bank
+  // whose ATM they can reach; bank-agnostic markets have no --bank.
+  final atmInstrument = activePaymentSystem.instrumentFor(OfferCategory.atm);
+  final needsBank = atmInstrument?.hasBanks ?? false;
+
   if (fiatStr == null || coordinatorArg == null) {
     final codeUsage = providesCode ? '--code <${activePaymentSystem.codeLabel}> ' : '';
+    final bankUsage = needsBank
+        ? '--bank <${atmInstrument!.banks.map((b) => b.id).join('|')}> '
+        : '';
     stderr.writeln(
         'usage: $exe offer create '
-        '--fiat <amount> --coordinator <npub|hex> $codeUsage'
+        '--fiat <amount> --coordinator <npub|hex> $codeUsage$bankUsage'
         '[--currency ${activePaymentSystem.currency}] [--json] [--relay <url>]');
     return 64;
   }
@@ -156,6 +178,32 @@ Future<int> runOfferCreate(List<String> args) async {
     stderr.writeln(
         '--code is not used by ${activePaymentSystem.brandName}; the taker '
         'submits the ${activePaymentSystem.codeLabel} code.');
+    return 64;
+  }
+
+  // Resolve + validate the maker-chosen bank.
+  String? bank;
+  if (needsBank) {
+    final banks = atmInstrument!.banks;
+    final ids = banks.map((b) => b.id).join(', ');
+    bank = parsed['bank']?.trim();
+    if (bank == null || bank.isEmpty) {
+      stderr.writeln('${activePaymentSystem.brandName} requires --bank '
+          '(one of: $ids) — you withdraw at that bank\'s ATM.');
+      return 64;
+    }
+    final bankSpec = atmInstrument.bankById(bank);
+    if (bankSpec == null) {
+      stderr.writeln('Unknown --bank "$bank" (one of: $ids).');
+      return 64;
+    }
+    if (!atmInstrument.canDispenseAtmAmount(fiat, bank: bankSpec)) {
+      stderr.writeln('Amount $fiat is not dispensable at ${bankSpec.label} '
+          'ATMs (notes: ${atmInstrument.denominationsFor(bankSpec).join(', ')}).');
+      return 64;
+    }
+  } else if (parsed['bank'] != null) {
+    stderr.writeln('--bank is not used by ${activePaymentSystem.brandName}.');
     return 64;
   }
 
@@ -212,6 +260,7 @@ Future<int> runOfferCreate(List<String> args) async {
           // The maker's code (TWINT) rides the same `blik_code` param the app
           // and coordinator use across every payment system.
           if (code != null) 'blik_code': code,
+          if (bank != null) 'bank': bank,
         },
       ),
       coordinatorPubkey,
@@ -249,6 +298,8 @@ Future<int> runOfferCreate(List<String> args) async {
       holdInvoicePaymentHash: result['paymentHash']?.toString(),
       holdInvoice: result['holdInvoice']?.toString(),
       category: category,
+      paymentSystemId: activePaymentSystem.id,
+      bankId: bank,
     );
 
     final store = await OfferStore.open();
@@ -502,9 +553,16 @@ Future<int> _callGetBlikRpc(
   } else if (blikCode != null) {
     final ps = activePaymentSystem;
     final where = ps.requiresCodeConfirmation ? 'your banking app' : 'the ATM';
-    final mins = ps.codeValidityMinutes;
+    // Resolve validity (and bank name) per offer when we have it — SK banks
+    // differ (Tatra 20 / SLSP 15 / VÚB 3 min); else the market default.
+    final bank = localOffer != null ? bankForOffer(localOffer) : null;
+    final mins = localOffer != null
+        ? validityForOffer(localOffer).inMinutes
+        : ps.instruments.values.first.validity.inMinutes;
+    final atName = bank != null ? '${bank.label} ATM' : where;
     stdout.writeln('\n${ps.codeLabel} code : $blikCode');
-    stdout.writeln('Enter this code at $where within $mins minute${mins == 1 ? '' : 's'}.');
+    stdout.writeln(
+        'Enter this code at $atName within $mins minute${mins == 1 ? '' : 's'}.');
   } else {
     stdout.writeln(const JsonEncoder.withIndent('  ').convert(result));
   }

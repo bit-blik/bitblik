@@ -374,6 +374,10 @@ maker:
       premium: Premium
     actions:
       generateInvoice: Generate Invoice
+    bank:
+      label: "Bank"
+      required: "Please choose a bank"
+      shortValidityWarning: "This bank's code is valid for only ${minutes} min — be at the ATM before you reserve."
     twintScan:
       cardTitle: "Scan ${code} QR and amount"
       cardBody: "Point the camera at the payment screen. The app will prefill the code and, when visible, the amount."

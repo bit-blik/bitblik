@@ -57,6 +57,7 @@ class ApiServiceNostr {
     String? coordinatorPubkey,
     double premiumPercent = 0,
     String? blikCode,
+    String? bank,
   }) async {
     try {
       if (coordinatorPubkey == null) {
@@ -69,6 +70,7 @@ class ApiServiceNostr {
         coordinatorPubkey: coordinatorPubkey,
         premiumPercent: premiumPercent,
         blikCode: blikCode,
+        bank: bank,
       );
     } catch (e) {
       Logger.log.e(() => 'Error calling initiateOfferFiat: $e');

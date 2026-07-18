@@ -108,6 +108,13 @@ class Offer {
   /// via [paymentSystemForOffer].
   final String? paymentSystemId;
 
+  /// Bank this offer runs on, for markets whose ATM instrument varies by bank
+  /// (Slovakia: `tatrabanka`, `slsp`, `vub`). Chosen by the maker at offer
+  /// creation — they withdraw at that bank's ATM — and fixed for the offer's
+  /// lifetime. Null for bank-agnostic markets (BLIK, MB WAY, TWINT). Resolve
+  /// the [BankSpec] via [bankForOffer].
+  final String? bankId;
+
   /// Client that created the offer, as `<app|cli>/<version>` (e.g. `app/0.8.0`).
   /// Recorded coordinator-side from the maker's request envelope. Intentionally
   /// NOT serialized in [toJson]/[toRpcJson] — it is a server-only field surfaced
@@ -195,6 +202,7 @@ class Offer {
     this.premiumPercent = 0,
     this.paymentWalletId,
     this.paymentSystemId,
+    this.bankId,
     this.clientVersion,
   }) : statusRaw = statusRaw ?? status.name;
 
@@ -340,6 +348,7 @@ class Offer {
       premiumPercent: safeDouble(json['premium_percent'], 0),
       paymentWalletId: json['payment_wallet_id'] as String?,
       paymentSystemId: json['payment_system'] as String?,
+      bankId: json['bank'] as String?,
     );
   }
 
@@ -380,6 +389,7 @@ class Offer {
       'premium_percent': premiumPercent,
       'payment_wallet_id': paymentWalletId,
       'payment_system': paymentSystemId,
+      'bank': bankId,
     };
   }
 
@@ -489,6 +499,7 @@ class Offer {
     double? premiumPercent,
     String? paymentWalletId,
     String? paymentSystemId,
+    String? bankId,
     String? clientVersion,
   }) {
     return Offer(
@@ -528,6 +539,7 @@ class Offer {
       premiumPercent: premiumPercent ?? this.premiumPercent,
       paymentWalletId: paymentWalletId ?? this.paymentWalletId,
       paymentSystemId: paymentSystemId ?? this.paymentSystemId,
+      bankId: bankId ?? this.bankId,
       clientVersion: clientVersion ?? this.clientVersion,
     );
   }
@@ -581,9 +593,11 @@ class Offer {
         }
       }(),
       premiumPercent: double.tryParse(tagMap['premium'] ?? '0') ?? 0,
-      // Derive the method from the wire platform tag (`y`), e.g.
-      // `BitblikSK-Tatra` → `tatrabanka`. Unambiguous across the EUR markets.
+      // Derive the market from the wire platform tag (`y`), e.g. `Bitvyber` →
+      // `sk`. Unambiguous across the EUR markets.
       paymentSystemId: paymentSystemForPlatformTag(tagMap['y'])?.id,
+      // Bank chosen by the maker, present only for bank-scoped markets (SK).
+      bankId: (tagMap['bank'] ?? '').isEmpty ? null : tagMap['bank'],
     );
   }
 }

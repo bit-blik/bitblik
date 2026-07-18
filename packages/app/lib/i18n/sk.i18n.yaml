@@ -357,6 +357,10 @@ maker:
       premium: Prémia
     actions:
       generateInvoice: Vygenerovať faktúru
+    bank:
+      label: "Banka"
+      required: "Vyber si banku"
+      shortValidityWarning: "Kód tejto banky platí len ${minutes} min — buď pri bankomate skôr, než rezervuješ."
 
     tooltips:
       feeInfo: "Koordinátor si účtuje ${feePercent}% poplatok predávajúceho. Tento poplatok sa odpočíta z tvojej Lightning platby."

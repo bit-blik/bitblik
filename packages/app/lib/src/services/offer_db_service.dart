@@ -58,7 +58,8 @@ class OfferDbService {
       category TEXT,
       premium_percent REAL,
       payment_wallet_id TEXT,
-      payment_system TEXT
+      payment_system TEXT,
+      bank TEXT
     )
   ''';
 
@@ -73,7 +74,7 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 12,
+      version: 13,
       onCreate: (db, version) async {
         await db.execute(_createTableSql);
       },
@@ -151,6 +152,13 @@ class OfferDbService {
             await db.execute(
               'ALTER TABLE $_table ADD COLUMN payment_system TEXT',
             );
+          }
+        }
+        if (oldVersion < 13) {
+          final columns = await db.rawQuery('PRAGMA table_info($_table)');
+          final hasColumn = columns.any((col) => col['name'] == 'bank');
+          if (!hasColumn) {
+            await db.execute('ALTER TABLE $_table ADD COLUMN bank TEXT');
           }
         }
       },

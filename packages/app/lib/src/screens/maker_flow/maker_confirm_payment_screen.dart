@@ -939,23 +939,27 @@ class _MakerConfirmPaymentScreenState
 
     // MB WAY has its own MULTIBANCO wording; the cardless-ATM markets (Tatra
     // banka / SLSP / VÚB) share a generic bank-named instruction + ATM map link.
+    // For bank-scoped SK offers the bank name, validity and map link come from
+    // the offer's chosen bank, not the market.
+    final bank = bankForOffer(offer);
+    final validityMinutes = validityForOffer(offer).inMinutes;
     String? text;
     if (_method.id == kMbway.id) {
       text = t.maker.confirmPayment.mbwayAtmInstructions(
         amount: amount,
-        minutes: _method.codeValidityMinutes,
+        minutes: validityMinutes,
       );
     } else if (offer.category == OfferCategory.atm) {
       text = t.maker.confirmPayment.cardlessAtmInstructions(
         amount: amount,
         currency: _method.currencySymbol,
-        bank: _method.label,
-        minutes: _method.codeValidityMinutes,
+        bank: bank?.label ?? _method.label,
+        minutes: validityMinutes,
       );
     }
     if (text == null) return const [];
 
-    final mapUrl = _method.atmMapUrl;
+    final mapUrl = bank?.atmMapUrl ?? instrumentForOffer(offer)?.atmMapUrl;
 
     return [
       const SizedBox(height: 24),

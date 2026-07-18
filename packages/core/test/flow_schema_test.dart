@@ -71,6 +71,40 @@ $body
     expect(t.fromField, 'created_at');
   });
 
+  test('timeout after accepts a \$param (parametric duration)', () {
+    final e = engineFrom('''
+  a:
+    initial: true
+    transitions:
+      - on: timeout
+        after: \$code_validity
+        from: code_received_at
+        to: b
+  b:
+    terminal: true
+''');
+    final t = e.timeoutFor('a')!;
+    expect(t.durationSeconds, isNull);
+    expect(t.durationParam, 'code_validity');
+    expect(t.fromField, 'code_received_at');
+  });
+
+  test('timeout after rejects a non-int, non-\$param string', () {
+    expect(
+      () => engineFrom('''
+  a:
+    initial: true
+    transitions:
+      - on: timeout
+        after: soon
+        to: b
+  b:
+    terminal: true
+'''),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
   test('transitionFor resolves by event (and actor)', () {
     final e = engineFrom('''
   a:

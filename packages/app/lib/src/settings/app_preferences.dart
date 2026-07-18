@@ -201,12 +201,35 @@ class AppPreferencesStore {
     print(
       'BITFLAVOR loadSelected saved=$saved default=$buildDefaultPaymentSystemId',
     );
-    return paymentSystemById(saved ?? buildDefaultPaymentSystemId);
+    final resolved = paymentSystemById(saved ?? buildDefaultPaymentSystemId);
+    // Migrate a stored legacy per-bank SK id (`tatrabanka`/`slsp`/`vub`) to the
+    // collapsed `sk` market id, so the persisted value is canonical and the old
+    // bank choice becomes the maker's per-offer bank instead of the market.
+    if (saved != null && saved.isNotEmpty && saved != resolved.id) {
+      await prefs.setString(_selectedPaymentSystemKey, resolved.id);
+    }
+    return resolved;
   }
 
   static Future<void> saveSelectedPaymentSystem(PaymentSystem method) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_selectedPaymentSystemKey, method.id);
+  }
+
+  static String _lastBankKey(String marketId) =>
+      'offer_creation_last_bank_$marketId';
+
+  /// The bank the maker last used for [marketId] (bank-scoped markets), so the
+  /// bank picker can default to it. Null if never chosen.
+  static Future<String?> loadLastBank(String marketId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getString(_lastBankKey(marketId));
+    return (v == null || v.isEmpty) ? null : v;
+  }
+
+  static Future<void> saveLastBank(String marketId, String bankId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastBankKey(marketId), bankId);
   }
 
   /// Whether the user has ever explicitly chosen a market/country. False on a

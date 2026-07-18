@@ -98,7 +98,11 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
         .replaceAll('{codeLength}', '${ps.codeLength}')
         .replaceAll('{code}', ps.localizedCodeLabel)
         .replaceAll('{country}', countryName)
-        .replaceAll('{validity}', '${ps.codeValidityMinutes}');
+        // General FAQ (no offer): show the market's default code validity.
+        .replaceAll(
+          '{validity}',
+          '${ps.instruments.values.first.validity.inMinutes}',
+        );
   }
 
   Future<String> _loadMarkdownAsset(String assetKey) async {

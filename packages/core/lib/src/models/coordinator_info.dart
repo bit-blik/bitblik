@@ -23,10 +23,15 @@ class CoordinatorInfo {
   final double maxPremiumPercent;
   final List<String> currencies;
 
-  /// The single payment method id this coordinator serves (e.g. `blik`,
-  /// `mbway`). One deployment = one market. Older coordinators that don't
-  /// advertise it fall back to the method derived from [currencies].
+  /// The market id this coordinator serves (e.g. `blik`, `mbway`, `sk`). One
+  /// deployment = one market. Older coordinators that don't advertise it fall
+  /// back to the method derived from [currencies].
   final String paymentSystem;
+
+  /// The bank ids this coordinator serves within a bank-scoped market (SK ATM:
+  /// a subset of `tatrabanka`, `slsp`, `vub`). Empty for bank-agnostic markets
+  /// or when the coordinator serves all of the market's banks.
+  final List<String> banks;
 
   final String? nostrNpub;
   final String? version;
@@ -38,6 +43,12 @@ class CoordinatorInfo {
   /// the coordinator doesn't advertise any; the app then falls back to its
   /// bundled defaults for the payment system.
   final Map<String, String> channelLinks;
+
+  /// Bank-scoped community/notification channel links, `bankId → (messenger →
+  /// url)`. Lets takers subscribe only to the banks they hold. Falls back to
+  /// [channelLinks] (market-wide) for any bank/messenger not listed here — see
+  /// [channelLink]. Empty for bank-agnostic markets.
+  final Map<String, Map<String, String>> bankChannelLinks;
 
   const CoordinatorInfo({
     required this.name,
@@ -51,11 +62,24 @@ class CoordinatorInfo {
     required this.currencies,
     required this.paymentSystem,
     required this.nostrNpub,
+    this.banks = const [],
     this.version,
     this.icon,
     this.termsOfUsageNaddr,
     this.channelLinks = const {},
+    this.bankChannelLinks = const {},
   });
+
+  /// The channel link for [messenger], preferring the [bankId]-scoped link when
+  /// one is advertised, else the market-wide [channelLinks] entry, else null.
+  String? channelLink(String messenger, {String? bankId}) {
+    if (bankId != null) {
+      final scoped = bankChannelLinks[bankId]?[messenger];
+      if (scoped != null && scoped.isNotEmpty) return scoped;
+    }
+    final wide = channelLinks[messenger];
+    return (wide != null && wide.isNotEmpty) ? wide : null;
+  }
 
   /// Known messenger ids advertised via group links, in display order.
   static const List<String> messengerIds = [
@@ -82,11 +106,13 @@ class CoordinatorInfo {
           .toList(),
       paymentSystem: (json['payment_system'] as String?) ??
           _defaultMethodId(json['currencies']),
+      banks: _parseBanks(json['banks']),
       nostrNpub: json['nostr_npub'] as String?,
       version: json['version'] as String?,
       icon: json['icon'] as String?,
       termsOfUsageNaddr: json['terms_of_usage_naddr'] as String?,
       channelLinks: _parseChannelLinks(json['channel_links']),
+      bankChannelLinks: _parseBankChannelLinks(json['bank_channel_links']),
     );
   }
 
@@ -102,11 +128,13 @@ class CoordinatorInfo {
       'max_premium_percent': maxPremiumPercent,
       'currencies': currencies,
       'payment_system': paymentSystem,
+      if (banks.isNotEmpty) 'banks': banks,
       'nostr_npub': nostrNpub,
       if (version != null) 'version': version,
       if (icon != null) 'icon': icon,
       if (termsOfUsageNaddr != null) 'terms_of_usage_naddr': termsOfUsageNaddr,
       if (channelLinks.isNotEmpty) 'channel_links': channelLinks,
+      if (bankChannelLinks.isNotEmpty) 'bank_channel_links': bankChannelLinks,
     };
   }
 
@@ -126,6 +154,29 @@ class CoordinatorInfo {
         .where((c) => c.isNotEmpty)
         .toList();
 
+    final banks = (tags['banks'] ?? '')
+        .split(',')
+        .map((b) => b.trim())
+        .where((b) => b.isNotEmpty)
+        .toList();
+
+    // Bank-scoped channel links ride suffixed tags:
+    // `<messenger>_channel_link_<bankId>`. Split on the marker so the market-
+    // wide `<messenger>_channel_link` tags (no suffix) are left to the block
+    // below. Older parsers match only `endsWith('_channel_link')` and ignore
+    // these, preserving forward compatibility.
+    const marker = '_channel_link_';
+    final bankChannelLinks = <String, Map<String, String>>{};
+    for (final entry in tags.entries) {
+      final idx = entry.key.indexOf(marker);
+      if (idx <= 0 || entry.value.isEmpty) continue;
+      final messenger = entry.key.substring(0, idx);
+      final bankId = entry.key.substring(idx + marker.length);
+      if (messenger.isEmpty || bankId.isEmpty) continue;
+      (bankChannelLinks[bankId] ??= <String, String>{})[messenger] =
+          entry.value;
+    }
+
     return CoordinatorInfo(
       name: tags['name'] ?? 'Unknown Coordinator',
       icon: _emptyToNull(tags['icon']),
@@ -143,6 +194,7 @@ class CoordinatorInfo {
       currencies: currencies,
       paymentSystem:
           _emptyToNull(tags['payment_system']) ?? _defaultMethodId(currencies),
+      banks: banks,
       version: _emptyToNull(tags['version']),
       nostrNpub: Nip19.encodePubKey(event.pubKey),
       termsOfUsageNaddr: _emptyToNull(tags['terms_of_usage_naddr']),
@@ -152,6 +204,7 @@ class CoordinatorInfo {
             entry.key.substring(
                 0, entry.key.length - '_channel_link'.length): entry.value,
       },
+      bankChannelLinks: bankChannelLinks,
     );
   }
 
@@ -176,10 +229,15 @@ class CoordinatorInfo {
       ['reservation_seconds', reservationSeconds.toString()],
       ['currencies', currencies.join(',')],
       ['payment_system', paymentSystem],
+      if (banks.isNotEmpty) ['banks', banks.join(',')],
       ['version', version ?? ''],
       ['terms_of_usage_naddr', termsOfUsageNaddr ?? ''],
       for (final entry in channelLinks.entries)
         if (entry.value.isNotEmpty) ['${entry.key}_channel_link', entry.value],
+      for (final bank in bankChannelLinks.entries)
+        for (final link in bank.value.entries)
+          if (link.value.isNotEmpty)
+            ['${link.key}_channel_link_${bank.key}', link.value],
     ];
   }
 
@@ -189,6 +247,37 @@ class CoordinatorInfo {
     final out = <String, String>{};
     raw.forEach((k, v) {
       if (k is String && v is String && v.isNotEmpty) out[k] = v;
+    });
+    return out;
+  }
+
+  /// Parse the RPC `banks` value (JSON list or comma string) into a clean list.
+  static List<String> _parseBanks(dynamic raw) {
+    if (raw is List) {
+      return [
+        for (final b in raw)
+          if (b is String && b.trim().isNotEmpty) b.trim(),
+      ];
+    }
+    if (raw is String) {
+      return raw
+          .split(',')
+          .map((b) => b.trim())
+          .where((b) => b.isNotEmpty)
+          .toList();
+    }
+    return const [];
+  }
+
+  /// Parse the RPC `bank_channel_links` nested value into `bankId → (messenger
+  /// → url)`, dropping empty entries.
+  static Map<String, Map<String, String>> _parseBankChannelLinks(dynamic raw) {
+    if (raw is! Map) return const {};
+    final out = <String, Map<String, String>>{};
+    raw.forEach((bankId, links) {
+      if (bankId is! String || bankId.isEmpty) return;
+      final parsed = _parseChannelLinks(links);
+      if (parsed.isNotEmpty) out[bankId] = parsed;
     });
     return out;
   }

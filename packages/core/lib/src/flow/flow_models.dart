@@ -69,8 +69,16 @@ class FlowTransition {
   /// failure, the executor advances to this state instead of [target].
   final String? onFailTarget;
 
-  /// Default timer duration for [FlowTriggerType.timeout] edges (`after:`).
+  /// Default timer duration for [FlowTriggerType.timeout] edges (`after:` given
+  /// as an integer number of seconds). Null when the duration is parametric —
+  /// see [durationParam].
   final int? durationSeconds;
+
+  /// Name of a runtime-resolved duration parameter for [FlowTriggerType.timeout]
+  /// edges, when `after:` is written as `$name` (e.g. `$code_validity`). The
+  /// executor resolves it per offer (e.g. from the offer's bank validity).
+  /// Mutually exclusive with [durationSeconds]. Null for fixed durations.
+  final String? durationParam;
 
   /// For [FlowTriggerType.timeout] edges, the offer timestamp the duration is
   /// measured from (`from:`). Null means "state entry" (the executor uses the
@@ -91,6 +99,7 @@ class FlowTransition {
     this.actor,
     this.onFailTarget,
     this.durationSeconds,
+    this.durationParam,
     this.fromField,
     this.actions = const [],
     this.returns,
@@ -102,13 +111,37 @@ class FlowTransition {
       throw const FormatException('Flow transition is missing "on".');
     }
     final trigger = _triggerFromOn(on);
+    final after = m['after'];
+    int? durationSeconds;
+    String? durationParam;
+    if (after is int) {
+      durationSeconds = after;
+    } else if (after is String) {
+      final trimmed = after.trim();
+      if (trimmed.startsWith(r'$')) {
+        durationParam = trimmed.substring(1);
+        if (durationParam.isEmpty) {
+          throw const FormatException('Flow "after" parameter is empty.');
+        }
+      } else {
+        final parsed = int.tryParse(trimmed);
+        if (parsed == null) {
+          throw FormatException(
+              'Flow "after" must be an int or \$name, got: $after');
+        }
+        durationSeconds = parsed;
+      }
+    } else if (after != null) {
+      throw FormatException('Flow "after" must be an int or string: $after');
+    }
     return FlowTransition(
       trigger: trigger,
       target: m['to'] as String,
       event: trigger == FlowTriggerType.userAction ? on : null,
       actor: _actorFromYaml(m['by'] as String?),
       onFailTarget: m['on_fail'] as String?,
-      durationSeconds: m['after'] as int?,
+      durationSeconds: durationSeconds,
+      durationParam: durationParam,
       fromField: m['from'] as String?,
       actions: _stringList(m['do']),
       returns: m['returns'] as String?,

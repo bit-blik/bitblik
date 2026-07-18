@@ -17,6 +17,7 @@ import '../flow/flow_provider.dart';
 import '../utils/bitcoin_display.dart';
 import '../utils/category_icons.dart';
 import '../widgets/lightning_address_widget.dart';
+import '../widgets/offer_bank_badge.dart';
 import '../widgets/premium_info.dart';
 import '../widgets/progress_indicators.dart'; // Import the progress indicators
 import 'taker_flow/taker_submit_blik_screen.dart'; // Import new screen
@@ -904,9 +905,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     blikReceivedAt:
                                                         offer.blikReceivedAt!,
                                                     maxConfirmationTime:
-                                                        paymentSystemForOffer(
-                                                          offer,
-                                                        ).confirmationWindow,
+                                                        validityForOffer(offer),
                                                   ),
 
                                                 ListTile(
@@ -950,6 +949,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     children: [
                                                       Text(
                                                         '${t.offers.details.takerFeeLabel}: ${formatBitcoinAmount(context, bitcoinDisplayUnit, offer.takerFees ?? 0)}',
+                                                      ),
+                                                      OfferBankBadge(
+                                                        offer: offer,
                                                       ),
                                                       if (offer.premiumPercent >
                                                           0) ...[

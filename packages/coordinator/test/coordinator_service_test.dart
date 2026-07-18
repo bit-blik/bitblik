@@ -1152,7 +1152,8 @@ void main() {
         'startup check restarts BLIK confirmation timer for offers still within window',
         () {
       fakeAsync((async) {
-        final confirmationWindow = kBlik.confirmationWindow;
+        final confirmationWindow =
+            kBlik.instrumentFor(OfferCategory.atm)!.validity;
         final initialTime = clock.now().toUtc();
         final offerId = 'startup-blik-within-window';
         final holdInvoicePaymentHash = 'hash-for-$offerId';
