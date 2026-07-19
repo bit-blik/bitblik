@@ -138,12 +138,17 @@ a vlož ho do `NOSTR_PRIVATE_KEY`.
       DB_PORT: 5432
       DB_USER: user
       DB_PASSWORD: password
+      DB: test_sk                           # samostatná databáza pre SK trh
       # --- Trh (jedno nasadenie obsluhuje všetky slovenské banky) ---
       PAYMENT_SYSTEM: sk
       # Voliteľné: obmedz banky (nenastavené = tatrabanka + slsp + vub).
       # BANKS: tatrabanka,slsp
-      # CURRENCIES sa odvodí na EUR z trhu (netreba nastavovať)
-      # --- Časovače prispôsobené dlhšiemu EUR kódu (15–20 min) ---
+      # CURRENCIES sa odvodí na EUR z trhu (netreba nastavovať).
+      # FLOW_MODE NETREBA: sk beží na generickom yaml engine (flow sk_atm.yml)
+      # automaticky. Platnosť kódu je PER BANKA (Tatra 20 / SLSP 15 / VÚB 3 min)
+      # a rieši sa z banky ponuky cez $code_validity — netreba nastavovať.
+      # RESERVATION_SECONDS a FUNDED_EXPIRY_SECONDS sa pri generickom flow čítajú
+      # z sk_atm.yml, takže tieto hodnoty sú len informatívne.
       RESERVATION_SECONDS: 120
       FUNDED_EXPIRY_SECONDS: 1800
       TAKER_CHARGED_AUTO_CONFIRM_SECONDS: 3600
@@ -162,22 +167,62 @@ a vlož ho do `NOSTR_PRIVATE_KEY`.
       FRONTEND_DOMAIN: <tvoja doména alebo test.bitblik.app>
 ```
 LND súbory pripoj cez volumes (`./tls.cert`, `./admin.macaroon`), ako v example.
+Databázu `test_sk` vytvor na hostiteľskom postgrese (`CREATE DATABASE test_sk;`);
+tabuľky si koordinátor vytvorí sám pri štarte.
+
+`sk_atm.yml` je súčasťou obrazu (Dockerfile kopíruje `flows/*.yml` do `/app/flows`
+a nastaví `FLOW_DIR`), takže netreba nič extra.
+
+### 3.3.1 (Voliteľné) komunitné kanály — odkazy na pripojenie
+Koordinátor inzeruje odkazy, cez ktoré sa takeri pripoja do skupín. Trhové
+(spoločné) aj per-banka. Per-banka odkaz vidí taker len pri danej banke:
+```yaml
+      # Spoločné (fallback pre banku bez vlastného odkazu):
+      TELEGRAM_CHANNEL_LINK: https://t.me/bitvyber_sk
+      MATRIX_CHANNEL_LINK:   https://matrix.to/#/#bitvyber-sk:matrix.org
+      SIMPLEX_CHANNEL_LINK:  https://simplex.chat/contact#/...
+      SIGNAL_CHANNEL_LINK:   https://signal.group/#...
+      # Per-banka (<MESSENGER>_CHANNEL_LINK_<BANKA>):
+      TELEGRAM_CHANNEL_LINK_TATRABANKA: https://t.me/bitvyber_tatra
+      TELEGRAM_CHANNEL_LINK_SLSP:       https://t.me/bitvyber_slsp
+      TELEGRAM_CHANNEL_LINK_VUB:        https://t.me/bitvyber_vub
+      # ...to isté pre MATRIX_/SIMPLEX_/SIGNAL_ podľa potreby.
+```
+
+### 3.3.2 (Voliteľné) kam sa POSIELAJÚ notifikácie o nových ponukách
+Notifikácia o ponuke s bankou ide do spoločného kanála **aj** do kanála danej
+banky (oboje len ak je nastavené). Vyžaduje bota/CLI:
+```yaml
+      TELEGRAM_BOT_TOKEN: <token bota>
+      TELEGRAM_CHAT_ID: -100_spolocny_chat            # spoločný cieľ
+      TELEGRAM_CHAT_ID_TATRABANKA: -100_tatra_chat    # per-banka
+      TELEGRAM_CHAT_ID_SLSP: -100_slsp_chat
+      TELEGRAM_CHAT_ID_VUB: -100_vub_chat
+      # Analogicky MATRIX_ROOM / MATRIX_ROOM_<BANKA>, SIGNAL_GROUP_ID / _<BANKA>,
+      # SIMPLEX_GROUP / SIMPLEX_GROUP_<BANKA>.
+```
 
 ### 3.4 Spustenie
 ```bash
+docker compose build      # prvýkrát / po zmene kódu
 docker compose up -d
-docker compose logs -f coordinator     # over: "Resolved discovery relays", "Published coordinator info"
+docker compose logs -f bitblik-sk    # názov služby z compose (nie "coordinator")
 ```
-Po štarte koordinátor publikuje inzerciu (kind 15125, `payment_system=sk`, `banks=tatrabanka,slsp,vub`)
+V logu over:
+- `FLOW ENGINE: GENERIC ENFORCING mode ACTIVE for method "sk" (flow=sk_atm, ...)`
+- `Resolved discovery relays`
+- `Published coordinator info event`
+
+Po štarte koordinátor publikuje inzerciu (kind 15125, `payment_system=sk`,
+`banks=tatrabanka,slsp,vub` + prípadné `<messenger>_channel_link[_<banka>]` tagy)
 na discovery relaye. SK appka ho zaradí do jediného trhu **Slovensko (Bitvýber)**.
 
-### 3.5 (Voliteľné) vlastná SK discovery identita
-V kóde je `kSlovakiaPubkeyHex` placeholder. Nahradenie **nie je nutné** pre
-funkčnosť (discovery ide cez spoločné bootstrap relaye). Nahraď ho len ak chceš
-vlastné discovery relaye alebo mute list:
-1. Vygeneruj Nostr identitu, vlož jej hex do `kSlovakiaPubkeyHex`
-   (`packages/core/lib/src/constants/relays.dart`), rebuild appky.
-2. Publikuj jej **NIP‑65** (kind 10002) zoznam relayov na bootstrap relaye.
+### 3.5 Discovery identita
+SK trh používa **spoločnú Bitblik discovery identitu** (`kBitblikPubkeyHex`) —
+netreba samostatný Nostr kľúč pre Slovensko. Koordinátor publikuje na
+`NOSTR_RELAYS`; aby ho appka našla, tieto relaye sa musia prekrývať so SK
+discovery sadou (spoločné bootstrap relaye). Vlastnú SK discovery identitu
+netreba, iba ak by si chcel oddelenú discovery sadu alebo mute list.
 
 ---
 
