@@ -1084,6 +1084,10 @@ notificationSettings:
     label: Alertes de nouvelles offres
     description: Lorsque cette option est activée, ${app} vous notifie des nouvelles offres disponibles auprès de vos coordinateurs activés pendant que l'application est en arrière-plan. Cela peut être plus rapide que les messageries externes.
 
+onboarding:
+  title: Choisissez votre marché
+  subtitle: Choisissez le pays et le système de paiement que vous utiliserez. Vous pouvez le changer à tout moment dans les Paramètres.
+
 wallet:
   title: Portefeuille
   description: Gérez les réglages de votre portefeuille Lightning

@@ -62,6 +62,7 @@ class TranslationsFr extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$faq$fr faq = _Translations$faq$fr._(_root);
 	@override late final _Translations$settings$fr settings = _Translations$settings$fr._(_root);
 	@override late final _Translations$notificationSettings$fr notificationSettings = _Translations$notificationSettings$fr._(_root);
+	@override late final _Translations$onboarding$fr onboarding = _Translations$onboarding$fr._(_root);
 	@override late final _Translations$wallet$fr wallet = _Translations$wallet$fr._(_root);
 	@override late final _Translations$nwc$fr nwc = _Translations$nwc$fr._(_root);
 	@override late final _Translations$nekoManagement$fr nekoManagement = _Translations$nekoManagement$fr._(_root);
@@ -377,6 +378,17 @@ class _Translations$notificationSettings$fr extends Translations$notificationSet
 	@override String get title => 'Notifications';
 	@override String get androidOnly => 'Les notifications en arrière-plan ne sont actuellement prises en charge que sur Android.';
 	@override late final _Translations$notificationSettings$newOfferAlerts$fr newOfferAlerts = _Translations$notificationSettings$newOfferAlerts$fr._(_root);
+}
+
+// Path: onboarding
+class _Translations$onboarding$fr extends Translations$onboarding$en {
+	_Translations$onboarding$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Choisissez votre marché';
+	@override String get subtitle => 'Choisissez le pays et le système de paiement que vous utiliserez. Vous pouvez le changer à tout moment dans les Paramètres.';
 }
 
 // Path: wallet
@@ -3680,6 +3692,8 @@ extension on TranslationsFr {
 			'notificationSettings.androidOnly' => 'Les notifications en arrière-plan ne sont actuellement prises en charge que sur Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Alertes de nouvelles offres',
 			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'Lorsque cette option est activée, ${app} vous notifie des nouvelles offres disponibles auprès de vos coordinateurs activés pendant que l\'application est en arrière-plan. Cela peut être plus rapide que les messageries externes.',
+			'onboarding.title' => 'Choisissez votre marché',
+			'onboarding.subtitle' => 'Choisissez le pays et le système de paiement que vous utiliserez. Vous pouvez le changer à tout moment dans les Paramètres.',
 			'wallet.title' => 'Portefeuille',
 			'wallet.description' => 'Gérez les réglages de votre portefeuille Lightning',
 			'wallet.missingReceiving.title' => 'Portefeuille de réception requis',

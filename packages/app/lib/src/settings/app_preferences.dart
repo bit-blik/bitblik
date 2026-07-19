@@ -75,8 +75,6 @@ class AppPreferencesStore {
       'offer_creation_preferred_coordinator_pubkey';
   static const _bitcoinDisplayUnitKey = 'display_bitcoin_unit';
   static const _selectedPaymentSystemKey = 'selected_payment_system_id';
-  static const _paymentSystemAutoDetectAttemptedKey =
-      'selected_payment_system_auto_detect_attempted_v1';
 
   static const _defaultOfferCreation = OfferCreationPreferences(
     defaultCategory: OfferCategory.shop,
@@ -174,16 +172,25 @@ class AppPreferencesStore {
   /// Active payment method (country/system). Uses the saved choice if present,
   /// otherwise the build's default ([buildDefaultPaymentSystemId], resolved at
   /// startup from the appId/flavor or `--dart-define=PAYMENT_SYSTEM`).
-  static Future<void> initializeSelectedPaymentSystemForFirstLaunch() async {
+  /// Resolve the market for this launch and report whether one is now selected.
+  ///
+  /// Returns `true` (→ skip the first-launch market picker) when:
+  /// - the user already chose a market before, or
+  /// - this is a branded/forced build (it pins its own market), or
+  /// - IP geolocation resolves a **country served by a supported payment
+  ///   system**, which is then auto-selected.
+  ///
+  /// Returns `false` (→ show the market-onboarding picker) only when we cannot
+  /// determine the device country (no IP / lookup failed) OR the country is not
+  /// served by any supported payment system. Detection is retried on each cold
+  /// start until a market is selected, so a first launch without network can
+  /// still auto-resolve on a later launch instead of being stuck on onboarding.
+  static Future<bool> ensureMarketSelectedOrDetect() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_selectedPaymentSystemKey);
-    if (saved != null && saved.isNotEmpty) return;
-    if (isBuildPaymentSystemForced) return;
+    if (saved != null && saved.isNotEmpty) return true;
+    if (isBuildPaymentSystemForced) return true;
 
-    final attempted = prefs.getBool(_paymentSystemAutoDetectAttemptedKey);
-    if (attempted == true) return;
-
-    await prefs.setBool(_paymentSystemAutoDetectAttemptedKey, true);
     final detected = await _detectPaymentSystemFromIp();
     if (detected != null) {
       await prefs.setString(_selectedPaymentSystemKey, detected.id);
@@ -191,7 +198,10 @@ class AppPreferencesStore {
       print(
         'BITFLAVOR autoDetected country=${detected.country} method=${detected.id}',
       );
+      return true;
     }
+    // No supported market for the detected/undetermined country → onboarding.
+    return false;
   }
 
   static Future<PaymentSystem> loadSelectedPaymentSystem() async {
@@ -284,20 +294,51 @@ class AppPreferencesStore {
   }
 }
 
+/// Test/debug override for the detected country, e.g.
+/// `flutter run --dart-define=GEO_COUNTRY=SK`. When set to a 2-letter code it
+/// short-circuits the IP lookup so you can simulate any market on first launch.
+const String _geoCountryOverride =
+    String.fromEnvironment('GEO_COUNTRY', defaultValue: '');
+
+/// ISO 3166-1 alpha-2 country code from the device IP, or null.
+///
+/// Tries several free, no-key, HTTPS + CORS-friendly geolocation providers in
+/// order and returns the first valid 2-letter code, so one provider being
+/// rate-limited (e.g. ipapi.co's free tier) doesn't break detection. Each is
+/// given a short timeout; any failure falls through to the next.
 Future<String?> getCountryFromIP() async {
-  try {
-    final response = await http
-        .get(Uri.parse('https://ipapi.co/json/'))
-        .timeout(const Duration(seconds: 5));
-    if (response.statusCode == 200) {
+  // Test override wins — no network call.
+  if (_geoCountryOverride.length == 2 &&
+      RegExp(r'^[A-Za-z]{2}$').hasMatch(_geoCountryOverride)) {
+    // ignore: avoid_print
+    print('BITFLAVOR geoCountryOverride=$_geoCountryOverride');
+    return _geoCountryOverride.toUpperCase();
+  }
+  // (url, field extractor). Ordered by reliability of the free tier.
+  final providers = <(String, String? Function(Map))>[
+    ('https://api.country.is/', (j) => j['country'] as String?),
+    ('https://ipwho.is/', (j) => j['country_code'] as String?),
+    ('https://ipapi.co/json/', (j) => j['country_code'] as String?),
+  ];
+  for (final (url, pick) in providers) {
+    try {
+      final response = await http
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 200) continue;
       final data = jsonDecode(response.body);
-      final countryCode = data['country_code'];
-      if (countryCode is String && countryCode.isNotEmpty) {
-        return countryCode;
+      if (data is! Map) continue;
+      final code = pick(data);
+      // A valid result is exactly two letters; error responses (rate-limit
+      // messages, {"success":false}, ...) don't match and fall through.
+      if (code != null &&
+          code.length == 2 &&
+          RegExp(r'^[A-Za-z]{2}$').hasMatch(code)) {
+        return code.toUpperCase();
       }
+    } catch (_) {
+      // Network/CORS/timeout/parse failure → try the next provider.
     }
-  } catch (_) {
-    // Network/cors/timeout failures should just fall back to the build default.
   }
   return null;
 }

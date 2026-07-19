@@ -1646,8 +1646,10 @@ final selectedPaymentSystemProvider =
     );
 
 /// Whether the first-launch market/country picker is the active screen.
-/// Overridden in `main()` from [AppPreferencesStore.hasSelectedPaymentSystem];
-/// the `false` default keeps tests and non-`main` entrypoints on the normal
+/// Overridden in `main()` from
+/// [AppPreferencesStore.ensureMarketSelectedOrDetect] — true only when no
+/// market could be auto-detected from the device country (no IP / unsupported).
+/// The `false` default keeps tests and non-`main` entrypoints on the normal
 /// home route. When true, the router starts at the onboarding screen and the
 /// coordinator cold-start overlay is suppressed (so it doesn't pop over the
 /// picker). The onboarding screen flips this to `false` once the user picks a

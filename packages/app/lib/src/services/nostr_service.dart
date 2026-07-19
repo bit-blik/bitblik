@@ -251,16 +251,16 @@ class NostrService {
         walletsRepo: FlutterSecureStorageWalletsRepo(),
         eventVerifier: eventVerifier,
         bootstrapRelays: _relayUrls,
-        logLevel: kDebugMode ? LogLevel.debug : LogLevel.warning,
+        logLevel: false && kDebugMode ? LogLevel.debug : LogLevel.warning,
         cashuUserSeedphrase: CashuUserSeedphrase(seedPhrase: cashuSeedPhrase),
       ),
     );
 
     await IsolateManager.instance.ready;
 
-    ndk!.connectivity.relayConnectivityChanges.listen((data) {
-      print("🔗 Relay connectivity change: ${data}");
-    });
+    // ndk!.connectivity.relayConnectivityChanges.listen((data) {
+    //   print("🔗 Relay connectivity change: ${data}");
+    // });
 
     // _ndk!.connectivity.relayConnectivityChanges.listen((data) {
     //   print('🔗 Relay connectivity change: $data');

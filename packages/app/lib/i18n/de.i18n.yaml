@@ -1084,6 +1084,10 @@ notificationSettings:
     label: Benachrichtigungen über neue Angebote
     description: Wenn aktiviert, benachrichtigt dich ${app} über neue annehmbare Angebote deiner aktivierten Koordinatoren, während die App im Hintergrund läuft. Das kann schneller sein als externe Messenger.
 
+onboarding:
+  title: Wähle deinen Markt
+  subtitle: Wähle das Land und Zahlungssystem, das du verwenden wirst. Du kannst es jederzeit in den Einstellungen ändern.
+
 wallet:
   title: Wallet
   description: Verwalte deine Lightning-Wallet-Einstellungen

@@ -215,7 +215,11 @@ Future<void> main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await initBuildFlavor();
-  await AppPreferencesStore.initializeSelectedPaymentSystemForFirstLaunch();
+  // Try to resolve the market from the device country (IP geolocation) and
+  // auto-select it. Only when that fails (no IP / unsupported country) do we
+  // fall back to the first-launch market picker.
+  final marketSelected =
+      await AppPreferencesStore.ensureMarketSelectedOrDetect();
   await NotificationService().init();
   String? localeString = await asyncPrefs.getString('app_locale');
   if (localeString != null) {
@@ -238,9 +242,6 @@ Future<void> main() async {
   // by then discovery has run for BLIK and the Slovak coordinators don't appear
   // until a manual re-enable in Settings.
   final savedMethod = await AppPreferencesStore.loadSelectedPaymentSystem();
-  // On a fresh install the user hasn't picked a market yet — show the
-  // first-launch country picker instead of silently defaulting.
-  final hasMarket = await AppPreferencesStore.hasSelectedPaymentSystem();
   runApp(
     TranslationProvider(
       // Wrap with TranslationProvider
@@ -249,7 +250,7 @@ Future<void> main() async {
           selectedPaymentSystemProvider.overrideWith(
             (ref) => SelectedPaymentSystemNotifier(savedMethod),
           ),
-          needsMarketOnboardingProvider.overrideWith((ref) => !hasMarket),
+          needsMarketOnboardingProvider.overrideWith((ref) => !marketSelected),
         ],
         child: const SafeArea(child: MyApp()),
       ),

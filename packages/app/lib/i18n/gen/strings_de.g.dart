@@ -62,6 +62,7 @@ class TranslationsDe extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$faq$de faq = _Translations$faq$de._(_root);
 	@override late final _Translations$settings$de settings = _Translations$settings$de._(_root);
 	@override late final _Translations$notificationSettings$de notificationSettings = _Translations$notificationSettings$de._(_root);
+	@override late final _Translations$onboarding$de onboarding = _Translations$onboarding$de._(_root);
 	@override late final _Translations$wallet$de wallet = _Translations$wallet$de._(_root);
 	@override late final _Translations$nwc$de nwc = _Translations$nwc$de._(_root);
 	@override late final _Translations$nekoManagement$de nekoManagement = _Translations$nekoManagement$de._(_root);
@@ -377,6 +378,17 @@ class _Translations$notificationSettings$de extends Translations$notificationSet
 	@override String get title => 'Benachrichtigungen';
 	@override String get androidOnly => 'Hintergrund-Benachrichtigungen werden derzeit nur auf Android unterstützt.';
 	@override late final _Translations$notificationSettings$newOfferAlerts$de newOfferAlerts = _Translations$notificationSettings$newOfferAlerts$de._(_root);
+}
+
+// Path: onboarding
+class _Translations$onboarding$de extends Translations$onboarding$en {
+	_Translations$onboarding$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Wähle deinen Markt';
+	@override String get subtitle => 'Wähle das Land und Zahlungssystem, das du verwenden wirst. Du kannst es jederzeit in den Einstellungen ändern.';
 }
 
 // Path: wallet
@@ -3680,6 +3692,8 @@ extension on TranslationsDe {
 			'notificationSettings.androidOnly' => 'Hintergrund-Benachrichtigungen werden derzeit nur auf Android unterstützt.',
 			'notificationSettings.newOfferAlerts.label' => 'Benachrichtigungen über neue Angebote',
 			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'Wenn aktiviert, benachrichtigt dich ${app} über neue annehmbare Angebote deiner aktivierten Koordinatoren, während die App im Hintergrund läuft. Das kann schneller sein als externe Messenger.',
+			'onboarding.title' => 'Wähle deinen Markt',
+			'onboarding.subtitle' => 'Wähle das Land und Zahlungssystem, das du verwenden wirst. Du kannst es jederzeit in den Einstellungen ändern.',
 			'wallet.title' => 'Wallet',
 			'wallet.description' => 'Verwalte deine Lightning-Wallet-Einstellungen',
 			'wallet.missingReceiving.title' => 'Empfangs-Wallet erforderlich',
