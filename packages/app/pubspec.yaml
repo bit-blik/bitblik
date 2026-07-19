@@ -176,6 +176,7 @@ flutter:
     - assets/faq/bitblik/
     - assets/faq/bitway/
     - assets/faq/bittwint/
+    - assets/faq/bitvyber/
     # Flow definitions — single source of truth in bitblik_core/lib/flows,
     # bundled here as package assets (no copy in this repo).
     - packages/bitblik_core/flows/blik.yml

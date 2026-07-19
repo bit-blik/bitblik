@@ -323,10 +323,10 @@ Future<int> runOfferCreate(List<String> args) async {
 }
 
 // ---------------------------------------------------------------------------
-// CLI command: `bitblik offer get-blik`
+// CLI command: `bitblik offer get-code`
 // ---------------------------------------------------------------------------
 
-/// CLI command: `bitblik offer get-blik`.
+/// CLI command: `bitblik offer get-code`.
 ///
 /// Fast path: `--offer <id> --coordinator <npub|hex>` — skips local store,
 /// calls `get_blik` RPC directly.
@@ -833,10 +833,10 @@ Future<int> _callCancelOfferRpc(
 }
 
 // ---------------------------------------------------------------------------
-// CLI command: `bitblik offer mark-blik-invalid`
+// CLI command: `bitblik offer mark-code-invalid`
 // ---------------------------------------------------------------------------
 
-/// CLI command: `bitblik offer mark-blik-invalid`.
+/// CLI command: `bitblik offer mark-code-invalid`.
 ///
 /// Tells the coordinator the BLIK code was invalid / did not charge.
 /// Coordinator puts the offer back so a new taker can reserve it.

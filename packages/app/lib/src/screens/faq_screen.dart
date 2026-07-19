@@ -141,9 +141,11 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       // app flavor), so e.g. a Bittwint user who switches to MB WAY sees the
       // ATM-focused BitWay FAQ. FAQs live under assets/faq/<slug>/faq_<lang>.md;
       // fall back to the brand's English file, then to the generic Bitblik FAQ
-      // when no per-brand file exists for the language.
+      // when no per-brand file exists for the language. Slug uses the wire
+      // platformTag (ASCII, e.g. `Bitvyber`) not brandName, which can carry a
+      // diacritic (`Bitvýber`) that would make a fragile non-ASCII asset path.
       final String slug =
-          ref.read(selectedPaymentSystemProvider).brandName.toLowerCase();
+          ref.read(selectedPaymentSystemProvider).platformTag.toLowerCase();
       final candidates = <String>[
         'assets/faq/$slug/faq_$langCode.md',
         'assets/faq/$slug/faq_en.md',

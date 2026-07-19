@@ -1,6 +1,6 @@
 ---
 name: bitblik
-description: Peer-to-peer BLIK/Lightning exchange CLI — create maker offers, retrieve BLIK codes from takers, confirm payments. Operates via Nostr coordinator network.
+description: Peer-to-peer fiat/Lightning exchange CLI (BLIK, MB WAY, TWINT, Slovak cardless ATM) — create maker offers, retrieve payment codes from takers, confirm payments. Operates via Nostr coordinator network.
 license: MIT
 metadata:
   author: bitblik
@@ -9,7 +9,10 @@ metadata:
 
 # BitBlik Agent Skill
 
-P2P exchange: Lightning sats → BLIK fiat code. Maker-side CLI over Nostr.
+P2P exchange: Lightning sats → a fiat payment code. Maker-side CLI over Nostr.
+One binary per market: `bitblik` (BLIK/PL), `bitway` (MB WAY/PT), `bittwint`
+(TWINT/CH), `bitvyber` (Slovak cardless ATM/SK). The Slovak market is
+bank-scoped — `offer create` needs `--bank <tatrabanka|slsp|vub>`.
 
 ## Quick Reference
 
@@ -25,7 +28,7 @@ P2P exchange: Lightning sats → BLIK fiat code. Maker-side CLI over Nostr.
 ## One-Line Summary
 
 ```
-coordinators list → offer create → pay hold invoice → get-blik (poll) → confirm-payment
+coordinators list → offer create → pay hold invoice → get-code (poll) → confirm-payment
 ```
 
 ## Maker Commands at a Glance
@@ -34,9 +37,9 @@ coordinators list → offer create → pay hold invoice → get-blik (poll) → 
 |---------|-------------|
 | `offer create` | Start exchange — returns hold invoice to pay |
 | `offer cancel` | Abort before taker takes (created/funded) |
-| `offer get-blik` | Poll for BLIK code after taker reserves |
+| `offer get-code` | Poll for BLIK code after taker reserves |
 | `offer confirm-payment` | After entering BLIK in payment terminal |
-| `offer mark-blik-invalid` | BLIK code didn't work at terminal |
+| `offer mark-code-invalid` | BLIK code didn't work at terminal |
 | `offer open-dispute` | Taker raised conflict after invalid-BLIK report |
 | `offer sync` | Refresh local status from coordinator |
 | `offer list` | Show local offers |

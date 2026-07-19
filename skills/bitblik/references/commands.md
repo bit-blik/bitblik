@@ -16,9 +16,17 @@ Output fields: `pubkey`, `name`, `currencies`, `minAmountSats`, `maxAmountSats`,
 ```bash
 bitblik offer create --fiat 100 --coordinator <npub|hex> --json
 bitblik offer create --fiat 100 --coordinator <npub|hex> --currency PLN --json
+# Bank-scoped market (Slovakia / bitvyber): --bank is REQUIRED — you withdraw
+# at that bank's ATM. One of: tatrabanka | slsp | vub.
+bitvyber offer create --fiat 50 --coordinator <npub|hex> --bank tatrabanka --json
 ```
 
 Returns: `holdInvoice` (Lightning hold invoice to pay), `paymentHash`, `amountSats`, `fiatAmount`
+
+**Markets:** each binary serves one market — `bitblik` (BLIK/PL), `bitway`
+(MB WAY/PT), `bittwint` (TWINT/CH), `bitvyber` (Slovak cardless ATM/SK). The
+Slovak market is bank-scoped: `--bank` is required and the amount must be
+dispensable at that bank's ATM (notes 10/20/50/100 €).
 
 Offer saved locally after creation. Coordinator activates once hold invoice is paid.
 
@@ -45,9 +53,11 @@ Valid from `created` or `funded` status only. Coordinator voids the hold invoice
 ```bash
 bitblik offer list --json               # active offers only
 bitblik offer list --finished --json    # include terminal offers
+bitvyber offer list --bank vub --json   # bank-scoped market: filter by bank
 ```
 
-Shows locally cached state. Run `offer sync` first to refresh.
+Shows locally cached state. Run `offer sync` first to refresh. On bank-scoped
+markets the listing includes a BANK column; `--bank <id>` filters to one bank.
 
 ---
 
@@ -67,15 +77,17 @@ Queries live Nostr relay broadcasts from that coordinator. Shows all public offe
 bitblik offer sync
 ```
 
-Calls `get_my_active_offer` RPC once per coordinator. Updates the single active offer returned. Run before `get-blik` or `cancel` when local state may be stale.
+Calls `get_my_active_offer` RPC once per coordinator. Updates the single active offer returned. Run before `get-code` or `cancel` when local state may be stale.
 
 ---
 
-## Get BLIK Code (Polling — use for agents)
+## Get Payment Code (Polling — use for agents)
 
 ```bash
-bitblik offer get-blik --no-wait --json
+bitblik offer get-code --no-wait --json
 ```
+
+> Renamed from `get-blik`; the old name still works as an alias.
 
 **Exit codes:**
 - `0` — BLIK code retrieved. Output: `{"ready": true, "blik_code": "123456", ...}`
@@ -86,7 +98,7 @@ bitblik offer get-blik --no-wait --json
 
 ```bash
 while true; do
-  result=$(bitblik offer get-blik --no-wait --json)
+  result=$(bitblik offer get-code --no-wait --json)
   code=$?
   if [ $code -eq 0 ]; then
     echo "$result"   # contains blik_code
@@ -103,8 +115,8 @@ done
 With specific offer or coordinator:
 
 ```bash
-bitblik offer get-blik --no-wait --json --offer <payment_hash>
-bitblik offer get-blik --no-wait --json --offer <id> --coordinator <npub|hex>
+bitblik offer get-code --no-wait --json --offer <payment_hash>
+bitblik offer get-code --no-wait --json --offer <id> --coordinator <npub|hex>
 ```
 
 > **Without `--no-wait`** (blocking): waits indefinitely via Nostr subscription. Use only in interactive terminals, not agent loops.
@@ -122,13 +134,15 @@ Call after successfully entering BLIK code in banking app. Coordinator settles h
 
 ---
 
-## Mark BLIK Invalid
+## Mark Code Invalid
 
 ```bash
-bitblik offer mark-blik-invalid
-bitblik offer mark-blik-invalid --offer <id>
-bitblik offer mark-blik-invalid --offer <id> --coordinator <npub|hex>
+bitblik offer mark-code-invalid
+bitblik offer mark-code-invalid --offer <id>
+bitblik offer mark-code-invalid --offer <id> --coordinator <npub|hex>
 ```
+
+> Renamed from `mark-blik-invalid`; the old name still works as an alias.
 
 Call when the received BLIK code did not work at the bank terminal. Coordinator notifies the taker and re-lists the offer for a new taker.
 
