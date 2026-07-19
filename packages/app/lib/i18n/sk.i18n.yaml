@@ -795,6 +795,9 @@ home:
     simplex: SimpleX
     matrix: Matrix
     signal: Signal
+    channelAllBanks: "(všetky banky)"
+    channelForBankPrefix: "(len ponuky pre "
+    channelForBankSuffix: ")"
 
   statistics:
     title: Dokončené ponuky

@@ -161,7 +161,8 @@ class _FakeTelegramService extends TelegramService {
       : super(botToken: 'test-bot-token', chatIds: const ['test-chat-id']);
 
   @override
-  Future<TelegramSendResult> sendMessageDetailed(String message) async {
+  Future<TelegramSendResult> sendMessageDetailed(String message,
+      {List<String>? chatIds}) async {
     sendCalls++;
     lastMessage = message;
     return const TelegramSendResult(

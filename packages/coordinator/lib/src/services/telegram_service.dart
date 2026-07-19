@@ -68,8 +68,17 @@ class TelegramService {
   /// Sends [message] to all configured chats and returns the Telegram
   /// message ids of the successfully delivered copies, so they can be
   /// edited later (e.g. struck out when an offer is cancelled or expires).
-  Future<TelegramSendResult> sendMessageDetailed(String message) async {
-    if (!isConfigured) {
+  ///
+  /// [chatIds] overrides the default configured chats — used for per-offer
+  /// routing (general channel ∪ the offer's bank-specific channel).
+  Future<TelegramSendResult> sendMessageDetailed(
+    String message, {
+    List<String>? chatIds,
+  }) async {
+    final targets = <String>{...?chatIds, if (chatIds == null) ..._chatIds}
+        .where((c) => c.isNotEmpty)
+        .toList();
+    if (_botToken == null || _botToken.isEmpty || targets.isEmpty) {
       AppLogger.info(
           'Telegram not configured: botToken or chatIds missing. Skipping notification.');
       return const TelegramSendResult(allSucceeded: false, sentMessages: []);
@@ -81,7 +90,7 @@ class TelegramService {
       var allSucceeded = true;
       final sentMessages = <TelegramSentMessage>[];
 
-      for (final chatId in _chatIds) {
+      for (final chatId in targets) {
         final response = await _httpClient.post(
           url,
           headers: {'Content-Type': 'application/json'},

@@ -125,6 +125,35 @@ class CoordinatorService {
   /// banks they hold; falls back to [_channelLinks] client-side.
   late final Map<String, Map<String, String>> _bankChannelLinks;
 
+  /// Per-bank notification targets, `bankId → [targets]`, set from
+  /// `<CHANNEL>_<BANKID>` env vars (e.g. `TELEGRAM_CHAT_ID_TATRABANKA`,
+  /// `MATRIX_ROOM_SLSP`, `SIMPLEX_GROUP_VUB`, `SIGNAL_GROUP_ID_VUB`). A new-offer
+  /// notification for a bank-scoped offer is sent to the general channel AND the
+  /// offer bank's channel (both only if configured).
+  late final Map<String, List<String>> _telegramChatIdsByBank;
+  late final Map<String, List<String>> _matrixRoomsByBank;
+  late final Map<String, List<String>> _simplexGroupsByBank;
+  late final Map<String, List<String>> _signalGroupsByBank;
+
+  /// The general (non-bank) Telegram chat ids, so per-offer sends can union them
+  /// with the offer bank's chat ids.
+  late final List<String> _telegramGeneralChatIds;
+
+  /// Read `<baseKey>_<BANKID>` env for each served bank into `bankId →
+  /// [comma-split values]`, dropping banks with no configured value.
+  Map<String, List<String>> _perBankEnvTargets(String baseKey) {
+    final out = <String, List<String>>{};
+    for (final bankId in servedBanks) {
+      final raw = _env['${baseKey}_${bankId.toUpperCase()}'];
+      final vals = (raw?.split(',') ?? const <String>[])
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (vals.isNotEmpty) out[bankId] = vals;
+    }
+    return out;
+  }
+
   // Offer amount limits
   late final int _minAmountSats;
   late final int _maxAmountSats;
@@ -596,6 +625,13 @@ class CoordinatorService {
         int.tryParse(_env['PENDING_OFFER_TIMEOUT_SECONDS'] ?? '') ??
             26 * 60 * 60;
 
+    // Per-bank notification targets (bank-scoped markets, e.g. SK). A bank-scoped
+    // offer notifies the general channel AND the offer bank's channel.
+    _telegramChatIdsByBank = _perBankEnvTargets('TELEGRAM_CHAT_ID');
+    _matrixRoomsByBank = _perBankEnvTargets('MATRIX_ROOM');
+    _simplexGroupsByBank = _perBankEnvTargets('SIMPLEX_GROUP');
+    _signalGroupsByBank = _perBankEnvTargets('SIGNAL_GROUP_ID');
+
     // Initialize Telegram service
     final telegramBotToken = _env['TELEGRAM_BOT_TOKEN'];
     final telegramChatIds =
@@ -604,12 +640,13 @@ class CoordinatorService {
             .where((chatId) => chatId.isNotEmpty)
             .toSet()
             .toList();
+    _telegramGeneralChatIds = telegramChatIds;
     _telegramService = telegramServiceForTest;
     if (_telegramService != null) {
       AppLogger.info('Telegram service initialized from test override.');
     } else if (telegramBotToken != null &&
         telegramBotToken.isNotEmpty &&
-        telegramChatIds.isNotEmpty) {
+        (telegramChatIds.isNotEmpty || _telegramChatIdsByBank.isNotEmpty)) {
       _telegramService = TelegramService(
         botToken: telegramBotToken,
         chatIds: telegramChatIds,
@@ -1106,9 +1143,10 @@ class CoordinatorService {
   }
 
   /// Send SimpleX notification (returns Future for parallel execution)
-  Future<void> _sendSimpleXNotification(String notificationText) async {
+  Future<void> _sendSimpleXNotification(String notificationText,
+      {String? group}) async {
     try {
-      final simplexMsg = "#'$_simplexGroup' $notificationText";
+      final simplexMsg = "#'${group ?? _simplexGroup}' $notificationText";
       final result = await run('$_simplexChatExec -e "$simplexMsg" --ha');
       if (result.first.stderr.isNotEmpty) {
         AppLogger.info('simplex command error: ${result.first.stderr}');
@@ -1119,12 +1157,14 @@ class CoordinatorService {
   }
 
   /// Send Matrix notification (returns Future for parallel execution)
-  Future<void> _sendMatrixNotification(String notificationText) async {
+  Future<void> _sendMatrixNotification(String notificationText,
+      {String? roomId}) async {
     try {
-      AppLogger.info('Sending Matrix notification to room $_matrixRoomId');
-      final room = _matrixClient!.getRoomById(_matrixRoomId);
+      final targetRoom = roomId ?? _matrixRoomId;
+      AppLogger.info('Sending Matrix notification to room $targetRoom');
+      final room = _matrixClient!.getRoomById(targetRoom);
       if (room == null) {
-        AppLogger.info('Error: Could not find Matrix room $_matrixRoomId');
+        AppLogger.info('Error: Could not find Matrix room $targetRoom');
       } else {
         await room.sendTextEvent(notificationText);
         AppLogger.info('Matrix notification sent successfully.');
@@ -1138,10 +1178,11 @@ class CoordinatorService {
   /// Persists the sent message ids so the message can be edited later
   /// (struck out) if the offer is cancelled or expires.
   Future<void> _sendTelegramNotification(
-      String notificationText, String offerId) async {
+      String notificationText, String offerId,
+      {List<String>? chatIds}) async {
     try {
-      final result =
-          await _telegramService!.sendMessageDetailed(notificationText);
+      final result = await _telegramService!
+          .sendMessageDetailed(notificationText, chatIds: chatIds);
       for (final sent in result.sentMessages) {
         try {
           await _dbService.saveTelegramOfferMessage(
@@ -1225,10 +1266,12 @@ class CoordinatorService {
   }
 
   /// Send Signal notification (returns Future for parallel execution)
-  Future<void> _sendSignalNotification(String notificationText) async {
+  Future<void> _sendSignalNotification(String notificationText,
+      {String? groupId}) async {
     try {
+      final group = groupId ?? _signalGroupId;
       final signalCmd =
-          '$_signalCliExec send -g $_signalGroupId -m "$notificationText"';
+          '$_signalCliExec send -g $group -m "$notificationText"';
       final result = await run(signalCmd);
       if (result.first.stderr.isNotEmpty) {
         AppLogger.info('signal-cli command error: ${result.first.stderr}');
@@ -1252,25 +1295,60 @@ class CoordinatorService {
     return '${strings.newOffer}: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
   }
 
+  /// General target [general] (dropped if empty) unioned with the offer bank's
+  /// targets from [byBank], deduped. Both only when configured.
+  List<String> _notifyTargets(
+    String general,
+    Map<String, List<String>> byBank,
+    String? bankId,
+  ) {
+    final s = <String>{if (general.isNotEmpty) general};
+    if (bankId != null) s.addAll(byBank[bankId] ?? const []);
+    return s.toList();
+  }
+
   Future<void> _sendOfferNotifications(Offer offer) async {
     final notificationText = _buildFundedOfferNotification(offer);
+    final bankId = offer.bankId;
     final notificationFutures = <Future<void>>[];
 
+    // Each messenger: send to the general channel AND the offer bank's channel
+    // (both only if configured). For bank-agnostic offers, just the general one.
     if (_simplexChatExec != '') {
-      notificationFutures.add(_sendSimpleXNotification(notificationText));
+      for (final group in _notifyTargets(
+          _simplexGroup as String? ?? '', _simplexGroupsByBank, bankId)) {
+        notificationFutures
+            .add(_sendSimpleXNotification(notificationText, group: group));
+      }
     }
 
     if (_matrixClient != null && _matrixClient!.isLogged()) {
-      notificationFutures.add(_sendMatrixNotification(notificationText));
+      for (final room
+          in _notifyTargets(_matrixRoomId, _matrixRoomsByBank, bankId)) {
+        notificationFutures
+            .add(_sendMatrixNotification(notificationText, roomId: room));
+      }
     }
 
     if (_telegramService != null && _telegramService!.isConfigured) {
-      notificationFutures
-          .add(_sendTelegramNotification(notificationText, offer.id));
+      // Default (null) → the service's own general chats. When the offer's bank
+      // has its own chats, override with general ∪ bank so both are notified.
+      final bankChats =
+          bankId != null ? (_telegramChatIdsByBank[bankId] ?? const []) : const [];
+      final chatIds = bankChats.isEmpty
+          ? null
+          : <String>{..._telegramGeneralChatIds, ...bankChats}.toList();
+      notificationFutures.add(_sendTelegramNotification(
+          notificationText, offer.id,
+          chatIds: chatIds));
     }
 
-    if (_signalCliExec != '' && _signalGroupId.isNotEmpty) {
-      notificationFutures.add(_sendSignalNotification(notificationText));
+    if (_signalCliExec != '') {
+      for (final group in _notifyTargets(
+          _signalGroupId, _signalGroupsByBank, bankId)) {
+        notificationFutures
+            .add(_sendSignalNotification(notificationText, groupId: group));
+      }
     }
 
     if (notificationFutures.isNotEmpty) {

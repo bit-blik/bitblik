@@ -108,6 +108,16 @@ class CoordinatorRecord {
   String? get termsOfUsageNaddr => info?.termsOfUsageNaddr;
   Map<String, String> get channelLinks => info?.channelLinks ?? const {};
 
+  /// Bank-scoped channel links (`bankId → messenger → url`); empty for
+  /// bank-agnostic markets.
+  Map<String, Map<String, String>> get bankChannelLinks =>
+      info?.bankChannelLinks ?? const {};
+
+  /// Channel link for [messenger], preferring the [bankId]-scoped one, else the
+  /// market-wide link. Null when neither is advertised.
+  String? channelLink(String messenger, {String? bankId}) =>
+      info?.channelLink(messenger, bankId: bankId);
+
   /// True once this coordinator's relay set is known (NIP-65 or fallback).
   bool get hasRelays => relays.isNotEmpty;
 

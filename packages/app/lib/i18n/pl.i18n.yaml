@@ -933,6 +933,9 @@ home:
     simplex: SimpleX
     matrix: Matrix
     signal: Signal
+    channelAllBanks: "(wszystkie banki)"
+    channelForBankPrefix: "(tylko oferty dla "
+    channelForBankSuffix: ")"
   
   statistics:
     title: Zakończone oferty

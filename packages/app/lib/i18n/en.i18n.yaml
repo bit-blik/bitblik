@@ -1070,7 +1070,10 @@ home:
     simplex: SimpleX
     matrix: Matrix
     signal: Signal
-  
+    channelAllBanks: "(all banks)"
+    channelForBankPrefix: "(only offers for "
+    channelForBankSuffix: ")"
+
   statistics:
     title: Finished Offers
     lifetimeCompact: "All: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}"

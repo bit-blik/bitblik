@@ -2370,6 +2370,15 @@ class Translations$home$notifications$en {
 
 	/// en: 'Signal'
 	String get signal => 'Signal';
+
+	/// en: '(all banks)'
+	String get channelAllBanks => '(all banks)';
+
+	/// en: '(only offers for '
+	String get channelForBankPrefix => '(only offers for ';
+
+	/// en: ')'
+	String get channelForBankSuffix => ')';
 }
 
 // Path: home.statistics
@@ -6062,6 +6071,9 @@ extension on Translations {
 			'home.notifications.simplex' => 'SimpleX',
 			'home.notifications.matrix' => 'Matrix',
 			'home.notifications.signal' => 'Signal',
+			'home.notifications.channelAllBanks' => '(all banks)',
+			'home.notifications.channelForBankPrefix' => '(only offers for ',
+			'home.notifications.channelForBankSuffix' => ')',
 			'home.statistics.title' => 'Finished Offers',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'All: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',

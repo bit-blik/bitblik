@@ -115,6 +115,31 @@ void main() {
     expect(result.sentMessages.first.messageId, 42);
   });
 
+  test('sendMessageDetailed with explicit chatIds overrides the defaults',
+      () async {
+    final client = _RecordingClient(
+      statusCodes: [200, 200],
+      responseBodies: [
+        '{"ok": true, "result": {"message_id": 1}}',
+        '{"ok": true, "result": {"message_id": 2}}',
+      ],
+    );
+    final service = TelegramService(
+      botToken: 'token',
+      chatIds: ['@general'],
+      httpClient: client,
+    );
+
+    // Per-offer routing: general channel ∪ the offer bank's channel.
+    final result = await service.sendMessageDetailed(
+      'new offer',
+      chatIds: ['@general', '@tatra'],
+    );
+
+    expect(result.sentMessages.map((m) => m.chatId), ['@general', '@tatra']);
+    expect(client.requests, hasLength(2));
+  });
+
   test('editMessage posts to editMessageText with chat and message id',
       () async {
     final client = _RecordingClient(

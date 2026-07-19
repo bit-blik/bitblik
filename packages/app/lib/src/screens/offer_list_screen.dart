@@ -1358,12 +1358,28 @@ Widget _buildNotificationMessengers(
   Translations t,
   List<CoordinatorRecord> coordinators,
 ) {
-  final byMessenger = <String, List<({CoordinatorRecord coord, String url})>>{};
+  final byMessenger =
+      <String, List<({CoordinatorRecord coord, String url, String? bank})>>{};
   for (final c in coordinators.where((c) => c.enabled)) {
+    // Market-wide links.
     c.channelLinks.forEach((messenger, url) {
       if (url.isEmpty) return;
-      (byMessenger[messenger] ??= []).add((coord: c, url: url));
+      (byMessenger[messenger] ??= []).add((coord: c, url: url, bank: null));
     });
+    // Per-bank links (bank-scoped markets, e.g. SK): one entry per bank.
+    if (c.bankChannelLinks.isNotEmpty) {
+      final ps = paymentSystemById(c.paymentSystem);
+      final inst =
+          ps.instrumentFor(OfferCategory.atm) ?? ps.instrumentFor(null);
+      c.bankChannelLinks.forEach((bankId, links) {
+        final label = inst?.bankById(bankId)?.label ?? bankId;
+        links.forEach((messenger, url) {
+          if (url.isEmpty) return;
+          (byMessenger[messenger] ??= [])
+              .add((coord: c, url: url, bank: label));
+        });
+      });
+    }
   }
   if (byMessenger.isEmpty) return const SizedBox.shrink();
 
@@ -1414,7 +1430,7 @@ Future<void> _showMessengerCoordinators(
   BuildContext context,
   Translations t,
   String messengerId,
-  List<({CoordinatorRecord coord, String url})> entries,
+  List<({CoordinatorRecord coord, String url, String? bank})> entries,
 ) {
   return showModalBottomSheet(
     context: context,
@@ -1454,6 +1470,41 @@ Future<void> _showMessengerCoordinators(
                 ListTile(
                   leading: _buildCoordinatorIcon(e.coord, size: 28),
                   title: Text(e.coord.name),
+                  subtitle: e.bank == null
+                      ? Text(
+                          t.home.notifications.channelAllBanks,
+                          style: TextStyle(color: Colors.grey[600]),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                t.home.notifications.channelForBankPrefix,
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ),
+                            Icon(
+                              Icons.account_balance,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                e.bank!,
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              t.home.notifications.channelForBankSuffix,
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
                   trailing: const Icon(Icons.open_in_new, size: 20),
                   onTap: () async {
                     Navigator.of(ctx).pop();

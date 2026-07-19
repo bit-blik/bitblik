@@ -50,7 +50,8 @@ class _BlockingTelegramService extends TelegramService {
       : super(botToken: 'test-bot-token', chatIds: const ['test-chat-id']);
 
   @override
-  Future<TelegramSendResult> sendMessageDetailed(String message) =>
+  Future<TelegramSendResult> sendMessageDetailed(String message,
+          {List<String>? chatIds}) =>
       _sendCompleter.future;
 
   void complete() {

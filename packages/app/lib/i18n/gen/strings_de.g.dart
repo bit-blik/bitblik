@@ -1370,6 +1370,9 @@ class _Translations$home$notifications$de extends Translations$home$notification
 	@override String get simplex => 'SimpleX';
 	@override String get matrix => 'Matrix';
 	@override String get signal => 'Signal';
+	@override String get channelAllBanks => '(alle Banken)';
+	@override String get channelForBankPrefix => '(nur Angebote für ';
+	@override String get channelForBankSuffix => ')';
 }
 
 // Path: home.statistics
@@ -3561,6 +3564,9 @@ extension on TranslationsDe {
 			'home.notifications.simplex' => 'SimpleX',
 			'home.notifications.matrix' => 'Matrix',
 			'home.notifications.signal' => 'Signal',
+			'home.notifications.channelAllBanks' => '(alle Banken)',
+			'home.notifications.channelForBankPrefix' => '(nur Angebote für ',
+			'home.notifications.channelForBankSuffix' => ')',
 			'home.statistics.title' => 'Abgeschlossene Angebote',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Gesamt: ${count} Transaktionen\nDurchschn. Wartezeit auf ${code}: ${avgBlikTime}\nDurchschn. Abschlusszeit: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Letzte 7 T.: ${count} Transaktionen\nDurchschn. Wartezeit auf ${code}: ${avgBlikTime}\nDurchschn. Abschlusszeit: ${avgPaidTime}',

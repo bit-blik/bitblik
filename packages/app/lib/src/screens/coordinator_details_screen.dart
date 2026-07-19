@@ -550,56 +550,88 @@ class _CoordinatorDetailsScreenState
     }
   }
 
-  /// "Get notified" section: one tappable icon+label per configured messenger.
+  /// A row of tappable icon+label per configured messenger for [links].
+  Widget _linksWrap(Translations t, Map<String, String> links) {
+    return Wrap(
+      spacing: 20,
+      runSpacing: 12,
+      children: [
+        for (final id in CoordinatorInfo.messengerIds)
+          if (links[id] != null && links[id]!.isNotEmpty)
+            InkWell(
+              onTap: () => launchUrl(
+                Uri.parse(links[id]!),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: ClipOval(
+                      child: Image.asset('assets/$id.png', fit: BoxFit.contain),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(_messengerLabel(t, id)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.open_in_new, size: 14, color: Colors.grey),
+                ],
+              ),
+            ),
+      ],
+    );
+  }
+
+  /// Bank label for [bankId] on this coordinator's market, or the id itself.
+  String _bankLabel(CoordinatorRecord record, String bankId) {
+    final ps = paymentSystemById(record.paymentSystem);
+    final instrument =
+        ps.instrumentFor(OfferCategory.atm) ?? ps.instrumentFor(null);
+    return instrument?.bankById(bankId)?.label ?? bankId;
+  }
+
+  /// "Get notified" section: the market-wide links, then a group per bank that
+  /// advertises its own channels (takers join the ones for banks they hold).
   List<Widget> _notificationLinksSection(
     BuildContext context,
     Translations t,
     CoordinatorRecord record,
   ) {
     final links = _resolveChannelLinks(record);
-    if (links.isEmpty) return const [];
+    final bankLinks = record.bankChannelLinks;
+    if (links.isEmpty && bankLinks.isEmpty) return const [];
+
+    final titleStyle = Theme.of(
+      context,
+    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600);
+    final bankHeaderStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+        );
+
     return [
       const Divider(height: 32),
-      Text(
-        t.home.notifications.title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-      ),
+      Text(t.home.notifications.title, style: titleStyle),
       const SizedBox(height: 12),
-      Wrap(
-        spacing: 20,
-        runSpacing: 12,
-        children: [
-          for (final id in CoordinatorInfo.messengerIds)
-            if (links[id] != null && links[id]!.isNotEmpty)
-              InkWell(
-                onTap: () => launchUrl(
-                  Uri.parse(links[id]!),
-                  mode: LaunchMode.externalApplication,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/$id.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(_messengerLabel(t, id)),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.open_in_new, size: 14, color: Colors.grey),
-                  ],
-                ),
-              ),
-        ],
-      ),
+      if (links.isNotEmpty) _linksWrap(t, links),
+      // Per-bank groups (SK): each bank the coordinator advertises channels for.
+      for (final entry in bankLinks.entries) ...[
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Icon(
+              Icons.account_balance,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 6),
+            Text(_bankLabel(record, entry.key), style: bankHeaderStyle),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _linksWrap(t, entry.value),
+      ],
     ];
   }
 
