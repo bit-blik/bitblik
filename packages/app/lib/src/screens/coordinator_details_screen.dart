@@ -606,33 +606,78 @@ class _CoordinatorDetailsScreenState
     final titleStyle = Theme.of(
       context,
     ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600);
-    final bankHeaderStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-        );
+    // With per-bank channels, every group gets a consistent scope header ABOVE
+    // its links ("All banks" / "<Bank> only"), so the user can tell at a glance
+    // which channel notifies for everything vs one bank. With no bank channels,
+    // no header is needed — the links are unambiguous.
+    final hasBankScopes = bankLinks.isNotEmpty;
 
     return [
       const Divider(height: 32),
       Text(t.home.notifications.title, style: titleStyle),
       const SizedBox(height: 12),
-      if (links.isNotEmpty) _linksWrap(t, links),
-      // Per-bank groups (SK): each bank the coordinator advertises channels for.
+      if (links.isNotEmpty) ...[
+        if (hasBankScopes)
+          _scopeHeader(context, Icons.public,
+              Text(t.home.notifications.scopeAllBanks)),
+        _linksWrap(t, links),
+      ],
       for (final entry in bankLinks.entries) ...[
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Icon(
-              Icons.account_balance,
-              size: 16,
-              color: Theme.of(context).colorScheme.primary,
+        const SizedBox(height: 18),
+        _scopeHeader(
+          context,
+          Icons.account_balance,
+          _boldBankInScope(
+            context,
+            t.home.notifications.scopeBankOnly(
+              bank: _bankLabel(record, entry.key),
             ),
-            const SizedBox(width: 6),
-            Text(_bankLabel(record, entry.key), style: bankHeaderStyle),
-          ],
+            _bankLabel(record, entry.key),
+          ),
         ),
-        const SizedBox(height: 8),
         _linksWrap(t, entry.value),
       ],
     ];
+  }
+
+  /// A scope sub-header: an accent icon + label, sitting above its link row.
+  Widget _scopeHeader(BuildContext context, IconData icon, Widget label) {
+    final color = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: DefaultTextStyle.merge(
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(color: color, fontWeight: FontWeight.w600),
+              child: label,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Renders [full] with only [bank] bold (word order stays correct across
+  /// languages — "${bank} only" / "Nur ${bank}" / "Len ${bank}").
+  Widget _boldBankInScope(BuildContext context, String full, String bank) {
+    final idx = full.indexOf(bank);
+    if (idx < 0) return Text(full);
+    return Text.rich(
+      TextSpan(children: [
+        TextSpan(text: full.substring(0, idx)),
+        TextSpan(
+          text: bank,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        TextSpan(text: full.substring(idx + bank.length)),
+      ]),
+    );
   }
 
   Future<void> _openNjump(String idOrAddr) async {

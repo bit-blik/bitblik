@@ -798,6 +798,8 @@ home:
     channelAllBanks: "(všetky banky)"
     channelForBankPrefix: "(len ponuky pre "
     channelForBankSuffix: ")"
+    scopeAllBanks: "Všetky banky"
+    scopeBankOnly: "Len ${bank}"
 
   statistics:
     title: Dokončené ponuky

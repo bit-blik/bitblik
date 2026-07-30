@@ -885,6 +885,8 @@ home:
     channelAllBanks: "(tutte le banche)"
     channelForBankPrefix: "(solo offerte per "
     channelForBankSuffix: ")"
+    scopeAllBanks: "Tutte le banche"
+    scopeBankOnly: "Solo ${bank}"
 
   statistics:
     title: Offerte Completate

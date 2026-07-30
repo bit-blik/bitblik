@@ -1386,6 +1386,8 @@ class _Translations$home$notifications$pt extends Translations$home$notification
 	@override String get channelAllBanks => '(todos os bancos)';
 	@override String get channelForBankPrefix => '(apenas ofertas para ';
 	@override String get channelForBankSuffix => ')';
+	@override String get scopeAllBanks => 'Todos os bancos';
+	@override String scopeBankOnly({required Object bank}) => 'Apenas ${bank}';
 }
 
 // Path: home.statistics
@@ -3581,6 +3583,8 @@ extension on TranslationsPt {
 			'home.notifications.channelAllBanks' => '(todos os bancos)',
 			'home.notifications.channelForBankPrefix' => '(apenas ofertas para ',
 			'home.notifications.channelForBankSuffix' => ')',
+			'home.notifications.scopeAllBanks' => 'Todos os bancos',
+			'home.notifications.scopeBankOnly' => ({required Object bank}) => 'Apenas ${bank}',
 			'home.statistics.title' => 'Ofertas concluídas',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Total: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}',

@@ -1285,6 +1285,8 @@ class _Translations$home$notifications$sk extends Translations$home$notification
 	@override String get channelAllBanks => '(všetky banky)';
 	@override String get channelForBankPrefix => '(len ponuky pre ';
 	@override String get channelForBankSuffix => ')';
+	@override String get scopeAllBanks => 'Všetky banky';
+	@override String scopeBankOnly({required Object bank}) => 'Len ${bank}';
 }
 
 // Path: home.statistics
@@ -3199,6 +3201,8 @@ extension on TranslationsSk {
 			'home.notifications.channelAllBanks' => '(všetky banky)',
 			'home.notifications.channelForBankPrefix' => '(len ponuky pre ',
 			'home.notifications.channelForBankSuffix' => ')',
+			'home.notifications.scopeAllBanks' => 'Všetky banky',
+			'home.notifications.scopeBankOnly' => ({required Object bank}) => 'Len ${bank}',
 			'home.statistics.title' => 'Dokončené ponuky',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Všetky: ${count} transakcií\nPriem. čakanie na ${code}: ${avgBlikTime}\nPriem. čas dokončenia: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Posl. 7 dní: ${count} transakcií\nPriem. čakanie na ${code}: ${avgBlikTime}\nPriem. čas dokončenia: ${avgPaidTime}',

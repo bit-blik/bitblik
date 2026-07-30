@@ -2379,6 +2379,12 @@ class Translations$home$notifications$en {
 
 	/// en: ')'
 	String get channelForBankSuffix => ')';
+
+	/// en: 'All banks'
+	String get scopeAllBanks => 'All banks';
+
+	/// en: '${bank} only'
+	String scopeBankOnly({required Object bank}) => '${bank} only';
 }
 
 // Path: home.statistics
@@ -6074,6 +6080,8 @@ extension on Translations {
 			'home.notifications.channelAllBanks' => '(all banks)',
 			'home.notifications.channelForBankPrefix' => '(only offers for ',
 			'home.notifications.channelForBankSuffix' => ')',
+			'home.notifications.scopeAllBanks' => 'All banks',
+			'home.notifications.scopeBankOnly' => ({required Object bank}) => '${bank} only',
 			'home.statistics.title' => 'Finished Offers',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'All: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
