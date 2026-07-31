@@ -21,6 +21,7 @@ class OfferCreationSettingsScreen extends ConsumerStatefulWidget {
 class _OfferCreationSettingsScreenState
     extends ConsumerState<OfferCreationSettingsScreen> {
   OfferCreationPreferences? _settings;
+  String? _defaultBankId;
 
   @override
   void initState() {
@@ -30,10 +31,27 @@ class _OfferCreationSettingsScreenState
 
   Future<void> _load() async {
     final settings = await AppPreferencesStore.loadOfferCreation();
+    final marketId = ref.read(selectedPaymentSystemProvider).id;
+    final defaultBank = await AppPreferencesStore.loadDefaultBank(marketId);
     if (!mounted) return;
     setState(() {
       _settings = settings;
+      _defaultBankId = defaultBank;
     });
+  }
+
+  /// The current market's bank-scoped ATM instrument, or null when the market
+  /// has no banks (BLIK / MB WAY / TWINT).
+  InstrumentSpec? get _bankInstrument {
+    final ps = ref.read(selectedPaymentSystemProvider);
+    final atm = ps.instrumentFor(OfferCategory.atm) ?? ps.instrumentFor(null);
+    return (atm?.hasBanks ?? false) ? atm : null;
+  }
+
+  Future<void> _saveDefaultBank(String? bankId) async {
+    final marketId = ref.read(selectedPaymentSystemProvider).id;
+    setState(() => _defaultBankId = bankId);
+    await AppPreferencesStore.saveDefaultBank(marketId, bankId);
   }
 
   Future<void> _save(OfferCreationPreferences settings) async {
@@ -95,6 +113,51 @@ class _OfferCreationSettingsScreenState
       if (coordinator.maxPremium > max) max = coordinator.maxPremium;
     }
     return max > 0 ? max : 10.0;
+  }
+
+  Future<void> _showBankPicker(Translations t) async {
+    final instrument = _bankInstrument;
+    if (instrument == null) return;
+    // Sentinel for the "no default" choice (ask/first each time).
+    const noneId = '';
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(t.settings.offerCreation.dialogs.selectBank),
+              ),
+              ListTile(
+                leading: const Icon(Icons.remove_circle_outline),
+                title: Text(t.settings.offerCreation.defaultBankNone),
+                trailing: _defaultBankId == null
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                onTap: () => Navigator.of(context).pop(noneId),
+              ),
+              ...instrument.banks.map((b) {
+                final isSel = b.id == _defaultBankId;
+                return ListTile(
+                  leading: const Icon(Icons.account_balance),
+                  title: Text(b.label),
+                  subtitle: Text('${b.validity.inMinutes} min'),
+                  trailing: isSel
+                      ? const Icon(Icons.check, color: Colors.green)
+                      : null,
+                  onTap: () => Navigator.of(context).pop(b.id),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+    if (selected != null) {
+      await _saveDefaultBank(selected.isEmpty ? null : selected);
+    }
   }
 
   Future<void> _showCategoryPicker(Translations t) async {
@@ -228,17 +291,49 @@ class _OfferCreationSettingsScreenState
                   );
                   final isAutomatic = preferred == null && !isCheapest;
                   final maxPremium = _maxPremium(coordinators);
+                  final ps = ref.read(selectedPaymentSystemProvider);
+                  // Coerce the stored default to a category this market actually
+                  // supports (e.g. the global default `shop` for an ATM-only
+                  // market like SK), and hide the picker entirely when there's
+                  // no choice.
+                  final supportedCats = ps.supportedCategories;
+                  final effectiveDefaultCategory =
+                      supportedCats.contains(settings.defaultCategory)
+                          ? settings.defaultCategory
+                          : (supportedCats.isNotEmpty
+                              ? supportedCats.first
+                              : settings.defaultCategory);
                   return ListView(
                     children: [
-                      ListTile(
-                        leading: categoryIconWidget(settings.defaultCategory, 28),
-                        title: Text(t.settings.offerCreation.defaultCategory),
-                        subtitle: Text(
-                          _categoryLabel(t, settings.defaultCategory),
+                      if (ps.hasCategoryChoice)
+                        ListTile(
+                          leading: categoryIconWidget(
+                            effectiveDefaultCategory,
+                            28,
+                          ),
+                          title:
+                              Text(t.settings.offerCreation.defaultCategory),
+                          subtitle: Text(
+                            _categoryLabel(t, effectiveDefaultCategory),
+                          ),
+                          trailing:
+                              const Icon(Icons.arrow_forward_ios, size: 16),
+                          onTap: () => _showCategoryPicker(t),
                         ),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () => _showCategoryPicker(t),
-                      ),
+                      if (_bankInstrument != null)
+                        ListTile(
+                          leading: const Icon(Icons.account_balance),
+                          title: Text(t.settings.offerCreation.defaultBank),
+                          subtitle: Text(
+                            _bankInstrument!
+                                    .bankById(_defaultBankId)
+                                    ?.label ??
+                                t.settings.offerCreation.defaultBankNone,
+                          ),
+                          trailing:
+                              const Icon(Icons.arrow_forward_ios, size: 16),
+                          onTap: () => _showBankPicker(t),
+                        ),
                       SwitchListTile(
                         secondary: const Icon(Icons.tune),
                         title: Row(

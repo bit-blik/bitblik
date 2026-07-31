@@ -1,4 +1,4 @@
-
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import '../../../i18n/gen/strings.g.dart'; // Import Slang
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,7 +38,6 @@ class TakerPaymentProcessScreen extends ConsumerWidget {
     final t = Translations.of(context);
 
     return Scaffold(
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -182,8 +181,8 @@ class _PaymentChecklist extends ConsumerWidget {
     // defaulting the "Maker confirmed" step to active.
     final OfferStatus effectiveStatus =
         currentStatus == OfferStatus.payingTaker
-        ? OfferStatus.settled
-        : currentStatus;
+            ? OfferStatus.settled
+            : currentStatus;
 
     // Find the index corresponding to the current status in the successful flow
     int currentStatusOrderIndex = successfulStepsOrder.indexWhere(
@@ -220,7 +219,8 @@ class _PaymentChecklist extends ConsumerWidget {
             // --- End Refactored Status Logic ---
 
             // Determine the correct text based on failure state for the last item
-            final code = ref.read(selectedPaymentSystemProvider).codeLabel;
+            final code =
+                ref.read(selectedPaymentSystemProvider).localizedCodeLabel;
             String itemText;
             if (isFailed && stepOrderIndex == successfulStepsOrder.length - 1) {
               itemText = _getStepText(PaymentStep.takerPaymentFailed, code);
@@ -359,8 +359,10 @@ class _ChecklistItem extends ConsumerWidget {
                   final offer = ref.read(activeOfferProvider);
 
                   if (offer != null) {
-                    context.go(flowEntryRoute(ref, '/taker-failed'),
-                        extra: offer);
+                    context.go(
+                      flowEntryRoute(ref, '/taker-failed'),
+                      extra: offer,
+                    );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

@@ -66,6 +66,71 @@ void main() {
     });
   });
 
+  group('Offer bank (backward compatibility)', () {
+    test('legacy offer json without a bank key → bankId null', () {
+      final offer = Offer.fromJson({
+        'id': 'offer-nobank',
+        'amount_sats': 1000,
+        'maker_fees': 10,
+        'fiat_amount': 12.5,
+        'fiat_currency': 'PLN',
+        'status': 'funded',
+        'created_at': DateTime.utc(2026, 1, 2).toIso8601String(),
+        'maker_pubkey': 'maker-pubkey',
+        'coordinator_pubkey': 'coordinator-pubkey',
+      });
+      expect(offer.bankId, isNull);
+    });
+
+    test('legacy nostr offer event without a bank tag → bankId null', () {
+      // An offer published by a BLIK/MB WAY coordinator carries no `bank` tag.
+      final event = Nip01Event(
+        pubKey: 'maker-pubkey',
+        kind: 30402,
+        tags: const [
+          ['d', 'offer-legacy'],
+          ['amt', '250000'],
+          ['fa', '100.0'],
+          ['f', 'PLN'],
+          ['s', 'pending'],
+          ['created_at', '1767225600'],
+          ['maker', 'maker-pubkey'],
+          ['p', 'coordinator-pubkey'],
+          ['y', 'Bitblik'],
+          ['category', 'atm'],
+        ],
+        content: '',
+      );
+      final offer = Offer.fromNostrEvent(event);
+      expect(offer.bankId, isNull);
+      expect(offer.paymentSystemId, 'blik');
+    });
+
+    test('new nostr offer event parses the bank tag (SK)', () {
+      final event = Nip01Event(
+        pubKey: 'maker-pubkey',
+        kind: 30402,
+        tags: const [
+          ['d', 'offer-sk'],
+          ['amt', '250000'],
+          ['fa', '100.0'],
+          ['f', 'EUR'],
+          ['s', 'pending'],
+          ['created_at', '1767225600'],
+          ['maker', 'maker-pubkey'],
+          ['p', 'coordinator-pubkey'],
+          ['y', 'Bitvyber'],
+          ['category', 'atm'],
+          ['bank', 'vub'],
+        ],
+        content: '',
+      );
+      final offer = Offer.fromNostrEvent(event);
+      expect(offer.paymentSystemId, 'sk');
+      expect(offer.bankId, 'vub');
+    });
+  });
+
   group('Offer RPC json', () {
     test('omits bulky and sensitive fields by default', () {
       final offer = Offer(

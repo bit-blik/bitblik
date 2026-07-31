@@ -53,6 +53,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$twint$en twint = Translations$twint$en.internal(_root);
 	late final Translations$blik$en blik = Translations$blik$en.internal(_root);
 	late final Translations$home$en home = Translations$home$en.internal(_root);
+	late final Translations$onboarding$en onboarding = Translations$onboarding$en.internal(_root);
 	late final Translations$nekoInfo$en nekoInfo = Translations$nekoInfo$en.internal(_root);
 	late final Translations$generateNewKey$en generateNewKey = Translations$generateNewKey$en.internal(_root);
 	late final Translations$backup$en backup = Translations$backup$en.internal(_root);
@@ -96,6 +97,10 @@ class Translations$common$en {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+
+	/// en: 'code'
+	String get code => 'code';
+
 	late final Translations$common$buttons$en buttons = Translations$common$buttons$en.internal(_root);
 	late final Translations$common$labels$en labels = Translations$common$labels$en.internal(_root);
 	late final Translations$common$notifications$en notifications = Translations$common$notifications$en.internal(_root);
@@ -264,6 +269,21 @@ class Translations$home$en {
 	late final Translations$home$statistics$en statistics = Translations$home$statistics$en.internal(_root);
 }
 
+// Path: onboarding
+class Translations$onboarding$en {
+	Translations$onboarding$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Choose your market'
+	String get title => 'Choose your market';
+
+	/// en: 'Pick the country and payment system you'll use. You can change it anytime in Settings.'
+	String get subtitle => 'Pick the country and payment system you\'ll use. You can change it anytime in Settings.';
+}
+
 // Path: nekoInfo
 class Translations$nekoInfo$en {
 	Translations$nekoInfo$en.internal(this._root);
@@ -388,8 +408,8 @@ class Translations$landing$en {
 	/// en: 'Your ${code} ⇄ bitcoin Bridge'
 	String mainTitle({required Object code}) => 'Your ${code} ⇄ bitcoin Bridge';
 
-	/// en: 'Pay for or sell your ${code} code with bitcoin'
-	String subtitle({required Object code}) => 'Pay for or sell your ${code} code with bitcoin';
+	/// en: 'Pay for or sell your ${code} with bitcoin'
+	String subtitle({required Object code}) => 'Pay for or sell your ${code} with bitcoin';
 
 	/// en: 'partnership'
 	String get partnership => 'partnership';
@@ -1608,6 +1628,7 @@ class Translations$maker$amountForm$en {
 	late final Translations$maker$amountForm$progress$en progress = Translations$maker$amountForm$progress$en.internal(_root);
 	late final Translations$maker$amountForm$labels$en labels = Translations$maker$amountForm$labels$en.internal(_root);
 	late final Translations$maker$amountForm$actions$en actions = Translations$maker$amountForm$actions$en.internal(_root);
+	late final Translations$maker$amountForm$bank$en bank = Translations$maker$amountForm$bank$en.internal(_root);
 	late final Translations$maker$amountForm$twintScan$en twintScan = Translations$maker$amountForm$twintScan$en.internal(_root);
 	late final Translations$maker$amountForm$tooltips$en tooltips = Translations$maker$amountForm$tooltips$en.internal(_root);
 	late final Translations$maker$amountForm$category$en category = Translations$maker$amountForm$category$en.internal(_root);
@@ -1649,11 +1670,11 @@ class Translations$maker$waitTaker$en {
 	/// en: 'Error: Lost active offer details.'
 	String get errorActiveOfferDetailsLost => 'Error: Lost active offer details.';
 
-	/// en: 'Error: Failed to retrieve ${code} code.'
-	String errorFailedToRetrieveBlik({required Object code}) => 'Error: Failed to retrieve ${code} code.';
+	/// en: 'Error: Failed to retrieve ${code}.'
+	String errorFailedToRetrieveBlik({required Object code}) => 'Error: Failed to retrieve ${code}.';
 
-	/// en: 'Error retrieving ${code} code: ${details}'
-	String errorRetrievingBlik({required Object code, required Object details}) => 'Error retrieving ${code} code: ${details}';
+	/// en: 'Error retrieving ${code}: ${details}'
+	String errorRetrievingBlik({required Object code, required Object details}) => 'Error retrieving ${code}: ${details}';
 
 	/// en: 'Offer is no longer available (Status: ${status}).'
 	String offerNoLongerAvailable({required Object status}) => 'Offer is no longer available (Status: ${status}).';
@@ -1694,8 +1715,8 @@ class Translations$maker$waitForBlik$en {
 	/// en: 'Taker has reserved offer!'
 	String get messageInfo => 'Taker has reserved offer!';
 
-	/// en: 'Waiting to provide ${code} code...'
-	String messageWaiting({required Object code}) => 'Waiting to provide ${code} code...';
+	/// en: 'Waiting to provide ${code}...'
+	String messageWaiting({required Object code}) => 'Waiting to provide ${code}...';
 
 	/// en: 'Reserved: ${seconds} s left'
 	String progressLabel({required Object seconds}) => 'Reserved: ${seconds} s left';
@@ -1709,11 +1730,11 @@ class Translations$maker$confirmPayment$en {
 
 	// Translations
 
-	/// en: '${code} code received!'
-	String title({required Object code}) => '${code} code received!';
+	/// en: '${code} received!'
+	String title({required Object code}) => '${code} received!';
 
-	/// en: 'Retrieving ${code} code...'
-	String retrieving({required Object code}) => 'Retrieving ${code} code...';
+	/// en: 'Retrieving ${code}...'
+	String retrieving({required Object code}) => 'Retrieving ${code}...';
 
 	/// en: 'Enter this code into the payment terminal. When Taker confirms in their banking app and payment is successful, press Confirm below.'
 	String get instructions => 'Enter this code into the payment terminal. When Taker confirms in their banking app and payment is successful, press Confirm below.';
@@ -1730,6 +1751,12 @@ class Translations$maker$confirmPayment$en {
 	/// en: 'To withdraw ${amount} €, go to the nearest MULTIBANCO ATM, press the green key and choose the "Withdraw Cash" ("Levantar Dinheiro") option. Enter the code. This code is valid for ${minutes} minutes.'
 	String mbwayAtmInstructions({required Object amount, required Object minutes}) => 'To withdraw ${amount} €, go to the nearest MULTIBANCO ATM, press the green key and choose the "Withdraw Cash" ("Levantar Dinheiro") option. Enter the code. This code is valid for ${minutes} minutes.';
 
+	/// en: 'To withdraw ${amount} ${currency}, go to a ${bank} ATM, start the cardless / mobile withdrawal and enter the code — no card needed. The code is valid for ${minutes} minutes.'
+	String cardlessAtmInstructions({required Object amount, required Object currency, required Object bank, required Object minutes}) => 'To withdraw ${amount} ${currency}, go to a ${bank} ATM, start the cardless / mobile withdrawal and enter the code — no card needed. The code is valid for ${minutes} minutes.';
+
+	/// en: 'Find ${bank} ATMs on the map'
+	String findAtms({required Object bank}) => 'Find ${bank} ATMs on the map';
+
 	/// en: 'The taker has reported that the ${code} payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.'
 	String takerChargedWarning({required Object code}) => 'The taker has reported that the ${code} payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.';
 
@@ -1742,8 +1769,8 @@ class Translations$maker$confirmPayment$en {
 	/// en: '${code} Code Expired'
 	String expiredTitle({required Object code}) => '${code} Code Expired';
 
-	/// en: 'The ${code} code has expired. You need to manually confirm the payment status:'
-	String expiredWarning({required Object code}) => 'The ${code} code has expired. You need to manually confirm the payment status:';
+	/// en: 'The ${code} has expired. You need to manually confirm the payment status:'
+	String expiredWarning({required Object code}) => 'The ${code} has expired. You need to manually confirm the payment status:';
 
 	/// en: 'If the ${code} payment was successful and you completed your purchase, click "Confirm successful payment" below.'
 	String expiredInstruction1({required Object code}) => 'If the ${code} payment was successful and you completed your purchase, click "Confirm successful payment" below.';
@@ -1769,8 +1796,8 @@ class Translations$maker$invalidBlik$en {
 	/// en: 'Invalid ${code} Code'
 	String title({required Object code}) => 'Invalid ${code} Code';
 
-	/// en: 'You marked the ${code} code as invalid. Waiting for taker to provide new code or start dispute.'
-	String info({required Object code}) => 'You marked the ${code} code as invalid. Waiting for taker to provide new code or start dispute.';
+	/// en: 'You marked the ${code} as invalid. Waiting for taker to provide new code or start dispute.'
+	String info({required Object code}) => 'You marked the ${code} as invalid. Waiting for taker to provide new code or start dispute.';
 }
 
 // Path: maker.conflict
@@ -1787,8 +1814,8 @@ class Translations$maker$conflict$en {
 	/// en: 'Offer Conflict Reported'
 	String get headline => 'Offer Conflict Reported';
 
-	/// en: 'You marked the ${code} code as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.'
-	String body({required Object code}) => 'You marked the ${code} code as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.';
+	/// en: 'You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.'
+	String body({required Object code}) => 'You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.';
 
 	/// en: 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.'
 	String get instructions => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
@@ -1832,8 +1859,8 @@ class Translations$taker$roleSelection$en {
 
 	// Translations
 
-	/// en: 'SELL ${code} code for satoshi'
-	String button({required Object code}) => 'SELL ${code} code for satoshi';
+	/// en: 'SELL ${code} for satoshi'
+	String button({required Object code}) => 'SELL ${code} for satoshi';
 }
 
 // Path: taker.progress
@@ -1868,14 +1895,17 @@ class Translations$taker$submitBlik$en {
 	/// en: '${code} Code'
 	String label({required Object code}) => '${code} Code';
 
+	/// en: 'Generate the withdrawal code in your ${bank} app.'
+	String generateInBank({required Object bank}) => 'Generate the withdrawal code in your ${bank} app.';
+
 	/// en: 'Enter ${code} before time ends...'
 	String instruction({required Object code}) => 'Enter ${code} before time ends...';
 
 	/// en: 'Enter ${code} within: ${seconds} s'
 	String timeLimit({required Object code, required Object seconds}) => 'Enter ${code} within: ${seconds} s';
 
-	/// en: 'Time to enter ${code} code has expired.'
-	String timeExpired({required Object code}) => 'Time to enter ${code} code has expired.';
+	/// en: 'Time to enter ${code} has expired.'
+	String timeExpired({required Object code}) => 'Time to enter ${code} has expired.';
 
 	late final Translations$taker$submitBlik$actions$en actions = Translations$taker$submitBlik$actions$en.internal(_root);
 	late final Translations$taker$submitBlik$feedback$en feedback = Translations$taker$submitBlik$feedback$en.internal(_root);
@@ -2137,25 +2167,25 @@ class Translations$twint$waitConfirmation$en {
 	/// en: 'VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}.'
 	String importantBlikAmountConfirmation({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}.';
 
-	/// en: 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.'
-	String instructions({required Object minutes, required Object code}) => 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.';
+	/// en: 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} in your banking app.'
+	String instructions({required Object minutes, required Object code}) => 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} in your banking app.';
 
-	/// en: 'The maker must now enter your ${code} code at the ATM within ${minutes} minutes.'
-	String instructionsNoConfirm({required Object code, required Object minutes}) => 'The maker must now enter your ${code} code at the ATM within ${minutes} minutes.';
+	/// en: 'The maker must now enter your ${code} at the ATM within ${minutes} minutes.'
+	String instructionsNoConfirm({required Object code, required Object minutes}) => 'The maker must now enter your ${code} at the ATM within ${minutes} minutes.';
 
 	late final Translations$twint$waitConfirmation$categoryReminder$en categoryReminder = Translations$twint$waitConfirmation$categoryReminder$en.internal(_root);
 
-	/// en: 'Waiting for maker to receive your ${code} code...'
-	String waitingForMakerToReceive({required Object code}) => 'Waiting for maker to receive your ${code} code...';
+	/// en: 'Waiting for maker to receive your ${code}...'
+	String waitingForMakerToReceive({required Object code}) => 'Waiting for maker to receive your ${code}...';
 
-	/// en: 'Maker has received your ${code} code.'
-	String makerReceivedBlik({required Object code}) => 'Maker has received your ${code} code.';
+	/// en: 'Maker has received your ${code}.'
+	String makerReceivedBlik({required Object code}) => 'Maker has received your ${code}.';
 
 	/// en: '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.'
 	String timerExpiredMessage({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.';
 
-	/// en: '${code} ${minutes}m expiration time has passed but the maker hasn't received the ${code} code. You can resend a new ${code} code or cancel.'
-	String timerExpiredActions({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.';
+	/// en: '${code} ${minutes}m expiration time has passed but the maker hasn't received the ${code}. You can resend a new ${code} or cancel.'
+	String timerExpiredActions({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code}. You can resend a new ${code} or cancel.';
 
 	/// en: 'Resend New ${code} Code'
 	String resendBlikButton({required Object code}) => 'Resend New ${code} Code';
@@ -2166,8 +2196,8 @@ class Translations$twint$waitConfirmation$en {
 	/// en: '${code} Code Expired'
 	String expiredTitle({required Object code}) => '${code} Code Expired';
 
-	/// en: 'The maker did not receive the ${code} code so it couldn't have used it.'
-	String expiredWarning({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.';
+	/// en: 'The maker did not receive the ${code} so it couldn't have used it.'
+	String expiredWarning({required Object code}) => 'The maker did not receive the ${code} so it couldn\'t have used it.';
 
 	/// en: 'Reservation ends in'
 	String get expiredRelistCountdownLabel => 'Reservation ends in';
@@ -2175,8 +2205,8 @@ class Translations$twint$waitConfirmation$en {
 	/// en: 'The maker hasn't confirmed the payment yet. What would you like to do?'
 	String get expiredSentWarning => 'The maker hasn\'t confirmed the payment yet. What would you like to do?';
 
-	/// en: 'If you want to try again with a new ${code} code, renew the reservation.'
-	String expiredInstruction1({required Object code}) => 'If you want to try again with a new ${code} code, renew the reservation.';
+	/// en: 'If you want to try again with a new ${code}, renew the reservation.'
+	String expiredInstruction1({required Object code}) => 'If you want to try again with a new ${code}, renew the reservation.';
 
 	/// en: 'If you no longer want to complete this transaction, cancel the reservation.'
 	String get expiredInstruction2 => 'If you no longer want to complete this transaction, cancel the reservation.';
@@ -2264,8 +2294,8 @@ class Translations$twint$invalidBlik$en {
 	/// en: 'Maker Rejected ${code} Code'
 	String message({required Object code}) => 'Maker Rejected ${code} Code';
 
-	/// en: 'The offer maker indicated that the ${code} code you provided was invalid or didn't work.\n\nWhat would you like to do?'
-	String explanation({required Object code}) => 'The offer maker indicated that the ${code} code you provided was invalid or didn\'t work.\n\nWhat would you like to do?';
+	/// en: 'The offer maker indicated that the ${code} you provided was invalid or didn't work.\n\nWhat would you like to do?'
+	String explanation({required Object code}) => 'The offer maker indicated that the ${code} you provided was invalid or didn\'t work.\n\nWhat would you like to do?';
 
 	/// en: 'If you were NOT charged:'
 	String get werentCharged => 'If you were NOT charged:';
@@ -2294,8 +2324,8 @@ class Translations$twint$conflict$en {
 	/// en: 'Offer Conflict Reported'
 	String get headline => 'Offer Conflict Reported';
 
-	/// en: 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.'
-	String body({required Object code}) => 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.';
+	/// en: 'The Maker marked the ${code} as invalid, but you reported a conflict, indicating you believe the payment was successful.'
+	String body({required Object code}) => 'The Maker marked the ${code} as invalid, but you reported a conflict, indicating you believe the payment was successful.';
 
 	/// en: 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.'
 	String get instructions => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
@@ -2314,8 +2344,8 @@ class Translations$blik$instructions$en {
 
 	// Translations
 
-	/// en: 'Once the Maker enters the ${code} code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.'
-	String taker({required Object code}) => 'Once the Maker enters the ${code} code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.';
+	/// en: 'Once the Maker enters the ${code}, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.'
+	String taker({required Object code}) => 'Once the Maker enters the ${code}, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.';
 }
 
 // Path: home.notifications
@@ -2340,6 +2370,21 @@ class Translations$home$notifications$en {
 
 	/// en: 'Signal'
 	String get signal => 'Signal';
+
+	/// en: '(all banks)'
+	String get channelAllBanks => '(all banks)';
+
+	/// en: '(only offers for '
+	String get channelForBankPrefix => '(only offers for ';
+
+	/// en: ')'
+	String get channelForBankSuffix => ')';
+
+	/// en: 'All banks'
+	String get scopeAllBanks => 'All banks';
+
+	/// en: '${bank} only'
+	String scopeBankOnly({required Object bank}) => '${bank} only';
 }
 
 // Path: home.statistics
@@ -2538,8 +2583,8 @@ class Translations$system$blik$en {
 
 	// Translations
 
-	/// en: '${code} code copied to clipboard'
-	String copied({required Object code}) => '${code} code copied to clipboard';
+	/// en: '${code} copied to clipboard'
+	String copied({required Object code}) => '${code} copied to clipboard';
 }
 
 // Path: myOffers.filter
@@ -2675,6 +2720,12 @@ class Translations$settings$offerCreation$en {
 
 	/// en: 'Default category'
 	String get defaultCategory => 'Default category';
+
+	/// en: 'Default bank'
+	String get defaultBank => 'Default bank';
+
+	/// en: 'None (choose per offer)'
+	String get defaultBankNone => 'None (choose per offer)';
 
 	/// en: 'Preferred coordinator'
 	String get preferredCoordinator => 'Preferred coordinator';
@@ -3058,11 +3109,11 @@ class Translations$offerNotifications$blikReady$en {
 
 	// Translations
 
-	/// en: '${code} code ready'
-	String title({required Object code}) => '${code} code ready';
+	/// en: '${code} ready'
+	String title({required Object code}) => '${code} ready';
 
-	/// en: 'Your ${code} code is ready to view.'
-	String body({required Object code}) => 'Your ${code} code is ready to view.';
+	/// en: 'Your ${code} is ready to view.'
+	String body({required Object code}) => 'Your ${code} is ready to view.';
 }
 
 // Path: offerNotifications.newOffer
@@ -3112,8 +3163,8 @@ class Translations$offerNotifications$blikPendingReminder$en {
 	/// en: '${code} waiting for your action'
 	String title({required Object code}) => '${code} waiting for your action';
 
-	/// en: 'Confirm the payment or mark the ${code} code as invalid.'
-	String body({required Object code}) => 'Confirm the payment or mark the ${code} code as invalid.';
+	/// en: 'Confirm the payment or mark the ${code} as invalid.'
+	String body({required Object code}) => 'Confirm the payment or mark the ${code} as invalid.';
 }
 
 // Path: offerNotifications.takerCharged
@@ -3142,8 +3193,8 @@ class Translations$offerNotifications$invalidBlik$en {
 	/// en: '${code} marked invalid'
 	String title({required Object code}) => '${code} marked invalid';
 
-	/// en: 'Maker marked your ${code} code as invalid.'
-	String body({required Object code}) => 'Maker marked your ${code} code as invalid.';
+	/// en: 'Maker marked your ${code} as invalid.'
+	String body({required Object code}) => 'Maker marked your ${code} as invalid.';
 }
 
 // Path: offerNotifications.takerPaid
@@ -3290,6 +3341,24 @@ class Translations$maker$amountForm$actions$en {
 	String get generateInvoice => 'Generate Invoice';
 }
 
+// Path: maker.amountForm.bank
+class Translations$maker$amountForm$bank$en {
+	Translations$maker$amountForm$bank$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Bank'
+	String get label => 'Bank';
+
+	/// en: 'Please choose a bank'
+	String get required => 'Please choose a bank';
+
+	/// en: 'This bank's code is valid for only ${minutes} min — be at the ATM before you reserve.'
+	String shortValidityWarning({required Object minutes}) => 'This bank\'s code is valid for only ${minutes} min — be at the ATM before you reserve.';
+}
+
 // Path: maker.amountForm.twintScan
 class Translations$maker$amountForm$twintScan$en {
 	Translations$maker$amountForm$twintScan$en.internal(this._root);
@@ -3361,8 +3430,8 @@ class Translations$maker$amountForm$category$en {
 	/// en: 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.'
 	String get atmHint => 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.';
 
-	/// en: 'The ideal place to use ${app} is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a ${code} code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you're feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.'
-	String physicalShopHint({required Object app, required Object code}) => 'The ideal place to use ${app} is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a ${code} code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you\'re feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.';
+	/// en: 'The ideal place to use ${app} is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a ${code} might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you're feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.'
+	String physicalShopHint({required Object app, required Object code}) => 'The ideal place to use ${app} is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a ${code} might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you\'re feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.';
 
 	/// en: 'Online merchant refund risk'
 	String get ecommerceWarningTitle => 'Online merchant refund risk';
@@ -3649,11 +3718,11 @@ class Translations$maker$confirmPayment$errors$en {
 
 	// Translations
 
-	/// en: 'Error: Failed to retrieve ${code} code.'
-	String failedToRetrieve({required Object code}) => 'Error: Failed to retrieve ${code} code.';
+	/// en: 'Error: Failed to retrieve ${code}.'
+	String failedToRetrieve({required Object code}) => 'Error: Failed to retrieve ${code}.';
 
-	/// en: 'Error retrieving ${code} code: ${details}'
-	String retrieving({required Object code, required Object details}) => 'Error retrieving ${code} code: ${details}';
+	/// en: 'Error retrieving ${code}: ${details}'
+	String retrieving({required Object code, required Object details}) => 'Error retrieving ${code}: ${details}';
 
 	/// en: 'Error: Missing payment hash or public key.'
 	String get missingHashOrKey => 'Error: Missing payment hash or public key.';
@@ -3792,8 +3861,8 @@ class Translations$taker$submitBlik$feedback$en {
 
 	// Translations
 
-	/// en: 'Pasted ${code} code.'
-	String pasted({required Object code}) => 'Pasted ${code} code.';
+	/// en: 'Pasted ${code}.'
+	String pasted({required Object code}) => 'Pasted ${code}.';
 }
 
 // Path: taker.submitBlik.validation
@@ -3804,8 +3873,8 @@ class Translations$taker$submitBlik$validation$en {
 
 	// Translations
 
-	/// en: 'Enter a valid ${digits}-digit ${code} code.'
-	String invalidFormat({required Object digits, required Object code}) => 'Enter a valid ${digits}-digit ${code} code.';
+	/// en: 'Enter a valid ${digits}-digit ${code}.'
+	String invalidFormat({required Object digits, required Object code}) => 'Enter a valid ${digits}-digit ${code}.';
 }
 
 // Path: taker.submitBlik.errors
@@ -3816,11 +3885,11 @@ class Translations$taker$submitBlik$errors$en {
 
 	// Translations
 
-	/// en: 'Error submitting ${code} code: ${details}'
-	String submitting({required Object code, required Object details}) => 'Error submitting ${code} code: ${details}';
+	/// en: 'Error submitting ${code}: ${details}'
+	String submitting({required Object code, required Object details}) => 'Error submitting ${code}: ${details}';
 
-	/// en: 'Clipboard does not contain a valid ${digits}-digit ${code} code.'
-	String clipboardInvalid({required Object digits, required Object code}) => 'Clipboard does not contain a valid ${digits}-digit ${code} code.';
+	/// en: 'Clipboard does not contain a valid ${digits}-digit ${code}.'
+	String clipboardInvalid({required Object digits, required Object code}) => 'Clipboard does not contain a valid ${digits}-digit ${code}.';
 
 	/// en: 'Error: Offer state has changed.'
 	String get stateChanged => 'Error: Offer state has changed.';
@@ -4593,8 +4662,8 @@ class Translations$twint$waitConfirmation$expiredActions$en {
 	/// en: '${code} was charged from my bank account'
 	String reportConflict({required Object code}) => '${code} was charged from my bank account';
 
-	/// en: 'Try again with new ${code} code'
-	String renewReservation({required Object code}) => 'Try again with new ${code} code';
+	/// en: 'Try again with new ${code}'
+	String renewReservation({required Object code}) => 'Try again with new ${code}';
 
 	/// en: 'Cancel reservation'
 	String get cancelReservation => 'Cancel reservation';
@@ -4857,8 +4926,8 @@ class Translations$twint$invalidBlik$actions$en {
 
 	// Translations
 
-	/// en: 'Send new ${code} code'
-	String retry({required Object code}) => 'Send new ${code} code';
+	/// en: 'Send new ${code}'
+	String retry({required Object code}) => 'Send new ${code}';
 
 	/// en: 'Cancel Transaction'
 	String get cancelReservation => 'Cancel Transaction';
@@ -5038,6 +5107,9 @@ class Translations$settings$offerCreation$dialogs$en {
 	/// en: 'Select default category'
 	String get selectCategory => 'Select default category';
 
+	/// en: 'Select default bank'
+	String get selectBank => 'Select default bank';
+
 	/// en: 'Select preferred coordinator'
 	String get selectCoordinator => 'Select preferred coordinator';
 
@@ -5079,6 +5151,9 @@ class Translations$settings$paymentSystem$countries$en {
 
 	/// en: 'Switzerland'
 	String get CH => 'Switzerland';
+
+	/// en: 'Slovakia'
+	String get SK => 'Slovakia';
 }
 
 // Path: maker.amountForm.category.options
@@ -5266,6 +5341,7 @@ extension on Translations {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Hello!',
 			'app.changelog' => 'Changelog',
+			'common.code' => 'code',
 			'common.buttons.cancel' => 'Cancel',
 			'common.buttons.save' => 'Save',
 			'common.buttons.done' => 'Done',
@@ -5529,6 +5605,9 @@ extension on Translations {
 			'maker.amountForm.labels.tapToSelect' => 'Tap to select',
 			'maker.amountForm.labels.premium' => 'Premium',
 			'maker.amountForm.actions.generateInvoice' => 'Generate Invoice',
+			'maker.amountForm.bank.label' => 'Bank',
+			'maker.amountForm.bank.required' => 'Please choose a bank',
+			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'This bank\'s code is valid for only ${minutes} min — be at the ATM before you reserve.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Scan ${code} QR and amount',
 			'maker.amountForm.twintScan.cardBody' => 'Point the camera at the payment screen. The app will prefill the code and, when visible, the amount.',
 			'maker.amountForm.twintScan.scanButton' => 'Scan with camera',
@@ -5549,7 +5628,7 @@ extension on Translations {
 			'maker.amountForm.category.shortLabels.atm' => 'ATM',
 			'maker.amountForm.category.shortLabels.online' => 'Online',
 			'maker.amountForm.category.atmHint' => 'Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees.',
-			'maker.amountForm.category.physicalShopHint' => ({required Object app, required Object code}) => 'The ideal place to use ${app} is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a ${code} code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you\'re feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.',
+			'maker.amountForm.category.physicalShopHint' => ({required Object app, required Object code}) => 'The ideal place to use ${app} is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a ${code} might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you\'re feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you.',
 			'maker.amountForm.category.ecommerceWarningTitle' => 'Online merchant refund risk',
 			'maker.amountForm.category.ecommerceWarningBody' => ({required Object code}) => 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the ${code}, which is the taker\'s account. The coordinator cannot force the taker to return those funds to you.',
 			'maker.amountForm.category.ecommerceConfirmation' => 'I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary.',
@@ -5602,8 +5681,8 @@ extension on Translations {
 			'maker.waitTaker.message' => 'Waiting for a Taker to reserve your offer...',
 			'maker.waitTaker.progressLabel' => ({required Object time}) => 'Waiting for taker: ${time}',
 			'maker.waitTaker.errorActiveOfferDetailsLost' => 'Error: Lost active offer details.',
-			'maker.waitTaker.errorFailedToRetrieveBlik' => ({required Object code}) => 'Error: Failed to retrieve ${code} code.',
-			'maker.waitTaker.errorRetrievingBlik' => ({required Object code, required Object details}) => 'Error retrieving ${code} code: ${details}',
+			'maker.waitTaker.errorFailedToRetrieveBlik' => ({required Object code}) => 'Error: Failed to retrieve ${code}.',
+			'maker.waitTaker.errorRetrievingBlik' => ({required Object code, required Object details}) => 'Error retrieving ${code}: ${details}',
 			'maker.waitTaker.offerNoLongerAvailable' => ({required Object status}) => 'Offer is no longer available (Status: ${status}).',
 			'maker.waitTaker.errorCouldNotIdentifyOffer' => 'Error: Could not identify offer to cancel.',
 			'maker.waitTaker.offerCannotBeCancelled' => ({required Object status}) => 'Offer cannot be cancelled in current state (${status}).',
@@ -5614,20 +5693,22 @@ extension on Translations {
 			'maker.waitTaker.recreateOffer' => 'New offer — same amount',
 			'maker.waitForBlik.title' => ({required Object code}) => 'Waiting for ${code}',
 			'maker.waitForBlik.messageInfo' => 'Taker has reserved offer!',
-			'maker.waitForBlik.messageWaiting' => ({required Object code}) => 'Waiting to provide ${code} code...',
+			'maker.waitForBlik.messageWaiting' => ({required Object code}) => 'Waiting to provide ${code}...',
 			'maker.waitForBlik.progressLabel' => ({required Object seconds}) => 'Reserved: ${seconds} s left',
-			'maker.confirmPayment.title' => ({required Object code}) => '${code} code received!',
-			'maker.confirmPayment.retrieving' => ({required Object code}) => 'Retrieving ${code} code...',
+			'maker.confirmPayment.title' => ({required Object code}) => '${code} received!',
+			'maker.confirmPayment.retrieving' => ({required Object code}) => 'Retrieving ${code}...',
 			'maker.confirmPayment.instructions' => 'Enter this code into the payment terminal. When Taker confirms in their banking app and payment is successful, press Confirm below.',
 			'maker.confirmPayment.instruction1' => ({required Object code}) => 'Enter the code into the ${code} payment request.',
 			'maker.confirmPayment.instruction2' => 'Wait until Taker confirms the payment in their app.',
 			'maker.confirmPayment.instruction3' => 'When payment is succesful, press Confirm below:',
 			'maker.confirmPayment.mbwayAtmInstructions' => ({required Object amount, required Object minutes}) => 'To withdraw ${amount} €, go to the nearest MULTIBANCO ATM, press the green key and choose the "Withdraw Cash" ("Levantar Dinheiro") option. Enter the code. This code is valid for ${minutes} minutes.',
+			'maker.confirmPayment.cardlessAtmInstructions' => ({required Object amount, required Object currency, required Object bank, required Object minutes}) => 'To withdraw ${amount} ${currency}, go to a ${bank} ATM, start the cardless / mobile withdrawal and enter the code — no card needed. The code is valid for ${minutes} minutes.',
+			'maker.confirmPayment.findAtms' => ({required Object bank}) => 'Find ${bank} ATMs on the map',
 			'maker.confirmPayment.takerChargedWarning' => ({required Object code}) => 'The taker has reported that the ${code} payment was charged from their bank account. If you mark this as invalid, this will cause a conflict.',
 			'maker.confirmPayment.autoConfirmInfo' => ({required Object code}) => 'Unless you mark the ${code} as invalid, the payment will be auto-confirmed and the taker paid when this timer runs out.',
 			'maker.confirmPayment.autoConfirmCountdown' => ({required Object time}) => 'Auto-confirm in ${time}',
 			'maker.confirmPayment.expiredTitle' => ({required Object code}) => '${code} Code Expired',
-			'maker.confirmPayment.expiredWarning' => ({required Object code}) => 'The ${code} code has expired. You need to manually confirm the payment status:',
+			'maker.confirmPayment.expiredWarning' => ({required Object code}) => 'The ${code} has expired. You need to manually confirm the payment status:',
 			'maker.confirmPayment.expiredInstruction1' => ({required Object code}) => 'If the ${code} payment was successful and you completed your purchase, click "Confirm successful payment" below.',
 			'maker.confirmPayment.expiredInstruction2' => ({required Object code}) => 'If the ${code} payment failed or was not completed, click "Invalid ${code} Code" below.',
 			'maker.confirmPayment.actions.confirm' => 'Confirm successful payment',
@@ -5644,8 +5725,8 @@ extension on Translations {
 			'maker.confirmPayment.feedback.confirmed' => 'Maker confirmed payment.',
 			'maker.confirmPayment.feedback.confirmedTakerPaid' => 'Payment confirmed! Taker will receive funds.',
 			'maker.confirmPayment.feedback.progressLabel' => ({required Object seconds}) => 'Confirming: ${seconds} s left',
-			'maker.confirmPayment.errors.failedToRetrieve' => ({required Object code}) => 'Error: Failed to retrieve ${code} code.',
-			'maker.confirmPayment.errors.retrieving' => ({required Object code, required Object details}) => 'Error retrieving ${code} code: ${details}',
+			'maker.confirmPayment.errors.failedToRetrieve' => ({required Object code}) => 'Error: Failed to retrieve ${code}.',
+			'maker.confirmPayment.errors.retrieving' => ({required Object code, required Object details}) => 'Error retrieving ${code}: ${details}',
 			'maker.confirmPayment.errors.missingHashOrKey' => 'Error: Missing payment hash or public key.',
 			'maker.confirmPayment.errors.incorrectState' => ({required Object status}) => 'Offer is not in correct state for confirmation (Status: ${status})',
 			'maker.confirmPayment.errors.confirming' => ({required Object details}) => 'Error confirming payment: ${details}',
@@ -5654,10 +5735,10 @@ extension on Translations {
 			'maker.confirmPayment.errors.notAwaitingConfirmation' => ({required Object status}) => 'Offer is no longer awaiting confirmation (Status: ${status}).',
 			'maker.confirmPayment.errors.unexpectedStatus' => 'Received unexpected offer status from server.',
 			'maker.invalidBlik.title' => ({required Object code}) => 'Invalid ${code} Code',
-			'maker.invalidBlik.info' => ({required Object code}) => 'You marked the ${code} code as invalid. Waiting for taker to provide new code or start dispute.',
+			'maker.invalidBlik.info' => ({required Object code}) => 'You marked the ${code} as invalid. Waiting for taker to provide new code or start dispute.',
 			'maker.conflict.title' => 'Offer Conflict',
 			'maker.conflict.headline' => 'Offer Conflict Reported',
-			'maker.conflict.body' => ({required Object code}) => 'You marked the ${code} code as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.',
+			'maker.conflict.body' => ({required Object code}) => 'You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.',
 			'maker.conflict.instructions' => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.',
 			'maker.conflict.actions.back' => 'Back to Home',
 			'maker.conflict.actions.confirmPayment' => ({required Object code}) => 'My mistake, confirm ${code} payment success',
@@ -5682,20 +5763,21 @@ extension on Translations {
 			'maker.success.subtitle' => 'Taker will now be paid.',
 			'maker.success.detailsTitle' => 'Offer details:',
 			'maker.success.duration' => ({required Object time}) => 'Offer took ${time}!',
-			'taker.roleSelection.button' => ({required Object code}) => 'SELL ${code} code for satoshi',
+			'taker.roleSelection.button' => ({required Object code}) => 'SELL ${code} for satoshi',
 			'taker.progress.step1' => ({required Object code}) => 'Submit ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Confirm ${code}',
 			'taker.progress.step3' => 'Get Paid',
 			'taker.submitBlik.title' => ({required Object digits, required Object code}) => 'Enter ${digits}-digit ${code}',
 			'taker.submitBlik.label' => ({required Object code}) => '${code} Code',
+			'taker.submitBlik.generateInBank' => ({required Object bank}) => 'Generate the withdrawal code in your ${bank} app.',
 			'taker.submitBlik.instruction' => ({required Object code}) => 'Enter ${code} before time ends...',
 			'taker.submitBlik.timeLimit' => ({required Object code, required Object seconds}) => 'Enter ${code} within: ${seconds} s',
-			'taker.submitBlik.timeExpired' => ({required Object code}) => 'Time to enter ${code} code has expired.',
+			'taker.submitBlik.timeExpired' => ({required Object code}) => 'Time to enter ${code} has expired.',
 			'taker.submitBlik.actions.submit' => ({required Object code}) => 'Submit ${code}',
-			'taker.submitBlik.feedback.pasted' => ({required Object code}) => 'Pasted ${code} code.',
-			'taker.submitBlik.validation.invalidFormat' => ({required Object digits, required Object code}) => 'Enter a valid ${digits}-digit ${code} code.',
-			'taker.submitBlik.errors.submitting' => ({required Object code, required Object details}) => 'Error submitting ${code} code: ${details}',
-			'taker.submitBlik.errors.clipboardInvalid' => ({required Object digits, required Object code}) => 'Clipboard does not contain a valid ${digits}-digit ${code} code.',
+			'taker.submitBlik.feedback.pasted' => ({required Object code}) => 'Pasted ${code}.',
+			'taker.submitBlik.validation.invalidFormat' => ({required Object digits, required Object code}) => 'Enter a valid ${digits}-digit ${code}.',
+			'taker.submitBlik.errors.submitting' => ({required Object code, required Object details}) => 'Error submitting ${code}: ${details}',
+			'taker.submitBlik.errors.clipboardInvalid' => ({required Object digits, required Object code}) => 'Clipboard does not contain a valid ${digits}-digit ${code}.',
 			'taker.submitBlik.errors.stateChanged' => 'Error: Offer state has changed.',
 			'taker.submitBlik.errors.stateNotValid' => 'Error: Offer state is no longer valid.',
 			'taker.submitBlik.errors.fetchedIdMismatch' => ({required Object fetchedId, required Object initialId}) => 'Fetched active offer ID (${fetchedId}) does not match initial offer ID (${initialId}). State mismatch?',
@@ -5768,6 +5850,8 @@ extension on Translations {
 			'taker.paymentFailed.actions.retryPayment' => 'Submit New Invoice',
 			'taker.paymentFailed.errors.enterValidInvoice' => 'Please enter a valid invoice',
 			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Error updating invoice: ${details}',
+			_ => null,
+		} ?? switch (path) {
 			'taker.paymentFailed.errors.paymentRetryFailed' => 'Payment retry failed. Please check the invoice or try again later.',
 			'taker.paymentFailed.errors.takerPublicKeyNotFound' => 'Taker public key not found.',
 			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Failed to generate invoice: ${details}',
@@ -5775,8 +5859,6 @@ extension on Translations {
 			'taker.paymentFailed.walletSection.defaultLabel' => 'default',
 			'taker.paymentFailed.walletSection.tapToGenerate' => ({required Object amountSats}) => 'Tap to generate invoice for ${amountSats}',
 			'taker.paymentFailed.loading.processingPayment' => 'Processing your payment retry...',
-			_ => null,
-		} ?? switch (path) {
 			'taker.paymentFailed.success.title' => 'Payment Successful',
 			'taker.paymentFailed.success.message' => 'Your payment has been processed successfully.',
 			'taker.paymentSuccess.title' => 'Payment Successful',
@@ -5886,27 +5968,27 @@ extension on Translations {
 			'twint.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'Waiting for Maker to confirm ${code} is correct. Time remaining: ${seconds}s',
 			'twint.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: Make sure you only accept ${code} confirmation for ${amount} ${currency}',
 			'twint.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}.',
-			'twint.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.',
-			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'The maker must now enter your ${code} code at the ATM within ${minutes} minutes.',
+			'twint.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} in your banking app.',
+			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'The maker must now enter your ${code} at the ATM within ${minutes} minutes.',
 			'twint.waitConfirmation.categoryReminder.atm' => 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.',
 			'twint.waitConfirmation.categoryReminder.ecommerce' => 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.',
-			'twint.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Waiting for maker to receive your ${code} code...',
-			'twint.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Maker has received your ${code} code.',
+			'twint.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Waiting for maker to receive your ${code}...',
+			'twint.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Maker has received your ${code}.',
 			'twint.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.',
-			'twint.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.',
+			'twint.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code}. You can resend a new ${code} or cancel.',
 			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Resend New ${code} Code',
 			'twint.waitConfirmation.navigatedHome' => 'Navigated home.',
 			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => '${code} Code Expired',
-			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.',
+			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} so it couldn\'t have used it.',
 			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'Reservation ends in',
 			'twint.waitConfirmation.expiredSentWarning' => 'The maker hasn\'t confirmed the payment yet. What would you like to do?',
-			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'If you want to try again with a new ${code} code, renew the reservation.',
+			'twint.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'If you want to try again with a new ${code}, renew the reservation.',
 			'twint.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
 			'twint.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',
 			'twint.waitConfirmation.takerCharged.title' => ({required Object code}) => 'You marked ${code} as charged',
 			'twint.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.',
 			'twint.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} was charged from my bank account',
-			'twint.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Try again with new ${code} code',
+			'twint.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Try again with new ${code}',
 			'twint.waitConfirmation.expiredActions.cancelReservation' => 'Cancel reservation',
 			'twint.waitConfirmation.feedback.makerConfirmed' => 'Maker confirmed payment.',
 			'twint.waitConfirmation.feedback.paymentSuccessful' => 'Payment successful! You will receive funds shortly.',
@@ -5957,10 +6039,10 @@ extension on Translations {
 			'twint.paymentSuccess.actions.goHome' => 'Go to home',
 			'twint.invalidBlik.title' => ({required Object code}) => 'Invalid ${code} Code',
 			'twint.invalidBlik.message' => ({required Object code}) => 'Maker Rejected ${code} Code',
-			'twint.invalidBlik.explanation' => ({required Object code}) => 'The offer maker indicated that the ${code} code you provided was invalid or didn\'t work.\n\nWhat would you like to do?',
+			'twint.invalidBlik.explanation' => ({required Object code}) => 'The offer maker indicated that the ${code} you provided was invalid or didn\'t work.\n\nWhat would you like to do?',
 			'twint.invalidBlik.werentCharged' => 'If you were NOT charged:',
 			'twint.invalidBlik.wereCharged' => 'If you were charged:',
-			'twint.invalidBlik.actions.retry' => ({required Object code}) => 'Send new ${code} code',
+			'twint.invalidBlik.actions.retry' => ({required Object code}) => 'Send new ${code}',
 			'twint.invalidBlik.actions.cancelReservation' => 'Cancel Transaction',
 			'twint.invalidBlik.actions.reportConflict' => 'Start Dispute',
 			'twint.invalidBlik.actions.returnHome' => 'Return to home',
@@ -5977,7 +6059,7 @@ extension on Translations {
 			'twint.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Error reporting conflict: ${details}',
 			'twint.conflict.title' => 'Offer Conflict',
 			'twint.conflict.headline' => 'Offer Conflict Reported',
-			'twint.conflict.body' => ({required Object code}) => 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.',
+			'twint.conflict.body' => ({required Object code}) => 'The Maker marked the ${code} as invalid, but you reported a conflict, indicating you believe the payment was successful.',
 			'twint.conflict.instructions' => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.',
 			'twint.conflict.actions.back' => 'Back to Home',
 			'twint.conflict.feedback.reported' => 'Conflict reported. Coordinator will review.',
@@ -5989,17 +6071,24 @@ extension on Translations {
 			'twint.conflict.nostrContact.npubCopied' => 'Coordinator npub copied to clipboard!',
 			'twint.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
 			'twint.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
-			'blik.instructions.taker' => ({required Object code}) => 'Once the Maker enters the ${code} code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.',
+			'blik.instructions.taker' => ({required Object code}) => 'Once the Maker enters the ${code}, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming.',
 			'home.notifications.title' => 'Get notified about new offers via:',
 			'home.notifications.telegram' => 'Telegram',
 			'home.notifications.simplex' => 'SimpleX',
 			'home.notifications.matrix' => 'Matrix',
 			'home.notifications.signal' => 'Signal',
+			'home.notifications.channelAllBanks' => '(all banks)',
+			'home.notifications.channelForBankPrefix' => '(only offers for ',
+			'home.notifications.channelForBankSuffix' => ')',
+			'home.notifications.scopeAllBanks' => 'All banks',
+			'home.notifications.scopeBankOnly' => ({required Object bank}) => '${bank} only',
 			'home.statistics.title' => 'Finished Offers',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'All: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Last 7d: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}',
 			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Last 7d: ${count} offers  |  Avg reserve: ${avgReservationTime}  |  Avg Paid: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Error loading statistics: ${error}',
+			'onboarding.title' => 'Choose your market',
+			'onboarding.subtitle' => 'Pick the country and payment system you\'ll use. You can change it anytime in Settings.',
 			'nekoInfo.title' => 'What is a Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'Your Neko is your identity for using ${app}. It\'s composed of a private and public key to ensure cryptographically secure communication with the coordinator.\n\nTo ensure greater anonymity, it is recommended to use a new, fresh Neko for each offer.\n\n⚠️ IMPORTANT: Your private key is only stored on your device (client-side). It is critically important to backup your private key, as losing access to it may prevent you from resolving disputes and recovering your funds.',
 			'nekoInfo.backupWarning' => 'Remember to backup your Neko',
@@ -6028,7 +6117,7 @@ extension on Translations {
 			'system.errors.noPublicKey' => 'Your public key is not available. Cannot proceed.',
 			'system.errors.internalOfferIncomplete' => 'Internal error: Offer details are incomplete. Please try again.',
 			'system.errors.loadingPublicKey' => 'Error loading your public key. Please restart the app.',
-			'system.blik.copied' => ({required Object code}) => '${code} code copied to clipboard',
+			'system.blik.copied' => ({required Object code}) => '${code} copied to clipboard',
 			'myOffers.title' => 'My offers',
 			'myOffers.empty' => 'No offers yet.',
 			'myOffers.unknownCoordinator' => 'Unknown coordinator',
@@ -6060,7 +6149,7 @@ extension on Translations {
 			'myOffers.details.continueActiveOffer' => 'Continue active offer',
 			'myOffers.details.after' => ({required Object duration}) => 'after ${duration}',
 			'landing.mainTitle' => ({required Object code}) => 'Your ${code} ⇄ bitcoin Bridge',
-			'landing.subtitle' => ({required Object code}) => 'Pay for or sell your ${code} code with bitcoin',
+			'landing.subtitle' => ({required Object code}) => 'Pay for or sell your ${code} with bitcoin',
 			'landing.partnership' => 'partnership',
 			'landing.actions.payBlik' => ({required Object code}) => 'Pay ${code}',
 			'landing.actions.payBlikSubtitle' => 'with bitcoin',
@@ -6072,6 +6161,8 @@ extension on Translations {
 			'settings.title' => 'Settings',
 			'settings.offerCreation.title' => 'Offer creation',
 			'settings.offerCreation.defaultCategory' => 'Default category',
+			'settings.offerCreation.defaultBank' => 'Default bank',
+			'settings.offerCreation.defaultBankNone' => 'None (choose per offer)',
 			'settings.offerCreation.preferredCoordinator' => 'Preferred coordinator',
 			'settings.offerCreation.automaticCoordinator' => 'Most reliable',
 			'settings.offerCreation.automaticCoordinatorDescription' => 'Picks the coordinator with the best track record, combining your own completed offers and overall network activity.',
@@ -6086,6 +6177,7 @@ extension on Translations {
 			'settings.offerCreation.categoryOptions.atm' => 'ATM cash out',
 			'settings.offerCreation.categoryOptions.online' => 'Online service/product',
 			'settings.offerCreation.dialogs.selectCategory' => 'Select default category',
+			'settings.offerCreation.dialogs.selectBank' => 'Select default bank',
 			'settings.offerCreation.dialogs.selectCoordinator' => 'Select preferred coordinator',
 			'settings.offerCreation.dialogs.premiumHint' => 'Enter a percentage like 1.5. Values are rounded to 0.5% steps.',
 			'settings.offerCreation.dialogs.premiumHelper' => 'Applied when premium pricing is enabled and clamped by the selected coordinator maximum.',
@@ -6100,6 +6192,7 @@ extension on Translations {
 			'settings.paymentSystem.countries.PL' => 'Poland',
 			'settings.paymentSystem.countries.PT' => 'Portugal',
 			'settings.paymentSystem.countries.CH' => 'Switzerland',
+			'settings.paymentSystem.countries.SK' => 'Slovakia',
 			'notificationSettings.title' => 'Notifications',
 			'notificationSettings.androidOnly' => 'Background notifications are currently only supported on Android.',
 			'notificationSettings.newOfferAlerts.label' => 'New offer alerts',
@@ -6168,8 +6261,8 @@ extension on Translations {
 			'offerNotifications.funded.body' => 'Your hold invoice was accepted. Offer is now live.',
 			'offerNotifications.reserved.title' => 'Offer reserved',
 			'offerNotifications.reserved.body' => 'A taker has reserved your offer.',
-			'offerNotifications.blikReady.title' => ({required Object code}) => '${code} code ready',
-			'offerNotifications.blikReady.body' => ({required Object code}) => 'Your ${code} code is ready to view.',
+			'offerNotifications.blikReady.title' => ({required Object code}) => '${code} ready',
+			'offerNotifications.blikReady.body' => ({required Object code}) => 'Your ${code} is ready to view.',
 			'offerNotifications.newOffer.title' => 'New offer available',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premium',
@@ -6177,11 +6270,11 @@ extension on Translations {
 			'offerNotifications.categories.atm' => 'ATM',
 			'offerNotifications.categories.online' => 'Online',
 			'offerNotifications.blikPendingReminder.title' => ({required Object code}) => '${code} waiting for your action',
-			'offerNotifications.blikPendingReminder.body' => ({required Object code}) => 'Confirm the payment or mark the ${code} code as invalid.',
+			'offerNotifications.blikPendingReminder.body' => ({required Object code}) => 'Confirm the payment or mark the ${code} as invalid.',
 			'offerNotifications.takerCharged.title' => ({required Object code}) => '${code} charged',
 			'offerNotifications.takerCharged.body' => ({required Object code}) => 'Taker reports ${code} was charged. Confirm or mark as invalid.',
 			'offerNotifications.invalidBlik.title' => ({required Object code}) => '${code} marked invalid',
-			'offerNotifications.invalidBlik.body' => ({required Object code}) => 'Maker marked your ${code} code as invalid.',
+			'offerNotifications.invalidBlik.body' => ({required Object code}) => 'Maker marked your ${code} as invalid.',
 			'offerNotifications.takerPaid.title' => 'Payment received',
 			'offerNotifications.takerPaid.body' => 'Your Lightning payment has been sent.',
 			'altstore.dialogTitle' => 'AltStore Not Installed',

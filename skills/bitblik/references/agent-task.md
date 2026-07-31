@@ -11,6 +11,8 @@ Step-by-step instructions for an agent executing a complete BitBlik exchange.
 
 3. Run: bitblik offer create --fiat <amount> --coordinator <pubkey> --json
    → Returns holdInvoice (Lightning hold invoice) + paymentHash
+   → Bank-scoped markets (bitvyber/SK): add --bank <tatrabanka|slsp|vub>. The
+     amount must be dispensable at that bank's ATM (10/20/50/100 € notes).
 
 4. Pay the hold invoice
    IMPORTANT — hold invoice behavior:
@@ -25,10 +27,12 @@ Step-by-step instructions for an agent executing a complete BitBlik exchange.
    → Status other than "created" = coordinator confirmed hold invoice received → proceed
    → Status "expired" = offer timed out (10-minute window), must start over
 
-6. Get the BLIK code: Poll every 2s: bitblik offer get-blik --no-wait --json
+6. Get the BLIK code: Poll every 2s: bitblik offer get-code --no-wait --json
    → Exit 2 + {"ready": false}: not ready, keep polling
    → Exit 0 + {"ready": true, "blik_code": "..."}: got code — show immediately
-   → Tell user: "Enter this BLIK code in your banking app within 120 seconds"
+   → Tell user to enter the code within its validity window (the get-code output
+     states it): BLIK ~120s, MB WAY 30 min, TWINT 5 min, Slovak ATM per bank
+     (Tatra 20 / SLSP 15 / VÚB 3 min) — at the ATM for SK, in the banking app otherwise
    → If offer reaches status "expired" or "expiredBlik": exchange failed, start over
 
 7. After user confirms BLIK entered: bitblik offer confirm-payment

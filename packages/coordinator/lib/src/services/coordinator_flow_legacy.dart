@@ -491,7 +491,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
       ];
 
       final now = _c._clock.now().toUtc();
-      final timeoutDuration = _c._paymentSystem.confirmationWindow;
+      final timeoutDuration = _c._primaryInstrument.validity;
 
       int expiredCount = 0;
       for (final offer in offersToCheck) {
@@ -1021,7 +1021,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
 
   void _startBlikConfirmationTimer(String offerId, {Duration? duration}) {
     _blikConfirmationTimers[offerId]?.cancel();
-    final window = duration ?? _c._paymentSystem.confirmationWindow;
+    final window = duration ?? _c._primaryInstrument.validity;
     AppLogger.info(
         '### COORDINATOR: Starting ${window.inSeconds}s BLIK confirmation timer for offer $offerId',
         offerId: offerId);
@@ -1156,7 +1156,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
   Future<bool> submitBlikCode(String offerId, String takerId, String? blikCode,
       String? takerLightningAddress, String? takerInvoice) async {
     AppLogger.info(
-        'Submitting ${_c._paymentSystem.codeLabel} flow for offer $offerId by taker $takerId',
+        'Submitting ${_c._primaryInstrument.codeLabel} flow for offer $offerId by taker $takerId',
         offerId: offerId);
     final offer = await _c._dbService.getOfferById(offerId);
     if (offer == null ||
@@ -1168,13 +1168,13 @@ class LegacyEnumOfferFlow implements OfferFlow {
       return false;
     }
 
-    final effectiveCode = _c._paymentSystem.makerProvidesCodeAtOfferCreation
+    final effectiveCode = _c._primaryInstrument.makerProvidesCode
         ? offer.blikCode
         : blikCode?.trim();
     if (effectiveCode == null ||
-        !_c._paymentSystem.isValidCode(effectiveCode)) {
+        !_c._primaryInstrument.validate(effectiveCode)) {
       AppLogger.info(
-          'Offer $offerId has no valid ${_c._paymentSystem.codeLabel} code available.',
+          'Offer $offerId has no valid ${_c._primaryInstrument.codeLabel} code available.',
           offerId: offerId);
       return false;
     }
@@ -1310,7 +1310,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
       if (offer.blikReceivedAt != null) {
         final now = _c._clock.now().toUtc();
         final elapsed = now.difference(offer.blikReceivedAt!);
-        final timeoutDuration = _c._paymentSystem.confirmationWindow;
+        final timeoutDuration = _c._primaryInstrument.validity;
         final remaining = timeoutDuration - elapsed;
         if (remaining > Duration.zero) {
           _blikConfirmationTimers[offerId] = Timer(remaining, () {
@@ -1352,7 +1352,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
     }
 
     final allowDirectMakerConfirmationFromReserved =
-        _c._paymentSystem.makerProvidesCodeAtOfferCreation &&
+        _c._primaryInstrument.makerProvidesCode &&
             offer.status == OfferStatus.reserved;
 
     if (!allowDirectMakerConfirmationFromReserved &&
@@ -1544,7 +1544,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
         offerId: offerId);
     final offer = await _c._dbService.getOfferById(offerId);
     final allowDirectMakerConfirmationFromReserved = offer != null &&
-        _c._paymentSystem.makerProvidesCodeAtOfferCreation &&
+        _c._primaryInstrument.makerProvidesCode &&
         offer.status == OfferStatus.reserved;
 
     if (offer == null ||
@@ -1595,7 +1595,7 @@ class LegacyEnumOfferFlow implements OfferFlow {
       OfferStatus.takerCharged,
       OfferStatus.blikSentToMaker,
       OfferStatus.expiredSentBlik,
-      if (_c._paymentSystem.makerProvidesCodeAtOfferCreation)
+      if (_c._primaryInstrument.makerProvidesCode)
         OfferStatus.reserved,
     ]);
     if (!success) {

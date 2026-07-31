@@ -50,7 +50,7 @@ android {
     }
 }
 
-fun getSigningConfig(): ApkSigningConfig {
+fun getSigningConfig(): ApkSigningConfig? {
     if (!System.getenv("KEYSTORE").isNullOrEmpty()) {
         println("Signing: using env vars")
         val cfg = android.signingConfigs.create("env") {
@@ -67,11 +67,15 @@ fun getSigningConfig(): ApkSigningConfig {
         }
         return cfg
     }
-    println("Signing: using key.properties")
-    return android.signingConfigs.getByName("keyFile")
+    if (keystorePropertiesFile.exists()) {
+        println("Signing: using key.properties")
+        return android.signingConfigs.getByName("keyFile")
+    }
+    println("Signing: no key.properties or KEYSTORE env found, using default debug signing")
+    return null
 }
 
-// pick signing config
+// pick signing config (null means: fall back to default debug signing, release will fail without one)
 val cfg = getSigningConfig()
 
 android {
@@ -98,7 +102,11 @@ android {
 
     buildTypes {
         release {
-            signingConfig = cfg
+            if (cfg != null) {
+                signingConfig = cfg
+            } else {
+                println("WARNING: no signing config (key.properties or KEYSTORE env) found, release build will be unsigned")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -106,7 +114,10 @@ android {
         }
         debug {
             applicationIdSuffix = ".dev"
-            signingConfig = cfg
+            if (cfg != null) {
+                signingConfig = cfg
+            }
+            // else: leave unset -> AGP's default debug signing config is used
         }
     }
 

@@ -10,10 +10,11 @@ class SetNewCodeAction extends FlowAction {
 
   @override
   Future<void> run(GenericOfferFlow flow, FlowEffectContext ctx) async {
-    final ps = flow._c._paymentSystem;
+    final instrument = flow._c._instrumentForCategory(ctx.offer.category);
+    final bank = instrument.bankById(ctx.offer.bankId);
     final provided = _cleanParam(ctx.params['blik_code']);
-    if (provided == null || !ps.isValidCode(provided)) {
-      throw Exception('Invalid ${ps.codeLabel} code.');
+    if (provided == null || !instrument.validate(provided, bank: bank)) {
+      throw Exception('Invalid ${instrument.codeLabel} code.');
     }
     ctx.write.code = provided;
   }

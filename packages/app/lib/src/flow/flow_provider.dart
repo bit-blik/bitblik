@@ -9,7 +9,7 @@ import 'taker_receive_invoice.dart';
 /// Flow ids whose UI is driven by the yaml flow definition (state -> screen
 /// registry, engine-derived action buttons, yaml-timeout countdowns) instead of
 /// the legacy hardcoded per-screen navigation.
-const Set<String> kFlowDrivenFlowIds = {'twint', 'blik', 'mbway'};
+const Set<String> kFlowDrivenFlowIds = {'twint', 'blik', 'mbway', 'sk_atm'};
 
 bool isFlowDrivenFlow(String? flowId) =>
     flowId != null && kFlowDrivenFlowIds.contains(flowId);

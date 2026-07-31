@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -347,7 +348,9 @@ class _MakerWaitForBlikScreenState
                       child: Text(
                         t.maker.waitForBlik.messageWaiting(
                           code:
-                              ref.read(selectedPaymentSystemProvider).codeLabel,
+                              ref
+                                  .read(selectedPaymentSystemProvider)
+                                  .localizedCodeLabel,
                         ),
                         style: const TextStyle(
                           fontSize: 24,

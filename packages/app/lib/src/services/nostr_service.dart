@@ -44,6 +44,19 @@ Offer reservedOfferFromResult(
         merged.coordinatorPubkey == 'unknown_coordinator') {
       merged = merged.copyWith(coordinatorPubkey: listed.coordinatorPubkey);
     }
+    // The coordinator doesn't persist the market id / bank in a column, so its
+    // RPC response can come back with them null. Keep the values resolved from
+    // the listed offer's wire tags (`y` → market, `bank`), otherwise
+    // paymentSystemForOffer falls back to currency and an SK (EUR) offer
+    // wrongly resolves to MB WAY (10-digit codes).
+    if ((merged.paymentSystemId == null || merged.paymentSystemId!.isEmpty) &&
+        listed.paymentSystemId != null) {
+      merged = merged.copyWith(paymentSystemId: listed.paymentSystemId);
+    }
+    if ((merged.bankId == null || merged.bankId!.isEmpty) &&
+        listed.bankId != null) {
+      merged = merged.copyWith(bankId: listed.bankId);
+    }
     return merged;
   }
   return listed.copyWith(
@@ -238,16 +251,16 @@ class NostrService {
         walletsRepo: FlutterSecureStorageWalletsRepo(),
         eventVerifier: eventVerifier,
         bootstrapRelays: _relayUrls,
-        logLevel: kDebugMode ? LogLevel.debug : LogLevel.warning,
+        logLevel: false && kDebugMode ? LogLevel.debug : LogLevel.warning,
         cashuUserSeedphrase: CashuUserSeedphrase(seedPhrase: cashuSeedPhrase),
       ),
     );
 
     await IsolateManager.instance.ready;
 
-    ndk!.connectivity.relayConnectivityChanges.listen((data) {
-      print("🔗 Relay connectivity change: ${data}");
-    });
+    // ndk!.connectivity.relayConnectivityChanges.listen((data) {
+    //   print("🔗 Relay connectivity change: ${data}");
+    // });
 
     // _ndk!.connectivity.relayConnectivityChanges.listen((data) {
     //   print('🔗 Relay connectivity change: $data');
@@ -400,6 +413,7 @@ class NostrService {
     required String coordinatorPubkey,
     double premiumPercent = 0,
     String? blikCode,
+    String? bank,
   }) async {
     final request = NostrRequest(
       method: kRpcInitiateOffer,
@@ -409,6 +423,7 @@ class NostrService {
         if (category != null) 'category': category.name,
         if (premiumPercent > 0) 'premium_percent': premiumPercent,
         if (blikCode != null && blikCode.isNotEmpty) 'blik_code': blikCode,
+        if (bank != null && bank.isNotEmpty) 'bank': bank,
       },
     );
 

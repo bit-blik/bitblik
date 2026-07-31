@@ -1645,10 +1645,25 @@ final selectedPaymentSystemProvider =
       (ref) => SelectedPaymentSystemNotifier(),
     );
 
+/// Whether the first-launch market/country picker is the active screen.
+/// Overridden in `main()` from
+/// [AppPreferencesStore.ensureMarketSelectedOrDetect] — true only when no
+/// market could be auto-detected from the device country (no IP / unsupported).
+/// The `false` default keeps tests and non-`main` entrypoints on the normal
+/// home route. When true, the router starts at the onboarding screen and the
+/// coordinator cold-start overlay is suppressed (so it doesn't pop over the
+/// picker). The onboarding screen flips this to `false` once the user picks a
+/// market, after which discovery + overlay behave normally.
+final needsMarketOnboardingProvider = StateProvider<bool>((ref) => false);
+
 class SelectedPaymentSystemNotifier extends StateNotifier<PaymentSystem> {
-  SelectedPaymentSystemNotifier()
-    : super(paymentSystemById(buildDefaultPaymentSystemId)) {
-    _load();
+  /// [initial] seeds the state synchronously (used at startup with the saved
+  /// market preloaded in main), so discovery targets the right market from the
+  /// first sweep. When null, falls back to the build default and loads the saved
+  /// preference asynchronously.
+  SelectedPaymentSystemNotifier([PaymentSystem? initial])
+    : super(initial ?? paymentSystemById(buildDefaultPaymentSystemId)) {
+    if (initial == null) _load();
   }
 
   Future<void> _load() async {

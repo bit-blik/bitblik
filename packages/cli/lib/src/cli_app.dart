@@ -31,7 +31,10 @@ Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
     return runOfferList(args.sublist(2));
   }
 
-  if (args.length >= 2 && args[0] == 'offer' && args[1] == 'get-blik') {
+  // `get-code` is the current name; `get-blik` kept as a backward-compat alias.
+  if (args.length >= 2 &&
+      args[0] == 'offer' &&
+      (args[1] == 'get-code' || args[1] == 'get-blik')) {
     return runOfferGetBlik(args.sublist(2));
   }
 
@@ -39,9 +42,10 @@ Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
     return runOfferCancel(args.sublist(2));
   }
 
+  // `mark-code-invalid` is the current name; `mark-blik-invalid` kept as alias.
   if (args.length >= 2 &&
       args[0] == 'offer' &&
-      args[1] == 'mark-blik-invalid') {
+      (args[1] == 'mark-code-invalid' || args[1] == 'mark-blik-invalid')) {
     return runOfferMarkBlikInvalid(args.sublist(2));
   }
 
@@ -193,7 +197,7 @@ Future<void> _printHelp(PaymentSystem ps) async {
 
   if (showGetCode) {
     cmd(
-        '${_cmd('offer')} ${_sub('get-blik')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--no-wait] [--json] [--relay <url>]')}',
+        '${_cmd('offer')} ${_sub('get-code')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--no-wait] [--json] [--relay <url>]')}',
         [
           'Wait for a taker to submit a $code code, then retrieve it via RPC.',
           'Syncs local state first. Uses the single active local offer automatically;',
@@ -205,11 +209,11 @@ Future<void> _printHelp(PaymentSystem ps) async {
 
   if (showMarkInvalid) {
     cmd(
-        '${_cmd('offer')} ${_sub('mark-blik-invalid')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
+        '${_cmd('offer')} ${_sub('mark-code-invalid')} ${p('[--offer <id>] [--coordinator <npub|hex>] [--relay <url>]')}',
         [
           'Report that the received $code code was invalid / did not charge.',
           'Coordinator notifies the taker and relists the offer for a new taker.',
-          'Use after get-blik when the code fails at the bank terminal.',
+          'Use after get-code when the code fails at the bank terminal.',
         ]);
   }
 

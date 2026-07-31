@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async';
 import 'dart:ui' as ui show TextDirection;
 import 'package:flutter/gestures.dart';
@@ -27,7 +28,7 @@ class MakerProgressIndicator extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
-    final code = ref.watch(selectedPaymentSystemProvider).codeLabel;
+    final code = ref.watch(selectedPaymentSystemProvider).localizedCodeLabel;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Wrap(
@@ -117,6 +118,32 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   /// Active payment method chosen by the user; drives the offer currency and
   /// the fiat exchange-rate lookup.
   PaymentSystem get _method => ref.read(selectedPaymentSystemProvider);
+
+  /// The payment instrument for the current category (falls back to the
+  /// market's sole instrument when no category is chosen). Drives code length,
+  /// ATM presets/denominations and the bank picker.
+  InstrumentSpec? get _instrument =>
+      _method.instrumentFor(_selectedCategory) ?? _method.instrumentFor(null);
+
+  /// Whether the maker must pick a bank for this offer (SK ATM). The chosen
+  /// bank is fixed for the offer's lifetime — the maker withdraws at its ATM.
+  bool get _needsBank => _instrument?.hasBanks ?? false;
+
+  /// The bank the maker selected, resolved against the current instrument.
+  BankSpec? get _selectedBank => _instrument?.bankById(_selectedBankId);
+
+  /// Pick the default bank for a bank-scoped market: the remembered bank if it
+  /// is still valid, else the first bank. Null for bank-agnostic markets.
+  String? _resolveDefaultBank(String? remembered) {
+    final inst =
+        _method.instrumentFor(OfferCategory.atm) ?? _method.instrumentFor(null);
+    if (inst == null || !inst.hasBanks) return null;
+    if (remembered != null && inst.bankById(remembered) != null) {
+      return remembered;
+    }
+    return inst.banks.first.id;
+  }
+
   bool get _usesMakerProvidedCodeFlow =>
       _method.makerProvidesCodeAtOfferCreation;
   bool get _makerProvidedFieldsVisible =>
@@ -154,6 +181,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   bool _userPickedCoordinator = false;
   OfferCategory? _selectedCategory = OfferCategory.shop;
   OfferCategory _defaultCategoryPreference = OfferCategory.shop;
+  // Bank chosen by the maker for bank-scoped markets (SK ATM). Null for
+  // bank-agnostic markets. Defaulted to the last-used / first bank.
+  String? _selectedBankId;
   double _premiumPercent = 0; // Maker premium % above market price
   double _defaultPremiumPreference = 0;
   bool _premiumEnabled = false;
@@ -250,6 +280,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     try {
       final preferences = await AppPreferencesStore.load();
+      // Explicit default (offer-creation settings) wins over the last-used bank.
+      final rememberedBank =
+          await AppPreferencesStore.loadDefaultBank(_method.id) ??
+          await AppPreferencesStore.loadLastBank(_method.id);
       if (!mounted) return;
       setState(() {
         _defaultCategoryPreference = preferences.offerCreation.defaultCategory;
@@ -264,6 +298,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         _preferredCoordinatorPubkey =
             preferences.offerCreation.preferredCoordinatorPubkey;
         _bitcoinDisplayUnit = preferences.display.bitcoinDisplayUnit;
+        _selectedBankId = _resolveDefaultBank(rememberedBank);
       });
 
       final rate = await apiService.getBtcRate(_method.currency);
@@ -500,14 +535,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     }
 
     // ATM cash-out must be an amount the ATM can actually dispense (a
-    // combination of the method's banknote nominals).
+    // combination of the bank's banknote nominals). Resolved per chosen bank
+    // for bank-scoped markets (SK), else the instrument default.
+    final atmInstrument = _instrument;
     if (currentError == null &&
         parsedFiat != null &&
         _selectedCategory == OfferCategory.atm &&
-        !_method.canDispenseAtmAmount(parsedFiat)) {
+        atmInstrument != null &&
+        !atmInstrument.canDispenseAtmAmount(parsedFiat, bank: _selectedBank)) {
       currentError = t.exchange.errors.atmNotDispensable(
         notes:
-            '${_method.atmBanknoteDenominations.join(', ')} ${_method.currencySymbol}',
+            '${atmInstrument.denominationsFor(_selectedBank).join(', ')} ${_method.currencySymbol}',
       );
     }
 
@@ -534,6 +572,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     if (supportsCategory && _selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(t.maker.amountForm.errors.categoryRequired)),
+      );
+      return;
+    }
+    if (_needsBank && _selectedBankId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.maker.amountForm.bank.required)),
       );
       return;
     }
@@ -576,6 +620,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     ref.read(errorProvider.notifier).state = null;
 
     try {
+      final offerBank = _needsBank ? _selectedBankId : null;
       final apiService = ref.read(apiServiceProvider);
       final result = await apiService.initiateOfferFiat(
         fiatAmount: fiatAmount,
@@ -584,7 +629,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         coordinatorPubkey: coordinatorPubkey,
         premiumPercent: _premiumPercent,
         blikCode: _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
+        bank: offerBank,
       );
+      if (offerBank != null) {
+        await AppPreferencesStore.saveLastBank(_method.id, offerBank);
+      }
       final paymentHash = result['paymentHash'] as String;
       ref.read(holdInvoiceProvider.notifier).state = result['holdInvoice'];
       ref.read(paymentHashProvider.notifier).state = paymentHash;
@@ -603,6 +652,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               holdInvoice: result['holdInvoice'],
               makerPubkey: makerId,
               coordinatorPubkey: coordinatorPubkey,
+              paymentSystemId: _method.id,
+              bankId: offerBank,
               category: supportsCategory ? _selectedCategory : null,
               blikCode:
                   _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
@@ -1486,13 +1537,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       final hint = switch (category) {
                         OfferCategory.shop => t.maker.amountForm.category
                             .physicalShopHint(
-                              code: _method.codeLabel,
+                              code: _method.localizedCodeLabel,
                               app: _method.brandName,
                             ),
                         OfferCategory.atm =>
                           t.maker.amountForm.category.atmHint,
                         OfferCategory.online => t.maker.amountForm.category
-                            .ecommerceWarningBody(code: _method.codeLabel),
+                            .ecommerceWarningBody(
+                              code: _method.localizedCodeLabel,
+                            ),
                       };
                       final name = switch (category) {
                         OfferCategory.shop =>
@@ -1572,6 +1625,75 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     }
   }
 
+  /// Bank chooser for bank-scoped ATM markets (SK). Selecting a bank re-runs
+  /// amount validation (presets/denominations are per bank) and re-scales the
+  /// countdown copy shown downstream.
+  Widget _buildBankPicker(Translations t) {
+    final banks = _instrument?.banks ?? const <BankSpec>[];
+    if (banks.isEmpty) return const SizedBox.shrink();
+    final selected = _selectedBank;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Centered when the chips fit (extra space split equally on both
+          // sides); scrolls horizontally when they don't.
+          LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (final b in banks)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: ChoiceChip(
+                          label: Text(b.label),
+                          selected: b.id == _selectedBankId,
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          labelPadding:
+                              const EdgeInsets.symmetric(horizontal: 4),
+                          onSelected: (_) {
+                            setState(() => _selectedBankId = b.id);
+                            // Presets/denominations changed → revalidate.
+                            _validateAndRecalculate();
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (selected != null && selected.validity.inMinutes <= 5) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.timer_outlined, size: 16, color: Colors.amber),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    t.maker.amountForm.bank.shortValidityWarning(
+                      minutes: selected.validity.inMinutes,
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.amber.shade800,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildAtmAmountPresets(Translations t) {
     // Only show presets within the selected coordinator's amount range.
     final rate = _rate;
@@ -1582,7 +1704,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       minFiat = (info.minAmountSats / 100000000.0) * rate;
       maxFiat = (info.maxAmountSats / 100000000.0) * rate;
     }
-    final presets = _method.atmPresetAmounts
+    final presetSource =
+        _instrument?.presetsFor(_selectedBank) ?? const <int>[];
+    final presets = presetSource
         .where(
           (amt) =>
               (maxFiat == null || amt <= maxFiat) &&
@@ -1735,7 +1859,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       Expanded(
                         child: Text(
                           t.maker.amountForm.category.physicalShopHint(
-                            code: _method.codeLabel,
+                            code: _method.localizedCodeLabel,
                             app: _method.brandName,
                           ),
                           style: const TextStyle(fontSize: 13, height: 1.4),
@@ -1799,7 +1923,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           Expanded(
                             child: Text(
                               t.maker.amountForm.category.ecommerceWarningBody(
-                                code: _method.codeLabel,
+                                code: _method.localizedCodeLabel,
                               ),
                               style: const TextStyle(fontSize: 13, height: 1.4),
                             ),
@@ -2168,6 +2292,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 //   ),
                 const SizedBox(height: 4),
               ],
+              // Bank picker for bank-scoped markets (SK ATM). The maker chooses
+              // the bank whose ATM they can reach; it is fixed for the offer.
+              if (_needsBank) _buildBankPicker(t),
               if (_usesMakerProvidedCodeFlow && !_makerProvidedFieldsVisible)
                 _buildMakerProvidedScanCard()
               // Amount entry: ATM presets (default) or the traditional input.

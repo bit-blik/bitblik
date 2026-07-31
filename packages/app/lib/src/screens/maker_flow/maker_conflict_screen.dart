@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import '../../../i18n/gen/strings.g.dart'; // Import Slang
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +40,11 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text(t.maker.confirmPayment.confirmDialog.title),
-          content: Text(t.maker.confirmPayment.confirmDialog.content(code: (paymentSystemForCurrency(widget.offer.fiatCurrency) ?? kBlik).codeLabel)),
+          content: Text(
+            t.maker.confirmPayment.confirmDialog.content(
+              code: paymentSystemForOffer(widget.offer).localizedCodeLabel,
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               child: Text(t.maker.confirmPayment.confirmDialog.cancel),
@@ -186,70 +191,77 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 24),
-              const Icon(
-                Icons.gavel_rounded,
-                size: 80,
-                color: Colors.deepPurple,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                t.maker.conflict.headline,
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
-              ),
+            const Icon(Icons.gavel_rounded, size: 80, color: Colors.deepPurple),
+            const SizedBox(height: 24),
+            Text(
+              t.maker.conflict.headline,
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _isDisputeOpened || widget.offer.isDispute
+                  ? t.maker.conflict.feedback.disputeOpenedSuccess
+                  : t.maker.conflict.body(
+                    code:
+                        paymentSystemForOffer(widget.offer).localizedCodeLabel,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            if (isLoading)
+              const CircularProgressIndicator()
+            else if (_isDisputeOpened || widget.offer.isDispute) ...[
+              CoordinatorNostrContactCard(npub: coordNpub),
               const SizedBox(height: 16),
-              Text(
-                _isDisputeOpened || widget.offer.isDispute
-                    ? t.maker.conflict.feedback.disputeOpenedSuccess
-                    : t.maker.conflict.body(
-                      code:
-                          (paymentSystemForCurrency(widget.offer.fiatCurrency) ??
-                                  kBlik)
-                              .codeLabel,
-                    ),
-                textAlign: TextAlign.center,
+              ElevatedButton(
+                onPressed: () => context.go('/'),
+                child: Text(t.common.buttons.goHome),
               ),
-              const SizedBox(height: 16),
-              if (isLoading)
-                const CircularProgressIndicator()
-              else if (_isDisputeOpened || widget.offer.isDispute) ...[
-                CoordinatorNostrContactCard(npub: coordNpub),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.go('/'),
-                  child: Text(t.common.buttons.goHome),
-                ),
-              ]
-              else
-                Column(
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () => _showConfirmationDialog(context, ref),
-                      child: Text(t.maker.conflict.actions.confirmPayment(code: (paymentSystemForCurrency(widget.offer.fiatCurrency) ?? kBlik).codeLabel)),
+            ] else
+              Column(
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                        foregroundColor: Colors.white,
+                    onPressed: () => _showConfirmationDialog(context, ref),
+                    child: Text(
+                      t.maker.conflict.actions.confirmPayment(
+                        code:
+                            paymentSystemForOffer(
+                              widget.offer,
+                            ).localizedCodeLabel,
                       ),
-                      onPressed: () => _openDispute(context, ref),
-                      child: Text(t.maker.conflict.actions.openDispute(code: (paymentSystemForCurrency(widget.offer.fiatCurrency) ?? kBlik).codeLabel)),
                     ),
-                    // const SizedBox(height: 16),
-                    // TextButton(
-                    //   onPressed: () => context.go('/'),
-                    //   child: Text(t.common.actions.cancelAndReturnHome),
-                    // ),
-                  ],
-                ),
-            ],
-          ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => _openDispute(context, ref),
+                    child: Text(
+                      t.maker.conflict.actions.openDispute(
+                        code:
+                            paymentSystemForOffer(
+                              widget.offer,
+                            ).localizedCodeLabel,
+                      ),
+                    ),
+                  ),
+                  // const SizedBox(height: 16),
+                  // TextButton(
+                  //   onPressed: () => context.go('/'),
+                  //   child: Text(t.common.actions.cancelAndReturnHome),
+                  // ),
+                ],
+              ),
+          ],
         ),
+      ),
     );
   }
 }

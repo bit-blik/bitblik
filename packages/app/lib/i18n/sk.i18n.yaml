@@ -1,0 +1,1118 @@
+# =============================================================================
+# GLOBÁLNE PRVKY APLIKÁCIE
+# =============================================================================
+app:
+  title: ${app}
+  greeting: Ahoj!
+  changelog: Zoznam zmien
+
+# =============================================================================
+# SPOLOČNÉ PRVKY UI
+# =============================================================================
+common:
+  code: kód
+  buttons:
+    cancel: Zrušiť
+    save: Uložiť
+    done: Hotovo
+    retry: Skúsiť znova
+    goHome: Domov
+    saveAndContinue: Uložiť a pokračovať
+    reveal: Zobraziť
+    hide: Skryť
+    copy: Kopírovať
+    close: Zavrieť
+    restore: Obnoviť
+    faq: FAQ
+
+  labels:
+    amount: "Suma (${currency})"
+    status: "Stav: ${status}" # Používa taker.waitConfirmation
+    role: "Rola: ${role}"
+
+  notifications:
+    success: Hotovo
+    error: Chyba
+    loading: Načítava sa...
+
+  clipboard:
+    copyToClipboard: Kopírovať do schránky
+    pasteFromClipboard: Vložiť zo schránky
+    copied: Skopírované do schránky!
+
+  actions:
+    cancelAndReturnToOffers: Zrušiť a vrátiť sa k ponukám
+    cancelAndReturnHome: Zrušiť a vrátiť sa domov
+
+# =============================================================================
+# SPRÁVA LIGHTNING ADRESY
+# =============================================================================
+lightningAddress:
+  labels:
+    address: Lightning adresa (LNURL)
+    hint: pouzivatel@domena.com
+    short: "Lightning adresa: ${address}"
+    receivingAddress: "Tvoja adresa na prijímanie:"
+
+  prompts:
+    enter: Zadaj svoju Lightning adresu a pokračuj
+    edit: Upraviť
+    invalid: Zadaj platnú Lightning adresu
+    required: Lightning adresa je povinná.
+    enterToTakeOffer: Na prijatie ponuky musíš nastaviť Lightning adresu.
+    missing: Chýba Lightning adresa. Pridaj ju, aby si mohol prijímať ponuky.
+    add: Pridať
+    delete: Odstrániť
+    confirmDelete: Naozaj chceš odstrániť svoju Lightning adresu?
+    howToGet: "Ešte nemáš Lightning adresu? Zisti, ako ju získať!"
+    learnMore: Zisti viac o Lightning adrese
+
+  feedback:
+    saved: Lightning adresa uložená!
+    updated: Lightning adresa aktualizovaná!
+    valid: Platná Lightning adresa
+
+  errors:
+    saving: "Chyba pri ukladaní adresy: ${details}"
+    loading: "Chyba pri načítaní Lightning adresy: ${details}"
+
+# =============================================================================
+# PONUKY A TRANSAKCIE
+# =============================================================================
+offers:
+  details:
+    yourOffer: "Tvoja ponuka:"
+    selectedOffer: "Ponuka:"
+    activeOffer: "Máš aktívnu ponuku:"
+    finishedOffers: Dokončené ponuky
+    noAvailable: Žiadne dostupné ponuky.
+    noAvailableTip: "Tip: zdieľaj ${app} vo svojej komunite a medzi priateľmi, aby si zvýšil počet objednávok v ${app}."
+    noSuccessfulTrades: Žiadne úspešné obchody.
+    loadingDetails: "Načítavajú sa detaily ponuky..." # Používa taker.paymentProcess & taker.waitConfirmation
+
+    amount: "Suma: ${amount} satoshi"
+    amountWithCurrency: "${amount} ${currency}"
+    makerFee: "Poplatok: ${fee} sats"
+    takerFee: "Poplatok: ${fee} sats"
+    subtitle: "${sats} + ${fee} (poplatok) satoshi\nStav: ${status}"
+    subtitleWithDate: "${sats} + ${fee} (poplatok) satoshi\nStav: ${status}\nZaplatené: ${date}"
+    activeSubtitle: "Stav: ${status}\nSuma: ${amount} satoshi"
+    id: "ID ponuky: ${id}..."
+    created: "Vytvorené: ${dateTime}"
+    takenAfter: "Prijaté po: ${duration}"
+    paidAfter: "Zaplatené po: ${duration}"
+    exchangeRate: "Výmenný kurz"
+    amountLabel: "Suma"
+    makerFeeLabel: "Poplatok predávajúceho"
+    takerFeeLabel: "Poplatok kupujúceho"
+    feeLabel: "Poplatok"
+    statusLabel: "Stav"
+    youllReceive: "Dostaneš"
+    coordinator: "Koordinátor"
+    categoryLabel: "Kategória"
+    categories:
+      physicalShop: "Obchod, kaviareň alebo reštaurácia"
+      atmCashout: "Výber z bankomatu"
+      onlineService: "Online služba/produkt"
+    consents:
+      atm: "Niektoré bankomaty pripočítajú k sume ponuky ďalší poplatok. Prijatím tejto ponuky súhlasíš s akýmikoľvek dodatočnými bankovými poplatkami, ktoré bankomat vyžaduje."
+      ecommerce: "Z rôznych dôvodov — napríklad kvôli vypredanému tovaru, oprave preplatku alebo iným problémom na strane obchodníka — môže online obchodník automaticky poslať peniaze späť na bankový účet spojený s kódom ${code}, ktorý si vygeneroval. Tieto prostriedky pristanú na tvojom účte a nepatria tebe. Ak sa to stane, kontaktuj v dobrej viere koordinátora a dohodni sa na vrátení prostriedkov predávajúcemu. Prijatím tejto ponuky súhlasíš s týmito podmienkami a čestne sľubuješ, že sa v takýchto situáciách zachováš poctivo."
+
+  labels:
+    premium: "Prémia"
+    premiumBadge: "+${percent}% prémia"
+
+  tooltips:
+    takerFeeInfo: "Koordinátor si účtuje ${feePercent}% poplatok kupujúceho. Ten zahŕňa smerovacie poplatky Lightning a odpočíta sa zo sumy, ktorú dostaneš."
+    premiumInfoTaker: "Prémia znamená, že táto ponuka je ocenená nad trhovou cenou. Za rovnakú sumu vo fiate predávajúci uzamkne menej sats v hold faktúre, takže platíš nad trh a dostaneš menej sats než pri trhovom kurze. Maximálnu prémiu určuje koordinátor."
+    ratesFetchedAt: "Načítané o"
+    ratesSources: "Zdroje priem. kurzu"
+
+  actions:
+    take: PRIJAŤ
+    takeOffer: Prijať ponuku
+    resume: ZADAŤ ${code}
+    cancel: Zrušiť ponuku
+    view: Zobraziť detaily
+
+  status:
+    created: "Vytvorená"
+    funded: "Financovaná"
+    expired: "Vypršaná"
+    cancelled: "Zrušená"
+    reserved: "Rezervovaná"
+    blikReceived: "${code} odoslaný"
+    blikSentToMaker: "${code} prijatý"
+    expiredBlik: "${code} vypršal"
+    expiredSentBlik: "${code} vypršal"
+    takerCharged: "Kupujúci zaťažený"
+    invalidBlik: "Neplatný ${code}"
+    conflict: "Konflikt"
+    dispute: "Spor"
+    makerConfirmed: "Potvrdená"
+    settled: "Vyrovnaná"
+    payingTaker: "Platí sa kupujúcemu"
+    takerPaymentFailed: "Platba kupujúcemu zlyhala"
+    takerPaid: "Kupujúci zaplatený"
+    unknownStatus: "Neznámy"
+
+  statusMessages:
+    reserved: Ponuku rezervoval kupujúci!
+    cancelled: Ponuka úspešne zrušená.
+    cancelledOrExpired: Ponuka bola zrušená alebo vypršala. # Používa taker.waitConfirmation
+    noLongerAvailable: "Ponuka už nie je dostupná (Stav: ${status})."
+
+  progress:
+    waitingForTaker: "Čaká sa na kupujúceho: ${time}"
+    reserved: "Rezervované: ostáva ${seconds} s"
+    confirming: "Potvrdzuje sa: ostáva ${seconds} s"
+
+  errors:
+    loading: "Chyba pri načítaní ponúk: ${details}"
+    loadingDetails: "Chyba pri načítaní detailov ponuky: ${details}"
+    detailsMissing: "Chyba: Detaily ponuky chýbajú alebo sú neplatné."
+    detailsNotLoaded: Nepodarilo sa načítať detaily ponuky.
+    notFound: "Chyba: Ponuka sa nenašla."
+    unexpectedState: "Chyba: Ponuka je v neočakávanom stave."
+    unexpectedStateWithStatus: "Ponuka je v neočakávanom stave (${status}). Skús to znova alebo kontaktuj podporu." # Používa taker.waitConfirmation
+    invalidStatus: Ponuka má neplatný stav.
+    couldNotIdentify: "Chyba: Nepodarilo sa identifikovať ponuku na zrušenie."
+    cannotBeCancelled: "Ponuku nie je možné zrušiť v aktuálnom stave (${status})."
+    failedToCancel: "Nepodarilo sa zrušiť ponuku: ${details}"
+    activeDetailsLost: "Chyba: Stratili sa detaily aktívnej ponuky."
+    checkingActive: "Chyba pri kontrole aktívnych ponúk: ${details}"
+    cannotResume: "Ponuku nie je možné obnoviť v stave: ${status}"
+    cannotResumeTaker: "Ponuku kupujúceho nie je možné obnoviť v stave: ${status}"
+    resuming: "Chyba pri obnovovaní ponuky: ${details}"
+    makerPublicKeyNotFound: Verejný kľúč predávajúceho sa nenašiel
+    takerPublicKeyNotFound: Verejný kľúč kupujúceho sa nenašiel.
+    atmConsentRequired: "Pred prijatím tejto ponuky prijmi podmienku dodatočného poplatku bankomatu."
+    ecommerceConsentRequired: "Pred prijatím tejto ponuky prijmi podmienku vrátenia peňazí pri e-commerce."
+    cannotTakeOwnOffer: "Nemôžeš prijať vlastnú ponuku."
+
+  success:
+    title: Ponuka dokončená
+    headline: Platba potvrdená!
+    subtitle: Kupujúcemu sa teraz zaplatí.
+    detailsTitle: "Detaily ponuky:"
+    duration: "Dokončenie ponuky trvalo ${time}."
+
+# =============================================================================
+# REZERVÁCIE
+# =============================================================================
+reservations:
+  actions:
+    cancel: Zrušiť rezerváciu
+
+  feedback:
+    cancelled: Rezervácia zrušená.
+
+  errors:
+    cancelling: "Nepodarilo sa zrušiť rezerváciu: ${error}"
+    failedToReserve: "Nepodarilo sa rezervovať ponuku: ${details}"
+    failedNoTimestamp: Nepodarilo sa rezervovať ponuku (chýba časová značka).
+    timestampMissing: Chýba časová značka rezervácie ponuky.
+    notReserved: "Ponuka už nie je v rezervovanom stave (${status})."
+
+# =============================================================================
+# VÝMENNÉ KURZY A SUMY
+# =============================================================================
+exchange:
+  labels:
+    enterAmount: "Zadaj sumu (${currency}) na zaplatenie:"
+    equivalent: "≈ ${sats} satoshi"
+    rate: "Výmenný kurz ≈ ${rate} ${currency}/BTC"
+
+  feedback:
+    fetching: Načítava sa výmenný kurz...
+
+  errors:
+    fetchingRate: Nepodarilo sa načítať výmenný kurz.
+    invalidFormat: Neplatný formát čísla
+    mustBePositive: Suma musí byť kladná
+    invalidFeePercentage: Neplatné percento poplatku
+    tooLowFiat: "Suma je príliš nízka. Minimum je ${minAmount} ${currency}."
+    tooHighFiat: "Suma je príliš vysoká. Maximum je ${maxAmount} ${currency}."
+    atmNotDispensable: "Bankomat nedokáže vydať túto sumu. Použi kombináciu bankoviek: ${notes}."
+
+# =============================================================================
+# INFORMÁCIE O KOORDINÁTOROVI
+# =============================================================================
+coordinator:
+  title: "Koordinátori"
+  info:
+    fee: "poplatok"
+    rangeDisplay: "Suma: ${minAmount}-${maxAmount} ${currency}"
+    feeDisplay: "${fee}% poplatok"
+
+  selector:
+    loading: "Načítavajú sa koordinátori..."
+    errorLoading: "Chyba pri načítaní koordinátorov"
+    choose: "Vyber koordinátora"
+    viewNostrProfile: "Zobraziť Nostr profil"
+    unresponsive: "Tento koordinátor neodpovedá"
+    waitingResponse: "Čaká sa na odpoveď koordinátora"
+    termsAccept: "Súhlasím s "
+    termsOfUsage: "podmienkami používania"
+
+  dialog:
+    makerFee: "Poplatok predávajúceho"
+    takerFee: "Poplatok kupujúceho"
+    amountRange: "Rozsah sumy"
+    reservationTime: "Čas rezervácie"
+    currencies: "Meny"
+    viewTerms: "Zobraziť podmienky"
+
+  details:
+    title: "Koordinátor"
+    relaysInUse: "Používané relaye"
+    relaysInUseHint: "Všetka komunikácia s týmto koordinátorom prebieha cez tieto relaye (z jeho zoznamu NIP-65)."
+    noRelays: "Zatiaľ nie sú známe žiadne relaye"
+    makerFee: "Poplatok predávajúceho"
+    takerFee: "Poplatok kupujúceho"
+    amountRange: "Rozsah sumy"
+    maxPremium: "Max. prémia"
+    maxPremiumInfoTitle: "Prémia"
+    maxPremiumInfoBody: "Prémia je voliteľná prirážka nad trhový kurz, ktorú môže predávajúci nastaviť na ponuke. S prémiou predávajúci uzamkne menej sats za rovnakú sumu vo fiate, takže kupujúci platí nad trh a predávajúci si ponechá rozdiel. Táto hodnota je najvyššia prémia, ktorú tento koordinátor na svojich ponukách povoľuje."
+    reservationTime: "Čas rezervácie"
+    currencies: "Meny"
+    paymentSystem: "Platobný systém"
+    version: "Verzia"
+    yourOffers: "Tvoje ponuky"
+    successfulOffers: "Úspešné ponuky (30d)"
+    statusOnline: "Online"
+    statusOffline: "Offline"
+    statusUnknown: "Neznámy"
+    openNostrProfile: "Otvoriť Nostr profil"
+    termsOfUsage: "Podmienky používania"
+
+  coldStart:
+    title: "Vyhľadávanie koordinátorov"
+    body: "${app} hľadá verejných koordinátorov, kontroluje, ktorí sú dostupní, a zapne pre teba malú predvolenú skupinu."
+    settingsHint: "Zapnutých koordinátorov môžeš neskôr zmeniť v Nastaveniach."
+    ok: "OK"
+    discovered: "Nájdení"
+    candidates: "Kandidáti"
+    enabled: "Zapnutí"
+    recordsTitle: "Aktuálni koordinátori"
+    recordEnabled: "Zapnutý"
+    recordHealthyCandidate: "Zdravý kandidát"
+    recordOfflineCandidate: "Kandidát offline"
+    recordChecking: "Kontroluje sa"
+    recordDiscovered: "Nájdený"
+    phases:
+      loadingMuteList: "Načítavajú sa filtre koordinátorov"
+      discovering: "Vyhľadávanie koordinátorov na Nostr"
+      loadingProfiles: "Načítavajú sa profily koordinátorov"
+      loadingStats: "Číta sa história koordinátorov"
+      checkingHealth: "Kontrola stavu koordinátorov"
+      finalizing: "Zapínajú sa predvolení koordinátori"
+      completed: "Hotovo"
+
+  management:
+    title: "Správa koordinátorov"
+    availableCoordinators: "Koordinátori"
+    noCoordinators: "Zatiaľ neboli nájdení žiadni koordinátori."
+    online: "Online"
+    unknownOffline: "Neznámy/Offline"
+    openNostrProfile: "Otvoriť Nostr profil"
+    enable: "Zapnúť"
+    remove: "Odstrániť"
+    addCustomWhitelist: "Pridať koordinátora"
+    addCustomWhitelistHint: "npub1..."
+    add: "Pridať"
+    coordinatorDisabled: "Koordinátor vypnutý"
+    coordinatorEnabled: "Koordinátor zapnutý"
+    coordinatorAdded: "Koordinátor pridaný do vlastného zoznamu"
+    coordinatorRemoved: "Koordinátor odstránený z vlastného zoznamu"
+    coordinatorAddInfoUnavailable: "Na relayoch sa nenašli žiadne informácie o koordinátorovi. Koordinátor nebol pridaný."
+    pleaseEnterNpub: "Zadaj npub"
+    error: "Chyba"
+    metricYourOffers: "Tvoje ponuky"
+    metricYourOffersTooltip: "Počet ponúk, ktoré si úspešne dokončil s týmto koordinátorom."
+    metricNetworkOffers: "Ponuky (30d)"
+    metricNetworkOffersTooltip: "Úspešné ponuky vyrovnané týmto koordinátorom naprieč všetkými používateľmi za posledných 30 dní."
+
+# =============================================================================
+# TOK PREDÁVAJÚCEHO
+# =============================================================================
+maker:
+  roleSelection:
+    button: ZAPLATIŤ cez Lightning
+
+  amountForm:
+    progress:
+      step1: "1. Vytvoriť ponuku"
+      step2: "2. Čakať na kupujúceho"
+      step3: "3. Použiť ${code}"
+    labels:
+      coordinator: Koordinátor
+      category: Kategória
+      exchangeRate: Výmenný kurz
+      fee: Poplatok
+      satoshisToPay: Suma na zaplatenie
+      enterAmount: Zadaj sumu
+      customAmount: Vlastná
+      tapToSelect: Ťukni na výber
+      premium: Prémia
+    actions:
+      generateInvoice: Vygenerovať faktúru
+    bank:
+      label: "Banka"
+      required: "Vyber si banku"
+      shortValidityWarning: "Kód tejto banky platí len ${minutes} min — buď pri bankomate skôr, než rezervuješ."
+
+    tooltips:
+      feeInfo: "Koordinátor si účtuje ${feePercent}% poplatok predávajúceho. Tento poplatok sa odpočíta z tvojej Lightning platby."
+      payInfo: "Tento výpočet vychádza z výmenných kurzov načítaných na strane klienta. Koordinátor vypočíta presnú sumu a suma na faktúre bude konečná a presná suma na zaplatenie."
+      premiumInfo: "Voliteľná prémia ti umožňuje predať sats nad trhovú cenu. Prémia zníži počet sats uzamknutých v tvojej hold faktúre za rovnakú sumu vo fiate, takže kupujúci platí nad trh a ty si ponecháš rozdiel. Predvolene je vypnutá (0%). Maximálnu prémiu určuje vybraný koordinátor."
+
+    category:
+      label: "Kategória ponuky"
+      unsupportedForSystem: "${system} nepodporuje túto kategóriu."
+      options:
+        physicalShop: "Obchod, kaviareň alebo reštaurácia"
+        atmCashout: "Výber z bankomatu"
+        onlineService: "Online služba/produkt"
+      shortLabels:
+        shop: "Obchod"
+        atm: "Bankomat"
+        online: "Online"
+      atmHint: "Kupujúci uvidia, že táto ponuka je na výber z bankomatu, a môžu sa jej vyhnúť, ak im banka účtuje ďalšie poplatky za bankomat."
+      physicalShopHint: "Ideálne miesto na použitie ${app} je samoobslužná pokladňa — keďže čakanie na to, kým kupujúci rezervuje, vygeneruje a potvrdí ${code}, môže trvať pár minút. Skvele funguje v obchodoch, kaviarňach aj reštauráciách. Ak sa cítiš dosť odvážny na to, aby si nechal bežného pokladníka (a ľudí v rade za tebou) čakať tých pár minút, tak nech sa páči."
+      ecommerceWarningTitle: "Riziko vrátenia peňazí od online obchodníka"
+      ecommerceWarningBody: "Z rôznych dôvodov — napríklad kvôli vypredanému tovaru, oprave preplatku alebo iným problémom na strane obchodníka — môže online obchodník automaticky vystaviť vrátenie peňazí na bankový účet spojený s kódom ${code}, čo je účet kupujúceho. Koordinátor nemôže prinútiť kupujúceho, aby ti tieto prostriedky vrátil."
+      ecommerceConfirmation: "Rozumiem riziku vrátenia peňazí a k objednávke pridám poznámku, aby obchodník v prípade potreby vrátil peniaze na iný účet."
+      whyThisIsNeeded: "prečo je to potrebné?"
+    onboarding:
+      titlePrefix: "Nové"
+      title: "Vyber kategóriu ponuky"
+      body: "Pred vygenerovaním faktúry vyber kategóriu, ktorá najlepšie zodpovedá tomu, za čo platíš."
+      showWhy: "Prečo na tom záleží?"
+      hideWhy: "Skryť detaily"
+      whyTitle: "Správna kategória pomáha kupujúcim bezpečne sa rozhodnúť"
+      whyBody: "Rôzne situácie prinášajú rôzne očakávania a riziká. Výbery z bankomatu môžu zahŕňať ďalšie bankové poplatky a online nákupy môžu zahŕňať okrajové prípady s vrátením peňazí. Označenie správnej kategórie dáva kupujúcim kontext, ktorý potrebujú pred prijatím tvojej ponuky."
+      cta: "Rozumiem"
+
+    errors:
+      initiating: "Chyba pri vytváraní ponuky: ${details}"
+      publicKeyNotLoaded: "Chyba: Verejný kľúč ešte nie je načítaný."
+      noCoordinatorMatchesAmount: "Túto sumu nepodporuje žiadny koordinátor. Skús inú hodnotu."
+      categoryRequired: "Vyber kategóriu ponuky."
+      ecommerceConfirmationRequired: "Pred pokračovaním potvrď riziko vrátenia peňazí od online obchodníka."
+
+  payInvoice:
+    title: "Zaplať túto hold faktúru:"
+    actions:
+      copy: Kopírovať faktúru
+      payInWallet: Otvoriť v externej peňaženke
+      connectWallet: Pripojiť peňaženku
+      payWithNwc: "Zaplatiť"
+      paying: Platí sa...
+
+    feedback:
+      copied: Faktúra skopírovaná do schránky!
+      waitingConfirmation: Čaká sa na potvrdenie platby...
+      nwcConnected: NWC peňaženka pripojená!
+      nwcPaymentSuccess: Platba úspešná!
+
+    errors:
+      couldNotOpenApp: Nepodarilo sa otvoriť Lightning aplikáciu pre faktúru.
+      openingApp: "Chyba pri otváraní Lightning aplikácie: ${details}"
+      publicKeyNotAvailable: Verejný kľúč nie je dostupný.
+      couldNotFetchActive: Nepodarilo sa načítať detaily aktívnej ponuky. Mohla vypršať.
+      nwcPaymentFailed: "Platba zlyhala: ${details}"
+      nwcNotConnected: NWC peňaženka nie je pripojená
+      insufficientBalance: "Nedostatočný zostatok. Potrebuješ ${required} sats, máš ${available} sats"
+      cancelOfferAlreadyFunded: "Koordinátor hlási, že táto ponuka je už financovaná. Teraz ju nie je možné zrušiť."
+      cancelFailed: "Nepodarilo sa zrušiť ponuku: ${details}"
+
+    budgetWarning:
+      title: "Platba môže zlyhať"
+      balanceTooLow: "Tvoja predvolená peňaženka na platby ${name} nemá dostatočný zostatok na túto platbu."
+      budgetTooLow: "Tvoja predvolená peňaženka na platby ${name} nemá dostatočný rozpočet na túto platbu."
+      balanceLine: "Zostatok: ${available}"
+      budgetLine: "Zostávajúci NWC rozpočet: ${remaining}"
+      requiredLine: "Potrebné: ${required}"
+      addFundsHint: "Dobi ${name}, aby si pokryl túto sumu platby."
+      increaseBudgetHint: "Zvýš NWC rozpočet na míňanie pre toto pripojenie v aplikácii svojej peňaženky."
+      switchWalletLabel: "Alebo použi inú peňaženku:"
+      walletLowFundsTag: "Môže zlyhať"
+      payAnyway: "Skúsiť aj tak"
+      cancel: "Zrušiť"
+      readyTitle: "Zaplatiť faktúru"
+
+  waitTaker:
+    message: Čaká sa, kým kupujúci rezervuje tvoju ponuku...
+    progressLabel: "Čaká sa na kupujúceho: ${time}"
+    errorActiveOfferDetailsLost: "Chyba: Stratili sa detaily aktívnej ponuky."
+    errorFailedToRetrieveBlik: "Chyba: Nepodarilo sa načítať ${code}."
+    errorRetrievingBlik: "Chyba pri načítaní ${code}: ${details}"
+    offerNoLongerAvailable: "Ponuka už nie je dostupná (Stav: ${status})."
+    errorCouldNotIdentifyOffer: "Chyba: Nepodarilo sa identifikovať ponuku na zrušenie."
+    offerCannotBeCancelled: "Ponuku nie je možné zrušiť v aktuálnom stave (${status})."
+    offerCancelledSuccessfully: "Ponuka úspešne zrušená."
+    failedToCancelOffer: "Nepodarilo sa zrušiť ponuku: ${details}"
+    offerExpiredTitle: "Ponuka vypršala"
+    offerExpiredMessage: "Žiadny kupujúci nerezervoval tvoju ponuku načas."
+    recreateOffer: "Nová ponuka — rovnaká suma"
+
+  waitForBlik:
+    title: Čaká sa na ${code}
+    messageInfo: Kupujúci rezervoval ponuku!
+    messageWaiting: Čaká sa na poskytnutie ${code}...
+    #timeLimitWithSeconds: "Kupujúci má ${seconds} sekúnd na poskytnutie ${code}."
+    progressLabel: "Rezervované: ostáva ${seconds} s"
+
+  confirmPayment:
+    title: ${code} prijatý!
+    retrieving: Načítava sa ${code}...
+    instructions: Zadaj tento kód do platobného terminálu. Keď kupujúci potvrdí platbu vo svojej bankovej aplikácii a platba je úspešná, stlač Potvrdiť nižšie.
+    instruction1: Zadaj kód do platobnej výzvy ${code}.
+    instruction2: Počkaj, kým kupujúci potvrdí platbu vo svojej aplikácii.
+    instruction3: "Keď je platba úspešná, stlač Potvrdiť nižšie:"
+    # Voliteľné pokyny špecifické pre platobný systém a jazyk zobrazené v modrom
+    # info boxe pod kódom. Vykreslia sa len pri metódach, ktoré ich definujú.
+    mbwayAtmInstructions: "Ak chceš vybrať ${amount} €, choď k najbližšiemu bankomatu MULTIBANCO, stlač zelené tlačidlo a vyber možnosť \"Výber hotovosti\" (\"Levantar Dinheiro\"). Zadaj kód. Tento kód je platný ${minutes} minút."
+    cardlessAtmInstructions: "Ak chceš vybrať ${amount} ${currency}, choď k bankomatu ${bank}, spusti výber bez karty / cez mobil a zadaj kód — karta nie je potrebná. Kód je platný ${minutes} minút."
+    findAtms: "Nájdi bankomaty ${bank} na mape"
+
+    takerChargedWarning: "Kupujúci nahlásil, že platba ${code} bola strhnutá z jeho bankového účtu. Ak toto označíš ako neplatné, spôsobí to konflikt."
+    autoConfirmInfo: "Ak neoznačíš ${code} ako neplatný, platba sa po uplynutí tohto času automaticky potvrdí a kupujúcemu sa zaplatí."
+    autoConfirmCountdown: "Automatické potvrdenie o ${time}"
+
+    expiredTitle: Kód ${code} vypršal
+    expiredWarning: "${code} vypršal. Musíš manuálne potvrdiť stav platby:"
+    expiredInstruction1: "Ak bola platba ${code} úspešná a dokončil si nákup, klikni nižšie na \"Potvrdiť úspešnú platbu\"."
+    expiredInstruction2: "Ak platba ${code} zlyhala alebo nebola dokončená, klikni nižšie na \"Neplatný kód ${code}\"."
+
+    actions:
+      confirm: Potvrdiť úspešnú platbu
+      markInvalid: Neplatný kód ${code}
+      copyBlik: Kopírovať ${code}
+
+    confirmDialog:
+      title: Potvrdiť platbu?
+      content: "Táto akcia je nezvratná. Po potvrdení:\n\n• Kupujúci okamžite dostane prostriedky\n• Koordinátor nebude môcť prostriedky spochybniť\n• Túto akciu nemôžeš vrátiť späť\n\nPotvrď iba vtedy, ak bola platba ${code} úspešná."
+      cancel: Zrušiť
+      confirmButton: Áno, potvrdiť platbu
+
+    invalidBlikDisputeDialog:
+      title: Otvoriť spor?
+      content: "Kupujúci nahlásil, že platba ${code} bola strhnutá z jeho účtu.\n\nOznačením ako neplatné okamžite otvoríš SPOR, ktorý vyžaduje zásah koordinátora.\n\n• Ak sa rozhodne v tvoj neprospech, môže byť účtovaný poplatok za spor\n• Hold faktúra sa okamžite vyrovná\n• Bude potrebné manuálne overenie\n\nPokračuj iba vtedy, ak si istý, že platba ${code} NEbola úspešná."
+      cancel: Zrušiť
+      confirmButton: Áno, otvoriť spor
+
+    feedback:
+      confirmed: Predávajúci potvrdil platbu.
+      confirmedTakerPaid: Platba potvrdená! Kupujúci dostane prostriedky.
+      progressLabel: "Potvrdzuje sa: ostáva ${seconds} s"
+
+    errors:
+      failedToRetrieve: "Chyba: Nepodarilo sa načítať ${code}."
+      retrieving: "Chyba pri načítaní ${code}: ${details}"
+      missingHashOrKey: "Chyba: Chýba hash platby alebo verejný kľúč."
+      incorrectState: "Ponuka nie je v správnom stave na potvrdenie (Stav: ${status})"
+      confirming: "Chyba pri potvrdzovaní platby: ${details}"
+      invalidState: "Chyba: Prijatý neplatný stav ponuky."
+      internalIncomplete: "Interná chyba: Neúplné detaily ponuky."
+      notAwaitingConfirmation: "Ponuka už nečaká na potvrdenie (Stav: ${status})."
+      unexpectedStatus: Zo servera prišiel neočakávaný stav ponuky.
+
+  invalidBlik:
+    title: Neplatný kód ${code}
+    info: Označil si ${code} ako neplatný. Čaká sa, kým kupujúci poskytne nový kód alebo začne spor.
+
+  conflict:
+    title: Konflikt ponuky
+    headline: Nahlásený konflikt ponuky
+    body: Označil si ${code} ako neplatný, ale kupujúci nahlásil konflikt, čím naznačuje, že podľa neho bola platba úspešná.
+    instructions: Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.
+
+    actions:
+      back: Späť domov
+      confirmPayment: Moja chyba, potvrdiť úspešnú platbu ${code}
+      openDispute: Platba ${code} NEbola úspešná, OTVORIŤ SPOR
+      submitDispute: Odoslať spor
+
+    disputeDialog:
+      title: Otvoriť spor?
+      content: Otvorenie sporu vyžaduje manuálne overenie koordinátorom, čo zaberie čas. Ak sa spor rozhodne v tvoj neprospech, odpočíta sa poplatok za spor. Hold faktúra sa vyrovná, aby nevypršala. Ak sa spor rozhodne v tvoj prospech, dostaneš vrátené prostriedky (mínus poplatky) do peňaženky podľa vlastného výberu.
+      contentDetailed: "Otvorenie sporu bude vyžadovať manuálny zásah koordinátora, čo zaberie čas a je spojené s poplatkom za spor.\n\nHold faktúra sa okamžite vyrovná, aby nevypršala pred vyriešením sporu.\n\nAk sa spor rozhodne v tvoj prospech, suma satoshi sa vráti do peňaženky podľa tvojho výberu (mínus poplatky). Uisti sa, že máš pripravenú peňaženku na prijatie."
+      actions:
+        confirm: Otvoriť spor
+        cancel: Zrušiť
+
+    feedback:
+      disputeOpenedSuccess: Spor úspešne otvorený. Koordinátor ho posúdi. # Opravené
+
+    errors:
+      openingDispute: "Chyba pri otváraní sporu: ${error}"
+
+    nostrContact:
+      title: Kontaktuj koordinátora na Nostr
+      description: Môžeš koordinátorovi napísať priamu správu (DM) a požiadať o pomoc s týmto sporom.
+      copyNpub: Kopírovať npub
+      openProfile: Zobraziť profil
+      npubCopied: Npub koordinátora skopírovaný do schránky!
+      yourIdentityDescription: "Ak chceš posielať DM, prihlás sa svojím súkromným kľúčom Neko (nsec) v ľubovoľnom Nostr klientovi, ktorý podporuje priame správy."
+      manageNekoKeys: Spravovať Neko kľúče
+
+  success:
+    title: Ponuka dokončená
+    headline: Platba potvrdená!
+    subtitle: Kupujúcemu sa teraz zaplatí.
+    detailsTitle: "Detaily ponuky:"
+    duration: "Ponuka trvala ${time}!"
+
+# =============================================================================
+# TOK KUPUJÚCEHO
+# =============================================================================
+taker:
+  roleSelection:
+    button: PREDAŤ ${code} za satoshi
+
+  progress:
+    step1: Odoslať ${code}
+    step2: Potvrdiť ${code}
+    step3: Dostať zaplatené
+
+  submitBlik:
+    title: "Zadaj ${digits}-miestny ${code}"
+    label: Kód ${code}
+    generateInBank: "Vygeneruj kód na výber v aplikácii ${bank}."
+    instruction: "Zadaj ${code}, kým vyprší čas..."
+
+    timeLimit: "Zadaj ${code} do: ${seconds} s"
+    timeExpired: Čas na zadanie ${code} vypršal.
+
+    actions:
+      submit: Odoslať ${code}
+
+    feedback:
+      pasted: Vložený ${code}.
+
+    validation:
+      invalidFormat: Zadaj platný ${digits}-miestny ${code}.
+
+    errors:
+      submitting: "Chyba pri odosielaní ${code}: ${details}"
+      clipboardInvalid: Schránka neobsahuje platný ${digits}-miestny ${code}.
+      stateChanged: "Chyba: Stav ponuky sa zmenil."
+      stateNotValid: "Chyba: Stav ponuky už nie je platný."
+      fetchedIdMismatch: "Načítané ID aktívnej ponuky (${fetchedId}) sa nezhoduje s pôvodným ID ponuky (${initialId}). Nesúlad stavu?"
+      paymentHashMissing: Po načítaní chýba hash platby ponuky.
+
+    details:
+      requestedAmount: "Požadovaná suma ${code}"
+      exchangeRate: "Výmenný kurz"
+      takerFee: "Poplatok kupujúceho"
+      status: "Stav"
+      youllReceive: "Dostaneš"
+
+  waitConfirmation:
+    title: "Čaká sa na predávajúceho"
+    statusLabel: "Stav ponuky: ${status}"
+    waitingMaker: "Čaká sa na potvrdenie predávajúceho: ${seconds} s"
+    waitingMakerConfirmation: "Čaká sa, kým predávajúci potvrdí, že ${code} je správny. Zostávajúci čas: ${seconds}s"
+    importantNotice: "VEĽMI DÔLEŽITÉ: Uisti sa, že prijímaš potvrdenie ${code} iba na ${amount} ${currency}"
+    importantBlikAmountConfirmation: "VEĽMI DÔLEŽITÉ: V bankovej aplikácii sa uisti, že potvrdzuješ platbu ${code} presne na ${amount} ${currency}."
+    instructions: Predávajúci ho teraz musí zadať do platobného terminálu do ${minutes} minút. Potom musíš ${code} prijať vo svojej bankovej aplikácii.
+    instructionsNoConfirm: Predávajúci teraz musí zadať tvoj ${code} do bankomatu do ${minutes} minút.
+    categoryReminder:
+      atm: "Pripomienka k ponuke bankomatu: tvoja banka ťa môže ešte požiadať o schválenie dodatočného poplatku za bankomat nad hlavnú sumu."
+      ecommerce: "Pripomienka k online objednávke: ak obchodník pošle automatické vrátenie peňazí na tvoj bankový účet, kontaktuj koordinátora a vráť ich."
+    waitingForMakerToReceive: "Čaká sa, kým predávajúci dostane tvoj ${code}..."
+    makerReceivedBlik: "Predávajúci dostal tvoj ${code}."
+    timerExpiredMessage: "Čas platnosti ${code} (${minutes}m) uplynul. Čaká sa, kým predávajúci potvrdí alebo označí kód ako neplatný."
+    timerExpiredActions: "Čas platnosti ${code} (${minutes}m) uplynul, ale predávajúci nedostal ${code}. Môžeš poslať nový ${code} alebo zrušiť."
+    resendBlikButton: "Poslať nový kód ${code}"
+    navigatedHome: "Presmerované domov."
+
+    expiredTitle: "Kód ${code} vypršal"
+    expiredWarning: "Predávajúci nedostal ${code}, takže ho nemohol použiť."
+    expiredRelistCountdownLabel: "Rezervácia končí o"
+    expiredSentWarning: "Predávajúci ešte nepotvrdil platbu. Čo chceš urobiť?"
+    expiredInstruction1: "Ak to chceš skúsiť znova s novým ${code}, obnov rezerváciu."
+    expiredInstruction2: "Ak už túto transakciu nechceš dokončiť, zruš rezerváciu."
+    expiredInstruction3: "Ak bola platba ${code} strhnutá z tvojho bankového účtu, neboj sa, bitcoin je stále bezpečne uzamknutý u koordinátora."
+
+    takerCharged:
+      title: "Označil si ${code} ako strhnutý"
+      message: "Predávajúci má ${minutes} min na potvrdenie platby alebo jej spochybnenie. Ak neurobí nič, platba sa automaticky potvrdí a ty dostaneš bitcoin."
+    expiredActions:
+      reportConflict: "${code} bol strhnutý z môjho bankového účtu"
+      renewReservation: "Skúsiť znova s novým ${code}"
+      cancelReservation: "Zrušiť rezerváciu"
+
+    feedback:
+      makerConfirmed: Predávajúci potvrdil platbu.
+      paymentSuccessful: Platba úspešná! Čoskoro dostaneš prostriedky.
+      conflictReported: Konflikt nahlásený. Koordinátor posúdi situáciu.
+
+    errors:
+      invalidOfferStateReceived: "Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa."
+      reportingConflict: "Chyba pri nahlasovaní konfliktu: ${details}"
+
+  paymentProcess:
+    title: Priebeh platby
+    waitingForOfferUpdate: "Čaká sa na aktualizáciu stavu ponuky..."
+
+    states:
+      preparing: Príprava na odoslanie platby...
+      sending: Odosiela sa platba...
+      received: Platba prijatá!
+      failed: Platba zlyhala
+      waitingUpdate: Čaká sa na aktualizáciu ponuky...
+
+    steps:
+      makerConfirmedBlik: "Predávajúci potvrdil platbu ${code}"
+      makerInvoiceSettled: "Hold faktúra predávajúceho vyrovnaná"
+      takerInvoicePaid: "Platí sa tvoja Lightning faktúra"
+      takerPaymentFailed: "Platba na tvoju faktúru zlyhala"
+
+    errors:
+      sending: "Chyba pri odosielaní platby: ${details}"
+      notConfirmed: Ponuka nebola potvrdená predávajúcim.
+      expired: Ponuka vypršala.
+      cancelled: Ponuka zrušená.
+      paymentFailed: Platba ponuky zlyhala.
+      unknown: Neznáma chyba ponuky.
+      takerPaymentFailed: "Platba na tvoju Lightning faktúru zlyhala."
+      noPublicKey: "Chyba: Nepodarilo sa načítať tvoj verejný kľúč."
+      loadingPublicKey: Chyba pri načítaní tvojich údajov
+      missingPaymentHash: "Chyba: Chýbajú detaily platby."
+
+    loading:
+      publicKey: Načítavajú sa tvoje údaje...
+
+    actions:
+      goToFailureDetails: "Skúsiť znova s novou faktúrou"
+
+  paymentFailed:
+    title: Platba zlyhala
+    instructions: "Poskytni novú Lightning faktúru na ${netAmount}"
+    form:
+      newInvoiceLabel: "Nová Lightning faktúra"
+      newInvoiceHint: "Zadaj svoju BOLT11 faktúru"
+    actions:
+      retryPayment: "Odoslať novú faktúru"
+    errors:
+      enterValidInvoice: "Zadaj platnú faktúru"
+      updatingInvoice: "Chyba pri aktualizácii faktúry: ${details}"
+      paymentRetryFailed: "Opätovná platba zlyhala. Skontroluj faktúru alebo to skús znova neskôr."
+      takerPublicKeyNotFound: "Verejný kľúč kupujúceho sa nenašiel."
+      generateFailed: "Nepodarilo sa vygenerovať faktúru: ${details}"
+    walletSection:
+      title: "Vygenerovať faktúru z peňaženky"
+      defaultLabel: "predvolená"
+      tapToGenerate: "Ťukni na vygenerovanie faktúry na ${amountSats}"
+    loading:
+      processingPayment: "Spracúva sa opätovná platba..."
+    success:
+      title: "Platba úspešná"
+      message: "Tvoja platba bola úspešne spracovaná."
+
+  paymentSuccess:
+    title: Platba úspešná
+    message: Tvoja platba bola úspešne spracovaná.
+    actions:
+      goHome: Prejsť domov
+
+  invalidBlik:
+    title: Neplatný kód ${code}
+    message: Predávajúci odmietol kód ${code}
+    explanation: Predávajúci ponuky uviedol, že ${code}, ktorý si poskytol, bol neplatný alebo nefungoval.\n\nČo chceš urobiť?
+
+    werentCharged: "Ak ti NEBOLO nič strhnuté:"
+    wereCharged: "Ak ti bolo strhnuté:"
+
+    actions:
+      retry: Poslať nový ${code}
+      cancelReservation: Zrušiť transakciu
+      reportConflict: Začať spor
+      returnHome: Vrátiť sa domov
+
+    confirmDialog:
+      title: Naozaj?
+      content: "Keď na to ťukneš, niet cesty späť.\n\nAk ti suma naozaj BOLA strhnutá z bankového účtu, koordinátor NEbude môcť zaručiť, že dostaneš bitcoin, a môžeš prísť o svoje prostriedky.\n\nAk si nie si istý, je najlepšie chvíľu počkať a potvrdiť si, že ti NEbolo strhnuté, skôr než budeš pokračovať."
+      actions:
+        proceed: Som si istý, pokračovať
+        cancel: Zrušiť
+
+    disputeConfirmDialog:
+      title: Začať spor?
+      content: "Spor začni iba vtedy, ak ti suma BOLA strhnutá z bankového účtu.\n\nKoordinátor manuálne posúdi tvoj prípad, čo zaberie čas. Budeš musieť poskytnúť dôkaz o platbe."
+      actions:
+        proceed: Áno, bolo mi strhnuté
+        cancel: Zrušiť
+
+    feedback:
+      conflictReportedSuccess: Konflikt nahlásený. Koordinátor ho posúdi.
+
+    errors:
+      reservationFailed: Nepodarilo sa znova rezervovať ponuku
+      conflictReport: "Chyba pri nahlasovaní konfliktu: ${details}"
+
+  conflict:
+    title: Konflikt ponuky
+    headline: Nahlásený konflikt ponuky
+    body: Predávajúci označil ${code} ako neplatný, ale ty si nahlásil konflikt, čím naznačuješ, že podľa teba bola platba úspešná.
+    instructions: Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.
+
+    actions:
+      back: Späť domov
+
+    feedback:
+      reported: Konflikt nahlásený. Koordinátor ho posúdi.
+
+    errors:
+      reporting: "Chyba pri nahlasovaní konfliktu: ${details}"
+
+    nostrContact:
+      title: Kontaktuj koordinátora na Nostr
+      description: Môžeš koordinátorovi napísať priamu správu (DM) a požiadať o pomoc s týmto sporom.
+      copyNpub: Kopírovať npub
+      openProfile: Zobraziť profil
+      npubCopied: Npub koordinátora skopírovaný do schránky!
+      yourIdentityDescription: "Ak chceš posielať DM, prihlás sa svojím súkromným kľúčom Neko (nsec) v ľubovoľnom Nostr klientovi, ktorý podporuje priame správy."
+      manageNekoKeys: Spravovať Neko kľúče
+
+# =============================================================================
+# ${code} (Všeobecné)
+# =============================================================================
+blik:
+  instructions:
+    taker: "Keď predávajúci zadá ${code}, budeš musieť potvrdiť platbu vo svojej bankovej aplikácii. Pred potvrdením sa uisti, že suma je správna."
+
+# =============================================================================
+# DOMOVSKÁ OBRAZOVKA / ZOZNAM PONÚK
+# =============================================================================
+home:
+  notifications:
+    title: "Dostávaj upozornenia na nové ponuky cez:"
+    telegram: Telegram
+    simplex: SimpleX
+    matrix: Matrix
+    signal: Signal
+    channelAllBanks: "(všetky banky)"
+    channelForBankPrefix: "(len ponuky pre "
+    channelForBankSuffix: ")"
+    scopeAllBanks: "Všetky banky"
+    scopeBankOnly: "Len ${bank}"
+
+  statistics:
+    title: Dokončené ponuky
+    lifetimeCompact: "Všetky: ${count} transakcií\nPriem. čakanie na ${code}: ${avgBlikTime}\nPriem. čas dokončenia: ${avgPaidTime}"
+    last7DaysCompact: "Posl. 7 dní: ${count} transakcií\nPriem. čakanie na ${code}: ${avgBlikTime}\nPriem. čas dokončenia: ${avgPaidTime}"
+    last7DaysSingleLine: "Posl. 7 dní: ${count} ponúk  |  Priem. rezervácia: ${avgReservationTime}  |  Priem. zaplatené: ${avgPaidTime}"
+
+    errors:
+      loading: "Chyba pri načítaní štatistík: ${error}"
+
+# =============================================================================
+# ONBOARDING TRHU PRI PRVOM SPUSTENÍ
+# =============================================================================
+onboarding:
+  title: Vyber si trh
+  subtitle: Vyber krajinu a platobný systém, ktorý budeš používať. Môžeš to kedykoľvek zmeniť v Nastaveniach.
+
+# =============================================================================
+# SPRÁVA KĽÚČOV
+# =============================================================================
+nekoInfo:
+  title: Čo je Neko?
+  description: "Tvoje Neko je tvoja identita na používanie ${app}. Skladá sa zo súkromného a verejného kľúča, aby zaručilo kryptograficky bezpečnú komunikáciu s koordinátorom.\n\nPre väčšiu anonymitu sa odporúča použiť pre každú ponuku nové, čerstvé Neko.\n\n⚠️ DÔLEŽITÉ: Tvoj súkromný kľúč je uložený iba na tvojom zariadení (na strane klienta). Je mimoriadne dôležité si súkromný kľúč zálohovať, pretože strata prístupu k nemu ti môže znemožniť riešenie sporov a obnovu tvojich prostriedkov."
+  backupWarning: "Nezabudni si zálohovať svoje Neko"
+
+generateNewKey:
+  title: Nové
+  description: Naozaj chceš vygenerovať nové Neko? Tvoje súčasné sa navždy stratí, ak si ho nezálohoval.
+  buttons:
+    generate: Vygenerovať
+  errors:
+    activeOffer: Nemôžeš vygenerovať nové Neko, kým máš aktívnu ponuku.
+    failed: "Nepodarilo sa vygenerovať nové Neko"
+  feedback:
+    success: Nové Neko úspešne vygenerované!
+  tooltips:
+    generate: Vygenerovať nové Neko
+
+# =============================================================================
+# ZÁLOHA A OBNOVA
+# =============================================================================
+backup:
+  title: Záloha
+  description: Toto je tvoj súkromný kľúč. Zabezpečuje komunikáciu s koordinátorom. Nikdy ho nikomu neprezraď. Zálohuj ho na bezpečnom mieste, aby si predišiel problémom počas sporov.
+  feedback:
+    copied: Súkromný kľúč skopírovaný do schránky!
+  tooltips:
+    backup: Zálohovať Neko
+
+restore:
+  title: Obnoviť
+  labels:
+    privateKey: Súkromný kľúč
+  buttons:
+    restore: Obnoviť
+  errors:
+    invalidKey: Musí to byť 64-znakový hex reťazec.
+    failed: "Obnovenie zlyhalo"
+  feedback:
+    success: Neko úspešne obnovené! Aplikácia sa reštartuje.
+  tooltips:
+    restore: Obnoviť Neko
+
+# =============================================================================
+# SYSTÉMOVÉ CHYBY A KONFIGURÁCIE
+# =============================================================================
+system:
+  loadingPublicKey: "Načítava sa tvoj verejný kľúč..."
+  errors:
+    generic: Vyskytla sa neočakávaná chyba. Skús to znova.
+    loadingTimeoutConfig: Chyba pri načítaní konfigurácie časového limitu.
+    loadingCoordinatorConfig: Chyba pri načítaní konfigurácie koordinátora. Skús to znova.
+    noPublicKey: "Tvoj verejný kľúč nie je dostupný. Nedá sa pokračovať."
+    internalOfferIncomplete: "Interná chyba: Detaily ponuky sú neúplné. Skús to znova."
+    loadingPublicKey: "Chyba pri načítaní tvojho verejného kľúča. Reštartuj aplikáciu."
+
+  blik:
+    copied: ${code} skopírovaný do schránky
+
+# =============================================================================
+# HLAVNÁ ÚVODNÁ STRÁNKA
+# =============================================================================
+myOffers:
+  title: "Moje ponuky"
+  empty: "Zatiaľ žiadne ponuky."
+  unknownCoordinator: "Neznámy koordinátor"
+  menuLabel: "Moje ponuky"
+  filter:
+    all: "Všetky"
+    active: "Aktívne"
+    completed: "Dokončené"
+    failed: "Neúspešné"
+  details:
+    title: "Detaily ponuky"
+    notFound: "Ponuka sa nenašla."
+    amount: "Suma"
+    fees: "Poplatky"
+    sats: "Satoshi"
+    maker: "Predávajúci"
+    taker: "Kupujúci"
+    yourFee: "Tvoj poplatok"
+    makerFee: "Poplatok predávajúceho"
+    takerFee: "Poplatok kupujúceho"
+    coordinator: "Koordinátor"
+    createdAt: "Vytvorené"
+    reservedAt: "Rezervované"
+    blikReceivedAt: "${code} odoslaný"
+    makerConfirmedAt: "Potvrdené"
+    settledAt: "Vyrovnané"
+    takerPaidAt: "Kupujúci zaplatený"
+    id: "ID ponuky"
+    paymentHash: "Hash platby"
+    holdInvoice: "Hold faktúra"
+    continueActiveOffer: "Pokračovať v aktívnej ponuke"
+    after: "po ${duration}"
+
+landing:
+  mainTitle: "Tvoj most ${code} ⇄ bitcoin"
+  subtitle: "Zaplať alebo predaj svoj ${code} za bitcoin"
+  partnership: "partnerstvo"
+
+  actions:
+    payBlik: "Zaplatiť ${code}"
+    payBlikSubtitle: "cez bitcoin"
+    sellBlik: "Kúpiť bitcoin"
+    sellBlikSubtitle: "cez ${code}"
+    howItWorks: "Ako to funguje?"
+
+# =============================================================================
+# FAQ
+# =============================================================================
+faq:
+  screenTitle: FAQ
+  tooltip: FAQ
+
+# =============================================================================
+# NASTAVENIA
+# =============================================================================
+settings:
+  title: Nastavenia
+  offerCreation:
+    title: Vytváranie ponúk
+    defaultCategory: Predvolená kategória
+    defaultBank: Predvolená banka
+    defaultBankNone: "Žiadna (vyber pri každej ponuke)"
+    preferredCoordinator: Preferovaný koordinátor
+    automaticCoordinator: Najspoľahlivejší
+    automaticCoordinatorDescription: "Vyberie koordinátora s najlepšou históriou, pričom kombinuje tvoje vlastné dokončené ponuky a celkovú aktivitu v sieti."
+    cheapestCoordinator: Najlacnejší
+    cheapestCoordinatorDescription: "Pre každú ponuku vyberie dostupného koordinátora s najnižším poplatkom predávajúceho."
+    enablePremium: Zapnúť prémiové ceny
+    enablePremiumDescription: Zobraziť posuvník prémie pri vytváraní ponúk predávajúceho.
+    defaultPremium: Predvolená prémia
+    defaultPremiumDisabled: Zapni prémiové ceny, aby si nastavil predvolenú prémiu.
+    premiumPerCoordinatorNote: "Každý koordinátor si nastavuje vlastnú maximálnu prémiu, takže tvoja predvolená hodnota je obmedzená koordinátorom použitým pre ponuku."
+    categoryOptions:
+      shop: Obchod, kaviareň alebo reštaurácia
+      atm: Výber z bankomatu
+      online: Online služba/produkt
+    dialogs:
+      selectCategory: Vyber predvolenú kategóriu
+      selectBank: Vyber predvolenú banku
+      selectCoordinator: Vyber preferovaného koordinátora
+      premiumHint: Zadaj percento, napríklad 1.5. Hodnoty sa zaokrúhľujú na kroky po 0.5%.
+      premiumHelper: Uplatní sa, keď sú zapnuté prémiové ceny, a je obmedzená maximom vybraného koordinátora.
+  display:
+    title: Zobrazenie
+    bitcoinUnit: Jednotka bitcoinu
+    bitcoinUnitDescription: Vyber, ako sa v celej aplikácii zobrazujú sumy v bitcoinoch.
+    unitOptions:
+      sats: sats
+      bitcoin: ₿ (BIP-177)
+  paymentSystem:
+    title: Krajina / Platobný systém
+    subtitle: "Vyber platobný systém svojej krajiny."
+    dialogTitle: Vyber platobný systém
+    countries:
+      PL: Poľsko
+      PT: Portugalsko
+      CH: Švajčiarsko
+      SK: Slovensko
+
+notificationSettings:
+  title: Notifikácie
+  androidOnly: Notifikácie na pozadí sú momentálne podporované iba na Androide.
+  newOfferAlerts:
+    label: Upozornenia na nové ponuky
+    description: Keď je zapnuté, ${app} ťa upozorní na nové ponuky dostupné na prijatie od tvojich zapnutých koordinátorov, kým je aplikácia na pozadí. Môže to byť rýchlejšie než externé messengery.
+
+wallet:
+  title: Peňaženka
+  description: Spravuj nastavenia svojej Lightning peňaženky
+  missingReceiving:
+    title: Vyžaduje sa peňaženka na prijímanie
+    message: Nie je nakonfigurovaná žiadna peňaženka na prijímanie. Pridaj jednu v nastaveniach peňaženky, aby si mohol prijímať ponuky.
+    openSettings: Nastavenia peňaženky
+  details:
+    title: Detaily peňaženky
+    pendingTitle: Čakajúce transakcie
+    finishedTitle: Dokončené transakcie
+
+nwc:
+  title: Nostr Wallet Connect (NWC)
+  description: Pripoj svoju Lightning peňaženku cez NWC
+  labels:
+    connectionString: NWC pripojovací reťazec
+    hint: "nostr+walletconnect://..."
+    status: Stav pripojenia
+    connected: Pripojené
+    disconnected: Odpojené
+    scanQrCode: Naskenuj QR kód so svojím NWC pripojením
+    balance: "Zostatok"
+    budget: "Rozpočet"
+    usedBudget: "Použité"
+    totalBudget: "Celkom"
+    renewsIn: "Obnoví sa o"
+    renewalPeriod: "Obdobie obnovy"
+    relay: "Relay"
+    relays: "Relaye"
+  prompts:
+    enter: Zadaj svoj NWC pripojovací reťazec
+    connect: Pripojiť peňaženku
+    disconnect: Odpojiť
+    confirmDisconnect: Naozaj chceš odpojiť svoju NWC peňaženku?
+    pasteConnection: Vlož pripojovací reťazec
+    chooseMethod: Vyber, ako pripojiť svoju Lightning peňaženku
+    howToGet: "Ešte nemáš NWC pripojenie? Zisti, ako ho získať!"
+    learnMore: Zisti viac o NWC
+  actions:
+    connectAlbyGo: Pripojiť cez Alby Go
+    connectNwc: Naskenovať NWC QR kód
+  feedback:
+    connected: NWC peňaženka úspešne pripojená!
+    disconnected: NWC peňaženka odpojená
+    connecting: Pripája sa k NWC peňaženke...
+    loadingWalletInfo: Načítavajú sa informácie o peňaženke...
+  errors:
+    connecting: "Chyba pri pripájaní k NWC: ${details}"
+    disconnecting: "Chyba pri odpájaní NWC: ${details}"
+    invalid: Neplatný NWC pripojovací reťazec
+    required: NWC pripojovací reťazec je povinný
+    loadingBalance: Nepodarilo sa načítať zostatok peňaženky
+    loadingBudget: Nepodarilo sa načítať rozpočet peňaženky
+  time:
+    minutes: "${count}m"
+    hours: "${count}h"
+    days: "${count}d"
+    justNow: práve teraz
+
+nekoManagement:
+  title: Neko
+
+# =============================================================================
+# PRIPOJENIE RELAY
+# =============================================================================
+relays:
+  title: Relaye
+  coordinatorRelays: Relaye koordinátora
+  discoveryRelays: Relaye na vyhľadávanie
+  status:
+    connected: Pripojené
+    connecting: Pripája sa
+    reconnecting: Znovu sa pripája
+    disconnected: Odpojené
+  popup:
+    title: "Relaye (pripojené ${connected}/${total})"
+    connectingMessage: Pripája sa k relayom...
+
+# =============================================================================
+# LOKÁLNE NOTIFIKÁCIE
+# =============================================================================
+offerNotifications:
+  activeService:
+    title: Čaká sa na nové ponuky
+    body: Nostr služba monitoruje udalosti ponúk ${app}.
+  funded:
+    title: Ponuka financovaná
+    body: Tvoja hold faktúra bola prijatá. Ponuka je teraz aktívna.
+  reserved:
+    title: Ponuka rezervovaná
+    body: Kupujúci rezervoval tvoju ponuku.
+  blikReady:
+    title: ${code} pripravený
+    body: Tvoj ${code} je pripravený na zobrazenie.
+  newOffer:
+    title: Dostupná nová ponuka
+    body: "${amount} ${currency} · ${sats}"
+    premiumSuffix: "+${percent}% prémia"
+  categories:
+    shop: Obchod
+    atm: Bankomat
+    online: Online
+  blikPendingReminder:
+    title: ${code} čaká na tvoju akciu
+    body: Potvrď platbu alebo označ ${code} ako neplatný.
+  takerCharged:
+    title: ${code} strhnutý
+    body: Kupujúci hlási, že ${code} bol strhnutý. Potvrď alebo označ ako neplatný.
+  invalidBlik:
+    title: ${code} označený ako neplatný
+    body: Predávajúci označil tvoj ${code} ako neplatný.
+  takerPaid:
+    title: Platba prijatá
+    body: Tvoja Lightning platba bola odoslaná.
+
+# =============================================================================
+# INŠTALÁCIA ALTSTORE
+# =============================================================================
+altstore:
+  dialogTitle: "AltStore nie je nainštalovaný"
+  step1Title: "Stiahni a nainštaluj AltStore PAL"
+  step1Button: "altstore.io/download"
+  step1Warning: "Na inštaláciu AltStore PAL potrebuješ Safari!"
+  step2Title: "Nainštaluj ${app}"
+  step2Button: "Nainštalovať ${app}"
+  step2Fallback: "Stále to nefunguje? Vlož zdroj do AltStore"

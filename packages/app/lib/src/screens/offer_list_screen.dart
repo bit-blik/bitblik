@@ -17,6 +17,7 @@ import '../flow/flow_provider.dart';
 import '../utils/bitcoin_display.dart';
 import '../utils/category_icons.dart';
 import '../widgets/lightning_address_widget.dart';
+import '../widgets/offer_bank_badge.dart';
 import '../widgets/premium_info.dart';
 import '../widgets/progress_indicators.dart'; // Import the progress indicators
 import 'taker_flow/taker_submit_blik_screen.dart'; // Import new screen
@@ -904,12 +905,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     blikReceivedAt:
                                                         offer.blikReceivedAt!,
                                                     maxConfirmationTime:
-                                                        (paymentSystemForCurrency(
-                                                                  offer
-                                                                      .fiatCurrency,
-                                                                ) ??
-                                                                kBlik)
-                                                            .confirmationWindow,
+                                                        validityForOffer(offer),
                                                   ),
 
                                                 ListTile(
@@ -953,6 +949,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     children: [
                                                       Text(
                                                         '${t.offers.details.takerFeeLabel}: ${formatBitcoinAmount(context, bitcoinDisplayUnit, offer.takerFees ?? 0)}',
+                                                      ),
+                                                      OfferBankBadge(
+                                                        offer: offer,
                                                       ),
                                                       if (offer.premiumPercent >
                                                           0) ...[
@@ -1359,12 +1358,28 @@ Widget _buildNotificationMessengers(
   Translations t,
   List<CoordinatorRecord> coordinators,
 ) {
-  final byMessenger = <String, List<({CoordinatorRecord coord, String url})>>{};
+  final byMessenger =
+      <String, List<({CoordinatorRecord coord, String url, String? bank})>>{};
   for (final c in coordinators.where((c) => c.enabled)) {
+    // Market-wide links.
     c.channelLinks.forEach((messenger, url) {
       if (url.isEmpty) return;
-      (byMessenger[messenger] ??= []).add((coord: c, url: url));
+      (byMessenger[messenger] ??= []).add((coord: c, url: url, bank: null));
     });
+    // Per-bank links (bank-scoped markets, e.g. SK): one entry per bank.
+    if (c.bankChannelLinks.isNotEmpty) {
+      final ps = paymentSystemById(c.paymentSystem);
+      final inst =
+          ps.instrumentFor(OfferCategory.atm) ?? ps.instrumentFor(null);
+      c.bankChannelLinks.forEach((bankId, links) {
+        final label = inst?.bankById(bankId)?.label ?? bankId;
+        links.forEach((messenger, url) {
+          if (url.isEmpty) return;
+          (byMessenger[messenger] ??= [])
+              .add((coord: c, url: url, bank: label));
+        });
+      });
+    }
   }
   if (byMessenger.isEmpty) return const SizedBox.shrink();
 
@@ -1415,7 +1430,7 @@ Future<void> _showMessengerCoordinators(
   BuildContext context,
   Translations t,
   String messengerId,
-  List<({CoordinatorRecord coord, String url})> entries,
+  List<({CoordinatorRecord coord, String url, String? bank})> entries,
 ) {
   return showModalBottomSheet(
     context: context,
@@ -1455,6 +1470,41 @@ Future<void> _showMessengerCoordinators(
                 ListTile(
                   leading: _buildCoordinatorIcon(e.coord, size: 28),
                   title: Text(e.coord.name),
+                  subtitle: e.bank == null
+                      ? Text(
+                          t.home.notifications.channelAllBanks,
+                          style: TextStyle(color: Colors.grey[600]),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                t.home.notifications.channelForBankPrefix,
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ),
+                            Icon(
+                              Icons.account_balance,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                e.bank!,
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              t.home.notifications.channelForBankSuffix,
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
                   trailing: const Icon(Icons.open_in_new, size: 20),
                   onTap: () async {
                     Navigator.of(ctx).pop();

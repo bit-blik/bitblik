@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import '../../../i18n/gen/strings.g.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,12 +34,15 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
     });
 
     final offer = ref.watch(activeOfferProvider);
-    final coordNpub = offer?.coordinatorPubkey != null
-        ? ref
-              .watch(coordinatorInfoByPubkeyProvider(offer!.coordinatorPubkey))
-              .valueOrNull
-              ?.nostrNpub
-        : null;
+    final coordNpub =
+        offer?.coordinatorPubkey != null
+            ? ref
+                .watch(
+                  coordinatorInfoByPubkeyProvider(offer!.coordinatorPubkey),
+                )
+                .valueOrNull
+                ?.nostrNpub
+            : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -52,30 +56,36 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 24),
-              const Icon(
-                Icons.warning_amber_rounded,
-                size: 80,
-                color: Colors.orange,
+            const Icon(
+              Icons.warning_amber_rounded,
+              size: 80,
+              color: Colors.orange,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              t.taker.conflict.headline,
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              t.taker.conflict.body(
+                code:
+                    ref.read(selectedPaymentSystemProvider).localizedCodeLabel,
               ),
-              const SizedBox(height: 24),
-              Text(
-                t.taker.conflict.headline,
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(t.taker.conflict.body(code: ref.read(selectedPaymentSystemProvider).codeLabel), textAlign: TextAlign.center),
-              CoordinatorNostrContactCard(npub: coordNpub),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  context.go('/');
-                },
-                child: Text(t.taker.conflict.actions.back),
-              ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+            CoordinatorNostrContactCard(npub: coordNpub),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                context.go('/');
+              },
+              child: Text(t.taker.conflict.actions.back),
+            ),
+          ],
         ),
+      ),
     );
   }
 

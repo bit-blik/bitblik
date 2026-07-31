@@ -117,8 +117,10 @@ class SettingsScreen extends ConsumerWidget {
               RadioListTile<PaymentSystem>(
                 value: method,
                 groupValue: current,
-                title: Text('${method.flag}  ${_countryName(t, method)}'),
-                subtitle: Text('${method.label} · ${method.currency}'),
+                title: Text('${method.flag}  ${method.label}'),
+                subtitle: Text(
+                  '${_countryName(t, method)} · ${method.currency}',
+                ),
                 onChanged: (value) => Navigator.of(context).pop(value),
               ),
           ],

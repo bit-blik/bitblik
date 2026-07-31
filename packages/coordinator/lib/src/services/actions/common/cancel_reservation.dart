@@ -8,7 +8,8 @@ class CancelReservationAction extends FlowAction {
   @override
   Future<void> run(GenericOfferFlow flow, FlowEffectContext ctx) async {
     ctx.write.clearTakerFields = true;
-    ctx.write.preserveCodeOnClear =
-        flow._c._paymentSystem.makerProvidesCodeAtOfferCreation;
+    ctx.write.preserveCodeOnClear = flow._c
+        ._instrumentForCategory(ctx.offer.category)
+        .makerProvidesCode;
   }
 }

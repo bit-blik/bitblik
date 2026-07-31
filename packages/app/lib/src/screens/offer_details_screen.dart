@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,7 @@ import '../services/api_service_nostr.dart';
 import '../utils/bitcoin_display.dart';
 import 'coordinator_details_screen.dart';
 import '../widgets/lightning_address_widget.dart';
+import '../widgets/offer_bank_badge.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/premium_info.dart';
 
@@ -33,7 +35,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     final o = ref.read(offerDetailsProvider(widget.offerId)).valueOrNull;
     return o != null
         ? offerCodeLabel(o)
-        : ref.read(selectedPaymentSystemProvider).codeLabel;
+        : ref.read(selectedPaymentSystemProvider).localizedCodeLabel;
   }
 
   bool _termsAccepted = false;
@@ -640,12 +642,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                       ),
                                       blikReceivedAt: offer.blikReceivedAt!,
                                       maxConfirmationTime:
-                                          (paymentSystemForCurrency(
-                                                    offer.fiatCurrency,
-                                                  ) ??
-                                                  kBlik)
-                                              .confirmationWindow,
+                                          validityForOffer(offer),
                                     ),
+                                  Center(child: OfferBankBadge(offer: offer)),
                                   const SizedBox(height: 20),
 
                                   // Exchange Rate row (hide for takerPaid)

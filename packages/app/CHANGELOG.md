@@ -1,3 +1,8 @@
+## [0.10.0] - 2026-07-??
+- feat: support Slovakian payment system ATM for 3 banks (Tatra, SLSP, VUB)
+- feat: add SK translation
+- feat: support NFC reading on LNURL lightning addresses and adding wallet
+
 ## [0.9.0] - 2026-07-08
 - feat: support TWINT Swiss payment system
 - feat: add DE & FR language translations

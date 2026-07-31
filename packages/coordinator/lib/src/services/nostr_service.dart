@@ -680,6 +680,7 @@ class NostrService {
               (params['premium_percent'] as num?)?.toDouble() ?? 0;
           final fiatCurrency = params['fiat_currency'] as String?;
           final blikCode = params['blik_code'] as String?;
+          final bank = params['bank'] as String?;
 
           return await _coordinatorService.initiateOfferFiat(
             fiatAmount: fiatAmount,
@@ -688,6 +689,7 @@ class NostrService {
             category: category,
             premiumPercent: premiumPercent,
             blikCode: blikCode,
+            bank: bank,
             clientVersion: clientVersion,
           );
 
@@ -699,7 +701,12 @@ class NostrService {
               await _coordinatorService.getMyActiveOffers(userPubkey);
           if (activeOffers.isNotEmpty) {
             final offer = activeOffers.first;
-            return offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey);
+            return <String, dynamic>{
+              ...offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey),
+              // Stamp this coordinator's market so clients resolve the right
+              // method (EUR alone is ambiguous across the Slovak banks).
+              'payment_system': _coordinatorService.paymentSystem.id,
+            };
           } else {
             return {};
           }
@@ -715,15 +722,18 @@ class NostrService {
           if (offer == null) {
             return {};
           }
-          final includeBlikCode = _coordinatorService
-                  .paymentSystem.makerProvidesCodeAtOfferCreation &&
-              offer.takerPubkey == userPubkey;
+          final includeBlikCode =
+              _coordinatorService.offerUsesMakerProvidedCode(offer) &&
+                  offer.takerPubkey == userPubkey;
           // Participant gate above guarantees requester is maker or taker;
           // non-makers get the maker-private fields stripped.
-          return offer.toRpcJson(
-            includeBlikCode: includeBlikCode,
-            forTaker: offer.makerPubkey != userPubkey,
-          );
+          return <String, dynamic>{
+            ...offer.toRpcJson(
+              includeBlikCode: includeBlikCode,
+              forTaker: offer.makerPubkey != userPubkey,
+            ),
+            'payment_system': _coordinatorService.paymentSystem.id,
+          };
 
         // DEPRECATED: clients (>= local-db-counts change) no longer call this.
         // The per-coordinator "your offers" count is now derived from the
@@ -743,8 +753,11 @@ class NostrService {
               .toList();
 
           final finishedList = finished
-              .map((offer) =>
-                  offer.toRpcJson(forTaker: offer.makerPubkey != userPubkey))
+              .map((offer) => <String, dynamic>{
+                    ...offer.toRpcJson(
+                        forTaker: offer.makerPubkey != userPubkey),
+                    'payment_system': _coordinatorService.paymentSystem.id,
+                  })
               .toList();
           return {'offers': finishedList};
 
@@ -1069,6 +1082,10 @@ class NostrService {
               : ''
         ],
         if (offer.category != null) ['category', offer.category!.name],
+        // Bank the maker will withdraw at, for bank-scoped markets (SK). Lets
+        // takers filter the feed to banks whose app they hold.
+        if (offer.bankId != null && offer.bankId!.isNotEmpty)
+          ['bank', offer.bankId!],
         if (offer.takerFees != null && offer.takerFees! > 0)
           ['taker_fees', offer.takerFees.toString()],
         if (offer.makerFees > 0) ['maker_fees', offer.makerFees.toString()],

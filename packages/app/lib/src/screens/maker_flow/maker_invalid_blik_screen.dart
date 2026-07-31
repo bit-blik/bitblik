@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import '../../../i18n/gen/strings.g.dart'; // Import Slang
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Use Riverpod
@@ -81,7 +82,10 @@ class MakerInvalidBlikScreen extends ConsumerWidget {
               const SizedBox(height: 30),
               Text(
                 t.maker.invalidBlik.info(
-                  code: ref.read(selectedPaymentSystemProvider).codeLabel,
+                  code:
+                      ref
+                          .read(selectedPaymentSystemProvider)
+                          .localizedCodeLabel,
                 ),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,

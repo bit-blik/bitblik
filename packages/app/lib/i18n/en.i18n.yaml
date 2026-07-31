@@ -10,6 +10,7 @@ app:
 # COMMON UI ELEMENTS
 # =============================================================================
 common:
+  code: code
   buttons:
     cancel: Cancel
     save: Save
@@ -373,6 +374,10 @@ maker:
       premium: Premium
     actions:
       generateInvoice: Generate Invoice
+    bank:
+      label: "Bank"
+      required: "Please choose a bank"
+      shortValidityWarning: "This bank's code is valid for only ${minutes} min — be at the ATM before you reserve."
     twintScan:
       cardTitle: "Scan ${code} QR and amount"
       cardBody: "Point the camera at the payment screen. The app will prefill the code and, when visible, the amount."
@@ -400,7 +405,7 @@ maker:
         atm: "ATM"
         online: "Online"
       atmHint: "Takers will see that this offer is for ATM cash out and may avoid it if their bank charges extra ATM fees."
-      physicalShopHint: "The ideal place to use ${app} is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a ${code} code might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you're feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you."
+      physicalShopHint: "The ideal place to use ${app} is a self-checkout terminal — since waiting for a taker to reserve, generate and confirm a ${code} might take a couple of minutes. Works great at shops, cafes, and restaurants alike. If you're feeling brave enough to make a regular cashier (and the people queued behind you) wait those couple of minutes, good for you."
       ecommerceWarningTitle: "Online merchant refund risk"
       ecommerceWarningBody: "For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically issue a refund back to the bank account linked to the ${code}, which is the taker's account. The coordinator cannot force the taker to return those funds to you."
       ecommerceConfirmation: "I understand the refund risk and will add a note to the order instructing the merchant to refund a different account if a refund becomes necessary."
@@ -467,8 +472,8 @@ maker:
     message: Waiting for a Taker to reserve your offer...
     progressLabel: "Waiting for taker: ${time}"
     errorActiveOfferDetailsLost: "Error: Lost active offer details."
-    errorFailedToRetrieveBlik: "Error: Failed to retrieve ${code} code."
-    errorRetrievingBlik: "Error retrieving ${code} code: ${details}"
+    errorFailedToRetrieveBlik: "Error: Failed to retrieve ${code}."
+    errorRetrievingBlik: "Error retrieving ${code}: ${details}"
     offerNoLongerAvailable: "Offer is no longer available (Status: ${status})."
     errorCouldNotIdentifyOffer: "Error: Could not identify offer to cancel."
     offerCannotBeCancelled: "Offer cannot be cancelled in current state (${status})."
@@ -481,13 +486,13 @@ maker:
   waitForBlik:
     title: Waiting for ${code}
     messageInfo: Taker has reserved offer!
-    messageWaiting: Waiting to provide ${code} code...
-    #timeLimitWithSeconds: "Taker has ${seconds} seconds to provide ${code} code."
+    messageWaiting: Waiting to provide ${code}...
+    #timeLimitWithSeconds: "Taker has ${seconds} seconds to provide ${code}."
     progressLabel: "Reserved: ${seconds} s left"
   
   confirmPayment:
-    title: ${code} code received!
-    retrieving: Retrieving ${code} code...
+    title: ${code} received!
+    retrieving: Retrieving ${code}...
     instructions: Enter this code into the payment terminal. When Taker confirms in their banking app and payment is successful, press Confirm below.
     instruction1: Enter the code into the ${code} payment request.
     instruction2: Wait until Taker confirms the payment in their app.
@@ -495,13 +500,15 @@ maker:
     # Optional payment-system + language specific instructions shown in a blue
     # info box below the code. Only rendered for methods that define one.
     mbwayAtmInstructions: "To withdraw ${amount} €, go to the nearest MULTIBANCO ATM, press the green key and choose the \"Withdraw Cash\" (\"Levantar Dinheiro\") option. Enter the code. This code is valid for ${minutes} minutes."
+    cardlessAtmInstructions: "To withdraw ${amount} ${currency}, go to a ${bank} ATM, start the cardless / mobile withdrawal and enter the code — no card needed. The code is valid for ${minutes} minutes."
+    findAtms: "Find ${bank} ATMs on the map"
 
     takerChargedWarning: "The taker has reported that the ${code} payment was charged from their bank account. If you mark this as invalid, this will cause a conflict."
     autoConfirmInfo: "Unless you mark the ${code} as invalid, the payment will be auto-confirmed and the taker paid when this timer runs out."
     autoConfirmCountdown: "Auto-confirm in ${time}"
 
     expiredTitle: ${code} Code Expired
-    expiredWarning: "The ${code} code has expired. You need to manually confirm the payment status:"
+    expiredWarning: "The ${code} has expired. You need to manually confirm the payment status:"
     expiredInstruction1: "If the ${code} payment was successful and you completed your purchase, click \"Confirm successful payment\" below."
     expiredInstruction2: "If the ${code} payment failed or was not completed, click \"Invalid ${code} Code\" below."
     
@@ -528,8 +535,8 @@ maker:
       progressLabel: "Confirming: ${seconds} s left"
     
     errors:
-      failedToRetrieve: "Error: Failed to retrieve ${code} code."
-      retrieving: "Error retrieving ${code} code: ${details}"
+      failedToRetrieve: "Error: Failed to retrieve ${code}."
+      retrieving: "Error retrieving ${code}: ${details}"
       missingHashOrKey: "Error: Missing payment hash or public key."
       incorrectState: "Offer is not in correct state for confirmation (Status: ${status})"
       confirming: "Error confirming payment: ${details}"
@@ -540,12 +547,12 @@ maker:
   
   invalidBlik:
     title: Invalid ${code} Code
-    info: You marked the ${code} code as invalid. Waiting for taker to provide new code or start dispute.
+    info: You marked the ${code} as invalid. Waiting for taker to provide new code or start dispute.
   
   conflict:
     title: Offer Conflict
     headline: Offer Conflict Reported
-    body: You marked the ${code} code as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.
+    body: You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.
     instructions: Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.
     
     actions:
@@ -589,7 +596,7 @@ maker:
 # =============================================================================
 taker:
   roleSelection:
-    button: SELL ${code} code for satoshi
+    button: SELL ${code} for satoshi
   
   progress:
     step1: Submit ${code}
@@ -599,23 +606,24 @@ taker:
   submitBlik:
     title: "Enter ${digits}-digit ${code}"
     label: ${code} Code
+    generateInBank: "Generate the withdrawal code in your ${bank} app."
     instruction: "Enter ${code} before time ends..."
     
     timeLimit: "Enter ${code} within: ${seconds} s"
-    timeExpired: Time to enter ${code} code has expired.
+    timeExpired: Time to enter ${code} has expired.
     
     actions:
       submit: Submit ${code}
     
     feedback:
-      pasted: Pasted ${code} code.
+      pasted: Pasted ${code}.
     
     validation:
-      invalidFormat: Enter a valid ${digits}-digit ${code} code.
+      invalidFormat: Enter a valid ${digits}-digit ${code}.
     
     errors:
-      submitting: "Error submitting ${code} code: ${details}"
-      clipboardInvalid: Clipboard does not contain a valid ${digits}-digit ${code} code.
+      submitting: "Error submitting ${code}: ${details}"
+      clipboardInvalid: Clipboard does not contain a valid ${digits}-digit ${code}.
       stateChanged: "Error: Offer state has changed."
       stateNotValid: "Error: Offer state is no longer valid."
       fetchedIdMismatch: "Fetched active offer ID (${fetchedId}) does not match initial offer ID (${initialId}). State mismatch?"
@@ -884,23 +892,23 @@ twint:
     waitingMakerConfirmation: "Waiting for Maker to confirm ${code} is correct. Time remaining: ${seconds}s"
     importantNotice: "VERY IMPORTANT: Make sure you only accept ${code} confirmation for ${amount} ${currency}"
     importantBlikAmountConfirmation: "VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}."
-    instructions: The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.
-    instructionsNoConfirm: The maker must now enter your ${code} code at the ATM within ${minutes} minutes.
+    instructions: The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} in your banking app.
+    instructionsNoConfirm: The maker must now enter your ${code} at the ATM within ${minutes} minutes.
     categoryReminder:
       atm: "ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount."
       ecommerce: "Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it."
-    waitingForMakerToReceive: "Waiting for maker to receive your ${code} code..."
-    makerReceivedBlik: "Maker has received your ${code} code."
+    waitingForMakerToReceive: "Waiting for maker to receive your ${code}..."
+    makerReceivedBlik: "Maker has received your ${code}."
     timerExpiredMessage: "${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid."
-    timerExpiredActions: "${code} ${minutes}m expiration time has passed but the maker hasn't received the ${code} code. You can resend a new ${code} code or cancel."
+    timerExpiredActions: "${code} ${minutes}m expiration time has passed but the maker hasn't received the ${code}. You can resend a new ${code} or cancel."
     resendBlikButton: "Resend New ${code} Code"
     navigatedHome: "Navigated home."
     
     expiredTitle: "${code} Code Expired"
-    expiredWarning: "The maker did not receive the ${code} code so it couldn't have used it."
+    expiredWarning: "The maker did not receive the ${code} so it couldn't have used it."
     expiredRelistCountdownLabel: "Reservation ends in"
     expiredSentWarning: "The maker hasn't confirmed the payment yet. What would you like to do?"
-    expiredInstruction1: "If you want to try again with a new ${code} code, renew the reservation."
+    expiredInstruction1: "If you want to try again with a new ${code}, renew the reservation."
     expiredInstruction2: "If you no longer want to complete this transaction, cancel the reservation."
     expiredInstruction3: "If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator."
 
@@ -909,7 +917,7 @@ twint:
       message: "The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin."
     expiredActions:
       reportConflict: "${code} was charged from my bank account"
-      renewReservation: "Try again with new ${code} code"
+      renewReservation: "Try again with new ${code}"
       cancelReservation: "Cancel reservation"
     
     feedback:
@@ -989,13 +997,13 @@ twint:
   invalidBlik:
     title: Invalid ${code} Code
     message: Maker Rejected ${code} Code
-    explanation: The offer maker indicated that the ${code} code you provided was invalid or didn't work.\n\nWhat would you like to do?
+    explanation: The offer maker indicated that the ${code} you provided was invalid or didn't work.\n\nWhat would you like to do?
 
     werentCharged: "If you were NOT charged:"
     wereCharged: "If you were charged:"
 
     actions:
-      retry: Send new ${code} code
+      retry: Send new ${code}
       cancelReservation: Cancel Transaction
       reportConflict: Start Dispute
       returnHome: Return to home
@@ -1024,7 +1032,7 @@ twint:
   conflict:
     title: Offer Conflict
     headline: Offer Conflict Reported
-    body: The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.
+    body: The Maker marked the ${code} as invalid, but you reported a conflict, indicating you believe the payment was successful.
     instructions: Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.
     
     actions:
@@ -1050,7 +1058,7 @@ twint:
 # =============================================================================
 blik:
   instructions:
-    taker: "Once the Maker enters the ${code} code, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming."
+    taker: "Once the Maker enters the ${code}, you will need to confirm the payment in your banking app. Ensure the amount is correct before confirming."
 
 # =============================================================================
 # HOME SCREEN / OFFER LIST
@@ -1062,7 +1070,12 @@ home:
     simplex: SimpleX
     matrix: Matrix
     signal: Signal
-  
+    channelAllBanks: "(all banks)"
+    channelForBankPrefix: "(only offers for "
+    channelForBankSuffix: ")"
+    scopeAllBanks: "All banks"
+    scopeBankOnly: "${bank} only"
+
   statistics:
     title: Finished Offers
     lifetimeCompact: "All: ${count} transactions\nAvg wait for ${code}: ${avgBlikTime}\nAvg completion time: ${avgPaidTime}"
@@ -1071,6 +1084,13 @@ home:
     
     errors:
       loading: "Error loading statistics: ${error}"
+
+# =============================================================================
+# FIRST-LAUNCH MARKET ONBOARDING
+# =============================================================================
+onboarding:
+  title: Choose your market
+  subtitle: Pick the country and payment system you'll use. You can change it anytime in Settings.
 
 # =============================================================================
 # KEY MANAGEMENT
@@ -1132,7 +1152,7 @@ system:
     loadingPublicKey: "Error loading your public key. Please restart the app."
   
   blik:
-    copied: ${code} code copied to clipboard
+    copied: ${code} copied to clipboard
 
 # =============================================================================
 # MAIN LANDING PAGE
@@ -1173,7 +1193,7 @@ myOffers:
 
 landing:
   mainTitle: "Your ${code} ⇄ bitcoin Bridge"
-  subtitle: "Pay for or sell your ${code} code with bitcoin"
+  subtitle: "Pay for or sell your ${code} with bitcoin"
   partnership: "partnership"
 
   actions:
@@ -1198,6 +1218,8 @@ settings:
   offerCreation:
     title: Offer creation
     defaultCategory: Default category
+    defaultBank: Default bank
+    defaultBankNone: "None (choose per offer)"
     preferredCoordinator: Preferred coordinator
     automaticCoordinator: Most reliable
     automaticCoordinatorDescription: "Picks the coordinator with the best track record, combining your own completed offers and overall network activity."
@@ -1214,6 +1236,7 @@ settings:
       online: Online service/product
     dialogs:
       selectCategory: Select default category
+      selectBank: Select default bank
       selectCoordinator: Select preferred coordinator
       premiumHint: Enter a percentage like 1.5. Values are rounded to 0.5% steps.
       premiumHelper: Applied when premium pricing is enabled and clamped by the selected coordinator maximum.
@@ -1232,6 +1255,7 @@ settings:
       PL: Poland
       PT: Portugal
       CH: Switzerland
+      SK: Slovakia
 
 notificationSettings:
   title: Notifications
@@ -1333,8 +1357,8 @@ offerNotifications:
     title: Offer reserved
     body: A taker has reserved your offer.
   blikReady:
-    title: ${code} code ready
-    body: Your ${code} code is ready to view.
+    title: ${code} ready
+    body: Your ${code} is ready to view.
   newOffer:
     title: New offer available
     body: "${amount} ${currency} · ${sats}"
@@ -1345,13 +1369,13 @@ offerNotifications:
     online: Online
   blikPendingReminder:
     title: ${code} waiting for your action
-    body: Confirm the payment or mark the ${code} code as invalid.
+    body: Confirm the payment or mark the ${code} as invalid.
   takerCharged:
     title: ${code} charged
     body: Taker reports ${code} was charged. Confirm or mark as invalid.
   invalidBlik:
     title: ${code} marked invalid
-    body: Maker marked your ${code} code as invalid.
+    body: Maker marked your ${code} as invalid.
   takerPaid:
     title: Payment received
     body: Your Lightning payment has been sent.

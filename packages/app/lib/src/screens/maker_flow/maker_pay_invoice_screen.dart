@@ -1120,6 +1120,12 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       );
     }
 
+    // The send() below can outlive this widget (a successful pay fires a status
+    // update that navigates away, disposing this element). Capture the
+    // app-scoped container up front so the catch can still reconcile without
+    // touching `ref` after disposal.
+    final container = ProviderScope.containerOf(context, listen: false);
+
     try {
       await ndk.wallets.send(
         walletId: walletId,
@@ -1136,9 +1142,9 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       // (or an "invoice already being paid" error on retry) does NOT mean the
       // payment failed — the HTLC may already be locked. Ask the coordinator
       // for the authoritative offer status before surfacing an error.
-      await ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
+      await container.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
       final accepted =
-          _paymentAccepted(ref.read(activeOfferProvider)?.statusEnum);
+          _paymentAccepted(container.read(activeOfferProvider)?.statusEnum);
       // When accepted, reconcile pushed a new offer into activeOfferProvider,
       // firing the ref.listen in build() -> _handleStatusUpdate -> navigation
       // to /wait-taker. Suppress the error in that case.

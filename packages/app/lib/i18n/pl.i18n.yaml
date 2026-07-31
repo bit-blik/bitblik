@@ -10,6 +10,7 @@ app:
 # COMMON UI ELEMENTS
 # =============================================================================
 common:
+  code: kod
   buttons:
     cancel: Anuluj
     save: Zapisz
@@ -372,6 +373,10 @@ maker:
       premium: Premia
     actions:
       generateInvoice: Wygeneruj Fakturę
+    bank:
+      label: "Bank"
+      required: "Wybierz bank"
+      shortValidityWarning: "Kod tego banku jest ważny tylko ${minutes} min — bądź przy bankomacie, zanim zarezerwujesz."
     twintScan:
       cardTitle: "Zeskanuj QR ${code} i kwotę"
       cardBody: "Skieruj kamerę na ekran płatności. Aplikacja uzupełni kod oraz, jeśli będzie widoczna, także kwotę."
@@ -579,6 +584,7 @@ taker:
     step3: Otrzymaj płatność
   
   submitBlik:
+    generateInBank: "Wygeneruj kod wypłaty w aplikacji ${bank}."
     title: "Wpisz ${digits}-cyfr ${code}"
     label: Kod ${code}
     instruction: "Wprowadź ${code} zanim upłynie czas..."
@@ -870,6 +876,10 @@ blik:
 # =============================================================================
 # KEY MANAGEMENT
 # =============================================================================
+onboarding:
+  title: Wybierz swój rynek
+  subtitle: Wybierz kraj i system płatności, którego będziesz używać. Możesz to zmienić w każdej chwili w Ustawieniach.
+
 nekoInfo:
   title: Czym jest Neko?
   description: "Twoje Neko to Twoja tożsamość do korzystania z ${app}. Składa się z klucza prywatnego i publicznego, aby zapewnić kryptograficznie bezpieczną komunikację z koordynatorem.\n\nAby zapewnić większą anonimowość, zaleca się używanie nowego, świeżego Neko dla każdej oferty.\n\n⚠️ WAŻNE: Twój klucz prywatny jest przechowywany tylko na Twoim urządzeniu (po stronie klienta). Niezwykle ważne jest zarchiwizowanie klucza prywatnego, ponieważ utrata dostępu do niego może uniemożliwić rozstrzygnięcie sporów i odzyskanie środków."
@@ -923,6 +933,11 @@ home:
     simplex: SimpleX
     matrix: Matrix
     signal: Signal
+    channelAllBanks: "(wszystkie banki)"
+    channelForBankPrefix: "(tylko oferty dla "
+    channelForBankSuffix: ")"
+    scopeAllBanks: "Wszystkie banki"
+    scopeBankOnly: "Tylko ${bank}"
   
   statistics:
     title: Zakończone oferty
@@ -1013,6 +1028,8 @@ settings:
   offerCreation:
     title: Tworzenie ofert
     defaultCategory: Domyślna kategoria
+    defaultBank: Domyślny bank
+    defaultBankNone: "Brak (wybierz przy każdej ofercie)"
     preferredCoordinator: Preferowany koordynator
     automaticCoordinator: Najbardziej niezawodny
     automaticCoordinatorDescription: "Wybiera koordynatora z najlepszą historią, uwzględniając Twoje własne zrealizowane oferty oraz ogólną aktywność w sieci."
@@ -1029,6 +1046,7 @@ settings:
       online: Usługa/produkt online
     dialogs:
       selectCategory: Wybierz domyślną kategorię
+      selectBank: Wybierz domyślny bank
       selectCoordinator: Wybierz preferowanego koordynatora
       premiumHint: Wpisz wartość procentową, np. 1.5. Wartości są zaokrąglane do kroków co 0.5%.
       premiumHelper: Stosowane po włączeniu premii cenowej i ograniczane do maksimum wybranego koordynatora.
@@ -1047,6 +1065,7 @@ settings:
       PL: Polska
       PT: Portugalia
       CH: Szwajcaria
+      SK: Słowacja
 
 notificationSettings:
   title: Powiadomienia

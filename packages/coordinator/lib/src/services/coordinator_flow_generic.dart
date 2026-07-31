@@ -168,8 +168,17 @@ class GenericOfferFlow implements OfferFlow {
       for (final t in s.transitions) {
         final label = '${s.name} -[${t.event ?? t.trigger.name}]-> ${t.target}';
         checkActions(label, t.actions, s, t);
-        if (t.trigger == FlowTriggerType.timeout && t.durationSeconds == null) {
+        if (t.trigger == FlowTriggerType.timeout &&
+            t.durationSeconds == null &&
+            t.durationParam == null) {
           problems.add('$label: timeout transition has no after');
+        }
+        if (t.durationParam != null &&
+            !CoordinatorService._knownFlowDurationParams
+                .contains(t.durationParam)) {
+          problems.add('$label: unknown timeout parameter '
+              '"\$${t.durationParam}" (known: '
+              '${CoordinatorService._knownFlowDurationParams.join(', ')})');
         }
       }
     }
@@ -239,7 +248,7 @@ class GenericOfferFlow implements OfferFlow {
     // taker in maker-provides-code flows (TWINT): reserving entitles them to
     // it (it's what they must pay), same gate as get_offer_details.
     final revealCodeToTaker = t.actor == FlowActor.taker &&
-        _c._paymentSystem.makerProvidesCodeAtOfferCreation &&
+        _c._instrumentForCategory(updated.category).makerProvidesCode &&
         updated.takerPubkey == userPubkey;
     final json = updated.toRpcJson(
       includeBlikCode: revealCodeToTaker,
@@ -248,6 +257,10 @@ class GenericOfferFlow implements OfferFlow {
     // toRpcJson serializes the enum status (unknown for generic-only states);
     // broadcast the raw state instead, matching _publishStatusUpdate.
     json['status'] = updated.statusRaw;
+    // The market id isn't a DB column, so a re-fetched offer serializes it null;
+    // stamp this coordinator's market so the taker resolves the right method
+    // (EUR alone is ambiguous — SK vs MB WAY).
+    json['payment_system'] = _c._paymentSystem.id;
     // Back-compat: legacy reserve returned reserved_at as epoch ms (int); old
     // clients parse it as int. toRpcJson emits ISO; echo the int form too.
     if (updated.reservedAt != null) {
@@ -561,7 +574,9 @@ class GenericOfferFlow implements OfferFlow {
 
   void _armTimer(Offer offer) {
     final t = _engine.timeoutFor(offer.statusRaw);
-    if (t == null || t.durationSeconds == null) return;
+    if (t == null) return;
+    final durationSeconds = _c._resolveTimeoutSeconds(offer, t);
+    if (durationSeconds == null) return;
     _cancelTimer(offer.id);
     final DateTime base;
     switch (t.fromField) {
@@ -576,7 +591,7 @@ class GenericOfferFlow implements OfferFlow {
       default:
         base = (offer.updatedAt ?? offer.createdAt).toUtc();
     }
-    final fireAt = base.add(Duration(seconds: t.durationSeconds!));
+    final fireAt = base.add(Duration(seconds: durationSeconds));
     final remaining = fireAt.difference(_c._clock.now().toUtc());
     final dur = remaining.isNegative ? Duration.zero : remaining;
     final expectedState = offer.statusRaw;

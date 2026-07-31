@@ -27,16 +27,15 @@ class TakerWaitConfirmationScreen extends ConsumerStatefulWidget {
 
 class _TakerWaitConfirmationScreenState
     extends ConsumerState<TakerWaitConfirmationScreen> {
-  /// Payment method for this offer, derived from its currency (falls back to
-  /// the app's selected method). Drives the confirmation window, validity text,
-  /// and whether banking-app confirmation prompts are shown.
-  PaymentSystem get _method =>
-      paymentSystemForCurrency(widget.offer.fiatCurrency) ??
-      ref.read(selectedPaymentSystemProvider);
+  /// Payment method for this offer, resolved from its payment-system id
+  /// (unambiguous across the EUR markets). Drives the confirmation window,
+  /// validity text, and whether banking-app confirmation prompts are shown.
+  PaymentSystem get _method => paymentSystemForOffer(widget.offer);
 
-  /// Confirmation window for this offer's payment method (BLIK 2 min, MB WAY
-  /// 30 min).
-  Duration get _confirmationDuration => _method.confirmationWindow;
+  /// Confirmation window for this offer — resolved per bank for bank-scoped
+  /// markets (SK: Tatra 20 / SLSP 15 / VÚB 3 min), else the method default
+  /// (BLIK 2 min, MB WAY 30 min).
+  Duration get _confirmationDuration => validityForOffer(widget.offer);
   Timer? _confirmationTimer;
   Timer? _expiredBlikTimer;
   late int _confirmationCountdownSeconds = _confirmationDuration.inSeconds;
@@ -444,7 +443,7 @@ class _TakerWaitConfirmationScreenState
           maxConfirmationTime: _confirmationDuration,
           timerExpired: _timerExpired,
           requiresConfirmation: _method.requiresCodeConfirmation,
-          validityMinutes: _method.codeValidityMinutes,
+          validityMinutes: _confirmationDuration.inMinutes,
         );
       case OfferStatus.expiredBlik:
         return _ExpiredBlikWidget(
@@ -665,10 +664,14 @@ class _BlikSentToMakerWidget extends StatelessWidget {
           _buildStatusMessage(
             context,
             requiresConfirmation
-                ? t.taker.waitConfirmation
-                    .instructions(code: code, minutes: validityMinutes)
-                : t.taker.waitConfirmation
-                    .instructionsNoConfirm(code: code, minutes: validityMinutes),
+                ? t.taker.waitConfirmation.instructions(
+                  code: code,
+                  minutes: validityMinutes,
+                )
+                : t.taker.waitConfirmation.instructionsNoConfirm(
+                  code: code,
+                  minutes: validityMinutes,
+                ),
             isLoading: true,
           ),
           const SizedBox(height: 30),
@@ -699,8 +702,10 @@ class _BlikSentToMakerWidget extends StatelessWidget {
         if (timerExpired)
           _buildWarningBox(
             context,
-            t.taker.waitConfirmation
-                .timerExpiredMessage(code: code, minutes: validityMinutes),
+            t.taker.waitConfirmation.timerExpiredMessage(
+              code: code,
+              minutes: validityMinutes,
+            ),
           ),
       ],
     );
@@ -736,7 +741,9 @@ class _ExpiredBlikWidget extends ConsumerWidget {
         _buildExpiredTitle(t.taker.waitConfirmation.expiredTitle(code: code)),
         const SizedBox(height: 10),
         _buildWarningBox(
-            context, t.taker.waitConfirmation.expiredWarning(code: code)),
+          context,
+          t.taker.waitConfirmation.expiredWarning(code: code),
+        ),
         const SizedBox(height: 10),
         Text(
           t['taker.waitConfirmation.expiredRelistCountdownLabel'],
@@ -889,8 +896,8 @@ class _TakerChargedWidget extends ConsumerWidget {
         _buildInfoBox(
           context,
           t.taker.waitConfirmation.takerCharged.message(
-            minutes: (autoConfirmDuration ?? const Duration(minutes: 60))
-                .inMinutes,
+            minutes:
+                (autoConfirmDuration ?? const Duration(minutes: 60)).inMinutes,
           ),
           Icons.info_outline,
           Colors.blue,

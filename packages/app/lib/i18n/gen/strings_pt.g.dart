@@ -52,6 +52,7 @@ class TranslationsPt extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$twint$pt twint = _Translations$twint$pt._(_root);
 	@override late final _Translations$blik$pt blik = _Translations$blik$pt._(_root);
 	@override late final _Translations$home$pt home = _Translations$home$pt._(_root);
+	@override late final _Translations$onboarding$pt onboarding = _Translations$onboarding$pt._(_root);
 	@override late final _Translations$nekoInfo$pt nekoInfo = _Translations$nekoInfo$pt._(_root);
 	@override late final _Translations$generateNewKey$pt generateNewKey = _Translations$generateNewKey$pt._(_root);
 	@override late final _Translations$backup$pt backup = _Translations$backup$pt._(_root);
@@ -89,6 +90,7 @@ class _Translations$common$pt extends Translations$common$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override String get code => 'código';
 	@override late final _Translations$common$buttons$pt buttons = _Translations$common$buttons$pt._(_root);
 	@override late final _Translations$common$labels$pt labels = _Translations$common$labels$pt._(_root);
 	@override late final _Translations$common$notifications$pt notifications = _Translations$common$notifications$pt._(_root);
@@ -246,6 +248,17 @@ class _Translations$home$pt extends Translations$home$en {
 	// Translations
 	@override late final _Translations$home$notifications$pt notifications = _Translations$home$notifications$pt._(_root);
 	@override late final _Translations$home$statistics$pt statistics = _Translations$home$statistics$pt._(_root);
+}
+
+// Path: onboarding
+class _Translations$onboarding$pt extends Translations$onboarding$en {
+	_Translations$onboarding$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Escolha o seu mercado';
+	@override String get subtitle => 'Selecione o país e o sistema de pagamento que vai usar. Pode alterá-lo a qualquer momento nas Definições.';
 }
 
 // Path: nekoInfo
@@ -1033,6 +1046,7 @@ class _Translations$maker$amountForm$pt extends Translations$maker$amountForm$en
 	@override late final _Translations$maker$amountForm$progress$pt progress = _Translations$maker$amountForm$progress$pt._(_root);
 	@override late final _Translations$maker$amountForm$labels$pt labels = _Translations$maker$amountForm$labels$pt._(_root);
 	@override late final _Translations$maker$amountForm$actions$pt actions = _Translations$maker$amountForm$actions$pt._(_root);
+	@override late final _Translations$maker$amountForm$bank$pt bank = _Translations$maker$amountForm$bank$pt._(_root);
 	@override late final _Translations$maker$amountForm$twintScan$pt twintScan = _Translations$maker$amountForm$twintScan$pt._(_root);
 	@override late final _Translations$maker$amountForm$tooltips$pt tooltips = _Translations$maker$amountForm$tooltips$pt._(_root);
 	@override late final _Translations$maker$amountForm$category$pt category = _Translations$maker$amountForm$category$pt._(_root);
@@ -1189,6 +1203,7 @@ class _Translations$taker$submitBlik$pt extends Translations$taker$submitBlik$en
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override String generateInBank({required Object bank}) => 'Gera o código de levantamento na app ${bank}.';
 	@override String title({required Object code, required Object digits}) => 'Introduza o ${code} de ${digits} dígitos';
 	@override String label({required Object code}) => 'Código ${code}';
 	@override String instruction({required Object code}) => 'Introduza o ${code} antes de o tempo terminar...';
@@ -1368,6 +1383,11 @@ class _Translations$home$notifications$pt extends Translations$home$notification
 	@override String get simplex => 'SimpleX';
 	@override String get matrix => 'Matrix';
 	@override String get signal => 'Signal';
+	@override String get channelAllBanks => '(todos os bancos)';
+	@override String get channelForBankPrefix => '(apenas ofertas para ';
+	@override String get channelForBankSuffix => ')';
+	@override String get scopeAllBanks => 'Todos os bancos';
+	@override String scopeBankOnly({required Object bank}) => 'Apenas ${bank}';
 }
 
 // Path: home.statistics
@@ -1588,6 +1608,8 @@ class _Translations$settings$offerCreation$pt extends Translations$settings$offe
 	// Translations
 	@override String get title => 'Criação de ofertas';
 	@override String get defaultCategory => 'Categoria predefinida';
+	@override String get defaultBank => 'Banco predefinido';
+	@override String get defaultBankNone => 'Nenhum (escolher por oferta)';
 	@override String get preferredCoordinator => 'Coordenador preferido';
 	@override String get automaticCoordinator => 'Mais fiável';
 	@override String get automaticCoordinatorDescription => 'Escolhe o coordenador com o melhor historial, combinando as suas próprias ofertas concluídas e a atividade global da rede.';
@@ -1968,6 +1990,18 @@ class _Translations$maker$amountForm$actions$pt extends Translations$maker$amoun
 
 	// Translations
 	@override String get generateInvoice => 'Gerar invoice';
+}
+
+// Path: maker.amountForm.bank
+class _Translations$maker$amountForm$bank$pt extends Translations$maker$amountForm$bank$en {
+	_Translations$maker$amountForm$bank$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Banco';
+	@override String get required => 'Escolhe um banco';
+	@override String shortValidityWarning({required Object minutes}) => 'O código deste banco é válido apenas ${minutes} min — está no multibanco antes de reservar.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -2784,6 +2818,7 @@ class _Translations$settings$offerCreation$dialogs$pt extends Translations$setti
 
 	// Translations
 	@override String get selectCategory => 'Selecionar categoria predefinida';
+	@override String get selectBank => 'Selecionar banco predefinido';
 	@override String get selectCoordinator => 'Selecionar coordenador preferido';
 	@override String get premiumHint => 'Introduza uma percentagem como 1,5. Os valores são arredondados a passos de 0,5%.';
 	@override String get premiumHelper => 'Aplicado quando os preços premium estão ativados e limitado pelo máximo do coordenador selecionado.';
@@ -2810,6 +2845,7 @@ class _Translations$settings$paymentSystem$countries$pt extends Translations$set
 	@override String get PL => 'Polónia';
 	@override String get PT => 'Portugal';
 	@override String get CH => 'Suíça';
+	@override String get SK => 'Eslováquia';
 }
 
 // Path: maker.amountForm.category.options
@@ -2919,6 +2955,7 @@ extension on TranslationsPt {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Olá!',
 			'app.changelog' => 'Registo de alterações',
+			'common.code' => 'código',
 			'common.buttons.cancel' => 'Cancelar',
 			'common.buttons.save' => 'Guardar',
 			'common.buttons.done' => 'Concluído',
@@ -3182,6 +3219,9 @@ extension on TranslationsPt {
 			'maker.amountForm.labels.tapToSelect' => 'Toque para selecionar',
 			'maker.amountForm.labels.premium' => 'Premium',
 			'maker.amountForm.actions.generateInvoice' => 'Gerar invoice',
+			'maker.amountForm.bank.label' => 'Banco',
+			'maker.amountForm.bank.required' => 'Escolhe um banco',
+			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'O código deste banco é válido apenas ${minutes} min — está no multibanco antes de reservar.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Ler QR ${code} e montante',
 			'maker.amountForm.twintScan.cardBody' => 'Aponte a câmara para o ecrã de pagamento. A app preencherá automaticamente o código e, quando visível, o montante.',
 			'maker.amountForm.twintScan.scanButton' => 'Ler com a câmara',
@@ -3339,6 +3379,7 @@ extension on TranslationsPt {
 			'taker.progress.step1' => ({required Object code}) => 'Submeter ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Confirmar ${code}',
 			'taker.progress.step3' => 'Receber pagamento',
+			'taker.submitBlik.generateInBank' => ({required Object bank}) => 'Gera o código de levantamento na app ${bank}.',
 			'taker.submitBlik.title' => ({required Object code, required Object digits}) => 'Introduza o ${code} de ${digits} dígitos',
 			'taker.submitBlik.label' => ({required Object code}) => 'Código ${code}',
 			'taker.submitBlik.instruction' => ({required Object code}) => 'Introduza o ${code} antes de o tempo terminar...',
@@ -3423,13 +3464,13 @@ extension on TranslationsPt {
 			'twint.flow.takerExpired.cancelDialog.cancel' => 'Voltar',
 			'twint.flow.takerExpired.cancelDialog.confirmButton' => 'Sim, cancelar',
 			'twint.waitConfirmation.title' => 'À espera do maker',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.statusLabel' => ({required Object status}) => 'Estado da oferta: ${status}',
 			'twint.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'À espera da confirmação do maker: ${seconds} s',
 			'twint.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'À espera que o maker confirme que o ${code} está correto. Tempo restante: ${seconds}s',
 			'twint.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'MUITO IMPORTANTE: certifique-se de que só aceita a confirmação ${code} para ${amount} ${currency}',
 			'twint.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'MUITO IMPORTANTE: na app do seu banco, certifique-se de que está a confirmar um pagamento ${code} de exatamente ${amount} ${currency}.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'O maker tem agora de o introduzir no terminal de pagamento dentro de ${minutes} minutos. Depois tem de aceitar o código ${code} na app do seu banco.',
 			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'O maker tem agora de introduzir o seu código ${code} no multibanco dentro de ${minutes} minutos.',
 			'twint.waitConfirmation.categoryReminder.atm' => 'Lembrete da oferta de multibanco: o seu banco pode ainda pedir-lhe para aprovar uma taxa extra de multibanco para além do montante principal.',
@@ -3539,11 +3580,18 @@ extension on TranslationsPt {
 			'home.notifications.simplex' => 'SimpleX',
 			'home.notifications.matrix' => 'Matrix',
 			'home.notifications.signal' => 'Signal',
+			'home.notifications.channelAllBanks' => '(todos os bancos)',
+			'home.notifications.channelForBankPrefix' => '(apenas ofertas para ',
+			'home.notifications.channelForBankSuffix' => ')',
+			'home.notifications.scopeAllBanks' => 'Todos os bancos',
+			'home.notifications.scopeBankOnly' => ({required Object bank}) => 'Apenas ${bank}',
 			'home.statistics.title' => 'Ofertas concluídas',
 			'home.statistics.lifetimeCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Total: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}',
 			'home.statistics.last7DaysCompact' => ({required Object count, required Object code, required Object avgBlikTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} transações\nEspera média pelo ${code}: ${avgBlikTime}\nTempo médio de conclusão: ${avgPaidTime}',
 			'home.statistics.last7DaysSingleLine' => ({required Object count, required Object avgReservationTime, required Object avgPaidTime}) => 'Últimos 7d: ${count} ofertas  |  Reserva méd.: ${avgReservationTime}  |  Pago méd.: ${avgPaidTime}',
 			'home.statistics.errors.loading' => ({required Object error}) => 'Erro ao carregar estatísticas: ${error}',
+			'onboarding.title' => 'Escolha o seu mercado',
+			'onboarding.subtitle' => 'Selecione o país e o sistema de pagamento que vai usar. Pode alterá-lo a qualquer momento nas Definições.',
 			'nekoInfo.title' => 'O que é um Neko?',
 			'nekoInfo.description' => ({required Object app}) => 'O seu Neko é a sua identidade para usar o ${app}. É composto por uma chave privada e uma chave pública para garantir uma comunicação criptograficamente segura com o coordenador.\n\nPara garantir maior anonimato, recomenda-se usar um Neko novo para cada oferta.\n\n⚠️ IMPORTANTE: A sua chave privada é guardada apenas no seu dispositivo (no cliente). É de importância crítica fazer uma cópia de segurança da sua chave privada, já que perder o acesso a ela pode impedi-lo de resolver disputas e de recuperar os seus fundos.',
 			'nekoInfo.backupWarning' => 'Lembre-se de fazer uma cópia de segurança do seu Neko',
@@ -3616,6 +3664,8 @@ extension on TranslationsPt {
 			'settings.title' => 'Definições',
 			'settings.offerCreation.title' => 'Criação de ofertas',
 			'settings.offerCreation.defaultCategory' => 'Categoria predefinida',
+			'settings.offerCreation.defaultBank' => 'Banco predefinido',
+			'settings.offerCreation.defaultBankNone' => 'Nenhum (escolher por oferta)',
 			'settings.offerCreation.preferredCoordinator' => 'Coordenador preferido',
 			'settings.offerCreation.automaticCoordinator' => 'Mais fiável',
 			'settings.offerCreation.automaticCoordinatorDescription' => 'Escolhe o coordenador com o melhor historial, combinando as suas próprias ofertas concluídas e a atividade global da rede.',
@@ -3630,6 +3680,7 @@ extension on TranslationsPt {
 			'settings.offerCreation.categoryOptions.atm' => 'Levantamento em multibanco',
 			'settings.offerCreation.categoryOptions.online' => 'Serviço/produto online',
 			'settings.offerCreation.dialogs.selectCategory' => 'Selecionar categoria predefinida',
+			'settings.offerCreation.dialogs.selectBank' => 'Selecionar banco predefinido',
 			'settings.offerCreation.dialogs.selectCoordinator' => 'Selecionar coordenador preferido',
 			'settings.offerCreation.dialogs.premiumHint' => 'Introduza uma percentagem como 1,5. Os valores são arredondados a passos de 0,5%.',
 			'settings.offerCreation.dialogs.premiumHelper' => 'Aplicado quando os preços premium estão ativados e limitado pelo máximo do coordenador selecionado.',
@@ -3644,6 +3695,7 @@ extension on TranslationsPt {
 			'settings.paymentSystem.countries.PL' => 'Polónia',
 			'settings.paymentSystem.countries.PT' => 'Portugal',
 			'settings.paymentSystem.countries.CH' => 'Suíça',
+			'settings.paymentSystem.countries.SK' => 'Eslováquia',
 			'notificationSettings.title' => 'Notificações',
 			'notificationSettings.androidOnly' => 'As notificações em segundo plano são atualmente suportadas apenas no Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Alertas de novas ofertas',

@@ -161,7 +161,8 @@ class _FakeTelegramService extends TelegramService {
       : super(botToken: 'test-bot-token', chatIds: const ['test-chat-id']);
 
   @override
-  Future<TelegramSendResult> sendMessageDetailed(String message) async {
+  Future<TelegramSendResult> sendMessageDetailed(String message,
+      {List<String>? chatIds}) async {
     sendCalls++;
     lastMessage = message;
     return const TelegramSendResult(
@@ -1152,7 +1153,8 @@ void main() {
         'startup check restarts BLIK confirmation timer for offers still within window',
         () {
       fakeAsync((async) {
-        final confirmationWindow = kBlik.confirmationWindow;
+        final confirmationWindow =
+            kBlik.instrumentFor(OfferCategory.atm)!.validity;
         final initialTime = clock.now().toUtc();
         final offerId = 'startup-blik-within-window';
         final holdInvoicePaymentHash = 'hash-for-$offerId';

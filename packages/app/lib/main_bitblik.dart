@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async';
 import 'dart:io' show Platform; // Import Platform
 
@@ -37,6 +38,7 @@ import 'src/screens/display_settings_screen.dart';
 import 'src/screens/faq_screen.dart'; // Import the FAQ screen
 import 'src/screens/maker_flow/maker_amount_form.dart';
 import 'src/screens/local_offer_details_screen.dart';
+import 'src/screens/market_onboarding_screen.dart';
 import 'src/screens/my_offers_screen.dart';
 import 'src/screens/neko_management_screen.dart';
 import 'src/screens/offer_details_screen.dart';
@@ -63,11 +65,21 @@ late AppLocale appLocale;
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
+  // On a fresh install (no market saved yet), start at the market-selection
+  // onboarding so the first coordinator-discovery sweep only runs after the
+  // user picks their country. See [needsMarketOnboardingProvider].
+  final startOnboarding = ref.read(needsMarketOnboardingProvider);
   return GoRouter(
     debugLogDiagnostics: true,
-    initialLocation: '/',
+    initialLocation: startOnboarding ? MarketOnboardingScreen.routeName : '/',
     navigatorKey: rootNavigatorKey,
     routes: [
+      // Top-level (outside the ShellRoute) so onboarding renders full-screen
+      // without the app's nav chrome.
+      GoRoute(
+        path: MarketOnboardingScreen.routeName,
+        builder: (context, state) => const MarketOnboardingScreen(),
+      ),
       ShellRoute(
         builder: (context, state, child) {
           String? pageTitle;
@@ -203,7 +215,11 @@ Future<void> main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await initBuildFlavor();
-  await AppPreferencesStore.initializeSelectedPaymentSystemForFirstLaunch();
+  // Try to resolve the market from the device country (IP geolocation) and
+  // auto-select it. Only when that fails (no IP / unsupported country) do we
+  // fall back to the first-launch market picker.
+  final marketSelected =
+      await AppPreferencesStore.ensureMarketSelectedOrDetect();
   await NotificationService().init();
   String? localeString = await asyncPrefs.getString('app_locale');
   if (localeString != null) {
@@ -213,16 +229,31 @@ Future<void> main() async {
       'pt' => AppLocale.pt,
       'de' => AppLocale.de,
       'fr' => AppLocale.fr,
+      'sk' => AppLocale.sk,
       _ => AppLocale.en,
     };
   } else {
     appLocale = AppLocaleUtils.findDeviceLocale();
   }
   LocaleSettings.setLocale(appLocale);
+  // Preload the saved market so the FIRST coordinator-discovery sweep already
+  // targets it. Otherwise selectedPaymentSystemProvider starts at the default
+  // (BLIK) and the saved market (e.g. Tatra banka) only loads asynchronously —
+  // by then discovery has run for BLIK and the Slovak coordinators don't appear
+  // until a manual re-enable in Settings.
+  final savedMethod = await AppPreferencesStore.loadSelectedPaymentSystem();
   runApp(
     TranslationProvider(
       // Wrap with TranslationProvider
-      child: const ProviderScope(child: SafeArea(child: MyApp())),
+      child: ProviderScope(
+        overrides: [
+          selectedPaymentSystemProvider.overrideWith(
+            (ref) => SelectedPaymentSystemNotifier(savedMethod),
+          ),
+          needsMarketOnboardingProvider.overrideWith((ref) => !marketSelected),
+        ],
+        child: const SafeArea(child: MyApp()),
+      ),
     ),
   );
 }
@@ -286,8 +317,14 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         // cannot miss a short-lived bootstrap state in release builds.
         ref.read(coordinatorColdStartProvider);
         // Prime the coordinator stream without using `watch` outside build.
+        // Keeps [discoveryIdentityInitializer] alive so that, if the user picks a
+        // different market than the build default on the first-launch onboarding,
+        // discovery re-points and sweeps for the chosen market automatically.
         ref.read(discoveredCoordinatorsProvider);
         final registry = await ref.read(coordinatorRegistryProvider.future);
+        // Discover for the build default up front (as always). During onboarding
+        // the cold-start overlay is suppressed, so this pre-warm stays invisible;
+        // if the user then picks a different market, discovery re-points to it.
         unawaited(() async {
           try {
             await registry.discover();
@@ -646,7 +683,10 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: [
         ...GlobalMaterialLocalizations.delegates,
-        ndk_l10n.AppLocalizations.delegate,
+        // Wrapped so a market/device locale ndk doesn't translate (e.g. sk)
+        // falls back to English for ndk's own strings instead of warning
+        // "locale not supported by all localization delegates".
+        const _NdkLocalizationsFallbackDelegate(),
       ],
       builder:
           (context, child) => Stack(
@@ -665,6 +705,10 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Don't pop the discovery overlay over the first-launch market picker.
+    if (ref.watch(needsMarketOnboardingProvider)) {
+      return const SizedBox.shrink();
+    }
     final async = ref.watch(coordinatorColdStartProvider);
     final state = async.valueOrNull;
     if (state == null) return const SizedBox.shrink();
@@ -1464,7 +1508,10 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                 leading: const Icon(Icons.flash_on, color: Color(0xFFFF0000)),
                 title: Text(
                   t.landing.actions.payBlik(
-                    code: ref.read(selectedPaymentSystemProvider).codeLabel,
+                    code:
+                        ref
+                            .read(selectedPaymentSystemProvider)
+                            .localizedCodeLabel,
                   ),
                 ),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -1682,6 +1729,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                   AppLocale.pt,
                   AppLocale.de,
                   AppLocale.fr,
+                  AppLocale.sk,
                 ];
                 return orderedLocales.map<Widget>((AppLocale locale) {
                   return Container(
@@ -1722,6 +1770,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                     AppLocale.pt,
                     AppLocale.de,
                     AppLocale.fr,
+                    AppLocale.sk,
                   ].map<DropdownMenuItem<AppLocale>>((AppLocale locale) {
                     final String flagEmoji =
                         locale.languageCode == 'en'
@@ -1736,6 +1785,8 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                             ? '🇩🇪'
                             : locale.languageCode == 'fr'
                             ? '🇫🇷'
+                            : locale.languageCode == 'sk'
+                            ? '🇸🇰'
                             : '';
                     final String displayName =
                         locale.languageCode == 'en'
@@ -2021,4 +2072,28 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     }
     return const RoleSelectionScreen();
   }
+}
+
+/// Wraps ndk_flutter's [ndk_l10n.AppLocalizations] delegate so it accepts any
+/// locale: for a locale ndk doesn't translate (it ships en/es/fr/ja/ru/zh —
+/// not sk), it loads its English strings instead of reporting the locale
+/// unsupported, which otherwise triggers Flutter's "not supported by all of its
+/// localization delegates" warning.
+class _NdkLocalizationsFallbackDelegate
+    extends LocalizationsDelegate<ndk_l10n.AppLocalizations> {
+  const _NdkLocalizationsFallbackDelegate();
+
+  @override
+  bool isSupported(Locale locale) => true;
+
+  @override
+  Future<ndk_l10n.AppLocalizations> load(Locale locale) {
+    final supported = ndk_l10n.AppLocalizations.supportedLocales
+        .any((l) => l.languageCode == locale.languageCode);
+    return ndk_l10n.AppLocalizations.delegate
+        .load(supported ? locale : const Locale('en'));
+  }
+
+  @override
+  bool shouldReload(_NdkLocalizationsFallbackDelegate old) => false;
 }

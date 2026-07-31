@@ -550,57 +550,134 @@ class _CoordinatorDetailsScreenState
     }
   }
 
-  /// "Get notified" section: one tappable icon+label per configured messenger.
+  /// A row of tappable icon+label per configured messenger for [links].
+  Widget _linksWrap(Translations t, Map<String, String> links) {
+    return Wrap(
+      spacing: 20,
+      runSpacing: 12,
+      children: [
+        for (final id in CoordinatorInfo.messengerIds)
+          if (links[id] != null && links[id]!.isNotEmpty)
+            InkWell(
+              onTap: () => launchUrl(
+                Uri.parse(links[id]!),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: ClipOval(
+                      child: Image.asset('assets/$id.png', fit: BoxFit.contain),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(_messengerLabel(t, id)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.open_in_new, size: 14, color: Colors.grey),
+                ],
+              ),
+            ),
+      ],
+    );
+  }
+
+  /// Bank label for [bankId] on this coordinator's market, or the id itself.
+  String _bankLabel(CoordinatorRecord record, String bankId) {
+    final ps = paymentSystemById(record.paymentSystem);
+    final instrument =
+        ps.instrumentFor(OfferCategory.atm) ?? ps.instrumentFor(null);
+    return instrument?.bankById(bankId)?.label ?? bankId;
+  }
+
+  /// "Get notified" section: the market-wide links, then a group per bank that
+  /// advertises its own channels (takers join the ones for banks they hold).
   List<Widget> _notificationLinksSection(
     BuildContext context,
     Translations t,
     CoordinatorRecord record,
   ) {
     final links = _resolveChannelLinks(record);
-    if (links.isEmpty) return const [];
+    final bankLinks = record.bankChannelLinks;
+    if (links.isEmpty && bankLinks.isEmpty) return const [];
+
+    final titleStyle = Theme.of(
+      context,
+    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600);
+    // With per-bank channels, every group gets a consistent scope header ABOVE
+    // its links ("All banks" / "<Bank> only"), so the user can tell at a glance
+    // which channel notifies for everything vs one bank. With no bank channels,
+    // no header is needed — the links are unambiguous.
+    final hasBankScopes = bankLinks.isNotEmpty;
+
     return [
       const Divider(height: 32),
-      Text(
-        t.home.notifications.title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-      ),
+      Text(t.home.notifications.title, style: titleStyle),
       const SizedBox(height: 12),
-      Wrap(
-        spacing: 20,
-        runSpacing: 12,
+      if (links.isNotEmpty) ...[
+        if (hasBankScopes)
+          _scopeHeader(context, Icons.public,
+              Text(t.home.notifications.scopeAllBanks)),
+        _linksWrap(t, links),
+      ],
+      for (final entry in bankLinks.entries) ...[
+        const SizedBox(height: 18),
+        _scopeHeader(
+          context,
+          Icons.account_balance,
+          _boldBankInScope(
+            context,
+            t.home.notifications.scopeBankOnly(
+              bank: _bankLabel(record, entry.key),
+            ),
+            _bankLabel(record, entry.key),
+          ),
+        ),
+        _linksWrap(t, entry.value),
+      ],
+    ];
+  }
+
+  /// A scope sub-header: an accent icon + label, sitting above its link row.
+  Widget _scopeHeader(BuildContext context, IconData icon, Widget label) {
+    final color = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
         children: [
-          for (final id in CoordinatorInfo.messengerIds)
-            if (links[id] != null && links[id]!.isNotEmpty)
-              InkWell(
-                onTap: () => launchUrl(
-                  Uri.parse(links[id]!),
-                  mode: LaunchMode.externalApplication,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/$id.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(_messengerLabel(t, id)),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.open_in_new, size: 14, color: Colors.grey),
-                  ],
-                ),
-              ),
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: DefaultTextStyle.merge(
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(color: color, fontWeight: FontWeight.w600),
+              child: label,
+            ),
+          ),
         ],
       ),
-    ];
+    );
+  }
+
+  /// Renders [full] with only [bank] bold (word order stays correct across
+  /// languages — "${bank} only" / "Nur ${bank}" / "Len ${bank}").
+  Widget _boldBankInScope(BuildContext context, String full, String bank) {
+    final idx = full.indexOf(bank);
+    if (idx < 0) return Text(full);
+    return Text.rich(
+      TextSpan(children: [
+        TextSpan(text: full.substring(0, idx)),
+        TextSpan(
+          text: bank,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        TextSpan(text: full.substring(idx + bank.length)),
+      ]),
+    );
   }
 
   Future<void> _openNjump(String idOrAddr) async {

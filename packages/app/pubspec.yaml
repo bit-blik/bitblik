@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.9.0+30
+version: 0.10.0+31
 resolution: workspace
 environment:
   sdk: ^3.7.2
@@ -92,7 +92,7 @@ dependency_overrides:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk_flutter
     #  #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      ref: c96944f03e9e2f148e021a8347a522e6792a881f
+      ref: 3c87573143f20c71cb346f70612961c236401c5a
     #path: ../../../ndk/packages/ndk_flutter
 #  ndk_drift:
 #    git:
@@ -176,12 +176,14 @@ flutter:
     - assets/faq/bitblik/
     - assets/faq/bitway/
     - assets/faq/bittwint/
+    - assets/faq/bitvyber/
     # Flow definitions — single source of truth in bitblik_core/lib/flows,
     # bundled here as package assets (no copy in this repo).
     - packages/bitblik_core/flows/blik.yml
     - packages/bitblik_core/flows/common.yml
     - packages/bitblik_core/flows/mbway.yml
     - packages/bitblik_core/flows/twint.yml
+    - packages/bitblik_core/flows/sk_atm.yml
     - CHANGELOG.md
 
   # An image asset can refer to one or more resolution-specific "variants", see

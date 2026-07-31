@@ -1,0 +1,221 @@
+# Bitvýber offer state machine — Slovak cardless ATM withdrawal, schema v2.
+#
+# One flow serves all three Slovak banks (Tatra banka, Slovenská sporiteľňa,
+# VÚB). The banks differ only in how long their withdrawal code stays valid
+# (20 / 15 / 3 min); that window is written as `$code_validity` and resolved per
+# offer from the offer's bank (Offer.bankId -> BankSpec.validity). Everything
+# else is identical across banks.
+#
+# Pull-style, like MB WAY: the taker generates a "cardless withdrawal" code in
+# their banking app and submits it; the maker withdraws the cash at that bank's
+# ATM. There is nothing for the taker to confirm in an app.
+#
+# v2 model:
+# - A transition is an attempt. When `on` fires, run `do`; if every action
+#   succeeds, commit and advance to `to`. If any action fails, the state does
+#   not advance and nothing is committed.
+# - `on_fail` routes definitive transition failure to another state.
+# - `on: auto` transitions are detached/internal attempts.
+# - State-level `do:` runs after the state commit, best-effort.
+#
+# Initial state: funded.
+
+imports: [common.yml]
+
+id: sk_atm
+
+states:
+
+  funded:
+    nip69: pending
+    initial: true
+    do: [send_offer_notifications]
+    description: >
+      Hold invoice confirmed. Offer is live and open for takers.
+    transitions:
+      - on: cancel_offer
+        by: maker
+        do: [clear_taker_fields, cancel_hold_invoice]
+        to: cancelled
+      - on: reserve_offer
+        by: taker
+        do: [reserve_taker]
+        to: reserved
+      - on: timeout
+        after: 600
+        from: created_at
+        do: [clear_taker_fields, cancel_hold_invoice]
+        to: expired
+        reason: No taker reserved in time
+
+  reserved:
+    nip69: in-progress
+    description: >
+      A taker holds the offer slot and must submit a cardless-withdrawal code.
+    transitions:
+      - on: submit_blik
+        by: taker
+        do: [assert_assigned_taker, validate_code, resolve_taker_invoice, stamp_code_received_at]
+        to: blikReceived
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, cancel_reservation]
+        to: funded
+      - on: timeout
+        after: 120
+        do: [cancel_reservation]
+        to: funded
+        reason: >
+          Taker did not submit a code in time; the offer is reverted to funded
+          so it can be re-listed.
+
+  blikReceived:
+    nip69: in-progress
+    description: >
+      Taker submitted a withdrawal code. The maker has not yet fetched it. The
+      code's lifespan ($code_validity) is per bank and starts at submission.
+    transitions:
+      - on: get_blik
+        by: maker
+        to: blikSentToMaker
+        returns: blik_code
+      - on: timeout
+        after: $code_validity
+        from: code_received_at
+        to: expiredBlik
+        reason: Maker never fetched the code before it expired.
+
+  blikSentToMaker:
+    nip69: in-progress
+    description: >
+      Maker has the code and is withdrawing at the bank's ATM. Must render a
+      verdict before the code's per-bank lifespan elapses.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: mark_blik_invalid
+        by: maker
+        do: []
+        to: invalidBlik
+      - on: timeout
+        after: $code_validity
+        from: code_received_at
+        to: expiredSentBlik
+        reason: >
+          Maker did not respond before the code expired.
+
+  expired:
+    nip69: canceled
+    description: Offer expired — no taker reserved within the funded window.
+    terminal: true
+
+  invalidBlik:
+    nip69: in-progress
+    description: >
+      Maker marked the code invalid before the taker reported a charge.
+    transitions:
+      - on: mark_blik_charged
+        by: taker
+        do: [assert_assigned_taker, accept_taker_invoice, stamp_taker_charged_at]
+        to: conflict
+      - on: reserve_offer
+        by: taker
+        do: [assert_assigned_taker, stamp_reserved_at]
+        to: reserved
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, cancel_reservation]
+        to: funded
+      - on: timeout
+        after: 3600
+        do: [settle_offer_funds]
+        to: dispute
+        reason: autoInvalidBlikTimeout — taker silent; settle and escalate.
+
+  expiredBlik:
+    nip69: in-progress
+    description: >
+      The maker never fetched the code. The same taker may re-take or cancel;
+      otherwise the offer is re-listed.
+    transitions:
+      - on: reserve_offer
+        by: taker
+        do: [assert_assigned_taker, stamp_reserved_at]
+        to: reserved
+      - on: cancel_reservation
+        by: taker
+        do: [assert_assigned_taker, cancel_reservation]
+        to: funded
+      - on: timeout
+        after: 60
+        do: [cancel_reservation]
+        to: funded
+        reason: Grace period elapsed; re-list the offer as funded.
+
+  expiredSentBlik:
+    nip69: in-progress
+    description: >
+      Maker had the code but did not respond before it expired.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: mark_blik_invalid
+        by: maker
+        do: []
+        to: invalidBlik
+      - on: mark_blik_charged
+        by: taker
+        do: [assert_assigned_taker, accept_taker_invoice, stamp_taker_charged_at]
+        to: takerCharged
+      - on: reserve_offer
+        by: taker
+        do: [assert_assigned_taker, stamp_reserved_at]
+        to: reserved
+      - on: timeout
+        after: 3600
+        do: [settle_offer_funds]
+        to: dispute
+        reason: autoExpiredSentBlikTimeout — settle and escalate.
+
+  takerCharged:
+    nip69: in-progress
+    description: >
+      Taker reported the code was charged but the maker has not confirmed.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: mark_blik_invalid
+        by: maker
+        do: []
+        to: conflict
+      - on: timeout
+        after: 3600
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+        reason: Maker silent; auto-confirm in the taker's favour.
+
+  conflict:
+    nip69: dispute
+    description: >
+      Maker reported a bad code. Maker may still confirm, or open a formal
+      dispute.
+    transitions:
+      - on: confirm_payment
+        by: maker
+        do: [stamp_maker_confirmed_at]
+        to: makerConfirmed
+      - on: open_dispute
+        by: maker
+        do: [settle_offer_funds]
+        to: dispute
+      - on: timeout
+        after: 3600
+        do: [settle_offer_funds]
+        to: dispute
+        reason: autoConflictTimeout — settle and escalate to dispute.

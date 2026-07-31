@@ -373,6 +373,10 @@ maker:
       premium: Prime
     actions:
       generateInvoice: Générer la facture
+    bank:
+      label: "Banque"
+      required: "Veuillez choisir une banque"
+      shortValidityWarning: "Le code de cette banque n'est valable que ${minutes} min — soyez au distributeur avant de réserver."
     twintScan:
       cardTitle: "Scanner le QR ${code} et le montant"
       cardBody: "Pointez la caméra vers l'écran de paiement. L'application préremplira le code et, s'il est visible, le montant."
@@ -597,6 +601,7 @@ taker:
     step3: Être payé
 
   submitBlik:
+    generateInBank: "Générez le code de retrait dans votre application ${bank}."
     title: "Saisissez le ${code} à ${digits} chiffres"
     label: Code ${code}
     instruction: "Saisissez le ${code} avant la fin du délai..."
@@ -894,6 +899,11 @@ home:
     simplex: SimpleX
     matrix: Matrix
     signal: Signal
+    channelAllBanks: "(toutes les banques)"
+    channelForBankPrefix: "(uniquement les offres pour "
+    channelForBankSuffix: ")"
+    scopeAllBanks: "Toutes les banques"
+    scopeBankOnly: "${bank} uniquement"
 
   statistics:
     title: Offres terminées
@@ -1030,6 +1040,8 @@ settings:
   offerCreation:
     title: Création d'offres
     defaultCategory: Catégorie par défaut
+    defaultBank: Banque par défaut
+    defaultBankNone: "Aucune (choisir par offre)"
     preferredCoordinator: Coordinateur préféré
     automaticCoordinator: Le plus fiable
     automaticCoordinatorDescription: "Choisit le coordinateur avec le meilleur historique, en combinant vos propres offres terminées et l'activité globale du réseau."
@@ -1046,6 +1058,7 @@ settings:
       online: Service/produit en ligne
     dialogs:
       selectCategory: Sélectionner la catégorie par défaut
+      selectBank: Sélectionner la banque par défaut
       selectCoordinator: Sélectionner le coordinateur préféré
       premiumHint: Saisissez un pourcentage comme 1.5. Les valeurs sont arrondies par pas de 0.5%.
       premiumHelper: Appliquée lorsque la tarification avec prime est activée et plafonnée par le maximum du coordinateur sélectionné.
@@ -1064,6 +1077,7 @@ settings:
       PL: Pologne
       PT: Portugal
       CH: Suisse
+      SK: Slovaquie
 
 notificationSettings:
   title: Notifications
@@ -1071,6 +1085,10 @@ notificationSettings:
   newOfferAlerts:
     label: Alertes de nouvelles offres
     description: Lorsque cette option est activée, ${app} vous notifie des nouvelles offres disponibles auprès de vos coordinateurs activés pendant que l'application est en arrière-plan. Cela peut être plus rapide que les messageries externes.
+
+onboarding:
+  title: Choisissez votre marché
+  subtitle: Choisissez le pays et le système de paiement que vous utiliserez. Vous pouvez le changer à tout moment dans les Paramètres.
 
 wallet:
   title: Portefeuille

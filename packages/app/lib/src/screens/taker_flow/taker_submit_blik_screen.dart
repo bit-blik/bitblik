@@ -1,3 +1,4 @@
+import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -41,11 +42,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
   int _previousBlikLength = 0; // Track previous length to detect paste
   Offer? _resolvedOffer;
 
-  /// Payment method for the offer being taken, resolved from its currency
-  /// (falls back to the app's selected method). Drives the code length.
-  PaymentSystem get _method =>
-      paymentSystemForCurrency(widget.initialOffer.fiatCurrency) ??
-      ref.read(selectedPaymentSystemProvider);
+  /// Payment method for the offer being taken, resolved from its payment-system
+  /// id (unambiguous across the EUR markets). Drives the code length.
+  PaymentSystem get _method => paymentSystemForOffer(widget.initialOffer);
 
   bool get _makerProvidedCodeFlow => _method.makerProvidesCodeAtOfferCreation;
 
@@ -261,7 +260,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       Logger.log.i(() => "[TakerSubmitBlikScreen] BLIK input timer expired.");
       await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
       _resetToOfferList(
-        t.taker.submitBlik.timeExpired(code: _method.codeLabel),
+        t.taker.submitBlik.timeExpired(code: _method.localizedCodeLabel),
       );
     }
   }
@@ -309,7 +308,10 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     }
     if (!_makerProvidedCodeFlow && !_method.isValidCode(blikCode ?? '')) {
       ref.read(errorProvider.notifier).state = t.taker.submitBlik.validation
-          .invalidFormat(code: _method.codeLabel, digits: _method.codeLength);
+          .invalidFormat(
+            code: _method.localizedCodeLabel,
+            digits: _method.codeLength,
+          );
       _startBlikInputTimer(offer);
       return;
     }
@@ -400,12 +402,14 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
             "[TakerSubmitBlikScreen] BLIK submitted. Navigating to WaitConfirmation.",
       );
       if (mounted) {
-        context.go(flowEntryRoute(ref, '/wait-confirmation'),
-            extra: updatedOffer);
+        context.go(
+          flowEntryRoute(ref, '/wait-confirmation'),
+          extra: updatedOffer,
+        );
       }
     } catch (e) {
       ref.read(errorProvider.notifier).state = t.taker.submitBlik.errors
-          .submitting(details: e.toString(), code: _method.codeLabel);
+          .submitting(details: e.toString(), code: _method.localizedCodeLabel);
       if (mounted) {
         _startBlikInputTimer(offer);
       }
@@ -690,7 +694,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                t.taker.submitBlik.feedback.pasted(code: _method.codeLabel),
+                t.taker.submitBlik.feedback.pasted(
+                  code: _method.localizedCodeLabel,
+                ),
               ),
               duration: const Duration(seconds: 1),
             ),
@@ -700,7 +706,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
             SnackBar(
               content: Text(
                 t.taker.submitBlik.errors.clipboardInvalid(
-                  code: _method.codeLabel,
+                  code: _method.localizedCodeLabel,
                   digits: _method.codeLength,
                 ),
               ),
@@ -814,9 +820,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                     Expanded(
                       child: Text(
                         _makerProvidedCodeFlow
-                            ? 'Open ${_method.codeLabel}, enter this code, then continue before the timer ends.'
+                            ? 'Open ${_method.localizedCodeLabel}, enter this code, then continue before the timer ends.'
                             : t.taker.submitBlik.instruction(
-                              code: _method.codeLabel,
+                              code: _method.localizedCodeLabel,
                             ),
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                         textAlign: TextAlign.center,
@@ -825,6 +831,81 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   ],
                 ),
               ),
+
+              // Which bank the taker must generate the withdrawal code in
+              // (bank-scoped markets, e.g. SK cardless ATM).
+              ...(() {
+                final bank = bankForOffer(activeOffer);
+                if (bank == null) return const <Widget>[];
+                return [
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Builder(
+                            builder: (context) {
+                              final color =
+                                  Theme.of(context).colorScheme.primary;
+                              final full = t.taker.submitBlik.generateInBank(
+                                bank: bank.label,
+                              );
+                              // Bold only the bank name; the rest stays normal.
+                              final idx = full.indexOf(bank.label);
+                              final base = TextStyle(fontSize: 14, color: color);
+                              if (idx < 0) {
+                                return Text(full, style: base);
+                              }
+                              return Text.rich(
+                                TextSpan(
+                                  style: base,
+                                  children: [
+                                    TextSpan(text: full.substring(0, idx)),
+                                    TextSpan(
+                                      text: bank.label,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: full.substring(
+                                        idx + bank.label.length,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ];
+              })(),
               const SizedBox(height: 30),
 
               // Circular Countdown Timer
@@ -854,7 +935,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   child: Column(
                     children: [
                       Text(
-                        '${_method.codeLabel} code',
+                        '${_method.localizedCodeLabel} code',
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                       const SizedBox(height: 8),
@@ -890,7 +971,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                                         SnackBar(
                                           content: Text(
                                             t.system.blik.copied(
-                                              code: _method.codeLabel,
+                                              code: _method.localizedCodeLabel,
                                             ),
                                           ),
                                           duration: const Duration(seconds: 1),
@@ -936,7 +1017,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                         ),
                         decoration: InputDecoration(
                           hintText: t.taker.submitBlik.title(
-                            code: _method.codeLabel,
+                            code: _method.localizedCodeLabel,
                             digits: codeLength,
                           ),
                           hintStyle: TextStyle(
@@ -986,7 +1067,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   children: [
                     _buildDetailRow(
                       t.taker.submitBlik.details.requestedAmount(
-                        code: _method.codeLabel,
+                        code: _method.localizedCodeLabel,
                       ),
                       '${formatDouble(activeOffer.fiatAmount)} ${activeOffer.fiatCurrency}',
                     ),
@@ -1074,7 +1155,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                             _makerProvidedCodeFlow
                                 ? 'I entered the code'
                                 : t.taker.submitBlik.actions.submit(
-                                  code: _method.codeLabel,
+                                  code: _method.localizedCodeLabel,
                                 ),
                             style: TextStyle(
                               fontSize: 16,
