@@ -1382,6 +1382,13 @@ class CoordinatorService {
       atm: 'ATM/Bancomat',
       online: 'Online',
     ),
+    'SK': OfferNotificationStrings(
+      newOffer: 'New offer/Nová ponuka',
+      premium: 'premium/prémia',
+      shop: 'Shop/Obchod',
+      atm: 'ATM/Bankomat',
+      online: 'Online',
+    ),
   };
 
   OfferNotificationStrings get _notificationStrings =>
