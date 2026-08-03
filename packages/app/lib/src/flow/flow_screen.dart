@@ -275,11 +275,10 @@ class FlowScreen extends ConsumerWidget {
     final engineAsync = ref.watch(flowEngineProvider);
 
     // The active offer being cleared while we're on the flow screen means the
-    // user left it (e.g. taker cancelled a reservation → offer relisted and the
-    // taker is no longer a participant). Return to the offer list.
+    // user left it. Return home without selecting another historical offer.
     ref.listen<Offer?>(activeOfferProvider, (prev, next) {
       if (prev != null && next == null && context.mounted) {
-        context.go('/offers');
+        context.go('/');
       }
     });
 

@@ -31,8 +31,7 @@ class FlowActionsBar extends ConsumerWidget {
 
   /// Events after which the user leaves the offer (e.g. a taker cancelling a
   /// reservation → the offer relists without them, and no status update reaches
-  /// this ex-participant). On success we clear the active offer and return to
-  /// the offer list.
+  /// this ex-participant). On success we clear the active offer and return home.
   final Set<String> leaveEvents;
 
   const FlowActionsBar({
@@ -75,7 +74,7 @@ class FlowActionsBar extends ConsumerWidget {
       await fireFlowAction(ref, offer, event);
       if (leaveEvents.contains(event)) {
         await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
-        if (context.mounted) context.go('/offers');
+        if (context.mounted) context.go('/');
       }
     } catch (e) {
       if (context.mounted) {

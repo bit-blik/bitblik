@@ -248,7 +248,10 @@ class _TakerWaitConfirmationScreenState
         offer.createdAt;
   }
 
-  Future<void> _resetToOfferList(String message) async {
+  Future<void> _resetToOfferList(
+    String message, {
+    bool returnHome = false,
+  }) async {
     _confirmationTimer?.cancel();
     ref.read(errorProvider.notifier).state = null;
     _timersInitialized = false;
@@ -261,7 +264,9 @@ class _TakerWaitConfirmationScreenState
           if (scaffoldMessenger != null) {
             scaffoldMessenger.showSnackBar(SnackBar(content: Text(message)));
           }
-          if (navigator != null && navigator.canPop()) {
+          if (returnHome) {
+            context.go('/');
+          } else if (navigator != null && navigator.canPop()) {
             navigator.popUntil((route) => route.isFirst);
           }
         }
@@ -270,7 +275,7 @@ class _TakerWaitConfirmationScreenState
       if (scaffoldMessenger != null) {
         scaffoldMessenger.showSnackBar(SnackBar(content: Text(message)));
       }
-      context.go('/offers');
+      context.go(returnHome ? '/' : '/offers');
     }
   }
 
@@ -583,7 +588,7 @@ class _TakerWaitConfirmationScreenState
       );
       if (mounted) {
         final t = Translations.of(context);
-        _resetToOfferList(t.reservations.feedback.cancelled);
+        _resetToOfferList(t.reservations.feedback.cancelled, returnHome: true);
       }
     } catch (e) {
       if (mounted) {

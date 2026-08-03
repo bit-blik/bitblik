@@ -307,7 +307,7 @@ class _TakerInvalidBlikScreenState
                                       .read(activeOfferProvider.notifier)
                                       .setActiveOffer(null);
                                   if (!context.mounted) return;
-                                  context.go('/offers');
+                                  context.go('/');
                                 } catch (e) {
                                   Logger.log.d(
                                     () =>

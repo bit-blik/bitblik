@@ -265,15 +265,19 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     }
   }
 
-  Future<void> _resetToOfferList(String message) async {
+  Future<void> _resetToOfferList(
+    String message, {
+    bool returnHome = false,
+  }) async {
     _blikInputTimer?.cancel();
     await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
+    if (!mounted) return;
     ref.read(errorProvider.notifier).state = null;
     final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
     Navigator.maybeOf(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.go("/offers");
+        context.go(returnHome ? "/" : "/offers");
         if (scaffoldMessenger != null) {
           scaffoldMessenger.showSnackBar(SnackBar(content: Text(message)));
         }
@@ -1203,6 +1207,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                               if (mounted) {
                                 _resetToOfferList(
                                   t.reservations.feedback.cancelled,
+                                  returnHome: true,
                                 );
                               }
                             } catch (e) {

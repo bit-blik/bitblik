@@ -957,7 +957,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
     final cancelled = current.copyWith(status: OfferStatus.cancelled);
     await OfferDbService().upsertOffer(cancelled);
-    await _promoteMostRecentActiveOffer();
+    // Cancellation is an explicit exit from this trade. Do not promote an
+    // older active row here: the current flow screen would immediately redraw
+    // that offer (for example an old dispute), making it look as though the
+    // offer just cancelled had entered that state.
+    state = null;
   }
 
   /// Persist a status update from the coordinator.
@@ -1041,7 +1045,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                       currentState.holdInvoicePaymentHash ==
                           updated.holdInvoicePaymentHash));
           if (isCurrent) {
-            await _promoteMostRecentActiveOffer();
+            state = null;
             _ref.read(appLifecycleProvider)._updateForegroundService();
           }
           return;
@@ -1062,7 +1066,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                       currentState.holdInvoicePaymentHash ==
                           updated.holdInvoicePaymentHash));
           if (isCurrent) {
-            await _promoteMostRecentActiveOffer();
+            state = null;
             _ref.read(appLifecycleProvider)._updateForegroundService();
           }
           _ref.invalidate(myOffersProvider);
@@ -1126,7 +1130,14 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         state = hydrated;
         _ref.read(appLifecycleProvider)._updateForegroundService();
       } else if (OfferDbService.terminalStatuses.contains(newStatus)) {
-        await _promoteMostRecentActiveOffer();
+        if (newStatus == OfferStatus.cancelled) {
+          // A cancelled offer exits to home. Promoting another persisted offer
+          // while the flow screen is mounted can visually turn this offer into
+          // an unrelated older dispute.
+          state = null;
+        } else {
+          await _promoteMostRecentActiveOffer();
+        }
         _ref.read(appLifecycleProvider)._updateForegroundService();
       } else {
         state = hydrated;
