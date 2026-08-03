@@ -719,6 +719,15 @@ taker:
     actions:
       goHome: Prejsť domov
 
+  criticalCodeDecision:
+    title: "Kritické rozhodnutie"
+    explanation: "Predávajúcemu si už poskytol kód ${code}. Pokračovanie môže tento kód nahradiť, ukončiť tvoju rezerváciu a znovu sprístupniť ponuku iným kupujúcim."
+    warningTitle: "MÔŽEŠ PRÍSŤ O SVOJE PROSTRIEDKY"
+    warningBody: "Ak ti banka strhla platbu ${code}, NEPOKRAČUJ. Predávajúci mohol tvoj kód použiť a po tejto akcii už koordinátor nemusí vedieť zaručiť vyplatenie tvojich bitcoinov."
+    actions:
+      cancel: "Späť a skontrolovať banku"
+      proceed: "NEBOLO mi strhnuté — pokračovať"
+
   invalidBlik:
     title: Neplatný kód ${code}
     message: Predávajúci odmietol kód ${code}

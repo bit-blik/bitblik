@@ -633,6 +633,15 @@ taker:
       status: "Statut"
       youllReceive: "Vous recevrez"
 
+  criticalCodeDecision:
+    title: "Décision critique"
+    explanation: "Vous avez déjà communiqué un code ${code} au maker. Continuer peut remplacer ce code, mettre fin à votre réservation et rouvrir l’offre à d’autres takers."
+    warningTitle: "VOUS RISQUEZ DE PERDRE VOS FONDS"
+    warningBody: "Si votre banque a débité le paiement ${code}, NE continuez PAS. Le maker a peut-être utilisé votre code et, après cette action, le coordinateur pourrait ne plus pouvoir garantir le versement de vos bitcoins."
+    actions:
+      cancel: "Retourner vérifier ma banque"
+      proceed: "Je n’ai PAS été débité — continuer"
+
 twint:
   scanner:
     title: "Scanner le code ${code}"

@@ -209,6 +209,7 @@ class _Translations$taker$de extends Translations$taker$en {
 	@override late final _Translations$taker$roleSelection$de roleSelection = _Translations$taker$roleSelection$de._(_root);
 	@override late final _Translations$taker$progress$de progress = _Translations$taker$progress$de._(_root);
 	@override late final _Translations$taker$submitBlik$de submitBlik = _Translations$taker$submitBlik$de._(_root);
+	@override late final _Translations$taker$criticalCodeDecision$de criticalCodeDecision = _Translations$taker$criticalCodeDecision$de._(_root);
 }
 
 // Path: twint
@@ -1213,6 +1214,20 @@ class _Translations$taker$submitBlik$de extends Translations$taker$submitBlik$en
 	@override late final _Translations$taker$submitBlik$validation$de validation = _Translations$taker$submitBlik$validation$de._(_root);
 	@override late final _Translations$taker$submitBlik$errors$de errors = _Translations$taker$submitBlik$errors$de._(_root);
 	@override late final _Translations$taker$submitBlik$details$de details = _Translations$taker$submitBlik$details$de._(_root);
+}
+
+// Path: taker.criticalCodeDecision
+class _Translations$taker$criticalCodeDecision$de extends Translations$taker$criticalCodeDecision$en {
+	_Translations$taker$criticalCodeDecision$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Kritische Entscheidung';
+	@override String explanation({required Object code}) => 'Du hast dem Maker bereits einen ${code}-Code mitgeteilt. Wenn du fortfährst, kann dieser Code ersetzt, deine Reservierung beendet und das Angebot wieder für andere Taker freigegeben werden.';
+	@override String get warningTitle => 'DU KANNST DEIN GELD VERLIEREN';
+	@override String warningBody({required Object code}) => 'Wenn deine Bank die ${code}-Zahlung belastet hat, fahre NICHT fort. Der Maker könnte deinen Code verwendet haben, und danach kann der Koordinator deine Bitcoin-Auszahlung möglicherweise nicht mehr garantieren.';
+	@override late final _Translations$taker$criticalCodeDecision$actions$de actions = _Translations$taker$criticalCodeDecision$actions$de._(_root);
 }
 
 // Path: twint.scanner
@@ -2338,6 +2353,17 @@ class _Translations$taker$submitBlik$details$de extends Translations$taker$submi
 	@override String get youllReceive => 'Du erhältst';
 }
 
+// Path: taker.criticalCodeDecision.actions
+class _Translations$taker$criticalCodeDecision$actions$de extends Translations$taker$criticalCodeDecision$actions$en {
+	_Translations$taker$criticalCodeDecision$actions$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get cancel => 'Zurück und Bankkonto prüfen';
+	@override String get proceed => 'Ich wurde NICHT belastet – fortfahren';
+}
+
 // Path: twint.scanner.status
 class _Translations$twint$scanner$status$de extends Translations$twint$scanner$status$en {
 	_Translations$twint$scanner$status$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -3397,6 +3423,12 @@ extension on TranslationsDe {
 			'taker.submitBlik.details.takerFee' => 'Taker-Gebühr',
 			'taker.submitBlik.details.status' => 'Status',
 			'taker.submitBlik.details.youllReceive' => 'Du erhältst',
+			'taker.criticalCodeDecision.title' => 'Kritische Entscheidung',
+			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Du hast dem Maker bereits einen ${code}-Code mitgeteilt. Wenn du fortfährst, kann dieser Code ersetzt, deine Reservierung beendet und das Angebot wieder für andere Taker freigegeben werden.',
+			'taker.criticalCodeDecision.warningTitle' => 'DU KANNST DEIN GELD VERLIEREN',
+			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Wenn deine Bank die ${code}-Zahlung belastet hat, fahre NICHT fort. Der Maker könnte deinen Code verwendet haben, und danach kann der Koordinator deine Bitcoin-Auszahlung möglicherweise nicht mehr garantieren.',
+			'taker.criticalCodeDecision.actions.cancel' => 'Zurück und Bankkonto prüfen',
+			'taker.criticalCodeDecision.actions.proceed' => 'Ich wurde NICHT belastet – fortfahren',
 			'twint.scanner.title' => ({required Object code}) => '${code}-Code scannen',
 			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.',
@@ -3457,14 +3489,14 @@ extension on TranslationsDe {
 			'twint.flow.takerExpired.markPaidDialog.content' => ({required Object code}) => 'Fahre nur fort, wenn du sicher bist, dass die ${code}-Zahlung in deiner Banking-App abgebucht wurde.\n\nDer Maker wird gebeten, den Empfang zu bestätigen, um die Bitcoin freizugeben. Bestreitet er ihn, wird ein Disput eröffnet und beide Parteien müssen dem Koordinator Nachweise liefern.',
 			'twint.flow.takerExpired.markPaidDialog.cancel' => 'Zurück',
 			'twint.flow.takerExpired.markPaidDialog.confirmButton' => 'Ja, ich habe bezahlt',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.takerExpired.cancelDialog.title' => 'Reservierung stornieren?',
 			'twint.flow.takerExpired.cancelDialog.content' => ({required Object code}) => 'Storniere nur, wenn du den ${code}-Code NICHT bezahlt hast.\n\nDas kann nicht rückgängig gemacht werden: falls die Zahlung doch durchging, kann der Koordinator NICHT garantieren, dass du die Sats erhältst.',
 			'twint.flow.takerExpired.cancelDialog.cancel' => 'Zurück',
 			'twint.flow.takerExpired.cancelDialog.confirmButton' => 'Ja, stornieren',
 			'twint.waitConfirmation.title' => 'Warte auf den Maker',
 			'twint.waitConfirmation.statusLabel' => ({required Object status}) => 'Angebotsstatus: ${status}',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'Warte auf Bestätigung des Makers: ${seconds} s',
 			'twint.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'Warte darauf, dass der Maker bestätigt, dass der ${code} korrekt ist. Verbleibende Zeit: ${seconds}s',
 			'twint.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'SEHR WICHTIG: Stelle sicher, dass du nur eine ${code}-Bestätigung über ${amount} ${currency} akzeptierst',

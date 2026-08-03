@@ -174,8 +174,8 @@ class CoordinatorService {
   /// primary (first) instrument when the category is null or unmapped. The
   /// fallback preserves pre-split behavior for legacy/older clients that omit a
   /// category on markets with a single effective instrument (BLIK, MB WAY) or
-  /// several identical ones (TWINT shop/online) — the old market-level scalars
-  /// always resolved to that instrument regardless of category.
+  /// TWINT — the old market-level scalars always resolved to that instrument
+  /// regardless of category.
   InstrumentSpec _instrumentForCategory(OfferCategory? category) =>
       _paymentSystem.instrumentFor(category) ??
       _paymentSystem.instruments.values.first;

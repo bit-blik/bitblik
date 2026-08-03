@@ -9,6 +9,7 @@ import 'package:bitblik_core/core.dart';
 import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../services/nostr_service.dart' show reservedOfferFromResult;
+import '../../widgets/critical_code_safety.dart';
 import '../../widgets/progress_indicators.dart'; // Import providers
 
 class TakerInvalidBlikScreen extends ConsumerStatefulWidget {
@@ -27,34 +28,61 @@ class _TakerInvalidBlikScreenState
 
   /// Shows an irreversible-action warning. Returns true only if the user
   /// explicitly confirms they were NOT charged and want to proceed.
-  Future<bool> _confirmNotCharged() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          icon: const Icon(
-            Icons.warning_amber_rounded,
-            color: Colors.orange,
-            size: 48,
+  Future<bool> _confirmNotCharged() => showCriticalCodeDecisionDialog(
+    context,
+    code: ref.read(selectedPaymentSystemProvider).localizedCodeLabel,
+  );
+
+  Future<void> _reportConflict(Offer offer) async {
+    if (!await _confirmDispute() || !mounted) return;
+    setState(() => _isLoading = true);
+    final apiService = ref.read(apiServiceProvider);
+    final userPublicKey = await ref.read(publicKeyProvider.future);
+
+    if (userPublicKey == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t.maker.confirmPayment.errors.missingHashOrKey),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
-          title: Text(t.taker.invalidBlik.confirmDialog.title),
-          content: Text(t.taker.invalidBlik.confirmDialog.content),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(t.taker.invalidBlik.confirmDialog.actions.cancel),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(t.taker.invalidBlik.confirmDialog.actions.proceed),
-            ),
-          ],
         );
-      },
-    );
-    return confirmed ?? false;
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
+
+    try {
+      Logger.log.d(
+        () =>
+            "[TakerInvalidBlikScreen] Reporting conflict for offer ${offer.id} by taker $userPublicKey",
+      );
+      await apiService.markBlikCharged(offer.id, offer.coordinatorPubkey);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t.taker.invalidBlik.feedback.conflictReportedSuccess),
+          backgroundColor: Colors.green,
+        ),
+      );
+      context.go(flowRoute, extra: offer.id);
+    } catch (e) {
+      Logger.log.d(
+        () => "[TakerInvalidBlikScreen] Error reporting conflict: $e",
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              t.taker.invalidBlik.errors.conflictReport(details: e.toString()),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   /// Confirms the user really was charged before opening a dispute.
@@ -150,7 +178,7 @@ class _TakerInvalidBlikScreenState
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () async {
-                        if (!await _confirmNotCharged()) {
+                        if (!await _confirmNotCharged() || !context.mounted) {
                           return;
                         }
                         Logger.log.d(
@@ -161,6 +189,7 @@ class _TakerInvalidBlikScreenState
                         final userPublicKey = await ref.read(
                           publicKeyProvider.future,
                         );
+                        if (!context.mounted) return;
 
                         final takerId = userPublicKey;
                         final apiService = ref.read(apiServiceProvider);
@@ -169,6 +198,7 @@ class _TakerInvalidBlikScreenState
                           takerId!,
                           offer.coordinatorPubkey,
                         );
+                        if (!context.mounted) return;
 
                         if (reservation.reservedAt != null ||
                             reservation.offer != null) {
@@ -181,6 +211,7 @@ class _TakerInvalidBlikScreenState
                           await ref
                               .read(activeOfferProvider.notifier)
                               .setActiveOffer(updatedOffer);
+                          if (!context.mounted) return;
 
                           context.go(flowRoute, extra: updatedOffer);
                         } else {
@@ -219,7 +250,8 @@ class _TakerInvalidBlikScreenState
                           _isLoading
                               ? null
                               : () async {
-                                if (!await _confirmNotCharged()) {
+                                if (!await _confirmNotCharged() ||
+                                    !context.mounted) {
                                   return;
                                 }
                                 setState(() {
@@ -229,6 +261,7 @@ class _TakerInvalidBlikScreenState
                                 final userPublicKey = await ref.read(
                                   publicKeyProvider.future,
                                 );
+                                if (!context.mounted) return;
 
                                 if (userPublicKey == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -260,26 +293,27 @@ class _TakerInvalidBlikScreenState
                                     userPublicKey,
                                     offer.coordinatorPubkey,
                                   );
+                                  if (!context.mounted) return;
 
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          t.reservations.feedback.cancelled,
-                                        ),
-                                        backgroundColor: Colors.green,
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        t.reservations.feedback.cancelled,
                                       ),
-                                    );
-                                    await ref
-                                        .read(activeOfferProvider.notifier)
-                                        .setActiveOffer(null);
-                                    context.go('/offers');
-                                  }
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  await ref
+                                      .read(activeOfferProvider.notifier)
+                                      .setActiveOffer(null);
+                                  if (!context.mounted) return;
+                                  context.go('/offers');
                                 } catch (e) {
                                   Logger.log.d(
                                     () =>
                                         "[TakerInvalidBlikScreen] Error canceling reservation: $e",
                                   );
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
@@ -325,140 +359,20 @@ class _TakerInvalidBlikScreenState
                                 ),
                               ),
                     ),
-                    const SizedBox(height: 25),
-                    Text(
-                      t.taker.invalidBlik.wereCharged,
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    ElevatedButton(
-                      onPressed:
-                          _isLoading
-                              ? null
-                              : () async {
-                                if (!await _confirmDispute()) {
-                                  return;
-                                }
-                                setState(() {
-                                  _isLoading = true;
-                                });
-                                final apiService = ref.read(apiServiceProvider);
-                                final userPublicKey = await ref.read(
-                                  publicKeyProvider.future,
-                                );
-
-                                if (userPublicKey == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        t
-                                            .maker
-                                            .confirmPayment
-                                            .errors
-                                            .missingHashOrKey,
-                                      ),
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.error,
-                                    ),
-                                  );
-                                  setState(() {
-                                    _isLoading = false;
-                                  });
-                                  return;
-                                }
-
-                                try {
-                                  Logger.log.d(
-                                    () =>
-                                        "[TakerInvalidBlikScreen] Reporting conflict for offer ${offer.id} by taker $userPublicKey",
-                                  );
-                                  await apiService.markBlikCharged(
-                                    offer.id,
-                                    offer.coordinatorPubkey,
-                                  );
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        t
-                                            .taker
-                                            .invalidBlik
-                                            .feedback
-                                            .conflictReportedSuccess,
-                                      ),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-
-                                  if (mounted) {
-                                    context.go(flowRoute, extra: offer.id);
-                                  }
-                                } catch (e) {
-                                  Logger.log.d(
-                                    () =>
-                                        "[TakerInvalidBlikScreen] Error reporting conflict: $e",
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        t.taker.invalidBlik.errors
-                                            .conflictReport(
-                                              details: e.toString(),
-                                            ),
-                                      ),
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.error,
-                                    ),
-                                  );
-                                } finally {
-                                  if (mounted) {
-                                    setState(() {
-                                      _isLoading = false;
-                                    });
-                                  }
-                                }
-                              },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                        foregroundColor: Colors.white,
-                      ),
-                      child:
-                          _isLoading
-                              ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                              : Text(
-                                t.taker.invalidBlik.actions.reportConflict,
-                              ),
-                    ),
-                    // const SizedBox(height: 20),
-                    // TextButton(
-                    //   onPressed: () async {
-                    //     // PILA no no no, we should cancel the reservation and go back to funded, TODO!!!!
-                    //     // await ref
-                    //     //     .read(activeOfferProvider.notifier)
-                    //     //     .setActiveOffer(null);
-                    //     context.go('/offers');
-                    //   },
-                    //   child: Text(t.common.actions.cancelAndReturnToOffers),
-                    // ),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: CriticalChargedActionBar(
+        actionKey: const ValueKey('invalid_blik_charged_action'),
+        prompt: t.taker.invalidBlik.wereCharged,
+        label: t.taker.invalidBlik.actions.reportConflict,
+        onPressed: _isLoading ? null : () => _reportConflict(offer),
+        isLoading: _isLoading,
       ),
     );
   }

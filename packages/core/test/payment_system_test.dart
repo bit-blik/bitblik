@@ -31,12 +31,14 @@ void main() {
     });
 
     test('twint: 5 digits, 5 min, CHF, maker-provided, generic engine', () {
-      final i = kTwint.instrumentFor(OfferCategory.shop)!;
+      final i = kTwint.instrumentFor(OfferCategory.online)!;
       expect(i.codeLength, 5);
       expect(i.validity, const Duration(minutes: 5));
       expect(kTwint.currency, 'CHF');
       expect(i.makerProvidesCode, isTrue);
       expect(i.flowId, isNotEmpty);
+      expect(kTwint.supportedCategories, [OfferCategory.online]);
+      expect(kTwint.hasCategoryChoice, isFalse);
     });
 
     test('instrument.validate enforces exact length and digits-only', () {

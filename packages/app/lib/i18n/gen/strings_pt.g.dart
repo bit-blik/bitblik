@@ -210,6 +210,7 @@ class _Translations$taker$pt extends Translations$taker$en {
 	@override late final _Translations$taker$roleSelection$pt roleSelection = _Translations$taker$roleSelection$pt._(_root);
 	@override late final _Translations$taker$progress$pt progress = _Translations$taker$progress$pt._(_root);
 	@override late final _Translations$taker$submitBlik$pt submitBlik = _Translations$taker$submitBlik$pt._(_root);
+	@override late final _Translations$taker$criticalCodeDecision$pt criticalCodeDecision = _Translations$taker$criticalCodeDecision$pt._(_root);
 }
 
 // Path: twint
@@ -1214,6 +1215,20 @@ class _Translations$taker$submitBlik$pt extends Translations$taker$submitBlik$en
 	@override late final _Translations$taker$submitBlik$validation$pt validation = _Translations$taker$submitBlik$validation$pt._(_root);
 	@override late final _Translations$taker$submitBlik$errors$pt errors = _Translations$taker$submitBlik$errors$pt._(_root);
 	@override late final _Translations$taker$submitBlik$details$pt details = _Translations$taker$submitBlik$details$pt._(_root);
+}
+
+// Path: taker.criticalCodeDecision
+class _Translations$taker$criticalCodeDecision$pt extends Translations$taker$criticalCodeDecision$en {
+	_Translations$taker$criticalCodeDecision$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Decisão crítica';
+	@override String explanation({required Object code}) => 'Já partilhou um código ${code} com o maker. Continuar pode substituir esse código, terminar a sua reserva e reabrir a oferta a outros takers.';
+	@override String get warningTitle => 'PODE PERDER OS SEUS FUNDOS';
+	@override String warningBody({required Object code}) => 'Se o seu banco debitou o pagamento ${code}, NÃO continue. O maker pode ter usado o seu código e, após esta ação, o coordenador poderá já não conseguir garantir o pagamento dos seus bitcoins.';
+	@override late final _Translations$taker$criticalCodeDecision$actions$pt actions = _Translations$taker$criticalCodeDecision$actions$pt._(_root);
 }
 
 // Path: twint.scanner
@@ -2339,6 +2354,17 @@ class _Translations$taker$submitBlik$details$pt extends Translations$taker$submi
 	@override String get youllReceive => 'Vai receber';
 }
 
+// Path: taker.criticalCodeDecision.actions
+class _Translations$taker$criticalCodeDecision$actions$pt extends Translations$taker$criticalCodeDecision$actions$en {
+	_Translations$taker$criticalCodeDecision$actions$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get cancel => 'Voltar e verificar o banco';
+	@override String get proceed => 'NÃO fui debitado — continuar';
+}
+
 // Path: twint.scanner.status
 class _Translations$twint$scanner$status$pt extends Translations$twint$scanner$status$en {
 	_Translations$twint$scanner$status$pt._(TranslationsPt root) : this._root = root, super.internal(root);
@@ -3399,6 +3425,12 @@ extension on TranslationsPt {
 			'taker.submitBlik.details.takerFee' => 'Taxa do taker',
 			'taker.submitBlik.details.status' => 'Estado',
 			'taker.submitBlik.details.youllReceive' => 'Vai receber',
+			'taker.criticalCodeDecision.title' => 'Decisão crítica',
+			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Já partilhou um código ${code} com o maker. Continuar pode substituir esse código, terminar a sua reserva e reabrir a oferta a outros takers.',
+			'taker.criticalCodeDecision.warningTitle' => 'PODE PERDER OS SEUS FUNDOS',
+			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Se o seu banco debitou o pagamento ${code}, NÃO continue. O maker pode ter usado o seu código e, após esta ação, o coordenador poderá já não conseguir garantir o pagamento dos seus bitcoins.',
+			'taker.criticalCodeDecision.actions.cancel' => 'Voltar e verificar o banco',
+			'taker.criticalCodeDecision.actions.proceed' => 'NÃO fui debitado — continuar',
 			'twint.scanner.title' => ({required Object code}) => 'Ler código ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente.',
@@ -3458,14 +3490,14 @@ extension on TranslationsPt {
 			'twint.flow.takerExpired.markPaidDialog.title' => 'Confirma que pagou?',
 			'twint.flow.takerExpired.markPaidDialog.content' => ({required Object code}) => 'Continue apenas se tiver a certeza de que o pagamento ${code} foi debitado na app do seu banco.\n\nO maker será convidado a confirmar a receção para desbloquear o bitcoin. Se negar, é aberta uma disputa e ambas as partes terão de fornecer provas ao coordenador.',
 			'twint.flow.takerExpired.markPaidDialog.cancel' => 'Voltar',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.takerExpired.markPaidDialog.confirmButton' => 'Sim, paguei',
 			'twint.flow.takerExpired.cancelDialog.title' => 'Cancelar a reserva?',
 			'twint.flow.takerExpired.cancelDialog.content' => ({required Object code}) => 'Cancele apenas se NÃO pagou o código ${code}.\n\nNão pode ser desfeito: se o pagamento tiver de facto passado, o coordenador NÃO poderá garantir que recebe os sats.',
 			'twint.flow.takerExpired.cancelDialog.cancel' => 'Voltar',
 			'twint.flow.takerExpired.cancelDialog.confirmButton' => 'Sim, cancelar',
 			'twint.waitConfirmation.title' => 'À espera do maker',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.statusLabel' => ({required Object status}) => 'Estado da oferta: ${status}',
 			'twint.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'À espera da confirmação do maker: ${seconds} s',
 			'twint.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'À espera que o maker confirme que o ${code} está correto. Tempo restante: ${seconds}s',

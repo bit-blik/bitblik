@@ -616,6 +616,15 @@ taker:
       status: "Status"
       youllReceive: "Otrzymasz"
 
+  criticalCodeDecision:
+    title: "Krytyczna decyzja"
+    explanation: "Udostępniłeś już kod ${code} sprzedającemu. Kontynuowanie może zastąpić ten kod, zakończyć Twoją rezerwację i ponownie udostępnić ofertę innym kupującym."
+    warningTitle: "MOŻESZ STRACIĆ SWOJE ŚRODKI"
+    warningBody: "Jeśli bank obciążył Cię płatnością ${code}, NIE kontynuuj. Sprzedający mógł użyć Twojego kodu, a po tej czynności koordynator może już nie móc zagwarantować wypłaty bitcoinów."
+    actions:
+      cancel: "Wróć i sprawdź konto bankowe"
+      proceed: "NIE obciążono mnie — kontynuuj"
+
 twint:
   scanner:
     title: "Skanuj kod ${code}"
@@ -806,7 +815,7 @@ twint:
     message: Twoja płatność została przetworzona pomyślnie.
     actions:
       goHome: Przejdź do strony głównej
-  
+
   invalidBlik:
     title: Nieprawidłowy Kod ${code}
     message: Maker Odrzucił Kod ${code}

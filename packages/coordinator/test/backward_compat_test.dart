@@ -56,10 +56,9 @@ void main() {
 
     test('TWINT still validates the maker code even with a null category',
         () async {
-      // TWINT has two instruments (shop, online). An old client that omits the
-      // category must still get its maker-provided code validated — the
-      // coordinator falls back to the primary instrument. An invalid code is
-      // rejected before any rate/backend work.
+      // An old client that omits the category must still get its maker-provided
+      // code validated — the coordinator falls back to the sole online
+      // instrument. An invalid code is rejected before any rate/backend work.
       final svc = serviceFor('twint');
       await svc.init();
       expect(
@@ -70,6 +69,27 @@ void main() {
           blikCode: 'not-a-code',
         ),
         throwsA(isA<Exception>()),
+      );
+    });
+
+    test('TWINT rejects the disabled shop category', () async {
+      final svc = serviceFor('twint');
+      await svc.init();
+      expect(
+        () => svc.initiateOfferFiat(
+          fiatAmount: 50,
+          makerId: maker,
+          fiatCurrency: 'CHF',
+          category: OfferCategory.shop,
+          blikCode: '12345',
+        ),
+        throwsA(
+          predicate(
+            (error) => error.toString().contains(
+                  'Unsupported category shop for twint',
+                ),
+          ),
+        ),
       );
     });
   });

@@ -210,6 +210,7 @@ class _Translations$taker$pl extends Translations$taker$en {
 	@override late final _Translations$taker$roleSelection$pl roleSelection = _Translations$taker$roleSelection$pl._(_root);
 	@override late final _Translations$taker$progress$pl progress = _Translations$taker$progress$pl._(_root);
 	@override late final _Translations$taker$submitBlik$pl submitBlik = _Translations$taker$submitBlik$pl._(_root);
+	@override late final _Translations$taker$criticalCodeDecision$pl criticalCodeDecision = _Translations$taker$criticalCodeDecision$pl._(_root);
 }
 
 // Path: twint
@@ -1209,6 +1210,20 @@ class _Translations$taker$submitBlik$pl extends Translations$taker$submitBlik$en
 	@override late final _Translations$taker$submitBlik$validation$pl validation = _Translations$taker$submitBlik$validation$pl._(_root);
 	@override late final _Translations$taker$submitBlik$errors$pl errors = _Translations$taker$submitBlik$errors$pl._(_root);
 	@override late final _Translations$taker$submitBlik$details$pl details = _Translations$taker$submitBlik$details$pl._(_root);
+}
+
+// Path: taker.criticalCodeDecision
+class _Translations$taker$criticalCodeDecision$pl extends Translations$taker$criticalCodeDecision$en {
+	_Translations$taker$criticalCodeDecision$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Krytyczna decyzja';
+	@override String explanation({required Object code}) => 'Udostępniłeś już kod ${code} sprzedającemu. Kontynuowanie może zastąpić ten kod, zakończyć Twoją rezerwację i ponownie udostępnić ofertę innym kupującym.';
+	@override String get warningTitle => 'MOŻESZ STRACIĆ SWOJE ŚRODKI';
+	@override String warningBody({required Object code}) => 'Jeśli bank obciążył Cię płatnością ${code}, NIE kontynuuj. Sprzedający mógł użyć Twojego kodu, a po tej czynności koordynator może już nie móc zagwarantować wypłaty bitcoinów.';
+	@override late final _Translations$taker$criticalCodeDecision$actions$pl actions = _Translations$taker$criticalCodeDecision$actions$pl._(_root);
 }
 
 // Path: twint.scanner
@@ -2300,6 +2315,17 @@ class _Translations$taker$submitBlik$details$pl extends Translations$taker$submi
 	@override String get youllReceive => 'Otrzymasz';
 }
 
+// Path: taker.criticalCodeDecision.actions
+class _Translations$taker$criticalCodeDecision$actions$pl extends Translations$taker$criticalCodeDecision$actions$en {
+	_Translations$taker$criticalCodeDecision$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get cancel => 'Wróć i sprawdź konto bankowe';
+	@override String get proceed => 'NIE obciążono mnie — kontynuuj';
+}
+
 // Path: twint.scanner.status
 class _Translations$twint$scanner$status$pl extends Translations$twint$scanner$status$en {
 	_Translations$twint$scanner$status$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -3344,6 +3370,12 @@ extension on TranslationsPl {
 			'taker.submitBlik.details.takerFee' => 'Opłata Taker',
 			'taker.submitBlik.details.status' => 'Status',
 			'taker.submitBlik.details.youllReceive' => 'Otrzymasz',
+			'taker.criticalCodeDecision.title' => 'Krytyczna decyzja',
+			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Udostępniłeś już kod ${code} sprzedającemu. Kontynuowanie może zastąpić ten kod, zakończyć Twoją rezerwację i ponownie udostępnić ofertę innym kupującym.',
+			'taker.criticalCodeDecision.warningTitle' => 'MOŻESZ STRACIĆ SWOJE ŚRODKI',
+			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Jeśli bank obciążył Cię płatnością ${code}, NIE kontynuuj. Sprzedający mógł użyć Twojego kodu, a po tej czynności koordynator może już nie móc zagwarantować wypłaty bitcoinów.',
+			'taker.criticalCodeDecision.actions.cancel' => 'Wróć i sprawdź konto bankowe',
+			'taker.criticalCodeDecision.actions.proceed' => 'NIE obciążono mnie — kontynuuj',
 			'twint.scanner.title' => ({required Object code}) => 'Skanuj kod ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Ustaw kod QR ${code} i tekst z kwotą wewnątrz kadru kamery.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Kod ${code} nie został jeszcze rozpoznany. Trzymaj QR i kwotę w kadrze albo wypełnij formularz ręcznie.',
@@ -3419,14 +3451,14 @@ extension on TranslationsPl {
 			'twint.waitConfirmation.categoryReminder.atm' => 'Przypomnienie dla oferty ATM: Twój bank może nadal poprosić o zatwierdzenie dodatkowej opłaty bankomatowej ponad główną kwotę.',
 			'twint.waitConfirmation.categoryReminder.ecommerce' => 'Przypomnienie dla zamówienia online: jeśli sprzedawca wyśle automatyczny zwrot na Twoje konto, skontaktuj się z koordynatorem i oddaj środki.',
 			'twint.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Czekamy, aż twórca oferty otrzyma Twój kod ${code}...',
+			_ => null,
+		} ?? switch (path) {
 			'twint.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Twórca oferty otrzymał Twój kod ${code}',
 			'twint.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => 'Minął termin ważności kodu ${code} ${minutes}m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.',
 			'twint.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => 'Minął termin ważności kodu ${code} ${minutes}m, ale wystawca nie otrzymał kodu ${code}. Możesz wysłać nowy kod ${code} lub anulować.',
 			'twint.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Wyślij nowy kod ${code}',
 			'twint.waitConfirmation.navigatedHome' => 'Przeniesiono na stronę główną.',
 			'twint.waitConfirmation.expiredTitle' => ({required Object code}) => 'Kod ${code} wygasł',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.expiredWarning' => ({required Object code}) => 'Twórca oferty nie otrzymał kodu ${code}, więc nie mógł go użyć.',
 			'twint.waitConfirmation.expiredRelistCountdownLabel' => 'Koniec rezerwacji za',
 			'twint.waitConfirmation.expiredSentWarning' => 'Twórca oferty jeszcze nie potwierdził płatności. Co chcesz zrobić?',

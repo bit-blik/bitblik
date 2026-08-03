@@ -448,7 +448,6 @@ const PaymentSystem kTwint = PaymentSystem(
   currencySymbol: 'CHF',
   discoveryPubkeyHex: kTwintPubkeyHex,
   instruments: {
-    OfferCategory.shop: _twintInstrument,
     OfferCategory.online: _twintInstrument,
   },
 );
