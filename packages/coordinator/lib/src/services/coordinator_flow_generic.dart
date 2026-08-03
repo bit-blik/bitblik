@@ -189,6 +189,13 @@ class GenericOfferFlow {
       }
       for (final t in s.transitions) {
         final label = '${s.name} -[${t.event ?? t.trigger.name}]-> ${t.target}';
+        if (t.trigger == FlowTriggerType.userAction &&
+            t.actor != FlowActor.maker &&
+            t.actor != FlowActor.taker &&
+            t.actor != FlowActor.coordinator) {
+          problems.add('$label: every user action must declare '
+              'by: maker|taker|coordinator');
+        }
         checkTransitionActions(label, t.actions, s, t);
         if (t.trigger == FlowTriggerType.timeout &&
             t.durationSeconds == null &&
@@ -345,7 +352,10 @@ class GenericOfferFlow {
         return coordinatorPubkey != null && userPubkey == coordinatorPubkey;
       case FlowActor.server:
       case null:
-        return true;
+        // Internal actors are never valid for an RPC-backed user transition.
+        // Startup validation rejects such definitions; keep the runtime guard
+        // fail-closed as defense in depth.
+        return false;
     }
   }
 

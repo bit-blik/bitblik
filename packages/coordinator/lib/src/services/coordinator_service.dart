@@ -259,6 +259,10 @@ class CoordinatorService {
   /// generic YAML flow executor.
   late final FlowEngine _flowEngine;
 
+  // Test-only engine override for exercising deep startup validation against
+  // deliberately malformed definitions.
+  final FlowEngine? _flowEngineOverride;
+
   // Test-only override for the payment method id, bypassing `.env`.
   final String? _paymentSystemIdOverride;
 
@@ -455,11 +459,13 @@ class CoordinatorService {
       http.Client? httpClient,
       NostrService? nostrService,
       TelegramService? telegramServiceForTest,
-      String? paymentSystemIdForTest})
+      String? paymentSystemIdForTest,
+      FlowEngine? flowEngineForTest})
       : _clock = clock ?? const Clock(),
         _httpClient = httpClient ?? http.Client(),
         _nostrService = nostrService,
-        _paymentSystemIdOverride = paymentSystemIdForTest {
+        _paymentSystemIdOverride = paymentSystemIdForTest,
+        _flowEngineOverride = flowEngineForTest {
     // Initialize dotenv
     _env = DotEnv(includePlatformEnvironment: true)..load();
 
@@ -619,18 +625,22 @@ class CoordinatorService {
     final method = _paymentSystem.id;
     final flowId = _primaryInstrument.flowId;
 
-    try {
-      final engine = await FlowLoader.load(flowId);
-      if (engine == null) {
+    if (_flowEngineOverride != null) {
+      _flowEngine = _flowEngineOverride;
+    } else {
+      try {
+        final engine = await FlowLoader.load(flowId);
+        if (engine == null) {
+          throw StateError(
+              'FLOW ENGINE: flow "$flowId" could not be located for method '
+              '"$method". Refusing to start.');
+        }
+        _flowEngine = engine;
+      } catch (e) {
         throw StateError(
-            'FLOW ENGINE: flow "$flowId" could not be located for method '
-            '"$method". Refusing to start.');
+            'FLOW ENGINE: "$flowId.yml" failed to load or validate for method '
+            '"$method": $e');
       }
-      _flowEngine = engine;
-    } catch (e) {
-      throw StateError(
-          'FLOW ENGINE: "$flowId.yml" failed to load or validate for method '
-          '"$method": $e');
     }
 
     // Deep self-check beyond structural parse: effects, timer durations,
