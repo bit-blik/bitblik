@@ -56,7 +56,7 @@ class DatabaseService {
   bool _stateHistoryTableReady = false;
 
   /// When true, every offer status change is appended to `offer_state_history`.
-  /// Enabled for FLOW_MODE generic (where it replaces the log_audit trail).
+  /// Enabled for the generic YAML flow, where it replaces the log_audit trail.
   bool recordStateHistory = false;
 
   DatabaseService() {
@@ -116,7 +116,6 @@ class DatabaseService {
         maker_fees BIGINT NOT NULL, -- Renamed
         maker_pubkey TEXT NOT NULL,
         taker_pubkey TEXT,
-        taker_lightning_address TEXT,
         taker_invoice TEXT,
         taker_invoice_fees BIGINT,
         blik_code TEXT,
@@ -141,6 +140,12 @@ class DatabaseService {
         premium_percent NUMERIC NOT NULL DEFAULT 0,
         bank TEXT
       );
+    ''');
+    // LNURL payout was removed: drop the taker's Lightning-address column on
+    // existing databases (fresh schemas above no longer create it).
+    await _connection!.execute('''
+      ALTER TABLE offers
+      DROP COLUMN IF EXISTS taker_lightning_address;
     ''');
     await _connection!.execute('''
       ALTER TABLE offers
@@ -328,7 +333,8 @@ class DatabaseService {
           offerId: offerId, fromState: fromState, toState: toState, meta: meta);
 
   /// Chronological transition history for an offer (oldest first).
-  Future<List<Map<String, dynamic>>> getOfferStateHistory(String offerId) async {
+  Future<List<Map<String, dynamic>>> getOfferStateHistory(
+      String offerId) async {
     if (_connection == null) throw StateError('Database not connected.');
     final rows = await _connection!.query(
       '''
@@ -540,11 +546,9 @@ class DatabaseService {
     return results.map(_mapRowToOffer).toList();
   }
 
-  // ─── Generic (yaml-driven) flow support ─────────────────────────────────
-  // These operate on raw status strings instead of [OfferStatus], for flows
-  // whose states are not enum-bound (see [[project-dual-flow-engine]]). They
-  // are intentionally dumb: the GenericFlowController decides which fields to
-  // set/clear; the DB just applies them.
+  // ─── YAML flow persistence ──────────────────────────────────────────
+  // These operate on raw state strings because flow states are not enum-bound.
+  // GenericOfferFlow decides which fields to set/clear; the DB applies them.
 
   Future<List<Offer>> getOffersByRawStatus(String status,
       {int limit = 1000, int offset = 0}) async {
@@ -586,7 +590,6 @@ class DatabaseService {
     String? takerPubkey,
     String? code,
     String? takerInvoice,
-    String? takerLightningAddress,
     DateTime? reservedAt,
     DateTime? codeReceivedAt,
     DateTime? takerChargedAt,
@@ -626,7 +629,6 @@ class DatabaseService {
         // In maker-provides-code flows (preserveCodeOnClear) the code and its
         // issued-at stamp belong to the maker and survive the clear.
         if (code == null && !preserveCodeOnClear) 'blik_code = NULL',
-        if (takerLightningAddress == null) 'taker_lightning_address = NULL',
         if (takerInvoice == null) 'taker_invoice = NULL',
         if (takerInvoiceFees == null) 'taker_invoice_fees = NULL',
         if (codeReceivedAt == null && !preserveCodeOnClear)
@@ -640,10 +642,6 @@ class DatabaseService {
     if (code != null) put('blik_code', 'blik_code', code);
     if (takerInvoice != null) {
       put('taker_invoice', 'taker_invoice', takerInvoice);
-    }
-    if (takerLightningAddress != null) {
-      put('taker_lightning_address', 'taker_lightning_address',
-          takerLightningAddress);
     }
     if (reservedAt != null) {
       put('reserved_at', 'reserved_at', reservedAt.toUtc());
@@ -710,313 +708,6 @@ class DatabaseService {
       substitutionValues: params,
     );
     return result.affectedRowCount == 1;
-  }
-
-  Future<bool> updateTakerInvoice(String id, String takerInvoice) async {
-    if (_connection == null) throw StateError('Database not connected.');
-    final now = DateTime.now().toUtc();
-    final affectedRows = await _connection!.execute(
-      'UPDATE offers SET taker_invoice = @taker_invoice, updated_at = @updated_at WHERE id = @id',
-      substitutionValues: {
-        'id': id,
-        'taker_invoice': takerInvoice,
-        'updated_at': now,
-      },
-    );
-    return affectedRows == 1;
-  }
-
-  Future<bool> updateTakerInvoiceFees(String id, int fees) async {
-    if (_connection == null) throw StateError('Database not connected.');
-    final now = DateTime.now().toUtc();
-    final affectedRows = await _connection!.execute(
-      'UPDATE offers SET taker_invoice_fees = @fees, updated_at = @updated_at WHERE id = @id',
-      substitutionValues: {
-        'id': id,
-        'fees': fees,
-        'updated_at': now,
-      },
-    );
-    return affectedRows == 1;
-  }
-
-  Future<bool> updateOfferStatus(
-      // Return type back to bool
-      String id,
-      OfferStatus newStatus,
-      {String? takerPubkey,
-      String? blikCode,
-      String? takerInvoice,
-      String? takerLightningAddress,
-      DateTime? reservedAt,
-      DateTime? blikReceivedAt,
-      DateTime? takerChargedAt,
-      DisputeEscalationReason? disputeEscalationReason,
-      int? takerFees,
-      String? failureReason,
-      StateTransitionMeta? transitionMeta}) async {
-    return _updateOfferStatusInternal(
-      id,
-      newStatus,
-      takerPubkey: takerPubkey,
-      blikCode: blikCode,
-      takerInvoice: takerInvoice,
-      takerLightningAddress: takerLightningAddress,
-      reservedAt: reservedAt,
-      blikReceivedAt: blikReceivedAt,
-      takerChargedAt: takerChargedAt,
-      disputeEscalationReason: disputeEscalationReason,
-      takerFees: takerFees,
-      failureReason: failureReason,
-      transitionMeta: transitionMeta,
-    );
-  }
-
-  Future<bool> updateOfferStatusIfCurrentStatus(String id,
-      OfferStatus newStatus, List<OfferStatus> expectedCurrentStatuses,
-      {String? takerPubkey,
-      String? blikCode,
-      String? takerInvoice,
-      String? takerLightningAddress,
-      DateTime? reservedAt,
-      DateTime? blikReceivedAt,
-      DateTime? takerChargedAt,
-      DisputeEscalationReason? disputeEscalationReason,
-      int? takerFees,
-      String? failureReason,
-      String? expectedTakerPubkey,
-      StateTransitionMeta? transitionMeta}) async {
-    return _updateOfferStatusInternal(
-      id,
-      newStatus,
-      takerPubkey: takerPubkey,
-      blikCode: blikCode,
-      takerInvoice: takerInvoice,
-      takerLightningAddress: takerLightningAddress,
-      reservedAt: reservedAt,
-      blikReceivedAt: blikReceivedAt,
-      takerChargedAt: takerChargedAt,
-      disputeEscalationReason: disputeEscalationReason,
-      takerFees: takerFees,
-      failureReason: failureReason,
-      expectedCurrentStatuses: expectedCurrentStatuses,
-      expectedTakerPubkey: expectedTakerPubkey,
-      transitionMeta: transitionMeta,
-    );
-  }
-
-  Future<bool> _updateOfferStatusInternal(String id, OfferStatus newStatus,
-      {String? takerPubkey,
-      String? blikCode,
-      String? takerInvoice,
-      String? takerLightningAddress,
-      DateTime? reservedAt,
-      DateTime? blikReceivedAt,
-      DateTime? takerChargedAt,
-      DisputeEscalationReason? disputeEscalationReason,
-      int? takerFees,
-      String? failureReason,
-      List<OfferStatus>? expectedCurrentStatuses,
-      String? expectedTakerPubkey,
-      StateTransitionMeta? transitionMeta}) async {
-    // Renamed parameter
-    // Added takerFees
-    if (_connection == null) throw StateError('Database not connected.');
-    final now = DateTime.now().toUtc(); // Keep 'now' for updated_at
-    Map<String, dynamic> params = {
-      'id': id,
-      'status': newStatus.name,
-      'updated_at': now,
-    };
-    List<String> setClauses = ['status = @status', 'updated_at = @updated_at'];
-
-    switch (newStatus) {
-      case OfferStatus.reserved:
-        if (takerPubkey == null)
-          throw ArgumentError('takerPubkey required for reserved status');
-        if (reservedAt == null)
-          throw ArgumentError(
-              'reservedAt required for reserved status'); // Ensure timestamp is passed
-        params['taker_pubkey'] = takerPubkey;
-        params['reserved_at'] = reservedAt.toUtc(); // Use passed timestamp
-        setClauses.add('taker_pubkey = @taker_pubkey');
-        setClauses.add('reserved_at = @reserved_at');
-        setClauses.add('taker_charged_at = NULL');
-        setClauses.add('dispute_at = NULL');
-        setClauses.add('dispute_escalation_reason = NULL');
-        break;
-      case OfferStatus.blikReceived:
-        if (blikCode == null)
-          throw ArgumentError('blikCode required for blikReceived status');
-        if (takerInvoice == null || takerInvoice.trim().isEmpty) {
-          throw ArgumentError('takerInvoice required for blikReceived status');
-        }
-        if (blikReceivedAt == null)
-          throw ArgumentError(
-              'blikReceivedAt required for blikReceived status'); // Ensure timestamp is passed
-        if (takerLightningAddress == null) {
-          setClauses.add('taker_lightning_address = NULL');
-        } else {
-          params['taker_lightning_address'] = takerLightningAddress;
-          setClauses.add('taker_lightning_address = @taker_lightning_address');
-        }
-        params['blik_code'] = blikCode;
-        params['taker_invoice'] = takerInvoice;
-        params['blik_received_at'] =
-            blikReceivedAt.toUtc(); // Use passed timestamp
-        setClauses.add('blik_code = @blik_code');
-        setClauses.add('taker_invoice = @taker_invoice');
-        setClauses.add('blik_received_at = @blik_received_at');
-        break;
-      case OfferStatus.makerConfirmed:
-        params['maker_confirmed_at'] = now;
-        setClauses.add('maker_confirmed_at = @maker_confirmed_at');
-        break;
-      case OfferStatus.settled:
-        params['settled_at'] = now;
-        setClauses.add('settled_at = @settled_at');
-        break;
-      case OfferStatus.takerPaid:
-        if (takerFees == null) {
-          // Renamed check
-          // Optionally throw an error, or just log a warning if fees are expected
-          AppLogger.info(
-              'Warning: Updating status to takerPaid without providing takerFees for offer $id',
-              offerId: id);
-        }
-        params['taker_paid_at'] = now;
-        params['taker_fees'] = takerFees; // Renamed parameter and column
-        setClauses.add('taker_paid_at = @taker_paid_at');
-        setClauses.add('taker_fees = @taker_fees'); // Renamed column
-        break;
-      case OfferStatus.funded: // Explicitly handle reverting to funded
-      case OfferStatus.expired:
-      case OfferStatus.cancelled: // Also clear fields when cancelling
-        setClauses.add('taker_pubkey = NULL');
-        setClauses.add('reserved_at = NULL');
-        setClauses.add('blik_code = NULL');
-        setClauses.add('taker_lightning_address = NULL');
-        setClauses.add('taker_invoice = NULL');
-        setClauses.add('taker_invoice_fees = NULL');
-        setClauses.add('blik_received_at = NULL');
-        setClauses.add('taker_charged_at = NULL');
-        setClauses.add('dispute_at = NULL');
-        setClauses.add('dispute_escalation_reason = NULL');
-        break;
-      case OfferStatus.takerPaymentFailed:
-        if (failureReason != null) {
-          params['taker_payment_failure_reason'] = failureReason;
-          setClauses.add(
-              'taker_payment_failure_reason = @taker_payment_failure_reason');
-        }
-        break;
-      case OfferStatus.invalidBlik: // Add case for invalidBlik
-      case OfferStatus.conflict: // Add case for conflict
-        // No specific fields to update/clear when moving TO these states
-        break;
-      case OfferStatus.dispute:
-        // Record when the offer entered dispute. COALESCE preserves the first
-        // value if the status is ever re-applied.
-        params['dispute_at'] = now;
-        setClauses.add('dispute_at = COALESCE(dispute_at, @dispute_at)');
-        if (disputeEscalationReason != null) {
-          params['dispute_escalation_reason'] = disputeEscalationReason.name;
-          setClauses.add(
-              'dispute_escalation_reason = COALESCE(dispute_escalation_reason, @dispute_escalation_reason)');
-        }
-        break;
-      default:
-        break;
-    }
-
-    if (takerChargedAt != null) {
-      params['taker_charged_at'] = takerChargedAt.toUtc();
-      setClauses.add(
-          'taker_charged_at = COALESCE(taker_charged_at, @taker_charged_at)');
-    }
-
-    // AppLogger.info(
-    //     '[DatabaseService.updateOfferStatus] Executing update for offer $id with status $newStatus. Params: $params',
-    //     offerId: id);
-    // AppLogger.info(
-    //     '[DatabaseService.updateOfferStatus] SQL: UPDATE offers SET ${setClauses.join(', ')} WHERE id = @id');
-
-    final whereClauses = ['id = @id'];
-    if (expectedCurrentStatuses != null && expectedCurrentStatuses.isNotEmpty) {
-      params['expected_current_statuses'] =
-          expectedCurrentStatuses.map((status) => status.name).toList();
-      whereClauses
-          .add('status = ANY(CAST(@expected_current_statuses AS TEXT[]))');
-    }
-    if (expectedTakerPubkey != null) {
-      // Guards ABA races on taker-scoped transitions: the status can cycle
-      // back to the expected value (e.g. reserved -> funded -> reserved) with
-      // a different taker between the caller's read and this write. Status
-      // alone cannot detect that.
-      params['expected_taker_pubkey'] = expectedTakerPubkey;
-      whereClauses.add('taker_pubkey = @expected_taker_pubkey');
-    }
-
-    // Use query() (extended protocol) rather than execute() (simple protocol).
-    // execute() does naive textual substitution and renders a List as an
-    // unquoted postgres array literal `{funded}`, producing
-    // `CAST({funded} AS TEXT[])` -> 42601 syntax error at or near "{".
-    // query() binds the array as a typed parameter correctly.
-    if (recordStateHistory) {
-      final result = await _connection!.query(
-        'UPDATE offers AS o SET ${setClauses.join(', ')} '
-        'FROM (SELECT status AS old_status FROM offers WHERE id = @id) AS prev '
-        'WHERE ${whereClauses.join(' AND ')} RETURNING prev.old_status',
-        substitutionValues: params,
-      );
-      final ok = result.affectedRowCount == 1;
-      if (ok) {
-        await _recordStateTransition(
-          offerId: id,
-          fromState: result.first.first as String?,
-          toState: newStatus.name,
-          meta: transitionMeta,
-        );
-      }
-      return ok;
-    }
-    final result = await _connection!.query(
-      'UPDATE offers SET ${setClauses.join(', ')} WHERE ${whereClauses.join(' AND ')}',
-      substitutionValues: params,
-    );
-    // Return bool indicating success
-    return result.affectedRowCount == 1;
-  }
-
-  // Cancel an offer (set status to cancelled) only if it's currently funded
-  Future<bool> cancelOffer(String id, String makerPubkey) async {
-    if (_connection == null) throw StateError('Database not connected.');
-    final now = DateTime.now().toUtc();
-    final affectedRows = await _connection!.execute(
-      '''
-         UPDATE offers
-         SET status = @newStatus,
-             updated_at = @updated_at,
-             taker_pubkey = NULL,
-             reserved_at = NULL,
-             blik_code = NULL,
-             taker_lightning_address = NULL,
-             taker_invoice = NULL,
-             taker_invoice_fees = NULL,
-             blik_received_at = NULL
-         WHERE id = @id
-           AND maker_pubkey = @makerPubkey
-           AND status = @requiredStatus
-       ''',
-      substitutionValues: {
-        'id': id,
-        'makerPubkey': makerPubkey,
-        'newStatus': OfferStatus.cancelled.name,
-        'requiredStatus': OfferStatus.funded.name,
-        'updated_at': now,
-      },
-    );
-    return affectedRows == 1;
   }
 
   // Fetch active offers where the user is either maker or taker
@@ -1112,7 +803,6 @@ class DatabaseService {
       fiatAmount: double.parse(map['fiat_amount']),
       fiatCurrency: map['fiat_currency'] ?? '?',
       takerPubkey: map['taker_pubkey'],
-      takerLightningAddress: map['taker_lightning_address'],
       takerInvoice: map['taker_invoice'],
       blikCode: map['blik_code'],
       updatedAt: (map['updated_at'] as DateTime?)?.toLocal(),

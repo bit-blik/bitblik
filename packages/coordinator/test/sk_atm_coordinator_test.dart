@@ -1,14 +1,12 @@
 import 'package:bitblik_core/core.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
-import 'package:bitblik_coordinator/src/models/cancel_invoice_result.dart';
-import 'package:bitblik_coordinator/src/services/database_service.dart';
 import 'package:bitblik_coordinator/src/services/telegram_service.dart';
 import 'package:clock/clock.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
-import 'coordinator_service_test.mocks.dart';
+import 'test_mocks.mocks.dart';
 
 class _FakeTelegramService extends TelegramService {
   _FakeTelegramService()
@@ -49,11 +47,11 @@ void main() {
         telegramServiceForTest: _FakeTelegramService(),
         paymentSystemIdForTest: 'sk',
       );
-      await svc.init(); // loads + validates sk_atm.yml (proves $code_validity ok)
+      await svc
+          .init(); // loads + validates sk_atm.yml (proves $code_validity ok)
     });
 
-    test('runs generic and handles the pull-style events', () {
-      expect(svc.isGenericFlow, isTrue);
+    test('loads the YAML flow and handles the pull-style events', () {
       expect(svc.paymentSystem.id, 'sk');
       expect(svc.flow.handlesRpc('reserve_offer'), isTrue);
       expect(svc.flow.handlesRpc('submit_blik'), isTrue);
@@ -175,7 +173,6 @@ void main() {
           settledAt: anyNamed('settledAt'),
           takerPaidAt: anyNamed('takerPaidAt'),
           takerInvoice: anyNamed('takerInvoice'),
-          takerLightningAddress: anyNamed('takerLightningAddress'),
           code: anyNamed('code'),
           codeReceivedAt: anyNamed('codeReceivedAt'),
           disputeAt: anyNamed('disputeAt'),

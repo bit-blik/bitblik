@@ -2,6 +2,7 @@
 - feat: support Slovakian payment system ATM for 3 banks (Tatra, SLSP, VUB)
 - feat: add SK translation
 - feat: support NFC reading on LNURL lightning addresses and adding wallet
+- fix: providing a new invoice for paying out the taker doesn't get stored
 
 ## [0.9.0] - 2026-07-08
 - feat: support TWINT Swiss payment system

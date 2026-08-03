@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:math';
+import 'dart:io';
 
 import 'package:bip340/bip340.dart' as bip340;
 import 'package:ndk/ndk.dart';
@@ -13,6 +13,10 @@ import '../logging/app_logger.dart';
 /// Service to handle Nostr communication for the coordinator
 /// Implements info replaceable events and NIP-44 encrypted request/response
 class NostrService {
+  /// Where a freshly generated coordinator key is persisted (owner-only) when
+  /// no `NOSTR_PRIVATE_KEY` is configured, so the identity survives restarts.
+  static const String _generatedKeyFilePath = 'coordinator_private_key.hex';
+
   final CoordinatorService _coordinatorService;
   late final Ndk _ndk;
   late final MemCacheManager _cacheManager;
@@ -149,36 +153,53 @@ class NostrService {
       ),
     );
 
-    // Generate or load coordinator keys
+    // Generate or load coordinator keys. Precedence: explicit env key, then
+    // the generated-key file from a previous run (keeps the identity stable
+    // across restarts), then a fresh key.
     if (privateKey.isNotEmpty) {
       final decodedKey = _decodeNsecKey(privateKey);
       if (decodedKey == null) {
         throw Exception(
             'Invalid private key format. Use hex or nsec1... format.');
       }
-
+      // Fail fast on a malformed or out-of-range scalar instead of signing
+      // with a silently reduced key.
+      final validatedKey = requireValidSecp256k1PrivateKeyHex(decodedKey);
       _signer = Bip340EventSigner(
-        privateKey: decodedKey,
-        publicKey: bip340.getPublicKey(decodedKey),
+        privateKey: validatedKey,
+        publicKey: bip340.getPublicKey(validatedKey),
       );
     } else {
-      // Generate new keys
-      final random = Random.secure();
-      final privateKeyBytes =
-          List<int>.generate(32, (_) => random.nextInt(256));
-      final privateKeyHex = privateKeyBytes
-          .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-          .join('');
-
+      final keyFile = File(_generatedKeyFilePath);
+      String? fileKey;
+      if (await keyFile.exists()) {
+        final raw = (await keyFile.readAsString()).trim();
+        // Throws on a corrupted/tampered key file — better to refuse to
+        // start than to sign with a bad key.
+        fileKey = requireValidSecp256k1PrivateKeyHex(raw);
+      }
+      final privateKeyHex = fileKey ?? generateSecp256k1PrivateKeyHex();
       _signer = Bip340EventSigner(
         privateKey: privateKeyHex,
         publicKey: bip340.getPublicKey(privateKeyHex),
       );
-
-      AppLogger.info(
-          'Generated new coordinator keys. Private key: $privateKeyHex');
-      AppLogger.info(
-          'Store this private key in your .env file as NOSTR_PRIVATE_KEY');
+      if (fileKey == null) {
+        // Persist with owner-only permissions so the identity survives
+        // restarts. NEVER log the private key — logs are shipped to the
+        // audit DB and log aggregators.
+        await keyFile.writeAsString('$privateKeyHex\n');
+        if (!Platform.isWindows) {
+          await Process.run('chmod', ['600', keyFile.path]);
+        }
+        AppLogger.info('Generated new coordinator keypair. '
+            'Public key: ${_signer.getPublicKey()}');
+        AppLogger.info(
+            'Private key stored in ${keyFile.path} (mode 600). To pin the '
+            'identity explicitly, set NOSTR_PRIVATE_KEY in .env instead.');
+      } else {
+        AppLogger.info('Loaded coordinator key from ${keyFile.path}. '
+            'Public key: ${_signer.getPublicKey()}');
+      }
     }
 
     // Log the coordinator key into NDK accounts so the userRelayLists usecase
@@ -643,8 +664,8 @@ class NostrService {
       {String? clientVersion}) async {
     try {
       // Offer-action RPCs (the state machine) are owned by the active flow
-      // strategy — generic (yaml-driven) or legacy enum. Query/info/payout RPCs
-      // fall through to the shared handlers below.
+      // strategy — YAML-driven generic flow. Query/info RPCs fall through to
+      // the shared handlers below.
       if (_coordinatorService.flow.handlesRpc(method)) {
         return await _coordinatorService.flow.handleRpc(
             method, params, userPubkey,
@@ -760,36 +781,6 @@ class NostrService {
                   })
               .toList();
           return {'offers': finishedList};
-
-        case kRpcUpdateTakerInvoice:
-          final offerId = params['offer_id'] as String?;
-          final bolt11 = params['bolt11'] as String?;
-
-          if (offerId == null || bolt11 == null) {
-            throw Exception('Missing required parameters: offer_id, bolt11');
-          }
-
-          final success = await _coordinatorService.updateTakerInvoice(
-              offerId, bolt11, userPubkey);
-          if (success) {
-            return {'message': 'Taker invoice updated'};
-          } else {
-            throw Exception('Failed to update taker invoice');
-          }
-
-        case kRpcRetryTakerPayment:
-          final offerId = params['offer_id'] as String?;
-          if (offerId == null) {
-            throw Exception('Missing required parameter: offer_id');
-          }
-
-          final error =
-              await _coordinatorService.retryTakerPayment(offerId, userPubkey);
-          if (error == null) {
-            return {'message': 'Taker payment retried'};
-          } else {
-            throw Exception(error);
-          }
 
         case kRpcGetSuccessfulOffersStats:
           return await _coordinatorService.getSuccessfulOffersWithStats();
@@ -1030,8 +1021,8 @@ class NostrService {
     String document = 'order',
     String bond = "0",
   }) async {
-    // Generic flows declare the NIP-69 category in the yaml (`nip69:`); legacy
-    // falls back to the OfferStatus-based mapping.
+    // Flow states declare the NIP-69 category in YAML. The raw/enum fallback
+    // handles historical rows whose state is not present in the active flow.
     final status = _coordinatorService.nip69CategoryForRaw(offer.statusRaw) ??
         _mapRawStatusToNip69Status(offer.statusRaw, offer.status);
     final premiumValue = premium ?? offer.premiumPercent;
@@ -1139,8 +1130,7 @@ class NostrService {
         // Calculate expiration if the offer is still active
         int? expiration;
         if (offer.status == OfferStatus.funded) {
-          // Same expiration logic as the original broadcast: generic flows read
-          // it strictly from the yaml state def, enum flows from the env value.
+          // The funded expiry comes from the YAML state definition.
           expiration = offer.createdAt
                   .add(Duration(
                       seconds: _coordinatorService.fundedExpirySeconds))

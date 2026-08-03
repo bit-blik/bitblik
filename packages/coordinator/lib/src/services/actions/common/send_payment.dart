@@ -17,17 +17,9 @@ class SendPaymentAction extends FlowAction {
 
     var invoice = offer.takerInvoice;
     if (invoice == null || invoice.isEmpty) {
-      final lnAddr = offer.takerLightningAddress;
-      if (lnAddr == null || lnAddr.isEmpty) {
-        throw const FlowTransitionFailure(
-            'Missing both taker invoice and Lightning Address');
-      }
-      invoice = await c._resolveLnurlPay(lnAddr, netAmountSats);
-      if (invoice == null || invoice.isEmpty) {
-        throw const FlowTransitionFailure(
-            'Failed to get invoice from lightning address (LNURL resolution failed)');
-      }
-      ctx.write.takerInvoice = invoice;
+      // Payout is bolt11-only: the taker must have supplied an invoice by
+      // this point (submit / reserve / update_taker_invoice).
+      throw const FlowTransitionFailure('Missing taker invoice');
     }
 
     try {

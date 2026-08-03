@@ -6,22 +6,8 @@ import '../providers/providers.dart'
     show selectedPaymentSystemProvider, ndkProvider;
 import 'taker_receive_invoice.dart';
 
-/// Flow ids whose UI is driven by the yaml flow definition (state -> screen
-/// registry, engine-derived action buttons, yaml-timeout countdowns) instead of
-/// the legacy hardcoded per-screen navigation.
-const Set<String> kFlowDrivenFlowIds = {'twint', 'blik', 'mbway', 'sk_atm'};
-
-bool isFlowDrivenFlow(String? flowId) =>
-    flowId != null && kFlowDrivenFlowIds.contains(flowId);
-
-/// Entry-point router helper: `/flow` when the active market is flow-driven,
-/// otherwise the legacy per-status route unchanged. Lets existing maker/taker
-/// navigation opt into the flow-driven screen without changing BLIK behaviour
-/// (BLIK is not flow-driven → always gets [legacyRoute]).
-String flowEntryRoute(WidgetRef ref, String legacyRoute) {
-  final ps = ref.read(selectedPaymentSystemProvider);
-  return isFlowDrivenFlow(ps.flowId) ? '/flow' : legacyRoute;
-}
+/// The single route used for every coordinator flow interaction.
+const String flowRoute = '/flow';
 
 /// Loads and caches [FlowEngine]s parsed from the flow definitions bundled as
 /// package assets from `bitblik_core/lib/flows/` — the single source of truth
@@ -45,13 +31,11 @@ class AppFlowLoader {
   }
 }
 
-/// The [FlowEngine] for the active payment system, or null when that method is
-/// not flow-driven (legacy enum navigation applies). Watches
+/// The [FlowEngine] for the active payment system. Watches
 /// [selectedPaymentSystemProvider] so it re-resolves when the market changes.
-final flowEngineProvider = FutureProvider<FlowEngine?>((ref) async {
+final flowEngineProvider = FutureProvider<FlowEngine>((ref) async {
   final ps = ref.watch(selectedPaymentSystemProvider);
-  if (!isFlowDrivenFlow(ps.flowId)) return null;
-  return AppFlowLoader.load(ps.flowId!);
+  return AppFlowLoader.load(ps.flowId);
 });
 
 /// When the active flow captures the taker's payout invoice at reserve (its
@@ -60,10 +44,8 @@ final flowEngineProvider = FutureProvider<FlowEngine?>((ref) async {
 /// be sent with `reserve_offer`. Returns null when not needed. Throws if no
 /// receiving wallet is configured / generation fails (the reserve then aborts).
 Future<String?> reserveTakerInvoiceIfNeeded(WidgetRef ref, Offer offer) async {
-  final ps = ref.read(selectedPaymentSystemProvider);
-  if (!isFlowDrivenFlow(ps.flowId)) return null;
   final engine = await ref.read(flowEngineProvider.future);
-  final t = engine?.transitionFor(engine.initialState, 'reserve_offer');
+  final t = engine.transitionFor(engine.initialState, 'reserve_offer');
   if (t == null || !t.actions.contains('accept_taker_invoice')) return null;
   final ndk = ref.read(ndkProvider);
   if (ndk == null) throw Exception('No wallet available to receive payout');

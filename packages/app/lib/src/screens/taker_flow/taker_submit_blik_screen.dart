@@ -13,7 +13,7 @@ import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
 // Added
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
 import '../../utils/bitcoin_display.dart';
@@ -402,10 +402,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
             "[TakerSubmitBlikScreen] BLIK submitted. Navigating to WaitConfirmation.",
       );
       if (mounted) {
-        context.go(
-          flowEntryRoute(ref, '/wait-confirmation'),
-          extra: updatedOffer,
-        );
+        context.go(flowRoute, extra: updatedOffer);
       }
     } catch (e) {
       ref.read(errorProvider.notifier).state = t.taker.submitBlik.errors
@@ -875,7 +872,10 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                               );
                               // Bold only the bank name; the rest stays normal.
                               final idx = full.indexOf(bank.label);
-                              final base = TextStyle(fontSize: 14, color: color);
+                              final base = TextStyle(
+                                fontSize: 14,
+                                color: color,
+                              );
                               if (idx < 0) {
                                 return Text(full, style: base);
                               }

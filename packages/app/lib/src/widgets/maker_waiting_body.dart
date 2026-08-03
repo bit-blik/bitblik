@@ -14,7 +14,7 @@ import 'premium_info.dart';
 /// error line and action buttons.
 ///
 /// Purely presentational — the caller supplies the countdown widget and the
-/// actions, so the same layout serves both the legacy BLIK screen (client-side
+/// actions, so the same layout serves both the BLIK screen (client-side
 /// timers and per-status navigation) and flow-driven bodies where
 /// navigation/actions/timeouts are dictated by the flow yaml (TWINT today,
 /// BLIK once migrated).
@@ -51,8 +51,7 @@ class MakerWaitingBody extends ConsumerWidget {
     this.extra = const [],
     this.error,
     this.actions,
-    this.progressIndicator =
-        const MakerProgressIndicator(activeStep: 2),
+    this.progressIndicator = const MakerProgressIndicator(activeStep: 2),
   });
 
   @override
@@ -90,8 +89,10 @@ class MakerWaitingBody extends ConsumerWidget {
                   Flexible(
                     child: Text(
                       message!,
-                      style:
-                          const TextStyle(fontSize: 16, color: Colors.black87),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
                       textAlign: TextAlign.center,
                       softWrap: true,
                     ),

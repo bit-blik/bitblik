@@ -10,7 +10,7 @@ import 'package:ndk/domain_layer/entities/wallet/providers/nwc/nwc_wallet.dart';
 import 'package:ndk/domain_layer/entities/wallet/wallet_balance.dart';
 
 import 'package:bitblik_core/core.dart'; // For OfferStatus enum
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../utils/bitcoin_display.dart';
 import '../../widgets/progress_indicators.dart';
@@ -61,13 +61,6 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         status == OfferStatus.funded;
   }
 
-  PaymentSystem get _method {
-    final offer = ref.read(activeOfferProvider);
-    return offer != null
-        ? (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik)
-        : ref.read(selectedPaymentSystemProvider);
-  }
-
   void _scheduleExpiryTimer(Offer? offer) {
     if (offer == null) return;
     final expiresAt = offer.createdAt.add(const Duration(minutes: 10));
@@ -107,14 +100,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
 
     if (status == OfferStatus.reserved) {
       if (mounted) {
-        context.go(
-          flowEntryRoute(
-            ref,
-            _method.makerProvidesCodeAtOfferCreation
-                ? '/confirm-blik'
-                : '/wait-blik',
-          ),
-        );
+        context.go(flowRoute);
       }
     } else if (status == OfferStatus.funded) {
       // Continue waiting
@@ -169,7 +155,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
           );
           if (blikCode != null && blikCode.isNotEmpty) {
             ref.read(receivedBlikCodeProvider.notifier).state = blikCode;
-            if (mounted) context.go(flowEntryRoute(ref, '/confirm-blik'));
+            if (mounted) context.go(flowRoute);
             return;
           }
           Logger.log.w(
@@ -325,7 +311,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                   offer.premiumPercent,
             ),
           );
-      if (mounted) context.go(flowEntryRoute(ref, '/pay'));
+      if (mounted) context.go(flowRoute);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(

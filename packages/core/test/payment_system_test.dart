@@ -36,7 +36,7 @@ void main() {
       expect(i.validity, const Duration(minutes: 5));
       expect(kTwint.currency, 'CHF');
       expect(i.makerProvidesCode, isTrue);
-      expect(i.flowEngineMode, FlowEngineMode.generic);
+      expect(i.flowId, isNotEmpty);
     });
 
     test('instrument.validate enforces exact length and digits-only', () {
@@ -248,8 +248,8 @@ void main() {
               t[0] == 'telegram_channel_link_tatrabanka' &&
               t[1] == 'https://t.me/tatra'),
           isTrue);
-      expect(tags.any((t) => t[0] == 'banks' && t[1] == 'tatrabanka,vub'),
-          isTrue);
+      expect(
+          tags.any((t) => t[0] == 'banks' && t[1] == 'tatrabanka,vub'), isTrue);
     });
   });
 
@@ -278,8 +278,8 @@ void main() {
     test('legacy per-bank id resolves to the SK market', () {
       expect(paymentSystemForOffer(offerWith(paymentSystemId: 'tatrabanka')),
           kSlovakia);
-      expect(paymentSystemForOffer(offerWith(paymentSystemId: 'sk')),
-          kSlovakia);
+      expect(
+          paymentSystemForOffer(offerWith(paymentSystemId: 'sk')), kSlovakia);
     });
 
     test('bankForOffer / validityForOffer resolve per-bank', () {

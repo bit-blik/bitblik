@@ -158,7 +158,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           reservation,
         );
         ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
-        router.go(flowEntryRoute(ref, '/submit-blik'), extra: updatedOffer);
+        router.go(flowRoute, extra: updatedOffer);
       } else {
         setState(() => _isTaking = false);
         ref.read(errorProvider.notifier).state =
@@ -514,15 +514,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                   ),
                   onPressed: () {
                     if (myActiveOffer.status == OfferStatus.reserved) {
-                      router.go(
-                        flowEntryRoute(ref, '/submit-blik'),
-                        extra: myActiveOffer,
-                      );
+                      router.go(flowRoute, extra: myActiveOffer);
                     } else {
-                      router.go(
-                        flowEntryRoute(ref, '/wait-confirmation'),
-                        extra: myActiveOffer,
-                      );
+                      router.go(flowRoute, extra: myActiveOffer);
                     }
                   },
                 ),
@@ -641,8 +635,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                         'progress_blik_${offer.id}',
                                       ),
                                       blikReceivedAt: offer.blikReceivedAt!,
-                                      maxConfirmationTime:
-                                          validityForOffer(offer),
+                                      maxConfirmationTime: validityForOffer(
+                                        offer,
+                                      ),
                                     ),
                                   Center(child: OfferBankBadge(offer: offer)),
                                   const SizedBox(height: 20),

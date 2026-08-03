@@ -144,7 +144,7 @@ a vlož ho do `NOSTR_PRIVATE_KEY`.
       # Voliteľné: obmedz banky (nenastavené = tatrabanka + slsp + vub).
       # BANKS: tatrabanka,slsp
       # CURRENCIES sa odvodí na EUR z trhu (netreba nastavovať).
-      # FLOW_MODE NETREBA: sk beží na generickom yaml engine (flow sk_atm.yml)
+      # sk always runs on the YAML flow engine (flow sk_atm.yml)
       # automaticky. Platnosť kódu je PER BANKA (Tatra 20 / SLSP 15 / VÚB 3 min)
       # a rieši sa z banky ponuky cez $code_validity — netreba nastavovať.
       # RESERVATION_SECONDS a FUNDED_EXPIRY_SECONDS sa pri generickom flow čítajú

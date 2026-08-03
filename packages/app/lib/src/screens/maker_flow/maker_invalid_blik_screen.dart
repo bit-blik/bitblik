@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import 'maker_amount_form.dart'; // Import providers
 
@@ -17,9 +17,6 @@ class MakerInvalidBlikScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final PaymentSystem method =
-        paymentSystemForCurrency(offer.fiatCurrency) ??
-        ref.read(selectedPaymentSystemProvider);
     // Listen to the active offer provider for status changes
     ref.listen<Offer?>(activeOfferProvider, (previous, next) {
       if (next != null && next.id == offer.id) {
@@ -29,27 +26,19 @@ class MakerInvalidBlikScreen extends ConsumerWidget {
             () =>
                 "[MakerInvalidBlikScreen] Offer status changed to conflict. Navigating...",
           );
-          context.go(flowEntryRoute(ref, '/maker-conflict'), extra: offer);
+          context.go(flowRoute, extra: offer);
         } else if (status == OfferStatus.reserved) {
           Logger.log.d(
             () =>
                 "[MakerInvalidBlikScreen] Offer status changed to reserved. Navigating back to wait-blik.",
           );
-          context.go(
-            flowEntryRoute(
-              ref,
-              method.makerProvidesCodeAtOfferCreation
-                  ? '/confirm-blik'
-                  : '/wait-blik',
-            ),
-            extra: offer,
-          );
+          context.go(flowRoute, extra: offer);
         } else if (status == OfferStatus.funded) {
           Logger.log.d(
             () =>
                 "[MakerInvalidBlikScreen] Offer status changed to funded. Navigating back to wait taker.",
           );
-          context.go(flowEntryRoute(ref, '/wait-taker'), extra: offer);
+          context.go(flowRoute, extra: offer);
         } else if (status == OfferStatus.expired) {
           Logger.log.d(
             () =>

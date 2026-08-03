@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS offers (
   maker_fees BIGINT NOT NULL, -- Renamed from fee_sats
   maker_pubkey TEXT NOT NULL,
   taker_pubkey TEXT,
-  taker_lightning_address TEXT, -- Added for LNURL payout
   taker_invoice TEXT, -- Added to store resolved invoice before payment attempt
   blik_code TEXT,
   hold_invoice_payment_hash TEXT UNIQUE NOT NULL,
@@ -49,7 +48,7 @@ CREATE TABLE IF NOT EXISTS log_audit (
 CREATE INDEX IF NOT EXISTS idx_log_audit_offer_id ON log_audit (offer_id);
 CREATE INDEX IF NOT EXISTS idx_log_audit_action ON log_audit (action);
 
--- Per-offer state transition trail for FLOW_MODE generic (yaml-driven flows).
+-- Per-offer state transition trail for YAML-driven flows.
 -- Records every transition an offer goes through: user actions, timer/timeout
 -- firings, and coordinator-driven (auto) follow-ups. Supersedes log_audit in
 -- that mode.

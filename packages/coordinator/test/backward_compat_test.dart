@@ -1,11 +1,9 @@
 import 'package:bitblik_core/core.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
-import 'package:bitblik_coordinator/src/services/database_service.dart';
 import 'package:clock/clock.dart';
-import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
-import 'coordinator_service_test.mocks.dart';
+import 'test_mocks.mocks.dart';
 
 /// A new coordinator (bank-aware code) must stay wire-compatible with old
 /// BLIK / MB WAY / TWINT clients that know nothing about banks: no bank is

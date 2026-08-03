@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../widgets/coordinator_nostr_contact.dart';
 
@@ -104,7 +104,7 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
             "[TakerConflictScreen] Status is ${statusEnum.name}. Navigating to payment process screen.",
       );
       if (mounted) {
-        context.go(flowEntryRoute(ref, '/paying-taker'));
+        context.go(flowRoute);
       }
     }
     // Navigate to payment failed screen
@@ -116,7 +116,7 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
       if (mounted) {
         final offer = ref.read(activeOfferProvider);
         if (offer != null) {
-          context.go(flowEntryRoute(ref, '/taker-failed'), extra: offer);
+          context.go(flowRoute, extra: offer);
         }
       }
     }

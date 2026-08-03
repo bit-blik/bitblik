@@ -80,11 +80,8 @@ Future<void> _runCoordinator(List<String> args) async {
     );
     await coordinatorService.init();
 
-    // FLOW_MODE generic records every offer transition in offer_state_history,
-    // which supersedes the log_audit trail — so persist state history and stop
-    // persisting log_audit in that mode.
-    final generic = coordinatorService.isGenericFlow;
-    dbService.recordStateHistory = generic;
+    // Every coordinator records YAML flow transitions in offer_state_history.
+    dbService.recordStateHistory = true;
     // AppLogger.setAuditPersistenceEnabled(!generic);
     // AppLogger.info(
     //     'Flow mode: ${generic ? 'generic (offer_state_history on, log_audit off)' : 'enum (log_audit on)'}',

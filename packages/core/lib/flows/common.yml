@@ -43,7 +43,7 @@ states:
     transitions:
       - on: update_taker_invoice
         by: taker
-        do: []
+        do: [update_taker_invoice]
         to: payingTaker
       - on: retry_taker_payment
         by: taker

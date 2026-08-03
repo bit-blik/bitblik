@@ -18,7 +18,7 @@ dependencies:
   fixnum: ^1.1.0 # For Int64 support in protobuf
   shelf: ^1.4.0 # For HTTP server framework
   shelf_router: ^1.1.0 # For routing requests
-  http: ^1.2.1 # Added for making HTTP requests (LNURL)
+  http: ^1.2.1 # Exchange-rate and notification HTTP requests
   shelf_cors_headers: ^0.1.5 # For adding CORS headers
   process_run: ^1.2.4 # For running shell commands
   matrix: ^3.0.2

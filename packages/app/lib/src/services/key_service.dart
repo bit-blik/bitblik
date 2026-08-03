@@ -1,33 +1,12 @@
-import 'dart:math'; // For Random.secure()
-import 'dart:typed_data'; // For Uint8List
-
 import 'package:bip340/bip340.dart' as bip340;
+import 'package:bitblik_core/core.dart'
+    show generateSecp256k1PrivateKeyHex, isValidSecp256k1PrivateKeyHex;
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:ndk/entities.dart';
 import 'package:ndk/ndk.dart';
 
 import 'wallet_ids.dart';
-
-// Helper function for hex encoding
-String bytesToHex(List<int> bytes) {
-  return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join('');
-}
-
-// Helper function for hex decoding
-Uint8List hexToBytes(String hex) {
-  hex = hex.replaceAll(RegExp(r'\s+'), ''); // Remove spaces if any
-  if (hex.length % 2 != 0) {
-    hex = '0$hex'; // Pad with leading zero if odd length
-  }
-  final bytes = <int>[];
-  for (int i = 0; i < hex.length; i += 2) {
-    final hexPair = hex.substring(i, i + 2);
-    bytes.add(int.parse(hexPair, radix: 16));
-  }
-  // Ensure the output is Uint8List, often required by crypto libs
-  return Uint8List.fromList(bytes);
-}
 
 class KeyService {
   final _storage = const FlutterSecureStorage();
@@ -62,9 +41,8 @@ class KeyService {
       );
 
       if (storedPrivateKeyHex != null && storedPrivateKeyHex.isNotEmpty) {
-        // Basic validation: check length (should be 64 hex chars for 32 bytes)
-        if (storedPrivateKeyHex.length == 64 &&
-            RegExp(r'^[0-9a-fA-F]+$').hasMatch(storedPrivateKeyHex)) {
+        // Full validation: 64 hex chars AND a scalar in [1, n-1].
+        if (isValidSecp256k1PrivateKeyHex(storedPrivateKeyHex)) {
           _privateKeyHex = storedPrivateKeyHex;
           // Derive public key from private key hex string
           _publicKeyHex = bip340.getPublicKey(
@@ -98,14 +76,9 @@ class KeyService {
 
   // Generates a new key pair and stores the private key
   Future<void> generateNewKeyPair() async {
-    // Generate 32 random bytes for the private key
-    final random = Random.secure();
-    final privateKeyBytes = Uint8List.fromList(
-      List<int>.generate(32, (_) => random.nextInt(256)),
-    );
-
-    // Convert bytes to hex for bip340 functions and storage
-    _privateKeyHex = bytesToHex(privateKeyBytes);
+    // OS-CSPRNG entropy, rejection-sampled into the valid secp256k1 scalar
+    // range (see core's secure_keys.dart).
+    _privateKeyHex = generateSecp256k1PrivateKeyHex();
     // Derive public key from the hex private key
     _publicKeyHex = bip340.getPublicKey(_privateKeyHex!);
 
@@ -115,11 +88,11 @@ class KeyService {
 
   // Saves a provided private key, replacing the existing one.
   Future<void> savePrivateKey(String privateKeyHex) async {
-    // Basic validation
-    if (privateKeyHex.length != 64 ||
-        !RegExp(r'^[0-9a-fA-F]+$').hasMatch(privateKeyHex)) {
+    // Full validation: 64 hex chars AND a scalar in [1, n-1] — a malformed or
+    // out-of-range key must not replace a good identity.
+    if (!isValidSecp256k1PrivateKeyHex(privateKeyHex)) {
       throw ArgumentError(
-        'Invalid private key format. It must be a 64-character hex string.',
+        'Invalid private key. It must be a 64-character hex string encoding a valid secp256k1 scalar.',
       );
     }
 

@@ -130,10 +130,10 @@ final Map<String, Map<FlowActor, FlowBody>> _payoutTailBodies = {
   },
 };
 
-/// BLIK and MB WAY share the legacy screen set as flow bodies — mbway.yml
+/// BLIK and MB WAY share the established code screen set as flow bodies — mbway.yml
 /// mirrors blik.yml's state names, and both use the same code-based screens.
-/// The screens' internal status navigation routes through flowEntryRoute,
-/// which resolves to '/flow' while the market is flow-driven — so FlowScreen
+/// The screens' internal status navigation routes back through [flowRoute], so
+/// FlowScreen
 /// stays the navigation owner and simply re-renders the body registered for
 /// the next state.
 final Map<String, Map<FlowActor, FlowBody>> _codeFlowBodies = {
@@ -223,8 +223,8 @@ final Map<String, Map<String, Map<FlowActor, FlowBody>>> _flowBodies = {
   'twint': {
     // `created` is a client-side pre-funding status (not a yaml state — the
     // coordinator only learns of the offer once the hold invoice is paid), so
-    // the legacy invoice screen owns it; it re-enters `/flow` on funding via
-    // flowEntryRoute.
+    // the invoice screen owns it; it re-enters `/flow` on funding via
+    // flowRoute.
     'created': {
       FlowActor.maker:
           (context, ref, offer, engine, role) => const MakerPayInvoiceScreen(),
@@ -289,7 +289,7 @@ class FlowScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Flow load error: $e')),
           data: (engine) {
-            if (offer == null || engine == null) {
+            if (offer == null) {
               return const Center(child: CircularProgressIndicator());
             }
             final role = roleForOffer(ref, offer);

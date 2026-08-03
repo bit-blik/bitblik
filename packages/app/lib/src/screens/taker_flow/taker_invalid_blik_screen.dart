@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../services/nostr_service.dart' show reservedOfferFromResult;
 import '../../widgets/progress_indicators.dart'; // Import providers
@@ -182,10 +182,7 @@ class _TakerInvalidBlikScreenState
                               .read(activeOfferProvider.notifier)
                               .setActiveOffer(updatedOffer);
 
-                          context.go(
-                            flowEntryRoute(ref, '/submit-blik'),
-                            extra: updatedOffer,
-                          );
+                          context.go(flowRoute, extra: updatedOffer);
                         } else {
                           // Handle reservation failure
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -398,10 +395,7 @@ class _TakerInvalidBlikScreenState
                                   );
 
                                   if (mounted) {
-                                    context.go(
-                                      flowEntryRoute(ref, '/taker-conflict'),
-                                      extra: offer.id,
-                                    );
+                                    context.go(flowRoute, extra: offer.id);
                                   }
                                 } catch (e) {
                                   Logger.log.d(

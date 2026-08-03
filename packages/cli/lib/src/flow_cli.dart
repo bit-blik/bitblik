@@ -10,10 +10,10 @@ import 'cli_context.dart';
 /// state while waiting.
 ///
 /// Everything keys off the verbatim flow-state string ([Offer.statusRaw]),
-/// **not** the [OfferStatus] enum. Generic flows (TWINT) carry states such as
+/// **not** the [OfferStatus] enum. Flows may carry states such as
 /// `invalidTwint` / `expiredTwint` that have no enum value — they round-trip as
 /// [OfferStatus.unknown] but their [Offer.statusRaw] matches the engine's state
-/// names directly. See [[project-dual-flow-engine]].
+/// names directly.
 class MakerFlow {
   final FlowEngine engine;
 
@@ -22,10 +22,6 @@ class MakerFlow {
   /// Load the flow for the process's active payment system.
   static Future<MakerFlow> load() async {
     final flowId = activePaymentSystem.flowId;
-    if (flowId == null) {
-      throw StateError(
-          'Payment system "${activePaymentSystem.id}" has no flow definition.');
-    }
     return MakerFlow(await FlowFileLoader.load(flowId));
   }
 

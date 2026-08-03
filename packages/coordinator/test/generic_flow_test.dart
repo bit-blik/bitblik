@@ -11,7 +11,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
-import 'coordinator_service_test.mocks.dart';
+import 'test_mocks.mocks.dart';
 
 class _FakeTelegramService extends TelegramService {
   int editCalls = 0;
@@ -118,8 +118,7 @@ void main() {
         ]);
   });
 
-  test('twint coordinator runs in generic mode', () {
-    expect(svc.isGenericFlow, isTrue);
+  test('twint coordinator derives actions from its YAML flow', () {
     // handlesRpc is now derived from the flow's user-action events, so every
     // twint event routes to the generic controller — including the payout-tail
     // retry events and twint-specific ones.
@@ -170,7 +169,6 @@ void main() {
       settledAt: anyNamed('settledAt'),
       takerPaidAt: anyNamed('takerPaidAt'),
       takerInvoice: anyNamed('takerInvoice'),
-      takerLightningAddress: anyNamed('takerLightningAddress'),
       code: anyNamed('code'),
       codeReceivedAt: anyNamed('codeReceivedAt'),
       disputeAt: anyNamed('disputeAt'),
@@ -201,7 +199,6 @@ void main() {
       settledAt: anyNamed('settledAt'),
       takerPaidAt: anyNamed('takerPaidAt'),
       takerInvoice: anyNamed('takerInvoice'),
-      takerLightningAddress: anyNamed('takerLightningAddress'),
       code: anyNamed('code'),
       codeReceivedAt: anyNamed('codeReceivedAt'),
       disputeAt: anyNamed('disputeAt'),
@@ -223,7 +220,7 @@ void main() {
     verify(db.deleteTelegramOfferMessages('o1')).called(1);
   });
 
-  group('blik forced onto the generic engine (FLOW_MODE=generic)', () {
+  group('blik generic engine', () {
     late MockDatabaseService bdb;
     late CoordinatorService bsvc;
 
@@ -254,13 +251,11 @@ void main() {
         paymentServiceForTest: MockPaymentService(),
         clock: const Clock(),
         paymentSystemIdForTest: 'blik',
-        flowModeForTest: FlowEngineMode.generic,
       );
       await bsvc.init(); // loads blik.yml
     });
 
-    test('isGenericFlow + handles submit_blik / get_blik', () {
-      expect(bsvc.isGenericFlow, isTrue);
+    test('handles submit_blik / get_blik from the YAML flow', () {
       expect(bsvc.flow.handlesRpc('submit_blik'), isTrue);
       expect(bsvc.flow.handlesRpc('get_blik'), isTrue);
     });
@@ -282,7 +277,6 @@ void main() {
         settledAt: anyNamed('settledAt'),
         takerPaidAt: anyNamed('takerPaidAt'),
         takerInvoice: anyNamed('takerInvoice'),
-        takerLightningAddress: anyNamed('takerLightningAddress'),
         code: anyNamed('code'),
         codeReceivedAt: anyNamed('codeReceivedAt'),
         disputeAt: anyNamed('disputeAt'),
@@ -324,7 +318,6 @@ void main() {
           clock: Clock(() => testClock.now()),
           telegramServiceForTest: blockingTelegram,
           paymentSystemIdForTest: 'blik',
-          flowModeForTest: FlowEngineMode.generic,
         );
 
         var currentStatus = 'reserved';
@@ -371,7 +364,6 @@ void main() {
           settledAt: anyNamed('settledAt'),
           takerPaidAt: anyNamed('takerPaidAt'),
           takerInvoice: anyNamed('takerInvoice'),
-          takerLightningAddress: anyNamed('takerLightningAddress'),
           code: anyNamed('code'),
           codeReceivedAt: anyNamed('codeReceivedAt'),
           disputeAt: anyNamed('disputeAt'),
@@ -449,11 +441,15 @@ void main() {
     late _FakeTelegramService gtelegram;
     late String current;
 
-    Offer payoutOffer({String? takerInvoice, String? lnAddr}) => Offer(
+    Offer payoutOffer(
+            {String? takerInvoice,
+            int amountSats = 1550,
+            int takerFees = 50}) =>
+        Offer(
           id: 'p1',
-          amountSats: 1550,
+          amountSats: amountSats,
           makerFees: 0,
-          takerFees: 50,
+          takerFees: takerFees,
           status: OfferStatus.unknown,
           statusRaw: current,
           fiatAmount: 10,
@@ -463,7 +459,6 @@ void main() {
           coordinatorPubkey: 'coord',
           takerPubkey: taker,
           takerInvoice: takerInvoice,
-          takerLightningAddress: lnAddr,
           blikCode: '123456',
           holdInvoicePaymentHash: 'hash',
           holdInvoicePreimage: 'preimage',
@@ -483,7 +478,6 @@ void main() {
         settledAt: anyNamed('settledAt'),
         takerPaidAt: anyNamed('takerPaidAt'),
         takerInvoice: anyNamed('takerInvoice'),
-        takerLightningAddress: anyNamed('takerLightningAddress'),
         code: anyNamed('code'),
         codeReceivedAt: anyNamed('codeReceivedAt'),
         disputeAt: anyNamed('disputeAt'),
@@ -515,14 +509,11 @@ void main() {
         clock: const Clock(),
         telegramServiceForTest: gtelegram,
         paymentSystemIdForTest: 'blik',
-        flowModeForTest: FlowEngineMode.generic,
       );
       await gsvc.init();
       current = 'blikSentToMaker';
       when(gpay.settleInvoice(preimageHex: anyNamed('preimageHex')))
           .thenAnswer((_) async {});
-      when(gdb.updateTakerInvoice(any, any)).thenAnswer((_) async => true);
-      when(gdb.updateTakerInvoiceFees(any, any)).thenAnswer((_) async => true);
       when(gdb.deleteTelegramOfferMessages(any)).thenAnswer((_) async {});
       when(gdb.getTelegramOfferMessages(any)).thenAnswer((_) async => [
             TelegramOfferMessage(
@@ -564,7 +555,6 @@ void main() {
         settledAt: anyNamed('settledAt'),
         takerPaidAt: anyNamed('takerPaidAt'),
         takerInvoice: anyNamed('takerInvoice'),
-        takerLightningAddress: anyNamed('takerLightningAddress'),
         code: anyNamed('code'),
         codeReceivedAt: anyNamed('codeReceivedAt'),
         disputeAt: anyNamed('disputeAt'),
@@ -604,8 +594,7 @@ void main() {
       expect(current, 'takerPaymentFailed');
     });
 
-    test('setup failure (no invoice / no ln address) -> takerPaymentFailed',
-        () async {
+    test('setup failure (no invoice) -> takerPaymentFailed', () async {
       when(gdb.getOfferById('p1')).thenAnswer((_) async => payoutOffer());
       stubCas();
 
@@ -655,6 +644,162 @@ void main() {
       await gsvc.flow.recoverTimers();
       await pumpEventQueue(times: 100);
 
+      expect(current, 'takerPaymentFailed');
+    });
+  });
+
+  group('generic update_taker_invoice', () {
+    const invoice =
+        'lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3sdqsvfhkcap3xyhx7un8cqzpgxqzjcsp5f8c52y2stc300gl6s4xswtjpc37hrnnr3c9wvtgjfuvqmpm35evq9qyyssqy4lgd8tj637qcjp05rdpxxykjenthxftej7a2zzmwrmrl70fyj9hvj0rewhzj7jfyuwkwcg9g2jpwtk3wkjtwnkdks84hsnu8xps5vsq4gj5hs';
+
+    late MockDatabaseService gdb;
+    late MockPaymentService gpay;
+    late CoordinatorService gsvc;
+    late _FakeTelegramService gtelegram;
+    late String current;
+    // The invoice the fake DB "stores"; CAS writes update it so the detached
+    // auto payout re-fetches the fresh invoice, like the real DB.
+    late String? storedInvoice;
+
+    Offer failedOffer() => Offer(
+          id: 'p1',
+          amountSats: 1550,
+          makerFees: 0,
+          takerFees: 50,
+          status: OfferStatus.unknown,
+          statusRaw: current,
+          fiatAmount: 10,
+          fiatCurrency: 'PLN',
+          createdAt: DateTime.now().toUtc(),
+          makerPubkey: maker,
+          coordinatorPubkey: 'coord',
+          takerPubkey: taker,
+          takerInvoice: storedInvoice,
+        );
+
+    void stubCas() {
+      when(gdb.updateOfferRawStatusIfCurrent(
+        any,
+        any,
+        expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+        takerPubkey: anyNamed('takerPubkey'),
+        reservedAt: anyNamed('reservedAt'),
+        takerChargedAt: anyNamed('takerChargedAt'),
+        makerConfirmedAt: anyNamed('makerConfirmedAt'),
+        settledAt: anyNamed('settledAt'),
+        takerPaidAt: anyNamed('takerPaidAt'),
+        takerInvoice: anyNamed('takerInvoice'),
+        code: anyNamed('code'),
+        codeReceivedAt: anyNamed('codeReceivedAt'),
+        disputeAt: anyNamed('disputeAt'),
+        takerFees: anyNamed('takerFees'),
+        takerInvoiceFees: anyNamed('takerInvoiceFees'),
+        failureReason: anyNamed('failureReason'),
+        clearTakerFields: anyNamed('clearTakerFields'),
+        transitionMeta: anyNamed('transitionMeta'),
+      )).thenAnswer((inv) async {
+        final target = inv.positionalArguments[1] as String;
+        final expected =
+            inv.namedArguments[const Symbol('expectedCurrentStatuses')]
+                as List<String>?;
+        if (expected == null || expected.contains(current)) {
+          current = target;
+          final written =
+              inv.namedArguments[const Symbol('takerInvoice')] as String?;
+          if (written != null) storedInvoice = written;
+          return true;
+        }
+        return false;
+      });
+    }
+
+    setUp(() async {
+      gdb = MockDatabaseService();
+      gpay = MockPaymentService();
+      gtelegram = _FakeTelegramService();
+      gsvc = CoordinatorService(
+        gdb,
+        paymentServiceForTest: gpay,
+        clock: const Clock(),
+        telegramServiceForTest: gtelegram,
+        paymentSystemIdForTest: 'blik',
+      );
+      await gsvc.init();
+      current = 'takerPaymentFailed';
+      storedInvoice = 'old-broken-invoice';
+      when(gdb.getOfferById('p1')).thenAnswer((_) async => failedOffer());
+      when(gdb.deleteTelegramOfferMessages(any)).thenAnswer((_) async {});
+      when(gdb.getTelegramOfferMessages(any)).thenAnswer((_) async => [
+            TelegramOfferMessage(
+              offerId: 'p1',
+              chatId: 'test-chat-id',
+              messageId: 1,
+              messageText: 'New offer',
+            ),
+          ]);
+      stubCas();
+    });
+
+    test('valid bolt11 is stored and the payout retries with it', () async {
+      when(gpay.payInvoice(
+        invoice: anyNamed('invoice'),
+        amountSat: anyNamed('amountSat'),
+        feeLimitSat: anyNamed('feeLimitSat'),
+      )).thenAnswer(
+          (_) async => PayInvoiceResult(paymentPreimage: 'pre', feeSat: 1));
+
+      await gsvc.flow.handleRpc(
+          'update_taker_invoice', {'offer_id': 'p1', 'bolt11': invoice}, taker);
+      await pumpEventQueue(times: 100);
+
+      expect(storedInvoice, invoice);
+      expect(current, 'takerPaid');
+      verify(gpay.payInvoice(
+        invoice: invoice,
+        amountSat: anyNamed('amountSat'),
+        feeLimitSat: anyNamed('feeLimitSat'),
+      )).called(1);
+    });
+
+    test('missing invoice rejects the RPC and stays in takerPaymentFailed',
+        () async {
+      await expectLater(
+        gsvc.flow.handleRpc('update_taker_invoice', {'offer_id': 'p1'}, taker),
+        throwsA(isA<Exception>()),
+      );
+      await pumpEventQueue(times: 100);
+
+      expect(storedInvoice, 'old-broken-invoice');
+      expect(current, 'takerPaymentFailed');
+    });
+
+    test('wrong-amount invoice rejects the RPC and stays in takerPaymentFailed',
+        () async {
+      when(gdb.getOfferById('p1')).thenAnswer((_) async => Offer(
+            id: 'p1',
+            amountSats: 10000,
+            makerFees: 0,
+            takerFees: 50,
+            status: OfferStatus.unknown,
+            statusRaw: current,
+            fiatAmount: 10,
+            fiatCurrency: 'PLN',
+            createdAt: DateTime.now().toUtc(),
+            makerPubkey: maker,
+            coordinatorPubkey: 'coord',
+            takerPubkey: taker,
+            takerInvoice: storedInvoice,
+          ));
+
+      await expectLater(
+        gsvc.flow.handleRpc('update_taker_invoice',
+            {'offer_id': 'p1', 'bolt11': invoice}, taker),
+        throwsA(isA<Exception>()),
+      );
+      await pumpEventQueue(times: 100);
+
+      expect(storedInvoice, 'old-broken-invoice');
       expect(current, 'takerPaymentFailed');
     });
   });

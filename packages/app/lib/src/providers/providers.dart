@@ -889,7 +889,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     final apiService = await _ref.read(initializedApiServiceProvider.future);
 
     // Generic (yaml-driven) flows start at `funded` and never use `created`,
-    // so this is only true for legacy pre-payment offers. Compare the raw
+    // so this is only true for older pre-payment offers. Compare the raw
     // status string, not the enum, so generic flow states are handled correctly.
     final isLocalOnly = current.statusRaw == OfferStatus.created.name;
 
@@ -946,7 +946,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     // it remotely would hit the coordinator for an offer it has no record of.
     if (!isLocalOnly || sameOffer) {
       // Prefer the coordinator UUID; local id may be a payment hash or the
-      // legacy "empty" placeholder which the coordinator rejects.
+      // older "empty" placeholder which the coordinator rejects.
       final cancelId = remoteId ?? current.id;
       try {
         await apiService.cancelOffer(cancelId, current.coordinatorPubkey);
@@ -995,7 +995,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       // Preserve the verbatim wire status so generic (yaml-driven) flows keep
       // their real state (e.g. `invalidTwint`/`expiredTwint`) even though the
       // OfferStatus enum parses them to `unknown`. Flow-driven navigation keys
-      // on statusRaw. For legacy flows this equals status.name.
+      // on statusRaw. For older offers this equals status.name.
       statusRaw: update.status,
       reservedAt: update.reservedAt,
       // Anchor the BLIK confirmation countdown to the coordinator's

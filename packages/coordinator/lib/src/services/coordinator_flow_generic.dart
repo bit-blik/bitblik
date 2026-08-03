@@ -14,7 +14,6 @@ class OfferWriteSpec {
   DateTime? takerPaidAt;
   String? code;
   String? takerInvoice;
-  String? takerLightningAddress;
   int? takerFees;
 
   /// Lightning routing fee (sats) charged when paying the taker's invoice —
@@ -101,7 +100,7 @@ class FlowEffectContext {
 /// constants.
 ///
 /// `part of` the coordinator library so it reaches shared services via `_c`.
-class GenericOfferFlow implements OfferFlow {
+class GenericOfferFlow {
   final CoordinatorService _c;
   GenericOfferFlow(this._c);
 
@@ -116,7 +115,7 @@ class GenericOfferFlow implements OfferFlow {
     'dispute',
   };
 
-  FlowEngine get _engine => _c._flowEngine!;
+  FlowEngine get _engine => _c._flowEngine;
 
   /// Events (== RPC method names) the loaded flow declares as user actions.
   /// Derived from the flow so ANY flow's events (e.g. TWINT's
@@ -129,12 +128,10 @@ class GenericOfferFlow implements OfferFlow {
           t.event!,
   };
 
-  @override
   bool handlesRpc(String method) => _handledEvents.contains(method);
 
   /// Deep startup validation of the loaded flow (beyond [FlowDefinition.parse]'s
   /// structural checks). Throws [StateError] listing every problem found.
-  @override
   void validateDefinition() {
     final def = _engine.definition;
     final problems = <String>[];
@@ -191,7 +188,6 @@ class GenericOfferFlow implements OfferFlow {
 
   // ─── RPC entry ────────────────────────────────────────────────────────
 
-  @override
   Future<Map<String, dynamic>> handleRpc(
       String method, Map<String, dynamic> params, String userPubkey,
       {String? clientVersion}) async {
@@ -370,7 +366,6 @@ class GenericOfferFlow implements OfferFlow {
       'client': clientVersion,
       'blik_code': w.code ?? (t.returns == 'blik_code' ? offer.blikCode : null),
       'taker_invoice': w.takerInvoice,
-      'taker_lightning_address': w.takerLightningAddress,
       'taker_fees': w.takerFees,
       'maker_invoice': _cleanParam(params['maker_invoice']),
       'failure_reason': w.failureReason,
@@ -390,7 +385,6 @@ class GenericOfferFlow implements OfferFlow {
       code: w.code,
       codeReceivedAt: w.codeReceivedAt,
       takerInvoice: w.takerInvoice,
-      takerLightningAddress: w.takerLightningAddress,
       takerFees: w.takerFees,
       takerInvoiceFees: w.takerInvoiceFees,
       failureReason: w.failureReason,
@@ -628,9 +622,7 @@ class GenericOfferFlow implements OfferFlow {
 
   // ─── lifecycle hooks ──────────────────────────────────────────────────────
 
-  @override
   void onOfferFunded(Offer offer) {
-    if (!_c.isGenericFlow) return;
     // Genesis row: the offer is INSERTed already funded, so no status-update
     // fires — seed the history explicitly.
     _c._dbService.recordOfferTransition(
@@ -660,9 +652,7 @@ class GenericOfferFlow implements OfferFlow {
     _armTimer(offer);
   }
 
-  @override
   Future<void> recoverTimers() async {
-    if (!_c.isGenericFlow) return;
     final terminal = <String>{
       for (final s in _engine.definition.states.values)
         if (s.terminal) s.name,
@@ -689,7 +679,6 @@ class GenericOfferFlow implements OfferFlow {
     await _recoverFailedPayouts();
   }
 
-  @override
   Map<String, int> debugCounters() => {
         'state_timers': _stateTimers.length,
       };

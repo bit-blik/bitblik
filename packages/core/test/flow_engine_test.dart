@@ -3,15 +3,9 @@ import 'dart:io';
 import 'package:bitblik_core/core.dart';
 import 'package:test/test.dart';
 
-/// Golden backward-compatibility test.
+/// Canonical BLIK flow behavior test.
 ///
-/// Asserts that the FlowEngine built from the canonical `blik.yml` reproduces
-/// exactly the transition table the historical hardcoded `CoordinatorService`
-/// enforced. Each row below was extracted from a guard in that service. If this
-/// test fails, the YAML has drifted from the coordinator's real behaviour —
-/// reconcile before relying on the engine for enforcement.
-
-/// One allowed (fromState, event, actor) -> target row from the legacy code.
+/// One allowed (fromState, event, actor) -> target row.
 class _Row {
   final String from;
   final String event;
@@ -96,14 +90,9 @@ void main() {
 
   test('parses and validates structurally', () {
     expect(engine.initialState, 'funded');
-    // Every state in the definition is a known OfferStatus (or maps cleanly).
-    for (final name in engine.definition.states.keys) {
-      expect(offerStatusFromFlowState(name), isNot(OfferStatus.unknown),
-          reason: 'flow state "$name" has no matching OfferStatus');
-    }
   });
 
-  group('allowed user-action transitions match legacy table', () {
+  group('allowed user-action transitions match the canonical table', () {
     for (final r in _allowed) {
       test('${r.from} --${r.event}/${r.actor.name}--> ${r.target}', () {
         final res = engine.resolveUserAction(
@@ -156,9 +145,7 @@ void main() {
     }
   });
 
-  test('statesAllowing(maker_confirms) covers every legacy confirm source', () {
-    // confirmMakerPayment CAS list: conflict, takerCharged, blikSentToMaker,
-    // expiredSentBlik (reserved is twint-only and not in blik.yml).
+  test('statesAllowing(confirm_payment) covers every BLIK confirm source', () {
     expect(
       engine.statesAllowing('confirm_payment', actor: _maker),
       {
@@ -168,12 +155,5 @@ void main() {
         'expiredSentBlik',
       },
     );
-  });
-
-  test('OfferStatus <-> flow-state name round-trips', () {
-    const sample = OfferStatus.blikSentToMaker;
-    expect(flowStateForOfferStatus(sample), 'blik_sent_to_maker');
-    expect(offerStatusFromFlowState('blik_sent_to_maker'), sample);
-    expect(offerStatusFromFlowState('not_a_real_state'), OfferStatus.unknown);
   });
 }

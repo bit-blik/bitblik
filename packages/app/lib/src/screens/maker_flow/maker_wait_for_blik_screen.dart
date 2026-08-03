@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import 'package:bitblik_core/core.dart';
 import '../../utils/bitcoin_display.dart';
@@ -107,7 +107,7 @@ class _MakerWaitForBlikScreenState
 
     if (_method.makerProvidesCodeAtOfferCreation &&
         status == OfferStatus.reserved) {
-      if (mounted) context.go(flowEntryRoute(ref, '/confirm-blik'));
+      if (mounted) context.go(flowRoute);
       return;
     }
 
@@ -156,7 +156,7 @@ class _MakerWaitForBlikScreenState
             () =>
                 "[MakerWaitForBlik] Navigating to MakerConfirmPaymentScreen...",
           );
-          context.go(flowEntryRoute(ref, '/confirm-blik'));
+          context.go(flowRoute);
         } else {
           Logger.log.e(
             () =>
@@ -180,7 +180,7 @@ class _MakerWaitForBlikScreenState
             "[MakerWaitForBlik] Offer reverted to FUNDED (Taker likely timed out). Popping back.",
       );
       if (mounted) {
-        context.go(flowEntryRoute(ref, '/wait-taker'));
+        context.go(flowRoute);
       }
     } else if (status == OfferStatus.reserved) {
       Logger.log.d(

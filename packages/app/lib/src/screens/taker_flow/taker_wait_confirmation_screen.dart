@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../services/nostr_service.dart' show reservedOfferFromResult;
 import '../../services/offer_db_service.dart';
@@ -323,7 +323,7 @@ class _TakerWaitConfirmationScreenState
             "[TakerWaitConfirmation] Status is $currentStatusEnum. Navigating to process screen.",
       );
       _confirmationTimer?.cancel();
-      context.go(flowEntryRoute(ref, '/paying-taker'));
+      context.go(flowRoute);
     } else if (currentStatusEnum == OfferStatus.funded) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
@@ -335,15 +335,15 @@ class _TakerWaitConfirmationScreenState
     } else if (currentStatusEnum == OfferStatus.invalidBlik) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      context.go(flowEntryRoute(ref, '/taker-invalid-blik'), extra: offer);
+      context.go(flowRoute, extra: offer);
     } else if (currentStatusEnum == OfferStatus.conflict) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      context.go(flowEntryRoute(ref, '/taker-conflict'), extra: offer.id);
+      context.go(flowRoute, extra: offer.id);
     } else if (currentStatusEnum == OfferStatus.takerPaymentFailed) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      context.go(flowEntryRoute(ref, '/paying-taker'));
+      context.go(flowRoute);
     } else if (!_isValidStatusForThisScreen(currentStatusEnum)) {
       _resetToOfferList(
         t.offers.errors.unexpectedStateWithStatus(
@@ -488,7 +488,7 @@ class _TakerWaitConfirmationScreenState
 
       await ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
       if (mounted) {
-        context.go(flowEntryRoute(ref, '/submit-blik'), extra: updatedOffer);
+        context.go(flowRoute, extra: updatedOffer);
       }
     } else {
       if (mounted) {
