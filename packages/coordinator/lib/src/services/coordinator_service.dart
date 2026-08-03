@@ -1321,6 +1321,14 @@ class CoordinatorService {
       return (ok: false, result: null, error: 'No payment backend configured');
     }
     try {
+      // A committed payout/refund state may be resumed after a coordinator
+      // crash. Reconcile before every attempt because NWC pay_invoice is not
+      // idempotent and the previous call may have settled before the crash.
+      final existing =
+          await _paymentBackend!.reconcileOutgoingPayment(invoice: invoice);
+      if (existing != null && existing.isSuccess) {
+        return (ok: true, result: existing, error: null);
+      }
       final r = await _paymentBackend!.payInvoice(
         invoice: invoice,
         amountSat: netAmountSats,

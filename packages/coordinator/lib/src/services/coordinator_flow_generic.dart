@@ -14,6 +14,7 @@ class OfferWriteSpec {
   DateTime? takerPaidAt;
   String? code;
   String? takerInvoice;
+  String? makerRefundInvoice;
   int? takerFees;
 
   /// Lightning routing fee (sats) charged when paying the taker's invoice —
@@ -45,6 +46,11 @@ class FlowTransitionFailure implements Exception {
 abstract class FlowAction {
   /// The yml keyword this action implements.
   String get name;
+
+  /// Irreversible escrow/payment actions must only run after a state-changing
+  /// CAS has durably claimed the work. Flow validation rejects these actions
+  /// on transition edges; they belong on an intermediate state's `do:` list.
+  bool get requiresCommittedState => false;
 
   Future<void> run(GenericOfferFlow flow, FlowEffectContext ctx);
 
@@ -139,13 +145,17 @@ class GenericOfferFlow {
     // Every yaml action must have a registered [FlowAction] implementation;
     // each action may also contribute its own wiring checks. A missing
     // implementation aborts coordinator startup.
-    void checkActions(String label, Iterable<String> names, FlowState state,
-        FlowTransition edge) {
+    void checkTransitionActions(String label, Iterable<String> names,
+        FlowState state, FlowTransition edge) {
       for (final a in names) {
         final impl = _flowActionRegistry[a];
         if (impl == null) {
           problems.add('$label: unknown action "$a"');
         } else {
+          if (impl.requiresCommittedState) {
+            problems.add('$label: action "$a" must be a post-commit state '
+                'action, not a transition action');
+          }
           problems.addAll(impl.validate(_engine, state, edge));
         }
       }
@@ -158,13 +168,28 @@ class GenericOfferFlow {
       }
       final autoCount =
           s.transitions.where((t) => t.trigger == FlowTriggerType.auto).length;
+      final committedActions = <String>[];
+      for (final a in s.actions) {
+        final impl = _flowActionRegistry[a];
+        if (impl == null) {
+          problems.add('state "${s.name}" do: unknown action "$a"');
+        } else if (impl.requiresCommittedState) {
+          committedActions.add(a);
+        }
+      }
+      if (committedActions.isNotEmpty &&
+          (autoCount != 1 || s.transitions.length != 1)) {
+        problems.add('state "${s.name}": post-commit action(s) '
+            '${committedActions.join(', ')} require exactly one auto '
+            'completion transition and no competing edges');
+      }
       if (autoCount > 1) {
         problems.add(
             'state "${s.name}": schema v2 allows at most one auto transition');
       }
       for (final t in s.transitions) {
         final label = '${s.name} -[${t.event ?? t.trigger.name}]-> ${t.target}';
-        checkActions(label, t.actions, s, t);
+        checkTransitionActions(label, t.actions, s, t);
         if (t.trigger == FlowTriggerType.timeout &&
             t.durationSeconds == null &&
             t.durationParam == null) {
@@ -334,6 +359,8 @@ class GenericOfferFlow {
     String? actorName,
     String actorPubkey = '',
     String? clientVersion,
+    OfferWriteSpec? initialWrite,
+    FlowTransitionFailure? initialFailure,
   }) async {
     final ctx = FlowEffectContext(
       offer: offer,
@@ -341,12 +368,13 @@ class GenericOfferFlow {
       params: params,
       userPubkey: actorPubkey,
       isNewTaker: offer.takerPubkey == null,
-      write: OfferWriteSpec(),
+      write: initialWrite ?? OfferWriteSpec(),
       now: _c._clock.now().toUtc(),
     );
 
     var targetState = t.target;
     try {
+      if (initialFailure != null) throw initialFailure;
       for (final a in t.actions) {
         await _runAction(a, ctx);
       }
@@ -385,6 +413,7 @@ class GenericOfferFlow {
       code: w.code,
       codeReceivedAt: w.codeReceivedAt,
       takerInvoice: w.takerInvoice,
+      makerRefundInvoice: w.makerRefundInvoice,
       takerFees: w.takerFees,
       takerInvoiceFees: w.takerInvoiceFees,
       failureReason: w.failureReason,
@@ -411,11 +440,59 @@ class GenericOfferFlow {
   Future<void> _enterState(Offer offer) async {
     final state = _engine.definition.state(offer.statusRaw);
     final isTerminal = state?.terminal ?? false;
+    final hasCommittedActions = state?.actions.any((name) =>
+            _flowActionRegistry[name]?.requiresCommittedState == true) ??
+        false;
 
     // Arm the entered state's timeout before slow side effects so a stale
     // earlier enterState() cannot later overwrite a newer state's timer.
     if (!isTerminal) {
       _armTimer(offer);
+    }
+
+    // A committed-effect state is a durable, exclusive claim. Run its
+    // irreversible action before exposing/advancing the state, then atomically
+    // finalize through its sole auto edge. No competing edge is allowed by
+    // validateDefinition(), so an external effect can never belong to a losing
+    // transition CAS.
+    if (hasCommittedActions) {
+      final completion = state!.transitions.single;
+      try {
+        final write = await _runStateActions(offer, strict: true);
+        write.audit['post_commit_do'] = state.actions;
+        final current = await _c._dbService.getOfferById(offer.id);
+        if (current == null || current.statusRaw != offer.statusRaw) return;
+        await _applyTransition(current, completion, const {},
+            trigger: 'auto', actorName: 'coordinator', initialWrite: write);
+      } on FlowTransitionFailure catch (e) {
+        if (completion.onFailTarget != null) {
+          final current = await _c._dbService.getOfferById(offer.id);
+          if (current == null || current.statusRaw != offer.statusRaw) return;
+          final failureWrite = OfferWriteSpec()
+            ..audit['post_commit_do'] = state.actions;
+          await _applyTransition(current, completion, const {},
+              trigger: 'auto',
+              actorName: 'coordinator',
+              initialWrite: failureWrite,
+              initialFailure: e);
+        } else {
+          AppLogger.warning(
+              'Generic post-commit state action failed for offer ${offer.id} '
+              'in state "${offer.statusRaw}": ${e.reason}',
+              offerId: offer.id,
+              error: e);
+          _scheduleStateActionRetry(offer);
+        }
+      } catch (e, st) {
+        AppLogger.warning(
+            'Generic post-commit state action failed for offer ${offer.id} '
+            'in state "${offer.statusRaw}": $e',
+            offerId: offer.id,
+            error: e,
+            stackTrace: st);
+        _scheduleStateActionRetry(offer);
+      }
+      return;
     }
 
     await _c._publishStatusUpdate(offer);
@@ -437,9 +514,11 @@ class GenericOfferFlow {
     _driveAuto(current);
   }
 
-  Future<void> _runStateActions(Offer offer) async {
+  Future<OfferWriteSpec> _runStateActions(Offer offer,
+      {bool strict = false}) async {
     final state = _engine.definition.state(offer.statusRaw);
-    if (state == null || state.actions.isEmpty) return;
+    final write = OfferWriteSpec();
+    if (state == null || state.actions.isEmpty) return write;
 
     final ctx = FlowEffectContext(
       offer: offer,
@@ -447,13 +526,14 @@ class GenericOfferFlow {
       params: const {},
       userPubkey: '',
       isNewTaker: offer.takerPubkey == null,
-      write: OfferWriteSpec(),
+      write: write,
       now: _c._clock.now().toUtc(),
     );
     for (final actionName in state.actions) {
       try {
         await _runAction(actionName, ctx);
       } catch (e, st) {
+        if (strict) rethrow;
         AppLogger.warning(
             'Generic state action "$actionName" failed for offer ${offer.id} '
             'in state "${offer.statusRaw}": $e',
@@ -462,6 +542,17 @@ class GenericOfferFlow {
             stackTrace: st);
       }
     }
+    return write;
+  }
+
+  void _scheduleStateActionRetry(Offer offer) {
+    _cancelTimer(offer.id);
+    _stateTimers[offer.id] = Timer(_timeoutRetryBackoff, () async {
+      _stateTimers.remove(offer.id);
+      final current = await _c._dbService.getOfferById(offer.id);
+      if (current == null || current.statusRaw != offer.statusRaw) return;
+      await _enterState(current);
+    });
   }
 
   /// Starts the state's detached `auto` transition, if present.
@@ -552,7 +643,7 @@ class GenericOfferFlow {
       _sendPaymentTail() {
     for (final s in _engine.definition.states.values) {
       for (final t in s.transitions) {
-        if (t.actions.contains('send_payment') && t.onFailTarget != null) {
+        if (s.actions.contains('send_payment') && t.onFailTarget != null) {
           return (
             payingState: s.name,
             failedState: t.onFailTarget!,
@@ -670,7 +761,15 @@ class GenericOfferFlow {
       // Resume any auto chain interrupted by a crash (e.g. stuck in
       // makerConfirmed before the settle edge ran, or in payingTaker before
       // the detached send_payment attempt completed).
-      _driveAuto(o);
+      final state = _engine.definition.state(o.statusRaw);
+      final hasCommittedActions = state?.actions.any((name) =>
+              _flowActionRegistry[name]?.requiresCommittedState == true) ??
+          false;
+      if (hasCommittedActions) {
+        await _enterState(o);
+      } else {
+        _driveAuto(o);
+      }
     }
     AppLogger.info(
         'FLOW ENGINE: generic startup recovery armed $armed timer(s) across '

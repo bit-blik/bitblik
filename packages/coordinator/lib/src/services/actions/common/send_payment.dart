@@ -1,12 +1,14 @@
 part of '../../coordinator_service.dart';
 
-/// Pays out the taker over Lightning. In schema v2 this action runs inside the
-/// detached `auto` attempt itself: success commits the transition to its normal
-/// `to:` target, while definitive failure throws [FlowTransitionFailure] and
-/// the executor routes to `on_fail:`.
+/// Pays out the taker over Lightning after `payingTaker` has been committed as
+/// the durable work claim. Success/failure is finalized by that state's auto
+/// completion edge.
 class SendPaymentAction extends FlowAction {
   @override
   String get name => 'send_payment';
+
+  @override
+  bool get requiresCommittedState => true;
 
   @override
   Future<void> run(GenericOfferFlow flow, FlowEffectContext ctx) async {
@@ -48,16 +50,6 @@ class SendPaymentAction extends FlowAction {
   @override
   List<String> validate(
       FlowEngine engine, FlowState state, FlowTransition edge) {
-    if (edge.trigger != FlowTriggerType.auto) {
-      return [
-        'state "${state.name}": send_payment must run on an auto transition'
-      ];
-    }
-    if (edge.onFailTarget == null) {
-      return [
-        'state "${state.name}": send_payment transition must declare on_fail'
-      ];
-    }
     return const [];
   }
 }

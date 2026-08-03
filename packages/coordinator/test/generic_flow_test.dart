@@ -210,14 +210,52 @@ void main() {
       transitionMeta: anyNamed('transitionMeta'),
     )).captured;
 
-    expect(captured[0], 'cancelled'); // target
-    expect(captured[1], ['funded']); // expected-current CAS guard
-    expect(captured[2], isTrue); // clearTakerFields
+    // The first CAS durably claims cancellation and clears taker fields; only
+    // then does cancel_hold_invoice run. Its completion edge is a second CAS.
+    expect(captured[0], 'cancelling');
+    expect(captured[1], ['funded']);
+    expect(captured[2], isTrue);
     // TWINT: the code is the maker's — it survives taker-field clears.
-    expect(captured[3], isTrue); // preserveCodeOnClear
+    expect(captured[3], isTrue);
+    expect(captured[4], 'cancelled');
+    expect(captured[5], ['cancelling']);
     expect(telegram.editCalls, 1);
     expect(telegram.lastEditedText, '<s>New offer</s>');
     verify(db.deleteTelegramOfferMessages('o1')).called(1);
+  });
+
+  test('losing cancellation CAS never cancels the hold invoice', () async {
+    when(db.getOfferById('o1')).thenAnswer((_) async => twintOffer('funded'));
+    when(db.updateOfferRawStatusIfCurrent(
+      any,
+      any,
+      expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+      expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+      takerPubkey: anyNamed('takerPubkey'),
+      reservedAt: anyNamed('reservedAt'),
+      takerChargedAt: anyNamed('takerChargedAt'),
+      makerConfirmedAt: anyNamed('makerConfirmedAt'),
+      settledAt: anyNamed('settledAt'),
+      takerPaidAt: anyNamed('takerPaidAt'),
+      takerInvoice: anyNamed('takerInvoice'),
+      makerRefundInvoice: anyNamed('makerRefundInvoice'),
+      code: anyNamed('code'),
+      codeReceivedAt: anyNamed('codeReceivedAt'),
+      disputeAt: anyNamed('disputeAt'),
+      takerFees: anyNamed('takerFees'),
+      takerInvoiceFees: anyNamed('takerInvoiceFees'),
+      failureReason: anyNamed('failureReason'),
+      clearTakerFields: anyNamed('clearTakerFields'),
+      preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
+      transitionMeta: anyNamed('transitionMeta'),
+    )).thenAnswer((_) async => false);
+
+    await expectLater(
+      svc.flow.handleRpc('cancel_offer', {'offer_id': 'o1'}, maker),
+      throwsA(isA<Exception>()),
+    );
+
+    verifyNever(pay.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')));
   });
 
   group('blik generic engine', () {

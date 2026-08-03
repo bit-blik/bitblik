@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS offers (
   maker_pubkey TEXT NOT NULL,
   taker_pubkey TEXT,
   taker_invoice TEXT, -- Added to store resolved invoice before payment attempt
+  maker_refund_invoice TEXT,
   blik_code TEXT,
   hold_invoice_payment_hash TEXT UNIQUE NOT NULL,
   hold_invoice_preimage TEXT NOT NULL,

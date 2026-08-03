@@ -117,6 +117,7 @@ class DatabaseService {
         maker_pubkey TEXT NOT NULL,
         taker_pubkey TEXT,
         taker_invoice TEXT,
+        maker_refund_invoice TEXT,
         taker_invoice_fees BIGINT,
         blik_code TEXT,
         hold_invoice_payment_hash TEXT UNIQUE NOT NULL,
@@ -158,6 +159,10 @@ class DatabaseService {
     await _connection!.execute('''
       ALTER TABLE offers
       ADD COLUMN IF NOT EXISTS taker_payment_failure_reason TEXT NULL;
+    ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS maker_refund_invoice TEXT;
     ''');
     await _connection!.execute('''
       ALTER TABLE offers
@@ -590,6 +595,7 @@ class DatabaseService {
     String? takerPubkey,
     String? code,
     String? takerInvoice,
+    String? makerRefundInvoice,
     DateTime? reservedAt,
     DateTime? codeReceivedAt,
     DateTime? takerChargedAt,
@@ -642,6 +648,9 @@ class DatabaseService {
     if (code != null) put('blik_code', 'blik_code', code);
     if (takerInvoice != null) {
       put('taker_invoice', 'taker_invoice', takerInvoice);
+    }
+    if (makerRefundInvoice != null) {
+      put('maker_refund_invoice', 'maker_refund_invoice', makerRefundInvoice);
     }
     if (reservedAt != null) {
       put('reserved_at', 'reserved_at', reservedAt.toUtc());
@@ -804,6 +813,7 @@ class DatabaseService {
       fiatCurrency: map['fiat_currency'] ?? '?',
       takerPubkey: map['taker_pubkey'],
       takerInvoice: map['taker_invoice'],
+      makerRefundInvoice: map['maker_refund_invoice'],
       blikCode: map['blik_code'],
       updatedAt: (map['updated_at'] as DateTime?)?.toLocal(),
       reservedAt: (map['reserved_at'] as DateTime?)?.toLocal(),

@@ -7,9 +7,10 @@ states:
   makerConfirmed:
     nip69: in-progress
     description: Maker confirmed payment. Settling hold invoice, paying out the taker.
+    do: [settle_offer_funds]
     transitions:
       - on: auto
-        do: [settle_offer_funds]
+        do: []
         to: settled
 
   settled:
@@ -23,14 +24,12 @@ states:
   payingTaker:
     nip69: in-progress
     description: Sending the Lightning payout to the taker.
+    do: [send_payment]
     transitions:
       - on: auto
-        do: [send_payment]
+        do: []
         to: takerPaid
         on_fail: takerPaymentFailed
-      - on: timeout
-        after: 300
-        to: takerPaymentFailed
 
   takerPaid:
     nip69: success
@@ -55,21 +54,43 @@ states:
     description: Offer cancelled.
     terminal: true
 
+  cancelling:
+    nip69: in-progress
+    description: Cancellation committed. Returning the hold invoice to the maker.
+    do: [cancel_hold_invoice]
+    transitions:
+      - on: auto
+        to: cancelled
+
+  securingDispute:
+    nip69: dispute
+    description: Dispute committed. Securing the hold invoice at the coordinator.
+    do: [settle_offer_funds]
+    transitions:
+      - on: auto
+        to: dispute
+
   dispute:
     nip69: dispute
     description: >
-      Formal dispute. The hold invoice is settled on entry (funds secured by
-      the coordinator) while evidence is collected from both peers. The
-      coordinator then rules: refund the maker (a fresh Lightning payment to a
-      maker-provided invoice, offer cancelled) or pay the taker (payout tail).
+      Formal dispute with the hold invoice secured by the coordinator. The
+      coordinator rules: refund the maker or pay the taker.
     transitions:
       - on: resolve_dispute_refund_maker
         by: coordinator
-        do: [require_maker_refund_invoice, refund_maker]
-        to: cancelled
+        do: [require_maker_refund_invoice]
+        to: refundingMaker
         reason: Coordinator ruled for the maker; refunded via maker invoice.
       - on: resolve_dispute_pay_taker
         by: coordinator
         do: []
         to: payingTaker
         reason: Coordinator ruled for the taker.
+
+  refundingMaker:
+    nip69: in-progress
+    description: Refund decision committed. Paying the maker's persisted invoice.
+    do: [refund_maker]
+    transitions:
+      - on: auto
+        to: cancelled

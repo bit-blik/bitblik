@@ -6,13 +6,27 @@ class SettleOfferFundsAction extends FlowAction {
   String get name => 'settle_offer_funds';
 
   @override
+  bool get requiresCommittedState => true;
+
+  @override
   Future<void> run(GenericOfferFlow flow, FlowEffectContext ctx) async {
     ctx.write.settledAt = ctx.now;
     final offer = ctx.offer;
-    if (flow._c._paymentBackend == null || offer.holdInvoicePreimage == null) {
-      return;
+    final backend = flow._c._paymentBackend;
+    final preimage = offer.holdInvoicePreimage;
+    final paymentHash = offer.holdInvoicePaymentHash;
+    if (backend == null || preimage == null || paymentHash == null) {
+      throw StateError('Cannot settle offer ${offer.id}: missing payment '
+          'backend, preimage, or payment hash.');
     }
-    await flow._c._paymentBackend!
-        .settleInvoice(preimageHex: offer.holdInvoicePreimage!);
+    try {
+      await backend.settleInvoice(preimageHex: preimage);
+    } catch (_) {
+      // Settlement is idempotent at the flow level: if the backend applied it
+      // before a crash/transport error, finalize without issuing it again.
+      final invoice = await backend.lookupInvoice(paymentHashHex: paymentHash);
+      if (invoice.status == InvoiceStatus.SETTLED) return;
+      rethrow;
+    }
   }
 }

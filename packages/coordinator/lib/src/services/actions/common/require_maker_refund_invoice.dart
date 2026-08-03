@@ -29,5 +29,6 @@ class RequireMakerRefundInvoiceAction extends FlowAction {
           'maker_invoice amount $invoiceAmountSats sats does not match the '
           'expected refund of ~$expected sats.');
     }
+    ctx.write.makerRefundInvoice = invoice;
   }
 }

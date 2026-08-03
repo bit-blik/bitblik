@@ -20,7 +20,7 @@ const _taker = FlowActor.taker;
 // The faithful BLIK user-action table (timeouts asserted separately).
 const _allowed = <_Row>[
   // funded
-  _Row('funded', 'cancel_offer', _maker, 'cancelled'),
+  _Row('funded', 'cancel_offer', _maker, 'cancelling'),
   _Row('funded', 'reserve_offer', _taker, 'reserved'),
   // reserved
   _Row('reserved', 'submit_blik', _taker, 'blikReceived'),
@@ -47,7 +47,7 @@ const _allowed = <_Row>[
   _Row('takerCharged', 'mark_blik_invalid', _maker, 'conflict'),
   // conflict
   _Row('conflict', 'confirm_payment', _maker, 'makerConfirmed'),
-  _Row('conflict', 'open_dispute', _maker, 'dispute'),
+  _Row('conflict', 'open_dispute', _maker, 'securingDispute'),
   // takerPaymentFailed
   _Row('takerPaymentFailed', 'update_taker_invoice', _taker, 'payingTaker'),
   _Row('takerPaymentFailed', 'retry_taker_payment', _taker, 'payingTaker'),
@@ -60,15 +60,15 @@ const _allowed = <_Row>[
 // the yml must not break this golden test, only changing a target/transition
 // (real behaviour) should.
 const _timeouts = <String, String>{
-  'funded': 'expired',
+  'funded': 'expiring',
   'reserved': 'funded',
   'blikReceived': 'expiredBlik',
   'blikSentToMaker': 'expiredSentBlik',
-  'invalidBlik': 'dispute',
+  'invalidBlik': 'securingDispute',
   'expiredBlik': 'funded',
-  'expiredSentBlik': 'dispute',
+  'expiredSentBlik': 'securingDispute',
   'takerCharged': 'makerConfirmed',
-  'conflict': 'dispute',
+  'conflict': 'securingDispute',
 };
 
 const _terminalStates = {

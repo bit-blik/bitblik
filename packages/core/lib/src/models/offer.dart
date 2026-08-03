@@ -77,6 +77,10 @@ class Offer {
   // Added fields based on DB schema that might be useful
   final String? takerLightningAddress;
   final String? takerInvoice;
+
+  /// Server-only invoice used to resume a coordinator-ruled maker refund.
+  /// Intentionally excluded from JSON/RPC serialization.
+  final String? makerRefundInvoice;
   final String?
       holdInvoicePreimage; // Might be sensitive, consider if needed on client
   final DateTime? updatedAt;
@@ -187,6 +191,7 @@ class Offer {
     this.holdInvoice,
     this.takerLightningAddress,
     this.takerInvoice,
+    this.makerRefundInvoice,
     this.holdInvoicePreimage,
     this.updatedAt,
     this.makerConfirmedAt,
