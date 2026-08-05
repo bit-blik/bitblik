@@ -1147,12 +1147,17 @@ class CoordinatorService {
     final strings = _notificationStrings;
     final fiatText =
         '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
+    // The general channel mixes every bank of a multi-bank market, so the bank
+    // goes up front: a taker must see whose ATM the code is for without opening
+    // the offer. Empty for bank-agnostic markets (BLIK/MB WAY/TWINT).
+    final bank = bankForOffer(offer);
+    final bankTag = bank == null ? '' : ' [${bank.label}]';
     final categoryText = _formatCategoryForNotification(offer.category);
     final categorySuffix = categoryText == null ? '' : ', $categoryText';
     final premiumSuffix = offer.premiumPercent > 0
         ? ', +${_formatPremium(offer.premiumPercent)}% ${strings.premium}'
         : '';
-    return '${strings.newOffer}: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
+    return '${strings.newOffer}$bankTag: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
   }
 
   /// General target [general] (dropped if empty) unioned with the offer bank's
