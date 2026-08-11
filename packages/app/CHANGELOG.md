@@ -4,8 +4,6 @@
 - feat: support NFC reading on LNURL lightning addresses and adding wallet
 - fix: providing a new invoice for paying out the taker doesn't get stored
 - fix: keep taker charged actions visible on small screens and warn before abandoning a potentially charged code
-
-## [0.9.0] - 2026-07-08
 - feat: support TWINT Swiss payment system
 - feat: add DE & FR language translations
 
