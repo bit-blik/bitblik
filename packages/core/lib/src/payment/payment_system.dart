@@ -4,19 +4,6 @@ import 'package:ndk/ndk.dart' show Nip19;
 import '../constants/relays.dart';
 import '../models/offer.dart' show OfferCategory, Offer;
 
-/// Which coordinator state-machine implementation drives a payment flow.
-enum FlowEngineMode {
-  /// Legacy path: hardcoded transitions keyed on the [OfferStatus] enum.
-  /// Deprecated but retained for existing markets (BLIK, MB WAY) and their
-  /// already-deployed clients. See [[project-dual-flow-engine]].
-  legacyEnum,
-
-  /// Generic path: transitions and timers are enforced purely from a yaml flow
-  /// definition via `FlowEngine`, storing raw flow-state strings. Not coupled
-  /// to [OfferStatus].
-  generic,
-}
-
 /// The shape of the payment artifact exchanged in a flow.
 enum InstrumentKind {
   /// A fixed-length numeric code (BLIK, MB WAY, TWINT, SK cardless withdrawal).
@@ -91,8 +78,8 @@ class BankSpec {
 /// How the payment artifact works for one [OfferCategory] of a market.
 ///
 /// Holds everything that used to be hardcoded per payment method: code length,
-/// validity window, who provides the code, and which coordinator flow drives
-/// it. Where a market's ATM instrument varies by bank (Slovakia), the defaults
+/// validity window, who provides the code, and its generic flow definition.
+/// Where a market's ATM instrument varies by bank (Slovakia), the defaults
 /// here are overridden by the matching [BankSpec].
 @immutable
 class InstrumentSpec {
@@ -100,13 +87,8 @@ class InstrumentSpec {
   final InstrumentDirection direction;
 
   /// Id of the flow definition (`packages/core/lib/flows/<flowId>.yml`) that
-  /// models this instrument's coordinator state machine. Null when no faithful
-  /// flow definition exists yet (the coordinator then relies on hardcoded
-  /// logic).
-  final String? flowId;
-
-  /// Which coordinator engine drives this instrument.
-  final FlowEngineMode flowEngineMode;
+  /// models this instrument's coordinator state machine.
+  final String flowId;
 
   /// Default validity window (maker confirmation countdown). Overridden per
   /// bank by [BankSpec.validity].
@@ -144,8 +126,7 @@ class InstrumentSpec {
     required this.kind,
     required this.direction,
     required this.validity,
-    this.flowId,
-    this.flowEngineMode = FlowEngineMode.legacyEnum,
+    required this.flowId,
     this.codeLength,
     this.codeName,
     this.requiresCodeConfirmation = true,
@@ -343,10 +324,7 @@ class PaymentSystem {
 
   /// The primary instrument's flow id — the flow this market's coordinator/
   /// client loads (current markets have one flow across their categories).
-  String? get flowId => _primary.flowId;
-
-  /// The primary instrument's coordinator engine mode.
-  FlowEngineMode get flowEngineMode => _primary.flowEngineMode;
+  String get flowId => _primary.flowId;
 
   /// Whether [code] is valid for the primary instrument (its default length).
   /// Prefer `instrument.validate(code, bank: bank)` when a bank is known.
@@ -470,7 +448,6 @@ const PaymentSystem kTwint = PaymentSystem(
   currencySymbol: 'CHF',
   discoveryPubkeyHex: kTwintPubkeyHex,
   instruments: {
-    OfferCategory.shop: _twintInstrument,
     OfferCategory.online: _twintInstrument,
   },
 );
@@ -479,7 +456,6 @@ const InstrumentSpec _twintInstrument = InstrumentSpec(
   kind: InstrumentKind.numericCode,
   direction: InstrumentDirection.makerProvides,
   flowId: 'twint',
-  flowEngineMode: FlowEngineMode.generic,
   validity: Duration(minutes: 5),
   codeLength: 5,
   codeName: 'TWINT',
@@ -504,7 +480,6 @@ const PaymentSystem kSlovakia = PaymentSystem(
       kind: InstrumentKind.numericCode,
       direction: InstrumentDirection.takerProvides,
       flowId: 'sk_atm',
-      flowEngineMode: FlowEngineMode.generic,
       // Bank-scoped code validity resolves through $code_validity in sk_atm.yml;
       // this default is the fallback when an offer has no (known) bank.
       validity: Duration(minutes: 15),
@@ -521,8 +496,7 @@ const PaymentSystem kSlovakia = PaymentSystem(
           id: 'tatrabanka',
           label: 'Tatra banka',
           validity: Duration(minutes: 20),
-          atmMapUrl:
-              'https://www.google.com/maps/search/Tatra+banka+bankomat',
+          atmMapUrl: 'https://www.google.com/maps/search/Tatra+banka+bankomat',
         ),
         BankSpec(
           id: 'slsp',

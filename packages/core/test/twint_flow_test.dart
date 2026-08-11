@@ -51,27 +51,11 @@ void main() {
         'makerConfirmed');
   });
 
-  test('twint-specific states are intentionally non-enum; the rest map', () {
-    // invalidTwint / expiredTwint are new generic states with NO OfferStatus
-    // value (stored/broadcast as raw strings). Every other twint state shares
-    // its name with the enum (payout tail + lifecycle).
-    const twintOnly = {'invalidTwint', 'expiredTwint'};
-    for (final name in engine.definition.states.keys) {
-      final mapped = offerStatusFromFlowState(name);
-      if (twintOnly.contains(name)) {
-        expect(mapped, OfferStatus.unknown, reason: '$name should be non-enum');
-      } else {
-        expect(mapped, isNot(OfferStatus.unknown),
-            reason: 'flow state "$name" has no matching OfferStatus');
-      }
-    }
-  });
-
   test('timeouts drive the documented targets', () {
     expect(engine.timeoutFor('funded')!.target, 'invalidTwint');
     expect(engine.timeoutFor('reserved')!.target, 'expiredTwint');
     expect(engine.timeoutFor('expiredTwint')!.target, 'invalidTwint');
-    expect(engine.timeoutFor('invalidTwint')!.target, 'cancelled');
+    expect(engine.timeoutFor('invalidTwint')!.target, 'cancelling');
     expect(engine.timeoutFor('takerCharged')!.target, 'makerConfirmed');
   });
 
@@ -122,13 +106,41 @@ void main() {
     for (final s in ['cancelled', 'takerPaid']) {
       expect(engine.isTerminal(s), isTrue, reason: s);
     }
-    // Dispute is no longer terminal: the coordinator resolves it by refunding
-    // the maker (-> cancelled) or paying the taker (-> settled).
+    // A private intermediate state first secures escrow post-commit, then the
+    // coordinator exposes/resolves the existing dispute state.
     expect(engine.isTerminal('dispute'), isFalse);
+    expect(engine.definition.state('securingDispute')!.actions,
+        contains('settle_offer_funds'));
+    expect(
+        engine.definition.state('securingDispute')!.transitions.single.target,
+        'dispute');
     expect(
         engine.transitionFor('dispute', 'resolve_dispute_refund_maker')?.target,
-        'cancelled');
+        'refundingMaker');
     expect(engine.transitionFor('dispute', 'resolve_dispute_pay_taker')?.target,
         'payingTaker');
+  });
+
+  test('escrow mutations are post-commit state actions', () {
+    const irreversible = {
+      'cancel_hold_invoice',
+      'settle_offer_funds',
+      'send_payment',
+      'refund_maker',
+    };
+    for (final state in engine.definition.states.values) {
+      for (final transition in state.transitions) {
+        expect(transition.actions.toSet().intersection(irreversible), isEmpty,
+            reason: '${state.name} transition mutates escrow pre-commit');
+      }
+    }
+    expect(engine.definition.state('cancelling')!.actions,
+        contains('cancel_hold_invoice'));
+    expect(engine.definition.state('makerConfirmed')!.actions,
+        contains('settle_offer_funds'));
+    expect(engine.definition.state('payingTaker')!.actions,
+        contains('send_payment'));
+    expect(engine.definition.state('refundingMaker')!.actions,
+        contains('refund_maker'));
   });
 }

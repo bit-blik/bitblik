@@ -35,13 +35,9 @@ class FlowLoader {
     return file.readAsStringSync();
   }
 
-  /// Resolve and parse the flow with [flowId]. Returns null (and never throws)
-  /// if the file cannot be located or fails to parse/validate — the coordinator
-  /// then proceeds on hardcoded logic alone.
-  /// Returns null when the flow file cannot be located (legitimate: the method
-  /// has no bundled flow → legacy enforcement). **Parse/validation errors are
-  /// NOT swallowed** — they propagate so the caller can fail loudly in generic
-  /// mode instead of silently downgrading to legacy.
+  /// Resolve and parse the flow with [flowId]. Returns null when the flow file
+  /// cannot be located. Parse/validation errors propagate so coordinator
+  /// startup fails loudly; every payment system requires a valid bundled flow.
   static Future<FlowEngine?> load(String flowId) async {
     // Explicit dir (Docker/AOT deployments, where Isolate.resolvePackageUri
     // returns null) takes precedence over package resolution.

@@ -24,6 +24,7 @@ final List<FlowAction> allFlowActions = [
   StampMakerConfirmedAtAction(),
   StampReservedAtAction(),
   StampTakerChargedAtAction(),
+  UpdateTakerInvoiceAction(),
   ValidateCodeAction(),
   NotifyMakerOfChargeAction(),
   SendTwintCodeToTakerAction(),

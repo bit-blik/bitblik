@@ -1,12 +1,14 @@
 part of '../../coordinator_service.dart';
 
-/// Pays out the taker over Lightning. In schema v2 this action runs inside the
-/// detached `auto` attempt itself: success commits the transition to its normal
-/// `to:` target, while definitive failure throws [FlowTransitionFailure] and
-/// the executor routes to `on_fail:`.
+/// Pays out the taker over Lightning after `payingTaker` has been committed as
+/// the durable work claim. Success/failure is finalized by that state's auto
+/// completion edge.
 class SendPaymentAction extends FlowAction {
   @override
   String get name => 'send_payment';
+
+  @override
+  bool get requiresCommittedState => true;
 
   @override
   Future<void> run(GenericOfferFlow flow, FlowEffectContext ctx) async {
@@ -17,17 +19,9 @@ class SendPaymentAction extends FlowAction {
 
     var invoice = offer.takerInvoice;
     if (invoice == null || invoice.isEmpty) {
-      final lnAddr = offer.takerLightningAddress;
-      if (lnAddr == null || lnAddr.isEmpty) {
-        throw const FlowTransitionFailure(
-            'Missing both taker invoice and Lightning Address');
-      }
-      invoice = await c._resolveLnurlPay(lnAddr, netAmountSats);
-      if (invoice == null || invoice.isEmpty) {
-        throw const FlowTransitionFailure(
-            'Failed to get invoice from lightning address (LNURL resolution failed)');
-      }
-      ctx.write.takerInvoice = invoice;
+      // Payout is bolt11-only: the taker must have supplied an invoice by
+      // this point (submit / reserve / update_taker_invoice).
+      throw const FlowTransitionFailure('Missing taker invoice');
     }
 
     try {
@@ -56,16 +50,6 @@ class SendPaymentAction extends FlowAction {
   @override
   List<String> validate(
       FlowEngine engine, FlowState state, FlowTransition edge) {
-    if (edge.trigger != FlowTriggerType.auto) {
-      return [
-        'state "${state.name}": send_payment must run on an auto transition'
-      ];
-    }
-    if (edge.onFailTarget == null) {
-      return [
-        'state "${state.name}": send_payment transition must declare on_fail'
-      ];
-    }
     return const [];
   }
 }

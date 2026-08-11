@@ -321,8 +321,6 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                 // Action cards
                 Builder(
                   builder: (context) {
-                    final hasRealActiveOffer =
-                        !kDebugMode && hasActiveOffer && !isTakerPaid;
                     final cardHeight =
                         220.0; //screenWidth > 600 ? 200.0 : 180.0; // Responsive height
 
@@ -330,7 +328,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                       children: [
                         // Pay BLIK card (gradient)
                         Expanded(
-                          child: Container(
+                          child: SizedBox(
                             height: cardHeight,
                             child: _buildActionCard(
                               context: context,
@@ -351,7 +349,6 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                                 ],
                               ),
                               textColor: Colors.white,
-                              isEnabled: !hasRealActiveOffer,
                               onTap: () {
                                 if (kIsWeb) {
                                   context.go("/create");
@@ -365,7 +362,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                         const SizedBox(width: 24),
                         // Sell BLIK card (white)
                         Expanded(
-                          child: Container(
+                          child: SizedBox(
                             height: cardHeight,
                             child: _buildActionCard(
                               context: context,
@@ -380,7 +377,6 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                               backgroundColor: Colors.white,
                               textColor: const Color(0xFF000000),
                               borderColor: Colors.grey[300],
-                              isEnabled: !hasRealActiveOffer,
                               onTap: () {
                                 if (kIsWeb) {
                                   context.go("/offers");
@@ -536,14 +532,13 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
     Gradient? gradient,
     required Color textColor,
     Color? borderColor,
-    required bool isEnabled,
     required VoidCallback onTap,
   }) {
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: isEnabled ? onTap : null,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
@@ -563,13 +558,12 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                   width: 44,
                   height: 44,
                   fit: BoxFit.contain,
-                  opacity: AlwaysStoppedAnimation(isEnabled ? 1.0 : 0.5),
                 )
               else if (icon != null)
                 Icon(
                   icon,
                   size: 44, // Reduced from 48 to 40
-                  color: textColor.withOpacity(isEnabled ? 1.0 : 0.5),
+                  color: textColor,
                 ),
               const SizedBox(height: 14), // Reduced from 16 to 12
               Flexible(
@@ -579,7 +573,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                   style: TextStyle(
                     fontSize: 22, // Reduced from 24 to 20
                     fontWeight: FontWeight.bold,
-                    color: textColor.withOpacity(isEnabled ? 1.0 : 0.5),
+                    color: textColor,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2, // Added max lines to prevent overflow
@@ -593,7 +587,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                   subtitle,
                   style: TextStyle(
                     fontSize: 14, // Reduced from 16 to 14
-                    color: textColor.withOpacity(isEnabled ? 0.8 : 0.4),
+                    color: textColor.withValues(alpha: 0.8),
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2, // Added max lines to prevent overflow

@@ -632,6 +632,15 @@ taker:
       status: "Estado"
       youllReceive: "Vai receber"
 
+  criticalCodeDecision:
+    title: "Decisão crítica"
+    explanation: "Já partilhou um código ${code} com o maker. Continuar pode substituir esse código, terminar a sua reserva e reabrir a oferta a outros takers."
+    warningTitle: "PODE PERDER OS SEUS FUNDOS"
+    warningBody: "Se o seu banco debitou o pagamento ${code}, NÃO continue. O maker pode ter usado o seu código e, após esta ação, o coordenador poderá já não conseguir garantir o pagamento dos seus bitcoins."
+    actions:
+      cancel: "Voltar e verificar o banco"
+      proceed: "NÃO fui debitado — continuar"
+
 twint:
   scanner:
     title: "Ler código ${code}"

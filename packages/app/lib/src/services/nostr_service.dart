@@ -19,14 +19,14 @@ import 'nostr_cache_factory.dart';
 import 'relay_reconnect_gate.dart';
 
 /// Result of a reserve_offer RPC. Generic (yaml-driven) coordinators return
-/// the full offer json ([offer] non-null); legacy enum coordinators return
+/// the full offer json ([offer] non-null); older coordinators returned
 /// only the reservation timestamp.
 typedef ReserveOfferResult = ({DateTime? reservedAt, Offer? offer});
 
 /// The taker's local reserved offer after a successful reserve: prefer the
 /// coordinator's full offer json when present (server truth: raw flow state,
 /// blik_received_at as the code-lifespan countdown base, updated_at), falling
-/// back to patching the listed offer for legacy enum coordinators.
+/// back to patching the listed offer for those older coordinators.
 Offer reservedOfferFromResult(
   Offer listed,
   String takerId,
@@ -72,7 +72,6 @@ class NostrService {
   /// events) and to bootstrap NDK. All per-coordinator communication is routed
   /// to each coordinator's own relays (see [CoordinatorRegistry.relaysFor]).
   static const List<String> _defaultRelayUrls = kDiscoveryRelays;
-
 
   final KeyService _keyService;
   Ndk? _ndk;
@@ -595,7 +594,7 @@ class NostrService {
       params: {
         'offer_id': offerId,
         // D1: generic flows (TWINT) capture the taker's payout details at
-        // reserve via the `accept_taker_invoice` effect. Legacy enum flows
+        // reserve via the `accept_taker_invoice` effect. Older coordinators
         // (BLIK) ignore these extra params.
         if (takerLightningAddress != null && takerLightningAddress.isNotEmpty)
           'taker_lightning_address': takerLightningAddress,

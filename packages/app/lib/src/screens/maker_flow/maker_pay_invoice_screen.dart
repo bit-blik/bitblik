@@ -104,7 +104,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
         ),
       );
       // Coordinator says we're funded — surface that flow.
-      context.go(flowEntryRoute(ref, '/wait-taker'));
+      context.go(flowRoute);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -358,7 +358,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       final usedWalletId = ref.read(activeOfferProvider)?.paymentWalletId;
       unawaited(_refreshWalletBalanceAndBudget(walletId: usedWalletId));
       if (mounted) {
-        context.go(flowEntryRoute(ref, "/wait-taker"));
+        context.go(flowRoute);
       }
       _isPayingWithWallet = false;
     } else {
@@ -1135,16 +1135,19 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       // Note: Code below is unreachable until payment is implemented
       // Logger.log.i(() => '[MakerPayInvoiceScreen] Invoice accepted');
       // if (mounted) {
-      //   context.go(flowEntryRoute(ref, "/wait-taker"));
+      //   context.go(flowRoute);
       // }
     } catch (e) {
       // pay_invoice blocks while the coordinator holds the HTLC, so a timeout
       // (or an "invoice already being paid" error on retry) does NOT mean the
       // payment failed — the HTLC may already be locked. Ask the coordinator
       // for the authoritative offer status before surfacing an error.
-      await container.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
-      final accepted =
-          _paymentAccepted(container.read(activeOfferProvider)?.statusEnum);
+      await container
+          .read(activeOfferProvider.notifier)
+          .reconcileActiveOfferNow();
+      final accepted = _paymentAccepted(
+        container.read(activeOfferProvider)?.statusEnum,
+      );
       // When accepted, reconcile pushed a new offer into activeOfferProvider,
       // firing the ref.listen in build() -> _handleStatusUpdate -> navigation
       // to /wait-taker. Suppress the error in that case.

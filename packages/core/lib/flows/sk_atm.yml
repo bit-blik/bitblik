@@ -16,7 +16,8 @@
 #   not advance and nothing is committed.
 # - `on_fail` routes definitive transition failure to another state.
 # - `on: auto` transitions are detached/internal attempts.
-# - State-level `do:` runs after the state commit, best-effort.
+# - State-level `do:` runs after the state commit. Escrow actions gate the
+#   state's sole auto completion edge and retry from the durable state.
 #
 # Initial state: funded.
 
@@ -35,8 +36,8 @@ states:
     transitions:
       - on: cancel_offer
         by: maker
-        do: [clear_taker_fields, cancel_hold_invoice]
-        to: cancelled
+        do: [clear_taker_fields]
+        to: cancelling
       - on: reserve_offer
         by: taker
         do: [reserve_taker]
@@ -44,8 +45,8 @@ states:
       - on: timeout
         after: 600
         from: created_at
-        do: [clear_taker_fields, cancel_hold_invoice]
-        to: expired
+        do: [clear_taker_fields]
+        to: expiring
         reason: No taker reserved in time
 
   reserved:
@@ -111,6 +112,14 @@ states:
     description: Offer expired — no taker reserved within the funded window.
     terminal: true
 
+  expiring:
+    nip69: in-progress
+    description: Expiry committed. Returning the hold invoice to the maker.
+    do: [cancel_hold_invoice]
+    transitions:
+      - on: auto
+        to: expired
+
   invalidBlik:
     nip69: in-progress
     description: >
@@ -130,8 +139,7 @@ states:
         to: funded
       - on: timeout
         after: 3600
-        do: [settle_offer_funds]
-        to: dispute
+        to: securingDispute
         reason: autoInvalidBlikTimeout — taker silent; settle and escalate.
 
   expiredBlik:
@@ -177,8 +185,7 @@ states:
         to: reserved
       - on: timeout
         after: 3600
-        do: [settle_offer_funds]
-        to: dispute
+        to: securingDispute
         reason: autoExpiredSentBlikTimeout — settle and escalate.
 
   takerCharged:
@@ -212,10 +219,8 @@ states:
         to: makerConfirmed
       - on: open_dispute
         by: maker
-        do: [settle_offer_funds]
-        to: dispute
+        to: securingDispute
       - on: timeout
         after: 3600
-        do: [settle_offer_funds]
-        to: dispute
+        to: securingDispute
         reason: autoConflictTimeout — settle and escalate to dispute.

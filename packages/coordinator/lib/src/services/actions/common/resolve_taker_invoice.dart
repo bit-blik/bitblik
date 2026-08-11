@@ -1,31 +1,20 @@
 part of '../../coordinator_service.dart';
 
-/// Ensures the taker's payout invoice — accepts a bolt11 from the params
-/// (validated against the expected net amount) or resolves one from the
-/// taker's Lightning address via LNURL.
+/// Ensures the taker's payout invoice — requires a bolt11 from the params and
+/// validates it against the expected net amount. Lightning-address (LNURL)
+/// payout is not supported: the taker must supply an invoice.
 class ResolveTakerInvoiceAction extends FlowAction {
   @override
   String get name => 'resolve_taker_invoice';
 
   @override
   Future<void> run(GenericOfferFlow flow, FlowEffectContext ctx) async {
-    final lnAddr = _cleanParam(ctx.params['taker_lightning_address']);
-    var inv = _cleanParam(ctx.params['taker_invoice']);
+    final inv = _cleanParam(ctx.params['taker_invoice']) ??
+        _cleanParam(ctx.params['bolt11']);
     if (inv == null) {
-      if (lnAddr == null) {
-        throw Exception(
-            'Missing taker invoice and lightning address for submit.');
-      }
-      inv = await flow._c._resolveLnurlPay(
-          lnAddr, flow._c._expectedTakerNetAmountSats(ctx.offer));
-      if (inv == null || inv.isEmpty) {
-        throw Exception('Could not resolve a taker invoice from $lnAddr.');
-      }
-    } else {
-      flow._c
-          ._validateTakerInvoiceAmount(ctx.offer, inv, action: 'submit_blik');
+      throw Exception('Missing taker invoice (bolt11) for submit.');
     }
+    flow._c._validateTakerInvoiceAmount(ctx.offer, inv, action: 'submit_blik');
     ctx.write.takerInvoice = inv;
-    ctx.write.takerLightningAddress = lnAddr;
   }
 }

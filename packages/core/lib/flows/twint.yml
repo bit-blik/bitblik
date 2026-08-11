@@ -8,7 +8,8 @@
 #   not advance and nothing is committed.
 # - `on_fail` routes definitive transition failure to another state.
 # - `on: auto` transitions are detached/internal attempts.
-# - State-level `do:` runs after the state commit, best-effort.
+# - State-level `do:` runs after the state commit. Escrow actions gate the
+#   state's sole auto completion edge and retry from the durable state.
 #
 # Initial state: funded. The maker supplies the TWINT code at offer creation
 # (PaymentSystem.makerProvidesCodeAtOfferCreation).
@@ -30,8 +31,8 @@ states:
     transitions:
       - on: cancel_offer
         by: maker
-        do: [clear_taker_fields, cancel_hold_invoice]
-        to: cancelled
+        do: [clear_taker_fields]
+        to: cancelling
       - on: reserve_offer
         by: taker
         do: [reserve_taker, accept_taker_invoice, send_twint_code_to_taker]
@@ -54,12 +55,11 @@ states:
         to: funded
       - on: cancel_offer
         by: maker
-        do: [clear_taker_fields, cancel_hold_invoice]
-        to: cancelled
+        do: [clear_taker_fields]
+        to: cancelling
       - on: timeout
         after: 3600           # cancel
-        do: [cancel_hold_invoice]
-        to: cancelled
+        to: cancelling
 
   reserved:
     nip69: in-progress
@@ -123,8 +123,7 @@ states:
         to: makerConfirmed
       - on: start_dispute
         by: maker
-        do: [settle_offer_funds]
-        to: dispute
+        to: securingDispute
       - on: timeout
         after: 3600           # 60 min
         do: [stamp_maker_confirmed_at]

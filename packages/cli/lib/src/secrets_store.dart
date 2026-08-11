@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
+import 'package:bitblik_core/core.dart'
+    show generateSecp256k1PrivateKeyHex, requireValidSecp256k1PrivateKeyHex;
 import 'package:ndk/ndk.dart' show CashuSeed;
 
 class BitblikSecrets {
@@ -29,14 +30,19 @@ class SecretsStore {
     final envKey = Platform.environment[_envPrivateKey];
     final envSeed = Platform.environment[_envCashuSeed];
     if (envKey != null && envSeed != null) {
-      return BitblikSecrets(privateKeyHex: envKey, cashuSeedPhrase: envSeed);
+      // Fail fast on a malformed/out-of-range key instead of signing with a
+      // silently reduced one.
+      return BitblikSecrets(
+          privateKeyHex: requireValidSecp256k1PrivateKeyHex(envKey),
+          cashuSeedPhrase: envSeed);
     }
 
     final file = _secretsFile;
     if (await file.exists()) {
       final raw = jsonDecode(await file.readAsString());
       return BitblikSecrets(
-        privateKeyHex: raw['private_key'] as String,
+        privateKeyHex:
+            requireValidSecp256k1PrivateKeyHex(raw['private_key'] as String),
         cashuSeedPhrase: raw['cashu_seed'] as String,
       );
     }
@@ -48,10 +54,9 @@ class SecretsStore {
   }
 
   static BitblikSecrets _generate() {
-    final rng = Random.secure();
-    final bytes = List<int>.generate(32, (_) => rng.nextInt(256));
-    final privateKey =
-        bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    // OS-CSPRNG entropy, rejection-sampled into the valid secp256k1 scalar
+    // range (see core's secure_keys.dart).
+    final privateKey = generateSecp256k1PrivateKeyHex();
     final seed = CashuSeed.generateSeedPhrase();
     return BitblikSecrets(privateKeyHex: privateKey, cashuSeedPhrase: seed);
   }

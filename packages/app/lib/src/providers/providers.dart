@@ -889,7 +889,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     final apiService = await _ref.read(initializedApiServiceProvider.future);
 
     // Generic (yaml-driven) flows start at `funded` and never use `created`,
-    // so this is only true for legacy pre-payment offers. Compare the raw
+    // so this is only true for older pre-payment offers. Compare the raw
     // status string, not the enum, so generic flow states are handled correctly.
     final isLocalOnly = current.statusRaw == OfferStatus.created.name;
 
@@ -946,7 +946,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     // it remotely would hit the coordinator for an offer it has no record of.
     if (!isLocalOnly || sameOffer) {
       // Prefer the coordinator UUID; local id may be a payment hash or the
-      // legacy "empty" placeholder which the coordinator rejects.
+      // older "empty" placeholder which the coordinator rejects.
       final cancelId = remoteId ?? current.id;
       try {
         await apiService.cancelOffer(cancelId, current.coordinatorPubkey);
@@ -957,7 +957,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
     final cancelled = current.copyWith(status: OfferStatus.cancelled);
     await OfferDbService().upsertOffer(cancelled);
-    await _promoteMostRecentActiveOffer();
+    // Cancellation is an explicit exit from this trade. Do not promote an
+    // older active row here: the current flow screen would immediately redraw
+    // that offer (for example an old dispute), making it look as though the
+    // offer just cancelled had entered that state.
+    state = null;
   }
 
   /// Persist a status update from the coordinator.
@@ -995,7 +999,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       // Preserve the verbatim wire status so generic (yaml-driven) flows keep
       // their real state (e.g. `invalidTwint`/`expiredTwint`) even though the
       // OfferStatus enum parses them to `unknown`. Flow-driven navigation keys
-      // on statusRaw. For legacy flows this equals status.name.
+      // on statusRaw. For older offers this equals status.name.
       statusRaw: update.status,
       reservedAt: update.reservedAt,
       // Anchor the BLIK confirmation countdown to the coordinator's
@@ -1041,7 +1045,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                       currentState.holdInvoicePaymentHash ==
                           updated.holdInvoicePaymentHash));
           if (isCurrent) {
-            await _promoteMostRecentActiveOffer();
+            state = null;
             _ref.read(appLifecycleProvider)._updateForegroundService();
           }
           return;
@@ -1062,7 +1066,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                       currentState.holdInvoicePaymentHash ==
                           updated.holdInvoicePaymentHash));
           if (isCurrent) {
-            await _promoteMostRecentActiveOffer();
+            state = null;
             _ref.read(appLifecycleProvider)._updateForegroundService();
           }
           _ref.invalidate(myOffersProvider);
@@ -1126,7 +1130,14 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         state = hydrated;
         _ref.read(appLifecycleProvider)._updateForegroundService();
       } else if (OfferDbService.terminalStatuses.contains(newStatus)) {
-        await _promoteMostRecentActiveOffer();
+        if (newStatus == OfferStatus.cancelled) {
+          // A cancelled offer exits to home. Promoting another persisted offer
+          // while the flow screen is mounted can visually turn this offer into
+          // an unrelated older dispute.
+          state = null;
+        } else {
+          await _promoteMostRecentActiveOffer();
+        }
         _ref.read(appLifecycleProvider)._updateForegroundService();
       } else {
         state = hydrated;

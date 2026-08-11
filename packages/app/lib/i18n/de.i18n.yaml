@@ -633,6 +633,15 @@ taker:
       status: "Status"
       youllReceive: "Du erhältst"
 
+  criticalCodeDecision:
+    title: "Kritische Entscheidung"
+    explanation: "Du hast dem Maker bereits einen ${code}-Code mitgeteilt. Wenn du fortfährst, kann dieser Code ersetzt, deine Reservierung beendet und das Angebot wieder für andere Taker freigegeben werden."
+    warningTitle: "DU KANNST DEIN GELD VERLIEREN"
+    warningBody: "Wenn deine Bank die ${code}-Zahlung belastet hat, fahre NICHT fort. Der Maker könnte deinen Code verwendet haben, und danach kann der Koordinator deine Bitcoin-Auszahlung möglicherweise nicht mehr garantieren."
+    actions:
+      cancel: "Zurück und Bankkonto prüfen"
+      proceed: "Ich wurde NICHT belastet – fortfahren"
+
 twint:
   scanner:
     title: "${code}-Code scannen"

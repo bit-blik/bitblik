@@ -199,6 +199,7 @@ class _Translations$taker$sk extends Translations$taker$en {
 	@override late final _Translations$taker$paymentProcess$sk paymentProcess = _Translations$taker$paymentProcess$sk._(_root);
 	@override late final _Translations$taker$paymentFailed$sk paymentFailed = _Translations$taker$paymentFailed$sk._(_root);
 	@override late final _Translations$taker$paymentSuccess$sk paymentSuccess = _Translations$taker$paymentSuccess$sk._(_root);
+	@override late final _Translations$taker$criticalCodeDecision$sk criticalCodeDecision = _Translations$taker$criticalCodeDecision$sk._(_root);
 	@override late final _Translations$taker$invalidBlik$sk invalidBlik = _Translations$taker$invalidBlik$sk._(_root);
 	@override late final _Translations$taker$conflict$sk conflict = _Translations$taker$conflict$sk._(_root);
 }
@@ -1222,6 +1223,20 @@ class _Translations$taker$paymentSuccess$sk extends Translations$taker$paymentSu
 	@override String get title => 'Platba úspešná';
 	@override String get message => 'Tvoja platba bola úspešne spracovaná.';
 	@override late final _Translations$taker$paymentSuccess$actions$sk actions = _Translations$taker$paymentSuccess$actions$sk._(_root);
+}
+
+// Path: taker.criticalCodeDecision
+class _Translations$taker$criticalCodeDecision$sk extends Translations$taker$criticalCodeDecision$en {
+	_Translations$taker$criticalCodeDecision$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Kritické rozhodnutie';
+	@override String explanation({required Object code}) => 'Predávajúcemu si už poskytol kód ${code}. Pokračovanie môže tento kód nahradiť, ukončiť tvoju rezerváciu a znovu sprístupniť ponuku iným kupujúcim.';
+	@override String get warningTitle => 'MÔŽEŠ PRÍSŤ O SVOJE PROSTRIEDKY';
+	@override String warningBody({required Object code}) => 'Ak ti banka strhla platbu ${code}, NEPOKRAČUJ. Predávajúci mohol tvoj kód použiť a po tejto akcii už koordinátor nemusí vedieť zaručiť vyplatenie tvojich bitcoinov.';
+	@override late final _Translations$taker$criticalCodeDecision$actions$sk actions = _Translations$taker$criticalCodeDecision$actions$sk._(_root);
 }
 
 // Path: taker.invalidBlik
@@ -2422,6 +2437,17 @@ class _Translations$taker$paymentSuccess$actions$sk extends Translations$taker$p
 	@override String get goHome => 'Prejsť domov';
 }
 
+// Path: taker.criticalCodeDecision.actions
+class _Translations$taker$criticalCodeDecision$actions$sk extends Translations$taker$criticalCodeDecision$actions$en {
+	_Translations$taker$criticalCodeDecision$actions$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get cancel => 'Späť a skontrolovať banku';
+	@override String get proceed => 'NEBOLO mi strhnuté — pokračovať';
+}
+
 // Path: taker.invalidBlik.actions
 class _Translations$taker$invalidBlik$actions$sk extends Translations$taker$invalidBlik$actions$en {
 	_Translations$taker$invalidBlik$actions$sk._(TranslationsSk root) : this._root = root, super.internal(root);
@@ -3156,15 +3182,21 @@ extension on TranslationsSk {
 			'taker.paymentSuccess.title' => 'Platba úspešná',
 			'taker.paymentSuccess.message' => 'Tvoja platba bola úspešne spracovaná.',
 			'taker.paymentSuccess.actions.goHome' => 'Prejsť domov',
+			'taker.criticalCodeDecision.title' => 'Kritické rozhodnutie',
+			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Predávajúcemu si už poskytol kód ${code}. Pokračovanie môže tento kód nahradiť, ukončiť tvoju rezerváciu a znovu sprístupniť ponuku iným kupujúcim.',
+			'taker.criticalCodeDecision.warningTitle' => 'MÔŽEŠ PRÍSŤ O SVOJE PROSTRIEDKY',
+			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Ak ti banka strhla platbu ${code}, NEPOKRAČUJ. Predávajúci mohol tvoj kód použiť a po tejto akcii už koordinátor nemusí vedieť zaručiť vyplatenie tvojich bitcoinov.',
+			'taker.criticalCodeDecision.actions.cancel' => 'Späť a skontrolovať banku',
+			'taker.criticalCodeDecision.actions.proceed' => 'NEBOLO mi strhnuté — pokračovať',
 			'taker.invalidBlik.title' => ({required Object code}) => 'Neplatný kód ${code}',
+			_ => null,
+		} ?? switch (path) {
 			'taker.invalidBlik.message' => ({required Object code}) => 'Predávajúci odmietol kód ${code}',
 			'taker.invalidBlik.explanation' => ({required Object code}) => 'Predávajúci ponuky uviedol, že ${code}, ktorý si poskytol, bol neplatný alebo nefungoval.\n\nČo chceš urobiť?',
 			'taker.invalidBlik.werentCharged' => 'Ak ti NEBOLO nič strhnuté:',
 			'taker.invalidBlik.wereCharged' => 'Ak ti bolo strhnuté:',
 			'taker.invalidBlik.actions.retry' => ({required Object code}) => 'Poslať nový ${code}',
 			'taker.invalidBlik.actions.cancelReservation' => 'Zrušiť transakciu',
-			_ => null,
-		} ?? switch (path) {
 			'taker.invalidBlik.actions.reportConflict' => 'Začať spor',
 			'taker.invalidBlik.actions.returnHome' => 'Vrátiť sa domov',
 			'taker.invalidBlik.confirmDialog.title' => 'Naozaj?',

@@ -8,7 +8,7 @@ import 'package:yaml/yaml.dart';
 import 'package:clock/clock.dart'; // Added for Clock
 import 'package:crypto/crypto.dart'; // For SHA256
 import 'package:dotenv/dotenv.dart';
-import 'package:http/http.dart' as http; // For LNURL HTTP requests
+import 'package:http/http.dart' as http; // For exchange-rate HTTP requests
 import 'package:matrix/matrix.dart' as matrix; // Import Matrix SDK
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as path;
@@ -30,12 +30,9 @@ import 'telegram_service.dart';
 import '../flow/flow_loader.dart';
 import '../logging/app_logger.dart';
 
-// Offer-flow strategy: generic (yaml-driven) vs legacy enum. Parts share this
-// library's privates so each flow can reach the shared services on
-// CoordinatorService without widening its public API.
-part 'coordinator_flow.dart';
+// The YAML-driven offer flow shares this library's privates so it can reach the
+// coordinator's common services without widening its public API.
 part 'coordinator_flow_generic.dart';
-part 'coordinator_flow_legacy.dart';
 // Flow action implementations (one file per yml action keyword).
 part 'actions/all_actions.dart';
 part 'actions/common/accept_taker_invoice.dart';
@@ -54,13 +51,11 @@ part 'actions/common/stamp_code_received_at.dart';
 part 'actions/common/stamp_maker_confirmed_at.dart';
 part 'actions/common/stamp_reserved_at.dart';
 part 'actions/common/stamp_taker_charged_at.dart';
+part 'actions/common/update_taker_invoice.dart';
 part 'actions/common/validate_code.dart';
 part 'actions/twint/notify_maker_of_charge.dart';
 part 'actions/twint/send_twint_code_to_taker.dart';
 part 'actions/twint/set_new_code.dart';
-
-// Set to Duration.zero for production
-const Duration _kDebugDelayDuration = Duration(seconds: 0);
 
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
@@ -179,8 +174,8 @@ class CoordinatorService {
   /// primary (first) instrument when the category is null or unmapped. The
   /// fallback preserves pre-split behavior for legacy/older clients that omit a
   /// category on markets with a single effective instrument (BLIK, MB WAY) or
-  /// several identical ones (TWINT shop/online) — the old market-level scalars
-  /// always resolved to that instrument regardless of category.
+  /// TWINT — the old market-level scalars always resolved to that instrument
+  /// regardless of category.
   InstrumentSpec _instrumentForCategory(OfferCategory? category) =>
       _paymentSystem.instrumentFor(category) ??
       _paymentSystem.instruments.values.first;
@@ -189,7 +184,8 @@ class CoordinatorService {
   /// (engine mode, flowId). Current markets have one flow across their
   /// categories; a market with per-category flows would need the FlowRegistry
   /// (deferred to the QR phase).
-  InstrumentSpec get _primaryInstrument => _paymentSystem.instruments.values.first;
+  InstrumentSpec get _primaryInstrument =>
+      _paymentSystem.instruments.values.first;
 
   /// Whether [offer]'s instrument has the maker supply the payment code upfront
   /// (TWINT). Public so the RPC layer can gate code reveal without reaching for
@@ -202,7 +198,9 @@ class CoordinatorService {
   /// unset. Empty for bank-agnostic markets.
   List<String> get servedBanks {
     if (_servedBanks.isNotEmpty) return _servedBanks;
-    return [for (final b in _instrumentForCategory(OfferCategory.atm).banks) b.id];
+    return [
+      for (final b in _instrumentForCategory(OfferCategory.atm).banks) b.id
+    ];
   }
 
   /// Flow timeout parameters this coordinator can resolve (yaml `after: $name`).
@@ -250,48 +248,23 @@ class CoordinatorService {
       throw Exception('Unknown bank "$normalized" for ${_paymentSystem.id}.');
     }
     if (!servedBanks.contains(normalized)) {
-      throw Exception(
-          'This coordinator does not serve bank "$normalized" '
+      throw Exception('This coordinator does not serve bank "$normalized" '
           '(served: ${servedBanks.join(', ')}).');
     }
     return normalized;
   }
 
-  /// Effective engine mode for this deployment: the primary instrument's
-  /// [InstrumentSpec.flowEngineMode], optionally overridden by the FLOW_MODE env.
-  late final FlowEngineMode _flowEngineMode;
-
-  static FlowEngineMode? _parseFlowMode(String? raw) {
-    switch (raw?.toLowerCase()) {
-      case null:
-      case '':
-        return null;
-      case 'generic':
-        return FlowEngineMode.generic;
-      case 'legacy':
-      case 'legacyenum':
-      case 'enum':
-        return FlowEngineMode.legacyEnum;
-      default:
-        AppLogger.warning(
-            'Unrecognized FLOW_MODE "$raw"; using the method default.');
-        return null;
-    }
-  }
-
   /// State-machine engine loaded from the active method's bundled flow
-  /// definition. Null when no faithful flow exists yet for this method.
-  ///
-  /// PHASE 1 (shadow mode): used only by [_shadowCheckTransition] to verify the
-  /// hardcoded transitions against the declarative flow; the hardcoded logic
-  /// remains authoritative. Phase 2 will make this the enforcement source.
-  FlowEngine? _flowEngine;
+  /// definition. It is required: every coordinator operates through the
+  /// generic YAML flow executor.
+  late final FlowEngine _flowEngine;
+
+  // Test-only engine override for exercising deep startup validation against
+  // deliberately malformed definitions.
+  final FlowEngine? _flowEngineOverride;
 
   // Test-only override for the payment method id, bypassing `.env`.
   final String? _paymentSystemIdOverride;
-
-  // Test-only override for the engine mode, bypassing the FLOW_MODE env.
-  final FlowEngineMode? _flowModeOverrideForTest;
 
   // Supported currencies
   late final List<String> _supportedCurrencies;
@@ -299,44 +272,26 @@ class CoordinatorService {
   // Reservation timeout configuration
   late final int _reservationTimeoutSeconds;
 
-  /// Effective reservation timeout (env-configurable), exposed for tests.
-  int get reservationTimeoutSeconds => _reservationTimeoutSeconds;
-
-  /// Reservation window in seconds. Generic (yaml-driven) flows read it strictly
-  /// from the `reserved` state in the `.yml` and ignore the env override; enum
-  /// flows use the env-configurable [_reservationTimeoutSeconds].
+  /// Reservation window in seconds, read from the `reserved` state in the YAML
+  /// definition (with the configured value as a defensive fallback).
   int get _reservationSeconds {
-    if (isGenericFlow) {
-      return _flowEngine!.timeoutFor('reserved')?.durationSeconds ??
-          _reservationTimeoutSeconds;
-    }
-    return _reservationTimeoutSeconds;
+    return _flowEngine.timeoutFor('reserved')?.durationSeconds ??
+        _reservationTimeoutSeconds;
   }
 
   // Funded expire timeout configuration
   late final int _fundedExpireTimeoutSeconds;
 
-  /// Funded-state expiry window in seconds. Generic (yaml-driven) flows read it
-  /// strictly from the `.yml` state definition and ignore the env override;
-  /// enum flows use the env-configurable [_fundedExpireTimeoutSeconds].
+  /// Funded-state expiry window in seconds, read from the YAML definition.
   int get fundedExpirySeconds => _fundedExpirySeconds;
 
   int get _fundedExpirySeconds {
-    if (isGenericFlow) {
-      // Generic: the funded window is the timeout of the flow's initial state.
-      return _flowEngine!
-              .timeoutFor(_flowEngine!.initialState)
-              ?.durationSeconds ??
-          _fundedExpireTimeoutSeconds;
-    }
-    return _fundedExpireTimeoutSeconds;
+    return _flowEngine.timeoutFor(_flowEngine.initialState)?.durationSeconds ??
+        _fundedExpireTimeoutSeconds;
   }
 
   // taker charged timeout configuration
   late final int _takerChargedAutoConfirmTimeoutSeconds;
-
-  // conflict -> dispute auto-transition timeout configuration
-  late final int _conflictAutoDisputeTimeoutSeconds;
 
   // Exchange rate cache, keyed by uppercase currency code (e.g. PLN, EUR).
   final Map<String, double> _cachedRates = {};
@@ -483,8 +438,8 @@ class CoordinatorService {
   final Map<String, _PendingOfferRecord> _pendingOffers = {};
   final Map<String, StreamSubscription> _invoiceSubscriptions = {};
   final Map<String, Timer> _pendingOfferTimeouts = {};
-  // Per-stage offer timers live in the flow strategies (LegacyEnumOfferFlow /
-  // GenericOfferFlow). The coordinator keeps only the shared republish timer.
+  // Per-stage offer timers live in the generic flow. The coordinator keeps
+  // only the shared republish timer.
   final Map<String, Timer> _statusRepublishTimers = {};
 
   // Fee percentages, configurable via environment variables
@@ -505,12 +460,12 @@ class CoordinatorService {
       NostrService? nostrService,
       TelegramService? telegramServiceForTest,
       String? paymentSystemIdForTest,
-      FlowEngineMode? flowModeForTest})
+      FlowEngine? flowEngineForTest})
       : _clock = clock ?? const Clock(),
         _httpClient = httpClient ?? http.Client(),
         _nostrService = nostrService,
         _paymentSystemIdOverride = paymentSystemIdForTest,
-        _flowModeOverrideForTest = flowModeForTest {
+        _flowEngineOverride = flowEngineForTest {
     // Initialize dotenv
     _env = DotEnv(includePlatformEnvironment: true)..load();
 
@@ -587,21 +542,13 @@ class CoordinatorService {
     for (final bankId in servedBankIds) {
       final links = <String, String>{};
       for (final id in CoordinatorInfo.messengerIds) {
-        final envKey = '${id.toUpperCase()}_CHANNEL_LINK_${bankId.toUpperCase()}';
+        final envKey =
+            '${id.toUpperCase()}_CHANNEL_LINK_${bankId.toUpperCase()}';
         final url = (_env[envKey] ?? '').trim();
         if (url.isNotEmpty) links[id] = url;
       }
       if (links.isNotEmpty) _bankChannelLinks[bankId] = links;
     }
-
-    // Engine mode defaults to the method's own [PaymentSystem.flowEngineMode],
-    // but FLOW_MODE (`legacy`/`legacyEnum` | `generic`) overrides it per
-    // deployment — e.g. to dry-run a method on the generic executor. The
-    // generic mode still requires a loadable flow definition (flowId); if none
-    // loads, [isGenericFlow] stays false regardless of this setting.
-    _flowEngineMode = _flowModeOverrideForTest ??
-        _parseFlowMode(_env['FLOW_MODE']?.trim()) ??
-        _primaryInstrument.flowEngineMode;
 
     _supportedCurrencies =
         (_env['CURRENCIES']?.split(',') ?? [_paymentSystem.currency])
@@ -615,8 +562,6 @@ class CoordinatorService {
     _takerChargedAutoConfirmTimeoutSeconds =
         int.tryParse(_env['TAKER_CHARGED_AUTO_CONFIRM_SECONDS'] ?? '') ??
             3600; // 1h
-    _conflictAutoDisputeTimeoutSeconds = 3600; // 60m
-
     _makerFeePercentage =
         double.tryParse(_env['MAKER_FEE'] ?? '') ?? 0.5; // Default to 0.5%
     _takerFeePercentage =
@@ -673,146 +618,62 @@ class CoordinatorService {
     await _loadFlowEngine();
     AppLogger.info(
         'CoordinatorService initialized with $_paymentBackendType backend '
-        '(${isGenericFlow ? 'generic' : 'legacy-enum'} flow).');
+        '(generic YAML flow).');
   }
 
   Future<void> _loadFlowEngine() async {
     final method = _paymentSystem.id;
     final flowId = _primaryInstrument.flowId;
-    // Was the mode set by FLOW_MODE, or by the method's own default?
-    final overridden = _flowEngineMode != _primaryInstrument.flowEngineMode;
-    final source = overridden ? 'FLOW_MODE env override' : 'method default';
 
-    // When generic mode is explicitly intended, any failure to obtain a valid
-    // engine is fatal: we must NOT silently downgrade to legacy enforcement.
-    final wantGeneric = _flowEngineMode == FlowEngineMode.generic;
-
-    if (flowId == null) {
-      if (wantGeneric) {
-        throw StateError(
-            'FLOW ENGINE: GENERIC mode requested ($source) for method "$method" '
-            'but it declares no flowId. Refusing to start; fix the config or '
-            'unset FLOW_MODE=generic.');
-      }
-      AppLogger.info(
-          'FLOW ENGINE: method "$method" has no flow definition; legacy enum '
-          'enforcement only.');
-      return;
-    }
-
-    try {
-      _flowEngine = await FlowLoader.load(flowId);
-    } catch (e) {
-      // Parse/validation error in the yml.
-      if (wantGeneric) {
-        throw StateError(
-            'FLOW ENGINE: GENERIC mode but "$flowId.yml" failed to parse/'
-            'validate: $e. Refusing to start.');
-      }
-      AppLogger.warning(
-          'FLOW ENGINE: "$flowId.yml" failed to parse ($e); shadow disabled, '
-          'legacy enum enforcement only.');
-      return;
-    }
-    if (_flowEngine == null) {
-      if (wantGeneric) {
-        throw StateError(
-            'FLOW ENGINE: GENERIC mode but flow "$flowId" could not be located. '
-            'Refusing to start.');
-      }
-      AppLogger.warning(
-          'FLOW ENGINE: flow "$flowId" not found for method "$method"; '
-          'legacy enum enforcement only.');
-      return;
-    }
-
-    // isGenericFlow is now meaningful (engine != null).
-    if (isGenericFlow) {
-      // Deep self-check beyond structural parse: effects, timer durations,
-      // payout wiring, nip69. Throws (fatal) on any inconsistency.
-      flow.validateDefinition();
-      AppLogger.warning(
-          'FLOW ENGINE: GENERIC ENFORCING mode ACTIVE for method "$method" '
-          '(flow=$flowId, $source). State transitions AND timers are enforced '
-          'from $flowId.yml; legacy enum handlers are bypassed.');
+    if (_flowEngineOverride != null) {
+      _flowEngine = _flowEngineOverride;
     } else {
-      AppLogger.info(
-          'FLOW ENGINE: SHADOW mode for method "$method" (flow=$flowId, $source). '
-          'Legacy enum logic enforces; the engine only logs FLOW-SHADOW MISMATCH '
-          'divergences.');
+      try {
+        final engine = await FlowLoader.load(flowId);
+        if (engine == null) {
+          throw StateError(
+              'FLOW ENGINE: flow "$flowId" could not be located for method '
+              '"$method". Refusing to start.');
+        }
+        _flowEngine = engine;
+      } catch (e) {
+        throw StateError(
+            'FLOW ENGINE: "$flowId.yml" failed to load or validate for method '
+            '"$method": $e');
+      }
     }
-  }
 
-  /// PHASE 1 shadow check: compare an about-to-be-applied transition against the
-  /// loaded [FlowEngine]. Logs loudly on divergence but never blocks — hardcoded
-  /// logic stays authoritative until Phase 2. No-op when no engine is loaded.
-  void _shadowCheckTransition({
-    required OfferStatus from,
-    required String event,
-    required FlowActor actor,
-    required OfferStatus to,
-  }) {
-    final engine = _flowEngine;
-    if (engine == null) return;
-    final fromState = flowStateForOfferStatus(from);
-    final res = engine.resolveUserAction(
-        fromState: fromState, event: event, actor: actor);
-    if (!res.allowed) {
-      AppLogger.warning(
-          'FLOW-SHADOW MISMATCH: legacy allows $from --$event/${actor.name}--> $to '
-          'but engine rejects (${res.rejectReason}).');
-      return;
-    }
-    final expected = offerStatusFromFlowState(res.target ?? '');
-    if (expected != to) {
-      AppLogger.warning(
-          'FLOW-SHADOW MISMATCH: $from --$event/${actor.name}--> legacy=$to engine=$expected.');
-    }
+    // Deep self-check beyond structural parse: effects, timer durations,
+    // payout wiring and nip69. Any inconsistency prevents startup.
+    flow.validateDefinition();
+    AppLogger.info(
+        'FLOW ENGINE: generic enforcement active for method "$method" '
+        '(flow=$flowId).');
   }
 
   // ════════════════════════════════════════════════════════════════════
-  // Offer-flow strategy selection. The flow logic lives in the part files
-  // coordinator_flow_generic.dart (yaml-driven) and coordinator_flow_legacy.dart
-  // (hardcoded enum); this class owns only the shared services they call.
+  // The flow logic lives in coordinator_flow_generic.dart; this class owns the
+  // shared services it calls.
   // ════════════════════════════════════════════════════════════════════
-
-  bool get isGenericFlow =>
-      _flowEngineMode == FlowEngineMode.generic && _flowEngine != null;
 
   bool isTerminalOffer(Offer offer) {
-    if (isGenericFlow) {
-      return _flowEngine!.definition.state(offer.statusRaw)?.terminal ?? false;
-    }
-    switch (offer.status) {
-      case OfferStatus.takerPaid:
-      case OfferStatus.cancelled:
-      case OfferStatus.expired:
-      case OfferStatus.dispute:
-        return true;
-      default:
-        return false;
-    }
+    return _flowEngine.definition.state(offer.statusRaw)?.terminal ?? false;
   }
 
-  OfferFlow? _flow;
+  GenericOfferFlow? _flow;
 
-  /// Active offer-flow strategy, derived from [isGenericFlow] (meaningful once
-  /// the flow engine has loaded in [init]). nostr_service routes offer-action
-  /// RPCs through it; the coordinator delegates funded-timer arming and startup
-  /// recovery to it.
-  OfferFlow get flow => _flow ??=
-      isGenericFlow ? GenericOfferFlow(this) : LegacyEnumOfferFlow(this);
+  /// The coordinator's sole offer-flow strategy. Nostr routes offer-action RPCs
+  /// through it; it also owns funded-timer arming and startup recovery.
+  GenericOfferFlow get flow => _flow ??= GenericOfferFlow(this);
 
   /// NIP-69 status category declared by the flow state [raw], for the broadcast
-  /// layer. Generic flows read it from the yaml `nip69:` attribute; legacy flows
-  /// return null (the broadcaster falls back to its OfferStatus mapping).
+  /// layer, read from the YAML state's `nip69:` attribute.
   String? nip69CategoryForRaw(String raw) =>
-      isGenericFlow ? _flowEngine!.definition.state(raw)?.nip69 : null;
+      _flowEngine.definition.state(raw)?.nip69;
 
   Future<void> doInitialCheckStatuses() async {
     await _initializeMatrixClient();
-    // Each flow recovers its own timers: the generic flow re-arms yaml-driven
-    // timers; the legacy flow runs its per-stage expiry sweeps.
+    // The generic flow re-arms YAML-driven timers for live offers.
     await flow.recoverTimers();
   }
 
@@ -1093,7 +954,7 @@ class CoordinatorService {
         // Enum view stays funded; generic flows persist the raw initial-state
         // name from the flow definition (== funded for current flows).
         status: OfferStatus.funded,
-        statusRaw: isGenericFlow ? _flowEngine!.initialState : null,
+        statusRaw: _flowEngine.initialState,
         blikCode: pendingData['blikCode'] as String?,
         // Maker-provides-code flows (TWINT): the code is issued now — this
         // stamp is the base for its yaml lifespan timeout (code_received_at),
@@ -1270,8 +1131,7 @@ class CoordinatorService {
       {String? groupId}) async {
     try {
       final group = groupId ?? _signalGroupId;
-      final signalCmd =
-          '$_signalCliExec send -g $group -m "$notificationText"';
+      final signalCmd = '$_signalCliExec send -g $group -m "$notificationText"';
       final result = await run(signalCmd);
       if (result.first.stderr.isNotEmpty) {
         AppLogger.info('signal-cli command error: ${result.first.stderr}');
@@ -1333,8 +1193,9 @@ class CoordinatorService {
     if (_telegramService != null && _telegramService!.isConfigured) {
       // Default (null) → the service's own general chats. When the offer's bank
       // has its own chats, override with general ∪ bank so both are notified.
-      final bankChats =
-          bankId != null ? (_telegramChatIdsByBank[bankId] ?? const []) : const [];
+      final bankChats = bankId != null
+          ? (_telegramChatIdsByBank[bankId] ?? const [])
+          : const [];
       final chatIds = bankChats.isEmpty
           ? null
           : <String>{..._telegramGeneralChatIds, ...bankChats}.toList();
@@ -1344,8 +1205,8 @@ class CoordinatorService {
     }
 
     if (_signalCliExec != '') {
-      for (final group in _notifyTargets(
-          _signalGroupId, _signalGroupsByBank, bankId)) {
+      for (final group
+          in _notifyTargets(_signalGroupId, _signalGroupsByBank, bankId)) {
         notificationFutures
             .add(_sendSignalNotification(notificationText, groupId: group));
       }
@@ -1457,268 +1318,10 @@ class CoordinatorService {
     }
   }
 
-  Future<bool> updateTakerInvoice(
-      String offerId, String takerInvoice, String userPubkey) async {
-    AppLogger.info(
-        'Updating taker invoice for offer $offerId by user $userPubkey',
-        offerId: offerId);
-    final offer = await _dbService.getOfferById(offerId);
-    if (offer == null) {
-      AppLogger.info('Offer $offerId not found.', offerId: offerId);
-      return false;
-    }
-    if (offer.takerPubkey != userPubkey) {
-      AppLogger.info('User pubkey mismatch for updating taker invoice.');
-      return false;
-    }
-    if (offer.status != OfferStatus.takerPaymentFailed) {
-      AppLogger.info(
-          'Offer $offerId is in status ${offer.status}. Taker invoice updates are only allowed in takerPaymentFailed.',
-          offerId: offerId);
-      return false;
-    }
-    _validateTakerInvoiceAmount(
-      offer,
-      takerInvoice,
-      action: 'update_taker_invoice',
-    );
-    final success = await _dbService.updateTakerInvoice(offerId, takerInvoice);
-    if (success) {
-      AppLogger.info('Taker invoice updated for offer $offerId.',
-          offerId: offerId);
-    } else {
-      AppLogger.info('Failed to update taker invoice for offer $offerId.',
-          offerId: offerId);
-    }
-    return success;
-  }
-
-  Future<void> _payTakerAsync(String offerId) async {
-    AppLogger.info('Starting async taker payment process for offer $offerId...',
-        offerId: offerId);
-    final offer = await _dbService.getOfferById(offerId);
-    if (offer == null) {
-      AppLogger.info('Async Error: Offer $offerId not found for taker payment.',
-          offerId: offerId);
-      return;
-    }
-    if (offer.status != OfferStatus.settled) {
-      AppLogger.info(
-          'Async Error: Offer $offerId not in settled state (state is ${offer.status}). Cannot pay taker.',
-          offerId: offerId);
-      return;
-    }
-
-    // Calculate net amount after taker fees
-    final takerFees = _effectiveTakerFeeSats(offer);
-    final netAmountSats = offer.amountSats - takerFees;
-    String? takerInvoice = offer.takerInvoice;
-
-    if (takerInvoice == null || takerInvoice.isEmpty) {
-      if (offer.takerLightningAddress == null ||
-          offer.takerLightningAddress!.isEmpty) {
-        AppLogger.info(
-            'Async Error: Missing both taker invoice and Lightning Address for offer $offerId.',
-            offerId: offerId);
-        await _dbService.updateOfferStatus(
-            offerId, OfferStatus.takerPaymentFailed,
-            failureReason: 'Missing both taker invoice and Lightning Address');
-        final failedOffer = await _dbService.getOfferById(offerId);
-        if (failedOffer != null) {
-          await _publishStatusUpdate(failedOffer);
-        }
-        return;
-      }
-
-      AppLogger.info(
-          'Async: No stored taker invoice. Attempting LNURL resolution for ${offer.takerLightningAddress} and net amount $netAmountSats sats (Original: ${offer.amountSats}, Fee: $takerFees)');
-    } else {
-      AppLogger.info(
-          'Async: Using stored taker invoice for offer $offerId and net amount $netAmountSats sats (Original: ${offer.amountSats}, Fee: $takerFees)',
-          offerId: offerId);
-    }
-
-    try {
-      if (takerInvoice == null || takerInvoice.isEmpty) {
-        takerInvoice =
-            await _resolveLnurlPay(offer.takerLightningAddress!, netAmountSats);
-        if (takerInvoice == null || takerInvoice.isEmpty) {
-          AppLogger.info(
-              'Async Error: Failed to resolve LNURL for net amount $netAmountSats for offer $offerId.',
-              offerId: offerId);
-          await _dbService.updateOfferStatus(
-              offerId, OfferStatus.takerPaymentFailed,
-              failureReason:
-                  'Failed to get invoice from lightning address (LNURL resolution failed)');
-          final failedOffer = await _dbService.getOfferById(offerId);
-          if (failedOffer != null) {
-            await _publishStatusUpdate(failedOffer);
-          }
-          return;
-        }
-
-        bool invoiceStored =
-            await _dbService.updateTakerInvoice(offerId, takerInvoice);
-        if (!invoiceStored) {
-          AppLogger.info(
-              'Async Warning: Failed to store resolved taker invoice for offer $offerId. Proceeding with payment attempt.',
-              offerId: offerId);
-        }
-      }
-      _validateTakerInvoiceAmount(
-        offer,
-        takerInvoice,
-        action: 'pay_taker',
-      );
-      await _sendTakerPayment(offerId, takerInvoice);
-    } catch (e) {
-      AppLogger.info(
-          'Async Exception during taker payment for offer $offerId: $e',
-          offerId: offerId);
-      await _dbService.updateOfferStatus(
-          offerId, OfferStatus.takerPaymentFailed,
-          failureReason: e.toString());
-      final failedOffer = await _dbService.getOfferById(offerId);
-      if (failedOffer != null) {
-        await _publishStatusUpdate(failedOffer);
-      }
-    }
-  }
-
-  Future<String?> _sendTakerPayment(String offerId, String takerInvoice) async {
-    AppLogger.info('Attempting to send taker payment for offer $offerId...',
-        offerId: offerId);
-    try {
-      final offer = await _dbService.getOfferById(offerId);
-      if (offer == null) {
-        AppLogger.info('Offer $offerId not found for taker payment.',
-            offerId: offerId);
-        await _dbService.updateOfferStatus(
-            offerId, OfferStatus.takerPaymentFailed,
-            failureReason: 'Offer not found');
-        return "invalid offer";
-      }
-      await Future.delayed(_kDebugDelayDuration);
-      await _dbService.updateOfferStatus(offerId, OfferStatus.payingTaker);
-
-      // Publish status update
-      final payingOffer = await _dbService.getOfferById(offerId);
-      if (payingOffer != null) {
-        await _publishStatusUpdate(payingOffer);
-      }
-
-      // Calculate taker fees (configurable % of the original offer amount)
-      final takerFees = _effectiveTakerFeeSats(offer);
-      final netAmountSats = offer.amountSats - takerFees;
-      AppLogger.info(
-          'Calculated taker fees for offer $offerId: $takerFees sats. Paying net amount: $netAmountSats sats.',
-          offerId: offerId);
-
-      if (_paymentBackend == null) {
-        AppLogger.info(
-            'CRITICAL: No payment backend configured for _sendTakerPayment.');
-        await _dbService.updateOfferStatus(
-            offerId, OfferStatus.takerPaymentFailed,
-            failureReason: 'No payment backend configured');
-        return 'No payment backend configured.';
-      }
-
-      _validateTakerInvoiceAmount(
-        offer,
-        takerInvoice,
-        action: 'pay_taker',
-      );
-
-      final feeLimitSat = (offer.takerFees! * kTakerFeeLimitFactor).ceil();
-      AppLogger.info(
-          ' Attempting to pay invoice for offer $offerId. Amount: $netAmountSats sats, Fee limit: $feeLimitSat sats.',
-          offerId: offerId);
-
-      final paymentResult = await _paymentBackend!.payInvoice(
-        invoice: takerInvoice,
-        amountSat: netAmountSats,
-        feeLimitSat: feeLimitSat,
-      );
-
-      if (paymentResult.isSuccess) {
-        AppLogger.info(
-            ' Successfully paid taker for offer $offerId. Preimage: ${paymentResult.paymentPreimage}',
-            offerId: offerId);
-        await _markTakerPaid(offerId, paymentResult, takerFees);
-        return null; // Success
-      }
-
-      // payInvoice reported failure/timeout. The NWC pay_invoice request is not
-      // idempotent: a timeout or transport error does NOT prove the payment
-      // failed — the wallet may have settled it anyway. Reconcile before
-      // declaring failure, so we don't mark a paid offer as failed (which would
-      // also let a later retry double-pay the taker).
-      final reconciled = await _paymentBackend!
-          .reconcileOutgoingPayment(invoice: takerInvoice);
-      if (reconciled != null && reconciled.isSuccess) {
-        AppLogger.info(
-            ' Taker payment for offer $offerId reconciled as SETTLED despite error "${paymentResult.paymentError}". Marking paid.',
-            offerId: offerId);
-        await _markTakerPaid(offerId, reconciled, takerFees);
-        return null;
-      }
-
-      AppLogger.info(
-          ' Failed to pay taker for offer $offerId. Reason: ${paymentResult.paymentError}',
-          offerId: offerId);
-      await _dbService.updateOfferStatus(
-          offerId, OfferStatus.takerPaymentFailed,
-          failureReason: paymentResult.paymentError ??
-              'Payment failed (no route or unknown error)');
-
-      // Publish status update
-      final failedOffer = await _dbService.getOfferById(offerId);
-      if (failedOffer != null) {
-        await _publishStatusUpdate(failedOffer);
-      }
-
-      return ' Failed to pay taker for offer $offerId. Reason: ${paymentResult.paymentError}';
-    } catch (e) {
-      AppLogger.info(
-          'Exception during taker payment for offer $offerId (using $_paymentBackendType): $e',
-          offerId: offerId);
-      // Same idempotency caveat as the failure branch: an exception doesn't
-      // prove the payment didn't settle. Reconcile before marking failed.
-      try {
-        final reconciled = await _paymentBackend?.reconcileOutgoingPayment(
-            invoice: takerInvoice);
-        final offerForFees = await _dbService.getOfferById(offerId);
-        if (reconciled != null &&
-            reconciled.isSuccess &&
-            offerForFees != null) {
-          final takerFees = _effectiveTakerFeeSats(offerForFees);
-          AppLogger.info(
-              ' Taker payment for offer $offerId reconciled as SETTLED despite exception. Marking paid.',
-              offerId: offerId);
-          await _markTakerPaid(offerId, reconciled, takerFees);
-          return null;
-        }
-      } catch (reconcileError) {
-        AppLogger.info(
-            'Reconciliation after exception failed for offer $offerId: $reconcileError',
-            offerId: offerId);
-      }
-      await _dbService.updateOfferStatus(
-          offerId, OfferStatus.takerPaymentFailed,
-          failureReason: e.toString());
-      // Publish status update
-      final failedOffer = await _dbService.getOfferById(offerId);
-      if (failedOffer != null) {
-        await _publishStatusUpdate(failedOffer);
-      }
-      return 'Exception during taker payment for offer $offerId: $e';
-    }
-  }
-
   /// Status-write-free taker payment primitive: attempts the Lightning payment
   /// and, on a reported failure/exception, reconciles (NWC pay_invoice is not
   /// idempotent) before declaring failure. Performs NO DB writes/publishes so it
-  /// can back both the legacy enum payout and the generic (raw) payout.
+  /// backs the generic raw-state payout flow.
   ///
   /// Returns the settled [PayInvoiceResult] on success, or an error string.
   Future<({bool ok, PayInvoiceResult? result, String? error})>
@@ -1728,6 +1331,14 @@ class CoordinatorService {
       return (ok: false, result: null, error: 'No payment backend configured');
     }
     try {
+      // A committed payout/refund state may be resumed after a coordinator
+      // crash. Reconcile before every attempt because NWC pay_invoice is not
+      // idempotent and the previous call may have settled before the crash.
+      final existing =
+          await _paymentBackend!.reconcileOutgoingPayment(invoice: invoice);
+      if (existing != null && existing.isSuccess) {
+        return (ok: true, result: existing, error: null);
+      }
       final r = await _paymentBackend!.payInvoice(
         invoice: invoice,
         amountSat: netAmountSats,
@@ -1756,74 +1367,6 @@ class CoordinatorService {
     }
   }
 
-  /// Mark an offer as successfully paid to the taker and broadcast the update.
-  /// Shared by the direct success path and the reconciliation paths.
-  Future<void> _markTakerPaid(
-      String offerId, PayInvoiceResult result, int takerFees) async {
-    await Future.delayed(_kDebugDelayDuration);
-    await _dbService.updateOfferStatus(offerId, OfferStatus.takerPaid,
-        takerFees: takerFees);
-    await _dbService.updateTakerInvoiceFees(offerId, result.feeSat ?? 0);
-    AppLogger.info(
-        ' Updated taker invoice fees to ${result.feeSat ?? 0} sats for offer $offerId.',
-        offerId: offerId);
-
-    final paidOffer = await _dbService.getOfferById(offerId);
-    if (paidOffer != null) {
-      await _publishStatusUpdate(paidOffer);
-      await _nostrService?.broadcastNip69OrderFromOffer(paidOffer);
-    }
-
-    await _deleteTelegramOfferMessages(offerId);
-  }
-
-  Future<String?> retryTakerPayment(String offerId, String userPubkey) async {
-    AppLogger.info(
-        'Retrying taker payment for offer $offerId by user $userPubkey',
-        offerId: offerId);
-    final offer = await _dbService.getOfferById(offerId);
-    if (offer == null) {
-      AppLogger.info('Offer $offerId not found.', offerId: offerId);
-      return "invalid offer";
-    }
-    if (offer.takerPubkey != userPubkey) {
-      AppLogger.info('User pubkey mismatch for retrying taker payment.');
-      return "not your offer";
-    }
-    if (offer.takerInvoice == null || offer.takerInvoice!.isEmpty) {
-      AppLogger.info('No taker invoice available for offer $offerId.',
-          offerId: offerId);
-      return "No taker invoice in offer";
-    }
-    if (offer.status != OfferStatus.takerPaymentFailed) {
-      AppLogger.info(
-          'Offer $offerId is in status ${offer.status}. Retry is only allowed in takerPaymentFailed.',
-          offerId: offerId);
-      return "offer is not in takerPaymentFailed";
-    }
-    _validateTakerInvoiceAmount(
-      offer,
-      offer.takerInvoice!,
-      action: 'retry_taker_payment',
-    );
-
-    // Guard against double-paying: a prior attempt may have actually settled
-    // even though it was recorded as failed (NWC pay_invoice timeouts are not
-    // idempotent). Reconcile before sending a fresh payment.
-    final reconciled = await _paymentBackend?.reconcileOutgoingPayment(
-        invoice: offer.takerInvoice!);
-    if (reconciled != null && reconciled.isSuccess) {
-      AppLogger.info(
-          'Retry: offer $offerId already SETTLED on wallet. Finalizing instead of paying again.',
-          offerId: offerId);
-      final takerFees = _effectiveTakerFeeSats(offer);
-      await _markTakerPaid(offerId, reconciled, takerFees);
-      return null;
-    }
-
-    return await _sendTakerPayment(offerId, offer.takerInvoice!);
-  }
-
   Uint8List _generatePreimage() {
     final random = Random.secure();
     return Uint8List.fromList(
@@ -1841,81 +1384,6 @@ class CoordinatorService {
       bytes.add(int.parse(hexPair, radix: 16));
     }
     return Uint8List.fromList(bytes);
-  }
-
-  Future<String?> _resolveLnurlPay(
-      String lightningAddress, int netAmountSats) async {
-    try {
-      if (!lightningAddress.contains('@')) {
-        AppLogger.info('Invalid Lightning Address format: $lightningAddress');
-        return null;
-      }
-      final parts = lightningAddress.split('@');
-      final username = parts[0];
-      final domain = parts[1];
-      final lnurlpUrl = Uri.https(domain, '/.well-known/lnurlp/$username');
-      AppLogger.info('LNURL: Requesting step 1 from $lnurlpUrl');
-      final response1 = await _httpClient.get(lnurlpUrl); // Use _httpClient
-      if (response1.statusCode != 200) {
-        AppLogger.info(
-            'LNURL Error: Step 1 request failed (${response1.statusCode}) for $lightningAddress: ${response1.body}');
-        return null;
-      }
-      final data1 = jsonDecode(response1.body) as Map<String, dynamic>;
-      if (data1['status'] == 'ERROR') {
-        AppLogger.info(
-            'LNURL Error: Service returned error in step 1 for $lightningAddress: ${data1['reason']}');
-        return null;
-      }
-      if (data1['tag'] != 'payRequest') {
-        AppLogger.info(
-            'LNURL Error: Invalid tag in step 1 response for $lightningAddress: ${data1['tag']}');
-        return null;
-      }
-      final callbackUrl = data1['callback'] as String?;
-      final minSendable = data1['minSendable'] as int?;
-      final maxSendable = data1['maxSendable'] as int?;
-      if (callbackUrl == null || minSendable == null || maxSendable == null) {
-        AppLogger.info(
-            'LNURL Error: Missing required fields (callback, min/maxSendable) in step 1 for $lightningAddress');
-        return null;
-      }
-      final amountMsats = netAmountSats * 1000;
-      if (amountMsats < minSendable || amountMsats > maxSendable) {
-        AppLogger.info(
-            'LNURL Error: Net amount $netAmountSats sats ($amountMsats msats) is outside acceptable range ($minSendable - $maxSendable msats) for $lightningAddress');
-        return null;
-      }
-      final callbackUri = Uri.parse(callbackUrl);
-      final queryParams = Map<String, String>.from(callbackUri.queryParameters);
-      queryParams['amount'] = amountMsats.toString();
-      final finalUrl = callbackUri.replace(queryParameters: queryParams);
-      AppLogger.info('LNURL: Requesting step 2 from $finalUrl');
-      final response2 = await _httpClient.get(finalUrl); // Use _httpClient
-      if (response2.statusCode != 200) {
-        AppLogger.info(
-            'LNURL Error: Step 2 request failed (${response2.statusCode}) for $lightningAddress: ${response2.body}');
-        return null;
-      }
-      final data2 = jsonDecode(response2.body) as Map<String, dynamic>;
-      if (data2['status'] == 'ERROR') {
-        AppLogger.info(
-            'LNURL Error: Service returned error in step 2 for $lightningAddress: ${data2['reason']}');
-        return null;
-      }
-      final invoice = data2['pr'] as String?;
-      if (invoice == null) {
-        AppLogger.info(
-            'LNURL Error: Missing invoice ("pr" field) in step 2 response for $lightningAddress');
-        return null;
-      }
-      AppLogger.info('LNURL Success: Resolved invoice for $lightningAddress');
-      return invoice;
-    } catch (e) {
-      AppLogger.info(
-          'Exception during LNURL resolution for $lightningAddress: $e');
-      return null;
-    }
   }
 
   /// Set the Nostr service for publishing status updates
@@ -2029,7 +1497,6 @@ class CoordinatorService {
   Map<String, dynamic> debugSnapshot() {
     final flowCounters = flow.debugCounters();
     return {
-      'is_generic_flow': isGenericFlow,
       'payment_backend_type': _paymentBackendType,
       'payment_system': _paymentSystem.id,
       'supported_currencies': _supportedCurrencies,

@@ -6,7 +6,7 @@ import 'package:ndk/domain_layer/entities/wallet/wallet.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../utils/bitcoin_display.dart';
 import '../../widgets/progress_indicators.dart';
@@ -48,12 +48,12 @@ class _TakerPaymentFailedScreenState
     if (ndk == null) return;
     final all = ndk.wallets.getWalletsForUnit('sat');
     final defaultW = ndk.wallets.defaultWalletForReceiving;
-    final others = all
-        .where((w) => w.canReceive && w.id != defaultW?.id)
-        .toList();
+    final others =
+        all.where((w) => w.canReceive && w.id != defaultW?.id).toList();
     if (mounted) {
       setState(() {
-        _defaultReceivingWallet = defaultW?.canReceive == true ? defaultW : null;
+        _defaultReceivingWallet =
+            defaultW?.canReceive == true ? defaultW : null;
         _otherReceivingWallets = others;
       });
     }
@@ -73,7 +73,7 @@ class _TakerPaymentFailedScreenState
     if (status == OfferStatus.takerPaid) {
       _closeRetryDialog();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go(flowEntryRoute(ref, '/paying-taker'));
+        if (mounted) context.go(flowRoute);
       });
     } else if (status == OfferStatus.takerPaymentFailed) {
       _closeRetryDialog();
@@ -92,8 +92,7 @@ class _TakerPaymentFailedScreenState
     super.dispose();
   }
 
-  Future<void> _generateInvoiceFromWallet(
-      Wallet wallet, int amountSats) async {
+  Future<void> _generateInvoiceFromWallet(Wallet wallet, int amountSats) async {
     if (_generatingWalletId != null) return;
     setState(() => _generatingWalletId = wallet.id);
     try {
@@ -112,7 +111,13 @@ class _TakerPaymentFailedScreenState
       Logger.log.e(() => '[TakerPaymentFailedScreen] Invoice gen failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t.taker.paymentFailed.errors.generateFailed(details: e.toString()))),
+          SnackBar(
+            content: Text(
+              t.taker.paymentFailed.errors.generateFailed(
+                details: e.toString(),
+              ),
+            ),
+          ),
         );
       }
     } finally {
@@ -124,9 +129,10 @@ class _TakerPaymentFailedScreenState
     String? normalize(String? raw) {
       if (raw == null) return null;
       final trimmed = raw.trim();
-      final withoutPrefix = trimmed.toLowerCase().startsWith('lightning:')
-          ? trimmed.substring('lightning:'.length).trim()
-          : trimmed;
+      final withoutPrefix =
+          trimmed.toLowerCase().startsWith('lightning:')
+              ? trimmed.substring('lightning:'.length).trim()
+              : trimmed;
       return withoutPrefix.toLowerCase().startsWith('lnbc')
           ? withoutPrefix
           : null;
@@ -228,7 +234,8 @@ class _TakerPaymentFailedScreenState
     // Calculate net amount (moved here for access to widget.offer)
     // Fallback uses 0.5% — historical default when no offer-level fee was
     // recorded. New offers always carry takerFees, so this branch is rare.
-    final takerFees = widget.offer.takerFees ??
+    final takerFees =
+        widget.offer.takerFees ??
         OfferQuote.takerFeeSats(widget.offer.amountSats, 0.5);
     final netAmountSats = widget.offer.amountSats - takerFees;
 
@@ -258,7 +265,6 @@ class _TakerPaymentFailedScreenState
     switch (_currentState) {
       case PaymentRetryState.loading:
       case PaymentRetryState.success:
-
       case PaymentRetryState.initial:
       case PaymentRetryState.failed:
         return Column(
@@ -296,14 +302,17 @@ class _TakerPaymentFailedScreenState
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.account_balance_wallet_outlined,
-                        size: 14, color: Colors.grey[600]),
+                    Icon(
+                      Icons.account_balance_wallet_outlined,
+                      size: 14,
+                      color: Colors.grey[600],
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       _defaultReceivingWallet!.name,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -315,8 +324,8 @@ class _TakerPaymentFailedScreenState
                 child: Text(
                   widget.offer.takerPaymentFailureReason!,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -398,15 +407,14 @@ class _TakerPaymentFailedScreenState
   }) {
     final isGenerating = _generatingWalletId == wallet.id;
     return InkWell(
-      onTap: _generatingWalletId != null
-          ? null
-          : () => _generateInvoiceFromWallet(wallet, amountSats),
+      onTap:
+          _generatingWalletId != null
+              ? null
+              : () => _generateInvoiceFromWallet(wallet, amountSats),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
         child: Row(
           children: [
             Icon(
@@ -431,7 +439,9 @@ class _TakerPaymentFailedScreenState
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 1),
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(4),
@@ -439,7 +449,9 @@ class _TakerPaymentFailedScreenState
                           child: Text(
                             t.taker.paymentFailed.walletSection.defaultLabel,
                             style: TextStyle(
-                                fontSize: 10, color: Colors.grey[600]),
+                              fontSize: 10,
+                              color: Colors.grey[600],
+                            ),
                           ),
                         ),
                       ],

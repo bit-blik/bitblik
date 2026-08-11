@@ -227,6 +227,7 @@ class Translations$taker$en {
 	late final Translations$taker$paymentProcess$en paymentProcess = Translations$taker$paymentProcess$en.internal(_root);
 	late final Translations$taker$paymentFailed$en paymentFailed = Translations$taker$paymentFailed$en.internal(_root);
 	late final Translations$taker$paymentSuccess$en paymentSuccess = Translations$taker$paymentSuccess$en.internal(_root);
+	late final Translations$taker$criticalCodeDecision$en criticalCodeDecision = Translations$taker$criticalCodeDecision$en.internal(_root);
 	late final Translations$taker$invalidBlik$en invalidBlik = Translations$taker$invalidBlik$en.internal(_root);
 	late final Translations$taker$conflict$en conflict = Translations$taker$conflict$en.internal(_root);
 }
@@ -2051,6 +2052,29 @@ class Translations$taker$paymentSuccess$en {
 	String get message => 'Your payment has been processed successfully.';
 
 	late final Translations$taker$paymentSuccess$actions$en actions = Translations$taker$paymentSuccess$actions$en.internal(_root);
+}
+
+// Path: taker.criticalCodeDecision
+class Translations$taker$criticalCodeDecision$en {
+	Translations$taker$criticalCodeDecision$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Critical decision'
+	String get title => 'Critical decision';
+
+	/// en: 'You already shared a ${code} code with the maker. Continuing can replace that code, end your reservation, and return this offer to other takers.'
+	String explanation({required Object code}) => 'You already shared a ${code} code with the maker. Continuing can replace that code, end your reservation, and return this offer to other takers.';
+
+	/// en: 'YOU MAY LOSE YOUR FUNDS'
+	String get warningTitle => 'YOU MAY LOSE YOUR FUNDS';
+
+	/// en: 'If your bank charged the ${code} payment, DO NOT continue. The maker may have used your code, and after this action the coordinator may no longer be able to guarantee your bitcoin payout.'
+	String warningBody({required Object code}) => 'If your bank charged the ${code} payment, DO NOT continue. The maker may have used your code, and after this action the coordinator may no longer be able to guarantee your bitcoin payout.';
+
+	late final Translations$taker$criticalCodeDecision$actions$en actions = Translations$taker$criticalCodeDecision$actions$en.internal(_root);
 }
 
 // Path: taker.invalidBlik
@@ -4225,6 +4249,21 @@ class Translations$taker$paymentSuccess$actions$en {
 	String get goHome => 'Go to home';
 }
 
+// Path: taker.criticalCodeDecision.actions
+class Translations$taker$criticalCodeDecision$actions$en {
+	Translations$taker$criticalCodeDecision$actions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Go back and check my bank'
+	String get cancel => 'Go back and check my bank';
+
+	/// en: 'I was NOT charged — continue'
+	String get proceed => 'I was NOT charged — continue';
+}
+
 // Path: taker.invalidBlik.actions
 class Translations$taker$invalidBlik$actions$en {
 	Translations$taker$invalidBlik$actions$en.internal(this._root);
@@ -5864,6 +5903,12 @@ extension on Translations {
 			'taker.paymentSuccess.title' => 'Payment Successful',
 			'taker.paymentSuccess.message' => 'Your payment has been processed successfully.',
 			'taker.paymentSuccess.actions.goHome' => 'Go to home',
+			'taker.criticalCodeDecision.title' => 'Critical decision',
+			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'You already shared a ${code} code with the maker. Continuing can replace that code, end your reservation, and return this offer to other takers.',
+			'taker.criticalCodeDecision.warningTitle' => 'YOU MAY LOSE YOUR FUNDS',
+			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'If your bank charged the ${code} payment, DO NOT continue. The maker may have used your code, and after this action the coordinator may no longer be able to guarantee your bitcoin payout.',
+			'taker.criticalCodeDecision.actions.cancel' => 'Go back and check my bank',
+			'taker.criticalCodeDecision.actions.proceed' => 'I was NOT charged — continue',
 			'taker.invalidBlik.title' => ({required Object code}) => 'Invalid ${code} Code',
 			'taker.invalidBlik.message' => ({required Object code}) => 'Maker Rejected ${code} Code',
 			'taker.invalidBlik.explanation' => ({required Object code}) => 'The offer maker indicated that the ${code} code you provided was invalid or didn\'t work.\n\nWhat would you like to do?',

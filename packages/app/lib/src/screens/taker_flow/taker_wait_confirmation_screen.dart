@@ -8,11 +8,12 @@ import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../services/nostr_service.dart' show reservedOfferFromResult;
 import '../../services/offer_db_service.dart';
 import '../../utils/offer_status_label.dart';
+import '../../widgets/critical_code_safety.dart';
 import '../../widgets/progress_indicators.dart';
 
 class TakerWaitConfirmationScreen extends ConsumerStatefulWidget {
@@ -247,7 +248,10 @@ class _TakerWaitConfirmationScreenState
         offer.createdAt;
   }
 
-  Future<void> _resetToOfferList(String message) async {
+  Future<void> _resetToOfferList(
+    String message, {
+    bool returnHome = false,
+  }) async {
     _confirmationTimer?.cancel();
     ref.read(errorProvider.notifier).state = null;
     _timersInitialized = false;
@@ -260,7 +264,9 @@ class _TakerWaitConfirmationScreenState
           if (scaffoldMessenger != null) {
             scaffoldMessenger.showSnackBar(SnackBar(content: Text(message)));
           }
-          if (navigator != null && navigator.canPop()) {
+          if (returnHome) {
+            context.go('/');
+          } else if (navigator != null && navigator.canPop()) {
             navigator.popUntil((route) => route.isFirst);
           }
         }
@@ -269,7 +275,7 @@ class _TakerWaitConfirmationScreenState
       if (scaffoldMessenger != null) {
         scaffoldMessenger.showSnackBar(SnackBar(content: Text(message)));
       }
-      context.go('/offers');
+      context.go(returnHome ? '/' : '/offers');
     }
   }
 
@@ -303,7 +309,22 @@ class _TakerWaitConfirmationScreenState
       });
     }
 
-    return Scaffold(body: _buildContentForStatus(context, offer));
+    final isLoading = ref.watch(isLoadingProvider);
+    final showChargedAction = offer.statusEnum == OfferStatus.expiredSentBlik;
+    return Scaffold(
+      body: _buildContentForStatus(context, offer),
+      bottomNavigationBar:
+          showChargedAction
+              ? CriticalChargedActionBar(
+                actionKey: const ValueKey('expired_sent_blik_charged_action'),
+                label: t.taker.waitConfirmation.expiredActions.reportConflict(
+                  code: offerCodeLabel(offer),
+                ),
+                onPressed: isLoading ? null : () => _reportCharged(offer),
+                isLoading: isLoading,
+              )
+              : null,
+    );
   }
 
   bool _shouldInitializeTimer(Offer offer) {
@@ -323,7 +344,7 @@ class _TakerWaitConfirmationScreenState
             "[TakerWaitConfirmation] Status is $currentStatusEnum. Navigating to process screen.",
       );
       _confirmationTimer?.cancel();
-      context.go(flowEntryRoute(ref, '/paying-taker'));
+      context.go(flowRoute);
     } else if (currentStatusEnum == OfferStatus.funded) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
@@ -335,15 +356,15 @@ class _TakerWaitConfirmationScreenState
     } else if (currentStatusEnum == OfferStatus.invalidBlik) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      context.go(flowEntryRoute(ref, '/taker-invalid-blik'), extra: offer);
+      context.go(flowRoute, extra: offer);
     } else if (currentStatusEnum == OfferStatus.conflict) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      context.go(flowEntryRoute(ref, '/taker-conflict'), extra: offer.id);
+      context.go(flowRoute, extra: offer.id);
     } else if (currentStatusEnum == OfferStatus.takerPaymentFailed) {
       _confirmationTimer?.cancel();
       _expiredBlikTimer?.cancel();
-      context.go(flowEntryRoute(ref, '/paying-taker'));
+      context.go(flowRoute);
     } else if (!_isValidStatusForThisScreen(currentStatusEnum)) {
       _resetToOfferList(
         t.offers.errors.unexpectedStateWithStatus(
@@ -453,11 +474,7 @@ class _TakerWaitConfirmationScreenState
           relistExpired: _expiredBlikWindowExpired,
         );
       case OfferStatus.expiredSentBlik:
-        return _ExpiredSentBlikWidget(
-          offer: offer,
-          onResendBlik: _resendBlik,
-          onReportConflict: _reportCharged,
-        );
+        return _ExpiredSentBlikWidget(offer: offer, onResendBlik: _resendBlik);
       case OfferStatus.takerCharged:
         return _TakerChargedWidget(offer: offer);
       default:
@@ -466,6 +483,13 @@ class _TakerWaitConfirmationScreenState
   }
 
   Future<void> _resendBlik(Offer offer) async {
+    if (!await showCriticalCodeDecisionDialog(
+          context,
+          code: offerCodeLabel(offer),
+        ) ||
+        !mounted) {
+      return;
+    }
     Logger.log.d(
       () => "[TakerWaitConfirmation] Retry selected for offer ${offer.id}",
     );
@@ -488,7 +512,7 @@ class _TakerWaitConfirmationScreenState
 
       await ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
       if (mounted) {
-        context.go(flowEntryRoute(ref, '/submit-blik'), extra: updatedOffer);
+        context.go(flowRoute, extra: updatedOffer);
       }
     } else {
       if (mounted) {
@@ -542,6 +566,13 @@ class _TakerWaitConfirmationScreenState
   }
 
   Future<void> _cancelReservation(Offer offer) async {
+    if (!await showCriticalCodeDecisionDialog(
+          context,
+          code: offerCodeLabel(offer),
+        ) ||
+        !mounted) {
+      return;
+    }
     final takerId = ref.read(publicKeyProvider).value;
     if (takerId == null) return;
 
@@ -557,7 +588,7 @@ class _TakerWaitConfirmationScreenState
       );
       if (mounted) {
         final t = Translations.of(context);
-        _resetToOfferList(t.reservations.feedback.cancelled);
+        _resetToOfferList(t.reservations.feedback.cancelled, returnHome: true);
       }
     } catch (e) {
       if (mounted) {
@@ -799,12 +830,10 @@ class _ExpiredBlikWidget extends ConsumerWidget {
 class _ExpiredSentBlikWidget extends ConsumerWidget {
   final Offer offer;
   final Future<void> Function(Offer) onResendBlik;
-  final Future<void> Function(Offer) onReportConflict;
 
   const _ExpiredSentBlikWidget({
     required this.offer,
     required this.onResendBlik,
-    required this.onReportConflict,
   });
 
   @override
@@ -840,14 +869,6 @@ class _ExpiredSentBlikWidget extends ConsumerWidget {
           isLoading: isLoading,
         ),
         const SizedBox(height: 12),
-        _buildPrimaryButton(
-          context,
-          t.taker.waitConfirmation.expiredActions.reportConflict(code: code),
-          Icons.report_problem_outlined,
-          Colors.red,
-          isLoading ? null : () => onReportConflict(offer),
-          isLoading: isLoading,
-        ),
       ],
     );
   }

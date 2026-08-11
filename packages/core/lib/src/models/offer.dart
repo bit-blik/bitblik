@@ -59,11 +59,10 @@ class Offer {
 
   /// Verbatim status string as stored in the DB / received on the wire.
   ///
-  /// For legacy enum flows this equals `status.name`. For generic
-  /// (yaml-driven) flows it holds the raw flow-state id (e.g. `twint_charged`,
-  /// `expired_twint`) that has no [OfferStatus] value — in that case [status]
-  /// parses to [OfferStatus.unknown] and the generic flow code reads
-  /// [statusRaw] instead. See [[project-dual-flow-engine]].
+  /// For older serialized offers this equals `status.name`. YAML flows may use
+  /// a raw state id (e.g. `invalidTwint`) that has no [OfferStatus] value — in
+  /// that case [status] parses to [OfferStatus.unknown] and flow code reads
+  /// [statusRaw] instead.
   final String statusRaw;
 
   final DateTime createdAt;
@@ -78,6 +77,10 @@ class Offer {
   // Added fields based on DB schema that might be useful
   final String? takerLightningAddress;
   final String? takerInvoice;
+
+  /// Server-only invoice used to resume a coordinator-ruled maker refund.
+  /// Intentionally excluded from JSON/RPC serialization.
+  final String? makerRefundInvoice;
   final String?
       holdInvoicePreimage; // Might be sensitive, consider if needed on client
   final DateTime? updatedAt;
@@ -188,6 +191,7 @@ class Offer {
     this.holdInvoice,
     this.takerLightningAddress,
     this.takerInvoice,
+    this.makerRefundInvoice,
     this.holdInvoicePreimage,
     this.updatedAt,
     this.makerConfirmedAt,
@@ -362,7 +366,7 @@ class Offer {
       'fiat_currency': fiatCurrency,
       // Emit the raw state string so generic (yaml-driven) flows round-trip
       // their real state (e.g. `invalidTwint`) instead of the enum's `unknown`
-      // fallback. For legacy enum flows statusRaw == status.name (unchanged).
+      // fallback. Older offers retain statusRaw == status.name.
       'status': statusRaw,
       'created_at': createdAt.toUtc().toIso8601String(),
       'maker_pubkey': makerPubkey,

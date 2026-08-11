@@ -322,6 +322,8 @@ Widget _makerCancelButton(
       onPressed: () async {
         try {
           await fireFlowAction(ref, offer, 'cancel_offer');
+          await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
+          if (context.mounted) context.go('/');
         } catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1151,7 +1153,7 @@ Widget _takerPaidButton(
 /// Red outlined cancel button for the taker's `cancel_reservation` action,
 /// matching the BLIK taker-submit cancel button style. Shows the same
 /// irreversibility dialog as the expired-TWINT body, then clears the offer
-/// and returns to the offer list.
+/// and returns home.
 Widget _takerCancelButton(
   BuildContext context,
   WidgetRef ref,
@@ -1196,7 +1198,7 @@ Widget _takerCancelButton(
         try {
           await fireFlowAction(ref, offer, 'cancel_reservation');
           await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
-          if (context.mounted) context.go('/offers');
+          if (context.mounted) context.go('/');
         } catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1374,9 +1376,9 @@ final FlowBody twintTakerExpiredBody =
       await fireFlowAction(ref, offer, event);
       if (leavesOffer) {
         // Cancelling releases the offer without this taker — no further
-        // status updates reach them; leave to the offer list.
+        // status updates reach them; return home.
         await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
-        if (context.mounted) context.go('/offers');
+        if (context.mounted) context.go('/');
       }
     } catch (e) {
       if (context.mounted) {

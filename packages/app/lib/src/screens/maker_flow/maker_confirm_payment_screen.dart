@@ -9,7 +9,7 @@ import 'package:ndk/shared/logger/logger.dart';
 import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../flow/flow_provider.dart' show flowEntryRoute;
+import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import 'maker_amount_form.dart'; // For MakerProgressIndicator
 
@@ -230,7 +230,7 @@ class _MakerConfirmPaymentScreenState
           ), // Use Slang t
         );
       }
-      context.go(flowEntryRoute(ref, '/maker-success'), extra: offer);
+      context.go(flowRoute, extra: offer);
     } catch (e) {
       ref.read(errorProvider.notifier).state = t.maker.confirmPayment.errors
           .confirming(details: e.toString()); // Use Slang t
@@ -275,9 +275,9 @@ class _MakerConfirmPaymentScreenState
 
       if (context.mounted) {
         if (offer.statusEnum == OfferStatus.takerCharged) {
-          context.go(flowEntryRoute(ref, '/maker-conflict'), extra: offer);
+          context.go(flowRoute, extra: offer);
         } else {
-          context.go(flowEntryRoute(ref, '/maker-invalid-blik'), extra: offer);
+          context.go(flowRoute, extra: offer);
         }
       }
     } catch (e) {
@@ -996,9 +996,7 @@ class _MakerConfirmPaymentScreenState
                           text: bankName,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
-                        TextSpan(
-                          text: text.substring(idx + bankName.length),
-                        ),
+                        TextSpan(text: text.substring(idx + bankName.length)),
                       ],
                     ),
                   );
@@ -1090,19 +1088,11 @@ class _MakerConfirmPaymentScreenState
         () =>
             "[MakerConfirmPaymentScreen] Offer ${statusEnum.name}; navigating to maker success.",
       );
-      context.go(
-        flowEntryRoute(ref, '/maker-success'),
-        extra: ref.read(activeOfferProvider),
-      );
+      context.go(flowRoute, extra: ref.read(activeOfferProvider));
     } else if (statusEnum == OfferStatus.reserved) {
-      context.go(
-        flowEntryRoute(
-          ref,
-          _makerProvidedCodeFlow ? '/confirm-blik' : '/wait-blik',
-        ),
-      );
+      context.go(flowRoute);
     } else if (statusEnum == OfferStatus.funded) {
-      context.go(flowEntryRoute(ref, '/wait-taker'));
+      context.go(flowRoute);
     } else if (statusEnum == OfferStatus.expired) {
       context.go('/');
     }

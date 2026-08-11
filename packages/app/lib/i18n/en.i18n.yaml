@@ -744,6 +744,15 @@ taker:
     message: Your payment has been processed successfully.
     actions:
       goHome: Go to home
+
+  criticalCodeDecision:
+    title: "Critical decision"
+    explanation: "You already shared a ${code} code with the maker. Continuing can replace that code, end your reservation, and return this offer to other takers."
+    warningTitle: "YOU MAY LOSE YOUR FUNDS"
+    warningBody: "If your bank charged the ${code} payment, DO NOT continue. The maker may have used your code, and after this action the coordinator may no longer be able to guarantee your bitcoin payout."
+    actions:
+      cancel: "Go back and check my bank"
+      proceed: "I was NOT charged — continue"
   
   invalidBlik:
     title: Invalid ${code} Code

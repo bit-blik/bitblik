@@ -293,10 +293,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                     .setActiveOffer(updatedOffer);
 
                                 // Navigate to submit BLIK screen
-                                router.go(
-                                  flowEntryRoute(ref, "/submit-blik"),
-                                  extra: updatedOffer,
-                                );
+                                router.go(flowRoute, extra: updatedOffer);
                               } else {
                                 ref.read(errorProvider.notifier).state =
                                     t.reservations.errors.failedNoTimestamp;
@@ -681,10 +678,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                         );
 
                                                     router.go(
-                                                      flowEntryRoute(
-                                                        ref,
-                                                        '/submit-blik',
-                                                      ),
+                                                      flowRoute,
                                                       extra: updatedOffer,
                                                     );
                                                   } else {
@@ -1375,8 +1369,11 @@ Widget _buildNotificationMessengers(
         final label = inst?.bankById(bankId)?.label ?? bankId;
         links.forEach((messenger, url) {
           if (url.isEmpty) return;
-          (byMessenger[messenger] ??= [])
-              .add((coord: c, url: url, bank: label));
+          (byMessenger[messenger] ??= []).add((
+            coord: c,
+            url: url,
+            bank: label,
+          ));
         });
       });
     }
@@ -1470,41 +1467,42 @@ Future<void> _showMessengerCoordinators(
                 ListTile(
                   leading: _buildCoordinatorIcon(e.coord, size: 28),
                   title: Text(e.coord.name),
-                  subtitle: e.bank == null
-                      ? Text(
-                          t.home.notifications.channelAllBanks,
-                          style: TextStyle(color: Colors.grey[600]),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                t.home.notifications.channelForBankPrefix,
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                            ),
-                            Icon(
-                              Icons.account_balance,
-                              size: 14,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                e.bank!,
-                                style: TextStyle(
-                                  color: Colors.grey[700],
-                                  fontWeight: FontWeight.w600,
+                  subtitle:
+                      e.bank == null
+                          ? Text(
+                            t.home.notifications.channelAllBanks,
+                            style: TextStyle(color: Colors.grey[600]),
+                          )
+                          : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  t.home.notifications.channelForBankPrefix,
+                                  style: TextStyle(color: Colors.grey[600]),
                                 ),
                               ),
-                            ),
-                            Text(
-                              t.home.notifications.channelForBankSuffix,
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                          ],
-                        ),
+                              Icon(
+                                Icons.account_balance,
+                                size: 14,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  e.bank!,
+                                  style: TextStyle(
+                                    color: Colors.grey[700],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                t.home.notifications.channelForBankSuffix,
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
                   trailing: const Icon(Icons.open_in_new, size: 20),
                   onTap: () async {
                     Navigator.of(ctx).pop();
