@@ -1,16 +1,38 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:bitblik_core/core.dart';
+import 'package:bitblik_coordinator/src/models/create_hold_invoice_result.dart';
+import 'package:bitblik_coordinator/src/models/invoice_status.dart';
+import 'package:bitblik_coordinator/src/models/invoice_update.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/services/telegram_service.dart';
 import 'package:clock/clock.dart';
 import 'package:fake_async/fake_async.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
 import 'test_mocks.mocks.dart';
 
 class _FakeTelegramService extends TelegramService {
+  String? lastMessage;
+
   _FakeTelegramService()
       : super(botToken: 'test-bot-token', chatIds: const ['test-chat-id']);
+
+  @override
+  Future<TelegramSendResult> sendMessageDetailed(String message,
+      {List<String>? chatIds}) async {
+    lastMessage = message;
+    return const TelegramSendResult(
+      allSucceeded: true,
+      sentMessages: [
+        TelegramSentMessage(chatId: 'test-chat-id', messageId: 1),
+      ],
+    );
+  }
 
   @override
   Future<bool> editMessage({
@@ -221,6 +243,104 @@ void main() {
 
     test('VÚB = 3 min', () {
       runBankScenario('vub', const Duration(minutes: 3));
+    });
+  });
+
+  // The general (market-wide) channel carries offers from all three banks, so
+  // the notification has to name the bank — otherwise a taker cannot tell whose
+  // ATM the code will work at without opening the offer.
+  group('new-offer notification names the bank', () {
+    late MockDatabaseService db;
+    late MockPaymentService payment;
+    late MockClient httpClient;
+    late _FakeTelegramService telegram;
+    late CoordinatorService svc;
+    late StreamController<InvoiceUpdate> invoiceUpdates;
+
+    setUp(() async {
+      db = MockDatabaseService();
+      payment = MockPaymentService();
+      httpClient = MockClient((request) async {
+        final body = {
+          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur':
+              jsonEncode({
+            'bitcoin': {'eur': 54251.0}
+          }),
+          'https://api.yadio.io/exrates/eur': jsonEncode({'BTC': 54319.67}),
+          'https://blockchain.info/ticker': jsonEncode({
+            'EUR': {'last': 54218.15}
+          }),
+        }[request.url.toString()];
+        return body == null
+            ? http.Response('Not found', 404)
+            : http.Response(body, 200);
+      });
+      telegram = _FakeTelegramService();
+      invoiceUpdates = StreamController<InvoiceUpdate>();
+
+      svc = CoordinatorService(
+        db,
+        paymentServiceForTest: payment,
+        clock: const Clock(),
+        httpClient: httpClient,
+        telegramServiceForTest: telegram,
+        paymentSystemIdForTest: 'sk',
+      );
+      await svc.init();
+
+      when(payment.createHoldInvoice(
+              amountSats: anyNamed('amountSats'),
+              memo: anyNamed('memo'),
+              paymentHashHex: anyNamed('paymentHashHex')))
+          .thenAnswer((invocation) async => CreateHoldInvoiceResult(
+                invoice: 'lnbc_funded_invoice',
+                paymentHash: invocation
+                    .namedArguments[const Symbol('paymentHashHex')] as String,
+              ));
+      when(payment.subscribeToInvoiceUpdates(
+              paymentHashHex: anyNamed('paymentHashHex')))
+          .thenAnswer((_) => invoiceUpdates.stream);
+      when(db.createOffer(any))
+          .thenAnswer((inv) async => inv.positionalArguments.first as Offer);
+      when(db.saveTelegramOfferMessage(
+        offerId: anyNamed('offerId'),
+        chatId: anyNamed('chatId'),
+        messageId: anyNamed('messageId'),
+        messageText: anyNamed('messageText'),
+      )).thenAnswer((_) async {});
+    });
+
+    Future<String?> notificationForBank(String bank) async {
+      final init = await svc.initiateOfferFiat(
+        fiatAmount: 20,
+        makerId: maker,
+        category: OfferCategory.atm,
+        bank: bank,
+      );
+      invoiceUpdates.add(InvoiceUpdate(
+        status: InvoiceStatus.ACCEPTED,
+        paymentHash: init['paymentHash'] as String,
+      ));
+      await invoiceUpdates.close();
+      await Future<void>.delayed(Duration.zero);
+      return telegram.lastMessage;
+    }
+
+    test('Tatra banka offer carries the bank label', () async {
+      final message = await notificationForBank('tatrabanka');
+      expect(message, contains('Tatra banka'));
+      // The rest of the wording is unchanged.
+      expect(message, contains('Nová ponuka'));
+      expect(message, contains('/offers/'));
+    });
+
+    test('SLSP offer carries the bank label', () async {
+      expect(
+          await notificationForBank('slsp'), contains('Slovenská sporiteľňa'));
+    });
+
+    test('VÚB offer carries the bank label', () async {
+      expect(await notificationForBank('vub'), contains('VÚB'));
     });
   });
 }
