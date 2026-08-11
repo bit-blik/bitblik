@@ -1,4 +1,4 @@
-## [0.10.0] - 2026-07-??
+## [0.10.0] - 2026-08-11
 - feat: support Slovakian payment system ATM for 3 banks (Tatra, SLSP, VUB)
 - feat: add SK translation
 - feat: support NFC reading on LNURL lightning addresses and adding wallet
