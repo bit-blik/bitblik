@@ -162,6 +162,8 @@ jobs:
             entrypoint: lib/main_bitblik.dart
           - flavor: bitway
             entrypoint: lib/main_bitway.dart
+          - flavor: bittwint
+            entrypoint: lib/main_bittwint.dart
     defaults:
       run:
         working-directory: ./packages/app
