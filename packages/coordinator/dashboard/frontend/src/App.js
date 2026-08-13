@@ -129,7 +129,7 @@ export const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorC
                 </span>
               </Link>
             ))}
-            {!loading && (
+            {!loading && coordinators.length > 1 && (
               <Link
                 to="/total"
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm ${

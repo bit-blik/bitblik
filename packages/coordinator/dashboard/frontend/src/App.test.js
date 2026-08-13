@@ -106,7 +106,10 @@ test('shows Total with coordinator pills and disables Offers while Total is sele
 
   render(
     <Navigation
-      coordinators={[{ id: 'eur', label: 'EUR coordinator' }]}
+      coordinators={[
+        { id: 'eur', label: 'EUR coordinator' },
+        { id: 'pln', label: 'PLN coordinator' },
+      ]}
       selectedCoordinatorId="eur"
       onCoordinatorChange={jest.fn()}
       loading={false}
@@ -117,6 +120,20 @@ test('shows Total with coordinator pills and disables Offers while Total is sele
   expect(screen.getByText('Offers').closest('a')).toHaveAttribute('tabindex', '-1');
   expect(screen.getByText('Total').closest('a')).toHaveAttribute('href', '/total');
   expect(screen.getByText('EUR coordinator').closest('a')).toHaveAttribute('href', '/');
+});
+
+test('hides Total when only one coordinator is configured', () => {
+  render(
+    <Navigation
+      coordinators={[{ id: 'only', label: 'Only coordinator' }]}
+      selectedCoordinatorId="only"
+      onCoordinatorChange={jest.fn()}
+      loading={false}
+    />
+  );
+
+  expect(screen.queryByText('Total')).not.toBeInTheDocument();
+  expect(screen.getByText('Only coordinator')).toBeInTheDocument();
 });
 
 afterEach(() => {
