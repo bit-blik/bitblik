@@ -6,6 +6,7 @@ import './App.css';
 import OffersPage from './pages/OffersPage';
 import FlowPage from './pages/FlowPage';
 import { buildCoordinatorApiUrl, COORDINATOR_STORAGE_KEY } from './coordinators';
+import { aggregateAnalyticsResults } from './analytics';
 
 // Stable, saturated colors for known categories; unknowns fall back to the
 // palette. Pill *background* pastels (lime-100/blue-100/...) are near-white and
@@ -33,6 +34,8 @@ const CURRENCY_LOCALES = {
   CZK: 'cs-CZ', HUF: 'hu-HU', RON: 'ro-RO', SEK: 'sv-SE', NOK: 'nb-NO',
   DKK: 'da-DK', BGN: 'bg-BG', UAH: 'uk-UA',
 };
+const SUPPORTED_FIAT_CURRENCIES = Object.keys(CURRENCY_LOCALES);
+const TOTAL_CURRENCY_STORAGE_KEY = 'dashboard:total-display-currency';
 const localeForCurrency = (currency) => CURRENCY_LOCALES[currency] || undefined;
 
 // BTC/<currency> rate sources. Each builds its request URL and response parser
@@ -59,11 +62,11 @@ const buildExchangeRateSources = (currency) => {
   ];
 };
 
-const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorChange, loading }) => {
+export const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorChange, loading }) => {
   const location = useLocation();
 
   return (
-    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(96vw,56rem)]">
+    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(96vw,64rem)]">
       <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 px-2 py-1.5 flex items-center justify-between gap-1 sm:px-3 sm:py-2 sm:gap-2">
         <div className="flex gap-1 min-w-0">
           <Link
@@ -79,9 +82,16 @@ const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorChange, 
           </Link>
           <Link
             to="/offers"
+            onClick={(event) => {
+              if (location.pathname === '/total') event.preventDefault();
+            }}
+            aria-disabled={location.pathname === '/total'}
+            tabIndex={location.pathname === '/total' ? -1 : undefined}
             className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
               location.pathname === '/offers'
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
+                : location.pathname === '/total'
+                  ? 'text-gray-300 cursor-not-allowed'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -96,12 +106,12 @@ const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorChange, 
               <span className="px-2 py-1.5 text-xs font-medium text-gray-500 sm:px-3 sm:py-2 sm:text-sm">Loading...</span>
             )}
             {!loading && coordinators.map((coordinator) => (
-              <button
+              <Link
                 key={coordinator.id}
-                type="button"
+                to={location.pathname === '/total' ? '/' : location.pathname}
                 onClick={() => onCoordinatorChange(coordinator.id)}
                 className={`max-w-[7.25rem] truncate px-2.5 py-1.5 rounded-full text-xs font-medium transition-all sm:max-w-none sm:px-4 sm:py-2 sm:text-sm ${
-                  selectedCoordinatorId === coordinator.id
+                  location.pathname !== '/total' && selectedCoordinatorId === coordinator.id
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
@@ -117,8 +127,22 @@ const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorChange, 
                   )}
                   <span className="truncate">{coordinator.label}</span>
                 </span>
-              </button>
+              </Link>
             ))}
+            {!loading && (
+              <Link
+                to="/total"
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm ${
+                  location.pathname === '/total'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                aria-label="All coordinators"
+              >
+                <TrendingUp size={14} className="flex-shrink-0 sm:h-4 sm:w-4" />
+                <span>Total</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -126,7 +150,7 @@ const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorChange, 
   );
 };
 
-const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
+export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], isTotal = false }) => {
   const [data, setData] = useState([]);
   const [totals, setTotals] = useState(null);
   const [weekdaySuccess, setWeekdaySuccess] = useState([]);
@@ -146,72 +170,124 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
   const [endDate, setEndDate] = useState('');
   const [showDateFilters, setShowDateFilters] = useState(false);
   const [pagination, setPagination] = useState(null);
-  // Currency is detected from the offers returned by the API and drives both
-  // fiat formatting and the BTC rate source below. Defaults to PLN.
-  const [currency, setCurrency] = useState('PLN');
+  // Currency is detected from this coordinator's offers and drives both fiat
+  // formatting and the BTC rate source below. Keep it unknown until that
+  // coordinator's response arrives so mounting Analytics cannot briefly fetch
+  // the default coordinator's PLN rate.
+  const [currency, setCurrency] = useState(null);
   const [btcFiatRate, setBtcFiatRate] = useState(null);
   const [rateLoading, setRateLoading] = useState(true);
   const [rateError, setRateError] = useState(null);
   const [lastRateFetchTime, setLastRateFetchTime] = useState(null);
+  const [rawAnalyticsResults, setRawAnalyticsResults] = useState([]);
+  const [exchangeRates, setExchangeRates] = useState({});
+  const coordinatorIds = isTotal
+    ? coordinators.map((coordinator) => coordinator.id)
+    : [selectedCoordinatorId].filter(Boolean);
+  const coordinatorIdsKey = coordinatorIds.join(',');
 
-  // Fetch BTC/<currency> rate from all sources and calculate average
-  const fetchBtcFiatRate = async () => {
-    setRateLoading(true);
-    setRateError(null);
-
-    try {
-      const exchangeRateSources = buildExchangeRateSources(currency);
-      const fetchPromises = exchangeRateSources.map(async (source) => {
-        try {
-          const response = await fetch(source.url);
-          if (!response.ok) {
-            console.warn(`Failed to fetch from ${source.name}: ${response.status}`);
-            return null;
-          }
-          const data = await response.json();
-          const rate = source.parser(data);
-          if (rate && typeof rate === 'number' && rate > 0) {
-            console.log(`Fetched rate from ${source.name}: ${rate} ${currency}/BTC`);
-            return rate;
-          }
-          console.warn(`Invalid rate from ${source.name}: ${rate}`);
-          return null;
-        } catch (err) {
-          console.warn(`Error fetching from ${source.name}:`, err);
-          return null;
-        }
-      });
-
-      const results = await Promise.all(fetchPromises);
-      const validRates = results.filter((rate) => rate !== null);
-
-      if (validRates.length > 0) {
-        const averageRate = validRates.reduce((a, b) => a + b, 0) / validRates.length;
-        setBtcFiatRate(averageRate);
-        setLastRateFetchTime(new Date());
-        console.log(`Average BTC/${currency} rate: ${averageRate} (from ${validRates.length} sources)`);
-      } else {
-        throw new Error(`Failed to fetch BTC/${currency} rate from all sources`);
-      }
-    } catch (err) {
-      console.error(`Error fetching BTC/${currency} rate:`, err);
-      setRateError(err.message);
-    } finally {
-      setRateLoading(false);
-    }
-  };
-
-  // Refetch the rate whenever the detected currency changes (and on mount).
+  // Fetch only after this coordinator's currency is known. Abort an obsolete
+  // request when the currency changes or Analytics unmounts, preventing a slow
+  // response for the previous currency from replacing the current rate.
   useEffect(() => {
-    fetchBtcFiatRate();
+    if (!currency || rawAnalyticsResults.length === 0) return undefined;
+
+    let currentController = null;
+
+    const fetchBtcFiatRates = async () => {
+      currentController?.abort();
+      const controller = new AbortController();
+      currentController = controller;
+      setRateLoading(true);
+      setRateError(null);
+
+      try {
+        const sourceCurrencies = rawAnalyticsResults.map(
+          (result) => String(result.currency || 'PLN').toUpperCase()
+        );
+        const requiredCurrencies = Array.from(new Set([currency, ...sourceCurrencies]));
+        const rateEntries = await Promise.all(requiredCurrencies.map(async (requiredCurrency) => {
+          const exchangeRateSources = buildExchangeRateSources(requiredCurrency);
+          const results = await Promise.all(exchangeRateSources.map(async (source) => {
+            try {
+              const response = await fetch(source.url, { signal: controller.signal });
+              if (!response.ok) {
+                console.warn(`Failed to fetch from ${source.name}: ${response.status}`);
+                return null;
+              }
+              const responseData = await response.json();
+              const rate = source.parser(responseData);
+              if (rate && typeof rate === 'number' && rate > 0) {
+                console.log(`Fetched rate from ${source.name}: ${rate} ${requiredCurrency}/BTC`);
+                return rate;
+              }
+              console.warn(`Invalid rate from ${source.name}: ${rate}`);
+              return null;
+            } catch (err) {
+              if (err.name !== 'AbortError') {
+                console.warn(`Error fetching from ${source.name}:`, err);
+              }
+              return null;
+            }
+          }));
+          const validRates = results.filter((rate) => rate !== null);
+          const averageRate = validRates.length
+            ? validRates.reduce((a, b) => a + b, 0) / validRates.length
+            : null;
+          return [requiredCurrency, averageRate];
+        }));
+        if (controller.signal.aborted) return;
+
+        const nextRates = Object.fromEntries(rateEntries.filter(([, rate]) => rate));
+        setExchangeRates(nextRates);
+        setBtcFiatRate(nextRates[currency] || null);
+
+        if (!nextRates[currency]) {
+          throw new Error(`Failed to fetch BTC/${currency} rate from all sources`);
+        }
+        const missingSourceCurrency = sourceCurrencies.find(
+          (sourceCurrency) => sourceCurrency !== currency && !nextRates[sourceCurrency]
+        );
+        if (missingSourceCurrency) {
+          throw new Error(`Failed to fetch BTC/${missingSourceCurrency} rate for conversion to ${currency}`);
+        }
+
+        setLastRateFetchTime(new Date());
+        console.log(`Average BTC/${currency} rate: ${nextRates[currency]}`);
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          console.error(`Error fetching BTC/${currency} rate:`, err);
+          setRateError(err.message);
+          const needsConversion = rawAnalyticsResults.some(
+            (result) => String(result.currency || 'PLN').toUpperCase() !== currency
+          );
+          if (needsConversion) {
+            setLoading(false);
+            setRefreshing(false);
+          }
+        }
+      } finally {
+        if (currentController === controller) {
+          setRateLoading(false);
+        }
+      }
+    };
+
+    fetchBtcFiatRates();
     // Refresh rate every 5 minutes (matching coordinator cache time)
-    const interval = setInterval(fetchBtcFiatRate, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currency]);
+    const interval = setInterval(fetchBtcFiatRates, 5 * 60 * 1000);
+    return () => {
+      clearInterval(interval);
+      currentController?.abort();
+      currentController = null;
+    };
+  }, [currency, rawAnalyticsResults]);
 
   // Fetch data from API
   useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+
     const fetchData = async () => {
       const isInitialLoad = data.length === 0 && !totals;
       if (isInitialLoad) {
@@ -225,104 +301,139 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
         // groupBy drives SQL grouping; optional startDate/endDate filter the
         // whole dashboard (charts + totals). Both dates required together.
         const rangeActive = startDate && endDate;
-        const response = await fetch(buildCoordinatorApiUrl('/api/offers-data', selectedCoordinatorId), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            rangeActive ? { groupBy, page, startDate, endDate } : { groupBy, page }
-          )
-        });
+        const requestBody = JSON.stringify(
+          rangeActive ? { groupBy, page, startDate, endDate } : { groupBy, page }
+        );
+        const results = await Promise.all(coordinatorIds.map(async (coordinatorId) => {
+          const response = await fetch(buildCoordinatorApiUrl('/api/offers-data', coordinatorId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: requestBody,
+            signal: controller.signal,
+          });
+          if (!response.ok) {
+            throw new Error(`Failed to load ${coordinatorId}: HTTP ${response.status}`);
+          }
+          return response.json();
+        }));
+        if (cancelled) return;
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        setRawAnalyticsResults(results);
+        if (isTotal) {
+          const rememberedCurrency = window.localStorage.getItem(TOTAL_CURRENCY_STORAGE_KEY);
+          const selectedIndex = coordinatorIds.indexOf(selectedCoordinatorId);
+          const selectedCurrency = results[selectedIndex]?.currency;
+          const fallbackCurrency = selectedCurrency || results[0]?.currency || 'PLN';
+          setCurrency((current) => current || (
+            SUPPORTED_FIAT_CURRENCIES.includes(rememberedCurrency)
+              ? rememberedCurrency
+              : String(fallbackCurrency).toUpperCase()
+          ));
+        } else {
+          setCurrency(String(results[0]?.currency || 'PLN').toUpperCase());
         }
-
-        const result = await response.json();
-        if (result.currency) setCurrency(result.currency);
-        setData(result.rows || []);
-        setTotals(result.totals || null);
-        setPagination(result.pagination || null);
-        setWeekdaySuccess(
-          (result.weekdaySuccess || []).map((item) => ({
-            ...item,
-            success_count: parseInt(item.success_count || 0, 10),
-            avg_offer_count: parseFloat(item.avg_offer_count || 0),
-          }))
-        );
-        setWeekdayVolume(
-          (result.weekdayVolume || []).map((item) => ({
-            ...item,
-            total_volume_fiat: parseFloat(item.total_volume_fiat || 0),
-            avg_volume_fiat: parseFloat(item.avg_volume_fiat || 0),
-          }))
-        );
-
-        // Pivot category distribution into per-period rows for a stacked bar
-        // chart: { date, <category>: count, ... }. Categories discovered
-        // dynamically so new categories appear without code changes.
-        const catRows = result.categoryDistribution || [];
-        const keys = [];
-        const byDate = new Map();
-        const volByDate = new Map();
-        catRows.forEach((row) => {
-          const key = row.category || 'unknown';
-          if (!keys.includes(key)) keys.push(key);
-          if (!byDate.has(row.date)) byDate.set(row.date, { date: row.date });
-          if (!volByDate.has(row.date)) volByDate.set(row.date, { date: row.date });
-          byDate.get(row.date)[key] = parseInt(row.count || 0, 10);
-          volByDate.get(row.date)[key] = parseFloat(row.volume || 0);
-        });
-        keys.sort();
-        const fillZeros = (entry) => {
-          keys.forEach((key) => {
-            if (entry[key] == null) entry[key] = 0;
-          });
-          return entry;
-        };
-        setCategoryKeys(keys);
-        setCategoryData(Array.from(byDate.values()).map(fillZeros));
-        setCategoryVolumeData(Array.from(volByDate.values()).map(fillZeros));
-
-        // Pivot client-version distribution into per-period rows for a
-        // multi-line chart: { date, <client>: count, ... }. Client builds
-        // discovered dynamically so new app/cli versions appear automatically.
-        const clientRows = result.clientVersionDistribution || [];
-        const cKeys = [];
-        const cByDate = new Map();
-        clientRows.forEach((row) => {
-          const key = row.client || 'unknown';
-          if (!cKeys.includes(key)) cKeys.push(key);
-          if (!cByDate.has(row.date)) cByDate.set(row.date, { date: row.date });
-          cByDate.get(row.date)[key] = parseInt(row.count || 0, 10);
-        });
-        cKeys.sort();
-        const fillClientZeros = (entry) => {
-          cKeys.forEach((key) => {
-            if (entry[key] == null) entry[key] = 0;
-          });
-          return entry;
-        };
-        setClientKeys(cKeys);
-        setClientData(Array.from(cByDate.values()).map(fillClientZeros));
       } catch (err) {
-        setError(err.message);
-        console.error('Error fetching data:', err);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (!cancelled && err.name !== 'AbortError') {
+          setError(err.message);
+          setLoading(false);
+          setRefreshing(false);
+          console.error('Error fetching data:', err);
+        }
       }
     };
 
     // `data`/`totals` intentionally omitted to avoid re-fetch loop.
     // Only refetch on range change once both bounds are set, or both cleared.
-    if (!selectedCoordinatorId) return;
+    if (!coordinatorIdsKey) return undefined;
     if (startDate && !endDate) return;
     if (endDate && !startDate) return;
     fetchData();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupBy, page, selectedCoordinatorId, startDate, endDate]);
+  }, [groupBy, page, coordinatorIdsKey, startDate, endDate, isTotal]);
+
+  // Normalize and merge the fetched coordinator payloads. For Total analytics,
+  // fiat amounts are converted through each currency's BTC rate before they are
+  // summed; counts and sats are combined directly.
+  useEffect(() => {
+    if (!currency || rawAnalyticsResults.length === 0) return;
+    const needsMissingRate = isTotal && rawAnalyticsResults.some((result) => {
+      const sourceCurrency = String(result.currency || 'PLN').toUpperCase();
+      return sourceCurrency !== currency && (!exchangeRates[sourceCurrency] || !exchangeRates[currency]);
+    });
+    if (needsMissingRate) return;
+
+    const result = isTotal
+      ? aggregateAnalyticsResults(rawAnalyticsResults, currency, exchangeRates)
+      : rawAnalyticsResults[0];
+
+    setData(result.rows || []);
+    setTotals(result.totals || null);
+    setPagination(result.pagination || null);
+    setWeekdaySuccess(
+      (result.weekdaySuccess || []).map((item) => ({
+        ...item,
+        success_count: parseInt(item.success_count || 0, 10),
+        avg_offer_count: parseFloat(item.avg_offer_count || 0),
+      }))
+    );
+    setWeekdayVolume(
+      (result.weekdayVolume || []).map((item) => ({
+        ...item,
+        total_volume_fiat: parseFloat(item.total_volume_fiat || 0),
+        avg_volume_fiat: parseFloat(item.avg_volume_fiat || 0),
+      }))
+    );
+
+    const catRows = result.categoryDistribution || [];
+    const keys = [];
+    const byDate = new Map();
+    const volByDate = new Map();
+    catRows.forEach((row) => {
+      const key = row.category || 'unknown';
+      if (!keys.includes(key)) keys.push(key);
+      if (!byDate.has(row.date)) byDate.set(row.date, { date: row.date });
+      if (!volByDate.has(row.date)) volByDate.set(row.date, { date: row.date });
+      byDate.get(row.date)[key] = parseInt(row.count || 0, 10);
+      volByDate.get(row.date)[key] = parseFloat(row.volume || 0);
+    });
+    keys.sort();
+    const fillZeros = (entry) => {
+      keys.forEach((key) => {
+        if (entry[key] == null) entry[key] = 0;
+      });
+      return entry;
+    };
+    setCategoryKeys(keys);
+    setCategoryData(Array.from(byDate.values()).map(fillZeros));
+    setCategoryVolumeData(Array.from(volByDate.values()).map(fillZeros));
+
+    const clientRows = result.clientVersionDistribution || [];
+    const cKeys = [];
+    const cByDate = new Map();
+    clientRows.forEach((row) => {
+      const key = row.client || 'unknown';
+      if (!cKeys.includes(key)) cKeys.push(key);
+      if (!cByDate.has(row.date)) cByDate.set(row.date, { date: row.date });
+      cByDate.get(row.date)[key] = parseInt(row.count || 0, 10);
+    });
+    cKeys.sort();
+    const fillClientZeros = (entry) => {
+      cKeys.forEach((key) => {
+        if (entry[key] == null) entry[key] = 0;
+      });
+      return entry;
+    };
+    setClientKeys(cKeys);
+    setClientData(Array.from(cByDate.values()).map(fillClientZeros));
+    setError(null);
+    setLoading(false);
+    setRefreshing(false);
+  }, [currency, exchangeRates, isTotal, rawAnalyticsResults]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat(localeForCurrency(currency), {
@@ -393,6 +504,13 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
   const hasActiveDateRange = Boolean(startDate && endDate);
   const metricValueClass = 'text-[clamp(0.8rem,4vw,1.5rem)] sm:text-2xl font-extrabold leading-tight tracking-tight';
   const metricUnitClass = 'text-[clamp(0.7rem,2.8vw,0.875rem)] sm:text-sm font-medium';
+  const handleDisplayCurrencyChange = (event) => {
+    const nextCurrency = event.target.value;
+    window.localStorage.setItem(TOTAL_CURRENCY_STORAGE_KEY, nextCurrency);
+    setRefreshing(true);
+    setRateError(null);
+    setCurrency(nextCurrency);
+  };
 
   // Convert sats to the active fiat currency using the fetched rate
   const satsToFiat = (sats) => {
@@ -465,7 +583,7 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <TrendingUp size={18} className="text-blue-600 flex-shrink-0" />
                 <h1 className="text-lg font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent sm:whitespace-nowrap">
-                  Offers Analytics
+                  {isTotal ? 'Total Analytics' : 'Offers Analytics'}
                 </h1>
                 <div className="flex items-center justify-center bg-amber-50 rounded px-2 py-1 border border-amber-200 sm:px-2.5 sm:py-1.5">
                   <div className="flex flex-col items-center">
@@ -482,6 +600,21 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
                     )}
                   </div>
                 </div>
+                {isTotal && currency && (
+                  <label className="flex items-center gap-1.5 rounded border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700">
+                    <span className="hidden sm:inline">Display</span>
+                    <select
+                      value={currency}
+                      onChange={handleDisplayCurrencyChange}
+                      className="bg-transparent font-bold text-indigo-800 outline-none"
+                      aria-label="Display currency"
+                    >
+                      {SUPPORTED_FIAT_CURRENCIES.map((fiatCurrency) => (
+                        <option key={fiatCurrency} value={fiatCurrency}>{fiatCurrency}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
               
               {/* Flexible Spacer */}
@@ -630,8 +763,14 @@ const AnalyticsDashboard = ({ selectedCoordinatorId }) => {
         {!totals ? (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
             <AlertCircle className="text-yellow-600 mx-auto mb-3" size={32} />
-            <p className="text-yellow-800 font-medium">No data available</p>
-            <p className="text-yellow-700 text-sm mt-1">There are no offers matching the selected criteria.</p>
+            <p className="text-yellow-800 font-medium">
+              {isTotal && rateError ? 'Unable to convert fiat values' : 'No data available'}
+            </p>
+            <p className="text-yellow-700 text-sm mt-1">
+              {isTotal && rateError
+                ? rateError
+                : 'There are no offers matching the selected criteria.'}
+            </p>
           </div>
         ) : (
           <>
@@ -1251,6 +1390,17 @@ const App = () => {
       <div className="pt-16 sm:pt-20">
         <Routes>
           <Route path="/" element={<AnalyticsDashboard key={selectedCoordinatorId} selectedCoordinatorId={selectedCoordinatorId} />} />
+          <Route
+            path="/total"
+            element={
+              <AnalyticsDashboard
+                key="total-analytics"
+                selectedCoordinatorId={selectedCoordinatorId}
+                coordinators={coordinators}
+                isTotal
+              />
+            }
+          />
           <Route
             path="/offers"
             element={
