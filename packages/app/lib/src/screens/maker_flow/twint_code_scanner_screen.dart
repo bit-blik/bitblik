@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../i18n/gen/strings.g.dart';
 
@@ -24,9 +24,6 @@ class TwintCodeScannerScreen extends StatefulWidget {
 }
 
 class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
-  static const MethodChannel _textRecognitionChannel = MethodChannel(
-    'app.bitblik/text_recognition',
-  );
   static final RegExp _codePattern = RegExp(r'(?<!\d)(\d{5})(?!\d)');
   static final RegExp _amountPattern = RegExp(
     r'(?:CHF|Fr\.?)\s*([0-9]+(?:[.,][0-9]{1,2})?)|([0-9]+(?:[.,][0-9]{1,2})?)\s*(?:CHF|Fr\.?)',
@@ -41,12 +38,15 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     detectionSpeed: DetectionSpeed.noDuplicates,
     returnImage: !kIsWeb,
   );
+  final TextRecognizer _textRecognizer = TextRecognizer();
+
   bool _isHandlingCapture = false;
   _TwintScannerStatus _status = _TwintScannerStatus.align;
 
   @override
   void dispose() {
     _controller.dispose();
+    _textRecognizer.close();
     super.dispose();
   }
 
@@ -62,15 +62,15 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
       String? code = _extractCode(qrValue);
       double? amount;
 
-      final needsOcr = widget.scanAmount || code == null;
-      if (!kIsWeb && needsOcr && capture.image != null) {
-        final ocrText = await _textRecognitionChannel.invokeMethod<String>(
-          'recognizeText',
-          {'image': capture.image!},
+      if (!kIsWeb && capture.image != null && capture.size != Size.zero) {
+        final recognizedText = await _textRecognizer.processImage(
+          InputImage.fromBitmap(
+            bitmap: capture.image!,
+            width: capture.size.width.round(),
+            height: capture.size.height.round(),
+          ),
         );
-        if (ocrText == null) {
-          throw StateError('Native text recognition returned no result');
-        }
+        final ocrText = recognizedText.text;
         code ??= _extractCode(ocrText);
         if (widget.scanAmount) {
           amount = _extractAmount(ocrText);
@@ -113,8 +113,8 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     final directMatch = _amountPattern.firstMatch(text);
     final raw =
         directMatch?.group(1) ??
-        directMatch?.group(2) ??
-        _fallbackDecimalPattern.firstMatch(text)?.group(1);
+            directMatch?.group(2) ??
+            _fallbackDecimalPattern.firstMatch(text)?.group(1);
     if (raw == null) return null;
     return double.tryParse(raw.replaceAll(',', '.'));
   }
@@ -124,13 +124,11 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     final t = Translations.of(context);
     const codeLabel = 'TWINT';
     final statusText = switch (_status) {
-      _TwintScannerStatus.align => t.twint.scanner.status.align(
-        code: codeLabel,
-      ),
-      _TwintScannerStatus.notRecognized => t.twint.scanner.status.notRecognized(
-        code: codeLabel,
-      ),
-      _TwintScannerStatus.amountFailed => t.twint.scanner.status.amountFailed,
+      _TwintScannerStatus.align => t.twint.scanner.status.align(code: codeLabel),
+      _TwintScannerStatus.notRecognized =>
+          t.twint.scanner.status.notRecognized(code: codeLabel),
+      _TwintScannerStatus.amountFailed =>
+      t.twint.scanner.status.amountFailed,
     };
     return Scaffold(
       appBar: AppBar(title: Text(t.twint.scanner.title(code: codeLabel))),
