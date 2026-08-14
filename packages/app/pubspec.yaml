@@ -75,7 +75,7 @@ dependencies:
   connectivity_plus: ^7.0.0
   mobile_scanner: ^7.2.1
   flutter_local_notifications: ^20.1.0
-  google_mlkit_text_recognition: ^0.15.0
+  #google_mlkit_text_recognition: ^0.15.0
   nfc_manager: ^4.2.1
   nfc_manager_ndef: ^1.1.0
 
@@ -170,6 +170,7 @@ flutter:
     - assets/category_shop.png
     - assets/category_atm.png
     - assets/category_online.png
+    - assets/tessdata/eng.traineddata
     - assets/bff-logo.png
     - assets/bff-rabbit.png
     - assets/bff-laurs.png
