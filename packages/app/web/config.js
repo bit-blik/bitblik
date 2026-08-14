@@ -1,8 +1,8 @@
-// Runtime configuration for group links
-// This file can be mounted/overwritten in Docker to customize group links
-// Set window.appConfig with the group links you want to display
+// Runtime deployment configuration. This file can be mounted/overwritten in
+// Docker. An empty paymentSystem lets the app use its normal startup behavior.
 
 window.appConfig = {
+  paymentSystem: '',
   telegramGroupLink: '',
   matrixGroupLink: '',
   simplexGroupLink: '',
@@ -11,9 +11,9 @@ window.appConfig = {
 
 // Example configuration (uncomment and modify as needed):
 // window.appConfig = {
+//   paymentSystem: 'sk',
 //   telegramGroupLink: 'https://t.me/+xSktv2JukXUxYmEx',
 //   matrixGroupLink: 'https://matrix.to/#/#bitblik-offers:matrix.org',
 //   simplexGroupLink: 'https://simplex.chat/contact#/?v=2-7&smp=...',
 //   signalGroupLink: 'https://signal.group/#...'
 // };
-

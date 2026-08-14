@@ -36,6 +36,52 @@ void main() {
     });
   });
 
+  group('deployment payment-system default', () {
+    test('is selected for a new user without being persisted', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      expect(
+        await AppPreferencesStore.ensureMarketSelectedOrDetect(
+          deploymentDefaultPaymentSystemId: 'sk',
+        ),
+        isTrue,
+      );
+      expect(
+        await AppPreferencesStore.loadSelectedPaymentSystem(
+          deploymentDefaultPaymentSystemId: 'sk',
+        ),
+        kSlovakia,
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('selected_payment_system_id'), isNull);
+    });
+
+    test('does not override a saved user choice', () async {
+      SharedPreferences.setMockInitialValues({
+        'selected_payment_system_id': 'twint',
+      });
+
+      expect(
+        await AppPreferencesStore.loadSelectedPaymentSystem(
+          deploymentDefaultPaymentSystemId: 'sk',
+        ),
+        kTwint,
+      );
+    });
+
+    test('ignores an unknown deployment value', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      expect(
+        await AppPreferencesStore.loadSelectedPaymentSystem(
+          deploymentDefaultPaymentSystemId: 'unknown',
+        ),
+        kBlik,
+      );
+    });
+  });
+
   group('per-market last-bank memory', () {
     test('save then load round-trips the chosen bank', () async {
       SharedPreferences.setMockInitialValues({});

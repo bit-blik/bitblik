@@ -29,6 +29,7 @@ import 'package:markdown/markdown.dart' as md;
 import 'i18n/gen/strings.g.dart'; // Import Slang from new path
 import 'package:bitblik_core/core.dart'; // Needed for OfferStatus enum
 import 'src/config/build_flavor.dart';
+import 'src/config/runtime_config.dart';
 import 'src/providers/providers.dart';
 import 'src/settings/app_preferences.dart';
 import 'src/services/notification_service.dart';
@@ -215,11 +216,16 @@ Future<void> main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await initBuildFlavor();
+  final deploymentDefaultPaymentSystemId =
+      RuntimeConfig.defaultPaymentSystemId;
   // Try to resolve the market from the device country (IP geolocation) and
-  // auto-select it. Only when that fails (no IP / unsupported country) do we
-  // fall back to the first-launch market picker.
+  // auto-select it when the deployment did not provide a runtime default.
+  // Only when neither is available do we show the first-launch market picker.
   final marketSelected =
-      await AppPreferencesStore.ensureMarketSelectedOrDetect();
+      await AppPreferencesStore.ensureMarketSelectedOrDetect(
+        deploymentDefaultPaymentSystemId:
+            deploymentDefaultPaymentSystemId,
+      );
   await NotificationService().init();
   String? localeString = await asyncPrefs.getString('app_locale');
   if (localeString != null) {
@@ -241,7 +247,9 @@ Future<void> main() async {
   // (BLIK) and the saved market (e.g. Tatra banka) only loads asynchronously —
   // by then discovery has run for BLIK and the Slovak coordinators don't appear
   // until a manual re-enable in Settings.
-  final savedMethod = await AppPreferencesStore.loadSelectedPaymentSystem();
+  final savedMethod = await AppPreferencesStore.loadSelectedPaymentSystem(
+    deploymentDefaultPaymentSystemId: deploymentDefaultPaymentSystemId,
+  );
   runApp(
     TranslationProvider(
       // Wrap with TranslationProvider

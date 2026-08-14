@@ -1,9 +1,10 @@
-# Docker Runtime Configuration for Group Links and Web Flavors
+# Docker Runtime Configuration and Web Flavors
 
 This document explains:
 
 1. How to build Docker images for the two web flavors: `bitblik` and `bitway`
-2. How to configure group links (Telegram, Element, SimpleX, Signal) at **runtime**
+2. How to choose an initial payment system at **runtime**
+3. How to configure group links (Telegram, Element, SimpleX, Signal) at **runtime**
 
 The web build now uses explicit Flutter entrypoints and committed web shell templates, including flavor-specific `index.html`, `manifest.json`, `favicon`, PWA icons, and splash/preloader images. It does not rely on scripts that mutate `web/` and then restore files.
 
@@ -53,7 +54,8 @@ docker build \
 
 ## Overview
 
-The group links are configured at runtime (not build time) using either:
+The initial payment system and group links are configured at runtime (not
+build time) using either:
 1. **Environment variables** - The entrypoint script generates `config.js` from environment variables
 2. **Volume mount** - Mount a custom `config.js` file to override the default configuration
 
@@ -64,6 +66,7 @@ The group links are configured at runtime (not build time) using either:
 ```bash
 docker run -d \
   -p 80:80 \
+  -e PAYMENT_SYSTEM="sk" \
   -e TELEGRAM_GROUP_LINK="https://t.me/+xSktv2JukXUxYmEx" \
   -e ELEMENT_GROUP_LINK="https://matrix.to/#/#bitblik-offers:matrix.org" \
   -e SIMPLEX_GROUP_LINK="https://simplex.chat/contact#/?v=2-7&smp=..." \
@@ -86,6 +89,7 @@ services:
     ports:
       - "80:80"
     environment:
+      - PAYMENT_SYSTEM=${PAYMENT_SYSTEM:-}
       - TELEGRAM_GROUP_LINK=${TELEGRAM_GROUP_LINK:-}
       - ELEMENT_GROUP_LINK=${ELEMENT_GROUP_LINK:-}
       - SIMPLEX_GROUP_LINK=${SIMPLEX_GROUP_LINK:-}
@@ -95,6 +99,7 @@ services:
 Or use a `.env` file:
 
 ```env
+PAYMENT_SYSTEM=sk
 TELEGRAM_GROUP_LINK=https://t.me/+xSktv2JukXUxYmEx
 ELEMENT_GROUP_LINK=https://matrix.to/#/#bitblik-offers:matrix.org
 SIMPLEX_GROUP_LINK=https://simplex.chat/contact#/?v=2-7&smp=...
@@ -132,6 +137,7 @@ Edit `config.js` with your group links:
 
 ```javascript
 window.appConfig = {
+  paymentSystem: 'sk',
   telegramGroupLink: 'https://t.me/+xSktv2JukXUxYmEx',
   elementGroupLink: 'https://matrix.to/#/#bitblik-offers:matrix.org',
   simplexGroupLink: 'https://simplex.chat/contact#/?v=2-7&smp=...',
@@ -168,12 +174,19 @@ services:
 
 The following environment variables are available (all optional):
 
+- `PAYMENT_SYSTEM` - initial payment system for users who do not already have
+  a saved choice: `blik`, `mbway`, `twint`, or `sk`
 - `TELEGRAM_GROUP_LINK` - Telegram group invite link
 - `ELEMENT_GROUP_LINK` - Element/Matrix room link
 - `SIMPLEX_GROUP_LINK` - SimpleX contact/group link
 - `SIGNAL_GROUP_LINK` - Signal group invite link
 
-Only links that are provided (non-empty) will be displayed in the UI.
+The payment-system setting is an initial default, not a lock. An existing saved
+user choice takes precedence, and users can still select another payment system
+in Settings. When a valid default is supplied, new users skip IP geolocation and
+the first-launch market picker. Invalid or empty values are ignored.
+
+Only group links that are provided (non-empty) will be displayed in the UI.
 
 ## How It Works
 
@@ -183,7 +196,9 @@ Only links that are provided (non-empty) will be displayed in the UI.
     - It generates `config.js` from environment variables (if provided)
     - Alternatively, you can mount a custom `config.js` file to override the generated one
 3. **Application**: The Flutter web app reads `window.appConfig` from the JavaScript file at runtime
-4. **UI**: Only non-empty links are displayed in the notifications bar
+4. **Application default**: A valid `PAYMENT_SYSTEM` initializes the market when
+   the browser has no saved user choice
+5. **UI**: Only non-empty links are displayed in the notifications bar
 
 ## Advantages of Runtime Configuration
 

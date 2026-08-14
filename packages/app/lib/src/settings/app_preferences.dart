@@ -169,13 +169,11 @@ class AppPreferencesStore {
     );
   }
 
-  /// Active payment method (country/system). Uses the saved choice if present,
-  /// otherwise the build's default ([buildDefaultPaymentSystemId], resolved at
-  /// startup from the appId/flavor or `--dart-define=PAYMENT_SYSTEM`).
   /// Resolve the market for this launch and report whether one is now selected.
   ///
   /// Returns `true` (→ skip the first-launch market picker) when:
   /// - the user already chose a market before, or
+  /// - the web deployment supplied a valid default market, or
   /// - this is a branded/forced build (it pins its own market), or
   /// - IP geolocation resolves a **country served by a supported payment
   ///   system**, which is then auto-selected.
@@ -185,10 +183,15 @@ class AppPreferencesStore {
   /// served by any supported payment system. Detection is retried on each cold
   /// start until a market is selected, so a first launch without network can
   /// still auto-resolve on a later launch instead of being stuck on onboarding.
-  static Future<bool> ensureMarketSelectedOrDetect() async {
+  static Future<bool> ensureMarketSelectedOrDetect({
+    String? deploymentDefaultPaymentSystemId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_selectedPaymentSystemKey);
     if (saved != null && saved.isNotEmpty) return true;
+    if (_supportedPaymentSystemById(deploymentDefaultPaymentSystemId) != null) {
+      return true;
+    }
     if (isBuildPaymentSystemForced) return true;
 
     final detected = await _detectPaymentSystemFromIp();
@@ -204,14 +207,25 @@ class AppPreferencesStore {
     return false;
   }
 
-  static Future<PaymentSystem> loadSelectedPaymentSystem() async {
+  /// Active payment method (country/system). A saved user choice wins, followed
+  /// by the deployment runtime default and finally the built-in flavor default.
+  static Future<PaymentSystem> loadSelectedPaymentSystem({
+    String? deploymentDefaultPaymentSystemId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_selectedPaymentSystemKey);
+    final deploymentDefault = _supportedPaymentSystemById(
+      deploymentDefaultPaymentSystemId,
+    );
     // ignore: avoid_print
     print(
-      'BITFLAVOR loadSelected saved=$saved default=$buildDefaultPaymentSystemId',
+      'BITFLAVOR loadSelected saved=$saved '
+      'deploymentDefault=${deploymentDefault?.id} '
+      'buildDefault=$buildDefaultPaymentSystemId',
     );
-    final resolved = paymentSystemById(saved ?? buildDefaultPaymentSystemId);
+    final resolved = paymentSystemById(
+      saved ?? deploymentDefault?.id ?? buildDefaultPaymentSystemId,
+    );
     // Migrate a stored legacy per-bank SK id (`tatrabanka`/`slsp`/`vub`) to the
     // collapsed `sk` market id, so the persisted value is canonical and the old
     // bank choice becomes the maker's per-offer bank instead of the market.
@@ -224,6 +238,15 @@ class AppPreferencesStore {
   static Future<void> saveSelectedPaymentSystem(PaymentSystem method) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_selectedPaymentSystemKey, method.id);
+  }
+
+  static PaymentSystem? _supportedPaymentSystemById(String? id) {
+    final normalized = id?.trim();
+    if (normalized == null || normalized.isEmpty) return null;
+    for (final system in kPaymentSystems) {
+      if (system.id == normalized) return system;
+    }
+    return null;
   }
 
   static String _lastBankKey(String marketId) =>
