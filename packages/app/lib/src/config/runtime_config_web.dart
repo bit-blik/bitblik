@@ -11,8 +11,10 @@ class RuntimeConfig {
   /// Payment-system id used when the browser has no saved user choice.
   static String? get defaultPaymentSystemId {
     try {
-      final windowObj = js.context['window'] ?? js.context;
-      final appConfig = windowObj['appConfig'];
+      // `js.context` already represents the browser's global Window object.
+      // Reading `window` from it produces a dart:html Window wrapper, which
+      // does not support the `[]` operator in a compiled release build.
+      final appConfig = js.context['appConfig'];
       final value = appConfig?['paymentSystem'];
       if (value is! String) return null;
       final normalized = value.trim();
