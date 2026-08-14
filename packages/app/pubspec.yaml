@@ -170,7 +170,6 @@ flutter:
     - assets/category_shop.png
     - assets/category_atm.png
     - assets/category_online.png
-    - assets/tessdata/eng.traineddata
     - assets/bff-logo.png
     - assets/bff-rabbit.png
     - assets/bff-laurs.png
