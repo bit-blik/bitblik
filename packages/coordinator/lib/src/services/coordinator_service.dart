@@ -86,11 +86,31 @@ class _PendingOfferRecord {
   });
 }
 
+/// Obtains a payment backend: a connected service plus the type name to report
+/// ("lnd" / "nwc"), or `(null, "none")` when the configured backend could not
+/// be reached. Throwing means the coordinator is misconfigured, which is fatal
+/// at startup; returning `(null, "none")` means "down right now", which is not.
+typedef PaymentBackendConnector
+    = Future<({PaymentService? backend, String type})> Function();
+
 class CoordinatorService {
   final DatabaseService _dbService;
   PaymentService? _paymentBackend; // Unified payment backend
   String _paymentBackendType =
       "none"; // To track active backend: "lnd", "nwc", or "none"
+
+  /// Active backend type; "none" while no backend is connected.
+  String get paymentBackendType => _paymentBackendType;
+
+  late final PaymentBackendConnector _connectPaymentBackend;
+
+  // A backend that is unreachable at startup is retried, instead of leaving the
+  // coordinator permanently unable to create hold invoices.
+  static const _backendRetryFirstDelay = Duration(seconds: 15);
+  static const _backendRetryMaxDelay = Duration(minutes: 5);
+  Timer? _backendRetryTimer;
+  Duration _backendRetryDelay = _backendRetryFirstDelay;
+
   final Clock _clock; // Added for testable time
   final http.Client _httpClient; // Added for testable HTTP calls
   late DotEnv _env;
@@ -460,12 +480,15 @@ class CoordinatorService {
       NostrService? nostrService,
       TelegramService? telegramServiceForTest,
       String? paymentSystemIdForTest,
-      FlowEngine? flowEngineForTest})
+      FlowEngine? flowEngineForTest,
+      PaymentBackendConnector? paymentBackendConnectorForTest})
       : _clock = clock ?? const Clock(),
         _httpClient = httpClient ?? http.Client(),
         _nostrService = nostrService,
         _paymentSystemIdOverride = paymentSystemIdForTest,
         _flowEngineOverride = flowEngineForTest {
+    _connectPaymentBackend =
+        paymentBackendConnectorForTest ?? _connectPaymentBackendFromEnv;
     // Initialize dotenv
     _env = DotEnv(includePlatformEnvironment: true)..load();
 
@@ -619,6 +642,9 @@ class CoordinatorService {
     AppLogger.info(
         'CoordinatorService initialized with $_paymentBackendType backend '
         '(generic YAML flow).');
+    if (_paymentBackend == null) {
+      _scheduleBackendRetry();
+    }
   }
 
   Future<void> _loadFlowEngine() async {
@@ -741,6 +767,13 @@ class CoordinatorService {
   }
 
   Future<void> _initializePaymentBackend() async {
+    final result = await _connectPaymentBackend();
+    _paymentBackend = result.backend;
+    _paymentBackendType = result.type;
+  }
+
+  Future<({PaymentService? backend, String type})>
+      _connectPaymentBackendFromEnv() async {
     final nwcUri = _env['NWC_URI'];
     final lndHost = _env['LND_HOST'];
 
@@ -749,43 +782,83 @@ class CoordinatorService {
       try {
         final nwcService = NwcService(nwcUri: nwcUri);
         await nwcService.connect();
-        _paymentBackend = nwcService;
-        _paymentBackendType = "nwc";
         AppLogger.info('NwcService initialized and connected successfully.');
+        return (backend: nwcService, type: "nwc");
       } catch (e) {
         AppLogger.info('Error initializing NwcService: $e');
-        _paymentBackend = null; // Ensure backend is null on error
-        _paymentBackendType = "none";
         AppLogger.info(
             'Falling back to LND check due to NWC initialization error.');
         if (lndHost != null && lndHost.isNotEmpty) {
-          await _initializeLndService(lndHost);
+          return _connectLndService(lndHost);
         } else {
           throw Exception("CRITICAL: NWC failed and LND_HOST not configured");
         }
       }
     } else if (lndHost != null && lndHost.isNotEmpty) {
-      await _initializeLndService(lndHost);
+      return _connectLndService(lndHost);
     } else {
       throw Exception(
           "CRITICAL: No payment backend configured (NWC_URI or LND_HOST not set). Hold invoice functionality will be disabled.");
     }
   }
 
-  Future<void> _initializeLndService(String lndHost) async {
+  Future<({PaymentService? backend, String type})> _connectLndService(
+      String lndHost) async {
     AppLogger.info(
         'LND_HOST found ($lndHost). Initializing LndService (uses internal env vars for details)...');
     try {
       final lndService = LndService();
       await lndService.connect();
-      _paymentBackend = lndService;
-      _paymentBackendType = "lnd";
       AppLogger.info('LndService initialized and connected successfully.');
+      return (backend: lndService, type: "lnd");
     } catch (e) {
-      AppLogger.info('Error initializing LndService: $e');
-      _paymentBackend = null; // Ensure backend is null on error
-      _paymentBackendType = "none";
+      // Not fatal and not permanent: LND is commonly still booting or has a
+      // locked wallet while the coordinator starts. Report no backend and let
+      // the retry pick it up.
+      AppLogger.severe('Error initializing LndService: $e');
+      return (backend: null, type: "none");
     }
+  }
+
+  /// Re-attempts the payment backend connection after a failed one.
+  ///
+  /// Returns true once a backend is connected. A configuration error (the
+  /// connector throwing) is reported and treated as "still down": the
+  /// coordinator is already serving by the time this runs, so it must not be
+  /// taken down by an exception on a background timer.
+  Future<bool> retryPaymentBackend() async {
+    if (_paymentBackend != null) return true;
+
+    try {
+      await _initializePaymentBackend();
+    } catch (e) {
+      AppLogger.severe('Payment backend retry failed: $e');
+      return false;
+    }
+
+    if (_paymentBackend == null) return false;
+
+    _backendRetryTimer?.cancel();
+    _backendRetryTimer = null;
+    _backendRetryDelay = _backendRetryFirstDelay;
+    AppLogger.info(
+        'Payment backend recovered: now on $_paymentBackendType. '
+        'Hold invoices work again.');
+    return true;
+  }
+
+  void _scheduleBackendRetry() {
+    _backendRetryTimer?.cancel();
+    AppLogger.severe(
+        'No payment backend: every offer will fail to get a hold invoice '
+        'until one connects. Retrying in ${_backendRetryDelay.inSeconds}s.');
+    _backendRetryTimer = Timer(_backendRetryDelay, () async {
+      if (await retryPaymentBackend()) return;
+      final doubled = _backendRetryDelay * 2;
+      _backendRetryDelay =
+          doubled > _backendRetryMaxDelay ? _backendRetryMaxDelay : doubled;
+      _scheduleBackendRetry();
+    });
   }
 
   Future<void> _removeInvoiceSubscription(String paymentHashHex) async {
@@ -1479,6 +1552,9 @@ class CoordinatorService {
   }
 
   Future<void> shutdown() async {
+    _backendRetryTimer?.cancel();
+    _backendRetryTimer = null;
+
     for (final timer in _pendingOfferTimeouts.values) {
       timer.cancel();
     }
