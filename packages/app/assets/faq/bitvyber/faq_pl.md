@@ -24,9 +24,9 @@ Słowacja to jeden rynek (**{app}**) obsługiwany przez jednego koordynatora, ob
 Każdy bank ustala żywotność kodu wypłaty bez karty:
 - **Tatra banka: 20 minut**
 - **Slovenská sporiteľňa: 15 minut**
-- **VÚB: 3 minuty**
+- **VÚB: 10–60 minut**, czas wybiera taker przy generowaniu kodu
 
-Okno VÚB jest bardzo krótkie; przy ofercie VÚB taker powinien być już przy (lub bardzo blisko) bankomatu VÚB przed rezerwacją. Aplikacja pokazuje pozostały czas jako odliczanie.
+VÚB to jedyny bank, w którym okno wybiera taker — od 10 do 60 minut — przy generowaniu kodu. BitBlik nie wie, jaką wartość wybrał, więc odlicza od dolnej granicy 10 minut. Poproś o dłuższe okno, jeśli maker ma dalej do bankomatu. Aplikacja pokazuje pozostały czas jako odliczanie.
 
 #### Jak działa escrow?
 
@@ -64,7 +64,7 @@ Maker zablokował już Bitcoiny w hold invoice **zanim** wyślesz kod. Gdy maker
 
 #### Co jeśli kod jest nieprawidłowy lub wygaśnie, zanim maker wypłaci?
 
-Jeśli maker nie może wypłacić kodem (nieprawidłowy lub wygasły — najprawdopodobniej przy 3-minutowym oknie VÚB), transakcja z tym kodem nie może być kontynuowana. Maker oznacza go jako nieprawidłowy, oferta jest ponownie wystawiana, a taker może wysłać nowy kod lub anulować. Ponieważ kod szybko wygasa, uzgodnijcie czas i wybierzcie bank, którego bankomat maker szybko osiągnie.
+Jeśli maker nie może wypłacić kodem (nieprawidłowy lub wygasły), transakcja z tym kodem nie może być kontynuowana. Maker oznacza go jako nieprawidłowy, oferta jest ponownie wystawiana, a taker może wysłać nowy kod lub anulować. Ponieważ kod szybko wygasa, uzgodnijcie czas i wybierzcie bank, którego bankomat maker szybko osiągnie.
 
 #### Jakie są ryzyka protokołu?
 

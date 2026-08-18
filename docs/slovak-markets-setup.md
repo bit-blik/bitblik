@@ -17,7 +17,7 @@ Slovensko je **jeden trh** (`sk`, wire tag `Bitvyber`) obsluhovaný **jedným
 koordinátorom**, ktorý pokrýva Tatra banku, Slovenskú sporiteľňu aj VÚB. **Banku
 vyberá maker pri vytváraní ponuky** — on stojí pri bankomate danej banky, takže
 sieť bankomatov je vlastnosťou ponuky. Každá banka má vlastnú platnosť kódu
-(Tatra 20 min, SLSP 15 min, VÚB 3 min); jeden flow obsluhuje všetky. Kód z Tatra
+(Tatra 20 min, SLSP 15 min, VÚB 10 min); jeden flow obsluhuje všetky. Kód z Tatra
 banky funguje len v Tatra bankomatoch, atď., takže taker berie len ponuky banky,
 ktorej appku má.
 
@@ -83,7 +83,8 @@ Pripoj peňaženku cez **NWC** (Nostr Wallet Connect) — napr. Alby Go:
    karty"** (6‑miestny kód).
 3. Kód zadaj v BitBliku (submit). Kód **odovzdávaš makerovi** — ten ho zadá v
    bankomate; z tvojho účtu sa suma odpíše a **dostaneš sats**.
-4. Kód má obmedzenú platnosť (SLSP 15 min, Tatra 20 min) — koordinuj s makerom.
+4. Kód má obmedzenú platnosť (VÚB 10 min, SLSP 15 min, Tatra 20 min) — koordinuj
+   s makerom.
 
 ### 2.5 Maker (nákup hotovosti za sats)
 1. **Create offer** → suma v EUR, kategória ATM, **vyber banku**, ktorej
@@ -145,7 +146,7 @@ a vlož ho do `NOSTR_PRIVATE_KEY`.
       # BANKS: tatrabanka,slsp
       # CURRENCIES sa odvodí na EUR z trhu (netreba nastavovať).
       # sk always runs on the YAML flow engine (flow sk_atm.yml)
-      # automaticky. Platnosť kódu je PER BANKA (Tatra 20 / SLSP 15 / VÚB 3 min)
+      # automaticky. Platnosť kódu je PER BANKA (Tatra 20 / SLSP 15 / VÚB 10 min)
       # a rieši sa z banky ponuky cez $code_validity — netreba nastavovať.
       # RESERVATION_SECONDS a FUNDED_EXPIRY_SECONDS sa pri generickom flow čítajú
       # z sk_atm.yml, takže tieto hodnoty sú len informatívne.
@@ -307,9 +308,10 @@ Overenie: stav prejde `settled → takerPaid`, takerovi prídu sats.
 ## 6. Poznámky a limity
 - **Nominály:** slovenské bankomaty bežne 10/20/50/100 € (€5 len Tatra/ČSOB).
   Sumy musia byť zložiteľné z týchto nominálov (napr. 30, 70, 500 áno; 15 nie).
-- **VÚB platnosť kódu** je **3 min** (podľa FAQ na vub.sk) — veľmi tesné pre
-  dvojicu, taker nech je pri bankomate skôr, než rezervuje. Jednoriadková zmena
-  `BankSpec.validity` v `payment_system.dart`. Tatra 20 min, SLSP 15 min.
+- **VÚB platnosť kódu** si volí taker vo VÚB Mobil Bankingu — „Doba platnosti"
+  od **10 do 60 min**. Koordinátor sa zvolenú hodnotu nedozvie, preto
+  `BankSpec.validity` drží **10 min**, teda spodnú hranicu, ktorú má každý VÚB
+  kód. Tatra 20 min, SLSP 15 min.
 - **Limit banky:** cardless výber máva strop ~€500 na výber; drž sumy pod ním.
 - **Discovery:** funguje cez spoločné bootstrap relaye aj s placeholder
   `kSlovakiaPubkeyHex`.

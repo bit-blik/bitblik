@@ -24,9 +24,9 @@ Slovensko je jeden trh (**{app}**) obsluhovaný jedným koordinátorom, pokrýva
 Každá banka má vlastnú platnosť kódu na výber bez karty:
 - **Tatra banka: 20 minút**
 - **Slovenská sporiteľňa: 15 minút**
-- **VÚB: 3 minúty**
+- **VÚB: 10–60 minút**, dobu si volí taker pri generovaní kódu
 
-Okno VÚB je veľmi krátke, preto pri VÚB ponuke by mal byť taker už pri (alebo veľmi blízko) VÚB bankomatu skôr, než rezervuje. Appka zobrazuje zostávajúci čas odpočtom.
+VÚB je jediná banka, kde si okno volí taker — od 10 do 60 minút — pri generovaní kódu. BitBlik nevie, akú hodnotu zvolil, takže odpočítava od spodnej hranice 10 minút. Ak to má maker k bankomatu ďalej, vypýtaj si dlhšie okno. Appka zobrazuje zostávajúci čas odpočtom.
 
 #### Ako funguje escrow proces?
 
@@ -64,7 +64,7 @@ Maker už uzamkol Bitcoin v hold invoice **skôr**, než odošleš výberový k�
 
 #### Čo ak je kód neplatný alebo vyprší skôr, než maker vyberie?
 
-Ak maker nedokáže vybrať (neplatný alebo vypršaný kód — najpravdepodobnejšie pri 3-minútovom okne VÚB), obchod s tým kódom nepokračuje. Maker ho označí za neplatný, ponuka sa znova ponúkne a taker môže poslať nový kód alebo zrušiť. Keďže kód vyprší rýchlo, zladíte časovanie a zvoľte banku, ktorej bankomat maker rýchlo dosiahne.
+Ak maker nedokáže vybrať (neplatný alebo vypršaný kód), obchod s tým kódom nepokračuje. Maker ho označí za neplatný, ponuka sa znova ponúkne a taker môže poslať nový kód alebo zrušiť. Keďže kód vyprší rýchlo, zladíte časovanie a zvoľte banku, ktorej bankomat maker rýchlo dosiahne.
 
 #### Aké sú riziká protokolu?
 

@@ -226,7 +226,7 @@ class CoordinatorService {
 
   /// The code-validity window for [offer] — its bank's override, else the
   /// instrument default. Drives the `$code_validity` flow timeouts so Tatra /
-  /// SLSP / VÚB get 20 / 15 / 3 minutes from one flow.
+  /// SLSP / VÚB get 20 / 15 / 10 minutes from one flow.
   Duration _codeValidityForOffer(Offer offer) {
     final instrument = _instrumentForCategory(offer.category);
     return instrument.validityFor(instrument.bankById(offer.bankId));

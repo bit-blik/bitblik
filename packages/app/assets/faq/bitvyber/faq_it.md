@@ -24,9 +24,9 @@ La Slovacchia è un unico mercato (**{app}**) gestito da un coordinatore, che co
 Ogni banca imposta la durata di un codice di prelievo senza carta:
 - **Tatra banka: 20 minuti**
 - **Slovenská sporiteľňa: 15 minuti**
-- **VÚB: 3 minuti**
+- **VÚB: 10–60 minuti**, scelti dal taker quando genera il codice
 
-La finestra di VÚB è molto breve; per un'offerta VÚB il taker dovrebbe essere già a (o molto vicino a) un ATM VÚB prima di prenotare. L'app mostra il tempo residuo con un conto alla rovescia.
+VÚB è l'unica banca in cui la finestra la sceglie il taker — da 10 a 60 minuti — quando genera il codice. BitBlik non sa quale valore abbia scelto, quindi conta alla rovescia dal minimo di 10 minuti. Chiedete una finestra più lunga se il maker ha più strada da fare. L'app mostra il tempo residuo con un conto alla rovescia.
 
 #### Come funziona l'escrow?
 
@@ -64,7 +64,7 @@ Il maker ha già bloccato i suoi Bitcoin in una hold invoice **prima** del tuo i
 
 #### E se il codice è invalido o scade prima che il maker prelevi?
 
-Se il maker non riesce a prelevare con il codice (invalido o scaduto — molto probabile con la finestra di 3 minuti di VÚB), lo scambio non può proseguire con quel codice. Il maker lo segna invalido, l'offerta viene ripubblicata e il taker può inviare un nuovo codice o annullare. Poiché il codice scade in fretta, coordinate i tempi e scegliete una banca il cui ATM il maker raggiunge in fretta.
+Se il maker non riesce a prelevare con il codice (invalido o scaduto), lo scambio non può proseguire con quel codice. Il maker lo segna invalido, l'offerta viene ripubblicata e il taker può inviare un nuovo codice o annullare. Poiché il codice scade in fretta, coordinate i tempi e scegliete una banca il cui ATM il maker raggiunge in fretta.
 
 #### Quali sono i rischi del protocollo?
 

@@ -28,8 +28,8 @@ short **6-digit code** is the only credential.
   lock Lightning in BitBlik and receive the cash. → **"Sell" manuals**.
 
 The two must be online **at the same time** and the seller must be **at the
-bank's ATM** while the code is valid (Tatra 20 min · SLSP 15 min · **VÚB only 3
-min**).
+bank's ATM** while the code is valid (Tatra 20 min · SLSP 15 min · VÚB 10 min —
+the floor of the 10–60 min the taker picks in the VÚB app).
 
 ## SK — Ako BitBlik SK funguje (dve roly)
 
@@ -44,7 +44,8 @@ jediné, čo treba, je **6-miestny kód**.
   BitBliku zamkne Lightning a dostane hotovosť. → **návody „Sell"**.
 
 Obaja musia byť online **naraz** a predávajúci musí byť **pri bankomate banky**,
-kým je kód platný (Tatra 20 min · SLSP 15 min · **VÚB len 3 min**).
+kým je kód platný (Tatra 20 min · SLSP 15 min · VÚB 10 min — spodná hranica
+z 10–60 min, ktoré si taker volí vo VÚB appke).
 
 ---
 
