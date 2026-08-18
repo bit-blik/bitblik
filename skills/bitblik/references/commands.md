@@ -17,7 +17,7 @@ Output fields: `pubkey`, `name`, `currencies`, `minAmountSats`, `maxAmountSats`,
 bitblik offer create --fiat 100 --coordinator <npub|hex> --json
 bitblik offer create --fiat 100 --coordinator <npub|hex> --currency PLN --json
 # Bank-scoped market (Slovakia / bitvyber): --bank is REQUIRED — you withdraw
-# at that bank's ATM. One of: tatrabanka | slsp | vub.
+# at that bank's ATM. One of: tatrabanka | slsp | vub | primabanka.
 bitvyber offer create --fiat 50 --coordinator <npub|hex> --bank tatrabanka --json
 ```
 

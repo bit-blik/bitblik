@@ -824,6 +824,7 @@ class _Translations$exchange$errors$sk extends Translations$exchange$errors$en {
 	@override String tooLowFiat({required Object minAmount, required Object currency}) => 'Suma je príliš nízka. Minimum je ${minAmount} ${currency}.';
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'Suma je príliš vysoká. Maximum je ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Bankomat nedokáže vydať túto sumu. Použi kombináciu bankoviek: ${notes}.';
+	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} vydá na jeden výber najviac ${limit} ${currency}.';
 }
 
 // Path: coordinator.info
@@ -2838,6 +2839,7 @@ extension on TranslationsSk {
 			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'Suma je príliš nízka. Minimum je ${minAmount} ${currency}.',
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Suma je príliš vysoká. Maximum je ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Bankomat nedokáže vydať túto sumu. Použi kombináciu bankoviek: ${notes}.',
+			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} vydá na jeden výber najviac ${limit} ${currency}.',
 			'coordinator.title' => 'Koordinátori',
 			'coordinator.info.fee' => 'poplatok',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Suma: ${minAmount}-${maxAmount} ${currency}',
@@ -3188,9 +3190,9 @@ extension on TranslationsSk {
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Ak ti banka strhla platbu ${code}, NEPOKRAČUJ. Predávajúci mohol tvoj kód použiť a po tejto akcii už koordinátor nemusí vedieť zaručiť vyplatenie tvojich bitcoinov.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Späť a skontrolovať banku',
 			'taker.criticalCodeDecision.actions.proceed' => 'NEBOLO mi strhnuté — pokračovať',
-			'taker.invalidBlik.title' => ({required Object code}) => 'Neplatný kód ${code}',
 			_ => null,
 		} ?? switch (path) {
+			'taker.invalidBlik.title' => ({required Object code}) => 'Neplatný kód ${code}',
 			'taker.invalidBlik.message' => ({required Object code}) => 'Predávajúci odmietol kód ${code}',
 			'taker.invalidBlik.explanation' => ({required Object code}) => 'Predávajúci ponuky uviedol, že ${code}, ktorý si poskytol, bol neplatný alebo nefungoval.\n\nČo chceš urobiť?',
 			'taker.invalidBlik.werentCharged' => 'Ak ti NEBOLO nič strhnuté:',

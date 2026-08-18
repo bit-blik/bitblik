@@ -896,6 +896,7 @@ class _Translations$exchange$errors$it extends Translations$exchange$errors$en {
 	@override String tooLowFiat({required Object minAmount, required Object currency}) => 'L\'importo è troppo basso. Il minimo è ${minAmount} ${currency}.';
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'L\'importo è troppo alto. Il massimo è ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}.';
+	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} eroga al massimo ${limit} ${currency} per prelievo.';
 }
 
 // Path: coordinator.info
@@ -3114,6 +3115,7 @@ extension on TranslationsIt {
 			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'L\'importo è troppo basso. Il minimo è ${minAmount} ${currency}.',
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'L\'importo è troppo alto. Il massimo è ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}.',
+			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} eroga al massimo ${limit} ${currency} per prelievo.',
 			'coordinator.title' => 'Coordinatori',
 			'coordinator.info.fee' => 'commissione',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Importo: ${minAmount}-${maxAmount} ${currency}',
@@ -3453,9 +3455,9 @@ extension on TranslationsIt {
 			'twint.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Assicurati di accettare solo la conferma ${code} per ${amount} ${currency}',
 			'twint.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'MOLTO IMPORTANTE: Nella tua app bancaria, assicurati di confermare un pagamento ${code} per esattamente ${amount} ${currency}.',
 			'twint.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'Il maker deve ora inserirlo nel terminale di pagamento entro ${minutes} minuti. Dovrai poi accettare il codice ${code} nella tua app bancaria.',
-			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'Il maker deve ora inserire il tuo codice ${code} allo sportello ATM entro ${minutes} minuti.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'Il maker deve ora inserire il tuo codice ${code} allo sportello ATM entro ${minutes} minuti.',
 			'twint.waitConfirmation.categoryReminder.atm' => 'Promemoria offerta ATM: la tua banca potrebbe ancora chiederti di approvare una commissione ATM extra oltre all\'importo principale.',
 			'twint.waitConfirmation.categoryReminder.ecommerce' => 'Promemoria ordine online: se il commerciante invia un rimborso automatico al tuo conto bancario, contatta il coordinatore e restituiscilo.',
 			'twint.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'In attesa che il maker riceva il tuo codice ${code}...',

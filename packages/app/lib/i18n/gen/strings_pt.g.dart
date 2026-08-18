@@ -897,6 +897,7 @@ class _Translations$exchange$errors$pt extends Translations$exchange$errors$en {
 	@override String tooLowFiat({required Object minAmount, required Object currency}) => 'O montante é demasiado baixo. O mínimo é ${minAmount} ${currency}.';
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'O montante é demasiado alto. O máximo é ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'O multibanco não consegue dispensar este montante. Use uma combinação de notas: ${notes}.';
+	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} entrega no máximo ${limit} ${currency} por levantamento.';
 }
 
 // Path: coordinator.info
@@ -3150,6 +3151,7 @@ extension on TranslationsPt {
 			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'O montante é demasiado baixo. O mínimo é ${minAmount} ${currency}.',
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'O montante é demasiado alto. O máximo é ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'O multibanco não consegue dispensar este montante. Use uma combinação de notas: ${notes}.',
+			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} entrega no máximo ${limit} ${currency} por levantamento.',
 			'coordinator.title' => 'Coordenadores',
 			'coordinator.info.fee' => 'taxa',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Montante: ${minAmount}-${maxAmount} ${currency}',
@@ -3489,9 +3491,9 @@ extension on TranslationsPt {
 			'twint.flow.takerExpired.cancel' => 'Cancelar reserva',
 			'twint.flow.takerExpired.markPaidDialog.title' => 'Confirma que pagou?',
 			'twint.flow.takerExpired.markPaidDialog.content' => ({required Object code}) => 'Continue apenas se tiver a certeza de que o pagamento ${code} foi debitado na app do seu banco.\n\nO maker será convidado a confirmar a receção para desbloquear o bitcoin. Se negar, é aberta uma disputa e ambas as partes terão de fornecer provas ao coordenador.',
-			'twint.flow.takerExpired.markPaidDialog.cancel' => 'Voltar',
 			_ => null,
 		} ?? switch (path) {
+			'twint.flow.takerExpired.markPaidDialog.cancel' => 'Voltar',
 			'twint.flow.takerExpired.markPaidDialog.confirmButton' => 'Sim, paguei',
 			'twint.flow.takerExpired.cancelDialog.title' => 'Cancelar a reserva?',
 			'twint.flow.takerExpired.cancelDialog.content' => ({required Object code}) => 'Cancele apenas se NÃO pagou o código ${code}.\n\nNão pode ser desfeito: se o pagamento tiver de facto passado, o coordenador NÃO poderá garantir que recebe os sats.',

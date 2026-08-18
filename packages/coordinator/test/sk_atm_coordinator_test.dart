@@ -82,7 +82,8 @@ void main() {
     });
 
     test('serves every bank of the market when BANKS is unset', () {
-      expect(svc.servedBanks.toSet(), {'tatrabanka', 'slsp', 'vub'});
+      expect(svc.servedBanks.toSet(),
+          {'tatrabanka', 'slsp', 'vub', 'primabanka'});
     });
 
     test('coordinator info advertises the market id', () async {
@@ -127,12 +128,47 @@ void main() {
         throwsA(isA<Exception>()),
       );
     });
+
+    // Prima banka pays out at most 200 EUR per cardless code. Catching this at
+    // creation matters: past the cap the offer would fund normally and only
+    // fail at the ATM, with the maker's sats already locked.
+    test('over Prima banka\'s 200 EUR cardless cap is rejected', () {
+      expect(
+        () => svc.initiateOfferFiat(
+          fiatAmount: 300,
+          makerId: maker,
+          category: OfferCategory.atm,
+          bank: 'primabanka',
+        ),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            allOf(contains('Prima banka'), contains('200')),
+          ),
+        ),
+      );
+    });
+
+    // The same amount is fine at a bank with no cardless cap of its own, so the
+    // rejection above is the bank's limit and not a market-wide one.
+    test('the same amount passes the cap check at an uncapped bank', () {
+      final atm = svc.paymentSystem.instrumentFor(OfferCategory.atm)!;
+      expect(
+        atm.isWithinAtmLimit(300, bank: atm.bankById('slsp')),
+        isTrue,
+      );
+      expect(
+        atm.isWithinAtmLimit(300, bank: atm.bankById('primabanka')),
+        isFalse,
+      );
+    });
   });
 
-  // ─── the headline: one flow, three per-bank timeout windows ───────────────
+  // ─── the headline: one flow, four per-bank timeout windows ───────────────
   // A blikReceived offer times out to expiredBlik after exactly its bank's code
-  // validity (Tatra 20 min, SLSP 15 min, VÚB 3 min), all from `$code_validity`
-  // in the single sk_atm.yml.
+  // validity (Tatra 20 min, SLSP 15 min, VÚB 3 min, Prima banka 30 min), all
+  // from `$code_validity` in the single sk_atm.yml.
   group('per-bank code-validity timeout (one flow)', () {
     void runBankScenario(String bank, Duration window) {
       fakeAsync((async) {
@@ -243,6 +279,10 @@ void main() {
 
     test('VÚB = 3 min', () {
       runBankScenario('vub', const Duration(minutes: 3));
+    });
+
+    test('Prima banka = 30 min', () {
+      runBankScenario('primabanka', const Duration(minutes: 30));
     });
   });
 

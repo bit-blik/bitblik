@@ -1,7 +1,7 @@
 import 'package:bitblik_core/core.dart';
 import 'package:test/test.dart';
 
-/// The SK ATM instrument and its three banks, resolved from the market.
+/// The SK ATM instrument and its banks, resolved from the market.
 InstrumentSpec get _skAtm => kSlovakia.instrumentFor(OfferCategory.atm)!;
 BankSpec _skBank(String id) => _skAtm.bankById(id)!;
 
@@ -95,22 +95,24 @@ void main() {
       expect(paymentSystemForCurrency(null), isNull);
     });
 
-    test('SK: one market, one tag, three ATM banks', () {
+    test('SK: one market, one tag, four ATM banks', () {
       expect(kSlovakia.currency, 'EUR');
       expect(kSlovakia.country, 'SK');
       expect(kSlovakia.supportedCategories, [OfferCategory.atm]);
       expect(_skAtm.requiresCodeConfirmation, isFalse);
       expect(_skAtm.direction, InstrumentDirection.takerProvides);
       expect(_skAtm.banks.map((b) => b.id).toList(),
-          ['tatrabanka', 'slsp', 'vub']);
+          ['tatrabanka', 'slsp', 'vub', 'primabanka']);
     });
 
-    test('SK: per-bank validity windows (20 / 15 / 3 min)', () {
+    test('SK: per-bank validity windows (20 / 15 / 3 / 30 min)', () {
       expect(_skAtm.validityFor(_skBank('tatrabanka')),
           const Duration(minutes: 20));
       expect(_skAtm.validityFor(_skBank('slsp')), const Duration(minutes: 15));
       // VÚB cardless-withdrawal codes are only valid for 3 minutes.
       expect(_skAtm.validityFor(_skBank('vub')), const Duration(minutes: 3));
+      expect(_skAtm.validityFor(_skBank('primabanka')),
+          const Duration(minutes: 30));
       // Unknown/absent bank falls back to the instrument default.
       expect(_skAtm.validityFor(null), const Duration(minutes: 15));
     });
@@ -129,6 +131,28 @@ void main() {
       expect(_skAtm.presetsFor(_skBank('tatrabanka')), [10, 20, 50, 100, 200]);
       expect(_skAtm.presetsFor(_skBank('slsp')), [10, 20, 50, 100, 200]);
       expect(_skAtm.presetsFor(_skBank('vub')), [10, 20, 50, 100, 200]);
+      expect(_skAtm.presetsFor(_skBank('primabanka')), [10, 20, 50, 100, 200]);
+    });
+
+    test('SK: per-bank cardless withdrawal cap (Prima banka 200 EUR)', () {
+      // Tatra / SLSP / VÚB cap a single cardless withdrawal at 500 EUR, which
+      // the market-wide MAX_AMOUNT_SATS already covers, so they carry no
+      // bank-level cap. Prima banka caps each code at 200 EUR.
+      expect(_skAtm.maxAmountFor(_skBank('tatrabanka')), isNull);
+      expect(_skAtm.maxAmountFor(_skBank('slsp')), isNull);
+      expect(_skAtm.maxAmountFor(_skBank('vub')), isNull);
+      expect(_skAtm.maxAmountFor(_skBank('primabanka')), 200);
+      // No bank chosen: the instrument default (uncapped) applies.
+      expect(_skAtm.maxAmountFor(null), isNull);
+
+      final prima = _skBank('primabanka');
+      expect(_skAtm.isWithinAtmLimit(200, bank: prima), isTrue);
+      expect(_skAtm.isWithinAtmLimit(150, bank: prima), isTrue);
+      expect(_skAtm.isWithinAtmLimit(201, bank: prima), isFalse);
+      expect(_skAtm.isWithinAtmLimit(500, bank: prima), isFalse);
+      // Uncapped banks accept anything the market limits allow.
+      expect(_skAtm.isWithinAtmLimit(500, bank: _skBank('slsp')), isTrue);
+      expect(_skAtm.isWithinAtmLimit(500), isTrue);
     });
 
     test('registry: market ids and platform tags are unique', () {

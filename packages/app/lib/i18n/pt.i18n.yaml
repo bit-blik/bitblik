@@ -251,6 +251,7 @@ exchange:
     tooLowFiat: "O montante é demasiado baixo. O mínimo é ${minAmount} ${currency}."
     tooHighFiat: "O montante é demasiado alto. O máximo é ${maxAmount} ${currency}."
     atmNotDispensable: "O multibanco não consegue dispensar este montante. Use uma combinação de notas: ${notes}."
+    atmOverBankLimit: "${bank} entrega no máximo ${limit} ${currency} por levantamento."
 
 # =============================================================================
 # COORDINATOR INFORMATION

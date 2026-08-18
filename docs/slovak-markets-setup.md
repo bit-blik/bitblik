@@ -1,7 +1,8 @@
 # BitBlik — slovenské banky: návod na spustenie a testovanie
 
 Ako rozbehnúť a otestovať BitBlik pre **výber hotovosti z bankomatu bez karty**
-cez slovenské banky (**Tatra banka, Slovenská sporiteľňa, VÚB**), za Lightning
+cez slovenské banky (**Tatra banka, Slovenská sporiteľňa, VÚB, Prima banka**),
+za Lightning
 sats. Návod je pre bežných používateľov aj pre operátorov koordinátora.
 
 ---
@@ -14,10 +15,11 @@ výber z bankomatu bez karty jednorazovým **6‑miestnym kódom**, ktorý je
 **zdieľateľný tretej osobe** a funguje **len v bankomatoch danej banky**.
 
 Slovensko je **jeden trh** (`sk`, wire tag `Bitvyber`) obsluhovaný **jedným
-koordinátorom**, ktorý pokrýva Tatra banku, Slovenskú sporiteľňu aj VÚB. **Banku
-vyberá maker pri vytváraní ponuky** — on stojí pri bankomate danej banky, takže
-sieť bankomatov je vlastnosťou ponuky. Každá banka má vlastnú platnosť kódu
-(Tatra 20 min, SLSP 15 min, VÚB 3 min); jeden flow obsluhuje všetky. Kód z Tatra
+koordinátorom**, ktorý pokrýva Tatra banku, Slovenskú sporiteľňu, VÚB aj Prima
+banku. **Banku vyberá maker pri vytváraní ponuky** — on stojí pri bankomate danej
+banky, takže sieť bankomatov je vlastnosťou ponuky. Každá banka má vlastnú
+platnosť kódu (Tatra 20 min, SLSP 15 min, VÚB 3 min, Prima banka 30 min); jeden
+flow obsluhuje všetky. Kód z Tatra
 banky funguje len v Tatra bankomatoch, atď., takže taker berie len ponuky banky,
 ktorej appku má.
 
@@ -25,7 +27,7 @@ ktorej appku má.
 
 | Rola | Čo robí | Čo potrebuje | Výsledok |
 |------|---------|--------------|----------|
-| **Taker** (predáva hotovosť za sats) | Vo svojej bankovej appke vygeneruje „výber bez karty" kód a zadá ho do BitBliku | Účet + mobilná appka v TB/SLSP/VÚB; Lightning adresa na príjem | Z účtu sa mu odpíše suma (keď maker vyberie), **dostane sats** |
+| **Taker** (predáva hotovosť za sats) | Vo svojej bankovej appke vygeneruje „výber bez karty" kód a zadá ho do BitBliku | Účet + mobilná appka v TB/SLSP/VÚB/Prima banke; Lightning adresa na príjem | Z účtu sa mu odpíše suma (keď maker vyberie), **dostane sats** |
 | **Maker** (kupuje hotovosť za sats) | Uzamkne sats v hold invoice, fyzicky príde k bankomatu danej banky a **zadá kód** | Lightning peňaženka so sats; **fyzický prístup k bankomatu tej banky** (účet v nej NETREBA) | Z bankomatu **dostane hotovosť**, jeho sats idú takerovi |
 
 **Dôležité pre makera:** vyberaj ponuky tej banky, ktorej bankomat máš po
@@ -83,12 +85,15 @@ Pripoj peňaženku cez **NWC** (Nostr Wallet Connect) — napr. Alby Go:
    karty"** (6‑miestny kód).
 3. Kód zadaj v BitBliku (submit). Kód **odovzdávaš makerovi** — ten ho zadá v
    bankomate; z tvojho účtu sa suma odpíše a **dostaneš sats**.
-4. Kód má obmedzenú platnosť (SLSP 15 min, Tatra 20 min) — koordinuj s makerom.
+4. Kód má obmedzenú platnosť (VÚB 3 min, SLSP 15 min, Tatra 20 min, Prima banka
+   30 min) — koordinuj s makerom.
 
 ### 2.5 Maker (nákup hotovosti za sats)
 1. **Create offer** → suma v EUR, kategória ATM, **vyber banku**, ktorej
-   bankomat máš po ruke (Tatra banka / SLSP / VÚB). Banka je fixná pre ponuku;
-   prednastavené sumy sa prispôsobia bankomatovým nominálom danej banky.
+   bankomat máš po ruke (Tatra banka / SLSP / VÚB / Prima banka). Banka je fixná
+   pre ponuku; prednastavené sumy sa prispôsobia bankomatovým nominálom danej
+   banky. Prima banka vydá na jeden kód najviac **200 €** — vyššiu ponuku
+   koordinátor odmietne hneď pri vytváraní.
 2. Zaplať **hold invoice** zo svojej Lightning peňaženky (sats sa uzamknú).
 3. Počkaj, kým taker odovzdá kód (`blikReceived`), a **vyzdvihni kód** v appke.
 4. Choď k **bankomatu danej banky**, zvoľ výber bez karty / mobilom a **zadaj
@@ -105,7 +110,7 @@ Slovensko = **jedno nasadenie koordinátora** (`PAYMENT_SYSTEM=sk`) obsluhujúce
 všetky banky. Klienti ho nájdu na spoločných discovery relayoch a filtrujú podľa
 `payment_system`, takže netreba nič extra na strane discovery. Operátor môže
 voliteľne obmedziť obsluhované banky cez `BANKS=tatrabanka,slsp` (nenastavené =
-všetky tri).
+všetky štyri).
 
 ### 3.1 Požiadavky
 - **Lightning node**: LND (`admin.macaroon` + `tls.cert`) alebo NWC connection s
@@ -256,8 +261,9 @@ flutter run -d linux --flavor bitblik -t lib/main_bitblik.dart \
 Výstup APK: `build/app/outputs/flutter-apk/`.
 
 Poznámky:
-- `--dart-define=PAYMENT_SYSTEM=…` nastaví **default** trh (`tatrabanka` /
-  `slsp` / `vub`; bez neho BLIK/Poľsko). Pri **prvom spustení** appka ukáže
+- `--dart-define=PAYMENT_SYSTEM=…` nastaví **default** trh (`sk`; staré
+  per-bank id `tatrabanka` / `slsp` / `vub` sa naň mapujú; bez neho
+  BLIK/Poľsko). Pri **prvom spustení** appka ukáže
   **výber trhu** (všetkých 5) — voľba sa uloží; neskôr sa dá zmeniť v
   **Settings → Country / Payment System**.
 - Slovenské banky sa **netýkajú flavoru** — sú v `kPaymentSystems`, takže sú
@@ -297,9 +303,9 @@ Overenie: stav prejde `settled → takerPaid`, takerovi prídu sats.
 
 ### 5.2 Reálny test s hotovosťou
 1. Taker vygeneruje **reálny** „výber bez karty" kód vo svojej bankovej appke
-   (TB/SLSP/VÚB) a zadá ho do BitBliku.
-2. Maker s ním do **platnosti kódu** (15–20 min) príde k **bankomatu tej banky**
-   a zadá ho → dostane hotovosť.
+   (TB/SLSP/VÚB/Prima banka) a zadá ho do BitBliku.
+2. Maker s ním do **platnosti kódu** (3–30 min podľa banky) príde k **bankomatu
+   tej banky** a zadá ho → dostane hotovosť.
 3. Maker potvrdí v appke → taker dostane sats.
 
 ---
@@ -309,7 +315,12 @@ Overenie: stav prejde `settled → takerPaid`, takerovi prídu sats.
   Sumy musia byť zložiteľné z týchto nominálov (napr. 30, 70, 500 áno; 15 nie).
 - **VÚB platnosť kódu** je **3 min** (podľa FAQ na vub.sk) — veľmi tesné pre
   dvojicu, taker nech je pri bankomate skôr, než rezervuje. Jednoriadková zmena
-  `BankSpec.validity` v `payment_system.dart`. Tatra 20 min, SLSP 15 min.
+  `BankSpec.validity` v `payment_system.dart`. Tatra 20 min, SLSP 15 min,
+  Prima banka 30 min.
+- **Prima banka limit:** jeden kód vydá najviac **200 €** a denne sa dá
+  vygenerovať **5 kódov** (primabanka.sk/penazenka). Strop na sumu drží
+  `BankSpec.atmMaxAmount`, takže vyššia ponuka neprejde ani v appke, ani cez
+  koordinátora; denný počet kódov je na takerovi.
 - **Limit banky:** cardless výber máva strop ~€500 na výber; drž sumy pod ním.
 - **Discovery:** funguje cez spoločné bootstrap relaye aj s placeholder
   `kSlovakiaPubkeyHex`.

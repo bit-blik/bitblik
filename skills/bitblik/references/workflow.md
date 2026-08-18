@@ -7,7 +7,7 @@ Full happy path (BLIK example):
 ```
 1. coordinators list        → find a coordinator
 2. offer create             → create offer, get hold invoice to pay
-                              (bank-scoped markets: add --bank <tatrabanka|slsp|vub>)
+                              (bank-scoped markets: add --bank <tatrabanka|slsp|vub|primabanka>)
 3. [user pays hold invoice in Lightning wallet]
 4. offer get-code --no-wait → poll until taker submits the code
 5. [user enters the code in banking app / at the ATM within its validity window]
@@ -16,7 +16,7 @@ Full happy path (BLIK example):
 
 **Code validity is per market (and per bank):** BLIK ~120s, MB WAY 30 min,
 TWINT 5 min, Slovak ATM per bank — Tatra banka 20 min, Slovenská sporiteľňa
-15 min, VÚB 3 min. `get-code` output states the window and (for SK) the bank.
+15 min, VÚB 3 min, Prima banka 30 min. `get-code` output states the window and (for SK) the bank.
 
 ## Offer Status Lifecycle
 

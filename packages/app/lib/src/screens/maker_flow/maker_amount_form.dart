@@ -538,14 +538,33 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     // combination of the bank's banknote nominals). Resolved per chosen bank
     // for bank-scoped markets (SK), else the instrument default.
     final atmInstrument = _instrument;
+    final isAtm = _selectedCategory == OfferCategory.atm;
     if (currentError == null &&
         parsedFiat != null &&
-        _selectedCategory == OfferCategory.atm &&
+        isAtm &&
         atmInstrument != null &&
         !atmInstrument.canDispenseAtmAmount(parsedFiat, bank: _selectedBank)) {
       currentError = t.exchange.errors.atmNotDispensable(
         notes:
             '${atmInstrument.denominationsFor(_selectedBank).join(', ')} ${_method.currencySymbol}',
+      );
+    }
+
+    // Some banks cap a single cardless withdrawal below the coordinator's own
+    // maximum (Prima banka: 200 EUR per code), so the amount has to clear the
+    // chosen bank's limit too — otherwise the offer funds and only fails at the
+    // ATM.
+    final bankLimit = atmInstrument?.maxAmountFor(_selectedBank);
+    if (currentError == null &&
+        parsedFiat != null &&
+        isAtm &&
+        atmInstrument != null &&
+        bankLimit != null &&
+        !atmInstrument.isWithinAtmLimit(parsedFiat, bank: _selectedBank)) {
+      currentError = t.exchange.errors.atmOverBankLimit(
+        bank: _selectedBank?.label ?? _method.label,
+        limit: bankLimit.toString(),
+        currency: _method.currencySymbol,
       );
     }
 

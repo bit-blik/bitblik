@@ -895,6 +895,7 @@ class _Translations$exchange$errors$pl extends Translations$exchange$errors$en {
 	@override String tooLowFiat({required Object minAmount, required Object currency}) => 'Kwota jest za niska. Minimum to ${minAmount} ${currency}.';
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Bankomat nie wypłaci tej kwoty. Użyj kombinacji nominałów: ${notes}.';
+	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} wypłaca maksymalnie ${limit} ${currency} na jedną wypłatę.';
 }
 
 // Path: coordinator.info
@@ -3110,6 +3111,7 @@ extension on TranslationsPl {
 			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'Kwota jest za niska. Minimum to ${minAmount} ${currency}.',
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Bankomat nie wypłaci tej kwoty. Użyj kombinacji nominałów: ${notes}.',
+			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} wypłaca maksymalnie ${limit} ${currency} na jedną wypłatę.',
 			'coordinator.title' => 'Koordynatorzy',
 			'coordinator.info.fee' => 'opłata',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Kwota: ${minAmount}-${maxAmount} ${currency}',
@@ -3450,9 +3452,9 @@ extension on TranslationsPl {
 			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'Osoba wystawiająca ofertę musi teraz wpisać Twój kod ${code} w bankomacie w ciągu ${minutes} minut.',
 			'twint.waitConfirmation.categoryReminder.atm' => 'Przypomnienie dla oferty ATM: Twój bank może nadal poprosić o zatwierdzenie dodatkowej opłaty bankomatowej ponad główną kwotę.',
 			'twint.waitConfirmation.categoryReminder.ecommerce' => 'Przypomnienie dla zamówienia online: jeśli sprzedawca wyśle automatyczny zwrot na Twoje konto, skontaktuj się z koordynatorem i oddaj środki.',
-			'twint.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Czekamy, aż twórca oferty otrzyma Twój kod ${code}...',
 			_ => null,
 		} ?? switch (path) {
+			'twint.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Czekamy, aż twórca oferty otrzyma Twój kod ${code}...',
 			'twint.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Twórca oferty otrzymał Twój kod ${code}',
 			'twint.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => 'Minął termin ważności kodu ${code} ${minutes}m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.',
 			'twint.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => 'Minął termin ważności kodu ${code} ${minutes}m, ale wystawca nie otrzymał kodu ${code}. Możesz wysłać nowy kod ${code} lub anulować.',

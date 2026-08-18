@@ -250,6 +250,7 @@ exchange:
     tooLowFiat: "Kwota jest za niska. Minimum to ${minAmount} ${currency}."
     tooHighFiat: "Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}."
     atmNotDispensable: "Bankomat nie wypłaci tej kwoty. Użyj kombinacji nominałów: ${notes}."
+    atmOverBankLimit: "${bank} wypłaca maksymalnie ${limit} ${currency} na jedną wypłatę."
 
 # =============================================================================
 # COORDINATOR INFORMATION
