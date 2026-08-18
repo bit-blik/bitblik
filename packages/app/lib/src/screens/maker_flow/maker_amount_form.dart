@@ -1689,7 +1689,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               ),
             ),
           ),
-          if (selected != null && selected.validity.inMinutes <= 5) ...[
+          if (selected != null && selected.validity.inMinutes <= 10) ...[
             const SizedBox(height: 8),
             Row(
               children: [

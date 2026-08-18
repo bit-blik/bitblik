@@ -105,12 +105,13 @@ void main() {
           ['tatrabanka', 'slsp', 'vub', 'primabanka']);
     });
 
-    test('SK: per-bank validity windows (20 / 15 / 3 / 30 min)', () {
+    test('SK: per-bank validity windows (20 / 15 / 10 / 30 min)', () {
       expect(_skAtm.validityFor(_skBank('tatrabanka')),
           const Duration(minutes: 20));
       expect(_skAtm.validityFor(_skBank('slsp')), const Duration(minutes: 15));
-      // VÚB cardless-withdrawal codes are only valid for 3 minutes.
-      expect(_skAtm.validityFor(_skBank('vub')), const Duration(minutes: 3));
+      // VÚB lets the code holder pick 10–60 min; 10 is the floor they can
+      // choose, so it is the only window every VÚB code is guaranteed to have.
+      expect(_skAtm.validityFor(_skBank('vub')), const Duration(minutes: 10));
       expect(_skAtm.validityFor(_skBank('primabanka')),
           const Duration(minutes: 30));
       // Unknown/absent bank falls back to the instrument default.
@@ -313,7 +314,7 @@ void main() {
       expect(bankForOffer(tatra)!.id, 'tatrabanka');
       expect(validityForOffer(tatra), const Duration(minutes: 20));
       final vub = offerWith(paymentSystemId: 'sk', bankId: 'vub');
-      expect(validityForOffer(vub), const Duration(minutes: 3));
+      expect(validityForOffer(vub), const Duration(minutes: 10));
       // No bank on a SK offer → instrument default validity.
       final noBank = offerWith(paymentSystemId: 'sk');
       expect(bankForOffer(noBank), isNull);
@@ -359,7 +360,7 @@ void main() {
       });
       expect(o.paymentSystemId, 'sk');
       expect(o.bankId, 'vub');
-      expect(validityForOffer(o), const Duration(minutes: 3));
+      expect(validityForOffer(o), const Duration(minutes: 10));
     });
   });
 }

@@ -34,7 +34,7 @@ class _TakerWaitConfirmationScreenState
   PaymentSystem get _method => paymentSystemForOffer(widget.offer);
 
   /// Confirmation window for this offer — resolved per bank for bank-scoped
-  /// markets (SK: Tatra 20 / SLSP 15 / VÚB 3 min), else the method default
+  /// markets (SK: Tatra 20 / SLSP 15 / VÚB 10 min), else the method default
   /// (BLIK 2 min, MB WAY 30 min).
   Duration get _confirmationDuration => validityForOffer(widget.offer);
   Timer? _confirmationTimer;
