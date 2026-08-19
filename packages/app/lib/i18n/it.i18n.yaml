@@ -251,6 +251,7 @@ exchange:
     tooLowFiat: "L'importo è troppo basso. Il minimo è ${minAmount} ${currency}."
     tooHighFiat: "L'importo è troppo alto. Il massimo è ${maxAmount} ${currency}."
     atmNotDispensable: "Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}."
+    atmOverBankLimit: "${bank} eroga al massimo ${limit} ${currency} per prelievo."
 
 # =============================================================================
 # COORDINATOR INFORMATION

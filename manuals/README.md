@@ -1,7 +1,7 @@
 # BitBlik SK — Návody / Manuals
 
 Bilingválne návody (EN + SK) pre kúpu a predaj Lightningu za hotovosť cez
-bezkartový výber z bankomatu troch slovenských bánk.
+bezkartový výber z bankomatu štyroch slovenských bánk.
 
 ## Manuals / Návody
 | # | Bank | Flow | File |
@@ -12,6 +12,8 @@ bezkartový výber z bankomatu troch slovenských bánk.
 | 4 | Tatra banka | **Buy** LN (generate code) | [tatra-buy.md](tatra-buy.md) |
 | 5 | VÚB banka | **Buy** LN (generate code) | [vub-buy.md](vub-buy.md) |
 | 6 | Slovenská sporiteľňa | **Buy** LN (generate code) | [slsp-buy.md](slsp-buy.md) |
+| 7 | Prima banka | **Sell** LN for cash at ATM | [prima-sell.md](prima-sell.md) |
+| 8 | Prima banka | **Buy** LN (generate code) | [prima-buy.md](prima-buy.md) |
 
 ---
 
@@ -28,8 +30,9 @@ short **6-digit code** is the only credential.
   lock Lightning in BitBlik and receive the cash. → **"Sell" manuals**.
 
 The two must be online **at the same time** and the seller must be **at the
-bank's ATM** while the code is valid (Tatra 20 min · SLSP 15 min · **VÚB only 3
-min**).
+bank's ATM** while the code is valid (Prima banka 30 min · Tatra 20 min · SLSP
+15 min · **VÚB only 3 min**). Prima banka also caps a single withdrawal at
+**€200**.
 
 ## SK — Ako BitBlik SK funguje (dve roly)
 
@@ -44,7 +47,8 @@ jediné, čo treba, je **6-miestny kód**.
   BitBliku zamkne Lightning a dostane hotovosť. → **návody „Sell"**.
 
 Obaja musia byť online **naraz** a predávajúci musí byť **pri bankomate banky**,
-kým je kód platný (Tatra 20 min · SLSP 15 min · **VÚB len 3 min**).
+kým je kód platný (Prima banka 30 min · Tatra 20 min · SLSP 15 min · **VÚB len 3
+min**). Prima banka navyše vydá na jeden výber najviac **200 €**.
 
 ---
 

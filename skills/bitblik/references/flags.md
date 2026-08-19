@@ -9,4 +9,4 @@
 | `--relay <url>` | Override Nostr relay URL (repeatable) |
 | `--currency <code>` | Fiat currency code, default the market's currency |
 | `--fiat <amount>` | Fiat amount for the offer |
-| `--bank <id>` | Bank the offer runs on — REQUIRED for bank-scoped markets (Slovakia: `tatrabanka`, `slsp`, `vub`); rejected for bank-agnostic markets (BLIK/MB WAY/TWINT). On `offer list`, filters to that bank. |
+| `--bank <id>` | Bank the offer runs on — REQUIRED for bank-scoped markets (Slovakia: `tatrabanka`, `slsp`, `vub`, `primabanka`); rejected for bank-agnostic markets (BLIK/MB WAY/TWINT). On `offer list`, filters to that bank. |

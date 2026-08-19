@@ -12,7 +12,7 @@ metadata:
 P2P exchange: Lightning sats → a fiat payment code. Maker-side CLI over Nostr.
 One binary per market: `bitblik` (BLIK/PL), `bitway` (MB WAY/PT), `bittwint`
 (TWINT/CH), `bitvyber` (Slovak cardless ATM/SK). The Slovak market is
-bank-scoped — `offer create` needs `--bank <tatrabanka|slsp|vub>`.
+bank-scoped — `offer create` needs `--bank <tatrabanka|slsp|vub|primabanka>`.
 
 ## Quick Reference
 

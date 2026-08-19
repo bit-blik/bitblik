@@ -25,8 +25,9 @@ enum InstrumentDirection {
 }
 
 /// Per-bank parameters for an ATM instrument that varies by bank. Today only
-/// the Slovak ATM instrument carries these — Tatra banka, Slovenská sporiteľňa
-/// and VÚB differ only in code validity and ATM note set, not in flow shape.
+/// the Slovak ATM instrument carries these — Tatra banka, Slovenská sporiteľňa,
+/// VÚB and Prima banka differ only in code validity, ATM note set and
+/// per-withdrawal cap, not in flow shape.
 ///
 /// Every field except [id]/[label]/[validity] is an optional override of the
 /// owning [InstrumentSpec]'s default.
@@ -57,6 +58,12 @@ class BankSpec {
   /// [InstrumentSpec.atmBanknoteDenominations].
   final List<int>? atmBanknoteDenominations;
 
+  /// Cap the bank puts on a **single** cardless withdrawal, in whole currency
+  /// units. Null when the bank's own cap is at or above what the coordinator's
+  /// `MAX_AMOUNT_SATS` already allows, so it never binds in practice.
+  /// Overrides [InstrumentSpec.atmMaxAmount].
+  final int? atmMaxAmount;
+
   const BankSpec({
     required this.id,
     required this.label,
@@ -65,6 +72,7 @@ class BankSpec {
     this.atmMapUrl,
     this.atmPresetAmounts,
     this.atmBanknoteDenominations,
+    this.atmMaxAmount,
   });
 
   @override
@@ -115,6 +123,11 @@ class InstrumentSpec {
   /// per bank.
   final List<int> atmBanknoteDenominations;
 
+  /// Default cap on a single ATM cash-out, in whole currency units. Null means
+  /// only the coordinator's sats limits bind. Overridden per bank by
+  /// [BankSpec.atmMaxAmount].
+  final int? atmMaxAmount;
+
   /// Default ATM locator URL. Overridden per bank by [BankSpec.atmMapUrl].
   final String? atmMapUrl;
 
@@ -132,6 +145,7 @@ class InstrumentSpec {
     this.requiresCodeConfirmation = true,
     this.atmPresetAmounts = const [],
     this.atmBanknoteDenominations = const [],
+    this.atmMaxAmount,
     this.atmMapUrl,
     this.banks = const [],
   });
@@ -172,6 +186,10 @@ class InstrumentSpec {
   /// ATM locator URL for [bank] (its override, else the default).
   String? atmMapUrlFor(BankSpec? bank) => bank?.atmMapUrl ?? atmMapUrl;
 
+  /// Per-withdrawal cap for [bank] (its override, else the default). Null when
+  /// neither the bank nor the instrument caps a single withdrawal.
+  int? maxAmountFor(BankSpec? bank) => bank?.atmMaxAmount ?? atmMaxAmount;
+
   /// Whether [payload] is a syntactically valid artifact for this instrument
   /// (and optionally [bank]). Numeric codes must be exactly the expected number
   /// of digits; QR payloads only need to be non-empty (pay-by-square structure
@@ -193,6 +211,13 @@ class InstrumentSpec {
   /// integer combination of the note denominations.
   bool canDispenseAtmAmount(num amount, {BankSpec? bank}) =>
       _canDispense(amount, denominationsFor(bank));
+
+  /// Whether [amount] (whole currency units) is at or below what [bank] hands
+  /// out on a single cardless code. Always true where no cap applies.
+  bool isWithinAtmLimit(num amount, {BankSpec? bank}) {
+    final max = maxAmountFor(bank);
+    return max == null || amount <= max;
+  }
 }
 
 /// A country/market specification. One market = one coordinator scope, one
@@ -461,11 +486,11 @@ const InstrumentSpec _twintInstrument = InstrumentSpec(
   codeName: 'TWINT',
 );
 
-/// Slovakia — cardless ATM withdrawal across Tatra banka, Slovenská sporiteľňa
-/// and VÚB. One market, one coordinator scope, one wire tag (`Bitvyber`); the
-/// bank is chosen by the maker per offer and carried in `Offer.bankId`. The
-/// three banks differ only in code validity and ATM note set — one flow serves
-/// all of them.
+/// Slovakia — cardless ATM withdrawal across Tatra banka, Slovenská sporiteľňa,
+/// VÚB and Prima banka. One market, one coordinator scope, one wire tag
+/// (`Bitvyber`); the bank is chosen by the maker per offer and carried in
+/// `Offer.bankId`. The banks differ only in code validity, ATM note set and
+/// per-withdrawal cap — one flow serves all of them.
 const PaymentSystem kSlovakia = PaymentSystem(
   id: 'sk',
   label: 'Slovensko',
@@ -513,6 +538,21 @@ const PaymentSystem kSlovakia = PaymentSystem(
           // a VÚB ATM.
           validity: Duration(minutes: 3),
           atmMapUrl: 'https://www.google.com/maps/search/VUB+banka+bankomat',
+        ),
+        BankSpec(
+          id: 'primabanka',
+          label: 'Prima banka',
+          // The code is generated in Prima banka's "Peňaženka" app and stays
+          // valid for 30 minutes — the roomiest window of the four, so the
+          // taker can still be walking to the ATM when the code arrives.
+          validity: Duration(minutes: 30),
+          // primabanka.sk/penazenka: each code pays out at most 200 EUR (and
+          // at most 5 codes a day). Unlike the other three — whose 500 EUR cap
+          // sits above the market's MAX_AMOUNT_SATS — this one binds, so an
+          // over-cap offer is rejected at creation rather than failing at the
+          // ATM with the taker's sats already locked.
+          atmMaxAmount: 200,
+          atmMapUrl: 'https://www.google.com/maps/search/Prima+banka+bankomat',
         ),
       ],
     ),

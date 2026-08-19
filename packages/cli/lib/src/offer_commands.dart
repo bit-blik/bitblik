@@ -202,6 +202,12 @@ Future<int> runOfferCreate(List<String> args) async {
           'ATMs (notes: ${atmInstrument.denominationsFor(bankSpec).join(', ')}).');
       return 64;
     }
+    if (!atmInstrument.isWithinAtmLimit(fiat, bank: bankSpec)) {
+      stderr.writeln('${bankSpec.label} pays out at most '
+          '${atmInstrument.maxAmountFor(bankSpec)} '
+          '${activePaymentSystem.currency} per cardless withdrawal.');
+      return 64;
+    }
   } else if (parsed['bank'] != null) {
     stderr.writeln('--bank is not used by ${activePaymentSystem.brandName}.');
     return 64;

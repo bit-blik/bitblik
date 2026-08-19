@@ -896,6 +896,7 @@ class _Translations$exchange$errors$de extends Translations$exchange$errors$en {
 	@override String tooLowFiat({required Object minAmount, required Object currency}) => 'Betrag ist zu niedrig. Minimum ist ${minAmount} ${currency}.';
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'Betrag ist zu hoch. Maximum ist ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Der Geldautomat kann diesen Betrag nicht ausgeben. Verwende eine Kombination von Scheinen: ${notes}.';
+	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} zahlt pro Abhebung höchstens ${limit} ${currency} aus.';
 }
 
 // Path: coordinator.info
@@ -3148,6 +3149,7 @@ extension on TranslationsDe {
 			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'Betrag ist zu niedrig. Minimum ist ${minAmount} ${currency}.',
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Betrag ist zu hoch. Maximum ist ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Der Geldautomat kann diesen Betrag nicht ausgeben. Verwende eine Kombination von Scheinen: ${notes}.',
+			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} zahlt pro Abhebung höchstens ${limit} ${currency} aus.',
 			'coordinator.title' => 'Koordinatoren',
 			'coordinator.info.fee' => 'Gebühr',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Betrag: ${minAmount}-${maxAmount} ${currency}',
@@ -3488,9 +3490,9 @@ extension on TranslationsDe {
 			'twint.flow.takerExpired.markPaidDialog.title' => 'Zahlung bestätigen?',
 			'twint.flow.takerExpired.markPaidDialog.content' => ({required Object code}) => 'Fahre nur fort, wenn du sicher bist, dass die ${code}-Zahlung in deiner Banking-App abgebucht wurde.\n\nDer Maker wird gebeten, den Empfang zu bestätigen, um die Bitcoin freizugeben. Bestreitet er ihn, wird ein Disput eröffnet und beide Parteien müssen dem Koordinator Nachweise liefern.',
 			'twint.flow.takerExpired.markPaidDialog.cancel' => 'Zurück',
-			'twint.flow.takerExpired.markPaidDialog.confirmButton' => 'Ja, ich habe bezahlt',
 			_ => null,
 		} ?? switch (path) {
+			'twint.flow.takerExpired.markPaidDialog.confirmButton' => 'Ja, ich habe bezahlt',
 			'twint.flow.takerExpired.cancelDialog.title' => 'Reservierung stornieren?',
 			'twint.flow.takerExpired.cancelDialog.content' => ({required Object code}) => 'Storniere nur, wenn du den ${code}-Code NICHT bezahlt hast.\n\nDas kann nicht rückgängig gemacht werden: falls die Zahlung doch durchging, kann der Koordinator NICHT garantieren, dass du die Sats erhältst.',
 			'twint.flow.takerExpired.cancelDialog.cancel' => 'Zurück',

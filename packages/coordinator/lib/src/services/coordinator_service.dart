@@ -1721,13 +1721,25 @@ class CoordinatorService {
     // withdraw at that bank's ATM, so the bank is fixed for the offer.
     final instrument = _instrumentForCategory(category);
     final resolvedBank = _resolveOfferBank(bank, category);
+    // Some banks cap a single cardless withdrawal below what this coordinator's
+    // sats limits allow (Prima banka: 200 EUR per code). Reject here, while the
+    // amount is still fiat and nothing is locked — past this point the offer
+    // would fund normally and only fail at the ATM.
+    final offerBankSpec = instrument.bankById(resolvedBank);
+    if (!instrument.isWithinAtmLimit(fiatAmount, bank: offerBankSpec)) {
+      // A cap can also sit on the instrument itself, so fall back to the
+      // market label when the offer carries no bank.
+      final capped = offerBankSpec?.label ?? _paymentSystem.label;
+      throw Exception('$capped pays out at most '
+          '${instrument.maxAmountFor(offerBankSpec)} ${_paymentSystem.currency} '
+          'per cardless withdrawal; requested $fiatAmount.');
+    }
     if (instrument.makerProvidesCode) {
       final normalizedCode = blikCode?.trim() ?? '';
-      final bankSpec = instrument.bankById(resolvedBank);
-      if (!instrument.validate(normalizedCode, bank: bankSpec)) {
+      if (!instrument.validate(normalizedCode, bank: offerBankSpec)) {
         throw Exception(
             'Invalid ${instrument.codeLabel} code. Expected exactly '
-            '${instrument.codeLengthFor(bankSpec)} digits.');
+            '${instrument.codeLengthFor(offerBankSpec)} digits.');
       }
       blikCode = normalizedCode;
     }

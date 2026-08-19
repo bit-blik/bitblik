@@ -234,6 +234,7 @@ exchange:
     tooLowFiat: "Suma je príliš nízka. Minimum je ${minAmount} ${currency}."
     tooHighFiat: "Suma je príliš vysoká. Maximum je ${maxAmount} ${currency}."
     atmNotDispensable: "Bankomat nedokáže vydať túto sumu. Použi kombináciu bankoviek: ${notes}."
+    atmOverBankLimit: "${bank} vydá na jeden výber najviac ${limit} ${currency}."
 
 # =============================================================================
 # INFORMÁCIE O KOORDINÁTOROVI

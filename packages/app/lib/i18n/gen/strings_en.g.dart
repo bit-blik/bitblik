@@ -1330,6 +1330,9 @@ class Translations$exchange$errors$en {
 
 	/// en: 'ATM can't dispense this amount. Use a combination of notes: ${notes}.'
 	String atmNotDispensable({required Object notes}) => 'ATM can\'t dispense this amount. Use a combination of notes: ${notes}.';
+
+	/// en: '${bank} pays out at most ${limit} ${currency} per withdrawal.'
+	String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} pays out at most ${limit} ${currency} per withdrawal.';
 }
 
 // Path: coordinator.info
@@ -5549,6 +5552,7 @@ extension on Translations {
 			'exchange.errors.tooLowFiat' => ({required Object minAmount, required Object currency}) => 'Amount is too low. Minimum is ${minAmount} ${currency}.',
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Amount is too high. Maximum is ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'ATM can\'t dispense this amount. Use a combination of notes: ${notes}.',
+			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} pays out at most ${limit} ${currency} per withdrawal.',
 			'coordinator.title' => 'Coordinators',
 			'coordinator.info.fee' => 'fee',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Amount: ${minAmount}-${maxAmount} ${currency}',
@@ -5888,9 +5892,9 @@ extension on Translations {
 			'taker.paymentFailed.form.newInvoiceHint' => 'Enter your BOLT11 invoice',
 			'taker.paymentFailed.actions.retryPayment' => 'Submit New Invoice',
 			'taker.paymentFailed.errors.enterValidInvoice' => 'Please enter a valid invoice',
-			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Error updating invoice: ${details}',
 			_ => null,
 		} ?? switch (path) {
+			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Error updating invoice: ${details}',
 			'taker.paymentFailed.errors.paymentRetryFailed' => 'Payment retry failed. Please check the invoice or try again later.',
 			'taker.paymentFailed.errors.takerPublicKeyNotFound' => 'Taker public key not found.',
 			'taker.paymentFailed.errors.generateFailed' => ({required Object details}) => 'Failed to generate invoice: ${details}',
