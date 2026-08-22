@@ -202,7 +202,7 @@ class BitblikRpcClient {
     final connected = <String>{};
     ndk.relays.globalState.relays.forEach((url, rc) {
       try {
-        if (rc.isConnected) connected.add(normalizeRelayUrl(url));
+        if (rc.isConnected) connected.add(normalizeRelayUrl(url.url));
       } catch (_) {}
     });
     return urls
