@@ -28,6 +28,7 @@ class NwcService implements PaymentService {
   /// which is far too short for real Lightning routing/settlement and causes
   /// legitimate taker payments to spuriously time out.
   static const Duration _payInvoiceTimeout = Duration(seconds: 60);
+  static const Duration _makeHoldInvoiceTimeout = Duration(seconds: 10);
 
   late final Ndk _ndk; // NDK instance managed by the service
   NwcConnection? _nwcConnection;
@@ -170,6 +171,7 @@ class NwcService implements PaymentService {
         paymentHash: paymentHashHex,
         description: memo, // Use memo as description
         expiry: _holdInvoiceExpirySeconds,
+        timeout: _makeHoldInvoiceTimeout,
       );
       if (response.errorCode != null) {
         throw Exception(
@@ -425,8 +427,7 @@ class NwcService implements PaymentService {
         return null;
       }
 
-      final settled =
-          response.settledAt != null && response.settledAt! > 0;
+      final settled = response.settledAt != null && response.settledAt! > 0;
       if (settled && response.preimage.isNotEmpty) {
         AppLogger.info(
             'NWC Service: reconciliation found SETTLED payment. Preimage: ${response.preimage}');
@@ -441,8 +442,7 @@ class NwcService implements PaymentService {
           'NWC Service: reconciliation: invoice not settled (settledAt=${response.settledAt}).');
       return null;
     } catch (e) {
-      AppLogger.info(
-          'NWC Service: Exception in reconcileOutgoingPayment: $e');
+      AppLogger.info('NWC Service: Exception in reconcileOutgoingPayment: $e');
       return null;
     }
   }

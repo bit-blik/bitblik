@@ -1081,8 +1081,8 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/ndk"
-      ref: "38e50aa259018c9a2a5eef1ff0d3e57d64f4f290"
-      resolved-ref: "38e50aa259018c9a2a5eef1ff0d3e57d64f4f290"
+      ref: c7b3ffbdb12af3c81bc0c8b0c9493ca064a6527e
+      resolved-ref: c7b3ffbdb12af3c81bc0c8b0c9493ca064a6527e
       url: "https://github.com/relaystr/ndk.git"
     source: git
     version: "0.9.0"
@@ -1090,8 +1090,8 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/drift"
-      ref: "38e50aa259018c9a2a5eef1ff0d3e57d64f4f290"
-      resolved-ref: "38e50aa259018c9a2a5eef1ff0d3e57d64f4f290"
+      ref: c7b3ffbdb12af3c81bc0c8b0c9493ca064a6527e
+      resolved-ref: c7b3ffbdb12af3c81bc0c8b0c9493ca064a6527e
       url: "https://github.com/relaystr/ndk.git"
     source: git
     version: "0.1.1+1"
@@ -1108,8 +1108,8 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/objectbox"
-      ref: "38e50aa259018c9a2a5eef1ff0d3e57d64f4f290"
-      resolved-ref: "38e50aa259018c9a2a5eef1ff0d3e57d64f4f290"
+      ref: c7b3ffbdb12af3c81bc0c8b0c9493ca064a6527e
+      resolved-ref: c7b3ffbdb12af3c81bc0c8b0c9493ca064a6527e
       url: "https://github.com/relaystr/ndk.git"
     source: git
     version: "0.2.12+1"

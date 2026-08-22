@@ -11,6 +11,8 @@ import 'offer_store.dart';
 import 'protocol_client.dart';
 import 'secrets_store.dart';
 
+const Duration _initiateOfferRpcTimeout = Duration(seconds: 25);
+
 /// CLI command: `bitblik offer list`.
 ///
 /// Default: reads locally persisted offers from [OfferStore].
@@ -270,6 +272,7 @@ Future<int> runOfferCreate(List<String> args) async {
         },
       ),
       coordinatorPubkey,
+      timeoutOverride: _initiateOfferRpcTimeout,
     );
 
     if (!response.isSuccess) {

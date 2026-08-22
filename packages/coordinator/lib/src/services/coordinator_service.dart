@@ -314,8 +314,14 @@ class CoordinatorService {
   late final int _takerChargedAutoConfirmTimeoutSeconds;
 
   // Exchange rate cache, keyed by uppercase currency code (e.g. PLN, EUR).
+  static const Duration _rateCacheTtl = Duration(minutes: 5);
+  static const Duration _rateBackgroundRefreshAge = Duration(minutes: 4);
+  static const Duration _rateLookupTimeout = Duration(seconds: 5);
+  static const Duration _initiateOfferDeadline = Duration(seconds: 20);
+
   final Map<String, double> _cachedRates = {};
   final Map<String, DateTime> _cachedRateTimes = {};
+  final Map<String, Future<void>> _rateRefreshes = {};
 
   // Build the exchange-rate sources for [currency] (case-insensitive).
   static List<Map<String, String>> _exchangeRateSourcesFor(String currency) {
@@ -384,40 +390,73 @@ class CoordinatorService {
 
   Future<double> _getRate(String currency) async {
     final cur = currency.toUpperCase();
-    final now = DateTime.now();
+    final now = _clock.now();
     final cached = _cachedRates[cur];
     final cachedTime = _cachedRateTimes[cur];
-    if (cached != null &&
-        cachedTime != null &&
-        now.difference(cachedTime).inMinutes < 5) {
+    final cacheAge = cachedTime == null ? null : now.difference(cachedTime);
+    if (cached != null && cacheAge != null && cacheAge < _rateCacheTtl) {
+      if (cacheAge >= _rateBackgroundRefreshAge) {
+        _refreshRateInBackground(cur);
+      }
       return cached;
     }
 
+    final freshRate = await _fetchAndCacheRate(cur);
+    if (freshRate != null) return freshRate;
+
+    if (cached != null) {
+      AppLogger.warning(
+          'Returning stale BTC/$cur rate because the bounded refresh failed.');
+      return cached;
+    }
+    throw Exception('Failed to fetch BTC/$cur rate from all sources.');
+  }
+
+  Future<double?> _fetchAndCacheRate(String currency) async {
     final fetchFutures = <Future<double?>>[];
-    for (var source in _exchangeRateSourcesFor(cur)) {
-      fetchFutures.add(_fetchRateFromSource(source, cur));
+    for (var source in _exchangeRateSourcesFor(currency)) {
+      fetchFutures.add(_fetchRateFromSource(source, currency));
     }
 
-    final List<double?> results = await Future.wait(fetchFutures);
+    final List<double?> results = await Future.wait(fetchFutures).timeout(
+      _rateLookupTimeout,
+      onTimeout: () {
+        AppLogger.warning(
+            'BTC/$currency rate lookup exceeded ${_rateLookupTimeout.inSeconds}s.');
+        return List<double?>.filled(fetchFutures.length, null);
+      },
+    );
     final List<double> validRates =
         results.where((rate) => rate != null).cast<double>().toList();
 
     if (validRates.isNotEmpty) {
       final averageRate =
           validRates.reduce((a, b) => a + b) / validRates.length;
-      _cachedRates[cur] = averageRate;
-      _cachedRateTimes[cur] = now;
+      _cachedRates[currency] = averageRate;
+      _cachedRateTimes[currency] = _clock.now();
       AppLogger.info(
-          'Successfully fetched and averaged BTC/$cur rate: $averageRate from ${validRates.length} sources.');
+          'Successfully fetched and averaged BTC/$currency rate: $averageRate from ${validRates.length} sources.');
       return averageRate;
-    } else {
-      if (cached != null) {
-        AppLogger.info(
-            'Returning stale BTC/$cur rate due to all sources failing to fetch.');
-        return cached;
-      }
-      throw Exception('Failed to fetch BTC/$cur rate from all sources.');
     }
+    return null;
+  }
+
+  void _refreshRateInBackground(String currency) {
+    if (_rateRefreshes.containsKey(currency)) return;
+
+    late final Future<void> refresh;
+    refresh = _fetchAndCacheRate(currency).then<void>((rate) {
+      if (rate == null) {
+        AppLogger.warning(
+            'Background BTC/$currency rate refresh failed; keeping cached rate.');
+      }
+    }).whenComplete(() {
+      if (identical(_rateRefreshes[currency], refresh)) {
+        _rateRefreshes.remove(currency);
+      }
+    });
+    _rateRefreshes[currency] = refresh;
+    unawaited(refresh);
   }
 
   Future<double?> _fetchRateFromSource(
@@ -427,7 +466,9 @@ class CoordinatorService {
     final sourceName = source['name']!;
 
     try {
-      final response = await _httpClient.get(url); // Use _httpClient
+      final response = await _httpClient
+          .get(url)
+          .timeout(_rateLookupTimeout); // Use _httpClient
       if (response.statusCode == 200) {
         double? rate;
         if (parserName == 'coingecko') {
@@ -841,8 +882,7 @@ class CoordinatorService {
     _backendRetryTimer?.cancel();
     _backendRetryTimer = null;
     _backendRetryDelay = _backendRetryFirstDelay;
-    AppLogger.info(
-        'Payment backend recovered: now on $_paymentBackendType. '
+    AppLogger.info('Payment backend recovered: now on $_paymentBackendType. '
         'Hold invoices work again.');
     return true;
   }
@@ -1692,6 +1732,34 @@ class CoordinatorService {
   }
 
   Future<Map<String, dynamic>> initiateOfferFiat({
+    required double fiatAmount,
+    required String makerId,
+    String? fiatCurrency,
+    OfferCategory? category,
+    double premiumPercent = 0,
+    String? blikCode,
+    String? bank,
+    String? clientVersion,
+  }) {
+    return _initiateOfferFiat(
+      fiatAmount: fiatAmount,
+      makerId: makerId,
+      fiatCurrency: fiatCurrency,
+      category: category,
+      premiumPercent: premiumPercent,
+      blikCode: blikCode,
+      bank: bank,
+      clientVersion: clientVersion,
+    ).timeout(
+      _initiateOfferDeadline,
+      onTimeout: () => throw TimeoutException(
+        'initiate_offer exceeded the ${_initiateOfferDeadline.inSeconds}s coordinator deadline',
+        _initiateOfferDeadline,
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> _initiateOfferFiat({
     required double fiatAmount,
     required String makerId,
     String? fiatCurrency,

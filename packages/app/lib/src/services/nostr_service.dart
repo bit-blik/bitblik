@@ -72,6 +72,7 @@ class NostrService {
   /// events) and to bootstrap NDK. All per-coordinator communication is routed
   /// to each coordinator's own relays (see [CoordinatorRegistry.relaysFor]).
   static const List<String> _defaultRelayUrls = kDiscoveryRelays;
+  static const Duration _initiateOfferRpcTimeout = Duration(seconds: 25);
 
   final KeyService _keyService;
   Ndk? _ndk;
@@ -426,7 +427,11 @@ class NostrService {
       },
     );
 
-    final response = await sendRequest(request, coordinatorPubkey);
+    final response = await sendRequest(
+      request,
+      coordinatorPubkey,
+      timeoutOverride: _initiateOfferRpcTimeout,
+    );
     return _handleResponse(response, (result) => result);
   }
 

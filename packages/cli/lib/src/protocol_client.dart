@@ -165,13 +165,16 @@ class BitblikProtocolClient {
   /// Routes to the coordinator's own relays (NIP-65 / fallback).
   Future<NostrResponse> sendRequest(
     NostrRequest request,
-    String coordinatorPubkey,
-  ) {
-    final effectiveTimeout = timeout + kRelayRequestGrace;
+    String coordinatorPubkey, {
+    Duration? timeoutOverride,
+  }) {
+    final requestTimeout = timeoutOverride ?? timeout;
+    final effectiveTimeout = requestTimeout + kRelayRequestGrace;
     return _rpc
         .send(
           request,
           coordinatorPubkey,
+          timeoutOverride: requestTimeout,
           relays: _registry.relaysFor(coordinatorPubkey),
         )
         .timeout(
