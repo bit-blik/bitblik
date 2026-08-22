@@ -1,3 +1,7 @@
+## [0.10.1] - 2026-08-22
+- feat: add new SK Prima bank
+- fix: SK VÚB code validity is 10 minutes, not 3
+
 ## [0.10.0] - 2026-08-11
 - feat: support Slovakian payment system ATM for 3 banks (Tatra, SLSP, VUB)
 - feat: add SK translation
