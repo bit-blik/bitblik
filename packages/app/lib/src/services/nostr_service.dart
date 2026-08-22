@@ -1144,7 +1144,7 @@ class NostrService {
     final ndk = _ndk;
     if (ndk == null) return const Stream<bool>.empty();
     return ndk.connectivity.relayConnectivityChanges
-        .map((relays) => relays.values.any((r) => r.isConnected))
+        .map((relays) => relays.any((relay) => relay.isConnected))
         .distinct();
   }
 }

@@ -1505,7 +1505,7 @@ class RelayConnectivityNotifier
       }
 
       // Get initial state from the current global state
-      _updateFromRelays(ndk.relays.globalState.relays);
+      _updateFromRelays(ndk.relays.globalState.relays.values);
 
       // Subscribe to the stream for updates
       _subscription = ndk.connectivity.relayConnectivityChanges.listen((
@@ -1523,20 +1523,35 @@ class RelayConnectivityNotifier
   /// Raw map of ALL NDK relays (coordinator, discovery, NWC). Consumers filter
   /// to the subset they care about (coordinator relays for the top bar,
   /// discovery relays for the management screen).
-  void _updateFromRelays(Map<String, dynamic> relays) {
+  void _updateFromRelays(Iterable<RelayConnectivity<dynamic>> relays) {
     final result = <String, RelayStatus>{};
-    for (final entry in relays.entries) {
-      final relayConnectivity = entry.value;
-      result[entry.key] = RelayStatus(
-        url: relayConnectivity.url,
-        state: _determineRelayState(relayConnectivity),
-      );
+    for (final relayConnectivity in relays) {
+      final url = relayConnectivity.url;
+      final relayState = _determineRelayState(relayConnectivity);
+      final current = result[url];
+
+      // NDK can maintain anonymous and authenticated connections to the same
+      // relay. Show the healthiest connection for that URL.
+      if (current == null ||
+          _relayStatePriority(relayState) >
+              _relayStatePriority(current.state)) {
+        result[url] = RelayStatus(url: url, state: relayState);
+      }
     }
     state = result;
   }
 
+  int _relayStatePriority(RelayConnectionState state) => switch (state) {
+    RelayConnectionState.connected => 3,
+    RelayConnectionState.reconnecting => 2,
+    RelayConnectionState.connecting => 1,
+    RelayConnectionState.disconnected => 0,
+  };
+
   /// Helper function to determine relay connection state
-  RelayConnectionState _determineRelayState(dynamic relayConnectivity) {
+  RelayConnectionState _determineRelayState(
+    RelayConnectivity<dynamic> relayConnectivity,
+  ) {
     if (relayConnectivity.isConnected) {
       return RelayConnectionState.connected;
     } else if (relayConnectivity.relay.connecting) {

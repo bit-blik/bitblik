@@ -68,7 +68,8 @@ class RelayReconnectGate {
       // 1. Kill zombie sockets. resetTransport closes the transport and nulls
       //    relayTransport (so isConnected becomes false), but keeps the relay
       //    entry + metadata so tryReconnect below will actually redial them.
-      final urls = ndk.relays.globalState.relays.keys.toList();
+      final urls =
+          ndk.relays.globalState.relays.keys.map((key) => key.url).toSet();
       for (final url in urls) {
         try {
           await ndk.relays.resetTransport(url);
