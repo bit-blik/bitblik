@@ -1,26 +1,31 @@
 # Build context: repo root (required for Dart workspace resolution)
 # Stage 1: Build the Flutter web application
-#FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build
 FROM ghcr.io/gmeligio/flutter-android:3.47.0 AS build
 
 ARG APP_FLAVOR=bitblik
 ARG BUILD_MODE=release
 ARG FLUTTER_TARGET=lib/main_bitblik.dart
 
+USER root
+RUN apt-get update && apt-get install -y ca-certificates
+
+USER flutter
+ENV PATH="/opt/flutter/bin:${PATH}"
+
 WORKDIR /workspace
 
 # Copy workspace pubspec files first for layer caching
-COPY pubspec.yaml pubspec.lock ./
-COPY packages/app/pubspec.yaml packages/app/pubspec.yaml
-COPY packages/core/pubspec.yaml packages/core/pubspec.yaml
-COPY packages/cli/pubspec.yaml packages/cli/pubspec.yaml
-COPY packages/coordinator/pubspec.yaml packages/coordinator/pubspec.yaml
+COPY --chown=flutter:flutter pubspec.yaml pubspec.lock ./
+COPY --chown=flutter:flutter packages/app/pubspec.yaml packages/app/pubspec.yaml
+COPY --chown=flutter:flutter packages/core/pubspec.yaml packages/core/pubspec.yaml
+COPY --chown=flutter:flutter packages/cli/pubspec.yaml packages/cli/pubspec.yaml
+COPY --chown=flutter:flutter packages/coordinator/pubspec.yaml packages/coordinator/pubspec.yaml
 
 RUN flutter pub get
 
 # Copy source for packages used by app
-COPY packages/app/ packages/app/
-COPY packages/core/ packages/core/
+COPY --chown=flutter:flutter packages/app/ packages/app/
+COPY --chown=flutter:flutter packages/core/ packages/core/
 
 WORKDIR /workspace/packages/app
 
@@ -45,7 +50,6 @@ RUN cp web_shells/${APP_FLAVOR}/index.html web/index.html \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-3x.png web/splash/img/dark-3x.png \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-4x.png web/splash/img/dark-4x.png \
  && flutter build web --${BUILD_MODE} --target=${FLUTTER_TARGET} --no-web-resources-cdn
-#--wasm
 
 # Stage 2: Serve via Nginx
 FROM nginx:stable-alpine

@@ -1,11 +1,8 @@
-# Build context: repo root (required for Dart workspace resolution)
-# Flutter image needed: workspace includes Flutter packages, dart pub get alone can't resolve them
-#FROM instrumentisto/flutter:3.41.6 AS build
-#FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build
 FROM ghcr.io/gmeligio/flutter-android:3.47.0 AS build
 
-
 WORKDIR /workspace
+
+USER root
 
 RUN apt-get update && apt-get install -y wget curl build-essential
 
@@ -13,21 +10,25 @@ RUN wget https://github.com/simplex-chat/simplex-chat/releases/download/v6.4.0/s
     && mv simplex-chat-ubuntu-22_04-x86-64 /workspace/simplex-chat \
     && chmod +x /workspace/simplex-chat
 
+# Install Rust for the flutter user, not root
+USER flutter
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
+ENV PATH="/home/flutter/.cargo/bin:${PATH}"
+
+ENV PATH="/opt/flutter/bin:${PATH}"
 
 # Copy workspace pubspec files first for layer caching
-COPY pubspec.yaml pubspec.lock ./
-COPY packages/coordinator/pubspec.yaml packages/coordinator/pubspec.yaml
-COPY packages/core/pubspec.yaml packages/core/pubspec.yaml
-COPY packages/app/pubspec.yaml packages/app/pubspec.yaml
-COPY packages/cli/pubspec.yaml packages/cli/pubspec.yaml
+COPY --chown=flutter:flutter pubspec.yaml pubspec.lock ./
+COPY --chown=flutter:flutter packages/coordinator/pubspec.yaml packages/coordinator/pubspec.yaml
+COPY --chown=flutter:flutter packages/core/pubspec.yaml packages/core/pubspec.yaml
+COPY --chown=flutter:flutter packages/app/pubspec.yaml packages/app/pubspec.yaml
+COPY --chown=flutter:flutter packages/cli/pubspec.yaml packages/cli/pubspec.yaml
 
 RUN flutter pub get
 
 # Copy source for packages used by coordinator
-COPY packages/coordinator/ packages/coordinator/
-COPY packages/core/ packages/core/
+COPY --chown=flutter:flutter packages/coordinator/ packages/coordinator/
+COPY --chown=flutter:flutter packages/core/ packages/core/
 
 WORKDIR /workspace/packages/coordinator
 
