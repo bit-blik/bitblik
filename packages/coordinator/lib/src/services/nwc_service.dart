@@ -427,7 +427,8 @@ class NwcService implements PaymentService {
         return null;
       }
 
-      final settled = response.settledAt != null && response.settledAt! > 0;
+      final settled =
+          response.settledAt != null && response.settledAt! > 0;
       if (settled && response.preimage.isNotEmpty) {
         AppLogger.info(
             'NWC Service: reconciliation found SETTLED payment. Preimage: ${response.preimage}');
@@ -442,7 +443,8 @@ class NwcService implements PaymentService {
           'NWC Service: reconciliation: invoice not settled (settledAt=${response.settledAt}).');
       return null;
     } catch (e) {
-      AppLogger.info('NWC Service: Exception in reconcileOutgoingPayment: $e');
+      AppLogger.info(
+          'NWC Service: Exception in reconcileOutgoingPayment: $e');
       return null;
     }
   }

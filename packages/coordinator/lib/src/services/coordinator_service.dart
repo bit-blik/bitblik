@@ -882,7 +882,8 @@ class CoordinatorService {
     _backendRetryTimer?.cancel();
     _backendRetryTimer = null;
     _backendRetryDelay = _backendRetryFirstDelay;
-    AppLogger.info('Payment backend recovered: now on $_paymentBackendType. '
+    AppLogger.info(
+        'Payment backend recovered: now on $_paymentBackendType. '
         'Hold invoices work again.');
     return true;
   }
