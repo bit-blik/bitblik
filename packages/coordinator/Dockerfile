@@ -1,7 +1,9 @@
 # Build context: repo root (required for Dart workspace resolution)
 # Flutter image needed: workspace includes Flutter packages, dart pub get alone can't resolve them
 #FROM instrumentisto/flutter:3.41.6 AS build
-FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build
+#FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build
+FROM ghcr.io/gmeligio/flutter-android:3.47.0 AS build
+
 
 WORKDIR /workspace
 
