@@ -1281,6 +1281,10 @@ wallet:
     title: Receiving wallet required
     message: No wallet configured for receiving. Add one in Wallet settings to take offers.
     openSettings: Wallet settings
+  incompatibleReceiving:
+    title: BOLT11 wallet needed
+    message: This coordinator can pay this offer using BOLT11 only.
+    explanation: Your receiving wallet supports BOLT12 offers, but it cannot create the BOLT11 invoice this coordinator requires. Add a BOLT11-compatible receiving wallet to continue.
   details:
     title: Wallet details
     pendingTitle: Pending transactions

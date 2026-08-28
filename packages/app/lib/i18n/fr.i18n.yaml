@@ -1107,6 +1107,10 @@ wallet:
     title: Portefeuille de réception requis
     message: Aucun portefeuille configuré pour la réception. Ajoutez-en un dans les réglages du portefeuille pour accepter des offres.
     openSettings: Réglages du portefeuille
+  incompatibleReceiving:
+    title: Portefeuille BOLT11 requis
+    message: Ce coordinateur ne peut payer cette offre qu’en BOLT11.
+    explanation: Votre portefeuille de réception prend en charge les offres BOLT12, mais ne peut pas créer la facture BOLT11 requise. Ajoutez un portefeuille de réception compatible BOLT11.
   details:
     title: Détails du portefeuille
     pendingTitle: Transactions en attente

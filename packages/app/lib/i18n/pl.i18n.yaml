@@ -1091,6 +1091,10 @@ wallet:
     title: Wymagany portfel odbiorczy
     message: Brak skonfigurowanego portfela do odbierania. Dodaj go w ustawieniach portfela, aby przyjmować oferty.
     openSettings: Ustawienia portfela
+  incompatibleReceiving:
+    title: Wymagany portfel BOLT11
+    message: Ten koordynator może wypłacić tę ofertę wyłącznie przez BOLT11.
+    explanation: Twój portfel odbiorczy obsługuje oferty BOLT12, ale nie może utworzyć wymaganej faktury BOLT11. Dodaj portfel odbiorczy zgodny z BOLT11.
 
 nwc:
   title: Nostr Wallet Connect (NWC)

@@ -4,6 +4,10 @@ import 'package:bitblik_core/core.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/models/cancel_invoice_result.dart';
 import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart';
+import 'package:bitblik_coordinator/src/models/outgoing_payment_attempt.dart';
+import 'package:bitblik_coordinator/src/models/bolt12_offer_info.dart';
+import 'package:bitblik_coordinator/src/models/pay_offer_result.dart';
+import 'package:bitblik_coordinator/src/models/payment_status.dart';
 import 'package:bitblik_coordinator/src/services/database_service.dart';
 import 'package:bitblik_coordinator/src/services/telegram_service.dart';
 import 'package:clock/clock.dart';
@@ -12,6 +16,94 @@ import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
 import 'test_mocks.mocks.dart';
+
+void _stubOutgoingPaymentAttempts(
+  MockDatabaseService db, {
+  OutgoingPaymentAttemptState initialState =
+      OutgoingPaymentAttemptState.prepared,
+  String? backendPaymentId,
+}) {
+  OutgoingPaymentAttempt? current;
+  when(db.getOrCreateOutgoingPaymentAttempt(
+    id: anyNamed('id'),
+    offerId: anyNamed('offerId'),
+    purpose: anyNamed('purpose'),
+    paymentType: anyNamed('paymentType'),
+    encoded: anyNamed('encoded'),
+    expectedAmountSats: anyNamed('expectedAmountSats'),
+    feeLimitSats: anyNamed('feeLimitSats'),
+    backendType: anyNamed('backendType'),
+  )).thenAnswer((invocation) async {
+    final now = DateTime.now().toUtc();
+    current ??= OutgoingPaymentAttempt(
+      id: invocation.namedArguments[#id] as String,
+      offerId: invocation.namedArguments[#offerId] as String,
+      purpose: invocation.namedArguments[#purpose] as String,
+      generation: 0,
+      paymentType:
+          invocation.namedArguments[#paymentType] as OutgoingPaymentType,
+      bolt11Invoice:
+          invocation.namedArguments[#paymentType] == OutgoingPaymentType.bolt11
+              ? invocation.namedArguments[#encoded] as String
+              : null,
+      bolt12Offer:
+          invocation.namedArguments[#paymentType] == OutgoingPaymentType.bolt12
+              ? invocation.namedArguments[#encoded] as String
+              : null,
+      expectedAmountSats: invocation.namedArguments[#expectedAmountSats] as int,
+      feeLimitSats: invocation.namedArguments[#feeLimitSats] as int?,
+      backendType: invocation.namedArguments[#backendType] as String,
+      backendPaymentId: backendPaymentId,
+      state: initialState,
+      createdAt: now,
+      updatedAt: now,
+    );
+    return current!;
+  });
+  when(db.updateOutgoingPaymentAttempt(
+    any,
+    state: anyNamed('state'),
+    backendPaymentId: anyNamed('backendPaymentId'),
+    paymentHash: anyNamed('paymentHash'),
+    preimage: anyNamed('preimage'),
+    payerProof: anyNamed('payerProof'),
+    feePaidSats: anyNamed('feePaidSats'),
+    failureReason: anyNamed('failureReason'),
+  )).thenAnswer((invocation) async {
+    final old = current!;
+    final now = DateTime.now().toUtc();
+    current = OutgoingPaymentAttempt(
+      id: old.id,
+      offerId: old.offerId,
+      purpose: old.purpose,
+      generation: old.generation,
+      paymentType: old.paymentType,
+      bolt11Invoice: old.bolt11Invoice,
+      bolt12Offer: old.bolt12Offer,
+      expectedAmountSats: old.expectedAmountSats,
+      feeLimitSats: old.feeLimitSats,
+      backendType: old.backendType,
+      backendPaymentId:
+          invocation.namedArguments[#backendPaymentId] as String? ??
+              old.backendPaymentId,
+      state: invocation.namedArguments[#state] as OutgoingPaymentAttemptState,
+      preimage: invocation.namedArguments[#preimage] as String? ?? old.preimage,
+      payerProof:
+          invocation.namedArguments[#payerProof] as String? ?? old.payerProof,
+      feePaidSats:
+          invocation.namedArguments[#feePaidSats] as int? ?? old.feePaidSats,
+      failureReason: invocation.namedArguments[#failureReason] as String? ??
+          old.failureReason,
+      createdAt: old.createdAt,
+      updatedAt: now,
+      settledAt: invocation.namedArguments[#state] ==
+              OutgoingPaymentAttemptState.succeeded
+          ? now
+          : old.settledAt,
+    );
+    return current!;
+  });
+}
 
 class _FakeTelegramService extends TelegramService {
   int editCalls = 0;
@@ -69,6 +161,27 @@ class _BlockingTelegramService extends TelegramService {
 /// Verifies routing, enforcement and identity guards without the full payout
 /// chain (covered structurally by core's twint_flow_test).
 void main() {
+  test('legacy payout action names remain registered as compatibility aliases',
+      () {
+    final actionsByName = {
+      for (final action in allFlowActions) action.name: action,
+    };
+
+    expect(
+        actionsByName['accept_taker_invoice'], isA<AcceptTakerInvoiceAction>());
+    expect(actionsByName['resolve_taker_invoice'],
+        isA<ResolveTakerInvoiceAction>());
+    expect(
+        actionsByName['update_taker_invoice'], isA<UpdateTakerInvoiceAction>());
+    expect(actionsByName['require_maker_refund_invoice'],
+        isA<RequireMakerRefundInvoiceAction>());
+
+    expect(actionsByName, contains('accept_taker_payout'));
+    expect(actionsByName, contains('resolve_taker_payout'));
+    expect(actionsByName, contains('update_taker_payout'));
+    expect(actionsByName, contains('require_maker_refund_payout'));
+  });
+
   late MockDatabaseService db;
   late MockPaymentService pay;
   late CoordinatorService svc;
@@ -474,13 +587,14 @@ void main() {
         'lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3sdqsvfhkcap3xyhx7un8cqzpgxqzjcsp5f8c52y2stc300gl6s4xswtjpc37hrnnr3c9wvtgjfuvqmpm35evq9qyyssqy4lgd8tj637qcjp05rdpxxykjenthxftej7a2zzmwrmrl70fyj9hvj0rewhzj7jfyuwkwcg9g2jpwtk3wkjtwnkdks84hsnu8xps5vsq4gj5hs';
 
     late MockDatabaseService gdb;
-    late MockPaymentService gpay;
+    late MockCombinedPaymentService gpay;
     late CoordinatorService gsvc;
     late _FakeTelegramService gtelegram;
     late String current;
 
     Offer payoutOffer(
             {String? takerInvoice,
+            String? takerOffer,
             int amountSats = 1550,
             int takerFees = 50}) =>
         Offer(
@@ -497,6 +611,7 @@ void main() {
           coordinatorPubkey: 'coord',
           takerPubkey: taker,
           takerInvoice: takerInvoice,
+          takerOffer: takerOffer,
           blikCode: '123456',
           holdInvoicePaymentHash: 'hash',
           holdInvoicePreimage: 'preimage',
@@ -539,7 +654,8 @@ void main() {
 
     setUp(() async {
       gdb = MockDatabaseService();
-      gpay = MockPaymentService();
+      gpay = MockCombinedPaymentService();
+      _stubOutgoingPaymentAttempts(gdb);
       gtelegram = _FakeTelegramService();
       gsvc = CoordinatorService(
         gdb,
@@ -632,6 +748,107 @@ void main() {
       expect(current, 'takerPaymentFailed');
     });
 
+    test('variable BOLT12 payout sends exact amount and needs no preimage',
+        () async {
+      const offer =
+          'lno1zcss9mk8y3wkklfvevcrszlmu23kfrxh49px20665dqwmn4p72pksese';
+      when(gdb.getOfferById('p1'))
+          .thenAnswer((_) async => payoutOffer(takerOffer: offer));
+      stubCas();
+      when(gpay.isBolt12Available).thenReturn(true);
+      when(gpay.decodeOffer(offer: anyNamed('offer'))).thenAnswer(
+        (_) async => const Bolt12OfferInfo(
+          normalized: offer,
+          offerId:
+              '0000000000000000000000000000000000000000000000000000000000000000',
+          network: 'mainnet',
+          amountMsat: null,
+          isExpired: false,
+          isVariableAmount: true,
+        ),
+      );
+      when(gpay.reconcileOutgoingOffer(
+        offer: anyNamed('offer'),
+        paymentAttemptId: anyNamed('paymentAttemptId'),
+        paymentId: anyNamed('paymentId'),
+      )).thenAnswer((_) async => null);
+      when(gpay.payOffer(
+        offer: anyNamed('offer'),
+        amountSat: anyNamed('amountSat'),
+        feeLimitSat: anyNamed('feeLimitSat'),
+        paymentAttemptId: anyNamed('paymentAttemptId'),
+      )).thenAnswer(
+        (_) async => const PayOfferResult(
+          status: PaymentStatus.SUCCEEDED,
+          paymentId: 'wallet-transaction',
+          feeSat: 2,
+        ),
+      );
+
+      await gsvc.flow.handleRpc('confirm_payment', {'offer_id': 'p1'}, maker);
+      await pumpEventQueue(times: 100);
+
+      expect(current, 'takerPaid');
+      final amounts = verify(gpay.payOffer(
+        offer: offer,
+        amountSat: captureAnyNamed('amountSat'),
+        feeLimitSat: anyNamed('feeLimitSat'),
+        paymentAttemptId: anyNamed('paymentAttemptId'),
+      )).captured;
+      expect(amounts.single, 1500);
+    });
+
+    test('submitted unknown attempt is reconciled and never resent', () async {
+      _stubOutgoingPaymentAttempts(
+        gdb,
+        initialState: OutgoingPaymentAttemptState.submitted,
+      );
+      when(gdb.getOfferById('p1'))
+          .thenAnswer((_) async => payoutOffer(takerInvoice: invoice));
+      stubCas();
+      when(gpay.reconcileOutgoingPayment(invoice: anyNamed('invoice')))
+          .thenAnswer((_) async => null);
+
+      await gsvc.flow.handleRpc('confirm_payment', {'offer_id': 'p1'}, maker);
+      await pumpEventQueue(times: 100);
+
+      expect(current, 'payingTaker');
+      verifyNever(gpay.payInvoice(
+        invoice: anyNamed('invoice'),
+        amountSat: anyNamed('amountSat'),
+        feeLimitSat: anyNamed('feeLimitSat'),
+      ));
+    });
+
+    test('submitted attempt finalized from reconciliation is not resent',
+        () async {
+      _stubOutgoingPaymentAttempts(
+        gdb,
+        initialState: OutgoingPaymentAttemptState.submitted,
+      );
+      when(gdb.getOfferById('p1'))
+          .thenAnswer((_) async => payoutOffer(takerInvoice: invoice));
+      stubCas();
+      when(gpay.reconcileOutgoingPayment(invoice: anyNamed('invoice')))
+          .thenAnswer(
+        (_) async => PayInvoiceResult(
+          status: PaymentStatus.SUCCEEDED,
+          paymentId: 'wallet-transaction',
+          feeSat: 3,
+        ),
+      );
+
+      await gsvc.flow.handleRpc('confirm_payment', {'offer_id': 'p1'}, maker);
+      await pumpEventQueue(times: 100);
+
+      expect(current, 'takerPaid');
+      verifyNever(gpay.payInvoice(
+        invoice: anyNamed('invoice'),
+        amountSat: anyNamed('amountSat'),
+        feeLimitSat: anyNamed('feeLimitSat'),
+      ));
+    });
+
     test('setup failure (no invoice) -> takerPaymentFailed', () async {
       when(gdb.getOfferById('p1')).thenAnswer((_) async => payoutOffer());
       stubCas();
@@ -691,7 +908,7 @@ void main() {
         'lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3sdqsvfhkcap3xyhx7un8cqzpgxqzjcsp5f8c52y2stc300gl6s4xswtjpc37hrnnr3c9wvtgjfuvqmpm35evq9qyyssqy4lgd8tj637qcjp05rdpxxykjenthxftej7a2zzmwrmrl70fyj9hvj0rewhzj7jfyuwkwcg9g2jpwtk3wkjtwnkdks84hsnu8xps5vsq4gj5hs';
 
     late MockDatabaseService gdb;
-    late MockPaymentService gpay;
+    late MockCombinedPaymentService gpay;
     late CoordinatorService gsvc;
     late _FakeTelegramService gtelegram;
     late String current;
@@ -754,7 +971,8 @@ void main() {
 
     setUp(() async {
       gdb = MockDatabaseService();
-      gpay = MockPaymentService();
+      gpay = MockCombinedPaymentService();
+      _stubOutgoingPaymentAttempts(gdb);
       gtelegram = _FakeTelegramService();
       gsvc = CoordinatorService(
         gdb,
@@ -809,6 +1027,34 @@ void main() {
       await pumpEventQueue(times: 100);
 
       expect(storedInvoice, 'old-broken-invoice');
+      expect(current, 'takerPaymentFailed');
+    });
+
+    test('supplying both invoice and offer rejects the replacement', () async {
+      const offer =
+          'lno1zcss9mk8y3wkklfvevcrszlmu23kfrxh49px20665dqwmn4p72pksese';
+      await expectLater(
+        gsvc.flow.handleRpc(
+          'update_taker_invoice',
+          {'offer_id': 'p1', 'bolt11': invoice, 'taker_offer': offer},
+          taker,
+        ),
+        throwsA(isA<Exception>()),
+      );
+      expect(current, 'takerPaymentFailed');
+    });
+
+    test('lno is rejected in the invoice field', () async {
+      const offer =
+          'lno1zcss9mk8y3wkklfvevcrszlmu23kfrxh49px20665dqwmn4p72pksese';
+      await expectLater(
+        gsvc.flow.handleRpc(
+          'update_taker_invoice',
+          {'offer_id': 'p1', 'bolt11': offer},
+          taker,
+        ),
+        throwsA(isA<Exception>()),
+      );
       expect(current, 'takerPaymentFailed');
     });
 

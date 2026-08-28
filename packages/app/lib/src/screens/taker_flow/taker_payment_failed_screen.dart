@@ -9,6 +9,7 @@ import 'package:bitblik_core/core.dart';
 import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../utils/bitcoin_display.dart';
+import '../../widgets/lightning_address_widget.dart';
 import '../../widgets/progress_indicators.dart';
 
 // Enum to manage screen state
@@ -36,6 +37,7 @@ class _TakerPaymentFailedScreenState
   List<Wallet> _otherReceivingWallets = [];
   String? _generatingWalletId;
   BuildContext? _retryDialogContext;
+  bool _shownIncompatibleWalletDialog = false;
 
   @override
   void initState() {
@@ -48,14 +50,44 @@ class _TakerPaymentFailedScreenState
     if (ndk == null) return;
     final all = ndk.wallets.getWalletsForUnit('sat');
     final defaultW = ndk.wallets.defaultWalletForReceiving;
-    final others =
-        all.where((w) => w.canReceive && w.id != defaultW?.id).toList();
+    final coordinator = ref
+        .read(apiServiceProvider)
+        .getCoordinatorInfoByPubkey(widget.offer.coordinatorPubkey);
+    final coordinatorSupportsBolt12 =
+        coordinator?.outgoingPaymentTypes.contains('bolt12') ?? false;
+    final compatible =
+        all
+            .where(
+              (wallet) => walletCanReceiveForCoordinator(
+                wallet,
+                coordinatorSupportsBolt12: coordinatorSupportsBolt12,
+              ),
+            )
+            .toList();
+    final defaultIsCompatible =
+        defaultW != null &&
+        compatible.any((wallet) => wallet.id == defaultW.id);
+    final others = compatible.where((w) => w.id != defaultW?.id).toList();
     if (mounted) {
       setState(() {
-        _defaultReceivingWallet =
-            defaultW?.canReceive == true ? defaultW : null;
+        _defaultReceivingWallet = defaultIsCompatible ? defaultW : null;
         _otherReceivingWallets = others;
       });
+      if (!coordinatorSupportsBolt12 &&
+          compatible.isEmpty &&
+          hasOnlyBolt12ReceivingWallets(all) &&
+          !_shownIncompatibleWalletDialog) {
+        _shownIncompatibleWalletDialog = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          LightningAddressWidget.showReceivingWalletRequiredDialog(
+            context,
+            ref,
+            Translations.of(context),
+            requiresBolt11: true,
+          );
+        });
+      }
     }
   }
 
@@ -98,14 +130,19 @@ class _TakerPaymentFailedScreenState
     try {
       final ndk = ref.read(ndkProvider);
       if (ndk == null) throw Exception('NDK not available');
-      final result = await ndk.wallets.receive(
+      final coordinator = ref
+          .read(apiServiceProvider)
+          .getCoordinatorInfoByPubkey(widget.offer.coordinatorPubkey);
+      final payment = await createReceivingPayment(
+        ndk,
+        amountSats,
+        coordinatorSupportsBolt12:
+            coordinator?.outgoingPaymentTypes.contains('bolt12') ?? false,
         walletId: wallet.id,
-        amountSats: amountSats,
+        description: 'BitBlik payout retry',
       );
-      final invoice = _extractBolt11(result);
-      if (invoice == null) throw Exception('No invoice in response');
       if (mounted) {
-        setState(() => _bolt11Controller.text = invoice);
+        setState(() => _bolt11Controller.text = payment.encoded);
       }
     } catch (e) {
       Logger.log.e(() => '[TakerPaymentFailedScreen] Invoice gen failed: $e');
@@ -125,35 +162,9 @@ class _TakerPaymentFailedScreenState
     }
   }
 
-  String? _extractBolt11(dynamic value) {
-    String? normalize(String? raw) {
-      if (raw == null) return null;
-      final trimmed = raw.trim();
-      final withoutPrefix =
-          trimmed.toLowerCase().startsWith('lightning:')
-              ? trimmed.substring('lightning:'.length).trim()
-              : trimmed;
-      return withoutPrefix.toLowerCase().startsWith('lnbc')
-          ? withoutPrefix
-          : null;
-    }
-
-    if (value is String) return normalize(value);
-    if (value is Map) {
-      for (final key in ['bolt11', 'invoice', 'payment_request', 'request']) {
-        final candidate = value[key];
-        if (candidate is String) {
-          final n = normalize(candidate);
-          if (n != null) return n;
-        }
-      }
-    }
-    return null;
-  }
-
   Future<void> _retryPayment() async {
-    final newInvoice = _bolt11Controller.text.trim();
-    if (newInvoice.isEmpty) {
+    final encoded = _bolt11Controller.text.trim();
+    if (encoded.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(t.taker.paymentFailed.errors.enterValidInvoice)),
       );
@@ -186,13 +197,26 @@ class _TakerPaymentFailedScreenState
 
     try {
       final apiService = ref.read(apiServiceProvider);
+      final coordinator = apiService.getCoordinatorInfoByPubkey(
+        widget.offer.coordinatorPubkey,
+      );
+      final bolt12 = extractBolt12Offer(encoded);
+      final bolt11 = extractBolt11Invoice(encoded);
+      if (bolt12 != null &&
+          !(coordinator?.outgoingPaymentTypes.contains('bolt12') ?? false)) {
+        throw Exception('This coordinator does not support BOLT12 payouts');
+      }
+      if (bolt11 == null && bolt12 == null) {
+        throw Exception('Enter a valid BOLT11 invoice or BOLT12 offer');
+      }
       final userPubkey = widget.offer.takerPubkey;
       if (userPubkey == null || userPubkey.isEmpty) {
         throw Exception(t.taker.paymentFailed.errors.takerPublicKeyNotFound);
       }
       await apiService.updateTakerInvoice(
         offerId: widget.offer.id,
-        newBolt11: newInvoice,
+        newBolt11: bolt11,
+        newBolt12: bolt12,
         userPubkey: userPubkey,
         coordinatorPubkey: widget.offer.coordinatorPubkey,
       );
@@ -234,9 +258,15 @@ class _TakerPaymentFailedScreenState
     // Calculate net amount (moved here for access to widget.offer)
     // Fallback uses 0.5% — historical default when no offer-level fee was
     // recorded. New offers always carry takerFees, so this branch is rare.
+    final coordinator = ref
+        .read(apiServiceProvider)
+        .getCoordinatorInfoByPubkey(widget.offer.coordinatorPubkey);
     final takerFees =
         widget.offer.takerFees ??
-        OfferQuote.takerFeeSats(widget.offer.amountSats, 0.5);
+        OfferQuote.takerFeeSats(
+          widget.offer.amountSats,
+          coordinator?.takerFee ?? 0.5,
+        );
     final netAmountSats = widget.offer.amountSats - takerFees;
 
     return Scaffold(

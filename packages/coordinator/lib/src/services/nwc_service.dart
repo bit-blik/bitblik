@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart'; // For sha256 if used directly
 import 'package:ndk/domain_layer/usecases/nwc/nwc_notification.dart';
 // NDK imports
 import 'package:ndk/ndk.dart';
+import 'package:bitblik_core/core.dart';
 
 import '../models/cancel_invoice_result.dart';
 import '../models/create_hold_invoice_result.dart';
@@ -14,12 +15,30 @@ import '../models/invoice_details.dart'; // Added import
 import '../models/invoice_status.dart';
 import '../models/invoice_update.dart';
 import '../models/pay_invoice_result.dart';
+import '../models/pay_offer_result.dart';
+import '../models/bolt12_offer_info.dart';
+import '../models/payment_status.dart';
 // Import the interface
 import 'payment_service.dart';
+import 'bolt12_offer_parser.dart';
 import '../logging/app_logger.dart';
 
+bool hasSafeNwcBolt12Capability({
+  required bool recoveryEnabled,
+  required String network,
+  required Set<String> advertisedMethods,
+}) =>
+    recoveryEnabled &&
+    const {'mainnet', 'testnet', 'signet', 'regtest'}.contains(network) &&
+    advertisedMethods.contains('pay') &&
+    advertisedMethods.contains('list_transactions');
+
+bool nwcBolt12RecoveryEnabled(String? configuredValue) =>
+    !const {'0', 'false', 'no'}
+        .contains((configuredValue ?? '').trim().toLowerCase());
+
 /// Service to interact with Nostr Wallet Connect (NWC) for hold invoices.
-class NwcService implements PaymentService {
+class NwcService implements PaymentService, Bolt12PaymentService {
   static const int _holdInvoiceExpirySeconds = 86400;
 
   final String _nwcUri;
@@ -32,12 +51,18 @@ class NwcService implements PaymentService {
 
   late final Ndk _ndk; // NDK instance managed by the service
   NwcConnection? _nwcConnection;
+  final bool enableBolt12Recovery;
+  bool _isBolt12Available = false;
+  String _network = 'mainnet';
 
   final StreamController<InvoiceUpdate> _invoiceSubscriptionController =
       StreamController<InvoiceUpdate>.broadcast();
   StreamSubscription? _internalNwcNotificationSubscription;
 
-  NwcService({required String nwcUri}) : _nwcUri = nwcUri {
+  NwcService({
+    required String nwcUri,
+    this.enableBolt12Recovery = true,
+  }) : _nwcUri = nwcUri {
     _ndk = Ndk.emptyBootstrapRelaysConfig();
   }
 
@@ -57,7 +82,7 @@ class NwcService implements PaymentService {
       // If issues persist with re-connection, uncommenting the disconnect lines might be necessary.
     }
     try {
-      AppLogger.info('NWC Service: Connecting to $_nwcUri...');
+      AppLogger.info('NWC Service: Connecting to configured wallet...');
       _nwcConnection = await _ndk.nwc.connect(
         _nwcUri,
         doGetInfoMethod: doGetInfoMethod,
@@ -83,6 +108,24 @@ class NwcService implements PaymentService {
         throw Exception(
             'NWC Connection failed: make_hold_invoice, settle_hold_invoice & cancel_hold_invoice permission needed. Make sure to use a NWC wallet provider that supports these permissions like Alby Hub >= 1.18.0');
       }
+
+      _network = _nwcConnection!.info?.network.plaintext ?? 'mainnet';
+      final advertised = <String>{
+        ..._nwcConnection!.permissions,
+        ...?_nwcConnection!.info?.methods,
+      };
+      _isBolt12Available = hasSafeNwcBolt12Capability(
+        recoveryEnabled: enableBolt12Recovery,
+        network: _network,
+        advertisedMethods: advertised,
+      );
+      AppLogger.info(
+        'NWC Service: BOLT12 payouts '
+        '${_isBolt12Available ? 'enabled' : 'disabled'} '
+        '(recovery=${enableBolt12Recovery ? 'enabled' : 'disabled'}, '
+        'network=$_network, pay=${advertised.contains('pay')}, '
+        'list_transactions=${advertised.contains('list_transactions')}).',
+      );
 
       AppLogger.info(
           'NWC Service: Connected successfully to wallet: ${_nwcConnection?.uri.walletPubkey}.');
@@ -145,6 +188,7 @@ class NwcService implements PaymentService {
       await _ndk.nwc.disconnect(_nwcConnection!);
     }
     _nwcConnection = null;
+    _isBolt12Available = false;
     // _ndk.destroy(); // NDK instance might be shared or have a longer lifecycle.
     // Consider if NDK should be destroyed here or managed externally.
     // For now, let's assume NDK is managed at a higher level or NwcService is a singleton.
@@ -178,7 +222,7 @@ class NwcService implements PaymentService {
             'NWC Error creating hold invoice: ${response.errorCode} - ${response.errorMessage}');
       }
       AppLogger.info(
-          'NWC Service: Hold invoice created: ${response.invoice}, paymentHash: ${response.paymentHash}');
+          'NWC Service: Hold invoice created for paymentHash: ${response.paymentHash}');
       return CreateHoldInvoiceResult(
         invoice: response.invoice,
         paymentHash: response.paymentHash, // Prefer response hash if available
@@ -210,8 +254,7 @@ class NwcService implements PaymentService {
     if (_nwcConnection == null) {
       throw Exception('NWC Service: Not connected.');
     }
-    AppLogger.info(
-        'NWC Service: Settling hold invoice with preimage: $preimageHex');
+    AppLogger.info('NWC Service: Settling hold invoice.');
     try {
       final response = await _ndk.nwc.settleHoldInvoice(
         _nwcConnection!,
@@ -267,7 +310,13 @@ class NwcService implements PaymentService {
     if (_nwcConnection == null) {
       throw Exception('NWC Service: Not connected.');
     }
-    AppLogger.info('NWC Service: Paying invoice: $invoice');
+    if (!isBolt11(invoice)) {
+      return PayInvoiceResult(
+        status: PaymentStatus.FAILED,
+        paymentError: 'payInvoice accepts BOLT11 invoices only',
+      );
+    }
+    AppLogger.info('NWC Service: Paying BOLT11 invoice.');
     try {
       final response = await _ndk.nwc.payInvoice(
         _nwcConnection!,
@@ -279,21 +328,26 @@ class NwcService implements PaymentService {
         AppLogger.info(
             'NWC Service: Error paying invoice: ${response.errorCode} - ${response.errorMessage}');
         return PayInvoiceResult(
+          status: PaymentStatus.FAILED,
           paymentError: // Use paymentError
               '${response.errorCode}: ${response.errorMessage ?? "Unknown NWC error"}',
         );
       }
 
       AppLogger.info(
-          'NWC Service: Invoice paid successfully. Preimage: ${response.preimage}, fees: ${response.feesPaid} msat');
+          'NWC Service: Invoice paid successfully; fees: ${response.feesPaid} msat');
       return PayInvoiceResult(
+        status: PaymentStatus.SUCCEEDED,
         paymentPreimage: response.preimage,
         // NWC reports fees_paid in msats; PayInvoiceResult.feeSat is in sats.
         feeSat: (response.feesPaid / 1000).round(),
       );
     } catch (e) {
       AppLogger.info('NWC Service: Exception in payInvoice: $e');
-      return PayInvoiceResult(paymentError: e.toString()); // Use paymentError
+      return PayInvoiceResult(
+        status: PaymentStatus.UNKNOWN,
+        paymentError: e.toString(),
+      );
     }
   }
 
@@ -427,13 +481,13 @@ class NwcService implements PaymentService {
         return null;
       }
 
-      final settled =
-          response.settledAt != null && response.settledAt! > 0;
-      if (settled && response.preimage.isNotEmpty) {
-        AppLogger.info(
-            'NWC Service: reconciliation found SETTLED payment. Preimage: ${response.preimage}');
+      final settled = response.settledAt != null && response.settledAt! > 0;
+      if (settled) {
+        AppLogger.info('NWC Service: reconciliation found SETTLED payment.');
         return PayInvoiceResult(
-          paymentPreimage: response.preimage,
+          status: PaymentStatus.SUCCEEDED,
+          paymentId: response.paymentHash,
+          paymentPreimage: response.preimage.isEmpty ? null : response.preimage,
           // NWC reports fees in msats; PayInvoiceResult.feeSat is in sats.
           feeSat: (response.feesPaid / 1000).round(),
         );
@@ -443,9 +497,223 @@ class NwcService implements PaymentService {
           'NWC Service: reconciliation: invoice not settled (settledAt=${response.settledAt}).');
       return null;
     } catch (e) {
-      AppLogger.info(
-          'NWC Service: Exception in reconcileOutgoingPayment: $e');
+      AppLogger.info('NWC Service: Exception in reconcileOutgoingPayment: $e');
       return null;
     }
+  }
+
+  @override
+  bool get isBolt12Available => _isBolt12Available;
+
+  @override
+  Future<Bolt12OfferInfo> decodeOffer({required String offer}) async {
+    if (!_isBolt12Available) {
+      throw StateError('NWC BOLT12 is not available for this wallet');
+    }
+    return Bolt12OfferParser(expectedNetwork: _network).decode(offer);
+  }
+
+  @override
+  Future<PayOfferResult> payOffer({
+    required String offer,
+    required int amountSat,
+    int? feeLimitSat,
+    required String paymentAttemptId,
+  }) async {
+    final connection = _nwcConnection;
+    if (amountSat <= 0) {
+      return const PayOfferResult(
+        status: PaymentStatus.FAILED,
+        paymentError: 'BOLT12 payment amount must be positive',
+      );
+    }
+    if (connection == null || !_isBolt12Available) {
+      return const PayOfferResult(
+        status: PaymentStatus.FAILED,
+        paymentError: 'NWC BOLT12 is unavailable',
+      );
+    }
+    final info = await decodeOffer(offer: offer);
+    if (info.isExpired) {
+      return const PayOfferResult(
+        status: PaymentStatus.FAILED,
+        paymentError: 'BOLT12 offer is expired',
+      );
+    }
+    final expectedAmountMsat = amountSat * 1000;
+    final paidAmountMsat = info.amountMsat ?? expectedAmountMsat;
+    if (info.amountMsat != null &&
+        (info.amountMsat! < (amountSat - 100) * 1000 ||
+            info.amountMsat! > (amountSat + 10) * 1000)) {
+      return PayOfferResult(
+        status: PaymentStatus.FAILED,
+        paymentError:
+            'BOLT12 offer amount ${info.amountMsat} msat does not match $expectedAmountMsat msat',
+      );
+    }
+
+    final token = paymentAttemptId.replaceAll('-', '');
+    final shortToken = token.length <= 12 ? token : token.substring(0, 12);
+    final createdAt = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+    try {
+      final response = await Nwc321Client(_ndk).pay(
+        connection,
+        payment: bip321ForBolt12Offer(info.normalized),
+        amountMsat: info.isVariableAmount ? expectedAmountMsat : null,
+        maxFeeMsat: feeLimitSat == null ? null : feeLimitSat * 1000,
+        payerNote: 'BitBlik payout $shortToken',
+        metadata: {
+          'bitblik_attempt': paymentAttemptId,
+          'bitblik_offer_id': info.offerId,
+          'bitblik_amount_msat': paidAmountMsat,
+          'bitblik_created_at': createdAt,
+        },
+        timeout: _payInvoiceTimeout,
+      );
+      if (response.instructionType != 'bolt12' ||
+          response.amountMsat != paidAmountMsat) {
+        return PayOfferResult(
+          status: PaymentStatus.UNKNOWN,
+          paymentId: response.transactionId,
+          paymentError: 'Wallet returned inconsistent NWC-321 payment details',
+        );
+      }
+      return _mapNwc321Payment(
+        state: response.state,
+        paymentId: response.transactionId,
+        preimage: response.preimage,
+        payerProof: response.payerProof,
+        feesPaidMsat: response.feesPaidMsat,
+        failureReason: response.failureReason,
+      );
+    } on Nwc321Exception catch (e) {
+      const definitiveCodes = {
+        'BAD_REQUEST',
+        'UNSUPPORTED_PAYMENT_INSTRUCTION',
+        'UNSUPPORTED_NETWORK',
+        'PAYMENT_FAILED',
+        'FEE_LIMIT_EXCEEDED',
+        'NOT_IMPLEMENTED',
+      };
+      return PayOfferResult(
+        status: definitiveCodes.contains(e.code)
+            ? PaymentStatus.FAILED
+            : PaymentStatus.UNKNOWN,
+        paymentError: e.toString(),
+      );
+    } catch (e) {
+      // A timeout is indeterminate: the wallet may have paid after receiving
+      // the request. The durable attempt must reconcile and must not resend.
+      return PayOfferResult(
+        status: PaymentStatus.UNKNOWN,
+        paymentError: e.toString(),
+      );
+    }
+  }
+
+  @override
+  Future<PayOfferResult?> reconcileOutgoingOffer({
+    required String offer,
+    required String paymentAttemptId,
+    String? paymentId,
+  }) async {
+    final connection = _nwcConnection;
+    if (connection == null || !_isBolt12Available) return null;
+    try {
+      final info = await decodeOffer(offer: offer);
+      final now = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+      final earliest = now - const Duration(days: 30).inSeconds;
+      final token = paymentAttemptId.replaceAll('-', '');
+      final shortToken = token.length <= 12 ? token : token.substring(0, 12);
+      final expectedNote = 'BitBlik payout $shortToken';
+      final transactions = <Map<String, dynamic>>[];
+      for (var offset = 0; offset < 1000; offset += 100) {
+        final page = await Nwc321Client(_ndk).listTransactions(
+          connection,
+          from: earliest,
+          limit: 100,
+          offset: offset,
+        );
+        transactions.addAll(page);
+        if (page.length < 100) break;
+      }
+      final matches = transactions.where((transaction) {
+        if (transaction['type'] != 'outgoing') return false;
+        if (transaction['instruction_type']?.toString() != 'bolt12') {
+          return false;
+        }
+        final id = transaction['transaction_id']?.toString();
+        final metadata = transaction['metadata'];
+        final attempt =
+            metadata is Map ? metadata['bitblik_attempt']?.toString() : null;
+        final idMatches = paymentId != null && id == paymentId;
+        final attemptMatches = attempt == paymentAttemptId;
+        if (!idMatches && !attemptMatches) return false;
+
+        if (metadata is Map) {
+          final metadataOfferId = metadata['bitblik_offer_id']?.toString();
+          if (metadataOfferId != null && metadataOfferId != info.offerId) {
+            return false;
+          }
+          final metadataAmount = metadata['bitblik_amount_msat'];
+          final transactionAmount = transaction['amount'];
+          if (metadataAmount is num &&
+              transactionAmount is num &&
+              metadataAmount.toInt() != transactionAmount.toInt()) {
+            return false;
+          }
+        }
+        final transactionAmount = (transaction['amount'] as num?)?.toInt();
+        if (transactionAmount == null || transactionAmount <= 0) return false;
+        if (info.amountMsat != null && transactionAmount != info.amountMsat) {
+          return false;
+        }
+        final createdAt = (transaction['created_at'] as num?)?.toInt();
+        if (createdAt == null ||
+            createdAt < earliest ||
+            createdAt > now + 300) {
+          return false;
+        }
+        final payerNote = transaction['payer_note']?.toString();
+        if (payerNote != null && payerNote != expectedNote) return false;
+        return true;
+      }).toList();
+      if (matches.length != 1) return null;
+      final transaction = matches.single;
+      return _mapNwc321Payment(
+        state: transaction['state']?.toString() ?? 'pending',
+        paymentId: transaction['transaction_id']?.toString() ?? paymentId,
+        preimage: transaction['preimage']?.toString(),
+        payerProof: transaction['payer_proof']?.toString(),
+        feesPaidMsat: (transaction['fees_paid'] as num?)?.toInt(),
+        failureReason: transaction['failure_reason']?.toString(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  PayOfferResult _mapNwc321Payment({
+    required String state,
+    String? paymentId,
+    String? preimage,
+    String? payerProof,
+    int? feesPaidMsat,
+    String? failureReason,
+  }) {
+    final status = switch (state) {
+      'settled' => PaymentStatus.SUCCEEDED,
+      'failed' => PaymentStatus.FAILED,
+      'pending' => PaymentStatus.PENDING,
+      _ => PaymentStatus.UNKNOWN,
+    };
+    return PayOfferResult(
+      status: status,
+      paymentId: paymentId,
+      paymentPreimage: preimage,
+      payerProof: payerProof,
+      feeSat: feesPaidMsat == null ? null : (feesPaidMsat / 1000).round(),
+      paymentError: status == PaymentStatus.FAILED ? failureReason : null,
+    );
   }
 }

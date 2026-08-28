@@ -403,6 +403,7 @@ class _Translations$wallet$pt extends Translations$wallet$en {
 	@override String get title => 'Carteira';
 	@override String get description => 'Faça a gestão das definições da sua carteira Lightning';
 	@override late final _Translations$wallet$missingReceiving$pt missingReceiving = _Translations$wallet$missingReceiving$pt._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$pt incompatibleReceiving = _Translations$wallet$incompatibleReceiving$pt._(_root);
 	@override late final _Translations$wallet$details$pt details = _Translations$wallet$details$pt._(_root);
 }
 
@@ -1687,6 +1688,18 @@ class _Translations$wallet$missingReceiving$pt extends Translations$wallet$missi
 	@override String get title => 'Carteira de receção necessária';
 	@override String get message => 'Nenhuma carteira configurada para receber. Adicione uma nas definições da Carteira para aceitar ofertas.';
 	@override String get openSettings => 'Definições da carteira';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$pt extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Carteira BOLT11 necessária';
+	@override String get message => 'Este coordenador só pode pagar esta oferta através de BOLT11.';
+	@override String get explanation => 'A sua carteira de receção suporta ofertas BOLT12, mas não consegue criar a fatura BOLT11 necessária. Adicione uma carteira de receção compatível com BOLT11.';
 }
 
 // Path: wallet.details
@@ -3739,6 +3752,9 @@ extension on TranslationsPt {
 			'wallet.missingReceiving.title' => 'Carteira de receção necessária',
 			'wallet.missingReceiving.message' => 'Nenhuma carteira configurada para receber. Adicione uma nas definições da Carteira para aceitar ofertas.',
 			'wallet.missingReceiving.openSettings' => 'Definições da carteira',
+			'wallet.incompatibleReceiving.title' => 'Carteira BOLT11 necessária',
+			'wallet.incompatibleReceiving.message' => 'Este coordenador só pode pagar esta oferta através de BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'A sua carteira de receção suporta ofertas BOLT12, mas não consegue criar a fatura BOLT11 necessária. Adicione uma carteira de receção compatível com BOLT11.',
 			'wallet.details.title' => 'Detalhes da carteira',
 			'wallet.details.pendingTitle' => 'Transações pendentes',
 			'wallet.details.finishedTitle' => 'Transações concluídas',

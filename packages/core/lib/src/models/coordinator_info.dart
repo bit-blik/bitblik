@@ -22,6 +22,7 @@ class CoordinatorInfo {
   /// `0` means the premium feature is disabled for this coordinator.
   final double maxPremiumPercent;
   final List<String> currencies;
+  final List<String> outgoingPaymentTypes;
 
   /// The market id this coordinator serves (e.g. `blik`, `mbway`, `sk`). One
   /// deployment = one market. Older coordinators that don't advertise it fall
@@ -60,6 +61,7 @@ class CoordinatorInfo {
     this.takerChargedAutoConfirmSeconds = 3600,
     this.maxPremiumPercent = 0,
     required this.currencies,
+    this.outgoingPaymentTypes = const ['bolt11'],
     required this.paymentSystem,
     required this.nostrNpub,
     this.banks = const [],
@@ -99,11 +101,14 @@ class CoordinatorInfo {
       maxAmountSats: json['max_amount_sats'] as int,
       takerChargedAutoConfirmSeconds:
           (json['taker_charged_auto_confirm_seconds'] as num?)?.toInt() ?? 3600,
-      maxPremiumPercent:
-          (json['max_premium_percent'] as num?)?.toDouble() ?? 0,
+      maxPremiumPercent: (json['max_premium_percent'] as num?)?.toDouble() ?? 0,
       currencies: (json['currencies'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      outgoingPaymentTypes: (json['outgoing_payment_types'] as List?)
+              ?.whereType<String>()
+              .toList() ??
+          const ['bolt11'],
       paymentSystem: (json['payment_system'] as String?) ??
           _defaultMethodId(json['currencies']),
       banks: _parseBanks(json['banks']),
@@ -127,6 +132,7 @@ class CoordinatorInfo {
       'taker_charged_auto_confirm_seconds': takerChargedAutoConfirmSeconds,
       'max_premium_percent': maxPremiumPercent,
       'currencies': currencies,
+      'outgoing_payment_types': outgoingPaymentTypes,
       'payment_system': paymentSystem,
       if (banks.isNotEmpty) 'banks': banks,
       'nostr_npub': nostrNpub,
@@ -189,9 +195,13 @@ class CoordinatorInfo {
           double.tryParse(tags['max_premium_percent'] ?? '0') ?? 0.0,
       makerFee: double.tryParse(tags['maker_fee'] ?? '0') ?? 0.0,
       takerFee: double.tryParse(tags['taker_fee'] ?? '0') ?? 0.0,
-      reservationSeconds:
-          int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
+      reservationSeconds: int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
       currencies: currencies,
+      outgoingPaymentTypes: (tags['outgoing_payment_types'] ?? 'bolt11')
+          .split(',')
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList(),
       paymentSystem:
           _emptyToNull(tags['payment_system']) ?? _defaultMethodId(currencies),
       banks: banks,
@@ -201,8 +211,8 @@ class CoordinatorInfo {
       channelLinks: {
         for (final entry in tags.entries)
           if (entry.key.endsWith('_channel_link') && entry.value.isNotEmpty)
-            entry.key.substring(
-                0, entry.key.length - '_channel_link'.length): entry.value,
+            entry.key.substring(0, entry.key.length - '_channel_link'.length):
+                entry.value,
       },
       bankChannelLinks: bankChannelLinks,
     );
@@ -228,6 +238,7 @@ class CoordinatorInfo {
       ['taker_fee', takerFee.toString()],
       ['reservation_seconds', reservationSeconds.toString()],
       ['currencies', currencies.join(',')],
+      ['outgoing_payment_types', outgoingPaymentTypes.join(',')],
       ['payment_system', paymentSystem],
       if (banks.isNotEmpty) ['banks', banks.join(',')],
       ['version', version ?? ''],
@@ -282,8 +293,7 @@ class CoordinatorInfo {
     return out;
   }
 
-  static String? _emptyToNull(String? v) =>
-      v == null || v.isEmpty ? null : v;
+  static String? _emptyToNull(String? v) => v == null || v.isEmpty ? null : v;
 
   /// Derive a payment method id from a legacy `currencies` value when a
   /// coordinator doesn't advertise `payment_system`. Falls back to [kBlik].

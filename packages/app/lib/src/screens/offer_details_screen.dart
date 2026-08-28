@@ -105,8 +105,17 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
-  void _showReceivingWalletRequired(WidgetRef ref, Translations t) {
-    LightningAddressWidget.showReceivingWalletRequiredDialog(context, ref, t);
+  void _showReceivingWalletRequired(
+    WidgetRef ref,
+    Translations t, {
+    bool requiresBolt11 = false,
+  }) {
+    LightningAddressWidget.showReceivingWalletRequiredDialog(
+      context,
+      ref,
+      t,
+      requiresBolt11: requiresBolt11,
+    );
   }
 
   Future<void> _executeTakeOffer({
@@ -140,15 +149,45 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
       return;
     }
 
+    final coordinator = apiService.getCoordinatorInfoByPubkey(
+      offer.coordinatorPubkey,
+    );
+    final coordinatorSupportsBolt12 =
+        coordinator?.outgoingPaymentTypes.contains('bolt12') ?? false;
+    final ndk = ref.read(ndkProvider);
+    final wallets = ndk?.wallets.getWalletsForUnit('sat');
+    final defaultReceivingWallet = ndk?.wallets.defaultWalletForReceiving;
+    final compatibleWallet =
+        wallets == null
+            ? null
+            : selectReceivingWalletForCoordinator(
+              wallets,
+              coordinatorSupportsBolt12: coordinatorSupportsBolt12,
+              defaultWallet: defaultReceivingWallet,
+            );
+    if (compatibleWallet == null) {
+      setState(() => _isTaking = false);
+      _showReceivingWalletRequired(
+        ref,
+        t,
+        requiresBolt11:
+            !coordinatorSupportsBolt12 &&
+            wallets != null &&
+            hasOnlyBolt12ReceivingWallets(wallets),
+      );
+      return;
+    }
+
     try {
       // Flow-driven markets that capture the payout invoice at reserve (TWINT)
       // generate it here and send it with reserve_offer.
-      final takerInvoice = await reserveTakerInvoiceIfNeeded(ref, offer);
+      final takerPayment = await reserveTakerInvoiceIfNeeded(ref, offer);
       final reservation = await apiService.reserveOffer(
         offer.id,
         publicKey,
         offer.coordinatorPubkey,
-        takerInvoice: takerInvoice,
+        takerInvoice: takerPayment?.bolt11,
+        takerOffer: takerPayment?.bolt12,
       );
       if (!mounted) return;
       if (reservation.reservedAt != null || reservation.offer != null) {

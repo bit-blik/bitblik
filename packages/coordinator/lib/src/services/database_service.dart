@@ -4,6 +4,7 @@ import 'package:postgres/postgres.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
+import '../models/outgoing_payment_attempt.dart';
 
 /// Context for a single offer state transition, recorded in
 /// `offer_state_history` when [DatabaseService.recordStateHistory] is on.
@@ -88,6 +89,7 @@ class DatabaseService {
       await _ensureOffersTable();
       await _ensureLogAuditTable();
       await _ensureOfferStateHistoryTable();
+      await _ensureOutgoingPaymentAttemptsTable();
       await _ensureTelegramOfferMessagesTable();
     } catch (e) {
       AppLogger.severe(
@@ -219,6 +221,223 @@ class DatabaseService {
     ''');
     AppLogger.info('Offers table checked/created.',
         action: 'database.schema.offers.ready');
+  }
+
+  Future<void> _ensureOutgoingPaymentAttemptsTable() async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute('''
+      CREATE TABLE IF NOT EXISTS outgoing_payment_attempts (
+        id UUID PRIMARY KEY,
+        offer_id UUID NOT NULL REFERENCES offers(id) ON DELETE CASCADE,
+        purpose TEXT NOT NULL,
+        generation INTEGER NOT NULL,
+        payment_type TEXT NOT NULL,
+        bolt11_invoice TEXT,
+        bolt12_offer TEXT,
+        expected_amount_sats BIGINT NOT NULL,
+        fee_limit_sats BIGINT,
+        backend_type TEXT NOT NULL,
+        backend_payment_id TEXT,
+        state TEXT NOT NULL,
+        payment_hash TEXT,
+        preimage TEXT,
+        payer_proof TEXT,
+        fee_paid_sats BIGINT,
+        failure_reason TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        settled_at TIMESTAMPTZ,
+        UNIQUE (offer_id, purpose, generation),
+        CHECK (
+          (payment_type = 'bolt11' AND bolt11_invoice IS NOT NULL AND bolt12_offer IS NULL)
+          OR
+          (payment_type = 'bolt12' AND bolt12_offer IS NOT NULL AND bolt11_invoice IS NULL)
+        ),
+        CHECK (state IN ('prepared','submitted','pending','succeeded','failed','unknown'))
+      );
+    ''');
+    await _connection!.execute('''
+      CREATE INDEX IF NOT EXISTS idx_outgoing_attempts_nonterminal
+        ON outgoing_payment_attempts (state, updated_at)
+        WHERE state IN ('prepared','submitted','pending','unknown');
+    ''');
+  }
+
+  Future<OutgoingPaymentAttempt> getOrCreateOutgoingPaymentAttempt({
+    required String id,
+    required String offerId,
+    required String purpose,
+    required OutgoingPaymentType paymentType,
+    required String encoded,
+    required int expectedAmountSats,
+    int? feeLimitSats,
+    required String backendType,
+  }) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final latestResult = await _connection!.query(
+      '''SELECT * FROM outgoing_payment_attempts
+         WHERE offer_id = @offer_id AND purpose = @purpose
+         ORDER BY generation DESC LIMIT 1''',
+      substitutionValues: {'offer_id': offerId, 'purpose': purpose},
+    );
+    var generation = 0;
+    if (latestResult.isNotEmpty) {
+      final latest = _mapRowToOutgoingPaymentAttempt(latestResult.first);
+      if (latest.paymentType == paymentType &&
+          latest.encoded == encoded &&
+          latest.state != OutgoingPaymentAttemptState.failed) {
+        _validateOutgoingPaymentAttempt(
+          latest,
+          expectedAmountSats: expectedAmountSats,
+          feeLimitSats: feeLimitSats,
+          backendType: backendType,
+        );
+        return latest;
+      }
+      if (latest.state != OutgoingPaymentAttemptState.failed) {
+        throw StateError(
+          'Cannot replace a ${latest.state.name} outgoing payment attempt',
+        );
+      }
+      generation = latest.generation + 1;
+    }
+
+    await _connection!.execute(
+      '''INSERT INTO outgoing_payment_attempts (
+           id, offer_id, purpose, generation, payment_type,
+           bolt11_invoice, bolt12_offer, expected_amount_sats, fee_limit_sats,
+           backend_type, state, created_at, updated_at
+         ) VALUES (
+           @id, @offer_id, @purpose, @generation, @payment_type,
+           @bolt11_invoice, @bolt12_offer, @expected_amount_sats, @fee_limit_sats,
+           @backend_type, 'prepared', @now, @now
+         ) ON CONFLICT (offer_id, purpose, generation) DO NOTHING''',
+      substitutionValues: {
+        'id': id,
+        'offer_id': offerId,
+        'purpose': purpose,
+        'generation': generation,
+        'payment_type': paymentType.name,
+        'bolt11_invoice':
+            paymentType == OutgoingPaymentType.bolt11 ? encoded : null,
+        'bolt12_offer':
+            paymentType == OutgoingPaymentType.bolt12 ? encoded : null,
+        'expected_amount_sats': expectedAmountSats,
+        'fee_limit_sats': feeLimitSats,
+        'backend_type': backendType,
+        'now': DateTime.now().toUtc(),
+      },
+    );
+    final result = await _connection!.query(
+      '''SELECT * FROM outgoing_payment_attempts
+         WHERE offer_id = @offer_id AND purpose = @purpose AND generation = @generation''',
+      substitutionValues: {
+        'offer_id': offerId,
+        'purpose': purpose,
+        'generation': generation,
+      },
+    );
+    final attempt = _mapRowToOutgoingPaymentAttempt(result.single);
+    if (attempt.paymentType != paymentType || attempt.encoded != encoded) {
+      throw StateError(
+        'A different outgoing payment attempt won the concurrent write',
+      );
+    }
+    _validateOutgoingPaymentAttempt(
+      attempt,
+      expectedAmountSats: expectedAmountSats,
+      feeLimitSats: feeLimitSats,
+      backendType: backendType,
+    );
+    return attempt;
+  }
+
+  void _validateOutgoingPaymentAttempt(
+    OutgoingPaymentAttempt attempt, {
+    required int expectedAmountSats,
+    required int? feeLimitSats,
+    required String backendType,
+  }) {
+    if (attempt.expectedAmountSats != expectedAmountSats ||
+        attempt.feeLimitSats != feeLimitSats ||
+        attempt.backendType != backendType) {
+      throw StateError(
+        'Outgoing payment attempt parameters do not match persisted state',
+      );
+    }
+  }
+
+  Future<OutgoingPaymentAttempt> updateOutgoingPaymentAttempt(
+    String id, {
+    required OutgoingPaymentAttemptState state,
+    String? backendPaymentId,
+    String? paymentHash,
+    String? preimage,
+    String? payerProof,
+    int? feePaidSats,
+    String? failureReason,
+  }) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final now = DateTime.now().toUtc();
+    final result = await _connection!.query(
+      '''UPDATE outgoing_payment_attempts SET
+           state = @state,
+           backend_payment_id = COALESCE(@backend_payment_id, backend_payment_id),
+           payment_hash = COALESCE(@payment_hash, payment_hash),
+           preimage = COALESCE(@preimage, preimage),
+           payer_proof = COALESCE(@payer_proof, payer_proof),
+           fee_paid_sats = COALESCE(@fee_paid_sats, fee_paid_sats),
+           failure_reason = CASE
+             WHEN @state = 'succeeded' THEN NULL
+             ELSE COALESCE(@failure_reason, failure_reason)
+           END,
+           updated_at = @now,
+           settled_at = CASE WHEN @state = 'succeeded' THEN COALESCE(settled_at, @now) ELSE settled_at END
+         WHERE id = @id RETURNING *''',
+      substitutionValues: {
+        'id': id,
+        'state': state.name,
+        'backend_payment_id': backendPaymentId,
+        'payment_hash': paymentHash,
+        'preimage': preimage,
+        'payer_proof': payerProof,
+        'fee_paid_sats': feePaidSats,
+        'failure_reason': failureReason,
+        'now': now,
+      },
+    );
+    if (result.isEmpty)
+      throw StateError('Outgoing payment attempt $id not found');
+    return _mapRowToOutgoingPaymentAttempt(result.single);
+  }
+
+  OutgoingPaymentAttempt _mapRowToOutgoingPaymentAttempt(
+    PostgreSQLResultRow row,
+  ) {
+    final map = row.toColumnMap();
+    return OutgoingPaymentAttempt(
+      id: map['id'].toString(),
+      offerId: map['offer_id'].toString(),
+      purpose: map['purpose'] as String,
+      generation: map['generation'] as int,
+      paymentType:
+          OutgoingPaymentType.values.byName(map['payment_type'] as String),
+      bolt11Invoice: map['bolt11_invoice'] as String?,
+      bolt12Offer: map['bolt12_offer'] as String?,
+      expectedAmountSats: map['expected_amount_sats'] as int,
+      feeLimitSats: map['fee_limit_sats'] as int?,
+      backendType: map['backend_type'] as String,
+      backendPaymentId: map['backend_payment_id'] as String?,
+      state: OutgoingPaymentAttemptState.values.byName(map['state'] as String),
+      paymentHash: map['payment_hash'] as String?,
+      preimage: map['preimage'] as String?,
+      payerProof: map['payer_proof'] as String?,
+      feePaidSats: map['fee_paid_sats'] as int?,
+      failureReason: map['failure_reason'] as String?,
+      createdAt: map['created_at'] as DateTime,
+      updatedAt: map['updated_at'] as DateTime,
+      settledAt: map['settled_at'] as DateTime?,
+    );
   }
 
   Future<void> _ensureLogAuditTable() async {
@@ -595,7 +814,9 @@ class DatabaseService {
     String? takerPubkey,
     String? code,
     String? takerInvoice,
+    String? takerOffer,
     String? makerRefundInvoice,
+    String? makerRefundOffer,
     DateTime? reservedAt,
     DateTime? codeReceivedAt,
     DateTime? takerChargedAt,
@@ -611,6 +832,12 @@ class DatabaseService {
     StateTransitionMeta? transitionMeta,
   }) async {
     if (_connection == null) throw StateError('Database not connected.');
+    if (takerInvoice != null && takerOffer != null) {
+      throw ArgumentError('Exactly one taker payout instruction is allowed');
+    }
+    if (makerRefundInvoice != null && makerRefundOffer != null) {
+      throw ArgumentError('Exactly one maker refund instruction is allowed');
+    }
     final now = DateTime.now().toUtc();
     final params = <String, dynamic>{
       'id': id,
@@ -635,7 +862,7 @@ class DatabaseService {
         // In maker-provides-code flows (preserveCodeOnClear) the code and its
         // issued-at stamp belong to the maker and survive the clear.
         if (code == null && !preserveCodeOnClear) 'blik_code = NULL',
-        if (takerInvoice == null) 'taker_invoice = NULL',
+        if (takerInvoice == null && takerOffer == null) 'taker_invoice = NULL',
         if (takerInvoiceFees == null) 'taker_invoice_fees = NULL',
         if (codeReceivedAt == null && !preserveCodeOnClear)
           'blik_received_at = NULL',
@@ -649,8 +876,14 @@ class DatabaseService {
     if (takerInvoice != null) {
       put('taker_invoice', 'taker_invoice', takerInvoice);
     }
+    if (takerOffer != null) {
+      put('taker_invoice', 'taker_invoice', takerOffer);
+    }
     if (makerRefundInvoice != null) {
       put('maker_refund_invoice', 'maker_refund_invoice', makerRefundInvoice);
+    }
+    if (makerRefundOffer != null) {
+      put('maker_refund_invoice', 'maker_refund_invoice', makerRefundOffer);
     }
     if (reservedAt != null) {
       put('reserved_at', 'reserved_at', reservedAt.toUtc());
@@ -789,6 +1022,8 @@ class DatabaseService {
       }
     }
 
+    final takerPayment = map['taker_invoice'] as String?;
+    final makerRefundPayment = map['maker_refund_invoice'] as String?;
     return Offer(
       id: map['id'],
       amountSats: map['amount_sats'],
@@ -812,8 +1047,19 @@ class DatabaseService {
       fiatAmount: double.parse(map['fiat_amount']),
       fiatCurrency: map['fiat_currency'] ?? '?',
       takerPubkey: map['taker_pubkey'],
-      takerInvoice: map['taker_invoice'],
-      makerRefundInvoice: map['maker_refund_invoice'],
+      takerInvoice:
+          takerPayment != null && isBolt11(takerPayment) ? takerPayment : null,
+      takerOffer: takerPayment != null && isBolt12Offer(takerPayment)
+          ? takerPayment
+          : null,
+      makerRefundInvoice:
+          makerRefundPayment != null && isBolt11(makerRefundPayment)
+              ? makerRefundPayment
+              : null,
+      makerRefundOffer:
+          makerRefundPayment != null && isBolt12Offer(makerRefundPayment)
+              ? makerRefundPayment
+              : null,
       blikCode: map['blik_code'],
       updatedAt: (map['updated_at'] as DateTime?)?.toLocal(),
       reservedAt: (map['reserved_at'] as DateTime?)?.toLocal(),

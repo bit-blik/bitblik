@@ -270,13 +270,14 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             );
 
                             try {
-                              final takerInvoice =
+                              final takerPayment =
                                   await reserveTakerInvoiceIfNeeded(ref, offer);
                               final reservation = await apiService.reserveOffer(
                                 offer.id,
                                 takerId,
                                 offer.coordinatorPubkey,
-                                takerInvoice: takerInvoice,
+                                takerInvoice: takerPayment?.bolt11,
+                                takerOffer: takerPayment?.bolt12,
                               );
 
                               if (reservation.reservedAt != null ||
@@ -598,7 +599,6 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                   return;
                                                 }
 
-                                                // Check terms acceptance
                                                 final coordinatorInfoAsync = ref
                                                     .read(
                                                       coordinatorInfoByPubkeyProvider(
@@ -608,7 +608,46 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                 final coordInfo =
                                                     coordinatorInfoAsync
                                                         .valueOrNull;
+                                                final coordinatorSupportsBolt12 =
+                                                    coordInfo
+                                                        ?.outgoingPaymentTypes
+                                                        .contains('bolt12') ??
+                                                    false;
+                                                final ndk = ref.read(
+                                                  ndkProvider,
+                                                );
+                                                final wallets = ndk?.wallets
+                                                    .getWalletsForUnit('sat');
+                                                final defaultReceivingWallet =
+                                                    ndk
+                                                        ?.wallets
+                                                        .defaultWalletForReceiving;
+                                                final compatibleWallet =
+                                                    wallets == null
+                                                        ? null
+                                                        : selectReceivingWalletForCoordinator(
+                                                          wallets,
+                                                          coordinatorSupportsBolt12:
+                                                              coordinatorSupportsBolt12,
+                                                          defaultWallet:
+                                                              defaultReceivingWallet,
+                                                        );
+                                                if (compatibleWallet == null) {
+                                                  LightningAddressWidget.showReceivingWalletRequiredDialog(
+                                                    context,
+                                                    ref,
+                                                    t,
+                                                    requiresBolt11:
+                                                        !coordinatorSupportsBolt12 &&
+                                                        wallets != null &&
+                                                        hasOnlyBolt12ReceivingWallets(
+                                                          wallets,
+                                                        ),
+                                                  );
+                                                  return;
+                                                }
 
+                                                // Check terms acceptance
                                                 if (coordInfo
                                                         ?.termsOfUsageNaddr !=
                                                     null) {
@@ -641,7 +680,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     );
 
                                                 try {
-                                                  final takerInvoice =
+                                                  final takerPayment =
                                                       await reserveTakerInvoiceIfNeeded(
                                                         ref,
                                                         offer,
@@ -654,7 +693,11 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                             offer
                                                                 .coordinatorPubkey,
                                                             takerInvoice:
-                                                                takerInvoice,
+                                                                takerPayment
+                                                                    ?.bolt11,
+                                                            takerOffer:
+                                                                takerPayment
+                                                                    ?.bolt12,
                                                           );
 
                                                   if (reservation.reservedAt !=

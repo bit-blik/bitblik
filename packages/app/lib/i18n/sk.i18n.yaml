@@ -1006,6 +1006,10 @@ wallet:
     title: Vyžaduje sa peňaženka na prijímanie
     message: Nie je nakonfigurovaná žiadna peňaženka na prijímanie. Pridaj jednu v nastaveniach peňaženky, aby si mohol prijímať ponuky.
     openSettings: Nastavenia peňaženky
+  incompatibleReceiving:
+    title: Vyžaduje sa BOLT11 peňaženka
+    message: Tento koordinátor môže túto ponuku vyplatiť iba cez BOLT11.
+    explanation: Tvoja prijímacia peňaženka podporuje ponuky BOLT12, ale nevie vytvoriť požadovanú BOLT11 faktúru. Pridaj prijímaciu peňaženku kompatibilnú s BOLT11.
   details:
     title: Detaily peňaženky
     pendingTitle: Čakajúce transakcie

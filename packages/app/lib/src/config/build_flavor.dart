@@ -18,7 +18,8 @@ String buildDefaultPaymentSystemId = 'blik';
 String buildAppName = 'BitBlik';
 
 /// Public icon URL used for the Alby Go NWC connection prompt, per flavor.
-String buildNwcIconUrl = 'https://bitblik.app/assets/assets/logo.png';
+String buildNwcIconUrl =
+    'https://npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3.nsite.lol/app/assets/assets/logo.png';
 
 /// Brand logo embedded inside generated QR codes. Pinned to the build flavor
 /// (not the user's runtime payment-system selection) so a branded build always
@@ -32,9 +33,11 @@ String get buildAppScheme => switch (buildDefaultPaymentSystemId) {
 };
 
 String get buildPrimaryHost => switch (buildDefaultPaymentSystemId) {
-  'mbway' => 'bitway.me',
+  'mbway' =>
+    'npub180nj93uqjvvjksryaxaz8fk9gxwwtg06gxlkd5csrj6rqfg3phhs09n5s9.nsite.lol',
   'twint' => 'bittwint.app',
-  _ => 'bitblik.app',
+  _ =>
+    'npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3.nsite.lol',
 };
 
 String get buildAltStoreSourceUrl =>
@@ -63,9 +66,11 @@ void _apply(String id) {
     _ => 'BitBlik',
   };
   buildNwcIconUrl = switch (id) {
-    'mbway' => 'https://bitblik.app/assets/assets/bitway-icon.png',
+    'mbway' =>
+      'https://npub180nj93uqjvvjksryaxaz8fk9gxwwtg06gxlkd5csrj6rqfg3phhs09n5s9.nsite.lol/app/assets/assets/bitway-icon.png',
     'twint' => 'https://bittwint.app/assets/assets/bittwint-icon.png',
-    _ => 'https://bitblik.app/assets/assets/logo.png',
+    _ =>
+      'https://npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3.nsite.lol/app/assets/assets/logo.png',
   };
   buildQrLogoAsset = switch (id) {
     'mbway' => 'assets/bitway-icon.png',

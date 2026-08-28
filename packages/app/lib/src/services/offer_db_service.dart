@@ -47,6 +47,7 @@ class OfferDbService {
       hold_invoice TEXT,
       taker_lightning_address TEXT,
       taker_invoice TEXT,
+      taker_offer TEXT,
       hold_invoice_preimage TEXT,
       updated_at TEXT,
       maker_confirmed_at TEXT,
@@ -74,7 +75,7 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 13,
+      version: 14,
       onCreate: (db, version) async {
         await db.execute(_createTableSql);
       },
@@ -159,6 +160,13 @@ class OfferDbService {
           final hasColumn = columns.any((col) => col['name'] == 'bank');
           if (!hasColumn) {
             await db.execute('ALTER TABLE $_table ADD COLUMN bank TEXT');
+          }
+        }
+        if (oldVersion < 14) {
+          final columns = await db.rawQuery('PRAGMA table_info($_table)');
+          final hasColumn = columns.any((col) => col['name'] == 'taker_offer');
+          if (!hasColumn) {
+            await db.execute('ALTER TABLE $_table ADD COLUMN taker_offer TEXT');
           }
         }
       },

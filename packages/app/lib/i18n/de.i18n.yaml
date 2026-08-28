@@ -1107,6 +1107,10 @@ wallet:
     title: Empfangs-Wallet erforderlich
     message: Keine Wallet für den Empfang konfiguriert. Füge in den Wallet-Einstellungen eine hinzu, um Angebote anzunehmen.
     openSettings: Wallet-Einstellungen
+  incompatibleReceiving:
+    title: BOLT11-Wallet erforderlich
+    message: Dieser Koordinator kann dieses Angebot nur über BOLT11 auszahlen.
+    explanation: Deine Empfangs-Wallet unterstützt BOLT12-Angebote, kann aber die erforderliche BOLT11-Rechnung nicht erstellen. Füge eine BOLT11-kompatible Empfangs-Wallet hinzu.
   details:
     title: Wallet-Details
     pendingTitle: Ausstehende Transaktionen

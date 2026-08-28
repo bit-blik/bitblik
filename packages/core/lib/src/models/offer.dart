@@ -77,10 +77,12 @@ class Offer {
   // Added fields based on DB schema that might be useful
   final String? takerLightningAddress;
   final String? takerInvoice;
+  final String? takerOffer;
 
   /// Server-only invoice used to resume a coordinator-ruled maker refund.
   /// Intentionally excluded from JSON/RPC serialization.
   final String? makerRefundInvoice;
+  final String? makerRefundOffer;
   final String?
       holdInvoicePreimage; // Might be sensitive, consider if needed on client
   final DateTime? updatedAt;
@@ -191,7 +193,9 @@ class Offer {
     this.holdInvoice,
     this.takerLightningAddress,
     this.takerInvoice,
+    this.takerOffer,
     this.makerRefundInvoice,
+    this.makerRefundOffer,
     this.holdInvoicePreimage,
     this.updatedAt,
     this.makerConfirmedAt,
@@ -208,10 +212,17 @@ class Offer {
     this.paymentSystemId,
     this.bankId,
     this.clientVersion,
-  }) : statusRaw = statusRaw ?? status.name;
+  })  : assert(takerInvoice == null || takerOffer == null),
+        assert(makerRefundInvoice == null || makerRefundOffer == null),
+        statusRaw = statusRaw ?? status.name;
 
   // Factory constructor to create an Offer from JSON data (Map).
   factory Offer.fromJson(Map<String, dynamic> json) {
+    if (json['taker_invoice'] != null && json['taker_offer'] != null) {
+      throw const FormatException(
+        'Offer contains both taker_invoice and taker_offer',
+      );
+    }
     DateTime? parseOptionalDateTime(dynamic value) {
       if (value == null) return null;
       if (value is int) {
@@ -320,6 +331,7 @@ class Offer {
       // Parse additional fields if present in JSON
       takerLightningAddress: json['taker_lightning_address'] as String?,
       takerInvoice: json['taker_invoice'] as String?,
+      takerOffer: json['taker_offer'] as String?,
       holdInvoicePreimage:
           json['hold_invoice_preimage'] as String?, // Be cautious exposing this
       updatedAt: parseOptionalDateTime(json['updated_at']),
@@ -379,6 +391,7 @@ class Offer {
       'hold_invoice': holdInvoice,
       'taker_lightning_address': takerLightningAddress,
       'taker_invoice': takerInvoice,
+      'taker_offer': takerOffer,
       'hold_invoice_preimage': holdInvoicePreimage,
       'updated_at': updatedAt?.toUtc().toIso8601String(),
       'maker_confirmed_at': makerConfirmedAt?.toUtc().toIso8601String(),
@@ -458,6 +471,7 @@ class Offer {
     }
     if (!includeTakerInvoice) {
       json.remove('taker_invoice');
+      json.remove('taker_offer');
     }
     if (!includeHoldInvoicePreimage) {
       json.remove('hold_invoice_preimage');
@@ -489,6 +503,9 @@ class Offer {
     String? holdInvoice,
     String? takerLightningAddress,
     String? takerInvoice,
+    String? takerOffer,
+    String? makerRefundInvoice,
+    String? makerRefundOffer,
     String? holdInvoicePreimage,
     DateTime? updatedAt,
     DateTime? makerConfirmedAt,
@@ -526,7 +543,15 @@ class Offer {
       holdInvoice: holdInvoice ?? this.holdInvoice,
       takerLightningAddress:
           takerLightningAddress ?? this.takerLightningAddress,
-      takerInvoice: takerInvoice ?? this.takerInvoice,
+      takerInvoice:
+          takerOffer != null ? null : takerInvoice ?? this.takerInvoice,
+      takerOffer: takerInvoice != null ? null : takerOffer ?? this.takerOffer,
+      makerRefundInvoice: makerRefundOffer != null
+          ? null
+          : makerRefundInvoice ?? this.makerRefundInvoice,
+      makerRefundOffer: makerRefundInvoice != null
+          ? null
+          : makerRefundOffer ?? this.makerRefundOffer,
       holdInvoicePreimage: holdInvoicePreimage ?? this.holdInvoicePreimage,
       updatedAt: updatedAt ?? this.updatedAt,
       makerConfirmedAt: makerConfirmedAt ?? this.makerConfirmedAt,

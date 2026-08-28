@@ -1106,6 +1106,10 @@ wallet:
     title: Carteira de receção necessária
     message: Nenhuma carteira configurada para receber. Adicione uma nas definições da Carteira para aceitar ofertas.
     openSettings: Definições da carteira
+  incompatibleReceiving:
+    title: Carteira BOLT11 necessária
+    message: Este coordenador só pode pagar esta oferta através de BOLT11.
+    explanation: A sua carteira de receção suporta ofertas BOLT12, mas não consegue criar a fatura BOLT11 necessária. Adicione uma carteira de receção compatível com BOLT11.
   details:
     title: Detalhes da carteira
     pendingTitle: Transações pendentes

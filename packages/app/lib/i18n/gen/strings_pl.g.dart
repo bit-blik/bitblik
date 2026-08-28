@@ -403,6 +403,7 @@ class _Translations$wallet$pl extends Translations$wallet$en {
 	@override String get title => 'Portfel';
 	@override String get description => 'Zarządzaj ustawieniami portfela Lightning';
 	@override late final _Translations$wallet$missingReceiving$pl missingReceiving = _Translations$wallet$missingReceiving$pl._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$pl incompatibleReceiving = _Translations$wallet$incompatibleReceiving$pl._(_root);
 }
 
 // Path: nwc
@@ -1682,6 +1683,18 @@ class _Translations$wallet$missingReceiving$pl extends Translations$wallet$missi
 	@override String get title => 'Wymagany portfel odbiorczy';
 	@override String get message => 'Brak skonfigurowanego portfela do odbierania. Dodaj go w ustawieniach portfela, aby przyjmować oferty.';
 	@override String get openSettings => 'Ustawienia portfela';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$pl extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Wymagany portfel BOLT11';
+	@override String get message => 'Ten koordynator może wypłacić tę ofertę wyłącznie przez BOLT11.';
+	@override String get explanation => 'Twój portfel odbiorczy obsługuje oferty BOLT12, ale nie może utworzyć wymaganej faktury BOLT11. Dodaj portfel odbiorczy zgodny z BOLT11.';
 }
 
 // Path: nwc.labels
@@ -3684,6 +3697,9 @@ extension on TranslationsPl {
 			'wallet.missingReceiving.title' => 'Wymagany portfel odbiorczy',
 			'wallet.missingReceiving.message' => 'Brak skonfigurowanego portfela do odbierania. Dodaj go w ustawieniach portfela, aby przyjmować oferty.',
 			'wallet.missingReceiving.openSettings' => 'Ustawienia portfela',
+			'wallet.incompatibleReceiving.title' => 'Wymagany portfel BOLT11',
+			'wallet.incompatibleReceiving.message' => 'Ten koordynator może wypłacić tę ofertę wyłącznie przez BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'Twój portfel odbiorczy obsługuje oferty BOLT12, ale nie może utworzyć wymaganej faktury BOLT11. Dodaj portfel odbiorczy zgodny z BOLT11.',
 			'nwc.title' => 'Nostr Wallet Connect (NWC)',
 			'nwc.description' => 'Połącz swój portfel Lightning przez NWC',
 			'nwc.labels.connectionString' => 'Ciąg połączenia NWC',
