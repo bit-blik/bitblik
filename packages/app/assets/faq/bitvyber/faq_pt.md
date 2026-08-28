@@ -24,9 +24,9 @@ A Eslováquia é um único mercado (**{app}**) operado por um coordenador, cobri
 Cada banco define a validade de um código de levantamento sem cartão:
 - **Tatra banka: 20 minutos**
 - **Slovenská sporiteľňa: 15 minutos**
-- **VÚB: 3 minutos**
+- **VÚB: 10–60 minutos**, definidos pelo taker ao gerar o código
 
-A janela do VÚB é muito curta; para uma oferta VÚB o taker deve estar já no (ou muito perto de um) multibanco VÚB antes de reservar. A app mostra o tempo restante em contagem decrescente.
+O VÚB é o único banco em que a janela é escolhida pelo taker — de 10 a 60 minutos — ao gerar o código. O BitBlik não sabe que valor foi escolhido, por isso conta a partir do mínimo de 10 minutos. Peçam uma janela maior se o maker tiver mais caminho a fazer. A app mostra o tempo restante em contagem decrescente.
 
 #### Como funciona o escrow?
 
@@ -64,7 +64,7 @@ O maker já bloqueou o seu Bitcoin numa hold invoice **antes** de você submeter
 
 #### E se o código for inválido ou expirar antes de o maker levantar?
 
-Se o maker não conseguir levantar com o código (inválido ou expirado — muito provável com a janela de 3 minutos do VÚB), a troca não pode prosseguir com esse código. O maker marca-o inválido, a oferta é republicada e o taker pode submeter um novo código ou cancelar. Como o código expira depressa, combinem o timing e escolham um banco cujo multibanco o maker alcance rapidamente.
+Se o maker não conseguir levantar com o código (inválido ou expirado), a troca não pode prosseguir com esse código. O maker marca-o inválido, a oferta é republicada e o taker pode submeter um novo código ou cancelar. Como o código expira depressa, combinem o timing e escolham um banco cujo multibanco o maker alcance rapidamente.
 
 #### Quais são os riscos do protocolo?
 

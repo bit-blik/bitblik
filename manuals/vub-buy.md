@@ -21,19 +21,22 @@ your account is debited. (In BitBlik: **taker/buyer**.)
 ### Steps
 1. **BitBlik → VÚB banka** (pick this market on first launch; later in **Settings → Country / Payment System**). **Take** a sell offer with the € amount you want.
    `[APP: offer list, take offer]`
-2. **Wait for the seller to confirm they're at a VÚB ATM.** Only then generate the
-   code — it lives ~3 min.
+2. Agree a **Doba platnosti** with the seller before generating the code — the
+   longer the walk to the ATM, the longer the window they need.
 3. In **VÚB Mobil Banking**:
    1. On the **pre-login** screen tap **„Výber z bankomatu"**, then authenticate.
    2. Select your **card**, enter the **same € amount** as the offer, **confirm**.
-   3. A **6-digit one-time code** appears with a **3-minute** countdown. `[bank: VUB video 1ZscQMZbTME]`
+   3. Set **„Doba platnosti"** — anywhere from **10 to 60 minutes**; BitBlik
+      counts down from **10**, so pick 10 only if the seller is already at the
+      ATM.
+   4. A **6-digit one-time code** appears with that countdown. `[bank: VUB video 1ZscQMZbTME]`
 4. **Immediately enter the code into BitBlik** and submit. `[APP: Enter 6-digit code]`
 5. The seller withdraws the cash (your account debited); you **receive Lightning**.
    Done. `[APP: "Get paid"]`
 
 ### Tips
-- Because of the 3-min window, do steps 3–4 **fast** and only when the seller is
-  ready at the ATM. Max **€500** per code, **5 codes/day**.
+- BitBlik always assumes the **10-minute floor**, so anything you set above it
+  is your own margin. Max **€500** per code, **5 codes/day**.
 - If it expires, generate a new one (counts toward the 5/day limit).
 
 ---
@@ -48,18 +51,20 @@ your account is debited. (In BitBlik: **taker/buyer**.)
 ### Postup
 1. **BitBlik → VÚB banka** (pri prvom spustení vyber tento trh; neskôr v **Settings → Country / Payment System**). **Prijmi** ponuku na predaj so sumou v €, ktorú chceš.
    `[APP: zoznam ponúk, prijať]`
-2. **Počkaj, kým predávajúci potvrdí, že je pri bankomate VÚB.** Až potom generuj
-   kód — platí ~3 min.
+2. S predávajúcim si vopred dohodni **dobu platnosti** — čím ďalej to má
+   k bankomatu, tým dlhšie okno potrebuje.
 3. Vo **VÚB Mobil Banking**:
    1. Na obrazovke **pred prihlásením** ťukni **„Výber z bankomatu"**, over sa.
    2. Zvoľ **kartu**, zadaj **rovnakú sumu v €** ako ponuka, **potvrď**.
-   3. Zobrazí sa **6-miestny jednorazový kód** s **3-minútovým** odpočtom.
+   3. Nastav **„Dobu platnosti"** — od **10 do 60 minút**; BitBlik odpočítava
+      od **10**, takže 10 voľ len vtedy, keď je predávajúci už pri bankomate.
+   4. Zobrazí sa **6-miestny jednorazový kód** s týmto odpočtom.
       `[bank: VÚB video 1ZscQMZbTME]`
 4. **Hneď zadaj kód do BitBliku** a odošli. `[APP: zadanie 6-miestneho kódu]`
 5. Predávajúci vyberie hotovosť (z tvojho účtu sa odpíše); ty **dostaneš
    Lightning**. Hotovo. `[APP: „Get paid"]`
 
 ### Tipy
-- Kvôli 3-min oknu urob kroky 3–4 **rýchlo** a len keď je predávajúci pri
-  bankomate. Max **500 €** na kód, **5 kódov/deň**.
+- BitBlik vždy počíta so **spodnou hranicou 10 minút**, takže čokoľvek nad ňu
+  je tvoja rezerva. Max **500 €** na kód, **5 kódov/deň**.
 - Ak vyprší, vygeneruj nový (počíta sa do limitu 5/deň).

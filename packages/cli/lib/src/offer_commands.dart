@@ -563,7 +563,7 @@ Future<int> _callGetBlikRpc(
     final ps = activePaymentSystem;
     final where = ps.requiresCodeConfirmation ? 'your banking app' : 'the ATM';
     // Resolve validity (and bank name) per offer when we have it — SK banks
-    // differ (Tatra 20 / SLSP 15 / VÚB 3 min); else the market default.
+    // differ (Tatra 20 / SLSP 15 / VÚB 10 min); else the market default.
     final bank = localOffer != null ? bankForOffer(localOffer) : null;
     final mins = localOffer != null
         ? validityForOffer(localOffer).inMinutes

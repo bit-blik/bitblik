@@ -24,9 +24,9 @@ La Slovaquie est un marché unique (**{app}**) exploité par un coordinateur, co
 Chaque banque définit la durée de vie d'un code de retrait sans carte :
 - **Tatra banka : 20 minutes**
 - **Slovenská sporiteľňa : 15 minutes**
-- **VÚB : 3 minutes**
+- **VÚB : 10 à 60 minutes**, choisi par le taker au moment de générer le code
 
-La fenêtre VÚB est très courte ; pour une offre VÚB, le taker devrait déjà être au (ou tout près d'un) distributeur VÚB avant de réserver. L'appli affiche le temps restant en compte à rebours.
+VÚB est la seule banque où le taker choisit la fenêtre — de 10 à 60 minutes — en générant le code. BitBlik ignore la valeur retenue et décompte donc depuis le plancher de 10 minutes. Demandez une fenêtre plus longue si le maker a plus de chemin à faire. L'appli affiche le temps restant en compte à rebours.
 
 #### Comment fonctionne l'escrow ?
 
@@ -64,7 +64,7 @@ Le maker a déjà verrouillé ses Bitcoin dans une hold invoice **avant** votre 
 
 #### Et si le code est invalide ou expire avant le retrait du maker ?
 
-Si le maker ne peut pas retirer avec le code (invalide ou expiré — surtout avec la fenêtre de 3 minutes de VÚB), le trade ne peut pas continuer avec ce code. Le maker le marque invalide, l'offre est de nouveau publiée et le taker peut soumettre un nouveau code ou annuler. Comme le code expire vite, coordonnez le timing et choisissez une banque dont le maker atteint vite le distributeur.
+Si le maker ne peut pas retirer avec le code (invalide ou expiré), le trade ne peut pas continuer avec ce code. Le maker le marque invalide, l'offre est de nouveau publiée et le taker peut soumettre un nouveau code ou annuler. Comme le code expire vite, coordonnez le timing et choisissez une banque dont le maker atteint vite le distributeur.
 
 #### Quels sont les risques du protocole ?
 

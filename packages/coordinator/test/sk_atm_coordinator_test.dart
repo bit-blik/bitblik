@@ -167,7 +167,7 @@ void main() {
 
   // ─── the headline: one flow, four per-bank timeout windows ───────────────
   // A blikReceived offer times out to expiredBlik after exactly its bank's code
-  // validity (Tatra 20 min, SLSP 15 min, VÚB 3 min, Prima banka 30 min), all
+  // validity (Tatra 20 min, SLSP 15 min, VÚB 10 min, Prima banka 30 min), all
   // from `$code_validity` in the single sk_atm.yml.
   group('per-bank code-validity timeout (one flow)', () {
     void runBankScenario(String bank, Duration window) {
@@ -277,8 +277,8 @@ void main() {
       runBankScenario('slsp', const Duration(minutes: 15));
     });
 
-    test('VÚB = 3 min', () {
-      runBankScenario('vub', const Duration(minutes: 3));
+    test('VÚB = 10 min', () {
+      runBankScenario('vub', const Duration(minutes: 10));
     });
 
     test('Prima banka = 30 min', () {

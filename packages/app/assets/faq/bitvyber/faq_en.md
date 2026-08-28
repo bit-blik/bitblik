@@ -24,9 +24,9 @@ Slovakia is a single market (**{app}**) served by one coordinator, covering **Ta
 Each bank sets its own lifetime for a cardless-withdrawal code:
 - **Tatra banka: 20 minutes**
 - **Slovenská sporiteľňa: 15 minutes**
-- **VÚB: 3 minutes**
+- **VÚB: 10–60 minutes**, set by the taker when generating the code
 
-VÚB's window is very short, so for a VÚB offer the taker should already be at (or very close to) a VÚB ATM before reserving. The app shows the remaining time as a countdown.
+VÚB is the one bank where the taker picks the window — anywhere from 10 to 60 minutes — when generating the code. BitBlik cannot see which value they chose, so it counts down from the 10-minute floor. Ask for a longer window if the maker has further to walk. The app shows the remaining time as a countdown.
 
 #### How does the escrow process work?
 
@@ -64,7 +64,7 @@ The Maker has already locked their Bitcoin in a hold invoice **before** you subm
 
 #### What if the code is invalid or expires before the Maker withdraws?
 
-If the Maker cannot withdraw with the code (invalid or expired — most likely with VÚB's 3-minute window), the trade cannot proceed with that code. The Maker marks it invalid, the offer is re-listed, and the Taker may submit a fresh code or cancel. Because the code expires fast, coordinate timing and choose a bank whose ATM the maker can reach quickly.
+If the Maker cannot withdraw with the code (invalid or expired), the trade cannot proceed with that code. The Maker marks it invalid, the offer is re-listed, and the Taker may submit a fresh code or cancel. Because the code expires fast, coordinate timing and choose a bank whose ATM the maker can reach quickly.
 
 #### What are the risks of using this protocol?
 

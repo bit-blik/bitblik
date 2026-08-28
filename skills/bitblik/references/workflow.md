@@ -16,7 +16,7 @@ Full happy path (BLIK example):
 
 **Code validity is per market (and per bank):** BLIK ~120s, MB WAY 30 min,
 TWINT 5 min, Slovak ATM per bank — Tatra banka 20 min, Slovenská sporiteľňa
-15 min, VÚB 3 min, Prima banka 30 min. `get-code` output states the window and (for SK) the bank.
+15 min, VÚB 10 min, Prima banka 30 min. `get-code` output states the window and (for SK) the bank.
 
 ## Offer Status Lifecycle
 
