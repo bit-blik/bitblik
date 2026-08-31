@@ -40,7 +40,9 @@ part 'actions/common/assert_assigned_taker.dart';
 part 'actions/common/cancel_hold_invoice.dart';
 part 'actions/common/cancel_reservation.dart';
 part 'actions/common/clear_taker_fields.dart';
+part 'actions/common/limit_code_attempts.dart';
 part 'actions/common/refund_maker.dart';
+part 'actions/common/reject_reused_code.dart';
 part 'actions/common/require_maker_refund_invoice.dart';
 part 'actions/common/resolve_taker_invoice.dart';
 part 'actions/common/reserve_taker.dart';
@@ -59,6 +61,11 @@ part 'actions/twint/set_new_code.dart';
 
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
+
+// Cap on how many times the maker may mark a submitted code invalid on the
+// same offer before the taker is blocked from re-reserving it (SK ATM: an
+// unbounded submit/invalid loop let the same withdrawal code be resubmitted).
+const int kMaxInvalidCodeAttempts = 3;
 
 /// Bilingual (English/local language) wording used in chat notifications
 /// (Telegram/Matrix/SimpleX/Signal) for new-offer announcements.
@@ -1264,7 +1271,15 @@ class CoordinatorService {
     // The general channel mixes every bank of a multi-bank market, so the bank
     // goes up front: a taker must see whose ATM the code is for without opening
     // the offer. Empty for bank-agnostic markets (BLIK/MB WAY/TWINT).
-    final bank = bankForOffer(offer);
+    //
+    // Resolved through THIS coordinator's own market/instrument, not the
+    // global bankForOffer(offer): offer.paymentSystemId is not a DB column, so
+    // a DB-loaded offer always has it null, and bankForOffer's currency
+    // fallback (paymentSystemForCurrency('EUR')) resolves to the first EUR
+    // market (MB WAY) rather than sk — silently dropping the bank tag for
+    // every re-list notification (see SendOfferNotificationsAction for why
+    // re-lists are now suppressed instead of just mislabeled).
+    final bank = _instrumentForCategory(offer.category).bankById(offer.bankId);
     final bankTag = bank == null ? '' : ' [${bank.label}]';
     final categoryText = _formatCategoryForNotification(offer.category);
     final categorySuffix = categoryText == null ? '' : ', $categoryText';

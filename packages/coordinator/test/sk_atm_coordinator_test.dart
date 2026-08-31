@@ -6,6 +6,7 @@ import 'package:bitblik_coordinator/src/models/create_hold_invoice_result.dart';
 import 'package:bitblik_coordinator/src/models/invoice_status.dart';
 import 'package:bitblik_coordinator/src/models/invoice_update.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
+import 'package:bitblik_coordinator/src/services/database_service.dart';
 import 'package:bitblik_coordinator/src/services/telegram_service.dart';
 import 'package:clock/clock.dart';
 import 'package:fake_async/fake_async.dart';
@@ -48,6 +49,27 @@ class _FakeTelegramService extends TelegramService {
     required int messageId,
   }) async =>
       true;
+}
+
+/// Records every message sent, so a test can assert both the count (was the
+/// offer re-announced?) and the content (does it carry the bank label?).
+class _CountingTelegramService extends TelegramService {
+  final List<String> sentMessages = [];
+
+  _CountingTelegramService()
+      : super(botToken: 'test-bot-token', chatIds: const ['test-chat-id']);
+
+  @override
+  Future<TelegramSendResult> sendMessageDetailed(String message,
+      {List<String>? chatIds}) async {
+    sentMessages.add(message);
+    return const TelegramSendResult(
+      allSucceeded: true,
+      sentMessages: [
+        TelegramSentMessage(chatId: 'test-chat-id', messageId: 1),
+      ],
+    );
+  }
 }
 
 /// Slovak multi-bank ATM market on the generic engine (one `sk_atm` flow serves
@@ -381,6 +403,306 @@ void main() {
 
     test('VÚB offer carries the bank label', () async {
       expect(await notificationForBank('vub'), contains('VÚB'));
+    });
+  });
+
+  // Production evidence: offers 0f4947d6 (995768, 892949, 892949, 441484) and
+  // 44ad1390 (424180, 233602, 233602, 298827) had the SAME 6-digit code
+  // submitted twice, the maker clicking "invalid" up to 4 times per offer.
+  // reject_reused_code and limit_code_attempts close that loop.
+  group('resubmission guards on the invalid-code loop', () {
+    const invoice =
+        'lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3sdqsvfhkcap3xyhx7un8cqzpgxqzjcsp5f8c52y2stc300gl6s4xswtjpc37hrnnr3c9wvtgjfuvqmpm35evq9qyyssqy4lgd8tj637qcjp05rdpxxykjenthxftej7a2zzmwrmrl70fyj9hvj0rewhzj7jfyuwkwcg9g2jpwtk3wkjtwnkdks84hsnu8xps5vsq4gj5hs'; // 1500-sat invoice (15u); offer net = amountSats - takerFees = 1500.
+
+    late MockDatabaseService db;
+    late CoordinatorService svc;
+    late String status;
+    String? blikCode;
+    late List<Map<String, dynamic>> history;
+
+    Offer offer() => Offer(
+          id: 'sk-loop',
+          amountSats: 1550,
+          makerFees: 0,
+          takerFees: 50,
+          status: OfferStatus.unknown,
+          statusRaw: status,
+          fiatAmount: 50,
+          fiatCurrency: 'EUR',
+          category: OfferCategory.atm,
+          paymentSystemId: 'sk',
+          bankId: 'tatrabanka',
+          createdAt: DateTime.now().toUtc(),
+          makerPubkey: maker,
+          coordinatorPubkey: 'coord',
+          takerPubkey: taker,
+          blikCode: blikCode,
+          holdInvoicePaymentHash: 'hash',
+          holdInvoicePreimage: 'preimage',
+        );
+
+    setUp(() async {
+      db = MockDatabaseService();
+      svc = CoordinatorService(
+        db,
+        paymentServiceForTest: MockPaymentService(),
+        clock: const Clock(),
+        telegramServiceForTest: _FakeTelegramService(),
+        paymentSystemIdForTest: 'sk',
+      );
+      await svc.init();
+
+      status = 'reserved';
+      blikCode = null;
+      history = [];
+
+      when(db.getOfferById('sk-loop')).thenAnswer((_) async => offer());
+      when(db.getOfferStateHistory('sk-loop'))
+          .thenAnswer((_) async => List.of(history));
+      when(db.updateOfferRawStatusIfCurrent(
+        any,
+        any,
+        expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+        takerPubkey: anyNamed('takerPubkey'),
+        reservedAt: anyNamed('reservedAt'),
+        takerChargedAt: anyNamed('takerChargedAt'),
+        makerConfirmedAt: anyNamed('makerConfirmedAt'),
+        settledAt: anyNamed('settledAt'),
+        takerPaidAt: anyNamed('takerPaidAt'),
+        takerInvoice: anyNamed('takerInvoice'),
+        code: anyNamed('code'),
+        codeReceivedAt: anyNamed('codeReceivedAt'),
+        disputeAt: anyNamed('disputeAt'),
+        takerFees: anyNamed('takerFees'),
+        takerInvoiceFees: anyNamed('takerInvoiceFees'),
+        failureReason: anyNamed('failureReason'),
+        clearTakerFields: anyNamed('clearTakerFields'),
+        preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
+        transitionMeta: anyNamed('transitionMeta'),
+      )).thenAnswer((inv) async {
+        final expected =
+            inv.namedArguments[const Symbol('expectedCurrentStatuses')]
+                as List<String>?;
+        if (expected != null && !expected.contains(status)) return false;
+        final newStatus = inv.positionalArguments[1] as String;
+        final meta = inv.namedArguments[const Symbol('transitionMeta')]
+            as StateTransitionMeta?;
+        final code = inv.namedArguments[const Symbol('code')] as String?;
+        history.add({
+          'event': meta?.event,
+          'to_state': newStatus,
+          'metadata': meta?.extra,
+        });
+        status = newStatus;
+        if (code != null) blikCode = code;
+        return true;
+      });
+    });
+
+    // reserved -[submit_blik]-> blikReceived -[get_blik]-> blikSentToMaker
+    // -[mark_blik_invalid]-> invalidBlik: one full cycle of the loop.
+    Future<void> loopToInvalidBlik(String code) async {
+      await svc.flow.handleRpc(
+          'submit_blik',
+          {
+            'offer_id': 'sk-loop',
+            'blik_code': code,
+            'taker_invoice': invoice,
+          },
+          taker);
+      await svc.flow.handleRpc('get_blik', {'offer_id': 'sk-loop'}, maker);
+      await svc.flow
+          .handleRpc('mark_blik_invalid', {'offer_id': 'sk-loop'}, maker);
+    }
+
+    test('a resubmitted code is rejected; a fresh one is accepted', () async {
+      await loopToInvalidBlik('111111');
+      expect(status, 'invalidBlik');
+
+      await svc.flow.handleRpc('reserve_offer', {'offer_id': 'sk-loop'}, taker);
+      expect(status, 'reserved');
+
+      await expectLater(
+        svc.flow.handleRpc(
+            'submit_blik',
+            {
+              'offer_id': 'sk-loop',
+              'blik_code': '111111',
+              'taker_invoice': invoice,
+            },
+            taker),
+        throwsA(isA<Exception>().having(
+          (e) => e.toString(),
+          'message',
+          contains('already used for this offer'),
+        )),
+      );
+      expect(status, 'reserved',
+          reason: 'a rejected submit must not advance the offer');
+
+      await svc.flow.handleRpc(
+          'submit_blik',
+          {
+            'offer_id': 'sk-loop',
+            'blik_code': '222222',
+            'taker_invoice': invoice,
+          },
+          taker);
+      expect(status, 'blikReceived');
+    });
+
+    test('a third mark_blik_invalid blocks re-reservation; a second does not',
+        () async {
+      await loopToInvalidBlik('111111'); // invalid #1
+      await svc.flow.handleRpc('reserve_offer', {'offer_id': 'sk-loop'}, taker);
+      expect(status, 'reserved');
+
+      await loopToInvalidBlik('222222'); // invalid #2
+      await svc.flow.handleRpc('reserve_offer', {'offer_id': 'sk-loop'}, taker);
+      expect(status, 'reserved',
+          reason: '2 invalid codes must still allow a re-reservation');
+
+      await loopToInvalidBlik('333333'); // invalid #3
+      await expectLater(
+        svc.flow.handleRpc('reserve_offer', {'offer_id': 'sk-loop'}, taker),
+        throwsA(isA<Exception>().having(
+          (e) => e.toString(),
+          'message',
+          contains('Too many invalid codes'),
+        )),
+      );
+      expect(status, 'invalidBlik',
+          reason: 'the 3rd mark_blik_invalid must block re-reservation');
+    });
+  });
+
+  // ADDENDUM: `funded` re-entries (a cancelled/timed-out reservation reverting
+  // to funded) re-announced the offer as if it were new — 42 times since
+  // 2026-08-10, one messenger message per re-entry, often for an offer that
+  // expired in the same second. The re-entry's notification also lost the
+  // bank label: a DB re-fetch always has paymentSystemId == null (not a DB
+  // column), so the old bankForOffer(offer) fell back to the first EUR
+  // market (MB WAY), which has no `tatrabanka` bank.
+  group('funded re-entry: single notification, label survives a DB re-fetch',
+      () {
+    late MockDatabaseService db;
+    late _CountingTelegramService telegram;
+    late CoordinatorService svc;
+    late String status;
+    late List<Map<String, dynamic>> history;
+
+    Offer offer() => Offer(
+          id: 'sk-relist',
+          amountSats: 148025,
+          makerFees: 0,
+          takerFees: 50,
+          status: OfferStatus.unknown,
+          statusRaw: status,
+          fiatAmount: 100,
+          fiatCurrency: 'EUR',
+          category: OfferCategory.atm,
+          // A real DB-loaded offer always has this null; it's not a DB
+          // column (see coordinator_service.dart, _buildFundedOfferNotification).
+          paymentSystemId: null,
+          bankId: 'tatrabanka',
+          createdAt: DateTime.now().toUtc(),
+          makerPubkey: maker,
+          coordinatorPubkey: 'coord',
+          takerPubkey: taker,
+          holdInvoicePaymentHash: 'hash',
+          holdInvoicePreimage: 'preimage',
+        );
+
+    setUp(() async {
+      db = MockDatabaseService();
+      telegram = _CountingTelegramService();
+      svc = CoordinatorService(
+        db,
+        paymentServiceForTest: MockPaymentService(),
+        clock: const Clock(),
+        telegramServiceForTest: telegram,
+        paymentSystemIdForTest: 'sk',
+      );
+      await svc.init();
+
+      status = 'reserved';
+      history = [];
+
+      when(db.getOfferById('sk-relist')).thenAnswer((_) async => offer());
+      when(db.getOfferStateHistory('sk-relist'))
+          .thenAnswer((_) async => List.of(history));
+      when(db.updateOfferRawStatusIfCurrent(
+        any,
+        any,
+        expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+        takerPubkey: anyNamed('takerPubkey'),
+        reservedAt: anyNamed('reservedAt'),
+        takerChargedAt: anyNamed('takerChargedAt'),
+        makerConfirmedAt: anyNamed('makerConfirmedAt'),
+        settledAt: anyNamed('settledAt'),
+        takerPaidAt: anyNamed('takerPaidAt'),
+        takerInvoice: anyNamed('takerInvoice'),
+        code: anyNamed('code'),
+        codeReceivedAt: anyNamed('codeReceivedAt'),
+        disputeAt: anyNamed('disputeAt'),
+        takerFees: anyNamed('takerFees'),
+        takerInvoiceFees: anyNamed('takerInvoiceFees'),
+        failureReason: anyNamed('failureReason'),
+        clearTakerFields: anyNamed('clearTakerFields'),
+        preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
+        transitionMeta: anyNamed('transitionMeta'),
+      )).thenAnswer((inv) async {
+        final expected =
+            inv.namedArguments[const Symbol('expectedCurrentStatuses')]
+                as List<String>?;
+        if (expected != null && !expected.contains(status)) return false;
+        final newStatus = inv.positionalArguments[1] as String;
+        final meta = inv.namedArguments[const Symbol('transitionMeta')]
+            as StateTransitionMeta?;
+        history.add({
+          'event': meta?.event,
+          'to_state': newStatus,
+          'metadata': meta?.extra,
+        });
+        status = newStatus;
+        return true;
+      });
+    });
+
+    test(
+        'the first funded entry carries the bank label even without paymentSystemId',
+        () async {
+      await svc.flow
+          .handleRpc('cancel_reservation', {'offer_id': 'sk-relist'}, taker);
+      expect(status, 'funded');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(telegram.sentMessages, hasLength(1));
+      expect(telegram.sentMessages.single, contains('[Tatra banka]'));
+    });
+
+    test('a second funded entry (re-list) sends no further notification',
+        () async {
+      await svc.flow
+          .handleRpc('cancel_reservation', {'offer_id': 'sk-relist'}, taker);
+      expect(status, 'funded');
+      await Future<void>.delayed(Duration.zero);
+      expect(telegram.sentMessages, hasLength(1));
+
+      // Taker reserves again and cancels a second time -> a re-list, not a
+      // new offer; the kind-38383 relay event still republishes regardless.
+      await svc.flow
+          .handleRpc('reserve_offer', {'offer_id': 'sk-relist'}, taker);
+      expect(status, 'reserved');
+      await svc.flow
+          .handleRpc('cancel_reservation', {'offer_id': 'sk-relist'}, taker);
+      expect(status, 'funded');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(telegram.sentMessages, hasLength(1),
+          reason: 're-entering funded must not re-announce the offer');
     });
   });
 }
