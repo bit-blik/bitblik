@@ -50,6 +50,11 @@ class ApiServiceNostr {
   /// Fires on every connect/reconnect (boot, network restore, app resume).
   Stream<bool> get relayConnectionState => _nostrService.relayConnectionState;
 
+  Future<void> ensureDmInboxReady() => _nostrService.ensureDmInboxReady();
+
+  Stream<Nip17Message> get dmMessages => _nostrService.dmMessages;
+  List<Nip17Message> get dmMessageSnapshot => _nostrService.dmMessageSnapshot;
+
   Future<Map<String, dynamic>> initiateOfferFiat({
     required double fiatAmount,
     required String fiatCurrency,
@@ -377,6 +382,19 @@ class ApiServiceNostr {
     }
   }
 
+  Future<Offer?> getMyActiveOffer(String coordinatorPubkey) async {
+    try {
+      final result = await _nostrService.getMyActiveOffer(coordinatorPubkey);
+      return result == null ? null : Offer.fromJson(result);
+    } catch (e) {
+      Logger.log.w(
+        () =>
+            'Could not recover active offer from coordinator $coordinatorPubkey: $e',
+      );
+      return null;
+    }
+  }
+
   Future<void> cancelOffer(String offerId, String coordinatorPubkey) async {
     try {
       await _nostrService.cancelOffer(offerId, coordinatorPubkey);
@@ -549,6 +567,11 @@ class ApiServiceNostr {
   /// prefer the registry's `changes` stream to react to updates.
   List<CoordinatorRecord> get discoveredCoordinators =>
       _nostrService.coordinatorRegistry.all;
+
+  /// Every configured coordinator, independent of the currently selected
+  /// payment system. Used solely to recover a missing active offer at boot.
+  List<CoordinatorRecord> get allConfiguredCoordinators =>
+      _nostrService.coordinatorRegistry.allMarkets;
 
   /// Get current relay URLs
   List<String> get relayUrls => _nostrService.relayUrls;

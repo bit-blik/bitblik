@@ -5,12 +5,16 @@ import 'package:ndk/presentation_layer/ndk.dart';
 /// screen so both produce the payout invoice the same way. Throws when no
 /// receiving wallet is configured or the wallet returns no bolt11.
 Future<String> createReceivingInvoice(Ndk ndk, int amountSats) async {
+  // ignore: experimental_member_use
   final wallet = ndk.wallets.defaultWalletForReceiving;
   if (wallet == null) {
     throw Exception('No default receiving wallet configured');
   }
-  final result =
-      await ndk.wallets.receive(walletId: wallet.id, amountSats: amountSats);
+  // ignore: experimental_member_use
+  final result = await ndk.wallets.receive(
+    walletId: wallet.id,
+    amountSats: amountSats,
+  );
   final invoice = extractBolt11Invoice(result);
   if (invoice == null) {
     throw Exception('Unable to generate invoice from receiving wallet');
@@ -24,15 +28,26 @@ String? extractBolt11Invoice(dynamic value) {
   String? normalize(String? raw) {
     if (raw == null) return null;
     final trimmed = raw.trim();
-    final withoutPrefix = trimmed.toLowerCase().startsWith('lightning:')
-        ? trimmed.substring('lightning:'.length).trim()
-        : trimmed;
-    return withoutPrefix.toLowerCase().startsWith('lnbc') ? withoutPrefix : null;
+    final withoutPrefix =
+        trimmed.toLowerCase().startsWith('lightning:')
+            ? trimmed.substring('lightning:'.length).trim()
+            : trimmed;
+    final lower = withoutPrefix.toLowerCase();
+    return lower.startsWith('lnbc') ||
+            lower.startsWith('lntb') ||
+            lower.startsWith('lnbcrt')
+        ? withoutPrefix
+        : null;
   }
 
   if (value is String) return normalize(value);
   if (value is Map) {
-    for (final key in const ['bolt11', 'invoice', 'payment_request', 'request']) {
+    for (final key in const [
+      'bolt11',
+      'invoice',
+      'payment_request',
+      'request',
+    ]) {
       final candidate = value[key];
       if (candidate is String) {
         final normalized = normalize(candidate);

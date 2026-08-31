@@ -166,6 +166,7 @@ offers:
     invalidBlik: "${code} Non Valido"
     conflict: "Conflitto"
     dispute: "Disputa"
+    refundingMaker: "Rimborso del maker"
     makerConfirmed: "Confermata"
     settled: "Conclusa"
     payingTaker: "Pagamento wTaker"
@@ -354,7 +355,54 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  legacyChannel: "Canale di compatibilità NIP-04 legacy"
+  privateConversation: "Conversazione privata con il coordinatore"
+  privacyNotice: "Questo è un canale NIP-17 privato. Messaggi e allegati non autorizzano pagamenti e non modificano lo stato dell’offerta."
+  noMessages: "Ancora nessun messaggio."
+  replyHint: "Rispondi qui"
+  readOnly: "La cronologia di questa controversia risolta è in sola lettura."
+  tooltips:
+    refresh: "Aggiorna messaggi"
+    attachEvidence: "Allega prova di pagamento"
+    send: "Invia messaggio"
+  errors:
+    accountNotReady: "La messaggistica privata sarà disponibile quando il tuo account Nostr sarà pronto."
+    subscriptionFailed: "Connessione ai messaggi privati non riuscita. Aggiorna la conversazione."
+    decryptFailed: "Non è stato possibile decifrare un messaggio privato."
+    operationFailed: "L’operazione di messaggistica privata non è riuscita. Riprova."
+    nostrNotInitialized: "Nostr non è inizializzato."
+    attachmentsRequireNip17: "Gli allegati sono disponibili solo nel canale NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "Il servizio wallet non è disponibile."
+    noBolt11: "Il wallet non ha restituito una fattura BOLT11."
+
 maker:
+  refundInvoice:
+    title: "Il coordinatore ha deciso a tuo favore"
+    instructions: "Scegli un wallet di ricezione o incolla una fattura Lightning di esattamente ${amount} per il rimborso."
+    invoiceLabel: "Fattura di rimborso con importo esatto"
+    submit: "Invia fattura di rimborso"
+    addWallet: "Aggiungi un nuovo wallet"
+    noReceivingWallet: "Non è configurato alcun wallet di ricezione. Aggiungine uno o incolla una fattura da un altro wallet."
+    paymentFailed: "Il precedente tentativo di rimborso non è riuscito. Scegli un altro wallet o invia una nuova fattura."
+    submitFailed: "Impossibile inviare la fattura di rimborso: ${details}"
+    errors:
+      backendUnavailable: "Il servizio di pagamento Lightning non è disponibile."
+      missing: "Inserisci una fattura di rimborso."
+      invalid: "Inserisci una fattura di rimborso BOLT11 valida."
+      wrongNetwork: "La fattura di rimborso appartiene alla rete Lightning errata."
+      wrongAmount: "La fattura di rimborso deve contenere l’importo esatto del rimborso."
+      invalidExpiry: "La fattura di rimborso ha una scadenza non valida."
+      futureTimestamp: "La data della fattura di rimborso è nel futuro."
+      expired: "La fattura di rimborso è scaduta. Generane una nuova."
+      invalidPaymentHash: "La fattura di rimborso non contiene un hash di pagamento valido."
+      reusedInvoice: "Usa una nuova fattura; la fattura dell’offerta non può ricevere il rimborso."
+      unsupportedNetwork: "Questa rete Lightning non è supportata."
+      unknown: "Controlla la fattura e riprova."
+
   roleSelection:
     button: PAGA con Lightning
 

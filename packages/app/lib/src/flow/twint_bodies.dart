@@ -11,12 +11,11 @@ import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart'
     show
         activeOfferProvider,
-        coordinatorInfoByPubkeyProvider,
         initializedApiServiceProvider,
         selectedPaymentSystemProvider;
 import '../screens/maker_flow/twint_code_scanner_screen.dart';
 import '../utils/offer_status_label.dart' show offerCodeLabel;
-import '../widgets/coordinator_nostr_contact.dart';
+import '../widgets/dispute_conversation_card.dart';
 import '../widgets/maker_waiting_body.dart';
 import '../widgets/progress_indicators.dart' show CircularCountdownTimer;
 import 'flow_actions_bar.dart';
@@ -1523,10 +1522,6 @@ final FlowBody twintDisputeBody =
     (context, ref, offer, engine, role) {
   final t = Translations.of(context);
   final codeLabel = offerCodeLabel(offer);
-  final coordNpub = ref
-      .watch(coordinatorInfoByPubkeyProvider(offer.coordinatorPubkey))
-      .valueOrNull
-      ?.nostrNpub;
   final isMaker = role == FlowActor.maker;
   return _titled(
     context,
@@ -1542,7 +1537,7 @@ final FlowBody twintDisputeBody =
       ),
       const SizedBox(height: 12),
       Text(_amount(offer), style: Theme.of(context).textTheme.titleLarge),
-      CoordinatorNostrContactCard(npub: coordNpub),
+      DisputeConversationCard(offer: offer),
     ],
   );
 };

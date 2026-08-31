@@ -52,6 +52,7 @@ part 'actions/common/stamp_maker_confirmed_at.dart';
 part 'actions/common/stamp_reserved_at.dart';
 part 'actions/common/stamp_taker_charged_at.dart';
 part 'actions/common/update_taker_invoice.dart';
+part 'actions/common/update_maker_refund_invoice.dart';
 part 'actions/common/validate_code.dart';
 part 'actions/twint/notify_maker_of_charge.dart';
 part 'actions/twint/send_twint_code_to_taker.dart';
@@ -115,6 +116,7 @@ class CoordinatorService {
   final http.Client _httpClient; // Added for testable HTTP calls
   late DotEnv _env;
   NostrService? _nostrService; // Nostr service for publishing events
+  final String? _coordinatorPubkeyForTest;
 
   matrix.Client? _matrixClient; // Matrix client instance
   TelegramService? _telegramService; // Telegram service for notifications
@@ -508,6 +510,10 @@ class CoordinatorService {
   late final double _takerFeePercentage;
   late final int _pendingOfferTimeoutSeconds;
 
+  /// Lightning chain accepted for payout invoices. BOLT11 uses the same
+  /// `lntb` prefix for testnet and signet.
+  late final String _lightningNetwork;
+
   late final _simplexGroup;
   late final _simplexChatExec;
   late final _signalCliExec;
@@ -521,11 +527,13 @@ class CoordinatorService {
       NostrService? nostrService,
       TelegramService? telegramServiceForTest,
       String? paymentSystemIdForTest,
+      String? coordinatorPubkeyForTest,
       FlowEngine? flowEngineForTest,
       PaymentBackendConnector? paymentBackendConnectorForTest})
       : _clock = clock ?? const Clock(),
         _httpClient = httpClient ?? http.Client(),
         _nostrService = nostrService,
+        _coordinatorPubkeyForTest = coordinatorPubkeyForTest,
         _paymentSystemIdOverride = paymentSystemIdForTest,
         _flowEngineOverride = flowEngineForTest {
     _connectPaymentBackend =
@@ -633,6 +641,12 @@ class CoordinatorService {
     _pendingOfferTimeoutSeconds =
         int.tryParse(_env['PENDING_OFFER_TIMEOUT_SECONDS'] ?? '') ??
             26 * 60 * 60;
+    _lightningNetwork =
+        (_env['LIGHTNING_NETWORK'] ?? 'mainnet').trim().toLowerCase();
+    if (!const {'mainnet', 'testnet', 'signet', 'regtest'}
+        .contains(_lightningNetwork)) {
+      throw StateError('Unsupported LIGHTNING_NETWORK "$_lightningNetwork".');
+    }
 
     // Per-bank notification targets (bank-scoped markets, e.g. SK). A bank-scoped
     // offer notifies the general channel AND the offer bank's channel.
@@ -882,8 +896,7 @@ class CoordinatorService {
     _backendRetryTimer?.cancel();
     _backendRetryTimer = null;
     _backendRetryDelay = _backendRetryFirstDelay;
-    AppLogger.info(
-        'Payment backend recovered: now on $_paymentBackendType. '
+    AppLogger.info('Payment backend recovered: now on $_paymentBackendType. '
         'Hold invoices work again.');
     return true;
   }
@@ -1437,6 +1450,78 @@ class CoordinatorService {
     }
   }
 
+  ({String invoice, String paymentHash, int amountSats})
+      _validateMakerRefundInvoice(Offer offer, String invoice) {
+    if (_paymentBackend == null) {
+      throw Exception('No Lightning payment backend is available.');
+    }
+
+    final trimmed = invoice.trim();
+    if (trimmed.isEmpty) {
+      throw Exception('Missing maker refund invoice.');
+    }
+
+    late final Bolt11PaymentRequest req;
+    try {
+      req = Bolt11PaymentRequest(trimmed);
+    } catch (_) {
+      throw Exception('Invalid BOLT11 maker refund invoice.');
+    }
+
+    final expectedPrefix = switch (_lightningNetwork) {
+      'mainnet' => PayRequestPrefix.lnbc,
+      'regtest' => PayRequestPrefix.lnbcrt,
+      'testnet' || 'signet' => PayRequestPrefix.lntb,
+      _ => throw StateError('Unsupported Lightning network.'),
+    };
+    if (req.prefix != expectedPrefix) {
+      throw Exception(
+          'Maker refund invoice is for ${req.prefix.name}, not $_lightningNetwork.');
+    }
+
+    final amountSats =
+        (req.amount * Decimal.fromInt(100000000)).toBigInt().toInt();
+    final expectedSats = offer.amountSats + offer.makerFees;
+    if (amountSats != expectedSats) {
+      throw Exception('Maker refund invoice must be exactly $expectedSats sats '
+          '(received $amountSats sats).');
+    }
+
+    var expirySeconds = 3600;
+    String? paymentHash;
+    for (final tag in req.tags) {
+      if (tag.type == 'expiry' && tag.data is num) {
+        expirySeconds = (tag.data as num).toInt();
+      } else if (tag.type == 'payment_hash' && tag.data is String) {
+        paymentHash = (tag.data as String).toLowerCase();
+      }
+    }
+    if (expirySeconds <= 0) {
+      throw Exception('Maker refund invoice has an invalid expiry.');
+    }
+    final nowSeconds = _clock.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+    final createdSeconds = req.timestamp.toInt();
+    if (createdSeconds > nowSeconds + 300) {
+      throw Exception('Maker refund invoice timestamp is in the future.');
+    }
+    if (nowSeconds >= createdSeconds + expirySeconds) {
+      throw Exception('Maker refund invoice has expired.');
+    }
+    if (paymentHash == null ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(paymentHash)) {
+      throw Exception('Maker refund invoice has no valid payment hash.');
+    }
+    if (paymentHash == offer.holdInvoicePaymentHash?.toLowerCase()) {
+      throw Exception('Maker refund invoice reuses the offer hold invoice.');
+    }
+
+    return (
+      invoice: trimmed,
+      paymentHash: paymentHash,
+      amountSats: amountSats,
+    );
+  }
+
   /// Status-write-free taker payment primitive: attempts the Lightning payment
   /// and, on a reported failure/exception, reconciles (NWC pay_invoice is not
   /// idempotent) before declaring failure. Performs NO DB writes/publishes so it
@@ -1959,6 +2044,30 @@ class CoordinatorService {
     // AppLogger.info('Fetching offer by ID: $offerId', offerId: offerId);
     return await _dbService.getOfferById(offerId);
   }
+
+  Future<List<Offer>> getDisputedOffers({
+    int limit = 25,
+    DateTime? beforeDisputeAt,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
+  }) =>
+      _dbService.getDisputedOffers(
+        limit: limit,
+        beforeDisputeAt: beforeDisputeAt,
+        beforeCreatedAt: beforeCreatedAt,
+        beforeId: beforeId,
+      );
+
+  ({int makerRefundSats, int takerPayoutSats}) disputeDecisionAmounts(
+    Offer offer,
+  ) =>
+      (
+        makerRefundSats: offer.amountSats + offer.makerFees,
+        takerPayoutSats: _expectedTakerNetAmountSats(offer),
+      );
+
+  Future<List<Map<String, dynamic>>> getOfferStateHistory(String offerId) =>
+      _dbService.getOfferStateHistory(offerId);
 
   Future<Offer?> getOfferDetailsForParticipant(
     String userPubkey, {

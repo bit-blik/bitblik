@@ -9,6 +9,7 @@ import 'package:bitblik_core/core.dart';
 import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../widgets/coordinator_nostr_contact.dart';
+import '../../widgets/dispute_conversation_card.dart';
 
 class TakerConflictScreen extends ConsumerStatefulWidget {
   final String offerId;
@@ -75,7 +76,10 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            CoordinatorNostrContactCard(npub: coordNpub),
+            if (offer?.isDispute == true)
+              DisputeConversationCard(offer: offer!)
+            else
+              CoordinatorNostrContactCard(npub: coordNpub),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {

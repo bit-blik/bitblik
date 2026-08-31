@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:bitblik_core/core.dart';
 import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
-import '../../widgets/coordinator_nostr_contact.dart';
+import '../../widgets/dispute_conversation_card.dart';
 
 class MakerConflictScreen extends ConsumerStatefulWidget {
   final Offer offer;
@@ -178,11 +178,6 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(isLoadingProvider);
-    final coordInfoAsync = ref.watch(
-      coordinatorInfoByPubkeyProvider(widget.offer.coordinatorPubkey),
-    );
-    final coordNpub = coordInfoAsync.valueOrNull?.nostrNpub;
-
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -212,7 +207,15 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
             if (isLoading)
               const CircularProgressIndicator()
             else if (_isDisputeOpened || widget.offer.isDispute) ...[
-              CoordinatorNostrContactCard(npub: coordNpub),
+              DisputeConversationCard(
+                offer:
+                    widget.offer.isDispute
+                        ? widget.offer
+                        : widget.offer.copyWith(
+                          status: OfferStatus.dispute,
+                          statusRaw: OfferStatus.dispute.name,
+                        ),
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => context.go('/'),

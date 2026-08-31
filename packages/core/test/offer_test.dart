@@ -5,6 +5,27 @@ import 'package:ndk/ndk.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('Offer dispute states', () {
+    test('refunding maker remains an active dispute', () {
+      final offer = Offer.fromJson({
+        'id': 'offer-refund-invoice',
+        'amount_sats': 1000,
+        'maker_fees': 10,
+        'fiat_amount': 12.5,
+        'fiat_currency': 'PLN',
+        'status': OfferStatus.refundingMaker.name,
+        'created_at': DateTime.utc(2026, 1, 2).toIso8601String(),
+        'maker_pubkey': 'maker-pubkey',
+        'coordinator_pubkey': 'coordinator-pubkey',
+      });
+
+      expect(offer.status, OfferStatus.refundingMaker);
+      expect(offer.statusRaw, 'refundingMaker');
+      expect(offer.isDispute, isTrue);
+      expect(offer.toJson()['status'], 'refundingMaker');
+    });
+  });
+
   group('Offer category', () {
     test('json roundtrip preserves category', () {
       final offer = Offer(

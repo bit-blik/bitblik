@@ -14,6 +14,8 @@ import '../screens/maker_flow/maker_invalid_blik_screen.dart'
     show MakerInvalidBlikScreen;
 import '../screens/maker_flow/maker_pay_invoice_screen.dart'
     show MakerPayInvoiceScreen;
+import '../screens/maker_flow/maker_refund_invoice_required_screen.dart'
+    show MakerRefundInvoiceRequiredScreen;
 import '../screens/maker_flow/maker_success_screen.dart'
     show MakerSuccessScreen;
 import '../screens/maker_flow/maker_wait_for_blik_screen.dart'
@@ -130,6 +132,20 @@ final Map<String, Map<FlowActor, FlowBody>> _payoutTailBodies = {
   },
 };
 
+/// Dispute states shared by every payment-method flow.
+final Map<String, Map<FlowActor, FlowBody>> _disputeBodies = {
+  'dispute': {
+    FlowActor.maker: twintDisputeBody,
+    FlowActor.taker: twintDisputeBody,
+  },
+  'refundingMaker': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerRefundInvoiceRequiredScreen(offer: offer),
+    FlowActor.taker: twintDisputeBody,
+  },
+};
+
 /// BLIK and MB WAY share the established code screen set as flow bodies — mbway.yml
 /// mirrors blik.yml's state names, and both use the same code-based screens.
 /// The screens' internal status navigation routes back through [flowRoute], so
@@ -210,10 +226,7 @@ final Map<String, Map<FlowActor, FlowBody>> _codeFlowBodies = {
   // Payout tail (makerConfirmed, settled, payingTaker, takerPaid,
   // takerPaymentFailed) is shared across every flow.
   ..._payoutTailBodies,
-  'dispute': {
-    FlowActor.maker: twintDisputeBody,
-    FlowActor.taker: twintDisputeBody,
-  },
+  ..._disputeBodies,
   // cancelled / expired terminals fall through to [genericFlowBody].
 };
 
@@ -239,10 +252,7 @@ final Map<String, Map<String, Map<FlowActor, FlowBody>>> _flowBodies = {
       FlowActor.taker: twintTakerWaitConfirmBody,
     },
     'invalidTwint': {FlowActor.maker: twintMakerReCodeBody},
-    'dispute': {
-      FlowActor.maker: twintDisputeBody,
-      FlowActor.taker: twintDisputeBody,
-    },
+    ..._disputeBodies,
     'expiredTwint': {
       FlowActor.maker: twintMakerExpiredBody,
       FlowActor.taker: twintTakerExpiredBody,

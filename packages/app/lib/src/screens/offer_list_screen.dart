@@ -494,6 +494,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                   OfferStatus.conflict,
                   OfferStatus.invalidBlik,
                   OfferStatus.dispute,
+                  OfferStatus.refundingMaker,
                 ];
                 // Only finished offers for the payment system selected in
                 // settings (filters the coordinator dropdown too, since it is

@@ -514,8 +514,40 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// [_listenForRelayConnectivity]) so it never runs against a connection that
   /// isn't up yet (the boot-time timeout that used to strand offers).
   Future<void> _loadActiveOffer() async {
+    await _ref.read(publicKeyProvider.future);
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
     state = await OfferDbService().getActiveOffer(userPubkey: myPubkey);
+    if (state != null) return;
+
+    // Recover a signed user's current offer when local desktop storage is
+    // empty. A dispute is included in the coordinator's active-offer query.
+    ApiServiceNostr apiService;
+    try {
+      apiService = await _ref.read(initializedApiServiceProvider.future);
+    } catch (error) {
+      Logger.log.w(
+        () =>
+            '[ActiveOfferNotifier] cannot recover a missing local offer: $error',
+      );
+      return;
+    }
+    for (final coordinator in apiService.allConfiguredCoordinators) {
+      if (!coordinator.enabled) continue;
+      final recovered = await apiService.getMyActiveOffer(
+        coordinator.pubkeyHex,
+      );
+      if (recovered == null ||
+          OfferDbService.terminalStatuses.contains(recovered.status)) {
+        continue;
+      }
+      await OfferDbService().upsertOffer(recovered);
+      state = recovered;
+      Logger.log.i(
+        () =>
+            '[ActiveOfferNotifier] recovered active offer ${recovered.id} (${recovered.statusRaw}) from ${coordinator.pubkeyHex}',
+      );
+      return;
+    }
   }
 
   /// Reconcile local offers against the coordinator on every relay
@@ -596,14 +628,14 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         );
 
         if (remote == null) {
-          if (_isTakerOnlyOfferForUser(localOffer, myPubkey)) {
-            Logger.log.i(
-              () =>
-                  '[ActiveOfferNotifier] deleting stale taker offer ${localOffer.id} (${localOffer.status.name}); coordinator no longer reports user participation',
-            );
-            await db.deleteOfferById(localOffer.id);
-            changed = true;
-          }
+          // An empty response is not authoritative proof that a local offer
+          // ended: relays can serve a partial/stale response and the offer may
+          // be in a coordinator-only state such as `dispute`. Keep the local
+          // history until an explicit terminal state is received.
+          Logger.log.w(
+            () =>
+                '[ActiveOfferNotifier] coordinator returned no details for tracked offer ${localOffer.id}; preserving local ${localOffer.statusRaw}',
+          );
           continue;
         }
 
@@ -673,26 +705,13 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       }
 
       if (remote == null) {
-        if (_isTakerOnlyOfferForUser(localOffer, myPubkey)) {
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] coordinator no longer reports taker-owned offer ${localOffer.id}; deleting local row',
-          );
-          await OfferDbService().deleteOfferById(localOffer.id);
-          if (state?.id == localOffer.id) {
-            await _promoteMostRecentActiveOffer();
-          }
-        } else {
-          // Coordinator has no active offer for this user — treat as cancelled.
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] coordinator reports no active offer; marking local ${localOffer.id} cancelled',
-          );
-          final cancelled = localOffer.copyWith(status: OfferStatus.cancelled);
-          await OfferDbService().upsertOffer(cancelled);
-          // Only clear if this offer is still the in-memory active one.
-          if (state?.id == localOffer.id) state = null;
-        }
+        // Never clear a local offer based on absence alone. In particular, a
+        // dispute must survive restart even if an RPC response is temporarily
+        // empty or stale. Only an explicit terminal state may clear it.
+        Logger.log.w(
+          () =>
+              '[ActiveOfferNotifier] coordinator returned no details for active offer ${localOffer.id}; preserving local ${localOffer.statusRaw}',
+        );
         return;
       }
 
@@ -729,13 +748,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                   remote['payment_hash']?.toString());
 
       if (!sameOffer) {
-        Logger.log.i(
+        Logger.log.w(
           () =>
-              '[ActiveOfferNotifier] coordinator active offer ($remoteId) differs from local (${localOffer.id}); marking local cancelled',
+              '[ActiveOfferNotifier] coordinator returned different offer ($remoteId) for local ${localOffer.id}; preserving local offer pending a definitive update',
         );
-        final cancelled = localOffer.copyWith(status: OfferStatus.cancelled);
-        await OfferDbService().upsertOffer(cancelled);
-        if (state?.id == localOffer.id) state = null;
         return;
       }
 

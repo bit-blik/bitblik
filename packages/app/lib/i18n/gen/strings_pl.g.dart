@@ -47,6 +47,8 @@ class TranslationsPl extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$reservations$pl reservations = _Translations$reservations$pl._(_root);
 	@override late final _Translations$exchange$pl exchange = _Translations$exchange$pl._(_root);
 	@override late final _Translations$coordinator$pl coordinator = _Translations$coordinator$pl._(_root);
+	@override late final _Translations$disputeChat$pl disputeChat = _Translations$disputeChat$pl._(_root);
+	@override late final _Translations$receivingInvoice$pl receivingInvoice = _Translations$receivingInvoice$pl._(_root);
 	@override late final _Translations$maker$pl maker = _Translations$maker$pl._(_root);
 	@override late final _Translations$taker$pl taker = _Translations$taker$pl._(_root);
 	@override late final _Translations$twint$pl twint = _Translations$twint$pl._(_root);
@@ -182,6 +184,33 @@ class _Translations$coordinator$pl extends Translations$coordinator$en {
 	@override late final _Translations$coordinator$management$pl management = _Translations$coordinator$management$pl._(_root);
 }
 
+// Path: disputeChat
+class _Translations$disputeChat$pl extends Translations$disputeChat$en {
+	_Translations$disputeChat$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get legacyChannel => 'Starszy kanał zgodności NIP-04';
+	@override String get privateConversation => 'Prywatna rozmowa z koordynatorem';
+	@override String get privacyNotice => 'To prywatny kanał NIP-17. Wiadomości i załączniki nie autoryzują płatności ani nie zmieniają stanu oferty.';
+	@override String get noMessages => 'Brak wiadomości.';
+	@override String get replyHint => 'Odpowiedz tutaj';
+	@override String get readOnly => 'Historia tego rozstrzygniętego sporu jest tylko do odczytu.';
+	@override late final _Translations$disputeChat$tooltips$pl tooltips = _Translations$disputeChat$tooltips$pl._(_root);
+	@override late final _Translations$disputeChat$errors$pl errors = _Translations$disputeChat$errors$pl._(_root);
+}
+
+// Path: receivingInvoice
+class _Translations$receivingInvoice$pl extends Translations$receivingInvoice$en {
+	_Translations$receivingInvoice$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$receivingInvoice$errors$pl errors = _Translations$receivingInvoice$errors$pl._(_root);
+}
+
 // Path: maker
 class _Translations$maker$pl extends Translations$maker$en {
 	_Translations$maker$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -189,6 +218,7 @@ class _Translations$maker$pl extends Translations$maker$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$maker$refundInvoice$pl refundInvoice = _Translations$maker$refundInvoice$pl._(_root);
 	@override late final _Translations$maker$roleSelection$pl roleSelection = _Translations$maker$roleSelection$pl._(_root);
 	@override late final _Translations$maker$amountForm$pl amountForm = _Translations$maker$amountForm$pl._(_root);
 	@override late final _Translations$maker$payInvoice$pl payInvoice = _Translations$maker$payInvoice$pl._(_root);
@@ -748,6 +778,7 @@ class _Translations$offers$status$pl extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => 'Nieprawidłowy ${code}';
 	@override String get conflict => 'Konflikt';
 	@override String get dispute => 'Spór';
+	@override String get refundingMaker => 'Zwrot środków makerowi';
 	@override String get makerConfirmed => 'Potwierdzona';
 	@override String get settled => 'Rozliczona';
 	@override String get payingTaker => 'Płacenie Takera';
@@ -1024,6 +1055,62 @@ class _Translations$coordinator$management$pl extends Translations$coordinator$m
 	@override String get metricYourOffersTooltip => 'Liczba ofert, które pomyślnie zrealizowałeś z tym koordynatorem.';
 	@override String get metricNetworkOffers => 'Oferty (30 dni)';
 	@override String get metricNetworkOffersTooltip => 'Pomyślnie rozliczone oferty przez tego koordynatora dla wszystkich użytkowników w ciągu ostatnich 30 dni.';
+}
+
+// Path: disputeChat.tooltips
+class _Translations$disputeChat$tooltips$pl extends Translations$disputeChat$tooltips$en {
+	_Translations$disputeChat$tooltips$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get refresh => 'Odśwież wiadomości';
+	@override String get attachEvidence => 'Dołącz dowód płatności';
+	@override String get send => 'Wyślij wiadomość';
+}
+
+// Path: disputeChat.errors
+class _Translations$disputeChat$errors$pl extends Translations$disputeChat$errors$en {
+	_Translations$disputeChat$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get accountNotReady => 'Prywatne wiadomości będą dostępne, gdy Twoje konto Nostr będzie gotowe.';
+	@override String get subscriptionFailed => 'Połączenie prywatnych wiadomości nie powiodło się. Odśwież rozmowę.';
+	@override String get decryptFailed => 'Nie udało się odszyfrować prywatnej wiadomości.';
+	@override String get operationFailed => 'Operacja prywatnych wiadomości nie powiodła się. Spróbuj ponownie.';
+	@override String get nostrNotInitialized => 'Nostr nie został zainicjalizowany.';
+	@override String get attachmentsRequireNip17 => 'Załączniki są dostępne tylko w kanale NIP-17.';
+}
+
+// Path: receivingInvoice.errors
+class _Translations$receivingInvoice$errors$pl extends Translations$receivingInvoice$errors$en {
+	_Translations$receivingInvoice$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get walletUnavailable => 'Usługa portfela jest niedostępna.';
+	@override String get noBolt11 => 'Portfel nie zwrócił faktury BOLT11.';
+}
+
+// Path: maker.refundInvoice
+class _Translations$maker$refundInvoice$pl extends Translations$maker$refundInvoice$en {
+	_Translations$maker$refundInvoice$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Koordynator rozstrzygnął na Twoją korzyść';
+	@override String instructions({required Object amount}) => 'Wybierz portfel odbiorczy lub wklej fakturę Lightning na dokładnie ${amount}, aby otrzymać zwrot.';
+	@override String get invoiceLabel => 'Faktura zwrotna na dokładną kwotę';
+	@override String get submit => 'Wyślij fakturę zwrotną';
+	@override String get addWallet => 'Dodaj nowy portfel';
+	@override String get noReceivingWallet => 'Nie skonfigurowano portfela odbiorczego. Dodaj go lub wklej fakturę z innego portfela.';
+	@override String get paymentFailed => 'Poprzednia próba zwrotu nie powiodła się. Wybierz inny portfel lub wyślij nową fakturę.';
+	@override String submitFailed({required Object details}) => 'Nie udało się wysłać faktury zwrotnej: ${details}';
+	@override late final _Translations$maker$refundInvoice$errors$pl errors = _Translations$maker$refundInvoice$errors$pl._(_root);
 }
 
 // Path: maker.roleSelection
@@ -1949,6 +2036,27 @@ class _Translations$coordinator$coldStart$phases$pl extends Translations$coordin
 	@override String get checkingHealth => 'Sprawdzanie zdrowia koordynatorów';
 	@override String get finalizing => 'Włączanie domyślnych koordynatorów';
 	@override String get completed => 'Gotowe';
+}
+
+// Path: maker.refundInvoice.errors
+class _Translations$maker$refundInvoice$errors$pl extends Translations$maker$refundInvoice$errors$en {
+	_Translations$maker$refundInvoice$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get backendUnavailable => 'Usługa płatności Lightning jest niedostępna.';
+	@override String get missing => 'Wprowadź fakturę zwrotną.';
+	@override String get invalid => 'Wprowadź prawidłową fakturę zwrotną BOLT11.';
+	@override String get wrongNetwork => 'Faktura zwrotna jest przeznaczona dla niewłaściwej sieci Lightning.';
+	@override String get wrongAmount => 'Faktura zwrotna musi zawierać dokładną kwotę zwrotu.';
+	@override String get invalidExpiry => 'Faktura zwrotna ma nieprawidłowy termin ważności.';
+	@override String get futureTimestamp => 'Znacznik czasu faktury zwrotnej jest w przyszłości.';
+	@override String get expired => 'Faktura zwrotna wygasła. Wygeneruj nową.';
+	@override String get invalidPaymentHash => 'Faktura zwrotna nie ma prawidłowego skrótu płatności.';
+	@override String get reusedInvoice => 'Użyj nowej faktury; faktura oferty nie może przyjąć zwrotu.';
+	@override String get unsupportedNetwork => 'Ta sieć Lightning nie jest obsługiwana.';
+	@override String get unknown => 'Sprawdź fakturę i spróbuj ponownie.';
 }
 
 // Path: maker.amountForm.progress
@@ -3054,6 +3162,7 @@ extension on TranslationsPl {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Nieprawidłowy ${code}',
 			'offers.status.conflict' => 'Konflikt',
 			'offers.status.dispute' => 'Spór',
+			'offers.status.refundingMaker' => 'Zwrot środków makerowi',
 			'offers.status.makerConfirmed' => 'Potwierdzona',
 			'offers.status.settled' => 'Rozliczona',
 			'offers.status.payingTaker' => 'Płacenie Takera',
@@ -3193,6 +3302,43 @@ extension on TranslationsPl {
 			'coordinator.management.metricYourOffersTooltip' => 'Liczba ofert, które pomyślnie zrealizowałeś z tym koordynatorem.',
 			'coordinator.management.metricNetworkOffers' => 'Oferty (30 dni)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Pomyślnie rozliczone oferty przez tego koordynatora dla wszystkich użytkowników w ciągu ostatnich 30 dni.',
+			'disputeChat.legacyChannel' => 'Starszy kanał zgodności NIP-04',
+			'disputeChat.privateConversation' => 'Prywatna rozmowa z koordynatorem',
+			'disputeChat.privacyNotice' => 'To prywatny kanał NIP-17. Wiadomości i załączniki nie autoryzują płatności ani nie zmieniają stanu oferty.',
+			'disputeChat.noMessages' => 'Brak wiadomości.',
+			'disputeChat.replyHint' => 'Odpowiedz tutaj',
+			'disputeChat.readOnly' => 'Historia tego rozstrzygniętego sporu jest tylko do odczytu.',
+			'disputeChat.tooltips.refresh' => 'Odśwież wiadomości',
+			'disputeChat.tooltips.attachEvidence' => 'Dołącz dowód płatności',
+			'disputeChat.tooltips.send' => 'Wyślij wiadomość',
+			'disputeChat.errors.accountNotReady' => 'Prywatne wiadomości będą dostępne, gdy Twoje konto Nostr będzie gotowe.',
+			'disputeChat.errors.subscriptionFailed' => 'Połączenie prywatnych wiadomości nie powiodło się. Odśwież rozmowę.',
+			'disputeChat.errors.decryptFailed' => 'Nie udało się odszyfrować prywatnej wiadomości.',
+			'disputeChat.errors.operationFailed' => 'Operacja prywatnych wiadomości nie powiodła się. Spróbuj ponownie.',
+			'disputeChat.errors.nostrNotInitialized' => 'Nostr nie został zainicjalizowany.',
+			'disputeChat.errors.attachmentsRequireNip17' => 'Załączniki są dostępne tylko w kanale NIP-17.',
+			'receivingInvoice.errors.walletUnavailable' => 'Usługa portfela jest niedostępna.',
+			'receivingInvoice.errors.noBolt11' => 'Portfel nie zwrócił faktury BOLT11.',
+			'maker.refundInvoice.title' => 'Koordynator rozstrzygnął na Twoją korzyść',
+			'maker.refundInvoice.instructions' => ({required Object amount}) => 'Wybierz portfel odbiorczy lub wklej fakturę Lightning na dokładnie ${amount}, aby otrzymać zwrot.',
+			'maker.refundInvoice.invoiceLabel' => 'Faktura zwrotna na dokładną kwotę',
+			'maker.refundInvoice.submit' => 'Wyślij fakturę zwrotną',
+			'maker.refundInvoice.addWallet' => 'Dodaj nowy portfel',
+			'maker.refundInvoice.noReceivingWallet' => 'Nie skonfigurowano portfela odbiorczego. Dodaj go lub wklej fakturę z innego portfela.',
+			'maker.refundInvoice.paymentFailed' => 'Poprzednia próba zwrotu nie powiodła się. Wybierz inny portfel lub wyślij nową fakturę.',
+			'maker.refundInvoice.submitFailed' => ({required Object details}) => 'Nie udało się wysłać faktury zwrotnej: ${details}',
+			'maker.refundInvoice.errors.backendUnavailable' => 'Usługa płatności Lightning jest niedostępna.',
+			'maker.refundInvoice.errors.missing' => 'Wprowadź fakturę zwrotną.',
+			'maker.refundInvoice.errors.invalid' => 'Wprowadź prawidłową fakturę zwrotną BOLT11.',
+			'maker.refundInvoice.errors.wrongNetwork' => 'Faktura zwrotna jest przeznaczona dla niewłaściwej sieci Lightning.',
+			'maker.refundInvoice.errors.wrongAmount' => 'Faktura zwrotna musi zawierać dokładną kwotę zwrotu.',
+			'maker.refundInvoice.errors.invalidExpiry' => 'Faktura zwrotna ma nieprawidłowy termin ważności.',
+			'maker.refundInvoice.errors.futureTimestamp' => 'Znacznik czasu faktury zwrotnej jest w przyszłości.',
+			'maker.refundInvoice.errors.expired' => 'Faktura zwrotna wygasła. Wygeneruj nową.',
+			'maker.refundInvoice.errors.invalidPaymentHash' => 'Faktura zwrotna nie ma prawidłowego skrótu płatności.',
+			'maker.refundInvoice.errors.reusedInvoice' => 'Użyj nowej faktury; faktura oferty nie może przyjąć zwrotu.',
+			'maker.refundInvoice.errors.unsupportedNetwork' => 'Ta sieć Lightning nie jest obsługiwana.',
+			'maker.refundInvoice.errors.unknown' => 'Sprawdź fakturę i spróbuj ponownie.',
 			'maker.roleSelection.button' => 'ZAPŁAĆ przez Lightning',
 			'maker.amountForm.progress.step1' => '1. Utwórz Ofertę',
 			'maker.amountForm.progress.step2' => '2. Czekaj na zabranie',
@@ -3414,6 +3560,8 @@ extension on TranslationsPl {
 			'twint.flow.makerRecode.scanCardTitle' => ({required Object code}) => 'Zeskanuj nowy kod QR ${code}',
 			'twint.flow.makerRecode.scanCardBody' => 'Skieruj aparat na ekran płatności. Aplikacja uzupełni nowy kod — kwota pozostaje bez zmian.',
 			'twint.flow.makerRecode.fieldLabel' => ({required Object code}) => 'Nowy kod ${code}',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.makerRecode.autoCancels' => 'Automatyczne anulowanie',
 			'twint.flow.makerRecode.relist' => 'Wystaw ponownie z nowym kodem',
 			'twint.flow.makerRecode.cancelOffer' => 'Anuluj ofertę',
@@ -3452,8 +3600,6 @@ extension on TranslationsPl {
 			'twint.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'Osoba wystawiająca ofertę musi teraz wpisać Twój kod ${code} w bankomacie w ciągu ${minutes} minut.',
 			'twint.waitConfirmation.categoryReminder.atm' => 'Przypomnienie dla oferty ATM: Twój bank może nadal poprosić o zatwierdzenie dodatkowej opłaty bankomatowej ponad główną kwotę.',
 			'twint.waitConfirmation.categoryReminder.ecommerce' => 'Przypomnienie dla zamówienia online: jeśli sprzedawca wyśle automatyczny zwrot na Twoje konto, skontaktuj się z koordynatorem i oddaj środki.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Czekamy, aż twórca oferty otrzyma Twój kod ${code}...',
 			'twint.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Twórca oferty otrzymał Twój kod ${code}',
 			'twint.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => 'Minął termin ważności kodu ${code} ${minutes}m. Czekamy na potwierdzenie lub oznaczenie kodu jako nieważnego przez wystawcę oferty.',

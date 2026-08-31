@@ -165,6 +165,7 @@ offers:
     invalidBlik: "Ungültiger ${code}"
     conflict: "Konflikt"
     dispute: "Streitfall"
+    refundingMaker: "Maker wird zurückerstattet"
     makerConfirmed: "Bestätigt"
     settled: "Abgewickelt"
     payingTaker: "Taker wird bezahlt"
@@ -353,7 +354,54 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  legacyChannel: "Legacy-NIP-04-Kompatibilitätskanal"
+  privateConversation: "Private Unterhaltung mit dem Koordinator"
+  privacyNotice: "Dies ist ein privater NIP-17-Kanal. Nachrichten und Anhänge autorisieren keine Zahlungen und ändern den Angebotsstatus nicht."
+  noMessages: "Noch keine Nachrichten."
+  replyHint: "Hier antworten"
+  readOnly: "Der Verlauf dieses abgeschlossenen Streitfalls ist schreibgeschützt."
+  tooltips:
+    refresh: "Nachrichten aktualisieren"
+    attachEvidence: "Zahlungsnachweis anhängen"
+    send: "Nachricht senden"
+  errors:
+    accountNotReady: "Private Nachrichten sind erst verfügbar, wenn dein Nostr-Konto bereit ist."
+    subscriptionFailed: "Die Verbindung für private Nachrichten ist fehlgeschlagen. Aktualisiere die Unterhaltung."
+    decryptFailed: "Eine private Nachricht konnte nicht entschlüsselt werden."
+    operationFailed: "Die private Nachrichtenaktion ist fehlgeschlagen. Bitte versuche es erneut."
+    nostrNotInitialized: "Nostr ist nicht initialisiert."
+    attachmentsRequireNip17: "Anhänge sind nur im NIP-17-Kanal verfügbar."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "Der Wallet-Dienst ist nicht verfügbar."
+    noBolt11: "Die Wallet hat keine BOLT11-Rechnung zurückgegeben."
+
 maker:
+  refundInvoice:
+    title: "Der Koordinator hat zu deinen Gunsten entschieden"
+    instructions: "Wähle eine Empfangs-Wallet oder füge eine Lightning-Rechnung über genau ${amount} für deine Rückerstattung ein."
+    invoiceLabel: "Rückerstattungsrechnung mit exaktem Betrag"
+    submit: "Rückerstattungsrechnung senden"
+    addWallet: "Neue Wallet hinzufügen"
+    noReceivingWallet: "Es ist keine Empfangs-Wallet eingerichtet. Füge eine hinzu oder füge eine Rechnung aus einer anderen Wallet ein."
+    paymentFailed: "Der vorherige Rückerstattungsversuch ist fehlgeschlagen. Wähle eine andere Wallet oder sende eine neue Rechnung."
+    submitFailed: "Die Rückerstattungsrechnung konnte nicht gesendet werden: ${details}"
+    errors:
+      backendUnavailable: "Der Lightning-Zahlungsdienst ist nicht verfügbar."
+      missing: "Gib eine Rückerstattungsrechnung ein."
+      invalid: "Gib eine gültige BOLT11-Rückerstattungsrechnung ein."
+      wrongNetwork: "Die Rückerstattungsrechnung gehört zum falschen Lightning-Netzwerk."
+      wrongAmount: "Die Rückerstattungsrechnung muss den exakten Rückerstattungsbetrag enthalten."
+      invalidExpiry: "Die Rückerstattungsrechnung hat eine ungültige Ablaufzeit."
+      futureTimestamp: "Der Zeitstempel der Rückerstattungsrechnung liegt in der Zukunft."
+      expired: "Die Rückerstattungsrechnung ist abgelaufen. Erstelle eine neue."
+      invalidPaymentHash: "Die Rückerstattungsrechnung hat keinen gültigen Zahlungs-Hash."
+      reusedInvoice: "Verwende eine neue Rechnung; die Angebotsrechnung kann die Rückerstattung nicht empfangen."
+      unsupportedNetwork: "Dieses Lightning-Netzwerk wird nicht unterstützt."
+      unknown: "Prüfe die Rechnung und versuche es erneut."
+
   roleSelection:
     button: Mit Lightning BEZAHLEN
 

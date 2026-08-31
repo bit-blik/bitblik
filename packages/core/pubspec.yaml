@@ -8,13 +8,14 @@ environment:
   sdk: ^3.6.0
 
 dependencies:
+  crypto: ^3.0.7
+  image: ^4.8.0
   meta: ^1.17.0
   ndk:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk
-      #ref: 18fdc6a4e1747f9675a5d730f53efd6cd2af888e
-      ref: 01ea7ce020cd3632de9d8dbefa96468967b3c66f
+      ref: 61d3901dd3d621f1a94b6fa9f2e257db669672d3
   yaml: ^3.1.3
 
 dev_dependencies:

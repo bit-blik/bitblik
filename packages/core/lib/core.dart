@@ -3,6 +3,7 @@ library core;
 export 'src/constants/kinds.dart';
 export 'src/constants/relays.dart';
 export 'src/constants/rpc_methods.dart';
+export 'src/communication/dispute_communication_service.dart';
 export 'src/flow/flow_models.dart';
 export 'src/flow/flow_engine.dart';
 export 'src/flow/flow_file_loader.dart';

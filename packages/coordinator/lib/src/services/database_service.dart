@@ -88,6 +88,7 @@ class DatabaseService {
       await _ensureOffersTable();
       await _ensureLogAuditTable();
       await _ensureOfferStateHistoryTable();
+      await _backfillDisputeAt();
       await _ensureTelegramOfferMessagesTable();
     } catch (e) {
       AppLogger.severe(
@@ -118,6 +119,7 @@ class DatabaseService {
         taker_pubkey TEXT,
         taker_invoice TEXT,
         maker_refund_invoice TEXT,
+        maker_refund_payment_hash TEXT,
         taker_invoice_fees BIGINT,
         blik_code TEXT,
         hold_invoice_payment_hash TEXT UNIQUE NOT NULL,
@@ -163,6 +165,15 @@ class DatabaseService {
     await _connection!.execute('''
       ALTER TABLE offers
       ADD COLUMN IF NOT EXISTS maker_refund_invoice TEXT;
+    ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS maker_refund_payment_hash TEXT;
+    ''');
+    await _connection!.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_offers_maker_refund_payment_hash
+        ON offers (maker_refund_payment_hash)
+        WHERE maker_refund_payment_hash IS NOT NULL;
     ''');
     await _connection!.execute('''
       ALTER TABLE offers
@@ -284,6 +295,53 @@ class DatabaseService {
     _stateHistoryTableReady = true;
     AppLogger.info('offer_state_history table checked/created.',
         action: 'database.schema.offer_state_history.ready');
+  }
+
+  /// Populate the dispute timestamp for rows created before the generic flow
+  /// started stamping it. Transition history identifies resolved disputes too,
+  /// while the current-state check covers active legacy rows without history.
+  Future<void> _backfillDisputeAt() async {
+    if (_connection == null) throw StateError('Database not connected.');
+    const disputeStates = [
+      'securingDispute',
+      'dispute',
+      'refundingMaker',
+      'payingMaker',
+    ];
+    // `execute` uses postgres.dart's simple-query protocol, which renders a
+    // Dart List as an unquoted `{...}` array literal. Use the extended/bound
+    // query path so the TEXT[] parameter reaches PostgreSQL correctly.
+    await _connection!.query(
+      '''
+        UPDATE offers AS o
+        SET dispute_at = COALESCE(
+          (
+            SELECT MIN(h.created_at)
+            FROM offer_state_history AS h
+            WHERE h.offer_id = o.id
+              AND h.to_state = ANY(CAST(@dispute_states AS TEXT[]))
+          ),
+          o.updated_at,
+          o.created_at
+        )
+        WHERE o.dispute_at IS NULL
+          AND (
+            o.status = ANY(CAST(@dispute_states AS TEXT[]))
+            OR EXISTS (
+              SELECT 1
+              FROM offer_state_history AS h
+              WHERE h.offer_id = o.id
+                AND h.to_state = ANY(CAST(@dispute_states AS TEXT[]))
+            )
+          )
+      ''',
+      substitutionValues: {'dispute_states': disputeStates},
+    );
+    await _connection!.execute('''
+      CREATE INDEX IF NOT EXISTS idx_offers_dispute_at
+        ON offers (dispute_at DESC, created_at DESC)
+        WHERE dispute_at IS NOT NULL;
+    ''');
   }
 
   /// Append one transition row. Best-effort: never throws into the caller's
@@ -596,6 +654,7 @@ class DatabaseService {
     String? code,
     String? takerInvoice,
     String? makerRefundInvoice,
+    String? makerRefundPaymentHash,
     DateTime? reservedAt,
     DateTime? codeReceivedAt,
     DateTime? takerChargedAt,
@@ -652,6 +711,10 @@ class DatabaseService {
     if (makerRefundInvoice != null) {
       put('maker_refund_invoice', 'maker_refund_invoice', makerRefundInvoice);
     }
+    if (makerRefundPaymentHash != null) {
+      put('maker_refund_payment_hash', 'maker_refund_payment_hash',
+          makerRefundPaymentHash);
+    }
     if (reservedAt != null) {
       put('reserved_at', 'reserved_at', reservedAt.toUtc());
     }
@@ -691,26 +754,41 @@ class DatabaseService {
       where.add('taker_pubkey = @expected_taker_pubkey');
     }
 
-    // When recording history, capture the pre-update status atomically via a
-    // self-join subquery (evaluated against the statement-start snapshot) and
-    // RETURN it, so from_state is race-free.
+    // Keep the compare-and-set and its audit row in one SQL statement. If the
+    // history insert fails, PostgreSQL rolls back the offer update as well.
+    // The CTE also captures from_state from the same statement snapshot, so a
+    // concurrent decision cannot create a misleading audit entry.
     if (recordStateHistory) {
+      final meta = transitionMeta ?? StateTransitionMeta.auto;
+      params.addAll({
+        'history_trigger': meta.trigger,
+        'history_event': meta.event,
+        'history_actor': meta.actor,
+        'history_actor_pubkey': meta.actorPubkey,
+        'history_metadata': meta.extra == null ? null : jsonEncode(meta.extra),
+      });
       final result = await _connection!.query(
-        'UPDATE offers AS o SET ${set.join(', ')} '
-        'FROM (SELECT status AS old_status FROM offers WHERE id = @id) AS prev '
-        'WHERE ${where.join(' AND ')} RETURNING prev.old_status',
+        '''
+          WITH updated AS (
+            UPDATE offers AS o SET ${set.join(', ')}
+            FROM (
+              SELECT status AS old_status FROM offers WHERE id = @id
+            ) AS prev
+            WHERE ${where.join(' AND ')}
+            RETURNING prev.old_status
+          )
+          INSERT INTO offer_state_history
+            (offer_id, from_state, to_state, trigger_type, event, actor, actor_pubkey, metadata)
+          SELECT
+            @id, old_status, @status, @history_trigger, @history_event,
+            @history_actor, @history_actor_pubkey,
+            CAST(@history_metadata AS JSONB)
+          FROM updated
+          RETURNING 1
+        ''',
         substitutionValues: params,
       );
-      final ok = result.affectedRowCount == 1;
-      if (ok) {
-        await _recordStateTransition(
-          offerId: id,
-          fromState: result.first.first as String?,
-          toState: newStatus,
-          meta: transitionMeta,
-        );
-      }
-      return ok;
+      return result.affectedRowCount == 1;
     }
     final result = await _connection!.query(
       'UPDATE offers SET ${set.join(', ')} WHERE ${where.join(' AND ')}',
@@ -740,8 +818,13 @@ class DatabaseService {
       OfferStatus.makerConfirmed,
       OfferStatus.payingTaker,
       OfferStatus.takerPaymentFailed,
-      OfferStatus.takerPaid
-    ].map((status) => status.name).toList(growable: false);
+      OfferStatus.takerPaid,
+      OfferStatus.dispute,
+      OfferStatus.refundingMaker,
+    ].map((status) => status.name).toList()
+      // These intermediate YAML states are intentionally not OfferStatus enum
+      // values, but must survive client restarts while coordinator work runs.
+      ..addAll(const ['securingDispute', 'payingMaker']);
 
     final results = await _connection!.query(
       '''
@@ -756,6 +839,58 @@ class DatabaseService {
       },
     );
     return results.map(_mapRowToOffer).toList();
+  }
+
+  /// Coordinator dispute history, including cases that have already reached a
+  /// terminal payout/refund state. This is never exposed to participants.
+  Future<List<Offer>> getDisputedOffers({
+    int limit = 25,
+    DateTime? beforeDisputeAt,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
+  }) async {
+    await connect();
+    if (_connection == null) throw StateError('Database not connected.');
+    final safeLimit = limit.clamp(1, 50).toInt();
+    final hasCursor = beforeDisputeAt != null &&
+        beforeCreatedAt != null &&
+        beforeId != null &&
+        beforeId.isNotEmpty;
+    const currentDisputeStates = [
+      'securingDispute',
+      'dispute',
+      'refundingMaker',
+      'payingMaker',
+    ];
+    final results = await _connection!.query(
+      '''
+        SELECT o.*,
+               COALESCE(o.dispute_at, o.updated_at, o.created_at) AS list_dispute_at
+        FROM offers AS o
+        WHERE (o.dispute_at IS NOT NULL
+               OR o.status = ANY(CAST(@dispute_states AS TEXT[])))
+        ${hasCursor ? 'AND (COALESCE(o.dispute_at, o.updated_at, o.created_at), o.created_at, o.id) < (@before_dispute_at, @before_created_at, CAST(@before_id AS UUID))' : ''}
+        ORDER BY COALESCE(o.dispute_at, o.updated_at, o.created_at) DESC,
+                 o.created_at DESC,
+                 o.id DESC
+        LIMIT @limit
+      ''',
+      substitutionValues: {
+        'limit': safeLimit,
+        'dispute_states': currentDisputeStates,
+        if (hasCursor) ...{
+          'before_dispute_at': beforeDisputeAt.toUtc(),
+          'before_created_at': beforeCreatedAt.toUtc(),
+          'before_id': beforeId,
+        },
+      },
+    );
+    return results.map((row) {
+      final offer = _mapRowToOffer(row);
+      if (offer.disputeAt != null) return offer;
+      final effective = row.toColumnMap()['list_dispute_at'] as DateTime;
+      return offer.copyWith(disputeAt: effective.toLocal());
+    }).toList(growable: false);
   }
 
   /// Get all offers from the last hours for rebroadcasting to Nostr
@@ -814,6 +949,7 @@ class DatabaseService {
       takerPubkey: map['taker_pubkey'],
       takerInvoice: map['taker_invoice'],
       makerRefundInvoice: map['maker_refund_invoice'],
+      makerRefundPaymentHash: map['maker_refund_payment_hash'],
       blikCode: map['blik_code'],
       updatedAt: (map['updated_at'] as DateTime?)?.toLocal(),
       reservedAt: (map['reserved_at'] as DateTime?)?.toLocal(),

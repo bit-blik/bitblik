@@ -24,7 +24,7 @@ const Duration kRelayRequestGrace = Duration(seconds: 3);
 /// own connection management without forking transport logic.
 class BitblikRpcClient {
   final Ndk ndk;
-  final Bip340EventSigner signer;
+  final EventSigner signer;
 
   /// Initial/bootstrap relays for the response subscription and the default
   /// broadcast target. Per-coordinator routing overrides the broadcast target
@@ -150,10 +150,9 @@ class BitblikRpcClient {
     );
 
     try {
-      final event = await ProtocolCodec.encryptRequest(
+      final event = await ProtocolCodec.encryptRequestWithSigner(
         request: reqWithId,
-        senderPrivateKeyHex: signer.privateKey!,
-        senderPubkeyHex: signer.getPublicKey(),
+        signer: signer,
         coordinatorPubkey: coordinatorPubkey,
       );
       final broadcastResponse = ndk.broadcast.broadcast(
@@ -212,10 +211,8 @@ class BitblikRpcClient {
 
   Future<void> _onResponse(Nip01Event event) async {
     try {
-      final response = await ProtocolCodec.decryptResponse(
-        event,
-        signer.privateKey!,
-      );
+      final response =
+          await ProtocolCodec.decryptResponseWithSigner(event, signer);
       final id = response.id;
       if (id == null) return;
       final pending = _pending[id];

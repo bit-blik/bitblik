@@ -3,6 +3,12 @@
 ## External Requirements
 
 For running a bitblik coordinator you will need a Lightning node.
+
+Dispute communication, evidence/Blossom configuration, console operation, and
+the adjudication runbook are documented in
+[`docs/dispute-operations.md`](../../docs/dispute-operations.md). Configure an
+ordered `BLOSSOM_SERVERS` list to enable encrypted picture evidence; the
+coordinator publishes it using the standard kind-10063 event.
 Currently supported are LND or a NWC connection with `make_hold_invoice` capability.
 
 ## Setup

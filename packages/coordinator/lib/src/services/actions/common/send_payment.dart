@@ -43,7 +43,7 @@ class SendPaymentAction extends FlowAction {
     ctx.write.audit.addAll({
       'taker_fees': takerFees,
       'fee_sats': res.result?.feeSat ?? 0,
-      'preimage': res.result?.paymentPreimage,
+      'payment_succeeded': true,
     });
   }
 

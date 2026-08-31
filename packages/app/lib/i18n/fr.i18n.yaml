@@ -165,6 +165,7 @@ offers:
     invalidBlik: "${code} invalide"
     conflict: "Conflit"
     dispute: "Litige"
+    refundingMaker: "Remboursement du maker"
     makerConfirmed: "Confirmée"
     settled: "Réglée"
     payingTaker: "Paiement du taker"
@@ -353,7 +354,54 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  legacyChannel: "Canal de compatibilité NIP-04 hérité"
+  privateConversation: "Conversation privée avec le coordinateur"
+  privacyNotice: "Ceci est un canal NIP-17 privé. Les messages et pièces jointes n’autorisent aucun paiement et ne modifient pas l’état de l’offre."
+  noMessages: "Aucun message pour le moment."
+  replyHint: "Répondre ici"
+  readOnly: "L’historique de ce litige résolu est en lecture seule."
+  tooltips:
+    refresh: "Actualiser les messages"
+    attachEvidence: "Joindre une preuve de paiement"
+    send: "Envoyer le message"
+  errors:
+    accountNotReady: "La messagerie privée sera disponible lorsque votre compte Nostr sera prêt."
+    subscriptionFailed: "La connexion aux messages privés a échoué. Actualisez la conversation."
+    decryptFailed: "Un message privé n’a pas pu être déchiffré."
+    operationFailed: "L’opération de messagerie privée a échoué. Veuillez réessayer."
+    nostrNotInitialized: "Nostr n’est pas initialisé."
+    attachmentsRequireNip17: "Les pièces jointes sont disponibles uniquement dans le canal NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "Le service de portefeuille est indisponible."
+    noBolt11: "Le portefeuille n’a pas renvoyé de facture BOLT11."
+
 maker:
+  refundInvoice:
+    title: "Le coordinateur a statué en votre faveur"
+    instructions: "Choisissez un portefeuille de réception ou collez une facture Lightning de exactement ${amount} pour votre remboursement."
+    invoiceLabel: "Facture de remboursement au montant exact"
+    submit: "Envoyer la facture de remboursement"
+    addWallet: "Ajouter un portefeuille"
+    noReceivingWallet: "Aucun portefeuille de réception n’est configuré. Ajoutez-en un ou collez une facture provenant d’un autre portefeuille."
+    paymentFailed: "La tentative de remboursement précédente a échoué. Choisissez un autre portefeuille ou envoyez une nouvelle facture."
+    submitFailed: "Impossible d’envoyer la facture de remboursement : ${details}"
+    errors:
+      backendUnavailable: "Le service de paiement Lightning est indisponible."
+      missing: "Saisissez une facture de remboursement."
+      invalid: "Saisissez une facture de remboursement BOLT11 valide."
+      wrongNetwork: "La facture de remboursement appartient au mauvais réseau Lightning."
+      wrongAmount: "La facture de remboursement doit contenir le montant exact du remboursement."
+      invalidExpiry: "La facture de remboursement a une expiration invalide."
+      futureTimestamp: "L’horodatage de la facture de remboursement est dans le futur."
+      expired: "La facture de remboursement a expiré. Générez-en une nouvelle."
+      invalidPaymentHash: "La facture de remboursement ne contient pas de hash de paiement valide."
+      reusedInvoice: "Utilisez une nouvelle facture ; la facture de l’offre ne peut pas recevoir le remboursement."
+      unsupportedNetwork: "Ce réseau Lightning n’est pas pris en charge."
+      unknown: "Vérifiez la facture et réessayez."
+
   roleSelection:
     button: PAYER avec Lightning
 

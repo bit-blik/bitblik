@@ -149,6 +149,7 @@ offers:
     invalidBlik: "Neplatný ${code}"
     conflict: "Konflikt"
     dispute: "Spor"
+    refundingMaker: "Vrátenie platby makerovi"
     makerConfirmed: "Potvrdená"
     settled: "Vyrovnaná"
     payingTaker: "Platí sa kupujúcemu"
@@ -337,7 +338,54 @@ coordinator:
 # =============================================================================
 # TOK PREDÁVAJÚCEHO
 # =============================================================================
+disputeChat:
+  legacyChannel: "Starší kompatibilný kanál NIP-04"
+  privateConversation: "Súkromná konverzácia s koordinátorom"
+  privacyNotice: "Toto je súkromný kanál NIP-17. Správy a prílohy nepovoľujú platby ani nemenia stav ponuky."
+  noMessages: "Zatiaľ žiadne správy."
+  replyHint: "Odpovedzte tu"
+  readOnly: "História tohto vyriešeného sporu je iba na čítanie."
+  tooltips:
+    refresh: "Obnoviť správy"
+    attachEvidence: "Priložiť doklad o platbe"
+    send: "Odoslať správu"
+  errors:
+    accountNotReady: "Súkromné správy budú dostupné, keď bude váš účet Nostr pripravený."
+    subscriptionFailed: "Pripojenie súkromných správ zlyhalo. Obnovte konverzáciu."
+    decryptFailed: "Súkromnú správu sa nepodarilo dešifrovať."
+    operationFailed: "Operácia súkromných správ zlyhala. Skúste to znova."
+    nostrNotInitialized: "Nostr nie je inicializovaný."
+    attachmentsRequireNip17: "Prílohy sú dostupné iba v kanáli NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "Služba peňaženky nie je dostupná."
+    noBolt11: "Peňaženka nevrátila BOLT11 faktúru."
+
 maker:
+  refundInvoice:
+    title: "Koordinátor rozhodol vo váš prospech"
+    instructions: "Vyberte prijímaciu peňaženku alebo vložte Lightning faktúru na presnú sumu ${amount} pre vrátenie platby."
+    invoiceLabel: "Faktúra na vrátenie presnej sumy"
+    submit: "Odoslať faktúru na vrátenie platby"
+    addWallet: "Pridať novú peňaženku"
+    noReceivingWallet: "Nie je nastavená žiadna prijímacia peňaženka. Pridajte ju alebo vložte faktúru z inej peňaženky."
+    paymentFailed: "Predchádzajúci pokus o vrátenie platby zlyhal. Vyberte inú peňaženku alebo odošlite novú faktúru."
+    submitFailed: "Faktúru na vrátenie platby sa nepodarilo odoslať: ${details}"
+    errors:
+      backendUnavailable: "Služba platieb Lightning nie je dostupná."
+      missing: "Zadajte faktúru na vrátenie platby."
+      invalid: "Zadajte platnú BOLT11 faktúru na vrátenie platby."
+      wrongNetwork: "Faktúra na vrátenie platby patrí do nesprávnej siete Lightning."
+      wrongAmount: "Faktúra musí obsahovať presnú sumu vrátenia platby."
+      invalidExpiry: "Faktúra na vrátenie platby má neplatnú dobu platnosti."
+      futureTimestamp: "Časová pečiatka faktúry je v budúcnosti."
+      expired: "Faktúra na vrátenie platby vypršala. Vytvorte novú."
+      invalidPaymentHash: "Faktúra nemá platný hash platby."
+      reusedInvoice: "Použite novú faktúru; faktúra ponuky nemôže prijať vrátenie platby."
+      unsupportedNetwork: "Táto sieť Lightning nie je podporovaná."
+      unknown: "Skontrolujte faktúru a skúste to znova."
+
   roleSelection:
     button: ZAPLATIŤ cez Lightning
 

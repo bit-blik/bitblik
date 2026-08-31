@@ -44,10 +44,11 @@ services:
       ICON_URL: https://www.0xkishan.com/blogs/nostr/nostr.png
       NOSTR_PRIVATE_KEY: <GENERATE A NEW NOSTR NSEC>
       NOSTR_RELAYS: wss://relay.primal.net,wss://relay.mostro.network
+      # Required for encrypted dispute evidence; published as kind 10063.
+      BLOSSOM_SERVERS: https://your-blossom.example
     volumes:
       - ./tls.cert:/app/tls.cert:ro
       - ./admin.macaroon:/app/admin.macaroon:ro
       - ./signal/:/root/.local/share/signal-cli/
 volumes:
   postgres_data:
-

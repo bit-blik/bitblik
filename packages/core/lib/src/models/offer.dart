@@ -20,13 +20,14 @@ enum OfferStatus {
   invalidBlik, // Maker marked the BLIK code as invalid
   conflict, // Taker reported conflict after Maker marked BLIK as invalid
   dispute, // Maker opened a dispute after conflict
-
   makerConfirmed, // Maker confirmed BLIK payment success
   settled, // Hold invoice settled by coordinator
 
   payingTaker, // Taker is being paid
   takerPaymentFailed, // Settled, but LNURL payment to taker failed
   takerPaid, // Taker successfully paid via LNURL-pay
+
+  refundingMaker, // Maker won dispute; exact payout invoice needed
 
   // Sentinel: persisted status name not recognized by this client build.
   // Append-only enum — never rename or remove existing values; this catches
@@ -81,6 +82,11 @@ class Offer {
   /// Server-only invoice used to resume a coordinator-ruled maker refund.
   /// Intentionally excluded from JSON/RPC serialization.
   final String? makerRefundInvoice;
+
+  /// Payment hash of [makerRefundInvoice]. Server-only and unique in the
+  /// coordinator database so the same Lightning invoice cannot authorize two
+  /// dispute payouts.
+  final String? makerRefundPaymentHash;
   final String?
       holdInvoicePreimage; // Might be sensitive, consider if needed on client
   final DateTime? updatedAt;
@@ -192,6 +198,7 @@ class Offer {
     this.takerLightningAddress,
     this.takerInvoice,
     this.makerRefundInvoice,
+    this.makerRefundPaymentHash,
     this.holdInvoicePreimage,
     this.updatedAt,
     this.makerConfirmedAt,
@@ -422,7 +429,8 @@ class Offer {
 
   bool get isInvalidBlik => status == OfferStatus.invalidBlik;
 
-  bool get isDispute => status == OfferStatus.dispute;
+  bool get isDispute =>
+      status == OfferStatus.dispute || status == OfferStatus.refundingMaker;
 
   bool get takerExplicitlyClaimedCharge => takerChargedAt != null;
 
@@ -489,6 +497,8 @@ class Offer {
     String? holdInvoice,
     String? takerLightningAddress,
     String? takerInvoice,
+    String? makerRefundInvoice,
+    String? makerRefundPaymentHash,
     String? holdInvoicePreimage,
     DateTime? updatedAt,
     DateTime? makerConfirmedAt,
@@ -527,6 +537,9 @@ class Offer {
       takerLightningAddress:
           takerLightningAddress ?? this.takerLightningAddress,
       takerInvoice: takerInvoice ?? this.takerInvoice,
+      makerRefundInvoice: makerRefundInvoice ?? this.makerRefundInvoice,
+      makerRefundPaymentHash:
+          makerRefundPaymentHash ?? this.makerRefundPaymentHash,
       holdInvoicePreimage: holdInvoicePreimage ?? this.holdInvoicePreimage,
       updatedAt: updatedAt ?? this.updatedAt,
       makerConfirmedAt: makerConfirmedAt ?? this.makerConfirmedAt,

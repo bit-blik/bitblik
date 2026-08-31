@@ -242,7 +242,7 @@ class LndService implements PaymentService {
         );
       }
     } catch (e) {
-      AppLogger.info('LND: Error decoding payment request $invoice: $e');
+      AppLogger.info('LND: Error decoding payment request.');
       return PayInvoiceResult(
         paymentError: 'Failed to decode payment request: ${e.toString()}',
       );

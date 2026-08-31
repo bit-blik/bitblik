@@ -48,6 +48,8 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$reservations$en reservations = Translations$reservations$en.internal(_root);
 	late final Translations$exchange$en exchange = Translations$exchange$en.internal(_root);
 	late final Translations$coordinator$en coordinator = Translations$coordinator$en.internal(_root);
+	late final Translations$disputeChat$en disputeChat = Translations$disputeChat$en.internal(_root);
+	late final Translations$receivingInvoice$en receivingInvoice = Translations$receivingInvoice$en.internal(_root);
 	late final Translations$maker$en maker = Translations$maker$en.internal(_root);
 	late final Translations$taker$en taker = Translations$taker$en.internal(_root);
 	late final Translations$twint$en twint = Translations$twint$en.internal(_root);
@@ -195,6 +197,46 @@ class Translations$coordinator$en {
 	late final Translations$coordinator$management$en management = Translations$coordinator$management$en.internal(_root);
 }
 
+// Path: disputeChat
+class Translations$disputeChat$en {
+	Translations$disputeChat$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Legacy NIP-04 compatibility channel'
+	String get legacyChannel => 'Legacy NIP-04 compatibility channel';
+
+	/// en: 'Private coordinator conversation'
+	String get privateConversation => 'Private coordinator conversation';
+
+	/// en: 'This is a private NIP-17 lane. Messages and attachments do not authorize payments or change the offer state.'
+	String get privacyNotice => 'This is a private NIP-17 lane. Messages and attachments do not authorize payments or change the offer state.';
+
+	/// en: 'No messages yet.'
+	String get noMessages => 'No messages yet.';
+
+	/// en: 'Reply here'
+	String get replyHint => 'Reply here';
+
+	/// en: 'This resolved dispute history is read-only.'
+	String get readOnly => 'This resolved dispute history is read-only.';
+
+	late final Translations$disputeChat$tooltips$en tooltips = Translations$disputeChat$tooltips$en.internal(_root);
+	late final Translations$disputeChat$errors$en errors = Translations$disputeChat$errors$en.internal(_root);
+}
+
+// Path: receivingInvoice
+class Translations$receivingInvoice$en {
+	Translations$receivingInvoice$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$receivingInvoice$errors$en errors = Translations$receivingInvoice$errors$en.internal(_root);
+}
+
 // Path: maker
 class Translations$maker$en {
 	Translations$maker$en.internal(this._root);
@@ -202,6 +244,7 @@ class Translations$maker$en {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final Translations$maker$refundInvoice$en refundInvoice = Translations$maker$refundInvoice$en.internal(_root);
 	late final Translations$maker$roleSelection$en roleSelection = Translations$maker$roleSelection$en.internal(_root);
 	late final Translations$maker$amountForm$en amountForm = Translations$maker$amountForm$en.internal(_root);
 	late final Translations$maker$payInvoice$en payInvoice = Translations$maker$payInvoice$en.internal(_root);
@@ -1070,6 +1113,9 @@ class Translations$offers$status$en {
 	/// en: 'Dispute'
 	String get dispute => 'Dispute';
 
+	/// en: 'Refunding Maker'
+	String get refundingMaker => 'Refunding Maker';
+
 	/// en: 'Confirmed'
 	String get makerConfirmed => 'Confirmed';
 
@@ -1608,6 +1654,101 @@ class Translations$coordinator$management$en {
 
 	/// en: 'Successful offers settled by this coordinator across all users in the last 30 days.'
 	String get metricNetworkOffersTooltip => 'Successful offers settled by this coordinator across all users in the last 30 days.';
+}
+
+// Path: disputeChat.tooltips
+class Translations$disputeChat$tooltips$en {
+	Translations$disputeChat$tooltips$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Refresh messages'
+	String get refresh => 'Refresh messages';
+
+	/// en: 'Attach payment evidence'
+	String get attachEvidence => 'Attach payment evidence';
+
+	/// en: 'Send message'
+	String get send => 'Send message';
+}
+
+// Path: disputeChat.errors
+class Translations$disputeChat$errors$en {
+	Translations$disputeChat$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Private messaging is unavailable until your Nostr account is ready.'
+	String get accountNotReady => 'Private messaging is unavailable until your Nostr account is ready.';
+
+	/// en: 'The private-message connection failed. Try refreshing the conversation.'
+	String get subscriptionFailed => 'The private-message connection failed. Try refreshing the conversation.';
+
+	/// en: 'A private message could not be decrypted.'
+	String get decryptFailed => 'A private message could not be decrypted.';
+
+	/// en: 'The private-message operation failed. Please try again.'
+	String get operationFailed => 'The private-message operation failed. Please try again.';
+
+	/// en: 'Nostr is not initialized.'
+	String get nostrNotInitialized => 'Nostr is not initialized.';
+
+	/// en: 'Attachments are available only in the NIP-17 channel.'
+	String get attachmentsRequireNip17 => 'Attachments are available only in the NIP-17 channel.';
+}
+
+// Path: receivingInvoice.errors
+class Translations$receivingInvoice$errors$en {
+	Translations$receivingInvoice$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'The wallet service is unavailable.'
+	String get walletUnavailable => 'The wallet service is unavailable.';
+
+	/// en: 'The wallet did not return a BOLT11 invoice.'
+	String get noBolt11 => 'The wallet did not return a BOLT11 invoice.';
+}
+
+// Path: maker.refundInvoice
+class Translations$maker$refundInvoice$en {
+	Translations$maker$refundInvoice$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'The coordinator ruled in your favor'
+	String get title => 'The coordinator ruled in your favor';
+
+	/// en: 'Choose a receiving wallet or paste an exact ${amount} Lightning invoice for your refund.'
+	String instructions({required Object amount}) => 'Choose a receiving wallet or paste an exact ${amount} Lightning invoice for your refund.';
+
+	/// en: 'Exact-amount refund invoice'
+	String get invoiceLabel => 'Exact-amount refund invoice';
+
+	/// en: 'Submit refund invoice'
+	String get submit => 'Submit refund invoice';
+
+	/// en: 'Add a new wallet'
+	String get addWallet => 'Add a new wallet';
+
+	/// en: 'No receiving wallet is configured. Add one or paste an invoice from another wallet.'
+	String get noReceivingWallet => 'No receiving wallet is configured. Add one or paste an invoice from another wallet.';
+
+	/// en: 'The previous refund attempt failed. Choose another wallet or submit a fresh invoice.'
+	String get paymentFailed => 'The previous refund attempt failed. Choose another wallet or submit a fresh invoice.';
+
+	/// en: 'Could not submit the refund invoice: ${details}'
+	String submitFailed({required Object details}) => 'Could not submit the refund invoice: ${details}';
+
+	late final Translations$maker$refundInvoice$errors$en errors = Translations$maker$refundInvoice$errors$en.internal(_root);
 }
 
 // Path: maker.roleSelection
@@ -3300,6 +3441,51 @@ class Translations$coordinator$coldStart$phases$en {
 
 	/// en: 'Done'
 	String get completed => 'Done';
+}
+
+// Path: maker.refundInvoice.errors
+class Translations$maker$refundInvoice$errors$en {
+	Translations$maker$refundInvoice$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'The Lightning payment service is unavailable.'
+	String get backendUnavailable => 'The Lightning payment service is unavailable.';
+
+	/// en: 'Enter a refund invoice.'
+	String get missing => 'Enter a refund invoice.';
+
+	/// en: 'Enter a valid BOLT11 refund invoice.'
+	String get invalid => 'Enter a valid BOLT11 refund invoice.';
+
+	/// en: 'The refund invoice is for the wrong Lightning network.'
+	String get wrongNetwork => 'The refund invoice is for the wrong Lightning network.';
+
+	/// en: 'The refund invoice must contain the exact refund amount.'
+	String get wrongAmount => 'The refund invoice must contain the exact refund amount.';
+
+	/// en: 'The refund invoice has an invalid expiry.'
+	String get invalidExpiry => 'The refund invoice has an invalid expiry.';
+
+	/// en: 'The refund invoice timestamp is in the future.'
+	String get futureTimestamp => 'The refund invoice timestamp is in the future.';
+
+	/// en: 'The refund invoice has expired. Generate a new one.'
+	String get expired => 'The refund invoice has expired. Generate a new one.';
+
+	/// en: 'The refund invoice has no valid payment hash.'
+	String get invalidPaymentHash => 'The refund invoice has no valid payment hash.';
+
+	/// en: 'Use a new invoice; the offer invoice cannot receive the refund.'
+	String get reusedInvoice => 'Use a new invoice; the offer invoice cannot receive the refund.';
+
+	/// en: 'This Lightning network is not supported.'
+	String get unsupportedNetwork => 'This Lightning network is not supported.';
+
+	/// en: 'Check the invoice and try again.'
+	String get unknown => 'Check the invoice and try again.';
 }
 
 // Path: maker.amountForm.progress
@@ -5495,6 +5681,7 @@ extension on Translations {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Invalid ${code}',
 			'offers.status.conflict' => 'Conflict',
 			'offers.status.dispute' => 'Dispute',
+			'offers.status.refundingMaker' => 'Refunding Maker',
 			'offers.status.makerConfirmed' => 'Confirmed',
 			'offers.status.settled' => 'Settled',
 			'offers.status.payingTaker' => 'Paying Taker',
@@ -5634,6 +5821,43 @@ extension on Translations {
 			'coordinator.management.metricYourOffersTooltip' => 'Number of offers you have successfully completed with this coordinator.',
 			'coordinator.management.metricNetworkOffers' => 'Offers (30d)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Successful offers settled by this coordinator across all users in the last 30 days.',
+			'disputeChat.legacyChannel' => 'Legacy NIP-04 compatibility channel',
+			'disputeChat.privateConversation' => 'Private coordinator conversation',
+			'disputeChat.privacyNotice' => 'This is a private NIP-17 lane. Messages and attachments do not authorize payments or change the offer state.',
+			'disputeChat.noMessages' => 'No messages yet.',
+			'disputeChat.replyHint' => 'Reply here',
+			'disputeChat.readOnly' => 'This resolved dispute history is read-only.',
+			'disputeChat.tooltips.refresh' => 'Refresh messages',
+			'disputeChat.tooltips.attachEvidence' => 'Attach payment evidence',
+			'disputeChat.tooltips.send' => 'Send message',
+			'disputeChat.errors.accountNotReady' => 'Private messaging is unavailable until your Nostr account is ready.',
+			'disputeChat.errors.subscriptionFailed' => 'The private-message connection failed. Try refreshing the conversation.',
+			'disputeChat.errors.decryptFailed' => 'A private message could not be decrypted.',
+			'disputeChat.errors.operationFailed' => 'The private-message operation failed. Please try again.',
+			'disputeChat.errors.nostrNotInitialized' => 'Nostr is not initialized.',
+			'disputeChat.errors.attachmentsRequireNip17' => 'Attachments are available only in the NIP-17 channel.',
+			'receivingInvoice.errors.walletUnavailable' => 'The wallet service is unavailable.',
+			'receivingInvoice.errors.noBolt11' => 'The wallet did not return a BOLT11 invoice.',
+			'maker.refundInvoice.title' => 'The coordinator ruled in your favor',
+			'maker.refundInvoice.instructions' => ({required Object amount}) => 'Choose a receiving wallet or paste an exact ${amount} Lightning invoice for your refund.',
+			'maker.refundInvoice.invoiceLabel' => 'Exact-amount refund invoice',
+			'maker.refundInvoice.submit' => 'Submit refund invoice',
+			'maker.refundInvoice.addWallet' => 'Add a new wallet',
+			'maker.refundInvoice.noReceivingWallet' => 'No receiving wallet is configured. Add one or paste an invoice from another wallet.',
+			'maker.refundInvoice.paymentFailed' => 'The previous refund attempt failed. Choose another wallet or submit a fresh invoice.',
+			'maker.refundInvoice.submitFailed' => ({required Object details}) => 'Could not submit the refund invoice: ${details}',
+			'maker.refundInvoice.errors.backendUnavailable' => 'The Lightning payment service is unavailable.',
+			'maker.refundInvoice.errors.missing' => 'Enter a refund invoice.',
+			'maker.refundInvoice.errors.invalid' => 'Enter a valid BOLT11 refund invoice.',
+			'maker.refundInvoice.errors.wrongNetwork' => 'The refund invoice is for the wrong Lightning network.',
+			'maker.refundInvoice.errors.wrongAmount' => 'The refund invoice must contain the exact refund amount.',
+			'maker.refundInvoice.errors.invalidExpiry' => 'The refund invoice has an invalid expiry.',
+			'maker.refundInvoice.errors.futureTimestamp' => 'The refund invoice timestamp is in the future.',
+			'maker.refundInvoice.errors.expired' => 'The refund invoice has expired. Generate a new one.',
+			'maker.refundInvoice.errors.invalidPaymentHash' => 'The refund invoice has no valid payment hash.',
+			'maker.refundInvoice.errors.reusedInvoice' => 'Use a new invoice; the offer invoice cannot receive the refund.',
+			'maker.refundInvoice.errors.unsupportedNetwork' => 'This Lightning network is not supported.',
+			'maker.refundInvoice.errors.unknown' => 'Check the invoice and try again.',
 			'maker.roleSelection.button' => 'PAY with Lightning',
 			'maker.amountForm.progress.step1' => '1. Create Offer',
 			'maker.amountForm.progress.step2' => '2. Wait for Taker',
@@ -5854,6 +6078,8 @@ extension on Translations {
 			'taker.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
 			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',
 			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'You marked ${code} as charged',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.',
 			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} was charged from my bank account',
 			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Try again with new ${code} code',
@@ -5892,8 +6118,6 @@ extension on Translations {
 			'taker.paymentFailed.form.newInvoiceHint' => 'Enter your BOLT11 invoice',
 			'taker.paymentFailed.actions.retryPayment' => 'Submit New Invoice',
 			'taker.paymentFailed.errors.enterValidInvoice' => 'Please enter a valid invoice',
-			_ => null,
-		} ?? switch (path) {
 			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Error updating invoice: ${details}',
 			'taker.paymentFailed.errors.paymentRetryFailed' => 'Payment retry failed. Please check the invoice or try again later.',
 			'taker.paymentFailed.errors.takerPublicKeyNotFound' => 'Taker public key not found.',

@@ -117,6 +117,16 @@ void main() {
     expect(
         engine.transitionFor('dispute', 'resolve_dispute_refund_maker')?.target,
         'refundingMaker');
+    expect(
+        engine
+            .transitionFor('refundingMaker', 'submit_maker_refund_invoice')
+            ?.target,
+        'payingMaker');
+    expect(
+        engine.definition.state('payingMaker')!.transitions.single.onFailTarget,
+        'refundingMaker');
+    expect(engine.definition.state('refundingMaker')!.nip69, 'dispute');
+    expect(engine.definition.state('payingMaker')!.nip69, 'dispute');
     expect(engine.transitionFor('dispute', 'resolve_dispute_pay_taker')?.target,
         'payingTaker');
   });
@@ -140,7 +150,7 @@ void main() {
         contains('settle_offer_funds'));
     expect(engine.definition.state('payingTaker')!.actions,
         contains('send_payment'));
-    expect(engine.definition.state('refundingMaker')!.actions,
+    expect(engine.definition.state('payingMaker')!.actions,
         contains('refund_maker'));
   });
 }

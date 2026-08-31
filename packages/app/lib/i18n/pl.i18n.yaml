@@ -165,6 +165,7 @@ offers:
     invalidBlik: "Nieprawidłowy ${code}"
     conflict: "Konflikt"
     dispute: "Spór"
+    refundingMaker: "Zwrot środków makerowi"
     makerConfirmed: "Potwierdzona"
     settled: "Rozliczona"
     payingTaker: "Płacenie Takera"
@@ -353,7 +354,54 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  legacyChannel: "Starszy kanał zgodności NIP-04"
+  privateConversation: "Prywatna rozmowa z koordynatorem"
+  privacyNotice: "To prywatny kanał NIP-17. Wiadomości i załączniki nie autoryzują płatności ani nie zmieniają stanu oferty."
+  noMessages: "Brak wiadomości."
+  replyHint: "Odpowiedz tutaj"
+  readOnly: "Historia tego rozstrzygniętego sporu jest tylko do odczytu."
+  tooltips:
+    refresh: "Odśwież wiadomości"
+    attachEvidence: "Dołącz dowód płatności"
+    send: "Wyślij wiadomość"
+  errors:
+    accountNotReady: "Prywatne wiadomości będą dostępne, gdy Twoje konto Nostr będzie gotowe."
+    subscriptionFailed: "Połączenie prywatnych wiadomości nie powiodło się. Odśwież rozmowę."
+    decryptFailed: "Nie udało się odszyfrować prywatnej wiadomości."
+    operationFailed: "Operacja prywatnych wiadomości nie powiodła się. Spróbuj ponownie."
+    nostrNotInitialized: "Nostr nie został zainicjalizowany."
+    attachmentsRequireNip17: "Załączniki są dostępne tylko w kanale NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "Usługa portfela jest niedostępna."
+    noBolt11: "Portfel nie zwrócił faktury BOLT11."
+
 maker:
+  refundInvoice:
+    title: "Koordynator rozstrzygnął na Twoją korzyść"
+    instructions: "Wybierz portfel odbiorczy lub wklej fakturę Lightning na dokładnie ${amount}, aby otrzymać zwrot."
+    invoiceLabel: "Faktura zwrotna na dokładną kwotę"
+    submit: "Wyślij fakturę zwrotną"
+    addWallet: "Dodaj nowy portfel"
+    noReceivingWallet: "Nie skonfigurowano portfela odbiorczego. Dodaj go lub wklej fakturę z innego portfela."
+    paymentFailed: "Poprzednia próba zwrotu nie powiodła się. Wybierz inny portfel lub wyślij nową fakturę."
+    submitFailed: "Nie udało się wysłać faktury zwrotnej: ${details}"
+    errors:
+      backendUnavailable: "Usługa płatności Lightning jest niedostępna."
+      missing: "Wprowadź fakturę zwrotną."
+      invalid: "Wprowadź prawidłową fakturę zwrotną BOLT11."
+      wrongNetwork: "Faktura zwrotna jest przeznaczona dla niewłaściwej sieci Lightning."
+      wrongAmount: "Faktura zwrotna musi zawierać dokładną kwotę zwrotu."
+      invalidExpiry: "Faktura zwrotna ma nieprawidłowy termin ważności."
+      futureTimestamp: "Znacznik czasu faktury zwrotnej jest w przyszłości."
+      expired: "Faktura zwrotna wygasła. Wygeneruj nową."
+      invalidPaymentHash: "Faktura zwrotna nie ma prawidłowego skrótu płatności."
+      reusedInvoice: "Użyj nowej faktury; faktura oferty nie może przyjąć zwrotu."
+      unsupportedNetwork: "Ta sieć Lightning nie jest obsługiwana."
+      unknown: "Sprawdź fakturę i spróbuj ponownie."
+
   roleSelection:
     button: ZAPŁAĆ przez Lightning
   

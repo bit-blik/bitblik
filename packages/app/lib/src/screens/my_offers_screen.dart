@@ -26,6 +26,7 @@ const _activeStatuses = {
   OfferStatus.takerPaymentFailed,
   OfferStatus.conflict,
   OfferStatus.dispute,
+  OfferStatus.refundingMaker,
   OfferStatus.unknown,
 };
 
@@ -96,9 +97,10 @@ class _MyOffersScreenState extends ConsumerState<MyOffersScreen> {
         data: (allOffers) {
           // Only show offers for the payment system selected in settings.
           final selectedSystem = ref.watch(selectedPaymentSystemProvider);
-          final offers = allOffers
-              .where((o) => o.fiatCurrency == selectedSystem.currency)
-              .toList();
+          final offers =
+              allOffers
+                  .where((o) => o.fiatCurrency == selectedSystem.currency)
+                  .toList();
           if (!_defaultFilterResolved) {
             final hasActive = offers.any(
               (o) => _activeStatuses.contains(o.status),
