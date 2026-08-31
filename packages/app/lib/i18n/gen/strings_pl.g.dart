@@ -241,6 +241,8 @@ class _Translations$taker$pl extends Translations$taker$en {
 	@override late final _Translations$taker$progress$pl progress = _Translations$taker$progress$pl._(_root);
 	@override late final _Translations$taker$submitBlik$pl submitBlik = _Translations$taker$submitBlik$pl._(_root);
 	@override late final _Translations$taker$criticalCodeDecision$pl criticalCodeDecision = _Translations$taker$criticalCodeDecision$pl._(_root);
+	@override late final _Translations$taker$conflict$pl conflict = _Translations$taker$conflict$pl._(_root);
+	@override late final _Translations$taker$dispute$pl dispute = _Translations$taker$dispute$pl._(_root);
 }
 
 // Path: twint
@@ -1236,7 +1238,8 @@ class _Translations$maker$conflict$pl extends Translations$maker$conflict$en {
 	@override String get title => 'Konflikt Oferty';
 	@override String get headline => 'Zgłoszono Konflikt Oferty';
 	@override String body({required Object code}) => 'Oznaczyłeś kod ${code} jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.';
-	@override String get instructions => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.';
+	@override String get instructions => 'Potwierdź wynik przed upływem czasu. Jeśli płatność się powiodła, potwierdź ją, aby Taker mógł otrzymać wypłatę. Jeśli się nie powiodła, otwórz spór. Jeśli nic nie zrobisz, formalny spór zostanie otwarty automatycznie.';
+	@override String timeoutLabel({required Object time}) => 'Formalny spór zostanie otwarty automatycznie za ${time}';
 	@override late final _Translations$maker$conflict$actions$pl actions = _Translations$maker$conflict$actions$pl._(_root);
 	@override late final _Translations$maker$conflict$disputeDialog$pl disputeDialog = _Translations$maker$conflict$disputeDialog$pl._(_root);
 	@override late final _Translations$maker$conflict$feedback$pl feedback = _Translations$maker$conflict$feedback$pl._(_root);
@@ -1312,6 +1315,34 @@ class _Translations$taker$criticalCodeDecision$pl extends Translations$taker$cri
 	@override String get warningTitle => 'MOŻESZ STRACIĆ SWOJE ŚRODKI';
 	@override String warningBody({required Object code}) => 'Jeśli bank obciążył Cię płatnością ${code}, NIE kontynuuj. Sprzedający mógł użyć Twojego kodu, a po tej czynności koordynator może już nie móc zagwarantować wypłaty bitcoinów.';
 	@override late final _Translations$taker$criticalCodeDecision$actions$pl actions = _Translations$taker$criticalCodeDecision$actions$pl._(_root);
+}
+
+// Path: taker.conflict
+class _Translations$taker$conflict$pl extends Translations$taker$conflict$en {
+	_Translations$taker$conflict$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Oczekiwanie na potwierdzenie płatności';
+	@override String get headline => 'Oczekiwanie na potwierdzenie Makera';
+	@override String body({required Object code}) => 'Zgłosiłeś, że płatność ${code} została pobrana, ale Maker zgłosił, że się nie powiodła. Te zgłoszenia są sprzeczne.';
+	@override String get instructions => 'Maker musi teraz potwierdzić wynik. Jeśli potwierdzi, że płatność się powiodła, Twoja wypłata będzie kontynuowana. Jeśli potwierdzi niepowodzenie lub upłynie czas, oferta przejdzie do formalnego sporu i czat sporu stanie się dostępny.';
+	@override String timeoutLabel({required Object time}) => 'Formalny spór zostanie otwarty automatycznie za ${time}';
+	@override late final _Translations$taker$conflict$actions$pl actions = _Translations$taker$conflict$actions$pl._(_root);
+	@override late final _Translations$taker$conflict$feedback$pl feedback = _Translations$taker$conflict$feedback$pl._(_root);
+	@override late final _Translations$taker$conflict$errors$pl errors = _Translations$taker$conflict$errors$pl._(_root);
+}
+
+// Path: taker.dispute
+class _Translations$taker$dispute$pl extends Translations$taker$dispute$en {
+	_Translations$taker$dispute$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => 'Otwarto formalny spór';
+	@override String get body => 'Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.';
 }
 
 // Path: twint.scanner
@@ -2435,6 +2466,36 @@ class _Translations$taker$criticalCodeDecision$actions$pl extends Translations$t
 	@override String get proceed => 'NIE obciążono mnie — kontynuuj';
 }
 
+// Path: taker.conflict.actions
+class _Translations$taker$conflict$actions$pl extends Translations$taker$conflict$actions$en {
+	_Translations$taker$conflict$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get back => 'Powrót do strony głównej';
+}
+
+// Path: taker.conflict.feedback
+class _Translations$taker$conflict$feedback$pl extends Translations$taker$conflict$feedback$en {
+	_Translations$taker$conflict$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get reported => 'Zgłoszono konflikt płatności. Oczekiwanie na potwierdzenie Makera.';
+}
+
+// Path: taker.conflict.errors
+class _Translations$taker$conflict$errors$pl extends Translations$taker$conflict$errors$en {
+	_Translations$taker$conflict$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String reporting({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}';
+}
+
 // Path: twint.scanner.status
 class _Translations$twint$scanner$status$pl extends Translations$twint$scanner$status$en {
 	_Translations$twint$scanner$status$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -3470,7 +3531,8 @@ extension on TranslationsPl {
 			'maker.conflict.title' => 'Konflikt Oferty',
 			'maker.conflict.headline' => 'Zgłoszono Konflikt Oferty',
 			'maker.conflict.body' => ({required Object code}) => 'Oznaczyłeś kod ${code} jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.',
-			'maker.conflict.instructions' => 'Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.',
+			'maker.conflict.instructions' => 'Potwierdź wynik przed upływem czasu. Jeśli płatność się powiodła, potwierdź ją, aby Taker mógł otrzymać wypłatę. Jeśli się nie powiodła, otwórz spór. Jeśli nic nie zrobisz, formalny spór zostanie otwarty automatycznie.',
+			'maker.conflict.timeoutLabel' => ({required Object time}) => 'Formalny spór zostanie otwarty automatycznie za ${time}',
 			'maker.conflict.actions.back' => 'Powrót do strony głównej',
 			'maker.conflict.actions.confirmPayment' => ({required Object code}) => 'Mój błąd, potwierdź sukces płatności ${code}',
 			'maker.conflict.actions.openDispute' => ({required Object code}) => 'Płatność ${code} NIE powiodła się, OTWÓRZ SPÓR',
@@ -3524,6 +3586,16 @@ extension on TranslationsPl {
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Jeśli bank obciążył Cię płatnością ${code}, NIE kontynuuj. Sprzedający mógł użyć Twojego kodu, a po tej czynności koordynator może już nie móc zagwarantować wypłaty bitcoinów.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Wróć i sprawdź konto bankowe',
 			'taker.criticalCodeDecision.actions.proceed' => 'NIE obciążono mnie — kontynuuj',
+			'taker.conflict.title' => 'Oczekiwanie na potwierdzenie płatności',
+			'taker.conflict.headline' => 'Oczekiwanie na potwierdzenie Makera',
+			'taker.conflict.body' => ({required Object code}) => 'Zgłosiłeś, że płatność ${code} została pobrana, ale Maker zgłosił, że się nie powiodła. Te zgłoszenia są sprzeczne.',
+			'taker.conflict.instructions' => 'Maker musi teraz potwierdzić wynik. Jeśli potwierdzi, że płatność się powiodła, Twoja wypłata będzie kontynuowana. Jeśli potwierdzi niepowodzenie lub upłynie czas, oferta przejdzie do formalnego sporu i czat sporu stanie się dostępny.',
+			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formalny spór zostanie otwarty automatycznie za ${time}',
+			'taker.conflict.actions.back' => 'Powrót do strony głównej',
+			'taker.conflict.feedback.reported' => 'Zgłoszono konflikt płatności. Oczekiwanie na potwierdzenie Makera.',
+			'taker.conflict.errors.reporting' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
+			'taker.dispute.headline' => 'Otwarto formalny spór',
+			'taker.dispute.body' => 'Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.',
 			'twint.scanner.title' => ({required Object code}) => 'Skanuj kod ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Ustaw kod QR ${code} i tekst z kwotą wewnątrz kadru kamery.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Kod ${code} nie został jeszcze rozpoznany. Trzymaj QR i kwotę w kadrze albo wypełnij formularz ręcznie.',
@@ -3549,6 +3621,8 @@ extension on TranslationsPl {
 			'twint.flow.makerExpired.warning' => ({required Object code}) => 'Kod ${code} prawdopodobnie już wygasł — ale taker mógł mimo to zdążyć go opłacić. Sprawdź u swojego sprzedawcy: masz poniższy czas na potwierdzenie płatności.',
 			'twint.flow.makerExpired.timerCaption' => 'Czas na potwierdzenie',
 			'twint.flow.makerExpired.disputeHint' => 'Możesz też poczekać, aż licznik dobiegnie końca. Jeśli taker zgłosi, że zapłacił, sprawa staje się konfliktem/sporem, w którym obie strony muszą dostarczyć koordynatorowi dowody do rozstrzygnięcia.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.makerVerify.title' => 'Czy otrzymałeś płatność?',
 			'twint.flow.makerVerify.body' => ({required Object amount, required Object code}) => 'Taker zgłasza, że zapłacił ${amount} na Twój kod ${code}.',
 			'twint.flow.makerVerify.hint' => 'Sprawdź status płatności u sprzedawcy (terminal w sklepie lub transakcja online). W razie wątpliwości poczekaj i sprawdź ponownie później, zanim podejmiesz decyzję.',
@@ -3560,8 +3634,6 @@ extension on TranslationsPl {
 			'twint.flow.makerRecode.scanCardTitle' => ({required Object code}) => 'Zeskanuj nowy kod QR ${code}',
 			'twint.flow.makerRecode.scanCardBody' => 'Skieruj aparat na ekran płatności. Aplikacja uzupełni nowy kod — kwota pozostaje bez zmian.',
 			'twint.flow.makerRecode.fieldLabel' => ({required Object code}) => 'Nowy kod ${code}',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerRecode.autoCancels' => 'Automatyczne anulowanie',
 			'twint.flow.makerRecode.relist' => 'Wystaw ponownie z nowym kodem',
 			'twint.flow.makerRecode.cancelOffer' => 'Anuluj ofertę',

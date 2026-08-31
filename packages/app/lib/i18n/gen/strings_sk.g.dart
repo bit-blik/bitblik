@@ -232,6 +232,7 @@ class _Translations$taker$sk extends Translations$taker$en {
 	@override late final _Translations$taker$criticalCodeDecision$sk criticalCodeDecision = _Translations$taker$criticalCodeDecision$sk._(_root);
 	@override late final _Translations$taker$invalidBlik$sk invalidBlik = _Translations$taker$invalidBlik$sk._(_root);
 	@override late final _Translations$taker$conflict$sk conflict = _Translations$taker$conflict$sk._(_root);
+	@override late final _Translations$taker$dispute$sk dispute = _Translations$taker$dispute$sk._(_root);
 }
 
 // Path: blik
@@ -1169,7 +1170,8 @@ class _Translations$maker$conflict$sk extends Translations$maker$conflict$en {
 	@override String get title => 'Konflikt ponuky';
 	@override String get headline => 'Nahlásený konflikt ponuky';
 	@override String body({required Object code}) => 'Označil si ${code} ako neplatný, ale kupujúci nahlásil konflikt, čím naznačuje, že podľa neho bola platba úspešná.';
-	@override String get instructions => 'Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.';
+	@override String get instructions => 'Potvrď výsledok pred vypršaním časovača. Ak bola platba úspešná, potvrď ju, aby mohol byť kupujúci vyplatený. Ak zlyhala, otvor spor. Ak nič neurobíš, automaticky sa otvorí formálny spor.';
+	@override String timeoutLabel({required Object time}) => 'Formálny spor sa automaticky otvorí o ${time}';
 	@override late final _Translations$maker$conflict$actions$sk actions = _Translations$maker$conflict$actions$sk._(_root);
 	@override late final _Translations$maker$conflict$disputeDialog$sk disputeDialog = _Translations$maker$conflict$disputeDialog$sk._(_root);
 	@override late final _Translations$maker$conflict$feedback$sk feedback = _Translations$maker$conflict$feedback$sk._(_root);
@@ -1353,14 +1355,26 @@ class _Translations$taker$conflict$sk extends Translations$taker$conflict$en {
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Konflikt ponuky';
-	@override String get headline => 'Nahlásený konflikt ponuky';
-	@override String body({required Object code}) => 'Predávajúci označil ${code} ako neplatný, ale ty si nahlásil konflikt, čím naznačuješ, že podľa teba bola platba úspešná.';
-	@override String get instructions => 'Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.';
+	@override String get title => 'Čaká sa na potvrdenie platby';
+	@override String get headline => 'Čaká sa na potvrdenie Makera';
+	@override String body({required Object code}) => 'Nahlásil si, že platba ${code} bola zaúčtovaná, ale Maker uviedol, že nebola úspešná. Tieto hlásenia si odporujú.';
+	@override String get instructions => 'Maker teraz musí potvrdiť výsledok. Ak potvrdí, že platba bola úspešná, tvoja výplata bude pokračovať. Ak potvrdí neúspech alebo vyprší časovač, ponuka prejde do formálneho sporu a sprístupní sa chat sporu.';
+	@override String timeoutLabel({required Object time}) => 'Formálny spor sa automaticky otvorí o ${time}';
 	@override late final _Translations$taker$conflict$actions$sk actions = _Translations$taker$conflict$actions$sk._(_root);
 	@override late final _Translations$taker$conflict$feedback$sk feedback = _Translations$taker$conflict$feedback$sk._(_root);
 	@override late final _Translations$taker$conflict$errors$sk errors = _Translations$taker$conflict$errors$sk._(_root);
 	@override late final _Translations$taker$conflict$nostrContact$sk nostrContact = _Translations$taker$conflict$nostrContact$sk._(_root);
+}
+
+// Path: taker.dispute
+class _Translations$taker$dispute$sk extends Translations$taker$dispute$en {
+	_Translations$taker$dispute$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => 'Otvorený formálny spor';
+	@override String get body => 'Ponuku teraz posudzuje koordinátor. Pomocou chatu sporu nižšie komunikuj s koordinátorom a poskytni požadované dôkazy.';
 }
 
 // Path: blik.instructions
@@ -2632,7 +2646,7 @@ class _Translations$taker$conflict$feedback$sk extends Translations$taker$confli
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
-	@override String get reported => 'Konflikt nahlásený. Koordinátor ho posúdi.';
+	@override String get reported => 'Nahlásený konflikt platby. Čaká sa na potvrdenie Makera.';
 }
 
 // Path: taker.conflict.errors
@@ -3207,7 +3221,8 @@ extension on TranslationsSk {
 			'maker.conflict.title' => 'Konflikt ponuky',
 			'maker.conflict.headline' => 'Nahlásený konflikt ponuky',
 			'maker.conflict.body' => ({required Object code}) => 'Označil si ${code} ako neplatný, ale kupujúci nahlásil konflikt, čím naznačuje, že podľa neho bola platba úspešná.',
-			'maker.conflict.instructions' => 'Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.',
+			'maker.conflict.instructions' => 'Potvrď výsledok pred vypršaním časovača. Ak bola platba úspešná, potvrď ju, aby mohol byť kupujúci vyplatený. Ak zlyhala, otvor spor. Ak nič neurobíš, automaticky sa otvorí formálny spor.',
+			'maker.conflict.timeoutLabel' => ({required Object time}) => 'Formálny spor sa automaticky otvorí o ${time}',
 			'maker.conflict.actions.back' => 'Späť domov',
 			'maker.conflict.actions.confirmPayment' => ({required Object code}) => 'Moja chyba, potvrdiť úspešnú platbu ${code}',
 			'maker.conflict.actions.openDispute' => ({required Object code}) => 'Platba ${code} NEbola úspešná, OTVORIŤ SPOR',
@@ -3297,9 +3312,9 @@ extension on TranslationsSk {
 			'taker.paymentProcess.states.waitingUpdate' => 'Čaká sa na aktualizáciu ponuky...',
 			'taker.paymentProcess.steps.makerConfirmedBlik' => ({required Object code}) => 'Predávajúci potvrdil platbu ${code}',
 			'taker.paymentProcess.steps.makerInvoiceSettled' => 'Hold faktúra predávajúceho vyrovnaná',
-			'taker.paymentProcess.steps.takerInvoicePaid' => 'Platí sa tvoja Lightning faktúra',
 			_ => null,
 		} ?? switch (path) {
+			'taker.paymentProcess.steps.takerInvoicePaid' => 'Platí sa tvoja Lightning faktúra',
 			'taker.paymentProcess.steps.takerPaymentFailed' => 'Platba na tvoju faktúru zlyhala',
 			'taker.paymentProcess.errors.sending' => ({required Object details}) => 'Chyba pri odosielaní platby: ${details}',
 			'taker.paymentProcess.errors.notConfirmed' => 'Ponuka nebola potvrdená predávajúcim.',
@@ -3358,12 +3373,13 @@ extension on TranslationsSk {
 			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Konflikt nahlásený. Koordinátor ho posúdi.',
 			'taker.invalidBlik.errors.reservationFailed' => 'Nepodarilo sa znova rezervovať ponuku',
 			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
-			'taker.conflict.title' => 'Konflikt ponuky',
-			'taker.conflict.headline' => 'Nahlásený konflikt ponuky',
-			'taker.conflict.body' => ({required Object code}) => 'Predávajúci označil ${code} ako neplatný, ale ty si nahlásil konflikt, čím naznačuješ, že podľa teba bola platba úspešná.',
-			'taker.conflict.instructions' => 'Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.',
+			'taker.conflict.title' => 'Čaká sa na potvrdenie platby',
+			'taker.conflict.headline' => 'Čaká sa na potvrdenie Makera',
+			'taker.conflict.body' => ({required Object code}) => 'Nahlásil si, že platba ${code} bola zaúčtovaná, ale Maker uviedol, že nebola úspešná. Tieto hlásenia si odporujú.',
+			'taker.conflict.instructions' => 'Maker teraz musí potvrdiť výsledok. Ak potvrdí, že platba bola úspešná, tvoja výplata bude pokračovať. Ak potvrdí neúspech alebo vyprší časovač, ponuka prejde do formálneho sporu a sprístupní sa chat sporu.',
+			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formálny spor sa automaticky otvorí o ${time}',
 			'taker.conflict.actions.back' => 'Späť domov',
-			'taker.conflict.feedback.reported' => 'Konflikt nahlásený. Koordinátor ho posúdi.',
+			'taker.conflict.feedback.reported' => 'Nahlásený konflikt platby. Čaká sa na potvrdenie Makera.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
 			'taker.conflict.nostrContact.title' => 'Kontaktuj koordinátora na Nostr',
 			'taker.conflict.nostrContact.description' => 'Môžeš koordinátorovi napísať priamu správu (DM) a požiadať o pomoc s týmto sporom.',
@@ -3372,6 +3388,8 @@ extension on TranslationsSk {
 			'taker.conflict.nostrContact.npubCopied' => 'Npub koordinátora skopírovaný do schránky!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'Ak chceš posielať DM, prihlás sa svojím súkromným kľúčom Neko (nsec) v ľubovoľnom Nostr klientovi, ktorý podporuje priame správy.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Spravovať Neko kľúče',
+			'taker.dispute.headline' => 'Otvorený formálny spor',
+			'taker.dispute.body' => 'Ponuku teraz posudzuje koordinátor. Pomocou chatu sporu nižšie komunikuj s koordinátorom a poskytni požadované dôkazy.',
 			'blik.instructions.taker' => ({required Object code}) => 'Keď predávajúci zadá ${code}, budeš musieť potvrdiť platbu vo svojej bankovej aplikácii. Pred potvrdením sa uisti, že suma je správna.',
 			'home.notifications.title' => 'Dostávaj upozornenia na nové ponuky cez:',
 			'home.notifications.telegram' => 'Telegram',

@@ -240,6 +240,8 @@ class _Translations$taker$de extends Translations$taker$en {
 	@override late final _Translations$taker$progress$de progress = _Translations$taker$progress$de._(_root);
 	@override late final _Translations$taker$submitBlik$de submitBlik = _Translations$taker$submitBlik$de._(_root);
 	@override late final _Translations$taker$criticalCodeDecision$de criticalCodeDecision = _Translations$taker$criticalCodeDecision$de._(_root);
+	@override late final _Translations$taker$conflict$de conflict = _Translations$taker$conflict$de._(_root);
+	@override late final _Translations$taker$dispute$de dispute = _Translations$taker$dispute$de._(_root);
 }
 
 // Path: twint
@@ -1240,7 +1242,8 @@ class _Translations$maker$conflict$de extends Translations$maker$conflict$en {
 	@override String get title => 'Angebotskonflikt';
 	@override String get headline => 'Angebotskonflikt gemeldet';
 	@override String body({required Object code}) => 'Du hast den ${code}-Code als ungültig markiert, aber der Taker hat einen Konflikt gemeldet und ist der Ansicht, dass die Zahlung erfolgreich war.';
-	@override String get instructions => 'Warte, bis der Koordinator die Situation prüft. Möglicherweise wirst du um weitere Details gebeten. Schau später wieder vorbei oder kontaktiere bei Bedarf den Support.';
+	@override String get instructions => 'Bestätige das Ergebnis, bevor der Timer abläuft. War die Zahlung erfolgreich, bestätige sie, damit der Taker bezahlt werden kann. Ist sie fehlgeschlagen, eröffne einen Streitfall. Wenn du nichts tust, wird automatisch ein formeller Streitfall eröffnet.';
+	@override String timeoutLabel({required Object time}) => 'Formeller Streitfall wird automatisch eröffnet in ${time}';
 	@override late final _Translations$maker$conflict$actions$de actions = _Translations$maker$conflict$actions$de._(_root);
 	@override late final _Translations$maker$conflict$disputeDialog$de disputeDialog = _Translations$maker$conflict$disputeDialog$de._(_root);
 	@override late final _Translations$maker$conflict$feedback$de feedback = _Translations$maker$conflict$feedback$de._(_root);
@@ -1316,6 +1319,34 @@ class _Translations$taker$criticalCodeDecision$de extends Translations$taker$cri
 	@override String get warningTitle => 'DU KANNST DEIN GELD VERLIEREN';
 	@override String warningBody({required Object code}) => 'Wenn deine Bank die ${code}-Zahlung belastet hat, fahre NICHT fort. Der Maker könnte deinen Code verwendet haben, und danach kann der Koordinator deine Bitcoin-Auszahlung möglicherweise nicht mehr garantieren.';
 	@override late final _Translations$taker$criticalCodeDecision$actions$de actions = _Translations$taker$criticalCodeDecision$actions$de._(_root);
+}
+
+// Path: taker.conflict
+class _Translations$taker$conflict$de extends Translations$taker$conflict$en {
+	_Translations$taker$conflict$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Zahlungsbestätigung ausstehend';
+	@override String get headline => 'Warten auf die Bestätigung des Makers';
+	@override String body({required Object code}) => 'Du hast gemeldet, dass die ${code}-Zahlung belastet wurde, aber der Maker hat sie als nicht erfolgreich gemeldet. Diese Meldungen widersprechen sich.';
+	@override String get instructions => 'Der Maker muss nun das Ergebnis bestätigen. Bestätigt er den Erfolg der Zahlung, wird deine Auszahlung fortgesetzt. Bestätigt er den Fehlschlag oder läuft der Timer ab, wechselt das Angebot in einen formellen Streitfall und der Streitfall-Chat wird verfügbar.';
+	@override String timeoutLabel({required Object time}) => 'Formeller Streitfall wird automatisch eröffnet in ${time}';
+	@override late final _Translations$taker$conflict$actions$de actions = _Translations$taker$conflict$actions$de._(_root);
+	@override late final _Translations$taker$conflict$feedback$de feedback = _Translations$taker$conflict$feedback$de._(_root);
+	@override late final _Translations$taker$conflict$errors$de errors = _Translations$taker$conflict$errors$de._(_root);
+}
+
+// Path: taker.dispute
+class _Translations$taker$dispute$de extends Translations$taker$dispute$en {
+	_Translations$taker$dispute$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => 'Formeller Streitfall eröffnet';
+	@override String get body => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.';
 }
 
 // Path: twint.scanner
@@ -2473,6 +2504,36 @@ class _Translations$taker$criticalCodeDecision$actions$de extends Translations$t
 	@override String get proceed => 'Ich wurde NICHT belastet – fortfahren';
 }
 
+// Path: taker.conflict.actions
+class _Translations$taker$conflict$actions$de extends Translations$taker$conflict$actions$en {
+	_Translations$taker$conflict$actions$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get back => 'Zurück zur Startseite';
+}
+
+// Path: taker.conflict.feedback
+class _Translations$taker$conflict$feedback$de extends Translations$taker$conflict$feedback$en {
+	_Translations$taker$conflict$feedback$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get reported => 'Zahlungskonflikt gemeldet. Warten auf die Bestätigung des Makers.';
+}
+
+// Path: taker.conflict.errors
+class _Translations$taker$conflict$errors$de extends Translations$taker$conflict$errors$en {
+	_Translations$taker$conflict$errors$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String reporting({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}';
+}
+
 // Path: twint.scanner.status
 class _Translations$twint$scanner$status$de extends Translations$twint$scanner$status$en {
 	_Translations$twint$scanner$status$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -3523,7 +3584,8 @@ extension on TranslationsDe {
 			'maker.conflict.title' => 'Angebotskonflikt',
 			'maker.conflict.headline' => 'Angebotskonflikt gemeldet',
 			'maker.conflict.body' => ({required Object code}) => 'Du hast den ${code}-Code als ungültig markiert, aber der Taker hat einen Konflikt gemeldet und ist der Ansicht, dass die Zahlung erfolgreich war.',
-			'maker.conflict.instructions' => 'Warte, bis der Koordinator die Situation prüft. Möglicherweise wirst du um weitere Details gebeten. Schau später wieder vorbei oder kontaktiere bei Bedarf den Support.',
+			'maker.conflict.instructions' => 'Bestätige das Ergebnis, bevor der Timer abläuft. War die Zahlung erfolgreich, bestätige sie, damit der Taker bezahlt werden kann. Ist sie fehlgeschlagen, eröffne einen Streitfall. Wenn du nichts tust, wird automatisch ein formeller Streitfall eröffnet.',
+			'maker.conflict.timeoutLabel' => ({required Object time}) => 'Formeller Streitfall wird automatisch eröffnet in ${time}',
 			'maker.conflict.actions.back' => 'Zurück zur Startseite',
 			'maker.conflict.actions.confirmPayment' => ({required Object code}) => 'Mein Fehler, ${code}-Zahlung als erfolgreich bestätigen',
 			'maker.conflict.actions.openDispute' => ({required Object code}) => '${code}-Zahlung war NICHT erfolgreich, STREITFALL ERÖFFNEN',
@@ -3577,6 +3639,16 @@ extension on TranslationsDe {
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Wenn deine Bank die ${code}-Zahlung belastet hat, fahre NICHT fort. Der Maker könnte deinen Code verwendet haben, und danach kann der Koordinator deine Bitcoin-Auszahlung möglicherweise nicht mehr garantieren.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Zurück und Bankkonto prüfen',
 			'taker.criticalCodeDecision.actions.proceed' => 'Ich wurde NICHT belastet – fortfahren',
+			'taker.conflict.title' => 'Zahlungsbestätigung ausstehend',
+			'taker.conflict.headline' => 'Warten auf die Bestätigung des Makers',
+			'taker.conflict.body' => ({required Object code}) => 'Du hast gemeldet, dass die ${code}-Zahlung belastet wurde, aber der Maker hat sie als nicht erfolgreich gemeldet. Diese Meldungen widersprechen sich.',
+			'taker.conflict.instructions' => 'Der Maker muss nun das Ergebnis bestätigen. Bestätigt er den Erfolg der Zahlung, wird deine Auszahlung fortgesetzt. Bestätigt er den Fehlschlag oder läuft der Timer ab, wechselt das Angebot in einen formellen Streitfall und der Streitfall-Chat wird verfügbar.',
+			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formeller Streitfall wird automatisch eröffnet in ${time}',
+			'taker.conflict.actions.back' => 'Zurück zur Startseite',
+			'taker.conflict.feedback.reported' => 'Zahlungskonflikt gemeldet. Warten auf die Bestätigung des Makers.',
+			'taker.conflict.errors.reporting' => ({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}',
+			'taker.dispute.headline' => 'Formeller Streitfall eröffnet',
+			'taker.dispute.body' => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.',
 			'twint.scanner.title' => ({required Object code}) => '${code}-Code scannen',
 			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.',
@@ -3587,6 +3659,8 @@ extension on TranslationsDe {
 			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. ${code} bezahlen',
 			'twint.flow.takerProgress.step2' => '2. Sats erhalten',
 			'twint.flow.makerWait.takerPaying' => 'Taker bezahlt',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Dein ${code}-Code',
 			'twint.flow.makerWait.offerExpires' => ({required Object code}) => '${code} läuft ab',
 			'twint.flow.makerWait.autoExpires' => 'Läuft automatisch ab',
@@ -3598,8 +3672,6 @@ extension on TranslationsDe {
 			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Bestätige nur, wenn du dir ABSOLUT sicher bist, dass die ${code}-Zahlung bei deinem Händler erfolgreich eingegangen ist.\n\nDie Bestätigung wickelt die Lightning-Hold-Invoice ab und sendet die Sats sofort an den Taker — das kann nicht rückgängig gemacht werden.',
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Abbrechen',
 			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Ja, Zahlung erhalten',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} wahrscheinlich abgelaufen',
 			'twint.flow.makerExpired.warning' => ({required Object code}) => 'Der ${code}-Code ist inzwischen wahrscheinlich abgelaufen — aber der Taker könnte ihn trotzdem noch bezahlt haben. Prüfe deinen Händler: du hast die unten angezeigte Zeit, um die Zahlung zu bestätigen.',
 			'twint.flow.makerExpired.timerCaption' => 'Zeit zum Bestätigen',

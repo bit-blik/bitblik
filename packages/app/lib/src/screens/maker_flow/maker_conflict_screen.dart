@@ -5,14 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:bitblik_core/core.dart';
-import '../../flow/flow_provider.dart' show flowRoute;
+import '../../flow/flow_provider.dart' show flowEngineProvider, flowRoute;
+import '../../flow/flow_timeout.dart';
 import '../../providers/providers.dart';
 import '../../widgets/dispute_conversation_card.dart';
 
 class MakerConflictScreen extends ConsumerStatefulWidget {
   final Offer offer;
 
-  const MakerConflictScreen({super.key, required this.offer});
+  final FlowEngine? engine;
+
+  const MakerConflictScreen({
+    super.key,
+    required this.offer,
+    this.engine,
+  });
 
   @override
   ConsumerState<MakerConflictScreen> createState() =>
@@ -178,6 +185,7 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(isLoadingProvider);
+    final engine = widget.engine ?? ref.watch(flowEngineProvider).valueOrNull;
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -224,6 +232,44 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
             ] else
               Column(
                 children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.hourglass_top_rounded),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(t.maker.conflict.instructions),
+                                const SizedBox(height: 12),
+                                if (engine != null)
+                                  FlowCountdown(
+                                    deadline: flowStateDeadline(
+                                      engine,
+                                      widget.offer.statusRaw,
+                                      widget.offer,
+                                    ),
+                                    label:
+                                        (time) => t.maker.conflict.timeoutLabel(
+                                          time: time,
+                                        ),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.deepOrange,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,

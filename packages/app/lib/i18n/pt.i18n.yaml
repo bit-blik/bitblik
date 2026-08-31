@@ -598,7 +598,8 @@ maker:
     title: Conflito na oferta
     headline: Conflito na oferta reportado
     body: Marcou o código ${code} como inválido, mas o taker reportou um conflito, indicando que acredita que o pagamento foi bem-sucedido.
-    instructions: Aguarde que o coordenador analise a situação. Poderão pedir-lhe mais detalhes. Volte mais tarde ou contacte o suporte se necessário.
+    instructions: Confirme o resultado antes de o temporizador expirar. Se o pagamento foi bem-sucedido, confirme-o para que o taker possa receber. Se falhou, abra uma disputa. Se não fizer nada, será aberta automaticamente uma disputa formal.
+    timeoutLabel: "A disputa formal será aberta automaticamente dentro de ${time}"
 
     actions:
       back: Voltar ao início
@@ -689,6 +690,23 @@ taker:
     actions:
       cancel: "Voltar e verificar o banco"
       proceed: "NÃO fui debitado — continuar"
+
+  conflict:
+    title: Confirmação do pagamento pendente
+    headline: A aguardar a confirmação do maker
+    body: Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.
+    instructions: O maker tem agora de confirmar o resultado. Se confirmar que o pagamento foi bem-sucedido, o seu pagamento continuará. Se confirmar que falhou, ou se o temporizador expirar, a oferta passará para uma disputa formal e o chat da disputa ficará disponível.
+    timeoutLabel: "A disputa formal será aberta automaticamente dentro de ${time}"
+    actions:
+      back: Voltar ao início
+    feedback:
+      reported: Conflito de pagamento reportado. A aguardar a confirmação do maker.
+    errors:
+      reporting: "Erro ao reportar o conflito: ${details}"
+
+  dispute:
+    headline: Disputa formal aberta
+    body: A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.
 
 twint:
   scanner:

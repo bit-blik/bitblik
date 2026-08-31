@@ -582,7 +582,8 @@ maker:
     title: Konflikt Oferty
     headline: Zgłoszono Konflikt Oferty
     body: Oznaczyłeś kod ${code} jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.
-    instructions: Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.
+    instructions: Potwierdź wynik przed upływem czasu. Jeśli płatność się powiodła, potwierdź ją, aby Taker mógł otrzymać wypłatę. Jeśli się nie powiodła, otwórz spór. Jeśli nic nie zrobisz, formalny spór zostanie otwarty automatycznie.
+    timeoutLabel: "Formalny spór zostanie otwarty automatycznie za ${time}"
     
     actions:
       back: Powrót do strony głównej
@@ -673,6 +674,23 @@ taker:
     actions:
       cancel: "Wróć i sprawdź konto bankowe"
       proceed: "NIE obciążono mnie — kontynuuj"
+
+  conflict:
+    title: Oczekiwanie na potwierdzenie płatności
+    headline: Oczekiwanie na potwierdzenie Makera
+    body: Zgłosiłeś, że płatność ${code} została pobrana, ale Maker zgłosił, że się nie powiodła. Te zgłoszenia są sprzeczne.
+    instructions: Maker musi teraz potwierdzić wynik. Jeśli potwierdzi, że płatność się powiodła, Twoja wypłata będzie kontynuowana. Jeśli potwierdzi niepowodzenie lub upłynie czas, oferta przejdzie do formalnego sporu i czat sporu stanie się dostępny.
+    timeoutLabel: "Formalny spór zostanie otwarty automatycznie za ${time}"
+    actions:
+      back: Powrót do strony głównej
+    feedback:
+      reported: Zgłoszono konflikt płatności. Oczekiwanie na potwierdzenie Makera.
+    errors:
+      reporting: "Błąd zgłaszania konfliktu: ${details}"
+
+  dispute:
+    headline: Otwarto formalny spór
+    body: Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.
 
 twint:
   scanner:

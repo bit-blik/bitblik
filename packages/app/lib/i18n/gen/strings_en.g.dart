@@ -273,6 +273,7 @@ class Translations$taker$en {
 	late final Translations$taker$criticalCodeDecision$en criticalCodeDecision = Translations$taker$criticalCodeDecision$en.internal(_root);
 	late final Translations$taker$invalidBlik$en invalidBlik = Translations$taker$invalidBlik$en.internal(_root);
 	late final Translations$taker$conflict$en conflict = Translations$taker$conflict$en.internal(_root);
+	late final Translations$taker$dispute$en dispute = Translations$taker$dispute$en.internal(_root);
 }
 
 // Path: twint
@@ -1962,8 +1963,11 @@ class Translations$maker$conflict$en {
 	/// en: 'You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.'
 	String body({required Object code}) => 'You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.';
 
-	/// en: 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.'
-	String get instructions => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
+	/// en: 'Confirm the outcome before the timer expires. If the payment succeeded, confirm it so the Taker can be paid. If it failed, open a dispute. If you do nothing, a formal dispute will open automatically.'
+	String get instructions => 'Confirm the outcome before the timer expires. If the payment succeeded, confirm it so the Taker can be paid. If it failed, open a dispute. If you do nothing, a formal dispute will open automatically.';
+
+	/// en: 'Formal dispute opens automatically in ${time}'
+	String timeoutLabel({required Object time}) => 'Formal dispute opens automatically in ${time}';
 
 	late final Translations$maker$conflict$actions$en actions = Translations$maker$conflict$actions$en.internal(_root);
 	late final Translations$maker$conflict$disputeDialog$en disputeDialog = Translations$maker$conflict$disputeDialog$en.internal(_root);
@@ -2259,22 +2263,40 @@ class Translations$taker$conflict$en {
 
 	// Translations
 
-	/// en: 'Offer Conflict'
-	String get title => 'Offer Conflict';
+	/// en: 'Payment Confirmation Pending'
+	String get title => 'Payment Confirmation Pending';
 
-	/// en: 'Offer Conflict Reported'
-	String get headline => 'Offer Conflict Reported';
+	/// en: 'Waiting for the Maker's Confirmation'
+	String get headline => 'Waiting for the Maker\'s Confirmation';
 
-	/// en: 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.'
-	String body({required Object code}) => 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.';
+	/// en: 'You reported that the ${code} payment was charged, but the Maker reported that it was unsuccessful. These reports conflict.'
+	String body({required Object code}) => 'You reported that the ${code} payment was charged, but the Maker reported that it was unsuccessful. These reports conflict.';
 
-	/// en: 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.'
-	String get instructions => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
+	/// en: 'The Maker must now confirm the result. If they confirm the payment succeeded, your payout will continue. If they confirm it failed, or the timer expires, the offer will move to a formal dispute and the dispute chat will become available.'
+	String get instructions => 'The Maker must now confirm the result. If they confirm the payment succeeded, your payout will continue. If they confirm it failed, or the timer expires, the offer will move to a formal dispute and the dispute chat will become available.';
+
+	/// en: 'Formal dispute opens automatically in ${time}'
+	String timeoutLabel({required Object time}) => 'Formal dispute opens automatically in ${time}';
 
 	late final Translations$taker$conflict$actions$en actions = Translations$taker$conflict$actions$en.internal(_root);
 	late final Translations$taker$conflict$feedback$en feedback = Translations$taker$conflict$feedback$en.internal(_root);
 	late final Translations$taker$conflict$errors$en errors = Translations$taker$conflict$errors$en.internal(_root);
 	late final Translations$taker$conflict$nostrContact$en nostrContact = Translations$taker$conflict$nostrContact$en.internal(_root);
+}
+
+// Path: taker.dispute
+class Translations$taker$dispute$en {
+	Translations$taker$dispute$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Formal Dispute Opened'
+	String get headline => 'Formal Dispute Opened';
+
+	/// en: 'The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.'
+	String get body => 'The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.';
 }
 
 // Path: twint.scanner
@@ -4555,8 +4577,8 @@ class Translations$taker$conflict$feedback$en {
 
 	// Translations
 
-	/// en: 'Conflict reported. Coordinator will review.'
-	String get reported => 'Conflict reported. Coordinator will review.';
+	/// en: 'Payment conflict reported. Waiting for the Maker's confirmation.'
+	String get reported => 'Payment conflict reported. Waiting for the Maker\'s confirmation.';
 }
 
 // Path: taker.conflict.errors
@@ -6006,7 +6028,8 @@ extension on Translations {
 			'maker.conflict.title' => 'Offer Conflict',
 			'maker.conflict.headline' => 'Offer Conflict Reported',
 			'maker.conflict.body' => ({required Object code}) => 'You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.',
-			'maker.conflict.instructions' => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.',
+			'maker.conflict.instructions' => 'Confirm the outcome before the timer expires. If the payment succeeded, confirm it so the Taker can be paid. If it failed, open a dispute. If you do nothing, a formal dispute will open automatically.',
+			'maker.conflict.timeoutLabel' => ({required Object time}) => 'Formal dispute opens automatically in ${time}',
 			'maker.conflict.actions.back' => 'Back to Home',
 			'maker.conflict.actions.confirmPayment' => ({required Object code}) => 'My mistake, confirm ${code} payment success',
 			'maker.conflict.actions.openDispute' => ({required Object code}) => '${code} payment did NOT succeed, OPEN DISPUTE',
@@ -6077,9 +6100,9 @@ extension on Translations {
 			'taker.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'If you want to try again with a new ${code} code, renew the reservation.',
 			'taker.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
 			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',
-			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'You marked ${code} as charged',
 			_ => null,
 		} ?? switch (path) {
+			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'You marked ${code} as charged',
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.',
 			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} was charged from my bank account',
 			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Try again with new ${code} code',
@@ -6157,12 +6180,13 @@ extension on Translations {
 			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Conflict reported. Coordinator will review.',
 			'taker.invalidBlik.errors.reservationFailed' => 'Failed to reserve offer again',
 			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Error reporting conflict: ${details}',
-			'taker.conflict.title' => 'Offer Conflict',
-			'taker.conflict.headline' => 'Offer Conflict Reported',
-			'taker.conflict.body' => ({required Object code}) => 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.',
-			'taker.conflict.instructions' => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.',
+			'taker.conflict.title' => 'Payment Confirmation Pending',
+			'taker.conflict.headline' => 'Waiting for the Maker\'s Confirmation',
+			'taker.conflict.body' => ({required Object code}) => 'You reported that the ${code} payment was charged, but the Maker reported that it was unsuccessful. These reports conflict.',
+			'taker.conflict.instructions' => 'The Maker must now confirm the result. If they confirm the payment succeeded, your payout will continue. If they confirm it failed, or the timer expires, the offer will move to a formal dispute and the dispute chat will become available.',
+			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formal dispute opens automatically in ${time}',
 			'taker.conflict.actions.back' => 'Back to Home',
-			'taker.conflict.feedback.reported' => 'Conflict reported. Coordinator will review.',
+			'taker.conflict.feedback.reported' => 'Payment conflict reported. Waiting for the Maker\'s confirmation.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Error reporting conflict: ${details}',
 			'taker.conflict.nostrContact.title' => 'Contact Coordinator on Nostr',
 			'taker.conflict.nostrContact.description' => 'You can DM the coordinator directly for help with this dispute.',
@@ -6171,6 +6195,8 @@ extension on Translations {
 			'taker.conflict.nostrContact.npubCopied' => 'Coordinator npub copied to clipboard!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
+			'taker.dispute.headline' => 'Formal Dispute Opened',
+			'taker.dispute.body' => 'The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.',
 			'twint.scanner.title' => ({required Object code}) => 'Scan ${code} code',
 			'twint.scanner.status.align' => ({required Object code}) => 'Align the ${code} QR code and amount text inside the camera frame.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually.',

@@ -576,7 +576,8 @@ maker:
     title: Konflikt ponuky
     headline: Nahlásený konflikt ponuky
     body: Označil si ${code} ako neplatný, ale kupujúci nahlásil konflikt, čím naznačuje, že podľa neho bola platba úspešná.
-    instructions: Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.
+    instructions: Potvrď výsledok pred vypršaním časovača. Ak bola platba úspešná, potvrď ju, aby mohol byť kupujúci vyplatený. Ak zlyhala, otvor spor. Ak nič neurobíš, automaticky sa otvorí formálny spor.
+    timeoutLabel: "Formálny spor sa automaticky otvorí o ${time}"
 
     actions:
       back: Späť domov
@@ -813,16 +814,17 @@ taker:
       conflictReport: "Chyba pri nahlasovaní konfliktu: ${details}"
 
   conflict:
-    title: Konflikt ponuky
-    headline: Nahlásený konflikt ponuky
-    body: Predávajúci označil ${code} ako neplatný, ale ty si nahlásil konflikt, čím naznačuješ, že podľa teba bola platba úspešná.
-    instructions: Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.
+    title: Čaká sa na potvrdenie platby
+    headline: Čaká sa na potvrdenie Makera
+    body: Nahlásil si, že platba ${code} bola zaúčtovaná, ale Maker uviedol, že nebola úspešná. Tieto hlásenia si odporujú.
+    instructions: Maker teraz musí potvrdiť výsledok. Ak potvrdí, že platba bola úspešná, tvoja výplata bude pokračovať. Ak potvrdí neúspech alebo vyprší časovač, ponuka prejde do formálneho sporu a sprístupní sa chat sporu.
+    timeoutLabel: "Formálny spor sa automaticky otvorí o ${time}"
 
     actions:
       back: Späť domov
 
     feedback:
-      reported: Konflikt nahlásený. Koordinátor ho posúdi.
+      reported: Nahlásený konflikt platby. Čaká sa na potvrdenie Makera.
 
     errors:
       reporting: "Chyba pri nahlasovaní konfliktu: ${details}"
@@ -835,6 +837,10 @@ taker:
       npubCopied: Npub koordinátora skopírovaný do schránky!
       yourIdentityDescription: "Ak chceš posielať DM, prihlás sa svojím súkromným kľúčom Neko (nsec) v ľubovoľnom Nostr klientovi, ktorý podporuje priame správy."
       manageNekoKeys: Spravovať Neko kľúče
+
+  dispute:
+    headline: Otvorený formálny spor
+    body: Ponuku teraz posudzuje koordinátor. Pomocou chatu sporu nižšie komunikuj s koordinátorom a poskytni požadované dôkazy.
 
 # =============================================================================
 # ${code} (Všeobecné)

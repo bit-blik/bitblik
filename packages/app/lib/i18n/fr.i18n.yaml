@@ -599,7 +599,8 @@ maker:
     title: Conflit sur l'offre
     headline: Conflit sur l'offre signalé
     body: Vous avez marqué le code ${code} comme invalide, mais le taker a signalé un conflit, indiquant qu'il estime que le paiement a réussi.
-    instructions: Attendez que le coordinateur examine la situation. Des détails supplémentaires pourront vous être demandés. Revenez plus tard ou contactez le support si nécessaire.
+    instructions: Confirmez le résultat avant la fin du délai. Si le paiement a réussi, confirmez-le afin que le taker soit payé. S'il a échoué, ouvrez un litige. Sans action de votre part, un litige formel sera ouvert automatiquement.
+    timeoutLabel: "Ouverture automatique du litige formel dans ${time}"
 
     actions:
       back: Retour à l'accueil
@@ -690,6 +691,23 @@ taker:
     actions:
       cancel: "Retourner vérifier ma banque"
       proceed: "Je n’ai PAS été débité — continuer"
+
+  conflict:
+    title: Confirmation du paiement en attente
+    headline: En attente de la confirmation du maker
+    body: Vous avez signalé que le paiement ${code} a été débité, mais le maker a indiqué qu'il avait échoué. Ces déclarations sont contradictoires.
+    instructions: Le maker doit maintenant confirmer le résultat. S'il confirme que le paiement a réussi, votre versement continuera. S'il confirme l'échec, ou si le délai expire, l'offre passera en litige formel et le chat du litige deviendra disponible.
+    timeoutLabel: "Ouverture automatique du litige formel dans ${time}"
+    actions:
+      back: Retour à l'accueil
+    feedback:
+      reported: Conflit de paiement signalé. En attente de la confirmation du maker.
+    errors:
+      reporting: "Erreur lors du signalement du conflit : ${details}"
+
+  dispute:
+    headline: Litige formel ouvert
+    body: L'offre est maintenant examinée par le coordinateur. Utilisez le chat du litige ci-dessous pour communiquer avec le coordinateur et fournir les justificatifs demandés.
 
 twint:
   scanner:

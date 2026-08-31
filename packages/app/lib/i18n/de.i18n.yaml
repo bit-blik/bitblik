@@ -599,7 +599,8 @@ maker:
     title: Angebotskonflikt
     headline: Angebotskonflikt gemeldet
     body: Du hast den ${code}-Code als ungültig markiert, aber der Taker hat einen Konflikt gemeldet und ist der Ansicht, dass die Zahlung erfolgreich war.
-    instructions: Warte, bis der Koordinator die Situation prüft. Möglicherweise wirst du um weitere Details gebeten. Schau später wieder vorbei oder kontaktiere bei Bedarf den Support.
+    instructions: Bestätige das Ergebnis, bevor der Timer abläuft. War die Zahlung erfolgreich, bestätige sie, damit der Taker bezahlt werden kann. Ist sie fehlgeschlagen, eröffne einen Streitfall. Wenn du nichts tust, wird automatisch ein formeller Streitfall eröffnet.
+    timeoutLabel: "Formeller Streitfall wird automatisch eröffnet in ${time}"
 
     actions:
       back: Zurück zur Startseite
@@ -690,6 +691,23 @@ taker:
     actions:
       cancel: "Zurück und Bankkonto prüfen"
       proceed: "Ich wurde NICHT belastet – fortfahren"
+
+  conflict:
+    title: Zahlungsbestätigung ausstehend
+    headline: Warten auf die Bestätigung des Makers
+    body: Du hast gemeldet, dass die ${code}-Zahlung belastet wurde, aber der Maker hat sie als nicht erfolgreich gemeldet. Diese Meldungen widersprechen sich.
+    instructions: Der Maker muss nun das Ergebnis bestätigen. Bestätigt er den Erfolg der Zahlung, wird deine Auszahlung fortgesetzt. Bestätigt er den Fehlschlag oder läuft der Timer ab, wechselt das Angebot in einen formellen Streitfall und der Streitfall-Chat wird verfügbar.
+    timeoutLabel: "Formeller Streitfall wird automatisch eröffnet in ${time}"
+    actions:
+      back: Zurück zur Startseite
+    feedback:
+      reported: Zahlungskonflikt gemeldet. Warten auf die Bestätigung des Makers.
+    errors:
+      reporting: "Fehler beim Melden des Konflikts: ${details}"
+
+  dispute:
+    headline: Formeller Streitfall eröffnet
+    body: Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.
 
 twint:
   scanner:

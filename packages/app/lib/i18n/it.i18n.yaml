@@ -582,7 +582,8 @@ maker:
     title: Conflitto Offerta
     headline: Conflitto Offerta Segnalato
     body: Hai contrassegnato il codice ${code} come non valido, ma il Taker ha segnalato un conflitto, indicando che ritiene il pagamento andato a buon fine.
-    instructions: Attendi che il coordinatore esamini la situazione. Potrebbero esserti richiesti ulteriori dettagli. Controlla più tardi o contatta l'assistenza se necessario.
+    instructions: Conferma l'esito prima che scada il timer. Se il pagamento è riuscito, confermalo affinché il Taker possa essere pagato. Se non è riuscito, apri una disputa. Se non fai nulla, verrà aperta automaticamente una disputa formale.
+    timeoutLabel: "La disputa formale si aprirà automaticamente tra ${time}"
 
     actions:
       back: Torna alla Home
@@ -673,6 +674,23 @@ taker:
     actions:
       cancel: "Torna indietro e controlla la banca"
       proceed: "NON mi è stato addebitato — continua"
+
+  conflict:
+    title: Conferma del pagamento in attesa
+    headline: In attesa della conferma del Maker
+    body: Hai segnalato che il pagamento ${code} è stato addebitato, ma il Maker ha dichiarato che non è riuscito. Le due segnalazioni sono in conflitto.
+    instructions: Il Maker deve ora confermare l'esito. Se conferma che il pagamento è riuscito, il tuo pagamento proseguirà. Se conferma che non è riuscito, o se il timer scade, l'offerta passerà a una disputa formale e la chat della disputa diventerà disponibile.
+    timeoutLabel: "La disputa formale si aprirà automaticamente tra ${time}"
+    actions:
+      back: Torna alla Home
+    feedback:
+      reported: Conflitto di pagamento segnalato. In attesa della conferma del Maker.
+    errors:
+      reporting: "Errore nella segnalazione del conflitto: ${details}"
+
+  dispute:
+    headline: Disputa formale aperta
+    body: L'offerta è ora in fase di revisione da parte del coordinatore. Usa la chat della disputa qui sotto per comunicare con il coordinatore e fornire le prove richieste.
 
 twint:
   scanner:

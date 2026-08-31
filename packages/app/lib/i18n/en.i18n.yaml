@@ -602,7 +602,8 @@ maker:
     title: Offer Conflict
     headline: Offer Conflict Reported
     body: You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.
-    instructions: Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.
+    instructions: Confirm the outcome before the timer expires. If the payment succeeded, confirm it so the Taker can be paid. If it failed, open a dispute. If you do nothing, a formal dispute will open automatically.
+    timeoutLabel: "Formal dispute opens automatically in ${time}"
     
     actions:
       back: Back to Home
@@ -839,16 +840,17 @@ taker:
       conflictReport: "Error reporting conflict: ${details}"
   
   conflict:
-    title: Offer Conflict
-    headline: Offer Conflict Reported
-    body: The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.
-    instructions: Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.
+    title: Payment Confirmation Pending
+    headline: Waiting for the Maker's Confirmation
+    body: You reported that the ${code} payment was charged, but the Maker reported that it was unsuccessful. These reports conflict.
+    instructions: The Maker must now confirm the result. If they confirm the payment succeeded, your payout will continue. If they confirm it failed, or the timer expires, the offer will move to a formal dispute and the dispute chat will become available.
+    timeoutLabel: "Formal dispute opens automatically in ${time}"
     
     actions:
       back: Back to Home
     
     feedback:
-      reported: Conflict reported. Coordinator will review.
+      reported: Payment conflict reported. Waiting for the Maker's confirmation.
     
     errors:
       reporting: "Error reporting conflict: ${details}"
@@ -861,6 +863,10 @@ taker:
       npubCopied: Coordinator npub copied to clipboard!
       yourIdentityDescription: "To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages."
       manageNekoKeys: Manage Neko Keys
+
+  dispute:
+    headline: Formal Dispute Opened
+    body: The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.
 
 twint:
   scanner:
