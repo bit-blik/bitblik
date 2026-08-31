@@ -196,7 +196,6 @@ class _Translations$disputeChat$de extends Translations$disputeChat$en {
 	@override String get ruledForTaker => 'Für den Taker entschieden';
 	@override String get legacyChannel => 'Legacy-NIP-04-Kompatibilitätskanal';
 	@override String get privateConversation => 'Private Unterhaltung mit dem Koordinator';
-	@override String get privacyNotice => 'Dies ist ein privater NIP-17-Kanal. Nachrichten und Anhänge autorisieren keine Zahlungen und ändern den Angebotsstatus nicht.';
 	@override String get noMessages => 'Noch keine Nachrichten.';
 	@override String get replyHint => 'Hier antworten';
 	@override String get readOnly => 'Der Verlauf dieses abgeschlossenen Streitfalls ist schreibgeschützt.';
@@ -3411,7 +3410,6 @@ extension on TranslationsDe {
 			'disputeChat.ruledForTaker' => 'Für den Taker entschieden',
 			'disputeChat.legacyChannel' => 'Legacy-NIP-04-Kompatibilitätskanal',
 			'disputeChat.privateConversation' => 'Private Unterhaltung mit dem Koordinator',
-			'disputeChat.privacyNotice' => 'Dies ist ein privater NIP-17-Kanal. Nachrichten und Anhänge autorisieren keine Zahlungen und ändern den Angebotsstatus nicht.',
 			'disputeChat.noMessages' => 'Noch keine Nachrichten.',
 			'disputeChat.replyHint' => 'Hier antworten',
 			'disputeChat.readOnly' => 'Der Verlauf dieses abgeschlossenen Streitfalls ist schreibgeschützt.',
@@ -3663,9 +3661,9 @@ extension on TranslationsDe {
 			'twint.scanner.status.amountFailed' => 'Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren.',
 			'twint.flow.progress.step1' => '1. Angebot erstellen',
 			'twint.flow.progress.step2' => '2. Auf Taker warten',
+			'twint.flow.progress.step3' => '3. Bestätigen',
 			_ => null,
 		} ?? switch (path) {
-			'twint.flow.progress.step3' => '3. Bestätigen',
 			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. ${code} bezahlen',
 			'twint.flow.takerProgress.step2' => '2. Sats erhalten',
 			'twint.flow.makerWait.takerPaying' => 'Taker bezahlt',

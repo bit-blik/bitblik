@@ -15,11 +15,7 @@ class MakerConflictScreen extends ConsumerStatefulWidget {
 
   final FlowEngine? engine;
 
-  const MakerConflictScreen({
-    super.key,
-    required this.offer,
-    this.engine,
-  });
+  const MakerConflictScreen({super.key, required this.offer, this.engine});
 
   @override
   ConsumerState<MakerConflictScreen> createState() =>
@@ -28,6 +24,7 @@ class MakerConflictScreen extends ConsumerStatefulWidget {
 
 class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
   bool _isDisputeOpened = false;
+  bool _isSubmitting = false;
   // final _formKey = GlobalKey<FormState>(); // Not used currently
   // final _lnAddressController = TextEditingController(); // Not used currently
 
@@ -83,6 +80,7 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
     final apiService = ref.read(apiServiceProvider);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final makerId = await ref.read(publicKeyProvider.future);
+    if (!context.mounted) return;
 
     if (makerId == null) {
       scaffoldMessenger.showSnackBar(
@@ -90,9 +88,8 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
       );
       return;
     }
-
-    ref.read(isLoadingProvider.notifier).state = true;
     ref.read(errorProvider.notifier).state = null;
+    setState(() => _isSubmitting = true);
 
     try {
       await apiService.confirmMakerPayment(
@@ -100,6 +97,7 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
         makerId,
         widget.offer.coordinatorPubkey,
       );
+      if (!context.mounted) return;
 
       scaffoldMessenger.showSnackBar(
         SnackBar(
@@ -112,9 +110,11 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
         details: e.toString(),
       );
       ref.read(errorProvider.notifier).state = errorMsg;
-      scaffoldMessenger.showSnackBar(SnackBar(content: Text(errorMsg)));
+      if (context.mounted) {
+        scaffoldMessenger.showSnackBar(SnackBar(content: Text(errorMsg)));
+      }
     } finally {
-      ref.read(isLoadingProvider.notifier).state = false;
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -123,6 +123,7 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
     final apiService = ref.read(apiServiceProvider);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final makerId = await ref.read(publicKeyProvider.future);
+    if (!context.mounted) return;
 
     if (makerId == null) {
       scaffoldMessenger.showSnackBar(
@@ -155,15 +156,17 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
     if (confirmed != true) {
       return;
     }
+    if (!context.mounted) return;
 
-    // ref.read(isLoadingProvider.notifier).state = true;
-    // ref.read(errorProvider.notifier).state = null;
+    ref.read(errorProvider.notifier).state = null;
+    setState(() => _isSubmitting = true);
 
     try {
       await apiService.openDispute(
         widget.offer.id,
         widget.offer.coordinatorPubkey,
       );
+      if (!context.mounted) return;
 
       setState(() {
         _isDisputeOpened = true;
@@ -176,15 +179,16 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
         error: e.toString(),
       );
       ref.read(errorProvider.notifier).state = errorMsg;
-      scaffoldMessenger.showSnackBar(SnackBar(content: Text(errorMsg)));
+      if (context.mounted) {
+        scaffoldMessenger.showSnackBar(SnackBar(content: Text(errorMsg)));
+      }
     } finally {
-      ref.read(isLoadingProvider.notifier).state = false;
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(isLoadingProvider);
     final engine = widget.engine ?? ref.watch(flowEngineProvider).valueOrNull;
     return Scaffold(
       body: SingleChildScrollView(
@@ -212,9 +216,7 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            if (isLoading)
-              const CircularProgressIndicator()
-            else if (_isDisputeOpened || widget.offer.isDispute) ...[
+            if (_isDisputeOpened || widget.offer.isDispute) ...[
               DisputeConversationCard(
                 offer:
                     widget.offer.isDispute
@@ -275,7 +277,12 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () => _showConfirmationDialog(context, ref),
+                    // Keep the conflict explanation and countdown visible
+                    // while the request is running; only disable its actions.
+                    onPressed:
+                        _isSubmitting
+                            ? null
+                            : () => _showConfirmationDialog(context, ref),
                     child: Text(
                       t.maker.conflict.actions.confirmPayment(
                         code:
@@ -291,7 +298,8 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                       backgroundColor: Theme.of(context).colorScheme.error,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () => _openDispute(context, ref),
+                    onPressed:
+                        _isSubmitting ? null : () => _openDispute(context, ref),
                     child: Text(
                       t.maker.conflict.actions.openDispute(
                         code:

@@ -197,7 +197,6 @@ class _Translations$disputeChat$pt extends Translations$disputeChat$en {
 	@override String get ruledForTaker => 'Decisão a favor do taker';
 	@override String get legacyChannel => 'Canal de compatibilidade NIP-04 legado';
 	@override String get privateConversation => 'Conversa privada com o coordenador';
-	@override String get privacyNotice => 'Este é um canal NIP-17 privado. Mensagens e anexos não autorizam pagamentos nem alteram o estado da oferta.';
 	@override String get noMessages => 'Ainda não há mensagens.';
 	@override String get replyHint => 'Responder aqui';
 	@override String get readOnly => 'O histórico desta disputa resolvida é só de leitura.';
@@ -3413,7 +3412,6 @@ extension on TranslationsPt {
 			'disputeChat.ruledForTaker' => 'Decisão a favor do taker',
 			'disputeChat.legacyChannel' => 'Canal de compatibilidade NIP-04 legado',
 			'disputeChat.privateConversation' => 'Conversa privada com o coordenador',
-			'disputeChat.privacyNotice' => 'Este é um canal NIP-17 privado. Mensagens e anexos não autorizam pagamentos nem alteram o estado da oferta.',
 			'disputeChat.noMessages' => 'Ainda não há mensagens.',
 			'disputeChat.replyHint' => 'Responder aqui',
 			'disputeChat.readOnly' => 'O histórico desta disputa resolvida é só de leitura.',
@@ -3664,9 +3662,9 @@ extension on TranslationsPt {
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente.',
 			'twint.scanner.status.amountFailed' => 'A leitura pela câmara não conseguiu extrair o montante. Ainda pode usar o resultado do QR e corrigir os campos manualmente.',
 			'twint.flow.progress.step1' => '1. Criar oferta',
+			'twint.flow.progress.step2' => '2. Esperar pelo taker',
 			_ => null,
 		} ?? switch (path) {
-			'twint.flow.progress.step2' => '2. Esperar pelo taker',
 			'twint.flow.progress.step3' => '3. Confirmar',
 			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. Pagar ${code}',
 			'twint.flow.takerProgress.step2' => '2. Receber sats',

@@ -759,7 +759,24 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       // `invalidTwint` all parse to the enum's `unknown`, so an enum compare
       // would miss transitions between them (and copyWith without statusRaw
       // would overwrite the real state with the literal 'unknown').
-      if (remoteStatusRaw == localOffer.statusRaw) return; // Already in sync.
+      if (remoteStatusRaw == localOffer.statusRaw) {
+        // Status pushes intentionally update only lifecycle fields, so older
+        // locally-created offers may still carry the historical client bug
+        // where amountSats already included makerFees. Refresh the
+        // coordinator-authoritative accounting fields even when the status is
+        // unchanged. This repairs an already-open refundingMaker screen after
+        // restart/re-entry without disturbing client-only wallet selection.
+        if (localOffer.amountSats != hydrated.amountSats ||
+            localOffer.makerFees != hydrated.makerFees) {
+          final corrected = localOffer.copyWith(
+            amountSats: hydrated.amountSats,
+            makerFees: hydrated.makerFees,
+          );
+          await OfferDbService().upsertOffer(corrected);
+          if (state?.id == localOffer.id) state = corrected;
+        }
+        return; // Already in sync lifecycle-wise.
+      }
 
       Logger.log.i(
         () =>
@@ -1099,7 +1116,9 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     final shouldHydrateCompletedOffer =
         newStatus == OfferStatus.makerConfirmed ||
         newStatus == OfferStatus.settled ||
-        newStatus == OfferStatus.takerPaid;
+        newStatus == OfferStatus.takerPaid ||
+        update.status == 'refundingMaker' ||
+        update.status == 'payingMaker';
     Offer hydrated = updated;
     if (shouldHydrateCompletedOffer) {
       try {

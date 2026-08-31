@@ -44,8 +44,9 @@ services:
       ICON_URL: https://www.0xkishan.com/blogs/nostr/nostr.png
       NOSTR_PRIVATE_KEY: <GENERATE A NEW NOSTR NSEC>
       NOSTR_RELAYS: wss://relay.primal.net,wss://relay.mostro.network
-      # Required for encrypted dispute evidence; published as kind 10063.
-      BLOSSOM_SERVERS: https://your-blossom.example
+      # Optional fallback. An existing kind-10063 list always wins. Empty uses
+      # nostr.download + blossom.jumble.social only when no published list exists.
+      BLOSSOM_SERVERS: ${BLOSSOM_SERVERS:-}
     volumes:
       - ./tls.cert:/app/tls.cert:ro
       - ./admin.macaroon:/app/admin.macaroon:ro

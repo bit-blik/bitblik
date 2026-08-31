@@ -361,7 +361,6 @@ disputeChat:
   ruledForTaker: "Rozstrzygnięto na korzyść Takera"
   legacyChannel: "Starszy kanał zgodności NIP-04"
   privateConversation: "Prywatna rozmowa z koordynatorem"
-  privacyNotice: "To prywatny kanał NIP-17. Wiadomości i załączniki nie autoryzują płatności ani nie zmieniają stanu oferty."
   noMessages: "Brak wiadomości."
   replyHint: "Odpowiedz tutaj"
   readOnly: "Historia tego rozstrzygniętego sporu jest tylko do odczytu."

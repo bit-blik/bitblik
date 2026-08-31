@@ -223,9 +223,6 @@ class Translations$disputeChat$en {
 	/// en: 'Private coordinator conversation'
 	String get privateConversation => 'Private coordinator conversation';
 
-	/// en: 'This is a private NIP-17 lane. Messages and attachments do not authorize payments or change the offer state.'
-	String get privacyNotice => 'This is a private NIP-17 lane. Messages and attachments do not authorize payments or change the offer state.';
-
 	/// en: 'No messages yet.'
 	String get noMessages => 'No messages yet.';
 
@@ -5861,7 +5858,6 @@ extension on Translations {
 			'disputeChat.ruledForTaker' => 'Ruled for Taker',
 			'disputeChat.legacyChannel' => 'Legacy NIP-04 compatibility channel',
 			'disputeChat.privateConversation' => 'Private coordinator conversation',
-			'disputeChat.privacyNotice' => 'This is a private NIP-17 lane. Messages and attachments do not authorize payments or change the offer state.',
 			'disputeChat.noMessages' => 'No messages yet.',
 			'disputeChat.replyHint' => 'Reply here',
 			'disputeChat.readOnly' => 'This resolved dispute history is read-only.',
@@ -6112,9 +6108,9 @@ extension on Translations {
 			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => '${code} Code Expired',
 			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.',
 			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Reservation ends in',
+			'taker.waitConfirmation.expiredSentWarning' => 'The maker hasn\'t confirmed the payment yet. What would you like to do?',
 			_ => null,
 		} ?? switch (path) {
-			'taker.waitConfirmation.expiredSentWarning' => 'The maker hasn\'t confirmed the payment yet. What would you like to do?',
 			'taker.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'If you want to try again with a new ${code} code, renew the reservation.',
 			'taker.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
 			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',

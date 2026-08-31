@@ -775,6 +775,7 @@ class _ConversationLaneState extends State<ConversationLane> {
   final controller = TextEditingController();
   final scrollController = ScrollController();
   final messages = <_LaneMessage>[];
+  final evidenceBytesByMessageId = <String, Future<Uint8List>>{};
   StreamSubscription<Nip17Message>? dmInboxEvents;
   StreamSubscription<LegacyNip04Message>? legacyInboxEvents;
   bool loading = true;
@@ -1048,6 +1049,8 @@ class _ConversationLaneState extends State<ConversationLane> {
         imageBytes: bytes,
         recipientDmRelayDiscoveryRelays:
             widget.repository.session.dmRelayDiscoveryRelays,
+        coordinatorBlossomDiscoveryRelays:
+            widget.repository.session.dmRelayDiscoveryRelays,
       );
       await _appendLatestMessages();
     } catch (error) {
@@ -1070,12 +1073,7 @@ class _ConversationLaneState extends State<ConversationLane> {
   Future<void> preview(Nip17Message message) async {
     Uint8List? bytes;
     try {
-      bytes = await widget.repository.communication.downloadEvidence(
-        offer: widget.dispute.offer,
-        myPubkey: widget.dispute.offer.coordinatorPubkey,
-        participantPubkey: widget.participantPubkey,
-        message: message,
-      );
+      bytes = await _evidenceBytes(message);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -1090,6 +1088,19 @@ class _ConversationLaneState extends State<ConversationLane> {
           Dialog(child: InteractiveViewer(child: Image.memory(bytes!))),
     );
   }
+
+  Future<Uint8List> _evidenceBytes(Nip17Message message) =>
+      evidenceBytesByMessageId.putIfAbsent(
+        message.id,
+        () => widget.repository.communication.downloadEvidence(
+          offer: widget.dispute.offer,
+          myPubkey: widget.dispute.offer.coordinatorPubkey,
+          participantPubkey: widget.participantPubkey,
+          message: message,
+          coordinatorBlossomDiscoveryRelays:
+              widget.repository.session.dmRelayDiscoveryRelays,
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -1151,12 +1162,9 @@ class _ConversationLaneState extends State<ConversationLane> {
                                   padding: const EdgeInsets.all(10),
                                   child: Text(message.content),
                                 )
-                              : TextButton.icon(
-                                  onPressed: () => preview(message),
-                                  icon: const Icon(Icons.image),
-                                  label: Text(
-                                    '${file.mimeType} · ${file.dimensions ?? ''}',
-                                  ),
+                              : _EvidenceThumbnail(
+                                  bytes: _evidenceBytes(message),
+                                  onTap: () => preview(message),
                                 ),
                         ),
                       );
@@ -1189,7 +1197,7 @@ class _ConversationLaneState extends State<ConversationLane> {
                     for (final reply in _preparedReplies)
                       PopupMenuItem(
                         value: reply.message,
-                        child: Text('${reply.action} · ${reply.language}'),
+                        child: Text(reply.action),
                       ),
                   ],
                 ),
@@ -1206,83 +1214,67 @@ class _ConversationLaneState extends State<ConversationLane> {
   }
 }
 
-const _preparedReplies = <({String action, String language, String message})>[
+const _preparedReplies = <({String action, String message})>[
   (
     action: 'Request evidence',
-    language: 'EN',
     message: 'Please provide clearer payment evidence.',
   ),
   (
-    action: 'Request evidence',
-    language: 'DE',
-    message: 'Bitte stelle einen deutlicheren Zahlungsnachweis bereit.',
-  ),
-  (
-    action: 'Request evidence',
-    language: 'FR',
-    message: 'Veuillez fournir une preuve de paiement plus claire.',
-  ),
-  (
-    action: 'Request evidence',
-    language: 'IT',
-    message: 'Fornisci una prova di pagamento più chiara.',
-  ),
-  (
-    action: 'Request evidence',
-    language: 'PL',
-    message: 'Prześlij wyraźniejszy dowód płatności.',
-  ),
-  (
-    action: 'Request evidence',
-    language: 'PT',
-    message: 'Envie um comprovativo de pagamento mais claro.',
-  ),
-  (
-    action: 'Request evidence',
-    language: 'SK',
-    message: 'Poskytnite jasnejší doklad o platbe.',
-  ),
-  (
     action: 'Request invoice',
-    language: 'EN',
     message:
         'Please submit the exact-amount Lightning payout invoice in BitBlik.',
   ),
-  (
-    action: 'Request invoice',
-    language: 'DE',
-    message:
-        'Bitte reiche die Lightning-Auszahlungsrechnung über den exakten Betrag in BitBlik ein.',
-  ),
-  (
-    action: 'Request invoice',
-    language: 'FR',
-    message:
-        'Veuillez envoyer dans BitBlik la facture Lightning de paiement au montant exact.',
-  ),
-  (
-    action: 'Request invoice',
-    language: 'IT',
-    message:
-        'Invia in BitBlik la fattura Lightning di pagamento con l’importo esatto.',
-  ),
-  (
-    action: 'Request invoice',
-    language: 'PL',
-    message: 'Prześlij w BitBlik fakturę wypłaty Lightning na dokładną kwotę.',
-  ),
-  (
-    action: 'Request invoice',
-    language: 'PT',
-    message:
-        'Envie no BitBlik a fatura Lightning de pagamento com o valor exato.',
-  ),
-  (
-    action: 'Request invoice',
-    language: 'SK',
-    message: 'Odošlite v BitBlik Lightning faktúru na výplatu presnej sumy.',
-  ),
 ];
+
+class _EvidenceThumbnail extends StatelessWidget {
+  const _EvidenceThumbnail({required this.bytes, required this.onTap});
+
+  final Future<Uint8List> bytes;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<Uint8List>(
+    future: bytes,
+    builder: (context, snapshot) {
+      final loaded = snapshot.data;
+      return Semantics(
+        button: loaded != null,
+        image: true,
+        child: InkWell(
+          onTap: loaded == null ? null : onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 144,
+              height: 96,
+              child: loaded != null
+                  ? Image.memory(
+                      loaded,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                    )
+                  : snapshot.hasError
+                  ? const ColoredBox(
+                      color: Colors.black12,
+                      child: Center(child: Icon(Icons.broken_image_outlined)),
+                    )
+                  : const ColoredBox(
+                      color: Colors.black12,
+                      child: Center(
+                        child: SizedBox.square(
+                          dimension: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
 
 class _NekoAvatar extends StatelessWidget {
   const _NekoAvatar({required this.pubkey, required this.size});

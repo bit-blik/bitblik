@@ -197,7 +197,6 @@ class _Translations$disputeChat$it extends Translations$disputeChat$en {
 	@override String get ruledForTaker => 'Decisione a favore del Taker';
 	@override String get legacyChannel => 'Canale di compatibilità NIP-04 legacy';
 	@override String get privateConversation => 'Conversazione privata con il coordinatore';
-	@override String get privacyNotice => 'Questo è un canale NIP-17 privato. Messaggi e allegati non autorizzano pagamenti e non modificano lo stato dell’offerta.';
 	@override String get noMessages => 'Ancora nessun messaggio.';
 	@override String get replyHint => 'Rispondi qui';
 	@override String get readOnly => 'La cronologia di questa controversia risolta è in sola lettura.';
@@ -3377,7 +3376,6 @@ extension on TranslationsIt {
 			'disputeChat.ruledForTaker' => 'Decisione a favore del Taker',
 			'disputeChat.legacyChannel' => 'Canale di compatibilità NIP-04 legacy',
 			'disputeChat.privateConversation' => 'Conversazione privata con il coordinatore',
-			'disputeChat.privacyNotice' => 'Questo è un canale NIP-17 privato. Messaggi e allegati non autorizzano pagamenti e non modificano lo stato dell’offerta.',
 			'disputeChat.noMessages' => 'Ancora nessun messaggio.',
 			'disputeChat.replyHint' => 'Rispondi qui',
 			'disputeChat.readOnly' => 'La cronologia di questa controversia risolta è in sola lettura.',
@@ -3628,9 +3626,9 @@ extension on TranslationsIt {
 			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Un taker ha riservato la tua offerta e sta pagando il tuo codice ${code} nella sua app bancaria. Quando il pagamento arriva al tuo esercente, confermalo qui sotto.',
 			'twint.flow.makerWait.confirmReceived' => 'Conferma pagamento ricevuto',
 			'twint.flow.makerWait.confirmDialog.title' => 'Confermare il pagamento ricevuto?',
+			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Conferma solo se sei ASSOLUTAMENTE sicuro che il pagamento ${code} sia stato ricevuto con successo dal tuo esercente.\n\nLa conferma regola la hold invoice Lightning e invia immediatamente i sats al taker — non può essere annullata.',
 			_ => null,
 		} ?? switch (path) {
-			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Conferma solo se sei ASSOLUTAMENTE sicuro che il pagamento ${code} sia stato ricevuto con successo dal tuo esercente.\n\nLa conferma regola la hold invoice Lightning e invia immediatamente i sats al taker — non può essere annullata.',
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Annulla',
 			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Sì, pagamento ricevuto',
 			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} probabilmente scaduto',

@@ -7,6 +7,44 @@ import 'package:ndk/ndk.dart';
 import 'package:ndk/shared/nips/nip01/bip340.dart';
 
 void main() {
+  test('normalizes trailing slashes from kind-10063 Blossom servers', () {
+    expect(
+      normalizeBlossomServerUrls([
+        ' https://blossom.primal.net/ ',
+        'https://blossom.primal.net///',
+        'https://nostr.download/',
+        'not-a-server',
+      ]),
+      ['https://blossom.primal.net', 'https://nostr.download'],
+    );
+  });
+
+  test(
+    'recovers a stored upload from a non-standard Blossom response',
+    () async {
+      final ciphertext = Uint8List.fromList([1, 2, 3, 4]);
+      const hash =
+          '9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a';
+      final requested = <Uri>[];
+
+      final recovered = await findVerifiedBlossomBlob(
+        serverUrls: const ['https://first.example/', 'https://yaki.example/'],
+        sha256Hex: hash,
+        download: (server, url) async {
+          requested.add(url);
+          if (server == 'https://first.example') return Uint8List.fromList([9]);
+          return ciphertext;
+        },
+      );
+
+      expect(recovered, Uri.parse('https://yaki.example/$hash'));
+      expect(requested, [
+        Uri.parse('https://first.example/$hash'),
+        Uri.parse('https://yaki.example/$hash'),
+      ]);
+    },
+  );
+
   const sanitizer = EvidenceImageSanitizer();
 
   test('JPEG evidence is decoded, re-encoded, and metadata is removed', () {

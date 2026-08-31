@@ -76,15 +76,21 @@ Future<void> _runCoordinator(List<String> args) async {
           'wss://relay.primal.net',
           'wss://offchain.pub'
         ];
-    final blossomServers = (env['BLOSSOM_SERVERS']?.split(',') ?? const [])
-        .map((value) => value.trim())
-        .where((value) => value.isNotEmpty)
-        .toList(growable: false);
+    final configuredBlossomServers =
+        (env['BLOSSOM_SERVERS']?.split(',') ?? const [])
+            .map((value) => value.trim())
+            .where((value) => value.isNotEmpty)
+            .toList(growable: false);
+    AppLogger.info(configuredBlossomServers.isEmpty
+        ? 'BLOSSOM_SERVERS: no override; preserving an existing kind-10063 '
+            'list or publishing public defaults when none exists'
+        : 'BLOSSOM_SERVERS fallback: ${configuredBlossomServers.join(',')} '
+            '(used only when no existing kind-10063 list is found)');
 
     nostrService = NostrService(
       coordinatorService,
       relays: relays,
-      blossomServers: blossomServers,
+      blossomServers: configuredBlossomServers,
     );
     await coordinatorService.init();
 

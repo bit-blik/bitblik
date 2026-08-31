@@ -196,7 +196,6 @@ class _Translations$disputeChat$fr extends Translations$disputeChat$en {
 	@override String get ruledForTaker => 'Décision en faveur du taker';
 	@override String get legacyChannel => 'Canal de compatibilité NIP-04 hérité';
 	@override String get privateConversation => 'Conversation privée avec le coordinateur';
-	@override String get privacyNotice => 'Ceci est un canal NIP-17 privé. Les messages et pièces jointes n’autorisent aucun paiement et ne modifient pas l’état de l’offre.';
 	@override String get noMessages => 'Aucun message pour le moment.';
 	@override String get replyHint => 'Répondre ici';
 	@override String get readOnly => 'L’historique de ce litige résolu est en lecture seule.';
@@ -3411,7 +3410,6 @@ extension on TranslationsFr {
 			'disputeChat.ruledForTaker' => 'Décision en faveur du taker',
 			'disputeChat.legacyChannel' => 'Canal de compatibilité NIP-04 hérité',
 			'disputeChat.privateConversation' => 'Conversation privée avec le coordinateur',
-			'disputeChat.privacyNotice' => 'Ceci est un canal NIP-17 privé. Les messages et pièces jointes n’autorisent aucun paiement et ne modifient pas l’état de l’offre.',
 			'disputeChat.noMessages' => 'Aucun message pour le moment.',
 			'disputeChat.replyHint' => 'Répondre ici',
 			'disputeChat.readOnly' => 'L’historique de ce litige résolu est en lecture seule.',
@@ -3663,9 +3661,9 @@ extension on TranslationsFr {
 			'twint.scanner.status.amountFailed' => 'Le scan caméra n\'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement.',
 			'twint.flow.progress.step1' => '1. Créer l\'offre',
 			'twint.flow.progress.step2' => '2. Attendre un taker',
+			'twint.flow.progress.step3' => '3. Confirmer',
 			_ => null,
 		} ?? switch (path) {
-			'twint.flow.progress.step3' => '3. Confirmer',
 			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. Payer ${code}',
 			'twint.flow.takerProgress.step2' => '2. Recevoir des sats',
 			'twint.flow.makerWait.takerPaying' => 'Le taker est en train de payer',

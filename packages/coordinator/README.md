@@ -6,9 +6,11 @@ For running a bitblik coordinator you will need a Lightning node.
 
 Dispute communication, evidence/Blossom configuration, console operation, and
 the adjudication runbook are documented in
-[`docs/dispute-operations.md`](../../docs/dispute-operations.md). Configure an
-ordered `BLOSSOM_SERVERS` list to enable encrypted picture evidence; the
-coordinator publishes it using the standard kind-10063 event.
+[`docs/dispute-operations.md`](../../docs/dispute-operations.md). By default,
+encrypted picture evidence uses an existing coordinator kind-10063 Blossom
+list when available. If none exists, `BLOSSOM_SERVERS` is published as a
+fallback, or nostr.download and blossom.jumble.social when that setting is empty. An existing
+kind-10063 list always takes precedence over environment configuration.
 Currently supported are LND or a NWC connection with `make_hold_invoice` capability.
 
 ## Setup

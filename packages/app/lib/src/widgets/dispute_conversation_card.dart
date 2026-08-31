@@ -39,6 +39,7 @@ class _DisputeConversationCardState
   final messageController = TextEditingController();
   final scrollController = ScrollController();
   final messages = <_ConversationMessage>[];
+  final evidenceBytesByMessageId = <String, Future<Uint8List>>{};
   String? myPubkey;
   bool loadingMessages = true;
   bool busy = false;
@@ -61,6 +62,7 @@ class _DisputeConversationCardState
         oldWidget.offer.statusRaw != widget.offer.statusRaw) {
       unawaited(_stopDmInboxListener());
       legacyMode = false;
+      evidenceBytesByMessageId.clear();
       _initialize();
     }
   }
@@ -350,21 +352,16 @@ class _DisputeConversationCardState
         myPubkey: pubkey,
         imageBytes: bytes,
         recipientDmRelayDiscoveryRelays: _nip17RelayDiscoveryRelays,
+        coordinatorBlossomDiscoveryRelays: _nip17RelayDiscoveryRelays,
       );
       await _appendLatestMessages();
     });
   }
 
   Future<void> _previewEvidence(Nip17Message message) async {
-    final pubkey = myPubkey;
-    if (pubkey == null) return;
     Uint8List? bytes;
     await _run(() async {
-      bytes = await _communication.downloadEvidence(
-        offer: widget.offer,
-        myPubkey: pubkey,
-        message: message,
-      );
+      bytes = await _evidenceBytes(message);
     });
     if (!mounted || bytes == null) return;
     await showDialog<void>(
@@ -372,6 +369,22 @@ class _DisputeConversationCardState
       builder:
           (context) =>
               Dialog(child: InteractiveViewer(child: Image.memory(bytes!))),
+    );
+  }
+
+  Future<Uint8List> _evidenceBytes(Nip17Message message) {
+    final pubkey = myPubkey;
+    if (pubkey == null) {
+      return Future.error(StateError('The active account is not available.'));
+    }
+    return evidenceBytesByMessageId.putIfAbsent(
+      message.id,
+      () => _communication.downloadEvidence(
+        offer: widget.offer,
+        myPubkey: pubkey,
+        message: message,
+        coordinatorBlossomDiscoveryRelays: _nip17RelayDiscoveryRelays,
+      ),
     );
   }
 
@@ -434,7 +447,6 @@ class _DisputeConversationCardState
                 ),
               ],
             ),
-            if (!legacyMode) Text(strings.privacyNotice),
             const SizedBox(height: 12),
             SizedBox(
               height: 260,
@@ -467,17 +479,16 @@ class _DisputeConversationCardState
                                         padding: const EdgeInsets.all(10),
                                         child: Text(message.content),
                                       )
-                                      : TextButton.icon(
-                                        onPressed:
+                                      : _EvidenceThumbnail(
+                                        bytes: _evidenceBytes(
+                                          message.nip17Message!,
+                                        ),
+                                        onTap:
                                             busy
                                                 ? null
                                                 : () => _previewEvidence(
                                                   message.nip17Message!,
                                                 ),
-                                        icon: const Icon(Icons.image),
-                                        label: Text(
-                                          '${file.mimeType} · ${file.dimensions ?? ''}',
-                                        ),
                                       ),
                             ),
                           );
@@ -560,6 +571,57 @@ class _CoordinatorLogo extends StatelessWidget {
 
   Widget _fallback() =>
       const CircleAvatar(radius: 18, child: Icon(Icons.account_balance_wallet));
+}
+
+class _EvidenceThumbnail extends StatelessWidget {
+  const _EvidenceThumbnail({required this.bytes, required this.onTap});
+
+  final Future<Uint8List> bytes;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<Uint8List>(
+    future: bytes,
+    builder: (context, snapshot) {
+      final loaded = snapshot.data;
+      return Semantics(
+        button: loaded != null,
+        image: true,
+        child: InkWell(
+          onTap: loaded == null ? null : onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 144,
+              height: 96,
+              child:
+                  loaded != null
+                      ? Image.memory(
+                        loaded,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                      )
+                      : snapshot.hasError
+                      ? const ColoredBox(
+                        color: Colors.black12,
+                        child: Center(child: Icon(Icons.broken_image_outlined)),
+                      )
+                      : const ColoredBox(
+                        color: Colors.black12,
+                        child: Center(
+                          child: SizedBox.square(
+                            dimension: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _ConversationMessage {

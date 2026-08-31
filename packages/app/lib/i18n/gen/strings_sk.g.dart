@@ -182,7 +182,6 @@ class _Translations$disputeChat$sk extends Translations$disputeChat$en {
 	@override String get ruledForTaker => 'Rozhodnuté v prospech Takera';
 	@override String get legacyChannel => 'Starší kompatibilný kanál NIP-04';
 	@override String get privateConversation => 'Súkromná konverzácia s koordinátorom';
-	@override String get privacyNotice => 'Toto je súkromný kanál NIP-17. Správy a prílohy nepovoľujú platby ani nemenia stav ponuky.';
 	@override String get noMessages => 'Zatiaľ žiadne správy.';
 	@override String get replyHint => 'Odpovedzte tu';
 	@override String get readOnly => 'História tohto vyriešeného sporu je iba na čítanie.';
@@ -3054,7 +3053,6 @@ extension on TranslationsSk {
 			'disputeChat.ruledForTaker' => 'Rozhodnuté v prospech Takera',
 			'disputeChat.legacyChannel' => 'Starší kompatibilný kanál NIP-04',
 			'disputeChat.privateConversation' => 'Súkromná konverzácia s koordinátorom',
-			'disputeChat.privacyNotice' => 'Toto je súkromný kanál NIP-17. Správy a prílohy nepovoľujú platby ani nemenia stav ponuky.',
 			'disputeChat.noMessages' => 'Zatiaľ žiadne správy.',
 			'disputeChat.replyHint' => 'Odpovedzte tu',
 			'disputeChat.readOnly' => 'História tohto vyriešeného sporu je iba na čítanie.',
@@ -3316,9 +3314,9 @@ extension on TranslationsSk {
 			'taker.paymentProcess.states.preparing' => 'Príprava na odoslanie platby...',
 			'taker.paymentProcess.states.sending' => 'Odosiela sa platba...',
 			'taker.paymentProcess.states.received' => 'Platba prijatá!',
+			'taker.paymentProcess.states.failed' => 'Platba zlyhala',
 			_ => null,
 		} ?? switch (path) {
-			'taker.paymentProcess.states.failed' => 'Platba zlyhala',
 			'taker.paymentProcess.states.waitingUpdate' => 'Čaká sa na aktualizáciu ponuky...',
 			'taker.paymentProcess.steps.makerConfirmedBlik' => ({required Object code}) => 'Predávajúci potvrdil platbu ${code}',
 			'taker.paymentProcess.steps.makerInvoiceSettled' => 'Hold faktúra predávajúceho vyrovnaná',

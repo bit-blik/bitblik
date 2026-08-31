@@ -197,7 +197,6 @@ class _Translations$disputeChat$pl extends Translations$disputeChat$en {
 	@override String get ruledForTaker => 'Rozstrzygnięto na korzyść Takera';
 	@override String get legacyChannel => 'Starszy kanał zgodności NIP-04';
 	@override String get privateConversation => 'Prywatna rozmowa z koordynatorem';
-	@override String get privacyNotice => 'To prywatny kanał NIP-17. Wiadomości i załączniki nie autoryzują płatności ani nie zmieniają stanu oferty.';
 	@override String get noMessages => 'Brak wiadomości.';
 	@override String get replyHint => 'Odpowiedz tutaj';
 	@override String get readOnly => 'Historia tego rozstrzygniętego sporu jest tylko do odczytu.';
@@ -3373,7 +3372,6 @@ extension on TranslationsPl {
 			'disputeChat.ruledForTaker' => 'Rozstrzygnięto na korzyść Takera',
 			'disputeChat.legacyChannel' => 'Starszy kanał zgodności NIP-04',
 			'disputeChat.privateConversation' => 'Prywatna rozmowa z koordynatorem',
-			'disputeChat.privacyNotice' => 'To prywatny kanał NIP-17. Wiadomości i załączniki nie autoryzują płatności ani nie zmieniają stanu oferty.',
 			'disputeChat.noMessages' => 'Brak wiadomości.',
 			'disputeChat.replyHint' => 'Odpowiedz tutaj',
 			'disputeChat.readOnly' => 'Historia tego rozstrzygniętego sporu jest tylko do odczytu.',
@@ -3625,9 +3623,9 @@ extension on TranslationsPl {
 			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Potwierdź tylko, jeśli masz ABSOLUTNĄ pewność, że płatność ${code} dotarła do Twojego sprzedawcy.\n\nPotwierdzenie rozlicza hold invoice Lightning i natychmiast wysyła satsy do takera — tego nie można cofnąć.',
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Anuluj',
 			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Tak, płatność otrzymana',
+			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} prawdopodobnie wygasł',
 			_ => null,
 		} ?? switch (path) {
-			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} prawdopodobnie wygasł',
 			'twint.flow.makerExpired.warning' => ({required Object code}) => 'Kod ${code} prawdopodobnie już wygasł — ale taker mógł mimo to zdążyć go opłacić. Sprawdź u swojego sprzedawcy: masz poniższy czas na potwierdzenie płatności.',
 			'twint.flow.makerExpired.timerCaption' => 'Czas na potwierdzenie',
 			'twint.flow.makerExpired.disputeHint' => 'Możesz też poczekać, aż licznik dobiegnie końca. Jeśli taker zgłosi, że zapłacił, sprawa staje się konfliktem/sporem, w którym obie strony muszą dostarczyć koordynatorowi dowody do rozstrzygnięcia.',

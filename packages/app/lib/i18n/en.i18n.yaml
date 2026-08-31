@@ -362,7 +362,6 @@ disputeChat:
   ruledForTaker: "Ruled for Taker"
   legacyChannel: "Legacy NIP-04 compatibility channel"
   privateConversation: "Private coordinator conversation"
-  privacyNotice: "This is a private NIP-17 lane. Messages and attachments do not authorize payments or change the offer state."
   noMessages: "No messages yet."
   replyHint: "Reply here"
   readOnly: "This resolved dispute history is read-only."

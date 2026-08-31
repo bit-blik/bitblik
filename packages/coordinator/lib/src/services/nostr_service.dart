@@ -13,6 +13,16 @@ import '../logging/app_logger.dart';
 /// Service to handle Nostr communication for the coordinator
 /// Implements info replaceable events and NIP-44 encrypted request/response
 class NostrService {
+  /// Public Blossom servers used when the operator does not configure an
+  /// ordered list. Both accept the opaque AES-GCM blobs required by NIP-17
+  /// file messages using standard BUD-11 authorization, without an account,
+  /// payment, or allowlist. Operators can replace the list through
+  /// BLOSSOM_SERVERS.
+  static const List<String> defaultBlossomServers = [
+    'https://nostr.download',
+    'https://blossom.jumble.social',
+  ];
+
   /// Where a freshly generated coordinator key is persisted (owner-only) when
   /// no `NOSTR_PRIVATE_KEY` is configured, so the identity survives restarts.
   static const String _generatedKeyFilePath = 'coordinator_private_key.hex';
@@ -238,7 +248,7 @@ class NostrService {
     // Resolve the working relay set from our own NIP-65 (or publish a new one).
     await _resolveWorkingRelays();
     await _publishDmRelayList();
-    await _publishBlossomServerList();
+    await _resolveBlossomServerList();
 
     // Ensure a kind-0 profile (name/logo) exists on the discovery relays.
     await _ensureMetadata();
@@ -429,23 +439,40 @@ class NostrService {
     }
   }
 
-  Future<void> _publishBlossomServerList() async {
-    if (_blossomServers.isEmpty) {
-      AppLogger.warning(
-        'BLOSSOM_SERVERS is empty; encrypted dispute evidence uploads are disabled.',
-      );
-      return;
-    }
+  /// Preserve an already-published kind-10063 list unconditionally.
+  /// BLOSSOM_SERVERS and the public defaults are seed values only: the
+  /// configured list is published when no existing event defines any
+  /// servers, and the public defaults are used when configuration is empty too.
+  Future<void> _resolveBlossomServerList() async {
     try {
+      final existing = await _ndk.blossomUserServerList.getUserServerList(
+        pubkeys: [_signer.getPublicKey()],
+      );
+      if (existing != null && existing.isNotEmpty) {
+        AppLogger.info(
+          'Existing kind-10063 Blossom server list found '
+          '(${existing.length} server(s)); preserving it. '
+          'BLOSSOM_SERVERS was not published.',
+        );
+        return;
+      }
+
+      final serversToPublish =
+          _blossomServers.isEmpty ? defaultBlossomServers : _blossomServers;
+      AppLogger.info(
+        _blossomServers.isEmpty
+            ? 'No existing kind-10063 list or configured fallback found; using public defaults.'
+            : 'No existing kind-10063 list found; publishing the configured BLOSSOM_SERVERS fallback.',
+      );
       await _ndk.blossomUserServerList.publishUserServerList(
-        serverUrlsOrdered: _blossomServers,
+        serverUrlsOrdered: serversToPublish,
       );
       AppLogger.info(
         'Published standard kind-10063 Blossom server list '
-        '(${_blossomServers.length} server(s)).',
+        '(${serversToPublish.length} server(s)).',
       );
     } catch (e) {
-      AppLogger.warning('Could not publish Blossom server list: $e');
+      AppLogger.warning('Could not resolve/publish Blossom server list: $e');
     }
   }
 

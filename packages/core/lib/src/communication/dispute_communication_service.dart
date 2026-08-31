@@ -41,6 +41,52 @@ class EvidenceImageException implements Exception {
   String toString() => message;
 }
 
+/// Normalizes kind-10063 `server` tags for NDK's Blossom client, which appends
+/// endpoint paths with string interpolation. Several Nostr clients publish
+/// conventional base URLs ending in `/`; without removing it NDK requests
+/// `//upload`, which strict Blossom servers reject with 404.
+List<String> normalizeBlossomServerUrls(Iterable<String> values) {
+  final normalized = <String>[];
+  for (final value in values) {
+    final trimmed = value.trim().replaceFirst(RegExp(r'/+$'), '');
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null ||
+        !const {'http', 'https'}.contains(uri.scheme) ||
+        uri.host.isEmpty) {
+      continue;
+    }
+    if (!normalized.contains(trimmed)) normalized.add(trimmed);
+  }
+  return List.unmodifiable(normalized);
+}
+
+typedef BlossomBlobDownloader = Future<Uint8List> Function(
+    String serverUrl, Uri blobUrl);
+
+/// Recovers from Blossom servers that store an upload successfully but return
+/// a non-standard descriptor response. The content-addressed URL is accepted
+/// only after downloading it and verifying the exact encrypted SHA-256.
+Future<Uri?> findVerifiedBlossomBlob({
+  required Iterable<String> serverUrls,
+  required String sha256Hex,
+  required BlossomBlobDownloader download,
+}) async {
+  final normalizedHash = sha256Hex.toLowerCase();
+  if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(normalizedHash)) return null;
+
+  for (final serverUrl in normalizeBlossomServerUrls(serverUrls)) {
+    final blobUrl = Uri.parse('$serverUrl/$normalizedHash');
+    try {
+      final bytes = await download(serverUrl, blobUrl);
+      if (sha256.convert(bytes).toString() == normalizedHash) return blobUrl;
+    } catch (_) {
+      // Continue to the next configured server. Upload diagnostics are
+      // retained and reported by the caller if no stored blob can be proven.
+    }
+  }
+  return null;
+}
+
 /// Validates decoded image structure and re-encodes pixels, removing EXIF,
 /// location, comments, profiles, and other source-file metadata.
 class EvidenceImageSanitizer {
@@ -586,6 +632,7 @@ class DisputeCommunicationService {
     required Uint8List imageBytes,
     String? participantPubkey,
     Iterable<String>? recipientDmRelayDiscoveryRelays,
+    Iterable<String>? coordinatorBlossomDiscoveryRelays,
   }) async {
     _requireWritableDispute(offer);
     final peer = _peerFor(
@@ -598,10 +645,11 @@ class DisputeCommunicationService {
 
     // Always resolve the standard kind-10063 list authored by the coordinator.
     // The uploader signs BUD authorization with their own logged-in key.
-    final servers = await ndk.blossomUserServerList.getUserServerList(
-      pubkeys: [offer.coordinatorPubkey],
+    final servers = await _loadCoordinatorBlossomServers(
+      offer.coordinatorPubkey,
+      discoveryRelays: coordinatorBlossomDiscoveryRelays,
     );
-    if (servers == null || servers.isEmpty) {
+    if (servers.isEmpty) {
       throw StateError('Coordinator has no Blossom server list (kind 10063).');
     }
     final uploads = await ndk.blossom.uploadBlob(
@@ -622,9 +670,27 @@ class DisputeCommunicationService {
         if (ciphertextUrl != null) break;
       }
     }
+    ciphertextUrl ??= await findVerifiedBlossomBlob(
+      serverUrls: servers,
+      sha256Hex: encrypted.encryptedSha256,
+      download: (serverUrl, blobUrl) async {
+        final blob = await ndk.files.download(
+          url: blobUrl.toString(),
+          serverUrls: [serverUrl],
+        );
+        return blob.data;
+      },
+    );
     if (ciphertextUrl == null) {
+      final failures = uploads
+          .map(
+            (result) =>
+                '${result.serverUrl}: ${result.error ?? 'invalid upload descriptor'}',
+          )
+          .join('; ');
       throw StateError(
-        'Encrypted evidence upload failed on all coordinator servers.',
+        'Encrypted evidence upload failed on all coordinator servers'
+        '${failures.isEmpty ? '.' : ': $failures'}',
       );
     }
 
@@ -648,6 +714,7 @@ class DisputeCommunicationService {
     required String myPubkey,
     required Nip17Message message,
     String? participantPubkey,
+    Iterable<String>? coordinatorBlossomDiscoveryRelays,
   }) async {
     final peer = _peerFor(
       offer,
@@ -661,10 +728,11 @@ class DisputeCommunicationService {
     }
     final metadata = message.fileMetadata;
     if (metadata == null) throw const FormatException('Invalid file message.');
-    final servers = await ndk.blossomUserServerList.getUserServerList(
-      pubkeys: [offer.coordinatorPubkey],
+    final servers = await _loadCoordinatorBlossomServers(
+      offer.coordinatorPubkey,
+      discoveryRelays: coordinatorBlossomDiscoveryRelays,
     );
-    if (servers == null || servers.isEmpty) {
+    if (servers.isEmpty) {
       throw StateError('Coordinator has no Blossom server list (kind 10063).');
     }
     final blob = await ndk.files.download(
@@ -677,6 +745,52 @@ class DisputeCommunicationService {
     );
     imageSanitizer.validateDownloaded(plaintext, metadata.mimeType);
     return plaintext;
+  }
+
+  Future<List<String>> _loadCoordinatorBlossomServers(
+    String coordinatorPubkey, {
+    Iterable<String>? discoveryRelays,
+  }) async {
+    final explicitRelays = discoveryRelays
+        ?.map((relay) => relay.trim())
+        .where((relay) => relay.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (explicitRelays != null && explicitRelays.isNotEmpty) {
+      try {
+        final response = ndk.requests.query(
+          name: 'dispute-coordinator-blossom-servers',
+          filter: Filter(
+            kinds: const [Blossom.kBlossomUserServerList],
+            authors: [coordinatorPubkey],
+            limit: 1,
+          ),
+          explicitRelays: explicitRelays,
+          cacheRead: false,
+          cacheWrite: true,
+          timeout: const Duration(seconds: 6),
+        );
+        final events = await response.future;
+        if (events.isNotEmpty) {
+          events.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return normalizeBlossomServerUrls(
+            events.first.tags
+                .where(
+                  (tag) => tag.length >= 2 && tag.first == 'server',
+                )
+                .map((tag) => tag[1]),
+          );
+        }
+      } catch (_) {
+        // Fall through to NDK's cache/default lookup. This still lets an
+        // already-cached list work during a transient discovery relay outage.
+      }
+    }
+
+    final discovered = await ndk.blossomUserServerList.getUserServerList(
+      pubkeys: [coordinatorPubkey],
+    );
+    return normalizeBlossomServerUrls(discovered ?? const []);
   }
 
   static String? _singleTag(Nip01Event event, String name) {

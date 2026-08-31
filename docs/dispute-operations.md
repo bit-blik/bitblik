@@ -33,16 +33,31 @@ from replicas, caches, or backups.
 
 ## Coordinator configuration
 
-Set an ordered, operator-selected list; BitBlik has no hard-coded Blossom host:
+Without configuration, the coordinator first preserves any non-empty kind-10063
+list already published under its pubkey. Only when no such list exists does it
+publish these public Blossom servers:
+
+```text
+https://nostr.download
+https://blossom.jumble.social
+```
+
+They accept small opaque NIP-17 uploads with standard signed Blossom
+authorization and do not require an account, payment, or allowlist. Operators
+can provide an ordered fallback list:
 
 ```dotenv
 BLOSSOM_SERVERS=https://blossom.example,https://backup-blossom.example
 LIGHTNING_NETWORK=mainnet
 ```
 
-At startup the coordinator publishes `BLOSSOM_SERVERS` as kind 10063. With an
-empty list, chat still works but evidence uploads are disabled. The existing
-`NOSTR_RELAYS` list is used for the coordinator's kind-10050 DM inbox.
+At startup an existing non-empty kind-10063 list always remains untouched, even
+when `BLOSSOM_SERVERS` is set. When no list exists, the configured fallback is
+published; the public defaults seed a new list only when the fallback is empty
+too. The existing `NOSTR_RELAYS` list is used for the coordinator's kind-10050
+DM inbox. Public-server retention and availability are third-party policies;
+operators needing stronger control should configure servers they operate or
+contract with before the coordinator publishes its first list.
 
 Database startup adds `maker_refund_invoice` and the unique
 `maker_refund_payment_hash` metadata needed for restart-safe maker payouts, plus

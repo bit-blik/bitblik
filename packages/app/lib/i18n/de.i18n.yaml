@@ -361,7 +361,6 @@ disputeChat:
   ruledForTaker: "Für den Taker entschieden"
   legacyChannel: "Legacy-NIP-04-Kompatibilitätskanal"
   privateConversation: "Private Unterhaltung mit dem Koordinator"
-  privacyNotice: "Dies ist ein privater NIP-17-Kanal. Nachrichten und Anhänge autorisieren keine Zahlungen und ändern den Angebotsstatus nicht."
   noMessages: "Noch keine Nachrichten."
   replyHint: "Hier antworten"
   readOnly: "Der Verlauf dieses abgeschlossenen Streitfalls ist schreibgeschützt."
