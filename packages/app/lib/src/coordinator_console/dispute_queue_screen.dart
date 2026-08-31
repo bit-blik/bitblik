@@ -882,11 +882,26 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
       } else {
         await widget.repository.ruleForTaker(item);
       }
+      final notification = await widget.repository.notifyRuling(
+        item,
+        makerWins: makerWins,
+      );
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Decision submitted.')));
-      setState(() => decisionStatus = 'Decision committed; refreshing state…');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            notification.deliveredToBoth
+                ? 'Decision submitted and both participants were notified.'
+                : 'Decision committed, but chat notification failed for: '
+                      '${notification.failedParticipants.join(', ')}.',
+          ),
+        ),
+      );
+      setState(
+        () => decisionStatus = notification.deliveredToBoth
+            ? 'Decision committed; both participants notified.'
+            : 'Decision committed; some chat notifications failed.',
+      );
       refresh();
     } catch (error) {
       if (!context.mounted) return;

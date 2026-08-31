@@ -23,6 +23,40 @@ class CoordinatorDisputeCase {
   });
 }
 
+class RulingChatNotificationResult {
+  final List<String> failedParticipants;
+
+  const RulingChatNotificationResult({this.failedParticipants = const []});
+
+  bool get deliveredToBoth => failedParticipants.isEmpty;
+}
+
+({String maker, String taker}) rulingChatMessages(
+  CoordinatorDisputeCase dispute, {
+  required bool makerWins,
+}) {
+  final offer = dispute.offer;
+  if (makerWins) {
+    return (
+      maker:
+          'Dispute ruling for offer ${offer.id}: the coordinator ruled in your favor. '
+          'The ruling authorizes a refund of ${dispute.makerRefundSats} sats. '
+          'Please submit the refund invoice in BitBlik.',
+      taker:
+          'Dispute ruling for offer ${offer.id}: the coordinator ruled in favor of the maker. '
+          'The ruling authorizes a refund of ${dispute.makerRefundSats} sats to the maker.',
+    );
+  }
+  return (
+    maker:
+        'Dispute ruling for offer ${offer.id}: the coordinator ruled in favor of the taker. '
+        'The ruling authorizes a payout of ${dispute.takerPayoutSats} sats to the taker.',
+    taker:
+        'Dispute ruling for offer ${offer.id}: the coordinator ruled in your favor. '
+        'The ruling authorizes your payout of ${dispute.takerPayoutSats} sats.',
+  );
+}
+
 class DisputeCaseRepository {
   final CoordinatorSession session;
   final DisputeCommunicationService communication;
@@ -259,5 +293,55 @@ class DisputeCaseRepository {
     if (response.error != null) {
       throw StateError(response.error!['message']?.toString() ?? 'RPC failed.');
     }
+  }
+
+  /// Announces an already-committed ruling in both private participant lanes.
+  /// Delivery errors are returned per lane and never reinterpret a successful
+  /// financial transition as a failed decision.
+  Future<RulingChatNotificationResult> notifyRuling(
+    CoordinatorDisputeCase dispute, {
+    required bool makerWins,
+  }) async {
+    final offer = dispute.offer;
+    final coordinator = session.expectedCoordinatorPubkey;
+    final taker = offer.takerPubkey;
+    if (coordinator == null || taker == null || taker.isEmpty) {
+      return const RulingChatNotificationResult(
+        failedParticipants: ['maker', 'taker'],
+      );
+    }
+    final messages = rulingChatMessages(dispute, makerWins: makerWins);
+
+    Future<String?> sendTo(
+      String label,
+      String participantPubkey,
+      String content,
+    ) async {
+      try {
+        final participantRelays = await session.loadUserRelayUrls(
+          participantPubkey,
+        );
+        await communication.sendText(
+          offer: offer,
+          myPubkey: coordinator,
+          participantPubkey: participantPubkey,
+          content: content,
+          recipientDmRelayDiscoveryRelays: session.dmRelayDiscoveryRelays,
+          legacyRendezvousRelays: {
+            ...session.dmRelayDiscoveryRelays,
+            ...participantRelays,
+          },
+        );
+        return null;
+      } catch (_) {
+        return label;
+      }
+    }
+
+    final failures = (await Future.wait([
+      sendTo('maker', offer.makerPubkey, messages.maker),
+      sendTo('taker', taker, messages.taker),
+    ])).whereType<String>().toList(growable: false);
+    return RulingChatNotificationResult(failedParticipants: failures);
   }
 }
