@@ -1,3 +1,8 @@
+## [0.11.0] - 2026-09-01
+- feat: dispute chat with coordinator
+    TODO: attach image files BLOSSOM!!!?!?!
+- feat: bolt12 wallet support
+
 ## [0.10.1] - 2026-08-22
 - feat: add new SK Prima bank
 - fix: SK VÚB code validity is 10 minutes, not 3

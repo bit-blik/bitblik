@@ -191,6 +191,10 @@ class _Translations$disputeChat$it extends Translations$disputeChat$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override String get viewHistory => 'Visualizza cronologia disputa';
+	@override String get historyTitle => 'Cronologia disputa';
+	@override String get ruledForMaker => 'Decisione a favore del Maker';
+	@override String get ruledForTaker => 'Decisione a favore del Taker';
 	@override String get legacyChannel => 'Canale di compatibilità NIP-04 legacy';
 	@override String get privateConversation => 'Conversazione privata con il coordinatore';
 	@override String get privacyNotice => 'Questo è un canale NIP-17 privato. Messaggi e allegati non autorizzano pagamenti e non modificano lo stato dell’offerta.';
@@ -3367,6 +3371,10 @@ extension on TranslationsIt {
 			'coordinator.management.metricYourOffersTooltip' => 'Numero di offerte che hai completato con successo con questo coordinatore.',
 			'coordinator.management.metricNetworkOffers' => 'Offerte (30g)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Offerte risolte con successo da questo coordinatore tra tutti gli utenti negli ultimi 30 giorni.',
+			'disputeChat.viewHistory' => 'Visualizza cronologia disputa',
+			'disputeChat.historyTitle' => 'Cronologia disputa',
+			'disputeChat.ruledForMaker' => 'Decisione a favore del Maker',
+			'disputeChat.ruledForTaker' => 'Decisione a favore del Taker',
 			'disputeChat.legacyChannel' => 'Canale di compatibilità NIP-04 legacy',
 			'disputeChat.privateConversation' => 'Conversazione privata con il coordinatore',
 			'disputeChat.privacyNotice' => 'Questo è un canale NIP-17 privato. Messaggi e allegati non autorizzano pagamenti e non modificano lo stato dell’offerta.',
@@ -3620,12 +3628,12 @@ extension on TranslationsIt {
 			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Un taker ha riservato la tua offerta e sta pagando il tuo codice ${code} nella sua app bancaria. Quando il pagamento arriva al tuo esercente, confermalo qui sotto.',
 			'twint.flow.makerWait.confirmReceived' => 'Conferma pagamento ricevuto',
 			'twint.flow.makerWait.confirmDialog.title' => 'Confermare il pagamento ricevuto?',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Conferma solo se sei ASSOLUTAMENTE sicuro che il pagamento ${code} sia stato ricevuto con successo dal tuo esercente.\n\nLa conferma regola la hold invoice Lightning e invia immediatamente i sats al taker — non può essere annullata.',
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Annulla',
 			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Sì, pagamento ricevuto',
 			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} probabilmente scaduto',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerExpired.warning' => ({required Object code}) => 'Il codice ${code} è probabilmente scaduto — ma il taker potrebbe comunque essere riuscito a pagarlo. Controlla il tuo esercente: hai il tempo indicato sotto per confermare il pagamento.',
 			'twint.flow.makerExpired.timerCaption' => 'Tempo per confermare',
 			'twint.flow.makerExpired.disputeHint' => 'Puoi anche lasciar scadere il timer. Se il taker dichiara di aver pagato, si apre un conflitto/disputa in cui entrambe le parti dovranno fornire prove al coordinatore per risolvere il problema.',

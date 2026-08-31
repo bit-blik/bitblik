@@ -205,6 +205,18 @@ class Translations$disputeChat$en {
 
 	// Translations
 
+	/// en: 'View dispute history'
+	String get viewHistory => 'View dispute history';
+
+	/// en: 'Dispute history'
+	String get historyTitle => 'Dispute history';
+
+	/// en: 'Ruled for Maker'
+	String get ruledForMaker => 'Ruled for Maker';
+
+	/// en: 'Ruled for Taker'
+	String get ruledForTaker => 'Ruled for Taker';
+
 	/// en: 'Legacy NIP-04 compatibility channel'
 	String get legacyChannel => 'Legacy NIP-04 compatibility channel';
 
@@ -5843,6 +5855,10 @@ extension on Translations {
 			'coordinator.management.metricYourOffersTooltip' => 'Number of offers you have successfully completed with this coordinator.',
 			'coordinator.management.metricNetworkOffers' => 'Offers (30d)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Successful offers settled by this coordinator across all users in the last 30 days.',
+			'disputeChat.viewHistory' => 'View dispute history',
+			'disputeChat.historyTitle' => 'Dispute history',
+			'disputeChat.ruledForMaker' => 'Ruled for Maker',
+			'disputeChat.ruledForTaker' => 'Ruled for Taker',
 			'disputeChat.legacyChannel' => 'Legacy NIP-04 compatibility channel',
 			'disputeChat.privateConversation' => 'Private coordinator conversation',
 			'disputeChat.privacyNotice' => 'This is a private NIP-17 lane. Messages and attachments do not authorize payments or change the offer state.',
@@ -6096,12 +6112,12 @@ extension on Translations {
 			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => '${code} Code Expired',
 			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.',
 			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Reservation ends in',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.expiredSentWarning' => 'The maker hasn\'t confirmed the payment yet. What would you like to do?',
 			'taker.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'If you want to try again with a new ${code} code, renew the reservation.',
 			'taker.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
 			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',
-			_ => null,
-		} ?? switch (path) {
 			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'You marked ${code} as charged',
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.',
 			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} was charged from my bank account',

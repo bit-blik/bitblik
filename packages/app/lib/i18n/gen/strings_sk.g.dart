@@ -176,6 +176,10 @@ class _Translations$disputeChat$sk extends Translations$disputeChat$en {
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
+	@override String get viewHistory => 'Zobraziť históriu sporu';
+	@override String get historyTitle => 'História sporu';
+	@override String get ruledForMaker => 'Rozhodnuté v prospech Makera';
+	@override String get ruledForTaker => 'Rozhodnuté v prospech Takera';
 	@override String get legacyChannel => 'Starší kompatibilný kanál NIP-04';
 	@override String get privateConversation => 'Súkromná konverzácia s koordinátorom';
 	@override String get privacyNotice => 'Toto je súkromný kanál NIP-17. Správy a prílohy nepovoľujú platby ani nemenia stav ponuky.';
@@ -3044,6 +3048,10 @@ extension on TranslationsSk {
 			'coordinator.management.metricYourOffersTooltip' => 'Počet ponúk, ktoré si úspešne dokončil s týmto koordinátorom.',
 			'coordinator.management.metricNetworkOffers' => 'Ponuky (30d)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Úspešné ponuky vyrovnané týmto koordinátorom naprieč všetkými používateľmi za posledných 30 dní.',
+			'disputeChat.viewHistory' => 'Zobraziť históriu sporu',
+			'disputeChat.historyTitle' => 'História sporu',
+			'disputeChat.ruledForMaker' => 'Rozhodnuté v prospech Makera',
+			'disputeChat.ruledForTaker' => 'Rozhodnuté v prospech Takera',
 			'disputeChat.legacyChannel' => 'Starší kompatibilný kanál NIP-04',
 			'disputeChat.privateConversation' => 'Súkromná konverzácia s koordinátorom',
 			'disputeChat.privacyNotice' => 'Toto je súkromný kanál NIP-17. Správy a prílohy nepovoľujú platby ani nemenia stav ponuky.',
@@ -3308,12 +3316,12 @@ extension on TranslationsSk {
 			'taker.paymentProcess.states.preparing' => 'Príprava na odoslanie platby...',
 			'taker.paymentProcess.states.sending' => 'Odosiela sa platba...',
 			'taker.paymentProcess.states.received' => 'Platba prijatá!',
+			_ => null,
+		} ?? switch (path) {
 			'taker.paymentProcess.states.failed' => 'Platba zlyhala',
 			'taker.paymentProcess.states.waitingUpdate' => 'Čaká sa na aktualizáciu ponuky...',
 			'taker.paymentProcess.steps.makerConfirmedBlik' => ({required Object code}) => 'Predávajúci potvrdil platbu ${code}',
 			'taker.paymentProcess.steps.makerInvoiceSettled' => 'Hold faktúra predávajúceho vyrovnaná',
-			_ => null,
-		} ?? switch (path) {
 			'taker.paymentProcess.steps.takerInvoicePaid' => 'Platí sa tvoja Lightning faktúra',
 			'taker.paymentProcess.steps.takerPaymentFailed' => 'Platba na tvoju faktúru zlyhala',
 			'taker.paymentProcess.errors.sending' => ({required Object details}) => 'Chyba pri odosielaní platby: ${details}',

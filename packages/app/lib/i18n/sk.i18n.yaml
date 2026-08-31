@@ -339,6 +339,10 @@ coordinator:
 # TOK PREDÁVAJÚCEHO
 # =============================================================================
 disputeChat:
+  viewHistory: "Zobraziť históriu sporu"
+  historyTitle: "História sporu"
+  ruledForMaker: "Rozhodnuté v prospech Makera"
+  ruledForTaker: "Rozhodnuté v prospech Takera"
   legacyChannel: "Starší kompatibilný kanál NIP-04"
   privateConversation: "Súkromná konverzácia s koordinátorom"
   privacyNotice: "Toto je súkromný kanál NIP-17. Správy a prílohy nepovoľujú platby ani nemenia stav ponuky."

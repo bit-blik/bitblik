@@ -191,6 +191,10 @@ class _Translations$disputeChat$pl extends Translations$disputeChat$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override String get viewHistory => 'Wyświetl historię sporu';
+	@override String get historyTitle => 'Historia sporu';
+	@override String get ruledForMaker => 'Rozstrzygnięto na korzyść Makera';
+	@override String get ruledForTaker => 'Rozstrzygnięto na korzyść Takera';
 	@override String get legacyChannel => 'Starszy kanał zgodności NIP-04';
 	@override String get privateConversation => 'Prywatna rozmowa z koordynatorem';
 	@override String get privacyNotice => 'To prywatny kanał NIP-17. Wiadomości i załączniki nie autoryzują płatności ani nie zmieniają stanu oferty.';
@@ -3363,6 +3367,10 @@ extension on TranslationsPl {
 			'coordinator.management.metricYourOffersTooltip' => 'Liczba ofert, które pomyślnie zrealizowałeś z tym koordynatorem.',
 			'coordinator.management.metricNetworkOffers' => 'Oferty (30 dni)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Pomyślnie rozliczone oferty przez tego koordynatora dla wszystkich użytkowników w ciągu ostatnich 30 dni.',
+			'disputeChat.viewHistory' => 'Wyświetl historię sporu',
+			'disputeChat.historyTitle' => 'Historia sporu',
+			'disputeChat.ruledForMaker' => 'Rozstrzygnięto na korzyść Makera',
+			'disputeChat.ruledForTaker' => 'Rozstrzygnięto na korzyść Takera',
 			'disputeChat.legacyChannel' => 'Starszy kanał zgodności NIP-04',
 			'disputeChat.privateConversation' => 'Prywatna rozmowa z koordynatorem',
 			'disputeChat.privacyNotice' => 'To prywatny kanał NIP-17. Wiadomości i załączniki nie autoryzują płatności ani nie zmieniają stanu oferty.',
@@ -3617,12 +3625,12 @@ extension on TranslationsPl {
 			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Potwierdź tylko, jeśli masz ABSOLUTNĄ pewność, że płatność ${code} dotarła do Twojego sprzedawcy.\n\nPotwierdzenie rozlicza hold invoice Lightning i natychmiast wysyła satsy do takera — tego nie można cofnąć.',
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Anuluj',
 			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Tak, płatność otrzymana',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} prawdopodobnie wygasł',
 			'twint.flow.makerExpired.warning' => ({required Object code}) => 'Kod ${code} prawdopodobnie już wygasł — ale taker mógł mimo to zdążyć go opłacić. Sprawdź u swojego sprzedawcy: masz poniższy czas na potwierdzenie płatności.',
 			'twint.flow.makerExpired.timerCaption' => 'Czas na potwierdzenie',
 			'twint.flow.makerExpired.disputeHint' => 'Możesz też poczekać, aż licznik dobiegnie końca. Jeśli taker zgłosi, że zapłacił, sprawa staje się konfliktem/sporem, w którym obie strony muszą dostarczyć koordynatorowi dowody do rozstrzygnięcia.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerVerify.title' => 'Czy otrzymałeś płatność?',
 			'twint.flow.makerVerify.body' => ({required Object amount, required Object code}) => 'Taker zgłasza, że zapłacił ${amount} na Twój kod ${code}.',
 			'twint.flow.makerVerify.hint' => 'Sprawdź status płatności u sprzedawcy (terminal w sklepie lub transakcja online). W razie wątpliwości poczekaj i sprawdź ponownie później, zanim podejmiesz decyzję.',

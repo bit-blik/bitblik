@@ -46,6 +46,8 @@ class _DisputeConversationCardState
   String? error;
   StreamSubscription<Nip17Message>? dmInboxEvents;
 
+  bool get _writable => widget.offer.statusRaw == OfferStatus.dispute.name;
+
   @override
   void initState() {
     super.initState();
@@ -102,7 +104,7 @@ class _DisputeConversationCardState
         loadingMessages = true;
       });
       await _replaceMessages(forceRefresh: true);
-      await _startDmInboxListener(account);
+      if (_writable) await _startDmInboxListener(account);
     } catch (exception) {
       if (!mounted) return;
       Logger.log.e(() => '[DisputeChat] Initialization failed: $exception');
@@ -386,7 +388,7 @@ class _DisputeConversationCardState
         Nip19.encodePubKey(widget.offer.coordinatorPubkey);
     final coordinatorIcon =
         coordinator?.profilePicture ?? coordinator?.info?.icon;
-    final writable = widget.offer.statusRaw == OfferStatus.dispute.name;
+    final writable = _writable;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

@@ -190,6 +190,10 @@ class _Translations$disputeChat$fr extends Translations$disputeChat$en {
 	final TranslationsFr _root; // ignore: unused_field
 
 	// Translations
+	@override String get viewHistory => 'Voir l’historique du litige';
+	@override String get historyTitle => 'Historique du litige';
+	@override String get ruledForMaker => 'Décision en faveur du maker';
+	@override String get ruledForTaker => 'Décision en faveur du taker';
 	@override String get legacyChannel => 'Canal de compatibilité NIP-04 hérité';
 	@override String get privateConversation => 'Conversation privée avec le coordinateur';
 	@override String get privacyNotice => 'Ceci est un canal NIP-17 privé. Les messages et pièces jointes n’autorisent aucun paiement et ne modifient pas l’état de l’offre.';
@@ -3401,6 +3405,10 @@ extension on TranslationsFr {
 			'coordinator.management.metricYourOffersTooltip' => 'Nombre d\'offres que vous avez menées à bien avec ce coordinateur.',
 			'coordinator.management.metricNetworkOffers' => 'Offres (30 j)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Offres réussies réglées par ce coordinateur pour l\'ensemble des utilisateurs au cours des 30 derniers jours.',
+			'disputeChat.viewHistory' => 'Voir l’historique du litige',
+			'disputeChat.historyTitle' => 'Historique du litige',
+			'disputeChat.ruledForMaker' => 'Décision en faveur du maker',
+			'disputeChat.ruledForTaker' => 'Décision en faveur du taker',
 			'disputeChat.legacyChannel' => 'Canal de compatibilité NIP-04 hérité',
 			'disputeChat.privateConversation' => 'Conversation privée avec le coordinateur',
 			'disputeChat.privacyNotice' => 'Ceci est un canal NIP-17 privé. Les messages et pièces jointes n’autorisent aucun paiement et ne modifient pas l’état de l’offre.',
@@ -3655,12 +3663,12 @@ extension on TranslationsFr {
 			'twint.scanner.status.amountFailed' => 'Le scan caméra n\'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement.',
 			'twint.flow.progress.step1' => '1. Créer l\'offre',
 			'twint.flow.progress.step2' => '2. Attendre un taker',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.progress.step3' => '3. Confirmer',
 			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. Payer ${code}',
 			'twint.flow.takerProgress.step2' => '2. Recevoir des sats',
 			'twint.flow.makerWait.takerPaying' => 'Le taker est en train de payer',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Votre code ${code}',
 			'twint.flow.makerWait.offerExpires' => ({required Object code}) => 'Le ${code} expire',
 			'twint.flow.makerWait.autoExpires' => 'Expire automatiquement',

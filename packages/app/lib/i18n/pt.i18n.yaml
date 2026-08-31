@@ -356,6 +356,10 @@ coordinator:
 # MAKER FLOW
 # =============================================================================
 disputeChat:
+  viewHistory: "Ver histórico da disputa"
+  historyTitle: "Histórico da disputa"
+  ruledForMaker: "Decisão a favor do maker"
+  ruledForTaker: "Decisão a favor do taker"
   legacyChannel: "Canal de compatibilidade NIP-04 legado"
   privateConversation: "Conversa privada com o coordenador"
   privacyNotice: "Este é um canal NIP-17 privado. Mensagens e anexos não autorizam pagamentos nem alteram o estado da oferta."
