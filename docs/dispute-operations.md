@@ -13,8 +13,10 @@ pubkey.
 - Encrypted rumor tags bind the message to
   `38383:<coordinator-pubkey>:<offer-id>` and a deterministic internal case id.
   Gift-wrap metadata does not expose those values or the real sender.
-- Clients publish a kind-10050 inbox list. Coordinators publish their working
-  relays as their kind-10050 list. Relay access supports NIP-42 authentication.
+- Clients publish a kind-10050 inbox list when none exists and otherwise
+  preserve it. The embedded coordinator console owns the coordinator's stable
+  DM inbox list; the backend never derives it from RPC/NIP-65 working relays.
+  Relay access supports NIP-42 authentication.
 - Evidence is limited client-side to decoded, single-frame JPEG/PNG images (12
   MiB input and 20 megapixels in v1). It is re-encoded to remove EXIF, location,
   comments, and profiles, then encrypted locally using AES-256-GCM with a fresh
@@ -54,8 +56,9 @@ LIGHTNING_NETWORK=mainnet
 At startup an existing non-empty kind-10063 list always remains untouched, even
 when `BLOSSOM_SERVERS` is set. When no list exists, the configured fallback is
 published; the public defaults seed a new list only when the fallback is empty
-too. The existing `NOSTR_RELAYS` list is used for the coordinator's kind-10050
-DM inbox. Public-server retention and availability are third-party policies;
+too. `NOSTR_RELAYS` configures coordinator RPC and public-event transport; it
+does not configure the kind-10050 DM inbox. Public-server retention and
+availability are third-party policies;
 operators needing stronger control should configure servers they operate or
 contract with before the coordinator publishes its first list.
 

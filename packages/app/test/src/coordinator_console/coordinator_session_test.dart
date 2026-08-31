@@ -13,6 +13,52 @@ void main() {
   late Ndk ndk;
   late CoordinatorSession session;
 
+  test('keeps listening on former generated NIP-17 inbox relays', () {
+    final relays = coordinatorDmInboxSubscriptionRelays(
+      configuredRelays: const ['wss://custom.example/'],
+      observedHistoricalRelays: const ['wss://old-inbox.example/'],
+      defaultRelays: const ['wss://relay.primal.net'],
+      discoveryRelays: const ['wss://nos.lol'],
+      coordinatorRelays: const ['wss://relay.mostro.network'],
+    );
+
+    expect(
+      relays,
+      unorderedEquals([
+        'wss://custom.example',
+        'wss://old-inbox.example',
+        'wss://nip17.com',
+        'wss://auth.nostr1.com',
+        'wss://relay.primal.net',
+        'wss://nos.lol',
+        'wss://relay.mostro.network',
+      ]),
+    );
+  });
+
+  test('recognizes the backend-generated RPC relay list for migration', () {
+    expect(
+      isGeneratedCoordinatorDmRelayList(
+        configuredRelays: const [
+          'wss://relay.mostro.network/',
+          'wss://relay.primal.net',
+        ],
+        coordinatorRelays: const [
+          'wss://relay.primal.net/',
+          'wss://relay.mostro.network',
+        ],
+      ),
+      isTrue,
+    );
+    expect(
+      isGeneratedCoordinatorDmRelayList(
+        configuredRelays: const ['wss://operator.example'],
+        coordinatorRelays: const ['wss://relay.mostro.network'],
+      ),
+      isFalse,
+    );
+  });
+
   setUp(() {
     ndk = Ndk(
       NdkConfig(

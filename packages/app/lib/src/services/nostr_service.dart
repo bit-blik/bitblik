@@ -379,26 +379,9 @@ class NostrService {
       throw StateError('NIP-17 requires the active signing account.');
     }
 
-    final responses = await ndk.dms.publishDmRelays(
-      relayUrlsOrdered: _relayUrls,
-      broadcastRelays: _relayUrls,
-    );
-    final accepted = responses
-        .where((response) => response.broadcastSuccessful)
-        .map((response) => response.relayUrl)
-        .toList(growable: false);
-    if (accepted.isEmpty) {
-      final detail = responses
-          .map((response) => '${response.relayUrl}: ${response.msg}')
-          .join('; ');
-      throw StateError(
-        'No relay accepted the NIP-17 inbox list${detail.isEmpty ? '' : ' ($detail)'}.',
-      );
-    }
-
-    // Warm NDK's own-list cache. sendMessage resolves the sender list without
-    // a custom discovery set, so publication alone is insufficient if the
-    // replaceable event has not propagated into the local cache yet.
+    // Preserve an existing kind-10050. Other clients cache this replaceable
+    // event, so rewriting it on every startup can strand an active chat on the
+    // previous inbox relays.
     List<String>? inboxRelays;
     for (var attempt = 0; attempt < 3; attempt++) {
       inboxRelays = await ndk.userRelayLists.getDmRelays(
@@ -408,6 +391,34 @@ class NostrService {
       );
       if (inboxRelays != null && inboxRelays.isNotEmpty) break;
       await Future<void>.delayed(const Duration(milliseconds: 400));
+    }
+    List<String> accepted = const [];
+    if (inboxRelays == null || inboxRelays.isEmpty) {
+      final responses = await ndk.dms.publishDmRelays(
+        relayUrlsOrdered: kDefaultDmInboxRelays,
+        broadcastRelays: _relayUrls,
+      );
+      accepted = responses
+          .where((response) => response.broadcastSuccessful)
+          .map((response) => response.relayUrl)
+          .toList(growable: false);
+      if (accepted.isEmpty) {
+        final detail = responses
+            .map((response) => '${response.relayUrl}: ${response.msg}')
+            .join('; ');
+        throw StateError(
+          'No relay accepted the NIP-17 inbox list${detail.isEmpty ? '' : ' ($detail)'}.',
+        );
+      }
+      for (var attempt = 0; attempt < 3; attempt++) {
+        inboxRelays = await ndk.userRelayLists.getDmRelays(
+          account.pubkey,
+          forceRefresh: true,
+          discoveryRelays: _relayUrls,
+        );
+        if (inboxRelays != null && inboxRelays.isNotEmpty) break;
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+      }
     }
     if (inboxRelays == null || inboxRelays.isEmpty) {
       throw StateError(
@@ -419,6 +430,7 @@ class NostrService {
     final subscription = ndk.requests.subscription(
       name: 'bitblik-dm-live',
       explicitRelays: inboxRelays,
+      authenticateAs: [account],
       cacheRead: false,
       cacheWrite: true,
       filter: Filter(
@@ -435,7 +447,8 @@ class NostrService {
     }, onError: _dmMessageController.addError);
     Logger.log.i(
       () =>
-          'NIP-17 inbox ready for ${account.pubkey} on $inboxRelays; kind-10050 accepted by $accepted',
+          'NIP-17 inbox ready for ${account.pubkey} on $inboxRelays'
+          '${accepted.isEmpty ? '' : '; kind-10050 accepted by $accepted'}',
     );
   }
 

@@ -11,6 +11,54 @@ const _formerGeneratedDmInboxRelays = [
   'wss://nos.lol',
 ];
 
+// Amethyst commonly uses these relays as NIP-17 inboxes. Keep authenticated
+// console connections to them because an Amethyst sender may still have an
+// older coordinator kind-10050 cached. This is receive/auth compatibility
+// only; these relays are deliberately not part of the coordinator's published
+// kind-10050 unless the operator explicitly configured them.
+const _amethystCompatibilityDmInboxRelays = ['wss://auth.nostr1.com'];
+
+@visibleForTesting
+List<String> coordinatorDmInboxSubscriptionRelays({
+  required Iterable<String> configuredRelays,
+  required Iterable<String> observedHistoricalRelays,
+  required Iterable<String> defaultRelays,
+  required Iterable<String> discoveryRelays,
+  required Iterable<String> coordinatorRelays,
+}) =>
+    {
+          ...configuredRelays,
+          ...observedHistoricalRelays,
+          ...defaultRelays,
+          ..._formerGeneratedDmInboxRelays,
+          ..._amethystCompatibilityDmInboxRelays,
+          ...discoveryRelays,
+          ...coordinatorRelays,
+        }
+        .map(normalizeRelayUrl)
+        .where((relay) => relay.isNotEmpty)
+        .toList(growable: false);
+
+@visibleForTesting
+bool isGeneratedCoordinatorDmRelayList({
+  required Iterable<String> configuredRelays,
+  required Iterable<String> coordinatorRelays,
+}) {
+  final configured = configuredRelays.map(normalizeRelayUrl).toSet();
+  if (configured.isEmpty) return false;
+  final former = _formerGeneratedDmInboxRelays.map(normalizeRelayUrl).toSet();
+  if (configured.length == former.length && configured.containsAll(former)) {
+    return true;
+  }
+  final working = coordinatorRelays
+      .map(normalizeRelayUrl)
+      .where((relay) => relay.isNotEmpty)
+      .toSet();
+  return working.isNotEmpty &&
+      configured.length == working.length &&
+      configured.containsAll(working);
+}
+
 class CoordinatorSession extends ChangeNotifier {
   final NdkFlutter ndkFlutter;
   final Future<List<String>> Function(String pubkey)? relayLoader;
@@ -19,10 +67,11 @@ class CoordinatorSession extends ChangeNotifier {
   String? _expectedCoordinatorPubkey;
   BitblikRpcClient? _rpc;
   List<String> _coordinatorRelays = const [];
-  NdkResponse? _dmInboxSubscription;
-  StreamSubscription<Nip01Event>? _dmInboxEvents;
-  Timer? _dmInboxPollTimer;
+  final Map<String, NdkResponse> _dmInboxSubscriptions = {};
+  final Map<String, StreamSubscription<Nip01Event>> _dmInboxEvents = {};
   List<String> _dmInboxRelays = const [];
+  Nip01Event? _publishedDmInboxEvent;
+  final Set<String> _observedDmInboxRelays = {};
   bool _dmInboxPollInFlight = false;
   bool _dmInboxReadyReported = false;
   bool _liveDmReceiptReported = false;
@@ -165,23 +214,21 @@ class CoordinatorSession extends ChangeNotifier {
     _rpc = null;
   }
 
-  /// Keeps exactly one authenticated kind-1059 inbox subscription for the
-  /// active coordinator. Conversation widgets read the cached, decrypted lane
-  /// after this stream reports a new wrapper.
+  /// Keeps one logical authenticated kind-1059 inbox listener for the active
+  /// coordinator, backed by an independent subscription per relay. Conversation
+  /// widgets read the cached, decrypted lane after a stream reports a wrapper.
   Future<void> _startDmInboxListener(
     Account account,
     List<String> defaultRelays,
   ) async {
     if (defaultRelays.isEmpty) return;
     var configuredRelays = await _loadPublishedDmInboxRelays(account.pubkey);
-    final formerGeneratedDefaults = _formerGeneratedDmInboxRelays
-        .map(normalizeRelayUrl)
-        .toSet();
-    final configuredSet = configuredRelays.map(normalizeRelayUrl).toSet();
-    final upgradeFormerGeneratedList =
-        configuredSet.length == formerGeneratedDefaults.length &&
-        configuredSet.containsAll(formerGeneratedDefaults);
-    if (configuredRelays.isEmpty || upgradeFormerGeneratedList) {
+    final replaceGeneratedList = isGeneratedCoordinatorDmRelayList(
+      configuredRelays: configuredRelays,
+      coordinatorRelays: _coordinatorRelays,
+    );
+    final needsNewRelayList = configuredRelays.isEmpty || replaceGeneratedList;
+    if (needsNewRelayList) {
       final responses = await ndk.dms.publishDmRelays(
         relayUrlsOrdered: defaultRelays,
         broadcastRelays: {
@@ -199,6 +246,29 @@ class CoordinatorSession extends ChangeNotifier {
       if (responses.any((response) => response.broadcastSuccessful)) {
         configuredRelays = List.of(defaultRelays);
       }
+    } else {
+      // NIP-65-aware clients such as Amethyst discover another user's DM
+      // inbox list through that user's outbox relays. Preserve the operator's
+      // existing kind-10050 verbatim, but replicate the same signed event to
+      // every discovery/outbox/inbox relay so clients do not fall back to an
+      // empty or stale local route.
+      final existing = _publishedDmInboxEvent;
+      if (existing != null) {
+        final targets = {
+          ...kDiscoveryRelays,
+          ..._coordinatorRelays,
+          ...configuredRelays,
+        };
+        try {
+          await ndk.broadcast
+              .broadcast(nostrEvent: existing, specificRelays: targets)
+              .broadcastDoneFuture
+              .timeout(const Duration(seconds: 8));
+        } catch (_) {
+          // The inbox listener still starts on every target below. A later
+          // activation retries propagation without replacing the event.
+        }
+      }
     }
 
     // Amethyst and other clients cache kind-10050. Keep receiving on the
@@ -206,62 +276,112 @@ class CoordinatorSession extends ChangeNotifier {
     // cached sender cannot strand a valid gift wrap during list propagation.
     // Also cover the coordinator's NIP-65 relays: clients that have not loaded
     // kind-10050 yet use those as their recipient-relay fallback.
-    final inboxRelays = {
-      ...configuredRelays,
-      ...defaultRelays,
-      ...kDiscoveryRelays,
-      ..._coordinatorRelays,
-    }.map(normalizeRelayUrl).where((relay) => relay.isNotEmpty).toList();
+    final inboxRelays = coordinatorDmInboxSubscriptionRelays(
+      configuredRelays: configuredRelays,
+      observedHistoricalRelays: _observedDmInboxRelays,
+      defaultRelays: defaultRelays,
+      discoveryRelays: kDiscoveryRelays,
+      coordinatorRelays: _coordinatorRelays,
+    );
     _dmInboxRelays = List.unmodifiable(inboxRelays);
-    final subscription = ndk.requests.subscription(
-      name: 'coordinator-console-dm-inbox',
-      explicitRelays: inboxRelays,
-      // NIP-17 inbox relays may protect kind-1059 delivery with NIP-42 and
-      // serve wrappers only to their p-tagged recipient. Match NDK's regular
-      // DM loader by authenticating this live subscription as the coordinator.
-      authenticateAs: [account],
-      cacheRead: false,
-      cacheWrite: true,
-      filter: Filter(
-        kinds: [GiftWrap.kGiftWrapEventkind],
-        pTags: [account.pubkey],
-        since:
-            Nip01Event.secondsSinceEpoch() - const Duration(days: 3).inSeconds,
-        limit: 200,
-      ),
-    );
-    _dmInboxSubscription = subscription;
-    _dmInboxEvents = subscription.stream.listen((wrappedEvent) {
-      // A request subscription caches the encrypted kind-1059 wrapper but
-      // does not decrypt it. Conversation snapshots deliberately use only
-      // cached plaintext sidecars, so decrypt before notifying lanes; this
-      // makes a live participant message visible without re-querying every
-      // relay or redrawing the other lane.
-      unawaited(_cacheAndForwardDmInboxEvent(wrappedEvent, account.pubkey));
-    }, onError: _dmInboxEventController.addError);
-    _dmInboxPollTimer = Timer.periodic(
-      const Duration(seconds: 15),
-      (_) => unawaited(_pollDmInbox(account)),
-    );
-    unawaited(_pollDmInbox(account));
+    // Finish history before opening the live streams. NDK deduplicates
+    // identical filters, so overlapping a one-shot query with a subscription
+    // can let the query's EOSE close the stream intended to remain live.
+    await _pollDmInbox(account);
+    // Keep every relay in an independent request so authentication, CLOSED,
+    // EOSE, or connection lifecycle on one relay cannot terminate another.
+    for (final relay in inboxRelays) {
+      final subscription = ndk.requests.subscription(
+        name: 'coordinator-console-dm-inbox',
+        explicitRelays: [relay],
+        // NIP-17 inbox relays may protect kind-1059 delivery with NIP-42 and
+        // serve wrappers only to their p-tagged recipient. Match NDK's regular
+        // DM loader by authenticating this live subscription as coordinator.
+        authenticateAs: [account],
+        cacheRead: false,
+        cacheWrite: true,
+        filter: Filter(
+          kinds: [GiftWrap.kGiftWrapEventkind],
+          pTags: [account.pubkey],
+          since:
+              Nip01Event.secondsSinceEpoch() -
+              const Duration(days: 3).inSeconds,
+          limit: 200,
+        ),
+      );
+      _dmInboxSubscriptions[relay] = subscription;
+      _dmInboxEvents[relay] = subscription.stream.listen((wrappedEvent) {
+        // A request subscription caches the encrypted kind-1059 wrapper but
+        // does not decrypt it. Conversation snapshots deliberately use only
+        // cached plaintext sidecars, so decrypt before notifying lanes.
+        unawaited(_cacheAndForwardDmInboxEvent(wrappedEvent, account.pubkey));
+      }, onError: _dmInboxEventController.addError);
+    }
   }
 
   Future<List<String>> _loadPublishedDmInboxRelays(String pubkey) async {
-    final response = ndk.requests.query(
-      name: 'coordinator-console-dm-relay-list',
-      explicitRelays: {...kDiscoveryRelays, ..._coordinatorRelays},
-      cacheRead: false,
-      cacheWrite: true,
-      timeout: const Duration(seconds: 6),
-      filter: Filter(
-        kinds: const [Nip51List.kDmRelays],
-        authors: [pubkey],
-        limit: 1,
-      ),
+    _publishedDmInboxEvent = null;
+    final account = activeAccount;
+    final canAuthenticate =
+        account?.pubkey.toLowerCase() == pubkey.toLowerCase();
+    final publicRelays = {
+      ...kDiscoveryRelays,
+      ..._coordinatorRelays,
+    }.map(normalizeRelayUrl).toSet();
+    final historicalRelays = {
+      ..._formerGeneratedDmInboxRelays,
+      ..._amethystCompatibilityDmInboxRelays,
+    }.map(normalizeRelayUrl).where((relay) => !publicRelays.contains(relay));
+    final filter = Filter(
+      kinds: const [Nip51List.kDmRelays],
+      authors: [pubkey],
+      limit: 1,
     );
-    final events = await response.future;
+
+    Future<List<Nip01Event>> queryRelaySet(
+      Iterable<String> relays, {
+      required bool authenticate,
+    }) async {
+      if (relays.isEmpty) return const [];
+      try {
+        return await ndk.requests
+            .query(
+              name: 'coordinator-console-dm-relay-list',
+              explicitRelays: relays,
+              authenticateAs: authenticate && canAuthenticate
+                  ? [account!]
+                  : null,
+              cacheRead: false,
+              cacheWrite: true,
+              timeout: const Duration(seconds: 6),
+              filter: filter,
+            )
+            .future;
+      } catch (_) {
+        return const [];
+      }
+    }
+
+    // Keep authenticated historical inboxes in separate requests. A fast EOSE
+    // from a public relay must not close the request before the NIP-42 relay
+    // finishes its challenge and returns its older replaceable event.
+    final results = await Future.wait([
+      queryRelaySet(publicRelays, authenticate: false),
+      for (final relay in historicalRelays)
+        queryRelaySet([relay], authenticate: true),
+    ]);
+    final events = results.expand((events) => events).toList();
     if (events.isEmpty) return const [];
+    for (final event in events) {
+      _observedDmInboxRelays.addAll(
+        event.tags
+            .where((tag) => tag.length >= 2 && tag.first == Nip51List.kRelay)
+            .map((tag) => normalizeRelayUrl(tag[1]))
+            .where((relay) => relay.isNotEmpty),
+      );
+    }
     events.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _publishedDmInboxEvent = events.first;
     return events.first.tags
         .where((tag) => tag.length >= 2 && tag.first == Nip51List.kRelay)
         .map((tag) => normalizeRelayUrl(tag[1]))
@@ -279,25 +399,29 @@ class CoordinatorSession extends ChangeNotifier {
     }
     _dmInboxPollInFlight = true;
     try {
-      final response = ndk.requests.query(
-        name: 'coordinator-console-dm-inbox-catchup',
-        explicitRelays: _dmInboxRelays,
-        authenticateAs: [account],
-        cacheRead: false,
-        cacheWrite: true,
-        timeout: const Duration(seconds: 8),
-        filter: Filter(
-          kinds: const [GiftWrap.kGiftWrapEventkind],
-          pTags: [account.pubkey],
-          since:
-              Nip01Event.secondsSinceEpoch() -
-              const Duration(days: 3).inSeconds,
-          limit: 500,
-        ),
+      await Future.wait(
+        _dmInboxRelays.map((relay) async {
+          final response = ndk.requests.query(
+            name: 'coordinator-console-dm-inbox-catchup',
+            explicitRelays: [relay],
+            authenticateAs: [account],
+            cacheRead: false,
+            cacheWrite: true,
+            timeout: const Duration(seconds: 8),
+            filter: Filter(
+              kinds: const [GiftWrap.kGiftWrapEventkind],
+              pTags: [account.pubkey],
+              since:
+                  Nip01Event.secondsSinceEpoch() -
+                  const Duration(days: 3).inSeconds,
+              limit: 500,
+            ),
+          );
+          await for (final wrappedEvent in response.stream) {
+            await _cacheAndForwardDmInboxEvent(wrappedEvent, account.pubkey);
+          }
+        }),
       );
-      await for (final wrappedEvent in response.stream) {
-        await _cacheAndForwardDmInboxEvent(wrappedEvent, account.pubkey);
-      }
     } catch (error, stackTrace) {
       if (!_closed && activeAccount?.pubkey == account.pubkey) {
         _dmInboxEventController.addError(error, stackTrace);
@@ -453,9 +577,8 @@ class CoordinatorSession extends ChangeNotifier {
   }
 
   Future<void> _stopDmInboxListener() async {
-    _dmInboxPollTimer?.cancel();
-    _dmInboxPollTimer = null;
     _dmInboxRelays = const [];
+    _observedDmInboxRelays.clear();
     _dmInboxReadyReported = false;
     _liveDmReceiptReported = false;
     _receivedDmWrapIds.clear();
@@ -464,17 +587,17 @@ class CoordinatorSession extends ChangeNotifier {
     _acceptedDmWrapCount = 0;
     _lastDmInboxRejection = null;
     _diagnosticLiveRumorId = null;
-    await _dmInboxEvents?.cancel();
-    _dmInboxEvents = null;
+    await Future.wait(_dmInboxEvents.values.map((events) => events.cancel()));
+    _dmInboxEvents.clear();
     _dmMessagesByRumorId.clear();
     await Future.wait(
       _legacyInboxEvents.values.map((events) => events.cancel()),
     );
     _legacyInboxEvents.clear();
     _legacyMessagesByEventId.clear();
-    final subscription = _dmInboxSubscription;
-    _dmInboxSubscription = null;
-    if (subscription != null) {
+    final subscriptions = _dmInboxSubscriptions.values.toList();
+    _dmInboxSubscriptions.clear();
+    for (final subscription in subscriptions) {
       await ndk.requests.closeSubscription(
         subscription.requestId,
         debugLabel: 'coordinator console DM inbox',

@@ -9,6 +9,7 @@ import 'package:ndk_flutter/ndk_flutter.dart';
 
 import 'coordinator_session.dart';
 import 'dispute_case_repository.dart';
+import 'dispute_read_store.dart';
 
 class DisputeQueueScreen extends StatefulWidget {
   final CoordinatorSession session;
@@ -55,6 +56,7 @@ class _DisputeQueueScreenState extends State<DisputeQueueScreen> {
 
   Future<List<Offer>> _loadCases() async {
     final loaded = await repository.listDisputes();
+    await unreadTracker.ready;
     if (mounted) unreadTracker.updateOffers(loaded);
     return loaded;
   }
@@ -266,15 +268,29 @@ class _DisputeQueueScreenState extends State<DisputeQueueScreen> {
 class _DisputeUnreadTracker extends ChangeNotifier {
   final CoordinatorSession session;
   final DisputeCommunicationService communication;
+  final DisputeReadStore readStore;
   final Map<String, Offer> _offers = {};
   final Map<String, Set<String>> _messageIdsByLane = {};
+  final Set<String> _readMessageIds = {};
   final Set<String> _reportedUnroutableNip17 = {};
   final List<Nip17Message> _pendingNip17 = [];
   final List<LegacyNip04Message> _pendingLegacy = [];
+  late final String _coordinatorPubkey;
+  late final Future<void> ready;
+  Future<void> _pendingReadStateWrite = Future<void>.value();
   late final StreamSubscription<Nip17Message> _nip17Events;
   late final StreamSubscription<LegacyNip04Message> _legacyEvents;
 
-  _DisputeUnreadTracker({required this.session, required this.communication}) {
+  _DisputeUnreadTracker({
+    required this.session,
+    required this.communication,
+    DisputeReadStore? readStore,
+  }) : readStore = readStore ?? const DisputeReadStore() {
+    _coordinatorPubkey =
+        session.expectedCoordinatorPubkey ??
+        session.activeAccount?.pubkey ??
+        '';
+    ready = _loadReadState();
     _nip17Events = session.dmInboxEvents.listen(_onNip17);
     _legacyEvents = session.legacyInboxEvents.listen(_onLegacy);
     // The coordinator session starts its authenticated inbox before the queue
@@ -291,6 +307,14 @@ class _DisputeUnreadTracker extends ChangeNotifier {
 
   String _laneKey(String offerId, String participantPubkey) =>
       '$offerId:${participantPubkey.toLowerCase()}';
+
+  Future<void> _loadReadState() async {
+    try {
+      _readMessageIds.addAll(await readStore.load(_coordinatorPubkey));
+    } catch (error) {
+      debugPrint('[DisputeChat] Could not restore read state: $error');
+    }
+  }
 
   void updateOffers(Iterable<Offer> offers) {
     _offers
@@ -309,8 +333,18 @@ class _DisputeUnreadTracker extends ChangeNotifier {
       .fold(0, (total, entry) => total + entry.value.length);
 
   void markLaneRead(String offerId, String participantPubkey) {
-    if (_messageIdsByLane.remove(_laneKey(offerId, participantPubkey)) !=
-        null) {
+    final displayedIds = _messageIdsByLane.remove(
+      _laneKey(offerId, participantPubkey),
+    );
+    if (displayedIds != null) {
+      _readMessageIds.addAll(displayedIds);
+      _pendingReadStateWrite = _pendingReadStateWrite.then((_) async {
+        try {
+          await readStore.save(_coordinatorPubkey, _readMessageIds);
+        } catch (error) {
+          debugPrint('[DisputeChat] Could not persist read state: $error');
+        }
+      });
       notifyListeners();
     }
   }
@@ -361,6 +395,7 @@ class _DisputeUnreadTracker extends ChangeNotifier {
       }
       return;
     }
+    if (_readMessageIds.contains(message.id)) return;
     final changed = _messageIdsByLane
         .putIfAbsent(_laneKey(offer.id, message.peerPubKey), () => {})
         .add(message.id);
@@ -391,6 +426,7 @@ class _DisputeUnreadTracker extends ChangeNotifier {
   void _recordLegacy(LegacyNip04Message message) {
     final offer = legacyOfferFor(message);
     if (offer == null) return;
+    if (_readMessageIds.contains(message.id)) return;
     final changed = _messageIdsByLane
         .putIfAbsent(_laneKey(offer.id, message.peerPubKey), () => {})
         .add(message.id);
@@ -1019,7 +1055,6 @@ class _ConversationLaneState extends State<_ConversationLane> {
               )
               .toList(growable: false),
         );
-    if (legacy.isNotEmpty) usesLegacyNip04 = true;
     return [
       ...nip17.map(_LaneMessage.nip17),
       ...legacy.map(_LaneMessage.legacy),

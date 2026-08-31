@@ -247,7 +247,6 @@ class NostrService {
 
     // Resolve the working relay set from our own NIP-65 (or publish a new one).
     await _resolveWorkingRelays();
-    await _publishDmRelayList();
     await _resolveBlossomServerList();
 
     // Ensure a kind-0 profile (name/logo) exists on the discovery relays.
@@ -426,19 +425,6 @@ class NostrService {
     }
   }
 
-  Future<void> _publishDmRelayList() async {
-    if (_relays.isEmpty) return;
-    try {
-      await _ndk.dms.publishDmRelays(
-        relayUrlsOrdered: _relays,
-        broadcastRelays: _discoveryTargets,
-      );
-      AppLogger.info('Published NIP-17 DM inbox relay list.');
-    } catch (e) {
-      AppLogger.warning('Could not publish NIP-17 DM inbox relay list: $e');
-    }
-  }
-
   /// Preserve an already-published kind-10063 list unconditionally.
   /// BLOSSOM_SERVERS and the public defaults are seed values only: the
   /// configured list is published when no existing event defines any
@@ -509,8 +495,6 @@ class NostrService {
       'Detected updated NIP-65 relays; switching runtime relays to $_relays and keeping previous relays active during grace period: $_graceRelays',
     );
     await _restartRequestListener(_broadcastRelays);
-    await _publishDmRelayList();
-
     _relayGraceTimer?.cancel();
     _relayGraceTimer = Timer(_relayChangeGracePeriod, () {
       _finishRelayGracePeriod().catchError((e) {
