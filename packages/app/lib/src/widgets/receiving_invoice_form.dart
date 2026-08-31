@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ndk/domain_layer/entities/wallet/wallet.dart';
+import 'package:ndk/entities.dart' show NwcWallet, Wallet;
 import 'package:ndk/shared/logger/logger.dart';
 
 import '../flow/taker_receive_invoice.dart';
@@ -50,6 +50,7 @@ class ReceivingInvoiceForm extends ConsumerStatefulWidget {
   final int amountSats;
   final ReceivingInvoiceFormLabels labels;
   final Future<void> Function(String bolt11) onSubmit;
+  final String? invoiceDescription;
   final bool enabled;
 
   const ReceivingInvoiceForm({
@@ -57,6 +58,7 @@ class ReceivingInvoiceForm extends ConsumerStatefulWidget {
     required this.amountSats,
     required this.labels,
     required this.onSubmit,
+    this.invoiceDescription,
     this.enabled = true,
   });
 
@@ -130,11 +132,34 @@ class _ReceivingInvoiceFormState extends ConsumerState<ReceivingInvoiceForm> {
     try {
       final ndk = ref.read(ndkProvider);
       if (ndk == null) throw StateError(widget.labels.walletUnavailableError);
-      // ignore: experimental_member_use
-      final result = await ndk.wallets.receive(
-        walletId: wallet.id,
-        amountSats: widget.amountSats,
-      );
+      final description = widget.invoiceDescription?.trim();
+      late final String result;
+      if (wallet is NwcWallet &&
+          description != null &&
+          description.isNotEmpty) {
+        var connection = wallet.connection;
+        if (connection == null) {
+          // ignore: experimental_member_use
+          connection = await ndk.nwc.connect(wallet.nwcUrl);
+          wallet.connection = connection;
+        }
+        // ignore: experimental_member_use
+        final response = await ndk.nwc.makeInvoice(
+          connection,
+          amountSats: widget.amountSats,
+          description: description,
+        );
+        result = response.invoice;
+      } else {
+        // Cashu and LNURL providers control the description of the invoice
+        // they return. The combined wallet API currently exposes no custom
+        // description for those providers.
+        // ignore: experimental_member_use
+        result = await ndk.wallets.receive(
+          walletId: wallet.id,
+          amountSats: widget.amountSats,
+        );
+      }
       final invoice = extractBolt11Invoice(result);
       if (invoice == null) {
         throw FormatException(widget.labels.missingBolt11Error);

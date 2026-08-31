@@ -1,6 +1,7 @@
 import 'package:bitblik_core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../i18n/gen/strings.g.dart';
 import '../../flow/flow_controller.dart';
@@ -75,6 +76,30 @@ class _MakerRefundInvoiceRequiredScreenState
       ref.watch(bitcoinDisplayUnitProvider),
       amountSats,
     );
+    final coordinatorRecord = ref.watch(
+      coordinatorRecordByPubkeyProvider(widget.offer.coordinatorPubkey),
+    );
+    final coordinatorInfo =
+        ref
+            .watch(
+              coordinatorInfoByPubkeyProvider(widget.offer.coordinatorPubkey),
+            )
+            .value;
+    final coordinatorName =
+        coordinatorRecord?.name ??
+        coordinatorInfo?.name ??
+        widget.offer.coordinatorPubkey;
+    final fiatAmount =
+        '${NumberFormat.decimalPattern('en').format(widget.offer.fiatAmount)} '
+        '${widget.offer.fiatCurrency}';
+    final holdInvoicePaymentHash = widget.offer.holdInvoicePaymentHash?.trim();
+    final holdInvoiceReference =
+        holdInvoicePaymentHash == null || holdInvoicePaymentHash.isEmpty
+            ? ''
+            : '; reference: $holdInvoicePaymentHash';
+    final invoiceDescription =
+        '$coordinatorName - Refund $fiatAmount for offer ${widget.offer.id}'
+        '$holdInvoiceReference.';
     final failure = widget.offer.takerPaymentFailureReason?.trim();
 
     return SingleChildScrollView(
@@ -116,6 +141,7 @@ class _MakerRefundInvoiceRequiredScreenState
               padding: const EdgeInsets.all(16),
               child: ReceivingInvoiceForm(
                 amountSats: amountSats,
+                invoiceDescription: invoiceDescription,
                 labels: ReceivingInvoiceFormLabels(
                   walletSectionTitle:
                       strings.taker.paymentFailed.walletSection.title,
