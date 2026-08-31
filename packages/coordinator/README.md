@@ -65,6 +65,16 @@ How to find out telegram bot token & chat id:
 - get chat id with https://api.telegram.org/bot<your-bot-token>/getUpdates
 - configure `TELEGRAM_CHAT_ID` with either a single destination or a comma-separated list to send to multiple groups/channels at once
 
+For the local central notification bot, set `TEST_TELEGRAM_BOT_TOKEN` and
+`TEST_TELEGRAM_GROUP_ID` in `packages/coordinator/.env`, then run:
+
+```bash
+docker compose --profile telegram-bot up -d --build telegram-bot
+```
+
+The container uses `PAYMENT_SYSTEM` from the same `.env`; its mute-list project
+identity is resolved from `bitblik_core` for that payment system.
+
 ## Memory Profiling
 
 ### Runtime snapshots

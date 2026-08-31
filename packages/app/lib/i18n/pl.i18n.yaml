@@ -1104,6 +1104,24 @@ faq:
 # =============================================================================
 settings:
   title: Ustawienia
+  coordinatorConsole:
+    title: Konsola koordynatora
+    subtitle: Zarządzaj sporami za pomocą podpisu koordynatora
+    signInTitle: Zaloguj się jako koordynator
+    signInDescription: Użyj klucza Nostr identyfikującego koordynatora, aby przeglądać i rozstrzygać spory.
+    separateIdentityNote: Podpis koordynatora działa w oddzielnej sesji NDK i nigdy nie zastępuje tożsamości handlowej Neko.
+    loginWithSignerApp: Zaloguj przez aplikację podpisującą
+    loginWithExtension: Zaloguj przez rozszerzenie przeglądarki
+    loginWithNsec: Zaloguj przez nsec
+    nsecDialogTitle: Klucz prywatny koordynatora
+    nsecFieldLabel: Klucz prywatny
+    nsecSecurityNote: Klucz prywatny jest bezpiecznie przechowywany na tym urządzeniu i używany wyłącznie przez oddzielną sesję koordynatora.
+    unsupportedPlatform: Logowanie koordynatora jest obecnie dostępne na Androidzie, Linuksie i w przeglądarce.
+    loginFailed: Logowanie koordynatora nie powiodło się
+    accountsTitle: Konta koordynatorów
+    savedAccounts: Zapisane konta koordynatorów
+    addAccount: Dodaj konto koordynatora
+    removeAccount: Usuń konto koordynatora
   offerCreation:
     title: Tworzenie ofert
     defaultCategory: Domyślna kategoria

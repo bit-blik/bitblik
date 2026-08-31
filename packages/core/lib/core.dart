@@ -15,6 +15,7 @@ export 'src/models/coordinator_record.dart';
 export 'src/models/exceptions.dart';
 export 'src/models/offer.dart';
 export 'src/models/offer_status_update.dart';
+export 'src/notifications/offer_notification_formatter.dart';
 export 'src/payment/payment_system.dart';
 export 'src/protocol/bitblik_rpc_client.dart';
 export 'src/quote/offer_quote.dart';

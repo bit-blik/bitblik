@@ -384,6 +384,7 @@ class _Translations$settings$sk extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Nastavenia';
+	@override late final _Translations$settings$coordinatorConsole$sk coordinatorConsole = _Translations$settings$coordinatorConsole$sk._(_root);
 	@override late final _Translations$settings$offerCreation$sk offerCreation = _Translations$settings$offerCreation$sk._(_root);
 	@override late final _Translations$settings$display$sk display = _Translations$settings$display$sk._(_root);
 	@override late final _Translations$settings$paymentSystem$sk paymentSystem = _Translations$settings$paymentSystem$sk._(_root);
@@ -1616,6 +1617,32 @@ class _Translations$landing$actions$sk extends Translations$landing$actions$en {
 	@override String get sellBlik => 'Kúpiť bitcoin';
 	@override String sellBlikSubtitle({required Object code}) => 'cez ${code}';
 	@override String get howItWorks => 'Ako to funguje?';
+}
+
+// Path: settings.coordinatorConsole
+class _Translations$settings$coordinatorConsole$sk extends Translations$settings$coordinatorConsole$en {
+	_Translations$settings$coordinatorConsole$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Konzola koordinátora';
+	@override String get subtitle => 'Spravujte spory pomocou podpisovača koordinátora';
+	@override String get signInTitle => 'Prihlásiť sa ako koordinátor';
+	@override String get signInDescription => 'Použite Nostr kľúč, ktorý identifikuje koordinátora, na kontrolu a riešenie sporov.';
+	@override String get separateIdentityNote => 'Podpisovač koordinátora používa samostatnú reláciu NDK a nikdy nenahrádza obchodnú identitu Neko.';
+	@override String get loginWithSignerApp => 'Prihlásiť sa cez podpisovaciu aplikáciu';
+	@override String get loginWithExtension => 'Prihlásiť sa cez rozšírenie prehliadača';
+	@override String get loginWithNsec => 'Prihlásiť sa pomocou nsec';
+	@override String get nsecDialogTitle => 'Súkromný kľúč koordinátora';
+	@override String get nsecFieldLabel => 'Súkromný kľúč';
+	@override String get nsecSecurityNote => 'Súkromný kľúč je bezpečne uložený v tomto zariadení a používa ho iba samostatná relácia koordinátora.';
+	@override String get unsupportedPlatform => 'Prihlásenie koordinátora je momentálne dostupné v systémoch Android, Linux a na webe.';
+	@override String get loginFailed => 'Prihlásenie koordinátora zlyhalo';
+	@override String get accountsTitle => 'Účty koordinátorov';
+	@override String get savedAccounts => 'Uložené účty koordinátorov';
+	@override String get addAccount => 'Pridať účet koordinátora';
+	@override String get removeAccount => 'Odstrániť účet koordinátora';
 }
 
 // Path: settings.offerCreation
@@ -3484,6 +3511,23 @@ extension on TranslationsSk {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Nastavenia',
+			'settings.coordinatorConsole.title' => 'Konzola koordinátora',
+			'settings.coordinatorConsole.subtitle' => 'Spravujte spory pomocou podpisovača koordinátora',
+			'settings.coordinatorConsole.signInTitle' => 'Prihlásiť sa ako koordinátor',
+			'settings.coordinatorConsole.signInDescription' => 'Použite Nostr kľúč, ktorý identifikuje koordinátora, na kontrolu a riešenie sporov.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'Podpisovač koordinátora používa samostatnú reláciu NDK a nikdy nenahrádza obchodnú identitu Neko.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Prihlásiť sa cez podpisovaciu aplikáciu',
+			'settings.coordinatorConsole.loginWithExtension' => 'Prihlásiť sa cez rozšírenie prehliadača',
+			'settings.coordinatorConsole.loginWithNsec' => 'Prihlásiť sa pomocou nsec',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Súkromný kľúč koordinátora',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Súkromný kľúč',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'Súkromný kľúč je bezpečne uložený v tomto zariadení a používa ho iba samostatná relácia koordinátora.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'Prihlásenie koordinátora je momentálne dostupné v systémoch Android, Linux a na webe.',
+			'settings.coordinatorConsole.loginFailed' => 'Prihlásenie koordinátora zlyhalo',
+			'settings.coordinatorConsole.accountsTitle' => 'Účty koordinátorov',
+			'settings.coordinatorConsole.savedAccounts' => 'Uložené účty koordinátorov',
+			'settings.coordinatorConsole.addAccount' => 'Pridať účet koordinátora',
+			'settings.coordinatorConsole.removeAccount' => 'Odstrániť účet koordinátora',
 			'settings.offerCreation.title' => 'Vytváranie ponúk',
 			'settings.offerCreation.defaultCategory' => 'Predvolená kategória',
 			'settings.offerCreation.defaultBank' => 'Predvolená banka',

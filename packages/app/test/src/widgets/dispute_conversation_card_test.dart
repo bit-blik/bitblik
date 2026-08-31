@@ -135,6 +135,22 @@ void main() {
     expect(find.text('Submit invoice'), findsNothing);
   });
 
+  testWidgets('chat header prefers the coordinator kind-0 name', (
+    tester,
+  ) async {
+    await pumpCard(
+      tester,
+      offer(OfferStatus.dispute.name),
+      coordinatorRecord: CoordinatorRecord(
+        pubkeyHex: coordinator,
+        profileName: 'MBWay Coordinator',
+      ),
+    );
+
+    expect(find.text('MBWay Coordinator'), findsOneWidget);
+    expect(find.text('Private coordinator conversation'), findsNothing);
+  });
+
   testWidgets('resolved dispute history is read-only', (tester) async {
     await pumpCard(
       tester,

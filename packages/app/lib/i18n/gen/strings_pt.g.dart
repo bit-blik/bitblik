@@ -411,6 +411,7 @@ class _Translations$settings$pt extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Definições';
+	@override late final _Translations$settings$coordinatorConsole$pt coordinatorConsole = _Translations$settings$coordinatorConsole$pt._(_root);
 	@override late final _Translations$settings$offerCreation$pt offerCreation = _Translations$settings$offerCreation$pt._(_root);
 	@override late final _Translations$settings$display$pt display = _Translations$settings$display$pt._(_root);
 	@override late final _Translations$settings$paymentSystem$pt paymentSystem = _Translations$settings$paymentSystem$pt._(_root);
@@ -1734,6 +1735,32 @@ class _Translations$landing$actions$pt extends Translations$landing$actions$en {
 	@override String get sellBlik => 'Comprar bitcoin';
 	@override String sellBlikSubtitle({required Object code}) => 'com ${code}';
 	@override String get howItWorks => 'Como funciona?';
+}
+
+// Path: settings.coordinatorConsole
+class _Translations$settings$coordinatorConsole$pt extends Translations$settings$coordinatorConsole$en {
+	_Translations$settings$coordinatorConsole$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Consola do coordenador';
+	@override String get subtitle => 'Gerir disputas com um assinante coordenador';
+	@override String get signInTitle => 'Iniciar sessão como coordenador';
+	@override String get signInDescription => 'Use a chave Nostr que identifica o coordenador para analisar e resolver disputas.';
+	@override String get separateIdentityNote => 'O assinante do coordenador utiliza uma sessão NDK separada e nunca substitui a identidade de negociação Neko.';
+	@override String get loginWithSignerApp => 'Entrar com a aplicação de assinatura';
+	@override String get loginWithExtension => 'Entrar com a extensão do navegador';
+	@override String get loginWithNsec => 'Entrar com nsec';
+	@override String get nsecDialogTitle => 'Chave privada do coordenador';
+	@override String get nsecFieldLabel => 'Chave privada';
+	@override String get nsecSecurityNote => 'A chave privada é armazenada com segurança neste dispositivo e usada apenas pela sessão separada do coordenador.';
+	@override String get unsupportedPlatform => 'O início de sessão do coordenador está atualmente disponível no Android, Linux e na Web.';
+	@override String get loginFailed => 'Falha no início de sessão do coordenador';
+	@override String get accountsTitle => 'Contas de coordenador';
+	@override String get savedAccounts => 'Contas de coordenador guardadas';
+	@override String get addAccount => 'Adicionar conta de coordenador';
+	@override String get removeAccount => 'Remover conta de coordenador';
 }
 
 // Path: settings.offerCreation
@@ -3920,6 +3947,23 @@ extension on TranslationsPt {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Definições',
+			'settings.coordinatorConsole.title' => 'Consola do coordenador',
+			'settings.coordinatorConsole.subtitle' => 'Gerir disputas com um assinante coordenador',
+			'settings.coordinatorConsole.signInTitle' => 'Iniciar sessão como coordenador',
+			'settings.coordinatorConsole.signInDescription' => 'Use a chave Nostr que identifica o coordenador para analisar e resolver disputas.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'O assinante do coordenador utiliza uma sessão NDK separada e nunca substitui a identidade de negociação Neko.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Entrar com a aplicação de assinatura',
+			'settings.coordinatorConsole.loginWithExtension' => 'Entrar com a extensão do navegador',
+			'settings.coordinatorConsole.loginWithNsec' => 'Entrar com nsec',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Chave privada do coordenador',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Chave privada',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'A chave privada é armazenada com segurança neste dispositivo e usada apenas pela sessão separada do coordenador.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'O início de sessão do coordenador está atualmente disponível no Android, Linux e na Web.',
+			'settings.coordinatorConsole.loginFailed' => 'Falha no início de sessão do coordenador',
+			'settings.coordinatorConsole.accountsTitle' => 'Contas de coordenador',
+			'settings.coordinatorConsole.savedAccounts' => 'Contas de coordenador guardadas',
+			'settings.coordinatorConsole.addAccount' => 'Adicionar conta de coordenador',
+			'settings.coordinatorConsole.removeAccount' => 'Remover conta de coordenador',
 			'settings.offerCreation.title' => 'Criação de ofertas',
 			'settings.offerCreation.defaultCategory' => 'Categoria predefinida',
 			'settings.offerCreation.defaultBank' => 'Banco predefinido',

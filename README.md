@@ -8,9 +8,10 @@ Peer-to-peer BLIK/Lightning exchange over Nostr. Makers fund a Lightning hold in
 | ------- | ---- | ----------- |
 | **core** | [`packages/core`](packages/core) | Shared models, protocol codec, RPC client, Nostr event kinds and constants. Used by all other packages. |
 | **coordinator** | [`packages/coordinator`](packages/coordinator) | Server-side coordinator: manages offer lifecycle, hold invoices, BLIK flow, and Nostr RPC endpoints. |
-| **coordinator console** | [`packages/coordinator/console`](packages/coordinator/console) | Native coordinator dispute queue, private conversations, evidence review, and adjudication UI. |
+| **coordinator console** | [`packages/app/lib/src/coordinator_console`](packages/app/lib/src/coordinator_console) | Coordinator dispute queue, private conversations, evidence review, and adjudication UI embedded in the BitBlik app. |
 | **cli** | [`packages/cli`](packages/cli) | Command-line interface for interacting with the protocol. Create and manage offers, retrieve BLIK codes, confirm payments, and sync local state. |
 | **app** | [`packages/app`](packages/app) | Flutter app (mobile, web, desktop) for interacting with the protocol. Browse and manage offers, submit BLIK codes, and track payment status. |
+| **telegram bot** | [`packages/telegram_bot`](packages/telegram_bot) | Central Telegram notifier for every non-muted coordinator in a payment system, with per-pubkey flood control and offer lifecycle edits. |
 
 ## Protocol
 

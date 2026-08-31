@@ -9,23 +9,29 @@ dependency_overrides:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/ndk,
-      ref: 7f4cef7f6208cf39fc7946d62fde49707e811cec
+      ref: f1a7ba37b564949aac582a7c70c0bcd87a61c575
+    }
+  ndk_flutter:
+    git: {
+      url: https://github.com/relaystr/ndk.git,
+      path: packages/ndk_flutter,
+      ref: f1a7ba37b564949aac582a7c70c0bcd87a61c575
     }
   ndk_drift:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/drift,
-      ref: 7f4cef7f6208cf39fc7946d62fde49707e811cec
+      ref: f1a7ba37b564949aac582a7c70c0bcd87a61c575
     }
   ndk_objectbox:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/objectbox,
-      ref: 7f4cef7f6208cf39fc7946d62fde49707e811cec
+      ref: f1a7ba37b564949aac582a7c70c0bcd87a61c575
     }
 workspace:
   - packages/app
   - packages/cli
   - packages/coordinator
-  - packages/coordinator/console
   - packages/core
+  - packages/telegram_bot

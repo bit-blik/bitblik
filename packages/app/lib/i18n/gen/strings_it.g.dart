@@ -411,6 +411,7 @@ class _Translations$settings$it extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Impostazioni';
+	@override late final _Translations$settings$coordinatorConsole$it coordinatorConsole = _Translations$settings$coordinatorConsole$it._(_root);
 	@override late final _Translations$settings$offerCreation$it offerCreation = _Translations$settings$offerCreation$it._(_root);
 	@override late final _Translations$settings$display$it display = _Translations$settings$display$it._(_root);
 	@override late final _Translations$settings$paymentSystem$it paymentSystem = _Translations$settings$paymentSystem$it._(_root);
@@ -1732,6 +1733,32 @@ class _Translations$landing$actions$it extends Translations$landing$actions$en {
 	@override String get sellBlik => 'Compra bitcoin';
 	@override String sellBlikSubtitle({required Object code}) => 'con ${code}';
 	@override String get howItWorks => 'Come funziona?';
+}
+
+// Path: settings.coordinatorConsole
+class _Translations$settings$coordinatorConsole$it extends Translations$settings$coordinatorConsole$en {
+	_Translations$settings$coordinatorConsole$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Console del coordinatore';
+	@override String get subtitle => 'Gestisci le dispute con un firmatario coordinatore';
+	@override String get signInTitle => 'Accedi come coordinatore';
+	@override String get signInDescription => 'Usa la chiave Nostr che identifica il coordinatore per esaminare e risolvere le dispute.';
+	@override String get separateIdentityNote => 'Il firmatario del coordinatore usa una sessione NDK separata e non sostituisce mai l\'identità di trading Neko.';
+	@override String get loginWithSignerApp => 'Accedi con l\'app di firma';
+	@override String get loginWithExtension => 'Accedi con l\'estensione del browser';
+	@override String get loginWithNsec => 'Accedi con nsec';
+	@override String get nsecDialogTitle => 'Chiave privata del coordinatore';
+	@override String get nsecFieldLabel => 'Chiave privata';
+	@override String get nsecSecurityNote => 'La chiave privata viene archiviata in modo sicuro su questo dispositivo ed è usata solo dalla sessione separata del coordinatore.';
+	@override String get unsupportedPlatform => 'L\'accesso del coordinatore è attualmente disponibile su Android, Linux e web.';
+	@override String get loginFailed => 'Accesso del coordinatore non riuscito';
+	@override String get accountsTitle => 'Account coordinatore';
+	@override String get savedAccounts => 'Account coordinatore salvati';
+	@override String get addAccount => 'Aggiungi account coordinatore';
+	@override String get removeAccount => 'Rimuovi account coordinatore';
 }
 
 // Path: settings.offerCreation
@@ -3871,6 +3898,23 @@ extension on TranslationsIt {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Impostazioni',
+			'settings.coordinatorConsole.title' => 'Console del coordinatore',
+			'settings.coordinatorConsole.subtitle' => 'Gestisci le dispute con un firmatario coordinatore',
+			'settings.coordinatorConsole.signInTitle' => 'Accedi come coordinatore',
+			'settings.coordinatorConsole.signInDescription' => 'Usa la chiave Nostr che identifica il coordinatore per esaminare e risolvere le dispute.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'Il firmatario del coordinatore usa una sessione NDK separata e non sostituisce mai l\'identità di trading Neko.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Accedi con l\'app di firma',
+			'settings.coordinatorConsole.loginWithExtension' => 'Accedi con l\'estensione del browser',
+			'settings.coordinatorConsole.loginWithNsec' => 'Accedi con nsec',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Chiave privata del coordinatore',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Chiave privata',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'La chiave privata viene archiviata in modo sicuro su questo dispositivo ed è usata solo dalla sessione separata del coordinatore.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'L\'accesso del coordinatore è attualmente disponibile su Android, Linux e web.',
+			'settings.coordinatorConsole.loginFailed' => 'Accesso del coordinatore non riuscito',
+			'settings.coordinatorConsole.accountsTitle' => 'Account coordinatore',
+			'settings.coordinatorConsole.savedAccounts' => 'Account coordinatore salvati',
+			'settings.coordinatorConsole.addAccount' => 'Aggiungi account coordinatore',
+			'settings.coordinatorConsole.removeAccount' => 'Rimuovi account coordinatore',
 			'settings.offerCreation.title' => 'Creazione offerte',
 			'settings.offerCreation.defaultCategory' => 'Categoria predefinita',
 			'settings.offerCreation.defaultBank' => 'Banca predefinita',

@@ -399,6 +399,7 @@ class _Translations$settings$fr extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Réglages';
+	@override late final _Translations$settings$coordinatorConsole$fr coordinatorConsole = _Translations$settings$coordinatorConsole$fr._(_root);
 	@override late final _Translations$settings$offerCreation$fr offerCreation = _Translations$settings$offerCreation$fr._(_root);
 	@override late final _Translations$settings$display$fr display = _Translations$settings$display$fr._(_root);
 	@override late final _Translations$settings$paymentSystem$fr paymentSystem = _Translations$settings$paymentSystem$fr._(_root);
@@ -1733,6 +1734,32 @@ class _Translations$landing$actions$fr extends Translations$landing$actions$en {
 	@override String get sellBlik => 'Acheter du bitcoin';
 	@override String sellBlikSubtitle({required Object code}) => 'avec ${code}';
 	@override String get howItWorks => 'Comment ça marche ?';
+}
+
+// Path: settings.coordinatorConsole
+class _Translations$settings$coordinatorConsole$fr extends Translations$settings$coordinatorConsole$en {
+	_Translations$settings$coordinatorConsole$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Console du coordinateur';
+	@override String get subtitle => 'Gérer les litiges avec un signataire coordinateur';
+	@override String get signInTitle => 'Se connecter comme coordinateur';
+	@override String get signInDescription => 'Utilisez la clé Nostr qui identifie votre coordinateur pour examiner et résoudre les litiges.';
+	@override String get separateIdentityNote => 'Le signataire du coordinateur utilise une session NDK séparée et ne remplace jamais l\'identité de trading Neko.';
+	@override String get loginWithSignerApp => 'Se connecter avec l\'application de signature';
+	@override String get loginWithExtension => 'Se connecter avec l\'extension du navigateur';
+	@override String get loginWithNsec => 'Se connecter avec un nsec';
+	@override String get nsecDialogTitle => 'Clé privée du coordinateur';
+	@override String get nsecFieldLabel => 'Clé privée';
+	@override String get nsecSecurityNote => 'La clé privée est stockée de manière sécurisée sur cet appareil et utilisée uniquement par la session distincte du coordinateur.';
+	@override String get unsupportedPlatform => 'La connexion du coordinateur est actuellement disponible sur Android, Linux et sur le Web.';
+	@override String get loginFailed => 'Échec de la connexion du coordinateur';
+	@override String get accountsTitle => 'Comptes de coordinateur';
+	@override String get savedAccounts => 'Comptes de coordinateur enregistrés';
+	@override String get addAccount => 'Ajouter un compte de coordinateur';
+	@override String get removeAccount => 'Supprimer le compte de coordinateur';
 }
 
 // Path: settings.offerCreation
@@ -3916,6 +3943,23 @@ extension on TranslationsFr {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Réglages',
+			'settings.coordinatorConsole.title' => 'Console du coordinateur',
+			'settings.coordinatorConsole.subtitle' => 'Gérer les litiges avec un signataire coordinateur',
+			'settings.coordinatorConsole.signInTitle' => 'Se connecter comme coordinateur',
+			'settings.coordinatorConsole.signInDescription' => 'Utilisez la clé Nostr qui identifie votre coordinateur pour examiner et résoudre les litiges.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'Le signataire du coordinateur utilise une session NDK séparée et ne remplace jamais l\'identité de trading Neko.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Se connecter avec l\'application de signature',
+			'settings.coordinatorConsole.loginWithExtension' => 'Se connecter avec l\'extension du navigateur',
+			'settings.coordinatorConsole.loginWithNsec' => 'Se connecter avec un nsec',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Clé privée du coordinateur',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Clé privée',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'La clé privée est stockée de manière sécurisée sur cet appareil et utilisée uniquement par la session distincte du coordinateur.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'La connexion du coordinateur est actuellement disponible sur Android, Linux et sur le Web.',
+			'settings.coordinatorConsole.loginFailed' => 'Échec de la connexion du coordinateur',
+			'settings.coordinatorConsole.accountsTitle' => 'Comptes de coordinateur',
+			'settings.coordinatorConsole.savedAccounts' => 'Comptes de coordinateur enregistrés',
+			'settings.coordinatorConsole.addAccount' => 'Ajouter un compte de coordinateur',
+			'settings.coordinatorConsole.removeAccount' => 'Supprimer le compte de coordinateur',
 			'settings.offerCreation.title' => 'Création d\'offres',
 			'settings.offerCreation.defaultCategory' => 'Catégorie par défaut',
 			'settings.offerCreation.defaultBank' => 'Banque par défaut',

@@ -411,6 +411,7 @@ class _Translations$settings$pl extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Ustawienia';
+	@override late final _Translations$settings$coordinatorConsole$pl coordinatorConsole = _Translations$settings$coordinatorConsole$pl._(_root);
 	@override late final _Translations$settings$offerCreation$pl offerCreation = _Translations$settings$offerCreation$pl._(_root);
 	@override late final _Translations$settings$display$pl display = _Translations$settings$display$pl._(_root);
 	@override late final _Translations$settings$paymentSystem$pl paymentSystem = _Translations$settings$paymentSystem$pl._(_root);
@@ -1729,6 +1730,32 @@ class _Translations$landing$actions$pl extends Translations$landing$actions$en {
 	@override String get sellBlik => 'Kup bitcoin';
 	@override String sellBlikSubtitle({required Object code}) => 'używając ${code}';
 	@override String get howItWorks => 'Jak to działa?';
+}
+
+// Path: settings.coordinatorConsole
+class _Translations$settings$coordinatorConsole$pl extends Translations$settings$coordinatorConsole$en {
+	_Translations$settings$coordinatorConsole$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Konsola koordynatora';
+	@override String get subtitle => 'Zarządzaj sporami za pomocą podpisu koordynatora';
+	@override String get signInTitle => 'Zaloguj się jako koordynator';
+	@override String get signInDescription => 'Użyj klucza Nostr identyfikującego koordynatora, aby przeglądać i rozstrzygać spory.';
+	@override String get separateIdentityNote => 'Podpis koordynatora działa w oddzielnej sesji NDK i nigdy nie zastępuje tożsamości handlowej Neko.';
+	@override String get loginWithSignerApp => 'Zaloguj przez aplikację podpisującą';
+	@override String get loginWithExtension => 'Zaloguj przez rozszerzenie przeglądarki';
+	@override String get loginWithNsec => 'Zaloguj przez nsec';
+	@override String get nsecDialogTitle => 'Klucz prywatny koordynatora';
+	@override String get nsecFieldLabel => 'Klucz prywatny';
+	@override String get nsecSecurityNote => 'Klucz prywatny jest bezpiecznie przechowywany na tym urządzeniu i używany wyłącznie przez oddzielną sesję koordynatora.';
+	@override String get unsupportedPlatform => 'Logowanie koordynatora jest obecnie dostępne na Androidzie, Linuksie i w przeglądarce.';
+	@override String get loginFailed => 'Logowanie koordynatora nie powiodło się';
+	@override String get accountsTitle => 'Konta koordynatorów';
+	@override String get savedAccounts => 'Zapisane konta koordynatorów';
+	@override String get addAccount => 'Dodaj konto koordynatora';
+	@override String get removeAccount => 'Usuń konto koordynatora';
 }
 
 // Path: settings.offerCreation
@@ -3865,6 +3892,23 @@ extension on TranslationsPl {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Ustawienia',
+			'settings.coordinatorConsole.title' => 'Konsola koordynatora',
+			'settings.coordinatorConsole.subtitle' => 'Zarządzaj sporami za pomocą podpisu koordynatora',
+			'settings.coordinatorConsole.signInTitle' => 'Zaloguj się jako koordynator',
+			'settings.coordinatorConsole.signInDescription' => 'Użyj klucza Nostr identyfikującego koordynatora, aby przeglądać i rozstrzygać spory.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'Podpis koordynatora działa w oddzielnej sesji NDK i nigdy nie zastępuje tożsamości handlowej Neko.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Zaloguj przez aplikację podpisującą',
+			'settings.coordinatorConsole.loginWithExtension' => 'Zaloguj przez rozszerzenie przeglądarki',
+			'settings.coordinatorConsole.loginWithNsec' => 'Zaloguj przez nsec',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Klucz prywatny koordynatora',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Klucz prywatny',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'Klucz prywatny jest bezpiecznie przechowywany na tym urządzeniu i używany wyłącznie przez oddzielną sesję koordynatora.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'Logowanie koordynatora jest obecnie dostępne na Androidzie, Linuksie i w przeglądarce.',
+			'settings.coordinatorConsole.loginFailed' => 'Logowanie koordynatora nie powiodło się',
+			'settings.coordinatorConsole.accountsTitle' => 'Konta koordynatorów',
+			'settings.coordinatorConsole.savedAccounts' => 'Zapisane konta koordynatorów',
+			'settings.coordinatorConsole.addAccount' => 'Dodaj konto koordynatora',
+			'settings.coordinatorConsole.removeAccount' => 'Usuń konto koordynatora',
 			'settings.offerCreation.title' => 'Tworzenie ofert',
 			'settings.offerCreation.defaultCategory' => 'Domyślna kategoria',
 			'settings.offerCreation.defaultBank' => 'Domyślny bank',

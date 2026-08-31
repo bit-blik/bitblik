@@ -1103,6 +1103,24 @@ faq:
 # =============================================================================
 settings:
   title: Impostazioni
+  coordinatorConsole:
+    title: Console del coordinatore
+    subtitle: Gestisci le dispute con un firmatario coordinatore
+    signInTitle: Accedi come coordinatore
+    signInDescription: Usa la chiave Nostr che identifica il coordinatore per esaminare e risolvere le dispute.
+    separateIdentityNote: Il firmatario del coordinatore usa una sessione NDK separata e non sostituisce mai l'identità di trading Neko.
+    loginWithSignerApp: Accedi con l'app di firma
+    loginWithExtension: Accedi con l'estensione del browser
+    loginWithNsec: Accedi con nsec
+    nsecDialogTitle: Chiave privata del coordinatore
+    nsecFieldLabel: Chiave privata
+    nsecSecurityNote: La chiave privata viene archiviata in modo sicuro su questo dispositivo ed è usata solo dalla sessione separata del coordinatore.
+    unsupportedPlatform: L'accesso del coordinatore è attualmente disponibile su Android, Linux e web.
+    loginFailed: Accesso del coordinatore non riuscito
+    accountsTitle: Account coordinatore
+    savedAccounts: Account coordinatore salvati
+    addAccount: Aggiungi account coordinatore
+    removeAccount: Rimuovi account coordinatore
   offerCreation:
     title: Creazione offerte
     defaultCategory: Categoria predefinita

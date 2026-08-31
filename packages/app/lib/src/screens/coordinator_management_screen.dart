@@ -1,11 +1,14 @@
 import 'package:bitblik_core/core.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import '../widgets/relay_dots.dart';
+import 'coordinator_console_access_screen.dart';
 import 'coordinator_details_screen.dart';
 
 class CoordinatorManagementScreen extends ConsumerStatefulWidget {
@@ -145,9 +148,8 @@ class _CoordinatorManagementScreenState
 
   Future<void> _refreshDiscovery() async {
     final registry = await ref.read(coordinatorRegistryProvider.future);
-    final enabledBefore = registry.enabled
-        .map((record) => record.pubkeyHex)
-        .toSet();
+    final enabledBefore =
+        registry.enabled.map((record) => record.pubkeyHex).toSet();
     registry.showColdStartState(
       CoordinatorColdStartPhase.loadingMuteList,
       enabledPubkeys: enabledBefore,
@@ -161,9 +163,8 @@ class _CoordinatorManagementScreenState
       );
       await registry.discover();
       final discovered = registry.all.map((record) => record.pubkeyHex).toSet();
-      final enabledAfterDiscovery = registry.enabled
-          .map((record) => record.pubkeyHex)
-          .toSet();
+      final enabledAfterDiscovery =
+          registry.enabled.map((record) => record.pubkeyHex).toSet();
       registry.showColdStartState(
         CoordinatorColdStartPhase.checkingHealth,
         discovered: discovered,
@@ -174,9 +175,8 @@ class _CoordinatorManagementScreenState
       registry.showColdStartState(
         CoordinatorColdStartPhase.completed,
         discovered: discovered,
-        enabledPubkeys: registry.enabled
-            .map((record) => record.pubkeyHex)
-            .toSet(),
+        enabledPubkeys:
+            registry.enabled.map((record) => record.pubkeyHex).toSet(),
         origin: CoordinatorColdStartOrigin.settings,
       );
     } catch (_) {
@@ -200,8 +200,27 @@ class _CoordinatorManagementScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          t.coordinator.management.availableCoordinators,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                t.coordinator.management.availableCoordinators,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            IconButton(
+              tooltip: t.settings.coordinatorConsole.title,
+              icon: const Icon(Icons.terminal),
+              onPressed: () {
+                if (kIsWeb) {
+                  context.go(CoordinatorConsoleAccessScreen.routeName);
+                } else {
+                  context.push(CoordinatorConsoleAccessScreen.routeName);
+                }
+              },
+            ),
+          ],
         ),
         actions: [
           // Discovery relay status (relays used to find coordinators).
@@ -262,8 +281,8 @@ class _CoordinatorManagementScreenState
                       onRefresh: _refreshDiscovery,
                       child: ListView.separated(
                         itemCount: coordinators.length,
-                        separatorBuilder: (_, index) =>
-                            const Divider(height: 1),
+                        separatorBuilder:
+                            (_, index) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final c = coordinators[index];
                           final pubkey = c.pubkeyHex;
@@ -278,8 +297,8 @@ class _CoordinatorManagementScreenState
                           // Tappable info area (logo + name + status + metrics)
                           // takes all available width so long names fit.
                           final info = InkWell(
-                            onTap: () =>
-                                openCoordinatorDetails(context, pubkey),
+                            onTap:
+                                () => openCoordinatorDetails(context, pubkey),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                 vertical: 8.0,
@@ -299,9 +318,10 @@ class _CoordinatorManagementScreenState
                                           c.name,
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.titleMedium,
+                                          style:
+                                              Theme.of(
+                                                context,
+                                              ).textTheme.titleMedium,
                                         ),
                                         const SizedBox(height: 4),
                                         Row(
@@ -329,9 +349,10 @@ class _CoordinatorManagementScreenState
                                                       .coordinator
                                                       .management
                                                       .unknownOffline,
-                                              style: Theme.of(
-                                                context,
-                                              ).textTheme.bodySmall,
+                                              style:
+                                                  Theme.of(
+                                                    context,
+                                                  ).textTheme.bodySmall,
                                             ),
                                           ],
                                         ),
@@ -364,8 +385,7 @@ class _CoordinatorManagementScreenState
                                   onChanged:
                                       _saving
                                           ? null
-                                          : (val) =>
-                                              _toggleEnable(pubkey, val),
+                                          : (val) => _toggleEnable(pubkey, val),
                                 ),
                               ),
                               if (c.manualAdded)
@@ -385,8 +405,9 @@ class _CoordinatorManagementScreenState
                                   color: Colors.grey,
                                 ),
                                 tooltip: t.coordinator.details.title,
-                                onPressed: () =>
-                                    openCoordinatorDetails(context, pubkey),
+                                onPressed:
+                                    () =>
+                                        openCoordinatorDetails(context, pubkey),
                               ),
                             ],
                           );
@@ -447,13 +468,15 @@ Widget buildCoordinatorLogo(
   if (icon.startsWith('http')) {
     return CachedNetworkImage(
       imageUrl: icon,
-      placeholder: (context, url) => SizedBox(
-        width: size,
-        height: size,
-        child: const CircularProgressIndicator(strokeWidth: 2),
-      ),
-      errorWidget: (context, url, error) =>
-          Icon(Icons.account_circle, size: size, color: Colors.grey),
+      placeholder:
+          (context, url) => SizedBox(
+            width: size,
+            height: size,
+            child: const CircularProgressIndicator(strokeWidth: 2),
+          ),
+      errorWidget:
+          (context, url, error) =>
+              Icon(Icons.account_circle, size: size, color: Colors.grey),
       width: size,
       height: size,
       fit: BoxFit.cover,
@@ -463,11 +486,9 @@ Widget buildCoordinatorLogo(
     icon,
     width: size,
     height: size,
-    errorBuilder: (_, error, stackTrace) => Icon(
-      Icons.account_circle,
-      size: size,
-      color: Colors.grey,
-    ),
+    errorBuilder:
+        (_, error, stackTrace) =>
+            Icon(Icons.account_circle, size: size, color: Colors.grey),
   );
 }
 

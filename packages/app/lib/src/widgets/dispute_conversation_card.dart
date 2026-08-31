@@ -10,6 +10,7 @@ import 'package:ndk/ndk.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../screens/coordinator_details_screen.dart';
 
 /// The end-user side of one private participant/coordinator dispute lane.
 /// Financial instructions remain structured RPCs rendered separately from the
@@ -401,6 +402,14 @@ class _DisputeConversationCardState
         Nip19.encodePubKey(widget.offer.coordinatorPubkey);
     final coordinatorIcon =
         coordinator?.profilePicture ?? coordinator?.info?.icon;
+    final profileName = coordinator?.profileName?.trim();
+    final advertisedName = coordinator?.info?.name.trim();
+    final coordinatorName =
+        profileName != null && profileName.isNotEmpty
+            ? profileName
+            : advertisedName != null && advertisedName.isNotEmpty
+            ? advertisedName
+            : strings.privateConversation;
     final writable = _writable;
     return Card(
       child: Padding(
@@ -410,25 +419,44 @@ class _DisputeConversationCardState
           children: [
             Row(
               children: [
-                _CoordinatorLogo(icon: coordinatorIcon),
-                const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        legacyMode
-                            ? strings.legacyChannel
-                            : strings.privateConversation,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap:
+                        () => openCoordinatorDetails(
+                          context,
+                          widget.offer.coordinatorPubkey,
+                        ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          _CoordinatorLogo(icon: coordinatorIcon),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  legacyMode
+                                      ? strings.legacyChannel
+                                      : coordinatorName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  coordinatorNpub,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        coordinatorNpub,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
                 if (!loadingMessages)

@@ -1116,6 +1116,24 @@ faq:
 # =============================================================================
 settings:
   title: Einstellungen
+  coordinatorConsole:
+    title: Koordinator-Konsole
+    subtitle: Streitfälle mit einem Koordinator-Signierer verwalten
+    signInTitle: Als Koordinator anmelden
+    signInDescription: Verwende den Nostr-Schlüssel deines Koordinators, um Streitfälle zu prüfen und zu entscheiden.
+    separateIdentityNote: Der Koordinator-Signierer läuft in einer separaten NDK-Sitzung und ersetzt niemals die Neko-Handelsidentität.
+    loginWithSignerApp: Mit Signierer-App anmelden
+    loginWithExtension: Mit Browser-Erweiterung anmelden
+    loginWithNsec: Mit nsec anmelden
+    nsecDialogTitle: Privater Koordinator-Schlüssel
+    nsecFieldLabel: Privater Schlüssel
+    nsecSecurityNote: Der private Schlüssel wird sicher auf diesem Gerät gespeichert und nur von der separaten Koordinator-Sitzung verwendet.
+    unsupportedPlatform: Die Koordinator-Anmeldung ist derzeit auf Android, Linux und im Web verfügbar.
+    loginFailed: Koordinator-Anmeldung fehlgeschlagen
+    accountsTitle: Koordinator-Konten
+    savedAccounts: Gespeicherte Koordinator-Konten
+    addAccount: Koordinator-Konto hinzufügen
+    removeAccount: Koordinator-Konto entfernen
   offerCreation:
     title: Angebotserstellung
     defaultCategory: Standardkategorie

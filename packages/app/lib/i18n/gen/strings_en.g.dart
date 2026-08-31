@@ -497,6 +497,7 @@ class Translations$settings$en {
 	/// en: 'Settings'
 	String get title => 'Settings';
 
+	late final Translations$settings$coordinatorConsole$en coordinatorConsole = Translations$settings$coordinatorConsole$en.internal(_root);
 	late final Translations$settings$offerCreation$en offerCreation = Translations$settings$offerCreation$en.internal(_root);
 	late final Translations$settings$display$en display = Translations$settings$display$en.internal(_root);
 	late final Translations$settings$paymentSystem$en paymentSystem = Translations$settings$paymentSystem$en.internal(_root);
@@ -2904,6 +2905,66 @@ class Translations$landing$actions$en {
 
 	/// en: 'How it works?'
 	String get howItWorks => 'How it works?';
+}
+
+// Path: settings.coordinatorConsole
+class Translations$settings$coordinatorConsole$en {
+	Translations$settings$coordinatorConsole$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Coordinator console'
+	String get title => 'Coordinator console';
+
+	/// en: 'Manage disputes using a coordinator signer'
+	String get subtitle => 'Manage disputes using a coordinator signer';
+
+	/// en: 'Sign in as a coordinator'
+	String get signInTitle => 'Sign in as a coordinator';
+
+	/// en: 'Use the Nostr key that identifies your coordinator to review and resolve disputes.'
+	String get signInDescription => 'Use the Nostr key that identifies your coordinator to review and resolve disputes.';
+
+	/// en: 'Your coordinator signer runs in a separate NDK session and never replaces the Neko trading identity.'
+	String get separateIdentityNote => 'Your coordinator signer runs in a separate NDK session and never replaces the Neko trading identity.';
+
+	/// en: 'Sign in with signer app'
+	String get loginWithSignerApp => 'Sign in with signer app';
+
+	/// en: 'Sign in with browser extension'
+	String get loginWithExtension => 'Sign in with browser extension';
+
+	/// en: 'Sign in with nsec'
+	String get loginWithNsec => 'Sign in with nsec';
+
+	/// en: 'Coordinator private key'
+	String get nsecDialogTitle => 'Coordinator private key';
+
+	/// en: 'Private key'
+	String get nsecFieldLabel => 'Private key';
+
+	/// en: 'The private key is stored securely on this device and is used only by the separate coordinator session.'
+	String get nsecSecurityNote => 'The private key is stored securely on this device and is used only by the separate coordinator session.';
+
+	/// en: 'Coordinator login is currently available on Android, Linux, and web.'
+	String get unsupportedPlatform => 'Coordinator login is currently available on Android, Linux, and web.';
+
+	/// en: 'Coordinator login failed'
+	String get loginFailed => 'Coordinator login failed';
+
+	/// en: 'Coordinator accounts'
+	String get accountsTitle => 'Coordinator accounts';
+
+	/// en: 'Saved coordinator accounts'
+	String get savedAccounts => 'Saved coordinator accounts';
+
+	/// en: 'Add coordinator account'
+	String get addAccount => 'Add coordinator account';
+
+	/// en: 'Remove coordinator account'
+	String get removeAccount => 'Remove coordinator account';
 }
 
 // Path: settings.offerCreation
@@ -6470,6 +6531,23 @@ extension on Translations {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Settings',
+			'settings.coordinatorConsole.title' => 'Coordinator console',
+			'settings.coordinatorConsole.subtitle' => 'Manage disputes using a coordinator signer',
+			'settings.coordinatorConsole.signInTitle' => 'Sign in as a coordinator',
+			'settings.coordinatorConsole.signInDescription' => 'Use the Nostr key that identifies your coordinator to review and resolve disputes.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'Your coordinator signer runs in a separate NDK session and never replaces the Neko trading identity.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Sign in with signer app',
+			'settings.coordinatorConsole.loginWithExtension' => 'Sign in with browser extension',
+			'settings.coordinatorConsole.loginWithNsec' => 'Sign in with nsec',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Coordinator private key',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Private key',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'The private key is stored securely on this device and is used only by the separate coordinator session.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'Coordinator login is currently available on Android, Linux, and web.',
+			'settings.coordinatorConsole.loginFailed' => 'Coordinator login failed',
+			'settings.coordinatorConsole.accountsTitle' => 'Coordinator accounts',
+			'settings.coordinatorConsole.savedAccounts' => 'Saved coordinator accounts',
+			'settings.coordinatorConsole.addAccount' => 'Add coordinator account',
+			'settings.coordinatorConsole.removeAccount' => 'Remove coordinator account',
 			'settings.offerCreation.title' => 'Offer creation',
 			'settings.offerCreation.defaultCategory' => 'Default category',
 			'settings.offerCreation.defaultBank' => 'Default bank',

@@ -61,24 +61,6 @@ part 'actions/twint/set_new_code.dart';
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
 
-/// Bilingual (English/local language) wording used in chat notifications
-/// (Telegram/Matrix/SimpleX/Signal) for new-offer announcements.
-class OfferNotificationStrings {
-  final String newOffer;
-  final String premium;
-  final String shop;
-  final String atm;
-  final String online;
-
-  const OfferNotificationStrings({
-    required this.newOffer,
-    required this.premium,
-    required this.shop,
-    required this.atm,
-    required this.online,
-  });
-}
-
 class _PendingOfferRecord {
   final Map<String, dynamic> data;
 
@@ -1271,20 +1253,10 @@ class CoordinatorService {
   }
 
   String _buildFundedOfferNotification(Offer offer) {
-    final strings = _notificationStrings;
-    final fiatText =
-        '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
-    // The general channel mixes every bank of a multi-bank market, so the bank
-    // goes up front: a taker must see whose ATM the code is for without opening
-    // the offer. Empty for bank-agnostic markets (BLIK/MB WAY/TWINT).
-    final bank = bankForOffer(offer);
-    final bankTag = bank == null ? '' : ' [${bank.label}]';
-    final categoryText = _formatCategoryForNotification(offer.category);
-    final categorySuffix = categoryText == null ? '' : ', $categoryText';
-    final premiumSuffix = offer.premiumPercent > 0
-        ? ', +${_formatPremium(offer.premiumPercent)}% ${strings.premium}'
-        : '';
-    return '${strings.newOffer}$bankTag: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
+    return formatFundedOfferNotification(
+      offer,
+      frontendDomain: frontendDomain,
+    );
   }
 
   /// General target [general] (dropped if empty) unioned with the offer bank's
@@ -1346,65 +1318,6 @@ class CoordinatorService {
 
     if (notificationFutures.isNotEmpty) {
       await Future.wait(notificationFutures, eagerError: false);
-    }
-  }
-
-  /// Notification wording for the market served by the configured payment
-  /// system (English/local language), keyed by the system's country code.
-  /// Falls back to Poland's wording for unknown markets.
-  static const Map<String, OfferNotificationStrings>
-      _notificationStringsByCountry = {
-    'PL': OfferNotificationStrings(
-      newOffer: 'New offer/Nowa oferta',
-      premium: 'premium/premia',
-      shop: 'Shop/Sklep',
-      atm: 'ATM/Bankomat',
-      online: 'Online',
-    ),
-    'PT': OfferNotificationStrings(
-      newOffer: 'New offer/Nova oferta',
-      premium: 'premium',
-      shop: 'Shop/Loja',
-      atm: 'ATM/Multibanco',
-      online: 'Online',
-    ),
-    'CH': OfferNotificationStrings(
-      newOffer: 'New offer/Neues Angebot',
-      premium: 'premium/Premium',
-      shop: 'Shop/Geschäft',
-      atm: 'ATM/Bancomat',
-      online: 'Online',
-    ),
-    'SK': OfferNotificationStrings(
-      newOffer: 'New offer/Nová ponuka',
-      premium: 'premium/prémia',
-      shop: 'Shop/Obchod',
-      atm: 'ATM/Bankomat',
-      online: 'Online',
-    ),
-  };
-
-  OfferNotificationStrings get _notificationStrings =>
-      _notificationStringsByCountry[_paymentSystem.country] ??
-      _notificationStringsByCountry['PL']!;
-
-  /// Trim trailing ".0" so 5.0 -> "5" but 2.5 stays "2.5".
-  String _formatPremium(double premium) {
-    final s = premium.toStringAsFixed(1);
-    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
-  }
-
-  String? _formatCategoryForNotification(OfferCategory? category) {
-    final strings = _notificationStrings;
-    switch (category) {
-      case OfferCategory.shop:
-        return strings.shop;
-      case OfferCategory.atm:
-        return strings.atm;
-      case OfferCategory.online:
-        return strings.online;
-      case null:
-        return null;
     }
   }
 

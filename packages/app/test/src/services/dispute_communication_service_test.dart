@@ -157,6 +157,194 @@ void main() {
     );
   });
 
+  test('legacy event tags bind a message to exactly one offer', () async {
+    const coordinatorPrivateKey =
+        '0000000000000000000000000000000000000000000000000000000000000002';
+    const takerPrivateKey =
+        '0000000000000000000000000000000000000000000000000000000000000003';
+    final coordinator = Bip340.getPublicKey(coordinatorPrivateKey);
+    final taker = Bip340.getPublicKey(takerPrivateKey);
+    final maker = Bip340.getPublicKey(
+      '0000000000000000000000000000000000000000000000000000000000000001',
+    );
+    final oldOffer = Offer(
+      id: 'old-offer',
+      amountSats: 1000,
+      makerFees: 5,
+      status: OfferStatus.dispute,
+      statusRaw: OfferStatus.dispute.name,
+      fiatAmount: 10,
+      fiatCurrency: 'PLN',
+      createdAt: DateTime.utc(2026, 1),
+      makerPubkey: maker,
+      coordinatorPubkey: coordinator,
+      takerPubkey: taker,
+    );
+    final newOffer = oldOffer.copyWith(
+      id: 'new-offer',
+      createdAt: DateTime.utc(2026, 2),
+    );
+    final ndk = Ndk(
+      NdkConfig(
+        cache: MemCacheManager(),
+        eventVerifier: Bip340EventVerifier(),
+        bootstrapRelays: const [],
+      ),
+    );
+    final communication = DisputeCommunicationService(ndk: ndk);
+    LegacyNip04Message message(List<List<String>> tags) => LegacyNip04Message(
+      event: Nip01Event(
+        pubKey: taker,
+        kind: Dms.kLegacyNip04MessageKind,
+        createdAt: DateTime.utc(2026, 3).millisecondsSinceEpoch ~/ 1000,
+        content: 'ciphertext',
+        tags: tags,
+      ),
+      peerPubKey: taker,
+      isOutgoing: false,
+      content: 'hello',
+    );
+
+    try {
+      final boundToOld = message([
+        ['p', coordinator],
+        ['a', DisputeCommunicationService.offerCoordinate(oldOffer)],
+        ['case', DisputeCommunicationService.caseIdFor(oldOffer)],
+      ]);
+      expect(
+        communication
+            .routeLegacyMessageToOffer(
+              offers: [oldOffer, newOffer],
+              myPubkey: coordinator,
+              message: boundToOld,
+            )
+            ?.id,
+        oldOffer.id,
+      );
+      expect(
+        communication.isLegacyMessageForCase(
+          offer: newOffer,
+          myPubkey: coordinator,
+          participantPubkey: taker,
+          message: boundToOld,
+          includeUnbound: true,
+        ),
+        isFalse,
+      );
+    } finally {
+      await ndk.destroy();
+    }
+  });
+
+  test(
+    'untagged legacy reply routes only to the newest eligible offer',
+    () async {
+      const coordinatorPrivateKey =
+          '0000000000000000000000000000000000000000000000000000000000000002';
+      const takerPrivateKey =
+          '0000000000000000000000000000000000000000000000000000000000000003';
+      final coordinator = Bip340.getPublicKey(coordinatorPrivateKey);
+      final taker = Bip340.getPublicKey(takerPrivateKey);
+      final maker = Bip340.getPublicKey(
+        '0000000000000000000000000000000000000000000000000000000000000001',
+      );
+      Offer offer(String id, DateTime createdAt) => Offer(
+        id: id,
+        amountSats: 1000,
+        makerFees: 5,
+        status: OfferStatus.dispute,
+        statusRaw: OfferStatus.dispute.name,
+        fiatAmount: 10,
+        fiatCurrency: 'PLN',
+        createdAt: createdAt,
+        makerPubkey: maker,
+        coordinatorPubkey: coordinator,
+        takerPubkey: taker,
+      );
+      final oldOffer = offer('old-offer', DateTime.utc(2026, 1));
+      final currentOffer = offer('current-offer', DateTime.utc(2026, 2));
+      final newerResolvedOffer = offer(
+        'newer-resolved-offer',
+        DateTime.utc(2026, 2, 15),
+      ).copyWith(status: OfferStatus.unknown, statusRaw: 'payingMaker');
+      final futureOffer = offer('future-offer', DateTime.utc(2026, 4));
+      final unbound = LegacyNip04Message(
+        event: Nip01Event(
+          pubKey: taker,
+          kind: Dms.kLegacyNip04MessageKind,
+          createdAt: DateTime.utc(2026, 3).millisecondsSinceEpoch ~/ 1000,
+          content: 'ciphertext',
+          tags: [
+            ['p', coordinator],
+          ],
+        ),
+        peerPubKey: taker,
+        isOutgoing: false,
+        content: 'generic client reply',
+      );
+      final ndk = Ndk(
+        NdkConfig(
+          cache: MemCacheManager(),
+          eventVerifier: Bip340EventVerifier(),
+          bootstrapRelays: const [],
+        ),
+      );
+      try {
+        final owner = DisputeCommunicationService(
+          ndk: ndk,
+        ).routeLegacyMessageToOffer(
+          offers: [oldOffer, futureOffer, newerResolvedOffer, currentOffer],
+          myPubkey: coordinator,
+          message: unbound,
+        );
+        expect(owner?.id, currentOffer.id);
+
+        final rumor = Nip01Event(
+          id: 'rumor-id',
+          pubKey: taker,
+          kind: Dms.kMessageKind,
+          createdAt: DateTime.utc(2026, 3).millisecondsSinceEpoch ~/ 1000,
+          content: 'generic NIP-17 reply',
+          tags: [
+            ['p', coordinator],
+          ],
+        );
+        final genericNip17 = Nip17Message(
+          wrappedEvent: Nip01Event(
+            id: 'wrap-id',
+            pubKey: maker,
+            kind: GiftWrap.kGiftWrapEventkind,
+            createdAt: rumor.createdAt,
+            content: 'ciphertext',
+            tags: [
+              ['p', coordinator],
+            ],
+          ),
+          rumor: rumor,
+          peerPubKey: taker,
+          isOutgoing: false,
+        );
+        expect(
+          DisputeCommunicationService(ndk: ndk)
+              .routeMessageToOffer(
+                offers: [
+                  oldOffer,
+                  futureOffer,
+                  newerResolvedOffer,
+                  currentOffer,
+                ],
+                myPubkey: coordinator,
+                message: genericNip17,
+              )
+              ?.id,
+          currentOffer.id,
+        );
+      } finally {
+        await ndk.destroy();
+      }
+    },
+  );
+
   test(
     'plain external NIP-04 can be shown only as unbound peer assistance',
     () async {

@@ -23,7 +23,7 @@ Relevant files:
 
 - `packages/core/lib/src/communication/dispute_communication_service.dart`
 - `packages/app/lib/src/widgets/dispute_conversation_card.dart`
-- `packages/coordinator/console/lib/main.dart`
+- `packages/app/lib/src/coordinator_console/dispute_queue_screen.dart`
 
 ## Explicit legacy NIP-04 fallback
 

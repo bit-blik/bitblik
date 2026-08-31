@@ -41,6 +41,18 @@ class EvidenceImageException implements Exception {
   String toString() => message;
 }
 
+/// Result of parsing one NIP-17 gift wrap, including a safe transport-level
+/// rejection reason for operator diagnostics. It never includes decrypted
+/// message content.
+class Nip17ParseResult {
+  final Nip17Message? message;
+  final String? rejectionReason;
+
+  const Nip17ParseResult.accepted(this.message) : rejectionReason = null;
+
+  const Nip17ParseResult.rejected(this.rejectionReason) : message = null;
+}
+
 /// Normalizes kind-10063 `server` tags for NDK's Blossom client, which appends
 /// endpoint paths with string interpolation. Several Nostr clients publish
 /// conventional base URLs ending in `/`; without removing it NDK requests
@@ -234,25 +246,19 @@ class DisputeCommunicationService {
         .toString();
   }
 
-  /// Prefix required on every legacy NIP-04 message in this case lane.
-  ///
-  /// Kind-4 events cannot carry private case tags, so this remains inside the
-  /// encrypted text and lets an operator identify an external-client reply.
+  /// Historical plaintext prefix used by older BitBlik NIP-04 messages.
+  /// New messages use event-level offer tags and keep the displayed text clean.
   static String legacyCaseReference(Offer offer) =>
       '[BitBlik dispute ${offer.id}]';
-
-  String _legacyOutgoingContent({
-    required Offer offer,
-    required String myPubkey,
-    required String text,
-  }) =>
-      myPubkey.toLowerCase() == offer.coordinatorPubkey.toLowerCase()
-          ? text
-          : '${legacyCaseReference(offer)}\n$text';
 
   List<List<String>> _caseTags(Offer offer) => [
         ['a', offerCoordinate(offer)],
         ['case', caseIdFor(offer)],
+      ];
+
+  List<List<String>> _legacyCaseTags(Offer offer, String recipientPubkey) => [
+        ['p', recipientPubkey],
+        ..._caseTags(offer),
       ];
 
   /// Whether a decrypted NIP-17 message belongs to this exact dispute lane.
@@ -282,6 +288,36 @@ class DisputeCommunicationService {
     // but a partial or different explicit case binding is never accepted.
     if (coordinate != null || caseId != null) return false;
     return includeUnbound;
+  }
+
+  /// Assigns one decrypted NIP-17 message to at most one offer. Explicit
+  /// encrypted case tags win; an unbound generic-client DM uses the same
+  /// deterministic newest-eligible-offer fallback as legacy NIP-04.
+  Offer? routeMessageToOffer({
+    required Iterable<Offer> offers,
+    required String myPubkey,
+    required Nip17Message message,
+  }) {
+    final candidates = _candidateOffersForPeer(
+      offers: offers,
+      myPubkey: myPubkey,
+      peerPubkey: message.peerPubKey,
+    );
+    for (final offer in candidates) {
+      if (isMessageForCase(
+        offer: offer,
+        myPubkey: myPubkey,
+        participantPubkey: message.peerPubKey,
+        message: message,
+      )) {
+        return offer;
+      }
+    }
+    if (_singleTag(message.rumor, 'a') != null ||
+        _singleTag(message.rumor, 'case') != null) {
+      return null;
+    }
+    return _newestEligibleOffer(candidates, message.createdAt);
   }
 
   String _peerFor(Offer offer, String myPubkey, {String? participantPubkey}) {
@@ -342,13 +378,10 @@ class DisputeCommunicationService {
     }
 
     final relays = _requireLegacyRendezvousRelays(legacyRendezvousRelays);
-    await ndk.dms.sendLegacyNip04Message(
+    await _sendBoundLegacyNip04Message(
       recipientPubKey: peer,
-      content: _legacyOutgoingContent(
-        offer: offer,
-        myPubkey: myPubkey,
-        text: text,
-      ),
+      content: text,
+      offer: offer,
       rendezvousRelays: relays,
     );
     return DisputeTextTransport.legacyNip04;
@@ -370,17 +403,50 @@ class DisputeCommunicationService {
       myPubkey,
       participantPubkey: participantPubkey,
     );
-    await ndk.dms.sendLegacyNip04Message(
+    await _sendBoundLegacyNip04Message(
       recipientPubKey: peer,
-      content: _legacyOutgoingContent(
-        offer: offer,
-        myPubkey: myPubkey,
-        text: text,
-      ),
+      content: text,
+      offer: offer,
       rendezvousRelays: _requireLegacyRendezvousRelays(
         legacyRendezvousRelays,
       ),
     );
+  }
+
+  /// Sends a normal kind-4 event whose public envelope carries the same offer
+  /// binding used inside NIP-17 rumors. NIP-04 already exposes both parties,
+  /// the timestamp, and the event kind; the referenced offer is itself public.
+  /// Keeping the binding outside the ciphertext means ordinary Nostr clients
+  /// display only the operator's message instead of a BitBlik text prefix.
+  Future<void> _sendBoundLegacyNip04Message({
+    required Offer offer,
+    required String recipientPubKey,
+    required String content,
+    required Iterable<String> rendezvousRelays,
+  }) async {
+    final account = ndk.accounts.getLoggedAccount();
+    if (account == null || !account.signer.canSign()) {
+      throw Exception('NIP-04 requires a logged-in signing account.');
+    }
+    // ignore: deprecated_member_use
+    final encrypted = await account.signer.encrypt(content, recipientPubKey);
+    if (encrypted == null || encrypted.isEmpty) {
+      throw StateError('The signer did not produce a NIP-04 ciphertext.');
+    }
+    final event = Nip01Event(
+      pubKey: account.pubkey,
+      kind: Dms.kLegacyNip04MessageKind,
+      createdAt: Nip01Event.secondsSinceEpoch(),
+      content: encrypted,
+      tags: _legacyCaseTags(offer, recipientPubKey),
+    );
+    await ndk.broadcast
+        .broadcast(
+          nostrEvent: event,
+          customSigner: account.signer,
+          specificRelays: rendezvousRelays,
+        )
+        .broadcastDoneFuture;
   }
 
   /// Returns the already-validated NIP-17 messages held in NDK's cache.
@@ -412,15 +478,38 @@ class DisputeCommunicationService {
         .toList(growable: false);
   }
 
-  /// Parses a NIP-17 gift wrap while tolerating the interoperable seal shape
-  /// emitted by clients that repeat the recipient `p` tag inside kind 13.
-  /// NDK's strict parser currently rejects every non-empty seal tag list.
+  /// Parses a NIP-17 gift wrap while tolerating interoperable seal shapes.
+  /// NDK's strict parser currently rejects every non-empty seal tag list, but
+  /// NIP-17 permits an `expiration` tag on disappearing-message seals and some
+  /// clients also repeat the recipient or client marker inside kind 13.
   Future<Nip17Message?> parseNip17Message(Nip01Event wrappedEvent) async {
-    final strict =
-        await ndk.dms.parseWrappedMessage(wrappedEvent: wrappedEvent);
-    if (strict != null) return strict;
+    return (await parseNip17MessageWithDiagnostics(wrappedEvent)).message;
+  }
+
+  /// Diagnostic variant of [parseNip17Message]. Rejection reasons describe
+  /// only envelope structure or cryptographic processing and do not expose DM
+  /// plaintext.
+  Future<Nip17ParseResult> parseNip17MessageWithDiagnostics(
+    Nip01Event wrappedEvent,
+  ) async {
+    try {
+      final strict =
+          await ndk.dms.parseWrappedMessage(wrappedEvent: wrappedEvent);
+      if (strict != null) return Nip17ParseResult.accepted(strict);
+    } catch (error) {
+      // The interoperability parser below provides a more precise result.
+      if (ndk.accounts.getLoggedAccount() == null) {
+        return Nip17ParseResult.rejected(
+          'no logged-in account (${error.runtimeType})',
+        );
+      }
+    }
     final account = ndk.accounts.getLoggedAccount();
-    if (account == null || !account.signer.canSign()) return null;
+    if (account == null || !account.signer.canSign()) {
+      return const Nip17ParseResult.rejected(
+        'the active account cannot decrypt messages',
+      );
+    }
     final me = account.pubkey.toLowerCase();
     try {
       final result = await ndk.giftWrap.fromGiftWrapWithInfo(
@@ -431,13 +520,15 @@ class DisputeCommunicationService {
       final outerRecipients = wrappedEvent.tags
           .where((tag) => tag.length >= 2 && tag.first == 'p')
           .toList();
-      final compatibleSealTags = seal.tags.isNotEmpty &&
-          seal.tags.every(
-            (tag) =>
-                tag.length >= 2 &&
-                ((tag.first == 'p' && tag[1].toLowerCase() == me) ||
-                    (tag.first == 'client' && tag[1].trim().isNotEmpty)),
-          );
+      final compatibleSealTags = seal.tags.every((tag) {
+        if (tag.length < 2) return false;
+        return switch (tag.first) {
+          'p' => tag[1].toLowerCase() == me,
+          'client' => tag[1].trim().isNotEmpty,
+          'expiration' => (int.tryParse(tag[1]) ?? 0) > 0,
+          _ => false,
+        };
+      });
       final expectedRumorId = Nip01Utils.calculateEventIdSync(
         pubKey: rumor.pubKey,
         createdAt: rumor.createdAt,
@@ -454,25 +545,65 @@ class DisputeCommunicationService {
           participantTags.every(
             (tag) => tag.length >= 2 && _hexPubKey.hasMatch(tag[1]),
           );
-      if (!result.isCryptographicallyValid ||
-          outerRecipients.length != 1 ||
-          outerRecipients.single[1].toLowerCase() != me ||
-          seal.kind != GiftWrap.kSealEventKind ||
-          !compatibleSealTags ||
-          rumor.sig != null ||
-          rumor.id != expectedRumorId ||
-          wrappedEvent.createdAt <= 0 ||
+      if (!result.isCryptographicallyValid) {
+        return const Nip17ParseResult.rejected(
+          'invalid gift-wrap or seal signature',
+        );
+      }
+      if (outerRecipients.length != 1) {
+        return Nip17ParseResult.rejected(
+          'gift wrap has ${outerRecipients.length} recipient tags',
+        );
+      }
+      if (outerRecipients.single[1].toLowerCase() != me) {
+        return const Nip17ParseResult.rejected(
+          'gift wrap is addressed to another account',
+        );
+      }
+      if (seal.kind != GiftWrap.kSealEventKind) {
+        return Nip17ParseResult.rejected(
+          'inner event is kind ${seal.kind}, not a kind-13 seal',
+        );
+      }
+      if (!compatibleSealTags) {
+        return const Nip17ParseResult.rejected(
+          'seal contains unsupported or malformed tags',
+        );
+      }
+      if (rumor.sig?.isNotEmpty ?? false) {
+        return const Nip17ParseResult.rejected('rumor is unexpectedly signed');
+      }
+      if (rumor.id != expectedRumorId) {
+        return const Nip17ParseResult.rejected('rumor id is not canonical');
+      }
+      if (wrappedEvent.createdAt <= 0 ||
           seal.createdAt <= 0 ||
-          rumor.createdAt <= 0 ||
-          wrappedEvent.createdAt > latestAccepted ||
+          rumor.createdAt <= 0) {
+        return const Nip17ParseResult.rejected('invalid event timestamp');
+      }
+      if (wrappedEvent.createdAt > latestAccepted ||
           seal.createdAt > latestAccepted ||
-          rumor.createdAt > latestAccepted ||
-          !validParticipants ||
-          (rumor.kind != Dms.kMessageKind &&
-              rumor.kind != Dms.kFileMessageKind) ||
-          (rumor.kind == Dms.kFileMessageKind &&
-              Nip17FileMetadata.tryParse(rumor) == null)) {
-        return null;
+          rumor.createdAt > latestAccepted) {
+        return const Nip17ParseResult.rejected(
+          'event timestamp is too far in the future',
+        );
+      }
+      if (!validParticipants) {
+        return const Nip17ParseResult.rejected(
+          'rumor has no well-formed participant tags',
+        );
+      }
+      if (rumor.kind != Dms.kMessageKind &&
+          rumor.kind != Dms.kFileMessageKind) {
+        return Nip17ParseResult.rejected(
+          'unsupported rumor kind ${rumor.kind}',
+        );
+      }
+      if (rumor.kind == Dms.kFileMessageKind &&
+          Nip17FileMetadata.tryParse(rumor) == null) {
+        return const Nip17ParseResult.rejected(
+          'invalid NIP-17 file metadata',
+        );
       }
       final rumorAuthor = rumor.pubKey.toLowerCase();
       String? peer;
@@ -488,15 +619,23 @@ class DisputeCommunicationService {
       )) {
         peer = rumorAuthor;
       }
-      if (peer == null) return null;
-      return Nip17Message(
-        wrappedEvent: wrappedEvent,
-        rumor: rumor,
-        peerPubKey: peer,
-        isOutgoing: rumorAuthor == me,
+      if (peer == null) {
+        return const Nip17ParseResult.rejected(
+          'rumor does not identify the conversation peer',
+        );
+      }
+      return Nip17ParseResult.accepted(
+        Nip17Message(
+          wrappedEvent: wrappedEvent,
+          rumor: rumor,
+          peerPubKey: peer,
+          isOutgoing: rumorAuthor == me,
+        ),
       );
-    } catch (_) {
-      return null;
+    } catch (error) {
+      return Nip17ParseResult.rejected(
+        'gift-wrap decryption failed (${error.runtimeType})',
+      );
     }
   }
 
@@ -620,10 +759,101 @@ class DisputeCommunicationService {
       participantPubkey: participantPubkey,
     );
     if (message.peerPubKey.toLowerCase() != peer.toLowerCase()) return false;
+    final coordinate = _singleTag(message.event, 'a');
+    final caseId = _singleTag(message.event, 'case');
+    if (coordinate == offerCoordinate(offer) && caseId == caseIdFor(offer)) {
+      return true;
+    }
+    if (coordinate != null || caseId != null) return false;
     final content = message.content.trimLeft();
     if (content.startsWith(legacyCaseReference(offer))) return true;
     if (content.startsWith('[BitBlik dispute ')) return false;
     return includeUnbound;
+  }
+
+  /// Assigns one decrypted legacy message to at most one offer.
+  ///
+  /// Explicit event tags and the historical encrypted prefix always win. A
+  /// generic Nostr client's untagged reply is inherently ambiguous, so it is
+  /// assigned to the newest matching dispute which already existed when the
+  /// event was created. This prevents one peer DM from appearing unread in
+  /// every historical offer while remaining useful for legacy clients.
+  Offer? routeLegacyMessageToOffer({
+    required Iterable<Offer> offers,
+    required String myPubkey,
+    required LegacyNip04Message message,
+  }) {
+    final candidates = _candidateOffersForPeer(
+      offers: offers,
+      myPubkey: myPubkey,
+      peerPubkey: message.peerPubKey,
+    );
+    for (final offer in candidates) {
+      if (isLegacyMessageForCase(
+        offer: offer,
+        myPubkey: myPubkey,
+        participantPubkey: message.peerPubKey,
+        message: message,
+      )) {
+        return offer;
+      }
+    }
+
+    final hasExplicitBinding = _singleTag(message.event, 'a') != null ||
+        _singleTag(message.event, 'case') != null ||
+        message.content.trimLeft().startsWith('[BitBlik dispute ');
+    if (hasExplicitBinding) return null;
+
+    return _newestEligibleOffer(candidates, message.createdAt);
+  }
+
+  List<Offer> _candidateOffersForPeer({
+    required Iterable<Offer> offers,
+    required String myPubkey,
+    required String peerPubkey,
+  }) {
+    final me = myPubkey.toLowerCase();
+    final peer = peerPubkey.toLowerCase();
+    return offers
+        .where(
+          (offer) =>
+              offer.coordinatorPubkey.toLowerCase() == me &&
+              (offer.makerPubkey.toLowerCase() == peer ||
+                  offer.takerPubkey?.toLowerCase() == peer),
+        )
+        .toList(growable: false);
+  }
+
+  Offer? _newestEligibleOffer(List<Offer> candidates, int createdAt) {
+    final sentAt = DateTime.fromMillisecondsSinceEpoch(
+      createdAt * 1000,
+      isUtc: true,
+    );
+    final eligible = candidates.where((offer) {
+      final openedAt = offer.disputeAt ?? offer.createdAt;
+      return !openedAt.toUtc().isAfter(sentAt);
+    }).toList();
+    // Generic Nostr clients cannot attach BitBlik's encrypted offer binding.
+    // When the same peer has historical disputes, route their new unbound DM
+    // to the currently open case instead of a newer-but-resolved record. An
+    // explicit `a`/`case` binding is handled before this fallback and remains
+    // authoritative for historical chat access.
+    final open = eligible
+        .where(
+          (offer) =>
+              offer.statusRaw == OfferStatus.dispute.name ||
+              offer.statusRaw == 'securingDispute',
+        )
+        .toList(growable: false);
+    final preferred = open.isNotEmpty ? open : eligible;
+    preferred
+      ..sort((a, b) {
+        final aOpened = a.disputeAt ?? a.createdAt;
+        final bOpened = b.disputeAt ?? b.createdAt;
+        final byDate = bOpened.compareTo(aOpened);
+        return byDate != 0 ? byDate : b.id.compareTo(a.id);
+      });
+    return preferred.isEmpty ? null : preferred.first;
   }
 
   Future<Nip17FileMetadata> sendEvidence({

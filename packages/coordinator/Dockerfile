@@ -23,6 +23,7 @@ COPY --chown=flutter:flutter packages/coordinator/pubspec.yaml packages/coordina
 COPY --chown=flutter:flutter packages/core/pubspec.yaml packages/core/pubspec.yaml
 COPY --chown=flutter:flutter packages/app/pubspec.yaml packages/app/pubspec.yaml
 COPY --chown=flutter:flutter packages/cli/pubspec.yaml packages/cli/pubspec.yaml
+COPY --chown=flutter:flutter packages/telegram_bot/pubspec.yaml packages/telegram_bot/pubspec.yaml
 
 RUN flutter pub get
 

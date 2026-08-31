@@ -399,6 +399,7 @@ class _Translations$settings$de extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Einstellungen';
+	@override late final _Translations$settings$coordinatorConsole$de coordinatorConsole = _Translations$settings$coordinatorConsole$de._(_root);
 	@override late final _Translations$settings$offerCreation$de offerCreation = _Translations$settings$offerCreation$de._(_root);
 	@override late final _Translations$settings$display$de display = _Translations$settings$display$de._(_root);
 	@override late final _Translations$settings$paymentSystem$de paymentSystem = _Translations$settings$paymentSystem$de._(_root);
@@ -1733,6 +1734,32 @@ class _Translations$landing$actions$de extends Translations$landing$actions$en {
 	@override String get sellBlik => 'Bitcoin kaufen';
 	@override String sellBlikSubtitle({required Object code}) => 'mit ${code}';
 	@override String get howItWorks => 'Wie funktioniert das?';
+}
+
+// Path: settings.coordinatorConsole
+class _Translations$settings$coordinatorConsole$de extends Translations$settings$coordinatorConsole$en {
+	_Translations$settings$coordinatorConsole$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Koordinator-Konsole';
+	@override String get subtitle => 'Streitfälle mit einem Koordinator-Signierer verwalten';
+	@override String get signInTitle => 'Als Koordinator anmelden';
+	@override String get signInDescription => 'Verwende den Nostr-Schlüssel deines Koordinators, um Streitfälle zu prüfen und zu entscheiden.';
+	@override String get separateIdentityNote => 'Der Koordinator-Signierer läuft in einer separaten NDK-Sitzung und ersetzt niemals die Neko-Handelsidentität.';
+	@override String get loginWithSignerApp => 'Mit Signierer-App anmelden';
+	@override String get loginWithExtension => 'Mit Browser-Erweiterung anmelden';
+	@override String get loginWithNsec => 'Mit nsec anmelden';
+	@override String get nsecDialogTitle => 'Privater Koordinator-Schlüssel';
+	@override String get nsecFieldLabel => 'Privater Schlüssel';
+	@override String get nsecSecurityNote => 'Der private Schlüssel wird sicher auf diesem Gerät gespeichert und nur von der separaten Koordinator-Sitzung verwendet.';
+	@override String get unsupportedPlatform => 'Die Koordinator-Anmeldung ist derzeit auf Android, Linux und im Web verfügbar.';
+	@override String get loginFailed => 'Koordinator-Anmeldung fehlgeschlagen';
+	@override String get accountsTitle => 'Koordinator-Konten';
+	@override String get savedAccounts => 'Gespeicherte Koordinator-Konten';
+	@override String get addAccount => 'Koordinator-Konto hinzufügen';
+	@override String get removeAccount => 'Koordinator-Konto entfernen';
 }
 
 // Path: settings.offerCreation
@@ -3916,6 +3943,23 @@ extension on TranslationsDe {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Einstellungen',
+			'settings.coordinatorConsole.title' => 'Koordinator-Konsole',
+			'settings.coordinatorConsole.subtitle' => 'Streitfälle mit einem Koordinator-Signierer verwalten',
+			'settings.coordinatorConsole.signInTitle' => 'Als Koordinator anmelden',
+			'settings.coordinatorConsole.signInDescription' => 'Verwende den Nostr-Schlüssel deines Koordinators, um Streitfälle zu prüfen und zu entscheiden.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'Der Koordinator-Signierer läuft in einer separaten NDK-Sitzung und ersetzt niemals die Neko-Handelsidentität.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Mit Signierer-App anmelden',
+			'settings.coordinatorConsole.loginWithExtension' => 'Mit Browser-Erweiterung anmelden',
+			'settings.coordinatorConsole.loginWithNsec' => 'Mit nsec anmelden',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Privater Koordinator-Schlüssel',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Privater Schlüssel',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'Der private Schlüssel wird sicher auf diesem Gerät gespeichert und nur von der separaten Koordinator-Sitzung verwendet.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'Die Koordinator-Anmeldung ist derzeit auf Android, Linux und im Web verfügbar.',
+			'settings.coordinatorConsole.loginFailed' => 'Koordinator-Anmeldung fehlgeschlagen',
+			'settings.coordinatorConsole.accountsTitle' => 'Koordinator-Konten',
+			'settings.coordinatorConsole.savedAccounts' => 'Gespeicherte Koordinator-Konten',
+			'settings.coordinatorConsole.addAccount' => 'Koordinator-Konto hinzufügen',
+			'settings.coordinatorConsole.removeAccount' => 'Koordinator-Konto entfernen',
 			'settings.offerCreation.title' => 'Angebotserstellung',
 			'settings.offerCreation.defaultCategory' => 'Standardkategorie',
 			'settings.offerCreation.defaultBank' => 'Standardbank',

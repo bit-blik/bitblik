@@ -1119,6 +1119,24 @@ faq:
 # =============================================================================
 settings:
   title: Definições
+  coordinatorConsole:
+    title: Consola do coordenador
+    subtitle: Gerir disputas com um assinante coordenador
+    signInTitle: Iniciar sessão como coordenador
+    signInDescription: Use a chave Nostr que identifica o coordenador para analisar e resolver disputas.
+    separateIdentityNote: O assinante do coordenador utiliza uma sessão NDK separada e nunca substitui a identidade de negociação Neko.
+    loginWithSignerApp: Entrar com a aplicação de assinatura
+    loginWithExtension: Entrar com a extensão do navegador
+    loginWithNsec: Entrar com nsec
+    nsecDialogTitle: Chave privada do coordenador
+    nsecFieldLabel: Chave privada
+    nsecSecurityNote: A chave privada é armazenada com segurança neste dispositivo e usada apenas pela sessão separada do coordenador.
+    unsupportedPlatform: O início de sessão do coordenador está atualmente disponível no Android, Linux e na Web.
+    loginFailed: Falha no início de sessão do coordenador
+    accountsTitle: Contas de coordenador
+    savedAccounts: Contas de coordenador guardadas
+    addAccount: Adicionar conta de coordenador
+    removeAccount: Remover conta de coordenador
   offerCreation:
     title: Criação de ofertas
     defaultCategory: Categoria predefinida

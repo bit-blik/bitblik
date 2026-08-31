@@ -1007,6 +1007,24 @@ faq:
 # =============================================================================
 settings:
   title: Nastavenia
+  coordinatorConsole:
+    title: Konzola koordinátora
+    subtitle: Spravujte spory pomocou podpisovača koordinátora
+    signInTitle: Prihlásiť sa ako koordinátor
+    signInDescription: Použite Nostr kľúč, ktorý identifikuje koordinátora, na kontrolu a riešenie sporov.
+    separateIdentityNote: Podpisovač koordinátora používa samostatnú reláciu NDK a nikdy nenahrádza obchodnú identitu Neko.
+    loginWithSignerApp: Prihlásiť sa cez podpisovaciu aplikáciu
+    loginWithExtension: Prihlásiť sa cez rozšírenie prehliadača
+    loginWithNsec: Prihlásiť sa pomocou nsec
+    nsecDialogTitle: Súkromný kľúč koordinátora
+    nsecFieldLabel: Súkromný kľúč
+    nsecSecurityNote: Súkromný kľúč je bezpečne uložený v tomto zariadení a používa ho iba samostatná relácia koordinátora.
+    unsupportedPlatform: Prihlásenie koordinátora je momentálne dostupné v systémoch Android, Linux a na webe.
+    loginFailed: Prihlásenie koordinátora zlyhalo
+    accountsTitle: Účty koordinátorov
+    savedAccounts: Uložené účty koordinátorov
+    addAccount: Pridať účet koordinátora
+    removeAccount: Odstrániť účet koordinátora
   offerCreation:
     title: Vytváranie ponúk
     defaultCategory: Predvolená kategória

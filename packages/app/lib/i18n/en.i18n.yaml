@@ -1282,6 +1282,24 @@ faq:
 # =============================================================================
 settings:
   title: Settings
+  coordinatorConsole:
+    title: Coordinator console
+    subtitle: Manage disputes using a coordinator signer
+    signInTitle: Sign in as a coordinator
+    signInDescription: Use the Nostr key that identifies your coordinator to review and resolve disputes.
+    separateIdentityNote: Your coordinator signer runs in a separate NDK session and never replaces the Neko trading identity.
+    loginWithSignerApp: Sign in with signer app
+    loginWithExtension: Sign in with browser extension
+    loginWithNsec: Sign in with nsec
+    nsecDialogTitle: Coordinator private key
+    nsecFieldLabel: Private key
+    nsecSecurityNote: The private key is stored securely on this device and is used only by the separate coordinator session.
+    unsupportedPlatform: Coordinator login is currently available on Android, Linux, and web.
+    loginFailed: Coordinator login failed
+    accountsTitle: Coordinator accounts
+    savedAccounts: Saved coordinator accounts
+    addAccount: Add coordinator account
+    removeAccount: Remove coordinator account
   offerCreation:
     title: Offer creation
     defaultCategory: Default category

@@ -68,7 +68,7 @@ action.
 
 ## Coordinator console
 
-Run the native Flutter package in `packages/coordinator/console`. Login and
+Open the console from the Coordinators screen in the BitBlik app. Login and
 multi-account switching use NDK Flutter's `NLogin` and `NSwitchAccount` backed
 by the NDK Accounts use case. The active signer pubkey must exactly equal the
 active coordinator signer pubkey. NIP-55 and NIP-46 are preferred; direct nsec login
