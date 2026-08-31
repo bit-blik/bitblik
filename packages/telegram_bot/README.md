@@ -44,11 +44,12 @@ For a direct host run, keep `STATE_FILE` on a user-writable path such as
 
 See [`.env.example`](.env.example) for all settings. `PAYMENT_SYSTEM` accepts
 `blik`, `mbway`, `twint`, or `sk`. Multiple comma-separated chat IDs are
-supported. Flavor images set `PAYMENT_SYSTEM`; the bot reads that system's
-canonical project Nostr identity from `bitblik_core` for discovery and muting.
+supported. The bot reads the selected system's canonical project Nostr
+identity from `bitblik_core` for discovery and muting.
 
-CI publishes the flavor tags `bitblik`, `bitway`, `bittwint`, and `bitvyber`
-under `ghcr.io/<owner>/telegram-bot`.
+CI publishes one generic image under `ghcr.io/<owner>/telegram-bot`. Set
+`PAYMENT_SYSTEM` when starting the container to select the market; the image is
+identical for `blik`, `mbway`, `twint`, and `sk`.
 
 After the central service is live, remove the shared generic group from each
 coordinator's `TELEGRAM_CHAT_ID` setting to avoid duplicate announcements.

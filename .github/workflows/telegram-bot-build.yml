@@ -59,17 +59,6 @@ jobs:
       REGISTRY: ghcr.io
       IMAGENAME: telegram-bot
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - flavor: bitblik
-            payment_system: blik
-          - flavor: bitway
-            payment_system: mbway
-          - flavor: bittwint
-            payment_system: twint
-          - flavor: bitvyber
-            payment_system: sk
     permissions:
       contents: read
       packages: write
@@ -95,10 +84,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGENAME }}
           tags: |
-            type=raw,value=${{ matrix.flavor }}
-            type=raw,value=${{ matrix.flavor }}-${{ github.sha }}
-            type=ref,event=branch,prefix=${{ matrix.flavor }}-
-            type=semver,pattern={{version}}-${{ matrix.flavor }}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern={{version}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -108,7 +97,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            PAYMENT_SYSTEM=${{ matrix.payment_system }}
-          cache-from: type=gha,scope=telegram-bot-${{ matrix.flavor }}
-          cache-to: type=gha,scope=telegram-bot-${{ matrix.flavor }},mode=max
+          cache-from: type=gha,scope=telegram-bot
+          cache-to: type=gha,scope=telegram-bot,mode=max

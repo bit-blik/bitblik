@@ -27,8 +27,6 @@ FROM alpine:latest
 RUN apk add --no-cache ca-certificates zlib gmp tzdata libstdc++ \
     && mkdir -p /data \
     && chmod 0777 /data
-ARG PAYMENT_SYSTEM=blik
-ENV PAYMENT_SYSTEM=${PAYMENT_SYSTEM}
 COPY --from=dart-runtime /runtime/ /
 COPY --from=build /workspace/packages/telegram_bot/bin/server /app/
 WORKDIR /app
