@@ -364,6 +364,11 @@ disputeChat:
   noMessages: "Aucun message pour le moment."
   replyHint: "Répondre ici"
   readOnly: "L’historique de ce litige résolu est en lecture seule."
+  evidenceDeadline:
+    title: "Date limite de soumission des preuves"
+    remaining: "Fournissez les preuves à l’appui de votre demande dans les ${time}. Après ce délai, le coordinateur peut statuer en faveur de la contrepartie selon les preuves disponibles."
+    expired: "La période de soumission des preuves est terminée. Le coordinateur peut maintenant statuer selon les preuves disponibles."
+    period: "Le coordinateur accorde jusqu’à ${time} pour fournir des preuves après l’ouverture du litige. Le compte à rebours commencera lorsque l’horodatage sera disponible."
   tooltips:
     refresh: "Actualiser les messages"
     attachEvidence: "Joindre une preuve de paiement"

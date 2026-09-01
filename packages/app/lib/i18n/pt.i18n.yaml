@@ -365,6 +365,11 @@ disputeChat:
   noMessages: "Ainda não há mensagens."
   replyHint: "Responder aqui"
   readOnly: "O histórico desta disputa resolvida é só de leitura."
+  evidenceDeadline:
+    title: "Prazo para envio de provas"
+    remaining: "Envie provas que sustentem a sua posição dentro de ${time}. Após este prazo, o coordenador pode decidir a favor da contraparte com base nas provas disponíveis."
+    expired: "O período para envio de provas terminou. O coordenador pode agora decidir com base nas provas disponíveis."
+    period: "O coordenador permite até ${time} para provas após a abertura da disputa. A contagem decrescente começará quando o horário da disputa estiver disponível."
   tooltips:
     refresh: "Atualizar mensagens"
     attachEvidence: "Anexar comprovativo de pagamento"

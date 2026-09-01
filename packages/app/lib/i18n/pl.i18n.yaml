@@ -364,6 +364,11 @@ disputeChat:
   noMessages: "Brak wiadomości."
   replyHint: "Odpowiedz tutaj"
   readOnly: "Historia tego rozstrzygniętego sporu jest tylko do odczytu."
+  evidenceDeadline:
+    title: "Termin przesłania dowodów"
+    remaining: "Prześlij dowody potwierdzające Twoje stanowisko w ciągu ${time}. Po tym terminie koordynator może rozstrzygnąć na korzyść drugiej strony na podstawie dostępnych dowodów."
+    expired: "Czas na przesłanie dowodów minął. Koordynator może teraz rozstrzygnąć spór na podstawie dostępnych dowodów."
+    period: "Koordynator daje do ${time} na dowody od otwarcia sporu. Odliczanie rozpocznie się, gdy będzie dostępny czas otwarcia sporu."
   tooltips:
     refresh: "Odśwież wiadomości"
     attachEvidence: "Dołącz dowód płatności"

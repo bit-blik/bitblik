@@ -18,6 +18,12 @@ class CoordinatorInfo {
   /// `3600` keeps older coordinators that don't advertise it consistent.
   final int takerChargedAutoConfirmSeconds;
 
+  /// Maximum evidence-collection period after an offer enters dispute.
+  /// After this deadline the coordinator may rule from the evidence already
+  /// available; this is a published policy, not an automatic fund transition.
+  /// Null when the coordinator does not advertise the policy.
+  final int? disputeEvidencePeriodSeconds;
+
   /// Maximum maker premium (%) this coordinator allows above market price.
   /// `0` means the premium feature is disabled for this coordinator.
   final double maxPremiumPercent;
@@ -58,6 +64,7 @@ class CoordinatorInfo {
     required this.minAmountSats,
     required this.maxAmountSats,
     this.takerChargedAutoConfirmSeconds = 3600,
+    this.disputeEvidencePeriodSeconds,
     this.maxPremiumPercent = 0,
     required this.currencies,
     required this.paymentSystem,
@@ -99,8 +106,9 @@ class CoordinatorInfo {
       maxAmountSats: json['max_amount_sats'] as int,
       takerChargedAutoConfirmSeconds:
           (json['taker_charged_auto_confirm_seconds'] as num?)?.toInt() ?? 3600,
-      maxPremiumPercent:
-          (json['max_premium_percent'] as num?)?.toDouble() ?? 0,
+      disputeEvidencePeriodSeconds:
+          (json['dispute_evidence_period_seconds'] as num?)?.toInt(),
+      maxPremiumPercent: (json['max_premium_percent'] as num?)?.toDouble() ?? 0,
       currencies: (json['currencies'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
@@ -125,6 +133,8 @@ class CoordinatorInfo {
       'min_amount_sats': minAmountSats,
       'max_amount_sats': maxAmountSats,
       'taker_charged_auto_confirm_seconds': takerChargedAutoConfirmSeconds,
+      if (disputeEvidencePeriodSeconds != null)
+        'dispute_evidence_period_seconds': disputeEvidencePeriodSeconds,
       'max_premium_percent': maxPremiumPercent,
       'currencies': currencies,
       'payment_system': paymentSystem,
@@ -185,12 +195,13 @@ class CoordinatorInfo {
       takerChargedAutoConfirmSeconds:
           int.tryParse(tags['taker_charged_auto_confirm_seconds'] ?? '') ??
               3600,
+      disputeEvidencePeriodSeconds:
+          int.tryParse(tags['dispute_evidence_period_seconds'] ?? ''),
       maxPremiumPercent:
           double.tryParse(tags['max_premium_percent'] ?? '0') ?? 0.0,
       makerFee: double.tryParse(tags['maker_fee'] ?? '0') ?? 0.0,
       takerFee: double.tryParse(tags['taker_fee'] ?? '0') ?? 0.0,
-      reservationSeconds:
-          int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
+      reservationSeconds: int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
       currencies: currencies,
       paymentSystem:
           _emptyToNull(tags['payment_system']) ?? _defaultMethodId(currencies),
@@ -201,8 +212,8 @@ class CoordinatorInfo {
       channelLinks: {
         for (final entry in tags.entries)
           if (entry.key.endsWith('_channel_link') && entry.value.isNotEmpty)
-            entry.key.substring(
-                0, entry.key.length - '_channel_link'.length): entry.value,
+            entry.key.substring(0, entry.key.length - '_channel_link'.length):
+                entry.value,
       },
       bankChannelLinks: bankChannelLinks,
     );
@@ -223,6 +234,11 @@ class CoordinatorInfo {
         'taker_charged_auto_confirm_seconds',
         takerChargedAutoConfirmSeconds.toString()
       ],
+      if (disputeEvidencePeriodSeconds != null)
+        [
+          'dispute_evidence_period_seconds',
+          disputeEvidencePeriodSeconds.toString()
+        ],
       ['max_premium_percent', maxPremiumPercent.toString()],
       ['maker_fee', makerFee.toString()],
       ['taker_fee', takerFee.toString()],
@@ -282,8 +298,7 @@ class CoordinatorInfo {
     return out;
   }
 
-  static String? _emptyToNull(String? v) =>
-      v == null || v.isEmpty ? null : v;
+  static String? _emptyToNull(String? v) => v == null || v.isEmpty ? null : v;
 
   /// Derive a payment method id from a legacy `currencies` value when a
   /// coordinator doesn't advertise `payment_system`. Falls back to [kBlik].

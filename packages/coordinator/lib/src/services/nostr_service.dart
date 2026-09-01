@@ -1253,6 +1253,11 @@ class NostrService {
               ? (offer.takerPaidAt!.millisecondsSinceEpoch ~/ 1000).toString()
               : ''
         ],
+        if (offer.disputeAt != null)
+          [
+            'dispute_at',
+            (offer.disputeAt!.millisecondsSinceEpoch ~/ 1000).toString(),
+          ],
         if (offer.category != null) ['category', offer.category!.name],
         // Bank the maker will withdraw at, for bank-scoped markets (SK). Lets
         // takers filter the feed to banks whose app they hold.

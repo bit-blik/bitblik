@@ -348,6 +348,11 @@ disputeChat:
   noMessages: "Zatiaľ žiadne správy."
   replyHint: "Odpovedzte tu"
   readOnly: "História tohto vyriešeného sporu je iba na čítanie."
+  evidenceDeadline:
+    title: "Lehota na predloženie dôkazov"
+    remaining: "Predložte dôkazy podporujúce vaše tvrdenie do ${time}. Po uplynutí lehoty môže koordinátor rozhodnúť v prospech protistrany podľa dostupných dôkazov."
+    expired: "Lehota na predloženie dôkazov uplynula. Koordinátor môže teraz rozhodnúť podľa dostupných dôkazov."
+    period: "Koordinátor poskytuje na dôkazy najviac ${time} od otvorenia sporu. Odpočítavanie sa začne, keď bude dostupný čas otvorenia sporu."
   tooltips:
     refresh: "Obnoviť správy"
     attachEvidence: "Priložiť doklad o platbe"

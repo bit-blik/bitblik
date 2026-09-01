@@ -364,6 +364,11 @@ disputeChat:
   noMessages: "Noch keine Nachrichten."
   replyHint: "Hier antworten"
   readOnly: "Der Verlauf dieses abgeschlossenen Streitfalls ist schreibgeschützt."
+  evidenceDeadline:
+    title: "Frist für die Einreichung von Beweisen"
+    remaining: "Reiche innerhalb von ${time} Beweise für deinen Anspruch ein. Nach Ablauf der Frist kann der Koordinator anhand der verfügbaren Beweise zugunsten der Gegenpartei entscheiden."
+    expired: "Die Beweisfrist ist abgelaufen. Der Koordinator kann nun anhand der verfügbaren Beweise entscheiden."
+    period: "Der Koordinator gewährt nach Eröffnung des Streitfalls bis zu ${time} für Beweise. Der Countdown beginnt, sobald der Streitzeitpunkt verfügbar ist."
   tooltips:
     refresh: "Nachrichten aktualisieren"
     attachEvidence: "Zahlungsnachweis anhängen"

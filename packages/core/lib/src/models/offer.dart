@@ -598,6 +598,7 @@ class Offer {
       coordinatorPubkey: tagMap['p'] ?? event.pubKey,
       takerPubkey: tagMap['taker'],
       reservedAt: epochSecondsOrNull(tagMap['reserved_at']),
+      disputeAt: epochSecondsOrNull(tagMap['dispute_at']),
       takerPaidAt: epochSecondsOrNull(tagMap['paid_at']),
       takerFees: int.tryParse(tagMap['taker_fees'] ?? ''),
       category: () {

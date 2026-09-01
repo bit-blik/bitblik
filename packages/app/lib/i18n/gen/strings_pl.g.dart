@@ -200,6 +200,7 @@ class _Translations$disputeChat$pl extends Translations$disputeChat$en {
 	@override String get noMessages => 'Brak wiadomości.';
 	@override String get replyHint => 'Odpowiedz tutaj';
 	@override String get readOnly => 'Historia tego rozstrzygniętego sporu jest tylko do odczytu.';
+	@override late final _Translations$disputeChat$evidenceDeadline$pl evidenceDeadline = _Translations$disputeChat$evidenceDeadline$pl._(_root);
 	@override late final _Translations$disputeChat$tooltips$pl tooltips = _Translations$disputeChat$tooltips$pl._(_root);
 	@override late final _Translations$disputeChat$errors$pl errors = _Translations$disputeChat$errors$pl._(_root);
 }
@@ -1061,6 +1062,19 @@ class _Translations$coordinator$management$pl extends Translations$coordinator$m
 	@override String get metricYourOffersTooltip => 'Liczba ofert, które pomyślnie zrealizowałeś z tym koordynatorem.';
 	@override String get metricNetworkOffers => 'Oferty (30 dni)';
 	@override String get metricNetworkOffersTooltip => 'Pomyślnie rozliczone oferty przez tego koordynatora dla wszystkich użytkowników w ciągu ostatnich 30 dni.';
+}
+
+// Path: disputeChat.evidenceDeadline
+class _Translations$disputeChat$evidenceDeadline$pl extends Translations$disputeChat$evidenceDeadline$en {
+	_Translations$disputeChat$evidenceDeadline$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Termin przesłania dowodów';
+	@override String remaining({required Object time}) => 'Prześlij dowody potwierdzające Twoje stanowisko w ciągu ${time}. Po tym terminie koordynator może rozstrzygnąć na korzyść drugiej strony na podstawie dostępnych dowodów.';
+	@override String get expired => 'Czas na przesłanie dowodów minął. Koordynator może teraz rozstrzygnąć spór na podstawie dostępnych dowodów.';
+	@override String period({required Object time}) => 'Koordynator daje do ${time} na dowody od otwarcia sporu. Odliczanie rozpocznie się, gdy będzie dostępny czas otwarcia sporu.';
 }
 
 // Path: disputeChat.tooltips
@@ -3402,6 +3416,10 @@ extension on TranslationsPl {
 			'disputeChat.noMessages' => 'Brak wiadomości.',
 			'disputeChat.replyHint' => 'Odpowiedz tutaj',
 			'disputeChat.readOnly' => 'Historia tego rozstrzygniętego sporu jest tylko do odczytu.',
+			'disputeChat.evidenceDeadline.title' => 'Termin przesłania dowodów',
+			'disputeChat.evidenceDeadline.remaining' => ({required Object time}) => 'Prześlij dowody potwierdzające Twoje stanowisko w ciągu ${time}. Po tym terminie koordynator może rozstrzygnąć na korzyść drugiej strony na podstawie dostępnych dowodów.',
+			'disputeChat.evidenceDeadline.expired' => 'Czas na przesłanie dowodów minął. Koordynator może teraz rozstrzygnąć spór na podstawie dostępnych dowodów.',
+			'disputeChat.evidenceDeadline.period' => ({required Object time}) => 'Koordynator daje do ${time} na dowody od otwarcia sporu. Odliczanie rozpocznie się, gdy będzie dostępny czas otwarcia sporu.',
 			'disputeChat.tooltips.refresh' => 'Odśwież wiadomości',
 			'disputeChat.tooltips.attachEvidence' => 'Dołącz dowód płatności',
 			'disputeChat.tooltips.send' => 'Wyślij wiadomość',
@@ -3647,12 +3665,12 @@ extension on TranslationsPl {
 			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Taker zarezerwował Twoją ofertę i właśnie płaci Twój kod ${code} w swojej aplikacji bankowej. Gdy płatność dotrze do Twojego sprzedawcy, potwierdź ją poniżej.',
 			'twint.flow.makerWait.confirmReceived' => 'Potwierdź otrzymanie płatności',
 			'twint.flow.makerWait.confirmDialog.title' => 'Potwierdzić otrzymanie płatności?',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Potwierdź tylko, jeśli masz ABSOLUTNĄ pewność, że płatność ${code} dotarła do Twojego sprzedawcy.\n\nPotwierdzenie rozlicza hold invoice Lightning i natychmiast wysyła satsy do takera — tego nie można cofnąć.',
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Anuluj',
 			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Tak, płatność otrzymana',
 			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} prawdopodobnie wygasł',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerExpired.warning' => ({required Object code}) => 'Kod ${code} prawdopodobnie już wygasł — ale taker mógł mimo to zdążyć go opłacić. Sprawdź u swojego sprzedawcy: masz poniższy czas na potwierdzenie płatności.',
 			'twint.flow.makerExpired.timerCaption' => 'Czas na potwierdzenie',
 			'twint.flow.makerExpired.disputeHint' => 'Możesz też poczekać, aż licznik dobiegnie końca. Jeśli taker zgłosi, że zapłacił, sprawa staje się konfliktem/sporem, w którym obie strony muszą dostarczyć koordynatorowi dowody do rozstrzygnięcia.',

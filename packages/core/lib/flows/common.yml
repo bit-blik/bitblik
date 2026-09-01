@@ -74,7 +74,8 @@ states:
     nip69: dispute
     description: >
       Formal dispute with the hold invoice secured by the coordinator. The
-      coordinator rules: refund the maker or pay the taker.
+      coordinator rules: refund the maker or pay the taker. Evidence timing is
+      an advertised coordinator policy, not an automatic state transition.
     transitions:
       - on: resolve_dispute_refund_maker
         by: coordinator

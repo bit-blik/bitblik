@@ -35,6 +35,22 @@ from replicas, caches, or backups.
 
 ## Coordinator configuration
 
+The evidence window is an advertised coordinator policy. Coordinators running
+this version default to 48 hours and publish it in kind-15125 as
+`dispute_evidence_period_seconds`. Override it with:
+
+```dotenv
+DISPUTE_EVIDENCE_PERIOD_SECONDS=172800
+```
+
+Clients must not assume a deadline when an older coordinator omits this tag;
+the deadline UI is hidden in that case. When advertised, the deadline is
+`offer.dispute_at + configured period`. Once it expires the
+coordinator may rule from the evidence available, including in favor of the
+counterparty when a participant did not support their claim. Expiration never
+selects a winner or moves funds automatically; the signed coordinator ruling
+remains an explicit state-machine event.
+
 Without configuration, the coordinator first preserves any non-empty kind-10063
 list already published under its pubkey. Only when no such list exists does it
 publish these public Blossom servers:

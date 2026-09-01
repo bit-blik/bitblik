@@ -297,6 +297,10 @@ class CoordinatorService {
   // taker charged timeout configuration
   late final int _takerChargedAutoConfirmTimeoutSeconds;
 
+  // Advertised evidence-collection policy. It never triggers a payout by
+  // itself; the coordinator still makes an explicit ruling.
+  late final int _disputeEvidencePeriodSeconds;
+
   // Exchange rate cache, keyed by uppercase currency code (e.g. PLN, EUR).
   static const Duration _rateCacheTtl = Duration(minutes: 5);
   static const Duration _rateBackgroundRefreshAge = Duration(minutes: 4);
@@ -616,6 +620,13 @@ class CoordinatorService {
     _takerChargedAutoConfirmTimeoutSeconds =
         int.tryParse(_env['TAKER_CHARGED_AUTO_CONFIRM_SECONDS'] ?? '') ??
             3600; // 1h
+    final configuredDisputeEvidencePeriod = int.tryParse(
+      _env['DISPUTE_EVIDENCE_PERIOD_SECONDS'] ?? '',
+    );
+    _disputeEvidencePeriodSeconds = configuredDisputeEvidencePeriod != null &&
+            configuredDisputeEvidencePeriod > 0
+        ? configuredDisputeEvidencePeriod
+        : 48 * 60 * 60;
     _makerFeePercentage =
         double.tryParse(_env['MAKER_FEE'] ?? '') ?? 0.5; // Default to 0.5%
     _takerFeePercentage =
@@ -1927,6 +1938,7 @@ class CoordinatorService {
       minAmountSats: _minAmountSats,
       maxAmountSats: _maxAmountSats,
       takerChargedAutoConfirmSeconds: _takerChargedAutoConfirmTimeoutSeconds,
+      disputeEvidencePeriodSeconds: _disputeEvidencePeriodSeconds,
       maxPremiumPercent: _maxPremiumPercent,
       currencies: List<String>.from(_supportedCurrencies),
       paymentSystem: _paymentSystem.id,

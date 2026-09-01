@@ -185,6 +185,7 @@ class _Translations$disputeChat$sk extends Translations$disputeChat$en {
 	@override String get noMessages => 'Zatiaľ žiadne správy.';
 	@override String get replyHint => 'Odpovedzte tu';
 	@override String get readOnly => 'História tohto vyriešeného sporu je iba na čítanie.';
+	@override late final _Translations$disputeChat$evidenceDeadline$sk evidenceDeadline = _Translations$disputeChat$evidenceDeadline$sk._(_root);
 	@override late final _Translations$disputeChat$tooltips$sk tooltips = _Translations$disputeChat$tooltips$sk._(_root);
 	@override late final _Translations$disputeChat$errors$sk errors = _Translations$disputeChat$errors$sk._(_root);
 }
@@ -989,6 +990,19 @@ class _Translations$coordinator$management$sk extends Translations$coordinator$m
 	@override String get metricYourOffersTooltip => 'Počet ponúk, ktoré si úspešne dokončil s týmto koordinátorom.';
 	@override String get metricNetworkOffers => 'Ponuky (30d)';
 	@override String get metricNetworkOffersTooltip => 'Úspešné ponuky vyrovnané týmto koordinátorom naprieč všetkými používateľmi za posledných 30 dní.';
+}
+
+// Path: disputeChat.evidenceDeadline
+class _Translations$disputeChat$evidenceDeadline$sk extends Translations$disputeChat$evidenceDeadline$en {
+	_Translations$disputeChat$evidenceDeadline$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Lehota na predloženie dôkazov';
+	@override String remaining({required Object time}) => 'Predložte dôkazy podporujúce vaše tvrdenie do ${time}. Po uplynutí lehoty môže koordinátor rozhodnúť v prospech protistrany podľa dostupných dôkazov.';
+	@override String get expired => 'Lehota na predloženie dôkazov uplynula. Koordinátor môže teraz rozhodnúť podľa dostupných dôkazov.';
+	@override String period({required Object time}) => 'Koordinátor poskytuje na dôkazy najviac ${time} od otvorenia sporu. Odpočítavanie sa začne, keď bude dostupný čas otvorenia sporu.';
 }
 
 // Path: disputeChat.tooltips
@@ -3083,6 +3097,10 @@ extension on TranslationsSk {
 			'disputeChat.noMessages' => 'Zatiaľ žiadne správy.',
 			'disputeChat.replyHint' => 'Odpovedzte tu',
 			'disputeChat.readOnly' => 'História tohto vyriešeného sporu je iba na čítanie.',
+			'disputeChat.evidenceDeadline.title' => 'Lehota na predloženie dôkazov',
+			'disputeChat.evidenceDeadline.remaining' => ({required Object time}) => 'Predložte dôkazy podporujúce vaše tvrdenie do ${time}. Po uplynutí lehoty môže koordinátor rozhodnúť v prospech protistrany podľa dostupných dôkazov.',
+			'disputeChat.evidenceDeadline.expired' => 'Lehota na predloženie dôkazov uplynula. Koordinátor môže teraz rozhodnúť podľa dostupných dôkazov.',
+			'disputeChat.evidenceDeadline.period' => ({required Object time}) => 'Koordinátor poskytuje na dôkazy najviac ${time} od otvorenia sporu. Odpočítavanie sa začne, keď bude dostupný čas otvorenia sporu.',
 			'disputeChat.tooltips.refresh' => 'Obnoviť správy',
 			'disputeChat.tooltips.attachEvidence' => 'Priložiť doklad o platbe',
 			'disputeChat.tooltips.send' => 'Odoslať správu',
@@ -3338,12 +3356,12 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
 			'taker.paymentProcess.title' => 'Priebeh platby',
 			'taker.paymentProcess.waitingForOfferUpdate' => 'Čaká sa na aktualizáciu stavu ponuky...',
+			_ => null,
+		} ?? switch (path) {
 			'taker.paymentProcess.states.preparing' => 'Príprava na odoslanie platby...',
 			'taker.paymentProcess.states.sending' => 'Odosiela sa platba...',
 			'taker.paymentProcess.states.received' => 'Platba prijatá!',
 			'taker.paymentProcess.states.failed' => 'Platba zlyhala',
-			_ => null,
-		} ?? switch (path) {
 			'taker.paymentProcess.states.waitingUpdate' => 'Čaká sa na aktualizáciu ponuky...',
 			'taker.paymentProcess.steps.makerConfirmedBlik' => ({required Object code}) => 'Predávajúci potvrdil platbu ${code}',
 			'taker.paymentProcess.steps.makerInvoiceSettled' => 'Hold faktúra predávajúceho vyrovnaná',

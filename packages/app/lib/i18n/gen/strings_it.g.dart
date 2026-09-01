@@ -200,6 +200,7 @@ class _Translations$disputeChat$it extends Translations$disputeChat$en {
 	@override String get noMessages => 'Ancora nessun messaggio.';
 	@override String get replyHint => 'Rispondi qui';
 	@override String get readOnly => 'La cronologia di questa controversia risolta è in sola lettura.';
+	@override late final _Translations$disputeChat$evidenceDeadline$it evidenceDeadline = _Translations$disputeChat$evidenceDeadline$it._(_root);
 	@override late final _Translations$disputeChat$tooltips$it tooltips = _Translations$disputeChat$tooltips$it._(_root);
 	@override late final _Translations$disputeChat$errors$it errors = _Translations$disputeChat$errors$it._(_root);
 }
@@ -1062,6 +1063,19 @@ class _Translations$coordinator$management$it extends Translations$coordinator$m
 	@override String get metricYourOffersTooltip => 'Numero di offerte che hai completato con successo con questo coordinatore.';
 	@override String get metricNetworkOffers => 'Offerte (30g)';
 	@override String get metricNetworkOffersTooltip => 'Offerte risolte con successo da questo coordinatore tra tutti gli utenti negli ultimi 30 giorni.';
+}
+
+// Path: disputeChat.evidenceDeadline
+class _Translations$disputeChat$evidenceDeadline$it extends Translations$disputeChat$evidenceDeadline$en {
+	_Translations$disputeChat$evidenceDeadline$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Scadenza per l’invio delle prove';
+	@override String remaining({required Object time}) => 'Fornisci le prove a sostegno della tua posizione entro ${time}. Dopo la scadenza, il coordinatore può decidere a favore della controparte in base alle prove disponibili.';
+	@override String get expired => 'Il periodo per le prove è terminato. Il coordinatore può ora decidere in base alle prove disponibili.';
+	@override String period({required Object time}) => 'Il coordinatore concede fino a ${time} per le prove dopo l’apertura della disputa. Il conto alla rovescia inizierà quando sarà disponibile l’orario della disputa.';
 }
 
 // Path: disputeChat.tooltips
@@ -3406,6 +3420,10 @@ extension on TranslationsIt {
 			'disputeChat.noMessages' => 'Ancora nessun messaggio.',
 			'disputeChat.replyHint' => 'Rispondi qui',
 			'disputeChat.readOnly' => 'La cronologia di questa controversia risolta è in sola lettura.',
+			'disputeChat.evidenceDeadline.title' => 'Scadenza per l’invio delle prove',
+			'disputeChat.evidenceDeadline.remaining' => ({required Object time}) => 'Fornisci le prove a sostegno della tua posizione entro ${time}. Dopo la scadenza, il coordinatore può decidere a favore della controparte in base alle prove disponibili.',
+			'disputeChat.evidenceDeadline.expired' => 'Il periodo per le prove è terminato. Il coordinatore può ora decidere in base alle prove disponibili.',
+			'disputeChat.evidenceDeadline.period' => ({required Object time}) => 'Il coordinatore concede fino a ${time} per le prove dopo l’apertura della disputa. Il conto alla rovescia inizierà quando sarà disponibile l’orario della disputa.',
 			'disputeChat.tooltips.refresh' => 'Aggiorna messaggi',
 			'disputeChat.tooltips.attachEvidence' => 'Allega prova di pagamento',
 			'disputeChat.tooltips.send' => 'Invia messaggio',
@@ -3650,12 +3668,12 @@ extension on TranslationsIt {
 			'twint.flow.makerWait.autoExpires' => 'Scade automaticamente',
 			'twint.flow.makerWait.codeExpiresIn' => ({required Object code}) => '${code} scadrà tra...',
 			'twint.flow.makerWait.cancelOffer' => 'Annulla offerta',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Un taker ha riservato la tua offerta e sta pagando il tuo codice ${code} nella sua app bancaria. Quando il pagamento arriva al tuo esercente, confermalo qui sotto.',
 			'twint.flow.makerWait.confirmReceived' => 'Conferma pagamento ricevuto',
 			'twint.flow.makerWait.confirmDialog.title' => 'Confermare il pagamento ricevuto?',
 			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Conferma solo se sei ASSOLUTAMENTE sicuro che il pagamento ${code} sia stato ricevuto con successo dal tuo esercente.\n\nLa conferma regola la hold invoice Lightning e invia immediatamente i sats al taker — non può essere annullata.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Annulla',
 			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Sì, pagamento ricevuto',
 			'twint.flow.makerExpired.title' => ({required Object code}) => '${code} probabilmente scaduto',

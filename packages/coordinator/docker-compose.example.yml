@@ -38,6 +38,9 @@ services:
       #   RESERVATION_SECONDS: 120
       #   FUNDED_EXPIRY_SECONDS: 1800
       #   TAKER_CHARGED_AUTO_CONFIRM_SECONDS: 3600
+      # Evidence may be submitted for this long after dispute entry. Expiry
+      # permits a coordinator ruling; it does not automatically move funds.
+      DISPUTE_EVIDENCE_PERIOD_SECONDS: 172800
       PAYMENT_SYSTEM: blik
       FRONTEND_DOMAIN: test.bitblik.app
       NAME: Example Coordinator

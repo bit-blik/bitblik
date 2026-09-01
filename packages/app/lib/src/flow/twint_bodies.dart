@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui show TextDirection;
 
 import 'package:bitblik_core/core.dart';
@@ -11,6 +12,7 @@ import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart'
     show
         activeOfferProvider,
+        coordinatorDisputeEvidenceDurationProvider,
         initializedApiServiceProvider,
         selectedPaymentSystemProvider;
 import '../screens/maker_flow/twint_code_scanner_screen.dart';
@@ -1612,6 +1614,111 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
 
 // ─── both roles: dispute ─────────────────────────────────────────────────────
 
+class _DisputeEvidenceDeadlineCard extends ConsumerWidget {
+  final Offer offer;
+
+  const _DisputeEvidenceDeadlineCard({required this.offer});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final period = ref.watch(
+      coordinatorDisputeEvidenceDurationProvider(offer.coordinatorPubkey),
+    );
+    if (period == null) return const SizedBox.shrink();
+    return _DisputeEvidenceCountdownCard(offer: offer, period: period);
+  }
+}
+
+class _DisputeEvidenceCountdownCard extends StatefulWidget {
+  final Offer offer;
+  final Duration period;
+
+  const _DisputeEvidenceCountdownCard({
+    required this.offer,
+    required this.period,
+  });
+
+  @override
+  State<_DisputeEvidenceCountdownCard> createState() =>
+      _DisputeEvidenceCountdownCardState();
+}
+
+class _DisputeEvidenceCountdownCardState
+    extends State<_DisputeEvidenceCountdownCard> {
+  late final Timer _timer;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  String _format(Duration duration) {
+    final seconds = duration.inSeconds.clamp(0, 1 << 31);
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    final remainder = seconds % 60;
+    return '${hours.toString().padLeft(2, '0')}:'
+        '${minutes.toString().padLeft(2, '0')}:'
+        '${remainder.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = Translations.of(context).disputeChat.evidenceDeadline;
+    final period = widget.period;
+    final startedAt = widget.offer.disputeAt;
+    final deadline = startedAt?.add(period);
+    final remaining = deadline?.difference(_now);
+    final expired = remaining != null && remaining <= Duration.zero;
+    final color = expired ? Colors.orange : Colors.amber.shade800;
+    final message = startedAt == null
+        ? strings.period(time: _format(period))
+        : expired
+            ? strings.expired
+            : strings.remaining(time: _format(remaining!));
+
+    return Card(
+      color: color.withValues(alpha: 0.10),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              expired ? Icons.timer_off_outlined : Icons.timer_outlined,
+              color: color,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    strings.title,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(message),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Shared dispute body (maker + taker): gavel icon, role-appropriate
 /// explanation, the offer amount, and the embedded coordinator dispute chat.
 /// The FlowScreen terminal footer supplies the Done/home action.
@@ -1632,6 +1739,7 @@ final FlowBody twintDisputeBody = (context, ref, offer, engine, role) {
       ),
       const SizedBox(height: 12),
       Text(_amount(offer), style: Theme.of(context).textTheme.titleLarge),
+      _DisputeEvidenceDeadlineCard(offer: offer),
       DisputeConversationCard(offer: offer),
     ],
   );

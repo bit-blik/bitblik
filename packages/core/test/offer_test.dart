@@ -85,6 +85,33 @@ void main() {
 
       expect(offer.category, OfferCategory.atm);
     });
+
+    test('nostr event parses public dispute timestamp', () {
+      final event = Nip01Event(
+        pubKey: 'coordinator-pubkey',
+        kind: kKindOffer,
+        tags: const [
+          ['d', 'offer-dispute'],
+          ['amt', '250000'],
+          ['fa', '100.0'],
+          ['f', 'PLN'],
+          ['s', 'dispute'],
+          ['created_at', '1767225600'],
+          ['p', 'coordinator-pubkey'],
+          ['dispute_at', '1767301200'],
+        ],
+        content: '',
+      );
+
+      final offer = Offer.fromNostrEvent(event);
+
+      expect(
+          offer.disputeAt,
+          DateTime.fromMillisecondsSinceEpoch(
+            1767301200 * 1000,
+            isUtc: true,
+          ));
+    });
   });
 
   group('Offer bank (backward compatibility)', () {

@@ -365,6 +365,11 @@ disputeChat:
   noMessages: "No messages yet."
   replyHint: "Reply here"
   readOnly: "This resolved dispute history is read-only."
+  evidenceDeadline:
+    title: "Evidence submission deadline"
+    remaining: "Provide evidence supporting your claim within ${time}. After this deadline, the coordinator may rule for the counterparty based on the evidence available."
+    expired: "The evidence period has ended. The coordinator may now rule based on the evidence available."
+    period: "The coordinator allows up to ${time} for evidence after the dispute opens. The countdown will start when the dispute timestamp is available."
   tooltips:
     refresh: "Refresh messages"
     attachEvidence: "Attach payment evidence"

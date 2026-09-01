@@ -200,6 +200,7 @@ class _Translations$disputeChat$pt extends Translations$disputeChat$en {
 	@override String get noMessages => 'Ainda não há mensagens.';
 	@override String get replyHint => 'Responder aqui';
 	@override String get readOnly => 'O histórico desta disputa resolvida é só de leitura.';
+	@override late final _Translations$disputeChat$evidenceDeadline$pt evidenceDeadline = _Translations$disputeChat$evidenceDeadline$pt._(_root);
 	@override late final _Translations$disputeChat$tooltips$pt tooltips = _Translations$disputeChat$tooltips$pt._(_root);
 	@override late final _Translations$disputeChat$errors$pt errors = _Translations$disputeChat$errors$pt._(_root);
 }
@@ -1063,6 +1064,19 @@ class _Translations$coordinator$management$pt extends Translations$coordinator$m
 	@override String get metricYourOffersTooltip => 'Número de ofertas que concluiu com sucesso com este coordenador.';
 	@override String get metricNetworkOffers => 'Ofertas (30d)';
 	@override String get metricNetworkOffersTooltip => 'Ofertas bem-sucedidas liquidadas por este coordenador entre todos os utilizadores nos últimos 30 dias.';
+}
+
+// Path: disputeChat.evidenceDeadline
+class _Translations$disputeChat$evidenceDeadline$pt extends Translations$disputeChat$evidenceDeadline$en {
+	_Translations$disputeChat$evidenceDeadline$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Prazo para envio de provas';
+	@override String remaining({required Object time}) => 'Envie provas que sustentem a sua posição dentro de ${time}. Após este prazo, o coordenador pode decidir a favor da contraparte com base nas provas disponíveis.';
+	@override String get expired => 'O período para envio de provas terminou. O coordenador pode agora decidir com base nas provas disponíveis.';
+	@override String period({required Object time}) => 'O coordenador permite até ${time} para provas após a abertura da disputa. A contagem decrescente começará quando o horário da disputa estiver disponível.';
 }
 
 // Path: disputeChat.tooltips
@@ -3442,6 +3456,10 @@ extension on TranslationsPt {
 			'disputeChat.noMessages' => 'Ainda não há mensagens.',
 			'disputeChat.replyHint' => 'Responder aqui',
 			'disputeChat.readOnly' => 'O histórico desta disputa resolvida é só de leitura.',
+			'disputeChat.evidenceDeadline.title' => 'Prazo para envio de provas',
+			'disputeChat.evidenceDeadline.remaining' => ({required Object time}) => 'Envie provas que sustentem a sua posição dentro de ${time}. Após este prazo, o coordenador pode decidir a favor da contraparte com base nas provas disponíveis.',
+			'disputeChat.evidenceDeadline.expired' => 'O período para envio de provas terminou. O coordenador pode agora decidir com base nas provas disponíveis.',
+			'disputeChat.evidenceDeadline.period' => ({required Object time}) => 'O coordenador permite até ${time} para provas após a abertura da disputa. A contagem decrescente começará quando o horário da disputa estiver disponível.',
 			'disputeChat.tooltips.refresh' => 'Atualizar mensagens',
 			'disputeChat.tooltips.attachEvidence' => 'Anexar comprovativo de pagamento',
 			'disputeChat.tooltips.send' => 'Enviar mensagem',
@@ -3686,12 +3704,12 @@ extension on TranslationsPt {
 			'taker.dispute.body' => 'A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.',
 			'twint.scanner.title' => ({required Object code}) => 'Ler código ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente.',
 			'twint.scanner.status.amountFailed' => 'A leitura pela câmara não conseguiu extrair o montante. Ainda pode usar o resultado do QR e corrigir os campos manualmente.',
 			'twint.flow.progress.step1' => '1. Criar oferta',
 			'twint.flow.progress.step2' => '2. Esperar pelo taker',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.progress.step3' => '3. Confirmar',
 			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. Pagar ${code}',
 			'twint.flow.takerProgress.step2' => '2. Receber sats',

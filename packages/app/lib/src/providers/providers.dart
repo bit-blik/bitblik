@@ -297,6 +297,35 @@ final coordinatorTakerChargedAutoConfirmDurationProvider =
       );
     });
 
+/// Evidence-collection policy advertised by the coordinator. Expiration allows
+/// an evidence-based ruling but never causes an automatic financial transition.
+final coordinatorDisputeEvidenceDurationProvider =
+    Provider.family<Duration?, String>((ref, coordinatorPubkey) {
+      final record = ref.watch(
+        coordinatorRecordByPubkeyProvider(coordinatorPubkey),
+      );
+      if (record?.info != null) {
+        final seconds = record!.info!.disputeEvidencePeriodSeconds;
+        return seconds == null || seconds <= 0
+            ? null
+            : Duration(seconds: seconds);
+      }
+      final coordinatorInfoAsync = ref.watch(
+        coordinatorInfoByPubkeyProvider(coordinatorPubkey),
+      );
+      return coordinatorInfoAsync.maybeWhen(
+        data:
+            (info) =>
+                info?.disputeEvidencePeriodSeconds == null ||
+                        info!.disputeEvidencePeriodSeconds! <= 0
+                    ? null
+                    : Duration(
+                      seconds: info.disputeEvidencePeriodSeconds!,
+                    ),
+        orElse: () => null,
+      );
+    });
+
 /// Helper provider to get reservation duration for a coordinator.
 /// Returns Duration based on coordinator's reservationSeconds, or null if coordinator info unavailable.
 final coordinatorReservationDurationProvider =

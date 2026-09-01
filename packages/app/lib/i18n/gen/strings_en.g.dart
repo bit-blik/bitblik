@@ -232,6 +232,7 @@ class Translations$disputeChat$en {
 	/// en: 'This resolved dispute history is read-only.'
 	String get readOnly => 'This resolved dispute history is read-only.';
 
+	late final Translations$disputeChat$evidenceDeadline$en evidenceDeadline = Translations$disputeChat$evidenceDeadline$en.internal(_root);
 	late final Translations$disputeChat$tooltips$en tooltips = Translations$disputeChat$tooltips$en.internal(_root);
 	late final Translations$disputeChat$errors$en errors = Translations$disputeChat$errors$en.internal(_root);
 }
@@ -1665,6 +1666,27 @@ class Translations$coordinator$management$en {
 
 	/// en: 'Successful offers settled by this coordinator across all users in the last 30 days.'
 	String get metricNetworkOffersTooltip => 'Successful offers settled by this coordinator across all users in the last 30 days.';
+}
+
+// Path: disputeChat.evidenceDeadline
+class Translations$disputeChat$evidenceDeadline$en {
+	Translations$disputeChat$evidenceDeadline$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Evidence submission deadline'
+	String get title => 'Evidence submission deadline';
+
+	/// en: 'Provide evidence supporting your claim within ${time}. After this deadline, the coordinator may rule for the counterparty based on the evidence available.'
+	String remaining({required Object time}) => 'Provide evidence supporting your claim within ${time}. After this deadline, the coordinator may rule for the counterparty based on the evidence available.';
+
+	/// en: 'The evidence period has ended. The coordinator may now rule based on the evidence available.'
+	String get expired => 'The evidence period has ended. The coordinator may now rule based on the evidence available.';
+
+	/// en: 'The coordinator allows up to ${time} for evidence after the dispute opens. The countdown will start when the dispute timestamp is available.'
+	String period({required Object time}) => 'The coordinator allows up to ${time} for evidence after the dispute opens. The countdown will start when the dispute timestamp is available.';
 }
 
 // Path: disputeChat.tooltips
@@ -5922,6 +5944,10 @@ extension on Translations {
 			'disputeChat.noMessages' => 'No messages yet.',
 			'disputeChat.replyHint' => 'Reply here',
 			'disputeChat.readOnly' => 'This resolved dispute history is read-only.',
+			'disputeChat.evidenceDeadline.title' => 'Evidence submission deadline',
+			'disputeChat.evidenceDeadline.remaining' => ({required Object time}) => 'Provide evidence supporting your claim within ${time}. After this deadline, the coordinator may rule for the counterparty based on the evidence available.',
+			'disputeChat.evidenceDeadline.expired' => 'The evidence period has ended. The coordinator may now rule based on the evidence available.',
+			'disputeChat.evidenceDeadline.period' => ({required Object time}) => 'The coordinator allows up to ${time} for evidence after the dispute opens. The countdown will start when the dispute timestamp is available.',
 			'disputeChat.tooltips.refresh' => 'Refresh messages',
 			'disputeChat.tooltips.attachEvidence' => 'Attach payment evidence',
 			'disputeChat.tooltips.send' => 'Send message',
@@ -6166,12 +6192,12 @@ extension on Translations {
 			'taker.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.',
 			'taker.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Resend New ${code} Code',
 			'taker.waitConfirmation.navigatedHome' => 'Navigated home.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => '${code} Code Expired',
 			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.',
 			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Reservation ends in',
 			'taker.waitConfirmation.expiredSentWarning' => 'The maker hasn\'t confirmed the payment yet. What would you like to do?',
-			_ => null,
-		} ?? switch (path) {
 			'taker.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'If you want to try again with a new ${code} code, renew the reservation.',
 			'taker.waitConfirmation.expiredInstruction2' => 'If you no longer want to complete this transaction, cancel the reservation.',
 			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',

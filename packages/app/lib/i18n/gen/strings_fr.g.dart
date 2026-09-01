@@ -199,6 +199,7 @@ class _Translations$disputeChat$fr extends Translations$disputeChat$en {
 	@override String get noMessages => 'Aucun message pour le moment.';
 	@override String get replyHint => 'Répondre ici';
 	@override String get readOnly => 'L’historique de ce litige résolu est en lecture seule.';
+	@override late final _Translations$disputeChat$evidenceDeadline$fr evidenceDeadline = _Translations$disputeChat$evidenceDeadline$fr._(_root);
 	@override late final _Translations$disputeChat$tooltips$fr tooltips = _Translations$disputeChat$tooltips$fr._(_root);
 	@override late final _Translations$disputeChat$errors$fr errors = _Translations$disputeChat$errors$fr._(_root);
 }
@@ -1062,6 +1063,19 @@ class _Translations$coordinator$management$fr extends Translations$coordinator$m
 	@override String get metricYourOffersTooltip => 'Nombre d\'offres que vous avez menées à bien avec ce coordinateur.';
 	@override String get metricNetworkOffers => 'Offres (30 j)';
 	@override String get metricNetworkOffersTooltip => 'Offres réussies réglées par ce coordinateur pour l\'ensemble des utilisateurs au cours des 30 derniers jours.';
+}
+
+// Path: disputeChat.evidenceDeadline
+class _Translations$disputeChat$evidenceDeadline$fr extends Translations$disputeChat$evidenceDeadline$en {
+	_Translations$disputeChat$evidenceDeadline$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Date limite de soumission des preuves';
+	@override String remaining({required Object time}) => 'Fournissez les preuves à l’appui de votre demande dans les ${time}. Après ce délai, le coordinateur peut statuer en faveur de la contrepartie selon les preuves disponibles.';
+	@override String get expired => 'La période de soumission des preuves est terminée. Le coordinateur peut maintenant statuer selon les preuves disponibles.';
+	@override String period({required Object time}) => 'Le coordinateur accorde jusqu’à ${time} pour fournir des preuves après l’ouverture du litige. Le compte à rebours commencera lorsque l’horodatage sera disponible.';
 }
 
 // Path: disputeChat.tooltips
@@ -3440,6 +3454,10 @@ extension on TranslationsFr {
 			'disputeChat.noMessages' => 'Aucun message pour le moment.',
 			'disputeChat.replyHint' => 'Répondre ici',
 			'disputeChat.readOnly' => 'L’historique de ce litige résolu est en lecture seule.',
+			'disputeChat.evidenceDeadline.title' => 'Date limite de soumission des preuves',
+			'disputeChat.evidenceDeadline.remaining' => ({required Object time}) => 'Fournissez les preuves à l’appui de votre demande dans les ${time}. Après ce délai, le coordinateur peut statuer en faveur de la contrepartie selon les preuves disponibles.',
+			'disputeChat.evidenceDeadline.expired' => 'La période de soumission des preuves est terminée. Le coordinateur peut maintenant statuer selon les preuves disponibles.',
+			'disputeChat.evidenceDeadline.period' => ({required Object time}) => 'Le coordinateur accorde jusqu’à ${time} pour fournir des preuves après l’ouverture du litige. Le compte à rebours commencera lorsque l’horodatage sera disponible.',
 			'disputeChat.tooltips.refresh' => 'Actualiser les messages',
 			'disputeChat.tooltips.attachEvidence' => 'Joindre une preuve de paiement',
 			'disputeChat.tooltips.send' => 'Envoyer le message',
@@ -3685,12 +3703,12 @@ extension on TranslationsFr {
 			'twint.scanner.title' => ({required Object code}) => 'Scanner le code ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alignez le QR ${code} et le texte du montant dans le cadre de la caméra.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Le code ${code} n\'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.scanner.status.amountFailed' => 'Le scan caméra n\'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement.',
 			'twint.flow.progress.step1' => '1. Créer l\'offre',
 			'twint.flow.progress.step2' => '2. Attendre un taker',
 			'twint.flow.progress.step3' => '3. Confirmer',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. Payer ${code}',
 			'twint.flow.takerProgress.step2' => '2. Recevoir des sats',
 			'twint.flow.makerWait.takerPaying' => 'Le taker est en train de payer',
