@@ -20,6 +20,8 @@ Future<void> main() async {
       frontendDomain: config.frontendDomain,
       coordinatorMinInterval: config.coordinatorMinInterval,
       coordinatorCooldown: config.coordinatorCooldown,
+      offerStateRetention: config.offerStateRetention,
+      maxTrackedOffers: config.maxTrackedOffers,
     );
     await controller.init();
     final monitor = NostrOfferMonitor(config: config, controller: controller);

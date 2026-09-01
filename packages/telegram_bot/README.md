@@ -54,3 +54,22 @@ identical for `blik`, `mbway`, `twint`, and `sk`.
 After the central service is live, remove the shared generic group from each
 coordinator's `TELEGRAM_CHAT_ID` setting to avoid duplicate announcements.
 Coordinator-specific or bank-specific destinations can remain configured.
+
+## Memory bounds
+
+The bot does not cache discovery query results. It rotates its long-lived Nostr
+offer subscription every 15 minutes, releasing NDK's per-subscription replay
+and event-id tracking, and refreshes coordinator discovery every five minutes.
+Offer records, including short-lived terminal tombstones needed for replay
+deduplication, are retained for at most 48 hours and the state is capped at
+2,000 records. Failed Telegram lifecycle operations are retried during
+discovery refreshes but cannot make the state grow beyond those bounds.
+
+The limits can be tuned with `DISCOVERY_REFRESH_SECONDS`,
+`SUBSCRIPTION_ROTATION_SECONDS`, `OFFER_STATE_RETENTION_SECONDS`, and
+`MAX_TRACKED_OFFERS`. The
+[`docker-compose.example.yml`](docker-compose.example.yml) service also applies
+a 192 MiB hard limit and a 64 MiB reservation. The limit is a final safety
+boundary, not a substitute for the bounded retention above; deploy the new
+image and restart the existing container once to release the heap accumulated
+by the old build.

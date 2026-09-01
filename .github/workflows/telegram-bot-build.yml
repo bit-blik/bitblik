@@ -3,16 +3,33 @@ name: Telegram Bot Docker build
 on:
   push:
     paths:
-      - 'packages/telegram_bot/**'
-      - 'packages/core/**'
+      # Keep this list aligned with packages/telegram_bot/Dockerfile. Tests,
+      # docs, examples, and local deployment files do not affect the image.
+      - 'packages/telegram_bot/bin/**'
+      - 'packages/telegram_bot/lib/**'
+      - 'packages/telegram_bot/pubspec.yaml'
+      - 'packages/telegram_bot/Dockerfile'
+      - 'packages/core/lib/**'
+      - 'packages/core/pubspec.yaml'
+      # The Docker build copies every workspace member manifest before pub get.
+      - 'packages/app/pubspec.yaml'
+      - 'packages/cli/pubspec.yaml'
+      - 'packages/coordinator/pubspec.yaml'
       - 'pubspec.yaml'
       - 'pubspec.lock'
       - '.dockerignore'
       - '.github/workflows/telegram-bot-build.yml'
   pull_request:
     paths:
-      - 'packages/telegram_bot/**'
-      - 'packages/core/**'
+      - 'packages/telegram_bot/bin/**'
+      - 'packages/telegram_bot/lib/**'
+      - 'packages/telegram_bot/pubspec.yaml'
+      - 'packages/telegram_bot/Dockerfile'
+      - 'packages/core/lib/**'
+      - 'packages/core/pubspec.yaml'
+      - 'packages/app/pubspec.yaml'
+      - 'packages/cli/pubspec.yaml'
+      - 'packages/coordinator/pubspec.yaml'
       - 'pubspec.yaml'
       - 'pubspec.lock'
       - '.dockerignore'

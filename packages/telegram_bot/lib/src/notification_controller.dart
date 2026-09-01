@@ -23,6 +23,8 @@ class OfferNotificationController {
   final Duration coordinatorMinInterval;
   final Duration coordinatorCooldown;
   final Duration initialOfferMaxAge;
+  final Duration offerStateRetention;
+  final int maxTrackedOffers;
   final BotClock _clock;
   final BotLogger _log;
 
@@ -41,6 +43,8 @@ class OfferNotificationController {
     required this.coordinatorMinInterval,
     required this.coordinatorCooldown,
     this.initialOfferMaxAge = const Duration(seconds: 30),
+    this.offerStateRetention = const Duration(hours: 48),
+    this.maxTrackedOffers = 2000,
     BotClock? clock,
     BotLogger? logger,
   })  : _clock = clock ?? DateTime.now,
@@ -60,6 +64,7 @@ class OfferNotificationController {
         await _strikeMessages(record);
       }
     }
+    _compactState();
     // Preflight persistence before connecting to relays or sending Telegram
     // messages. Running without durable message ids would make later
     // strike/delete operations impossible after a restart.
@@ -93,6 +98,8 @@ class OfferNotificationController {
           record.messages = await _deleteMessages(record.messages);
         }
       }
+      await _retryTerminalActions();
+      _compactState();
       await store.save(_state);
     });
   }
@@ -162,8 +169,43 @@ class OfferNotificationController {
           case 'dispute':
             break;
         }
+        _compactState();
         await store.save(_state);
       });
+
+  /// Bounds deduplication and pending Telegram lifecycle state. Recent terminal
+  /// records remain as tombstones so an overlapping subscription replay cannot
+  /// re-announce an older pending event. Even failed Telegram operations are
+  /// eventually evicted so an unavailable API cannot grow memory indefinitely.
+  void _compactState() {
+    final cutoff =
+        _clock().toUtc().subtract(offerStateRetention).millisecondsSinceEpoch ~/
+            1000;
+    _state.offers.removeWhere(
+      (_, record) => record.latestEventCreatedAt < cutoff,
+    );
+
+    final overflow = _state.offers.length - maxTrackedOffers;
+    if (overflow <= 0) return;
+    final removable = _state.offers.entries.toList()
+      ..sort((left, right) => left.value.latestEventCreatedAt
+          .compareTo(right.value.latestEventCreatedAt));
+    for (final entry in removable.take(overflow)) {
+      _state.offers.remove(entry.key);
+    }
+  }
+
+  Future<void> _retryTerminalActions() async {
+    for (final record in _state.offers.values) {
+      if (record.messages.isEmpty) continue;
+      if (record.status == 'success' ||
+          _mutedCoordinators.contains(record.coordinatorPubkey)) {
+        record.messages = await _deleteMessages(record.messages);
+      } else if (record.status == 'canceled') {
+        await _strikeMessages(record);
+      }
+    }
+  }
 
   Future<void> _handleFundedOffer(
     OfferNotificationRecord record,

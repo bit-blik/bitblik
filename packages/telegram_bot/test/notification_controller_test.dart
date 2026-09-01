@@ -70,7 +70,10 @@ void main() {
   late OfferNotificationController controller;
   late List<String> logs;
 
-  Future<OfferNotificationController> createController() async {
+  Future<OfferNotificationController> createController({
+    Duration offerStateRetention = const Duration(hours: 48),
+    int maxTrackedOffers = 2000,
+  }) async {
     final value = OfferNotificationController(
       telegram: telegram,
       store: store,
@@ -78,6 +81,8 @@ void main() {
       frontendDomain: 'bitblik.app',
       coordinatorMinInterval: const Duration(seconds: 10),
       coordinatorCooldown: const Duration(minutes: 10),
+      offerStateRetention: offerStateRetention,
+      maxTrackedOffers: maxTrackedOffers,
       clock: () => now,
       logger: logs.add,
     );
@@ -292,5 +297,45 @@ void main() {
     ));
 
     expect(telegram.sent, isEmpty);
+  });
+
+  test('bounds retained offer state by age and count', () async {
+    final timestamp = now.millisecondsSinceEpoch ~/ 1000;
+    store.state.offers.addAll({
+      '$coordinatorA:stale': OfferNotificationRecord(
+        coordinatorPubkey: coordinatorA,
+        offerId: 'stale',
+        latestEventCreatedAt: timestamp - 7200,
+        status: 'pending',
+      ),
+      '$coordinatorA:recent-1': OfferNotificationRecord(
+        coordinatorPubkey: coordinatorA,
+        offerId: 'recent-1',
+        latestEventCreatedAt: timestamp - 20,
+        status: 'canceled',
+      ),
+      '$coordinatorA:recent-2': OfferNotificationRecord(
+        coordinatorPubkey: coordinatorA,
+        offerId: 'recent-2',
+        latestEventCreatedAt: timestamp - 10,
+        status: 'pending',
+      ),
+      '$coordinatorA:recent-3': OfferNotificationRecord(
+        coordinatorPubkey: coordinatorA,
+        offerId: 'recent-3',
+        latestEventCreatedAt: timestamp,
+        status: 'pending',
+      ),
+    });
+
+    controller = await createController(
+      offerStateRetention: const Duration(hours: 1),
+      maxTrackedOffers: 2,
+    );
+
+    expect(store.state.offers.keys, {
+      '$coordinatorA:recent-2',
+      '$coordinatorA:recent-3',
+    });
   });
 }

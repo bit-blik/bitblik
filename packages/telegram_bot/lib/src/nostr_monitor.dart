@@ -16,6 +16,7 @@ class NostrOfferMonitor {
   StreamSubscription<Nip01Event>? _offerListener;
   Set<String> _subscribedAuthors = const {};
   Set<String> _subscribedRelays = const {};
+  DateTime? _subscriptionStartedAt;
   Map<String, CoordinatorIdentity> _reportedCoordinators = const {};
   Future<void>? _refreshInFlight;
   late Set<String> _lastMutedPubkeys;
@@ -91,6 +92,10 @@ class NostrOfferMonitor {
     } catch (error, stackTrace) {
       print('Nostr discovery refresh failed: $error\n$stackTrace');
     } finally {
+      // Discovery events are re-fetched on every refresh and the verifier
+      // cache is only an optimization. Releasing it keeps this daemon's
+      // steady-state heap independent of relay history and event volume.
+      _ndk.requests.clearVerifiedEventCache();
       _refreshInFlight = null;
       completer.complete();
     }
@@ -102,6 +107,7 @@ class NostrOfferMonitor {
       Filter(
         kinds: [kKindRelayList],
         authors: [config.paymentSystem.discoveryPubkeyHex],
+        limit: 1,
       ),
       config.bootstrapRelays,
       name: 'tg-discovery',
@@ -117,6 +123,7 @@ class NostrOfferMonitor {
         // The project identity is canonical in bitblik_core for each payment
         // system; use the same author for discovery and its NIP-51 mute list.
         authors: [config.paymentSystem.discoveryPubkeyHex],
+        limit: 1,
       ),
       {...config.bootstrapRelays, ...discoveryRelays},
       name: 'tg-mutes',
@@ -136,15 +143,17 @@ class NostrOfferMonitor {
   ) async {
     final response = _ndk.requests.query(
       name: 'tg-coordinators',
-      filter: Filter(kinds: [kKindCoordinatorInfo]),
+      // A limit prevents a noisy or malicious relay from making one refresh
+      // retain an arbitrarily large response while still leaving ample room
+      // for every real coordinator in a market.
+      filter: Filter(kinds: [kKindCoordinatorInfo], limit: 500),
       explicitRelays: discoveryRelays.toList(growable: false),
       cacheRead: false,
+      cacheWrite: false,
+      timeout: config.queryTimeout,
     );
     final coordinators = <String, (int, CoordinatorInfo)>{};
-    await for (final event in response.stream.timeout(
-      config.queryTimeout,
-      onTimeout: (sink) => sink.close(),
-    )) {
+    await for (final event in response.stream) {
       final pubkey = event.pubKey.trim().toLowerCase();
       if (muted.contains(pubkey)) continue;
       try {
@@ -211,7 +220,7 @@ class NostrOfferMonitor {
     Set<String> discoveryRelays,
   ) async {
     final newest = await _latestEvent(
-      Filter(kinds: [kKindRelayList], authors: [pubkey]),
+      Filter(kinds: [kKindRelayList], authors: [pubkey], limit: 1),
       discoveryRelays,
       // NDK appends an 11-character random suffix. Keep this comfortably under
       // the 64/100-character subscription-id limits enforced by relays.
@@ -232,12 +241,11 @@ class NostrOfferMonitor {
       filter: filter,
       explicitRelays: relays.toList(growable: false),
       cacheRead: false,
+      cacheWrite: false,
+      timeout: config.queryTimeout,
     );
     Nip01Event? newest;
-    await for (final event in response.stream.timeout(
-      config.queryTimeout,
-      onTimeout: (sink) => sink.close(),
-    )) {
+    await for (final event in response.stream) {
       if (newest == null || event.createdAt > newest.createdAt) newest = event;
     }
     return newest;
@@ -247,7 +255,12 @@ class NostrOfferMonitor {
     Set<String> authors,
     Set<String> relays,
   ) async {
-    if (_sameSet(authors, _subscribedAuthors) &&
+    final startedAt = _subscriptionStartedAt;
+    final rotationDue = startedAt == null ||
+        DateTime.now().toUtc().difference(startedAt) >=
+            config.subscriptionRotationInterval;
+    if (!rotationDue &&
+        _sameSet(authors, _subscribedAuthors) &&
         _sameSet(relays, _subscribedRelays)) {
       return;
     }
@@ -272,6 +285,8 @@ class NostrOfferMonitor {
         since: since,
       ),
       explicitRelays: relays.toList(growable: false),
+      cacheRead: false,
+      cacheWrite: false,
     );
     _offerListener = _offerSubscription!.stream.listen(
       (event) => unawaited(controller.handleEvent(event)),
@@ -280,6 +295,7 @@ class NostrOfferMonitor {
       },
       cancelOnError: false,
     );
+    _subscriptionStartedAt = DateTime.now().toUtc();
   }
 
   Set<String> _relayTags(Nip01Event event) => {
@@ -294,6 +310,7 @@ class NostrOfferMonitor {
       await _ndk.requests.closeSubscription(_offerSubscription!.requestId);
       _offerSubscription = null;
     }
+    _subscriptionStartedAt = null;
   }
 
   Future<void> stop() async {

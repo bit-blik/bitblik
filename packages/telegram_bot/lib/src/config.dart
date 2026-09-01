@@ -12,6 +12,9 @@ class TelegramBotConfig {
   final Duration discoveryRefreshInterval;
   final Duration queryTimeout;
   final Duration subscriptionOverlap;
+  final Duration subscriptionRotationInterval;
+  final Duration offerStateRetention;
+  final int maxTrackedOffers;
 
   const TelegramBotConfig({
     required this.botToken,
@@ -25,6 +28,9 @@ class TelegramBotConfig {
     required this.discoveryRefreshInterval,
     required this.queryTimeout,
     required this.subscriptionOverlap,
+    required this.subscriptionRotationInterval,
+    required this.offerStateRetention,
+    required this.maxTrackedOffers,
   });
 
   factory TelegramBotConfig.fromEnvironment(Map<String, String> env) {
@@ -98,7 +104,7 @@ class TelegramBotConfig {
         seconds: positiveInt('COORDINATOR_RATE_LIMIT_SECONDS', 600),
       ),
       discoveryRefreshInterval: Duration(
-        seconds: positiveInt('DISCOVERY_REFRESH_SECONDS', 60),
+        seconds: positiveInt('DISCOVERY_REFRESH_SECONDS', 300),
       ),
       queryTimeout: Duration(
         seconds: positiveInt('NOSTR_QUERY_TIMEOUT_SECONDS', 8),
@@ -106,6 +112,13 @@ class TelegramBotConfig {
       subscriptionOverlap: Duration(
         seconds: positiveInt('SUBSCRIPTION_OVERLAP_SECONDS', 15),
       ),
+      subscriptionRotationInterval: Duration(
+        seconds: positiveInt('SUBSCRIPTION_ROTATION_SECONDS', 900),
+      ),
+      offerStateRetention: Duration(
+        seconds: positiveInt('OFFER_STATE_RETENTION_SECONDS', 172800),
+      ),
+      maxTrackedOffers: positiveInt('MAX_TRACKED_OFFERS', 2000),
     );
   }
 }
