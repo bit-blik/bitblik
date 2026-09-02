@@ -1090,6 +1090,10 @@ wallet:
     title: Portafoglio di ricezione richiesto
     message: Nessun portafoglio configurato per ricevere. Aggiungine uno nelle impostazioni Portafoglio per accettare offerte.
     openSettings: Impostazioni portafoglio
+  incompatibleReceiving:
+    title: Serve un portafoglio BOLT11
+    message: Questo coordinatore può pagare questa offerta solo tramite BOLT11.
+    explanation: Il tuo portafoglio di ricezione supporta le offerte BOLT12, ma non può creare la fattura BOLT11 richiesta. Aggiungi un portafoglio di ricezione compatibile con BOLT11.
 
 nwc:
   title: Nostr Wallet Connect (NWC)

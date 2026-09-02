@@ -92,7 +92,7 @@ dependency_overrides:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk_flutter
     #  #ref: a2dda5ba7011ebe194f3a769f7543da08371ff5b
-      ref: 3c87573143f20c71cb346f70612961c236401c5a
+      ref: 3416e6332a1690cc302a823ac3efdad144e61de6
     #path: ../../../ndk/packages/ndk_flutter
 #  ndk_drift:
 #    git:

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
+import '../widgets/bolt12_badge.dart';
 import '../widgets/relay_dots.dart';
 import 'coordinator_details_screen.dart';
 
@@ -303,6 +304,30 @@ class _CoordinatorManagementScreenState
                                             context,
                                           ).textTheme.titleMedium,
                                         ),
+                                        if (c.version.isNotEmpty ||
+                                            c.supportsBolt12Payouts) ...[
+                                          const SizedBox(height: 3),
+                                          Wrap(
+                                            spacing: 7,
+                                            runSpacing: 4,
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            children: [
+                                              if (c.version.isNotEmpty)
+                                                Text(
+                                                  'v${c.version}',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.copyWith(
+                                                        color: Colors.grey,
+                                                      ),
+                                                ),
+                                              if (c.supportsBolt12Payouts)
+                                                const Bolt12Badge(compact: true),
+                                            ],
+                                          ),
+                                        ],
                                         const SizedBox(height: 4),
                                         Row(
                                           children: [
@@ -543,3 +568,4 @@ class _MetricChip extends StatelessWidget {
     );
   }
 }
+

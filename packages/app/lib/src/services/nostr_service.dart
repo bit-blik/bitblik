@@ -593,18 +593,21 @@ class NostrService {
     String coordinatorPubkey, {
     String? takerLightningAddress,
     String? takerInvoice,
+    String? takerOffer,
   }) async {
     final request = NostrRequest(
       method: kRpcReserveOffer,
       params: {
         'offer_id': offerId,
-        // D1: generic flows (TWINT) capture the taker's payout details at
-        // reserve via the `accept_taker_invoice` effect. Older coordinators
-        // (BLIK) ignore these extra params.
+        // Generic flows (TWINT) capture the taker's payout details at
+        // reserve via the legacy `accept_taker_invoice` effect or its typed
+        // alias. Older coordinators (BLIK) ignore these extra params.
         if (takerLightningAddress != null && takerLightningAddress.isNotEmpty)
           'taker_lightning_address': takerLightningAddress,
         if (takerInvoice != null && takerInvoice.isNotEmpty)
           'taker_invoice': takerInvoice,
+        if (takerOffer != null && takerOffer.isNotEmpty)
+          'taker_offer': takerOffer,
       },
     );
 
@@ -656,15 +659,24 @@ class NostrService {
     required String offerId,
     required String takerId,
     String? blikCode,
-    required String takerInvoice,
+    String? takerInvoice,
+    String? takerOffer,
     required String coordinatorPubkey,
   }) async {
+    if ((takerInvoice == null) == (takerOffer == null)) {
+      throw ArgumentError(
+        'Exactly one BOLT11 invoice or BOLT12 offer is required',
+      );
+    }
     final request = NostrRequest(
       method: kRpcSubmitBlik,
       params: {
         'offer_id': offerId,
         if (blikCode != null && blikCode.isNotEmpty) 'blik_code': blikCode,
-        'taker_invoice': takerInvoice,
+        if (takerInvoice != null && takerInvoice.isNotEmpty)
+          'taker_invoice': takerInvoice,
+        if (takerOffer != null && takerOffer.isNotEmpty)
+          'taker_offer': takerOffer,
       },
     );
 
@@ -794,13 +806,23 @@ class NostrService {
   /// POST /offers/{offerId}/update-invoice
   Future<void> updateTakerInvoice({
     required String offerId,
-    required String newBolt11,
+    String? newBolt11,
+    String? newBolt12,
     required String userPubkey,
     required String coordinatorPubkey,
   }) async {
+    if ((newBolt11 == null) == (newBolt12 == null)) {
+      throw ArgumentError(
+        'Exactly one BOLT11 invoice or BOLT12 offer is required',
+      );
+    }
     final request = NostrRequest(
       method: kRpcUpdateTakerInvoice,
-      params: {'offer_id': offerId, 'bolt11': newBolt11},
+      params: {
+        'offer_id': offerId,
+        if (newBolt11 != null && newBolt11.isNotEmpty) 'bolt11': newBolt11,
+        if (newBolt12 != null && newBolt12.isNotEmpty) 'taker_offer': newBolt12,
+      },
     );
 
     final response = await sendRequest(

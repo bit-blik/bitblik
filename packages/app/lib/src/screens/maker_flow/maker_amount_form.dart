@@ -15,6 +15,7 @@ import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
 import '../../settings/app_preferences.dart';
+import '../../widgets/bolt12_badge.dart';
 import '../coordinator_details_screen.dart';
 import 'twint_code_scanner_screen.dart';
 // CoordinatorRecord comes from bitblik_core
@@ -974,6 +975,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: Colors.grey),
                                 ),
+                              if (coordinator.supportsBolt12Payouts)
+                                const Bolt12Badge(compact: true),
                               Text(
                                 t.coordinator.info.rangeDisplay(
                                   minAmount: minPln,
@@ -2851,3 +2854,4 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     }
   }
 }
+

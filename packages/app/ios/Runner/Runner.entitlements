@@ -5,6 +5,9 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:bitblik.app</string>
+		<string>applinks:bitblik.xyz</string>
+		<string>applinks:npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3.nsite.lol</string>
+		<string>applinks:npub180nj93uqjvvjksryaxaz8fk9gxwwtg06gxlkd5csrj6rqfg3phhs09n5s9.nsite.lol</string>
 		<string>applinks:bitway.me</string>
 		<string>applinks:bittwint.app</string>
 	</array>

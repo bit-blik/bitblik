@@ -33,8 +33,21 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="bitblik.app" android:pathPrefix="/" />
+                <data android:scheme="https" android:host="bitblik.xyz" android:pathPrefix="/" />
                 <data android:scheme="https" android:host="bitway.me" android:pathPrefix="/" />
                 <data android:scheme="https" android:host="bittwint.app" android:pathPrefix="/" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3.nsite.lol" android:pathPrefix="/app/" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="npub180nj93uqjvvjksryaxaz8fk9gxwwtg06gxlkd5csrj6rqfg3phhs09n5s9.nsite.lol" android:pathPrefix="/app/" />
             </intent-filter>
             <!-- Deep links for app schemes -->
             <intent-filter>

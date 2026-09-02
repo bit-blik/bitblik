@@ -377,6 +377,7 @@ class _Translations$wallet$sk extends Translations$wallet$en {
 	@override String get title => 'Peňaženka';
 	@override String get description => 'Spravuj nastavenia svojej Lightning peňaženky';
 	@override late final _Translations$wallet$missingReceiving$sk missingReceiving = _Translations$wallet$missingReceiving$sk._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$sk incompatibleReceiving = _Translations$wallet$incompatibleReceiving$sk._(_root);
 	@override late final _Translations$wallet$details$sk details = _Translations$wallet$details$sk._(_root);
 }
 
@@ -1586,6 +1587,18 @@ class _Translations$wallet$missingReceiving$sk extends Translations$wallet$missi
 	@override String get title => 'Vyžaduje sa peňaženka na prijímanie';
 	@override String get message => 'Nie je nakonfigurovaná žiadna peňaženka na prijímanie. Pridaj jednu v nastaveniach peňaženky, aby si mohol prijímať ponuky.';
 	@override String get openSettings => 'Nastavenia peňaženky';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$sk extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Vyžaduje sa BOLT11 peňaženka';
+	@override String get message => 'Tento koordinátor môže túto ponuku vyplatiť iba cez BOLT11.';
+	@override String get explanation => 'Tvoja prijímacia peňaženka podporuje ponuky BOLT12, ale nevie vytvoriť požadovanú BOLT11 faktúru. Pridaj prijímaciu peňaženku kompatibilnú s BOLT11.';
 }
 
 // Path: wallet.details
@@ -3357,6 +3370,9 @@ extension on TranslationsSk {
 			'wallet.missingReceiving.title' => 'Vyžaduje sa peňaženka na prijímanie',
 			'wallet.missingReceiving.message' => 'Nie je nakonfigurovaná žiadna peňaženka na prijímanie. Pridaj jednu v nastaveniach peňaženky, aby si mohol prijímať ponuky.',
 			'wallet.missingReceiving.openSettings' => 'Nastavenia peňaženky',
+			'wallet.incompatibleReceiving.title' => 'Vyžaduje sa BOLT11 peňaženka',
+			'wallet.incompatibleReceiving.message' => 'Tento koordinátor môže túto ponuku vyplatiť iba cez BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'Tvoja prijímacia peňaženka podporuje ponuky BOLT12, ale nevie vytvoriť požadovanú BOLT11 faktúru. Pridaj prijímaciu peňaženku kompatibilnú s BOLT11.',
 			'wallet.details.title' => 'Detaily peňaženky',
 			'wallet.details.pendingTitle' => 'Čakajúce transakcie',
 			'wallet.details.finishedTitle' => 'Dokončené transakcie',

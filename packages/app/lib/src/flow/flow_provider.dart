@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bitblik_core/core.dart';
 
 import '../providers/providers.dart'
-    show selectedPaymentSystemProvider, ndkProvider;
+    show selectedPaymentSystemProvider, ndkProvider, apiServiceProvider;
 import 'taker_receive_invoice.dart';
 
 /// The single route used for every coordinator flow interaction.
@@ -38,18 +38,38 @@ final flowEngineProvider = FutureProvider<FlowEngine>((ref) async {
   return AppFlowLoader.load(ps.flowId);
 });
 
-/// When the active flow captures the taker's payout invoice at reserve (its
-/// `reserve_offer` transition runs `accept_taker_invoice` — e.g. TWINT), generate
-/// a bolt11 invoice for [offer]'s net payout from the receiving wallet so it can
-/// be sent with `reserve_offer`. Returns null when not needed. Throws if no
-/// receiving wallet is configured / generation fails (the reserve then aborts).
-Future<String?> reserveTakerInvoiceIfNeeded(WidgetRef ref, Offer offer) async {
+/// When the active flow captures the taker's payout instruction at reserve,
+/// generate one for [offer]'s net payout from the receiving wallet so it can be
+/// sent with `reserve_offer`. Both the legacy `accept_taker_invoice` keyword and
+/// its typed `accept_taker_payout` alias are recognized.
+Future<ReceivingPayment?> reserveTakerInvoiceIfNeeded(
+  WidgetRef ref,
+  Offer offer,
+) async {
   final engine = await ref.read(flowEngineProvider.future);
   final t = engine.transitionFor(engine.initialState, 'reserve_offer');
-  if (t == null || !t.actions.contains('accept_taker_invoice')) return null;
+  if (t == null ||
+      !t.actions.any(
+        const {'accept_taker_invoice', 'accept_taker_payout'}.contains,
+      )) {
+    return null;
+  }
   final ndk = ref.read(ndkProvider);
   if (ndk == null) throw Exception('No wallet available to receive payout');
-  final netSats = offer.amountSats - (offer.takerFees ?? 0);
+  final coordinator = ref
+      .read(apiServiceProvider)
+      .getCoordinatorInfoByPubkey(offer.coordinatorPubkey);
+  final takerFees =
+      offer.takerFees ??
+      (coordinator == null
+          ? 0
+          : OfferQuote.takerFeeSats(offer.amountSats, coordinator.takerFee));
+  final netSats = offer.amountSats - takerFees;
   if (netSats <= 0) throw Exception('Invalid payout amount');
-  return createReceivingInvoice(ndk, netSats);
+  return createBestReceivingPayment(
+    ndk,
+    netSats,
+    coordinatorSupportsBolt12:
+        coordinator?.outgoingPaymentTypes.contains('bolt12') ?? false,
+  );
 }

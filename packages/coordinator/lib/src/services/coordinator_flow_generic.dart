@@ -14,7 +14,9 @@ class OfferWriteSpec {
   DateTime? takerPaidAt;
   String? code;
   String? takerInvoice;
+  String? takerOffer;
   String? makerRefundInvoice;
+  String? makerRefundOffer;
   int? takerFees;
 
   /// Lightning routing fee (sats) charged when paying the taker's invoice —
@@ -404,8 +406,10 @@ class GenericOfferFlow {
       'client': clientVersion,
       'blik_code': w.code ?? (t.returns == 'blik_code' ? offer.blikCode : null),
       'taker_invoice': w.takerInvoice,
+      'taker_offer': w.takerOffer,
       'taker_fees': w.takerFees,
       'maker_invoice': _cleanParam(params['maker_invoice']),
+      'maker_offer': _cleanParam(params['maker_offer']),
       'failure_reason': w.failureReason,
       ...w.audit,
     };
@@ -423,7 +427,9 @@ class GenericOfferFlow {
       code: w.code,
       codeReceivedAt: w.codeReceivedAt,
       takerInvoice: w.takerInvoice,
+      takerOffer: w.takerOffer,
       makerRefundInvoice: w.makerRefundInvoice,
+      makerRefundOffer: w.makerRefundOffer,
       takerFees: w.takerFees,
       takerInvoiceFees: w.takerInvoiceFees,
       failureReason: w.failureReason,

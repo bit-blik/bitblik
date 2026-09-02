@@ -403,6 +403,7 @@ class _Translations$wallet$it extends Translations$wallet$en {
 	@override String get title => 'Portafoglio';
 	@override String get description => 'Gestisci le impostazioni del tuo portafoglio Lightning';
 	@override late final _Translations$wallet$missingReceiving$it missingReceiving = _Translations$wallet$missingReceiving$it._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$it incompatibleReceiving = _Translations$wallet$incompatibleReceiving$it._(_root);
 }
 
 // Path: nwc
@@ -1685,6 +1686,18 @@ class _Translations$wallet$missingReceiving$it extends Translations$wallet$missi
 	@override String get title => 'Portafoglio di ricezione richiesto';
 	@override String get message => 'Nessun portafoglio configurato per ricevere. Aggiungine uno nelle impostazioni Portafoglio per accettare offerte.';
 	@override String get openSettings => 'Impostazioni portafoglio';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$it extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Serve un portafoglio BOLT11';
+	@override String get message => 'Questo coordinatore può pagare questa offerta solo tramite BOLT11.';
+	@override String get explanation => 'Il tuo portafoglio di ricezione supporta le offerte BOLT12, ma non può creare la fattura BOLT11 richiesta. Aggiungi un portafoglio di ricezione compatibile con BOLT11.';
 }
 
 // Path: nwc.labels
@@ -3690,6 +3703,9 @@ extension on TranslationsIt {
 			'wallet.missingReceiving.title' => 'Portafoglio di ricezione richiesto',
 			'wallet.missingReceiving.message' => 'Nessun portafoglio configurato per ricevere. Aggiungine uno nelle impostazioni Portafoglio per accettare offerte.',
 			'wallet.missingReceiving.openSettings' => 'Impostazioni portafoglio',
+			'wallet.incompatibleReceiving.title' => 'Serve un portafoglio BOLT11',
+			'wallet.incompatibleReceiving.message' => 'Questo coordinatore può pagare questa offerta solo tramite BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'Il tuo portafoglio di ricezione supporta le offerte BOLT12, ma non può creare la fattura BOLT11 richiesta. Aggiungi un portafoglio di ricezione compatibile con BOLT11.',
 			'nwc.title' => 'Nostr Wallet Connect (NWC)',
 			'nwc.description' => 'Connetti il tuo portafoglio Lightning tramite NWC',
 			'nwc.labels.connectionString' => 'Stringa di Connessione NWC',

@@ -161,4 +161,35 @@ void main() {
       expect(utf8.encode(payload).length, lessThan(65535));
     });
   });
+
+  group('Offer typed payout instruction', () {
+    Offer base({String? invoice, String? bolt12Offer}) => Offer(
+          id: 'typed-payout',
+          amountSats: 1000,
+          makerFees: 10,
+          status: OfferStatus.payingTaker,
+          fiatAmount: 10,
+          fiatCurrency: 'PLN',
+          createdAt: DateTime.utc(2026),
+          makerPubkey: 'maker',
+          coordinatorPubkey: 'coordinator',
+          takerInvoice: invoice,
+          takerOffer: bolt12Offer,
+        );
+
+    test('copyWith switches invoice and offer as a one-of', () {
+      final invoice = base(invoice: 'lnbc10u1example');
+      final offer = invoice.copyWith(takerOffer: 'lno1example');
+      expect(offer.takerInvoice, isNull);
+      expect(offer.takerOffer, 'lno1example');
+      expect(
+          offer.copyWith(takerInvoice: 'lnbc20u1example').takerOffer, isNull);
+    });
+
+    test('JSON rejects both payout fields', () {
+      final json = base(invoice: 'lnbc10u1example').toJson()
+        ..['taker_offer'] = 'lno1example';
+      expect(() => Offer.fromJson(json), throwsFormatException);
+    });
+  });
 }

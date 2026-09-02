@@ -17,33 +17,51 @@ class SendPaymentAction extends FlowAction {
     final takerFees = c._effectiveTakerFeeSats(offer);
     final netAmountSats = offer.amountSats - takerFees;
 
-    var invoice = offer.takerInvoice;
-    if (invoice == null || invoice.isEmpty) {
-      // Payout is bolt11-only: the taker must have supplied an invoice by
-      // this point (submit / reserve / update_taker_invoice).
-      throw const FlowTransitionFailure('Missing taker invoice');
+    final invoice = offer.takerInvoice;
+    final bolt12Offer = offer.takerOffer;
+    if ((invoice == null) == (bolt12Offer == null)) {
+      throw const FlowTransitionFailure(
+        'Exactly one taker payout instruction is required',
+      );
     }
 
     try {
-      c._validateTakerInvoiceAmount(offer, invoice, action: 'pay_taker');
+      await c._validateOutgoingInstruction(
+        invoice: invoice,
+        offer: bolt12Offer,
+        expectedAmountSats: netAmountSats,
+        action: 'pay_taker',
+      );
     } catch (e) {
       throw FlowTransitionFailure(e.toString());
     }
 
     final feeLimitSat = (takerFees * kTakerFeeLimitFactor).ceil();
-    final res =
-        await c._attemptTakerPayment(invoice, netAmountSats, feeLimitSat);
-    if (!res.ok) {
+    final res = await c._attemptOutgoingPayment(
+      offer: offer,
+      purpose: 'taker_payout',
+      invoice: invoice,
+      bolt12Offer: bolt12Offer,
+      amountSats: netAmountSats,
+      feeLimitSat: feeLimitSat,
+    );
+    if (res.status == PaymentStatus.FAILED) {
       throw FlowTransitionFailure(res.error ?? 'Payment failed');
+    }
+    if (!res.isSuccess) {
+      throw StateError(
+        res.error ??
+            'Payment state is ${res.status.name}; reconciliation required',
+      );
     }
 
     ctx.write.takerFees = takerFees;
-    ctx.write.takerInvoiceFees = res.result?.feeSat ?? 0;
+    ctx.write.takerInvoiceFees = res.feeSat;
     ctx.write.takerPaidAt = ctx.now;
     ctx.write.audit.addAll({
       'taker_fees': takerFees,
-      'fee_sats': res.result?.feeSat ?? 0,
-      'preimage': res.result?.paymentPreimage,
+      'fee_sats': res.feeSat,
+      'payment_type': invoice != null ? 'bolt11' : 'bolt12',
     });
   }
 

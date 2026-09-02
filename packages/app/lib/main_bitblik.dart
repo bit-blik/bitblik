@@ -594,7 +594,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       }
     }
 
-    // Handle https deep links (bitblik.app / bitway.me / bittwint.app)
+    // Handle https deep links (BitBlik / BitWay domains / bittwint.app)
     if (scheme == 'https') {
       // Support both path-based (/offers/:id) and fragment-based (#/offers) links.
       final segments =

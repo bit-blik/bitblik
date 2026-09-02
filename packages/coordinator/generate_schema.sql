@@ -32,6 +32,43 @@ CREATE INDEX IF NOT EXISTS idx_offers_status ON offers (status);
 CREATE INDEX IF NOT EXISTS idx_offers_maker_pubkey ON offers (maker_pubkey);
 CREATE INDEX IF NOT EXISTS idx_offers_taker_pubkey ON offers (taker_pubkey);
 
+-- Durable outgoing payout/refund attempts. The legacy offer columns above
+-- hold either a BOLT11 invoice or a BOLT12 offer; attempts make that type
+-- explicit and prevent an indeterminate NWC request from being sent twice.
+CREATE TABLE IF NOT EXISTS outgoing_payment_attempts (
+  id UUID PRIMARY KEY,
+  offer_id UUID NOT NULL REFERENCES offers(id) ON DELETE CASCADE,
+  purpose TEXT NOT NULL,
+  generation INTEGER NOT NULL,
+  payment_type TEXT NOT NULL,
+  bolt11_invoice TEXT,
+  bolt12_offer TEXT,
+  expected_amount_sats BIGINT NOT NULL,
+  fee_limit_sats BIGINT,
+  backend_type TEXT NOT NULL,
+  backend_payment_id TEXT,
+  state TEXT NOT NULL,
+  payment_hash TEXT,
+  preimage TEXT,
+  payer_proof TEXT,
+  fee_paid_sats BIGINT,
+  failure_reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  settled_at TIMESTAMPTZ,
+  UNIQUE (offer_id, purpose, generation),
+  CHECK (
+    (payment_type = 'bolt11' AND bolt11_invoice IS NOT NULL AND bolt12_offer IS NULL)
+    OR
+    (payment_type = 'bolt12' AND bolt12_offer IS NOT NULL AND bolt11_invoice IS NULL)
+  ),
+  CHECK (state IN ('prepared','submitted','pending','succeeded','failed','unknown'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_outgoing_attempts_nonterminal
+  ON outgoing_payment_attempts (state, updated_at)
+  WHERE state IN ('prepared','submitted','pending','unknown');
+
 -- Audit logs persisted from application logger (onRecord listener)
 CREATE TABLE IF NOT EXISTS log_audit (
   id BIGSERIAL PRIMARY KEY,
