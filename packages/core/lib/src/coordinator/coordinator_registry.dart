@@ -224,21 +224,31 @@ class CoordinatorRegistry {
     Set<String> candidates = const {},
     Set<String> enabledPubkeys = const {},
     CoordinatorColdStartOrigin origin = CoordinatorColdStartOrigin.onboarding,
-  }) => _setColdStartState(
-    phase,
-    discovered: discovered,
-    candidates: candidates,
-    enabledPubkeys: enabledPubkeys,
-    origin: origin,
-  );
+  }) =>
+      _setColdStartState(
+        phase,
+        discovered: discovered,
+        candidates: candidates,
+        enabledPubkeys: enabledPubkeys,
+        origin: origin,
+      );
 
   /// All records (enabled and disabled), sorted by [_compare].
   List<CoordinatorRecord> get all => _sorted(
-      _records.values
-          .where((r) => !_mutedPubkeys.contains(r.pubkeyHex))
-          .where((r) => r.paymentSystem == activePaymentSystemId)
-          .toList(),
-    );
+        _records.values
+            .where((r) => !_mutedPubkeys.contains(r.pubkeyHex))
+            .where((r) => r.paymentSystem == activePaymentSystemId)
+            .toList(),
+      );
+
+  /// Persisted coordinators across every market. Recovery uses this instead
+  /// of [all], because an offer can be restored before the payment-system
+  /// preference has been loaded or after the user switched markets.
+  List<CoordinatorRecord> get allMarkets => _sorted(
+        _records.values
+            .where((r) => !_mutedPubkeys.contains(r.pubkeyHex))
+            .toList(),
+      );
 
   /// Enabled records only — what the maker flow should show.
   List<CoordinatorRecord> get enabled =>
@@ -698,7 +708,8 @@ class CoordinatorRegistry {
     // is no shared-relay bottleneck. This replaces a sequential loop that
     // summed per-coordinator latencies (potentially minutes for 20+ coords).
     final results = await Future.wait(
-      pubkeys.map((pubkey) async => MapEntry(pubkey, await _fetchFinishedStatsFor(pubkey))),
+      pubkeys.map((pubkey) async =>
+          MapEntry(pubkey, await _fetchFinishedStatsFor(pubkey))),
     );
 
     var changed = false;
@@ -868,8 +879,9 @@ class CoordinatorRegistry {
         relayListFromNip65: existing.relayListFromNip65,
         // DEBUG-ONLY: always refresh with the relays that served this event
         // on the most recent live query. Stale when read from disk cache.
-        discoverySources:
-            fallbackRelays.isNotEmpty ? fallbackRelays : existing.discoverySources,
+        discoverySources: fallbackRelays.isNotEmpty
+            ? fallbackRelays
+            : existing.discoverySources,
       );
     }
   }
@@ -1162,10 +1174,8 @@ class CoordinatorRegistry {
       forceRefresh: true,
     );
     if (list == null) return null;
-    final urls = list.urls
-        .map(normalizeRelayUrl)
-        .where((u) => u.isNotEmpty)
-        .toList();
+    final urls =
+        list.urls.map(normalizeRelayUrl).where((u) => u.isNotEmpty).toList();
     return urls.isEmpty ? null : urls;
   }
 
@@ -1340,7 +1350,8 @@ class CoordinatorRegistry {
               name: record.name,
               icon: record.icon,
               responsive: record.responsive,
-              enabled: record.enabled || enabledPubkeys.contains(record.pubkeyHex),
+              enabled:
+                  record.enabled || enabledPubkeys.contains(record.pubkeyHex),
               candidate: candidates.contains(record.pubkeyHex),
             ),
           )

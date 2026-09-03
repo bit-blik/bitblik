@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart' show activeOfferProvider;
 import '../screens/maker_flow/maker_confirm_payment_screen.dart'
     show MakerConfirmPaymentScreen;
@@ -14,6 +15,8 @@ import '../screens/maker_flow/maker_invalid_blik_screen.dart'
     show MakerInvalidBlikScreen;
 import '../screens/maker_flow/maker_pay_invoice_screen.dart'
     show MakerPayInvoiceScreen;
+import '../screens/maker_flow/maker_refund_invoice_required_screen.dart'
+    show MakerRefundInvoiceRequiredScreen;
 import '../screens/maker_flow/maker_success_screen.dart'
     show MakerSuccessScreen;
 import '../screens/maker_flow/maker_wait_for_blik_screen.dart'
@@ -33,6 +36,7 @@ import '../screens/taker_flow/taker_submit_blik_screen.dart'
 import '../screens/taker_flow/taker_wait_confirmation_screen.dart'
     show TakerWaitConfirmationScreen;
 import '../utils/offer_status_label.dart' show humanizeFlowState;
+import '../widgets/dispute_conversation_card.dart';
 import 'flow_actions_bar.dart';
 import 'flow_controller.dart';
 import 'flow_provider.dart';
@@ -130,6 +134,93 @@ final Map<String, Map<FlowActor, FlowBody>> _payoutTailBodies = {
   },
 };
 
+/// Dispute states shared by every payment-method flow.
+final Map<String, Map<FlowActor, FlowBody>> _disputeBodies = {
+  'dispute': {
+    FlowActor.maker: twintDisputeBody,
+    FlowActor.taker: twintDisputeBody,
+  },
+  'refundingMaker': {
+    FlowActor.maker:
+        (context, ref, offer, engine, role) =>
+            MakerRefundInvoiceRequiredScreen(offer: offer),
+    FlowActor.taker: twintDisputeBody,
+  },
+};
+
+const _makerRulingStates = {'refundingMaker', 'payingMaker', 'cancelled'};
+const _takerRulingStates = {
+  'payingTaker',
+  'takerPaymentFailed',
+  'takerPaid',
+};
+
+bool _hasPostRulingHistory(Offer offer) =>
+    offer.disputeAt != null &&
+    (_makerRulingStates.contains(offer.statusRaw) ||
+        _takerRulingStates.contains(offer.statusRaw)) &&
+    offer.statusRaw != 'refundingMaker';
+
+Future<void> _showDisputeHistory(BuildContext context, Offer offer) async {
+  final strings = Translations.of(context).disputeChat;
+  final ruling =
+      _makerRulingStates.contains(offer.statusRaw)
+          ? strings.ruledForMaker
+          : strings.ruledForTaker;
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder:
+        (sheetContext) => FractionallySizedBox(
+          heightFactor: 0.85,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 10, bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        strings.historyTitle,
+                        style: Theme.of(sheetContext).textTheme.titleLarge,
+                      ),
+                    ),
+                    Chip(label: Text(ruling)),
+                    IconButton(
+                      tooltip: MaterialLocalizations.of(
+                        sheetContext,
+                      ).closeButtonTooltip,
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+                  child: DisputeConversationCard(offer: offer),
+                ),
+              ),
+            ],
+          ),
+        ),
+  );
+}
+
 /// BLIK and MB WAY share the established code screen set as flow bodies — mbway.yml
 /// mirrors blik.yml's state names, and both use the same code-based screens.
 /// The screens' internal status navigation routes back through [flowRoute], so
@@ -202,18 +293,15 @@ final Map<String, Map<FlowActor, FlowBody>> _codeFlowBodies = {
   'conflict': {
     FlowActor.maker:
         (context, ref, offer, engine, role) =>
-            MakerConflictScreen(offer: offer),
+            MakerConflictScreen(offer: offer, engine: engine),
     FlowActor.taker:
         (context, ref, offer, engine, role) =>
-            TakerConflictScreen(offerId: offer.id),
+            TakerConflictScreen(offer: offer, engine: engine),
   },
   // Payout tail (makerConfirmed, settled, payingTaker, takerPaid,
   // takerPaymentFailed) is shared across every flow.
   ..._payoutTailBodies,
-  'dispute': {
-    FlowActor.maker: twintDisputeBody,
-    FlowActor.taker: twintDisputeBody,
-  },
+  ..._disputeBodies,
   // cancelled / expired terminals fall through to [genericFlowBody].
 };
 
@@ -239,10 +327,7 @@ final Map<String, Map<String, Map<FlowActor, FlowBody>>> _flowBodies = {
       FlowActor.taker: twintTakerWaitConfirmBody,
     },
     'invalidTwint': {FlowActor.maker: twintMakerReCodeBody},
-    'dispute': {
-      FlowActor.maker: twintDisputeBody,
-      FlowActor.taker: twintDisputeBody,
-    },
+    ..._disputeBodies,
     'expiredTwint': {
       FlowActor.maker: twintMakerExpiredBody,
       FlowActor.taker: twintTakerExpiredBody,
@@ -310,6 +395,22 @@ class FlowScreen extends ConsumerWidget {
                 // state's yaml deadline passes without a pushed update.
                 _FlowDeadlineSync(engine: engine, offer: offer),
                 Expanded(child: body),
+                if (_hasPostRulingHistory(offer))
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showDisputeHistory(context, offer),
+                        icon: const Icon(Icons.forum_outlined),
+                        label: Text(
+                          Translations.of(
+                            context,
+                          ).disputeChat.viewHistory,
+                        ),
+                      ),
+                    ),
+                  ),
                 if (terminal)
                   Padding(
                     padding: const EdgeInsets.all(16),

@@ -84,6 +84,13 @@ class NostrService {
 
   NdkResponse? _offerStatusSubscription;
   NdkResponse? _offerSubscription;
+  NdkResponse? _dmInboxSubscription;
+  StreamSubscription<Nip01Event>? _dmInboxEvents;
+  Future<void>? _dmInboxStartInFlight;
+  bool _dmInboxReady = false;
+  int _dmInboxLeases = 0;
+  final _dmMessageController = StreamController<Nip17Message>.broadcast();
+  final Map<String, Nip17Message> _dmMessagesByRumorId = {};
   final Map<String, Offer> _knownOffers = {};
   StreamSubscription<List<CoordinatorRecord>>? _coordinatorRegistryChangesSub;
   Set<String> _offerSubscriptionAuthors = const {};
@@ -219,6 +226,8 @@ class NostrService {
     // Destroy existing NDK instance if it exists
     if (_ndk != null) {
       try {
+        await _stopDmInbox();
+        _dmInboxReady = false;
         await _ndk!.destroy();
         Logger.log.d(() => '🔄 Destroyed previous NDK instance');
       } catch (e) {
@@ -255,6 +264,12 @@ class NostrService {
         cashuUserSeedphrase: CashuUserSeedphrase(seedPhrase: cashuSeedPhrase),
       ),
     );
+
+    // NDK starts reconnecting relays as soon as it is constructed. Register
+    // the signer before yielding to any asynchronous startup work so a relay
+    // reconnect cannot flush a durable queued event as an anonymous account.
+    _ensureClientSigner();
+    _ndk!.accounts.loginExternalSigner(signer: _clientSigner!);
 
     await IsolateManager.instance.ready;
 
@@ -306,14 +321,7 @@ class NostrService {
 
   /// Subscribe to response events from coordinator (via [BitblikRpcClient]).
   Future<void> _subscribeToResponses() async {
-    if (_keyService.publicKeyHex == null || _keyService.privateKeyHex == null) {
-      throw Exception('KeyService not initialized');
-    }
-
-    _clientSigner = Bip340EventSigner(
-      privateKey: _keyService.privateKeyHex!,
-      publicKey: _keyService.publicKeyHex!,
-    );
+    _ensureClientSigner();
 
     // Brand is the BUILT flavor (buildAppName, set before runApp from the
     // flavor entrypoint / appFlavor / appId), not the user's runtime
@@ -339,6 +347,213 @@ class NostrService {
     );
     await _rpcClient!.start();
     Logger.log.i(() => '👂 Subscribed to coordinator responses');
+  }
+
+  /// Starts the shared NIP-17 inbox used by mounted dispute conversations.
+  Future<void> ensureDmInboxReady() async {
+    if (_dmInboxReady) return;
+    final existing = _dmInboxStartInFlight;
+    if (existing != null) return existing;
+    final future = _startDmInbox();
+    _dmInboxStartInFlight = future;
+    try {
+      await future;
+      _dmInboxReady = true;
+    } finally {
+      _dmInboxStartInFlight = null;
+    }
+  }
+
+  /// Keeps the account-wide NIP-17 inbox alive while a dispute UI needs it.
+  Future<void> acquireDmInbox() async {
+    _dmInboxLeases++;
+    try {
+      await ensureDmInboxReady();
+    } catch (_) {
+      _dmInboxLeases--;
+      rethrow;
+    }
+  }
+
+  /// Releases a dispute UI's inbox lease and closes the relay subscription
+  /// once the last consumer leaves.
+  Future<void> releaseDmInbox() async {
+    if (_dmInboxLeases == 0) return;
+    _dmInboxLeases--;
+    if (_dmInboxLeases != 0) return;
+    _dmInboxReady = false;
+    await _stopDmInbox();
+  }
+
+  /// Replaces only the trading identity, preserving NDK, relays and wallets.
+  Future<void> switchNekoIdentity() async {
+    final ndk = _ndk;
+    final rpcClient = _rpcClient;
+    if (!_isInitialized || ndk == null || rpcClient == null) {
+      throw StateError(
+        'NostrService must be initialized before switching Neko',
+      );
+    }
+    if (_keyService.publicKeyHex == null ||
+        _keyService.privateKeyHex == null) {
+      throw StateError('KeyService does not contain a usable Neko');
+    }
+    if (_clientSigner?.getPublicKey() == _keyService.publicKeyHex) return;
+
+    final inboxStart = _dmInboxStartInFlight;
+    if (inboxStart != null) {
+      try {
+        await inboxStart;
+      } catch (_) {
+        // The identity switch below supersedes a failed old-account inbox.
+      }
+    }
+    _dmInboxReady = false;
+    await _stopDmInbox();
+    await stopOfferStatusSubscription();
+
+    final newSigner = Bip340EventSigner(
+      privateKey: _keyService.privateKeyHex!,
+      publicKey: _keyService.publicKeyHex!,
+    );
+    await rpcClient.rebindSigner(newSigner);
+
+    ndk.accounts.logout();
+    ndk.accounts.loginExternalSigner(signer: newSigner);
+    _clientSigner = newSigner;
+
+    if (_dmInboxLeases > 0) await ensureDmInboxReady();
+  }
+
+  Future<void> _startDmInbox() async {
+    final ndk = _ndk;
+    final account = ndk?.accounts.getLoggedAccount();
+    if (ndk == null || account == null || !account.signer.canSign()) {
+      throw StateError('NIP-17 requires the active signing account.');
+    }
+
+    // Preserve an existing kind-10050. Other clients cache this replaceable
+    // event, so rewriting it on every startup can strand an active chat on the
+    // previous inbox relays.
+    List<String>? inboxRelays;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      inboxRelays = await ndk.userRelayLists.getDmRelays(
+        account.pubkey,
+        forceRefresh: true,
+        discoveryRelays: _relayUrls,
+      );
+      if (inboxRelays != null && inboxRelays.isNotEmpty) break;
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    }
+    List<String> accepted = const [];
+    if (inboxRelays == null || inboxRelays.isEmpty) {
+      final responses = await ndk.dms.publishDmRelays(
+        relayUrlsOrdered: kDefaultDmInboxRelays,
+        broadcastRelays: _relayUrls,
+      );
+      accepted = responses
+          .where((response) => response.broadcastSuccessful)
+          .map((response) => response.relayUrl)
+          .toList(growable: false);
+      if (accepted.isEmpty) {
+        final detail = responses
+            .map((response) => '${response.relayUrl}: ${response.msg}')
+            .join('; ');
+        throw StateError(
+          'No relay accepted the NIP-17 inbox list${detail.isEmpty ? '' : ' ($detail)'}.',
+        );
+      }
+      for (var attempt = 0; attempt < 3; attempt++) {
+        inboxRelays = await ndk.userRelayLists.getDmRelays(
+          account.pubkey,
+          forceRefresh: true,
+          discoveryRelays: _relayUrls,
+        );
+        if (inboxRelays != null && inboxRelays.isNotEmpty) break;
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+      }
+    }
+    if (inboxRelays == null || inboxRelays.isEmpty) {
+      throw StateError(
+        'Relays accepted the NIP-17 inbox list but it could not be read back.',
+      );
+    }
+
+    await _stopDmInbox();
+    final subscription = ndk.requests.subscription(
+      name: 'bitblik-dm-live',
+      explicitRelays: inboxRelays,
+      authenticateAs: [account],
+      cacheRead: false,
+      cacheWrite: true,
+      filter: Filter(
+        kinds: [GiftWrap.kGiftWrapEventkind],
+        pTags: [account.pubkey],
+        since:
+            Nip01Event.secondsSinceEpoch() - const Duration(days: 3).inSeconds,
+        limit: 200,
+      ),
+    );
+    _dmInboxSubscription = subscription;
+    _dmInboxEvents = subscription.stream.listen((wrappedEvent) {
+      unawaited(_parseLiveDm(wrappedEvent, account.pubkey));
+    }, onError: _dmMessageController.addError);
+    Logger.log.i(
+      () =>
+          'NIP-17 inbox ready for ${account.pubkey} on $inboxRelays'
+          '${accepted.isEmpty ? '' : '; kind-10050 accepted by $accepted'}',
+    );
+  }
+
+  Future<void> _parseLiveDm(
+    Nip01Event wrappedEvent,
+    String accountPubkey,
+  ) async {
+    try {
+      if (_ndk?.accounts.getPublicKey() != accountPubkey) return;
+      final message = await _ndk!.dms.parseWrappedMessage(
+        wrappedEvent: wrappedEvent,
+      );
+      if (message != null && _ndk?.accounts.getPublicKey() == accountPubkey) {
+        _dmMessagesByRumorId[message.id] = message;
+        _dmMessageController.add(message);
+      }
+    } catch (error, stackTrace) {
+      _dmMessageController.addError(error, stackTrace);
+    }
+  }
+
+  Future<void> _stopDmInbox() async {
+    await _dmInboxEvents?.cancel();
+    _dmInboxEvents = null;
+    _dmMessagesByRumorId.clear();
+    final subscription = _dmInboxSubscription;
+    _dmInboxSubscription = null;
+    if (subscription != null && _ndk != null) {
+      await _ndk!.requests.closeSubscription(
+        subscription.requestId,
+        debugLabel: 'BitBlik account-wide DM inbox',
+      );
+    }
+  }
+
+  Stream<Nip17Message> get dmMessages => _dmMessageController.stream;
+  List<Nip17Message> get dmMessageSnapshot =>
+      List.unmodifiable(_dmMessagesByRumorId.values);
+
+  /// Creates the sole signer shared by NIP-17, Blossom, and Bitblik RPC.
+  ///
+  /// This deliberately happens before NDK's first asynchronous startup work;
+  /// see [_initializeNdk] for the account registration ordering.
+  void _ensureClientSigner() {
+    if (_clientSigner != null) return;
+    if (_keyService.publicKeyHex == null || _keyService.privateKeyHex == null) {
+      throw Exception('KeyService not initialized');
+    }
+    _clientSigner = Bip340EventSigner(
+      privateKey: _keyService.privateKeyHex!,
+      publicKey: _keyService.publicKeyHex!,
+    );
   }
 
   /// Send a request to the coordinator and wait for response
@@ -760,6 +975,23 @@ class NostrService {
     }
   }
 
+  /// Recovers the caller's current offer from one coordinator when local
+  /// offer storage is unavailable after a restart or migration.
+  Future<Map<String, dynamic>?> getMyActiveOffer(
+    String coordinatorPubkey,
+  ) async {
+    if (!_isInitialized) await init();
+    final response = await sendRequest(
+      NostrRequest(method: kRpcGetMyActiveOffer, params: const {}),
+      coordinatorPubkey,
+    );
+    return _handleResponse(response, (result) {
+      if (result.isEmpty) return null;
+      result['coordinator_pubkey'] = coordinatorPubkey;
+      return result;
+    });
+  }
+
   bool _looksLikeUuid(String s) => RegExp(
     r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
     caseSensitive: false,
@@ -1107,6 +1339,10 @@ class NostrService {
   /// Dispose resources
   Future<void> dispose() async {
     _initInFlight = null;
+    _dmInboxReady = false;
+    _dmInboxStartInFlight = null;
+    _dmInboxLeases = 0;
+    await _stopDmInbox();
     await _coordinatorRegistryChangesSub?.cancel();
     _coordinatorRegistryChangesSub = null;
     await _coordinatorRegistry?.dispose();

@@ -130,6 +130,43 @@ void main() {
     expect(svc.flow.handlesRpc('get_offer_details'), isFalse);
   });
 
+  test('console offer listing uses YAML terminal states and cursor', () async {
+    final before = DateTime.utc(2026, 9, 3);
+    when(
+      db.getOffersNotInRawStatuses(
+        any,
+        limit: anyNamed('limit'),
+        beforeCreatedAt: anyNamed('beforeCreatedAt'),
+        beforeId: anyNamed('beforeId'),
+      ),
+    ).thenAnswer((_) async => []);
+
+    await svc.getNonFinalOffers(
+      limit: 26,
+      beforeCreatedAt: before,
+      beforeId: '00000000-0000-0000-0000-000000000001',
+    );
+
+    final invocation = verify(
+      db.getOffersNotInRawStatuses(
+        captureAny,
+        limit: captureAnyNamed('limit'),
+        beforeCreatedAt: captureAnyNamed('beforeCreatedAt'),
+        beforeId: captureAnyNamed('beforeId'),
+      ),
+    );
+    final terminalStatuses = invocation.captured.first as List<String>;
+    expect(terminalStatuses, containsAll(['cancelled', 'takerPaid']));
+    expect(terminalStatuses, isNot(contains('funded')));
+    expect(terminalStatuses, isNot(contains('dispute')));
+    expect(invocation.captured[1], 26);
+    expect(invocation.captured[2], before);
+    expect(
+      invocation.captured[3],
+      '00000000-0000-0000-0000-000000000001',
+    );
+  });
+
   test('rejects an action from the wrong actor (taker confirming)', () async {
     when(db.getOfferById('o1')).thenAnswer(
         (_) async => twintOffer('twint_charged', takerPubkey: taker));

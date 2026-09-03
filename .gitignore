@@ -6,3 +6,5 @@
 /packages/app/.flutter-plugins-dependencies
 /packages/cli/build/
 .claude/
+/packages/telegram_bot/.env
+/packages/telegram_bot/telegram_bot_state.json

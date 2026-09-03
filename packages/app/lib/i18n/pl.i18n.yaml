@@ -165,6 +165,7 @@ offers:
     invalidBlik: "Nieprawidłowy ${code}"
     conflict: "Konflikt"
     dispute: "Spór"
+    refundingMaker: "Zwrot środków makerowi"
     makerConfirmed: "Potwierdzona"
     settled: "Rozliczona"
     payingTaker: "Płacenie Takera"
@@ -353,7 +354,62 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  viewHistory: "Wyświetl historię sporu"
+  historyTitle: "Historia sporu"
+  ruledForMaker: "Rozstrzygnięto na korzyść Makera"
+  ruledForTaker: "Rozstrzygnięto na korzyść Takera"
+  legacyChannel: "Starszy kanał zgodności NIP-04"
+  privateConversation: "Prywatna rozmowa z koordynatorem"
+  noMessages: "Brak wiadomości."
+  replyHint: "Odpowiedz tutaj"
+  readOnly: "Historia tego rozstrzygniętego sporu jest tylko do odczytu."
+  evidenceDeadline:
+    title: "Termin przesłania dowodów"
+    remaining: "Prześlij dowody potwierdzające Twoje stanowisko w ciągu ${time}. Po tym terminie koordynator może rozstrzygnąć na korzyść drugiej strony na podstawie dostępnych dowodów."
+    expired: "Czas na przesłanie dowodów minął. Koordynator może teraz rozstrzygnąć spór na podstawie dostępnych dowodów."
+    period: "Koordynator daje do ${time} na dowody od otwarcia sporu. Odliczanie rozpocznie się, gdy będzie dostępny czas otwarcia sporu."
+  tooltips:
+    refresh: "Odśwież wiadomości"
+    attachEvidence: "Dołącz dowód płatności"
+    send: "Wyślij wiadomość"
+  errors:
+    accountNotReady: "Prywatne wiadomości będą dostępne, gdy Twoje konto Nostr będzie gotowe."
+    subscriptionFailed: "Połączenie prywatnych wiadomości nie powiodło się. Odśwież rozmowę."
+    decryptFailed: "Nie udało się odszyfrować prywatnej wiadomości."
+    operationFailed: "Operacja prywatnych wiadomości nie powiodła się. Spróbuj ponownie."
+    nostrNotInitialized: "Nostr nie został zainicjalizowany."
+    attachmentsRequireNip17: "Załączniki są dostępne tylko w kanale NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "Usługa portfela jest niedostępna."
+    noBolt11: "Portfel nie zwrócił faktury BOLT11."
+
 maker:
+  refundInvoice:
+    title: "Koordynator rozstrzygnął na Twoją korzyść"
+    instructions: "Wybierz portfel odbiorczy lub wklej fakturę Lightning na dokładnie ${amount}, aby otrzymać zwrot."
+    invoiceLabel: "Faktura zwrotna na dokładną kwotę"
+    submit: "Wyślij fakturę zwrotną"
+    addWallet: "Dodaj nowy portfel"
+    noReceivingWallet: "Nie skonfigurowano portfela odbiorczego. Dodaj go lub wklej fakturę z innego portfela."
+    paymentFailed: "Poprzednia próba zwrotu nie powiodła się. Wybierz inny portfel lub wyślij nową fakturę."
+    submitFailed: "Nie udało się wysłać faktury zwrotnej: ${details}"
+    errors:
+      backendUnavailable: "Usługa płatności Lightning jest niedostępna."
+      missing: "Wprowadź fakturę zwrotną."
+      invalid: "Wprowadź prawidłową fakturę zwrotną BOLT11."
+      wrongNetwork: "Faktura zwrotna jest przeznaczona dla niewłaściwej sieci Lightning."
+      wrongAmount: "Faktura zwrotna musi zawierać dokładną kwotę zwrotu."
+      invalidExpiry: "Faktura zwrotna ma nieprawidłowy termin ważności."
+      futureTimestamp: "Znacznik czasu faktury zwrotnej jest w przyszłości."
+      expired: "Faktura zwrotna wygasła. Wygeneruj nową."
+      invalidPaymentHash: "Faktura zwrotna nie ma prawidłowego skrótu płatności."
+      reusedInvoice: "Użyj nowej faktury; faktura oferty nie może przyjąć zwrotu."
+      unsupportedNetwork: "Ta sieć Lightning nie jest obsługiwana."
+      unknown: "Sprawdź fakturę i spróbuj ponownie."
+
   roleSelection:
     button: ZAPŁAĆ przez Lightning
   
@@ -534,7 +590,8 @@ maker:
     title: Konflikt Oferty
     headline: Zgłoszono Konflikt Oferty
     body: Oznaczyłeś kod ${code} jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.
-    instructions: Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.
+    instructions: Potwierdź wynik przed upływem czasu. Jeśli płatność się powiodła, potwierdź ją, aby Taker mógł otrzymać wypłatę. Jeśli się nie powiodła, otwórz spór. Jeśli nic nie zrobisz, formalny spór zostanie otwarty automatycznie.
+    timeoutLabel: "Formalny spór zostanie otwarty automatycznie za ${time}"
     
     actions:
       back: Powrót do strony głównej
@@ -625,6 +682,23 @@ taker:
     actions:
       cancel: "Wróć i sprawdź konto bankowe"
       proceed: "NIE obciążono mnie — kontynuuj"
+
+  conflict:
+    title: Oczekiwanie na potwierdzenie płatności
+    headline: Oczekiwanie na potwierdzenie Makera
+    body: Zgłosiłeś, że płatność ${code} została pobrana, ale Maker zgłosił, że się nie powiodła. Te zgłoszenia są sprzeczne.
+    instructions: Maker musi teraz potwierdzić wynik. Jeśli potwierdzi, że płatność się powiodła, Twoja wypłata będzie kontynuowana. Jeśli potwierdzi niepowodzenie lub upłynie czas, oferta przejdzie do formalnego sporu i czat sporu stanie się dostępny.
+    timeoutLabel: "Formalny spór zostanie otwarty automatycznie za ${time}"
+    actions:
+      back: Powrót do strony głównej
+    feedback:
+      reported: Zgłoszono konflikt płatności. Oczekiwanie na potwierdzenie Makera.
+    errors:
+      reporting: "Błąd zgłaszania konfliktu: ${details}"
+
+  dispute:
+    headline: Otwarto formalny spór
+    body: Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.
 
 twint:
   scanner:
@@ -1035,6 +1109,24 @@ faq:
 # =============================================================================
 settings:
   title: Ustawienia
+  coordinatorConsole:
+    title: Konsola koordynatora
+    subtitle: Zarządzaj sporami za pomocą podpisu koordynatora
+    signInTitle: Zaloguj się jako koordynator
+    signInDescription: Użyj klucza Nostr identyfikującego koordynatora, aby przeglądać i rozstrzygać spory.
+    separateIdentityNote: Podpis koordynatora działa w oddzielnej sesji NDK i nigdy nie zastępuje tożsamości handlowej Neko.
+    loginWithSignerApp: Zaloguj przez aplikację podpisującą
+    loginWithExtension: Zaloguj przez rozszerzenie przeglądarki
+    loginWithNsec: Zaloguj przez nsec
+    nsecDialogTitle: Klucz prywatny koordynatora
+    nsecFieldLabel: Klucz prywatny
+    nsecSecurityNote: Klucz prywatny jest bezpiecznie przechowywany na tym urządzeniu i używany wyłącznie przez oddzielną sesję koordynatora.
+    unsupportedPlatform: Logowanie koordynatora jest obecnie dostępne na Androidzie, Linuksie i w przeglądarce.
+    loginFailed: Logowanie koordynatora nie powiodło się
+    accountsTitle: Konta koordynatorów
+    savedAccounts: Zapisane konta koordynatorów
+    addAccount: Dodaj konto koordynatora
+    removeAccount: Usuń konto koordynatora
   offerCreation:
     title: Tworzenie ofert
     defaultCategory: Domyślna kategoria

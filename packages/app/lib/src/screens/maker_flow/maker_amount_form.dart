@@ -661,7 +661,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           .setActiveOffer(
             Offer(
               id: paymentHash,
-              amountSats: result['makerFees'] + result['amountSats'],
+              // Keep Offer.amountSats as the trade principal. The hold invoice
+              // itself is principal + makerFees; storing that gross amount
+              // here made later refund code add the fee a second time.
+              amountSats: result['amountSats'],
               makerFees: result['makerFees'],
               status: OfferStatus.created,
               fiatAmount: fiatAmount,

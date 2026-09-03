@@ -1,0 +1,19 @@
+name: bitblik_telegram_bot
+description: Central Telegram notifications for BitBlik Nostr markets.
+version: 0.1.0
+resolution: workspace
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  bitblik_core:
+    path: ../core
+  dotenv: ^4.2.0
+  http: ^1.2.1
+  ndk: any
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.24.0

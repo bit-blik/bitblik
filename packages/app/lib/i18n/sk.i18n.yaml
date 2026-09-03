@@ -149,6 +149,7 @@ offers:
     invalidBlik: "Neplatný ${code}"
     conflict: "Konflikt"
     dispute: "Spor"
+    refundingMaker: "Vrátenie platby makerovi"
     makerConfirmed: "Potvrdená"
     settled: "Vyrovnaná"
     payingTaker: "Platí sa kupujúcemu"
@@ -337,7 +338,62 @@ coordinator:
 # =============================================================================
 # TOK PREDÁVAJÚCEHO
 # =============================================================================
+disputeChat:
+  viewHistory: "Zobraziť históriu sporu"
+  historyTitle: "História sporu"
+  ruledForMaker: "Rozhodnuté v prospech Makera"
+  ruledForTaker: "Rozhodnuté v prospech Takera"
+  legacyChannel: "Starší kompatibilný kanál NIP-04"
+  privateConversation: "Súkromná konverzácia s koordinátorom"
+  noMessages: "Zatiaľ žiadne správy."
+  replyHint: "Odpovedzte tu"
+  readOnly: "História tohto vyriešeného sporu je iba na čítanie."
+  evidenceDeadline:
+    title: "Lehota na predloženie dôkazov"
+    remaining: "Predložte dôkazy podporujúce vaše tvrdenie do ${time}. Po uplynutí lehoty môže koordinátor rozhodnúť v prospech protistrany podľa dostupných dôkazov."
+    expired: "Lehota na predloženie dôkazov uplynula. Koordinátor môže teraz rozhodnúť podľa dostupných dôkazov."
+    period: "Koordinátor poskytuje na dôkazy najviac ${time} od otvorenia sporu. Odpočítavanie sa začne, keď bude dostupný čas otvorenia sporu."
+  tooltips:
+    refresh: "Obnoviť správy"
+    attachEvidence: "Priložiť doklad o platbe"
+    send: "Odoslať správu"
+  errors:
+    accountNotReady: "Súkromné správy budú dostupné, keď bude váš účet Nostr pripravený."
+    subscriptionFailed: "Pripojenie súkromných správ zlyhalo. Obnovte konverzáciu."
+    decryptFailed: "Súkromnú správu sa nepodarilo dešifrovať."
+    operationFailed: "Operácia súkromných správ zlyhala. Skúste to znova."
+    nostrNotInitialized: "Nostr nie je inicializovaný."
+    attachmentsRequireNip17: "Prílohy sú dostupné iba v kanáli NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "Služba peňaženky nie je dostupná."
+    noBolt11: "Peňaženka nevrátila BOLT11 faktúru."
+
 maker:
+  refundInvoice:
+    title: "Koordinátor rozhodol vo váš prospech"
+    instructions: "Vyberte prijímaciu peňaženku alebo vložte Lightning faktúru na presnú sumu ${amount} pre vrátenie platby."
+    invoiceLabel: "Faktúra na vrátenie presnej sumy"
+    submit: "Odoslať faktúru na vrátenie platby"
+    addWallet: "Pridať novú peňaženku"
+    noReceivingWallet: "Nie je nastavená žiadna prijímacia peňaženka. Pridajte ju alebo vložte faktúru z inej peňaženky."
+    paymentFailed: "Predchádzajúci pokus o vrátenie platby zlyhal. Vyberte inú peňaženku alebo odošlite novú faktúru."
+    submitFailed: "Faktúru na vrátenie platby sa nepodarilo odoslať: ${details}"
+    errors:
+      backendUnavailable: "Služba platieb Lightning nie je dostupná."
+      missing: "Zadajte faktúru na vrátenie platby."
+      invalid: "Zadajte platnú BOLT11 faktúru na vrátenie platby."
+      wrongNetwork: "Faktúra na vrátenie platby patrí do nesprávnej siete Lightning."
+      wrongAmount: "Faktúra musí obsahovať presnú sumu vrátenia platby."
+      invalidExpiry: "Faktúra na vrátenie platby má neplatnú dobu platnosti."
+      futureTimestamp: "Časová pečiatka faktúry je v budúcnosti."
+      expired: "Faktúra na vrátenie platby vypršala. Vytvorte novú."
+      invalidPaymentHash: "Faktúra nemá platný hash platby."
+      reusedInvoice: "Použite novú faktúru; faktúra ponuky nemôže prijať vrátenie platby."
+      unsupportedNetwork: "Táto sieť Lightning nie je podporovaná."
+      unknown: "Skontrolujte faktúru a skúste to znova."
+
   roleSelection:
     button: ZAPLATIŤ cez Lightning
 
@@ -528,7 +584,8 @@ maker:
     title: Konflikt ponuky
     headline: Nahlásený konflikt ponuky
     body: Označil si ${code} ako neplatný, ale kupujúci nahlásil konflikt, čím naznačuje, že podľa neho bola platba úspešná.
-    instructions: Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.
+    instructions: Potvrď výsledok pred vypršaním časovača. Ak bola platba úspešná, potvrď ju, aby mohol byť kupujúci vyplatený. Ak zlyhala, otvor spor. Ak nič neurobíš, automaticky sa otvorí formálny spor.
+    timeoutLabel: "Formálny spor sa automaticky otvorí o ${time}"
 
     actions:
       back: Späť domov
@@ -765,16 +822,17 @@ taker:
       conflictReport: "Chyba pri nahlasovaní konfliktu: ${details}"
 
   conflict:
-    title: Konflikt ponuky
-    headline: Nahlásený konflikt ponuky
-    body: Predávajúci označil ${code} ako neplatný, ale ty si nahlásil konflikt, čím naznačuješ, že podľa teba bola platba úspešná.
-    instructions: Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.
+    title: Čaká sa na potvrdenie platby
+    headline: Čaká sa na potvrdenie Makera
+    body: Nahlásil si, že platba ${code} bola zaúčtovaná, ale Maker uviedol, že nebola úspešná. Tieto hlásenia si odporujú.
+    instructions: Maker teraz musí potvrdiť výsledok. Ak potvrdí, že platba bola úspešná, tvoja výplata bude pokračovať. Ak potvrdí neúspech alebo vyprší časovač, ponuka prejde do formálneho sporu a sprístupní sa chat sporu.
+    timeoutLabel: "Formálny spor sa automaticky otvorí o ${time}"
 
     actions:
       back: Späť domov
 
     feedback:
-      reported: Konflikt nahlásený. Koordinátor ho posúdi.
+      reported: Nahlásený konflikt platby. Čaká sa na potvrdenie Makera.
 
     errors:
       reporting: "Chyba pri nahlasovaní konfliktu: ${details}"
@@ -787,6 +845,10 @@ taker:
       npubCopied: Npub koordinátora skopírovaný do schránky!
       yourIdentityDescription: "Ak chceš posielať DM, prihlás sa svojím súkromným kľúčom Neko (nsec) v ľubovoľnom Nostr klientovi, ktorý podporuje priame správy."
       manageNekoKeys: Spravovať Neko kľúče
+
+  dispute:
+    headline: Otvorený formálny spor
+    body: Ponuku teraz posudzuje koordinátor. Pomocou chatu sporu nižšie komunikuj s koordinátorom a poskytni požadované dôkazy.
 
 # =============================================================================
 # ${code} (Všeobecné)
@@ -950,6 +1012,24 @@ faq:
 # =============================================================================
 settings:
   title: Nastavenia
+  coordinatorConsole:
+    title: Konzola koordinátora
+    subtitle: Spravujte spory pomocou podpisovača koordinátora
+    signInTitle: Prihlásiť sa ako koordinátor
+    signInDescription: Použite Nostr kľúč, ktorý identifikuje koordinátora, na kontrolu a riešenie sporov.
+    separateIdentityNote: Podpisovač koordinátora používa samostatnú reláciu NDK a nikdy nenahrádza obchodnú identitu Neko.
+    loginWithSignerApp: Prihlásiť sa cez podpisovaciu aplikáciu
+    loginWithExtension: Prihlásiť sa cez rozšírenie prehliadača
+    loginWithNsec: Prihlásiť sa pomocou nsec
+    nsecDialogTitle: Súkromný kľúč koordinátora
+    nsecFieldLabel: Súkromný kľúč
+    nsecSecurityNote: Súkromný kľúč je bezpečne uložený v tomto zariadení a používa ho iba samostatná relácia koordinátora.
+    unsupportedPlatform: Prihlásenie koordinátora je momentálne dostupné v systémoch Android, Linux a na webe.
+    loginFailed: Prihlásenie koordinátora zlyhalo
+    accountsTitle: Účty koordinátorov
+    savedAccounts: Uložené účty koordinátorov
+    addAccount: Pridať účet koordinátora
+    removeAccount: Odstrániť účet koordinátora
   offerCreation:
     title: Vytváranie ponúk
     defaultCategory: Predvolená kategória

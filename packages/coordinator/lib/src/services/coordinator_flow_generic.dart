@@ -12,9 +12,11 @@ class OfferWriteSpec {
   DateTime? makerConfirmedAt;
   DateTime? settledAt;
   DateTime? takerPaidAt;
+  DateTime? disputeAt;
   String? code;
   String? takerInvoice;
   String? makerRefundInvoice;
+  String? makerRefundPaymentHash;
   int? takerFees;
 
   /// Lightning routing fee (sats) charged when paying the taker's invoice —
@@ -348,8 +350,10 @@ class GenericOfferFlow {
       case FlowActor.coordinator:
         // Coordinator-actor RPCs (e.g. dispute resolutions) must be signed by
         // the coordinator's own key — otherwise any client could fire them.
-        final coordinatorPubkey = _c._nostrService?.coordinatorPubkey;
-        return coordinatorPubkey != null && userPubkey == coordinatorPubkey;
+        final coordinatorPubkey =
+            _c._coordinatorPubkeyForTest ?? _c._nostrService?.coordinatorPubkey;
+        return coordinatorPubkey != null &&
+            userPubkey.toLowerCase() == coordinatorPubkey.toLowerCase();
       case FlowActor.server:
       case null:
         // Internal actors are never valid for an RPC-backed user transition.
@@ -398,17 +402,33 @@ class GenericOfferFlow {
     }
 
     final w = ctx.write;
-    // Audit context relevant to this transition (values changed by its effects,
-    // plus the code for get_blik which serves it without changing it).
+    if (offer.disputeAt == null &&
+        (targetState == 'securingDispute' || targetState == 'dispute')) {
+      w.disputeAt = ctx.now;
+    }
+    // Record facts about sensitive values, never the values themselves.
     final auditCtx = <String, dynamic>{
       'client': clientVersion,
-      'blik_code': w.code ?? (t.returns == 'blik_code' ? offer.blikCode : null),
-      'taker_invoice': w.takerInvoice,
+      'code_updated': w.code != null,
+      'code_returned': t.returns == 'blik_code',
+      'taker_payout_updated': w.takerInvoice != null,
+      'maker_refund_payout_updated': w.makerRefundInvoice != null,
       'taker_fees': w.takerFees,
-      'maker_invoice': _cleanParam(params['maker_invoice']),
       'failure_reason': w.failureReason,
       ...w.audit,
     };
+    if (t.actor == FlowActor.coordinator &&
+        (t.event == 'resolve_dispute_refund_maker' ||
+            t.event == 'resolve_dispute_pay_taker')) {
+      final amounts = _c.disputeDecisionAmounts(offer);
+      final makerWins = t.event == 'resolve_dispute_refund_maker';
+      auditCtx.addAll({
+        'decision': t.event,
+        'decision_recipient': makerWins ? 'maker' : 'taker',
+        'decision_amount_sats':
+            makerWins ? amounts.makerRefundSats : amounts.takerPayoutSats,
+      });
+    }
     final applied = await _c._dbService.updateOfferRawStatusIfCurrent(
       offer.id,
       targetState,
@@ -420,10 +440,12 @@ class GenericOfferFlow {
       makerConfirmedAt: w.makerConfirmedAt,
       settledAt: w.settledAt,
       takerPaidAt: w.takerPaidAt,
+      disputeAt: w.disputeAt,
       code: w.code,
       codeReceivedAt: w.codeReceivedAt,
       takerInvoice: w.takerInvoice,
       makerRefundInvoice: w.makerRefundInvoice,
+      makerRefundPaymentHash: w.makerRefundPaymentHash,
       takerFees: w.takerFees,
       takerInvoiceFees: w.takerInvoiceFees,
       failureReason: w.failureReason,
@@ -594,16 +616,27 @@ class GenericOfferFlow {
     }
   }
 
-  /// Metadata recorded in offer_state_history: transition `do:` actions plus
-  /// any audit [ctx] (null entries dropped). [ctx] carries event-relevant
-  /// context — blik code, invoices, fees, payment preimage, failure reason, etc.
+  static bool _sensitiveAuditKey(String key) {
+    final normalized = key.toLowerCase();
+    return normalized.contains('invoice') && !normalized.endsWith('_ready') ||
+        normalized.contains('preimage') ||
+        normalized.contains('blik_code') ||
+        normalized.contains('private_key') ||
+        normalized.contains('decryption_key') ||
+        normalized == 'key' ||
+        normalized == 'nonce' ||
+        normalized == 'ciphertext_url';
+  }
+
+  /// Metadata recorded in offer_state_history. Sensitive fields are denied
+  /// here as defense in depth, even if an action accidentally adds one.
   Map<String, dynamic>? _meta(FlowTransition? t, [Map<String, dynamic>? ctx]) {
     final m = <String, dynamic>{};
     final acts = t?.actions ?? const [];
     if (acts.isNotEmpty) m['do'] = acts;
     if (t?.onFailTarget != null) m['on_fail'] = t!.onFailTarget;
     ctx?.forEach((k, v) {
-      if (v != null) m[k] = v;
+      if (v != null && !_sensitiveAuditKey(k)) m[k] = v;
     });
     return m.isEmpty ? null : m;
   }
@@ -622,8 +655,7 @@ class GenericOfferFlow {
   /// Finalize a reconciled successful taker payment from the payout-failed
   /// state into the send_payment transition's success target.
   Future<void> _markPaid(String offerId, String fromState,
-      FlowTransition sendPayment, int takerFees, int feeSat,
-      {String? preimage}) async {
+      FlowTransition sendPayment, int takerFees, int feeSat) async {
     await _c._dbService.updateOfferRawStatusIfCurrent(
       offerId,
       sendPayment.target,
@@ -637,7 +669,7 @@ class GenericOfferFlow {
         extra: _meta(sendPayment, {
           'taker_fees': takerFees,
           'fee_sats': feeSat,
-          'preimage': preimage,
+          'payment_succeeded': true,
         }),
       ),
     );
@@ -744,8 +776,7 @@ class GenericOfferFlow {
           'fiat_amount': offer.fiatAmount,
           'fiat_currency': offer.fiatCurrency,
           'premium_percent': offer.premiumPercent,
-          // Present for maker-provides-code flows (e.g. TWINT); null for BLIK.
-          'blik_code': offer.blikCode,
+          'initial_code_present': offer.blikCode != null,
         }),
       ),
     );

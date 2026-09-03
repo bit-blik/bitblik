@@ -494,6 +494,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                   OfferStatus.conflict,
                   OfferStatus.invalidBlik,
                   OfferStatus.dispute,
+                  OfferStatus.refundingMaker,
                 ];
                 // Only finished offers for the payment system selected in
                 // settings (filters the coordinator dropdown too, since it is
@@ -1469,10 +1470,16 @@ Future<void> _showMessengerCoordinators(
                   title: Text(e.coord.name),
                   subtitle:
                       e.bank == null
-                          ? Text(
-                            t.home.notifications.channelAllBanks,
-                            style: TextStyle(color: Colors.grey[600]),
-                          )
+                          ? paymentSystemById(
+                                e.coord.paymentSystem,
+                              ).instruments.values.any(
+                                (instrument) => instrument.hasBanks,
+                              )
+                              ? Text(
+                                t.home.notifications.channelAllBanks,
+                                style: TextStyle(color: Colors.grey[600]),
+                              )
+                              : null
                           : Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

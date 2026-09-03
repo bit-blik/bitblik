@@ -13,6 +13,16 @@ import '../logging/app_logger.dart';
 /// Service to handle Nostr communication for the coordinator
 /// Implements info replaceable events and NIP-44 encrypted request/response
 class NostrService {
+  /// Public Blossom servers used when the operator does not configure an
+  /// ordered list. Both accept the opaque AES-GCM blobs required by NIP-17
+  /// file messages using standard BUD-11 authorization, without an account,
+  /// payment, or allowlist. Operators can replace the list through
+  /// BLOSSOM_SERVERS.
+  static const List<String> defaultBlossomServers = [
+    'https://nostr.download',
+    'https://blossom.jumble.social',
+  ];
+
   /// Where a freshly generated coordinator key is persisted (owner-only) when
   /// no `NOSTR_PRIVATE_KEY` is configured, so the identity survives restarts.
   static const String _generatedKeyFilePath = 'coordinator_private_key.hex';
@@ -63,6 +73,7 @@ class NostrService {
   // otherwise published fresh from [_envRelays].
   final List<String> _envRelays;
   List<String> _relays;
+  final List<String> _blossomServers;
 
   /// Discovery relays — resolved from Bitblik's profile NIP-65 at [init]
   /// (fallback: hardcoded bootstrap). The coordinator publishes its info +
@@ -105,8 +116,27 @@ class NostrService {
       'wss://relay.damus.io',
       'wss://relay.primal.net',
     ],
+    List<String> blossomServers = const [],
   })  : _envRelays = relays,
-        _relays = List.from(relays);
+        _relays = List.from(relays),
+        _blossomServers = _validateBlossomServers(blossomServers);
+
+  static List<String> _validateBlossomServers(List<String> values) {
+    final result = <String>[];
+    for (final value in values) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) continue;
+      final uri = Uri.tryParse(trimmed);
+      if (uri == null ||
+          !const {'https', 'http'}.contains(uri.scheme) ||
+          uri.host.isEmpty) {
+        throw ArgumentError.value(value, 'blossomServers', 'Invalid URL');
+      }
+      final normalized = uri.toString().replaceFirst(RegExp(r'/+$'), '');
+      if (!result.contains(normalized)) result.add(normalized);
+    }
+    return List.unmodifiable(result);
+  }
 
   /// Relays the coordinator publishes its discovery events (info + NIP-65) to,
   /// so clients can find it on the discovery set as well as its own.
@@ -133,25 +163,7 @@ class NostrService {
 
   /// Initialize the Nostr service
   Future<void> init({required String privateKey}) async {
-    // Bootstrap NDK on discovery + env relays so the self NIP-65 lookup can
-    // succeed regardless of where a prior list was published.
-    final bootstrap = {...kDiscoveryRelays, ..._envRelays}.toList();
     _cacheManager = MemCacheManager();
-    _ndk = Ndk(
-      NdkConfig(
-        cache: _cacheManager,
-        eventVerifier: rustEventVerifier,
-        bootstrapRelays: bootstrap,
-        logLevel: LogLevel.info,
-        cacheEvictionEnabled: true,
-        cacheEvictionPolicy: _cacheEvictionPolicy,
-        cacheEvictionStartupDelay: _cacheEvictionStartupDelay,
-        cacheEvictionInterval: _cacheEvictionInterval,
-        // Slow down NDK's local-first rebroadcast pump so relay.mostro.network
-        // does not get hammered by repeated pending-delivery retries.
-        pendingDeliveryRetryInterval: _pendingDeliveryRetryInterval,
-      ),
-    );
 
     // Generate or load coordinator keys. Precedence: explicit env key, then
     // the generated-key file from a previous run (keeps the identity stable
@@ -202,6 +214,26 @@ class NostrService {
       }
     }
 
+    // Bootstrap only after the signer has been resolved. NDK starts relay
+    // connectivity as part of construction and can otherwise attempt a
+    // pending-delivery flush with no logged-in account.
+    final bootstrap = {...kDiscoveryRelays, ..._envRelays}.toList();
+    _ndk = Ndk(
+      NdkConfig(
+        cache: _cacheManager,
+        eventVerifier: rustEventVerifier,
+        bootstrapRelays: bootstrap,
+        logLevel: LogLevel.info,
+        cacheEvictionEnabled: true,
+        cacheEvictionPolicy: _cacheEvictionPolicy,
+        cacheEvictionStartupDelay: _cacheEvictionStartupDelay,
+        cacheEvictionInterval: _cacheEvictionInterval,
+        // Slow down NDK's local-first rebroadcast pump so relay.mostro.network
+        // does not get hammered by repeated pending-delivery retries.
+        pendingDeliveryRetryInterval: _pendingDeliveryRetryInterval,
+      ),
+    );
+
     // Log the coordinator key into NDK accounts so the userRelayLists usecase
     // (NIP-65 publish) can sign with it.
     _ndk.accounts.loginPrivateKey(
@@ -215,6 +247,7 @@ class NostrService {
 
     // Resolve the working relay set from our own NIP-65 (or publish a new one).
     await _resolveWorkingRelays();
+    await _resolveBlossomServerList();
 
     // Ensure a kind-0 profile (name/logo) exists on the discovery relays.
     await _ensureMetadata();
@@ -392,6 +425,43 @@ class NostrService {
     }
   }
 
+  /// Preserve an already-published kind-10063 list unconditionally.
+  /// BLOSSOM_SERVERS and the public defaults are seed values only: the
+  /// configured list is published when no existing event defines any
+  /// servers, and the public defaults are used when configuration is empty too.
+  Future<void> _resolveBlossomServerList() async {
+    try {
+      final existing = await _ndk.blossomUserServerList.getUserServerList(
+        pubkeys: [_signer.getPublicKey()],
+      );
+      if (existing != null && existing.isNotEmpty) {
+        AppLogger.info(
+          'Existing kind-10063 Blossom server list found '
+          '(${existing.length} server(s)); preserving it. '
+          'BLOSSOM_SERVERS was not published.',
+        );
+        return;
+      }
+
+      final serversToPublish =
+          _blossomServers.isEmpty ? defaultBlossomServers : _blossomServers;
+      AppLogger.info(
+        _blossomServers.isEmpty
+            ? 'No existing kind-10063 list or configured fallback found; using public defaults.'
+            : 'No existing kind-10063 list found; publishing the configured BLOSSOM_SERVERS fallback.',
+      );
+      await _ndk.blossomUserServerList.publishUserServerList(
+        serverUrlsOrdered: serversToPublish,
+      );
+      AppLogger.info(
+        'Published standard kind-10063 Blossom server list '
+        '(${serversToPublish.length} server(s)).',
+      );
+    } catch (e) {
+      AppLogger.warning('Could not resolve/publish Blossom server list: $e');
+    }
+  }
+
   void _startRelayRefreshLoop() {
     _relayRefreshTimer?.cancel();
     _relayRefreshTimer = Timer.periodic(_relayRefreshInterval, (_) {
@@ -425,7 +495,6 @@ class NostrService {
       'Detected updated NIP-65 relays; switching runtime relays to $_relays and keeping previous relays active during grace period: $_graceRelays',
     );
     await _restartRequestListener(_broadcastRelays);
-
     _relayGraceTimer?.cancel();
     _relayGraceTimer = Timer(_relayChangeGracePeriod, () {
       _finishRelayGracePeriod().catchError((e) {
@@ -639,7 +708,8 @@ class NostrService {
         ifAbsent: () => 1);
     final id = request.id;
     AppLogger.info(
-      '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} params=${request.params.values.map((v) => v.toString()).toList()..sort()}',
+      '${request.client} - ${request.method} from=${_shortKey(event.pubKey)} '
+      'paramKeys=${request.params.keys.toList()..sort()}',
     );
     if (id == null) {
       await _sendErrorResponse(
@@ -732,28 +802,134 @@ class NostrService {
             return {};
           }
 
+        case kRpcListDisputes:
+          final coordinatorKey = coordinatorPubkey;
+          final isCoordinator = coordinatorKey != null &&
+              userPubkey.toLowerCase() == coordinatorKey.toLowerCase();
+          if (!isCoordinator) {
+            throw StateError(
+              'Only the authenticated coordinator can list console offers.',
+            );
+          }
+          final requestedLimit = (params['limit'] as num?)?.toInt() ?? 25;
+          final limit = requestedLimit.clamp(1, 25).toInt();
+          final cursor = params['cursor'];
+          DateTime? beforeCreatedAt;
+          String? beforeId;
+          if (cursor != null) {
+            if (cursor is! Map) {
+              throw const FormatException('Invalid dispute-list cursor.');
+            }
+            beforeCreatedAt = DateTime.tryParse(
+              cursor['created_at']?.toString() ?? '',
+            )?.toUtc();
+            beforeId = cursor['id']?.toString();
+            if (beforeCreatedAt == null ||
+                beforeId == null ||
+                beforeId.isEmpty) {
+              throw const FormatException('Invalid dispute-list cursor.');
+            }
+          }
+          final offers = await _coordinatorService.getNonFinalOffers(
+            limit: limit + 1,
+            beforeCreatedAt: beforeCreatedAt,
+            beforeId: beforeId,
+          );
+          final hasMore = offers.length > limit;
+          final page = (hasMore ? offers.take(limit) : offers).toList(
+            growable: false,
+          );
+          final last = page.isEmpty ? null : page.last;
+          return <String, dynamic>{
+            'offers': page
+                .map(
+                  (offer) => <String, dynamic>{
+                    'id': offer.id,
+                    'amount_sats': offer.amountSats,
+                    'maker_fees': offer.makerFees,
+                    'status': offer.statusRaw,
+                    'created_at': offer.createdAt.toUtc().toIso8601String(),
+                    'dispute_at': offer.disputeAt?.toUtc().toIso8601String(),
+                    'fiat_amount': offer.fiatAmount,
+                    'fiat_currency': offer.fiatCurrency,
+                    'maker_pubkey': offer.makerPubkey,
+                    'taker_pubkey': offer.takerPubkey,
+                    'coordinator_pubkey': coordinatorKey,
+                  },
+                )
+                .toList(growable: false),
+            'next_cursor': hasMore && last != null
+                ? <String, dynamic>{
+                    'created_at': last.createdAt.toUtc().toIso8601String(),
+                    'id': last.id,
+                  }
+                : null,
+          };
+
         case kRpcGetOfferDetails:
           final offerId = params['offer_id'] as String?;
           final paymentHash = params['payment_hash'] as String?;
-          final offer = await _coordinatorService.getOfferDetailsForParticipant(
-            userPubkey,
-            offerId: offerId,
-            paymentHash: paymentHash,
-          );
+          // Nostr pubkeys are hex identifiers; compare their canonical form so
+          // a valid signed coordinator request is never downgraded to the
+          // participant lookup path because a signer encoded uppercase hex.
+          final coordinatorKey = coordinatorPubkey;
+          final isCoordinator = coordinatorKey != null &&
+              userPubkey.toLowerCase() == coordinatorKey.toLowerCase();
+          final offer = isCoordinator
+              ? (offerId != null && offerId.isNotEmpty
+                  ? await _coordinatorService.getOfferById(offerId)
+                  : paymentHash != null && paymentHash.isNotEmpty
+                      ? await _coordinatorService
+                          .getOfferByPaymentHash(paymentHash)
+                      : throw ArgumentError(
+                          'offerId or paymentHash is required'))
+              : await _coordinatorService.getOfferDetailsForParticipant(
+                  userPubkey,
+                  offerId: offerId,
+                  paymentHash: paymentHash,
+                );
           if (offer == null) {
             return {};
           }
-          final includeBlikCode =
+          final includeBlikCode = isCoordinator ||
               _coordinatorService.offerUsesMakerProvidedCode(offer) &&
                   offer.takerPubkey == userPubkey;
-          // Participant gate above guarantees requester is maker or taker;
-          // non-makers get the maker-private fields stripped.
+          // Coordinator authorization derives only from the signed request
+          // author matching this running service's own key. Participant
+          // responses preserve the existing maker-identity redaction.
           return <String, dynamic>{
             ...offer.toRpcJson(
               includeBlikCode: includeBlikCode,
-              forTaker: offer.makerPubkey != userPubkey,
+              includeTakerInvoice: isCoordinator,
+              forTaker: !isCoordinator && offer.makerPubkey != userPubkey,
             ),
+            // The running signer's key is authoritative even for legacy DB
+            // rows created before coordinator_pubkey was persisted.
+            if (coordinatorKey != null)
+              'coordinator_pubkey': coordinatorKey.toLowerCase(),
             'payment_system': _coordinatorService.paymentSystem.id,
+            if (isCoordinator || offer.makerPubkey == userPubkey)
+              'maker_refund_invoice_ready': offer.makerRefundInvoice != null &&
+                  offer.makerRefundPaymentHash != null,
+            if (isCoordinator)
+              'state_history':
+                  await _coordinatorService.getOfferStateHistory(offer.id),
+            if (isCoordinator)
+              'is_final': _coordinatorService.isTerminalOffer(offer),
+            if (isCoordinator)
+              'payment_backend': {
+                'type': _coordinatorService.paymentBackendType,
+                'available': _coordinatorService.paymentBackendType != 'none',
+              },
+            if (isCoordinator)
+              'decision_amounts': {
+                'maker_refund_sats': _coordinatorService
+                    .disputeDecisionAmounts(offer)
+                    .makerRefundSats,
+                'taker_payout_sats': _coordinatorService
+                    .disputeDecisionAmounts(offer)
+                    .takerPayoutSats,
+              },
           };
 
         // DEPRECATED: clients (>= local-db-counts change) no longer call this.
@@ -1072,6 +1248,11 @@ class NostrService {
               ? (offer.takerPaidAt!.millisecondsSinceEpoch ~/ 1000).toString()
               : ''
         ],
+        if (offer.disputeAt != null)
+          [
+            'dispute_at',
+            (offer.disputeAt!.millisecondsSinceEpoch ~/ 1000).toString(),
+          ],
         if (offer.category != null) ['category', offer.category!.name],
         // Bank the maker will withdraw at, for bank-scoped markets (SK). Lets
         // takers filter the feed to banks whose app they hold.
@@ -1168,6 +1349,8 @@ class NostrService {
       case 'expired':
         return 'canceled';
       case 'dispute':
+      case 'securingDispute':
+      case 'payingMaker':
         return 'dispute';
       // reserved, twint_charged, expired_twint (retake-able), conflict, and any
       // other live generic state.
@@ -1201,6 +1384,7 @@ class NostrService {
         return 'canceled';
       case OfferStatus.conflict:
       case OfferStatus.dispute:
+      case OfferStatus.refundingMaker:
         return 'dispute';
       case OfferStatus.unknown:
         // Coordinator never emits offers in `unknown` state — sentinel exists

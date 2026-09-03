@@ -166,6 +166,7 @@ offers:
     invalidBlik: "${code} inválido"
     conflict: "Conflito"
     dispute: "Disputa"
+    refundingMaker: "Reembolso do maker"
     makerConfirmed: "Confirmada"
     settled: "Liquidada"
     payingTaker: "A pagar ao taker"
@@ -354,7 +355,62 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  viewHistory: "Ver histórico da disputa"
+  historyTitle: "Histórico da disputa"
+  ruledForMaker: "Decisão a favor do maker"
+  ruledForTaker: "Decisão a favor do taker"
+  legacyChannel: "Canal de compatibilidade NIP-04 legado"
+  privateConversation: "Conversa privada com o coordenador"
+  noMessages: "Ainda não há mensagens."
+  replyHint: "Responder aqui"
+  readOnly: "O histórico desta disputa resolvida é só de leitura."
+  evidenceDeadline:
+    title: "Prazo para envio de provas"
+    remaining: "Envie provas que sustentem a sua posição dentro de ${time}. Após este prazo, o coordenador pode decidir a favor da contraparte com base nas provas disponíveis."
+    expired: "O período para envio de provas terminou. O coordenador pode agora decidir com base nas provas disponíveis."
+    period: "O coordenador permite até ${time} para provas após a abertura da disputa. A contagem decrescente começará quando o horário da disputa estiver disponível."
+  tooltips:
+    refresh: "Atualizar mensagens"
+    attachEvidence: "Anexar comprovativo de pagamento"
+    send: "Enviar mensagem"
+  errors:
+    accountNotReady: "As mensagens privadas estarão disponíveis quando a sua conta Nostr estiver pronta."
+    subscriptionFailed: "A ligação de mensagens privadas falhou. Atualize a conversa."
+    decryptFailed: "Não foi possível decifrar uma mensagem privada."
+    operationFailed: "A operação de mensagens privadas falhou. Tente novamente."
+    nostrNotInitialized: "O Nostr não foi inicializado."
+    attachmentsRequireNip17: "Os anexos estão disponíveis apenas no canal NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "O serviço de carteira não está disponível."
+    noBolt11: "A carteira não devolveu uma fatura BOLT11."
+
 maker:
+  refundInvoice:
+    title: "O coordenador decidiu a seu favor"
+    instructions: "Escolha uma carteira de recebimento ou cole uma fatura Lightning de exatamente ${amount} para o reembolso."
+    invoiceLabel: "Fatura de reembolso com o valor exato"
+    submit: "Enviar fatura de reembolso"
+    addWallet: "Adicionar nova carteira"
+    noReceivingWallet: "Não há uma carteira de recebimento configurada. Adicione uma ou cole uma fatura de outra carteira."
+    paymentFailed: "A tentativa de reembolso anterior falhou. Escolha outra carteira ou envie uma nova fatura."
+    submitFailed: "Não foi possível enviar a fatura de reembolso: ${details}"
+    errors:
+      backendUnavailable: "O serviço de pagamento Lightning não está disponível."
+      missing: "Introduza uma fatura de reembolso."
+      invalid: "Introduza uma fatura de reembolso BOLT11 válida."
+      wrongNetwork: "A fatura de reembolso pertence à rede Lightning errada."
+      wrongAmount: "A fatura de reembolso deve conter o valor exato do reembolso."
+      invalidExpiry: "A fatura de reembolso tem uma validade inválida."
+      futureTimestamp: "A data da fatura de reembolso está no futuro."
+      expired: "A fatura de reembolso expirou. Gere uma nova."
+      invalidPaymentHash: "A fatura de reembolso não tem um hash de pagamento válido."
+      reusedInvoice: "Use uma nova fatura; a fatura da oferta não pode receber o reembolso."
+      unsupportedNetwork: "Esta rede Lightning não é suportada."
+      unknown: "Verifique a fatura e tente novamente."
+
   roleSelection:
     button: PAGAR com Lightning
 
@@ -550,7 +606,8 @@ maker:
     title: Conflito na oferta
     headline: Conflito na oferta reportado
     body: Marcou o código ${code} como inválido, mas o taker reportou um conflito, indicando que acredita que o pagamento foi bem-sucedido.
-    instructions: Aguarde que o coordenador analise a situação. Poderão pedir-lhe mais detalhes. Volte mais tarde ou contacte o suporte se necessário.
+    instructions: Confirme o resultado antes de o temporizador expirar. Se o pagamento foi bem-sucedido, confirme-o para que o taker possa receber. Se falhou, abra uma disputa. Se não fizer nada, será aberta automaticamente uma disputa formal.
+    timeoutLabel: "A disputa formal será aberta automaticamente dentro de ${time}"
 
     actions:
       back: Voltar ao início
@@ -641,6 +698,23 @@ taker:
     actions:
       cancel: "Voltar e verificar o banco"
       proceed: "NÃO fui debitado — continuar"
+
+  conflict:
+    title: Confirmação do pagamento pendente
+    headline: A aguardar a confirmação do maker
+    body: Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.
+    instructions: O maker tem agora de confirmar o resultado. Se confirmar que o pagamento foi bem-sucedido, o seu pagamento continuará. Se confirmar que falhou, ou se o temporizador expirar, a oferta passará para uma disputa formal e o chat da disputa ficará disponível.
+    timeoutLabel: "A disputa formal será aberta automaticamente dentro de ${time}"
+    actions:
+      back: Voltar ao início
+    feedback:
+      reported: Conflito de pagamento reportado. A aguardar a confirmação do maker.
+    errors:
+      reporting: "Erro ao reportar o conflito: ${details}"
+
+  dispute:
+    headline: Disputa formal aberta
+    body: A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.
 
 twint:
   scanner:
@@ -1050,6 +1124,24 @@ faq:
 # =============================================================================
 settings:
   title: Definições
+  coordinatorConsole:
+    title: Consola do coordenador
+    subtitle: Gerir disputas com um assinante coordenador
+    signInTitle: Iniciar sessão como coordenador
+    signInDescription: Use a chave Nostr que identifica o coordenador para analisar e resolver disputas.
+    separateIdentityNote: O assinante do coordenador utiliza uma sessão NDK separada e nunca substitui a identidade de negociação Neko.
+    loginWithSignerApp: Entrar com a aplicação de assinatura
+    loginWithExtension: Entrar com a extensão do navegador
+    loginWithNsec: Entrar com nsec
+    nsecDialogTitle: Chave privada do coordenador
+    nsecFieldLabel: Chave privada
+    nsecSecurityNote: A chave privada é armazenada com segurança neste dispositivo e usada apenas pela sessão separada do coordenador.
+    unsupportedPlatform: O início de sessão do coordenador está atualmente disponível no Android, Linux e na Web.
+    loginFailed: Falha no início de sessão do coordenador
+    accountsTitle: Contas de coordenador
+    savedAccounts: Contas de coordenador guardadas
+    addAccount: Adicionar conta de coordenador
+    removeAccount: Remover conta de coordenador
   offerCreation:
     title: Criação de ofertas
     defaultCategory: Categoria predefinida

@@ -57,17 +57,19 @@ class OfferListTile extends ConsumerWidget {
     final isTaker = myPubkey != null && offer.takerPubkey == myPubkey;
     final premiumViewerRole =
         isTaker ? PremiumViewerRole.taker : PremiumViewerRole.maker;
-    final roleLabel = isMaker
-        ? t.myOffers.details.maker
-        : isTaker
-        ? t.myOffers.details.taker
-        : null;
+    final roleLabel =
+        isMaker
+            ? t.myOffers.details.maker
+            : isTaker
+            ? t.myOffers.details.taker
+            : null;
     // Use the user's own pubkey as the neko seed when their role is known.
-    final nekoPubkey = isMaker
-        ? offer.makerPubkey
-        : isTaker
-        ? offer.takerPubkey!
-        : offer.makerPubkey;
+    final nekoPubkey =
+        isMaker
+            ? offer.makerPubkey
+            : isTaker
+            ? offer.takerPubkey!
+            : offer.makerPubkey;
     final showNekoAvatar = isMaker || isTaker || showNeko;
 
     final Widget statusLeading =
@@ -79,14 +81,15 @@ class OfferListTile extends ConsumerWidget {
                 children: [
                   ClipOval(
                     child: CachedNetworkImage(
-                      imageUrl:
-                          'https://robohash.org/$nekoPubkey?set=set4',
+                      imageUrl: 'https://robohash.org/$nekoPubkey?set=set4',
                       width: 40,
                       height: 40,
                       fit: BoxFit.cover,
                       placeholder:
                           (_, __) => CircleAvatar(
-                            backgroundColor: statusColor.withValues(alpha: 0.15),
+                            backgroundColor: statusColor.withValues(
+                              alpha: 0.15,
+                            ),
                             child: Icon(
                               _statusIcon(offer.status),
                               color: statusColor,
@@ -95,7 +98,9 @@ class OfferListTile extends ConsumerWidget {
                           ),
                       errorWidget:
                           (_, __, ___) => CircleAvatar(
-                            backgroundColor: statusColor.withValues(alpha: 0.15),
+                            backgroundColor: statusColor.withValues(
+                              alpha: 0.15,
+                            ),
                             child: Icon(
                               _statusIcon(offer.status),
                               color: statusColor,
@@ -127,7 +132,11 @@ class OfferListTile extends ConsumerWidget {
             )
             : CircleAvatar(
               backgroundColor: statusColor.withValues(alpha: 0.15),
-              child: Icon(_statusIcon(offer.status), color: statusColor, size: 20),
+              child: Icon(
+                _statusIcon(offer.status),
+                color: statusColor,
+                size: 20,
+              ),
             );
 
     return InkWell(
@@ -214,7 +223,10 @@ class OfferListTile extends ConsumerWidget {
                           coordinatorName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ],
@@ -249,6 +261,7 @@ class OfferListTile extends ConsumerWidget {
       case OfferStatus.expiredSentBlik:
       case OfferStatus.conflict:
       case OfferStatus.dispute:
+      case OfferStatus.refundingMaker:
         return Icons.warning_amber;
       case OfferStatus.funded:
       case OfferStatus.reserved:
@@ -279,6 +292,7 @@ class OfferListTile extends ConsumerWidget {
       case OfferStatus.expiredSentBlik:
       case OfferStatus.conflict:
       case OfferStatus.dispute:
+      case OfferStatus.refundingMaker:
         return Colors.orange;
       case OfferStatus.funded:
       case OfferStatus.reserved:

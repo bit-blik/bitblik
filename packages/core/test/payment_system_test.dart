@@ -1,4 +1,5 @@
 import 'package:bitblik_core/core.dart';
+import 'package:ndk/ndk.dart';
 import 'package:test/test.dart';
 
 /// The SK ATM instrument and its banks, resolved from the market.
@@ -171,6 +172,7 @@ void main() {
       List<String> banks = const [],
       Map<String, String> channelLinks = const {},
       Map<String, Map<String, String>> bankChannelLinks = const {},
+      int? disputeEvidencePeriodSeconds = 48 * 60 * 60,
     }) =>
         CoordinatorInfo(
           name: 'c',
@@ -184,6 +186,7 @@ void main() {
           banks: banks,
           channelLinks: channelLinks,
           bankChannelLinks: bankChannelLinks,
+          disputeEvidencePeriodSeconds: disputeEvidencePeriodSeconds,
           nostrNpub: null,
         );
 
@@ -200,6 +203,7 @@ void main() {
       expect(decoded.banks, ['tatrabanka', 'slsp']);
       expect(decoded.bankChannelLinks['tatrabanka']!['telegram'],
           'https://t.me/tatra');
+      expect(decoded.disputeEvidencePeriodSeconds, 48 * 60 * 60);
     });
 
     test('fromJson derives method from currencies when absent', () {
@@ -277,6 +281,41 @@ void main() {
           isTrue);
       expect(
           tags.any((t) => t[0] == 'banks' && t[1] == 'tatrabanka,vub'), isTrue);
+      expect(
+          tags.any((t) =>
+              t[0] == 'dispute_evidence_period_seconds' && t[1] == '172800'),
+          isTrue);
+    });
+
+    test('old coordinator info has no evidence period', () {
+      final json = base().toJson()..remove('dispute_evidence_period_seconds');
+
+      final decoded = CoordinatorInfo.fromJson(json);
+      expect(decoded.disputeEvidencePeriodSeconds, isNull);
+      expect(decoded.toJson().containsKey('dispute_evidence_period_seconds'),
+          isFalse);
+      expect(
+          decoded
+              .toNostrTags()
+              .any((tag) => tag[0] == 'dispute_evidence_period_seconds'),
+          isFalse);
+    });
+
+    test('old Nostr info event has no evidence period', () {
+      final event = Nip01Event(
+        pubKey:
+            '0000000000000000000000000000000000000000000000000000000000000000',
+        kind: kKindCoordinatorInfo,
+        tags: const [
+          ['name', 'old coordinator'],
+          ['currencies', 'PLN'],
+          ['payment_system', 'blik'],
+        ],
+        content: '',
+      );
+
+      expect(CoordinatorInfo.fromNostrEvent(event).disputeEvidencePeriodSeconds,
+          isNull);
     });
   });
 

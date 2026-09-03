@@ -24,7 +24,8 @@ const Duration kRelayRequestGrace = Duration(seconds: 3);
 /// own connection management without forking transport logic.
 class BitblikRpcClient {
   final Ndk ndk;
-  final Bip340EventSigner signer;
+  EventSigner _signer;
+  EventSigner get signer => _signer;
 
   /// Initial/bootstrap relays for the response subscription and the default
   /// broadcast target. Per-coordinator routing overrides the broadcast target
@@ -36,6 +37,7 @@ class BitblikRpcClient {
   final Map<String, _PendingRpcRequest> _pending = {};
   final Random _random = Random.secure();
   NdkResponse? _subscription;
+  Future<void>? _rebindInFlight;
 
   /// Relays the current response subscription listens on. Starts as [relays].
   late List<String> _responseRelays = List.from(relays);
@@ -53,16 +55,53 @@ class BitblikRpcClient {
 
   BitblikRpcClient({
     required this.ndk,
-    required this.signer,
+    required EventSigner signer,
     required this.relays,
     this.timeout = const Duration(seconds: 5),
     this.subscriptionName = 'bitblik-rpc-responses',
     this.clientId,
-  });
+  }) : _signer = signer;
 
   /// Subscribe to incoming responses. Must be called before [send].
   Future<void> start() async {
     await _openSubscription(_responseRelays);
+  }
+
+  /// Switches the client identity without replacing the shared [Ndk] instance.
+  ///
+  /// Existing requests are allowed to finish with the old signer. New sends
+  /// wait until the response subscription has been reopened for [newSigner].
+  Future<void> rebindSigner(EventSigner newSigner) async {
+    final existing = _rebindInFlight;
+    if (existing != null) {
+      await existing;
+      if (signer.getPublicKey() == newSigner.getPublicKey()) return;
+    }
+    if (signer.getPublicKey() == newSigner.getPublicKey()) return;
+
+    final operation = _performSignerRebind(newSigner);
+    _rebindInFlight = operation;
+    try {
+      await operation;
+    } finally {
+      if (identical(_rebindInFlight, operation)) _rebindInFlight = null;
+    }
+  }
+
+  Future<void> _performSignerRebind(EventSigner newSigner) async {
+    final deadline = DateTime.now().add(timeout + kRelayRequestGrace);
+    while (_pending.isNotEmpty && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
+    if (_pending.isNotEmpty) {
+      throw StateError(
+        'Cannot switch the RPC signer while requests are still pending.',
+      );
+    }
+
+    await stop();
+    _signer = newSigner;
+    await start();
   }
 
   Future<void> _openSubscription(List<String> relays) async {
@@ -116,6 +155,9 @@ class BitblikRpcClient {
     Duration? timeoutOverride,
     List<String>? relays,
   }) async {
+    final rebind = _rebindInFlight;
+    if (rebind != null) await rebind;
+
     final targetRelays =
         (relays == null || relays.isEmpty) ? this.relays : relays;
     final effectiveTimeout = timeoutOverride ?? timeout;
@@ -150,10 +192,9 @@ class BitblikRpcClient {
     );
 
     try {
-      final event = await ProtocolCodec.encryptRequest(
+      final event = await ProtocolCodec.encryptRequestWithSigner(
         request: reqWithId,
-        senderPrivateKeyHex: signer.privateKey!,
-        senderPubkeyHex: signer.getPublicKey(),
+        signer: signer,
         coordinatorPubkey: coordinatorPubkey,
       );
       final broadcastResponse = ndk.broadcast.broadcast(
@@ -212,10 +253,8 @@ class BitblikRpcClient {
 
   Future<void> _onResponse(Nip01Event event) async {
     try {
-      final response = await ProtocolCodec.decryptResponse(
-        event,
-        signer.privateKey!,
-      );
+      final response =
+          await ProtocolCodec.decryptResponseWithSigner(event, signer);
       final id = response.id;
       if (id == null) return;
       final pending = _pending[id];

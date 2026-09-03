@@ -48,6 +48,8 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$reservations$en reservations = Translations$reservations$en.internal(_root);
 	late final Translations$exchange$en exchange = Translations$exchange$en.internal(_root);
 	late final Translations$coordinator$en coordinator = Translations$coordinator$en.internal(_root);
+	late final Translations$disputeChat$en disputeChat = Translations$disputeChat$en.internal(_root);
+	late final Translations$receivingInvoice$en receivingInvoice = Translations$receivingInvoice$en.internal(_root);
 	late final Translations$maker$en maker = Translations$maker$en.internal(_root);
 	late final Translations$taker$en taker = Translations$taker$en.internal(_root);
 	late final Translations$twint$en twint = Translations$twint$en.internal(_root);
@@ -195,6 +197,56 @@ class Translations$coordinator$en {
 	late final Translations$coordinator$management$en management = Translations$coordinator$management$en.internal(_root);
 }
 
+// Path: disputeChat
+class Translations$disputeChat$en {
+	Translations$disputeChat$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'View dispute history'
+	String get viewHistory => 'View dispute history';
+
+	/// en: 'Dispute history'
+	String get historyTitle => 'Dispute history';
+
+	/// en: 'Ruled for Maker'
+	String get ruledForMaker => 'Ruled for Maker';
+
+	/// en: 'Ruled for Taker'
+	String get ruledForTaker => 'Ruled for Taker';
+
+	/// en: 'Legacy NIP-04 compatibility channel'
+	String get legacyChannel => 'Legacy NIP-04 compatibility channel';
+
+	/// en: 'Private coordinator conversation'
+	String get privateConversation => 'Private coordinator conversation';
+
+	/// en: 'No messages yet.'
+	String get noMessages => 'No messages yet.';
+
+	/// en: 'Reply here'
+	String get replyHint => 'Reply here';
+
+	/// en: 'This resolved dispute history is read-only.'
+	String get readOnly => 'This resolved dispute history is read-only.';
+
+	late final Translations$disputeChat$evidenceDeadline$en evidenceDeadline = Translations$disputeChat$evidenceDeadline$en.internal(_root);
+	late final Translations$disputeChat$tooltips$en tooltips = Translations$disputeChat$tooltips$en.internal(_root);
+	late final Translations$disputeChat$errors$en errors = Translations$disputeChat$errors$en.internal(_root);
+}
+
+// Path: receivingInvoice
+class Translations$receivingInvoice$en {
+	Translations$receivingInvoice$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final Translations$receivingInvoice$errors$en errors = Translations$receivingInvoice$errors$en.internal(_root);
+}
+
 // Path: maker
 class Translations$maker$en {
 	Translations$maker$en.internal(this._root);
@@ -202,6 +254,7 @@ class Translations$maker$en {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final Translations$maker$refundInvoice$en refundInvoice = Translations$maker$refundInvoice$en.internal(_root);
 	late final Translations$maker$roleSelection$en roleSelection = Translations$maker$roleSelection$en.internal(_root);
 	late final Translations$maker$amountForm$en amountForm = Translations$maker$amountForm$en.internal(_root);
 	late final Translations$maker$payInvoice$en payInvoice = Translations$maker$payInvoice$en.internal(_root);
@@ -230,6 +283,7 @@ class Translations$taker$en {
 	late final Translations$taker$criticalCodeDecision$en criticalCodeDecision = Translations$taker$criticalCodeDecision$en.internal(_root);
 	late final Translations$taker$invalidBlik$en invalidBlik = Translations$taker$invalidBlik$en.internal(_root);
 	late final Translations$taker$conflict$en conflict = Translations$taker$conflict$en.internal(_root);
+	late final Translations$taker$dispute$en dispute = Translations$taker$dispute$en.internal(_root);
 }
 
 // Path: twint
@@ -444,6 +498,7 @@ class Translations$settings$en {
 	/// en: 'Settings'
 	String get title => 'Settings';
 
+	late final Translations$settings$coordinatorConsole$en coordinatorConsole = Translations$settings$coordinatorConsole$en.internal(_root);
 	late final Translations$settings$offerCreation$en offerCreation = Translations$settings$offerCreation$en.internal(_root);
 	late final Translations$settings$display$en display = Translations$settings$display$en.internal(_root);
 	late final Translations$settings$paymentSystem$en paymentSystem = Translations$settings$paymentSystem$en.internal(_root);
@@ -1070,6 +1125,9 @@ class Translations$offers$status$en {
 	/// en: 'Dispute'
 	String get dispute => 'Dispute';
 
+	/// en: 'Refunding Maker'
+	String get refundingMaker => 'Refunding Maker';
+
 	/// en: 'Confirmed'
 	String get makerConfirmed => 'Confirmed';
 
@@ -1610,6 +1668,122 @@ class Translations$coordinator$management$en {
 	String get metricNetworkOffersTooltip => 'Successful offers settled by this coordinator across all users in the last 30 days.';
 }
 
+// Path: disputeChat.evidenceDeadline
+class Translations$disputeChat$evidenceDeadline$en {
+	Translations$disputeChat$evidenceDeadline$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Evidence submission deadline'
+	String get title => 'Evidence submission deadline';
+
+	/// en: 'Provide evidence supporting your claim within ${time}. After this deadline, the coordinator may rule for the counterparty based on the evidence available.'
+	String remaining({required Object time}) => 'Provide evidence supporting your claim within ${time}. After this deadline, the coordinator may rule for the counterparty based on the evidence available.';
+
+	/// en: 'The evidence period has ended. The coordinator may now rule based on the evidence available.'
+	String get expired => 'The evidence period has ended. The coordinator may now rule based on the evidence available.';
+
+	/// en: 'The coordinator allows up to ${time} for evidence after the dispute opens. The countdown will start when the dispute timestamp is available.'
+	String period({required Object time}) => 'The coordinator allows up to ${time} for evidence after the dispute opens. The countdown will start when the dispute timestamp is available.';
+}
+
+// Path: disputeChat.tooltips
+class Translations$disputeChat$tooltips$en {
+	Translations$disputeChat$tooltips$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Refresh messages'
+	String get refresh => 'Refresh messages';
+
+	/// en: 'Attach payment evidence'
+	String get attachEvidence => 'Attach payment evidence';
+
+	/// en: 'Send message'
+	String get send => 'Send message';
+}
+
+// Path: disputeChat.errors
+class Translations$disputeChat$errors$en {
+	Translations$disputeChat$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Private messaging is unavailable until your Nostr account is ready.'
+	String get accountNotReady => 'Private messaging is unavailable until your Nostr account is ready.';
+
+	/// en: 'The private-message connection failed. Try refreshing the conversation.'
+	String get subscriptionFailed => 'The private-message connection failed. Try refreshing the conversation.';
+
+	/// en: 'A private message could not be decrypted.'
+	String get decryptFailed => 'A private message could not be decrypted.';
+
+	/// en: 'The private-message operation failed. Please try again.'
+	String get operationFailed => 'The private-message operation failed. Please try again.';
+
+	/// en: 'Nostr is not initialized.'
+	String get nostrNotInitialized => 'Nostr is not initialized.';
+
+	/// en: 'Attachments are available only in the NIP-17 channel.'
+	String get attachmentsRequireNip17 => 'Attachments are available only in the NIP-17 channel.';
+}
+
+// Path: receivingInvoice.errors
+class Translations$receivingInvoice$errors$en {
+	Translations$receivingInvoice$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'The wallet service is unavailable.'
+	String get walletUnavailable => 'The wallet service is unavailable.';
+
+	/// en: 'The wallet did not return a BOLT11 invoice.'
+	String get noBolt11 => 'The wallet did not return a BOLT11 invoice.';
+}
+
+// Path: maker.refundInvoice
+class Translations$maker$refundInvoice$en {
+	Translations$maker$refundInvoice$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'The coordinator ruled in your favor'
+	String get title => 'The coordinator ruled in your favor';
+
+	/// en: 'Choose a receiving wallet or paste an exact ${amount} Lightning invoice for your refund.'
+	String instructions({required Object amount}) => 'Choose a receiving wallet or paste an exact ${amount} Lightning invoice for your refund.';
+
+	/// en: 'Exact-amount refund invoice'
+	String get invoiceLabel => 'Exact-amount refund invoice';
+
+	/// en: 'Submit refund invoice'
+	String get submit => 'Submit refund invoice';
+
+	/// en: 'Add a new wallet'
+	String get addWallet => 'Add a new wallet';
+
+	/// en: 'No receiving wallet is configured. Add one or paste an invoice from another wallet.'
+	String get noReceivingWallet => 'No receiving wallet is configured. Add one or paste an invoice from another wallet.';
+
+	/// en: 'The previous refund attempt failed. Choose another wallet or submit a fresh invoice.'
+	String get paymentFailed => 'The previous refund attempt failed. Choose another wallet or submit a fresh invoice.';
+
+	/// en: 'Could not submit the refund invoice: ${details}'
+	String submitFailed({required Object details}) => 'Could not submit the refund invoice: ${details}';
+
+	late final Translations$maker$refundInvoice$errors$en errors = Translations$maker$refundInvoice$errors$en.internal(_root);
+}
+
 // Path: maker.roleSelection
 class Translations$maker$roleSelection$en {
 	Translations$maker$roleSelection$en.internal(this._root);
@@ -1821,8 +1995,11 @@ class Translations$maker$conflict$en {
 	/// en: 'You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.'
 	String body({required Object code}) => 'You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.';
 
-	/// en: 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.'
-	String get instructions => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
+	/// en: 'Confirm the outcome before the timer expires. If the payment succeeded, confirm it so the Taker can be paid. If it failed, open a dispute. If you do nothing, a formal dispute will open automatically.'
+	String get instructions => 'Confirm the outcome before the timer expires. If the payment succeeded, confirm it so the Taker can be paid. If it failed, open a dispute. If you do nothing, a formal dispute will open automatically.';
+
+	/// en: 'Formal dispute opens automatically in ${time}'
+	String timeoutLabel({required Object time}) => 'Formal dispute opens automatically in ${time}';
 
 	late final Translations$maker$conflict$actions$en actions = Translations$maker$conflict$actions$en.internal(_root);
 	late final Translations$maker$conflict$disputeDialog$en disputeDialog = Translations$maker$conflict$disputeDialog$en.internal(_root);
@@ -2118,22 +2295,40 @@ class Translations$taker$conflict$en {
 
 	// Translations
 
-	/// en: 'Offer Conflict'
-	String get title => 'Offer Conflict';
+	/// en: 'Payment Confirmation Pending'
+	String get title => 'Payment Confirmation Pending';
 
-	/// en: 'Offer Conflict Reported'
-	String get headline => 'Offer Conflict Reported';
+	/// en: 'Waiting for the Maker's Confirmation'
+	String get headline => 'Waiting for the Maker\'s Confirmation';
 
-	/// en: 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.'
-	String body({required Object code}) => 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.';
+	/// en: 'You reported that the ${code} payment was charged, but the Maker reported that it was unsuccessful. These reports conflict.'
+	String body({required Object code}) => 'You reported that the ${code} payment was charged, but the Maker reported that it was unsuccessful. These reports conflict.';
 
-	/// en: 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.'
-	String get instructions => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.';
+	/// en: 'The Maker must now confirm the result. If they confirm the payment succeeded, your payout will continue. If they confirm it failed, or the timer expires, the offer will move to a formal dispute and the dispute chat will become available.'
+	String get instructions => 'The Maker must now confirm the result. If they confirm the payment succeeded, your payout will continue. If they confirm it failed, or the timer expires, the offer will move to a formal dispute and the dispute chat will become available.';
+
+	/// en: 'Formal dispute opens automatically in ${time}'
+	String timeoutLabel({required Object time}) => 'Formal dispute opens automatically in ${time}';
 
 	late final Translations$taker$conflict$actions$en actions = Translations$taker$conflict$actions$en.internal(_root);
 	late final Translations$taker$conflict$feedback$en feedback = Translations$taker$conflict$feedback$en.internal(_root);
 	late final Translations$taker$conflict$errors$en errors = Translations$taker$conflict$errors$en.internal(_root);
 	late final Translations$taker$conflict$nostrContact$en nostrContact = Translations$taker$conflict$nostrContact$en.internal(_root);
+}
+
+// Path: taker.dispute
+class Translations$taker$dispute$en {
+	Translations$taker$dispute$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Formal Dispute Opened'
+	String get headline => 'Formal Dispute Opened';
+
+	/// en: 'The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.'
+	String get body => 'The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.';
 }
 
 // Path: twint.scanner
@@ -2734,6 +2929,66 @@ class Translations$landing$actions$en {
 	String get howItWorks => 'How it works?';
 }
 
+// Path: settings.coordinatorConsole
+class Translations$settings$coordinatorConsole$en {
+	Translations$settings$coordinatorConsole$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Coordinator console'
+	String get title => 'Coordinator console';
+
+	/// en: 'Manage disputes using a coordinator signer'
+	String get subtitle => 'Manage disputes using a coordinator signer';
+
+	/// en: 'Sign in as a coordinator'
+	String get signInTitle => 'Sign in as a coordinator';
+
+	/// en: 'Use the Nostr key that identifies your coordinator to review and resolve disputes.'
+	String get signInDescription => 'Use the Nostr key that identifies your coordinator to review and resolve disputes.';
+
+	/// en: 'Your coordinator signer runs in a separate NDK session and never replaces the Neko trading identity.'
+	String get separateIdentityNote => 'Your coordinator signer runs in a separate NDK session and never replaces the Neko trading identity.';
+
+	/// en: 'Sign in with signer app'
+	String get loginWithSignerApp => 'Sign in with signer app';
+
+	/// en: 'Sign in with browser extension'
+	String get loginWithExtension => 'Sign in with browser extension';
+
+	/// en: 'Sign in with nsec'
+	String get loginWithNsec => 'Sign in with nsec';
+
+	/// en: 'Coordinator private key'
+	String get nsecDialogTitle => 'Coordinator private key';
+
+	/// en: 'Private key'
+	String get nsecFieldLabel => 'Private key';
+
+	/// en: 'The private key is stored securely on this device and is used only by the separate coordinator session.'
+	String get nsecSecurityNote => 'The private key is stored securely on this device and is used only by the separate coordinator session.';
+
+	/// en: 'Coordinator login is currently available on Android, Linux, and web.'
+	String get unsupportedPlatform => 'Coordinator login is currently available on Android, Linux, and web.';
+
+	/// en: 'Coordinator login failed'
+	String get loginFailed => 'Coordinator login failed';
+
+	/// en: 'Coordinator accounts'
+	String get accountsTitle => 'Coordinator accounts';
+
+	/// en: 'Saved coordinator accounts'
+	String get savedAccounts => 'Saved coordinator accounts';
+
+	/// en: 'Add coordinator account'
+	String get addAccount => 'Add coordinator account';
+
+	/// en: 'Remove coordinator account'
+	String get removeAccount => 'Remove coordinator account';
+}
+
 // Path: settings.offerCreation
 class Translations$settings$offerCreation$en {
 	Translations$settings$offerCreation$en.internal(this._root);
@@ -3300,6 +3555,51 @@ class Translations$coordinator$coldStart$phases$en {
 
 	/// en: 'Done'
 	String get completed => 'Done';
+}
+
+// Path: maker.refundInvoice.errors
+class Translations$maker$refundInvoice$errors$en {
+	Translations$maker$refundInvoice$errors$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'The Lightning payment service is unavailable.'
+	String get backendUnavailable => 'The Lightning payment service is unavailable.';
+
+	/// en: 'Enter a refund invoice.'
+	String get missing => 'Enter a refund invoice.';
+
+	/// en: 'Enter a valid BOLT11 refund invoice.'
+	String get invalid => 'Enter a valid BOLT11 refund invoice.';
+
+	/// en: 'The refund invoice is for the wrong Lightning network.'
+	String get wrongNetwork => 'The refund invoice is for the wrong Lightning network.';
+
+	/// en: 'The refund invoice must contain the exact refund amount.'
+	String get wrongAmount => 'The refund invoice must contain the exact refund amount.';
+
+	/// en: 'The refund invoice has an invalid expiry.'
+	String get invalidExpiry => 'The refund invoice has an invalid expiry.';
+
+	/// en: 'The refund invoice timestamp is in the future.'
+	String get futureTimestamp => 'The refund invoice timestamp is in the future.';
+
+	/// en: 'The refund invoice has expired. Generate a new one.'
+	String get expired => 'The refund invoice has expired. Generate a new one.';
+
+	/// en: 'The refund invoice has no valid payment hash.'
+	String get invalidPaymentHash => 'The refund invoice has no valid payment hash.';
+
+	/// en: 'Use a new invoice; the offer invoice cannot receive the refund.'
+	String get reusedInvoice => 'Use a new invoice; the offer invoice cannot receive the refund.';
+
+	/// en: 'This Lightning network is not supported.'
+	String get unsupportedNetwork => 'This Lightning network is not supported.';
+
+	/// en: 'Check the invoice and try again.'
+	String get unknown => 'Check the invoice and try again.';
 }
 
 // Path: maker.amountForm.progress
@@ -4369,8 +4669,8 @@ class Translations$taker$conflict$feedback$en {
 
 	// Translations
 
-	/// en: 'Conflict reported. Coordinator will review.'
-	String get reported => 'Conflict reported. Coordinator will review.';
+	/// en: 'Payment conflict reported. Waiting for the Maker's confirmation.'
+	String get reported => 'Payment conflict reported. Waiting for the Maker\'s confirmation.';
 }
 
 // Path: taker.conflict.errors
@@ -5495,6 +5795,7 @@ extension on Translations {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Invalid ${code}',
 			'offers.status.conflict' => 'Conflict',
 			'offers.status.dispute' => 'Dispute',
+			'offers.status.refundingMaker' => 'Refunding Maker',
 			'offers.status.makerConfirmed' => 'Confirmed',
 			'offers.status.settled' => 'Settled',
 			'offers.status.payingTaker' => 'Paying Taker',
@@ -5634,6 +5935,50 @@ extension on Translations {
 			'coordinator.management.metricYourOffersTooltip' => 'Number of offers you have successfully completed with this coordinator.',
 			'coordinator.management.metricNetworkOffers' => 'Offers (30d)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Successful offers settled by this coordinator across all users in the last 30 days.',
+			'disputeChat.viewHistory' => 'View dispute history',
+			'disputeChat.historyTitle' => 'Dispute history',
+			'disputeChat.ruledForMaker' => 'Ruled for Maker',
+			'disputeChat.ruledForTaker' => 'Ruled for Taker',
+			'disputeChat.legacyChannel' => 'Legacy NIP-04 compatibility channel',
+			'disputeChat.privateConversation' => 'Private coordinator conversation',
+			'disputeChat.noMessages' => 'No messages yet.',
+			'disputeChat.replyHint' => 'Reply here',
+			'disputeChat.readOnly' => 'This resolved dispute history is read-only.',
+			'disputeChat.evidenceDeadline.title' => 'Evidence submission deadline',
+			'disputeChat.evidenceDeadline.remaining' => ({required Object time}) => 'Provide evidence supporting your claim within ${time}. After this deadline, the coordinator may rule for the counterparty based on the evidence available.',
+			'disputeChat.evidenceDeadline.expired' => 'The evidence period has ended. The coordinator may now rule based on the evidence available.',
+			'disputeChat.evidenceDeadline.period' => ({required Object time}) => 'The coordinator allows up to ${time} for evidence after the dispute opens. The countdown will start when the dispute timestamp is available.',
+			'disputeChat.tooltips.refresh' => 'Refresh messages',
+			'disputeChat.tooltips.attachEvidence' => 'Attach payment evidence',
+			'disputeChat.tooltips.send' => 'Send message',
+			'disputeChat.errors.accountNotReady' => 'Private messaging is unavailable until your Nostr account is ready.',
+			'disputeChat.errors.subscriptionFailed' => 'The private-message connection failed. Try refreshing the conversation.',
+			'disputeChat.errors.decryptFailed' => 'A private message could not be decrypted.',
+			'disputeChat.errors.operationFailed' => 'The private-message operation failed. Please try again.',
+			'disputeChat.errors.nostrNotInitialized' => 'Nostr is not initialized.',
+			'disputeChat.errors.attachmentsRequireNip17' => 'Attachments are available only in the NIP-17 channel.',
+			'receivingInvoice.errors.walletUnavailable' => 'The wallet service is unavailable.',
+			'receivingInvoice.errors.noBolt11' => 'The wallet did not return a BOLT11 invoice.',
+			'maker.refundInvoice.title' => 'The coordinator ruled in your favor',
+			'maker.refundInvoice.instructions' => ({required Object amount}) => 'Choose a receiving wallet or paste an exact ${amount} Lightning invoice for your refund.',
+			'maker.refundInvoice.invoiceLabel' => 'Exact-amount refund invoice',
+			'maker.refundInvoice.submit' => 'Submit refund invoice',
+			'maker.refundInvoice.addWallet' => 'Add a new wallet',
+			'maker.refundInvoice.noReceivingWallet' => 'No receiving wallet is configured. Add one or paste an invoice from another wallet.',
+			'maker.refundInvoice.paymentFailed' => 'The previous refund attempt failed. Choose another wallet or submit a fresh invoice.',
+			'maker.refundInvoice.submitFailed' => ({required Object details}) => 'Could not submit the refund invoice: ${details}',
+			'maker.refundInvoice.errors.backendUnavailable' => 'The Lightning payment service is unavailable.',
+			'maker.refundInvoice.errors.missing' => 'Enter a refund invoice.',
+			'maker.refundInvoice.errors.invalid' => 'Enter a valid BOLT11 refund invoice.',
+			'maker.refundInvoice.errors.wrongNetwork' => 'The refund invoice is for the wrong Lightning network.',
+			'maker.refundInvoice.errors.wrongAmount' => 'The refund invoice must contain the exact refund amount.',
+			'maker.refundInvoice.errors.invalidExpiry' => 'The refund invoice has an invalid expiry.',
+			'maker.refundInvoice.errors.futureTimestamp' => 'The refund invoice timestamp is in the future.',
+			'maker.refundInvoice.errors.expired' => 'The refund invoice has expired. Generate a new one.',
+			'maker.refundInvoice.errors.invalidPaymentHash' => 'The refund invoice has no valid payment hash.',
+			'maker.refundInvoice.errors.reusedInvoice' => 'Use a new invoice; the offer invoice cannot receive the refund.',
+			'maker.refundInvoice.errors.unsupportedNetwork' => 'This Lightning network is not supported.',
+			'maker.refundInvoice.errors.unknown' => 'Check the invoice and try again.',
 			'maker.roleSelection.button' => 'PAY with Lightning',
 			'maker.amountForm.progress.step1' => '1. Create Offer',
 			'maker.amountForm.progress.step2' => '2. Wait for Taker',
@@ -5782,7 +6127,8 @@ extension on Translations {
 			'maker.conflict.title' => 'Offer Conflict',
 			'maker.conflict.headline' => 'Offer Conflict Reported',
 			'maker.conflict.body' => ({required Object code}) => 'You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.',
-			'maker.conflict.instructions' => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.',
+			'maker.conflict.instructions' => 'Confirm the outcome before the timer expires. If the payment succeeded, confirm it so the Taker can be paid. If it failed, open a dispute. If you do nothing, a formal dispute will open automatically.',
+			'maker.conflict.timeoutLabel' => ({required Object time}) => 'Formal dispute opens automatically in ${time}',
 			'maker.conflict.actions.back' => 'Back to Home',
 			'maker.conflict.actions.confirmPayment' => ({required Object code}) => 'My mistake, confirm ${code} payment success',
 			'maker.conflict.actions.openDispute' => ({required Object code}) => '${code} payment did NOT succeed, OPEN DISPUTE',
@@ -5846,6 +6192,8 @@ extension on Translations {
 			'taker.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.',
 			'taker.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Resend New ${code} Code',
 			'taker.waitConfirmation.navigatedHome' => 'Navigated home.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => '${code} Code Expired',
 			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.',
 			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Reservation ends in',
@@ -5892,8 +6240,6 @@ extension on Translations {
 			'taker.paymentFailed.form.newInvoiceHint' => 'Enter your BOLT11 invoice',
 			'taker.paymentFailed.actions.retryPayment' => 'Submit New Invoice',
 			'taker.paymentFailed.errors.enterValidInvoice' => 'Please enter a valid invoice',
-			_ => null,
-		} ?? switch (path) {
 			'taker.paymentFailed.errors.updatingInvoice' => ({required Object details}) => 'Error updating invoice: ${details}',
 			'taker.paymentFailed.errors.paymentRetryFailed' => 'Payment retry failed. Please check the invoice or try again later.',
 			'taker.paymentFailed.errors.takerPublicKeyNotFound' => 'Taker public key not found.',
@@ -5933,12 +6279,13 @@ extension on Translations {
 			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Conflict reported. Coordinator will review.',
 			'taker.invalidBlik.errors.reservationFailed' => 'Failed to reserve offer again',
 			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Error reporting conflict: ${details}',
-			'taker.conflict.title' => 'Offer Conflict',
-			'taker.conflict.headline' => 'Offer Conflict Reported',
-			'taker.conflict.body' => ({required Object code}) => 'The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.',
-			'taker.conflict.instructions' => 'Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.',
+			'taker.conflict.title' => 'Payment Confirmation Pending',
+			'taker.conflict.headline' => 'Waiting for the Maker\'s Confirmation',
+			'taker.conflict.body' => ({required Object code}) => 'You reported that the ${code} payment was charged, but the Maker reported that it was unsuccessful. These reports conflict.',
+			'taker.conflict.instructions' => 'The Maker must now confirm the result. If they confirm the payment succeeded, your payout will continue. If they confirm it failed, or the timer expires, the offer will move to a formal dispute and the dispute chat will become available.',
+			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formal dispute opens automatically in ${time}',
 			'taker.conflict.actions.back' => 'Back to Home',
-			'taker.conflict.feedback.reported' => 'Conflict reported. Coordinator will review.',
+			'taker.conflict.feedback.reported' => 'Payment conflict reported. Waiting for the Maker\'s confirmation.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Error reporting conflict: ${details}',
 			'taker.conflict.nostrContact.title' => 'Contact Coordinator on Nostr',
 			'taker.conflict.nostrContact.description' => 'You can DM the coordinator directly for help with this dispute.',
@@ -5947,6 +6294,8 @@ extension on Translations {
 			'taker.conflict.nostrContact.npubCopied' => 'Coordinator npub copied to clipboard!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
+			'taker.dispute.headline' => 'Formal Dispute Opened',
+			'taker.dispute.body' => 'The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.',
 			'twint.scanner.title' => ({required Object code}) => 'Scan ${code} code',
 			'twint.scanner.status.align' => ({required Object code}) => 'Align the ${code} QR code and amount text inside the camera frame.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually.',
@@ -6208,6 +6557,23 @@ extension on Translations {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Settings',
+			'settings.coordinatorConsole.title' => 'Coordinator console',
+			'settings.coordinatorConsole.subtitle' => 'Manage disputes using a coordinator signer',
+			'settings.coordinatorConsole.signInTitle' => 'Sign in as a coordinator',
+			'settings.coordinatorConsole.signInDescription' => 'Use the Nostr key that identifies your coordinator to review and resolve disputes.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'Your coordinator signer runs in a separate NDK session and never replaces the Neko trading identity.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Sign in with signer app',
+			'settings.coordinatorConsole.loginWithExtension' => 'Sign in with browser extension',
+			'settings.coordinatorConsole.loginWithNsec' => 'Sign in with nsec',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Coordinator private key',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Private key',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'The private key is stored securely on this device and is used only by the separate coordinator session.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'Coordinator login is currently available on Android, Linux, and web.',
+			'settings.coordinatorConsole.loginFailed' => 'Coordinator login failed',
+			'settings.coordinatorConsole.accountsTitle' => 'Coordinator accounts',
+			'settings.coordinatorConsole.savedAccounts' => 'Saved coordinator accounts',
+			'settings.coordinatorConsole.addAccount' => 'Add coordinator account',
+			'settings.coordinatorConsole.removeAccount' => 'Remove coordinator account',
 			'settings.offerCreation.title' => 'Offer creation',
 			'settings.offerCreation.defaultCategory' => 'Default category',
 			'settings.offerCreation.defaultBank' => 'Default bank',

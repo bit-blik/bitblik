@@ -3,6 +3,14 @@
 ## External Requirements
 
 For running a bitblik coordinator you will need a Lightning node.
+
+Dispute communication, evidence/Blossom configuration, console operation, and
+the adjudication runbook are documented in
+[`docs/dispute-operations.md`](../../docs/dispute-operations.md). By default,
+encrypted picture evidence uses an existing coordinator kind-10063 Blossom
+list when available. If none exists, `BLOSSOM_SERVERS` is published as a
+fallback, or nostr.download and blossom.jumble.social when that setting is empty. An existing
+kind-10063 list always takes precedence over environment configuration.
 Currently supported are LND or a NWC connection with `make_hold_invoice` capability.
 
 ## Setup
@@ -56,6 +64,16 @@ How to find out telegram bot token & chat id:
 - send a message to your group to see the chat id in the response
 - get chat id with https://api.telegram.org/bot<your-bot-token>/getUpdates
 - configure `TELEGRAM_CHAT_ID` with either a single destination or a comma-separated list to send to multiple groups/channels at once
+
+For the local central notification bot, set `TEST_TELEGRAM_BOT_TOKEN` and
+`TEST_TELEGRAM_GROUP_ID` in `packages/coordinator/.env`, then run:
+
+```bash
+docker compose --profile telegram-bot up -d --build telegram-bot
+```
+
+The container uses `PAYMENT_SYSTEM` from the same `.env`; its mute-list project
+identity is resolved from `bitblik_core` for that payment system.
 
 ## Memory Profiling
 

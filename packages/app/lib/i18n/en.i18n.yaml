@@ -166,6 +166,7 @@ offers:
     invalidBlik: "Invalid ${code}"
     conflict: "Conflict"
     dispute: "Dispute"
+    refundingMaker: "Refunding Maker"
     makerConfirmed: "Confirmed"
     settled: "Settled"
     payingTaker: "Paying Taker"
@@ -354,7 +355,62 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  viewHistory: "View dispute history"
+  historyTitle: "Dispute history"
+  ruledForMaker: "Ruled for Maker"
+  ruledForTaker: "Ruled for Taker"
+  legacyChannel: "Legacy NIP-04 compatibility channel"
+  privateConversation: "Private coordinator conversation"
+  noMessages: "No messages yet."
+  replyHint: "Reply here"
+  readOnly: "This resolved dispute history is read-only."
+  evidenceDeadline:
+    title: "Evidence submission deadline"
+    remaining: "Provide evidence supporting your claim within ${time}. After this deadline, the coordinator may rule for the counterparty based on the evidence available."
+    expired: "The evidence period has ended. The coordinator may now rule based on the evidence available."
+    period: "The coordinator allows up to ${time} for evidence after the dispute opens. The countdown will start when the dispute timestamp is available."
+  tooltips:
+    refresh: "Refresh messages"
+    attachEvidence: "Attach payment evidence"
+    send: "Send message"
+  errors:
+    accountNotReady: "Private messaging is unavailable until your Nostr account is ready."
+    subscriptionFailed: "The private-message connection failed. Try refreshing the conversation."
+    decryptFailed: "A private message could not be decrypted."
+    operationFailed: "The private-message operation failed. Please try again."
+    nostrNotInitialized: "Nostr is not initialized."
+    attachmentsRequireNip17: "Attachments are available only in the NIP-17 channel."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "The wallet service is unavailable."
+    noBolt11: "The wallet did not return a BOLT11 invoice."
+
 maker:
+  refundInvoice:
+    title: The coordinator ruled in your favor
+    instructions: "Choose a receiving wallet or paste an exact ${amount} Lightning invoice for your refund."
+    invoiceLabel: Exact-amount refund invoice
+    submit: Submit refund invoice
+    addWallet: Add a new wallet
+    noReceivingWallet: No receiving wallet is configured. Add one or paste an invoice from another wallet.
+    paymentFailed: "The previous refund attempt failed. Choose another wallet or submit a fresh invoice."
+    submitFailed: "Could not submit the refund invoice: ${details}"
+    errors:
+      backendUnavailable: "The Lightning payment service is unavailable."
+      missing: "Enter a refund invoice."
+      invalid: "Enter a valid BOLT11 refund invoice."
+      wrongNetwork: "The refund invoice is for the wrong Lightning network."
+      wrongAmount: "The refund invoice must contain the exact refund amount."
+      invalidExpiry: "The refund invoice has an invalid expiry."
+      futureTimestamp: "The refund invoice timestamp is in the future."
+      expired: "The refund invoice has expired. Generate a new one."
+      invalidPaymentHash: "The refund invoice has no valid payment hash."
+      reusedInvoice: "Use a new invoice; the offer invoice cannot receive the refund."
+      unsupportedNetwork: "This Lightning network is not supported."
+      unknown: "Check the invoice and try again."
+
   roleSelection:
     button: PAY with Lightning
   
@@ -554,7 +610,8 @@ maker:
     title: Offer Conflict
     headline: Offer Conflict Reported
     body: You marked the ${code} as invalid, but the Taker reported a conflict, indicating they believe the payment was successful.
-    instructions: Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.
+    instructions: Confirm the outcome before the timer expires. If the payment succeeded, confirm it so the Taker can be paid. If it failed, open a dispute. If you do nothing, a formal dispute will open automatically.
+    timeoutLabel: "Formal dispute opens automatically in ${time}"
     
     actions:
       back: Back to Home
@@ -791,16 +848,17 @@ taker:
       conflictReport: "Error reporting conflict: ${details}"
   
   conflict:
-    title: Offer Conflict
-    headline: Offer Conflict Reported
-    body: The Maker marked the ${code} code as invalid, but you reported a conflict, indicating you believe the payment was successful.
-    instructions: Wait for the coordinator to review the situation. You may be asked for more details. Check back later or contact support if needed.
+    title: Payment Confirmation Pending
+    headline: Waiting for the Maker's Confirmation
+    body: You reported that the ${code} payment was charged, but the Maker reported that it was unsuccessful. These reports conflict.
+    instructions: The Maker must now confirm the result. If they confirm the payment succeeded, your payout will continue. If they confirm it failed, or the timer expires, the offer will move to a formal dispute and the dispute chat will become available.
+    timeoutLabel: "Formal dispute opens automatically in ${time}"
     
     actions:
       back: Back to Home
     
     feedback:
-      reported: Conflict reported. Coordinator will review.
+      reported: Payment conflict reported. Waiting for the Maker's confirmation.
     
     errors:
       reporting: "Error reporting conflict: ${details}"
@@ -813,6 +871,10 @@ taker:
       npubCopied: Coordinator npub copied to clipboard!
       yourIdentityDescription: "To send DMs, login with your Neko private key (nsec) in any Nostr client that supports direct messages."
       manageNekoKeys: Manage Neko Keys
+
+  dispute:
+    headline: Formal Dispute Opened
+    body: The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.
 
 twint:
   scanner:
@@ -1225,6 +1287,24 @@ faq:
 # =============================================================================
 settings:
   title: Settings
+  coordinatorConsole:
+    title: Coordinator console
+    subtitle: Manage disputes using a coordinator signer
+    signInTitle: Sign in as a coordinator
+    signInDescription: Use the Nostr key that identifies your coordinator to review and resolve disputes.
+    separateIdentityNote: Your coordinator signer runs in a separate NDK session and never replaces the Neko trading identity.
+    loginWithSignerApp: Sign in with signer app
+    loginWithExtension: Sign in with browser extension
+    loginWithNsec: Sign in with nsec
+    nsecDialogTitle: Coordinator private key
+    nsecFieldLabel: Private key
+    nsecSecurityNote: The private key is stored securely on this device and is used only by the separate coordinator session.
+    unsupportedPlatform: Coordinator login is currently available on Android, Linux, and web.
+    loginFailed: Coordinator login failed
+    accountsTitle: Coordinator accounts
+    savedAccounts: Saved coordinator accounts
+    addAccount: Add coordinator account
+    removeAccount: Remove coordinator account
   offerCreation:
     title: Offer creation
     defaultCategory: Default category

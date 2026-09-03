@@ -294,7 +294,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
           .setActiveOffer(
             Offer(
               id: paymentHash,
-              amountSats: result['makerFees'] + result['amountSats'],
+              // Offer.amountSats is the principal; makerFees is stored
+              // separately and added only where the gross hold amount is
+              // required (payment/refund).
+              amountSats: result['amountSats'],
               makerFees: result['makerFees'],
               status: OfferStatus.created,
               fiatAmount: offer.fiatAmount,

@@ -53,6 +53,8 @@ String offerStatusLabel(
       return t.offers.status.conflict;
     case OfferStatus.dispute:
       return t.offers.status.dispute;
+    case OfferStatus.refundingMaker:
+      return t.offers.status.refundingMaker;
     case OfferStatus.makerConfirmed:
       return t.offers.status.makerConfirmed;
     case OfferStatus.settled:

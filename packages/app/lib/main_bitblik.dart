@@ -34,6 +34,7 @@ import 'src/providers/providers.dart';
 import 'src/settings/app_preferences.dart';
 import 'src/services/notification_service.dart';
 import 'src/screens/coordinator_details_screen.dart';
+import 'src/screens/coordinator_console_access_screen.dart';
 import 'src/screens/coordinator_management_screen.dart';
 import 'src/screens/display_settings_screen.dart';
 import 'src/screens/faq_screen.dart'; // Import the FAQ screen
@@ -51,6 +52,7 @@ import 'src/screens/notification_settings_screen.dart';
 import 'src/screens/wallet_details_screen.dart';
 import 'src/screens/wallet_screen.dart';
 import 'src/widgets/relay_dots.dart';
+
 // Import our platform detection utility
 
 // BitBlik flavor entrypoint.
@@ -64,6 +66,7 @@ final double kTakerFeePercentage = 0.5;
 final SharedPreferencesAsync asyncPrefs = SharedPreferencesAsync();
 late AppLocale appLocale;
 final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 
 final routerProvider = Provider<GoRouter>((ref) {
   // On a fresh install (no market saved yet), start at the market-selection
@@ -166,6 +169,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const SettingsScreen(),
           ),
           GoRoute(
+            path: CoordinatorConsoleAccessScreen.routeName,
+            builder: (context, state) => const CoordinatorConsoleAccessScreen(),
+          ),
+          GoRoute(
             path: NotificationSettingsScreen.routeName,
             builder: (context, state) => const NotificationSettingsScreen(),
           ),
@@ -216,16 +223,13 @@ Future<void> main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await initBuildFlavor();
-  final deploymentDefaultPaymentSystemId =
-      RuntimeConfig.defaultPaymentSystemId;
+  final deploymentDefaultPaymentSystemId = RuntimeConfig.defaultPaymentSystemId;
   // Try to resolve the market from the device country (IP geolocation) and
   // auto-select it when the deployment did not provide a runtime default.
   // Only when neither is available do we show the first-launch market picker.
-  final marketSelected =
-      await AppPreferencesStore.ensureMarketSelectedOrDetect(
-        deploymentDefaultPaymentSystemId:
-            deploymentDefaultPaymentSystemId,
-      );
+  final marketSelected = await AppPreferencesStore.ensureMarketSelectedOrDetect(
+    deploymentDefaultPaymentSystemId: deploymentDefaultPaymentSystemId,
+  );
   await NotificationService().init();
   String? localeString = await asyncPrefs.getString('app_locale');
   if (localeString != null) {
@@ -2096,10 +2100,12 @@ class _NdkLocalizationsFallbackDelegate
 
   @override
   Future<ndk_l10n.AppLocalizations> load(Locale locale) {
-    final supported = ndk_l10n.AppLocalizations.supportedLocales
-        .any((l) => l.languageCode == locale.languageCode);
-    return ndk_l10n.AppLocalizations.delegate
-        .load(supported ? locale : const Locale('en'));
+    final supported = ndk_l10n.AppLocalizations.supportedLocales.any(
+      (l) => l.languageCode == locale.languageCode,
+    );
+    return ndk_l10n.AppLocalizations.delegate.load(
+      supported ? locale : const Locale('en'),
+    );
   }
 
   @override

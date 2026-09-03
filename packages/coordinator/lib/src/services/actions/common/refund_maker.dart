@@ -1,8 +1,8 @@
 part of '../../coordinator_service.dart';
 
-/// Pays the maker's (pre-validated — see `require_maker_refund_invoice`)
-/// dispute-refund invoice. The refunding state is committed first and remains
-/// in place for retry until the payment succeeds.
+/// Pays the maker's validated, persisted dispute-refund invoice. The refunding
+/// state is committed first; a definitive payment failure returns the flow to
+/// `refundingMaker` so the maker can choose another destination.
 class RefundMakerAction extends FlowAction {
   @override
   String get name => 'refund_maker';
@@ -20,7 +20,6 @@ class RefundMakerAction extends FlowAction {
     }
     final refundSats = offer.amountSats + offer.makerFees;
     final feeLimit = (refundSats * 0.01).ceil().clamp(10, refundSats);
-    // PILA refund maker should not attempt to pay taker, WTF!?
     final res =
         await flow._c._attemptTakerPayment(invoice, refundSats, feeLimit);
     if (res.ok) {

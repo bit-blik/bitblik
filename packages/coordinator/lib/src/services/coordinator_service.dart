@@ -52,6 +52,7 @@ part 'actions/common/stamp_maker_confirmed_at.dart';
 part 'actions/common/stamp_reserved_at.dart';
 part 'actions/common/stamp_taker_charged_at.dart';
 part 'actions/common/update_taker_invoice.dart';
+part 'actions/common/update_maker_refund_invoice.dart';
 part 'actions/common/validate_code.dart';
 part 'actions/twint/notify_maker_of_charge.dart';
 part 'actions/twint/send_twint_code_to_taker.dart';
@@ -59,24 +60,6 @@ part 'actions/twint/set_new_code.dart';
 
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
-
-/// Bilingual (English/local language) wording used in chat notifications
-/// (Telegram/Matrix/SimpleX/Signal) for new-offer announcements.
-class OfferNotificationStrings {
-  final String newOffer;
-  final String premium;
-  final String shop;
-  final String atm;
-  final String online;
-
-  const OfferNotificationStrings({
-    required this.newOffer,
-    required this.premium,
-    required this.shop,
-    required this.atm,
-    required this.online,
-  });
-}
 
 class _PendingOfferRecord {
   final Map<String, dynamic> data;
@@ -115,6 +98,7 @@ class CoordinatorService {
   final http.Client _httpClient; // Added for testable HTTP calls
   late DotEnv _env;
   NostrService? _nostrService; // Nostr service for publishing events
+  final String? _coordinatorPubkeyForTest;
 
   matrix.Client? _matrixClient; // Matrix client instance
   TelegramService? _telegramService; // Telegram service for notifications
@@ -313,6 +297,10 @@ class CoordinatorService {
   // taker charged timeout configuration
   late final int _takerChargedAutoConfirmTimeoutSeconds;
 
+  // Advertised evidence-collection policy. It never triggers a payout by
+  // itself; the coordinator still makes an explicit ruling.
+  late final int _disputeEvidencePeriodSeconds;
+
   // Exchange rate cache, keyed by uppercase currency code (e.g. PLN, EUR).
   static const Duration _rateCacheTtl = Duration(minutes: 5);
   static const Duration _rateBackgroundRefreshAge = Duration(minutes: 4);
@@ -508,6 +496,10 @@ class CoordinatorService {
   late final double _takerFeePercentage;
   late final int _pendingOfferTimeoutSeconds;
 
+  /// Lightning chain accepted for payout invoices. BOLT11 uses the same
+  /// `lntb` prefix for testnet and signet.
+  late final String _lightningNetwork;
+
   late final _simplexGroup;
   late final _simplexChatExec;
   late final _signalCliExec;
@@ -521,11 +513,13 @@ class CoordinatorService {
       NostrService? nostrService,
       TelegramService? telegramServiceForTest,
       String? paymentSystemIdForTest,
+      String? coordinatorPubkeyForTest,
       FlowEngine? flowEngineForTest,
       PaymentBackendConnector? paymentBackendConnectorForTest})
       : _clock = clock ?? const Clock(),
         _httpClient = httpClient ?? http.Client(),
         _nostrService = nostrService,
+        _coordinatorPubkeyForTest = coordinatorPubkeyForTest,
         _paymentSystemIdOverride = paymentSystemIdForTest,
         _flowEngineOverride = flowEngineForTest {
     _connectPaymentBackend =
@@ -626,6 +620,13 @@ class CoordinatorService {
     _takerChargedAutoConfirmTimeoutSeconds =
         int.tryParse(_env['TAKER_CHARGED_AUTO_CONFIRM_SECONDS'] ?? '') ??
             3600; // 1h
+    final configuredDisputeEvidencePeriod = int.tryParse(
+      _env['DISPUTE_EVIDENCE_PERIOD_SECONDS'] ?? '',
+    );
+    _disputeEvidencePeriodSeconds = configuredDisputeEvidencePeriod != null &&
+            configuredDisputeEvidencePeriod > 0
+        ? configuredDisputeEvidencePeriod
+        : 48 * 60 * 60;
     _makerFeePercentage =
         double.tryParse(_env['MAKER_FEE'] ?? '') ?? 0.5; // Default to 0.5%
     _takerFeePercentage =
@@ -633,6 +634,12 @@ class CoordinatorService {
     _pendingOfferTimeoutSeconds =
         int.tryParse(_env['PENDING_OFFER_TIMEOUT_SECONDS'] ?? '') ??
             26 * 60 * 60;
+    _lightningNetwork =
+        (_env['LIGHTNING_NETWORK'] ?? 'mainnet').trim().toLowerCase();
+    if (!const {'mainnet', 'testnet', 'signet', 'regtest'}
+        .contains(_lightningNetwork)) {
+      throw StateError('Unsupported LIGHTNING_NETWORK "$_lightningNetwork".');
+    }
 
     // Per-bank notification targets (bank-scoped markets, e.g. SK). A bank-scoped
     // offer notifies the general channel AND the offer bank's channel.
@@ -882,8 +889,7 @@ class CoordinatorService {
     _backendRetryTimer?.cancel();
     _backendRetryTimer = null;
     _backendRetryDelay = _backendRetryFirstDelay;
-    AppLogger.info(
-        'Payment backend recovered: now on $_paymentBackendType. '
+    AppLogger.info('Payment backend recovered: now on $_paymentBackendType. '
         'Hold invoices work again.');
     return true;
   }
@@ -1258,20 +1264,10 @@ class CoordinatorService {
   }
 
   String _buildFundedOfferNotification(Offer offer) {
-    final strings = _notificationStrings;
-    final fiatText =
-        '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
-    // The general channel mixes every bank of a multi-bank market, so the bank
-    // goes up front: a taker must see whose ATM the code is for without opening
-    // the offer. Empty for bank-agnostic markets (BLIK/MB WAY/TWINT).
-    final bank = bankForOffer(offer);
-    final bankTag = bank == null ? '' : ' [${bank.label}]';
-    final categoryText = _formatCategoryForNotification(offer.category);
-    final categorySuffix = categoryText == null ? '' : ', $categoryText';
-    final premiumSuffix = offer.premiumPercent > 0
-        ? ', +${_formatPremium(offer.premiumPercent)}% ${strings.premium}'
-        : '';
-    return '${strings.newOffer}$bankTag: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
+    return formatFundedOfferNotification(
+      offer,
+      frontendDomain: frontendDomain,
+    );
   }
 
   /// General target [general] (dropped if empty) unioned with the offer bank's
@@ -1336,65 +1332,6 @@ class CoordinatorService {
     }
   }
 
-  /// Notification wording for the market served by the configured payment
-  /// system (English/local language), keyed by the system's country code.
-  /// Falls back to Poland's wording for unknown markets.
-  static const Map<String, OfferNotificationStrings>
-      _notificationStringsByCountry = {
-    'PL': OfferNotificationStrings(
-      newOffer: 'New offer/Nowa oferta',
-      premium: 'premium/premia',
-      shop: 'Shop/Sklep',
-      atm: 'ATM/Bankomat',
-      online: 'Online',
-    ),
-    'PT': OfferNotificationStrings(
-      newOffer: 'New offer/Nova oferta',
-      premium: 'premium',
-      shop: 'Shop/Loja',
-      atm: 'ATM/Multibanco',
-      online: 'Online',
-    ),
-    'CH': OfferNotificationStrings(
-      newOffer: 'New offer/Neues Angebot',
-      premium: 'premium/Premium',
-      shop: 'Shop/Geschäft',
-      atm: 'ATM/Bancomat',
-      online: 'Online',
-    ),
-    'SK': OfferNotificationStrings(
-      newOffer: 'New offer/Nová ponuka',
-      premium: 'premium/prémia',
-      shop: 'Shop/Obchod',
-      atm: 'ATM/Bankomat',
-      online: 'Online',
-    ),
-  };
-
-  OfferNotificationStrings get _notificationStrings =>
-      _notificationStringsByCountry[_paymentSystem.country] ??
-      _notificationStringsByCountry['PL']!;
-
-  /// Trim trailing ".0" so 5.0 -> "5" but 2.5 stays "2.5".
-  String _formatPremium(double premium) {
-    final s = premium.toStringAsFixed(1);
-    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
-  }
-
-  String? _formatCategoryForNotification(OfferCategory? category) {
-    final strings = _notificationStrings;
-    switch (category) {
-      case OfferCategory.shop:
-        return strings.shop;
-      case OfferCategory.atm:
-        return strings.atm;
-      case OfferCategory.online:
-        return strings.online;
-      case null:
-        return null;
-    }
-  }
-
   int _expectedTakerNetAmountSats(Offer offer) {
     return offer.amountSats -
         (offer.takerFees ??
@@ -1435,6 +1372,78 @@ class CoordinatorService {
       throw Exception(
           'Provided taker invoice amount $invoiceAmountSats sats is much smaller than expected net amount $netAmountSats sats for $action.');
     }
+  }
+
+  ({String invoice, String paymentHash, int amountSats})
+      _validateMakerRefundInvoice(Offer offer, String invoice) {
+    if (_paymentBackend == null) {
+      throw Exception('No Lightning payment backend is available.');
+    }
+
+    final trimmed = invoice.trim();
+    if (trimmed.isEmpty) {
+      throw Exception('Missing maker refund invoice.');
+    }
+
+    late final Bolt11PaymentRequest req;
+    try {
+      req = Bolt11PaymentRequest(trimmed);
+    } catch (_) {
+      throw Exception('Invalid BOLT11 maker refund invoice.');
+    }
+
+    final expectedPrefix = switch (_lightningNetwork) {
+      'mainnet' => PayRequestPrefix.lnbc,
+      'regtest' => PayRequestPrefix.lnbcrt,
+      'testnet' || 'signet' => PayRequestPrefix.lntb,
+      _ => throw StateError('Unsupported Lightning network.'),
+    };
+    if (req.prefix != expectedPrefix) {
+      throw Exception(
+          'Maker refund invoice is for ${req.prefix.name}, not $_lightningNetwork.');
+    }
+
+    final amountSats =
+        (req.amount * Decimal.fromInt(100000000)).toBigInt().toInt();
+    final expectedSats = offer.amountSats + offer.makerFees;
+    if (amountSats != expectedSats) {
+      throw Exception('Maker refund invoice must be exactly $expectedSats sats '
+          '(received $amountSats sats).');
+    }
+
+    var expirySeconds = 3600;
+    String? paymentHash;
+    for (final tag in req.tags) {
+      if (tag.type == 'expiry' && tag.data is num) {
+        expirySeconds = (tag.data as num).toInt();
+      } else if (tag.type == 'payment_hash' && tag.data is String) {
+        paymentHash = (tag.data as String).toLowerCase();
+      }
+    }
+    if (expirySeconds <= 0) {
+      throw Exception('Maker refund invoice has an invalid expiry.');
+    }
+    final nowSeconds = _clock.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+    final createdSeconds = req.timestamp.toInt();
+    if (createdSeconds > nowSeconds + 300) {
+      throw Exception('Maker refund invoice timestamp is in the future.');
+    }
+    if (nowSeconds >= createdSeconds + expirySeconds) {
+      throw Exception('Maker refund invoice has expired.');
+    }
+    if (paymentHash == null ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(paymentHash)) {
+      throw Exception('Maker refund invoice has no valid payment hash.');
+    }
+    if (paymentHash == offer.holdInvoicePaymentHash?.toLowerCase()) {
+      throw Exception('Maker refund invoice reuses the offer hold invoice.');
+    }
+
+    return (
+      invoice: trimmed,
+      paymentHash: paymentHash,
+      amountSats: amountSats,
+    );
   }
 
   /// Status-write-free taker payment primitive: attempts the Lightning payment
@@ -1929,6 +1938,7 @@ class CoordinatorService {
       minAmountSats: _minAmountSats,
       maxAmountSats: _maxAmountSats,
       takerChargedAutoConfirmSeconds: _takerChargedAutoConfirmTimeoutSeconds,
+      disputeEvidencePeriodSeconds: _disputeEvidencePeriodSeconds,
       maxPremiumPercent: _maxPremiumPercent,
       currencies: List<String>.from(_supportedCurrencies),
       paymentSystem: _paymentSystem.id,
@@ -1959,6 +1969,50 @@ class CoordinatorService {
     // AppLogger.info('Fetching offer by ID: $offerId', offerId: offerId);
     return await _dbService.getOfferById(offerId);
   }
+
+  Future<List<Offer>> getDisputedOffers({
+    int limit = 25,
+    DateTime? beforeDisputeAt,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
+  }) =>
+      _dbService.getDisputedOffers(
+        limit: limit,
+        beforeDisputeAt: beforeDisputeAt,
+        beforeCreatedAt: beforeCreatedAt,
+        beforeId: beforeId,
+      );
+
+  /// Offers that can still change state. The coordinator console uses this
+  /// complete set so an operator can join a participant chat before a case
+  /// reaches the explicit dispute state.
+  Future<List<Offer>> getNonFinalOffers({
+    int limit = 25,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
+  }) {
+    final terminalStatuses = _flowEngine.definition.states.values
+        .where((state) => state.terminal)
+        .map((state) => state.name)
+        .toList(growable: false);
+    return _dbService.getOffersNotInRawStatuses(
+      terminalStatuses,
+      limit: limit,
+      beforeCreatedAt: beforeCreatedAt,
+      beforeId: beforeId,
+    );
+  }
+
+  ({int makerRefundSats, int takerPayoutSats}) disputeDecisionAmounts(
+    Offer offer,
+  ) =>
+      (
+        makerRefundSats: offer.amountSats + offer.makerFees,
+        takerPayoutSats: _expectedTakerNetAmountSats(offer),
+      );
+
+  Future<List<Map<String, dynamic>>> getOfferStateHistory(String offerId) =>
+      _dbService.getOfferStateHistory(offerId);
 
   Future<Offer?> getOfferDetailsForParticipant(
     String userPubkey, {

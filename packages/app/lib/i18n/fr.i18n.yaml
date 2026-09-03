@@ -165,6 +165,7 @@ offers:
     invalidBlik: "${code} invalide"
     conflict: "Conflit"
     dispute: "Litige"
+    refundingMaker: "Remboursement du maker"
     makerConfirmed: "Confirmée"
     settled: "Réglée"
     payingTaker: "Paiement du taker"
@@ -353,7 +354,62 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  viewHistory: "Voir l’historique du litige"
+  historyTitle: "Historique du litige"
+  ruledForMaker: "Décision en faveur du maker"
+  ruledForTaker: "Décision en faveur du taker"
+  legacyChannel: "Canal de compatibilité NIP-04 hérité"
+  privateConversation: "Conversation privée avec le coordinateur"
+  noMessages: "Aucun message pour le moment."
+  replyHint: "Répondre ici"
+  readOnly: "L’historique de ce litige résolu est en lecture seule."
+  evidenceDeadline:
+    title: "Date limite de soumission des preuves"
+    remaining: "Fournissez les preuves à l’appui de votre demande dans les ${time}. Après ce délai, le coordinateur peut statuer en faveur de la contrepartie selon les preuves disponibles."
+    expired: "La période de soumission des preuves est terminée. Le coordinateur peut maintenant statuer selon les preuves disponibles."
+    period: "Le coordinateur accorde jusqu’à ${time} pour fournir des preuves après l’ouverture du litige. Le compte à rebours commencera lorsque l’horodatage sera disponible."
+  tooltips:
+    refresh: "Actualiser les messages"
+    attachEvidence: "Joindre une preuve de paiement"
+    send: "Envoyer le message"
+  errors:
+    accountNotReady: "La messagerie privée sera disponible lorsque votre compte Nostr sera prêt."
+    subscriptionFailed: "La connexion aux messages privés a échoué. Actualisez la conversation."
+    decryptFailed: "Un message privé n’a pas pu être déchiffré."
+    operationFailed: "L’opération de messagerie privée a échoué. Veuillez réessayer."
+    nostrNotInitialized: "Nostr n’est pas initialisé."
+    attachmentsRequireNip17: "Les pièces jointes sont disponibles uniquement dans le canal NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "Le service de portefeuille est indisponible."
+    noBolt11: "Le portefeuille n’a pas renvoyé de facture BOLT11."
+
 maker:
+  refundInvoice:
+    title: "Le coordinateur a statué en votre faveur"
+    instructions: "Choisissez un portefeuille de réception ou collez une facture Lightning de exactement ${amount} pour votre remboursement."
+    invoiceLabel: "Facture de remboursement au montant exact"
+    submit: "Envoyer la facture de remboursement"
+    addWallet: "Ajouter un portefeuille"
+    noReceivingWallet: "Aucun portefeuille de réception n’est configuré. Ajoutez-en un ou collez une facture provenant d’un autre portefeuille."
+    paymentFailed: "La tentative de remboursement précédente a échoué. Choisissez un autre portefeuille ou envoyez une nouvelle facture."
+    submitFailed: "Impossible d’envoyer la facture de remboursement : ${details}"
+    errors:
+      backendUnavailable: "Le service de paiement Lightning est indisponible."
+      missing: "Saisissez une facture de remboursement."
+      invalid: "Saisissez une facture de remboursement BOLT11 valide."
+      wrongNetwork: "La facture de remboursement appartient au mauvais réseau Lightning."
+      wrongAmount: "La facture de remboursement doit contenir le montant exact du remboursement."
+      invalidExpiry: "La facture de remboursement a une expiration invalide."
+      futureTimestamp: "L’horodatage de la facture de remboursement est dans le futur."
+      expired: "La facture de remboursement a expiré. Générez-en une nouvelle."
+      invalidPaymentHash: "La facture de remboursement ne contient pas de hash de paiement valide."
+      reusedInvoice: "Utilisez une nouvelle facture ; la facture de l’offre ne peut pas recevoir le remboursement."
+      unsupportedNetwork: "Ce réseau Lightning n’est pas pris en charge."
+      unknown: "Vérifiez la facture et réessayez."
+
   roleSelection:
     button: PAYER avec Lightning
 
@@ -551,7 +607,8 @@ maker:
     title: Conflit sur l'offre
     headline: Conflit sur l'offre signalé
     body: Vous avez marqué le code ${code} comme invalide, mais le taker a signalé un conflit, indiquant qu'il estime que le paiement a réussi.
-    instructions: Attendez que le coordinateur examine la situation. Des détails supplémentaires pourront vous être demandés. Revenez plus tard ou contactez le support si nécessaire.
+    instructions: Confirmez le résultat avant la fin du délai. Si le paiement a réussi, confirmez-le afin que le taker soit payé. S'il a échoué, ouvrez un litige. Sans action de votre part, un litige formel sera ouvert automatiquement.
+    timeoutLabel: "Ouverture automatique du litige formel dans ${time}"
 
     actions:
       back: Retour à l'accueil
@@ -642,6 +699,23 @@ taker:
     actions:
       cancel: "Retourner vérifier ma banque"
       proceed: "Je n’ai PAS été débité — continuer"
+
+  conflict:
+    title: Confirmation du paiement en attente
+    headline: En attente de la confirmation du maker
+    body: Vous avez signalé que le paiement ${code} a été débité, mais le maker a indiqué qu'il avait échoué. Ces déclarations sont contradictoires.
+    instructions: Le maker doit maintenant confirmer le résultat. S'il confirme que le paiement a réussi, votre versement continuera. S'il confirme l'échec, ou si le délai expire, l'offre passera en litige formel et le chat du litige deviendra disponible.
+    timeoutLabel: "Ouverture automatique du litige formel dans ${time}"
+    actions:
+      back: Retour à l'accueil
+    feedback:
+      reported: Conflit de paiement signalé. En attente de la confirmation du maker.
+    errors:
+      reporting: "Erreur lors du signalement du conflit : ${details}"
+
+  dispute:
+    headline: Litige formel ouvert
+    body: L'offre est maintenant examinée par le coordinateur. Utilisez le chat du litige ci-dessous pour communiquer avec le coordinateur et fournir les justificatifs demandés.
 
 twint:
   scanner:
@@ -1047,6 +1121,24 @@ faq:
 # =============================================================================
 settings:
   title: Réglages
+  coordinatorConsole:
+    title: Console du coordinateur
+    subtitle: Gérer les litiges avec un signataire coordinateur
+    signInTitle: Se connecter comme coordinateur
+    signInDescription: Utilisez la clé Nostr qui identifie votre coordinateur pour examiner et résoudre les litiges.
+    separateIdentityNote: Le signataire du coordinateur utilise une session NDK séparée et ne remplace jamais l'identité de trading Neko.
+    loginWithSignerApp: Se connecter avec l'application de signature
+    loginWithExtension: Se connecter avec l'extension du navigateur
+    loginWithNsec: Se connecter avec un nsec
+    nsecDialogTitle: Clé privée du coordinateur
+    nsecFieldLabel: Clé privée
+    nsecSecurityNote: La clé privée est stockée de manière sécurisée sur cet appareil et utilisée uniquement par la session distincte du coordinateur.
+    unsupportedPlatform: La connexion du coordinateur est actuellement disponible sur Android, Linux et sur le Web.
+    loginFailed: Échec de la connexion du coordinateur
+    accountsTitle: Comptes de coordinateur
+    savedAccounts: Comptes de coordinateur enregistrés
+    addAccount: Ajouter un compte de coordinateur
+    removeAccount: Supprimer le compte de coordinateur
   offerCreation:
     title: Création d'offres
     defaultCategory: Catégorie par défaut

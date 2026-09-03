@@ -74,13 +74,14 @@ states:
     nip69: dispute
     description: >
       Formal dispute with the hold invoice secured by the coordinator. The
-      coordinator rules: refund the maker or pay the taker.
+      coordinator rules: refund the maker or pay the taker. Evidence timing is
+      an advertised coordinator policy, not an automatic state transition.
     transitions:
       - on: resolve_dispute_refund_maker
         by: coordinator
-        do: [require_maker_refund_invoice]
+        do: []
         to: refundingMaker
-        reason: Coordinator ruled for the maker; refunded via maker invoice.
+        reason: Coordinator ruled for the maker; awaiting the maker's exact-amount payout invoice.
       - on: resolve_dispute_pay_taker
         by: coordinator
         do: []
@@ -88,9 +89,22 @@ states:
         reason: Coordinator ruled for the taker.
 
   refundingMaker:
-    nip69: in-progress
+    nip69: dispute
+    description: Maker refund ruling committed. Awaiting a valid exact-amount payout invoice.
+    transitions:
+      - on: submit_maker_refund_invoice
+        by: maker
+        do: [update_maker_refund_invoice]
+        to: payingMaker
+        reason: Maker supplied the exact-amount payout invoice for the committed refund ruling.
+
+  payingMaker:
+    # Keep the case in the coordinator's public dispute queue until the refund
+    # succeeds. The raw state still differentiates the active payout attempt.
+    nip69: dispute
     description: Refund decision committed. Paying the maker's persisted invoice.
     do: [refund_maker]
     transitions:
       - on: auto
         to: cancelled
+        on_fail: refundingMaker
