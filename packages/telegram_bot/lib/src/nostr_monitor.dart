@@ -28,7 +28,12 @@ class NostrOfferMonitor {
     _ndk = Ndk(
       NdkConfig(
         cache: MemCacheManager(),
-        eventVerifier: RustEventVerifier(),
+        // This daemon verifies a very small event volume. The native Rust FFI
+        // verifier is faster, but its repeated short-lived allocations leave
+        // large libc arenas resident over long uptimes. Pure Dart verification
+        // keeps the process compact; disabling its compute isolate also avoids
+        // a worker-isolate heap for this low-throughput workload.
+        eventVerifier: Bip340EventVerifier(useIsolate: false),
         bootstrapRelays: config.bootstrapRelays,
         // NDK currently initializes its optional wallet use cases even for a
         // read-only client, which otherwise emits an irrelevant Cashu warning.

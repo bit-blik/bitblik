@@ -65,6 +65,13 @@ deduplication, are retained for at most 48 hours and the state is capped at
 2,000 records. Failed Telegram lifecycle operations are retried during
 discovery refreshes but cannot make the state grow beyond those bounds.
 
+Event signatures use NDK's pure-Dart BIP-340 verifier without a compute
+isolate. The bot's event rate is low enough that native FFI throughput is not
+useful, while avoiding it prevents libc allocation arenas from accumulating
+hundreds of resident megabytes during long uptimes. The container additionally
+caps glibc to two allocation arenas and lowers its trim threshold so unused
+native pages are returned promptly.
+
 The limits can be tuned with `DISCOVERY_REFRESH_SECONDS`,
 `SUBSCRIPTION_ROTATION_SECONDS`, `OFFER_STATE_RETENTION_SECONDS`, and
 `MAX_TRACKED_OFFERS`. The

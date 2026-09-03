@@ -24,6 +24,11 @@ RUN dart build cli -t bin/server.dart -o bin/server
 FROM dart:3.11.4-sdk AS dart-runtime
 
 FROM alpine:latest
+# The bundled Dart/native-asset runtime loads glibc alongside musl. Its default
+# per-thread arena policy retained ten large arenas in this low-traffic daemon.
+# Keep native fragmentation bounded and return unused pages promptly.
+ENV MALLOC_ARENA_MAX=2 \
+    MALLOC_TRIM_THRESHOLD_=65536
 RUN apk add --no-cache ca-certificates zlib gmp tzdata libstdc++ \
     && mkdir -p /data \
     && chmod 0777 /data
