@@ -91,6 +91,8 @@ class CoordinatorRegistry {
   Timer? _saveDebouncer;
   Future<void>? _discoveryInFlight;
   Future<void>? _refreshDiscoveryRelaysInFlight;
+  Future<void>? _finishedCountsRefreshInFlight;
+  bool _finishedCountsRefreshPending = false;
   final Set<String> _mutedPubkeys = {};
   CoordinatorColdStartState? _coldStartState;
   bool _coldStartDismissed = false;
@@ -698,45 +700,71 @@ class CoordinatorRegistry {
   /// Querying discovery relays here badly under-reports (only the few
   /// stray offer events that happen to land there are visible).
   Future<void> fetchNetworkFinishedCounts() async {
+    final inFlight = _finishedCountsRefreshInFlight;
+    if (inFlight != null) {
+      // Do not lose a trigger that arrives while a query is running (notably
+      // the retry after a coordinator publishes a new successful event).
+      _finishedCountsRefreshPending = true;
+      return inFlight;
+    }
+    final refresh = _drainNetworkFinishedCountRefreshes();
+    _finishedCountsRefreshInFlight = refresh;
+    try {
+      await refresh;
+    } finally {
+      if (identical(_finishedCountsRefreshInFlight, refresh)) {
+        _finishedCountsRefreshInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _drainNetworkFinishedCountRefreshes() async {
+    do {
+      _finishedCountsRefreshPending = false;
+      await _fetchNetworkFinishedCounts();
+    } while (_finishedCountsRefreshPending);
+  }
+
+  Future<void> _fetchNetworkFinishedCounts() async {
     final now = DateTime.now();
 
     // Snapshot pubkeys up front; the per-coordinator awaits below let other
     // code mutate `_records`, so we don't iterate it live.
-    final pubkeys = _records.keys.toList();
+    final pubkeys = _records.values
+        .where((r) => r.paymentSystem == activePaymentSystemId)
+        .map((r) => r.pubkeyHex)
+        .toList();
 
     // Query all coordinators in parallel — each hits its own relays, so there
-    // is no shared-relay bottleneck. This replaces a sequential loop that
-    // summed per-coordinator latencies (potentially minutes for 20+ coords).
-    final results = await Future.wait(
-      pubkeys.map((pubkey) async =>
-          MapEntry(pubkey, await _fetchFinishedStatsFor(pubkey))),
+    // is no shared-relay bottleneck. Apply each result as soon as it arrives:
+    // one bad relay or malformed event must not discard every other
+    // coordinator's successfully fetched stats.
+    await Future.wait(
+      pubkeys.map((pubkey) async {
+        try {
+          final stats = await _fetchFinishedStatsFor(pubkey);
+          final r = _records[pubkey];
+          if (r == null) return;
+          if (r.networkFinishedCount == stats.count &&
+              r.networkDistinctCounterpartyCount ==
+                  stats.distinctCounterpartyCount &&
+              r.networkFinishedVolumeSats == stats.volumeSats) {
+            return;
+          }
+          _records[pubkey] = r.copyWith(
+            networkFinishedCount: stats.count,
+            networkDistinctCounterpartyCount: stats.distinctCounterpartyCount,
+            networkFinishedVolumeSats: stats.volumeSats,
+            lastFinishedCountUpdate: now,
+          );
+          _schedulePersist();
+          _emit();
+        } catch (_) {
+          // Best-effort background refresh. A future refresh retries this
+          // coordinator without preventing healthy coordinators from updating.
+        }
+      }),
     );
-
-    var changed = false;
-    for (final entry in results) {
-      final pubkey = entry.key;
-      final stats = entry.value;
-      final r = _records[pubkey];
-      if (r == null) continue;
-      if (r.networkFinishedCount == stats.count &&
-          r.networkDistinctCounterpartyCount ==
-              stats.distinctCounterpartyCount &&
-          r.networkFinishedVolumeSats == stats.volumeSats) {
-        continue;
-      }
-      _records[pubkey] = r.copyWith(
-        networkFinishedCount: stats.count,
-        networkDistinctCounterpartyCount: stats.distinctCounterpartyCount,
-        networkFinishedVolumeSats: stats.volumeSats,
-        lastFinishedCountUpdate: now,
-      );
-      changed = true;
-    }
-
-    if (changed) {
-      _schedulePersist();
-      _emit();
-    }
   }
 
   /// Count `#s=success` [kKindOffer] events for a single coordinator within
@@ -788,7 +816,14 @@ class CoordinatorRegistry {
         if (event.createdAt < oldest) oldest = event.createdAt;
         final dTag = event.getDtag() ?? event.id;
         if (!seen.add(dTag)) continue;
-        final offer = Offer.fromNostrEvent(event);
+        Offer offer;
+        try {
+          offer = Offer.fromNostrEvent(event);
+        } catch (_) {
+          // The signed successful event is still evidence for the count, even
+          // if an old payload cannot provide volume/counterparty details.
+          continue;
+        }
         volumeSats += offer.amountSats;
         for (final counterparty in <String?>[
           offer.makerPubkey,
@@ -1286,17 +1321,7 @@ class CoordinatorRegistry {
   }
 
   static int _compare(CoordinatorRecord a, CoordinatorRecord b) {
-    final byScore = b.score.compareTo(a.score);
-    if (byScore != 0) return byScore;
-    final aFirst = a.firstSeenAt;
-    final bFirst = b.firstSeenAt;
-    if (aFirst != null && bFirst != null) {
-      final byAge = aFirst.compareTo(bFirst);
-      if (byAge != 0) return byAge;
-    }
-    final aName = a.info?.name ?? a.pubkeyHex;
-    final bName = b.info?.name ?? b.pubkeyHex;
-    return aName.compareTo(bName);
+    return a.compareForRanking(b);
   }
 
   static String _normalize(String pubkey) {
