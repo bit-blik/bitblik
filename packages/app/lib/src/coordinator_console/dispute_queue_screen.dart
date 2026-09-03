@@ -34,6 +34,7 @@ class _DisputeQueueScreenState extends State<DisputeQueueScreen> {
   late final _DisputeUnreadTracker unreadTracker;
   late Future<List<Offer>> cases;
   String query = '';
+  bool openingOffer = false;
   String? accountError;
   Account? removingAccount;
 
@@ -118,6 +119,34 @@ class _DisputeQueueScreenState extends State<DisputeQueueScreen> {
     );
   }
 
+  Future<void> openOffer(String rawOfferId) async {
+    final offerId = rawOfferId.trim();
+    if (offerId.isEmpty || openingOffer) return;
+    setState(() => openingOffer = true);
+    try {
+      final found = await repository.fetchCase(offerId);
+      if (!mounted) return;
+      unreadTracker.updateOffer(found.offer);
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => _DisputeCaseScreen(
+            repository: repository,
+            unreadTracker: unreadTracker,
+            offerId: offerId,
+          ),
+        ),
+      );
+      refresh();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) setState(() => openingOffer = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,9 +198,24 @@ class _DisputeQueueScreenState extends State<DisputeQueueScreen> {
             padding: const EdgeInsets.all(12),
             child: TextField(
               onChanged: (value) => setState(() => query = value.trim()),
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
+              onSubmitted: openOffer,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  tooltip: 'Open exact offer ID',
+                  onPressed: openingOffer || query.isEmpty
+                      ? null
+                      : () => openOffer(query),
+                  icon: openingOffer
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.open_in_new),
+                ),
                 labelText: 'Filter by offer id or status',
+                helperText:
+                    'Press Enter or the open button to find any exact offer ID, including final offers.',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -196,7 +240,7 @@ class _DisputeQueueScreenState extends State<DisputeQueueScreen> {
                         offer.statusRaw.toLowerCase().contains(normalizedQuery);
                   }).toList();
                   if (rows.isEmpty) {
-                    return const Center(child: Text('No disputes found.'));
+                    return const Center(child: Text('No offers found.'));
                   }
                   return ListView.builder(
                     itemCount: rows.length,
@@ -320,6 +364,11 @@ class _DisputeUnreadTracker extends ChangeNotifier {
     _offers
       ..clear()
       ..addEntries(offers.map((offer) => MapEntry(offer.id, offer)));
+    _drainPending();
+  }
+
+  void updateOffer(Offer offer) {
+    _offers[offer.id] = offer;
     _drainPending();
   }
 
@@ -502,7 +551,7 @@ class _DisputeUnreadTracker extends ChangeNotifier {
         color: Colors.green,
       );
     default:
-      return (label: 'Handled · $raw', icon: Icons.history, color: Colors.grey);
+      return (label: 'Active · $raw', icon: Icons.history, color: Colors.grey);
   }
 }
 
@@ -637,7 +686,9 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
               ? 'Ruled for maker · paying the maker'
               : offer.statusRaw == OfferStatus.payingTaker.name
               ? 'Ruled for taker · paying the taker'
-              : 'Decision completed · ${offer.statusRaw}';
+              : item.isFinal
+              ? 'Final · ${offer.statusRaw}'
+              : 'Active · ${offer.statusRaw}';
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -668,8 +719,8 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
                               ? 'Refund payment: waiting for the maker'
                               : 'Refund payment: in progress',
                         ),
-                      if (!isOpen && !makerRuled)
-                        const Text('Decision finalized. History is read-only.'),
+                      if (item.isFinal)
+                        const Text('Final offer. Chat history is read-only.'),
                       if (takerPubkey == null)
                         const Text(
                           'Taker identity is unavailable; rulings are disabled.',
@@ -1211,7 +1262,7 @@ class _ConversationLaneState extends State<_ConversationLane> {
   }
 
   Future<void> send([String? preset]) async {
-    if (!_isOpen) {
+    if (!_isChatWritable) {
       _showReadOnlyMessage();
       return;
     }
@@ -1230,6 +1281,7 @@ class _ConversationLaneState extends State<_ConversationLane> {
               recipientDmRelayDiscoveryRelays:
                   widget.repository.session.dmRelayDiscoveryRelays,
               legacyRendezvousRelays: legacyRelays,
+              allowNonDispute: _isChatWritable,
             );
       if (usesLegacyNip04 == true) {
         await widget.repository.communication.sendLegacyText(
@@ -1238,6 +1290,7 @@ class _ConversationLaneState extends State<_ConversationLane> {
           participantPubkey: widget.participantPubkey,
           content: text,
           legacyRendezvousRelays: legacyRelays,
+          allowNonDispute: _isChatWritable,
         );
       }
       controller.clear();
@@ -1261,7 +1314,7 @@ class _ConversationLaneState extends State<_ConversationLane> {
   }
 
   Future<void> attach() async {
-    if (!_isOpen) {
+    if (!_isChatWritable) {
       _showReadOnlyMessage();
       return;
     }
@@ -1287,6 +1340,7 @@ class _ConversationLaneState extends State<_ConversationLane> {
             widget.repository.session.dmRelayDiscoveryRelays,
         coordinatorBlossomDiscoveryRelays:
             widget.repository.session.dmRelayDiscoveryRelays,
+        allowNonDispute: _isChatWritable,
       );
       await _appendLatestMessages();
     } catch (error) {
@@ -1299,11 +1353,10 @@ class _ConversationLaneState extends State<_ConversationLane> {
     }
   }
 
-  bool get _isOpen =>
-      widget.dispute.offer.statusRaw == OfferStatus.dispute.name;
+  bool get _isChatWritable => !widget.dispute.isFinal;
 
   void _showReadOnlyMessage() => ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Resolved dispute history is read-only.')),
+    const SnackBar(content: Text('Final offer chat history is read-only.')),
   );
 
   Future<void> preview(Nip17Message message) async {
@@ -1411,19 +1464,19 @@ class _ConversationLaneState extends State<_ConversationLane> {
               children: [
                 if (usesLegacyNip04 != true)
                   IconButton(
-                    onPressed: sending || !_isOpen ? null : attach,
+                    onPressed: sending || !_isChatWritable ? null : attach,
                     icon: const Icon(Icons.attach_file),
                   ),
                 Expanded(
                   child: TextField(
                     controller: controller,
-                    enabled: !sending && _isOpen,
+                    enabled: !sending && _isChatWritable,
                     decoration: const InputDecoration(hintText: 'Reply here'),
                     onSubmitted: (_) => send(),
                   ),
                 ),
                 PopupMenuButton<String>(
-                  enabled: !sending && _isOpen,
+                  enabled: !sending && _isChatWritable,
                   tooltip: 'Prepared replies',
                   icon: const Icon(Icons.arrow_drop_down_circle_outlined),
                   onSelected: (message) => unawaited(send(message)),
@@ -1436,7 +1489,7 @@ class _ConversationLaneState extends State<_ConversationLane> {
                   ],
                 ),
                 IconButton(
-                  onPressed: sending || !_isOpen ? null : () => send(),
+                  onPressed: sending || !_isChatWritable ? null : () => send(),
                   icon: const Icon(Icons.send),
                 ),
               ],

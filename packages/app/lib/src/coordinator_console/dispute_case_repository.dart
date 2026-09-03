@@ -6,6 +6,7 @@ import 'coordinator_session.dart';
 class CoordinatorDisputeCase {
   final Offer offer;
   final List<Map<String, dynamic>> stateHistory;
+  final bool isFinal;
   final bool makerRefundInvoiceReady;
   final String paymentBackendType;
   final bool paymentBackendAvailable;
@@ -15,6 +16,7 @@ class CoordinatorDisputeCase {
   const CoordinatorDisputeCase({
     required this.offer,
     required this.stateHistory,
+    this.isFinal = false,
     required this.makerRefundInvoiceReady,
     required this.paymentBackendType,
     required this.paymentBackendAvailable,
@@ -64,8 +66,9 @@ class DisputeCaseRepository {
   DisputeCaseRepository({required this.session})
     : communication = DisputeCommunicationService(ndk: session.ndk);
 
-  /// Returns the coordinator's complete dispute history with authoritative
-  /// raw states. Older backends fall back to the public open-dispute view.
+  /// Returns every non-final coordinator offer with authoritative raw states,
+  /// allowing the operator to enter its participant chat at any active stage.
+  /// Older backends fall back to the public open-dispute view.
   Future<List<Offer>> listDisputes() async {
     final coordinator = session.expectedCoordinatorPubkey;
     final rpc = session.rpc;
@@ -244,6 +247,7 @@ class DisputeCaseRepository {
                 .map((entry) => Map<String, dynamic>.from(entry))
                 .toList(growable: false)
           : const [],
+      isFinal: result['is_final'] == true,
       makerRefundInvoiceReady: result['maker_refund_invoice_ready'] == true,
       paymentBackendType: backend is Map
           ? backend['type']?.toString() ?? 'unknown'

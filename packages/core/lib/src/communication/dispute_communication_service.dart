@@ -340,8 +340,16 @@ class DisputeCommunicationService {
     return offer.coordinatorPubkey;
   }
 
-  void _requireWritableDispute(Offer offer) {
-    if (offer.statusRaw != OfferStatus.dispute.name) {
+  void _requireWritableDispute(
+    Offer offer,
+    String myPubkey, {
+    required bool allowNonDispute,
+  }) {
+    if (allowNonDispute &&
+        myPubkey.toLowerCase() != offer.coordinatorPubkey.toLowerCase()) {
+      throw StateError('Only the coordinator can chat before a dispute.');
+    }
+    if (!allowNonDispute && offer.statusRaw != OfferStatus.dispute.name) {
       throw StateError('Resolved dispute history is read-only.');
     }
   }
@@ -353,8 +361,13 @@ class DisputeCommunicationService {
     String? participantPubkey,
     required Iterable<String> recipientDmRelayDiscoveryRelays,
     required Iterable<String> legacyRendezvousRelays,
+    bool allowNonDispute = false,
   }) async {
-    _requireWritableDispute(offer);
+    _requireWritableDispute(
+      offer,
+      myPubkey,
+      allowNonDispute: allowNonDispute,
+    );
     final text = content.trim();
     if (text.isEmpty) throw ArgumentError.value(content, 'content');
     final peer = _peerFor(
@@ -394,8 +407,13 @@ class DisputeCommunicationService {
     required String content,
     String? participantPubkey,
     required Iterable<String> legacyRendezvousRelays,
+    bool allowNonDispute = false,
   }) async {
-    _requireWritableDispute(offer);
+    _requireWritableDispute(
+      offer,
+      myPubkey,
+      allowNonDispute: allowNonDispute,
+    );
     final text = content.trim();
     if (text.isEmpty) throw ArgumentError.value(content, 'content');
     final peer = _peerFor(
@@ -863,8 +881,13 @@ class DisputeCommunicationService {
     String? participantPubkey,
     Iterable<String>? recipientDmRelayDiscoveryRelays,
     Iterable<String>? coordinatorBlossomDiscoveryRelays,
+    bool allowNonDispute = false,
   }) async {
-    _requireWritableDispute(offer);
+    _requireWritableDispute(
+      offer,
+      myPubkey,
+      allowNonDispute: allowNonDispute,
+    );
     final peer = _peerFor(
       offer,
       myPubkey,

@@ -630,12 +630,22 @@ class DatabaseService {
   /// All offers whose raw status is NOT one of [terminalStatuses]. Used by the
   /// generic startup sweep to re-arm timers.
   Future<List<Offer>> getOffersNotInRawStatuses(List<String> terminalStatuses,
-      {int limit = 5000}) async {
+      {int limit = 5000, DateTime? beforeCreatedAt, String? beforeId}) async {
     if (_connection == null) throw StateError('Database not connected.');
+    final hasCursor =
+        beforeCreatedAt != null && beforeId != null && beforeId.isNotEmpty;
     final results = await _connection!.query(
       'SELECT * FROM offers WHERE NOT (status = ANY(CAST(@terminals AS TEXT[]))) '
-      'ORDER BY created_at DESC LIMIT @limit',
-      substitutionValues: {'terminals': terminalStatuses, 'limit': limit},
+      '${hasCursor ? 'AND (created_at, id) < (@before_created_at, CAST(@before_id AS UUID)) ' : ''}'
+      'ORDER BY created_at DESC, id DESC LIMIT @limit',
+      substitutionValues: {
+        'terminals': terminalStatuses,
+        'limit': limit,
+        if (hasCursor) ...{
+          'before_created_at': beforeCreatedAt.toUtc(),
+          'before_id': beforeId,
+        },
+      },
     );
     return results.map(_mapRowToOffer).toList();
   }

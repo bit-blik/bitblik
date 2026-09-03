@@ -808,41 +808,35 @@ class NostrService {
               userPubkey.toLowerCase() == coordinatorKey.toLowerCase();
           if (!isCoordinator) {
             throw StateError(
-              'Only the authenticated coordinator can list dispute history.',
+              'Only the authenticated coordinator can list console offers.',
             );
           }
           final requestedLimit = (params['limit'] as num?)?.toInt() ?? 25;
           final limit = requestedLimit.clamp(1, 25).toInt();
           final cursor = params['cursor'];
-          DateTime? beforeDisputeAt;
           DateTime? beforeCreatedAt;
           String? beforeId;
           if (cursor != null) {
             if (cursor is! Map) {
               throw const FormatException('Invalid dispute-list cursor.');
             }
-            beforeDisputeAt = DateTime.tryParse(
-              cursor['dispute_at']?.toString() ?? '',
-            )?.toUtc();
             beforeCreatedAt = DateTime.tryParse(
               cursor['created_at']?.toString() ?? '',
             )?.toUtc();
             beforeId = cursor['id']?.toString();
-            if (beforeDisputeAt == null ||
-                beforeCreatedAt == null ||
+            if (beforeCreatedAt == null ||
                 beforeId == null ||
                 beforeId.isEmpty) {
               throw const FormatException('Invalid dispute-list cursor.');
             }
           }
-          final disputes = await _coordinatorService.getDisputedOffers(
+          final offers = await _coordinatorService.getNonFinalOffers(
             limit: limit + 1,
-            beforeDisputeAt: beforeDisputeAt,
             beforeCreatedAt: beforeCreatedAt,
             beforeId: beforeId,
           );
-          final hasMore = disputes.length > limit;
-          final page = (hasMore ? disputes.take(limit) : disputes).toList(
+          final hasMore = offers.length > limit;
+          final page = (hasMore ? offers.take(limit) : offers).toList(
             growable: false,
           );
           final last = page.isEmpty ? null : page.last;
@@ -866,7 +860,6 @@ class NostrService {
                 .toList(growable: false),
             'next_cursor': hasMore && last != null
                 ? <String, dynamic>{
-                    'dispute_at': last.disputeAt!.toUtc().toIso8601String(),
                     'created_at': last.createdAt.toUtc().toIso8601String(),
                     'id': last.id,
                   }
@@ -921,6 +914,8 @@ class NostrService {
             if (isCoordinator)
               'state_history':
                   await _coordinatorService.getOfferStateHistory(offer.id),
+            if (isCoordinator)
+              'is_final': _coordinatorService.isTerminalOffer(offer),
             if (isCoordinator)
               'payment_backend': {
                 'type': _coordinatorService.paymentBackendType,

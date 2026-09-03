@@ -47,6 +47,8 @@ class _DisputeConversationCardState
   bool legacyMode = false;
   String? error;
   StreamSubscription<Nip17Message>? dmInboxEvents;
+  bool ownsDmInboxLease = false;
+  Future<void> Function()? releaseDmInboxLease;
 
   bool get _writable => widget.offer.statusRaw == OfferStatus.dispute.name;
 
@@ -61,7 +63,6 @@ class _DisputeConversationCardState
     super.didUpdateWidget(oldWidget);
     if (oldWidget.offer.id != widget.offer.id ||
         oldWidget.offer.statusRaw != widget.offer.statusRaw) {
-      unawaited(_stopDmInboxListener());
       legacyMode = false;
       evidenceBytesByMessageId.clear();
       _initialize();
@@ -78,6 +79,7 @@ class _DisputeConversationCardState
 
   Future<void> _initialize() async {
     try {
+      await _stopDmInboxListener();
       // The public key is stored independently from NDK's account registry.
       // Do not start a NIP-17 load in the window where the app service has
       // created NDK but has not yet registered its signing account.
@@ -106,8 +108,8 @@ class _DisputeConversationCardState
         messages.clear();
         loadingMessages = true;
       });
-      await _replaceMessages(forceRefresh: true);
       if (_writable) await _startDmInboxListener(account);
+      await _replaceMessages(forceRefresh: true);
     } catch (exception) {
       if (!mounted) return;
       Logger.log.e(() => '[DisputeChat] Initialization failed: $exception');
@@ -158,10 +160,14 @@ class _DisputeConversationCardState
     // Injected communication is used by widget tests and callers that own
     // their own transport lifecycle.
     if (widget.communication != null) return;
-    await _stopDmInboxListener();
     final api = ref.read(apiServiceProvider);
-    await api.ensureDmInboxReady();
-    if (!mounted) return;
+    await api.acquireDmInbox();
+    ownsDmInboxLease = true;
+    releaseDmInboxLease = api.releaseDmInbox;
+    if (!mounted) {
+      await _stopDmInboxListener();
+      return;
+    }
     dmInboxEvents = api.dmMessages.listen(
       (message) {
         _handleDmInboxMessage(message, account.pubkey);
@@ -204,8 +210,12 @@ class _DisputeConversationCardState
   }
 
   Future<void> _stopDmInboxListener() async {
+    final releaseLease = ownsDmInboxLease ? releaseDmInboxLease : null;
+    ownsDmInboxLease = false;
+    releaseDmInboxLease = null;
     await dmInboxEvents?.cancel();
     dmInboxEvents = null;
+    if (releaseLease != null) await releaseLease();
   }
 
   Future<List<_ConversationMessage>> _load({bool forceRefresh = false}) async {

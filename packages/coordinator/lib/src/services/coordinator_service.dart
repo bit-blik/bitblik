@@ -1983,6 +1983,26 @@ class CoordinatorService {
         beforeId: beforeId,
       );
 
+  /// Offers that can still change state. The coordinator console uses this
+  /// complete set so an operator can join a participant chat before a case
+  /// reaches the explicit dispute state.
+  Future<List<Offer>> getNonFinalOffers({
+    int limit = 25,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
+  }) {
+    final terminalStatuses = _flowEngine.definition.states.values
+        .where((state) => state.terminal)
+        .map((state) => state.name)
+        .toList(growable: false);
+    return _dbService.getOffersNotInRawStatuses(
+      terminalStatuses,
+      limit: limit,
+      beforeCreatedAt: beforeCreatedAt,
+      beforeId: beforeId,
+    );
+  }
+
   ({int makerRefundSats, int takerPayoutSats}) disputeDecisionAmounts(
     Offer offer,
   ) =>

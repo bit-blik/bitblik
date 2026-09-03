@@ -327,12 +327,18 @@ class MockDatabaseService extends _i1.Mock implements _i7.DatabaseService {
   _i8.Future<List<_i2.Offer>> getOffersNotInRawStatuses(
     List<String>? terminalStatuses, {
     int? limit = 5000,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
           #getOffersNotInRawStatuses,
           [terminalStatuses],
-          {#limit: limit},
+          {
+            #limit: limit,
+            #beforeCreatedAt: beforeCreatedAt,
+            #beforeId: beforeId,
+          },
         ),
         returnValue: _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
         returnValueForMissingStub:
@@ -404,6 +410,29 @@ class MockDatabaseService extends _i1.Mock implements _i7.DatabaseService {
         Invocation.method(
           #getMyActiveOffers,
           [userPubkey],
+        ),
+        returnValue: _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+        returnValueForMissingStub:
+            _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+      ) as _i8.Future<List<_i2.Offer>>);
+
+  @override
+  _i8.Future<List<_i2.Offer>> getDisputedOffers({
+    int? limit = 25,
+    DateTime? beforeDisputeAt,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDisputedOffers,
+          [],
+          {
+            #limit: limit,
+            #beforeDisputeAt: beforeDisputeAt,
+            #beforeCreatedAt: beforeCreatedAt,
+            #beforeId: beforeId,
+          },
         ),
         returnValue: _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
         returnValueForMissingStub:

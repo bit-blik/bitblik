@@ -50,7 +50,11 @@ class ApiServiceNostr {
   /// Fires on every connect/reconnect (boot, network restore, app resume).
   Stream<bool> get relayConnectionState => _nostrService.relayConnectionState;
 
-  Future<void> ensureDmInboxReady() => _nostrService.ensureDmInboxReady();
+  Future<void> acquireDmInbox() => _nostrService.acquireDmInbox();
+
+  Future<void> releaseDmInbox() => _nostrService.releaseDmInbox();
+
+  Future<void> switchNekoIdentity() => _nostrService.switchNekoIdentity();
 
   Stream<Nip17Message> get dmMessages => _nostrService.dmMessages;
   List<Nip17Message> get dmMessageSnapshot => _nostrService.dmMessageSnapshot;
@@ -256,8 +260,7 @@ class ApiServiceNostr {
     if (MemoryCache.instance.read<double>(_btcRateCacheKey(currency)) == null) {
       await _fetchAndCacheAllSources(currency);
     }
-    final fetchedAt =
-        MemoryCache.instance.read<DateTime>(
+    final fetchedAt = MemoryCache.instance.read<DateTime>(
           _btcRateFetchedAtCacheKey(currency),
         ) ??
         DateTime.now();

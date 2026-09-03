@@ -1,6 +1,7 @@
 ## [0.11.0] - 2026-09-01
 - feat: dispute chat with coordinator
 - feat: bolt12 wallet support
+- fix: preserve wallet state when generating or restoring a Neko
 
 ## [0.10.1] - 2026-08-22
 - feat: add new SK Prima bank
