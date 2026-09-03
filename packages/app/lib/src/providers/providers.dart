@@ -135,7 +135,9 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
   // Periodic refresh — same 10min cadence as before.
   final timer = Timer.periodic(const Duration(seconds: 600), (_) async {
     try {
+      unawaited(_refreshNetworkFinishedCounts(registry));
       await registry.discover();
+      unawaited(_refreshNetworkFinishedCounts(registry));
       await registry.probeAllEnabled();
     } catch (e) {
       Logger.log.e(() => 'Periodic coordinator refresh failed: $e');
@@ -153,16 +155,26 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
 final coordinatorDiscoveryBootstrapProvider = FutureProvider<void>((ref) async {
   final registry = await ref.watch(coordinatorRegistryProvider.future);
   try {
+    // Refresh cached coordinators even if discovery or a health RPC later
+    // fails. The post-discovery call also picks up newly found records.
+    unawaited(_refreshNetworkFinishedCounts(registry));
     await registry.discover();
+    unawaited(_refreshNetworkFinishedCounts(registry));
     await registry.probeAllEnabled();
-    // Best-effort: refresh network usage counts to seed scoring.
-    unawaited(registry.fetchNetworkFinishedCounts());
     // Best-effort: count the user's own successful offers per coordinator.
     unawaited(_refreshLocalFinishedCounts(ref, registry));
   } catch (e) {
     Logger.log.e(() => 'Initial coordinator discovery failed: $e');
   }
 });
+
+Future<void> _refreshNetworkFinishedCounts(CoordinatorRegistry registry) async {
+  try {
+    await registry.fetchNetworkFinishedCounts();
+  } catch (e) {
+    Logger.log.w(() => 'Failed to refresh coordinator network stats: $e');
+  }
+}
 
 /// Count the user's own successful (takerPaid) offers per coordinator and feed
 /// them to the registry so the "your offers" metric reflects real data.
@@ -369,7 +381,9 @@ final discoveryIdentityInitializer = FutureProvider<void>((ref) async {
     hex: method.discoveryPubkeyHex,
     paymentSystemId: method.id,
   );
+  unawaited(_refreshNetworkFinishedCounts(registry));
   await registry.discover();
+  unawaited(_refreshNetworkFinishedCounts(registry));
   await registry.probeAllEnabled();
 });
 
@@ -499,6 +513,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// arrive in quick succession.
   bool _reconcileInFlight = false;
 
+  /// Gives the coordinator time to publish the public `s=success` event after
+  /// its private `takerPaid` status update reaches this client.
+  Timer? _successfulOfferStatsRefreshTimer;
+
   /// Window used by boot-time reconciliation. An offer older than this is
   /// assumed to be definitively cancelled — coordinator hold invoice
   /// would have expired by then.
@@ -513,6 +531,29 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   bool _userParticipatesInOffer(Offer offer, String? myPubkey) {
     return myPubkey != null &&
         (offer.makerPubkey == myPubkey || offer.takerPubkey == myPubkey);
+  }
+
+  void _refreshStatsAfterSuccessfulOffer(Offer offer, String? myPubkey) {
+    if (!_userParticipatesInOffer(offer, myPubkey)) return;
+
+    final registry = _ref.read(apiServiceProvider).coordinatorRegistry;
+
+    // The local row is already persisted, so the personal count can update
+    // immediately for either the maker or taker key.
+    unawaited(_refreshLocalFinishedCounts(_ref, registry));
+    _ref.invalidate(successfulOffersStatsProvider);
+
+    // The private status is published before the public offer event. Refresh
+    // again after propagation; a running registry refresh queues this pass.
+    _successfulOfferStatsRefreshTimer?.cancel();
+    _successfulOfferStatsRefreshTimer = Timer(
+      const Duration(seconds: 5),
+      () {
+        if (!mounted) return;
+        unawaited(_refreshNetworkFinishedCounts(registry));
+        _ref.invalidate(successfulOffersStatsProvider);
+      },
+    );
   }
 
   Future<void> _promoteMostRecentActiveOffer() async {
@@ -1170,6 +1211,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       }
     }
 
+    if (newStatus == OfferStatus.takerPaid &&
+        existing.status != OfferStatus.takerPaid) {
+      _refreshStatsAfterSuccessfulOffer(hydrated, myPubkey);
+    }
+
     if (existing.status == OfferStatus.blikSentToMaker &&
         newStatus != OfferStatus.blikSentToMaker) {
       NotificationService().cancelBlikReminder();
@@ -1296,6 +1342,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   @override
   void dispose() {
     _connectivitySub?.cancel();
+    _successfulOfferStatsRefreshTimer?.cancel();
     super.dispose();
   }
 }
@@ -2015,7 +2062,13 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
 
       // Refresh coordinator-derived state after transport recovery so the
       // app rehydrates its custom Bitblik layer, not just the raw sockets.
+      unawaited(
+        _refreshNetworkFinishedCounts(apiService.coordinatorRegistry),
+      );
       await apiService.coordinatorRegistry.discover();
+      unawaited(
+        _refreshNetworkFinishedCounts(apiService.coordinatorRegistry),
+      );
       await apiService.coordinatorRegistry.probeAllEnabled();
     } catch (e) {
       Logger.log.w(

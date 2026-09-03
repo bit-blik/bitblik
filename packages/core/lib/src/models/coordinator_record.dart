@@ -142,6 +142,27 @@ class CoordinatorRecord {
     return responsiveTier + personal + breadth + volume + probeScore + ageScore;
   }
 
+  /// Ordering used by coordinator lists (best first).
+  ///
+  /// Reliability remains the primary signal. When two coordinators have the
+  /// same reliability score, prefer the one that costs the maker less before
+  /// falling back to stable age/name ordering.
+  int compareForRanking(CoordinatorRecord other) {
+    final byScore = other.score.compareTo(score);
+    if (byScore != 0) return byScore;
+    final byMakerFee = makerFee.compareTo(other.makerFee);
+    if (byMakerFee != 0) return byMakerFee;
+    final aFirst = firstSeenAt;
+    final bFirst = other.firstSeenAt;
+    if (aFirst != null && bFirst != null) {
+      final byAge = aFirst.compareTo(bFirst);
+      if (byAge != 0) return byAge;
+    }
+    final aName = info?.name ?? pubkeyHex;
+    final bName = other.info?.name ?? other.pubkeyHex;
+    return aName.compareTo(bName);
+  }
+
   CoordinatorRecord copyWith({
     CoordinatorInfo? info,
     DateTime? lastSeen,
