@@ -785,6 +785,7 @@ class _Translations$offers$status$pl extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => 'Nieprawidłowy ${code}';
 	@override String get conflict => 'Konflikt';
 	@override String get dispute => 'Spór';
+	@override String get refundedMaker => 'Maker otrzymał zwrot';
 	@override String get refundingMaker => 'Zwrot środków makerowi';
 	@override String get makerConfirmed => 'Potwierdzona';
 	@override String get settled => 'Rozliczona';
@@ -3267,6 +3268,7 @@ extension on TranslationsPl {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Nieprawidłowy ${code}',
 			'offers.status.conflict' => 'Konflikt',
 			'offers.status.dispute' => 'Spór',
+			'offers.status.refundedMaker' => 'Maker otrzymał zwrot',
 			'offers.status.refundingMaker' => 'Zwrot środków makerowi',
 			'offers.status.makerConfirmed' => 'Potwierdzona',
 			'offers.status.settled' => 'Rozliczona',
@@ -3664,9 +3666,9 @@ extension on TranslationsPl {
 			'twint.flow.makerWait.cancelOffer' => 'Anuluj ofertę',
 			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Taker zarezerwował Twoją ofertę i właśnie płaci Twój kod ${code} w swojej aplikacji bankowej. Gdy płatność dotrze do Twojego sprzedawcy, potwierdź ją poniżej.',
 			'twint.flow.makerWait.confirmReceived' => 'Potwierdź otrzymanie płatności',
-			'twint.flow.makerWait.confirmDialog.title' => 'Potwierdzić otrzymanie płatności?',
 			_ => null,
 		} ?? switch (path) {
+			'twint.flow.makerWait.confirmDialog.title' => 'Potwierdzić otrzymanie płatności?',
 			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Potwierdź tylko, jeśli masz ABSOLUTNĄ pewność, że płatność ${code} dotarła do Twojego sprzedawcy.\n\nPotwierdzenie rozlicza hold invoice Lightning i natychmiast wysyła satsy do takera — tego nie można cofnąć.',
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Anuluj',
 			'twint.flow.makerWait.confirmDialog.confirmButton' => 'Tak, płatność otrzymana',

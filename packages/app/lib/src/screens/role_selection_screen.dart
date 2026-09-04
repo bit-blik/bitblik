@@ -166,6 +166,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
         return;
       }
       if (fetchedOfferObj.statusEnum == OfferStatus.takerPaid ||
+          fetchedOfferObj.statusEnum == OfferStatus.refundedMaker ||
           fetchedOfferObj.statusEnum == OfferStatus.expired ||
           fetchedOfferObj.statusEnum == OfferStatus.cancelled ||
           fetchedOfferObj.id != activeOffer.id) {
@@ -257,7 +258,8 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
         activeOffer != null &&
         currentPubKey != null &&
         (activeOffer.statusEnum != OfferStatus.expired) &&
-        (activeOffer.statusEnum != OfferStatus.cancelled);
+        (activeOffer.statusEnum != OfferStatus.cancelled) &&
+        (activeOffer.statusEnum != OfferStatus.refundedMaker);
     final isTakerPaid =
         hasActiveOffer && activeOffer.status == OfferStatus.takerPaid;
 

@@ -1125,6 +1125,9 @@ class Translations$offers$status$en {
 	/// en: 'Dispute'
 	String get dispute => 'Dispute';
 
+	/// en: 'Maker Refunded'
+	String get refundedMaker => 'Maker Refunded';
+
 	/// en: 'Refunding Maker'
 	String get refundingMaker => 'Refunding Maker';
 
@@ -5795,6 +5798,7 @@ extension on Translations {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Invalid ${code}',
 			'offers.status.conflict' => 'Conflict',
 			'offers.status.dispute' => 'Dispute',
+			'offers.status.refundedMaker' => 'Maker Refunded',
 			'offers.status.refundingMaker' => 'Refunding Maker',
 			'offers.status.makerConfirmed' => 'Confirmed',
 			'offers.status.settled' => 'Settled',
@@ -6191,9 +6195,9 @@ extension on Translations {
 			'taker.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.',
 			'taker.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.',
 			'taker.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Resend New ${code} Code',
-			'taker.waitConfirmation.navigatedHome' => 'Navigated home.',
 			_ => null,
 		} ?? switch (path) {
+			'taker.waitConfirmation.navigatedHome' => 'Navigated home.',
 			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => '${code} Code Expired',
 			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.',
 			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Reservation ends in',

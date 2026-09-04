@@ -1187,6 +1187,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         newStatus == OfferStatus.makerConfirmed ||
         newStatus == OfferStatus.settled ||
         newStatus == OfferStatus.takerPaid ||
+        newStatus == OfferStatus.refundedMaker ||
         update.status == 'refundingMaker' ||
         update.status == 'payingMaker';
     Offer hydrated = updated;
@@ -1231,9 +1232,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                     hydrated.holdInvoicePaymentHash));
 
     if (isCurrent) {
-      if (newStatus == OfferStatus.takerPaid) {
-        // Keep the takerPaid offer in state so the payment-process and
-        // payment-failed screens can observe the success transition. The
+      if (newStatus == OfferStatus.takerPaid ||
+          newStatus == OfferStatus.refundedMaker) {
+        // Keep successful terminal offers in state so their completion screen
+        // can observe the transition. The
         // screen is responsible for clearing active offer when the user
         // taps Done. Auto-promoting here would set state=null before any
         // listener sees takerPaid, causing the dialog to stay stuck forever.

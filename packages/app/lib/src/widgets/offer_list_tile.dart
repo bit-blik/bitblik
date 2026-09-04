@@ -249,6 +249,7 @@ class OfferListTile extends ConsumerWidget {
   IconData _statusIcon(OfferStatus status) {
     switch (status) {
       case OfferStatus.takerPaid:
+      case OfferStatus.refundedMaker:
       case OfferStatus.settled:
       case OfferStatus.makerConfirmed:
         return Icons.check_circle;
@@ -280,6 +281,7 @@ class OfferListTile extends ConsumerWidget {
   Color _statusColor(OfferStatus status) {
     switch (status) {
       case OfferStatus.takerPaid:
+      case OfferStatus.refundedMaker:
       case OfferStatus.settled:
       case OfferStatus.makerConfirmed:
         return Colors.green;

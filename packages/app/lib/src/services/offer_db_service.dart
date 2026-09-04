@@ -26,6 +26,7 @@ class OfferDbService {
     OfferStatus.cancelled,
     OfferStatus.expired,
     OfferStatus.takerPaid,
+    OfferStatus.refundedMaker,
   };
 
   static const String _createTableSql = '''
