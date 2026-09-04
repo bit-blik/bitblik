@@ -483,8 +483,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                     ],
                   );
                 }
-                // Separate finished offers
-                final finishedStatuses = [
+                // Keep terminal and payout-tail offers out of the active list,
+                // but only count a trade as finished once the taker was paid.
+                final nonActiveStatuses = [
                   OfferStatus.settled,
                   OfferStatus.takerPaid,
                   OfferStatus.expired,
@@ -503,7 +504,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                     offers
                         .where(
                           (offer) =>
-                              finishedStatuses.contains(offer.status) &&
+                              offer.status == OfferStatus.takerPaid &&
                               offer.fiatCurrency == selectedSystem.currency,
                         )
                         .toList();
@@ -511,7 +512,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                     offers
                         .where(
                           (offer) =>
-                              !finishedStatuses.contains(offer.status) &&
+                              !nonActiveStatuses.contains(offer.status) &&
                               !conflictStatuses.contains(offer.status),
                         )
                         .toList();
