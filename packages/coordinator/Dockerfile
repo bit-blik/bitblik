@@ -44,6 +44,12 @@ FROM alpine:latest
 ARG APP_VERSION
 ENV APP_VERSION=${APP_VERSION}
 
+# The bundled Dart runtime loads glibc alongside Alpine's musl. Bound glibc's
+# native arenas so transient NDK/Rust allocations are returned instead of
+# accumulating across the coordinator's long-running relay workloads.
+ENV MALLOC_ARENA_MAX=2 \
+    MALLOC_TRIM_THRESHOLD_=65536
+
 RUN apk add --no-cache zlib gmp tzdata sqlite-libs libstdc++
 RUN ln -s /usr/lib/libsqlite3.so.0 /usr/lib/libsqlite3.so
 RUN apk add signal-cli~=0.14
