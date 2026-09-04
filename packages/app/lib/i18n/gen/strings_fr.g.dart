@@ -786,6 +786,7 @@ class _Translations$offers$status$fr extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => '${code} invalide';
 	@override String get conflict => 'Conflit';
 	@override String get dispute => 'Litige';
+	@override String get refundedMaker => 'Maker remboursé';
 	@override String get refundingMaker => 'Remboursement du maker';
 	@override String get makerConfirmed => 'Confirmée';
 	@override String get settled => 'Réglée';
@@ -3305,6 +3306,7 @@ extension on TranslationsFr {
 			'offers.status.invalidBlik' => ({required Object code}) => '${code} invalide',
 			'offers.status.conflict' => 'Conflit',
 			'offers.status.dispute' => 'Litige',
+			'offers.status.refundedMaker' => 'Maker remboursé',
 			'offers.status.refundingMaker' => 'Remboursement du maker',
 			'offers.status.makerConfirmed' => 'Confirmée',
 			'offers.status.settled' => 'Réglée',
@@ -3702,9 +3704,9 @@ extension on TranslationsFr {
 			'taker.dispute.body' => 'L\'offre est maintenant examinée par le coordinateur. Utilisez le chat du litige ci-dessous pour communiquer avec le coordinateur et fournir les justificatifs demandés.',
 			'twint.scanner.title' => ({required Object code}) => 'Scanner le code ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alignez le QR ${code} et le texte du montant dans le cadre de la caméra.',
-			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Le code ${code} n\'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Le code ${code} n\'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement.',
 			'twint.scanner.status.amountFailed' => 'Le scan caméra n\'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement.',
 			'twint.flow.progress.step1' => '1. Créer l\'offre',
 			'twint.flow.progress.step2' => '2. Attendre un taker',

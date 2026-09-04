@@ -165,6 +165,7 @@ offers:
     invalidBlik: "Nieprawidłowy ${code}"
     conflict: "Konflikt"
     dispute: "Spór"
+    refundedMaker: "Maker otrzymał zwrot"
     refundingMaker: "Zwrot środków makerowi"
     makerConfirmed: "Potwierdzona"
     settled: "Rozliczona"

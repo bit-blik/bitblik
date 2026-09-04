@@ -51,7 +51,12 @@ states:
 
   cancelled:
     nip69: canceled
-    description: Offer cancelled.
+    description: Offer cancelled without a completed trade or maker refund.
+    terminal: true
+
+  refundedMaker:
+    nip69: success
+    description: Maker refunded after a coordinator ruling. Trade complete.
     terminal: true
 
   cancelling:
@@ -106,5 +111,5 @@ states:
     do: [refund_maker]
     transitions:
       - on: auto
-        to: cancelled
+        to: refundedMaker
         on_fail: refundingMaker
