@@ -14,6 +14,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ndk/entities.dart';
 import 'package:ndk_flutter/l10n/app_localizations.dart' as ndk_l10n;
+import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,10 +22,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/link.dart';
-import 'package:flutter/services.dart'
-    show rootBundle, Clipboard, ClipboardData;
-import 'package:flutter_html/flutter_html.dart';
-import 'package:markdown/markdown.dart' as md;
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import 'i18n/gen/strings.g.dart'; // Import Slang from new path
 import 'package:bitblik_core/core.dart'; // Needed for OfferStatus enum
@@ -1075,74 +1073,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     super.dispose();
   }
 
-  /// Shows the changelog in a dialog with rendered markdown
-  Future<void> _showChangelogDialog(BuildContext context) async {
-    final t = Translations.of(context);
-    try {
-      final changelogContent = await rootBundle.loadString('CHANGELOG.md');
-      if (!context.mounted) return;
-
-      // Convert Markdown to HTML
-      final htmlContent = md.markdownToHtml(
-        changelogContent,
-        inlineSyntaxes: [md.InlineHtmlSyntax()],
-      );
-
-      showDialog(
-        context: context,
-        builder:
-            (context) => Dialog(
-              child: Container(
-                constraints: const BoxConstraints(
-                  maxWidth: 500,
-                  maxHeight: 600,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Text(
-                            t.app.changelog,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    Flexible(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Html(
-                          data: htmlContent,
-                          onLinkTap: (url, attributes, element) async {
-                            if (url != null) {
-                              await launchUrl(Uri.parse(url));
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-      );
-    } catch (e) {
-      Logger.log.e(() => 'Error loading changelog: $e');
-    }
-  }
-
   /// Shows the AltStore installation dialog for iOS web users
   // ignore: unused_element
   void _showAltStoreDialog(BuildContext context) {
@@ -1670,6 +1600,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
   @override
   Widget build(BuildContext context) {
     final publicKeyAsync = ref.watch(publicKeyProvider);
+    final appUpdateController = ref.watch(zapstoreAppUpdateControllerProvider);
 
     Widget appBarTitle;
     // bool canGoBack = GoRouter.of(context).canGoBack(); // Removed this line
@@ -1899,16 +1830,24 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
-                          child: InkWell(
-                            onTap: () => _showChangelogDialog(context),
-                            child: Text(
-                              _clientVersion != null ? 'v$_clientVersion' : '',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black45,
-                              ),
-                            ),
-                          ),
+                          child: appUpdateController == null
+                              ? Text(
+                                  _clientVersion != null
+                                      ? 'v$_clientVersion'
+                                      : '',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black45,
+                                  ),
+                                )
+                              : NAppVersion(
+                                  controller: appUpdateController,
+                                  fallbackVersion: _clientVersion,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black45,
+                                  ),
+                                ),
                         ),
                         const SizedBox(width: 8),
                         // InkWell(

@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ndk/entities.dart';
+import 'package:ndk/ndk.dart' show SoftwareAppRef;
 import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
@@ -1568,6 +1569,30 @@ final ndkFlutterProvider = Provider<NdkFlutter?>((ref) {
   final ndk = ref.watch(ndkProvider);
   if (ndk == null) return null;
   return NdkFlutter(ndk: ndk);
+});
+
+final zapstoreAppUpdateControllerProvider = Provider<NAppUpdateController?>((ref) {
+  final ndkFlutter = ref.watch(ndkFlutterProvider);
+  if (ndkFlutter == null) return null;
+
+  final appIdentifier = switch (buildDefaultPaymentSystemId) {
+    'mbway' => 'me.bitway',
+    'twint' => 'app.bittwint',
+    _ => 'app.bitblik',
+  };
+
+  final controller = NAppUpdateController.self(
+    ndkFlutter: ndkFlutter,
+    app: SoftwareAppRef(
+      // npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3
+      publisher: kBitblikPubkeyHex,
+      identifier: appIdentifier,
+    ),
+    channel: 'main',
+    relays: const ['wss://relay.zapstore.dev'],
+  );
+  ref.onDispose(controller.dispose);
+  return controller;
 });
 
 /// Connection state enum for relay websocket

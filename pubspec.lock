@@ -81,14 +81,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.7.0"
-  ascii_qr:
-    dependency: transitive
-    description:
-      name: ascii_qr
-      sha256: "2046e400a0fa4ea0de5df44c87b992cdd1f76403bb15e64513b89263598750ae"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.1"
   async:
     dependency: transitive
     description:
@@ -461,18 +453,18 @@ packages:
     dependency: transitive
     description:
       name: drift
-      sha256: "970cd188fddb111b26ea6a9b07a62bf5c2432d74147b8122c67044ae3b97e99e"
+      sha256: e3b6352aa02e60bed6ffc3cc9894c421578dad5fbef21b1f7f57cdc0e4edabcb
       url: "https://pub.dev"
     source: hosted
-    version: "2.31.0"
+    version: "2.35.0"
   drift_flutter:
     dependency: transitive
     description:
       name: drift_flutter
-      sha256: c07120854742a0cae2f7501a0da02493addde550db6641d284983c08762e60a7
+      sha256: "91acf4bee7c3c84467cba46455aa70e5292a3b889f4582645d74f2e5a8c106f2"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.8"
+    version: "0.3.1"
   elliptic:
     dependency: transitive
     description:
@@ -1121,10 +1113,10 @@ packages:
     dependency: transitive
     description:
       name: matrix
-      sha256: "94f5284c4ee521ae9d61f30cbb7c299d02d820e35509c028090d3b1901f520a3"
+      sha256: c10386c9a22b3901a5f9e7753106b00ff16784157b99ad485db0c69b94a22fd2
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.2"
+    version: "9.0.1"
   memory_cache:
     dependency: transitive
     description:
@@ -1193,38 +1185,38 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/ndk"
-      ref: "06b4accc14488427d0d9d3cdc604a4ea6b41422b"
-      resolved-ref: "06b4accc14488427d0d9d3cdc604a4ea6b41422b"
+      ref: "5d68e4ff847f100e509e3ec2d556d428cf7b1e7c"
+      resolved-ref: "5d68e4ff847f100e509e3ec2d556d428cf7b1e7c"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.9.1-dev.1"
+    version: "0.10.0-dev.2"
   ndk_drift:
     dependency: "direct overridden"
     description:
       path: "packages/drift"
-      ref: "06b4accc14488427d0d9d3cdc604a4ea6b41422b"
-      resolved-ref: "06b4accc14488427d0d9d3cdc604a4ea6b41422b"
+      ref: "5d68e4ff847f100e509e3ec2d556d428cf7b1e7c"
+      resolved-ref: "5d68e4ff847f100e509e3ec2d556d428cf7b1e7c"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.1.1-dev.3"
+    version: "0.1.1-dev.10"
   ndk_flutter:
     dependency: "direct overridden"
     description:
       path: "packages/ndk_flutter"
-      ref: "06b4accc14488427d0d9d3cdc604a4ea6b41422b"
-      resolved-ref: "06b4accc14488427d0d9d3cdc604a4ea6b41422b"
+      ref: "5d68e4ff847f100e509e3ec2d556d428cf7b1e7c"
+      resolved-ref: "5d68e4ff847f100e509e3ec2d556d428cf7b1e7c"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.9.0-dev.1"
+    version: "0.9.0-dev.8"
   ndk_objectbox:
     dependency: "direct overridden"
     description:
       path: "packages/objectbox"
-      ref: "06b4accc14488427d0d9d3cdc604a4ea6b41422b"
-      resolved-ref: "06b4accc14488427d0d9d3cdc604a4ea6b41422b"
+      ref: "5d68e4ff847f100e509e3ec2d556d428cf7b1e7c"
+      resolved-ref: "5d68e4ff847f100e509e3ec2d556d428cf7b1e7c"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.2.12-dev.3"
+    version: "0.2.12-dev.10"
   nfc_manager:
     dependency: transitive
     description:
@@ -1770,18 +1762,18 @@ packages:
     dependency: transitive
     description:
       name: sqflite_common_ffi
-      sha256: "8d7b8749a516cbf6e9057f9b480b716ad14fc4f3d3873ca6938919cc626d9025"
+      sha256: cd0c7f7de39a08f2d54ef144d9058c46eca8461879aaa648025643455c1e5a20
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.7+1"
+    version: "2.4.0+3"
   sqflite_common_ffi_web:
     dependency: transitive
     description:
       name: sqflite_common_ffi_web
-      sha256: "45aeed3b367c06f3daf9ba6cdb4bfda1732673263fc9491e40166d2cb5353731"
+      sha256: "79338d0b69521d70cea10f841209ac87ce617921aaf7d33e7380682c83da1f06"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.2"
+    version: "1.1.1"
   sqflite_darwin:
     dependency: transitive
     description:
@@ -1798,22 +1790,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
+  sqlcipher_flutter_libs:
+    dependency: transitive
+    description:
+      name: sqlcipher_flutter_libs
+      sha256: "38d62d659d2fb8739bf25a42c9a350d1fdd6c29a5a61f13a946778ec75d27929"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.0+eol"
   sqlite3:
     dependency: transitive
     description:
       name: sqlite3
-      sha256: "3145bd74dcdb4fd6f5c6dda4d4e4490a8087d7f286a14dee5d37087290f0f8a2"
+      sha256: "4c7fe79840389aaeaf05fd093f795b631b5a98e2bd28d54e555c100f4a9c7a1c"
       url: "https://pub.dev"
     source: hosted
-    version: "2.9.4"
+    version: "3.5.2"
   sqlite3_flutter_libs:
     dependency: transitive
     description:
       name: sqlite3_flutter_libs
-      sha256: eeb9e3a45207649076b808f8a5a74d68770d0b7f26ccef6d5f43106eee5375ad
+      sha256: "3ed7553eee7bb368f8950f58ba29f634e06e813c029aff6a0d60862b96de8454"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.42"
+    version: "0.6.0+eol"
   stack_trace:
     dependency: transitive
     description:
@@ -2034,10 +2034,10 @@ packages:
     dependency: transitive
     description:
       name: vodozemac
-      sha256: "39144e20740807731871c9248d811ed5a037b21d0aa9ffcfa630954de74139d9"
+      sha256: bbe7dd31d7f623e2aeedb92e4b71a8b519e6109ce1e2911b5a220f6752b65cda
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.0"
+    version: "0.5.0"
   watcher:
     dependency: transitive
     description:
