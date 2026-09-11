@@ -61,7 +61,7 @@ class SendPaymentAction extends FlowAction {
     ctx.write.audit.addAll({
       'taker_fees': takerFees,
       'payment_type': invoice != null ? 'bolt11' : 'bolt12',
-      'fee_sats': res.result?.feeSat ?? 0,
+      'fee_sats': res.feeSat,
       'payment_succeeded': true,
     });
   }

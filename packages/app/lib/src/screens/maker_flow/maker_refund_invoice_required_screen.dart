@@ -26,43 +26,45 @@ class _MakerRefundInvoiceRequiredScreenState
     extends ConsumerState<MakerRefundInvoiceRequiredScreen> {
   String? error;
 
-  Future<void> _submit(String invoice) async {
+  Future<void> _submit(String instruction) async {
     if (mounted) setState(() => error = null);
     try {
+      final bolt12 = extractBolt12Offer(instruction);
       await fireFlowAction(
         ref,
         widget.offer,
         kRpcSubmitMakerRefundInvoice,
-        extraParams: {'bolt11': invoice},
+        extraParams: bolt12 != null
+            ? {'maker_offer': bolt12}
+            : {'bolt11': extractBolt11Invoice(instruction) ?? instruction},
       );
     } catch (exception) {
       if (!mounted) return;
       final raw = exception.toString().toLowerCase();
       final errors = Translations.of(context).maker.refundInvoice.errors;
-      final localized =
-          raw.contains('no lightning payment backend')
-              ? errors.backendUnavailable
-              : raw.contains('missing maker refund invoice')
-              ? errors.missing
-              : raw.contains('invalid bolt11')
-              ? errors.invalid
-              : raw.contains('unsupported lightning network')
-              ? errors.unsupportedNetwork
-              : raw.contains('invoice is for')
-              ? errors.wrongNetwork
-              : raw.contains('must be exactly')
-              ? errors.wrongAmount
-              : raw.contains('invalid expiry')
-              ? errors.invalidExpiry
-              : raw.contains('timestamp is in the future')
-              ? errors.futureTimestamp
-              : raw.contains('has expired')
-              ? errors.expired
-              : raw.contains('no valid payment hash')
-              ? errors.invalidPaymentHash
-              : raw.contains('reuses the offer hold invoice')
-              ? errors.reusedInvoice
-              : errors.unknown;
+      final localized = raw.contains('no lightning payment backend')
+          ? errors.backendUnavailable
+          : raw.contains('missing maker refund invoice')
+          ? errors.missing
+          : raw.contains('invalid bolt11')
+          ? errors.invalid
+          : raw.contains('unsupported lightning network')
+          ? errors.unsupportedNetwork
+          : raw.contains('invoice is for') || raw.contains('offer is for')
+          ? errors.wrongNetwork
+          : raw.contains('must be exactly')
+          ? errors.wrongAmount
+          : raw.contains('invalid expiry')
+          ? errors.invalidExpiry
+          : raw.contains('timestamp is in the future')
+          ? errors.futureTimestamp
+          : raw.contains('has expired')
+          ? errors.expired
+          : raw.contains('no valid payment hash')
+          ? errors.invalidPaymentHash
+          : raw.contains('reuses the offer hold invoice')
+          ? errors.reusedInvoice
+          : errors.unknown;
       setState(() => error = localized);
     }
   }
@@ -79,12 +81,9 @@ class _MakerRefundInvoiceRequiredScreenState
     final coordinatorRecord = ref.watch(
       coordinatorRecordByPubkeyProvider(widget.offer.coordinatorPubkey),
     );
-    final coordinatorInfo =
-        ref
-            .watch(
-              coordinatorInfoByPubkeyProvider(widget.offer.coordinatorPubkey),
-            )
-            .value;
+    final coordinatorInfo = ref
+        .watch(coordinatorInfoByPubkeyProvider(widget.offer.coordinatorPubkey))
+        .value;
     final coordinatorName =
         coordinatorRecord?.name ??
         coordinatorInfo?.name ??
@@ -95,8 +94,8 @@ class _MakerRefundInvoiceRequiredScreenState
     final holdInvoicePaymentHash = widget.offer.holdInvoicePaymentHash?.trim();
     final holdInvoiceReference =
         holdInvoicePaymentHash == null || holdInvoicePaymentHash.isEmpty
-            ? ''
-            : '; reference: $holdInvoicePaymentHash';
+        ? ''
+        : '; reference: $holdInvoicePaymentHash';
     final invoiceDescription =
         '$coordinatorName - Refund $fiatAmount for offer ${widget.offer.id}'
         '$holdInvoiceReference.';
@@ -141,23 +140,28 @@ class _MakerRefundInvoiceRequiredScreenState
               padding: const EdgeInsets.all(16),
               child: ReceivingInvoiceForm(
                 amountSats: amountSats,
+                coordinatorSupportsBolt12:
+                    coordinatorInfo?.outgoingPaymentTypes.contains('bolt12') ??
+                    coordinatorRecord?.supportsBolt12Payouts ??
+                    false,
                 invoiceDescription: invoiceDescription,
                 labels: ReceivingInvoiceFormLabels(
                   walletSectionTitle:
                       strings.taker.paymentFailed.walletSection.title,
                   defaultWalletLabel:
                       strings.taker.paymentFailed.walletSection.defaultLabel,
-                  tapToGenerate:
-                      (amount) => strings.taker.paymentFailed.walletSection
-                          .tapToGenerate(amountSats: amount),
+                  tapToGenerate: (amount) => strings
+                      .taker
+                      .paymentFailed
+                      .walletSection
+                      .tapToGenerate(amountSats: amount),
                   invoiceLabel: strings.maker.refundInvoice.invoiceLabel,
                   invoiceHint: strings.taker.paymentFailed.form.newInvoiceHint,
                   submitLabel: strings.maker.refundInvoice.submit,
                   emptyInvoiceError:
                       strings.taker.paymentFailed.errors.enterValidInvoice,
-                  generationError:
-                      (error) => strings.taker.paymentFailed.errors
-                          .generateFailed(details: error),
+                  generationError: (error) => strings.taker.paymentFailed.errors
+                      .generateFailed(details: error),
                   addWalletLabel: strings.maker.refundInvoice.addWallet,
                   noReceivingWalletMessage:
                       strings.maker.refundInvoice.noReceivingWallet,

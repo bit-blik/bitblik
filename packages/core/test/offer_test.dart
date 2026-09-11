@@ -234,6 +234,24 @@ void main() {
           offer.copyWith(takerInvoice: 'lnbc20u1example').takerOffer, isNull);
     });
 
+    test('switching maker refund to BOLT12 clears invoice and payment hash',
+        () {
+      final invoice = base().copyWith(
+        makerRefundInvoice: 'lnbc10u1example',
+        makerRefundPaymentHash: 'old-invoice-hash',
+      );
+      final offer = invoice.copyWith(makerRefundOffer: 'lno1example');
+      expect(offer.makerRefundInvoice, isNull);
+      expect(offer.makerRefundPaymentHash, isNull);
+      expect(offer.makerRefundOffer, 'lno1example');
+      final replacement = offer.copyWith(
+        makerRefundInvoice: 'lnbc20u1example',
+        makerRefundPaymentHash: 'new-invoice-hash',
+      );
+      expect(replacement.makerRefundOffer, isNull);
+      expect(replacement.makerRefundPaymentHash, 'new-invoice-hash');
+    });
+
     test('JSON rejects both payout fields', () {
       final json = base(invoice: 'lnbc10u1example').toJson()
         ..['taker_offer'] = 'lno1example';

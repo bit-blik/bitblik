@@ -59,6 +59,7 @@ part 'actions/common/stamp_reserved_at.dart';
 part 'actions/common/stamp_taker_charged_at.dart';
 part 'actions/common/update_taker_invoice.dart';
 part 'actions/common/update_maker_refund_invoice.dart';
+part 'actions/common/update_taker_payout.dart';
 part 'actions/common/validate_code.dart';
 part 'actions/twint/notify_maker_of_charge.dart';
 part 'actions/twint/send_twint_code_to_taker.dart';
@@ -1522,6 +1523,107 @@ class CoordinatorService {
 
     if (attempt.state != OutgoingPaymentAttemptState.prepared) {
       return _resultFromAttempt(attempt);
+    }
+
+    // Persist the submission claim before making the external call. A crash
+    // after this point recovers via authoritative wallet history only.
+    attempt = await _dbService.updateOutgoingPaymentAttempt(
+      attempt.id,
+      state: OutgoingPaymentAttemptState.submitted,
+    );
+    _OutgoingPaymentResult submitted;
+    try {
+      if (invoice != null) {
+        final result = await backend.payInvoice(
+          invoice: invoice,
+          amountSat: amountSats,
+          feeLimitSat: feeLimitSat,
+        );
+        submitted = _fromInvoiceResult(result);
+      } else if (backend is Bolt12PaymentService &&
+          (backend as Bolt12PaymentService).isBolt12Available) {
+        final bolt12Backend = backend as Bolt12PaymentService;
+        final result = await bolt12Backend.payOffer(
+          offer: bolt12Offer!,
+          amountSat: amountSats,
+          feeLimitSat: feeLimitSat,
+          paymentAttemptId: attempt.id,
+        );
+        submitted = _fromOfferResult(result);
+      } else {
+        submitted = const _OutgoingPaymentResult(
+          status: PaymentStatus.FAILED,
+          error: 'BOLT12 payment backend unavailable',
+        );
+      }
+    } catch (e) {
+      submitted = _OutgoingPaymentResult(
+        status: PaymentStatus.UNKNOWN,
+        error: e.toString(),
+      );
+    }
+    await _persistAttemptResult(attempt, submitted);
+    return submitted;
+  }
+
+  Future<
+      ({
+        String? invoice,
+        String? offer,
+        String? paymentHash,
+        int amountSats
+      })> _validateMakerRefundPayout(
+    Offer trade, {
+    required String? invoice,
+    required String? bolt12Offer,
+  }) async {
+    if ((invoice == null) == (bolt12Offer == null)) {
+      throw Exception(
+          'Exactly one BOLT11 invoice or BOLT12 offer is required for maker refund.');
+    }
+    if (invoice != null) {
+      final validated = _validateMakerRefundInvoice(trade, invoice);
+      return (
+        invoice: validated.invoice,
+        offer: null,
+        paymentHash: validated.paymentHash,
+        amountSats: validated.amountSats
+      );
+    }
+    final backend = _paymentBackend;
+    if (backend is! Bolt12PaymentService ||
+        !(backend as Bolt12PaymentService).isBolt12Available) {
+      throw Exception('BOLT12 payouts are not available for maker refund.');
+    }
+    final info = await (backend as Bolt12PaymentService)
+        .decodeOffer(offer: bolt12Offer!);
+    final expectedSats = trade.amountSats + trade.makerFees;
+    if (expectedSats <= 0) {
+      throw Exception('Maker refund amount must be positive.');
+    }
+    if (info.network != _lightningNetwork) {
+      throw Exception(
+          'Maker refund offer is for ${info.network}, not $_lightningNetwork.');
+    }
+    if (info.isExpired) {
+      throw Exception('Maker refund offer has expired.');
+    }
+    if (info.quantityMax != null && info.quantityMax != 1) {
+      throw Exception('Maker refund offer must not require a quantity.');
+    }
+    // Amountless reusable offers are valid: payOffer receives the exact refund
+    // amount. A fixed-amount offer must match, without the taker tolerance.
+    if (info.amountMsat != null && info.amountMsat != expectedSats * 1000) {
+      throw Exception('Maker refund offer must be exactly $expectedSats sats.');
+    }
+    return (
+      invoice: null,
+      offer: info.normalized,
+      paymentHash: null,
+      amountSats: expectedSats
+    );
+  }
+
   ({String invoice, String paymentHash, int amountSats})
       _validateMakerRefundInvoice(Offer offer, String invoice) {
     if (_paymentBackend == null) {
@@ -1592,60 +1694,6 @@ class CoordinatorService {
       paymentHash: paymentHash,
       amountSats: amountSats,
     );
-  }
-
-  /// Status-write-free taker payment primitive: attempts the Lightning payment
-  /// and, on a reported failure/exception, reconciles (NWC pay_invoice is not
-  /// idempotent) before declaring failure. Performs NO DB writes/publishes so it
-  /// backs the generic raw-state payout flow.
-  ///
-  /// Returns the settled [PayInvoiceResult] on success, or an error string.
-  Future<({bool ok, PayInvoiceResult? result, String? error})>
-      _attemptTakerPayment(
-          String invoice, int netAmountSats, int feeLimitSat) async {
-    if (_paymentBackend == null) {
-      return (ok: false, result: null, error: 'No payment backend configured');
-    }
-
-    // Persist the submission claim before making the external call. A crash
-    // after this point recovers via authoritative wallet history only.
-    attempt = await _dbService.updateOutgoingPaymentAttempt(
-      attempt.id,
-      state: OutgoingPaymentAttemptState.submitted,
-    );
-    _OutgoingPaymentResult submitted;
-    try {
-      if (invoice != null) {
-        final result = await backend.payInvoice(
-          invoice: invoice,
-          amountSat: amountSats,
-          feeLimitSat: feeLimitSat,
-        );
-        submitted = _fromInvoiceResult(result);
-      } else if (backend is Bolt12PaymentService &&
-          (backend as Bolt12PaymentService).isBolt12Available) {
-        final bolt12Backend = backend as Bolt12PaymentService;
-        final result = await bolt12Backend.payOffer(
-          offer: bolt12Offer!,
-          amountSat: amountSats,
-          feeLimitSat: feeLimitSat,
-          paymentAttemptId: attempt.id,
-        );
-        submitted = _fromOfferResult(result);
-      } else {
-        submitted = const _OutgoingPaymentResult(
-          status: PaymentStatus.FAILED,
-          error: 'BOLT12 payment backend unavailable',
-        );
-      }
-    } catch (e) {
-      submitted = _OutgoingPaymentResult(
-        status: PaymentStatus.UNKNOWN,
-        error: e.toString(),
-      );
-    }
-    await _persistAttemptResult(attempt, submitted);
-    return submitted;
   }
 
   Future<_OutgoingPaymentResult?> _reconcileAttempt(

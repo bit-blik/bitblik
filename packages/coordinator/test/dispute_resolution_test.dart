@@ -1,6 +1,10 @@
 import 'dart:async';
 
 import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart';
+import 'package:bitblik_coordinator/src/models/pay_offer_result.dart';
+import 'package:bitblik_coordinator/src/models/bolt12_offer_info.dart';
+import 'package:bitblik_coordinator/src/models/payment_status.dart';
+import 'package:bitblik_coordinator/src/models/outgoing_payment_attempt.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/services/database_service.dart';
 import 'package:bitblik_core/core.dart';
@@ -10,6 +14,7 @@ import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
 import 'test_mocks.mocks.dart';
+import 'outgoing_payment_attempt_stub.dart';
 
 void main() {
   const maker = 'maker';
@@ -28,10 +33,11 @@ void main() {
 
   group('structured dispute resolution', () {
     late MockDatabaseService db;
-    late MockPaymentService payment;
+    late MockCombinedPaymentService payment;
     late CoordinatorService service;
     late String currentStatus;
     String? storedMakerInvoice;
+    String? storedMakerOffer;
     String? storedMakerHash;
     String? storedTakerInvoice;
     int amountSats = 1490;
@@ -54,6 +60,7 @@ void main() {
           coordinatorPubkey: coordinator,
           takerInvoice: storedTakerInvoice,
           makerRefundInvoice: storedMakerInvoice,
+          makerRefundOffer: storedMakerOffer,
           makerRefundPaymentHash: storedMakerHash,
           holdInvoicePaymentHash:
               'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
@@ -71,6 +78,7 @@ void main() {
           code: anyNamed('code'),
           takerInvoice: anyNamed('takerInvoice'),
           makerRefundInvoice: anyNamed('makerRefundInvoice'),
+          makerRefundOffer: anyNamed('makerRefundOffer'),
           makerRefundPaymentHash: anyNamed('makerRefundPaymentHash'),
           reservedAt: anyNamed('reservedAt'),
           codeReceivedAt: anyNamed('codeReceivedAt'),
@@ -91,14 +99,23 @@ void main() {
             .namedArguments[const Symbol('expectedCurrentStatuses')] as List?;
         if (expected != null && !expected.contains(currentStatus)) return false;
         currentStatus = invocation.positionalArguments[1] as String;
-        storedMakerInvoice =
-            invocation.namedArguments[const Symbol('makerRefundInvoice')]
-                    as String? ??
-                storedMakerInvoice;
-        storedMakerHash =
-            invocation.namedArguments[const Symbol('makerRefundPaymentHash')]
-                    as String? ??
-                storedMakerHash;
+        final newInvoice =
+            invocation.namedArguments[#makerRefundInvoice] as String?;
+        final newOffer =
+            invocation.namedArguments[#makerRefundOffer] as String?;
+        if (newInvoice != null) {
+          storedMakerInvoice = newInvoice;
+          storedMakerOffer = null;
+        }
+        if (newOffer != null) {
+          storedMakerOffer = newOffer;
+          storedMakerInvoice = null;
+          storedMakerHash = null;
+        } else {
+          storedMakerHash =
+              invocation.namedArguments[#makerRefundPaymentHash] as String? ??
+                  storedMakerHash;
+        }
         final meta =
             invocation.namedArguments[#transitionMeta] as StateTransitionMeta?;
         if (meta != null) transitionMeta.add(meta);
@@ -108,9 +125,11 @@ void main() {
 
     setUp(() async {
       db = MockDatabaseService();
-      payment = MockPaymentService();
+      stubOutgoingPaymentAttempts(db);
+      payment = MockCombinedPaymentService();
       currentStatus = 'dispute';
       storedMakerInvoice = null;
+      storedMakerOffer = null;
       storedMakerHash = null;
       storedTakerInvoice = null;
       amountSats = 1490;
@@ -146,6 +165,161 @@ void main() {
           maker,
         );
 
+    const bolt12 =
+        'lno1zcss9mk8y3wkklfvevcrszlmu23kfrxh49px20665dqwmn4p72pksese';
+
+    void stubBolt12(
+        {int? amountMsat,
+        String network = 'mainnet',
+        bool expired = false,
+        bool available = true}) {
+      when(payment.isBolt12Available).thenReturn(available);
+      when(payment.decodeOffer(offer: anyNamed('offer'))).thenAnswer(
+          (_) async => Bolt12OfferInfo(
+              normalized: bolt12,
+              offerId: 'offer-id',
+              network: network,
+              amountMsat: amountMsat,
+              isExpired: expired,
+              isVariableAmount: amountMsat == null));
+      when(payment.payOffer(
+              offer: anyNamed('offer'),
+              amountSat: anyNamed('amountSat'),
+              feeLimitSat: anyNamed('feeLimitSat'),
+              paymentAttemptId: anyNamed('paymentAttemptId')))
+          .thenAnswer((_) async =>
+              PayOfferResult(status: PaymentStatus.SUCCEEDED, feeSat: 1));
+    }
+
+    Future<void> ruleForMaker() => service.flow.handleRpc(
+        'resolve_dispute_refund_maker', {'offer_id': 'dispute-1'}, coordinator);
+
+    Future<void> submitMakerOffer(
+            {String author = maker, bool withInvoice = false}) =>
+        service.flow.handleRpc(
+            kRpcSubmitMakerRefundInvoice,
+            {
+              'offer_id': 'dispute-1',
+              'maker_offer': bolt12,
+              if (withInvoice) 'bolt11': invoice
+            },
+            author);
+
+    for (final fixedAmount in [false, true]) {
+      test(
+          'maker can refund through ${fixedAmount ? "fixed" : "variable"}-amount BOLT12 offer',
+          () async {
+        stubBolt12(amountMsat: fixedAmount ? 1500000 : null);
+        await ruleForMaker();
+        await submitMakerOffer();
+        await pumpEventQueue(times: 100);
+        expect(currentStatus, 'refundedMaker');
+        expect(storedMakerOffer, bolt12);
+        expect(storedMakerInvoice, isNull);
+        expect(storedMakerHash, isNull);
+        verify(payment.payOffer(
+                offer: bolt12,
+                amountSat: 1500,
+                feeLimitSat: anyNamed('feeLimitSat'),
+                paymentAttemptId: anyNamed('paymentAttemptId')))
+            .called(1);
+        verifyNever(payment.payInvoice(
+            invoice: anyNamed('invoice'),
+            amountSat: anyNamed('amountSat'),
+            feeLimitSat: anyNamed('feeLimitSat')));
+      });
+    }
+
+    test(
+        'maker BOLT12 submission preserves authorization and one-of validation',
+        () async {
+      stubBolt12();
+      await expectLater(submitMakerOffer(), throwsException);
+      await ruleForMaker();
+      for (final author in [taker, coordinator]) {
+        await expectLater(submitMakerOffer(author: author), throwsException);
+      }
+      await expectLater(submitMakerOffer(withInvoice: true), throwsException);
+      expect(currentStatus, 'refundingMaker');
+      expect(storedMakerOffer, isNull);
+    });
+
+    test(
+        'maker BOLT12 rejects unavailable, expired, wrong-network and inexact offers',
+        () async {
+      await ruleForMaker();
+      stubBolt12(available: false);
+      await expectLater(submitMakerOffer(), throwsException);
+      stubBolt12(expired: true);
+      await expectLater(submitMakerOffer(), throwsException);
+      stubBolt12(network: 'testnet');
+      await expectLater(submitMakerOffer(), throwsException);
+      // Both values fit the old taker tolerance, but not an exact maker refund.
+      for (final amount in [1499000, 1501000]) {
+        stubBolt12(amountMsat: amount);
+        await expectLater(submitMakerOffer(), throwsException);
+      }
+      expect(currentStatus, 'refundingMaker');
+      expect(storedMakerOffer, isNull);
+    });
+
+    test('failed BOLT11 refund can switch to a BOLT12 destination', () async {
+      when(payment.payInvoice(
+              invoice: anyNamed('invoice'),
+              amountSat: anyNamed('amountSat'),
+              feeLimitSat: anyNamed('feeLimitSat')))
+          .thenAnswer((_) async => PayInvoiceResult(paymentError: 'no route'));
+      await ruleForMaker();
+      await submitMakerInvoice();
+      await pumpEventQueue(times: 100);
+      expect(currentStatus, 'refundingMaker');
+      expect(storedMakerHash, isNotNull);
+      stubBolt12();
+      await submitMakerOffer();
+      await pumpEventQueue(times: 100);
+      expect(currentStatus, 'refundedMaker');
+      expect(storedMakerInvoice, isNull);
+      expect(storedMakerHash, isNull);
+      expect(storedMakerOffer, bolt12);
+    });
+
+    for (final settled in [false, true]) {
+      test(
+          'restart reconciles BOLT12 maker refund without resending ($settled)',
+          () async {
+        stubBolt12();
+        storedMakerOffer = bolt12;
+        currentStatus = 'payingMaker';
+        stubOutgoingPaymentAttempts(db,
+            initialState: OutgoingPaymentAttemptState.submitted,
+            backendPaymentId: 'wallet-payment');
+        when(payment.reconcileOutgoingOffer(
+                offer: anyNamed('offer'),
+                paymentAttemptId: anyNamed('paymentAttemptId'),
+                paymentId: anyNamed('paymentId')))
+            .thenAnswer((_) async => PayOfferResult(
+                status:
+                    settled ? PaymentStatus.SUCCEEDED : PaymentStatus.UNKNOWN));
+        when(db.getOffersNotInRawStatuses(any))
+            .thenAnswer((_) async => [currentOffer()]);
+        final restarted = CoordinatorService(db,
+            paymentServiceForTest: payment,
+            paymentSystemIdForTest: 'blik',
+            coordinatorPubkeyForTest: coordinator,
+            clock:
+                Clock.fixed(invoiceCreatedAt.add(const Duration(minutes: 2))));
+        await restarted.init();
+        await restarted.doInitialCheckStatuses();
+        await pumpEventQueue(times: 100);
+        expect(currentStatus, settled ? 'refundedMaker' : 'payingMaker');
+        verifyNever(payment.payOffer(
+            offer: anyNamed('offer'),
+            amountSat: anyNamed('amountSat'),
+            feeLimitSat: anyNamed('feeLimitSat'),
+            paymentAttemptId: anyNamed('paymentAttemptId')));
+      });
+    }
+
     test('coordinator ruling waits for maker invoice, then refunds', () async {
       await service.flow.handleRpc(
         'resolve_dispute_refund_maker',
@@ -160,6 +334,19 @@ void main() {
       expect(storedMakerInvoice, invoice);
       expect(storedMakerHash, isNotNull);
       expect(currentStatus, 'refundedMaker');
+      final submission = transitionMeta.singleWhere(
+        (meta) => meta.event == 'submit_maker_refund_invoice',
+      );
+      expect(
+          submission.extra, containsPair('maker_refund_payout_updated', true));
+      for (final meta in transitionMeta) {
+        expect((meta.extra ?? const {}).keys, isNot(contains('blik_code')));
+        expect((meta.extra ?? const {}).keys, isNot(contains('taker_invoice')));
+        expect((meta.extra ?? const {}).keys, isNot(contains('taker_offer')));
+        expect((meta.extra ?? const {}).keys, isNot(contains('maker_invoice')));
+        expect((meta.extra ?? const {}).keys, isNot(contains('maker_offer')));
+        expect((meta.extra ?? const {}).values, isNot(contains(invoice)));
+      }
       verify(
         payment.payInvoice(
           invoice: invoice,

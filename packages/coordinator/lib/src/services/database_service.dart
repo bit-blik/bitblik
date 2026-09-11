@@ -89,6 +89,7 @@ class DatabaseService {
       await _ensureOffersTable();
       await _ensureLogAuditTable();
       await _ensureOfferStateHistoryTable();
+      await _ensureOutgoingPaymentAttemptsTable();
       await _backfillDisputeAt();
       await _ensureTelegramOfferMessagesTable();
     } catch (e) {
@@ -903,6 +904,9 @@ class DatabaseService {
     if (takerInvoice != null && takerOffer != null) {
       throw ArgumentError('Exactly one taker payout instruction is allowed');
     }
+    if (makerRefundOffer != null && makerRefundPaymentHash != null) {
+      throw ArgumentError('BOLT12 refund offers have no BOLT11 payment hash');
+    }
     if (makerRefundInvoice != null && makerRefundOffer != null) {
       throw ArgumentError('Exactly one maker refund instruction is allowed');
     }
@@ -952,6 +956,8 @@ class DatabaseService {
     }
     if (makerRefundOffer != null) {
       put('maker_refund_invoice', 'maker_refund_invoice', makerRefundOffer);
+      put('maker_refund_payment_hash', 'maker_refund_payment_hash', null);
+    }
     if (makerRefundPaymentHash != null) {
       put('maker_refund_payment_hash', 'maker_refund_payment_hash',
           makerRefundPaymentHash);

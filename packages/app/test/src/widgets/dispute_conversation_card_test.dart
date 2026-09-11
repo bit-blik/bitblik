@@ -24,6 +24,7 @@ class _FakeCommunication extends DisputeCommunicationService {
     required String myPubkey,
     required String content,
     String? participantPubkey,
+    bool allowNonDispute = false,
     required Iterable<String> recipientDmRelayDiscoveryRelays,
     required Iterable<String> legacyRendezvousRelays,
   }) async {

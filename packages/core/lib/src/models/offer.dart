@@ -516,7 +516,6 @@ class Offer {
     String? takerOffer,
     String? makerRefundInvoice,
     String? makerRefundOffer,
-    String? makerRefundInvoice,
     String? makerRefundPaymentHash,
     String? holdInvoicePreimage,
     DateTime? updatedAt,
@@ -566,7 +565,7 @@ class Offer {
           : makerRefundOffer ?? this.makerRefundOffer,
 
       makerRefundPaymentHash:
-          makerRefundPaymentHash ?? this.makerRefundPaymentHash,
+          makerRefundOffer != null ? null : makerRefundPaymentHash ?? this.makerRefundPaymentHash,
       holdInvoicePreimage: holdInvoicePreimage ?? this.holdInvoicePreimage,
       updatedAt: updatedAt ?? this.updatedAt,
       makerConfirmedAt: makerConfirmedAt ?? this.makerConfirmedAt,

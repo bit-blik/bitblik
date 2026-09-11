@@ -45,30 +45,20 @@ class _TakerPaymentFailedScreenState
     final ndk = ref.read(ndkProvider);
     if (ndk == null) return;
     final all = ndk.wallets.getWalletsForUnit('sat');
-    final defaultW = ndk.wallets.defaultWalletForReceiving;
     final coordinator = ref
         .read(apiServiceProvider)
         .getCoordinatorInfoByPubkey(widget.offer.coordinatorPubkey);
     final coordinatorSupportsBolt12 =
         coordinator?.outgoingPaymentTypes.contains('bolt12') ?? false;
-    final compatible =
-        all
-            .where(
-              (wallet) => walletCanReceiveForCoordinator(
-                wallet,
-                coordinatorSupportsBolt12: coordinatorSupportsBolt12,
-              ),
-            )
-            .toList();
-    final defaultIsCompatible =
-        defaultW != null &&
-        compatible.any((wallet) => wallet.id == defaultW.id);
-    final others = compatible.where((w) => w.id != defaultW?.id).toList();
+    final compatible = all
+        .where(
+          (wallet) => walletCanReceiveForCoordinator(
+            wallet,
+            coordinatorSupportsBolt12: coordinatorSupportsBolt12,
+          ),
+        )
+        .toList();
     if (mounted) {
-      setState(() {
-        _defaultReceivingWallet = defaultIsCompatible ? defaultW : null;
-        _otherReceivingWallets = others;
-      });
       if (!coordinatorSupportsBolt12 &&
           compatible.isEmpty &&
           hasOnlyBolt12ReceivingWallets(all) &&
@@ -114,52 +104,8 @@ class _TakerPaymentFailedScreenState
     }
   }
 
-  @override
-  void dispose() {
-    _bolt11Controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _generateInvoiceFromWallet(Wallet wallet, int amountSats) async {
-    if (_generatingWalletId != null) return;
-    setState(() => _generatingWalletId = wallet.id);
-    try {
-      final ndk = ref.read(ndkProvider);
-      if (ndk == null) throw Exception('NDK not available');
-      final coordinator = ref
-          .read(apiServiceProvider)
-          .getCoordinatorInfoByPubkey(widget.offer.coordinatorPubkey);
-      final payment = await createReceivingPayment(
-        ndk,
-        amountSats,
-        coordinatorSupportsBolt12:
-            coordinator?.outgoingPaymentTypes.contains('bolt12') ?? false,
-        walletId: wallet.id,
-        description: 'BitBlik payout retry',
-      );
-      if (mounted) {
-        setState(() => _bolt11Controller.text = payment.encoded);
-      }
-    } catch (e) {
-      Logger.log.e(() => '[TakerPaymentFailedScreen] Invoice gen failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              t.taker.paymentFailed.errors.generateFailed(
-                details: e.toString(),
-              ),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _generatingWalletId = null);
-    }
-  }
-
-  Future<void> _retryPayment() async {
-    final encoded = _bolt11Controller.text.trim();
+  Future<void> _retryPayment(String instruction) async {
+    final encoded = instruction.trim();
     if (encoded.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(t.taker.paymentFailed.errors.enterValidInvoice)),
@@ -354,22 +300,29 @@ class _TakerPaymentFailedScreenState
             const SizedBox(height: 16),
             ReceivingInvoiceForm(
               amountSats: netAmountSats,
+              invoiceDescription: 'BitBlik payout retry',
+              coordinatorSupportsBolt12:
+                  ref
+                      .read(apiServiceProvider)
+                      .getCoordinatorInfoByPubkey(
+                        widget.offer.coordinatorPubkey,
+                      )
+                      ?.outgoingPaymentTypes
+                      .contains('bolt12') ??
+                  false,
               labels: ReceivingInvoiceFormLabels(
                 walletSectionTitle: t.taker.paymentFailed.walletSection.title,
                 defaultWalletLabel:
                     t.taker.paymentFailed.walletSection.defaultLabel,
-                tapToGenerate:
-                    (amount) => t.taker.paymentFailed.walletSection
-                        .tapToGenerate(amountSats: amount),
+                tapToGenerate: (amount) => t.taker.paymentFailed.walletSection
+                    .tapToGenerate(amountSats: amount),
                 invoiceLabel: t.taker.paymentFailed.form.newInvoiceLabel,
                 invoiceHint: t.taker.paymentFailed.form.newInvoiceHint,
                 submitLabel: t.taker.paymentFailed.actions.retryPayment,
                 emptyInvoiceError:
                     t.taker.paymentFailed.errors.enterValidInvoice,
-                generationError:
-                    (error) => t.taker.paymentFailed.errors.generateFailed(
-                      details: error.toString(),
-                    ),
+                generationError: (error) => t.taker.paymentFailed.errors
+                    .generateFailed(details: error.toString()),
                 addWalletLabel: t.nfc.actions.addWallet,
                 noReceivingWalletMessage: t.wallet.missingReceiving.message,
                 walletUnavailableError:

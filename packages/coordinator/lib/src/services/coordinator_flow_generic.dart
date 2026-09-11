@@ -411,16 +411,12 @@ class GenericOfferFlow {
     // Record facts about sensitive values, never the values themselves.
     final auditCtx = <String, dynamic>{
       'client': clientVersion,
-      'blik_code': w.code ?? (t.returns == 'blik_code' ? offer.blikCode : null),
-      'taker_invoice': w.takerInvoice,
-      'taker_offer': w.takerOffer,
       'taker_fees': w.takerFees,
-      'maker_invoice': _cleanParam(params['maker_invoice']),
-      'maker_offer': _cleanParam(params['maker_offer']),
       'code_updated': w.code != null,
       'code_returned': t.returns == 'blik_code',
-      'taker_payout_updated': w.takerInvoice != null,
-      'maker_refund_payout_updated': w.makerRefundInvoice != null,
+      'taker_payout_updated': w.takerInvoice != null || w.takerOffer != null,
+      'maker_refund_payout_updated':
+          w.makerRefundInvoice != null || w.makerRefundOffer != null,
       'failure_reason': w.failureReason,
       ...w.audit,
     };

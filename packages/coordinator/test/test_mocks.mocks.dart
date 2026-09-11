@@ -588,7 +588,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
       ) as _i11.Future<List<_i3.Offer>>);
 
   @override
-  _i8.Future<List<_i2.Offer>> getDisputedOffers({
+  _i11.Future<List<_i3.Offer>> getDisputedOffers({
     int? limit = 25,
     DateTime? beforeDisputeAt,
     DateTime? beforeCreatedAt,
@@ -605,13 +605,13 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
             #beforeId: beforeId,
           },
         ),
-        returnValue: _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+        returnValue: _i11.Future<List<_i3.Offer>>.value(<_i3.Offer>[]),
         returnValueForMissingStub:
-            _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
-      ) as _i8.Future<List<_i2.Offer>>);
+            _i11.Future<List<_i3.Offer>>.value(<_i3.Offer>[]),
+      ) as _i11.Future<List<_i3.Offer>>);
 
   @override
-  _i8.Future<List<_i2.Offer>> getOffersFromLastHours() => (super.noSuchMethod(
+  _i11.Future<List<_i3.Offer>> getOffersFromLastHours() => (super.noSuchMethod(
         Invocation.method(
           #getOffersFromLastHours,
           [],
