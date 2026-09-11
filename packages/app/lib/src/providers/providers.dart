@@ -1583,6 +1583,7 @@ final zapstoreAppUpdateControllerProvider = Provider<NAppUpdateController?>((ref
 
   final controller = NAppUpdateController.self(
     ndkFlutter: ndkFlutter,
+    externalUpdateUrl: Uri.parse('https://bitblik.app'),
     app: SoftwareAppRef(
       // npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3
       publisher: kBitblikPubkeyHex,
