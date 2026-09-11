@@ -488,6 +488,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                 final nonActiveStatuses = [
                   OfferStatus.settled,
                   OfferStatus.takerPaid,
+                  OfferStatus.refundedMaker,
                   OfferStatus.expired,
                   OfferStatus.cancelled,
                 ];

@@ -1239,6 +1239,7 @@ class CoordinatorService {
         await _strikeTelegramOfferMessages(offer.id);
         return;
       case 'takerPaid':
+      case 'refundedMaker':
         await _deleteTelegramOfferMessages(offer.id);
         return;
       default:
