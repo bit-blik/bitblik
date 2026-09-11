@@ -24,9 +24,9 @@ Die Slowakei ist ein einziger Markt (**{app}**), betrieben von einem Koordinator
 Jede Bank legt die Lebensdauer eines kartenlosen Abhebungscodes selbst fest:
 - **Tatra banka: 20 Minuten**
 - **Slovenská sporiteľňa: 15 Minuten**
-- **VÚB: 3 Minuten**
+- **VÚB: 10–60 Minuten**, vom Taker beim Erzeugen des Codes gewählt
 
-Das VÚB-Fenster ist sehr kurz; bei einem VÚB-Angebot sollte der Taker vor dem Reservieren bereits an (oder sehr nah bei) einem VÚB-Automaten sein. Die App zeigt die verbleibende Zeit als Countdown.
+VÚB ist die einzige Bank, bei der der Taker das Fenster wählt — 10 bis 60 Minuten — wenn er den Code erzeugt. BitBlik erfährt den gewählten Wert nicht und zählt daher ab der Untergrenze von 10 Minuten herunter. Bittet um ein längeres Fenster, wenn der Maker weiter laufen muss. Die App zeigt die verbleibende Zeit als Countdown.
 
 #### Wie funktioniert der Escrow-Ablauf?
 
@@ -64,7 +64,7 @@ Der Maker hat seine Bitcoin bereits **vor** deiner Code-Übermittlung in einer H
 
 #### Was, wenn der Code ungültig ist oder abläuft, bevor der Maker abhebt?
 
-Kann der Maker mit dem Code nicht abheben (ungültig oder abgelaufen — am ehesten beim 3-Minuten-Fenster von VÚB), kann der Trade mit diesem Code nicht fortgesetzt werden. Der Maker markiert ihn als ungültig, das Angebot wird neu gelistet und der Taker kann einen neuen Code senden oder abbrechen. Da der Code schnell abläuft: Timing abstimmen und eine Bank wählen, deren Automat der Maker rasch erreicht.
+Kann der Maker mit dem Code nicht abheben (ungültig oder abgelaufen), kann der Trade mit diesem Code nicht fortgesetzt werden. Der Maker markiert ihn als ungültig, das Angebot wird neu gelistet und der Taker kann einen neuen Code senden oder abbrechen. Da der Code schnell abläuft: Timing abstimmen und eine Bank wählen, deren Automat der Maker rasch erreicht.
 
 #### Welche Risiken hat das Protokoll?
 

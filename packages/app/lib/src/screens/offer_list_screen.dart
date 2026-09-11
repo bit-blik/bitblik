@@ -484,10 +484,12 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                     ],
                   );
                 }
-                // Separate finished offers
-                final finishedStatuses = [
+                // Keep terminal and payout-tail offers out of the active list,
+                // but only count a trade as finished once the taker was paid.
+                final nonActiveStatuses = [
                   OfferStatus.settled,
                   OfferStatus.takerPaid,
+                  OfferStatus.refundedMaker,
                   OfferStatus.expired,
                   OfferStatus.cancelled,
                 ];
@@ -495,6 +497,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                   OfferStatus.conflict,
                   OfferStatus.invalidBlik,
                   OfferStatus.dispute,
+                  OfferStatus.refundingMaker,
                 ];
                 // Only finished offers for the payment system selected in
                 // settings (filters the coordinator dropdown too, since it is
@@ -503,7 +506,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                     offers
                         .where(
                           (offer) =>
-                              finishedStatuses.contains(offer.status) &&
+                              offer.status == OfferStatus.takerPaid &&
                               offer.fiatCurrency == selectedSystem.currency,
                         )
                         .toList();
@@ -511,7 +514,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                     offers
                         .where(
                           (offer) =>
-                              !finishedStatuses.contains(offer.status) &&
+                              !nonActiveStatuses.contains(offer.status) &&
                               !conflictStatuses.contains(offer.status),
                         )
                         .toList();
@@ -1512,10 +1515,16 @@ Future<void> _showMessengerCoordinators(
                   title: Text(e.coord.name),
                   subtitle:
                       e.bank == null
-                          ? Text(
-                            t.home.notifications.channelAllBanks,
-                            style: TextStyle(color: Colors.grey[600]),
-                          )
+                          ? paymentSystemById(
+                                e.coord.paymentSystem,
+                              ).instruments.values.any(
+                                (instrument) => instrument.hasBanks,
+                              )
+                              ? Text(
+                                t.home.notifications.channelAllBanks,
+                                style: TextStyle(color: Colors.grey[600]),
+                              )
+                              : null
                           : Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

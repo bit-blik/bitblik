@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 /// A compact chip naming the bank an offer runs on, for bank-scoped markets
 /// (SK cardless ATM). Renders nothing for bank-agnostic offers (BLIK, MB WAY,
-/// TWINT). Short-validity banks (≤ 5 min, e.g. VÚB) get a warning accent so
+/// TWINT). Short-validity banks (≤ 10 min, e.g. VÚB) get a warning accent so
 /// takers notice the tight window before reserving.
 class OfferBankBadge extends StatelessWidget {
   const OfferBankBadge({super.key, required this.offer});
@@ -16,7 +16,7 @@ class OfferBankBadge extends StatelessWidget {
     if (bank == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final isShortValidity = bank.validity.inMinutes <= 5;
+    final isShortValidity = bank.validity.inMinutes <= 10;
     final accent =
         isShortValidity ? Colors.amber.shade800 : theme.colorScheme.primary;
 

@@ -18,6 +18,12 @@ class CoordinatorInfo {
   /// `3600` keeps older coordinators that don't advertise it consistent.
   final int takerChargedAutoConfirmSeconds;
 
+  /// Maximum evidence-collection period after an offer enters dispute.
+  /// After this deadline the coordinator may rule from the evidence already
+  /// available; this is a published policy, not an automatic fund transition.
+  /// Null when the coordinator does not advertise the policy.
+  final int? disputeEvidencePeriodSeconds;
+
   /// Maximum maker premium (%) this coordinator allows above market price.
   /// `0` means the premium feature is disabled for this coordinator.
   final double maxPremiumPercent;
@@ -59,6 +65,7 @@ class CoordinatorInfo {
     required this.minAmountSats,
     required this.maxAmountSats,
     this.takerChargedAutoConfirmSeconds = 3600,
+    this.disputeEvidencePeriodSeconds,
     this.maxPremiumPercent = 0,
     required this.currencies,
     this.outgoingPaymentTypes = const ['bolt11'],
@@ -101,6 +108,8 @@ class CoordinatorInfo {
       maxAmountSats: json['max_amount_sats'] as int,
       takerChargedAutoConfirmSeconds:
           (json['taker_charged_auto_confirm_seconds'] as num?)?.toInt() ?? 3600,
+      disputeEvidencePeriodSeconds:
+          (json['dispute_evidence_period_seconds'] as num?)?.toInt(),
       maxPremiumPercent: (json['max_premium_percent'] as num?)?.toDouble() ?? 0,
       currencies: (json['currencies'] as List<dynamic>)
           .map((e) => e as String)
@@ -130,6 +139,8 @@ class CoordinatorInfo {
       'min_amount_sats': minAmountSats,
       'max_amount_sats': maxAmountSats,
       'taker_charged_auto_confirm_seconds': takerChargedAutoConfirmSeconds,
+      if (disputeEvidencePeriodSeconds != null)
+        'dispute_evidence_period_seconds': disputeEvidencePeriodSeconds,
       'max_premium_percent': maxPremiumPercent,
       'currencies': currencies,
       'outgoing_payment_types': outgoingPaymentTypes,
@@ -191,6 +202,8 @@ class CoordinatorInfo {
       takerChargedAutoConfirmSeconds:
           int.tryParse(tags['taker_charged_auto_confirm_seconds'] ?? '') ??
               3600,
+      disputeEvidencePeriodSeconds:
+          int.tryParse(tags['dispute_evidence_period_seconds'] ?? ''),
       maxPremiumPercent:
           double.tryParse(tags['max_premium_percent'] ?? '0') ?? 0.0,
       makerFee: double.tryParse(tags['maker_fee'] ?? '0') ?? 0.0,
@@ -233,6 +246,11 @@ class CoordinatorInfo {
         'taker_charged_auto_confirm_seconds',
         takerChargedAutoConfirmSeconds.toString()
       ],
+      if (disputeEvidencePeriodSeconds != null)
+        [
+          'dispute_evidence_period_seconds',
+          disputeEvidencePeriodSeconds.toString()
+        ],
       ['max_premium_percent', maxPremiumPercent.toString()],
       ['maker_fee', makerFee.toString()],
       ['taker_fee', takerFee.toString()],

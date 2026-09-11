@@ -39,6 +39,7 @@ bool nwcBolt12RecoveryEnabled(String? configuredValue) =>
 
 /// Service to interact with Nostr Wallet Connect (NWC) for hold invoices.
 class NwcService implements PaymentService, Bolt12PaymentService {
+  static const Duration _makeHoldInvoiceTimeout = Duration(seconds: 10);
   static const int _holdInvoiceExpirySeconds = 86400;
 
   final String _nwcUri;
@@ -47,7 +48,6 @@ class NwcService implements PaymentService, Bolt12PaymentService {
   /// which is far too short for real Lightning routing/settlement and causes
   /// legitimate taker payments to spuriously time out.
   static const Duration _payInvoiceTimeout = Duration(seconds: 60);
-  static const Duration _makeHoldInvoiceTimeout = Duration(seconds: 10);
 
   late final Ndk _ndk; // NDK instance managed by the service
   NwcConnection? _nwcConnection;
@@ -205,8 +205,7 @@ class NwcService implements PaymentService, Bolt12PaymentService {
       // No .isConnected check
       throw Exception('NWC Service: Not connected.');
     }
-    AppLogger.info(
-        'NWC Service: Creating hold invoice: amountSats=$amountSats, paymentHash=$paymentHashHex, memo=$memo');
+    AppLogger.info('NWC Service: Creating hold invoice.');
     try {
       // NWC's makeHoldInvoice uses 'description' not 'memo'
       final response = await _ndk.nwc.makeHoldInvoice(
@@ -221,8 +220,7 @@ class NwcService implements PaymentService, Bolt12PaymentService {
         throw Exception(
             'NWC Error creating hold invoice: ${response.errorCode} - ${response.errorMessage}');
       }
-      AppLogger.info(
-          'NWC Service: Hold invoice created for paymentHash: ${response.paymentHash}');
+      AppLogger.info('NWC Service: Hold invoice created.');
       return CreateHoldInvoiceResult(
         invoice: response.invoice,
         paymentHash: response.paymentHash, // Prefer response hash if available
@@ -335,7 +333,7 @@ class NwcService implements PaymentService, Bolt12PaymentService {
       }
 
       AppLogger.info(
-          'NWC Service: Invoice paid successfully; fees: ${response.feesPaid} msat');
+          'NWC Service: Invoice paid successfully; fees: ${response.feesPaid} msat.');
       return PayInvoiceResult(
         status: PaymentStatus.SUCCEEDED,
         paymentPreimage: response.preimage,

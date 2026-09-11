@@ -1089,6 +1089,13 @@ class _MakerConfirmPaymentScreenState
             "[MakerConfirmPaymentScreen] Offer ${statusEnum.name}; navigating to maker success.",
       );
       context.go(flowRoute, extra: ref.read(activeOfferProvider));
+    } else if (statusEnum == OfferStatus.conflict) {
+      // The taker can report a conflict while this confirmation body is
+      // mounted. Re-enter the flow route immediately so its state-to-body
+      // mapping replaces this screen with MakerConflictScreen (timer + maker
+      // actions), rather than leaving the old code-loading UI on screen until
+      // the user navigates away and opens the offer again.
+      context.go(flowRoute, extra: ref.read(activeOfferProvider));
     } else if (statusEnum == OfferStatus.reserved) {
       context.go(flowRoute);
     } else if (statusEnum == OfferStatus.funded) {

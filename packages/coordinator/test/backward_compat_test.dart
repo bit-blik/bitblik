@@ -25,6 +25,7 @@ void main() {
         await svc.init();
         expect(svc.servedBanks, isEmpty, reason: market);
         final info = await svc.getCoordinatorInfo();
+        expect(info.disputeEvidencePeriodSeconds, 48 * 60 * 60, reason: market);
         expect(info.banks, isEmpty, reason: market);
         expect(info.bankChannelLinks, isEmpty, reason: market);
         // Nothing bank-related leaks onto the wire.

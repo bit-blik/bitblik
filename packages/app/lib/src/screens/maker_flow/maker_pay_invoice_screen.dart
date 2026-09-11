@@ -288,7 +288,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     final offer = ref.read(activeOfferProvider);
     if (offer != null) {
       final balance = ndk.wallets.getBalance(defaultWallet.id, 'sat');
-      if (balance < offer.amountSats) return;
+      if (balance < offer.amountSats + offer.makerFees) return;
     }
 
     try {
@@ -403,7 +403,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       return;
     }
 
-    final requiredSats = offer.amountSats;
+    final requiredSats = offer.amountSats + offer.makerFees;
     final defaultWallet = ndk.wallets.defaultWalletForSending;
     if (defaultWallet == null) {
       await _payWithNwc(invoice);
@@ -1366,7 +1366,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                 Builder(
                   builder: (context) {
                     if (offer == null) return const SizedBox.shrink();
-                    final sats = offer.amountSats;
+                    final sats = offer.amountSats + offer.makerFees;
                     final fiat = offer.fiatAmount;
                     final bitcoinDisplayUnit = ref.watch(
                       bitcoinDisplayUnitProvider,

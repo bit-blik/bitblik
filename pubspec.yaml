@@ -28,3 +28,4 @@ workspace:
   - packages/cli
   - packages/coordinator
   - packages/core
+  - packages/telegram_bot

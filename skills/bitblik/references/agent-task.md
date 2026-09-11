@@ -32,7 +32,7 @@ Step-by-step instructions for an agent executing a complete BitBlik exchange.
    → Exit 0 + {"ready": true, "blik_code": "..."}: got code — show immediately
    → Tell user to enter the code within its validity window (the get-code output
      states it): BLIK ~120s, MB WAY 30 min, TWINT 5 min, Slovak ATM per bank
-     (Tatra 20 / SLSP 15 / VÚB 3 / Prima banka 30 min) — at the ATM for SK, in the banking app otherwise
+     (Tatra 20 / SLSP 15 / VÚB 10 / Prima banka 30 min) — at the ATM for SK, in the banking app otherwise
    → If offer reaches status "expired" or "expiredBlik": exchange failed, start over
 
 7. After user confirms BLIK entered: bitblik offer confirm-payment

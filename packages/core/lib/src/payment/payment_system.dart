@@ -533,10 +533,13 @@ const PaymentSystem kSlovakia = PaymentSystem(
         BankSpec(
           id: 'vub',
           label: 'VÚB banka',
-          // vub.sk FAQ: the cardless-withdrawal code expires in 3 minutes —
-          // very tight for a two-person P2P flow; the taker must already be at
-          // a VÚB ATM.
-          validity: Duration(minutes: 3),
+          // VÚB Mobil Banking asks the code holder to set a "Doba platnosti"
+          // anywhere from 10 to 60 minutes, so 10 is the shortest window a VÚB
+          // code can have — and the only one every code is guaranteed to have,
+          // since the coordinator never learns what the taker picked. Older
+          // material (and this comment before it) quoted a flat 3 minutes,
+          // which no longer matches the app.
+          validity: Duration(minutes: 10),
           atmMapUrl: 'https://www.google.com/maps/search/VUB+banka+bankomat',
         ),
         BankSpec(

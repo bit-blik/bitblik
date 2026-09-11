@@ -23,6 +23,7 @@ COPY --chown=flutter:flutter packages/coordinator/pubspec.yaml packages/coordina
 COPY --chown=flutter:flutter packages/core/pubspec.yaml packages/core/pubspec.yaml
 COPY --chown=flutter:flutter packages/app/pubspec.yaml packages/app/pubspec.yaml
 COPY --chown=flutter:flutter packages/cli/pubspec.yaml packages/cli/pubspec.yaml
+COPY --chown=flutter:flutter packages/telegram_bot/pubspec.yaml packages/telegram_bot/pubspec.yaml
 
 RUN flutter pub get
 
@@ -42,6 +43,12 @@ FROM alpine:latest
 
 ARG APP_VERSION
 ENV APP_VERSION=${APP_VERSION}
+
+# The bundled Dart runtime loads glibc alongside Alpine's musl. Bound glibc's
+# native arenas so transient NDK/Rust allocations are returned instead of
+# accumulating across the coordinator's long-running relay workloads.
+ENV MALLOC_ARENA_MAX=2 \
+    MALLOC_TRIM_THRESHOLD_=65536
 
 RUN apk add --no-cache zlib gmp tzdata sqlite-libs libstdc++
 RUN ln -s /usr/lib/libsqlite3.so.0 /usr/lib/libsqlite3.so

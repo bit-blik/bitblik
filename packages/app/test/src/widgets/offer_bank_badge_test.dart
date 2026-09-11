@@ -36,11 +36,19 @@ void main() {
     expect(find.textContaining('Tatra banka'), findsOneWidget);
   });
 
-  testWidgets('VÚB (3 min) shows a short-validity warning with minutes',
+  testWidgets('VÚB (10 min) shows a short-validity warning with minutes',
       (tester) async {
     await pump(tester, skOffer(bankId: 'vub'));
     // Short-validity banks surface the window inline.
-    expect(find.textContaining('3 min'), findsOneWidget);
+    expect(find.textContaining('10 min'), findsOneWidget);
     expect(find.byIcon(Icons.timer_outlined), findsOneWidget);
+  });
+
+  testWidgets('a roomier bank keeps the plain label, no timer accent',
+      (tester) async {
+    await pump(tester, skOffer(bankId: 'slsp'));
+    expect(find.textContaining('min'), findsNothing);
+    expect(find.byIcon(Icons.timer_outlined), findsNothing);
+    expect(find.byIcon(Icons.account_balance), findsOneWidget);
   });
 }

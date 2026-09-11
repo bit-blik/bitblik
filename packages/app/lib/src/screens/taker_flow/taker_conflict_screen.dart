@@ -6,14 +6,22 @@ import 'package:go_router/go_router.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
-import '../../flow/flow_provider.dart' show flowRoute;
+import '../../flow/flow_provider.dart' show flowEngineProvider, flowRoute;
+import '../../flow/flow_timeout.dart';
 import '../../providers/providers.dart';
-import '../../widgets/coordinator_nostr_contact.dart';
 
 class TakerConflictScreen extends ConsumerStatefulWidget {
-  final String offerId;
+  final Offer? offer;
 
-  const TakerConflictScreen({super.key, required this.offerId});
+  final FlowEngine? engine;
+  final String? offerId;
+
+  const TakerConflictScreen({
+    super.key,
+    this.offer,
+    this.engine,
+    this.offerId,
+  });
 
   @override
   ConsumerState<TakerConflictScreen> createState() =>
@@ -23,9 +31,15 @@ class TakerConflictScreen extends ConsumerStatefulWidget {
 class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
   @override
   Widget build(BuildContext context) {
+    final activeOffer = ref.watch(activeOfferProvider);
+    final offer = widget.offer ?? activeOffer;
+    final engine = widget.engine ?? ref.watch(flowEngineProvider).valueOrNull;
+
     // Listen to active offer provider for status changes
     ref.listen<Offer?>(activeOfferProvider, (previous, next) {
-      if (next != null && next.id == widget.offerId) {
+      final expectedOfferId = widget.offer?.id ?? widget.offerId;
+      if (next != null &&
+          (expectedOfferId == null || next.id == expectedOfferId)) {
         // Handle status update only if the status has actually changed
         if (previous == null || previous.status != next.status) {
           _handleStatusUpdate(next.statusEnum, context);
@@ -33,16 +47,11 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
       }
     });
 
-    final offer = ref.watch(activeOfferProvider);
-    final coordNpub =
-        offer?.coordinatorPubkey != null
-            ? ref
-                .watch(
-                  coordinatorInfoByPubkeyProvider(offer!.coordinatorPubkey),
-                )
-                .valueOrNull
-                ?.nostrNpub
-            : null;
+    if (offer == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -71,11 +80,49 @@ class _TakerConflictScreenState extends ConsumerState<TakerConflictScreen> {
             Text(
               t.taker.conflict.body(
                 code:
-                    ref.read(selectedPaymentSystemProvider).localizedCodeLabel,
+                    paymentSystemForOffer(offer).localizedCodeLabel,
               ),
               textAlign: TextAlign.center,
             ),
-            CoordinatorNostrContactCard(npub: coordNpub),
+
+            const SizedBox(height: 20),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.hourglass_top_rounded),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t.taker.conflict.instructions),
+                          const SizedBox(height: 12),
+                          if (engine != null)
+                            FlowCountdown(
+                              deadline: flowStateDeadline(
+                                engine,
+                                offer.statusRaw,
+                                offer,
+                              ),
+                              label:
+                                  (time) => t.taker.conflict.timeoutLabel(
+                                    time: time,
+                                  ),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepOrange,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {

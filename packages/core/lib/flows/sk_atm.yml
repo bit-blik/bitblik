@@ -2,7 +2,7 @@
 #
 # One flow serves all three Slovak banks (Tatra banka, Slovenská sporiteľňa,
 # VÚB). The banks differ only in how long their withdrawal code stays valid
-# (20 / 15 / 3 min); that window is written as `$code_validity` and resolved per
+# (20 / 15 / 10 min); that window is written as `$code_validity` and resolved per
 # offer from the offer's bank (Offer.bankId -> BankSpec.validity). Everything
 # else is identical across banks.
 #

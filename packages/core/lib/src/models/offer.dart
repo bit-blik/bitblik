@@ -20,7 +20,6 @@ enum OfferStatus {
   invalidBlik, // Maker marked the BLIK code as invalid
   conflict, // Taker reported conflict after Maker marked BLIK as invalid
   dispute, // Maker opened a dispute after conflict
-
   makerConfirmed, // Maker confirmed BLIK payment success
   settled, // Hold invoice settled by coordinator
 
@@ -28,10 +27,14 @@ enum OfferStatus {
   takerPaymentFailed, // Settled, but LNURL payment to taker failed
   takerPaid, // Taker successfully paid via LNURL-pay
 
+  refundingMaker, // Maker won dispute; exact payout invoice needed
+
   // Sentinel: persisted status name not recognized by this client build.
   // Append-only enum — never rename or remove existing values; this catches
   // future statuses introduced by newer coordinators.
   unknown,
+
+  refundedMaker, // Maker successfully refunded after a dispute ruling
 }
 
 enum OfferCategory {
@@ -83,6 +86,11 @@ class Offer {
   /// Intentionally excluded from JSON/RPC serialization.
   final String? makerRefundInvoice;
   final String? makerRefundOffer;
+
+  /// Payment hash of [makerRefundInvoice]. Server-only and unique in the
+  /// coordinator database so the same Lightning invoice cannot authorize two
+  /// dispute payouts.
+  final String? makerRefundPaymentHash;
   final String?
       holdInvoicePreimage; // Might be sensitive, consider if needed on client
   final DateTime? updatedAt;
@@ -196,6 +204,7 @@ class Offer {
     this.takerOffer,
     this.makerRefundInvoice,
     this.makerRefundOffer,
+    this.makerRefundPaymentHash,
     this.holdInvoicePreimage,
     this.updatedAt,
     this.makerConfirmedAt,
@@ -435,7 +444,8 @@ class Offer {
 
   bool get isInvalidBlik => status == OfferStatus.invalidBlik;
 
-  bool get isDispute => status == OfferStatus.dispute;
+  bool get isDispute =>
+      status == OfferStatus.dispute || status == OfferStatus.refundingMaker;
 
   bool get takerExplicitlyClaimedCharge => takerChargedAt != null;
 
@@ -506,6 +516,8 @@ class Offer {
     String? takerOffer,
     String? makerRefundInvoice,
     String? makerRefundOffer,
+    String? makerRefundInvoice,
+    String? makerRefundPaymentHash,
     String? holdInvoicePreimage,
     DateTime? updatedAt,
     DateTime? makerConfirmedAt,
@@ -552,6 +564,9 @@ class Offer {
       makerRefundOffer: makerRefundInvoice != null
           ? null
           : makerRefundOffer ?? this.makerRefundOffer,
+
+      makerRefundPaymentHash:
+          makerRefundPaymentHash ?? this.makerRefundPaymentHash,
       holdInvoicePreimage: holdInvoicePreimage ?? this.holdInvoicePreimage,
       updatedAt: updatedAt ?? this.updatedAt,
       makerConfirmedAt: makerConfirmedAt ?? this.makerConfirmedAt,
@@ -610,6 +625,7 @@ class Offer {
       coordinatorPubkey: tagMap['p'] ?? event.pubKey,
       takerPubkey: tagMap['taker'],
       reservedAt: epochSecondsOrNull(tagMap['reserved_at']),
+      disputeAt: epochSecondsOrNull(tagMap['dispute_at']),
       takerPaidAt: epochSecondsOrNull(tagMap['paid_at']),
       takerFees: int.tryParse(tagMap['taker_fees'] ?? ''),
       category: () {

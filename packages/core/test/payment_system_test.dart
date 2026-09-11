@@ -1,4 +1,5 @@
 import 'package:bitblik_core/core.dart';
+import 'package:ndk/ndk.dart';
 import 'package:test/test.dart';
 
 /// The SK ATM instrument and its banks, resolved from the market.
@@ -105,12 +106,13 @@ void main() {
           ['tatrabanka', 'slsp', 'vub', 'primabanka']);
     });
 
-    test('SK: per-bank validity windows (20 / 15 / 3 / 30 min)', () {
+    test('SK: per-bank validity windows (20 / 15 / 10 / 30 min)', () {
       expect(_skAtm.validityFor(_skBank('tatrabanka')),
           const Duration(minutes: 20));
       expect(_skAtm.validityFor(_skBank('slsp')), const Duration(minutes: 15));
-      // VÚB cardless-withdrawal codes are only valid for 3 minutes.
-      expect(_skAtm.validityFor(_skBank('vub')), const Duration(minutes: 3));
+      // VÚB lets the code holder pick 10–60 min; 10 is the floor they can
+      // choose, so it is the only window every VÚB code is guaranteed to have.
+      expect(_skAtm.validityFor(_skBank('vub')), const Duration(minutes: 10));
       expect(_skAtm.validityFor(_skBank('primabanka')),
           const Duration(minutes: 30));
       // Unknown/absent bank falls back to the instrument default.
@@ -170,6 +172,7 @@ void main() {
       List<String> banks = const [],
       Map<String, String> channelLinks = const {},
       Map<String, Map<String, String>> bankChannelLinks = const {},
+      int? disputeEvidencePeriodSeconds = 48 * 60 * 60,
     }) =>
         CoordinatorInfo(
           name: 'c',
@@ -183,6 +186,7 @@ void main() {
           banks: banks,
           channelLinks: channelLinks,
           bankChannelLinks: bankChannelLinks,
+          disputeEvidencePeriodSeconds: disputeEvidencePeriodSeconds,
           nostrNpub: null,
         );
 
@@ -199,6 +203,7 @@ void main() {
       expect(decoded.banks, ['tatrabanka', 'slsp']);
       expect(decoded.bankChannelLinks['tatrabanka']!['telegram'],
           'https://t.me/tatra');
+      expect(decoded.disputeEvidencePeriodSeconds, 48 * 60 * 60);
     });
 
     test('fromJson derives method from currencies when absent', () {
@@ -276,6 +281,41 @@ void main() {
           isTrue);
       expect(
           tags.any((t) => t[0] == 'banks' && t[1] == 'tatrabanka,vub'), isTrue);
+      expect(
+          tags.any((t) =>
+              t[0] == 'dispute_evidence_period_seconds' && t[1] == '172800'),
+          isTrue);
+    });
+
+    test('old coordinator info has no evidence period', () {
+      final json = base().toJson()..remove('dispute_evidence_period_seconds');
+
+      final decoded = CoordinatorInfo.fromJson(json);
+      expect(decoded.disputeEvidencePeriodSeconds, isNull);
+      expect(decoded.toJson().containsKey('dispute_evidence_period_seconds'),
+          isFalse);
+      expect(
+          decoded
+              .toNostrTags()
+              .any((tag) => tag[0] == 'dispute_evidence_period_seconds'),
+          isFalse);
+    });
+
+    test('old Nostr info event has no evidence period', () {
+      final event = Nip01Event(
+        pubKey:
+            '0000000000000000000000000000000000000000000000000000000000000000',
+        kind: kKindCoordinatorInfo,
+        tags: const [
+          ['name', 'old coordinator'],
+          ['currencies', 'PLN'],
+          ['payment_system', 'blik'],
+        ],
+        content: '',
+      );
+
+      expect(CoordinatorInfo.fromNostrEvent(event).disputeEvidencePeriodSeconds,
+          isNull);
     });
   });
 
@@ -313,7 +353,7 @@ void main() {
       expect(bankForOffer(tatra)!.id, 'tatrabanka');
       expect(validityForOffer(tatra), const Duration(minutes: 20));
       final vub = offerWith(paymentSystemId: 'sk', bankId: 'vub');
-      expect(validityForOffer(vub), const Duration(minutes: 3));
+      expect(validityForOffer(vub), const Duration(minutes: 10));
       // No bank on a SK offer → instrument default validity.
       final noBank = offerWith(paymentSystemId: 'sk');
       expect(bankForOffer(noBank), isNull);
@@ -359,7 +399,7 @@ void main() {
       });
       expect(o.paymentSystemId, 'sk');
       expect(o.bankId, 'vub');
-      expect(validityForOffer(o), const Duration(minutes: 3));
+      expect(validityForOffer(o), const Duration(minutes: 10));
     });
   });
 }

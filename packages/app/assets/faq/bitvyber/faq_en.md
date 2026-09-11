@@ -24,9 +24,9 @@ Slovakia is a single market (**{app}**) served by one coordinator, covering **Ta
 Each bank sets its own lifetime for a cardless-withdrawal code:
 - **Tatra banka: 20 minutes**
 - **Slovenská sporiteľňa: 15 minutes**
-- **VÚB: 3 minutes**
+- **VÚB: 10–60 minutes**, set by the taker when generating the code
 
-VÚB's window is very short, so for a VÚB offer the taker should already be at (or very close to) a VÚB ATM before reserving. The app shows the remaining time as a countdown.
+VÚB is the one bank where the taker picks the window — anywhere from 10 to 60 minutes — when generating the code. BitBlik cannot see which value they chose, so it counts down from the 10-minute floor. Ask for a longer window if the maker has further to walk. The app shows the remaining time as a countdown.
 
 #### How does the escrow process work?
 
@@ -64,7 +64,7 @@ The Maker has already locked their Bitcoin in a hold invoice **before** you subm
 
 #### What if the code is invalid or expires before the Maker withdraws?
 
-If the Maker cannot withdraw with the code (invalid or expired — most likely with VÚB's 3-minute window), the trade cannot proceed with that code. The Maker marks it invalid, the offer is re-listed, and the Taker may submit a fresh code or cancel. Because the code expires fast, coordinate timing and choose a bank whose ATM the maker can reach quickly.
+If the Maker cannot withdraw with the code (invalid or expired), the trade cannot proceed with that code. The Maker marks it invalid, the offer is re-listed, and the Taker may submit a fresh code or cancel. Because the code expires fast, coordinate timing and choose a bank whose ATM the maker can reach quickly.
 
 #### What are the risks of using this protocol?
 
@@ -143,3 +143,7 @@ If the Maker denies withdrawing after your account was debited: a bank statement
 ## Support
 
 For coordinator support or disputes, contact the coordinator operator directly via Nostr DMs — their profile is reachable through their terms-of-use link in the {app} app.
+
+#### How do private dispute messages and picture evidence work?
+
+Each party gets a separate encrypted NIP-17 conversation with the coordinator; there is no maker/taker group room. Pictures are stripped of metadata, encrypted on your device, and uploaded only as ciphertext to a coordinator-selected Blossom server. Relay and Blossom operators can still observe IP address, timing, and ciphertext size. Chat never authorizes a payment. A Maker refund invoice must be submitted through the separate exact-amount invoice form. After a ruling, history is read-only and remote deletion is best-effort.

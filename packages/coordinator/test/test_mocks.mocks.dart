@@ -494,12 +494,18 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
   _i11.Future<List<_i3.Offer>> getOffersNotInRawStatuses(
     List<String>? terminalStatuses, {
     int? limit = 5000,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
           #getOffersNotInRawStatuses,
           [terminalStatuses],
-          {#limit: limit},
+          {
+            #limit: limit,
+            #beforeCreatedAt: beforeCreatedAt,
+            #beforeId: beforeId,
+          },
         ),
         returnValue: _i11.Future<List<_i3.Offer>>.value(<_i3.Offer>[]),
         returnValueForMissingStub:
@@ -518,6 +524,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
     String? takerOffer,
     String? makerRefundInvoice,
     String? makerRefundOffer,
+    String? makerRefundPaymentHash,
     DateTime? reservedAt,
     DateTime? codeReceivedAt,
     DateTime? takerChargedAt,
@@ -548,6 +555,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
             #takerOffer: takerOffer,
             #makerRefundInvoice: makerRefundInvoice,
             #makerRefundOffer: makerRefundOffer,
+            #makerRefundPaymentHash: makerRefundPaymentHash,
             #reservedAt: reservedAt,
             #codeReceivedAt: codeReceivedAt,
             #takerChargedAt: takerChargedAt,
@@ -580,7 +588,30 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
       ) as _i11.Future<List<_i3.Offer>>);
 
   @override
-  _i11.Future<List<_i3.Offer>> getOffersFromLastHours() => (super.noSuchMethod(
+  _i8.Future<List<_i2.Offer>> getDisputedOffers({
+    int? limit = 25,
+    DateTime? beforeDisputeAt,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDisputedOffers,
+          [],
+          {
+            #limit: limit,
+            #beforeDisputeAt: beforeDisputeAt,
+            #beforeCreatedAt: beforeCreatedAt,
+            #beforeId: beforeId,
+          },
+        ),
+        returnValue: _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+        returnValueForMissingStub:
+            _i8.Future<List<_i2.Offer>>.value(<_i2.Offer>[]),
+      ) as _i8.Future<List<_i2.Offer>>);
+
+  @override
+  _i8.Future<List<_i2.Offer>> getOffersFromLastHours() => (super.noSuchMethod(
         Invocation.method(
           #getOffersFromLastHours,
           [],

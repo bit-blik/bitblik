@@ -31,8 +31,8 @@ short **6-digit code** is the only credential.
 
 The two must be online **at the same time** and the seller must be **at the
 bank's ATM** while the code is valid (Prima banka 30 min · Tatra 20 min · SLSP
-15 min · **VÚB only 3 min**). Prima banka also caps a single withdrawal at
-**€200**.
+15 min · VÚB 10 min — the floor of the 10–60 min the taker picks in the VÚB
+app). Prima banka also caps a single withdrawal at **€200**.
 
 ## SK — Ako BitBlik SK funguje (dve roly)
 
@@ -47,8 +47,9 @@ jediné, čo treba, je **6-miestny kód**.
   BitBliku zamkne Lightning a dostane hotovosť. → **návody „Sell"**.
 
 Obaja musia byť online **naraz** a predávajúci musí byť **pri bankomate banky**,
-kým je kód platný (Prima banka 30 min · Tatra 20 min · SLSP 15 min · **VÚB len 3
-min**). Prima banka navyše vydá na jeden výber najviac **200 €**.
+kým je kód platný (Prima banka 30 min · Tatra 20 min · SLSP 15 min · VÚB 10 min
+— spodná hranica z 10–60 min, ktoré si taker volí vo VÚB appke). Prima banka
+navyše vydá na jeden výber najviac **200 €**.
 
 ---
 
