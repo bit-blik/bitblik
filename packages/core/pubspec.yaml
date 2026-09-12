@@ -15,7 +15,7 @@ dependencies:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk
-      ref: 1311be7913687f6bf4151772c2510f47d1a613a3
+      ref: fb82b6ad74032a576bc5db79ea30807011112cb5
   yaml: ^3.1.3
 
 dev_dependencies:
