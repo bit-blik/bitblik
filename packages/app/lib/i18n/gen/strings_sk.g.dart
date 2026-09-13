@@ -713,6 +713,7 @@ class _Translations$offers$status$sk extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => 'Neplatný ${code}';
 	@override String get conflict => 'Konflikt';
 	@override String get dispute => 'Spor';
+	@override String get refundedMaker => 'Makerovi boli vrátené prostriedky';
 	@override String get refundingMaker => 'Vrátenie platby makerovi';
 	@override String get makerConfirmed => 'Potvrdená';
 	@override String get settled => 'Vyrovnaná';
@@ -2948,6 +2949,7 @@ extension on TranslationsSk {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Neplatný ${code}',
 			'offers.status.conflict' => 'Konflikt',
 			'offers.status.dispute' => 'Spor',
+			'offers.status.refundedMaker' => 'Makerovi boli vrátené prostriedky',
 			'offers.status.refundingMaker' => 'Vrátenie platby makerovi',
 			'offers.status.makerConfirmed' => 'Potvrdená',
 			'offers.status.settled' => 'Vyrovnaná',
@@ -3355,9 +3357,9 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa.',
 			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
 			'taker.paymentProcess.title' => 'Priebeh platby',
-			'taker.paymentProcess.waitingForOfferUpdate' => 'Čaká sa na aktualizáciu stavu ponuky...',
 			_ => null,
 		} ?? switch (path) {
+			'taker.paymentProcess.waitingForOfferUpdate' => 'Čaká sa na aktualizáciu stavu ponuky...',
 			'taker.paymentProcess.states.preparing' => 'Príprava na odoslanie platby...',
 			'taker.paymentProcess.states.sending' => 'Odosiela sa platba...',
 			'taker.paymentProcess.states.received' => 'Platba prijatá!',

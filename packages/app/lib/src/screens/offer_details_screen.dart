@@ -1497,6 +1497,10 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
         ribbonColor = Colors.grey[600]!;
         ribbonText = t.offers.status.cancelled.toUpperCase();
         break;
+      case 'refundedmaker':
+        ribbonColor = Colors.green[700]!;
+        ribbonText = t.offers.status.refundedMaker.toUpperCase();
+        break;
       case 'reserved':
         ribbonColor = Colors.orange;
         ribbonText = t.offers.status.reserved.toUpperCase();

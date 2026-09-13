@@ -149,6 +149,7 @@ offers:
     invalidBlik: "Neplatný ${code}"
     conflict: "Konflikt"
     dispute: "Spor"
+    refundedMaker: "Makerovi boli vrátené prostriedky"
     refundingMaker: "Vrátenie platby makerovi"
     makerConfirmed: "Potvrdená"
     settled: "Vyrovnaná"

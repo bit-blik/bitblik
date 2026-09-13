@@ -156,7 +156,8 @@ void main() {
       ),
     );
     final terminalStatuses = invocation.captured.first as List<String>;
-    expect(terminalStatuses, containsAll(['cancelled', 'takerPaid']));
+    expect(terminalStatuses,
+        containsAll(['cancelled', 'refundedMaker', 'takerPaid']));
     expect(terminalStatuses, isNot(contains('funded')));
     expect(terminalStatuses, isNot(contains('dispute')));
     expect(invocation.captured[1], 26);

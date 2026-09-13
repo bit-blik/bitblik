@@ -786,6 +786,7 @@ class _Translations$offers$status$it extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => '${code} Non Valido';
 	@override String get conflict => 'Conflitto';
 	@override String get dispute => 'Disputa';
+	@override String get refundedMaker => 'Maker rimborsato';
 	@override String get refundingMaker => 'Rimborso del maker';
 	@override String get makerConfirmed => 'Confermata';
 	@override String get settled => 'Conclusa';
@@ -3271,6 +3272,7 @@ extension on TranslationsIt {
 			'offers.status.invalidBlik' => ({required Object code}) => '${code} Non Valido',
 			'offers.status.conflict' => 'Conflitto',
 			'offers.status.dispute' => 'Disputa',
+			'offers.status.refundedMaker' => 'Maker rimborsato',
 			'offers.status.refundingMaker' => 'Rimborso del maker',
 			'offers.status.makerConfirmed' => 'Confermata',
 			'offers.status.settled' => 'Conclusa',
@@ -3667,9 +3669,9 @@ extension on TranslationsIt {
 			'twint.flow.makerWait.offerExpires' => ({required Object code}) => '${code} scade',
 			'twint.flow.makerWait.autoExpires' => 'Scade automaticamente',
 			'twint.flow.makerWait.codeExpiresIn' => ({required Object code}) => '${code} scadrà tra...',
-			'twint.flow.makerWait.cancelOffer' => 'Annulla offerta',
 			_ => null,
 		} ?? switch (path) {
+			'twint.flow.makerWait.cancelOffer' => 'Annulla offerta',
 			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Un taker ha riservato la tua offerta e sta pagando il tuo codice ${code} nella sua app bancaria. Quando il pagamento arriva al tuo esercente, confermalo qui sotto.',
 			'twint.flow.makerWait.confirmReceived' => 'Conferma pagamento ricevuto',
 			'twint.flow.makerWait.confirmDialog.title' => 'Confermare il pagamento ricevuto?',

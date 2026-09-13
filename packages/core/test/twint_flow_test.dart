@@ -102,8 +102,8 @@ void main() {
         isFalse);
   });
 
-  test('terminals: cancelled, takerPaid (dispute is resolvable)', () {
-    for (final s in ['cancelled', 'takerPaid']) {
+  test('terminals include cancelled, refundedMaker, and takerPaid', () {
+    for (final s in ['cancelled', 'refundedMaker', 'takerPaid']) {
       expect(engine.isTerminal(s), isTrue, reason: s);
     }
     // A private intermediate state first secures escrow post-commit, then the
@@ -122,6 +122,8 @@ void main() {
             .transitionFor('refundingMaker', 'submit_maker_refund_invoice')
             ?.target,
         'payingMaker');
+    expect(engine.definition.state('payingMaker')!.transitions.single.target,
+        'refundedMaker');
     expect(
         engine.definition.state('payingMaker')!.transitions.single.onFailTarget,
         'refundingMaker');

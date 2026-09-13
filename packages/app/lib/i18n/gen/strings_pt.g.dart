@@ -787,6 +787,7 @@ class _Translations$offers$status$pt extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => '${code} inválido';
 	@override String get conflict => 'Conflito';
 	@override String get dispute => 'Disputa';
+	@override String get refundedMaker => 'Maker reembolsado';
 	@override String get refundingMaker => 'Reembolso do maker';
 	@override String get makerConfirmed => 'Confirmada';
 	@override String get settled => 'Liquidada';
@@ -3307,6 +3308,7 @@ extension on TranslationsPt {
 			'offers.status.invalidBlik' => ({required Object code}) => '${code} inválido',
 			'offers.status.conflict' => 'Conflito',
 			'offers.status.dispute' => 'Disputa',
+			'offers.status.refundedMaker' => 'Maker reembolsado',
 			'offers.status.refundingMaker' => 'Reembolso do maker',
 			'offers.status.makerConfirmed' => 'Confirmada',
 			'offers.status.settled' => 'Liquidada',
@@ -3703,9 +3705,9 @@ extension on TranslationsPt {
 			'taker.dispute.headline' => 'Disputa formal aberta',
 			'taker.dispute.body' => 'A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.',
 			'twint.scanner.title' => ({required Object code}) => 'Ler código ${code}',
-			'twint.scanner.status.align' => ({required Object code}) => 'Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.scanner.status.align' => ({required Object code}) => 'Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente.',
 			'twint.scanner.status.amountFailed' => 'A leitura pela câmara não conseguiu extrair o montante. Ainda pode usar o resultado do QR e corrigir os campos manualmente.',
 			'twint.flow.progress.step1' => '1. Criar oferta',

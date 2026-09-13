@@ -30,7 +30,10 @@ const _activeStatuses = {
   OfferStatus.unknown,
 };
 
-const _completedStatuses = {OfferStatus.takerPaid};
+const _completedStatuses = {
+  OfferStatus.takerPaid,
+  OfferStatus.refundedMaker,
+};
 
 const _failedStatuses = {OfferStatus.expired, OfferStatus.cancelled};
 

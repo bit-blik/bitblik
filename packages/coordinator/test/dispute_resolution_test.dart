@@ -159,7 +159,7 @@ void main() {
 
       expect(storedMakerInvoice, invoice);
       expect(storedMakerHash, isNotNull);
-      expect(currentStatus, 'cancelled');
+      expect(currentStatus, 'refundedMaker');
       verify(
         payment.payInvoice(
           invoice: invoice,
@@ -212,7 +212,7 @@ void main() {
       );
       await submitMakerInvoice();
       await pumpEventQueue(times: 100);
-      expect(currentStatus, 'cancelled');
+      expect(currentStatus, 'refundedMaker');
     });
 
     test('rejects wrong amount, wrong network, expired and reused invoices',
@@ -321,7 +321,7 @@ void main() {
       await submitMakerInvoice();
       await pumpEventQueue(times: 100);
 
-      expect(currentStatus, 'cancelled');
+      expect(currentStatus, 'refundedMaker');
       verify(
         payment.payInvoice(
           invoice: invoice,
@@ -384,7 +384,7 @@ void main() {
       await restarted.doInitialCheckStatuses();
       await pumpEventQueue(times: 100);
 
-      expect(currentStatus, 'cancelled');
+      expect(currentStatus, 'refundedMaker');
       verify(
         payment.payInvoice(
           invoice: invoice,

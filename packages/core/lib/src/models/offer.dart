@@ -33,6 +33,8 @@ enum OfferStatus {
   // Append-only enum — never rename or remove existing values; this catches
   // future statuses introduced by newer coordinators.
   unknown,
+
+  refundedMaker, // Maker successfully refunded after a dispute ruling
 }
 
 enum OfferCategory {
