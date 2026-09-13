@@ -17,6 +17,8 @@ export 'src/models/offer.dart';
 export 'src/models/offer_status_update.dart';
 export 'src/notifications/offer_notification_formatter.dart';
 export 'src/payment/payment_system.dart';
+export 'src/payment/receiving_payment.dart';
+export 'src/payment/nwc_321_client.dart';
 export 'src/protocol/bitblik_rpc_client.dart';
 export 'src/quote/offer_quote.dart';
 export 'src/protocol/protocol_codec.dart';

@@ -283,6 +283,7 @@ class ApiServiceNostr {
     String coordinatorPubkey, {
     String? takerLightningAddress,
     String? takerInvoice,
+    String? takerOffer,
   }) async {
     // Client-side guard: a maker cannot take their own offer. The public
     // NIP-69 offer event carries no maker pubkey (it falls back to the
@@ -302,6 +303,7 @@ class ApiServiceNostr {
         coordinatorPubkey,
         takerLightningAddress: takerLightningAddress,
         takerInvoice: takerInvoice,
+        takerOffer: takerOffer,
       );
     } catch (e) {
       Logger.log.e(() => 'Error calling reserveOffer: $e');
@@ -313,7 +315,8 @@ class ApiServiceNostr {
     required String offerId,
     required String takerId,
     String? blikCode,
-    required String takerInvoice,
+    String? takerInvoice,
+    String? takerOffer,
     required String coordinatorPubkey,
   }) async {
     try {
@@ -322,6 +325,7 @@ class ApiServiceNostr {
         takerId: takerId,
         blikCode: blikCode,
         takerInvoice: takerInvoice,
+        takerOffer: takerOffer,
         coordinatorPubkey: coordinatorPubkey,
       );
     } catch (e) {
@@ -448,7 +452,8 @@ class ApiServiceNostr {
 
   Future<void> updateTakerInvoice({
     required String offerId,
-    required String newBolt11,
+    String? newBolt11,
+    String? newBolt12,
     required String userPubkey,
     required String coordinatorPubkey,
   }) async {
@@ -456,6 +461,7 @@ class ApiServiceNostr {
       await _nostrService.updateTakerInvoice(
         offerId: offerId,
         newBolt11: newBolt11,
+        newBolt12: newBolt12,
         userPubkey: userPubkey,
         coordinatorPubkey: coordinatorPubkey,
       );

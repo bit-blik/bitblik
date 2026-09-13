@@ -14,6 +14,7 @@ import '../models/invoice_update.dart';
 import '../models/create_hold_invoice_result.dart';
 import '../models/invoice_details.dart'; // Added import
 import '../models/pay_invoice_result.dart';
+import '../models/payment_status.dart' as domain;
 import '../logging/app_logger.dart';
 
 // Import generated LND gRPC files (adjust paths/names if necessary)
@@ -223,6 +224,14 @@ class LndService implements PaymentService {
       throw StateError('LND not connected.');
     }
 
+    if (!RegExp(r'^ln(?:bc|tb|bcrt|sb)[0-9]', caseSensitive: false)
+        .hasMatch(invoice.trim())) {
+      return PayInvoiceResult(
+        status: domain.PaymentStatus.FAILED,
+        paymentError: 'payInvoice accepts BOLT11 invoices only',
+      );
+    }
+
     String paymentHashHex;
     int invoiceAmountSat = 0;
 
@@ -267,16 +276,16 @@ class LndService implements PaymentService {
       );
     }
 
-    AppLogger.info(
-        'LND: Sending payment for invoice: $invoice (hash: $paymentHashHex)');
+    AppLogger.info('LND: Sending BOLT11 payment.');
     try {
       // sendPaymentV2 returns a stream. We need to listen until a terminal state.
       await for (final lndPaymentUpdate
           in _routerClient!.sendPaymentV2(request)) {
         if (lndPaymentUpdate.status == Payment_PaymentStatus.SUCCEEDED) {
-          AppLogger.info(
-              'LND: Payment SUCCEEDED. Preimage: ${lndPaymentUpdate.paymentPreimage}');
+          AppLogger.info('LND: Payment SUCCEEDED.');
           return PayInvoiceResult(
+            status: domain.PaymentStatus.SUCCEEDED,
+            paymentId: paymentHashHex,
             paymentPreimage: lndPaymentUpdate.paymentPreimage,
             feeSat: lndPaymentUpdate.feeSat.toInt(),
           );
@@ -284,6 +293,8 @@ class LndService implements PaymentService {
           AppLogger.info(
               'LND: Payment FAILED. Reason: ${lndPaymentUpdate.failureReason}');
           return PayInvoiceResult(
+            status: domain.PaymentStatus.FAILED,
+            paymentId: paymentHashHex,
             paymentError: lndPaymentUpdate.failureReason.toString(),
           );
         } else if (lndPaymentUpdate.status == Payment_PaymentStatus.IN_FLIGHT) {
@@ -329,9 +340,10 @@ class LndService implements PaymentService {
         AppLogger.info(
             '!!!!!!!!!!!!!!!!!!!!!!! LND: Payment status : ${update.status}');
         if (update.status == Payment_PaymentStatus.SUCCEEDED) {
-          AppLogger.info(
-              'LND: trackPaymentV2: Payment SUCCEEDED. Preimage: ${update.paymentPreimage}');
+          AppLogger.info('LND: trackPaymentV2: Payment SUCCEEDED.');
           return PayInvoiceResult(
+            status: domain.PaymentStatus.SUCCEEDED,
+            paymentId: paymentHashHex,
             paymentPreimage: update.paymentPreimage,
             feeSat: update.feeSat.toInt(),
           );
