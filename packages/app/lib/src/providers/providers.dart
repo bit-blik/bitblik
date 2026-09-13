@@ -14,6 +14,7 @@ import 'package:ndk/shared/logger/logger.dart';
 import 'package:bitblik_core/core.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
@@ -1573,19 +1574,35 @@ final ndkFlutterProvider = Provider<NdkFlutter?>((ref) {
   return NdkFlutter(ndk: ndk);
 });
 
-final zapstoreAppUpdateControllerProvider = Provider<NAppUpdateController?>((ref) {
-  final ndkFlutter = ref.watch(ndkFlutterProvider);
-  if (ndkFlutter == null) return null;
+final _installedPackageInfoProvider = FutureProvider<PackageInfo>(
+  (ref) => PackageInfo.fromPlatform(),
+);
 
+final zapstoreAppUpdateControllerProvider = Provider<NAppUpdateController?>((
+  ref,
+) {
+  final packageInfo = ref.watch(_installedPackageInfoProvider).valueOrNull;
+  if (packageInfo == null) return null;
+
+  final paymentSystemId = ref.watch(
+    selectedPaymentSystemProvider.select((system) => system.id),
+  );
+  final externalUpdateUrl = externalUpdateUrlForPaymentSystem(paymentSystemId);
+
+  // Package updates still target the installed build, not the selected market.
   final appIdentifier = switch (buildDefaultPaymentSystemId) {
     'mbway' => 'me.bitway',
     'twint' => 'app.bittwint',
     _ => 'app.bitblik',
   };
 
+  final ndkFlutter = ref.watch(ndkFlutterProvider);
+  if (ndkFlutter == null) return null;
+
   final controller = NAppUpdateController.self(
     ndkFlutter: ndkFlutter,
-    externalUpdateUrl: Uri.parse('https://bitblik.app'),
+    currentVersion: packageInfo.version,
+    externalUpdateUrl: externalUpdateUrl,
     app: SoftwareAppRef(
       // npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3
       publisher: kBitblikPubkeyHex,
