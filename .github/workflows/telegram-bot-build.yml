@@ -2,6 +2,7 @@ name: Telegram Bot Docker build
 
 on:
   push:
+    branches: [main]
     paths:
       # Keep this list aligned with packages/telegram_bot/Dockerfile. Tests,
       # docs, examples, and local deployment files do not affect the image.

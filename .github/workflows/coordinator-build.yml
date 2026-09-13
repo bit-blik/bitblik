@@ -2,6 +2,7 @@ name: Coordinator Docker build
 
 on:
   push:
+    branches: [main]
     paths:
       - 'packages/coordinator/**'
       - '!packages/coordinator/dashboard/**'
