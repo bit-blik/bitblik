@@ -32,6 +32,13 @@ String get buildAppScheme => switch (buildDefaultPaymentSystemId) {
   _ => 'bitblik',
 };
 
+/// Public download site for the selected payment system.
+Uri externalUpdateUrlForPaymentSystem(String paymentSystemId) =>
+    Uri.parse(switch (paymentSystemId) {
+      'mbway' => 'https://bitway.me',
+      _ => 'https://bitblik.app',
+    });
+
 String get buildPrimaryHost => switch (buildDefaultPaymentSystemId) {
   'mbway' =>
     'npub180nj93uqjvvjksryaxaz8fk9gxwwtg06gxlkd5csrj6rqfg3phhs09n5s9.nsite.lol',
