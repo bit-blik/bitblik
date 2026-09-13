@@ -2,7 +2,7 @@ import '../config/build_flavor.dart';
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -178,14 +178,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                         ? buildWalletQrScanner
                         : null,
                     albyGoConnectConfig: AlbyGoConnectConfig(
-                      // NWC callbacks require a wallet app on the same device.
-                      // Desktop/web instead authorize on a phone via NDK's QR.
-                      connectMethod:
-                          !kIsWeb &&
-                              (defaultTargetPlatform == TargetPlatform.android ||
-                                  defaultTargetPlatform == TargetPlatform.iOS)
-                          ? AlbyGoConnectMethod.nostrNwcCallback
-                          : AlbyGoConnectMethod.walletAuth,
+                      // Match NDK's sample: native wallet-auth on mobile,
+                      // with NDK's QR fallback on desktop and web.
+                      connectMethod: AlbyGoConnectMethod.walletAuth,
                       appName: ref
                           .watch(selectedPaymentSystemProvider)
                           .brandName,

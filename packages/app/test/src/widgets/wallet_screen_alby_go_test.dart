@@ -80,14 +80,9 @@ void main() {
         );
         await tester.pumpAndSettle();
         final wallets = tester.widget<NWallets>(find.byType(NWallets));
-        final mobile =
-            platform == TargetPlatform.android ||
-            platform == TargetPlatform.iOS;
         expect(
           wallets.albyGoConnectConfig.connectMethod,
-          mobile
-              ? AlbyGoConnectMethod.nostrNwcCallback
-              : AlbyGoConnectMethod.walletAuth,
+          AlbyGoConnectMethod.walletAuth,
         );
         expect(wallets.albyGoConnectConfig.appName, kBlik.brandName);
 

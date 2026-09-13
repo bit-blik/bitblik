@@ -6,6 +6,9 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:flutter_webrtc_zxing/flutter_webrtc_zxing.dart' as zxing;
 import 'package:image/image.dart' as image;
 
+import 'web_qr_frame_capture_stub.dart'
+    if (dart.library.js_interop) 'web_qr_frame_capture_web.dart';
+
 /// Decodes original camera pixels without the ReaderWidget's 768px resize and
 /// central crop, which discard detail and finder patterns in dense offer QRs.
 /// Called through compute so image conversion and detection stay off the UI.
@@ -149,9 +152,10 @@ class _FullFrameQrScannerState extends State<FullFrameQrScanner>
       }
 
       while (_isCurrent(generation)) {
-        final frame = await tracks.first.captureFrame();
+        final bytes = kIsWeb
+            ? await captureWebQrFrame(renderer)
+            : (await tracks.first.captureFrame()).asUint8List();
         if (!_isCurrent(generation)) break;
-        final bytes = frame.asUint8List();
         _decodeAttempts++;
         if (kDebugMode && (_decodeAttempts == 1 || _decodeAttempts % 10 == 0)) {
           debugPrint(
