@@ -9,25 +9,25 @@ dependency_overrides:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/ndk,
-      ref: 33754849c026f3e6d5ce2ad200b2fef06abdf9cc
+      ref: 214f1dbf08de1809b32ebeb0ab1d9b47b3996993
     }
   ndk_flutter:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/ndk_flutter,
-      ref: 33754849c026f3e6d5ce2ad200b2fef06abdf9cc
+      ref: 214f1dbf08de1809b32ebeb0ab1d9b47b3996993
     }
   ndk_drift:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/drift,
-      ref: 33754849c026f3e6d5ce2ad200b2fef06abdf9cc
+      ref: 214f1dbf08de1809b32ebeb0ab1d9b47b3996993
     }
   ndk_objectbox:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/objectbox,
-      ref: 33754849c026f3e6d5ce2ad200b2fef06abdf9cc
+      ref: 214f1dbf08de1809b32ebeb0ab1d9b47b3996993
     }
 workspace:
   - packages/app
