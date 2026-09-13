@@ -537,6 +537,7 @@ class Translations$wallet$en {
 	String get description => 'Manage your Lightning wallet settings';
 
 	late final Translations$wallet$missingReceiving$en missingReceiving = Translations$wallet$missingReceiving$en.internal(_root);
+	late final Translations$wallet$incompatibleReceiving$en incompatibleReceiving = Translations$wallet$incompatibleReceiving$en.internal(_root);
 	late final Translations$wallet$details$en details = Translations$wallet$details$en.internal(_root);
 }
 
@@ -1140,6 +1141,9 @@ class Translations$offers$status$en {
 
 	/// en: 'Dispute'
 	String get dispute => 'Dispute';
+
+	/// en: 'Maker Refunded'
+	String get refundedMaker => 'Maker Refunded';
 
 	/// en: 'Refunding Maker'
 	String get refundingMaker => 'Refunding Maker';
@@ -3130,6 +3134,24 @@ class Translations$wallet$missingReceiving$en {
 
 	/// en: 'Wallet settings'
 	String get openSettings => 'Wallet settings';
+}
+
+// Path: wallet.incompatibleReceiving
+class Translations$wallet$incompatibleReceiving$en {
+	Translations$wallet$incompatibleReceiving$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'BOLT11 wallet needed'
+	String get title => 'BOLT11 wallet needed';
+
+	/// en: 'This coordinator can pay this offer using BOLT11 only.'
+	String get message => 'This coordinator can pay this offer using BOLT11 only.';
+
+	/// en: 'Your receiving wallet supports BOLT12 offers, but it cannot create the BOLT11 invoice this coordinator requires. Add a BOLT11-compatible receiving wallet to continue.'
+	String get explanation => 'Your receiving wallet supports BOLT12 offers, but it cannot create the BOLT11 invoice this coordinator requires. Add a BOLT11-compatible receiving wallet to continue.';
 }
 
 // Path: wallet.details
@@ -5811,6 +5833,7 @@ extension on Translations {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Invalid ${code}',
 			'offers.status.conflict' => 'Conflict',
 			'offers.status.dispute' => 'Dispute',
+			'offers.status.refundedMaker' => 'Maker Refunded',
 			'offers.status.refundingMaker' => 'Refunding Maker',
 			'offers.status.makerConfirmed' => 'Confirmed',
 			'offers.status.settled' => 'Settled',
@@ -6207,9 +6230,9 @@ extension on Translations {
 			'taker.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.',
 			'taker.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.',
 			'taker.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Resend New ${code} Code',
-			'taker.waitConfirmation.navigatedHome' => 'Navigated home.',
 			_ => null,
 		} ?? switch (path) {
+			'taker.waitConfirmation.navigatedHome' => 'Navigated home.',
 			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => '${code} Code Expired',
 			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.',
 			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Reservation ends in',
@@ -6633,6 +6656,9 @@ extension on Translations {
 			'wallet.missingReceiving.title' => 'Receiving wallet required',
 			'wallet.missingReceiving.message' => 'No wallet configured for receiving. Add one in Wallet settings to take offers.',
 			'wallet.missingReceiving.openSettings' => 'Wallet settings',
+			'wallet.incompatibleReceiving.title' => 'BOLT11 wallet needed',
+			'wallet.incompatibleReceiving.message' => 'This coordinator can pay this offer using BOLT11 only.',
+			'wallet.incompatibleReceiving.explanation' => 'Your receiving wallet supports BOLT12 offers, but it cannot create the BOLT11 invoice this coordinator requires. Add a BOLT11-compatible receiving wallet to continue.',
 			'wallet.details.title' => 'Wallet details',
 			'wallet.details.pendingTitle' => 'Pending transactions',
 			'wallet.details.finishedTitle' => 'Finished transactions',

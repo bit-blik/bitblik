@@ -1344,6 +1344,7 @@ class NostrService {
       case 'funded':
         return 'pending';
       case 'taker_paid':
+      case 'refundedMaker':
         return 'success';
       case 'cancelled':
       case 'expired':
@@ -1378,6 +1379,7 @@ class NostrService {
       case OfferStatus.takerCharged:
         return 'in-progress';
       case OfferStatus.takerPaid:
+      case OfferStatus.refundedMaker:
         return 'success';
       case OfferStatus.cancelled:
       case OfferStatus.expired:

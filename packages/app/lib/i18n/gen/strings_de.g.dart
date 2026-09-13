@@ -440,6 +440,7 @@ class _Translations$wallet$de extends Translations$wallet$en {
 	@override String get title => 'Wallet';
 	@override String get description => 'Verwalte deine Lightning-Wallet-Einstellungen';
 	@override late final _Translations$wallet$missingReceiving$de missingReceiving = _Translations$wallet$missingReceiving$de._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$de incompatibleReceiving = _Translations$wallet$incompatibleReceiving$de._(_root);
 	@override late final _Translations$wallet$details$de details = _Translations$wallet$details$de._(_root);
 }
 
@@ -798,6 +799,7 @@ class _Translations$offers$status$de extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => 'Ungültiger ${code}';
 	@override String get conflict => 'Konflikt';
 	@override String get dispute => 'Streitfall';
+	@override String get refundedMaker => 'Maker zurückerstattet';
 	@override String get refundingMaker => 'Maker wird zurückerstattet';
 	@override String get makerConfirmed => 'Bestätigt';
 	@override String get settled => 'Abgewickelt';
@@ -1860,6 +1862,18 @@ class _Translations$wallet$missingReceiving$de extends Translations$wallet$missi
 	@override String get title => 'Empfangs-Wallet erforderlich';
 	@override String get message => 'Keine Wallet für den Empfang konfiguriert. Füge in den Wallet-Einstellungen eine hinzu, um Angebote anzunehmen.';
 	@override String get openSettings => 'Wallet-Einstellungen';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$de extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'BOLT11-Wallet erforderlich';
+	@override String get message => 'Dieser Koordinator kann dieses Angebot nur über BOLT11 auszahlen.';
+	@override String get explanation => 'Deine Empfangs-Wallet unterstützt BOLT12-Angebote, kann aber die erforderliche BOLT11-Rechnung nicht erstellen. Füge eine BOLT11-kompatible Empfangs-Wallet hinzu.';
 }
 
 // Path: wallet.details
@@ -3317,6 +3331,7 @@ extension on TranslationsDe {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Ungültiger ${code}',
 			'offers.status.conflict' => 'Konflikt',
 			'offers.status.dispute' => 'Streitfall',
+			'offers.status.refundedMaker' => 'Maker zurückerstattet',
 			'offers.status.refundingMaker' => 'Maker wird zurückerstattet',
 			'offers.status.makerConfirmed' => 'Bestätigt',
 			'offers.status.settled' => 'Abgewickelt',
@@ -3714,9 +3729,9 @@ extension on TranslationsDe {
 			'taker.dispute.body' => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.',
 			'twint.scanner.title' => ({required Object code}) => '${code}-Code scannen',
 			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
-			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.',
 			'twint.scanner.status.amountFailed' => 'Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren.',
 			'twint.flow.progress.step1' => '1. Angebot erstellen',
 			'twint.flow.progress.step2' => '2. Auf Taker warten',
@@ -4035,6 +4050,9 @@ extension on TranslationsDe {
 			'wallet.missingReceiving.title' => 'Empfangs-Wallet erforderlich',
 			'wallet.missingReceiving.message' => 'Keine Wallet für den Empfang konfiguriert. Füge in den Wallet-Einstellungen eine hinzu, um Angebote anzunehmen.',
 			'wallet.missingReceiving.openSettings' => 'Wallet-Einstellungen',
+			'wallet.incompatibleReceiving.title' => 'BOLT11-Wallet erforderlich',
+			'wallet.incompatibleReceiving.message' => 'Dieser Koordinator kann dieses Angebot nur über BOLT11 auszahlen.',
+			'wallet.incompatibleReceiving.explanation' => 'Deine Empfangs-Wallet unterstützt BOLT12-Angebote, kann aber die erforderliche BOLT11-Rechnung nicht erstellen. Füge eine BOLT11-kompatible Empfangs-Wallet hinzu.',
 			'wallet.details.title' => 'Wallet-Details',
 			'wallet.details.pendingTitle' => 'Ausstehende Transaktionen',
 			'wallet.details.finishedTitle' => 'Abgeschlossene Transaktionen',

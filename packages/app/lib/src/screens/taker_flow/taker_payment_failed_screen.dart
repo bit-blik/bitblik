@@ -8,6 +8,7 @@ import 'package:bitblik_core/core.dart';
 import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../utils/bitcoin_display.dart';
+import '../../widgets/lightning_address_widget.dart';
 import '../../widgets/progress_indicators.dart';
 import '../../widgets/receiving_invoice_form.dart';
 
@@ -32,6 +33,49 @@ class _TakerPaymentFailedScreenState
   String? _errorMessage; // To store error messages
 
   BuildContext? _retryDialogContext;
+  bool _shownIncompatibleWalletDialog = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWallets();
+  }
+
+  void _loadWallets() {
+    final ndk = ref.read(ndkProvider);
+    if (ndk == null) return;
+    final all = ndk.wallets.getWalletsForUnit('sat');
+    final coordinator = ref
+        .read(apiServiceProvider)
+        .getCoordinatorInfoByPubkey(widget.offer.coordinatorPubkey);
+    final coordinatorSupportsBolt12 =
+        coordinator?.outgoingPaymentTypes.contains('bolt12') ?? false;
+    final compatible = all
+        .where(
+          (wallet) => walletCanReceiveForCoordinator(
+            wallet,
+            coordinatorSupportsBolt12: coordinatorSupportsBolt12,
+          ),
+        )
+        .toList();
+    if (mounted) {
+      if (!coordinatorSupportsBolt12 &&
+          compatible.isEmpty &&
+          hasOnlyBolt12ReceivingWallets(all) &&
+          !_shownIncompatibleWalletDialog) {
+        _shownIncompatibleWalletDialog = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          LightningAddressWidget.showReceivingWalletRequiredDialog(
+            context,
+            ref,
+            Translations.of(context),
+            requiresBolt11: true,
+          );
+        });
+      }
+    }
+  }
 
   void _closeRetryDialog() {
     final ctx = _retryDialogContext;
@@ -60,7 +104,14 @@ class _TakerPaymentFailedScreenState
     }
   }
 
-  Future<void> _retryPayment(String newInvoice) async {
+  Future<void> _retryPayment(String instruction) async {
+    final encoded = instruction.trim();
+    if (encoded.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.taker.paymentFailed.errors.enterValidInvoice)),
+      );
+      return;
+    }
     if (!mounted) return;
 
     setState(() => _errorMessage = null);
@@ -88,13 +139,26 @@ class _TakerPaymentFailedScreenState
 
     try {
       final apiService = ref.read(apiServiceProvider);
+      final coordinator = apiService.getCoordinatorInfoByPubkey(
+        widget.offer.coordinatorPubkey,
+      );
+      final bolt12 = extractBolt12Offer(encoded);
+      final bolt11 = extractBolt11Invoice(encoded);
+      if (bolt12 != null &&
+          !(coordinator?.outgoingPaymentTypes.contains('bolt12') ?? false)) {
+        throw Exception('This coordinator does not support BOLT12 payouts');
+      }
+      if (bolt11 == null && bolt12 == null) {
+        throw Exception('Enter a valid BOLT11 invoice or BOLT12 offer');
+      }
       final userPubkey = widget.offer.takerPubkey;
       if (userPubkey == null || userPubkey.isEmpty) {
         throw Exception(t.taker.paymentFailed.errors.takerPublicKeyNotFound);
       }
       await apiService.updateTakerInvoice(
         offerId: widget.offer.id,
-        newBolt11: newInvoice,
+        newBolt11: bolt11,
+        newBolt12: bolt12,
         userPubkey: userPubkey,
         coordinatorPubkey: widget.offer.coordinatorPubkey,
       );
@@ -133,9 +197,15 @@ class _TakerPaymentFailedScreenState
     // Calculate net amount (moved here for access to widget.offer)
     // Fallback uses 0.5% — historical default when no offer-level fee was
     // recorded. New offers always carry takerFees, so this branch is rare.
+    final coordinator = ref
+        .read(apiServiceProvider)
+        .getCoordinatorInfoByPubkey(widget.offer.coordinatorPubkey);
     final takerFees =
         widget.offer.takerFees ??
-        OfferQuote.takerFeeSats(widget.offer.amountSats, 0.5);
+        OfferQuote.takerFeeSats(
+          widget.offer.amountSats,
+          coordinator?.takerFee ?? 0.5,
+        );
     final netAmountSats = widget.offer.amountSats - takerFees;
 
     return Scaffold(
@@ -230,22 +300,29 @@ class _TakerPaymentFailedScreenState
             const SizedBox(height: 16),
             ReceivingInvoiceForm(
               amountSats: netAmountSats,
+              invoiceDescription: 'BitBlik payout retry',
+              coordinatorSupportsBolt12:
+                  ref
+                      .read(apiServiceProvider)
+                      .getCoordinatorInfoByPubkey(
+                        widget.offer.coordinatorPubkey,
+                      )
+                      ?.outgoingPaymentTypes
+                      .contains('bolt12') ??
+                  false,
               labels: ReceivingInvoiceFormLabels(
                 walletSectionTitle: t.taker.paymentFailed.walletSection.title,
                 defaultWalletLabel:
                     t.taker.paymentFailed.walletSection.defaultLabel,
-                tapToGenerate:
-                    (amount) => t.taker.paymentFailed.walletSection
-                        .tapToGenerate(amountSats: amount),
+                tapToGenerate: (amount) => t.taker.paymentFailed.walletSection
+                    .tapToGenerate(amountSats: amount),
                 invoiceLabel: t.taker.paymentFailed.form.newInvoiceLabel,
                 invoiceHint: t.taker.paymentFailed.form.newInvoiceHint,
                 submitLabel: t.taker.paymentFailed.actions.retryPayment,
                 emptyInvoiceError:
                     t.taker.paymentFailed.errors.enterValidInvoice,
-                generationError:
-                    (error) => t.taker.paymentFailed.errors.generateFailed(
-                      details: error.toString(),
-                    ),
+                generationError: (error) => t.taker.paymentFailed.errors
+                    .generateFailed(details: error.toString()),
                 addWalletLabel: t.nfc.actions.addWallet,
                 noReceivingWalletMessage: t.wallet.missingReceiving.message,
                 walletUnavailableError:
