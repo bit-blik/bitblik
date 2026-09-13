@@ -9,26 +9,25 @@ dependency_overrides:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/ndk,
-      ref: fb82b6ad74032a576bc5db79ea30807011112cb5
+      ref: 73d1e62167e20b05fceaf51e655432fe5931f6a5
     }
   ndk_flutter:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/ndk_flutter,
-      ref: fb82b6ad74032a576bc5db79ea30807011112cb5
+      ref: 73d1e62167e20b05fceaf51e655432fe5931f6a5
     }
-  # Keep the SQLite 2 adapter while the coordinator uses Matrix 3.x.
   ndk_drift:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/drift,
-      ref: 3416e6332a1690cc302a823ac3efdad144e61de6
+      ref: 73d1e62167e20b05fceaf51e655432fe5931f6a5
     }
   ndk_objectbox:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/objectbox,
-      ref: fb82b6ad74032a576bc5db79ea30807011112cb5
+      ref: 73d1e62167e20b05fceaf51e655432fe5931f6a5
     }
 workspace:
   - packages/app
