@@ -178,7 +178,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                         ? buildWalletQrScanner
                         : null,
                     albyGoConnectConfig: AlbyGoConnectConfig(
-                      connectMethod: AlbyGoConnectMethod.nostrNwcCallback,
+                      // Match NDK's sample: native wallet-auth on mobile,
+                      // with NDK's QR fallback on desktop and web.
+                      connectMethod: AlbyGoConnectMethod.walletAuth,
                       appName: ref
                           .watch(selectedPaymentSystemProvider)
                           .brandName,
