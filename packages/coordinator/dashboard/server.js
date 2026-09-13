@@ -39,6 +39,7 @@ const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
   const user = stripQuotes(rawConfig.user ?? rawConfig.dbUser ?? rawConfig.DB_USER);
   const password = stripQuotes(rawConfig.password ?? rawConfig.dbPassword ?? rawConfig.DB_PASSWORD);
   const iconUrl = stripQuotes(rawConfig.iconUrl ?? rawConfig.iconURL ?? rawConfig.icon);
+  const color = stripQuotes(rawConfig.color ?? rawConfig.chartColor ?? rawConfig.chart_color);
   // Optional id of the flow yml (blik/twint/mbway) this coordinator runs, used
   // by the dashboard to render its state diagram. Optional: when unset the
   // flow page falls back to a picker.
@@ -50,6 +51,9 @@ const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
   if (!id || !host || !port || !database || !user || password == null) {
     throw new Error(`Invalid coordinator configuration at index ${index}`);
   }
+  if (color && !/^#[0-9a-f]{6}$/i.test(color)) {
+    throw new Error(`Invalid coordinator color at index ${index}; expected #RRGGBB`);
+  }
 
   return {
     id,
@@ -60,6 +64,7 @@ const normalizeCoordinatorConfig = (rawConfig, index = 0) => {
     user,
     password,
     iconUrl: iconUrl || null,
+    color: color?.toLowerCase() || null,
     flowId: flowId || null,
   };
 };
@@ -102,6 +107,7 @@ const loadCoordinatorConfigs = () => {
         database: process.env.DB_NAME,
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
+        color: process.env.COORDINATOR_COLOR,
       },
       0
     )
@@ -211,7 +217,7 @@ const isValidDateStr = (value) => {
 };
 
 const getCoordinatorOptions = () =>
-  coordinatorConfigs.map(({ id, label, iconUrl, flowId }) => ({ id, label, iconUrl, flowId }));
+  coordinatorConfigs.map(({ id, label, iconUrl, color, flowId }) => ({ id, label, iconUrl, color, flowId }));
 
 // ─── Flow definitions (state-machine ymls) ──────────────────────────────────
 // The flow ymls (blik/twint/mbway) are the single source of truth for the
