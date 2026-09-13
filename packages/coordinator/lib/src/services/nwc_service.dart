@@ -63,7 +63,16 @@ class NwcService implements PaymentService, Bolt12PaymentService {
     required String nwcUri,
     this.enableBolt12Recovery = true,
   }) : _nwcUri = nwcUri {
-    _ndk = Ndk.emptyBootstrapRelaysConfig();
+    _ndk = Ndk(
+      NdkConfig(
+        cache: MemCacheManager(),
+        eventVerifier: Bip340EventVerifier(),
+        bootstrapRelays: const [],
+        // NWC is another long-lived relay connection owned by the coordinator.
+        // Avoid retaining native WebSocket compression state here as well.
+        webSocketCompression: false,
+      ),
+    );
   }
 
   @override

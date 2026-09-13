@@ -5,7 +5,7 @@ environment:
   sdk: ^3.11.0
 
 dependency_overrides:
-  # NDK PR #823: native WebSocket compression opt-out for the Telegram bot.
+  # NDK PR #823: native WebSocket compression opt-out for long-running services.
   ndk:
     git: {
       url: https://github.com/relaystr/ndk.git,

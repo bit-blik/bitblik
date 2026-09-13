@@ -222,6 +222,9 @@ class NostrService {
       NdkConfig(
         cache: _cacheManager,
         eventVerifier: rustEventVerifier,
+        // Prefer a smaller native WebSocket footprint over wire compression
+        // for this long-running service.
+        webSocketCompression: false,
         bootstrapRelays: bootstrap,
         logLevel: LogLevel.info,
         cacheEvictionEnabled: true,
