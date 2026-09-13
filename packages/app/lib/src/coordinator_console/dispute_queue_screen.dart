@@ -526,7 +526,7 @@ class _DisputeUnreadTracker extends ChangeNotifier {
         icon: Icons.currency_bitcoin,
         color: Colors.teal,
       );
-    case 'cancelled':
+    case 'refundedMaker':
       return (
         label: 'Ruled for maker · refunded',
         icon: Icons.check_circle,
@@ -677,13 +677,17 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
           final awaitingMakerInvoice =
               offer.statusRaw == OfferStatus.refundingMaker.name;
           final payingMaker = offer.statusRaw == 'payingMaker';
-          final makerRuled = awaitingMakerInvoice || payingMaker;
+          final refundedMaker = offer.statusRaw == 'refundedMaker';
+          final makerRuled =
+              awaitingMakerInvoice || payingMaker || refundedMaker;
           final caseSummary = isOpen
               ? 'Awaiting coordinator ruling'
               : awaitingMakerInvoice
               ? 'Ruled for maker · awaiting refund invoice'
               : payingMaker
               ? 'Ruled for maker · paying the maker'
+              : refundedMaker
+              ? 'Ruled for maker · refunded'
               : offer.statusRaw == OfferStatus.payingTaker.name
               ? 'Ruled for taker · paying the taker'
               : item.isFinal

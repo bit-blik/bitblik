@@ -35,7 +35,8 @@ import '../screens/taker_flow/taker_submit_blik_screen.dart'
     show TakerSubmitBlikScreen;
 import '../screens/taker_flow/taker_wait_confirmation_screen.dart'
     show TakerWaitConfirmationScreen;
-import '../utils/offer_status_label.dart' show humanizeFlowState;
+import '../utils/offer_status_label.dart'
+    show offerCodeLabel, offerStatusLabel;
 import '../widgets/dispute_conversation_card.dart';
 import 'flow_actions_bar.dart';
 import 'flow_controller.dart';
@@ -51,7 +52,12 @@ import 'twint_bodies.dart';
 /// migrated onto the flow-driven UI.
 final FlowBody genericFlowBody = (context, ref, offer, engine, role) {
   final state = offer.statusRaw;
-  final title = humanizeFlowState(state);
+  final title = offerStatusLabel(
+    Translations.of(context),
+    offer.status,
+    code: offerCodeLabel(offer),
+    statusRaw: state,
+  );
   final actions = engine.userActionsFor(state, role);
   final terminal = engine.isTerminal(state);
   final hasTimeout = flowStateDeadline(engine, state, offer) != null;
@@ -148,7 +154,7 @@ final Map<String, Map<FlowActor, FlowBody>> _disputeBodies = {
   },
 };
 
-const _makerRulingStates = {'refundingMaker', 'payingMaker', 'cancelled'};
+const _makerRulingStates = {'refundingMaker', 'payingMaker', 'refundedMaker'};
 const _takerRulingStates = {
   'payingTaker',
   'takerPaymentFailed',

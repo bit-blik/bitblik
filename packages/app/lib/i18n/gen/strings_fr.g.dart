@@ -439,6 +439,7 @@ class _Translations$wallet$fr extends Translations$wallet$en {
 	@override String get title => 'Portefeuille';
 	@override String get description => 'Gérez les réglages de votre portefeuille Lightning';
 	@override late final _Translations$wallet$missingReceiving$fr missingReceiving = _Translations$wallet$missingReceiving$fr._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$fr incompatibleReceiving = _Translations$wallet$incompatibleReceiving$fr._(_root);
 	@override late final _Translations$wallet$details$fr details = _Translations$wallet$details$fr._(_root);
 }
 
@@ -786,6 +787,7 @@ class _Translations$offers$status$fr extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => '${code} invalide';
 	@override String get conflict => 'Conflit';
 	@override String get dispute => 'Litige';
+	@override String get refundedMaker => 'Maker remboursé';
 	@override String get refundingMaker => 'Remboursement du maker';
 	@override String get makerConfirmed => 'Confirmée';
 	@override String get settled => 'Réglée';
@@ -1848,6 +1850,18 @@ class _Translations$wallet$missingReceiving$fr extends Translations$wallet$missi
 	@override String get title => 'Portefeuille de réception requis';
 	@override String get message => 'Aucun portefeuille configuré pour la réception. Ajoutez-en un dans les réglages du portefeuille pour accepter des offres.';
 	@override String get openSettings => 'Réglages du portefeuille';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$fr extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Portefeuille BOLT11 requis';
+	@override String get message => 'Ce coordinateur ne peut payer cette offre qu’en BOLT11.';
+	@override String get explanation => 'Votre portefeuille de réception prend en charge les offres BOLT12, mais ne peut pas créer la facture BOLT11 requise. Ajoutez un portefeuille de réception compatible BOLT11.';
 }
 
 // Path: wallet.details
@@ -3306,6 +3320,7 @@ extension on TranslationsFr {
 			'offers.status.invalidBlik' => ({required Object code}) => '${code} invalide',
 			'offers.status.conflict' => 'Conflit',
 			'offers.status.dispute' => 'Litige',
+			'offers.status.refundedMaker' => 'Maker remboursé',
 			'offers.status.refundingMaker' => 'Remboursement du maker',
 			'offers.status.makerConfirmed' => 'Confirmée',
 			'offers.status.settled' => 'Réglée',
@@ -3703,9 +3718,9 @@ extension on TranslationsFr {
 			'taker.dispute.body' => 'L\'offre est maintenant examinée par le coordinateur. Utilisez le chat du litige ci-dessous pour communiquer avec le coordinateur et fournir les justificatifs demandés.',
 			'twint.scanner.title' => ({required Object code}) => 'Scanner le code ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alignez le QR ${code} et le texte du montant dans le cadre de la caméra.',
-			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Le code ${code} n\'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Le code ${code} n\'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement.',
 			'twint.scanner.status.amountFailed' => 'Le scan caméra n\'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement.',
 			'twint.flow.progress.step1' => '1. Créer l\'offre',
 			'twint.flow.progress.step2' => '2. Attendre un taker',
@@ -4025,6 +4040,9 @@ extension on TranslationsFr {
 			'wallet.missingReceiving.title' => 'Portefeuille de réception requis',
 			'wallet.missingReceiving.message' => 'Aucun portefeuille configuré pour la réception. Ajoutez-en un dans les réglages du portefeuille pour accepter des offres.',
 			'wallet.missingReceiving.openSettings' => 'Réglages du portefeuille',
+			'wallet.incompatibleReceiving.title' => 'Portefeuille BOLT11 requis',
+			'wallet.incompatibleReceiving.message' => 'Ce coordinateur ne peut payer cette offre qu’en BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'Votre portefeuille de réception prend en charge les offres BOLT12, mais ne peut pas créer la facture BOLT11 requise. Ajoutez un portefeuille de réception compatible BOLT11.',
 			'wallet.details.title' => 'Détails du portefeuille',
 			'wallet.details.pendingTitle' => 'Transactions en attente',
 			'wallet.details.finishedTitle' => 'Transactions terminées',
