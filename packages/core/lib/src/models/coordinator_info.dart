@@ -28,6 +28,7 @@ class CoordinatorInfo {
   /// `0` means the premium feature is disabled for this coordinator.
   final double maxPremiumPercent;
   final List<String> currencies;
+  final List<String> outgoingPaymentTypes;
 
   /// The market id this coordinator serves (e.g. `blik`, `mbway`, `sk`). One
   /// deployment = one market. Older coordinators that don't advertise it fall
@@ -67,6 +68,7 @@ class CoordinatorInfo {
     this.disputeEvidencePeriodSeconds,
     this.maxPremiumPercent = 0,
     required this.currencies,
+    this.outgoingPaymentTypes = const ['bolt11'],
     required this.paymentSystem,
     required this.nostrNpub,
     this.banks = const [],
@@ -112,6 +114,10 @@ class CoordinatorInfo {
       currencies: (json['currencies'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      outgoingPaymentTypes: (json['outgoing_payment_types'] as List?)
+              ?.whereType<String>()
+              .toList() ??
+          const ['bolt11'],
       paymentSystem: (json['payment_system'] as String?) ??
           _defaultMethodId(json['currencies']),
       banks: _parseBanks(json['banks']),
@@ -137,6 +143,7 @@ class CoordinatorInfo {
         'dispute_evidence_period_seconds': disputeEvidencePeriodSeconds,
       'max_premium_percent': maxPremiumPercent,
       'currencies': currencies,
+      'outgoing_payment_types': outgoingPaymentTypes,
       'payment_system': paymentSystem,
       if (banks.isNotEmpty) 'banks': banks,
       'nostr_npub': nostrNpub,
@@ -203,6 +210,11 @@ class CoordinatorInfo {
       takerFee: double.tryParse(tags['taker_fee'] ?? '0') ?? 0.0,
       reservationSeconds: int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
       currencies: currencies,
+      outgoingPaymentTypes: (tags['outgoing_payment_types'] ?? 'bolt11')
+          .split(',')
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList(),
       paymentSystem:
           _emptyToNull(tags['payment_system']) ?? _defaultMethodId(currencies),
       banks: banks,
@@ -244,6 +256,7 @@ class CoordinatorInfo {
       ['taker_fee', takerFee.toString()],
       ['reservation_seconds', reservationSeconds.toString()],
       ['currencies', currencies.join(',')],
+      ['outgoing_payment_types', outgoingPaymentTypes.join(',')],
       ['payment_system', paymentSystem],
       if (banks.isNotEmpty) ['banks', banks.join(',')],
       ['version', version ?? ''],

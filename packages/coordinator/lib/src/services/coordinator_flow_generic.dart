@@ -15,7 +15,9 @@ class OfferWriteSpec {
   DateTime? disputeAt;
   String? code;
   String? takerInvoice;
+  String? takerOffer;
   String? makerRefundInvoice;
+  String? makerRefundOffer;
   String? makerRefundPaymentHash;
   int? takerFees;
 
@@ -409,11 +411,12 @@ class GenericOfferFlow {
     // Record facts about sensitive values, never the values themselves.
     final auditCtx = <String, dynamic>{
       'client': clientVersion,
+      'taker_fees': w.takerFees,
       'code_updated': w.code != null,
       'code_returned': t.returns == 'blik_code',
-      'taker_payout_updated': w.takerInvoice != null,
-      'maker_refund_payout_updated': w.makerRefundInvoice != null,
-      'taker_fees': w.takerFees,
+      'taker_payout_updated': w.takerInvoice != null || w.takerOffer != null,
+      'maker_refund_payout_updated':
+          w.makerRefundInvoice != null || w.makerRefundOffer != null,
       'failure_reason': w.failureReason,
       ...w.audit,
     };
@@ -444,7 +447,9 @@ class GenericOfferFlow {
       code: w.code,
       codeReceivedAt: w.codeReceivedAt,
       takerInvoice: w.takerInvoice,
+      takerOffer: w.takerOffer,
       makerRefundInvoice: w.makerRefundInvoice,
+      makerRefundOffer: w.makerRefundOffer,
       makerRefundPaymentHash: w.makerRefundPaymentHash,
       takerFees: w.takerFees,
       takerInvoiceFees: w.takerInvoiceFees,

@@ -183,17 +183,26 @@ const formatCurrency = (value, currency = 'PLN') => {
   }).format(value);
 };
 
+const num = (value) => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 const calcTakerFeePct = (taker_invoice_fees, amount_sats) => {
   if (!taker_invoice_fees || !amount_sats || amount_sats === 0) return null;
   return (taker_invoice_fees * 100) / amount_sats;
 };
 
-const calcProfit = (maker_fees, taker_fees, taker_invoice_fees) => {
+// The API serves BIGINT columns as strings (node-postgres does not narrow them
+// to Number), so these must be coerced before any addition — `"368" + "1080"`
+// concatenates to 3681080 instead of summing to 1448, and the following
+// subtraction then silently turns that into a plausible-looking number.
+export const calcProfit = (maker_fees, taker_fees, taker_invoice_fees) => {
   if (maker_fees == null && taker_fees == null) return null;
-  return (maker_fees || 0) + (taker_fees || 0) - (taker_invoice_fees || 0);
+  return num(maker_fees) + num(taker_fees) - num(taker_invoice_fees);
 };
 
-const calcProfitFiat = (profit_sats, fiat_amount, amount_sats) => {
+export const calcProfitFiat = (profit_sats, fiat_amount, amount_sats) => {
   if (profit_sats == null || !fiat_amount || !amount_sats || amount_sats === 0) return null;
   return (profit_sats * fiat_amount) / amount_sats;
 };

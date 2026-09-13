@@ -54,14 +54,63 @@ class LightningAddressWidget extends ConsumerStatefulWidget {
   static void showReceivingWalletRequiredDialog(
     BuildContext context,
     WidgetRef ref,
-    Translations t,
-  ) {
+    Translations t, {
+    bool requiresBolt11 = false,
+  }) {
     showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(t.wallet.missingReceiving.title),
-          content: Text(t.wallet.missingReceiving.message),
+          title: Text(
+            requiresBolt11
+                ? t.wallet.incompatibleReceiving.title
+                : t.wallet.missingReceiving.title,
+          ),
+          content: requiresBolt11
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t.wallet.incompatibleReceiving.message),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF7C4DFF).withValues(alpha: 0.12),
+                            const Color(0xFFFFB300).withValues(alpha: 0.10),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(
+                            0xFF7C4DFF,
+                          ).withValues(alpha: 0.28),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline_rounded,
+                            color: Color(0xFF7C4DFF),
+                            size: 21,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              t.wallet.incompatibleReceiving.explanation,
+                              style: Theme.of(dialogContext).textTheme.bodySmall
+                                  ?.copyWith(height: 1.35),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : Text(t.wallet.missingReceiving.message),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -791,3 +840,4 @@ class _LightningAddressWidgetState
     }
   }
 }
+

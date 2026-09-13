@@ -3,6 +3,8 @@ import '../models/create_hold_invoice_result.dart';
 import '../models/invoice_details.dart'; // Added import
 import '../models/invoice_update.dart';
 import '../models/pay_invoice_result.dart';
+import '../models/pay_offer_result.dart';
+import '../models/bolt12_offer_info.dart';
 
 abstract class PaymentService {
   /// Connects to the payment backend.
@@ -64,6 +66,24 @@ abstract class PaymentService {
   /// already settled, or `null` when it is not settled / cannot be confirmed.
   /// Used before declaring failure and before retrying, to avoid marking a
   /// paid offer as failed or double-paying the taker.
-  Future<PayInvoiceResult?> reconcileOutgoingPayment(
-      {required String invoice});
+  Future<PayInvoiceResult?> reconcileOutgoingPayment({required String invoice});
+}
+
+abstract interface class Bolt12PaymentService {
+  bool get isBolt12Available;
+
+  Future<Bolt12OfferInfo> decodeOffer({required String offer});
+
+  Future<PayOfferResult> payOffer({
+    required String offer,
+    required int amountSat,
+    int? feeLimitSat,
+    required String paymentAttemptId,
+  });
+
+  Future<PayOfferResult?> reconcileOutgoingOffer({
+    required String offer,
+    required String paymentAttemptId,
+    String? paymentId,
+  });
 }

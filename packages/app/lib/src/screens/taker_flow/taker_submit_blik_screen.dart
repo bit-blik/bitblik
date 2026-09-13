@@ -332,11 +332,26 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       return;
     }
 
-    final defaultReceivingWallet = ndk.wallets.defaultWalletForReceiving;
-    if (defaultReceivingWallet == null || !defaultReceivingWallet.canReceive) {
-      LightningAddressWidget.showReceivingWalletRequiredDialog(context, ref, t);
+    final coordinatorSupportsBolt12 =
+        _coordinatorInfo?.outgoingPaymentTypes.contains('bolt12') ?? false;
+    final receivingWallets = ndk.wallets.getWalletsForUnit('sat');
+    final selectedReceivingWallet = selectReceivingWalletForCoordinator(
+      receivingWallets,
+      coordinatorSupportsBolt12: coordinatorSupportsBolt12,
+      defaultWallet: ndk.wallets.defaultWalletForReceiving,
+    );
+    if (selectedReceivingWallet == null) {
+      LightningAddressWidget.showReceivingWalletRequiredDialog(
+        context,
+        ref,
+        t,
+        requiresBolt11: !coordinatorSupportsBolt12 &&
+            hasOnlyBolt12ReceivingWallets(receivingWallets),
+      );
       ref.read(errorProvider.notifier).state =
-          t.wallet.missingReceiving.message;
+          coordinatorSupportsBolt12
+              ? t.wallet.missingReceiving.message
+              : t.wallet.incompatibleReceiving.message;
       _startBlikInputTimer(offer);
       return;
     }
@@ -356,9 +371,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       return;
     }
 
-    late final String takerInvoice;
+    late final ReceivingPayment takerPayment;
     try {
-      takerInvoice = await _createInvoiceForDefaultReceivingWallet(
+      takerPayment = await _createPaymentForDefaultReceivingWallet(
         ndk: ndk,
         amountSats: amountToInvoiceSats,
       );
@@ -367,17 +382,17 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         () => '[TakerSubmitBlikScreen] Failed to create taker invoice: $e',
       );
       if (!mounted) return;
-      final retryInvoice = await _showWalletPickerDialog(
+      final retryPayment = await _showWalletPickerDialog(
         ndk: ndk,
         amountSats: amountToInvoiceSats,
         error: e.toString(),
       );
-      if (retryInvoice == null) {
+      if (retryPayment == null) {
         ref.read(errorProvider.notifier).state = t.system.errors.generic;
         _startBlikInputTimer(offer);
         return;
       }
-      takerInvoice = retryInvoice;
+      takerPayment = retryPayment;
     }
     // --- End Validations ---
 
@@ -390,7 +405,8 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         offerId: offer.id,
         takerId: takerId,
         blikCode: blikCode,
-        takerInvoice: takerInvoice,
+        takerInvoice: takerPayment.bolt11,
+        takerOffer: takerPayment.bolt12,
         coordinatorPubkey: offer.coordinatorPubkey,
       );
 
@@ -421,18 +437,28 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     }
   }
 
-  Future<String?> _showWalletPickerDialog({
+  Future<ReceivingPayment?> _showWalletPickerDialog({
     required Ndk ndk,
     required int amountSats,
     required String error,
   }) async {
     final all = ndk.wallets.getWalletsForUnit('sat');
     final defaultW = ndk.wallets.defaultWalletForReceiving;
-    final receivingWallets = all.where((w) => w.canReceive).toList();
+    final coordinatorSupportsBolt12 =
+        _coordinatorInfo?.outgoingPaymentTypes.contains('bolt12') ?? false;
+    final receivingWallets =
+        all
+            .where(
+              (wallet) => walletCanReceiveForCoordinator(
+                wallet,
+                coordinatorSupportsBolt12: coordinatorSupportsBolt12,
+              ),
+            )
+            .toList();
 
     if (receivingWallets.isEmpty || !mounted) return null;
 
-    return showDialog<String>(
+    return showDialog<ReceivingPayment>(
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) {
@@ -443,14 +469,15 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
               if (generatingId != null) return;
               setDialogState(() => generatingId = wallet.id);
               try {
-                final result = await ndk.wallets.receive(
+                final payment = await createReceivingPayment(
+                  ndk,
+                  amountSats,
+                  coordinatorSupportsBolt12: coordinatorSupportsBolt12,
                   walletId: wallet.id,
-                  amountSats: amountSats,
+                  description: 'BitBlik payout',
                 );
-                final invoice = _extractBolt11Invoice(result);
-                if (invoice == null) throw Exception('No invoice in response');
                 if (dialogContext.mounted) {
-                  Navigator.of(dialogContext).pop(invoice);
+                  Navigator.of(dialogContext).pop(payment);
                 }
               } catch (e) {
                 Logger.log.e(
@@ -604,78 +631,17 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     );
   }
 
-  Future<String> _createInvoiceForDefaultReceivingWallet({
+  Future<ReceivingPayment> _createPaymentForDefaultReceivingWallet({
     required Ndk ndk,
     required int amountSats,
   }) async {
-    Wallet? wallet = ndk.wallets.defaultWalletForReceiving;
-    if (wallet == null) {
-      wallet = ndk.wallets
-          .getWalletsForUnit('sat')
-          .firstWhere(
-            (w) => w.canReceive,
-            orElse: () => throw Exception('No receiving wallet available'),
-          );
-      throw Exception('No default receiving wallet configured');
-    }
-    final result = await ndk.wallets.receive(
-      walletId: wallet.id,
-      amountSats: amountSats,
+    return createReceivingPayment(
+      ndk,
+      amountSats,
+      coordinatorSupportsBolt12:
+          _coordinatorInfo?.outgoingPaymentTypes.contains('bolt12') ?? false,
+      description: 'BitBlik payout',
     );
-    final invoice = _extractBolt11Invoice(result);
-    if (invoice != null) {
-      return invoice;
-    }
-    throw Exception('Unable to generate invoice from default receiving wallet');
-  }
-
-  String? _extractBolt11Invoice(dynamic value) {
-    String? normalize(String? raw) {
-      if (raw == null) return null;
-      final trimmed = raw.trim();
-      final withoutPrefix =
-          trimmed.toLowerCase().startsWith('lightning:')
-              ? trimmed.substring('lightning:'.length).trim()
-              : trimmed;
-      if (withoutPrefix.toLowerCase().startsWith('lnbc')) {
-        return withoutPrefix;
-      }
-      return null;
-    }
-
-    if (value is String) {
-      return normalize(value);
-    }
-
-    if (value is Map) {
-      final keys = <String>['bolt11', 'invoice', 'payment_request', 'request'];
-      for (final key in keys) {
-        final candidate = value[key];
-        if (candidate is String) {
-          final normalized = normalize(candidate);
-          if (normalized != null) {
-            return normalized;
-          }
-        }
-      }
-      return null;
-    }
-
-    try {
-      final invoice = (value as dynamic).invoice;
-      if (invoice is String) {
-        return normalize(invoice);
-      }
-    } catch (_) {}
-
-    try {
-      final bolt11 = (value as dynamic).bolt11;
-      if (bolt11 is String) {
-        return normalize(bolt11);
-      }
-    } catch (_) {}
-
-    return null;
   }
 
   Future<void> _pasteFromClipboard() async {
