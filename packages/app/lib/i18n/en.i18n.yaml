@@ -725,6 +725,7 @@ taker:
       title: "You marked ${code} as charged"
       message: "The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin."
     expiredActions:
+      checkReportStatus: "Check status / retry report"
       reportConflict: "${code} was charged from my bank account"
       renewReservation: "Try again with new ${code} code"
       cancelReservation: "Cancel reservation"
@@ -732,12 +733,12 @@ taker:
     feedback:
       makerConfirmed: Maker confirmed payment.
       paymentSuccessful: Payment successful! You will receive funds shortly.
-      conflictReported: Conflict reported. Coordinator will review the situation.
+      chargeReported: "Charge report received. Awaiting the maker’s response or automatic confirmation."
 
     errors:
       invalidOfferStateReceived: "Received an offer with an invalid state for this screen. Resetting."
       reportingConflict: "Error reporting conflict: ${details}"
-      reportingConflictUnconfirmed: "We could not confirm the report — the coordinator did not answer in time. It most likely did go through. Do not send it again; wait a moment and check the trade status, and contact support if it does not change."
+      reportingConflictUnconfirmed: "Report confirmation pending. Delivery is unknown. Check status to retry if the report is still needed. If status remains unavailable, contact support."
 
   paymentProcess:
     title: Payment Process

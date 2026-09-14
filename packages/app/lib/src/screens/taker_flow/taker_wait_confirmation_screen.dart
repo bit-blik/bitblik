@@ -11,7 +11,7 @@ import 'package:bitblik_core/core.dart';
 import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../services/nostr_service.dart' show reservedOfferFromResult;
-import '../../services/offer_db_service.dart';
+import '../../flow/taker_charge_report.dart';
 import '../../utils/offer_status_label.dart';
 import '../../widgets/critical_code_safety.dart';
 import '../../widgets/progress_indicators.dart';
@@ -41,6 +41,7 @@ class _TakerWaitConfirmationScreenState
   Timer? _expiredBlikTimer;
   late int _confirmationCountdownSeconds = _confirmationDuration.inSeconds;
   bool _timersInitialized = false;
+  bool _chargeReportPending = false;
   bool _timerExpired = false;
   bool _expiredBlikWindowExpired = false;
 
@@ -106,8 +107,8 @@ class _TakerWaitConfirmationScreenState
         setState(() {
           _expiredBlikWindowExpired = true;
         });
+        unawaited(_handleExpiredBlikWindowElapsed(offer));
       }
-      unawaited(_handleExpiredBlikWindowElapsed(offer));
       return;
     }
 
@@ -128,50 +129,20 @@ class _TakerWaitConfirmationScreenState
 
   Future<void> _handleExpiredBlikWindowElapsed(Offer offer) async {
     try {
-      final apiService = await ref.read(initializedApiServiceProvider.future);
-      final remote = await apiService.getOfferDetails(
-        offer,
-        offer.coordinatorPubkey,
-      );
-
-      if (remote == null) {
-        await OfferDbService().deleteOfferById(offer.id);
-        if (offer.holdInvoicePaymentHash != null &&
-            offer.holdInvoicePaymentHash!.isNotEmpty &&
-            offer.holdInvoicePaymentHash != offer.id) {
-          await OfferDbService().deleteOfferById(offer.holdInvoicePaymentHash!);
-        }
-        await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
-        if (mounted) {
-          context.go('/offers');
-        }
-        return;
-      }
-
-      final refreshed = Offer.fromJson(remote);
-      await ref.read(activeOfferProvider.notifier).setActiveOffer(refreshed);
+      final refreshed = await ref
+          .read(activeOfferProvider.notifier)
+          .refreshOfferDetails(offer);
       if (!mounted) return;
-
-      if (refreshed.statusEnum == OfferStatus.funded) {
-        await OfferDbService().deleteOfferById(refreshed.id);
-        await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
-        if (mounted) {
-          context.go('/offers');
-        }
-        return;
+      if (ref.read(activeOfferProvider) == null) {
+        context.go('/offers');
+      } else if (refreshed != null &&
+          refreshed.status != OfferStatus.expiredBlik) {
+        _navigateToOfferDetails(refreshed.id);
       }
-
-      _navigateToOfferDetails(refreshed.id);
     } catch (e) {
       Logger.log.w(
-        () =>
-            '[TakerWaitConfirmation] Failed reconciling expiredBlik relist expiry for ${offer.id}: $e',
+        () => '[TakerWaitConfirmation] Expired-code status unavailable: $e',
       );
-      await OfferDbService().deleteOfferById(offer.id);
-      await ref.read(activeOfferProvider.notifier).setActiveOffer(null);
-      if (mounted) {
-        context.go('/offers');
-      }
     }
   }
 
@@ -313,17 +284,18 @@ class _TakerWaitConfirmationScreenState
     final showChargedAction = offer.statusEnum == OfferStatus.expiredSentBlik;
     return Scaffold(
       body: _buildContentForStatus(context, offer),
-      bottomNavigationBar:
-          showChargedAction
-              ? CriticalChargedActionBar(
-                actionKey: const ValueKey('expired_sent_blik_charged_action'),
-                label: t.taker.waitConfirmation.expiredActions.reportConflict(
-                  code: offerCodeLabel(offer),
-                ),
-                onPressed: isLoading ? null : () => _reportCharged(offer),
-                isLoading: isLoading,
-              )
-              : null,
+      bottomNavigationBar: showChargedAction
+          ? CriticalChargedActionBar(
+              actionKey: const ValueKey('expired_sent_blik_charged_action'),
+              label: _chargeReportPending
+                  ? t.taker.waitConfirmation.expiredActions.checkReportStatus
+                  : t.taker.waitConfirmation.expiredActions.reportConflict(
+                      code: offerCodeLabel(offer),
+                    ),
+              onPressed: isLoading ? null : () => _reportCharged(offer),
+              isLoading: isLoading,
+            )
+          : null,
     );
   }
 
@@ -537,29 +509,28 @@ class _TakerWaitConfirmationScreenState
         () =>
             "[TakerWaitConfirmation] Reporting taker charged for offer ${offer.id}",
       );
-      await apiService.markBlikCharged(offer.id, offer.coordinatorPubkey);
-
-      if (mounted) {
-        final t = Translations.of(context);
+      final result = await reportTakerCharged(
+        send: () =>
+            apiService.markBlikCharged(offer.id, offer.coordinatorPubkey),
+        refresh: () =>
+            ref.read(activeOfferProvider.notifier).refreshOfferDetails(offer),
+        checkBeforeSending: _chargeReportPending,
+      );
+      if (!mounted) return;
+      final t = Translations.of(context);
+      setState(
+        () => _chargeReportPending = result == ChargeReportResult.pending,
+      );
+      if (_chargeReportPending) {
+        ref.read(errorProvider.notifier).state =
+            t.taker.waitConfirmation.errors.reportingConflictUnconfirmed;
+      } else if (result == ChargeReportResult.confirmed) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(t.taker.waitConfirmation.feedback.conflictReported),
+            content: Text(t.taker.waitConfirmation.feedback.chargeReported),
             backgroundColor: Colors.green,
           ),
         );
-      }
-    } on TimeoutException catch (e) {
-      // A timeout says the reply did not arrive, not that the report failed —
-      // and it usually did land. Telling the user it failed sends them off
-      // reporting it again, or worse, believing nobody has their case. Say
-      // exactly what we know instead.
-      Logger.log.w(
-        () => "[TakerWaitConfirmation] charged report timed out: $e",
-      );
-      if (mounted) {
-        final t = Translations.of(context);
-        ref.read(errorProvider.notifier).state =
-            t.taker.waitConfirmation.errors.reportingConflictUnconfirmed;
       }
     } catch (e) {
       Logger.log.e(

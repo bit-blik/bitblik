@@ -633,6 +633,13 @@ maker:
 # TAKER FLOW
 # =============================================================================
 taker:
+  waitConfirmation:
+    expiredActions:
+      checkReportStatus: "Sprawdź status / ponów zgłoszenie"
+    feedback:
+      chargeReported: "Zgłoszenie obciążenia przyjęte. Oczekiwanie na odpowiedź Makera lub automatyczne potwierdzenie."
+    errors:
+      reportingConflictUnconfirmed: "Oczekiwanie na potwierdzenie zgłoszenia. Nie wiadomo, czy dotarło. Sprawdź status, aby ponowić zgłoszenie, jeśli nadal jest potrzebne. Jeśli status pozostaje niedostępny, skontaktuj się z pomocą."
   roleSelection:
     button: SPRZEDAJ kod ${code} za satoshi
   
@@ -825,7 +832,6 @@ twint:
     errors:
       invalidOfferStateReceived: "Otrzymano ofertę o nieprawidłowym stanie dla tego ekranu. Resetowanie."
       reportingConflict: "Błąd zgłaszania konfliktu: ${details}"
-      reportingConflictUnconfirmed: "Nie udało się potwierdzić zgłoszenia — koordynator nie odpowiedział na czas. Najprawdopodobniej jednak dotarło. Nie wysyłaj go ponownie; odczekaj chwilę i sprawdź status transakcji, a jeśli się nie zmieni, skontaktuj się z pomocą."
 
   paymentProcess:
     title: Proces Płatności

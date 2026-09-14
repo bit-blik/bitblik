@@ -650,6 +650,13 @@ maker:
 # TAKER FLOW
 # =============================================================================
 taker:
+  waitConfirmation:
+    expiredActions:
+      checkReportStatus: "Vérifier le statut / renvoyer"
+    feedback:
+      chargeReported: "Signalement du débit reçu. En attente de la réponse du Maker ou de la confirmation automatique."
+    errors:
+      reportingConflictUnconfirmed: "Confirmation du signalement en attente. Sa réception est inconnue. Vérifiez le statut pour le renvoyer si nécessaire. Si le statut reste indisponible, contactez l’assistance."
   roleSelection:
     button: VENDRE un code ${code} contre des satoshi
 
@@ -841,7 +848,6 @@ twint:
     errors:
       invalidOfferStateReceived: "Offre reçue avec un état invalide pour cet écran. Réinitialisation."
       reportingConflict: "Erreur lors du signalement du conflit : ${details}"
-      reportingConflictUnconfirmed: "Impossible de confirmer le signalement — le coordinateur n'a pas répondu à temps. Il est très probablement bien arrivé. Ne l'envoyez pas à nouveau ; patientez un instant et vérifiez le statut de l'échange, puis contactez l'assistance s'il ne change pas."
 
   paymentProcess:
     title: Processus de paiement

@@ -522,25 +522,6 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// would have expired by then.
   static const Duration _cancelledLookbackWindow = Duration(hours: 24);
 
-  /// States in which a taker still has a claim on a trade, so its local record
-  /// must survive the coordinator re-listing the offer to somebody else. From
-  /// [OfferStatus.blikSentToMaker] onwards the withdrawal code is out of the
-  /// taker's hands and their money may already be gone.
-  static const Set<OfferStatus> _takerClaimStatuses = {
-    OfferStatus.blikSentToMaker,
-    OfferStatus.expiredSentBlik,
-    OfferStatus.takerCharged,
-    OfferStatus.invalidBlik,
-    OfferStatus.conflict,
-    OfferStatus.dispute,
-  };
-
-  bool _isTakerOnlyOfferForUser(Offer offer, String? myPubkey) {
-    return myPubkey != null &&
-        offer.takerPubkey == myPubkey &&
-        offer.makerPubkey != myPubkey;
-  }
-
   bool _userParticipatesInOffer(Offer offer, String? myPubkey) {
     return myPubkey != null &&
         (offer.makerPubkey == myPubkey || offer.takerPubkey == myPubkey);
@@ -722,36 +703,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           continue;
         }
 
-        final hydrated = Offer.fromJson(remote);
-        if (_isTakerOnlyOfferForUser(localOffer, myPubkey) &&
-            !_userParticipatesInOffer(hydrated, myPubkey)) {
-          // The coordinator re-lists an offer once a reservation lapses, which
-          // clears the taker and is normally reason enough to drop it from this
-          // user's history. But not once they have something at stake: after the
-          // code has been handed over, the cash may already have left their
-          // account, and deleting the row takes away the very trade they need to
-          // point at. Seen in production — a taker whose code expired reported
-          // being charged, and the trade vanished from the app while the
-          // coordinator was still holding the maker's sats for them.
-          if (_takerClaimStatuses.contains(localOffer.status)) {
-            Logger.log.w(
-              () =>
-                  '[ActiveOfferNotifier] keeping relisted taker offer ${localOffer.id}: local ${localOffer.statusRaw} means the user still has a claim',
-            );
-            continue;
-          }
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] deleting relisted taker offer ${localOffer.id}; coordinator cleared local user ownership',
-          );
-          await db.deleteOfferById(localOffer.id);
-          changed = true;
-          continue;
-        }
-        if (hydrated.id != localOffer.id) {
-          await db.deleteOfferById(localOffer.id);
-        }
-        await db.upsertOffer(hydrated);
+        await db.reconcileRemoteOffer(
+          localOffer,
+          Offer.fromJson(remote),
+          myPubkey,
+        );
         changed = true;
       } catch (e) {
         Logger.log.w(
@@ -762,146 +718,51 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     }
 
     if (changed) {
-      _ref.invalidate(myOffersProvider);
+      _ref.read(_offerHistoryRevisionProvider.notifier).state++;
     }
   }
 
-  /// Boot-time sanity check for the locally-active offer.
-  ///
-  /// When the app was offline while the coordinator cancelled or expired the
-  /// offer, the local DB still holds the stale non-terminal status (e.g.
-  /// `funded`). This method fetches exact offer from coordinator and
-  /// reconciles:
-  ///   - Remote is null → offer no longer exists on coordinator; mark cancelled.
-  ///   - Remote has a terminal status → update local DB and clear in-memory state.
-  ///   - Remote has a different non-terminal status → sync local to coordinator.
-  ///   - Remote matches local → no action.
+  /// Fetch exact coordinator state. Missing responses retain local history.
+  /// Returns only a snapshot accepted by the preservation policy, so callers
+  /// cannot mistake retained local state for fresh confirmation.
+  Future<Offer?> refreshOfferDetails(Offer localOffer) async {
+    final apiService = await _ref.read(initializedApiServiceProvider.future);
+    final remote = await apiService.getOfferDetails(
+      localOffer,
+      localOffer.coordinatorPubkey,
+      strict: true,
+    );
+    if (remote == null) return null;
+    final snapshot = Offer.fromJson(remote);
+    final resolved = await OfferDbService().reconcileRemoteOffer(
+      localOffer,
+      snapshot,
+      _ref.read(keyServiceProvider).publicKeyHex,
+    );
+    _ref.read(_offerHistoryRevisionProvider.notifier).state++;
+    if (state?.id == localOffer.id) {
+      if (resolved == null) {
+        await _promoteMostRecentActiveOffer();
+      } else if (OfferDbService.terminalStatuses.contains(resolved.status) &&
+          resolved.status != OfferStatus.takerPaid) {
+        state = null;
+      } else {
+        state = resolved;
+      }
+    }
+    if (resolved?.id != snapshot.id ||
+        resolved?.statusRaw != snapshot.statusRaw ||
+        resolved?.takerPubkey != snapshot.takerPubkey) {
+      return null;
+    }
+    return resolved;
+  }
+
   Future<void> _reconcileActiveOfferIfNeeded(Offer localOffer) async {
     try {
-      final apiService = await _ref.read(initializedApiServiceProvider.future);
-      final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
-      Logger.log.i(
-        () =>
-            '[ActiveOfferNotifier] reconciling active offer ${localOffer.id} (local status=${localOffer.status.name})',
-      );
-
-      Map<String, dynamic>? remote;
-      try {
-        remote = await apiService.getOfferDetails(
-          localOffer,
-          localOffer.coordinatorPubkey,
-          strict: true,
-        );
-      } catch (e) {
-        // Transient failure (timeout, relays not yet connected). Do NOT treat
-        // as a missing offer — leave local state untouched and retry later.
-        Logger.log.w(
-          () =>
-              '[ActiveOfferNotifier] getOfferDetails failed during active-offer reconciliation: $e',
-        );
-        return;
-      }
-
-      if (remote == null) {
-        // Never clear a local offer based on absence alone. In particular, a
-        // dispute must survive restart even if an RPC response is temporarily
-        // empty or stale. Only an explicit terminal state may clear it.
-        Logger.log.w(
-          () =>
-              '[ActiveOfferNotifier] coordinator returned no details for active offer ${localOffer.id}; preserving local ${localOffer.statusRaw}',
-        );
-        return;
-      }
-
-      final hydrated = Offer.fromJson(remote);
-      if (_isTakerOnlyOfferForUser(localOffer, myPubkey) &&
-          !_userParticipatesInOffer(hydrated, myPubkey)) {
-        Logger.log.i(
-          () =>
-              '[ActiveOfferNotifier] coordinator relisted taker offer ${localOffer.id}; removing stale local active row',
-        );
-        await OfferDbService().deleteOfferById(localOffer.id);
-        if (state?.id == localOffer.id) {
-          await _promoteMostRecentActiveOffer();
-        }
-        return;
-      }
-
-      final remoteId = remote['id']?.toString();
-      final remoteStatusRaw = remote['status']?.toString();
-      if (remoteId == null || remoteStatusRaw == null) return;
-
-      OfferStatus remoteStatus;
-      try {
-        remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
-      } catch (_) {
-        remoteStatus = OfferStatus.unknown;
-      }
-
-      // If coordinator reports a different offer id, this local offer is stale.
-      final sameOffer =
-          remoteId == localOffer.id ||
-          (localOffer.holdInvoicePaymentHash != null &&
-              localOffer.holdInvoicePaymentHash ==
-                  remote['payment_hash']?.toString());
-
-      if (!sameOffer) {
-        Logger.log.w(
-          () =>
-              '[ActiveOfferNotifier] coordinator returned different offer ($remoteId) for local ${localOffer.id}; preserving local offer pending a definitive update',
-        );
-        return;
-      }
-
-      // Compare raw wire states: generic (yaml-driven) flow states such as
-      // `invalidTwint` all parse to the enum's `unknown`, so an enum compare
-      // would miss transitions between them (and copyWith without statusRaw
-      // would overwrite the real state with the literal 'unknown').
-      if (remoteStatusRaw == localOffer.statusRaw) {
-        // Status pushes intentionally update only lifecycle fields, so older
-        // locally-created offers may still carry the historical client bug
-        // where amountSats already included makerFees. Refresh the
-        // coordinator-authoritative accounting fields even when the status is
-        // unchanged. This repairs an already-open refundingMaker screen after
-        // restart/re-entry without disturbing client-only wallet selection.
-        if (localOffer.amountSats != hydrated.amountSats ||
-            localOffer.makerFees != hydrated.makerFees) {
-          final corrected = localOffer.copyWith(
-            amountSats: hydrated.amountSats,
-            makerFees: hydrated.makerFees,
-          );
-          await OfferDbService().upsertOffer(corrected);
-          if (state?.id == localOffer.id) state = corrected;
-        }
-        return; // Already in sync lifecycle-wise.
-      }
-
-      Logger.log.i(
-        () =>
-            '[ActiveOfferNotifier] syncing active offer $remoteId: local=${localOffer.statusRaw} -> remote=$remoteStatusRaw',
-      );
-      final updated = localOffer.copyWith(
-        id: remoteId,
-        status: remoteStatus,
-        statusRaw: remoteStatusRaw,
-        // Keep the yaml-timeout countdown bases in sync (from_field:
-        // updated_at default, code_received_at, and reserved_at).
-        updatedAt: hydrated.updatedAt,
-        blikReceivedAt: hydrated.blikReceivedAt,
-        reservedAt: hydrated.reservedAt,
-      );
-      await OfferDbService().upsertOffer(updated);
-
-      if (OfferDbService.terminalStatuses.contains(remoteStatus) &&
-          remoteStatus != OfferStatus.takerPaid) {
-        // takerPaid is kept in state so the payment-process screen can show
-        // success — applyStatusUpdate handles it without auto-promoting.
-        if (state?.id == localOffer.id) state = null;
-      } else {
-        if (state?.id == localOffer.id) state = updated;
-      }
+      await refreshOfferDetails(localOffer);
     } catch (e) {
-      Logger.log.e(
+      Logger.log.w(
         () => '[ActiveOfferNotifier] active-offer reconciliation failed: $e',
       );
     }
@@ -1140,76 +1001,28 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       blikReceivedAt: update.blikReceivedAt?.toLocal(),
       updatedAt: update.timestamp.toLocal(),
     );
-    // When matched by paymentHash the coordinator UUID differs from local id;
-    // delete the old row so upsert doesn't leave a duplicate.
-    if (existing.id != updated.id) {
-      await db.deleteOfferById(existing.id);
-    }
-    await db.upsertOffer(updated);
-
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
-    final takerLostOwnershipOnRelist =
-        _isTakerOnlyOfferForUser(existing, myPubkey) &&
+    final takerRelist =
+        myPubkey != null &&
+        existing.takerPubkey == myPubkey &&
+        existing.makerPubkey != myPubkey &&
         newStatus == OfferStatus.funded;
-
-    if (takerLostOwnershipOnRelist) {
+    if (takerRelist) {
       try {
-        final apiService = await _ref.read(
-          initializedApiServiceProvider.future,
-        );
-        final remote = await apiService.getOfferDetails(
-          updated,
-          updated.coordinatorPubkey,
-        );
-
-        if (remote == null) {
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] removing relisted taker offer ${updated.id}; coordinator no longer reports this user as a participant',
-          );
-          await db.deleteOfferById(updated.id);
-          final currentState = state;
-          final isCurrent =
-              currentState != null &&
-              (currentState.id == updated.id ||
-                  (currentState.holdInvoicePaymentHash != null &&
-                      currentState.holdInvoicePaymentHash ==
-                          updated.holdInvoicePaymentHash));
-          if (isCurrent) {
-            state = null;
-            _ref.read(appLifecycleProvider)._updateForegroundService();
-          }
-          return;
-        }
-
-        final hydratedRemote = Offer.fromJson(remote);
-        if (!_userParticipatesInOffer(hydratedRemote, myPubkey)) {
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] removing relisted taker offer ${updated.id}; coordinator cleared local user ownership',
-          );
-          await db.deleteOfferById(updated.id);
-          final currentState = state;
-          final isCurrent =
-              currentState != null &&
-              (currentState.id == updated.id ||
-                  (currentState.holdInvoicePaymentHash != null &&
-                      currentState.holdInvoicePaymentHash ==
-                          updated.holdInvoicePaymentHash));
-          if (isCurrent) {
-            state = null;
-            _ref.read(appLifecycleProvider)._updateForegroundService();
-          }
-          _ref.invalidate(myOffersProvider);
-          return;
-        }
+        // Do not overwrite the claim with `funded` before checking ownership.
+        // A null response can also mean a timeout or denied participant access.
+        await refreshOfferDetails(existing);
       } catch (e) {
         Logger.log.w(
-          () =>
-              '[ActiveOfferNotifier] failed ownership check for relisted taker offer ${updated.id}: $e',
+          () => '[ActiveOfferNotifier] relist verification unavailable: $e',
         );
       }
+      return;
     }
+
+    await db.upsertOffer(updated);
+    // Replace temporary IDs only after the canonical row is safely stored.
+    if (existing.id != updated.id) await db.deleteOfferById(existing.id);
 
     final shouldHydrateCompletedOffer =
         newStatus == OfferStatus.makerConfirmed ||
@@ -1228,8 +1041,13 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           updated.coordinatorPubkey,
         );
         if (remote != null) {
-          hydrated = Offer.fromJson(remote);
-          await db.upsertOffer(hydrated);
+          hydrated =
+              await db.reconcileRemoteOffer(
+                updated,
+                Offer.fromJson(remote),
+                myPubkey,
+              ) ??
+              updated;
         }
       } catch (e) {
         Logger.log.w(
@@ -1375,10 +1193,13 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   }
 }
 
-/// All offers in the local DB (history). Re-fetches when the active
-/// offer changes (covers create / cancel / status update) so the list
-/// stays current without manual invalidation.
+// Separate signal avoids a dependency cycle when ActiveOfferNotifier updates
+// an inactive history row (myOffersProvider itself watches activeOfferProvider).
+final _offerHistoryRevisionProvider = StateProvider<int>((ref) => 0);
+
+/// All local history. Refresh when the active offer or an inactive row changes.
 final myOffersProvider = FutureProvider<List<Offer>>((ref) async {
+  ref.watch(_offerHistoryRevisionProvider);
   ref.watch(activeOfferProvider);
   final myPubkey = ref.watch(keyServiceProvider).publicKeyHex;
   return OfferDbService().listOffers(userPubkey: myPubkey);

@@ -240,6 +240,7 @@ class _Translations$taker$de extends Translations$taker$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$taker$waitConfirmation$de waitConfirmation = _Translations$taker$waitConfirmation$de._(_root);
 	@override late final _Translations$taker$roleSelection$de roleSelection = _Translations$taker$roleSelection$de._(_root);
 	@override late final _Translations$taker$progress$de progress = _Translations$taker$progress$de._(_root);
 	@override late final _Translations$taker$submitBlik$de submitBlik = _Translations$taker$submitBlik$de._(_root);
@@ -1281,6 +1282,18 @@ class _Translations$maker$success$de extends Translations$maker$success$en {
 	@override String get subtitle => 'Der Taker wird jetzt bezahlt.';
 	@override String get detailsTitle => 'Angebotsdetails:';
 	@override String duration({required Object time}) => 'Das Angebot dauerte ${time}!';
+}
+
+// Path: taker.waitConfirmation
+class _Translations$taker$waitConfirmation$de extends Translations$taker$waitConfirmation$en {
+	_Translations$taker$waitConfirmation$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$taker$waitConfirmation$expiredActions$de expiredActions = _Translations$taker$waitConfirmation$expiredActions$de._(_root);
+	@override late final _Translations$taker$waitConfirmation$feedback$de feedback = _Translations$taker$waitConfirmation$feedback$de._(_root);
+	@override late final _Translations$taker$waitConfirmation$errors$de errors = _Translations$taker$waitConfirmation$errors$de._(_root);
 }
 
 // Path: taker.roleSelection
@@ -2478,6 +2491,36 @@ class _Translations$maker$conflict$nostrContact$de extends Translations$maker$co
 	@override String get manageNekoKeys => 'Neko-Schlüssel verwalten';
 }
 
+// Path: taker.waitConfirmation.expiredActions
+class _Translations$taker$waitConfirmation$expiredActions$de extends Translations$taker$waitConfirmation$expiredActions$en {
+	_Translations$taker$waitConfirmation$expiredActions$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkReportStatus => 'Status prüfen / Meldung erneut senden';
+}
+
+// Path: taker.waitConfirmation.feedback
+class _Translations$taker$waitConfirmation$feedback$de extends Translations$taker$waitConfirmation$feedback$en {
+	_Translations$taker$waitConfirmation$feedback$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get chargeReported => 'Belastungsmeldung erhalten. Warten auf die Antwort des Makers oder die automatische Bestätigung.';
+}
+
+// Path: taker.waitConfirmation.errors
+class _Translations$taker$waitConfirmation$errors$de extends Translations$taker$waitConfirmation$errors$en {
+	_Translations$taker$waitConfirmation$errors$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get reportingConflictUnconfirmed => 'Bestätigung der Meldung ausstehend. Die Zustellung ist unklar. Prüfe den Status, um die Meldung bei Bedarf erneut zu senden. Falls der Status weiterhin nicht verfügbar ist, kontaktiere den Support.';
+}
+
 // Path: taker.submitBlik.actions
 class _Translations$taker$submitBlik$actions$de extends Translations$taker$submitBlik$actions$en {
 	_Translations$taker$submitBlik$actions$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -2777,7 +2820,6 @@ class _Translations$twint$waitConfirmation$errors$de extends Translations$twint$
 	// Translations
 	@override String get invalidOfferStateReceived => 'Angebot mit ungültigem Zustand für diesen Bildschirm empfangen. Wird zurückgesetzt.';
 	@override String reportingConflict({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}';
-	@override String get reportingConflictUnconfirmed => 'Die Meldung konnte nicht bestätigt werden — der Koordinator hat nicht rechtzeitig geantwortet. Sie ist höchstwahrscheinlich angekommen. Sende sie nicht erneut; warte kurz und prüfe den Status des Handels, und wende dich an den Support, falls er sich nicht ändert.';
 }
 
 // Path: twint.paymentProcess.states
@@ -3661,6 +3703,9 @@ extension on TranslationsDe {
 			'maker.success.subtitle' => 'Der Taker wird jetzt bezahlt.',
 			'maker.success.detailsTitle' => 'Angebotsdetails:',
 			'maker.success.duration' => ({required Object time}) => 'Das Angebot dauerte ${time}!',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Status prüfen / Meldung erneut senden',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Belastungsmeldung erhalten. Warten auf die Antwort des Makers oder die automatische Bestätigung.',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Bestätigung der Meldung ausstehend. Die Zustellung ist unklar. Prüfe den Status, um die Meldung bei Bedarf erneut zu senden. Falls der Status weiterhin nicht verfügbar ist, kontaktiere den Support.',
 			'taker.roleSelection.button' => ({required Object code}) => '${code}-Code für Satoshi VERKAUFEN',
 			'taker.progress.step1' => ({required Object code}) => '${code} senden',
 			'taker.progress.step2' => ({required Object code}) => '${code} bestätigen',
@@ -3701,11 +3746,11 @@ extension on TranslationsDe {
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}',
 			'taker.dispute.headline' => 'Formeller Streitfall eröffnet',
 			'taker.dispute.body' => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.scanner.title' => ({required Object code}) => '${code}-Code scannen',
 			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.scanner.status.amountFailed' => 'Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren.',
 			'twint.flow.progress.step1' => '1. Angebot erstellen',
 			'twint.flow.progress.step2' => '2. Auf Taker warten',
@@ -3800,7 +3845,6 @@ extension on TranslationsDe {
 			'twint.waitConfirmation.feedback.conflictReported' => 'Konflikt gemeldet. Der Koordinator wird die Situation prüfen.',
 			'twint.waitConfirmation.errors.invalidOfferStateReceived' => 'Angebot mit ungültigem Zustand für diesen Bildschirm empfangen. Wird zurückgesetzt.',
 			'twint.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}',
-			'twint.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Die Meldung konnte nicht bestätigt werden — der Koordinator hat nicht rechtzeitig geantwortet. Sie ist höchstwahrscheinlich angekommen. Sende sie nicht erneut; warte kurz und prüfe den Status des Handels, und wende dich an den Support, falls er sich nicht ändert.',
 			'twint.paymentProcess.title' => 'Zahlungsvorgang',
 			'twint.paymentProcess.waitingForOfferUpdate' => 'Warte auf Statusaktualisierung des Angebots...',
 			'twint.paymentProcess.states.preparing' => 'Zahlung wird vorbereitet...',

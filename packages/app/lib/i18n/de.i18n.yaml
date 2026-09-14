@@ -650,6 +650,13 @@ maker:
 # TAKER FLOW
 # =============================================================================
 taker:
+  waitConfirmation:
+    expiredActions:
+      checkReportStatus: "Status prüfen / Meldung erneut senden"
+    feedback:
+      chargeReported: "Belastungsmeldung erhalten. Warten auf die Antwort des Makers oder die automatische Bestätigung."
+    errors:
+      reportingConflictUnconfirmed: "Bestätigung der Meldung ausstehend. Die Zustellung ist unklar. Prüfe den Status, um die Meldung bei Bedarf erneut zu senden. Falls der Status weiterhin nicht verfügbar ist, kontaktiere den Support."
   roleSelection:
     button: ${code}-Code für Satoshi VERKAUFEN
 
@@ -841,7 +848,6 @@ twint:
     errors:
       invalidOfferStateReceived: "Angebot mit ungültigem Zustand für diesen Bildschirm empfangen. Wird zurückgesetzt."
       reportingConflict: "Fehler beim Melden des Konflikts: ${details}"
-      reportingConflictUnconfirmed: "Die Meldung konnte nicht bestätigt werden — der Koordinator hat nicht rechtzeitig geantwortet. Sie ist höchstwahrscheinlich angekommen. Sende sie nicht erneut; warte kurz und prüfe den Status des Handels, und wende dich an den Support, falls er sich nicht ändert."
 
   paymentProcess:
     title: Zahlungsvorgang

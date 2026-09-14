@@ -241,6 +241,7 @@ class _Translations$taker$pt extends Translations$taker$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$taker$waitConfirmation$pt waitConfirmation = _Translations$taker$waitConfirmation$pt._(_root);
 	@override late final _Translations$taker$roleSelection$pt roleSelection = _Translations$taker$roleSelection$pt._(_root);
 	@override late final _Translations$taker$progress$pt progress = _Translations$taker$progress$pt._(_root);
 	@override late final _Translations$taker$submitBlik$pt submitBlik = _Translations$taker$submitBlik$pt._(_root);
@@ -1282,6 +1283,18 @@ class _Translations$maker$success$pt extends Translations$maker$success$en {
 	@override String get subtitle => 'O taker vai ser pago agora.';
 	@override String get detailsTitle => 'Detalhes da oferta:';
 	@override String duration({required Object time}) => 'A oferta demorou ${time}!';
+}
+
+// Path: taker.waitConfirmation
+class _Translations$taker$waitConfirmation$pt extends Translations$taker$waitConfirmation$en {
+	_Translations$taker$waitConfirmation$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$taker$waitConfirmation$expiredActions$pt expiredActions = _Translations$taker$waitConfirmation$expiredActions$pt._(_root);
+	@override late final _Translations$taker$waitConfirmation$feedback$pt feedback = _Translations$taker$waitConfirmation$feedback$pt._(_root);
+	@override late final _Translations$taker$waitConfirmation$errors$pt errors = _Translations$taker$waitConfirmation$errors$pt._(_root);
 }
 
 // Path: taker.roleSelection
@@ -2479,6 +2492,36 @@ class _Translations$maker$conflict$nostrContact$pt extends Translations$maker$co
 	@override String get manageNekoKeys => 'Gerir chaves Neko';
 }
 
+// Path: taker.waitConfirmation.expiredActions
+class _Translations$taker$waitConfirmation$expiredActions$pt extends Translations$taker$waitConfirmation$expiredActions$en {
+	_Translations$taker$waitConfirmation$expiredActions$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkReportStatus => 'Verificar estado / reenviar relato';
+}
+
+// Path: taker.waitConfirmation.feedback
+class _Translations$taker$waitConfirmation$feedback$pt extends Translations$taker$waitConfirmation$feedback$en {
+	_Translations$taker$waitConfirmation$feedback$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get chargeReported => 'Relato de cobrança recebido. A aguardar a resposta do Maker ou a confirmação automática.';
+}
+
+// Path: taker.waitConfirmation.errors
+class _Translations$taker$waitConfirmation$errors$pt extends Translations$taker$waitConfirmation$errors$en {
+	_Translations$taker$waitConfirmation$errors$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get reportingConflictUnconfirmed => 'Confirmação do relato pendente. Não se sabe se foi entregue. Verifique o estado para reenviar se ainda for necessário. Se o estado continuar indisponível, contacte o suporte.';
+}
+
 // Path: taker.submitBlik.actions
 class _Translations$taker$submitBlik$actions$pt extends Translations$taker$submitBlik$actions$en {
 	_Translations$taker$submitBlik$actions$pt._(TranslationsPt root) : this._root = root, super.internal(root);
@@ -2778,7 +2821,6 @@ class _Translations$twint$waitConfirmation$errors$pt extends Translations$twint$
 	// Translations
 	@override String get invalidOfferStateReceived => 'Recebida uma oferta com um estado inválido para este ecrã. A reiniciar.';
 	@override String reportingConflict({required Object details}) => 'Erro ao reportar o conflito: ${details}';
-	@override String get reportingConflictUnconfirmed => 'Não foi possível confirmar o relato — o coordenador não respondeu a tempo. Muito provavelmente chegou. Não o envie novamente; aguarde um momento e verifique o estado da troca, e contacte o suporte se não mudar.';
 }
 
 // Path: twint.paymentProcess.states
@@ -3663,6 +3705,9 @@ extension on TranslationsPt {
 			'maker.success.subtitle' => 'O taker vai ser pago agora.',
 			'maker.success.detailsTitle' => 'Detalhes da oferta:',
 			'maker.success.duration' => ({required Object time}) => 'A oferta demorou ${time}!',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Verificar estado / reenviar relato',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Relato de cobrança recebido. A aguardar a resposta do Maker ou a confirmação automática.',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Confirmação do relato pendente. Não se sabe se foi entregue. Verifique o estado para reenviar se ainda for necessário. Se o estado continuar indisponível, contacte o suporte.',
 			'taker.roleSelection.button' => ({required Object code}) => 'VENDER código ${code} por satoshi',
 			'taker.progress.step1' => ({required Object code}) => 'Submeter ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Confirmar ${code}',
@@ -3702,11 +3747,11 @@ extension on TranslationsPt {
 			'taker.conflict.feedback.reported' => 'Conflito de pagamento reportado. A aguardar a confirmação do maker.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Erro ao reportar o conflito: ${details}',
 			'taker.dispute.headline' => 'Disputa formal aberta',
+			_ => null,
+		} ?? switch (path) {
 			'taker.dispute.body' => 'A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.',
 			'twint.scanner.title' => ({required Object code}) => 'Ler código ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente.',
 			'twint.scanner.status.amountFailed' => 'A leitura pela câmara não conseguiu extrair o montante. Ainda pode usar o resultado do QR e corrigir os campos manualmente.',
 			'twint.flow.progress.step1' => '1. Criar oferta',
@@ -3802,7 +3847,6 @@ extension on TranslationsPt {
 			'twint.waitConfirmation.feedback.conflictReported' => 'Conflito reportado. O coordenador vai analisar a situação.',
 			'twint.waitConfirmation.errors.invalidOfferStateReceived' => 'Recebida uma oferta com um estado inválido para este ecrã. A reiniciar.',
 			'twint.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Erro ao reportar o conflito: ${details}',
-			'twint.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Não foi possível confirmar o relato — o coordenador não respondeu a tempo. Muito provavelmente chegou. Não o envie novamente; aguarde um momento e verifique o estado da troca, e contacte o suporte se não mudar.',
 			'twint.paymentProcess.title' => 'Processo de pagamento',
 			'twint.paymentProcess.waitingForOfferUpdate' => 'À espera da atualização do estado da oferta...',
 			'twint.paymentProcess.states.preparing' => 'A preparar o envio do pagamento...',
