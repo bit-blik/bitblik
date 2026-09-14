@@ -44,6 +44,12 @@ Future<void> _runCoordinator(List<String> args) async {
   AppLogger.info('LND_CERT_PATH: ${env['LND_CERT_PATH'] ?? 'tls.cert'}');
   AppLogger.info(
       'LND_MACAROON_PATH: ${env['LND_MACAROON_PATH'] ?? 'admin.macaroon'}');
+  AppLogger.info('LDK_SERVER_HOST: ${env['LDK_SERVER_HOST'] ?? '[NOT SET]'}');
+  AppLogger.info('LDK_SERVER_PORT: ${env['LDK_SERVER_PORT'] ?? '3536'}');
+  AppLogger.info(
+      'LDK_SERVER_CERT_PATH: ${env['LDK_SERVER_CERT_PATH'] ?? '[NOT SET]'}');
+  AppLogger.info(
+      'LDK_SERVER_API_KEY: ${env['LDK_SERVER_API_KEY']?.isNotEmpty == true ? "[SET]" : "[NOT SET]"}');
   AppLogger.info(
       'SIMPLEX_GROUP: ${env['SIMPLEX_GROUP'] ?? 'Bitblik new offers'}');
   AppLogger.info(

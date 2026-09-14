@@ -20,6 +20,12 @@ services:
     environment:
       LND_HOST: <YOUR_LND_IP_HOST>
       ##NWC_URI: <NWC CONNECTION URI WITH MAKE_HOLD_INVOICE PERMISSION>
+      # Optional ldk-server backend. All three required values must be set.
+      # Host must match certificate SAN; keep both host clocks synchronized.
+      ##LDK_SERVER_HOST: ldk-server
+      ##LDK_SERVER_PORT: 3536
+      ##LDK_SERVER_CERT_PATH: /app/ldk-server-tls.crt
+      ##LDK_SERVER_API_KEY: <64-character-lowercase-api-key>
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: user
@@ -53,6 +59,8 @@ services:
     volumes:
       - ./tls.cert:/app/tls.cert:ro
       - ./admin.macaroon:/app/admin.macaroon:ro
+      # Required when ldk-server configuration above is enabled.
+      ##- ./ldk-server-tls.crt:/app/ldk-server-tls.crt:ro
       - ./signal/:/root/.local/share/signal-cli/
 volumes:
   postgres_data:

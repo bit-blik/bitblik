@@ -81,4 +81,55 @@ void main() {
     expect(await svc.retryPaymentBackend(), isFalse);
     expect(svc.paymentBackendType, 'none');
   });
+
+  test('backend candidates preserve NWC, ldk-server, LND fallback order',
+      () async {
+    final calls = <String>[];
+    final ldk = MockPaymentService();
+
+    final result = await connectPaymentBackendCandidates([
+      PaymentBackendCandidate(
+        type: 'nwc',
+        connect: () async {
+          calls.add('nwc');
+          throw Exception('offline');
+        },
+      ),
+      PaymentBackendCandidate(
+        type: 'ldk-server',
+        connect: () async {
+          calls.add('ldk-server');
+          return ldk;
+        },
+      ),
+      PaymentBackendCandidate(
+        type: 'lnd',
+        connect: () async {
+          calls.add('lnd');
+          return MockPaymentService();
+        },
+      ),
+    ]);
+
+    expect(result.backend, same(ldk));
+    expect(result.type, 'ldk-server');
+    expect(calls, ['nwc', 'ldk-server']);
+  });
+
+  test('all unreachable configured candidates yield retryable no-backend state',
+      () async {
+    final result = await connectPaymentBackendCandidates([
+      PaymentBackendCandidate(
+        type: 'ldk-server',
+        connect: () async => throw Exception('offline'),
+      ),
+      PaymentBackendCandidate(
+        type: 'lnd',
+        connect: () async => throw Exception('locked'),
+      ),
+    ]);
+
+    expect(result.backend, isNull);
+    expect(result.type, 'none');
+  });
 }
