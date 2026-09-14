@@ -233,6 +233,15 @@ class GenericOfferFlow {
     final offer = await _c._dbService.getOfferById(offerId);
     if (offer == null) throw Exception('Offer not found');
 
+    // Older takers cannot render the shop artifact. Reject their reservation
+    // before claiming the offer or returning its private payment payload.
+    if (method == kRpcReserveOffer &&
+        _c._paymentSystem.id == 'twint' &&
+        offer.category == OfferCategory.shop &&
+        params['twint_shop_qr_v1'] != true) {
+      throw Exception('Update your app to reserve TWINT shop QR offers.');
+    }
+
     final t = _engine.transitionFor(offer.statusRaw, method);
     if (t == null) {
       // get_blik may be a data-only re-fetch from the code-sent state.

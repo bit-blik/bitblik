@@ -294,6 +294,7 @@ class Translations$twint$en {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final Translations$twint$shop$en shop = Translations$twint$shop$en.internal(_root);
 	late final Translations$twint$scanner$en scanner = Translations$twint$scanner$en.internal(_root);
 	late final Translations$twint$flow$en flow = Translations$twint$flow$en.internal(_root);
 	late final Translations$twint$waitConfirmation$en waitConfirmation = Translations$twint$waitConfirmation$en.internal(_root);
@@ -2355,6 +2356,75 @@ class Translations$taker$dispute$en {
 
 	/// en: 'The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.'
 	String get body => 'The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.';
+}
+
+// Path: twint.shop
+class Translations$twint$shop$en {
+	Translations$twint$shop$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Scan shop QR code'
+	String get scanTitle => 'Scan shop QR code';
+
+	/// en: 'Scan the payment QR code on the shop terminal. The CHF amount will be read from the code.'
+	String get scanInstructions => 'Scan the payment QR code on the shop terminal. The CHF amount will be read from the code.';
+
+	/// en: 'This QR code is not a supported CHF shop payment. Scan the payment QR shown on the terminal.'
+	String get invalidQr => 'This QR code is not a supported CHF shop payment. Scan the payment QR shown on the terminal.';
+
+	/// en: 'This QR code has a different amount. Ask for a new QR code with the original payment amount.'
+	String get amountMismatch => 'This QR code has a different amount. Ask for a new QR code with the original payment amount.';
+
+	/// en: 'Camera unavailable. Allow camera access in your device or browser settings, then try again.'
+	String get cameraFailed => 'Camera unavailable. Allow camera access in your device or browser settings, then try again.';
+
+	/// en: 'Shop QR scanned. Check the CHF amount before funding.'
+	String get scanned => 'Shop QR scanned. Check the CHF amount before funding.';
+
+	/// en: 'Scan another QR code'
+	String get rescan => 'Scan another QR code';
+
+	/// en: 'This coordinator does not support shop QR payments. Choose a coordinator with shop QR support.'
+	String get coordinatorUnsupported => 'This coordinator does not support shop QR payments. Choose a coordinator with shop QR support.';
+
+	/// en: 'Could not load the payment QR code. Try again.'
+	String get loadingFailed => 'Could not load the payment QR code. Try again.';
+
+	/// en: 'Scan a new shop QR code for the same CHF amount as the funded offer.'
+	String get replacementInstructions => 'Scan a new shop QR code for the same CHF amount as the funded offer.';
+
+	/// en: 'Replacement QR matches the funded amount.'
+	String get replacementScanned => 'Replacement QR matches the funded amount.';
+
+	/// en: 'TWINT payment QR code'
+	String get qrLabel => 'TWINT payment QR code';
+
+	/// en: 'Scan this QR code with TWINT, or save the image and import it from your gallery in TWINT. Check the merchant and amount before paying.'
+	String get payInstructions => 'Scan this QR code with TWINT, or save the image and import it from your gallery in TWINT. Check the merchant and amount before paying.';
+
+	/// en: 'Save QR to photos'
+	String get saveImage => 'Save QR to photos';
+
+	/// en: 'Download QR image'
+	String get downloadImage => 'Download QR image';
+
+	/// en: 'Saving QR image…'
+	String get saving => 'Saving QR image…';
+
+	/// en: 'QR image saved. Open TWINT and import it from your gallery.'
+	String get saved => 'QR image saved. Open TWINT and import it from your gallery.';
+
+	/// en: 'QR image download started. Save it to your photos to import it in TWINT.'
+	String get downloadStarted => 'QR image download started. Save it to your photos to import it in TWINT.';
+
+	/// en: 'Could not save the QR image. Check photo permissions and available storage, then try again.'
+	String get saveFailed => 'Could not save the QR image. Check photo permissions and available storage, then try again.';
+
+	/// en: 'This QR code has expired. Do not pay it or use a previously saved image.'
+	String get expired => 'This QR code has expired. Do not pay it or use a previously saved image.';
 }
 
 // Path: twint.scanner
@@ -6345,6 +6415,26 @@ extension on Translations {
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Manage Neko Keys',
 			'taker.dispute.headline' => 'Formal Dispute Opened',
 			'taker.dispute.body' => 'The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.',
+			'twint.shop.scanTitle' => 'Scan shop QR code',
+			'twint.shop.scanInstructions' => 'Scan the payment QR code on the shop terminal. The CHF amount will be read from the code.',
+			'twint.shop.invalidQr' => 'This QR code is not a supported CHF shop payment. Scan the payment QR shown on the terminal.',
+			'twint.shop.amountMismatch' => 'This QR code has a different amount. Ask for a new QR code with the original payment amount.',
+			'twint.shop.cameraFailed' => 'Camera unavailable. Allow camera access in your device or browser settings, then try again.',
+			'twint.shop.scanned' => 'Shop QR scanned. Check the CHF amount before funding.',
+			'twint.shop.rescan' => 'Scan another QR code',
+			'twint.shop.coordinatorUnsupported' => 'This coordinator does not support shop QR payments. Choose a coordinator with shop QR support.',
+			'twint.shop.loadingFailed' => 'Could not load the payment QR code. Try again.',
+			'twint.shop.replacementInstructions' => 'Scan a new shop QR code for the same CHF amount as the funded offer.',
+			'twint.shop.replacementScanned' => 'Replacement QR matches the funded amount.',
+			'twint.shop.qrLabel' => 'TWINT payment QR code',
+			'twint.shop.payInstructions' => 'Scan this QR code with TWINT, or save the image and import it from your gallery in TWINT. Check the merchant and amount before paying.',
+			'twint.shop.saveImage' => 'Save QR to photos',
+			'twint.shop.downloadImage' => 'Download QR image',
+			'twint.shop.saving' => 'Saving QR image…',
+			'twint.shop.saved' => 'QR image saved. Open TWINT and import it from your gallery.',
+			'twint.shop.downloadStarted' => 'QR image download started. Save it to your photos to import it in TWINT.',
+			'twint.shop.saveFailed' => 'Could not save the QR image. Check photo permissions and available storage, then try again.',
+			'twint.shop.expired' => 'This QR code has expired. Do not pay it or use a previously saved image.',
 			'twint.scanner.title' => ({required Object code}) => 'Scan ${code} code',
 			'twint.scanner.status.align' => ({required Object code}) => 'Align the ${code} QR code and amount text inside the camera frame.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually.',
@@ -6730,6 +6820,8 @@ extension on Translations {
 			'offerNotifications.reserved.body' => 'A taker has reserved your offer.',
 			'offerNotifications.blikReady.title' => ({required Object code}) => '${code} ready',
 			'offerNotifications.blikReady.body' => ({required Object code}) => 'Your ${code} is ready to view.',
+			_ => null,
+		} ?? switch (path) {
 			'offerNotifications.newOffer.title' => 'New offer available',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premium',
@@ -6750,8 +6842,6 @@ extension on Translations {
 			'altstore.step1Warning' => 'You need Safari to install AltStore PAL!',
 			'altstore.step2Title' => ({required Object app}) => 'Install ${app}',
 			'altstore.step2Button' => ({required Object app}) => 'Install ${app}',
-			_ => null,
-		} ?? switch (path) {
 			'altstore.step2Fallback' => 'Still not working? Paste the source into AltStore',
 			_ => null,
 		};

@@ -514,6 +514,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// Guards against overlapping reconcile passes when connectivity events
   /// arrive in quick succession.
   bool _reconcileInFlight = false;
+  final Set<String> _disputeTimestampFetches = {};
 
   /// Gives the coordinator time to publish the public `s=success` event after
   /// its private `takerPaid` status update reaches this client.
@@ -652,6 +653,57 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     await _reconcileActiveOfferIfNeeded(active);
   }
 
+  /// Older coordinators omit dispute_at from status pushes but include it in
+  /// authorized offer details. Repair only the missing clock, never restarting
+  /// it from a notification's delivery time or overwriting a newer lifecycle.
+  Future<void> refreshMissingDisputeTimestamp() async {
+    final requested = state;
+    if (requested == null ||
+        !requested.isDispute ||
+        requested.disputeAt != null ||
+        !_disputeTimestampFetches.add(requested.id)) {
+      return;
+    }
+    try {
+      final api = await _ref.read(initializedApiServiceProvider.future);
+      if (!mounted) return;
+      final response = await api.getOfferDetails(
+        requested,
+        requested.coordinatorPubkey,
+        strict: true,
+      );
+      if (!mounted || response == null || response['id'] != requested.id) {
+        return;
+      }
+      final remote = Offer.fromJson(response);
+      if (remote.disputeAt == null) return;
+      final db = OfferDbService();
+      final latest = await db.getOfferById(requested.id);
+      if (!mounted ||
+          latest == null ||
+          latest.coordinatorPubkey != requested.coordinatorPubkey ||
+          !latest.isDispute ||
+          latest.disputeAt != null) {
+        return;
+      }
+      final repaired = latest.copyWith(disputeAt: remote.disputeAt);
+      await db.upsertOffer(repaired);
+      if (mounted &&
+          state?.id == repaired.id &&
+          state?.isDispute == true &&
+          state?.disputeAt == null) {
+        state = state!.copyWith(disputeAt: repaired.disputeAt);
+      }
+    } catch (error) {
+      Logger.log.w(
+        () =>
+            '[ActiveOfferNotifier] dispute timestamp refresh failed for ${requested.id}: $error',
+      );
+    } finally {
+      _disputeTimestampFetches.remove(requested.id);
+    }
+  }
+
   /// Revive wrongly/locally-cancelled offers and sync the active one. Guarded
   /// so overlapping connectivity events don't run it concurrently.
   Future<void> _reconcileAll() async {
@@ -725,7 +777,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         if (hydrated.id != localOffer.id) {
           await db.deleteOfferById(localOffer.id);
         }
-        await db.upsertOffer(hydrated);
+        await db.upsertOffer(
+          hydrated.copyWith(
+            disputeAt: hydrated.disputeAt ?? localOffer.disputeAt,
+          ),
+        );
         changed = true;
       } catch (e) {
         Logger.log.w(
@@ -749,7 +805,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   ///   - Remote is null → offer no longer exists on coordinator; mark cancelled.
   ///   - Remote has a terminal status → update local DB and clear in-memory state.
   ///   - Remote has a different non-terminal status → sync local to coordinator.
-  ///   - Remote matches local → no action.
+  ///   - Remote matches local → repair accounting and dispute timestamp.
   Future<void> _reconcileActiveOfferIfNeeded(Offer localOffer) async {
     try {
       final apiService = await _ref.read(initializedApiServiceProvider.future);
@@ -788,6 +844,17 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       }
 
       final hydrated = Offer.fromJson(remote);
+      // A push or another reconciliation may have advanced this row while the
+      // RPC was pending. Its old snapshot cannot safely replace that state.
+      final latest = await OfferDbService().getOfferById(localOffer.id);
+      if (!mounted ||
+          latest == null ||
+          latest.statusRaw != localOffer.statusRaw ||
+          latest.updatedAt?.millisecondsSinceEpoch !=
+              localOffer.updatedAt?.millisecondsSinceEpoch) {
+        return;
+      }
+      localOffer = latest;
       if (_isTakerOnlyOfferForUser(localOffer, myPubkey) &&
           !_userParticipatesInOffer(hydrated, myPubkey)) {
         Logger.log.i(
@@ -839,10 +906,13 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         // unchanged. This repairs an already-open refundingMaker screen after
         // restart/re-entry without disturbing client-only wallet selection.
         if (localOffer.amountSats != hydrated.amountSats ||
-            localOffer.makerFees != hydrated.makerFees) {
+            localOffer.makerFees != hydrated.makerFees ||
+            (hydrated.disputeAt != null &&
+                localOffer.disputeAt != hydrated.disputeAt)) {
           final corrected = localOffer.copyWith(
             amountSats: hydrated.amountSats,
             makerFees: hydrated.makerFees,
+            disputeAt: hydrated.disputeAt,
           );
           await OfferDbService().upsertOffer(corrected);
           if (state?.id == localOffer.id) state = corrected;
@@ -863,6 +933,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         updatedAt: hydrated.updatedAt,
         blikReceivedAt: hydrated.blikReceivedAt,
         reservedAt: hydrated.reservedAt,
+        disputeAt: hydrated.disputeAt,
       );
       await OfferDbService().upsertOffer(updated);
 
@@ -926,6 +997,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
             id: remoteId,
             status: remoteStatus,
             statusRaw: remoteStatusRaw,
+            disputeAt: Offer.fromJson(remote).disputeAt,
           );
           await OfferDbService().upsertOffer(revived);
           Logger.log.i(
@@ -1112,6 +1184,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       // older coordinator that omits it leaves the local value intact instead
       // of resetting the 2-min timer on the blikSentToMaker transition.
       blikReceivedAt: update.blikReceivedAt?.toLocal(),
+      disputeAt: update.disputeAt?.toLocal(),
       updatedAt: update.timestamp.toLocal(),
     );
     // When matched by paymentHash the coordinator UUID differs from local id;
@@ -1203,7 +1276,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           updated.coordinatorPubkey,
         );
         if (remote != null) {
-          hydrated = Offer.fromJson(remote);
+          final fetched = Offer.fromJson(remote);
+          hydrated = fetched.copyWith(
+            disputeAt: fetched.disputeAt ?? updated.disputeAt,
+          );
           await db.upsertOffer(hydrated);
         }
       } catch (e) {
@@ -1256,6 +1332,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       } else {
         state = hydrated;
       }
+      await refreshMissingDisputeTimestamp();
       return;
     }
 
@@ -2104,6 +2181,10 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       } else {
         await ndk.connectivity.tryReconnect();
       }
+
+      await _ref
+          .read(activeOfferProvider.notifier)
+          .refreshMissingDisputeTimestamp();
 
       // Refresh coordinator-derived state after transport recovery so the
       // app rehydrates its custom Bitblik layer, not just the raw sockets.

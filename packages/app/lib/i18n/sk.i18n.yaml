@@ -1205,6 +1205,29 @@ offerNotifications:
     title: Platba prijatá
     body: Tvoja Lightning platba bola odoslaná.
 
+twint:
+  shop:
+    scanTitle: "Naskenovať QR obchodu"
+    scanInstructions: "Naskenuj platobný QR kód na termináli v obchode. Suma v CHF sa načíta z kódu."
+    invalidQr: "Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli."
+    amountMismatch: "Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby."
+    cameraFailed: "Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova."
+    scanned: "QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF."
+    rescan: "Naskenovať iný QR kód"
+    coordinatorUnsupported: "Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje."
+    loadingFailed: "Platobný QR kód sa nepodarilo načítať. Skús to znova."
+    replacementInstructions: "Naskenuj nový QR kód obchodu s rovnakou sumou v CHF ako financovaná ponuka."
+    replacementScanned: "Náhradný QR kód zodpovedá financovanej sume."
+    qrLabel: "QR kód na platbu cez TWINT"
+    payInstructions: "Naskenuj tento QR kód cez TWINT alebo ulož obrázok a importuj ho z galérie do TWINT. Pred platbou skontroluj obchodníka a sumu."
+    saveImage: "Uložiť QR medzi fotky"
+    downloadImage: "Stiahnuť obrázok QR"
+    saving: "Ukladá sa obrázok QR…"
+    saved: "Obrázok QR bol uložený. Otvor TWINT a importuj ho z galérie."
+    downloadStarted: "Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT."
+    saveFailed: "Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova."
+    expired: "Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok."
+
 # =============================================================================
 # INŠTALÁCIA ALTSTORE
 # =============================================================================

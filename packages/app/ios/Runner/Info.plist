@@ -41,6 +41,10 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save payment QR codes to Photos so you can import them in TWINT.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Save payment QR codes to Photos so you can import them in TWINT.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to scan QR codes for payments and wallet connections.</string>
 	<key>NFCReaderUsageDescription</key>

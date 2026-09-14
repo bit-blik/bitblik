@@ -16,8 +16,10 @@ import '../providers/providers.dart'
         initializedApiServiceProvider,
         selectedPaymentSystemProvider;
 import '../screens/maker_flow/twint_code_scanner_screen.dart';
+import '../screens/maker_flow/twint_shop_qr_scanner_screen.dart';
 import '../widgets/dispute_conversation_card.dart';
 import '../widgets/maker_waiting_body.dart';
+import '../widgets/twint_shop_payment.dart';
 import '../widgets/progress_indicators.dart' show CircularCountdownTimer;
 import 'flow_actions_bar.dart';
 import 'flow_controller.dart';
@@ -209,12 +211,17 @@ Widget _codeBox(BuildContext context, String? code) {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          code ?? '—',
-          style: const TextStyle(
-            fontSize: 34,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 4,
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              code ?? '—',
+              style: const TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 4,
+              ),
+            ),
           ),
         ),
         if (code != null && code.isNotEmpty) ...[
@@ -662,7 +669,9 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
   bool _busy = false;
   bool _showManualEntry = false;
 
-  PaymentSystem get _method => ref.read(selectedPaymentSystemProvider);
+  PaymentSystem get _method => paymentSystemForOffer(widget.offer);
+  bool get _isShopQr =>
+      _method.id == 'twint' && widget.offer.category == OfferCategory.shop;
   String get _placeholder => List.filled(_method.codeLength, '0').join();
 
   @override
@@ -681,6 +690,21 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
   }
 
   Future<void> _scanCode() async {
+    if (_busy) return;
+    if (_isShopQr) {
+      final amount = chfCentimes(widget.offer.fiatAmount);
+      if (amount == null) return;
+      final offerId = widget.offer.id;
+      final result = await Navigator.of(context).push<TwintShopQr>(
+        MaterialPageRoute(
+          builder: (_) => TwintShopQrScannerScreen(requiredCentimes: amount),
+        ),
+      );
+      if (!mounted || widget.offer.id != offerId || result == null) return;
+      _controller.text = result.payload;
+      FocusScope.of(context).unfocus();
+      return;
+    }
     final result = await Navigator.of(context).push<TwintScanResult>(
       MaterialPageRoute(
         // The amount is fixed on a re-list — scan only the code.
@@ -698,6 +722,7 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
   }
 
   void _showManual() {
+    if (_isShopQr) return;
     setState(() => _showManualEntry = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusNode.requestFocus();
@@ -705,8 +730,13 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
   }
 
   Future<void> _submit() async {
-    final code = _controller.text.trim();
-    if (code.isEmpty) return;
+    final code = _isShopQr ? _controller.text : _controller.text.trim();
+    if (_busy ||
+        instrumentForOffer(widget.offer)?.validate(code) != true ||
+        (_isShopQr &&
+            TwintShopQr.tryParse(code)?.matchesAmount(widget.offer.fiatAmount) != true)) {
+      return;
+    }
     setState(() => _busy = true);
     try {
       await fireFlowAction(
@@ -801,7 +831,9 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      t.twint.flow.makerRecode.scanCardBody,
+                      _isShopQr
+                          ? t.twint.shop.replacementInstructions
+                          : t.twint.flow.makerRecode.scanCardBody,
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
@@ -815,7 +847,7 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
           ),
           const SizedBox(height: 16),
           _gradientButton(
-            onPressed: _scanCode,
+            onPressed: _busy ? null : _scanCode,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -833,7 +865,7 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
             ),
           ),
           const SizedBox(height: 8),
-          Center(
+          if (!_isShopQr) Center(
             child: TextButton(
               onPressed: _showManual,
               child: Text(t.maker.amountForm.twintScan.manualButton),
@@ -965,8 +997,9 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
     const codeLabel = 'TWINT';
     final manualVisible =
         _showManualEntry || _controller.text.trim().isNotEmpty;
-    final code = _controller.text.trim();
-    final codeComplete = code.length == _method.codeLength;
+    final code = _isShopQr ? _controller.text : _controller.text.trim();
+    final codeComplete = instrumentForOffer(widget.offer)?.validate(code) == true &&
+        (!_isShopQr || TwintShopQr.tryParse(code)?.matchesAmount(widget.offer.fiatAmount) == true);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -985,7 +1018,12 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          if (!manualVisible) _scanCard(t) else _codeField(t),
+          if (_isShopQr) ...[
+            Text(_amount(widget.offer), textAlign: TextAlign.center),
+            _scanCard(t),
+            if (codeComplete)
+              Text(t.twint.shop.replacementScanned, textAlign: TextAlign.center),
+          ] else if (!manualVisible) _scanCard(t) else _codeField(t),
           flowCountdownFor(
             context,
             widget.engine,
@@ -1064,6 +1102,9 @@ class _TwintTakerPayBody extends ConsumerStatefulWidget {
 }
 
 class _TwintTakerPayBodyState extends ConsumerState<_TwintTakerPayBody> {
+  bool get _isShopQr =>
+      widget.offer.category == OfferCategory.shop &&
+      paymentSystemForOffer(widget.offer).id == 'twint';
   @override
   void initState() {
     super.initState();
@@ -1076,6 +1117,7 @@ class _TwintTakerPayBodyState extends ConsumerState<_TwintTakerPayBody> {
   /// maker-provides-code methods) and merge it into the active offer so the
   /// code box renders it.
   Future<void> _ensureCode() async {
+    if (_isShopQr) return;
     if ((widget.offer.blikCode ?? '').isNotEmpty) return;
     try {
       final api = await ref.read(initializedApiServiceProvider.future);
@@ -1102,52 +1144,87 @@ class _TwintTakerPayBodyState extends ConsumerState<_TwintTakerPayBody> {
   Widget build(BuildContext context) {
     final t = Translations.of(context);
     const codeLabel = 'TWINT';
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const TwintTakerProgressIndicator(activeStep: 1),
-          const SizedBox(height: 20),
-          Text(
-            t.twint.flow.takerPay.title(code: codeLabel),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            t.twint.flow.takerPay.body(
-              code: codeLabel,
-              amount: _amount(widget.offer),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const TwintTakerProgressIndicator(activeStep: 1),
+                const SizedBox(height: 20),
+                Text(
+                  t.twint.flow.takerPay.title(code: codeLabel),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  t.twint.flow.takerPay.body(
+                    code: codeLabel,
+                    amount: _amount(widget.offer),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                if (_isShopQr)
+                  TwintShopPayment(
+                    offer: widget.offer,
+                    engine: widget.engine,
+                    loadOffer: (offer) async {
+                      final api = await ref.read(
+                        initializedApiServiceProvider.future,
+                      );
+                      final remote = await api.getOfferDetails(
+                        offer,
+                        offer.coordinatorPubkey,
+                      );
+                      return remote == null ? null : Offer.fromJson(remote);
+                    },
+                  )
+                else
+                  Center(child: _codeBox(context, widget.offer.blikCode)),
+                flowCountdownFor(
+                  context,
+                  widget.engine,
+                  widget.offer,
+                  caption: t.twint.flow.takerPay.codeExpires,
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          Center(child: _codeBox(context, widget.offer.blikCode)),
-          flowCountdownFor(
-            context,
-            widget.engine,
-            widget.offer,
-            caption: t.twint.flow.takerPay.codeExpires,
+        ),
+        const Divider(height: 1),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FlowActionsBar(
+                  offer: widget.offer,
+                  engine: widget.engine,
+                  role: widget.role,
+                  labels: {
+                    'mark_twint_charged': t.twint.flow.takerPay.paid,
+                    'cancel_reservation': t.twint.flow.takerPay.cancel,
+                  },
+                  overrides: {
+                    'mark_twint_charged': (_) =>
+                        _takerPaidButton(context, ref, widget.offer, t),
+                    'cancel_reservation': (_) =>
+                        _takerCancelButton(context, ref, widget.offer, t),
+                  },
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
-          FlowActionsBar(
-            offer: widget.offer,
-            engine: widget.engine,
-            role: widget.role,
-            labels: {
-              'mark_twint_charged': t.twint.flow.takerPay.paid,
-              'cancel_reservation': t.twint.flow.takerPay.cancel,
-            },
-            overrides: {
-              'mark_twint_charged':
-                  (_) => _takerPaidButton(context, ref, widget.offer, t),
-              'cancel_reservation':
-                  (_) => _takerCancelButton(context, ref, widget.offer, t),
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

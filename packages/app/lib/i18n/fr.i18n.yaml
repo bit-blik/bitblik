@@ -724,6 +724,27 @@ taker:
     body: L'offre est maintenant examinée par le coordinateur. Utilisez le chat du litige ci-dessous pour communiquer avec le coordinateur et fournir les justificatifs demandés.
 
 twint:
+  shop:
+    scanTitle: "Scanner le QR du magasin"
+    scanInstructions: "Scanne le code QR de paiement sur le terminal du magasin. Le montant en CHF sera lu dans le code."
+    invalidQr: "Ce code QR ne correspond pas à un paiement en magasin en CHF pris en charge. Scanne le code QR de paiement affiché sur le terminal."
+    amountMismatch: "Ce code QR indique un montant différent. Demande un nouveau code QR avec le montant initial du paiement."
+    cameraFailed: "Caméra indisponible. Autorise l’accès à la caméra dans les paramètres de ton appareil ou navigateur, puis réessaie."
+    scanned: "QR du magasin scanné. Vérifie le montant en CHF avant de financer l’offre."
+    rescan: "Scanner un autre code QR"
+    coordinatorUnsupported: "Ce coordinateur ne prend pas en charge les paiements QR en magasin. Choisis un coordinateur qui les prend en charge."
+    loadingFailed: "Impossible de charger le code QR de paiement. Réessaie."
+    replacementInstructions: "Scanne un nouveau code QR du magasin avec le même montant en CHF que l’offre financée."
+    replacementScanned: "Le QR de remplacement correspond au montant financé."
+    qrLabel: "Code QR de paiement TWINT"
+    payInstructions: "Scanne ce code QR avec TWINT ou enregistre l’image et importe-la depuis ta galerie dans TWINT. Vérifie le commerçant et le montant avant de payer."
+    saveImage: "Enregistrer le QR dans Photos"
+    downloadImage: "Télécharger l’image QR"
+    saving: "Enregistrement de l’image QR…"
+    saved: "Image QR enregistrée. Ouvre TWINT et importe-la depuis ta galerie."
+    downloadStarted: "Téléchargement de l’image QR lancé. Enregistre-la dans tes photos pour l’importer dans TWINT."
+    saveFailed: "Impossible d’enregistrer l’image QR. Vérifie les autorisations d’accès aux photos et l’espace de stockage disponible, puis réessaie."
+    expired: "Ce code QR a expiré. Ne le paie pas et n’utilise pas d’image enregistrée auparavant."
   scanner:
     title: "Scanner le code ${code}"
     status:

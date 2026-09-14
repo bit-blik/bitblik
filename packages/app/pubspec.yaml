@@ -42,6 +42,8 @@ dependencies:
   http: ^1.6.0
   image: ^4.8.0
   image_picker: ^1.2.1
+  file_picker: ^12.3.0
+  gal: ^2.3.3
   flutter_riverpod: ^2.6.1
   pretty_qr_code: ^3.5.0
 

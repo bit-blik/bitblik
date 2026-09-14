@@ -724,6 +724,27 @@ taker:
     body: Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.
 
 twint:
+  shop:
+    scanTitle: "Shop-QR-Code scannen"
+    scanInstructions: "Scanne den Zahlungs-QR-Code auf dem Terminal im Geschäft. Der CHF-Betrag wird aus dem Code gelesen."
+    invalidQr: "Dieser QR-Code ist keine unterstützte CHF-Zahlung im Geschäft. Scanne den Zahlungs-QR-Code auf dem Terminal."
+    amountMismatch: "Dieser QR-Code hat einen anderen Betrag. Bitte um einen neuen QR-Code mit dem ursprünglichen Zahlungsbetrag."
+    cameraFailed: "Kamera nicht verfügbar. Erlaube den Kamerazugriff in den Geräte- oder Browsereinstellungen und versuche es erneut."
+    scanned: "Shop-QR-Code gescannt. Prüfe den CHF-Betrag vor der Finanzierung."
+    rescan: "Anderen QR-Code scannen"
+    coordinatorUnsupported: "Dieser Koordinator unterstützt keine Shop-QR-Zahlungen. Wähle einen Koordinator mit Shop-QR-Unterstützung."
+    loadingFailed: "Zahlungs-QR-Code konnte nicht geladen werden. Versuche es erneut."
+    replacementInstructions: "Scanne einen neuen Shop-QR-Code mit demselben CHF-Betrag wie das finanzierte Angebot."
+    replacementScanned: "Der Ersatz-QR-Code entspricht dem finanzierten Betrag."
+    qrLabel: "TWINT-Zahlungs-QR-Code"
+    payInstructions: "Scanne diesen QR-Code mit TWINT oder speichere das Bild und importiere es in TWINT aus deiner Galerie. Prüfe Händler und Betrag vor dem Bezahlen."
+    saveImage: "QR-Code in Fotos speichern"
+    downloadImage: "QR-Bild herunterladen"
+    saving: "QR-Bild wird gespeichert…"
+    saved: "QR-Bild gespeichert. Öffne TWINT und importiere es aus deiner Galerie."
+    downloadStarted: "Download des QR-Bilds gestartet. Speichere es in deinen Fotos, um es in TWINT zu importieren."
+    saveFailed: "QR-Bild konnte nicht gespeichert werden. Prüfe die Fotoberechtigungen und den freien Speicherplatz und versuche es erneut."
+    expired: "Dieser QR-Code ist abgelaufen. Bezahle ihn nicht und verwende kein zuvor gespeichertes Bild."
   scanner:
     title: "${code}-Code scannen"
     status:

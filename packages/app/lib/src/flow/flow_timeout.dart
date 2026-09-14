@@ -19,9 +19,16 @@ DateTime? flowStateDeadline(FlowEngine engine, String state, Offer offer) {
 /// timeout. Timer base honors the transition's `from_field` (see
 /// [flowStateDeadline]).
 ({DateTime start, Duration max})? flowStateTimer(
-    FlowEngine engine, String state, Offer offer) {
+  FlowEngine engine,
+  String state,
+  Offer offer,
+) {
   final t = engine.timeoutFor(state);
-  final secs = t?.durationSeconds;
+  final secs =
+      t?.durationSeconds ??
+      (t?.durationParam == 'code_validity'
+          ? validityForOffer(offer).inSeconds
+          : null);
   if (t == null || secs == null) return null;
   final base = switch (t.fromField) {
     'created_at' => offer.createdAt,
