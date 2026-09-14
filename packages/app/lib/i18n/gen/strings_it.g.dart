@@ -437,6 +437,7 @@ class _Translations$wallet$it extends Translations$wallet$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$wallet$details$it details = _Translations$wallet$details$it._(_root);
 	@override String get title => 'Portafoglio';
 	@override String get description => 'Gestisci le impostazioni del tuo portafoglio Lightning';
 	@override late final _Translations$wallet$missingReceiving$it missingReceiving = _Translations$wallet$missingReceiving$it._(_root);
@@ -1837,6 +1838,18 @@ class _Translations$notificationSettings$newOfferAlerts$it extends Translations$
 	// Translations
 	@override String get label => 'Avvisi nuove offerte';
 	@override String description({required Object app}) => 'Se abilitato, ${app} ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.';
+}
+
+// Path: wallet.details
+class _Translations$wallet$details$it extends Translations$wallet$details$en {
+	_Translations$wallet$details$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Dettagli del portafoglio';
+	@override String get pendingTitle => 'Transazioni in sospeso';
+	@override String get finishedTitle => 'Transazioni completate';
 }
 
 // Path: wallet.missingReceiving
@@ -3986,6 +3999,9 @@ extension on TranslationsIt {
 			'notificationSettings.androidOnly' => 'Le notifiche in background sono attualmente supportate solo su Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Avvisi nuove offerte',
 			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'Se abilitato, ${app} ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.',
+			'wallet.details.title' => 'Dettagli del portafoglio',
+			'wallet.details.pendingTitle' => 'Transazioni in sospeso',
+			'wallet.details.finishedTitle' => 'Transazioni completate',
 			'wallet.title' => 'Portafoglio',
 			'wallet.description' => 'Gestisci le impostazioni del tuo portafoglio Lightning',
 			'wallet.missingReceiving.title' => 'Portafoglio di ricezione richiesto',

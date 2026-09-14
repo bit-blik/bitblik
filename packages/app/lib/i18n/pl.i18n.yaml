@@ -1178,6 +1178,10 @@ notificationSettings:
     description: Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.
 
 wallet:
+  details:
+    title: Szczegóły portfela
+    pendingTitle: Oczekujące transakcje
+    finishedTitle: Zakończone transakcje
   title: Portfel
   description: Zarządzaj ustawieniami portfela Lightning
   missingReceiving:

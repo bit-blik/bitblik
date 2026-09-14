@@ -1177,6 +1177,10 @@ notificationSettings:
     description: Se abilitato, ${app} ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l'app è in background. Potrebbe essere più veloce dei messenger esterni.
 
 wallet:
+  details:
+    title: Dettagli del portafoglio
+    pendingTitle: Transazioni in sospeso
+    finishedTitle: Transazioni completate
   title: Portafoglio
   description: Gestisci le impostazioni del tuo portafoglio Lightning
   missingReceiving:

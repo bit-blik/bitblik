@@ -437,6 +437,7 @@ class _Translations$wallet$pl extends Translations$wallet$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$wallet$details$pl details = _Translations$wallet$details$pl._(_root);
 	@override String get title => 'Portfel';
 	@override String get description => 'Zarządzaj ustawieniami portfela Lightning';
 	@override late final _Translations$wallet$missingReceiving$pl missingReceiving = _Translations$wallet$missingReceiving$pl._(_root);
@@ -1834,6 +1835,18 @@ class _Translations$notificationSettings$newOfferAlerts$pl extends Translations$
 	// Translations
 	@override String get label => 'Alerty o nowych ofertach';
 	@override String description({required Object app}) => 'Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.';
+}
+
+// Path: wallet.details
+class _Translations$wallet$details$pl extends Translations$wallet$details$en {
+	_Translations$wallet$details$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Szczegóły portfela';
+	@override String get pendingTitle => 'Oczekujące transakcje';
+	@override String get finishedTitle => 'Zakończone transakcje';
 }
 
 // Path: wallet.missingReceiving
@@ -3980,6 +3993,9 @@ extension on TranslationsPl {
 			'notificationSettings.androidOnly' => 'Powiadomienia w tle są obecnie obsługiwane tylko na Androidzie.',
 			'notificationSettings.newOfferAlerts.label' => 'Alerty o nowych ofertach',
 			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.',
+			'wallet.details.title' => 'Szczegóły portfela',
+			'wallet.details.pendingTitle' => 'Oczekujące transakcje',
+			'wallet.details.finishedTitle' => 'Zakończone transakcje',
 			'wallet.title' => 'Portfel',
 			'wallet.description' => 'Zarządzaj ustawieniami portfela Lightning',
 			'wallet.missingReceiving.title' => 'Wymagany portfel odbiorczy',
