@@ -143,3 +143,7 @@ If the Maker denies withdrawing after your account was debited: a bank statement
 ## Support
 
 For coordinator support or disputes, contact the coordinator operator directly via Nostr DMs — their profile is reachable through their terms-of-use link in the {app} app.
+
+#### How do private dispute messages and picture evidence work?
+
+Each party gets a separate encrypted NIP-17 conversation with the coordinator; there is no maker/taker group room. Pictures are stripped of metadata, encrypted on your device, and uploaded only as ciphertext to a coordinator-selected Blossom server. Relay and Blossom operators can still observe IP address, timing, and ciphertext size. Chat never authorizes a payment. A Maker refund invoice must be submitted through the separate exact-amount invoice form. After a ruling, history is read-only and remote deletion is best-effort.

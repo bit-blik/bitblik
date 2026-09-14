@@ -7,12 +7,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ndk/entities.dart';
+import 'package:ndk/ndk.dart' show SoftwareAppRef;
 import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
@@ -135,7 +137,9 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
   // Periodic refresh — same 10min cadence as before.
   final timer = Timer.periodic(const Duration(seconds: 600), (_) async {
     try {
+      unawaited(_refreshNetworkFinishedCounts(registry));
       await registry.discover();
+      unawaited(_refreshNetworkFinishedCounts(registry));
       await registry.probeAllEnabled();
     } catch (e) {
       Logger.log.e(() => 'Periodic coordinator refresh failed: $e');
@@ -153,16 +157,26 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
 final coordinatorDiscoveryBootstrapProvider = FutureProvider<void>((ref) async {
   final registry = await ref.watch(coordinatorRegistryProvider.future);
   try {
+    // Refresh cached coordinators even if discovery or a health RPC later
+    // fails. The post-discovery call also picks up newly found records.
+    unawaited(_refreshNetworkFinishedCounts(registry));
     await registry.discover();
+    unawaited(_refreshNetworkFinishedCounts(registry));
     await registry.probeAllEnabled();
-    // Best-effort: refresh network usage counts to seed scoring.
-    unawaited(registry.fetchNetworkFinishedCounts());
     // Best-effort: count the user's own successful offers per coordinator.
     unawaited(_refreshLocalFinishedCounts(ref, registry));
   } catch (e) {
     Logger.log.e(() => 'Initial coordinator discovery failed: $e');
   }
 });
+
+Future<void> _refreshNetworkFinishedCounts(CoordinatorRegistry registry) async {
+  try {
+    await registry.fetchNetworkFinishedCounts();
+  } catch (e) {
+    Logger.log.w(() => 'Failed to refresh coordinator network stats: $e');
+  }
+}
 
 /// Count the user's own successful (takerPaid) offers per coordinator and feed
 /// them to the registry so the "your offers" metric reflects real data.
@@ -297,6 +311,35 @@ final coordinatorTakerChargedAutoConfirmDurationProvider =
       );
     });
 
+/// Evidence-collection policy advertised by the coordinator. Expiration allows
+/// an evidence-based ruling but never causes an automatic financial transition.
+final coordinatorDisputeEvidenceDurationProvider =
+    Provider.family<Duration?, String>((ref, coordinatorPubkey) {
+      final record = ref.watch(
+        coordinatorRecordByPubkeyProvider(coordinatorPubkey),
+      );
+      if (record?.info != null) {
+        final seconds = record!.info!.disputeEvidencePeriodSeconds;
+        return seconds == null || seconds <= 0
+            ? null
+            : Duration(seconds: seconds);
+      }
+      final coordinatorInfoAsync = ref.watch(
+        coordinatorInfoByPubkeyProvider(coordinatorPubkey),
+      );
+      return coordinatorInfoAsync.maybeWhen(
+        data:
+            (info) =>
+                info?.disputeEvidencePeriodSeconds == null ||
+                        info!.disputeEvidencePeriodSeconds! <= 0
+                    ? null
+                    : Duration(
+                      seconds: info.disputeEvidencePeriodSeconds!,
+                    ),
+        orElse: () => null,
+      );
+    });
+
 /// Helper provider to get reservation duration for a coordinator.
 /// Returns Duration based on coordinator's reservationSeconds, or null if coordinator info unavailable.
 final coordinatorReservationDurationProvider =
@@ -340,7 +383,9 @@ final discoveryIdentityInitializer = FutureProvider<void>((ref) async {
     hex: method.discoveryPubkeyHex,
     paymentSystemId: method.id,
   );
+  unawaited(_refreshNetworkFinishedCounts(registry));
   await registry.discover();
+  unawaited(_refreshNetworkFinishedCounts(registry));
   await registry.probeAllEnabled();
 });
 
@@ -469,21 +514,43 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// Guards against overlapping reconcile passes when connectivity events
   /// arrive in quick succession.
   bool _reconcileInFlight = false;
+  final Set<String> _disputeTimestampFetches = {};
+
+  /// Gives the coordinator time to publish the public `s=success` event after
+  /// its private `takerPaid` status update reaches this client.
+  Timer? _successfulOfferStatsRefreshTimer;
 
   /// Window used by boot-time reconciliation. An offer older than this is
   /// assumed to be definitively cancelled — coordinator hold invoice
   /// would have expired by then.
   static const Duration _cancelledLookbackWindow = Duration(hours: 24);
 
-  bool _isTakerOnlyOfferForUser(Offer offer, String? myPubkey) {
-    return myPubkey != null &&
-        offer.takerPubkey == myPubkey &&
-        offer.makerPubkey != myPubkey;
-  }
-
   bool _userParticipatesInOffer(Offer offer, String? myPubkey) {
     return myPubkey != null &&
         (offer.makerPubkey == myPubkey || offer.takerPubkey == myPubkey);
+  }
+
+  void _refreshStatsAfterSuccessfulOffer(Offer offer, String? myPubkey) {
+    if (!_userParticipatesInOffer(offer, myPubkey)) return;
+
+    final registry = _ref.read(apiServiceProvider).coordinatorRegistry;
+
+    // The local row is already persisted, so the personal count can update
+    // immediately for either the maker or taker key.
+    unawaited(_refreshLocalFinishedCounts(_ref, registry));
+    _ref.invalidate(successfulOffersStatsProvider);
+
+    // The private status is published before the public offer event. Refresh
+    // again after propagation; a running registry refresh queues this pass.
+    _successfulOfferStatsRefreshTimer?.cancel();
+    _successfulOfferStatsRefreshTimer = Timer(
+      const Duration(seconds: 5),
+      () {
+        if (!mounted) return;
+        unawaited(_refreshNetworkFinishedCounts(registry));
+        _ref.invalidate(successfulOffersStatsProvider);
+      },
+    );
   }
 
   Future<void> _promoteMostRecentActiveOffer() async {
@@ -514,8 +581,40 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// [_listenForRelayConnectivity]) so it never runs against a connection that
   /// isn't up yet (the boot-time timeout that used to strand offers).
   Future<void> _loadActiveOffer() async {
+    await _ref.read(publicKeyProvider.future);
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
     state = await OfferDbService().getActiveOffer(userPubkey: myPubkey);
+    if (state != null) return;
+
+    // Recover a signed user's current offer when local desktop storage is
+    // empty. A dispute is included in the coordinator's active-offer query.
+    ApiServiceNostr apiService;
+    try {
+      apiService = await _ref.read(initializedApiServiceProvider.future);
+    } catch (error) {
+      Logger.log.w(
+        () =>
+            '[ActiveOfferNotifier] cannot recover a missing local offer: $error',
+      );
+      return;
+    }
+    for (final coordinator in apiService.allConfiguredCoordinators) {
+      if (!coordinator.enabled) continue;
+      final recovered = await apiService.getMyActiveOffer(
+        coordinator.pubkeyHex,
+      );
+      if (recovered == null ||
+          OfferDbService.terminalStatuses.contains(recovered.status)) {
+        continue;
+      }
+      await OfferDbService().upsertOffer(recovered);
+      state = recovered;
+      Logger.log.i(
+        () =>
+            '[ActiveOfferNotifier] recovered active offer ${recovered.id} (${recovered.statusRaw}) from ${coordinator.pubkeyHex}',
+      );
+      return;
+    }
   }
 
   /// Reconcile local offers against the coordinator on every relay
@@ -546,6 +645,57 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       return;
     }
     await _reconcileActiveOfferIfNeeded(active);
+  }
+
+  /// Older coordinators omit dispute_at from status pushes but include it in
+  /// authorized offer details. Repair only the missing clock, never restarting
+  /// it from a notification's delivery time or overwriting a newer lifecycle.
+  Future<void> refreshMissingDisputeTimestamp() async {
+    final requested = state;
+    if (requested == null ||
+        !requested.isDispute ||
+        requested.disputeAt != null ||
+        !_disputeTimestampFetches.add(requested.id)) {
+      return;
+    }
+    try {
+      final api = await _ref.read(initializedApiServiceProvider.future);
+      if (!mounted) return;
+      final response = await api.getOfferDetails(
+        requested,
+        requested.coordinatorPubkey,
+        strict: true,
+      );
+      if (!mounted || response == null || response['id'] != requested.id) {
+        return;
+      }
+      final remote = Offer.fromJson(response);
+      if (remote.disputeAt == null) return;
+      final db = OfferDbService();
+      final latest = await db.getOfferById(requested.id);
+      if (!mounted ||
+          latest == null ||
+          latest.coordinatorPubkey != requested.coordinatorPubkey ||
+          !latest.isDispute ||
+          latest.disputeAt != null) {
+        return;
+      }
+      final repaired = latest.copyWith(disputeAt: remote.disputeAt);
+      await db.upsertOffer(repaired);
+      if (mounted &&
+          state?.id == repaired.id &&
+          state?.isDispute == true &&
+          state?.disputeAt == null) {
+        state = state!.copyWith(disputeAt: repaired.disputeAt);
+      }
+    } catch (error) {
+      Logger.log.w(
+        () =>
+            '[ActiveOfferNotifier] dispute timestamp refresh failed for ${requested.id}: $error',
+      );
+    } finally {
+      _disputeTimestampFetches.remove(requested.id);
+    }
   }
 
   /// Revive wrongly/locally-cancelled offers and sync the active one. Guarded
@@ -596,32 +746,22 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         );
 
         if (remote == null) {
-          if (_isTakerOnlyOfferForUser(localOffer, myPubkey)) {
-            Logger.log.i(
-              () =>
-                  '[ActiveOfferNotifier] deleting stale taker offer ${localOffer.id} (${localOffer.status.name}); coordinator no longer reports user participation',
-            );
-            await db.deleteOfferById(localOffer.id);
-            changed = true;
-          }
+          // An empty response is not authoritative proof that a local offer
+          // ended: relays can serve a partial/stale response and the offer may
+          // be in a coordinator-only state such as `dispute`. Keep the local
+          // history until an explicit terminal state is received.
+          Logger.log.w(
+            () =>
+                '[ActiveOfferNotifier] coordinator returned no details for tracked offer ${localOffer.id}; preserving local ${localOffer.statusRaw}',
+          );
           continue;
         }
 
-        final hydrated = Offer.fromJson(remote);
-        if (_isTakerOnlyOfferForUser(localOffer, myPubkey) &&
-            !_userParticipatesInOffer(hydrated, myPubkey)) {
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] deleting relisted taker offer ${localOffer.id}; coordinator cleared local user ownership',
-          );
-          await db.deleteOfferById(localOffer.id);
-          changed = true;
-          continue;
-        }
-        if (hydrated.id != localOffer.id) {
-          await db.deleteOfferById(localOffer.id);
-        }
-        await db.upsertOffer(hydrated);
+        await db.reconcileRemoteOffer(
+          localOffer,
+          Offer.fromJson(remote),
+          myPubkey,
+        );
         changed = true;
       } catch (e) {
         Logger.log.w(
@@ -632,145 +772,51 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     }
 
     if (changed) {
-      _ref.invalidate(myOffersProvider);
+      _ref.read(_offerHistoryRevisionProvider.notifier).state++;
     }
   }
 
-  /// Boot-time sanity check for the locally-active offer.
-  ///
-  /// When the app was offline while the coordinator cancelled or expired the
-  /// offer, the local DB still holds the stale non-terminal status (e.g.
-  /// `funded`). This method fetches exact offer from coordinator and
-  /// reconciles:
-  ///   - Remote is null → offer no longer exists on coordinator; mark cancelled.
-  ///   - Remote has a terminal status → update local DB and clear in-memory state.
-  ///   - Remote has a different non-terminal status → sync local to coordinator.
-  ///   - Remote matches local → no action.
+  /// Fetch exact coordinator state. Missing responses retain local history.
+  /// Returns only a snapshot accepted by the preservation policy, so callers
+  /// cannot mistake retained local state for fresh confirmation.
+  Future<Offer?> refreshOfferDetails(Offer localOffer) async {
+    final apiService = await _ref.read(initializedApiServiceProvider.future);
+    final remote = await apiService.getOfferDetails(
+      localOffer,
+      localOffer.coordinatorPubkey,
+      strict: true,
+    );
+    if (remote == null) return null;
+    final snapshot = Offer.fromJson(remote);
+    final resolved = await OfferDbService().reconcileRemoteOffer(
+      localOffer,
+      snapshot,
+      _ref.read(keyServiceProvider).publicKeyHex,
+    );
+    _ref.read(_offerHistoryRevisionProvider.notifier).state++;
+    if (state?.id == localOffer.id) {
+      if (resolved == null) {
+        await _promoteMostRecentActiveOffer();
+      } else if (OfferDbService.terminalStatuses.contains(resolved.status) &&
+          resolved.status != OfferStatus.takerPaid) {
+        state = null;
+      } else {
+        state = resolved;
+      }
+    }
+    if (resolved?.id != snapshot.id ||
+        resolved?.statusRaw != snapshot.statusRaw ||
+        resolved?.takerPubkey != snapshot.takerPubkey) {
+      return null;
+    }
+    return resolved;
+  }
+
   Future<void> _reconcileActiveOfferIfNeeded(Offer localOffer) async {
     try {
-      final apiService = await _ref.read(initializedApiServiceProvider.future);
-      final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
-      Logger.log.i(
-        () =>
-            '[ActiveOfferNotifier] reconciling active offer ${localOffer.id} (local status=${localOffer.status.name})',
-      );
-
-      Map<String, dynamic>? remote;
-      try {
-        remote = await apiService.getOfferDetails(
-          localOffer,
-          localOffer.coordinatorPubkey,
-          strict: true,
-        );
-      } catch (e) {
-        // Transient failure (timeout, relays not yet connected). Do NOT treat
-        // as a missing offer — leave local state untouched and retry later.
-        Logger.log.w(
-          () =>
-              '[ActiveOfferNotifier] getOfferDetails failed during active-offer reconciliation: $e',
-        );
-        return;
-      }
-
-      if (remote == null) {
-        if (_isTakerOnlyOfferForUser(localOffer, myPubkey)) {
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] coordinator no longer reports taker-owned offer ${localOffer.id}; deleting local row',
-          );
-          await OfferDbService().deleteOfferById(localOffer.id);
-          if (state?.id == localOffer.id) {
-            await _promoteMostRecentActiveOffer();
-          }
-        } else {
-          // Coordinator has no active offer for this user — treat as cancelled.
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] coordinator reports no active offer; marking local ${localOffer.id} cancelled',
-          );
-          final cancelled = localOffer.copyWith(status: OfferStatus.cancelled);
-          await OfferDbService().upsertOffer(cancelled);
-          // Only clear if this offer is still the in-memory active one.
-          if (state?.id == localOffer.id) state = null;
-        }
-        return;
-      }
-
-      final hydrated = Offer.fromJson(remote);
-      if (_isTakerOnlyOfferForUser(localOffer, myPubkey) &&
-          !_userParticipatesInOffer(hydrated, myPubkey)) {
-        Logger.log.i(
-          () =>
-              '[ActiveOfferNotifier] coordinator relisted taker offer ${localOffer.id}; removing stale local active row',
-        );
-        await OfferDbService().deleteOfferById(localOffer.id);
-        if (state?.id == localOffer.id) {
-          await _promoteMostRecentActiveOffer();
-        }
-        return;
-      }
-
-      final remoteId = remote['id']?.toString();
-      final remoteStatusRaw = remote['status']?.toString();
-      if (remoteId == null || remoteStatusRaw == null) return;
-
-      OfferStatus remoteStatus;
-      try {
-        remoteStatus = OfferStatus.values.byName(remoteStatusRaw);
-      } catch (_) {
-        remoteStatus = OfferStatus.unknown;
-      }
-
-      // If coordinator reports a different offer id, this local offer is stale.
-      final sameOffer =
-          remoteId == localOffer.id ||
-          (localOffer.holdInvoicePaymentHash != null &&
-              localOffer.holdInvoicePaymentHash ==
-                  remote['payment_hash']?.toString());
-
-      if (!sameOffer) {
-        Logger.log.i(
-          () =>
-              '[ActiveOfferNotifier] coordinator active offer ($remoteId) differs from local (${localOffer.id}); marking local cancelled',
-        );
-        final cancelled = localOffer.copyWith(status: OfferStatus.cancelled);
-        await OfferDbService().upsertOffer(cancelled);
-        if (state?.id == localOffer.id) state = null;
-        return;
-      }
-
-      // Compare raw wire states: generic (yaml-driven) flow states such as
-      // `invalidTwint` all parse to the enum's `unknown`, so an enum compare
-      // would miss transitions between them (and copyWith without statusRaw
-      // would overwrite the real state with the literal 'unknown').
-      if (remoteStatusRaw == localOffer.statusRaw) return; // Already in sync.
-
-      Logger.log.i(
-        () =>
-            '[ActiveOfferNotifier] syncing active offer $remoteId: local=${localOffer.statusRaw} -> remote=$remoteStatusRaw',
-      );
-      final updated = localOffer.copyWith(
-        id: remoteId,
-        status: remoteStatus,
-        statusRaw: remoteStatusRaw,
-        // Keep the yaml-timeout countdown bases in sync (from_field:
-        // updated_at default, code_received_at, and reserved_at).
-        updatedAt: hydrated.updatedAt,
-        blikReceivedAt: hydrated.blikReceivedAt,
-        reservedAt: hydrated.reservedAt,
-      );
-      await OfferDbService().upsertOffer(updated);
-
-      if (OfferDbService.terminalStatuses.contains(remoteStatus) &&
-          remoteStatus != OfferStatus.takerPaid) {
-        // takerPaid is kept in state so the payment-process screen can show
-        // success — applyStatusUpdate handles it without auto-promoting.
-        if (state?.id == localOffer.id) state = null;
-      } else {
-        if (state?.id == localOffer.id) state = updated;
-      }
+      await refreshOfferDetails(localOffer);
     } catch (e) {
-      Logger.log.e(
+      Logger.log.w(
         () => '[ActiveOfferNotifier] active-offer reconciliation failed: $e',
       );
     }
@@ -821,6 +867,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
             id: remoteId,
             status: remoteStatus,
             statusRaw: remoteStatusRaw,
+            disputeAt: Offer.fromJson(remote).disputeAt,
           );
           await OfferDbService().upsertOffer(revived);
           Logger.log.i(
@@ -1007,83 +1054,39 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       // older coordinator that omits it leaves the local value intact instead
       // of resetting the 2-min timer on the blikSentToMaker transition.
       blikReceivedAt: update.blikReceivedAt?.toLocal(),
+      disputeAt: update.disputeAt?.toLocal(),
       updatedAt: update.timestamp.toLocal(),
     );
-    // When matched by paymentHash the coordinator UUID differs from local id;
-    // delete the old row so upsert doesn't leave a duplicate.
-    if (existing.id != updated.id) {
-      await db.deleteOfferById(existing.id);
-    }
-    await db.upsertOffer(updated);
-
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
-    final takerLostOwnershipOnRelist =
-        _isTakerOnlyOfferForUser(existing, myPubkey) &&
+    final takerRelist =
+        myPubkey != null &&
+        existing.takerPubkey == myPubkey &&
+        existing.makerPubkey != myPubkey &&
         newStatus == OfferStatus.funded;
-
-    if (takerLostOwnershipOnRelist) {
+    if (takerRelist) {
       try {
-        final apiService = await _ref.read(
-          initializedApiServiceProvider.future,
-        );
-        final remote = await apiService.getOfferDetails(
-          updated,
-          updated.coordinatorPubkey,
-        );
-
-        if (remote == null) {
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] removing relisted taker offer ${updated.id}; coordinator no longer reports this user as a participant',
-          );
-          await db.deleteOfferById(updated.id);
-          final currentState = state;
-          final isCurrent =
-              currentState != null &&
-              (currentState.id == updated.id ||
-                  (currentState.holdInvoicePaymentHash != null &&
-                      currentState.holdInvoicePaymentHash ==
-                          updated.holdInvoicePaymentHash));
-          if (isCurrent) {
-            state = null;
-            _ref.read(appLifecycleProvider)._updateForegroundService();
-          }
-          return;
-        }
-
-        final hydratedRemote = Offer.fromJson(remote);
-        if (!_userParticipatesInOffer(hydratedRemote, myPubkey)) {
-          Logger.log.i(
-            () =>
-                '[ActiveOfferNotifier] removing relisted taker offer ${updated.id}; coordinator cleared local user ownership',
-          );
-          await db.deleteOfferById(updated.id);
-          final currentState = state;
-          final isCurrent =
-              currentState != null &&
-              (currentState.id == updated.id ||
-                  (currentState.holdInvoicePaymentHash != null &&
-                      currentState.holdInvoicePaymentHash ==
-                          updated.holdInvoicePaymentHash));
-          if (isCurrent) {
-            state = null;
-            _ref.read(appLifecycleProvider)._updateForegroundService();
-          }
-          _ref.invalidate(myOffersProvider);
-          return;
-        }
+        // Do not overwrite the claim with `funded` before checking ownership.
+        // A null response can also mean a timeout or denied participant access.
+        await refreshOfferDetails(existing);
       } catch (e) {
         Logger.log.w(
-          () =>
-              '[ActiveOfferNotifier] failed ownership check for relisted taker offer ${updated.id}: $e',
+          () => '[ActiveOfferNotifier] relist verification unavailable: $e',
         );
       }
+      return;
     }
+
+    await db.upsertOffer(updated);
+    // Replace temporary IDs only after the canonical row is safely stored.
+    if (existing.id != updated.id) await db.deleteOfferById(existing.id);
 
     final shouldHydrateCompletedOffer =
         newStatus == OfferStatus.makerConfirmed ||
         newStatus == OfferStatus.settled ||
-        newStatus == OfferStatus.takerPaid;
+        newStatus == OfferStatus.takerPaid ||
+        newStatus == OfferStatus.refundedMaker ||
+        update.status == 'refundingMaker' ||
+        update.status == 'payingMaker';
     Offer hydrated = updated;
     if (shouldHydrateCompletedOffer) {
       try {
@@ -1095,8 +1098,13 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           updated.coordinatorPubkey,
         );
         if (remote != null) {
-          hydrated = Offer.fromJson(remote);
-          await db.upsertOffer(hydrated);
+          hydrated =
+              await db.reconcileRemoteOffer(
+                updated,
+                Offer.fromJson(remote),
+                myPubkey,
+              ) ??
+              updated;
         }
       } catch (e) {
         Logger.log.w(
@@ -1104,6 +1112,11 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
               '[ActiveOfferNotifier] failed hydrating completed offer ${updated.id}: $e',
         );
       }
+    }
+
+    if (newStatus == OfferStatus.takerPaid &&
+        existing.status != OfferStatus.takerPaid) {
+      _refreshStatsAfterSuccessfulOffer(hydrated, myPubkey);
     }
 
     if (existing.status == OfferStatus.blikSentToMaker &&
@@ -1121,9 +1134,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                     hydrated.holdInvoicePaymentHash));
 
     if (isCurrent) {
-      if (newStatus == OfferStatus.takerPaid) {
-        // Keep the takerPaid offer in state so the payment-process and
-        // payment-failed screens can observe the success transition. The
+      if (newStatus == OfferStatus.takerPaid ||
+          newStatus == OfferStatus.refundedMaker) {
+        // Keep successful terminal offers in state so their completion screen
+        // can observe the transition. The
         // screen is responsible for clearing active offer when the user
         // taps Done. Auto-promoting here would set state=null before any
         // listener sees takerPaid, causing the dialog to stay stuck forever.
@@ -1142,6 +1156,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       } else {
         state = hydrated;
       }
+      await refreshMissingDisputeTimestamp();
       return;
     }
 
@@ -1232,14 +1247,18 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   @override
   void dispose() {
     _connectivitySub?.cancel();
+    _successfulOfferStatsRefreshTimer?.cancel();
     super.dispose();
   }
 }
 
-/// All offers in the local DB (history). Re-fetches when the active
-/// offer changes (covers create / cancel / status update) so the list
-/// stays current without manual invalidation.
+// Separate signal avoids a dependency cycle when ActiveOfferNotifier updates
+// an inactive history row (myOffersProvider itself watches activeOfferProvider).
+final _offerHistoryRevisionProvider = StateProvider<int>((ref) => 0);
+
+/// All local history. Refresh when the active offer or an inactive row changes.
 final myOffersProvider = FutureProvider<List<Offer>>((ref) async {
+  ref.watch(_offerHistoryRevisionProvider);
   ref.watch(activeOfferProvider);
   final myPubkey = ref.watch(keyServiceProvider).publicKeyHex;
   return OfferDbService().listOffers(userPubkey: myPubkey);
@@ -1457,6 +1476,47 @@ final ndkFlutterProvider = Provider<NdkFlutter?>((ref) {
   final ndk = ref.watch(ndkProvider);
   if (ndk == null) return null;
   return NdkFlutter(ndk: ndk);
+});
+
+final _installedPackageInfoProvider = FutureProvider<PackageInfo>(
+  (ref) => PackageInfo.fromPlatform(),
+);
+
+final zapstoreAppUpdateControllerProvider = Provider<NAppUpdateController?>((
+  ref,
+) {
+  final packageInfo = ref.watch(_installedPackageInfoProvider).valueOrNull;
+  if (packageInfo == null) return null;
+
+  final paymentSystemId = ref.watch(
+    selectedPaymentSystemProvider.select((system) => system.id),
+  );
+  final externalUpdateUrl = externalUpdateUrlForPaymentSystem(paymentSystemId);
+
+  // Package updates still target the installed build, not the selected market.
+  final appIdentifier = switch (buildDefaultPaymentSystemId) {
+    'mbway' => 'me.bitway',
+    'twint' => 'app.bittwint',
+    _ => 'app.bitblik',
+  };
+
+  final ndkFlutter = ref.watch(ndkFlutterProvider);
+  if (ndkFlutter == null) return null;
+
+  final controller = NAppUpdateController.self(
+    ndkFlutter: ndkFlutter,
+    currentVersion: packageInfo.version,
+    externalUpdateUrl: externalUpdateUrl,
+    app: SoftwareAppRef(
+      // npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3
+      publisher: kBitblikPubkeyHex,
+      identifier: appIdentifier,
+    ),
+    channel: 'main',
+    relays: const ['wss://relay.zapstore.dev'],
+  );
+  ref.onDispose(controller.dispose);
+  return controller;
 });
 
 /// Connection state enum for relay websocket
@@ -1949,9 +2009,19 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         await ndk.connectivity.tryReconnect();
       }
 
+      await _ref
+          .read(activeOfferProvider.notifier)
+          .refreshMissingDisputeTimestamp();
+
       // Refresh coordinator-derived state after transport recovery so the
       // app rehydrates its custom Bitblik layer, not just the raw sockets.
+      unawaited(
+        _refreshNetworkFinishedCounts(apiService.coordinatorRegistry),
+      );
       await apiService.coordinatorRegistry.discover();
+      unawaited(
+        _refreshNetworkFinishedCounts(apiService.coordinatorRegistry),
+      );
       await apiService.coordinatorRegistry.probeAllEnabled();
     } catch (e) {
       Logger.log.w(

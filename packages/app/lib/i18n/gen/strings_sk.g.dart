@@ -46,6 +46,8 @@ class TranslationsSk extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$reservations$sk reservations = _Translations$reservations$sk._(_root);
 	@override late final _Translations$exchange$sk exchange = _Translations$exchange$sk._(_root);
 	@override late final _Translations$coordinator$sk coordinator = _Translations$coordinator$sk._(_root);
+	@override late final _Translations$disputeChat$sk disputeChat = _Translations$disputeChat$sk._(_root);
+	@override late final _Translations$receivingInvoice$sk receivingInvoice = _Translations$receivingInvoice$sk._(_root);
 	@override late final _Translations$maker$sk maker = _Translations$maker$sk._(_root);
 	@override late final _Translations$taker$sk taker = _Translations$taker$sk._(_root);
 	@override late final _Translations$blik$sk blik = _Translations$blik$sk._(_root);
@@ -66,6 +68,7 @@ class TranslationsSk extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$nekoManagement$sk nekoManagement = _Translations$nekoManagement$sk._(_root);
 	@override late final _Translations$relays$sk relays = _Translations$relays$sk._(_root);
 	@override late final _Translations$offerNotifications$sk offerNotifications = _Translations$offerNotifications$sk._(_root);
+	@override late final _Translations$twint$sk twint = _Translations$twint$sk._(_root);
 	@override late final _Translations$altstore$sk altstore = _Translations$altstore$sk._(_root);
 }
 
@@ -158,6 +161,7 @@ class _Translations$coordinator$sk extends Translations$coordinator$en {
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$sk bolt12 = _Translations$coordinator$bolt12$sk._(_root);
 	@override String get title => 'Koordinátori';
 	@override late final _Translations$coordinator$info$sk info = _Translations$coordinator$info$sk._(_root);
 	@override late final _Translations$coordinator$selector$sk selector = _Translations$coordinator$selector$sk._(_root);
@@ -167,6 +171,37 @@ class _Translations$coordinator$sk extends Translations$coordinator$en {
 	@override late final _Translations$coordinator$management$sk management = _Translations$coordinator$management$sk._(_root);
 }
 
+// Path: disputeChat
+class _Translations$disputeChat$sk extends Translations$disputeChat$en {
+	_Translations$disputeChat$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get viewHistory => 'Zobraziť históriu sporu';
+	@override String get historyTitle => 'História sporu';
+	@override String get ruledForMaker => 'Rozhodnuté v prospech Makera';
+	@override String get ruledForTaker => 'Rozhodnuté v prospech Takera';
+	@override String get legacyChannel => 'Starší kompatibilný kanál NIP-04';
+	@override String get privateConversation => 'Súkromná konverzácia s koordinátorom';
+	@override String get noMessages => 'Zatiaľ žiadne správy.';
+	@override String get replyHint => 'Odpovedzte tu';
+	@override String get readOnly => 'História tohto vyriešeného sporu je iba na čítanie.';
+	@override late final _Translations$disputeChat$evidenceDeadline$sk evidenceDeadline = _Translations$disputeChat$evidenceDeadline$sk._(_root);
+	@override late final _Translations$disputeChat$tooltips$sk tooltips = _Translations$disputeChat$tooltips$sk._(_root);
+	@override late final _Translations$disputeChat$errors$sk errors = _Translations$disputeChat$errors$sk._(_root);
+}
+
+// Path: receivingInvoice
+class _Translations$receivingInvoice$sk extends Translations$receivingInvoice$en {
+	_Translations$receivingInvoice$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$receivingInvoice$errors$sk errors = _Translations$receivingInvoice$errors$sk._(_root);
+}
+
 // Path: maker
 class _Translations$maker$sk extends Translations$maker$en {
 	_Translations$maker$sk._(TranslationsSk root) : this._root = root, super.internal(root);
@@ -174,6 +209,7 @@ class _Translations$maker$sk extends Translations$maker$en {
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$maker$refundInvoice$sk refundInvoice = _Translations$maker$refundInvoice$sk._(_root);
 	@override late final _Translations$maker$roleSelection$sk roleSelection = _Translations$maker$roleSelection$sk._(_root);
 	@override late final _Translations$maker$amountForm$sk amountForm = _Translations$maker$amountForm$sk._(_root);
 	@override late final _Translations$maker$payInvoice$sk payInvoice = _Translations$maker$payInvoice$sk._(_root);
@@ -202,6 +238,7 @@ class _Translations$taker$sk extends Translations$taker$en {
 	@override late final _Translations$taker$criticalCodeDecision$sk criticalCodeDecision = _Translations$taker$criticalCodeDecision$sk._(_root);
 	@override late final _Translations$taker$invalidBlik$sk invalidBlik = _Translations$taker$invalidBlik$sk._(_root);
 	@override late final _Translations$taker$conflict$sk conflict = _Translations$taker$conflict$sk._(_root);
+	@override late final _Translations$taker$dispute$sk dispute = _Translations$taker$dispute$sk._(_root);
 }
 
 // Path: blik
@@ -350,6 +387,7 @@ class _Translations$settings$sk extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Nastavenia';
+	@override late final _Translations$settings$coordinatorConsole$sk coordinatorConsole = _Translations$settings$coordinatorConsole$sk._(_root);
 	@override late final _Translations$settings$offerCreation$sk offerCreation = _Translations$settings$offerCreation$sk._(_root);
 	@override late final _Translations$settings$display$sk display = _Translations$settings$display$sk._(_root);
 	@override late final _Translations$settings$paymentSystem$sk paymentSystem = _Translations$settings$paymentSystem$sk._(_root);
@@ -377,6 +415,7 @@ class _Translations$wallet$sk extends Translations$wallet$en {
 	@override String get title => 'Peňaženka';
 	@override String get description => 'Spravuj nastavenia svojej Lightning peňaženky';
 	@override late final _Translations$wallet$missingReceiving$sk missingReceiving = _Translations$wallet$missingReceiving$sk._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$sk incompatibleReceiving = _Translations$wallet$incompatibleReceiving$sk._(_root);
 	@override late final _Translations$wallet$details$sk details = _Translations$wallet$details$sk._(_root);
 }
 
@@ -438,6 +477,16 @@ class _Translations$offerNotifications$sk extends Translations$offerNotification
 	@override late final _Translations$offerNotifications$takerCharged$sk takerCharged = _Translations$offerNotifications$takerCharged$sk._(_root);
 	@override late final _Translations$offerNotifications$invalidBlik$sk invalidBlik = _Translations$offerNotifications$invalidBlik$sk._(_root);
 	@override late final _Translations$offerNotifications$takerPaid$sk takerPaid = _Translations$offerNotifications$takerPaid$sk._(_root);
+}
+
+// Path: twint
+class _Translations$twint$sk extends Translations$twint$en {
+	_Translations$twint$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$twint$shop$sk shop = _Translations$twint$shop$sk._(_root);
 }
 
 // Path: altstore
@@ -677,6 +726,8 @@ class _Translations$offers$status$sk extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => 'Neplatný ${code}';
 	@override String get conflict => 'Konflikt';
 	@override String get dispute => 'Spor';
+	@override String get refundedMaker => 'Makerovi boli vrátené prostriedky';
+	@override String get refundingMaker => 'Vrátenie platby makerovi';
 	@override String get makerConfirmed => 'Potvrdená';
 	@override String get settled => 'Vyrovnaná';
 	@override String get payingTaker => 'Platí sa kupujúcemu';
@@ -827,6 +878,19 @@ class _Translations$exchange$errors$sk extends Translations$exchange$errors$en {
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} vydá na jeden výber najviac ${limit} ${currency}.';
 }
 
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$sk extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Podpora BOLT12';
+	@override String get body => 'Tento koordinátor môže platiť do peňaženiek, ktoré prijímajú platby cez ponuky BOLT12. Tieto peňaženky môžeš použiť na výplaty pre takerov alebo vrátenie prostriedkov makerom.';
+	@override String get details => 'Ponuka BOLT12 je opakovane použiteľná žiadosť o platbu cez Lightning, ktorú môžeš zdieľať ako text alebo QR kód. Tá istá ponuka môže prijať viacero platieb, takže nemusíš zakaždým vytvárať a zdieľať novú žiadosť o platbu. Tvoja prijímacia peňaženka musí podporovať ponuky BOLT12.';
+	@override String get learnMore => 'Viac informácií na bolt12.org';
+}
+
 // Path: coordinator.info
 class _Translations$coordinator$info$sk extends Translations$coordinator$info$en {
 	_Translations$coordinator$info$sk._(TranslationsSk root) : this._root = root, super.internal(root);
@@ -953,6 +1017,75 @@ class _Translations$coordinator$management$sk extends Translations$coordinator$m
 	@override String get metricYourOffersTooltip => 'Počet ponúk, ktoré si úspešne dokončil s týmto koordinátorom.';
 	@override String get metricNetworkOffers => 'Ponuky (30d)';
 	@override String get metricNetworkOffersTooltip => 'Úspešné ponuky vyrovnané týmto koordinátorom naprieč všetkými používateľmi za posledných 30 dní.';
+}
+
+// Path: disputeChat.evidenceDeadline
+class _Translations$disputeChat$evidenceDeadline$sk extends Translations$disputeChat$evidenceDeadline$en {
+	_Translations$disputeChat$evidenceDeadline$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Lehota na predloženie dôkazov';
+	@override String remaining({required Object time}) => 'Predložte dôkazy podporujúce vaše tvrdenie do ${time}. Po uplynutí lehoty môže koordinátor rozhodnúť v prospech protistrany podľa dostupných dôkazov.';
+	@override String get expired => 'Lehota na predloženie dôkazov uplynula. Koordinátor môže teraz rozhodnúť podľa dostupných dôkazov.';
+	@override String period({required Object time}) => 'Koordinátor poskytuje na dôkazy najviac ${time} od otvorenia sporu. Odpočítavanie sa začne, keď bude dostupný čas otvorenia sporu.';
+}
+
+// Path: disputeChat.tooltips
+class _Translations$disputeChat$tooltips$sk extends Translations$disputeChat$tooltips$en {
+	_Translations$disputeChat$tooltips$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get refresh => 'Obnoviť správy';
+	@override String get attachEvidence => 'Priložiť doklad o platbe';
+	@override String get send => 'Odoslať správu';
+}
+
+// Path: disputeChat.errors
+class _Translations$disputeChat$errors$sk extends Translations$disputeChat$errors$en {
+	_Translations$disputeChat$errors$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get accountNotReady => 'Súkromné správy budú dostupné, keď bude váš účet Nostr pripravený.';
+	@override String get subscriptionFailed => 'Pripojenie súkromných správ zlyhalo. Obnovte konverzáciu.';
+	@override String get decryptFailed => 'Súkromnú správu sa nepodarilo dešifrovať.';
+	@override String get operationFailed => 'Operácia súkromných správ zlyhala. Skúste to znova.';
+	@override String get nostrNotInitialized => 'Nostr nie je inicializovaný.';
+	@override String get attachmentsRequireNip17 => 'Prílohy sú dostupné iba v kanáli NIP-17.';
+}
+
+// Path: receivingInvoice.errors
+class _Translations$receivingInvoice$errors$sk extends Translations$receivingInvoice$errors$en {
+	_Translations$receivingInvoice$errors$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get walletUnavailable => 'Služba peňaženky nie je dostupná.';
+	@override String get noBolt11 => 'Peňaženka nevrátila BOLT11 faktúru.';
+}
+
+// Path: maker.refundInvoice
+class _Translations$maker$refundInvoice$sk extends Translations$maker$refundInvoice$en {
+	_Translations$maker$refundInvoice$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Koordinátor rozhodol vo váš prospech';
+	@override String instructions({required Object amount}) => 'Vyberte prijímaciu peňaženku alebo vložte Lightning faktúru na presnú sumu ${amount} pre vrátenie platby.';
+	@override String get invoiceLabel => 'Faktúra na vrátenie presnej sumy';
+	@override String get submit => 'Odoslať faktúru na vrátenie platby';
+	@override String get addWallet => 'Pridať novú peňaženku';
+	@override String get noReceivingWallet => 'Nie je nastavená žiadna prijímacia peňaženka. Pridajte ju alebo vložte faktúru z inej peňaženky.';
+	@override String get paymentFailed => 'Predchádzajúci pokus o vrátenie platby zlyhal. Vyberte inú peňaženku alebo odošlite novú faktúru.';
+	@override String submitFailed({required Object details}) => 'Faktúru na vrátenie platby sa nepodarilo odoslať: ${details}';
+	@override late final _Translations$maker$refundInvoice$errors$sk errors = _Translations$maker$refundInvoice$errors$sk._(_root);
 }
 
 // Path: maker.roleSelection
@@ -1082,7 +1215,8 @@ class _Translations$maker$conflict$sk extends Translations$maker$conflict$en {
 	@override String get title => 'Konflikt ponuky';
 	@override String get headline => 'Nahlásený konflikt ponuky';
 	@override String body({required Object code}) => 'Označil si ${code} ako neplatný, ale kupujúci nahlásil konflikt, čím naznačuje, že podľa neho bola platba úspešná.';
-	@override String get instructions => 'Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.';
+	@override String get instructions => 'Potvrď výsledok pred vypršaním časovača. Ak bola platba úspešná, potvrď ju, aby mohol byť kupujúci vyplatený. Ak zlyhala, otvor spor. Ak nič neurobíš, automaticky sa otvorí formálny spor.';
+	@override String timeoutLabel({required Object time}) => 'Formálny spor sa automaticky otvorí o ${time}';
 	@override late final _Translations$maker$conflict$actions$sk actions = _Translations$maker$conflict$actions$sk._(_root);
 	@override late final _Translations$maker$conflict$disputeDialog$sk disputeDialog = _Translations$maker$conflict$disputeDialog$sk._(_root);
 	@override late final _Translations$maker$conflict$feedback$sk feedback = _Translations$maker$conflict$feedback$sk._(_root);
@@ -1266,14 +1400,26 @@ class _Translations$taker$conflict$sk extends Translations$taker$conflict$en {
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Konflikt ponuky';
-	@override String get headline => 'Nahlásený konflikt ponuky';
-	@override String body({required Object code}) => 'Predávajúci označil ${code} ako neplatný, ale ty si nahlásil konflikt, čím naznačuješ, že podľa teba bola platba úspešná.';
-	@override String get instructions => 'Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.';
+	@override String get title => 'Čaká sa na potvrdenie platby';
+	@override String get headline => 'Čaká sa na potvrdenie Makera';
+	@override String body({required Object code}) => 'Nahlásil si, že platba ${code} bola zaúčtovaná, ale Maker uviedol, že nebola úspešná. Tieto hlásenia si odporujú.';
+	@override String get instructions => 'Maker teraz musí potvrdiť výsledok. Ak potvrdí, že platba bola úspešná, tvoja výplata bude pokračovať. Ak potvrdí neúspech alebo vyprší časovač, ponuka prejde do formálneho sporu a sprístupní sa chat sporu.';
+	@override String timeoutLabel({required Object time}) => 'Formálny spor sa automaticky otvorí o ${time}';
 	@override late final _Translations$taker$conflict$actions$sk actions = _Translations$taker$conflict$actions$sk._(_root);
 	@override late final _Translations$taker$conflict$feedback$sk feedback = _Translations$taker$conflict$feedback$sk._(_root);
 	@override late final _Translations$taker$conflict$errors$sk errors = _Translations$taker$conflict$errors$sk._(_root);
 	@override late final _Translations$taker$conflict$nostrContact$sk nostrContact = _Translations$taker$conflict$nostrContact$sk._(_root);
+}
+
+// Path: taker.dispute
+class _Translations$taker$dispute$sk extends Translations$taker$dispute$en {
+	_Translations$taker$dispute$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => 'Otvorený formálny spor';
+	@override String get body => 'Ponuku teraz posudzuje koordinátor. Pomocou chatu sporu nižšie komunikuj s koordinátorom a poskytni požadované dôkazy.';
 }
 
 // Path: blik.instructions
@@ -1514,6 +1660,32 @@ class _Translations$landing$actions$sk extends Translations$landing$actions$en {
 	@override String get howItWorks => 'Ako to funguje?';
 }
 
+// Path: settings.coordinatorConsole
+class _Translations$settings$coordinatorConsole$sk extends Translations$settings$coordinatorConsole$en {
+	_Translations$settings$coordinatorConsole$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Konzola koordinátora';
+	@override String get subtitle => 'Spravujte spory pomocou podpisovača koordinátora';
+	@override String get signInTitle => 'Prihlásiť sa ako koordinátor';
+	@override String get signInDescription => 'Použite Nostr kľúč, ktorý identifikuje koordinátora, na kontrolu a riešenie sporov.';
+	@override String get separateIdentityNote => 'Podpisovač koordinátora používa samostatnú reláciu NDK a nikdy nenahrádza obchodnú identitu Neko.';
+	@override String get loginWithSignerApp => 'Prihlásiť sa cez podpisovaciu aplikáciu';
+	@override String get loginWithExtension => 'Prihlásiť sa cez rozšírenie prehliadača';
+	@override String get loginWithNsec => 'Prihlásiť sa pomocou nsec';
+	@override String get nsecDialogTitle => 'Súkromný kľúč koordinátora';
+	@override String get nsecFieldLabel => 'Súkromný kľúč';
+	@override String get nsecSecurityNote => 'Súkromný kľúč je bezpečne uložený v tomto zariadení a používa ho iba samostatná relácia koordinátora.';
+	@override String get unsupportedPlatform => 'Prihlásenie koordinátora je momentálne dostupné v systémoch Android, Linux a na webe.';
+	@override String get loginFailed => 'Prihlásenie koordinátora zlyhalo';
+	@override String get accountsTitle => 'Účty koordinátorov';
+	@override String get savedAccounts => 'Uložené účty koordinátorov';
+	@override String get addAccount => 'Pridať účet koordinátora';
+	@override String get removeAccount => 'Odstrániť účet koordinátora';
+}
+
 // Path: settings.offerCreation
 class _Translations$settings$offerCreation$sk extends Translations$settings$offerCreation$en {
 	_Translations$settings$offerCreation$sk._(TranslationsSk root) : this._root = root, super.internal(root);
@@ -1586,6 +1758,18 @@ class _Translations$wallet$missingReceiving$sk extends Translations$wallet$missi
 	@override String get title => 'Vyžaduje sa peňaženka na prijímanie';
 	@override String get message => 'Nie je nakonfigurovaná žiadna peňaženka na prijímanie. Pridaj jednu v nastaveniach peňaženky, aby si mohol prijímať ponuky.';
 	@override String get openSettings => 'Nastavenia peňaženky';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$sk extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Vyžaduje sa BOLT11 peňaženka';
+	@override String get message => 'Tento koordinátor môže túto ponuku vyplatiť iba cez BOLT11.';
+	@override String get explanation => 'Tvoja prijímacia peňaženka podporuje ponuky BOLT12, ale nevie vytvoriť požadovanú BOLT11 faktúru. Pridaj prijímaciu peňaženku kompatibilnú s BOLT11.';
 }
 
 // Path: wallet.details
@@ -1828,6 +2012,35 @@ class _Translations$offerNotifications$takerPaid$sk extends Translations$offerNo
 	@override String get body => 'Tvoja Lightning platba bola odoslaná.';
 }
 
+// Path: twint.shop
+class _Translations$twint$shop$sk extends Translations$twint$shop$en {
+	_Translations$twint$shop$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Naskenovať QR obchodu';
+	@override String get scanInstructions => 'Naskenuj platobný QR kód na termináli v obchode. Suma v CHF sa načíta z kódu.';
+	@override String get invalidQr => 'Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli.';
+	@override String get amountMismatch => 'Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby.';
+	@override String get cameraFailed => 'Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova.';
+	@override String get scanned => 'QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF.';
+	@override String get rescan => 'Naskenovať iný QR kód';
+	@override String get coordinatorUnsupported => 'Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje.';
+	@override String get loadingFailed => 'Platobný QR kód sa nepodarilo načítať. Skús to znova.';
+	@override String get replacementInstructions => 'Naskenuj nový QR kód obchodu s rovnakou sumou v CHF ako financovaná ponuka.';
+	@override String get replacementScanned => 'Náhradný QR kód zodpovedá financovanej sume.';
+	@override String get qrLabel => 'QR kód na platbu cez TWINT';
+	@override String get payInstructions => 'Naskenuj tento QR kód cez TWINT alebo ulož obrázok a importuj ho z galérie do TWINT. Pred platbou skontroluj obchodníka a sumu.';
+	@override String get saveImage => 'Uložiť QR medzi fotky';
+	@override String get downloadImage => 'Stiahnuť obrázok QR';
+	@override String get saving => 'Ukladá sa obrázok QR…';
+	@override String get saved => 'Obrázok QR bol uložený. Otvor TWINT a importuj ho z galérie.';
+	@override String get downloadStarted => 'Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT.';
+	@override String get saveFailed => 'Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova.';
+	@override String get expired => 'Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok.';
+}
+
 // Path: offers.details.categories
 class _Translations$offers$details$categories$sk extends Translations$offers$details$categories$en {
 	_Translations$offers$details$categories$sk._(TranslationsSk root) : this._root = root, super.internal(root);
@@ -1865,6 +2078,27 @@ class _Translations$coordinator$coldStart$phases$sk extends Translations$coordin
 	@override String get checkingHealth => 'Kontrola stavu koordinátorov';
 	@override String get finalizing => 'Zapínajú sa predvolení koordinátori';
 	@override String get completed => 'Hotovo';
+}
+
+// Path: maker.refundInvoice.errors
+class _Translations$maker$refundInvoice$errors$sk extends Translations$maker$refundInvoice$errors$en {
+	_Translations$maker$refundInvoice$errors$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get backendUnavailable => 'Služba platieb Lightning nie je dostupná.';
+	@override String get missing => 'Zadajte faktúru na vrátenie platby.';
+	@override String get invalid => 'Zadajte platnú BOLT11 faktúru na vrátenie platby.';
+	@override String get wrongNetwork => 'Faktúra na vrátenie platby patrí do nesprávnej siete Lightning.';
+	@override String get wrongAmount => 'Faktúra musí obsahovať presnú sumu vrátenia platby.';
+	@override String get invalidExpiry => 'Faktúra na vrátenie platby má neplatnú dobu platnosti.';
+	@override String get futureTimestamp => 'Časová pečiatka faktúry je v budúcnosti.';
+	@override String get expired => 'Faktúra na vrátenie platby vypršala. Vytvorte novú.';
+	@override String get invalidPaymentHash => 'Faktúra nemá platný hash platby.';
+	@override String get reusedInvoice => 'Použite novú faktúru; faktúra ponuky nemôže prijať vrátenie platby.';
+	@override String get unsupportedNetwork => 'Táto sieť Lightning nie je podporovaná.';
+	@override String get unknown => 'Skontrolujte faktúru a skúste to znova.';
 }
 
 // Path: maker.amountForm.progress
@@ -2266,6 +2500,7 @@ class _Translations$taker$waitConfirmation$expiredActions$sk extends Translation
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
+	@override String get checkReportStatus => 'Skontrolovať stav / zopakovať hlásenie';
 	@override String reportConflict({required Object code}) => '${code} bol strhnutý z môjho bankového účtu';
 	@override String renewReservation({required Object code}) => 'Skúsiť znova s novým ${code}';
 	@override String get cancelReservation => 'Zrušiť rezerváciu';
@@ -2280,7 +2515,7 @@ class _Translations$taker$waitConfirmation$feedback$sk extends Translations$take
 	// Translations
 	@override String get makerConfirmed => 'Predávajúci potvrdil platbu.';
 	@override String get paymentSuccessful => 'Platba úspešná! Čoskoro dostaneš prostriedky.';
-	@override String get conflictReported => 'Konflikt nahlásený. Koordinátor posúdi situáciu.';
+	@override String get chargeReported => 'Hlásenie o strhnutí platby prijaté. Čaká sa na odpoveď Makera alebo automatické potvrdenie.';
 }
 
 // Path: taker.waitConfirmation.errors
@@ -2292,6 +2527,7 @@ class _Translations$taker$waitConfirmation$errors$sk extends Translations$taker$
 	// Translations
 	@override String get invalidOfferStateReceived => 'Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa.';
 	@override String reportingConflict({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}';
+	@override String get reportingConflictUnconfirmed => 'Čaká sa na potvrdenie hlásenia. Nie je známe, či bolo doručené. Skontroluj stav a v prípade potreby hlásenie odošli znova. Ak stav zostane nedostupný, kontaktuj podporu.';
 }
 
 // Path: taker.paymentProcess.states
@@ -2524,7 +2760,7 @@ class _Translations$taker$conflict$feedback$sk extends Translations$taker$confli
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
-	@override String get reported => 'Konflikt nahlásený. Koordinátor ho posúdi.';
+	@override String get reported => 'Nahlásený konflikt platby. Čaká sa na potvrdenie Makera.';
 }
 
 // Path: taker.conflict.errors
@@ -2782,6 +3018,8 @@ extension on TranslationsSk {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Neplatný ${code}',
 			'offers.status.conflict' => 'Konflikt',
 			'offers.status.dispute' => 'Spor',
+			'offers.status.refundedMaker' => 'Makerovi boli vrátené prostriedky',
+			'offers.status.refundingMaker' => 'Vrátenie platby makerovi',
 			'offers.status.makerConfirmed' => 'Potvrdená',
 			'offers.status.settled' => 'Vyrovnaná',
 			'offers.status.payingTaker' => 'Platí sa kupujúcemu',
@@ -2840,6 +3078,10 @@ extension on TranslationsSk {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Suma je príliš vysoká. Maximum je ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Bankomat nedokáže vydať túto sumu. Použi kombináciu bankoviek: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} vydá na jeden výber najviac ${limit} ${currency}.',
+			'coordinator.bolt12.title' => 'Podpora BOLT12',
+			'coordinator.bolt12.body' => 'Tento koordinátor môže platiť do peňaženiek, ktoré prijímajú platby cez ponuky BOLT12. Tieto peňaženky môžeš použiť na výplaty pre takerov alebo vrátenie prostriedkov makerom.',
+			'coordinator.bolt12.details' => 'Ponuka BOLT12 je opakovane použiteľná žiadosť o platbu cez Lightning, ktorú môžeš zdieľať ako text alebo QR kód. Tá istá ponuka môže prijať viacero platieb, takže nemusíš zakaždým vytvárať a zdieľať novú žiadosť o platbu. Tvoja prijímacia peňaženka musí podporovať ponuky BOLT12.',
+			'coordinator.bolt12.learnMore' => 'Viac informácií na bolt12.org',
 			'coordinator.title' => 'Koordinátori',
 			'coordinator.info.fee' => 'poplatok',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Suma: ${minAmount}-${maxAmount} ${currency}',
@@ -2921,6 +3163,50 @@ extension on TranslationsSk {
 			'coordinator.management.metricYourOffersTooltip' => 'Počet ponúk, ktoré si úspešne dokončil s týmto koordinátorom.',
 			'coordinator.management.metricNetworkOffers' => 'Ponuky (30d)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Úspešné ponuky vyrovnané týmto koordinátorom naprieč všetkými používateľmi za posledných 30 dní.',
+			'disputeChat.viewHistory' => 'Zobraziť históriu sporu',
+			'disputeChat.historyTitle' => 'História sporu',
+			'disputeChat.ruledForMaker' => 'Rozhodnuté v prospech Makera',
+			'disputeChat.ruledForTaker' => 'Rozhodnuté v prospech Takera',
+			'disputeChat.legacyChannel' => 'Starší kompatibilný kanál NIP-04',
+			'disputeChat.privateConversation' => 'Súkromná konverzácia s koordinátorom',
+			'disputeChat.noMessages' => 'Zatiaľ žiadne správy.',
+			'disputeChat.replyHint' => 'Odpovedzte tu',
+			'disputeChat.readOnly' => 'História tohto vyriešeného sporu je iba na čítanie.',
+			'disputeChat.evidenceDeadline.title' => 'Lehota na predloženie dôkazov',
+			'disputeChat.evidenceDeadline.remaining' => ({required Object time}) => 'Predložte dôkazy podporujúce vaše tvrdenie do ${time}. Po uplynutí lehoty môže koordinátor rozhodnúť v prospech protistrany podľa dostupných dôkazov.',
+			'disputeChat.evidenceDeadline.expired' => 'Lehota na predloženie dôkazov uplynula. Koordinátor môže teraz rozhodnúť podľa dostupných dôkazov.',
+			'disputeChat.evidenceDeadline.period' => ({required Object time}) => 'Koordinátor poskytuje na dôkazy najviac ${time} od otvorenia sporu. Odpočítavanie sa začne, keď bude dostupný čas otvorenia sporu.',
+			'disputeChat.tooltips.refresh' => 'Obnoviť správy',
+			'disputeChat.tooltips.attachEvidence' => 'Priložiť doklad o platbe',
+			'disputeChat.tooltips.send' => 'Odoslať správu',
+			'disputeChat.errors.accountNotReady' => 'Súkromné správy budú dostupné, keď bude váš účet Nostr pripravený.',
+			'disputeChat.errors.subscriptionFailed' => 'Pripojenie súkromných správ zlyhalo. Obnovte konverzáciu.',
+			'disputeChat.errors.decryptFailed' => 'Súkromnú správu sa nepodarilo dešifrovať.',
+			'disputeChat.errors.operationFailed' => 'Operácia súkromných správ zlyhala. Skúste to znova.',
+			'disputeChat.errors.nostrNotInitialized' => 'Nostr nie je inicializovaný.',
+			'disputeChat.errors.attachmentsRequireNip17' => 'Prílohy sú dostupné iba v kanáli NIP-17.',
+			'receivingInvoice.errors.walletUnavailable' => 'Služba peňaženky nie je dostupná.',
+			'receivingInvoice.errors.noBolt11' => 'Peňaženka nevrátila BOLT11 faktúru.',
+			'maker.refundInvoice.title' => 'Koordinátor rozhodol vo váš prospech',
+			'maker.refundInvoice.instructions' => ({required Object amount}) => 'Vyberte prijímaciu peňaženku alebo vložte Lightning faktúru na presnú sumu ${amount} pre vrátenie platby.',
+			'maker.refundInvoice.invoiceLabel' => 'Faktúra na vrátenie presnej sumy',
+			'maker.refundInvoice.submit' => 'Odoslať faktúru na vrátenie platby',
+			'maker.refundInvoice.addWallet' => 'Pridať novú peňaženku',
+			'maker.refundInvoice.noReceivingWallet' => 'Nie je nastavená žiadna prijímacia peňaženka. Pridajte ju alebo vložte faktúru z inej peňaženky.',
+			'maker.refundInvoice.paymentFailed' => 'Predchádzajúci pokus o vrátenie platby zlyhal. Vyberte inú peňaženku alebo odošlite novú faktúru.',
+			'maker.refundInvoice.submitFailed' => ({required Object details}) => 'Faktúru na vrátenie platby sa nepodarilo odoslať: ${details}',
+			'maker.refundInvoice.errors.backendUnavailable' => 'Služba platieb Lightning nie je dostupná.',
+			'maker.refundInvoice.errors.missing' => 'Zadajte faktúru na vrátenie platby.',
+			'maker.refundInvoice.errors.invalid' => 'Zadajte platnú BOLT11 faktúru na vrátenie platby.',
+			'maker.refundInvoice.errors.wrongNetwork' => 'Faktúra na vrátenie platby patrí do nesprávnej siete Lightning.',
+			'maker.refundInvoice.errors.wrongAmount' => 'Faktúra musí obsahovať presnú sumu vrátenia platby.',
+			'maker.refundInvoice.errors.invalidExpiry' => 'Faktúra na vrátenie platby má neplatnú dobu platnosti.',
+			'maker.refundInvoice.errors.futureTimestamp' => 'Časová pečiatka faktúry je v budúcnosti.',
+			'maker.refundInvoice.errors.expired' => 'Faktúra na vrátenie platby vypršala. Vytvorte novú.',
+			'maker.refundInvoice.errors.invalidPaymentHash' => 'Faktúra nemá platný hash platby.',
+			'maker.refundInvoice.errors.reusedInvoice' => 'Použite novú faktúru; faktúra ponuky nemôže prijať vrátenie platby.',
+			'maker.refundInvoice.errors.unsupportedNetwork' => 'Táto sieť Lightning nie je podporovaná.',
+			'maker.refundInvoice.errors.unknown' => 'Skontrolujte faktúru a skúste to znova.',
 			'maker.roleSelection.button' => 'ZAPLATIŤ cez Lightning',
 			'maker.amountForm.progress.step1' => '1. Vytvoriť ponuku',
 			'maker.amountForm.progress.step2' => '2. Čakať na kupujúceho',
@@ -3061,7 +3347,8 @@ extension on TranslationsSk {
 			'maker.conflict.title' => 'Konflikt ponuky',
 			'maker.conflict.headline' => 'Nahlásený konflikt ponuky',
 			'maker.conflict.body' => ({required Object code}) => 'Označil si ${code} ako neplatný, ale kupujúci nahlásil konflikt, čím naznačuje, že podľa neho bola platba úspešná.',
-			'maker.conflict.instructions' => 'Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.',
+			'maker.conflict.instructions' => 'Potvrď výsledok pred vypršaním časovača. Ak bola platba úspešná, potvrď ju, aby mohol byť kupujúci vyplatený. Ak zlyhala, otvor spor. Ak nič neurobíš, automaticky sa otvorí formálny spor.',
+			'maker.conflict.timeoutLabel' => ({required Object time}) => 'Formálny spor sa automaticky otvorí o ${time}',
 			'maker.conflict.actions.back' => 'Späť domov',
 			'maker.conflict.actions.confirmPayment' => ({required Object code}) => 'Moja chyba, potvrdiť úspešnú platbu ${code}',
 			'maker.conflict.actions.openDispute' => ({required Object code}) => 'Platba ${code} NEbola úspešná, OTVORIŤ SPOR',
@@ -3134,14 +3421,18 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'Ak bola platba ${code} strhnutá z tvojho bankového účtu, neboj sa, bitcoin je stále bezpečne uzamknutý u koordinátora.',
 			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Označil si ${code} ako strhnutý',
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Predávajúci má ${minutes} min na potvrdenie platby alebo jej spochybnenie. Ak neurobí nič, platba sa automaticky potvrdí a ty dostaneš bitcoin.',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Skontrolovať stav / zopakovať hlásenie',
 			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} bol strhnutý z môjho bankového účtu',
 			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Skúsiť znova s novým ${code}',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Zrušiť rezerváciu',
 			'taker.waitConfirmation.feedback.makerConfirmed' => 'Predávajúci potvrdil platbu.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Platba úspešná! Čoskoro dostaneš prostriedky.',
-			'taker.waitConfirmation.feedback.conflictReported' => 'Konflikt nahlásený. Koordinátor posúdi situáciu.',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Hlásenie o strhnutí platby prijaté. Čaká sa na odpoveď Makera alebo automatické potvrdenie.',
 			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa.',
 			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Čaká sa na potvrdenie hlásenia. Nie je známe, či bolo doručené. Skontroluj stav a v prípade potreby hlásenie odošli znova. Ak stav zostane nedostupný, kontaktuj podporu.',
 			'taker.paymentProcess.title' => 'Priebeh platby',
 			'taker.paymentProcess.waitingForOfferUpdate' => 'Čaká sa na aktualizáciu stavu ponuky...',
 			'taker.paymentProcess.states.preparing' => 'Príprava na odoslanie platby...',
@@ -3190,8 +3481,6 @@ extension on TranslationsSk {
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Ak ti banka strhla platbu ${code}, NEPOKRAČUJ. Predávajúci mohol tvoj kód použiť a po tejto akcii už koordinátor nemusí vedieť zaručiť vyplatenie tvojich bitcoinov.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Späť a skontrolovať banku',
 			'taker.criticalCodeDecision.actions.proceed' => 'NEBOLO mi strhnuté — pokračovať',
-			_ => null,
-		} ?? switch (path) {
 			'taker.invalidBlik.title' => ({required Object code}) => 'Neplatný kód ${code}',
 			'taker.invalidBlik.message' => ({required Object code}) => 'Predávajúci odmietol kód ${code}',
 			'taker.invalidBlik.explanation' => ({required Object code}) => 'Predávajúci ponuky uviedol, že ${code}, ktorý si poskytol, bol neplatný alebo nefungoval.\n\nČo chceš urobiť?',
@@ -3212,12 +3501,13 @@ extension on TranslationsSk {
 			'taker.invalidBlik.feedback.conflictReportedSuccess' => 'Konflikt nahlásený. Koordinátor ho posúdi.',
 			'taker.invalidBlik.errors.reservationFailed' => 'Nepodarilo sa znova rezervovať ponuku',
 			'taker.invalidBlik.errors.conflictReport' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
-			'taker.conflict.title' => 'Konflikt ponuky',
-			'taker.conflict.headline' => 'Nahlásený konflikt ponuky',
-			'taker.conflict.body' => ({required Object code}) => 'Predávajúci označil ${code} ako neplatný, ale ty si nahlásil konflikt, čím naznačuješ, že podľa teba bola platba úspešná.',
-			'taker.conflict.instructions' => 'Počkaj, kým koordinátor posúdi situáciu. Môžu ťa požiadať o ďalšie detaily. Skontroluj to neskôr alebo kontaktuj podporu v prípade potreby.',
+			'taker.conflict.title' => 'Čaká sa na potvrdenie platby',
+			'taker.conflict.headline' => 'Čaká sa na potvrdenie Makera',
+			'taker.conflict.body' => ({required Object code}) => 'Nahlásil si, že platba ${code} bola zaúčtovaná, ale Maker uviedol, že nebola úspešná. Tieto hlásenia si odporujú.',
+			'taker.conflict.instructions' => 'Maker teraz musí potvrdiť výsledok. Ak potvrdí, že platba bola úspešná, tvoja výplata bude pokračovať. Ak potvrdí neúspech alebo vyprší časovač, ponuka prejde do formálneho sporu a sprístupní sa chat sporu.',
+			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formálny spor sa automaticky otvorí o ${time}',
 			'taker.conflict.actions.back' => 'Späť domov',
-			'taker.conflict.feedback.reported' => 'Konflikt nahlásený. Koordinátor ho posúdi.',
+			'taker.conflict.feedback.reported' => 'Nahlásený konflikt platby. Čaká sa na potvrdenie Makera.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
 			'taker.conflict.nostrContact.title' => 'Kontaktuj koordinátora na Nostr',
 			'taker.conflict.nostrContact.description' => 'Môžeš koordinátorovi napísať priamu správu (DM) a požiadať o pomoc s týmto sporom.',
@@ -3226,6 +3516,8 @@ extension on TranslationsSk {
 			'taker.conflict.nostrContact.npubCopied' => 'Npub koordinátora skopírovaný do schránky!',
 			'taker.conflict.nostrContact.yourIdentityDescription' => 'Ak chceš posielať DM, prihlás sa svojím súkromným kľúčom Neko (nsec) v ľubovoľnom Nostr klientovi, ktorý podporuje priame správy.',
 			'taker.conflict.nostrContact.manageNekoKeys' => 'Spravovať Neko kľúče',
+			'taker.dispute.headline' => 'Otvorený formálny spor',
+			'taker.dispute.body' => 'Ponuku teraz posudzuje koordinátor. Pomocou chatu sporu nižšie komunikuj s koordinátorom a poskytni požadované dôkazy.',
 			'blik.instructions.taker' => ({required Object code}) => 'Keď predávajúci zadá ${code}, budeš musieť potvrdiť platbu vo svojej bankovej aplikácii. Pred potvrdením sa uisti, že suma je správna.',
 			'home.notifications.title' => 'Dostávaj upozornenia na nové ponuky cez:',
 			'home.notifications.telegram' => 'Telegram',
@@ -3314,6 +3606,23 @@ extension on TranslationsSk {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Nastavenia',
+			'settings.coordinatorConsole.title' => 'Konzola koordinátora',
+			'settings.coordinatorConsole.subtitle' => 'Spravujte spory pomocou podpisovača koordinátora',
+			'settings.coordinatorConsole.signInTitle' => 'Prihlásiť sa ako koordinátor',
+			'settings.coordinatorConsole.signInDescription' => 'Použite Nostr kľúč, ktorý identifikuje koordinátora, na kontrolu a riešenie sporov.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'Podpisovač koordinátora používa samostatnú reláciu NDK a nikdy nenahrádza obchodnú identitu Neko.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Prihlásiť sa cez podpisovaciu aplikáciu',
+			'settings.coordinatorConsole.loginWithExtension' => 'Prihlásiť sa cez rozšírenie prehliadača',
+			'settings.coordinatorConsole.loginWithNsec' => 'Prihlásiť sa pomocou nsec',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Súkromný kľúč koordinátora',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Súkromný kľúč',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'Súkromný kľúč je bezpečne uložený v tomto zariadení a používa ho iba samostatná relácia koordinátora.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'Prihlásenie koordinátora je momentálne dostupné v systémoch Android, Linux a na webe.',
+			'settings.coordinatorConsole.loginFailed' => 'Prihlásenie koordinátora zlyhalo',
+			'settings.coordinatorConsole.accountsTitle' => 'Účty koordinátorov',
+			'settings.coordinatorConsole.savedAccounts' => 'Uložené účty koordinátorov',
+			'settings.coordinatorConsole.addAccount' => 'Pridať účet koordinátora',
+			'settings.coordinatorConsole.removeAccount' => 'Odstrániť účet koordinátora',
 			'settings.offerCreation.title' => 'Vytváranie ponúk',
 			'settings.offerCreation.defaultCategory' => 'Predvolená kategória',
 			'settings.offerCreation.defaultBank' => 'Predvolená banka',
@@ -3357,6 +3666,9 @@ extension on TranslationsSk {
 			'wallet.missingReceiving.title' => 'Vyžaduje sa peňaženka na prijímanie',
 			'wallet.missingReceiving.message' => 'Nie je nakonfigurovaná žiadna peňaženka na prijímanie. Pridaj jednu v nastaveniach peňaženky, aby si mohol prijímať ponuky.',
 			'wallet.missingReceiving.openSettings' => 'Nastavenia peňaženky',
+			'wallet.incompatibleReceiving.title' => 'Vyžaduje sa BOLT11 peňaženka',
+			'wallet.incompatibleReceiving.message' => 'Tento koordinátor môže túto ponuku vyplatiť iba cez BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'Tvoja prijímacia peňaženka podporuje ponuky BOLT12, ale nevie vytvoriť požadovanú BOLT11 faktúru. Pridaj prijímaciu peňaženku kompatibilnú s BOLT11.',
 			'wallet.details.title' => 'Detaily peňaženky',
 			'wallet.details.pendingTitle' => 'Čakajúce transakcie',
 			'wallet.details.finishedTitle' => 'Dokončené transakcie',
@@ -3432,6 +3744,26 @@ extension on TranslationsSk {
 			'offerNotifications.invalidBlik.body' => ({required Object code}) => 'Predávajúci označil tvoj ${code} ako neplatný.',
 			'offerNotifications.takerPaid.title' => 'Platba prijatá',
 			'offerNotifications.takerPaid.body' => 'Tvoja Lightning platba bola odoslaná.',
+			'twint.shop.scanTitle' => 'Naskenovať QR obchodu',
+			'twint.shop.scanInstructions' => 'Naskenuj platobný QR kód na termináli v obchode. Suma v CHF sa načíta z kódu.',
+			'twint.shop.invalidQr' => 'Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli.',
+			'twint.shop.amountMismatch' => 'Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby.',
+			'twint.shop.cameraFailed' => 'Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova.',
+			'twint.shop.scanned' => 'QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF.',
+			'twint.shop.rescan' => 'Naskenovať iný QR kód',
+			'twint.shop.coordinatorUnsupported' => 'Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje.',
+			'twint.shop.loadingFailed' => 'Platobný QR kód sa nepodarilo načítať. Skús to znova.',
+			'twint.shop.replacementInstructions' => 'Naskenuj nový QR kód obchodu s rovnakou sumou v CHF ako financovaná ponuka.',
+			'twint.shop.replacementScanned' => 'Náhradný QR kód zodpovedá financovanej sume.',
+			'twint.shop.qrLabel' => 'QR kód na platbu cez TWINT',
+			'twint.shop.payInstructions' => 'Naskenuj tento QR kód cez TWINT alebo ulož obrázok a importuj ho z galérie do TWINT. Pred platbou skontroluj obchodníka a sumu.',
+			'twint.shop.saveImage' => 'Uložiť QR medzi fotky',
+			'twint.shop.downloadImage' => 'Stiahnuť obrázok QR',
+			'twint.shop.saving' => 'Ukladá sa obrázok QR…',
+			'twint.shop.saved' => 'Obrázok QR bol uložený. Otvor TWINT a importuj ho z galérie.',
+			'twint.shop.downloadStarted' => 'Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT.',
+			'twint.shop.saveFailed' => 'Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova.',
+			'twint.shop.expired' => 'Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok.',
 			'altstore.dialogTitle' => 'AltStore nie je nainštalovaný',
 			'altstore.step1Title' => 'Stiahni a nainštaluj AltStore PAL',
 			'altstore.step1Button' => 'altstore.io/download',

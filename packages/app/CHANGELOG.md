@@ -1,3 +1,12 @@
+## [0.11.0] - 2026-09-01
+- feat: dispute chat with coordinator
+- feat: bolt12 wallet support
+- feat: automatic new release version update from nip-82 event (zapstore)
+- fix: cashu backup/restore to/from file
+- feat: refund maker with invoice entered in app when dispute ruled against taker
+- fix: preserve wallet state when generating or restoring a Neko
+- fix: many security issues discovered with LLMs
+
 ## [0.10.1] - 2026-08-22
 - feat: add new SK Prima bank
 - fix: SK VÚB code validity is 10 minutes, not 3

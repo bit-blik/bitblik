@@ -5,6 +5,72 @@ import 'package:ndk/ndk.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('Offer NIP-69 dispute extension', () {
+    Offer parse(String status, {String? bitblikStatus}) =>
+        Offer.fromNostrEvent(Nip01Event(
+          pubKey: 'coordinator',
+          kind: kKindOffer,
+          tags: [
+            ['d', 'offer-dispute'],
+            ['s', status],
+            if (bitblikStatus != null) ['bitblik_status', bitblikStatus],
+            ['dispute_at', '1767301200'],
+          ],
+          content: '',
+        ));
+
+    test('in-progress with dispute marker is an active dispute', () {
+      final offer = parse('in-progress', bitblikStatus: 'dispute');
+      expect(offer.status, OfferStatus.dispute);
+      expect(offer.isDispute, isTrue);
+    });
+
+    test('unmarked in-progress stays reserved despite dispute history', () {
+      expect(parse('in-progress').status, OfferStatus.reserved);
+    });
+
+    test('legacy dispute status remains supported', () {
+      expect(parse('dispute').status, OfferStatus.conflict);
+    });
+
+    test('unknown extension values leave standard status unchanged', () {
+      expect(parse('in-progress', bitblikStatus: 'future-state').status,
+          OfferStatus.reserved);
+    });
+
+    test('dispute marker cannot override pending or terminal status', () {
+      for (final entry in {
+        'pending': OfferStatus.funded,
+        'success': OfferStatus.takerPaid,
+        'canceled': OfferStatus.cancelled,
+      }.entries) {
+        expect(parse(entry.key, bitblikStatus: 'dispute').status, entry.value,
+            reason: entry.key);
+      }
+    });
+  });
+
+  group('Offer dispute states', () {
+    test('refunding maker remains an active dispute', () {
+      final offer = Offer.fromJson({
+        'id': 'offer-refund-invoice',
+        'amount_sats': 1000,
+        'maker_fees': 10,
+        'fiat_amount': 12.5,
+        'fiat_currency': 'PLN',
+        'status': OfferStatus.refundingMaker.name,
+        'created_at': DateTime.utc(2026, 1, 2).toIso8601String(),
+        'maker_pubkey': 'maker-pubkey',
+        'coordinator_pubkey': 'coordinator-pubkey',
+      });
+
+      expect(offer.status, OfferStatus.refundingMaker);
+      expect(offer.statusRaw, 'refundingMaker');
+      expect(offer.isDispute, isTrue);
+      expect(offer.toJson()['status'], 'refundingMaker');
+    });
+  });
+
   group('Offer category', () {
     test('json roundtrip preserves category', () {
       final offer = Offer(
@@ -63,6 +129,33 @@ void main() {
       final offer = Offer.fromNostrEvent(event);
 
       expect(offer.category, OfferCategory.atm);
+    });
+
+    test('nostr event parses public dispute timestamp', () {
+      final event = Nip01Event(
+        pubKey: 'coordinator-pubkey',
+        kind: kKindOffer,
+        tags: const [
+          ['d', 'offer-dispute'],
+          ['amt', '250000'],
+          ['fa', '100.0'],
+          ['f', 'PLN'],
+          ['s', 'dispute'],
+          ['created_at', '1767225600'],
+          ['p', 'coordinator-pubkey'],
+          ['dispute_at', '1767301200'],
+        ],
+        content: '',
+      );
+
+      final offer = Offer.fromNostrEvent(event);
+
+      expect(
+          offer.disputeAt,
+          DateTime.fromMillisecondsSinceEpoch(
+            1767301200 * 1000,
+            isUtc: true,
+          ));
     });
   });
 
@@ -132,6 +225,60 @@ void main() {
   });
 
   group('Offer RPC json', () {
+    // These fixtures verify transport only, not shop-format validation.
+    for (final fixture in [
+      (OfferCategory.shop, 'Q4SIXZB8VXJ5000000000710CHF00025837'),
+      (OfferCategory.online, '01234'),
+      (null, '01234'),
+    ]) {
+      test('TWINT ${fixture.$1?.name ?? 'legacy'} payload stays exact in JSON',
+          () {
+        final offer = Offer(
+          id: 'twint-transport',
+          amountSats: 10000,
+          makerFees: 50,
+          status: OfferStatus.reserved,
+          fiatAmount: 7.10,
+          fiatCurrency: 'CHF',
+          paymentSystemId: 'twint',
+          createdAt: DateTime.utc(2026, 9, 14),
+          makerPubkey: 'maker-pubkey',
+          takerPubkey: 'taker-pubkey',
+          coordinatorPubkey: 'coordinator-pubkey',
+          category: fixture.$1,
+          blikCode: fixture.$2,
+          holdInvoice: 'private-hold-invoice',
+          holdInvoicePreimage: 'private-preimage',
+        );
+
+        final restored = Offer.fromJson(
+          jsonDecode(jsonEncode(offer.toJsonWithPubkeys()))
+              as Map<String, dynamic>,
+        );
+        expect(restored.blikCode, fixture.$2);
+        expect(restored.category, fixture.$1);
+        expect(restored.fiatAmount, 7.10);
+
+        final privateResponse = jsonDecode(jsonEncode(
+          restored.toRpcJson(includeBlikCode: true, forTaker: true),
+        )) as Map<String, dynamic>;
+        expect(privateResponse['blik_code'], fixture.$2);
+        expect(privateResponse['category'], fixture.$1?.name);
+        for (final field in [
+          'maker_pubkey',
+          'maker_fees',
+          'hold_invoice',
+          'hold_invoice_preimage',
+        ]) {
+          expect(privateResponse.containsKey(field), isFalse, reason: field);
+        }
+
+        final defaultResponse = restored.toRpcJson();
+        expect(defaultResponse.containsKey('blik_code'), isFalse);
+        expect(jsonEncode(defaultResponse), isNot(contains(fixture.$2)));
+      });
+    }
+
     test('omits bulky and sensitive fields by default', () {
       final offer = Offer(
         id: 'offer-rpc-1',
@@ -159,6 +306,55 @@ void main() {
       expect(rpcJson.containsKey('taker_invoice'), isFalse);
       expect(rpcJson['category'], OfferCategory.online.name);
       expect(utf8.encode(payload).length, lessThan(65535));
+    });
+  });
+
+  group('Offer typed payout instruction', () {
+    Offer base({String? invoice, String? bolt12Offer}) => Offer(
+          id: 'typed-payout',
+          amountSats: 1000,
+          makerFees: 10,
+          status: OfferStatus.payingTaker,
+          fiatAmount: 10,
+          fiatCurrency: 'PLN',
+          createdAt: DateTime.utc(2026),
+          makerPubkey: 'maker',
+          coordinatorPubkey: 'coordinator',
+          takerInvoice: invoice,
+          takerOffer: bolt12Offer,
+        );
+
+    test('copyWith switches invoice and offer as a one-of', () {
+      final invoice = base(invoice: 'lnbc10u1example');
+      final offer = invoice.copyWith(takerOffer: 'lno1example');
+      expect(offer.takerInvoice, isNull);
+      expect(offer.takerOffer, 'lno1example');
+      expect(
+          offer.copyWith(takerInvoice: 'lnbc20u1example').takerOffer, isNull);
+    });
+
+    test('switching maker refund to BOLT12 clears invoice and payment hash',
+        () {
+      final invoice = base().copyWith(
+        makerRefundInvoice: 'lnbc10u1example',
+        makerRefundPaymentHash: 'old-invoice-hash',
+      );
+      final offer = invoice.copyWith(makerRefundOffer: 'lno1example');
+      expect(offer.makerRefundInvoice, isNull);
+      expect(offer.makerRefundPaymentHash, isNull);
+      expect(offer.makerRefundOffer, 'lno1example');
+      final replacement = offer.copyWith(
+        makerRefundInvoice: 'lnbc20u1example',
+        makerRefundPaymentHash: 'new-invoice-hash',
+      );
+      expect(replacement.makerRefundOffer, isNull);
+      expect(replacement.makerRefundPaymentHash, 'new-invoice-hash');
+    });
+
+    test('JSON rejects both payout fields', () {
+      final json = base(invoice: 'lnbc10u1example').toJson()
+        ..['taker_offer'] = 'lno1example';
+      expect(() => Offer.fromJson(json), throwsFormatException);
     });
   });
 }

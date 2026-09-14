@@ -42,6 +42,18 @@ const List<String> kDiscoveryRelays = [
   'wss://relay.damus.io'
 ];
 
+/// Default inbox relays advertised for NIP-17 gift wraps.
+///
+/// These are the original BitBlik defaults used before the embedded console
+/// was introduced. Keep them stable: NIP-17 senders may cache the recipient's
+/// kind-10050 list, and changing it can silently split delivery across relays.
+const List<String> kDefaultDmInboxRelays = [
+  'wss://relay.primal.net',
+  'wss://nos.lol',
+  'wss://nostr.mom',
+  'wss://relay.damus.io',
+];
+
 /// Normalize a relay URL for comparison/dedup: trims whitespace and drops a
 /// single trailing slash. Used when matching published relay URLs against
 /// NDK's connectivity map and when building relay unions.

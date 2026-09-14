@@ -1,4 +1,9 @@
-import { aggregateAnalyticsResults } from './analytics';
+import {
+  aggregateAnalyticsResults,
+  buildCoordinatorProfitSeries,
+  buildCoordinatorVolumeSatsSeries,
+  buildCoordinatorVolumeSeries,
+} from './analytics';
 
 const coordinatorResult = ({
   currency,
@@ -86,4 +91,83 @@ test('aggregates coordinators and converts their fiat values to the display curr
     volume: 150,
   });
   expect(result.clientVersionDistribution[0].count).toBe(6);
+});
+
+test('builds stacked volume data with one converted series per coordinator', () => {
+  const pln = coordinatorResult({
+    currency: 'PLN',
+    volume: 400,
+    success: 1,
+    failed: 0,
+    avgSeconds: 10,
+    category: 'atm',
+  });
+  pln.rows.push({ date: '2026-08-14', volume: 800, volume_sats: 2000 });
+
+  const eur = coordinatorResult({
+    currency: 'EUR',
+    volume: 100,
+    success: 1,
+    failed: 0,
+    avgSeconds: 10,
+    category: 'shop',
+  });
+
+  const result = buildCoordinatorVolumeSeries(
+    [pln, eur],
+    [
+      { id: 'poland', label: 'Poland', color: '#7B2D9B' },
+      { id: 'eurozone', label: 'Eurozone', color: '#0F9FAE' },
+    ],
+    'EUR',
+    { PLN: 400000, EUR: 50000 }
+  );
+
+  expect(result.series).toEqual([
+    { dataKey: 'coordinatorVolume0', id: 'poland', name: 'Poland', color: '#7B2D9B', total: 150 },
+    { dataKey: 'coordinatorVolume1', id: 'eurozone', name: 'Eurozone', color: '#0F9FAE', total: 100 },
+  ]);
+  expect(result.data).toEqual([
+    { date: '2026-08-13', coordinatorVolume0: 50, coordinatorVolume1: 100 },
+    { date: '2026-08-14', coordinatorVolume0: 100, coordinatorVolume1: 0 },
+  ]);
+
+  const satsResult = buildCoordinatorVolumeSatsSeries(
+    [pln, eur],
+    [
+      { id: 'poland', label: 'Poland', color: '#7B2D9B' },
+      { id: 'eurozone', label: 'Eurozone', color: '#0F9FAE' },
+    ]
+  );
+  expect(satsResult.series).toEqual([
+    { dataKey: 'coordinatorVolumeSats0', id: 'poland', name: 'Poland', color: '#7B2D9B', total: 3000 },
+    { dataKey: 'coordinatorVolumeSats1', id: 'eurozone', name: 'Eurozone', color: '#0F9FAE', total: 1000 },
+  ]);
+  expect(satsResult.data).toEqual([
+    { date: '2026-08-13', coordinatorVolumeSats0: 1000, coordinatorVolumeSats1: 1000 },
+    { date: '2026-08-14', coordinatorVolumeSats0: 2000, coordinatorVolumeSats1: 0 },
+  ]);
+});
+
+test('builds stacked profit data in sats for each coordinator', () => {
+  const first = coordinatorResult({
+    currency: 'PLN', volume: 400, success: 1, failed: 0, avgSeconds: 10, category: 'atm',
+  });
+  const second = coordinatorResult({
+    currency: 'EUR', volume: 100, success: 1, failed: 0, avgSeconds: 10, category: 'shop',
+  });
+  second.rows[0].profit = 25;
+
+  const result = buildCoordinatorProfitSeries(
+    [first, second],
+    [{ id: 'first', label: 'First' }, { id: 'second', label: 'Second' }]
+  );
+
+  expect(result.series).toEqual([
+    { dataKey: 'coordinatorProfit0', id: 'first', name: 'First', total: 10 },
+    { dataKey: 'coordinatorProfit1', id: 'second', name: 'Second', total: 25 },
+  ]);
+  expect(result.data).toEqual([
+    { date: '2026-08-13', coordinatorProfit0: 10, coordinatorProfit1: 25 },
+  ]);
 });

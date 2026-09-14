@@ -165,6 +165,8 @@ offers:
     invalidBlik: "Nieprawidłowy ${code}"
     conflict: "Konflikt"
     dispute: "Spór"
+    refundedMaker: "Maker otrzymał zwrot"
+    refundingMaker: "Zwrot środków makerowi"
     makerConfirmed: "Potwierdzona"
     settled: "Rozliczona"
     payingTaker: "Płacenie Takera"
@@ -256,6 +258,11 @@ exchange:
 # COORDINATOR INFORMATION
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Obsługa BOLT12"
+    body: "Ten koordynator może płacić do portfeli odbierających płatności przez oferty BOLT12. Możesz używać tych portfeli do wypłat dla takera lub zwrotów dla makera."
+    details: "Oferta BOLT12 to wielokrotnego użytku żądanie płatności Lightning, które możesz udostępnić jako tekst lub kod QR. Ta sama oferta może przyjmować wiele płatności, więc nie musisz za każdym razem tworzyć i udostępniać nowego żądania płatności. Twój portfel odbiorczy musi obsługiwać oferty BOLT12."
+    learnMore: "Dowiedz się więcej na bolt12.org"
   title: "Koordynatorzy"
   info:
     fee: opłata
@@ -353,7 +360,62 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  viewHistory: "Wyświetl historię sporu"
+  historyTitle: "Historia sporu"
+  ruledForMaker: "Rozstrzygnięto na korzyść Makera"
+  ruledForTaker: "Rozstrzygnięto na korzyść Takera"
+  legacyChannel: "Starszy kanał zgodności NIP-04"
+  privateConversation: "Prywatna rozmowa z koordynatorem"
+  noMessages: "Brak wiadomości."
+  replyHint: "Odpowiedz tutaj"
+  readOnly: "Historia tego rozstrzygniętego sporu jest tylko do odczytu."
+  evidenceDeadline:
+    title: "Termin przesłania dowodów"
+    remaining: "Prześlij dowody potwierdzające Twoje stanowisko w ciągu ${time}. Po tym terminie koordynator może rozstrzygnąć na korzyść drugiej strony na podstawie dostępnych dowodów."
+    expired: "Czas na przesłanie dowodów minął. Koordynator może teraz rozstrzygnąć spór na podstawie dostępnych dowodów."
+    period: "Koordynator daje do ${time} na dowody od otwarcia sporu. Odliczanie rozpocznie się, gdy będzie dostępny czas otwarcia sporu."
+  tooltips:
+    refresh: "Odśwież wiadomości"
+    attachEvidence: "Dołącz dowód płatności"
+    send: "Wyślij wiadomość"
+  errors:
+    accountNotReady: "Prywatne wiadomości będą dostępne, gdy Twoje konto Nostr będzie gotowe."
+    subscriptionFailed: "Połączenie prywatnych wiadomości nie powiodło się. Odśwież rozmowę."
+    decryptFailed: "Nie udało się odszyfrować prywatnej wiadomości."
+    operationFailed: "Operacja prywatnych wiadomości nie powiodła się. Spróbuj ponownie."
+    nostrNotInitialized: "Nostr nie został zainicjalizowany."
+    attachmentsRequireNip17: "Załączniki są dostępne tylko w kanale NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "Usługa portfela jest niedostępna."
+    noBolt11: "Portfel nie zwrócił faktury BOLT11."
+
 maker:
+  refundInvoice:
+    title: "Koordynator rozstrzygnął na Twoją korzyść"
+    instructions: "Wybierz portfel odbiorczy lub wklej fakturę Lightning na dokładnie ${amount}, aby otrzymać zwrot."
+    invoiceLabel: "Faktura zwrotna na dokładną kwotę"
+    submit: "Wyślij fakturę zwrotną"
+    addWallet: "Dodaj nowy portfel"
+    noReceivingWallet: "Nie skonfigurowano portfela odbiorczego. Dodaj go lub wklej fakturę z innego portfela."
+    paymentFailed: "Poprzednia próba zwrotu nie powiodła się. Wybierz inny portfel lub wyślij nową fakturę."
+    submitFailed: "Nie udało się wysłać faktury zwrotnej: ${details}"
+    errors:
+      backendUnavailable: "Usługa płatności Lightning jest niedostępna."
+      missing: "Wprowadź fakturę zwrotną."
+      invalid: "Wprowadź prawidłową fakturę zwrotną BOLT11."
+      wrongNetwork: "Faktura zwrotna jest przeznaczona dla niewłaściwej sieci Lightning."
+      wrongAmount: "Faktura zwrotna musi zawierać dokładną kwotę zwrotu."
+      invalidExpiry: "Faktura zwrotna ma nieprawidłowy termin ważności."
+      futureTimestamp: "Znacznik czasu faktury zwrotnej jest w przyszłości."
+      expired: "Faktura zwrotna wygasła. Wygeneruj nową."
+      invalidPaymentHash: "Faktura zwrotna nie ma prawidłowego skrótu płatności."
+      reusedInvoice: "Użyj nowej faktury; faktura oferty nie może przyjąć zwrotu."
+      unsupportedNetwork: "Ta sieć Lightning nie jest obsługiwana."
+      unknown: "Sprawdź fakturę i spróbuj ponownie."
+
   roleSelection:
     button: ZAPŁAĆ przez Lightning
   
@@ -534,7 +596,8 @@ maker:
     title: Konflikt Oferty
     headline: Zgłoszono Konflikt Oferty
     body: Oznaczyłeś kod ${code} jako nieprawidłowy, ale Taker zgłosił konflikt, wskazując, że uważa, iż płatność zakończyła się sukcesem.
-    instructions: Poczekaj na rozpatrzenie sytuacji przez koordynatora. Możesz zostać poproszony o więcej szczegółów. Sprawdź później lub skontaktuj się z pomocą techniczną.
+    instructions: Potwierdź wynik przed upływem czasu. Jeśli płatność się powiodła, potwierdź ją, aby Taker mógł otrzymać wypłatę. Jeśli się nie powiodła, otwórz spór. Jeśli nic nie zrobisz, formalny spór zostanie otwarty automatycznie.
+    timeoutLabel: "Formalny spór zostanie otwarty automatycznie za ${time}"
     
     actions:
       back: Powrót do strony głównej
@@ -576,6 +639,13 @@ maker:
 # TAKER FLOW
 # =============================================================================
 taker:
+  waitConfirmation:
+    expiredActions:
+      checkReportStatus: "Sprawdź status / ponów zgłoszenie"
+    feedback:
+      chargeReported: "Zgłoszenie obciążenia przyjęte. Oczekiwanie na odpowiedź Makera lub automatyczne potwierdzenie."
+    errors:
+      reportingConflictUnconfirmed: "Oczekiwanie na potwierdzenie zgłoszenia. Nie wiadomo, czy dotarło. Sprawdź status, aby ponowić zgłoszenie, jeśli nadal jest potrzebne. Jeśli status pozostaje niedostępny, skontaktuj się z pomocą."
   roleSelection:
     button: SPRZEDAJ kod ${code} za satoshi
   
@@ -626,7 +696,45 @@ taker:
       cancel: "Wróć i sprawdź konto bankowe"
       proceed: "NIE obciążono mnie — kontynuuj"
 
+  conflict:
+    title: Oczekiwanie na potwierdzenie płatności
+    headline: Oczekiwanie na potwierdzenie Makera
+    body: Zgłosiłeś, że płatność ${code} została pobrana, ale Maker zgłosił, że się nie powiodła. Te zgłoszenia są sprzeczne.
+    instructions: Maker musi teraz potwierdzić wynik. Jeśli potwierdzi, że płatność się powiodła, Twoja wypłata będzie kontynuowana. Jeśli potwierdzi niepowodzenie lub upłynie czas, oferta przejdzie do formalnego sporu i czat sporu stanie się dostępny.
+    timeoutLabel: "Formalny spór zostanie otwarty automatycznie za ${time}"
+    actions:
+      back: Powrót do strony głównej
+    feedback:
+      reported: Zgłoszono konflikt płatności. Oczekiwanie na potwierdzenie Makera.
+    errors:
+      reporting: "Błąd zgłaszania konfliktu: ${details}"
+
+  dispute:
+    headline: Otwarto formalny spór
+    body: Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.
+
 twint:
+  shop:
+    scanTitle: "Zeskanuj QR w sklepie"
+    scanInstructions: "Zeskanuj kod QR płatności na terminalu sklepowym. Kwota w CHF zostanie odczytana z kodu."
+    invalidQr: "Ten kod QR nie jest obsługiwaną płatnością sklepową w CHF. Zeskanuj kod QR płatności wyświetlony na terminalu."
+    amountMismatch: "Ten kod QR ma inną kwotę. Poproś o nowy kod QR z pierwotną kwotą płatności."
+    cameraFailed: "Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie."
+    scanned: "Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty."
+    rescan: "Zeskanuj inny kod QR"
+    coordinatorUnsupported: "Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje."
+    loadingFailed: "Nie udało się wczytać kodu QR płatności. Spróbuj ponownie."
+    replacementInstructions: "Zeskanuj nowy kod QR sklepu na tę samą kwotę CHF co zasilona oferta."
+    replacementScanned: "Nowy kod QR odpowiada kwocie zasilonej oferty."
+    qrLabel: "Kod QR do płatności TWINT"
+    payInstructions: "Zeskanuj ten kod QR w TWINT albo zapisz obraz i zaimportuj go z galerii w TWINT. Przed zapłatą sprawdź sprzedawcę i kwotę."
+    saveImage: "Zapisz QR w zdjęciach"
+    downloadImage: "Pobierz obraz QR"
+    saving: "Zapisywanie obrazu QR…"
+    saved: "Obraz QR zapisany. Otwórz TWINT i zaimportuj go z galerii."
+    downloadStarted: "Pobieranie obrazu QR rozpoczęte. Zapisz go w zdjęciach, aby zaimportować go w TWINT."
+    saveFailed: "Nie udało się zapisać obrazu QR. Sprawdź uprawnienia dostępu do zdjęć i wolne miejsce, a następnie spróbuj ponownie."
+    expired: "Ten kod QR wygasł. Nie płać nim ani nie używaj wcześniej zapisanego obrazu."
   scanner:
     title: "Skanuj kod ${code}"
     status:
@@ -1035,6 +1143,24 @@ faq:
 # =============================================================================
 settings:
   title: Ustawienia
+  coordinatorConsole:
+    title: Konsola koordynatora
+    subtitle: Zarządzaj sporami za pomocą podpisu koordynatora
+    signInTitle: Zaloguj się jako koordynator
+    signInDescription: Użyj klucza Nostr identyfikującego koordynatora, aby przeglądać i rozstrzygać spory.
+    separateIdentityNote: Podpis koordynatora działa w oddzielnej sesji NDK i nigdy nie zastępuje tożsamości handlowej Neko.
+    loginWithSignerApp: Zaloguj przez aplikację podpisującą
+    loginWithExtension: Zaloguj przez rozszerzenie przeglądarki
+    loginWithNsec: Zaloguj przez nsec
+    nsecDialogTitle: Klucz prywatny koordynatora
+    nsecFieldLabel: Klucz prywatny
+    nsecSecurityNote: Klucz prywatny jest bezpiecznie przechowywany na tym urządzeniu i używany wyłącznie przez oddzielną sesję koordynatora.
+    unsupportedPlatform: Logowanie koordynatora jest obecnie dostępne na Androidzie, Linuksie i w przeglądarce.
+    loginFailed: Logowanie koordynatora nie powiodło się
+    accountsTitle: Konta koordynatorów
+    savedAccounts: Zapisane konta koordynatorów
+    addAccount: Dodaj konto koordynatora
+    removeAccount: Usuń konto koordynatora
   offerCreation:
     title: Tworzenie ofert
     defaultCategory: Domyślna kategoria
@@ -1085,12 +1211,20 @@ notificationSettings:
     description: Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.
 
 wallet:
+  details:
+    title: Szczegóły portfela
+    pendingTitle: Oczekujące transakcje
+    finishedTitle: Zakończone transakcje
   title: Portfel
   description: Zarządzaj ustawieniami portfela Lightning
   missingReceiving:
     title: Wymagany portfel odbiorczy
     message: Brak skonfigurowanego portfela do odbierania. Dodaj go w ustawieniach portfela, aby przyjmować oferty.
     openSettings: Ustawienia portfela
+  incompatibleReceiving:
+    title: Wymagany portfel BOLT11
+    message: Ten koordynator może wypłacić tę ofertę wyłącznie przez BOLT11.
+    explanation: Twój portfel odbiorczy obsługuje oferty BOLT12, ale nie może utworzyć wymaganej faktury BOLT11. Dodaj portfel odbiorczy zgodny z BOLT11.
 
 nwc:
   title: Nostr Wallet Connect (NWC)

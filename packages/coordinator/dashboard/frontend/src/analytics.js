@@ -22,6 +22,81 @@ const conversionFactor = (sourceCurrency, targetCurrency, rates) => {
   return targetRate / sourceRate;
 };
 
+const buildCoordinatorSeries = (
+  analyticsResults,
+  coordinators,
+  dataKeyPrefix,
+  valueForRow
+) => {
+  const byDate = new Map();
+  const series = analyticsResults.map((result, index) => {
+    const coordinator = coordinators[index] || {};
+    const id = coordinator.id || `coordinator-${index + 1}`;
+    const dataKey = `${dataKeyPrefix}${index}`;
+
+    (result.rows || []).forEach((row) => {
+      const current = byDate.get(row.date) || { date: row.date };
+      current[dataKey] = numberValue(current[dataKey]) + valueForRow(row, result);
+      byDate.set(row.date, current);
+    });
+
+    return {
+      dataKey,
+      id,
+      name: coordinator.label || id,
+      ...(/^#[0-9a-f]{6}$/i.test(coordinator.color) ? { color: coordinator.color } : {}),
+    };
+  });
+
+  const data = Array.from(byDate.values())
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((row) => {
+      series.forEach(({ dataKey }) => {
+        if (row[dataKey] == null) row[dataKey] = 0;
+      });
+      return row;
+    });
+
+  return {
+    data,
+    series: series.map((item) => ({
+      ...item,
+      total: data.reduce((sum, row) => sum + numberValue(row[item.dataKey]), 0),
+    })),
+  };
+};
+
+export const buildCoordinatorVolumeSeries = (
+  analyticsResults,
+  coordinators,
+  targetCurrency,
+  rates = {}
+) => buildCoordinatorSeries(
+  analyticsResults,
+  coordinators,
+  'coordinatorVolume',
+  (row, result) => {
+    const sourceCurrency = String(result.currency || 'PLN').toUpperCase();
+    return numberValue(row.volume) * conversionFactor(sourceCurrency, targetCurrency, rates);
+  }
+);
+
+export const buildCoordinatorVolumeSatsSeries = (analyticsResults, coordinators) =>
+  buildCoordinatorSeries(
+    analyticsResults,
+    coordinators,
+    'coordinatorVolumeSats',
+    (row) => numberValue(row.volume_sats)
+  );
+
+export const buildCoordinatorProfitSeries = (analyticsResults, coordinators) =>
+  buildCoordinatorSeries(
+    analyticsResults,
+    coordinators,
+    'coordinatorProfit',
+    (row) => numberValue(row.profit)
+  );
+
 const mergePeriodRows = (entries) => {
   const byDate = new Map();
 

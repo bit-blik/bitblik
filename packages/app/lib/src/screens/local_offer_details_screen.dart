@@ -11,11 +11,11 @@ import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import '../utils/offer_status_label.dart';
 import 'coordinator_details_screen.dart';
-import '../services/offer_db_service.dart';
 import '../utils/bitcoin_display.dart';
 import '../utils/category_icons.dart';
 import '../utils/locale_format.dart';
 import '../widgets/premium_info.dart';
+import '../widgets/dispute_conversation_card.dart';
 
 class LocalOfferDetailsScreen extends ConsumerWidget {
   const LocalOfferDetailsScreen({required this.offerId, super.key});
@@ -95,19 +95,11 @@ class LocalOfferDetailsScreen extends ConsumerWidget {
       return;
     }
 
-    final apiService = await ref.read(initializedApiServiceProvider.future);
-    final remote = await apiService.getOfferDetails(
-      offer,
-      offer.coordinatorPubkey,
-    );
-    if (remote == null) {
-      await OfferDbService().deleteOfferById(offer.id);
-      ref.invalidate(myOffersProvider);
-      return;
+    try {
+      await ref.read(activeOfferProvider.notifier).refreshOfferDetails(offer);
+    } catch (_) {
+      // Unavailable coordinator status must not erase the local trade.
     }
-
-    await OfferDbService().upsertOffer(Offer.fromJson(remote));
-    ref.invalidate(myOffersProvider);
   }
 }
 
@@ -162,6 +154,10 @@ class _OfferDetailsBody extends ConsumerWidget {
         currentPubKey != null && currentPubKey == offer.takerPubkey
             ? PremiumViewerRole.taker
             : PremiumViewerRole.maker;
+    final participated =
+        currentPubKey != null &&
+        (currentPubKey == offer.makerPubkey ||
+            currentPubKey == offer.takerPubkey);
 
     Color statusColor = _statusColor(offer.status);
 
@@ -371,6 +367,10 @@ class _OfferDetailsBody extends ConsumerWidget {
             ),
           ),
         ),
+        if (participated && (offer.isDispute || offer.disputeAt != null)) ...[
+          const SizedBox(height: 12),
+          DisputeConversationCard(offer: offer),
+        ],
         if (isCurrentOfferActive || canResumeMakerWaitTaker) ...[
           const SizedBox(height: 20),
           _ActiveOfferCta(
@@ -449,15 +449,19 @@ class _OfferDetailsBody extends ConsumerWidget {
       OfferStatus.takerPaymentFailed,
       OfferStatus.conflict,
       OfferStatus.dispute,
+      OfferStatus.refundingMaker,
       OfferStatus.unknown,
     };
 
-    return activeStatuses.contains(status) || status == OfferStatus.takerPaid;
+    return activeStatuses.contains(status) ||
+        status == OfferStatus.takerPaid ||
+        status == OfferStatus.refundedMaker;
   }
 
   IconData _statusIcon(OfferStatus status) {
     switch (status) {
       case OfferStatus.takerPaid:
+      case OfferStatus.refundedMaker:
       case OfferStatus.settled:
       case OfferStatus.makerConfirmed:
         return Icons.check_circle;
@@ -470,6 +474,7 @@ class _OfferDetailsBody extends ConsumerWidget {
         return Icons.cancel;
       case OfferStatus.conflict:
       case OfferStatus.dispute:
+      case OfferStatus.refundingMaker:
         return Icons.warning_amber;
       case OfferStatus.funded:
       case OfferStatus.reserved:
@@ -488,6 +493,7 @@ class _OfferDetailsBody extends ConsumerWidget {
   Color _statusColor(OfferStatus status) {
     switch (status) {
       case OfferStatus.takerPaid:
+      case OfferStatus.refundedMaker:
       case OfferStatus.settled:
       case OfferStatus.makerConfirmed:
         return Colors.green;
@@ -500,6 +506,7 @@ class _OfferDetailsBody extends ConsumerWidget {
         return Colors.redAccent;
       case OfferStatus.conflict:
       case OfferStatus.dispute:
+      case OfferStatus.refundingMaker:
         return Colors.orange;
       case OfferStatus.funded:
       case OfferStatus.reserved:

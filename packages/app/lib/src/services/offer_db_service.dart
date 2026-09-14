@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'offer_reconciliation.dart';
 import 'package:bitblik_core/core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:ndk/shared/logger/logger.dart';
@@ -26,6 +27,7 @@ class OfferDbService {
     OfferStatus.cancelled,
     OfferStatus.expired,
     OfferStatus.takerPaid,
+    OfferStatus.refundedMaker,
   };
 
   static const String _createTableSql = '''
@@ -47,6 +49,7 @@ class OfferDbService {
       hold_invoice TEXT,
       taker_lightning_address TEXT,
       taker_invoice TEXT,
+      taker_offer TEXT,
       hold_invoice_preimage TEXT,
       updated_at TEXT,
       maker_confirmed_at TEXT,
@@ -74,7 +77,7 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 13,
+      version: 14,
       onCreate: (db, version) async {
         await db.execute(_createTableSql);
       },
@@ -159,6 +162,13 @@ class OfferDbService {
           final hasColumn = columns.any((col) => col['name'] == 'bank');
           if (!hasColumn) {
             await db.execute('ALTER TABLE $_table ADD COLUMN bank TEXT');
+          }
+        }
+        if (oldVersion < 14) {
+          final columns = await db.rawQuery('PRAGMA table_info($_table)');
+          final hasColumn = columns.any((col) => col['name'] == 'taker_offer');
+          if (!hasColumn) {
+            await db.execute('ALTER TABLE $_table ADD COLUMN taker_offer TEXT');
           }
         }
       },
@@ -301,6 +311,26 @@ class OfferDbService {
         })
         .whereType<Offer>()
         .toList();
+  }
+
+  /// Used by reconnect, status-push hydration and manual history refresh.
+  Future<Offer?> reconcileRemoteOffer(
+    Offer local,
+    Offer? remote,
+    String? userPubkey,
+  ) async {
+    // A status push may have advanced the row while the RPC was in flight.
+    final current = await getOfferById(local.id) ?? local;
+    if (current.statusRaw != local.statusRaw) return current;
+    final resolved = reconcileOfferSnapshot(current, remote, userPubkey);
+    if (identical(resolved, current)) return current;
+    if (resolved == null) {
+      await deleteOfferById(current.id);
+      return null;
+    }
+    await upsertOffer(resolved);
+    if (current.id != resolved.id) await deleteOfferById(current.id);
+    return resolved;
   }
 
   Future<void> deleteOfferById(String id) async {

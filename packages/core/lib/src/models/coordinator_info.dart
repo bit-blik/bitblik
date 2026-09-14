@@ -18,15 +18,26 @@ class CoordinatorInfo {
   /// `3600` keeps older coordinators that don't advertise it consistent.
   final int takerChargedAutoConfirmSeconds;
 
+  /// Maximum evidence-collection period after an offer enters dispute.
+  /// After this deadline the coordinator may rule from the evidence already
+  /// available; this is a published policy, not an automatic fund transition.
+  /// Null when the coordinator does not advertise the policy.
+  final int? disputeEvidencePeriodSeconds;
+
   /// Maximum maker premium (%) this coordinator allows above market price.
   /// `0` means the premium feature is disabled for this coordinator.
   final double maxPremiumPercent;
   final List<String> currencies;
+  final List<String> outgoingPaymentTypes;
 
   /// The market id this coordinator serves (e.g. `blik`, `mbway`, `sk`). One
   /// deployment = one market. Older coordinators that don't advertise it fall
   /// back to the method derived from [currencies].
   final String paymentSystem;
+
+  /// Explicit compatibility signal for provisional TWINT shop QR support.
+  /// Missing on older coordinators, which must remain online-only in the app.
+  final bool supportsTwintShopQr;
 
   /// The bank ids this coordinator serves within a bank-scoped market (SK ATM:
   /// a subset of `tatrabanka`, `slsp`, `vub`). Empty for bank-agnostic markets
@@ -58,9 +69,12 @@ class CoordinatorInfo {
     required this.minAmountSats,
     required this.maxAmountSats,
     this.takerChargedAutoConfirmSeconds = 3600,
+    this.disputeEvidencePeriodSeconds,
     this.maxPremiumPercent = 0,
     required this.currencies,
+    this.outgoingPaymentTypes = const ['bolt11'],
     required this.paymentSystem,
+    this.supportsTwintShopQr = false,
     required this.nostrNpub,
     this.banks = const [],
     this.version,
@@ -99,13 +113,19 @@ class CoordinatorInfo {
       maxAmountSats: json['max_amount_sats'] as int,
       takerChargedAutoConfirmSeconds:
           (json['taker_charged_auto_confirm_seconds'] as num?)?.toInt() ?? 3600,
-      maxPremiumPercent:
-          (json['max_premium_percent'] as num?)?.toDouble() ?? 0,
+      disputeEvidencePeriodSeconds:
+          (json['dispute_evidence_period_seconds'] as num?)?.toInt(),
+      maxPremiumPercent: (json['max_premium_percent'] as num?)?.toDouble() ?? 0,
       currencies: (json['currencies'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      outgoingPaymentTypes: (json['outgoing_payment_types'] as List?)
+              ?.whereType<String>()
+              .toList() ??
+          const ['bolt11'],
       paymentSystem: (json['payment_system'] as String?) ??
           _defaultMethodId(json['currencies']),
+      supportsTwintShopQr: json['twint_shop_qr_v1'] == true,
       banks: _parseBanks(json['banks']),
       nostrNpub: json['nostr_npub'] as String?,
       version: json['version'] as String?,
@@ -125,9 +145,13 @@ class CoordinatorInfo {
       'min_amount_sats': minAmountSats,
       'max_amount_sats': maxAmountSats,
       'taker_charged_auto_confirm_seconds': takerChargedAutoConfirmSeconds,
+      if (disputeEvidencePeriodSeconds != null)
+        'dispute_evidence_period_seconds': disputeEvidencePeriodSeconds,
       'max_premium_percent': maxPremiumPercent,
       'currencies': currencies,
+      'outgoing_payment_types': outgoingPaymentTypes,
       'payment_system': paymentSystem,
+      if (supportsTwintShopQr) 'twint_shop_qr_v1': true,
       if (banks.isNotEmpty) 'banks': banks,
       'nostr_npub': nostrNpub,
       if (version != null) 'version': version,
@@ -185,15 +209,22 @@ class CoordinatorInfo {
       takerChargedAutoConfirmSeconds:
           int.tryParse(tags['taker_charged_auto_confirm_seconds'] ?? '') ??
               3600,
+      disputeEvidencePeriodSeconds:
+          int.tryParse(tags['dispute_evidence_period_seconds'] ?? ''),
       maxPremiumPercent:
           double.tryParse(tags['max_premium_percent'] ?? '0') ?? 0.0,
       makerFee: double.tryParse(tags['maker_fee'] ?? '0') ?? 0.0,
       takerFee: double.tryParse(tags['taker_fee'] ?? '0') ?? 0.0,
-      reservationSeconds:
-          int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
+      reservationSeconds: int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
       currencies: currencies,
+      outgoingPaymentTypes: (tags['outgoing_payment_types'] ?? 'bolt11')
+          .split(',')
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList(),
       paymentSystem:
           _emptyToNull(tags['payment_system']) ?? _defaultMethodId(currencies),
+      supportsTwintShopQr: tags['twint_shop_qr_v1'] == '1',
       banks: banks,
       version: _emptyToNull(tags['version']),
       nostrNpub: Nip19.encodePubKey(event.pubKey),
@@ -201,8 +232,8 @@ class CoordinatorInfo {
       channelLinks: {
         for (final entry in tags.entries)
           if (entry.key.endsWith('_channel_link') && entry.value.isNotEmpty)
-            entry.key.substring(
-                0, entry.key.length - '_channel_link'.length): entry.value,
+            entry.key.substring(0, entry.key.length - '_channel_link'.length):
+                entry.value,
       },
       bankChannelLinks: bankChannelLinks,
     );
@@ -223,12 +254,19 @@ class CoordinatorInfo {
         'taker_charged_auto_confirm_seconds',
         takerChargedAutoConfirmSeconds.toString()
       ],
+      if (disputeEvidencePeriodSeconds != null)
+        [
+          'dispute_evidence_period_seconds',
+          disputeEvidencePeriodSeconds.toString()
+        ],
       ['max_premium_percent', maxPremiumPercent.toString()],
       ['maker_fee', makerFee.toString()],
       ['taker_fee', takerFee.toString()],
       ['reservation_seconds', reservationSeconds.toString()],
       ['currencies', currencies.join(',')],
+      ['outgoing_payment_types', outgoingPaymentTypes.join(',')],
       ['payment_system', paymentSystem],
+      if (supportsTwintShopQr) ['twint_shop_qr_v1', '1'],
       if (banks.isNotEmpty) ['banks', banks.join(',')],
       ['version', version ?? ''],
       ['terms_of_usage_naddr', termsOfUsageNaddr ?? ''],
@@ -282,8 +320,7 @@ class CoordinatorInfo {
     return out;
   }
 
-  static String? _emptyToNull(String? v) =>
-      v == null || v.isEmpty ? null : v;
+  static String? _emptyToNull(String? v) => v == null || v.isEmpty ? null : v;
 
   /// Derive a payment method id from a legacy `currencies` value when a
   /// coordinator doesn't advertise `payment_system`. Falls back to [kBlik].

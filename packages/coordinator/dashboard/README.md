@@ -52,11 +52,12 @@ DB_PASSWORD=your_password
 Set `COORDINATORS_JSON` to a JSON array. Each entry becomes one option in the dashboard switcher:
 
 ```env
-COORDINATORS_JSON='[{"id":"main","label":"Main Coordinator","iconUrl":"https://example.com/main.png","host":"postgres-main","port":5432,"database":"bitblik","user":"postgres","password":"your_password"},{"id":"staging","label":"Staging Coordinator","iconUrl":"https://example.com/staging.png","host":"postgres-staging","port":5432,"database":"bitblik_staging","user":"postgres","password":"your_password"}]'
+COORDINATORS_JSON='[{"id":"main","label":"Main Coordinator","iconUrl":"https://example.com/main.png","color":"#2563eb","host":"postgres-main","port":5432,"database":"bitblik","user":"postgres","password":"your_password"},{"id":"staging","label":"Staging Coordinator","iconUrl":"https://example.com/staging.png","color":"#059669","host":"postgres-staging","port":5432,"database":"bitblik_staging","user":"postgres","password":"your_password"}]'
 ```
 
 When `COORDINATORS_JSON` is present, it overrides the single `DB_*` connection.
 In `.env` files loaded by `dotenv`, quote whole value and keep JSON on one line.
+Optional `color` values use `#RRGGBB` and identify coordinators in stacked dashboard charts.
 
 ### Basic Run
 

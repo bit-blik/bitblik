@@ -15,6 +15,7 @@ const String kRpcGetBlik = 'get_blik';
 const String kRpcConfirmPayment = 'confirm_payment';
 const String kRpcMarkBlikInvalid = 'mark_blik_invalid';
 const String kRpcOpenDispute = 'open_dispute';
+const String kRpcSubmitMakerRefundInvoice = 'submit_maker_refund_invoice';
 
 // Offer lifecycle (taker)
 const String kRpcReserveOffer = 'reserve_offer';
@@ -26,6 +27,7 @@ const String kRpcMarkBlikCharged = 'mark_blik_charged';
 
 // Queries
 const String kRpcGetOfferDetails = 'get_offer_details';
+const String kRpcListDisputes = 'list_disputes';
 
 // DEPRECATED: clients now resolve a local-only offer (id == payment hash, no
 // UUID yet) via `get_offer_details` with a `payment_hash` param. Coordinator

@@ -166,6 +166,8 @@ offers:
     invalidBlik: "${code} inválido"
     conflict: "Conflito"
     dispute: "Disputa"
+    refundedMaker: "Maker reembolsado"
+    refundingMaker: "Reembolso do maker"
     makerConfirmed: "Confirmada"
     settled: "Liquidada"
     payingTaker: "A pagar ao taker"
@@ -257,6 +259,11 @@ exchange:
 # COORDINATOR INFORMATION
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Suporte BOLT12"
+    body: "Este coordenador pode pagar a carteiras que recebem pagamentos através de ofertas BOLT12. Pode usar estas carteiras para pagamentos aos takers ou reembolsos aos makers."
+    details: "Uma oferta BOLT12 é um pedido de pagamento Lightning reutilizável que pode partilhar como texto ou código QR. A mesma oferta pode receber vários pagamentos, pelo que não precisa de criar e partilhar um novo pedido de cada vez. A sua carteira de receção tem de suportar ofertas BOLT12."
+    learnMore: "Saiba mais em bolt12.org"
   title: "Coordenadores"
   info:
     fee: "taxa"
@@ -354,7 +361,62 @@ coordinator:
 # =============================================================================
 # MAKER FLOW
 # =============================================================================
+disputeChat:
+  viewHistory: "Ver histórico da disputa"
+  historyTitle: "Histórico da disputa"
+  ruledForMaker: "Decisão a favor do maker"
+  ruledForTaker: "Decisão a favor do taker"
+  legacyChannel: "Canal de compatibilidade NIP-04 legado"
+  privateConversation: "Conversa privada com o coordenador"
+  noMessages: "Ainda não há mensagens."
+  replyHint: "Responder aqui"
+  readOnly: "O histórico desta disputa resolvida é só de leitura."
+  evidenceDeadline:
+    title: "Prazo para envio de provas"
+    remaining: "Envie provas que sustentem a sua posição dentro de ${time}. Após este prazo, o coordenador pode decidir a favor da contraparte com base nas provas disponíveis."
+    expired: "O período para envio de provas terminou. O coordenador pode agora decidir com base nas provas disponíveis."
+    period: "O coordenador permite até ${time} para provas após a abertura da disputa. A contagem decrescente começará quando o horário da disputa estiver disponível."
+  tooltips:
+    refresh: "Atualizar mensagens"
+    attachEvidence: "Anexar comprovativo de pagamento"
+    send: "Enviar mensagem"
+  errors:
+    accountNotReady: "As mensagens privadas estarão disponíveis quando a sua conta Nostr estiver pronta."
+    subscriptionFailed: "A ligação de mensagens privadas falhou. Atualize a conversa."
+    decryptFailed: "Não foi possível decifrar uma mensagem privada."
+    operationFailed: "A operação de mensagens privadas falhou. Tente novamente."
+    nostrNotInitialized: "O Nostr não foi inicializado."
+    attachmentsRequireNip17: "Os anexos estão disponíveis apenas no canal NIP-17."
+
+receivingInvoice:
+  errors:
+    walletUnavailable: "O serviço de carteira não está disponível."
+    noBolt11: "A carteira não devolveu uma fatura BOLT11."
+
 maker:
+  refundInvoice:
+    title: "O coordenador decidiu a seu favor"
+    instructions: "Escolha uma carteira de recebimento ou cole uma fatura Lightning de exatamente ${amount} para o reembolso."
+    invoiceLabel: "Fatura de reembolso com o valor exato"
+    submit: "Enviar fatura de reembolso"
+    addWallet: "Adicionar nova carteira"
+    noReceivingWallet: "Não há uma carteira de recebimento configurada. Adicione uma ou cole uma fatura de outra carteira."
+    paymentFailed: "A tentativa de reembolso anterior falhou. Escolha outra carteira ou envie uma nova fatura."
+    submitFailed: "Não foi possível enviar a fatura de reembolso: ${details}"
+    errors:
+      backendUnavailable: "O serviço de pagamento Lightning não está disponível."
+      missing: "Introduza uma fatura de reembolso."
+      invalid: "Introduza uma fatura de reembolso BOLT11 válida."
+      wrongNetwork: "A fatura de reembolso pertence à rede Lightning errada."
+      wrongAmount: "A fatura de reembolso deve conter o valor exato do reembolso."
+      invalidExpiry: "A fatura de reembolso tem uma validade inválida."
+      futureTimestamp: "A data da fatura de reembolso está no futuro."
+      expired: "A fatura de reembolso expirou. Gere uma nova."
+      invalidPaymentHash: "A fatura de reembolso não tem um hash de pagamento válido."
+      reusedInvoice: "Use uma nova fatura; a fatura da oferta não pode receber o reembolso."
+      unsupportedNetwork: "Esta rede Lightning não é suportada."
+      unknown: "Verifique a fatura e tente novamente."
+
   roleSelection:
     button: PAGAR com Lightning
 
@@ -550,7 +612,8 @@ maker:
     title: Conflito na oferta
     headline: Conflito na oferta reportado
     body: Marcou o código ${code} como inválido, mas o taker reportou um conflito, indicando que acredita que o pagamento foi bem-sucedido.
-    instructions: Aguarde que o coordenador analise a situação. Poderão pedir-lhe mais detalhes. Volte mais tarde ou contacte o suporte se necessário.
+    instructions: Confirme o resultado antes de o temporizador expirar. Se o pagamento foi bem-sucedido, confirme-o para que o taker possa receber. Se falhou, abra uma disputa. Se não fizer nada, será aberta automaticamente uma disputa formal.
+    timeoutLabel: "A disputa formal será aberta automaticamente dentro de ${time}"
 
     actions:
       back: Voltar ao início
@@ -592,6 +655,13 @@ maker:
 # TAKER FLOW
 # =============================================================================
 taker:
+  waitConfirmation:
+    expiredActions:
+      checkReportStatus: "Verificar estado / reenviar relato"
+    feedback:
+      chargeReported: "Relato de cobrança recebido. A aguardar a resposta do Maker ou a confirmação automática."
+    errors:
+      reportingConflictUnconfirmed: "Confirmação do relato pendente. Não se sabe se foi entregue. Verifique o estado para reenviar se ainda for necessário. Se o estado continuar indisponível, contacte o suporte."
   roleSelection:
     button: VENDER código ${code} por satoshi
 
@@ -642,7 +712,45 @@ taker:
       cancel: "Voltar e verificar o banco"
       proceed: "NÃO fui debitado — continuar"
 
+  conflict:
+    title: Confirmação do pagamento pendente
+    headline: A aguardar a confirmação do maker
+    body: Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.
+    instructions: O maker tem agora de confirmar o resultado. Se confirmar que o pagamento foi bem-sucedido, o seu pagamento continuará. Se confirmar que falhou, ou se o temporizador expirar, a oferta passará para uma disputa formal e o chat da disputa ficará disponível.
+    timeoutLabel: "A disputa formal será aberta automaticamente dentro de ${time}"
+    actions:
+      back: Voltar ao início
+    feedback:
+      reported: Conflito de pagamento reportado. A aguardar a confirmação do maker.
+    errors:
+      reporting: "Erro ao reportar o conflito: ${details}"
+
+  dispute:
+    headline: Disputa formal aberta
+    body: A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.
+
 twint:
+  shop:
+    scanTitle: "Escanear QR da loja"
+    scanInstructions: "Escaneie o código QR de pagamento no terminal da loja. O valor em CHF será lido do código."
+    invalidQr: "Este código QR não é um pagamento em loja em CHF compatível. Escaneie o código QR de pagamento exibido no terminal."
+    amountMismatch: "Este código QR tem um valor diferente. Peça um novo código QR com o valor original do pagamento."
+    cameraFailed: "Câmera indisponível. Permita o acesso à câmera nas configurações do dispositivo ou navegador e tente novamente."
+    scanned: "QR da loja escaneado. Confira o valor em CHF antes de financiar a oferta."
+    rescan: "Escanear outro código QR"
+    coordinatorUnsupported: "Este coordenador não aceita pagamentos QR em loja. Escolha um coordenador que aceite."
+    loadingFailed: "Não foi possível carregar o código QR de pagamento. Tente novamente."
+    replacementInstructions: "Escaneie um novo código QR da loja com o mesmo valor em CHF da oferta financiada."
+    replacementScanned: "O QR substituto corresponde ao valor financiado."
+    qrLabel: "Código QR de pagamento TWINT"
+    payInstructions: "Escaneie este código QR com o TWINT ou salve a imagem e importe-a da sua galeria no TWINT. Confira o comerciante e o valor antes de pagar."
+    saveImage: "Salvar QR nas fotos"
+    downloadImage: "Baixar imagem QR"
+    saving: "Salvando imagem QR…"
+    saved: "Imagem QR salva. Abra o TWINT e importe-a da sua galeria."
+    downloadStarted: "Download da imagem QR iniciado. Salve-a nas suas fotos para importá-la no TWINT."
+    saveFailed: "Não foi possível salvar a imagem QR. Confira as permissões de acesso às fotos e o espaço de armazenamento disponível e tente novamente."
+    expired: "Este código QR expirou. Não pague com ele nem use uma imagem salva anteriormente."
   scanner:
     title: "Ler código ${code}"
     status:
@@ -1050,6 +1158,24 @@ faq:
 # =============================================================================
 settings:
   title: Definições
+  coordinatorConsole:
+    title: Consola do coordenador
+    subtitle: Gerir disputas com um assinante coordenador
+    signInTitle: Iniciar sessão como coordenador
+    signInDescription: Use a chave Nostr que identifica o coordenador para analisar e resolver disputas.
+    separateIdentityNote: O assinante do coordenador utiliza uma sessão NDK separada e nunca substitui a identidade de negociação Neko.
+    loginWithSignerApp: Entrar com a aplicação de assinatura
+    loginWithExtension: Entrar com a extensão do navegador
+    loginWithNsec: Entrar com nsec
+    nsecDialogTitle: Chave privada do coordenador
+    nsecFieldLabel: Chave privada
+    nsecSecurityNote: A chave privada é armazenada com segurança neste dispositivo e usada apenas pela sessão separada do coordenador.
+    unsupportedPlatform: O início de sessão do coordenador está atualmente disponível no Android, Linux e na Web.
+    loginFailed: Falha no início de sessão do coordenador
+    accountsTitle: Contas de coordenador
+    savedAccounts: Contas de coordenador guardadas
+    addAccount: Adicionar conta de coordenador
+    removeAccount: Remover conta de coordenador
   offerCreation:
     title: Criação de ofertas
     defaultCategory: Categoria predefinida
@@ -1106,6 +1232,10 @@ wallet:
     title: Carteira de receção necessária
     message: Nenhuma carteira configurada para receber. Adicione uma nas definições da Carteira para aceitar ofertas.
     openSettings: Definições da carteira
+  incompatibleReceiving:
+    title: Carteira BOLT11 necessária
+    message: Este coordenador só pode pagar esta oferta através de BOLT11.
+    explanation: A sua carteira de receção suporta ofertas BOLT12, mas não consegue criar a fatura BOLT11 necessária. Adicione uma carteira de receção compatível com BOLT11.
   details:
     title: Detalhes da carteira
     pendingTitle: Transações pendentes

@@ -10,6 +10,7 @@ import 'package:ndk_flutter/ndk_flutter.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import '../services/nfc_lnurl_service.dart';
+import '../widgets/wallet_qr_scanner.dart';
 import 'wallet_details_screen.dart';
 
 const String kNwcWalletId = 'bitblik_nwc_wallet';
@@ -49,13 +50,13 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
 
     final deferredProtocolUrl = _deferredProtocolUrl;
     _deferredProtocolUrl = null;
-    if (deferredProtocolUrl == null) {
-      return;
-    }
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(_deliverProtocolUrlToWallets(deferredProtocolUrl));
+      if (deferredProtocolUrl != null) {
+        unawaited(_deliverProtocolUrlToWallets(deferredProtocolUrl));
+      } else {
+        unawaited(_nWalletsKey.currentState?.resumePendingWalletAuth());
+      }
     });
   }
 
@@ -129,60 +130,66 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
       ),
       body: apiInit.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error:
-            (error, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text('Failed to initialize wallet services: $error'),
-              ),
-            ),
-        data:
-            (_) =>
-                ndkFlutter == null
-                    ? const Center(child: CircularProgressIndicator())
-                    : Builder(
-                      builder: (context) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (!mounted) return;
-                          _walletProtocolDispatcher.attach(
-                            _deliverProtocolUrlToWallets,
-                          );
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text('Failed to initialize wallet services: $error'),
+          ),
+        ),
+        data: (_) => ndkFlutter == null
+            ? const Center(child: CircularProgressIndicator())
+            : Builder(
+                builder: (context) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    _walletProtocolDispatcher.attach(
+                      _deliverProtocolUrlToWallets,
+                    );
 
-                          final deferredProtocolUrl = _deferredProtocolUrl;
-                          if (deferredProtocolUrl == null) return;
-                          _deferredProtocolUrl = null;
-                          unawaited(
-                            _deliverProtocolUrlToWallets(deferredProtocolUrl),
-                          );
-                        });
+                    final deferredProtocolUrl = _deferredProtocolUrl;
+                    if (deferredProtocolUrl == null) return;
+                    _deferredProtocolUrl = null;
+                    unawaited(
+                      _deliverProtocolUrlToWallets(deferredProtocolUrl),
+                    );
+                  });
 
-                        return NWallets(
-                          key: _nWalletsKey,
-                          ndkFlutter: ndkFlutter,
-                          nwcWalletAuthCoordinator: _nwcWalletAuthCoordinator,
-                          title: t.wallet.title,
-                          showWalletActions: false,
-                          walletCardsScrollDirection: Axis.vertical,
-                          showPendingTransactions: false,
-                          showRecentTransactions: false,
-                          albyGoConnectConfig: AlbyGoConnectConfig(
-                            connectMethod: AlbyGoConnectMethod.nostrNwcCallback,
-                            appName:
-                                ref
-                                    .watch(selectedPaymentSystemProvider)
-                                    .brandName,
-                            appIconUrl: buildNwcIconUrl,
-                            callback: '$buildAppScheme://nwc-callback',
-                          ),
-                          onWalletSelected: (walletId) {
-                            context.push(
-                              WalletDetailsScreen.routeName,
-                              extra: walletId,
-                            );
-                          },
-                        );
-                      },
+                  return NWallets(
+                    key: _nWalletsKey,
+                    ndkFlutter: ndkFlutter,
+                    nwcWalletAuthCoordinator: _nwcWalletAuthCoordinator,
+                    title: t.wallet.title,
+                    walletCardsScrollDirection: Axis.vertical,
+                    showWalletActions: false,
+                    showPendingTransactions: false,
+                    showRecentTransactions: false,
+                    onWalletSelected: (walletId) {
+                      context.push(
+                        WalletDetailsScreen.routeName,
+                        extra: walletId,
+                      );
+                    },
+                    walletQrScannerBuilder:
+                        kIsWeb ||
+                            Platform.isAndroid ||
+                            Platform.isIOS ||
+                            Platform.isMacOS ||
+                            Platform.isLinux
+                        ? buildWalletQrScanner
+                        : null,
+                    albyGoConnectConfig: AlbyGoConnectConfig(
+                      // Match NDK's sample: native wallet-auth on mobile,
+                      // with NDK's QR fallback on desktop and web.
+                      connectMethod: AlbyGoConnectMethod.walletAuth,
+                      appName: ref
+                          .watch(selectedPaymentSystemProvider)
+                          .brandName,
+                      appIconUrl: buildNwcIconUrl,
+                      callback: '$buildAppScheme://nwc-callback',
                     ),
+                  );
+                },
+              ),
       ),
     );
   }

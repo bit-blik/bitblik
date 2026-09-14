@@ -1,0 +1,17 @@
+services:
+  telegram-bot:
+    build:
+      context: ../..
+      dockerfile: packages/telegram_bot/Dockerfile
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      STATE_FILE: /data/telegram_bot_state.json
+    mem_limit: 192m
+    mem_reservation: 64m
+    volumes:
+      - telegram_bot_data:/data
+
+volumes:
+  telegram_bot_data:

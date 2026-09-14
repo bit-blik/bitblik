@@ -25,6 +25,9 @@ import 'payment_service.dart';
 import '../models/invoice_status.dart';
 import '../models/invoice_update.dart';
 import '../models/pay_invoice_result.dart';
+import '../models/pay_offer_result.dart';
+import '../models/payment_status.dart';
+import '../models/outgoing_payment_attempt.dart';
 import 'nostr_service.dart';
 import 'telegram_service.dart';
 import '../flow/flow_loader.dart';
@@ -36,6 +39,7 @@ part 'coordinator_flow_generic.dart';
 // Flow action implementations (one file per yml action keyword).
 part 'actions/all_actions.dart';
 part 'actions/common/accept_taker_invoice.dart';
+part 'actions/common/accept_taker_payout.dart';
 part 'actions/common/assert_assigned_taker.dart';
 part 'actions/common/cancel_hold_invoice.dart';
 part 'actions/common/cancel_reservation.dart';
@@ -44,7 +48,9 @@ part 'actions/common/limit_code_attempts.dart';
 part 'actions/common/refund_maker.dart';
 part 'actions/common/reject_reused_code.dart';
 part 'actions/common/require_maker_refund_invoice.dart';
+part 'actions/common/require_maker_refund_payout.dart';
 part 'actions/common/resolve_taker_invoice.dart';
+part 'actions/common/resolve_taker_payout.dart';
 part 'actions/common/reserve_taker.dart';
 part 'actions/common/send_offer_notifications.dart';
 part 'actions/common/send_payment.dart';
@@ -54,6 +60,8 @@ part 'actions/common/stamp_maker_confirmed_at.dart';
 part 'actions/common/stamp_reserved_at.dart';
 part 'actions/common/stamp_taker_charged_at.dart';
 part 'actions/common/update_taker_invoice.dart';
+part 'actions/common/update_maker_refund_invoice.dart';
+part 'actions/common/update_taker_payout.dart';
 part 'actions/common/validate_code.dart';
 part 'actions/twint/notify_maker_of_charge.dart';
 part 'actions/twint/send_twint_code_to_taker.dart';
@@ -93,6 +101,26 @@ class _PendingOfferRecord {
   });
 }
 
+class _OutgoingPaymentResult {
+  final PaymentStatus status;
+  final String? paymentId;
+  final String? preimage;
+  final String? payerProof;
+  final String? error;
+  final int feeSat;
+
+  const _OutgoingPaymentResult({
+    required this.status,
+    this.paymentId,
+    this.preimage,
+    this.payerProof,
+    this.error,
+    this.feeSat = 0,
+  });
+
+  bool get isSuccess => status == PaymentStatus.SUCCEEDED;
+}
+
 /// Obtains a payment backend: a connected service plus the type name to report
 /// ("lnd" / "nwc"), or `(null, "none")` when the configured backend could not
 /// be reached. Throwing means the coordinator is misconfigured, which is fatal
@@ -122,6 +150,7 @@ class CoordinatorService {
   final http.Client _httpClient; // Added for testable HTTP calls
   late DotEnv _env;
   NostrService? _nostrService; // Nostr service for publishing events
+  final String? _coordinatorPubkeyForTest;
 
   matrix.Client? _matrixClient; // Matrix client instance
   TelegramService? _telegramService; // Telegram service for notifications
@@ -320,6 +349,10 @@ class CoordinatorService {
   // taker charged timeout configuration
   late final int _takerChargedAutoConfirmTimeoutSeconds;
 
+  // Advertised evidence-collection policy. It never triggers a payout by
+  // itself; the coordinator still makes an explicit ruling.
+  late final int _disputeEvidencePeriodSeconds;
+
   // Exchange rate cache, keyed by uppercase currency code (e.g. PLN, EUR).
   static const Duration _rateCacheTtl = Duration(minutes: 5);
   static const Duration _rateBackgroundRefreshAge = Duration(minutes: 4);
@@ -515,6 +548,10 @@ class CoordinatorService {
   late final double _takerFeePercentage;
   late final int _pendingOfferTimeoutSeconds;
 
+  /// Lightning chain accepted for payout invoices. BOLT11 uses the same
+  /// `lntb` prefix for testnet and signet.
+  late final String _lightningNetwork;
+
   late final _simplexGroup;
   late final _simplexChatExec;
   late final _signalCliExec;
@@ -528,11 +565,13 @@ class CoordinatorService {
       NostrService? nostrService,
       TelegramService? telegramServiceForTest,
       String? paymentSystemIdForTest,
+      String? coordinatorPubkeyForTest,
       FlowEngine? flowEngineForTest,
       PaymentBackendConnector? paymentBackendConnectorForTest})
       : _clock = clock ?? const Clock(),
         _httpClient = httpClient ?? http.Client(),
         _nostrService = nostrService,
+        _coordinatorPubkeyForTest = coordinatorPubkeyForTest,
         _paymentSystemIdOverride = paymentSystemIdForTest,
         _flowEngineOverride = flowEngineForTest {
     _connectPaymentBackend =
@@ -633,6 +672,13 @@ class CoordinatorService {
     _takerChargedAutoConfirmTimeoutSeconds =
         int.tryParse(_env['TAKER_CHARGED_AUTO_CONFIRM_SECONDS'] ?? '') ??
             3600; // 1h
+    final configuredDisputeEvidencePeriod = int.tryParse(
+      _env['DISPUTE_EVIDENCE_PERIOD_SECONDS'] ?? '',
+    );
+    _disputeEvidencePeriodSeconds = configuredDisputeEvidencePeriod != null &&
+            configuredDisputeEvidencePeriod > 0
+        ? configuredDisputeEvidencePeriod
+        : 48 * 60 * 60;
     _makerFeePercentage =
         double.tryParse(_env['MAKER_FEE'] ?? '') ?? 0.5; // Default to 0.5%
     _takerFeePercentage =
@@ -640,6 +686,12 @@ class CoordinatorService {
     _pendingOfferTimeoutSeconds =
         int.tryParse(_env['PENDING_OFFER_TIMEOUT_SECONDS'] ?? '') ??
             26 * 60 * 60;
+    _lightningNetwork =
+        (_env['LIGHTNING_NETWORK'] ?? 'mainnet').trim().toLowerCase();
+    if (!const {'mainnet', 'testnet', 'signet', 'regtest'}
+        .contains(_lightningNetwork)) {
+      throw StateError('Unsupported LIGHTNING_NETWORK "$_lightningNetwork".');
+    }
 
     // Per-bank notification targets (bank-scoped markets, e.g. SK). A bank-scoped
     // offer notifies the general channel AND the offer bank's channel.
@@ -828,7 +880,11 @@ class CoordinatorService {
     if (nwcUri != null && nwcUri.isNotEmpty) {
       AppLogger.info('NWC_URI found. Initializing NwcService...');
       try {
-        final nwcService = NwcService(nwcUri: nwcUri);
+        final nwcService = NwcService(
+          nwcUri: nwcUri,
+          enableBolt12Recovery:
+              nwcBolt12RecoveryEnabled(_env['NWC_BOLT12_RECOVERY']),
+        );
         await nwcService.connect();
         AppLogger.info('NwcService initialized and connected successfully.');
         return (backend: nwcService, type: "nwc");
@@ -889,8 +945,7 @@ class CoordinatorService {
     _backendRetryTimer?.cancel();
     _backendRetryTimer = null;
     _backendRetryDelay = _backendRetryFirstDelay;
-    AppLogger.info(
-        'Payment backend recovered: now on $_paymentBackendType. '
+    AppLogger.info('Payment backend recovered: now on $_paymentBackendType. '
         'Hold invoices work again.');
     return true;
   }
@@ -1240,6 +1295,7 @@ class CoordinatorService {
         await _strikeTelegramOfferMessages(offer.id);
         return;
       case 'takerPaid':
+      case 'refundedMaker':
         await _deleteTelegramOfferMessages(offer.id);
         return;
       default:
@@ -1351,65 +1407,6 @@ class CoordinatorService {
     }
   }
 
-  /// Notification wording for the market served by the configured payment
-  /// system (English/local language), keyed by the system's country code.
-  /// Falls back to Poland's wording for unknown markets.
-  static const Map<String, OfferNotificationStrings>
-      _notificationStringsByCountry = {
-    'PL': OfferNotificationStrings(
-      newOffer: 'New offer/Nowa oferta',
-      premium: 'premium/premia',
-      shop: 'Shop/Sklep',
-      atm: 'ATM/Bankomat',
-      online: 'Online',
-    ),
-    'PT': OfferNotificationStrings(
-      newOffer: 'New offer/Nova oferta',
-      premium: 'premium',
-      shop: 'Shop/Loja',
-      atm: 'ATM/Multibanco',
-      online: 'Online',
-    ),
-    'CH': OfferNotificationStrings(
-      newOffer: 'New offer/Neues Angebot',
-      premium: 'premium/Premium',
-      shop: 'Shop/Geschäft',
-      atm: 'ATM/Bancomat',
-      online: 'Online',
-    ),
-    'SK': OfferNotificationStrings(
-      newOffer: 'New offer/Nová ponuka',
-      premium: 'premium/prémia',
-      shop: 'Shop/Obchod',
-      atm: 'ATM/Bankomat',
-      online: 'Online',
-    ),
-  };
-
-  OfferNotificationStrings get _notificationStrings =>
-      _notificationStringsByCountry[_paymentSystem.country] ??
-      _notificationStringsByCountry['PL']!;
-
-  /// Trim trailing ".0" so 5.0 -> "5" but 2.5 stays "2.5".
-  String _formatPremium(double premium) {
-    final s = premium.toStringAsFixed(1);
-    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
-  }
-
-  String? _formatCategoryForNotification(OfferCategory? category) {
-    final strings = _notificationStrings;
-    switch (category) {
-      case OfferCategory.shop:
-        return strings.shop;
-      case OfferCategory.atm:
-        return strings.atm;
-      case OfferCategory.online:
-        return strings.online;
-      case null:
-        return null;
-    }
-  }
-
   int _expectedTakerNetAmountSats(Offer offer) {
     return offer.amountSats -
         (offer.takerFees ??
@@ -1421,85 +1418,416 @@ class CoordinatorService {
         OfferQuote.takerFeeSats(offer.amountSats, _takerFeePercentage);
   }
 
-  void _validateTakerInvoiceAmount(
+  Future<({String? invoice, String? offer})> _validateTakerPayoutInstruction(
     Offer offer,
-    String takerInvoice, {
+    Map<String, dynamic> params, {
+    required String action,
+    bool required = true,
+  }) async {
+    final invoice =
+        _cleanParam(params['taker_invoice']) ?? _cleanParam(params['bolt11']);
+    final bolt12Offer = _cleanParam(params['taker_offer']);
+    if (!required && invoice == null && bolt12Offer == null) {
+      return (invoice: null, offer: null);
+    }
+    return _validateOutgoingInstruction(
+      invoice: invoice,
+      offer: bolt12Offer,
+      expectedAmountSats: _expectedTakerNetAmountSats(offer),
+      action: action,
+    );
+  }
+
+  Future<({String? invoice, String? offer})> _validateOutgoingInstruction({
+    required String? invoice,
+    required String? offer,
+    required int expectedAmountSats,
+    required String action,
+  }) async {
+    if (expectedAmountSats <= 0) {
+      throw Exception('Expected payout for $action must be positive.');
+    }
+    if ((invoice == null) == (offer == null)) {
+      throw Exception(
+        'Exactly one BOLT11 invoice or BOLT12 offer is required for $action.',
+      );
+    }
+    if (invoice != null) {
+      if (!isBolt11(invoice)) {
+        throw Exception('Invalid BOLT11 invoice for $action.');
+      }
+      final req = Bolt11PaymentRequest(invoice);
+      final invoiceAmountSats =
+          (req.amount * Decimal.fromInt(100000000)).toBigInt().toInt();
+      _validateEncodedAmount(
+        invoiceAmountSats,
+        expectedAmountSats,
+        action: action,
+      );
+      return (invoice: invoice, offer: null);
+    }
+
+    final backend = _paymentBackend;
+    final Bolt12PaymentService? bolt12Backend = backend is Bolt12PaymentService
+        ? backend as Bolt12PaymentService
+        : null;
+    if (bolt12Backend == null || !bolt12Backend.isBolt12Available) {
+      throw Exception('BOLT12 payouts are not available for $action.');
+    }
+    final info = await bolt12Backend.decodeOffer(offer: offer!);
+    if (info.isExpired) {
+      throw Exception('BOLT12 offer for $action has expired.');
+    }
+    final amountMsat = info.amountMsat;
+    if (amountMsat != null) {
+      final minimumMsat = (expectedAmountSats - 100) * 1000;
+      final maximumMsat = (expectedAmountSats + 10) * 1000;
+      if (amountMsat < minimumMsat || amountMsat > maximumMsat) {
+        throw Exception(
+          'BOLT12 offer amount does not match the expected $expectedAmountSats sats for $action.',
+        );
+      }
+    }
+    return (invoice: null, offer: info.normalized);
+  }
+
+  void _validateEncodedAmount(
+    int actualAmountSats,
+    int expectedAmountSats, {
     required String action,
   }) {
-    final trimmed = takerInvoice.trim();
-    if (trimmed.isEmpty) {
-      throw Exception('Missing taker invoice for $action.');
-    }
-
-    final req = Bolt11PaymentRequest(trimmed);
-    final invoiceAmountSats =
-        (req.amount * Decimal.fromInt(100000000)).toBigInt().toInt();
-    final netAmountSats = _expectedTakerNetAmountSats(offer);
-
-    // Zero-amount invoices cannot be locally verified and are unsafe here,
-    // especially for NWC where the wallet pays the invoice's encoded amount.
-    if (invoiceAmountSats <= 0) {
+    if (actualAmountSats <= 0) {
       throw Exception(
-          'Provided taker invoice for $action must encode an amount close to the expected net amount $netAmountSats sats.');
+        'Payment instruction for $action must encode an amount close to $expectedAmountSats sats.',
+      );
     }
-    if (invoiceAmountSats > netAmountSats + 10) {
+    if (actualAmountSats > expectedAmountSats + 10 ||
+        actualAmountSats < expectedAmountSats - 100) {
       throw Exception(
-          'Provided taker invoice amount $invoiceAmountSats sats is greater than expected net amount $netAmountSats sats for $action.');
-    }
-    if (invoiceAmountSats < netAmountSats - 100) {
-      throw Exception(
-          'Provided taker invoice amount $invoiceAmountSats sats is much smaller than expected net amount $netAmountSats sats for $action.');
+        'Payment amount $actualAmountSats sats does not match the expected ~$expectedAmountSats sats for $action.',
+      );
     }
   }
 
-  /// Status-write-free taker payment primitive: attempts the Lightning payment
-  /// and, on a reported failure/exception, reconciles (NWC pay_invoice is not
-  /// idempotent) before declaring failure. Performs NO DB writes/publishes so it
-  /// backs the generic raw-state payout flow.
-  ///
-  /// Returns the settled [PayInvoiceResult] on success, or an error string.
-  Future<({bool ok, PayInvoiceResult? result, String? error})>
-      _attemptTakerPayment(
-          String invoice, int netAmountSats, int feeLimitSat) async {
-    if (_paymentBackend == null) {
-      return (ok: false, result: null, error: 'No payment backend configured');
+  /// Durable, at-most-once outgoing payment. Every instruction gets a stable
+  /// attempt row before submission. A resumed submitted/unknown attempt is
+  /// reconciled and never blindly sent again.
+  Future<_OutgoingPaymentResult> _attemptOutgoingPayment({
+    required Offer offer,
+    required String purpose,
+    required String? invoice,
+    required String? bolt12Offer,
+    required int amountSats,
+    required int feeLimitSat,
+  }) async {
+    final backend = _paymentBackend;
+    if (backend == null) {
+      return const _OutgoingPaymentResult(
+        status: PaymentStatus.UNKNOWN,
+        error: 'No payment backend configured',
+      );
     }
+    if ((invoice == null) == (bolt12Offer == null)) {
+      return const _OutgoingPaymentResult(
+        status: PaymentStatus.FAILED,
+        error: 'Exactly one outgoing payment instruction is required',
+      );
+    }
+
+    var attempt = await _dbService.getOrCreateOutgoingPaymentAttempt(
+      id: const Uuid().v4(),
+      offerId: offer.id,
+      purpose: purpose,
+      paymentType: invoice != null
+          ? OutgoingPaymentType.bolt11
+          : OutgoingPaymentType.bolt12,
+      encoded: invoice ?? bolt12Offer!,
+      expectedAmountSats: amountSats,
+      feeLimitSats: feeLimitSat,
+      backendType: _paymentBackendType,
+    );
+    if (attempt.backendType != _paymentBackendType) {
+      return _OutgoingPaymentResult(
+        status: PaymentStatus.UNKNOWN,
+        error:
+            'Outgoing payment belongs to backend ${attempt.backendType}; active backend is $_paymentBackendType',
+      );
+    }
+    if (attempt.state == OutgoingPaymentAttemptState.succeeded ||
+        attempt.state == OutgoingPaymentAttemptState.failed) {
+      return _resultFromAttempt(attempt);
+    }
+
+    final reconciled = await _reconcileAttempt(backend, attempt);
+    if (reconciled != null) {
+      attempt = await _persistAttemptResult(attempt, reconciled);
+      if (reconciled.status != PaymentStatus.UNKNOWN) return reconciled;
+    }
+
+    if (attempt.state != OutgoingPaymentAttemptState.prepared) {
+      return _resultFromAttempt(attempt);
+    }
+
+    // Persist the submission claim before making the external call. A crash
+    // after this point recovers via authoritative wallet history only.
+    attempt = await _dbService.updateOutgoingPaymentAttempt(
+      attempt.id,
+      state: OutgoingPaymentAttemptState.submitted,
+    );
+    _OutgoingPaymentResult submitted;
     try {
-      // A committed payout/refund state may be resumed after a coordinator
-      // crash. Reconcile before every attempt because NWC pay_invoice is not
-      // idempotent and the previous call may have settled before the crash.
-      final existing =
-          await _paymentBackend!.reconcileOutgoingPayment(invoice: invoice);
-      if (existing != null && existing.isSuccess) {
-        return (ok: true, result: existing, error: null);
+      if (invoice != null) {
+        final result = await backend.payInvoice(
+          invoice: invoice,
+          amountSat: amountSats,
+          feeLimitSat: feeLimitSat,
+        );
+        submitted = _fromInvoiceResult(result);
+      } else if (backend is Bolt12PaymentService &&
+          (backend as Bolt12PaymentService).isBolt12Available) {
+        final bolt12Backend = backend as Bolt12PaymentService;
+        final result = await bolt12Backend.payOffer(
+          offer: bolt12Offer!,
+          amountSat: amountSats,
+          feeLimitSat: feeLimitSat,
+          paymentAttemptId: attempt.id,
+        );
+        submitted = _fromOfferResult(result);
+      } else {
+        submitted = const _OutgoingPaymentResult(
+          status: PaymentStatus.FAILED,
+          error: 'BOLT12 payment backend unavailable',
+        );
       }
-      final r = await _paymentBackend!.payInvoice(
-        invoice: invoice,
-        amountSat: netAmountSats,
-        feeLimitSat: feeLimitSat,
-      );
-      if (r.isSuccess) return (ok: true, result: r, error: null);
-      final rec =
-          await _paymentBackend!.reconcileOutgoingPayment(invoice: invoice);
-      if (rec != null && rec.isSuccess) {
-        return (ok: true, result: rec, error: null);
-      }
-      return (
-        ok: false,
-        result: null,
-        error: r.paymentError ?? 'Payment failed (no route or unknown error)'
-      );
     } catch (e) {
-      try {
-        final rec =
-            await _paymentBackend?.reconcileOutgoingPayment(invoice: invoice);
-        if (rec != null && rec.isSuccess) {
-          return (ok: true, result: rec, error: null);
-        }
-      } catch (_) {/* reconcile failed; fall through to error */}
-      return (ok: false, result: null, error: e.toString());
+      submitted = _OutgoingPaymentResult(
+        status: PaymentStatus.UNKNOWN,
+        error: e.toString(),
+      );
+    }
+    await _persistAttemptResult(attempt, submitted);
+    return submitted;
+  }
+
+  Future<
+      ({
+        String? invoice,
+        String? offer,
+        String? paymentHash,
+        int amountSats
+      })> _validateMakerRefundPayout(
+    Offer trade, {
+    required String? invoice,
+    required String? bolt12Offer,
+  }) async {
+    if ((invoice == null) == (bolt12Offer == null)) {
+      throw Exception(
+          'Exactly one BOLT11 invoice or BOLT12 offer is required for maker refund.');
+    }
+    if (invoice != null) {
+      final validated = _validateMakerRefundInvoice(trade, invoice);
+      return (
+        invoice: validated.invoice,
+        offer: null,
+        paymentHash: validated.paymentHash,
+        amountSats: validated.amountSats
+      );
+    }
+    final backend = _paymentBackend;
+    if (backend is! Bolt12PaymentService ||
+        !(backend as Bolt12PaymentService).isBolt12Available) {
+      throw Exception('BOLT12 payouts are not available for maker refund.');
+    }
+    final info = await (backend as Bolt12PaymentService)
+        .decodeOffer(offer: bolt12Offer!);
+    final expectedSats = trade.amountSats + trade.makerFees;
+    if (expectedSats <= 0) {
+      throw Exception('Maker refund amount must be positive.');
+    }
+    if (info.network != _lightningNetwork) {
+      throw Exception(
+          'Maker refund offer is for ${info.network}, not $_lightningNetwork.');
+    }
+    if (info.isExpired) {
+      throw Exception('Maker refund offer has expired.');
+    }
+    if (info.quantityMax != null && info.quantityMax != 1) {
+      throw Exception('Maker refund offer must not require a quantity.');
+    }
+    // Amountless reusable offers are valid: payOffer receives the exact refund
+    // amount. A fixed-amount offer must match, without the taker tolerance.
+    if (info.amountMsat != null && info.amountMsat != expectedSats * 1000) {
+      throw Exception('Maker refund offer must be exactly $expectedSats sats.');
+    }
+    return (
+      invoice: null,
+      offer: info.normalized,
+      paymentHash: null,
+      amountSats: expectedSats
+    );
+  }
+
+  ({String invoice, String paymentHash, int amountSats})
+      _validateMakerRefundInvoice(Offer offer, String invoice) {
+    if (_paymentBackend == null) {
+      throw Exception('No Lightning payment backend is available.');
+    }
+
+    final trimmed = invoice.trim();
+    if (trimmed.isEmpty) {
+      throw Exception('Missing maker refund invoice.');
+    }
+
+    late final Bolt11PaymentRequest req;
+    try {
+      req = Bolt11PaymentRequest(trimmed);
+    } catch (_) {
+      throw Exception('Invalid BOLT11 maker refund invoice.');
+    }
+
+    final expectedPrefix = switch (_lightningNetwork) {
+      'mainnet' => PayRequestPrefix.lnbc,
+      'regtest' => PayRequestPrefix.lnbcrt,
+      'testnet' || 'signet' => PayRequestPrefix.lntb,
+      _ => throw StateError('Unsupported Lightning network.'),
+    };
+    if (req.prefix != expectedPrefix) {
+      throw Exception(
+          'Maker refund invoice is for ${req.prefix.name}, not $_lightningNetwork.');
+    }
+
+    final amountSats =
+        (req.amount * Decimal.fromInt(100000000)).toBigInt().toInt();
+    final expectedSats = offer.amountSats + offer.makerFees;
+    if (amountSats != expectedSats) {
+      throw Exception('Maker refund invoice must be exactly $expectedSats sats '
+          '(received $amountSats sats).');
+    }
+
+    var expirySeconds = 3600;
+    String? paymentHash;
+    for (final tag in req.tags) {
+      if (tag.type == 'expiry' && tag.data is num) {
+        expirySeconds = (tag.data as num).toInt();
+      } else if (tag.type == 'payment_hash' && tag.data is String) {
+        paymentHash = (tag.data as String).toLowerCase();
+      }
+    }
+    if (expirySeconds <= 0) {
+      throw Exception('Maker refund invoice has an invalid expiry.');
+    }
+    final nowSeconds = _clock.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+    final createdSeconds = req.timestamp.toInt();
+    if (createdSeconds > nowSeconds + 300) {
+      throw Exception('Maker refund invoice timestamp is in the future.');
+    }
+    if (nowSeconds >= createdSeconds + expirySeconds) {
+      throw Exception('Maker refund invoice has expired.');
+    }
+    if (paymentHash == null ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(paymentHash)) {
+      throw Exception('Maker refund invoice has no valid payment hash.');
+    }
+    if (paymentHash == offer.holdInvoicePaymentHash?.toLowerCase()) {
+      throw Exception('Maker refund invoice reuses the offer hold invoice.');
+    }
+
+    return (
+      invoice: trimmed,
+      paymentHash: paymentHash,
+      amountSats: amountSats,
+    );
+  }
+
+  Future<_OutgoingPaymentResult?> _reconcileAttempt(
+    PaymentService backend,
+    OutgoingPaymentAttempt attempt,
+  ) async {
+    try {
+      if (attempt.paymentType == OutgoingPaymentType.bolt11) {
+        final result = await backend.reconcileOutgoingPayment(
+          invoice: attempt.bolt11Invoice!,
+        );
+        return result == null ? null : _fromInvoiceResult(result);
+      }
+      if (backend is! Bolt12PaymentService ||
+          !(backend as Bolt12PaymentService).isBolt12Available) {
+        return null;
+      }
+      final bolt12Backend = backend as Bolt12PaymentService;
+      final result = await bolt12Backend.reconcileOutgoingOffer(
+        offer: attempt.bolt12Offer!,
+        paymentAttemptId: attempt.id,
+        paymentId: attempt.backendPaymentId,
+      );
+      return result == null ? null : _fromOfferResult(result);
+    } catch (e) {
+      AppLogger.warning(
+        'Outgoing payment reconciliation failed for offer ${attempt.offerId}',
+        offerId: attempt.offerId,
+        error: e,
+      );
+      return null;
     }
   }
+
+  Future<OutgoingPaymentAttempt> _persistAttemptResult(
+    OutgoingPaymentAttempt attempt,
+    _OutgoingPaymentResult result,
+  ) {
+    final state = switch (result.status) {
+      PaymentStatus.SUCCEEDED => OutgoingPaymentAttemptState.succeeded,
+      PaymentStatus.FAILED => OutgoingPaymentAttemptState.failed,
+      PaymentStatus.PENDING => OutgoingPaymentAttemptState.pending,
+      PaymentStatus.UNKNOWN => OutgoingPaymentAttemptState.unknown,
+    };
+    return _dbService.updateOutgoingPaymentAttempt(
+      attempt.id,
+      state: state,
+      backendPaymentId: result.paymentId,
+      preimage: result.preimage,
+      payerProof: result.payerProof,
+      feePaidSats: result.feeSat,
+      failureReason: result.error,
+    );
+  }
+
+  _OutgoingPaymentResult _fromInvoiceResult(PayInvoiceResult result) =>
+      _OutgoingPaymentResult(
+        status: result.status,
+        paymentId: result.paymentId,
+        preimage: result.paymentPreimage,
+        error: result.paymentError,
+        feeSat: result.feeSat ?? 0,
+      );
+
+  _OutgoingPaymentResult _fromOfferResult(PayOfferResult result) =>
+      _OutgoingPaymentResult(
+        status: result.status,
+        paymentId: result.paymentId,
+        preimage: result.paymentPreimage,
+        payerProof: result.payerProof,
+        error: result.paymentError,
+        feeSat: result.feeSat ?? 0,
+      );
+
+  _OutgoingPaymentResult _resultFromAttempt(OutgoingPaymentAttempt attempt) =>
+      _OutgoingPaymentResult(
+        status: switch (attempt.state) {
+          OutgoingPaymentAttemptState.succeeded => PaymentStatus.SUCCEEDED,
+          OutgoingPaymentAttemptState.failed => PaymentStatus.FAILED,
+          OutgoingPaymentAttemptState.pending => PaymentStatus.PENDING,
+          OutgoingPaymentAttemptState.prepared ||
+          OutgoingPaymentAttemptState.submitted ||
+          OutgoingPaymentAttemptState.unknown =>
+            PaymentStatus.UNKNOWN,
+        },
+        paymentId: attempt.backendPaymentId,
+        preimage: attempt.preimage,
+        payerProof: attempt.payerProof,
+        error: attempt.failureReason,
+        feeSat: attempt.feePaidSats ?? 0,
+      );
 
   Uint8List _generatePreimage() {
     final random = Random.secure();
@@ -1554,6 +1882,7 @@ class CoordinatorService {
         createdAt: offer.createdAt,
         reservedAt: offer.reservedAt,
         blikReceivedAt: offer.blikReceivedAt,
+        disputeAt: offer.disputeAt,
         makerPubkey: offer.makerPubkey,
         takerPubkey: offer.takerPubkey,
       );
@@ -1819,13 +2148,25 @@ class CoordinatorService {
           'per cardless withdrawal; requested $fiatAmount.');
     }
     if (instrument.makerProvidesCode) {
-      final normalizedCode = blikCode?.trim() ?? '';
+      final normalizedCode = instrument.kind == InstrumentKind.qrPayload
+          ? blikCode ?? ''
+          : blikCode?.trim() ?? '';
       if (!instrument.validate(normalizedCode, bank: offerBankSpec)) {
+        if (instrument.kind == InstrumentKind.qrPayload) {
+          throw const FormatException('Invalid TWINT shop QR payload.');
+        }
         throw Exception(
             'Invalid ${instrument.codeLabel} code. Expected exactly '
             '${instrument.codeLengthFor(offerBankSpec)} digits.');
       }
       blikCode = normalizedCode;
+      if (_paymentSystem.id == 'twint' && category == OfferCategory.shop) {
+        final qr = TwintShopQr.tryParse(normalizedCode)!;
+        if (fiatCurrency != qr.currency || !qr.matchesAmount(fiatAmount)) {
+          throw const FormatException(
+              'TWINT shop QR amount must exactly match the CHF offer amount.');
+        }
+      }
     }
     // Clamp premium to what this coordinator allows.
     final premium = premiumPercent.clamp(0, _maxPremiumPercent).toDouble();
@@ -1944,9 +2285,17 @@ class CoordinatorService {
       minAmountSats: _minAmountSats,
       maxAmountSats: _maxAmountSats,
       takerChargedAutoConfirmSeconds: _takerChargedAutoConfirmTimeoutSeconds,
+      disputeEvidencePeriodSeconds: _disputeEvidencePeriodSeconds,
       maxPremiumPercent: _maxPremiumPercent,
       currencies: List<String>.from(_supportedCurrencies),
+      outgoingPaymentTypes: [
+        'bolt11',
+        if (_paymentBackend case final Bolt12PaymentService bolt12
+            when bolt12.isBolt12Available)
+          'bolt12',
+      ],
       paymentSystem: _paymentSystem.id,
+      supportsTwintShopQr: _paymentSystem.id == 'twint',
       banks: List<String>.from(_servedBanks),
       nostrNpub: null,
       icon: _coordinatorIconUrl.isNotEmpty ? _coordinatorIconUrl : null,
@@ -1974,6 +2323,50 @@ class CoordinatorService {
     // AppLogger.info('Fetching offer by ID: $offerId', offerId: offerId);
     return await _dbService.getOfferById(offerId);
   }
+
+  Future<List<Offer>> getDisputedOffers({
+    int limit = 25,
+    DateTime? beforeDisputeAt,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
+  }) =>
+      _dbService.getDisputedOffers(
+        limit: limit,
+        beforeDisputeAt: beforeDisputeAt,
+        beforeCreatedAt: beforeCreatedAt,
+        beforeId: beforeId,
+      );
+
+  /// Offers that can still change state. The coordinator console uses this
+  /// complete set so an operator can join a participant chat before a case
+  /// reaches the explicit dispute state.
+  Future<List<Offer>> getNonFinalOffers({
+    int limit = 25,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
+  }) {
+    final terminalStatuses = _flowEngine.definition.states.values
+        .where((state) => state.terminal)
+        .map((state) => state.name)
+        .toList(growable: false);
+    return _dbService.getOffersNotInRawStatuses(
+      terminalStatuses,
+      limit: limit,
+      beforeCreatedAt: beforeCreatedAt,
+      beforeId: beforeId,
+    );
+  }
+
+  ({int makerRefundSats, int takerPayoutSats}) disputeDecisionAmounts(
+    Offer offer,
+  ) =>
+      (
+        makerRefundSats: offer.amountSats + offer.makerFees,
+        takerPayoutSats: _expectedTakerNetAmountSats(offer),
+      );
+
+  Future<List<Map<String, dynamic>>> getOfferStateHistory(String offerId) =>
+      _dbService.getOfferStateHistory(offerId);
 
   Future<Offer?> getOfferDetailsForParticipant(
     String userPubkey, {

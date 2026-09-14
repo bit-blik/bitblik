@@ -350,6 +350,9 @@ class _NekoManagementScreenState extends ConsumerState<NekoManagementScreen> {
                                           restoreKeyController.text,
                                         );
                                         await keyService.savePrivateKey(pKey);
+                                        await ref
+                                            .read(apiServiceProvider)
+                                            .switchNekoIdentity();
 
                                         // Clear the active offer when restoring
                                         await ref
@@ -357,27 +360,13 @@ class _NekoManagementScreenState extends ConsumerState<NekoManagementScreen> {
                                             .setActiveOffer(null);
 
                                         // Invalidate providers
-                                        ref.invalidate(keyServiceProvider);
-                                        ref.invalidate(apiServiceProvider);
-                                        ref.invalidate(
-                                          initializedApiServiceProvider,
-                                        );
                                         ref.invalidate(publicKeyProvider);
                                         ref.invalidate(
                                           discoveredCoordinatorsProvider,
                                         );
 
-                                        // Re-initialize services
-                                        await ref.read(
-                                          initializedApiServiceProvider.future,
-                                        );
-
                                         // Get new public key
-                                        final newKeyService = ref.read(
-                                          keyServiceProvider,
-                                        );
-                                        final newPubKey =
-                                            newKeyService.publicKeyHex;
+                                        final newPubKey = keyService.publicKeyHex;
 
                                         if (mounted && newPubKey != null) {
                                           setState(() {
@@ -440,6 +429,9 @@ class _NekoManagementScreenState extends ConsumerState<NekoManagementScreen> {
                                         });
 
                                         await keyService.generateNewKeyPair();
+                                        await ref
+                                            .read(apiServiceProvider)
+                                            .switchNekoIdentity();
 
                                         // Clear the active offer
                                         await ref
@@ -447,27 +439,13 @@ class _NekoManagementScreenState extends ConsumerState<NekoManagementScreen> {
                                             .setActiveOffer(null);
 
                                         // Invalidate providers
-                                        ref.invalidate(keyServiceProvider);
-                                        ref.invalidate(apiServiceProvider);
-                                        ref.invalidate(
-                                          initializedApiServiceProvider,
-                                        );
                                         ref.invalidate(publicKeyProvider);
                                         ref.invalidate(
                                           discoveredCoordinatorsProvider,
                                         );
 
-                                        // Re-initialize services
-                                        await ref.read(
-                                          initializedApiServiceProvider.future,
-                                        );
-
                                         // Get new public key
-                                        final newKeyService = ref.read(
-                                          keyServiceProvider,
-                                        );
-                                        final newPubKey =
-                                            newKeyService.publicKeyHex;
+                                        final newPubKey = keyService.publicKeyHex;
 
                                         if (mounted && newPubKey != null) {
                                           setState(() {

@@ -12,8 +12,8 @@ import 'package:flutter_localizations/flutter_localizations.dart'; // Keep for G
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ndk/entities.dart';
 import 'package:ndk_flutter/l10n/app_localizations.dart' as ndk_l10n;
+import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:ndk/shared/logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,10 +21,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/link.dart';
-import 'package:flutter/services.dart'
-    show rootBundle, Clipboard, ClipboardData;
-import 'package:flutter_html/flutter_html.dart';
-import 'package:markdown/markdown.dart' as md;
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import 'i18n/gen/strings.g.dart'; // Import Slang from new path
 import 'package:bitblik_core/core.dart'; // Needed for OfferStatus enum
@@ -34,6 +31,7 @@ import 'src/providers/providers.dart';
 import 'src/settings/app_preferences.dart';
 import 'src/services/notification_service.dart';
 import 'src/screens/coordinator_details_screen.dart';
+import 'src/screens/coordinator_console_access_screen.dart';
 import 'src/screens/coordinator_management_screen.dart';
 import 'src/screens/display_settings_screen.dart';
 import 'src/screens/faq_screen.dart'; // Import the FAQ screen
@@ -51,6 +49,7 @@ import 'src/screens/notification_settings_screen.dart';
 import 'src/screens/wallet_details_screen.dart';
 import 'src/screens/wallet_screen.dart';
 import 'src/widgets/relay_dots.dart';
+
 // Import our platform detection utility
 
 // BitBlik flavor entrypoint.
@@ -64,6 +63,7 @@ final double kTakerFeePercentage = 0.5;
 final SharedPreferencesAsync asyncPrefs = SharedPreferencesAsync();
 late AppLocale appLocale;
 final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 
 final routerProvider = Provider<GoRouter>((ref) {
   // On a fresh install (no market saved yet), start at the market-selection
@@ -166,6 +166,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const SettingsScreen(),
           ),
           GoRoute(
+            path: CoordinatorConsoleAccessScreen.routeName,
+            builder: (context, state) => const CoordinatorConsoleAccessScreen(),
+          ),
+          GoRoute(
             path: NotificationSettingsScreen.routeName,
             builder: (context, state) => const NotificationSettingsScreen(),
           ),
@@ -216,16 +220,13 @@ Future<void> main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await initBuildFlavor();
-  final deploymentDefaultPaymentSystemId =
-      RuntimeConfig.defaultPaymentSystemId;
+  final deploymentDefaultPaymentSystemId = RuntimeConfig.defaultPaymentSystemId;
   // Try to resolve the market from the device country (IP geolocation) and
   // auto-select it when the deployment did not provide a runtime default.
   // Only when neither is available do we show the first-launch market picker.
-  final marketSelected =
-      await AppPreferencesStore.ensureMarketSelectedOrDetect(
-        deploymentDefaultPaymentSystemId:
-            deploymentDefaultPaymentSystemId,
-      );
+  final marketSelected = await AppPreferencesStore.ensureMarketSelectedOrDetect(
+    deploymentDefaultPaymentSystemId: deploymentDefaultPaymentSystemId,
+  );
   await NotificationService().init();
   String? localeString = await asyncPrefs.getString('app_locale');
   if (localeString != null) {
@@ -562,7 +563,8 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     final router = ref.read(routerProvider);
     final scheme = uri.scheme.toLowerCase();
 
-    Logger.log.i(() => '🔗 Deep link received: $uri (scheme: $scheme)');
+    // Wallet callback query parameters can contain NWC credentials.
+    Logger.log.i(() => '🔗 Deep link received (scheme: $scheme)');
 
     // Handle nostr+walletconnect:// scheme (NWC connection)
     if (scheme == 'nostr+walletconnect') {
@@ -571,19 +573,12 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     }
     // Handle app-specific deep-link schemes (bitblik://, bitway://, bittwint://)
     if (scheme == 'bitblik' || scheme == 'bitway' || scheme == 'bittwint') {
-      // Check if it's an NWC connection string passed via the branded scheme
       final path = uri.host + uri.path;
-      if (path.startsWith('value') ||
+      if (path.endsWith('nwc-callback') ||
+          path.startsWith('value') ||
           uri.queryParameters.containsKey('value')) {
-        final nwcString = uri.queryParameters['value'];
-        if (nwcString != null) {
-          await _handleNwcDeepLink(nwcString);
-        }
-        return;
-      }
-      if (path.endsWith('nwc-callback')) {
-        _openPostNwcConnectionRoute();
-        ref.read(walletProtocolDispatcherProvider).dispatch(uri.toString());
+        // Preserve callback URI and correlation parameters for NDK validation.
+        await _handleNwcDeepLink(uri.toString());
         return;
       }
 
@@ -594,7 +589,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       }
     }
 
-    // Handle https deep links (bitblik.app / bitway.me / bittwint.app)
+    // Handle https deep links (BitBlik / BitWay domains / bittwint.app)
     if (scheme == 'https') {
       // Support both path-based (/offers/:id) and fragment-based (#/offers) links.
       final segments =
@@ -629,8 +624,8 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     _openWalletScreen();
   }
 
-  /// Handle NWC deep link: connect wallet and navigate based on active offer status
-  Future<void> _handleNwcDeepLink(String connectionString) async {
+  /// Complete NDK's connection before navigating, even without a wallet screen.
+  Future<void> _handleNwcDeepLink(String callbackUrl) async {
     Logger.log.i(() => '🔗 NWC deep link: connecting wallet...');
 
     try {
@@ -643,15 +638,36 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         return;
       }
 
-      final nwcWallet = NwcWallet(
-        id: kNwcWalletId,
-        name: 'NWC Wallet',
-        supportedUnits: {'sat'},
-        nwcUrl: connectionString.trim(),
+      if (!mounted) return;
+      final callbackContext = rootNavigatorKey.currentContext;
+      if (callbackContext == null) return;
+      final coordinator = ref.read(nwcWalletAuthCoordinatorProvider);
+      final existingWalletIds = {
+        for (final wallet in await ndk.wallets.getWallets()) wallet.id,
+      };
+      if (!mounted || !callbackContext.mounted) return;
+      final handled = await coordinator.processProtocolUrl(
+        callbackContext,
+        ref.read(ndkFlutterProvider) ?? NdkFlutter(ndk: ndk),
+        callbackUrl,
       );
+      if (!mounted) return;
+      if (!handled ||
+          coordinator.connectionState.value.phase !=
+              WalletConnectionPhase.connected) {
+        _openWalletScreen();
+        return;
+      }
 
-      await ndk.wallets.addWallet(nwcWallet);
-      ndk.wallets.setDefaultWallet(kNwcWalletId);
+      // NDK assigns the wallet ID and retains provider metadata. Select the
+      // newly connected wallet without consuming the widget's selection event.
+      final addedWallets = (await ndk.wallets.getWallets())
+          .where((wallet) => !existingWalletIds.contains(wallet.id))
+          .toList();
+      if (!mounted) return;
+      if (addedWallets.length == 1) {
+        ndk.wallets.setDefaultWallet(addedWallets.single.id);
+      }
       ref.read(defaultWalletProvider.notifier).refresh();
 
       Logger.log.i(() => '💰 NWC connected via deep link');
@@ -1069,74 +1085,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
   @override
   void dispose() {
     super.dispose();
-  }
-
-  /// Shows the changelog in a dialog with rendered markdown
-  Future<void> _showChangelogDialog(BuildContext context) async {
-    final t = Translations.of(context);
-    try {
-      final changelogContent = await rootBundle.loadString('CHANGELOG.md');
-      if (!context.mounted) return;
-
-      // Convert Markdown to HTML
-      final htmlContent = md.markdownToHtml(
-        changelogContent,
-        inlineSyntaxes: [md.InlineHtmlSyntax()],
-      );
-
-      showDialog(
-        context: context,
-        builder:
-            (context) => Dialog(
-              child: Container(
-                constraints: const BoxConstraints(
-                  maxWidth: 500,
-                  maxHeight: 600,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Text(
-                            t.app.changelog,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    Flexible(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Html(
-                          data: htmlContent,
-                          onLinkTap: (url, attributes, element) async {
-                            if (url != null) {
-                              await launchUrl(Uri.parse(url));
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-      );
-    } catch (e) {
-      Logger.log.e(() => 'Error loading changelog: $e');
-    }
   }
 
   /// Shows the AltStore installation dialog for iOS web users
@@ -1666,6 +1614,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
   @override
   Widget build(BuildContext context) {
     final publicKeyAsync = ref.watch(publicKeyProvider);
+    final appUpdateController = ref.watch(zapstoreAppUpdateControllerProvider);
 
     Widget appBarTitle;
     // bool canGoBack = GoRouter.of(context).canGoBack(); // Removed this line
@@ -1895,49 +1844,33 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
-                          child: InkWell(
-                            onTap: () => _showChangelogDialog(context),
-                            child: Text(
-                              _clientVersion != null ? 'v$_clientVersion' : '',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black45,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // InkWell(
-                        //   onTap: () async {
-                        //     final Uri url = Uri.parse('https://github.com/bit-blik/client');
-                        //     await launchUrl(url, mode: LaunchMode.externalApplication);
-                        //   },
-                        //   child: Image.asset('assets/github.png', width: 20, height: 20),
-                        // ),
-                        // const SizedBox(width: 8),
-                        InkWell(
-                          onTap: () async {
-                            final npub =
-                                ref
-                                    .read(selectedPaymentSystemProvider)
-                                    .discoveryNpub;
-                            final Uri url = Uri.parse('https://njump.to/$npub');
-                            await launchUrl(
-                              url,
-                              mode: LaunchMode.externalApplication,
-                            );
-                          },
-                          child: Image.asset(
-                            'assets/nostr.png',
-                            width: 36,
-                            height: 36,
-                          ),
+                          child: appUpdateController == null
+                              ? Text(
+                                  _clientVersion != null
+                                      ? 'v$_clientVersion'
+                                      : '',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black45,
+                                  ),
+                                )
+                              : NAppVersion(
+                                  controller: appUpdateController,
+                                  fallbackVersion: _clientVersion,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black45,
+                                  ),
+                                ),
                         ),
                       ],
                     ),
-                    // Download buttons on the right (only when on web)
-                    if (kIsWeb)
-                      Builder(
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Download buttons on the right (only when on web)
+                        if (kIsWeb)
+                          Builder(
                         builder: (context) {
                           // Download links follow the build flavor (pinned at
                           // startup), not the user's runtime currency switch.
@@ -2063,7 +1996,32 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                             ],
                           );
                         },
-                      ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: InkWell(
+                            onTap: () async {
+                              final npub =
+                                  ref
+                                      .read(selectedPaymentSystemProvider)
+                                      .discoveryNpub;
+                              final Uri url = Uri.parse(
+                                'https://njump.to/$npub',
+                              );
+                              await launchUrl(
+                                url,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            },
+                            child: Image.asset(
+                              'assets/nostr.png',
+                              width: 38,
+                              height: 38,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -2096,10 +2054,12 @@ class _NdkLocalizationsFallbackDelegate
 
   @override
   Future<ndk_l10n.AppLocalizations> load(Locale locale) {
-    final supported = ndk_l10n.AppLocalizations.supportedLocales
-        .any((l) => l.languageCode == locale.languageCode);
-    return ndk_l10n.AppLocalizations.delegate
-        .load(supported ? locale : const Locale('en'));
+    final supported = ndk_l10n.AppLocalizations.supportedLocales.any(
+      (l) => l.languageCode == locale.languageCode,
+    );
+    return ndk_l10n.AppLocalizations.delegate.load(
+      supported ? locale : const Locale('en'),
+    );
   }
 
   @override

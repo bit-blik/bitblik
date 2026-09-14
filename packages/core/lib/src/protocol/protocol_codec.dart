@@ -44,6 +44,32 @@ class ProtocolCodec {
     );
   }
 
+  /// Signer-backed variant used by NIP-46/55/07 and local-key accounts alike.
+  /// The signer performs NIP-44 without exposing private key material to the
+  /// caller or coordinator service.
+  static Future<Nip01Event> encryptRequestWithSigner({
+    required NostrRequest request,
+    required EventSigner signer,
+    required String coordinatorPubkey,
+  }) async {
+    final encrypted = await signer.encryptNip44(
+      plaintext: jsonEncode(request.toJson()),
+      recipientPubKey: coordinatorPubkey,
+    );
+    if (encrypted == null) {
+      throw StateError('Signer did not encrypt the coordinator request.');
+    }
+    return Nip01Event(
+      kind: kKindCoordinatorRequest,
+      pubKey: signer.getPublicKey(),
+      content: encrypted,
+      tags: [
+        ['p', coordinatorPubkey],
+      ],
+      createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    );
+  }
+
   /// Build a kind [kKindCoordinatorResponse] event carrying [response]
   /// encrypted for [recipientPubkey].
   static Future<Nip01Event> encryptResponse({
@@ -113,6 +139,22 @@ class ProtocolCodec {
     String recipientPrivateKeyHex,
   ) async {
     final plaintext = await _decrypt(event, recipientPrivateKeyHex);
+    return NostrResponse.fromJson(
+      jsonDecode(plaintext) as Map<String, dynamic>,
+    );
+  }
+
+  static Future<NostrResponse> decryptResponseWithSigner(
+    Nip01Event event,
+    EventSigner signer,
+  ) async {
+    final plaintext = await signer.decryptNip44(
+      ciphertext: event.content,
+      senderPubKey: event.pubKey,
+    );
+    if (plaintext == null) {
+      throw StateError('Signer did not decrypt the coordinator response.');
+    }
     return NostrResponse.fromJson(
       jsonDecode(plaintext) as Map<String, dynamic>,
     );

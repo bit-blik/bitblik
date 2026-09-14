@@ -25,6 +25,7 @@ void main() {
         await svc.init();
         expect(svc.servedBanks, isEmpty, reason: market);
         final info = await svc.getCoordinatorInfo();
+        expect(info.disputeEvidencePeriodSeconds, 48 * 60 * 60, reason: market);
         expect(info.banks, isEmpty, reason: market);
         expect(info.bankChannelLinks, isEmpty, reason: market);
         // Nothing bank-related leaks onto the wire.
@@ -72,7 +73,7 @@ void main() {
       );
     });
 
-    test('TWINT rejects the disabled shop category', () async {
+    test('TWINT shop category rejects an online numeric code', () async {
       final svc = serviceFor('twint');
       await svc.init();
       expect(
@@ -86,7 +87,7 @@ void main() {
         throwsA(
           predicate(
             (error) => error.toString().contains(
-                  'Unsupported category shop for twint',
+                  'Invalid TWINT shop QR payload',
                 ),
           ),
         ),

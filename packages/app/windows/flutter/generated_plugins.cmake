@@ -5,14 +5,17 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   connectivity_plus
+  file_selector_windows
   flutter_secure_storage_windows
+  flutter_webrtc
+  gal
   objectbox_flutter_libs
-  sqlite3_flutter_libs
   url_launcher_windows
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
   flutter_local_notifications_windows
+  flutter_webrtc_zxing
   jni
 )
 

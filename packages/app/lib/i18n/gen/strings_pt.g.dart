@@ -47,6 +47,8 @@ class TranslationsPt extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$reservations$pt reservations = _Translations$reservations$pt._(_root);
 	@override late final _Translations$exchange$pt exchange = _Translations$exchange$pt._(_root);
 	@override late final _Translations$coordinator$pt coordinator = _Translations$coordinator$pt._(_root);
+	@override late final _Translations$disputeChat$pt disputeChat = _Translations$disputeChat$pt._(_root);
+	@override late final _Translations$receivingInvoice$pt receivingInvoice = _Translations$receivingInvoice$pt._(_root);
 	@override late final _Translations$maker$pt maker = _Translations$maker$pt._(_root);
 	@override late final _Translations$taker$pt taker = _Translations$taker$pt._(_root);
 	@override late final _Translations$twint$pt twint = _Translations$twint$pt._(_root);
@@ -173,6 +175,7 @@ class _Translations$coordinator$pt extends Translations$coordinator$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$pt bolt12 = _Translations$coordinator$bolt12$pt._(_root);
 	@override String get title => 'Coordenadores';
 	@override late final _Translations$coordinator$info$pt info = _Translations$coordinator$info$pt._(_root);
 	@override late final _Translations$coordinator$selector$pt selector = _Translations$coordinator$selector$pt._(_root);
@@ -182,6 +185,37 @@ class _Translations$coordinator$pt extends Translations$coordinator$en {
 	@override late final _Translations$coordinator$management$pt management = _Translations$coordinator$management$pt._(_root);
 }
 
+// Path: disputeChat
+class _Translations$disputeChat$pt extends Translations$disputeChat$en {
+	_Translations$disputeChat$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get viewHistory => 'Ver histórico da disputa';
+	@override String get historyTitle => 'Histórico da disputa';
+	@override String get ruledForMaker => 'Decisão a favor do maker';
+	@override String get ruledForTaker => 'Decisão a favor do taker';
+	@override String get legacyChannel => 'Canal de compatibilidade NIP-04 legado';
+	@override String get privateConversation => 'Conversa privada com o coordenador';
+	@override String get noMessages => 'Ainda não há mensagens.';
+	@override String get replyHint => 'Responder aqui';
+	@override String get readOnly => 'O histórico desta disputa resolvida é só de leitura.';
+	@override late final _Translations$disputeChat$evidenceDeadline$pt evidenceDeadline = _Translations$disputeChat$evidenceDeadline$pt._(_root);
+	@override late final _Translations$disputeChat$tooltips$pt tooltips = _Translations$disputeChat$tooltips$pt._(_root);
+	@override late final _Translations$disputeChat$errors$pt errors = _Translations$disputeChat$errors$pt._(_root);
+}
+
+// Path: receivingInvoice
+class _Translations$receivingInvoice$pt extends Translations$receivingInvoice$en {
+	_Translations$receivingInvoice$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$receivingInvoice$errors$pt errors = _Translations$receivingInvoice$errors$pt._(_root);
+}
+
 // Path: maker
 class _Translations$maker$pt extends Translations$maker$en {
 	_Translations$maker$pt._(TranslationsPt root) : this._root = root, super.internal(root);
@@ -189,6 +223,7 @@ class _Translations$maker$pt extends Translations$maker$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$maker$refundInvoice$pt refundInvoice = _Translations$maker$refundInvoice$pt._(_root);
 	@override late final _Translations$maker$roleSelection$pt roleSelection = _Translations$maker$roleSelection$pt._(_root);
 	@override late final _Translations$maker$amountForm$pt amountForm = _Translations$maker$amountForm$pt._(_root);
 	@override late final _Translations$maker$payInvoice$pt payInvoice = _Translations$maker$payInvoice$pt._(_root);
@@ -207,10 +242,13 @@ class _Translations$taker$pt extends Translations$taker$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$taker$waitConfirmation$pt waitConfirmation = _Translations$taker$waitConfirmation$pt._(_root);
 	@override late final _Translations$taker$roleSelection$pt roleSelection = _Translations$taker$roleSelection$pt._(_root);
 	@override late final _Translations$taker$progress$pt progress = _Translations$taker$progress$pt._(_root);
 	@override late final _Translations$taker$submitBlik$pt submitBlik = _Translations$taker$submitBlik$pt._(_root);
 	@override late final _Translations$taker$criticalCodeDecision$pt criticalCodeDecision = _Translations$taker$criticalCodeDecision$pt._(_root);
+	@override late final _Translations$taker$conflict$pt conflict = _Translations$taker$conflict$pt._(_root);
+	@override late final _Translations$taker$dispute$pt dispute = _Translations$taker$dispute$pt._(_root);
 }
 
 // Path: twint
@@ -220,6 +258,7 @@ class _Translations$twint$pt extends Translations$twint$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$twint$shop$pt shop = _Translations$twint$shop$pt._(_root);
 	@override late final _Translations$twint$scanner$pt scanner = _Translations$twint$scanner$pt._(_root);
 	@override late final _Translations$twint$flow$pt flow = _Translations$twint$flow$pt._(_root);
 	@override late final _Translations$twint$waitConfirmation$pt waitConfirmation = _Translations$twint$waitConfirmation$pt._(_root);
@@ -376,6 +415,7 @@ class _Translations$settings$pt extends Translations$settings$en {
 
 	// Translations
 	@override String get title => 'Definições';
+	@override late final _Translations$settings$coordinatorConsole$pt coordinatorConsole = _Translations$settings$coordinatorConsole$pt._(_root);
 	@override late final _Translations$settings$offerCreation$pt offerCreation = _Translations$settings$offerCreation$pt._(_root);
 	@override late final _Translations$settings$display$pt display = _Translations$settings$display$pt._(_root);
 	@override late final _Translations$settings$paymentSystem$pt paymentSystem = _Translations$settings$paymentSystem$pt._(_root);
@@ -403,6 +443,7 @@ class _Translations$wallet$pt extends Translations$wallet$en {
 	@override String get title => 'Carteira';
 	@override String get description => 'Faça a gestão das definições da sua carteira Lightning';
 	@override late final _Translations$wallet$missingReceiving$pt missingReceiving = _Translations$wallet$missingReceiving$pt._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$pt incompatibleReceiving = _Translations$wallet$incompatibleReceiving$pt._(_root);
 	@override late final _Translations$wallet$details$pt details = _Translations$wallet$details$pt._(_root);
 }
 
@@ -750,6 +791,8 @@ class _Translations$offers$status$pt extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => '${code} inválido';
 	@override String get conflict => 'Conflito';
 	@override String get dispute => 'Disputa';
+	@override String get refundedMaker => 'Maker reembolsado';
+	@override String get refundingMaker => 'Reembolso do maker';
 	@override String get makerConfirmed => 'Confirmada';
 	@override String get settled => 'Liquidada';
 	@override String get payingTaker => 'A pagar ao taker';
@@ -900,6 +943,19 @@ class _Translations$exchange$errors$pt extends Translations$exchange$errors$en {
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} entrega no máximo ${limit} ${currency} por levantamento.';
 }
 
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$pt extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Suporte BOLT12';
+	@override String get body => 'Este coordenador pode pagar a carteiras que recebem pagamentos através de ofertas BOLT12. Pode usar estas carteiras para pagamentos aos takers ou reembolsos aos makers.';
+	@override String get details => 'Uma oferta BOLT12 é um pedido de pagamento Lightning reutilizável que pode partilhar como texto ou código QR. A mesma oferta pode receber vários pagamentos, pelo que não precisa de criar e partilhar um novo pedido de cada vez. A sua carteira de receção tem de suportar ofertas BOLT12.';
+	@override String get learnMore => 'Saiba mais em bolt12.org';
+}
+
 // Path: coordinator.info
 class _Translations$coordinator$info$pt extends Translations$coordinator$info$en {
 	_Translations$coordinator$info$pt._(TranslationsPt root) : this._root = root, super.internal(root);
@@ -1028,6 +1084,75 @@ class _Translations$coordinator$management$pt extends Translations$coordinator$m
 	@override String get metricNetworkOffersTooltip => 'Ofertas bem-sucedidas liquidadas por este coordenador entre todos os utilizadores nos últimos 30 dias.';
 }
 
+// Path: disputeChat.evidenceDeadline
+class _Translations$disputeChat$evidenceDeadline$pt extends Translations$disputeChat$evidenceDeadline$en {
+	_Translations$disputeChat$evidenceDeadline$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Prazo para envio de provas';
+	@override String remaining({required Object time}) => 'Envie provas que sustentem a sua posição dentro de ${time}. Após este prazo, o coordenador pode decidir a favor da contraparte com base nas provas disponíveis.';
+	@override String get expired => 'O período para envio de provas terminou. O coordenador pode agora decidir com base nas provas disponíveis.';
+	@override String period({required Object time}) => 'O coordenador permite até ${time} para provas após a abertura da disputa. A contagem decrescente começará quando o horário da disputa estiver disponível.';
+}
+
+// Path: disputeChat.tooltips
+class _Translations$disputeChat$tooltips$pt extends Translations$disputeChat$tooltips$en {
+	_Translations$disputeChat$tooltips$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get refresh => 'Atualizar mensagens';
+	@override String get attachEvidence => 'Anexar comprovativo de pagamento';
+	@override String get send => 'Enviar mensagem';
+}
+
+// Path: disputeChat.errors
+class _Translations$disputeChat$errors$pt extends Translations$disputeChat$errors$en {
+	_Translations$disputeChat$errors$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get accountNotReady => 'As mensagens privadas estarão disponíveis quando a sua conta Nostr estiver pronta.';
+	@override String get subscriptionFailed => 'A ligação de mensagens privadas falhou. Atualize a conversa.';
+	@override String get decryptFailed => 'Não foi possível decifrar uma mensagem privada.';
+	@override String get operationFailed => 'A operação de mensagens privadas falhou. Tente novamente.';
+	@override String get nostrNotInitialized => 'O Nostr não foi inicializado.';
+	@override String get attachmentsRequireNip17 => 'Os anexos estão disponíveis apenas no canal NIP-17.';
+}
+
+// Path: receivingInvoice.errors
+class _Translations$receivingInvoice$errors$pt extends Translations$receivingInvoice$errors$en {
+	_Translations$receivingInvoice$errors$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get walletUnavailable => 'O serviço de carteira não está disponível.';
+	@override String get noBolt11 => 'A carteira não devolveu uma fatura BOLT11.';
+}
+
+// Path: maker.refundInvoice
+class _Translations$maker$refundInvoice$pt extends Translations$maker$refundInvoice$en {
+	_Translations$maker$refundInvoice$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'O coordenador decidiu a seu favor';
+	@override String instructions({required Object amount}) => 'Escolha uma carteira de recebimento ou cole uma fatura Lightning de exatamente ${amount} para o reembolso.';
+	@override String get invoiceLabel => 'Fatura de reembolso com o valor exato';
+	@override String get submit => 'Enviar fatura de reembolso';
+	@override String get addWallet => 'Adicionar nova carteira';
+	@override String get noReceivingWallet => 'Não há uma carteira de recebimento configurada. Adicione uma ou cole uma fatura de outra carteira.';
+	@override String get paymentFailed => 'A tentativa de reembolso anterior falhou. Escolha outra carteira ou envie uma nova fatura.';
+	@override String submitFailed({required Object details}) => 'Não foi possível enviar a fatura de reembolso: ${details}';
+	@override late final _Translations$maker$refundInvoice$errors$pt errors = _Translations$maker$refundInvoice$errors$pt._(_root);
+}
+
 // Path: maker.roleSelection
 class _Translations$maker$roleSelection$pt extends Translations$maker$roleSelection$en {
 	_Translations$maker$roleSelection$pt._(TranslationsPt root) : this._root = root, super.internal(root);
@@ -1154,7 +1279,8 @@ class _Translations$maker$conflict$pt extends Translations$maker$conflict$en {
 	@override String get title => 'Conflito na oferta';
 	@override String get headline => 'Conflito na oferta reportado';
 	@override String body({required Object code}) => 'Marcou o código ${code} como inválido, mas o taker reportou um conflito, indicando que acredita que o pagamento foi bem-sucedido.';
-	@override String get instructions => 'Aguarde que o coordenador analise a situação. Poderão pedir-lhe mais detalhes. Volte mais tarde ou contacte o suporte se necessário.';
+	@override String get instructions => 'Confirme o resultado antes de o temporizador expirar. Se o pagamento foi bem-sucedido, confirme-o para que o taker possa receber. Se falhou, abra uma disputa. Se não fizer nada, será aberta automaticamente uma disputa formal.';
+	@override String timeoutLabel({required Object time}) => 'A disputa formal será aberta automaticamente dentro de ${time}';
 	@override late final _Translations$maker$conflict$actions$pt actions = _Translations$maker$conflict$actions$pt._(_root);
 	@override late final _Translations$maker$conflict$disputeDialog$pt disputeDialog = _Translations$maker$conflict$disputeDialog$pt._(_root);
 	@override late final _Translations$maker$conflict$feedback$pt feedback = _Translations$maker$conflict$feedback$pt._(_root);
@@ -1174,6 +1300,18 @@ class _Translations$maker$success$pt extends Translations$maker$success$en {
 	@override String get subtitle => 'O taker vai ser pago agora.';
 	@override String get detailsTitle => 'Detalhes da oferta:';
 	@override String duration({required Object time}) => 'A oferta demorou ${time}!';
+}
+
+// Path: taker.waitConfirmation
+class _Translations$taker$waitConfirmation$pt extends Translations$taker$waitConfirmation$en {
+	_Translations$taker$waitConfirmation$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$taker$waitConfirmation$expiredActions$pt expiredActions = _Translations$taker$waitConfirmation$expiredActions$pt._(_root);
+	@override late final _Translations$taker$waitConfirmation$feedback$pt feedback = _Translations$taker$waitConfirmation$feedback$pt._(_root);
+	@override late final _Translations$taker$waitConfirmation$errors$pt errors = _Translations$taker$waitConfirmation$errors$pt._(_root);
 }
 
 // Path: taker.roleSelection
@@ -1230,6 +1368,63 @@ class _Translations$taker$criticalCodeDecision$pt extends Translations$taker$cri
 	@override String get warningTitle => 'PODE PERDER OS SEUS FUNDOS';
 	@override String warningBody({required Object code}) => 'Se o seu banco debitou o pagamento ${code}, NÃO continue. O maker pode ter usado o seu código e, após esta ação, o coordenador poderá já não conseguir garantir o pagamento dos seus bitcoins.';
 	@override late final _Translations$taker$criticalCodeDecision$actions$pt actions = _Translations$taker$criticalCodeDecision$actions$pt._(_root);
+}
+
+// Path: taker.conflict
+class _Translations$taker$conflict$pt extends Translations$taker$conflict$en {
+	_Translations$taker$conflict$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Confirmação do pagamento pendente';
+	@override String get headline => 'A aguardar a confirmação do maker';
+	@override String body({required Object code}) => 'Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.';
+	@override String get instructions => 'O maker tem agora de confirmar o resultado. Se confirmar que o pagamento foi bem-sucedido, o seu pagamento continuará. Se confirmar que falhou, ou se o temporizador expirar, a oferta passará para uma disputa formal e o chat da disputa ficará disponível.';
+	@override String timeoutLabel({required Object time}) => 'A disputa formal será aberta automaticamente dentro de ${time}';
+	@override late final _Translations$taker$conflict$actions$pt actions = _Translations$taker$conflict$actions$pt._(_root);
+	@override late final _Translations$taker$conflict$feedback$pt feedback = _Translations$taker$conflict$feedback$pt._(_root);
+	@override late final _Translations$taker$conflict$errors$pt errors = _Translations$taker$conflict$errors$pt._(_root);
+}
+
+// Path: taker.dispute
+class _Translations$taker$dispute$pt extends Translations$taker$dispute$en {
+	_Translations$taker$dispute$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => 'Disputa formal aberta';
+	@override String get body => 'A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.';
+}
+
+// Path: twint.shop
+class _Translations$twint$shop$pt extends Translations$twint$shop$en {
+	_Translations$twint$shop$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Escanear QR da loja';
+	@override String get scanInstructions => 'Escaneie o código QR de pagamento no terminal da loja. O valor em CHF será lido do código.';
+	@override String get invalidQr => 'Este código QR não é um pagamento em loja em CHF compatível. Escaneie o código QR de pagamento exibido no terminal.';
+	@override String get amountMismatch => 'Este código QR tem um valor diferente. Peça um novo código QR com o valor original do pagamento.';
+	@override String get cameraFailed => 'Câmera indisponível. Permita o acesso à câmera nas configurações do dispositivo ou navegador e tente novamente.';
+	@override String get scanned => 'QR da loja escaneado. Confira o valor em CHF antes de financiar a oferta.';
+	@override String get rescan => 'Escanear outro código QR';
+	@override String get coordinatorUnsupported => 'Este coordenador não aceita pagamentos QR em loja. Escolha um coordenador que aceite.';
+	@override String get loadingFailed => 'Não foi possível carregar o código QR de pagamento. Tente novamente.';
+	@override String get replacementInstructions => 'Escaneie um novo código QR da loja com o mesmo valor em CHF da oferta financiada.';
+	@override String get replacementScanned => 'O QR substituto corresponde ao valor financiado.';
+	@override String get qrLabel => 'Código QR de pagamento TWINT';
+	@override String get payInstructions => 'Escaneie este código QR com o TWINT ou salve a imagem e importe-a da sua galeria no TWINT. Confira o comerciante e o valor antes de pagar.';
+	@override String get saveImage => 'Salvar QR nas fotos';
+	@override String get downloadImage => 'Baixar imagem QR';
+	@override String get saving => 'Salvando imagem QR…';
+	@override String get saved => 'Imagem QR salva. Abra o TWINT e importe-a da sua galeria.';
+	@override String get downloadStarted => 'Download da imagem QR iniciado. Salve-a nas suas fotos para importá-la no TWINT.';
+	@override String get saveFailed => 'Não foi possível salvar a imagem QR. Confira as permissões de acesso às fotos e o espaço de armazenamento disponível e tente novamente.';
+	@override String get expired => 'Este código QR expirou. Não pague com ele nem use uma imagem salva anteriormente.';
 }
 
 // Path: twint.scanner
@@ -1615,6 +1810,32 @@ class _Translations$landing$actions$pt extends Translations$landing$actions$en {
 	@override String get howItWorks => 'Como funciona?';
 }
 
+// Path: settings.coordinatorConsole
+class _Translations$settings$coordinatorConsole$pt extends Translations$settings$coordinatorConsole$en {
+	_Translations$settings$coordinatorConsole$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Consola do coordenador';
+	@override String get subtitle => 'Gerir disputas com um assinante coordenador';
+	@override String get signInTitle => 'Iniciar sessão como coordenador';
+	@override String get signInDescription => 'Use a chave Nostr que identifica o coordenador para analisar e resolver disputas.';
+	@override String get separateIdentityNote => 'O assinante do coordenador utiliza uma sessão NDK separada e nunca substitui a identidade de negociação Neko.';
+	@override String get loginWithSignerApp => 'Entrar com a aplicação de assinatura';
+	@override String get loginWithExtension => 'Entrar com a extensão do navegador';
+	@override String get loginWithNsec => 'Entrar com nsec';
+	@override String get nsecDialogTitle => 'Chave privada do coordenador';
+	@override String get nsecFieldLabel => 'Chave privada';
+	@override String get nsecSecurityNote => 'A chave privada é armazenada com segurança neste dispositivo e usada apenas pela sessão separada do coordenador.';
+	@override String get unsupportedPlatform => 'O início de sessão do coordenador está atualmente disponível no Android, Linux e na Web.';
+	@override String get loginFailed => 'Falha no início de sessão do coordenador';
+	@override String get accountsTitle => 'Contas de coordenador';
+	@override String get savedAccounts => 'Contas de coordenador guardadas';
+	@override String get addAccount => 'Adicionar conta de coordenador';
+	@override String get removeAccount => 'Remover conta de coordenador';
+}
+
 // Path: settings.offerCreation
 class _Translations$settings$offerCreation$pt extends Translations$settings$offerCreation$en {
 	_Translations$settings$offerCreation$pt._(TranslationsPt root) : this._root = root, super.internal(root);
@@ -1687,6 +1908,18 @@ class _Translations$wallet$missingReceiving$pt extends Translations$wallet$missi
 	@override String get title => 'Carteira de receção necessária';
 	@override String get message => 'Nenhuma carteira configurada para receber. Adicione uma nas definições da Carteira para aceitar ofertas.';
 	@override String get openSettings => 'Definições da carteira';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$pt extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Carteira BOLT11 necessária';
+	@override String get message => 'Este coordenador só pode pagar esta oferta através de BOLT11.';
+	@override String get explanation => 'A sua carteira de receção suporta ofertas BOLT12, mas não consegue criar a fatura BOLT11 necessária. Adicione uma carteira de receção compatível com BOLT11.';
 }
 
 // Path: wallet.details
@@ -1966,6 +2199,27 @@ class _Translations$coordinator$coldStart$phases$pt extends Translations$coordin
 	@override String get checkingHealth => 'A verificar a saúde dos coordenadores';
 	@override String get finalizing => 'A ativar coordenadores predefinidos';
 	@override String get completed => 'Concluído';
+}
+
+// Path: maker.refundInvoice.errors
+class _Translations$maker$refundInvoice$errors$pt extends Translations$maker$refundInvoice$errors$en {
+	_Translations$maker$refundInvoice$errors$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get backendUnavailable => 'O serviço de pagamento Lightning não está disponível.';
+	@override String get missing => 'Introduza uma fatura de reembolso.';
+	@override String get invalid => 'Introduza uma fatura de reembolso BOLT11 válida.';
+	@override String get wrongNetwork => 'A fatura de reembolso pertence à rede Lightning errada.';
+	@override String get wrongAmount => 'A fatura de reembolso deve conter o valor exato do reembolso.';
+	@override String get invalidExpiry => 'A fatura de reembolso tem uma validade inválida.';
+	@override String get futureTimestamp => 'A data da fatura de reembolso está no futuro.';
+	@override String get expired => 'A fatura de reembolso expirou. Gere uma nova.';
+	@override String get invalidPaymentHash => 'A fatura de reembolso não tem um hash de pagamento válido.';
+	@override String get reusedInvoice => 'Use uma nova fatura; a fatura da oferta não pode receber o reembolso.';
+	@override String get unsupportedNetwork => 'Esta rede Lightning não é suportada.';
+	@override String get unknown => 'Verifique a fatura e tente novamente.';
 }
 
 // Path: maker.amountForm.progress
@@ -2296,6 +2550,36 @@ class _Translations$maker$conflict$nostrContact$pt extends Translations$maker$co
 	@override String get manageNekoKeys => 'Gerir chaves Neko';
 }
 
+// Path: taker.waitConfirmation.expiredActions
+class _Translations$taker$waitConfirmation$expiredActions$pt extends Translations$taker$waitConfirmation$expiredActions$en {
+	_Translations$taker$waitConfirmation$expiredActions$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkReportStatus => 'Verificar estado / reenviar relato';
+}
+
+// Path: taker.waitConfirmation.feedback
+class _Translations$taker$waitConfirmation$feedback$pt extends Translations$taker$waitConfirmation$feedback$en {
+	_Translations$taker$waitConfirmation$feedback$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get chargeReported => 'Relato de cobrança recebido. A aguardar a resposta do Maker ou a confirmação automática.';
+}
+
+// Path: taker.waitConfirmation.errors
+class _Translations$taker$waitConfirmation$errors$pt extends Translations$taker$waitConfirmation$errors$en {
+	_Translations$taker$waitConfirmation$errors$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get reportingConflictUnconfirmed => 'Confirmação do relato pendente. Não se sabe se foi entregue. Verifique o estado para reenviar se ainda for necessário. Se o estado continuar indisponível, contacte o suporte.';
+}
+
 // Path: taker.submitBlik.actions
 class _Translations$taker$submitBlik$actions$pt extends Translations$taker$submitBlik$actions$en {
 	_Translations$taker$submitBlik$actions$pt._(TranslationsPt root) : this._root = root, super.internal(root);
@@ -2364,6 +2648,36 @@ class _Translations$taker$criticalCodeDecision$actions$pt extends Translations$t
 	// Translations
 	@override String get cancel => 'Voltar e verificar o banco';
 	@override String get proceed => 'NÃO fui debitado — continuar';
+}
+
+// Path: taker.conflict.actions
+class _Translations$taker$conflict$actions$pt extends Translations$taker$conflict$actions$en {
+	_Translations$taker$conflict$actions$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get back => 'Voltar ao início';
+}
+
+// Path: taker.conflict.feedback
+class _Translations$taker$conflict$feedback$pt extends Translations$taker$conflict$feedback$en {
+	_Translations$taker$conflict$feedback$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get reported => 'Conflito de pagamento reportado. A aguardar a confirmação do maker.';
+}
+
+// Path: taker.conflict.errors
+class _Translations$taker$conflict$errors$pt extends Translations$taker$conflict$errors$en {
+	_Translations$taker$conflict$errors$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String reporting({required Object details}) => 'Erro ao reportar o conflito: ${details}';
 }
 
 // Path: twint.scanner.status
@@ -3094,6 +3408,8 @@ extension on TranslationsPt {
 			'offers.status.invalidBlik' => ({required Object code}) => '${code} inválido',
 			'offers.status.conflict' => 'Conflito',
 			'offers.status.dispute' => 'Disputa',
+			'offers.status.refundedMaker' => 'Maker reembolsado',
+			'offers.status.refundingMaker' => 'Reembolso do maker',
 			'offers.status.makerConfirmed' => 'Confirmada',
 			'offers.status.settled' => 'Liquidada',
 			'offers.status.payingTaker' => 'A pagar ao taker',
@@ -3152,6 +3468,10 @@ extension on TranslationsPt {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'O montante é demasiado alto. O máximo é ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'O multibanco não consegue dispensar este montante. Use uma combinação de notas: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} entrega no máximo ${limit} ${currency} por levantamento.',
+			'coordinator.bolt12.title' => 'Suporte BOLT12',
+			'coordinator.bolt12.body' => 'Este coordenador pode pagar a carteiras que recebem pagamentos através de ofertas BOLT12. Pode usar estas carteiras para pagamentos aos takers ou reembolsos aos makers.',
+			'coordinator.bolt12.details' => 'Uma oferta BOLT12 é um pedido de pagamento Lightning reutilizável que pode partilhar como texto ou código QR. A mesma oferta pode receber vários pagamentos, pelo que não precisa de criar e partilhar um novo pedido de cada vez. A sua carteira de receção tem de suportar ofertas BOLT12.',
+			'coordinator.bolt12.learnMore' => 'Saiba mais em bolt12.org',
 			'coordinator.title' => 'Coordenadores',
 			'coordinator.info.fee' => 'taxa',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Montante: ${minAmount}-${maxAmount} ${currency}',
@@ -3233,6 +3553,50 @@ extension on TranslationsPt {
 			'coordinator.management.metricYourOffersTooltip' => 'Número de ofertas que concluiu com sucesso com este coordenador.',
 			'coordinator.management.metricNetworkOffers' => 'Ofertas (30d)',
 			'coordinator.management.metricNetworkOffersTooltip' => 'Ofertas bem-sucedidas liquidadas por este coordenador entre todos os utilizadores nos últimos 30 dias.',
+			'disputeChat.viewHistory' => 'Ver histórico da disputa',
+			'disputeChat.historyTitle' => 'Histórico da disputa',
+			'disputeChat.ruledForMaker' => 'Decisão a favor do maker',
+			'disputeChat.ruledForTaker' => 'Decisão a favor do taker',
+			'disputeChat.legacyChannel' => 'Canal de compatibilidade NIP-04 legado',
+			'disputeChat.privateConversation' => 'Conversa privada com o coordenador',
+			'disputeChat.noMessages' => 'Ainda não há mensagens.',
+			'disputeChat.replyHint' => 'Responder aqui',
+			'disputeChat.readOnly' => 'O histórico desta disputa resolvida é só de leitura.',
+			'disputeChat.evidenceDeadline.title' => 'Prazo para envio de provas',
+			'disputeChat.evidenceDeadline.remaining' => ({required Object time}) => 'Envie provas que sustentem a sua posição dentro de ${time}. Após este prazo, o coordenador pode decidir a favor da contraparte com base nas provas disponíveis.',
+			'disputeChat.evidenceDeadline.expired' => 'O período para envio de provas terminou. O coordenador pode agora decidir com base nas provas disponíveis.',
+			'disputeChat.evidenceDeadline.period' => ({required Object time}) => 'O coordenador permite até ${time} para provas após a abertura da disputa. A contagem decrescente começará quando o horário da disputa estiver disponível.',
+			'disputeChat.tooltips.refresh' => 'Atualizar mensagens',
+			'disputeChat.tooltips.attachEvidence' => 'Anexar comprovativo de pagamento',
+			'disputeChat.tooltips.send' => 'Enviar mensagem',
+			'disputeChat.errors.accountNotReady' => 'As mensagens privadas estarão disponíveis quando a sua conta Nostr estiver pronta.',
+			'disputeChat.errors.subscriptionFailed' => 'A ligação de mensagens privadas falhou. Atualize a conversa.',
+			'disputeChat.errors.decryptFailed' => 'Não foi possível decifrar uma mensagem privada.',
+			'disputeChat.errors.operationFailed' => 'A operação de mensagens privadas falhou. Tente novamente.',
+			'disputeChat.errors.nostrNotInitialized' => 'O Nostr não foi inicializado.',
+			'disputeChat.errors.attachmentsRequireNip17' => 'Os anexos estão disponíveis apenas no canal NIP-17.',
+			'receivingInvoice.errors.walletUnavailable' => 'O serviço de carteira não está disponível.',
+			'receivingInvoice.errors.noBolt11' => 'A carteira não devolveu uma fatura BOLT11.',
+			'maker.refundInvoice.title' => 'O coordenador decidiu a seu favor',
+			'maker.refundInvoice.instructions' => ({required Object amount}) => 'Escolha uma carteira de recebimento ou cole uma fatura Lightning de exatamente ${amount} para o reembolso.',
+			'maker.refundInvoice.invoiceLabel' => 'Fatura de reembolso com o valor exato',
+			'maker.refundInvoice.submit' => 'Enviar fatura de reembolso',
+			'maker.refundInvoice.addWallet' => 'Adicionar nova carteira',
+			'maker.refundInvoice.noReceivingWallet' => 'Não há uma carteira de recebimento configurada. Adicione uma ou cole uma fatura de outra carteira.',
+			'maker.refundInvoice.paymentFailed' => 'A tentativa de reembolso anterior falhou. Escolha outra carteira ou envie uma nova fatura.',
+			'maker.refundInvoice.submitFailed' => ({required Object details}) => 'Não foi possível enviar a fatura de reembolso: ${details}',
+			'maker.refundInvoice.errors.backendUnavailable' => 'O serviço de pagamento Lightning não está disponível.',
+			'maker.refundInvoice.errors.missing' => 'Introduza uma fatura de reembolso.',
+			'maker.refundInvoice.errors.invalid' => 'Introduza uma fatura de reembolso BOLT11 válida.',
+			'maker.refundInvoice.errors.wrongNetwork' => 'A fatura de reembolso pertence à rede Lightning errada.',
+			'maker.refundInvoice.errors.wrongAmount' => 'A fatura de reembolso deve conter o valor exato do reembolso.',
+			'maker.refundInvoice.errors.invalidExpiry' => 'A fatura de reembolso tem uma validade inválida.',
+			'maker.refundInvoice.errors.futureTimestamp' => 'A data da fatura de reembolso está no futuro.',
+			'maker.refundInvoice.errors.expired' => 'A fatura de reembolso expirou. Gere uma nova.',
+			'maker.refundInvoice.errors.invalidPaymentHash' => 'A fatura de reembolso não tem um hash de pagamento válido.',
+			'maker.refundInvoice.errors.reusedInvoice' => 'Use uma nova fatura; a fatura da oferta não pode receber o reembolso.',
+			'maker.refundInvoice.errors.unsupportedNetwork' => 'Esta rede Lightning não é suportada.',
+			'maker.refundInvoice.errors.unknown' => 'Verifique a fatura e tente novamente.',
 			'maker.roleSelection.button' => 'PAGAR com Lightning',
 			'maker.amountForm.progress.step1' => '1. Criar oferta',
 			'maker.amountForm.progress.step2' => '2. Esperar pelo taker',
@@ -3379,7 +3743,8 @@ extension on TranslationsPt {
 			'maker.conflict.title' => 'Conflito na oferta',
 			'maker.conflict.headline' => 'Conflito na oferta reportado',
 			'maker.conflict.body' => ({required Object code}) => 'Marcou o código ${code} como inválido, mas o taker reportou um conflito, indicando que acredita que o pagamento foi bem-sucedido.',
-			'maker.conflict.instructions' => 'Aguarde que o coordenador analise a situação. Poderão pedir-lhe mais detalhes. Volte mais tarde ou contacte o suporte se necessário.',
+			'maker.conflict.instructions' => 'Confirme o resultado antes de o temporizador expirar. Se o pagamento foi bem-sucedido, confirme-o para que o taker possa receber. Se falhou, abra uma disputa. Se não fizer nada, será aberta automaticamente uma disputa formal.',
+			'maker.conflict.timeoutLabel' => ({required Object time}) => 'A disputa formal será aberta automaticamente dentro de ${time}',
 			'maker.conflict.actions.back' => 'Voltar ao início',
 			'maker.conflict.actions.confirmPayment' => ({required Object code}) => 'Foi engano meu, confirmar o sucesso do pagamento ${code}',
 			'maker.conflict.actions.openDispute' => ({required Object code}) => 'O pagamento ${code} NÃO foi bem-sucedido, ABRIR DISPUTA',
@@ -3403,6 +3768,9 @@ extension on TranslationsPt {
 			'maker.success.subtitle' => 'O taker vai ser pago agora.',
 			'maker.success.detailsTitle' => 'Detalhes da oferta:',
 			'maker.success.duration' => ({required Object time}) => 'A oferta demorou ${time}!',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Verificar estado / reenviar relato',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Relato de cobrança recebido. A aguardar a resposta do Maker ou a confirmação automática.',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Confirmação do relato pendente. Não se sabe se foi entregue. Verifique o estado para reenviar se ainda for necessário. Se o estado continuar indisponível, contacte o suporte.',
 			'taker.roleSelection.button' => ({required Object code}) => 'VENDER código ${code} por satoshi',
 			'taker.progress.step1' => ({required Object code}) => 'Submeter ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Confirmar ${code}',
@@ -3433,6 +3801,38 @@ extension on TranslationsPt {
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Se o seu banco debitou o pagamento ${code}, NÃO continue. O maker pode ter usado o seu código e, após esta ação, o coordenador poderá já não conseguir garantir o pagamento dos seus bitcoins.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Voltar e verificar o banco',
 			'taker.criticalCodeDecision.actions.proceed' => 'NÃO fui debitado — continuar',
+			'taker.conflict.title' => 'Confirmação do pagamento pendente',
+			'taker.conflict.headline' => 'A aguardar a confirmação do maker',
+			'taker.conflict.body' => ({required Object code}) => 'Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.',
+			'taker.conflict.instructions' => 'O maker tem agora de confirmar o resultado. Se confirmar que o pagamento foi bem-sucedido, o seu pagamento continuará. Se confirmar que falhou, ou se o temporizador expirar, a oferta passará para uma disputa formal e o chat da disputa ficará disponível.',
+			_ => null,
+		} ?? switch (path) {
+			'taker.conflict.timeoutLabel' => ({required Object time}) => 'A disputa formal será aberta automaticamente dentro de ${time}',
+			'taker.conflict.actions.back' => 'Voltar ao início',
+			'taker.conflict.feedback.reported' => 'Conflito de pagamento reportado. A aguardar a confirmação do maker.',
+			'taker.conflict.errors.reporting' => ({required Object details}) => 'Erro ao reportar o conflito: ${details}',
+			'taker.dispute.headline' => 'Disputa formal aberta',
+			'taker.dispute.body' => 'A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.',
+			'twint.shop.scanTitle' => 'Escanear QR da loja',
+			'twint.shop.scanInstructions' => 'Escaneie o código QR de pagamento no terminal da loja. O valor em CHF será lido do código.',
+			'twint.shop.invalidQr' => 'Este código QR não é um pagamento em loja em CHF compatível. Escaneie o código QR de pagamento exibido no terminal.',
+			'twint.shop.amountMismatch' => 'Este código QR tem um valor diferente. Peça um novo código QR com o valor original do pagamento.',
+			'twint.shop.cameraFailed' => 'Câmera indisponível. Permita o acesso à câmera nas configurações do dispositivo ou navegador e tente novamente.',
+			'twint.shop.scanned' => 'QR da loja escaneado. Confira o valor em CHF antes de financiar a oferta.',
+			'twint.shop.rescan' => 'Escanear outro código QR',
+			'twint.shop.coordinatorUnsupported' => 'Este coordenador não aceita pagamentos QR em loja. Escolha um coordenador que aceite.',
+			'twint.shop.loadingFailed' => 'Não foi possível carregar o código QR de pagamento. Tente novamente.',
+			'twint.shop.replacementInstructions' => 'Escaneie um novo código QR da loja com o mesmo valor em CHF da oferta financiada.',
+			'twint.shop.replacementScanned' => 'O QR substituto corresponde ao valor financiado.',
+			'twint.shop.qrLabel' => 'Código QR de pagamento TWINT',
+			'twint.shop.payInstructions' => 'Escaneie este código QR com o TWINT ou salve a imagem e importe-a da sua galeria no TWINT. Confira o comerciante e o valor antes de pagar.',
+			'twint.shop.saveImage' => 'Salvar QR nas fotos',
+			'twint.shop.downloadImage' => 'Baixar imagem QR',
+			'twint.shop.saving' => 'Salvando imagem QR…',
+			'twint.shop.saved' => 'Imagem QR salva. Abra o TWINT e importe-a da sua galeria.',
+			'twint.shop.downloadStarted' => 'Download da imagem QR iniciado. Salve-a nas suas fotos para importá-la no TWINT.',
+			'twint.shop.saveFailed' => 'Não foi possível salvar a imagem QR. Confira as permissões de acesso às fotos e o espaço de armazenamento disponível e tente novamente.',
+			'twint.shop.expired' => 'Este código QR expirou. Não pague com ele nem use uma imagem salva anteriormente.',
 			'twint.scanner.title' => ({required Object code}) => 'Ler código ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente.',
@@ -3491,8 +3891,6 @@ extension on TranslationsPt {
 			'twint.flow.takerExpired.cancel' => 'Cancelar reserva',
 			'twint.flow.takerExpired.markPaidDialog.title' => 'Confirma que pagou?',
 			'twint.flow.takerExpired.markPaidDialog.content' => ({required Object code}) => 'Continue apenas se tiver a certeza de que o pagamento ${code} foi debitado na app do seu banco.\n\nO maker será convidado a confirmar a receção para desbloquear o bitcoin. Se negar, é aberta uma disputa e ambas as partes terão de fornecer provas ao coordenador.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.takerExpired.markPaidDialog.cancel' => 'Voltar',
 			'twint.flow.takerExpired.markPaidDialog.confirmButton' => 'Sim, paguei',
 			'twint.flow.takerExpired.cancelDialog.title' => 'Cancelar a reserva?',
@@ -3696,6 +4094,23 @@ extension on TranslationsPt {
 			'faq.screenTitle' => 'FAQ',
 			'faq.tooltip' => 'FAQ',
 			'settings.title' => 'Definições',
+			'settings.coordinatorConsole.title' => 'Consola do coordenador',
+			'settings.coordinatorConsole.subtitle' => 'Gerir disputas com um assinante coordenador',
+			'settings.coordinatorConsole.signInTitle' => 'Iniciar sessão como coordenador',
+			'settings.coordinatorConsole.signInDescription' => 'Use a chave Nostr que identifica o coordenador para analisar e resolver disputas.',
+			'settings.coordinatorConsole.separateIdentityNote' => 'O assinante do coordenador utiliza uma sessão NDK separada e nunca substitui a identidade de negociação Neko.',
+			'settings.coordinatorConsole.loginWithSignerApp' => 'Entrar com a aplicação de assinatura',
+			'settings.coordinatorConsole.loginWithExtension' => 'Entrar com a extensão do navegador',
+			'settings.coordinatorConsole.loginWithNsec' => 'Entrar com nsec',
+			'settings.coordinatorConsole.nsecDialogTitle' => 'Chave privada do coordenador',
+			'settings.coordinatorConsole.nsecFieldLabel' => 'Chave privada',
+			'settings.coordinatorConsole.nsecSecurityNote' => 'A chave privada é armazenada com segurança neste dispositivo e usada apenas pela sessão separada do coordenador.',
+			'settings.coordinatorConsole.unsupportedPlatform' => 'O início de sessão do coordenador está atualmente disponível no Android, Linux e na Web.',
+			'settings.coordinatorConsole.loginFailed' => 'Falha no início de sessão do coordenador',
+			'settings.coordinatorConsole.accountsTitle' => 'Contas de coordenador',
+			'settings.coordinatorConsole.savedAccounts' => 'Contas de coordenador guardadas',
+			'settings.coordinatorConsole.addAccount' => 'Adicionar conta de coordenador',
+			'settings.coordinatorConsole.removeAccount' => 'Remover conta de coordenador',
 			'settings.offerCreation.title' => 'Criação de ofertas',
 			'settings.offerCreation.defaultCategory' => 'Categoria predefinida',
 			'settings.offerCreation.defaultBank' => 'Banco predefinido',
@@ -3739,6 +4154,9 @@ extension on TranslationsPt {
 			'wallet.missingReceiving.title' => 'Carteira de receção necessária',
 			'wallet.missingReceiving.message' => 'Nenhuma carteira configurada para receber. Adicione uma nas definições da Carteira para aceitar ofertas.',
 			'wallet.missingReceiving.openSettings' => 'Definições da carteira',
+			'wallet.incompatibleReceiving.title' => 'Carteira BOLT11 necessária',
+			'wallet.incompatibleReceiving.message' => 'Este coordenador só pode pagar esta oferta através de BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'A sua carteira de receção suporta ofertas BOLT12, mas não consegue criar a fatura BOLT11 necessária. Adicione uma carteira de receção compatível com BOLT11.',
 			'wallet.details.title' => 'Detalhes da carteira',
 			'wallet.details.pendingTitle' => 'Transações pendentes',
 			'wallet.details.finishedTitle' => 'Transações concluídas',

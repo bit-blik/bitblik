@@ -9,6 +9,7 @@ part of '../coordinator_service.dart';
 /// a yml references an action not present here.
 final List<FlowAction> allFlowActions = [
   AcceptTakerInvoiceAction(),
+  AcceptTakerPayoutAction(),
   AssertAssignedTakerAction(),
   CancelHoldInvoiceAction(),
   CancelReservationAction(),
@@ -17,7 +18,9 @@ final List<FlowAction> allFlowActions = [
   RefundMakerAction(),
   RejectReusedCodeAction(),
   RequireMakerRefundInvoiceAction(),
+  RequireMakerRefundPayoutAction(),
   ResolveTakerInvoiceAction(),
+  ResolveTakerPayoutAction(),
   ReserveTakerAction(),
   SendOfferNotificationsAction(),
   SendPaymentAction(),
@@ -27,6 +30,8 @@ final List<FlowAction> allFlowActions = [
   StampReservedAtAction(),
   StampTakerChargedAtAction(),
   UpdateTakerInvoiceAction(),
+  UpdateTakerPayoutAction(),
+  UpdateMakerRefundInvoiceAction(),
   ValidateCodeAction(),
   NotifyMakerOfChargeAction(),
   SendTwintCodeToTakerAction(),

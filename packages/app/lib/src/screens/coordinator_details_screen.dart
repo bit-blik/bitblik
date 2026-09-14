@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import '../utils/bitcoin_display.dart';
+import '../widgets/bolt12_badge.dart';
 
 /// Details for a single coordinator, reachable by tapping its name/logo
 /// anywhere in the app. Shows metadata and — crucially — the **relays in use**
@@ -93,11 +94,24 @@ class _CoordinatorDetailsScreenState
                                 style: Theme.of(context).textTheme.titleLarge
                                     ?.copyWith(fontWeight: FontWeight.w600),
                               ),
-                              if (record.version.isNotEmpty)
-                                Text(
-                                  'v${record.version}',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(color: Colors.grey),
+                              if (record.version.isNotEmpty ||
+                                  record.supportsBolt12Payouts)
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 5,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    if (record.version.isNotEmpty)
+                                      Text(
+                                        'v${record.version}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(color: Colors.grey),
+                                      ),
+                                    if (record.supportsBolt12Payouts)
+                                      const Bolt12Badge(),
+                                  ],
                                 ),
                             ],
                           ),
@@ -702,3 +716,4 @@ void openCoordinatorDetails(BuildContext context, String pubkey) {
     context.push(location);
   }
 }
+
