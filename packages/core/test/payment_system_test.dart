@@ -38,8 +38,8 @@ void main() {
       expect(kTwint.currency, 'CHF');
       expect(i.makerProvidesCode, isTrue);
       expect(i.flowId, isNotEmpty);
-      expect(kTwint.supportedCategories, [OfferCategory.online]);
-      expect(kTwint.hasCategoryChoice, isFalse);
+      expect(kTwint.supportedCategories, [OfferCategory.online, OfferCategory.shop]);
+      expect(kTwint.hasCategoryChoice, isTrue);
     });
 
     test('instrument.validate enforces exact length and digits-only', () {

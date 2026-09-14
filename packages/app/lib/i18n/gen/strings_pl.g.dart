@@ -256,6 +256,7 @@ class _Translations$twint$pl extends Translations$twint$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$twint$shop$pl shop = _Translations$twint$shop$pl._(_root);
 	@override late final _Translations$twint$scanner$pl scanner = _Translations$twint$scanner$pl._(_root);
 	@override late final _Translations$twint$flow$pl flow = _Translations$twint$flow$pl._(_root);
 	@override late final _Translations$twint$waitConfirmation$pl waitConfirmation = _Translations$twint$waitConfirmation$pl._(_root);
@@ -1364,6 +1365,35 @@ class _Translations$taker$dispute$pl extends Translations$taker$dispute$en {
 	// Translations
 	@override String get headline => 'Otwarto formalny spór';
 	@override String get body => 'Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.';
+}
+
+// Path: twint.shop
+class _Translations$twint$shop$pl extends Translations$twint$shop$en {
+	_Translations$twint$shop$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Zeskanuj QR w sklepie';
+	@override String get scanInstructions => 'Zeskanuj kod QR płatności na terminalu sklepowym. Kwota w CHF zostanie odczytana z kodu.';
+	@override String get invalidQr => 'Ten kod QR nie jest obsługiwaną płatnością sklepową w CHF. Zeskanuj kod QR płatności wyświetlony na terminalu.';
+	@override String get amountMismatch => 'Ten kod QR ma inną kwotę. Poproś o nowy kod QR z pierwotną kwotą płatności.';
+	@override String get cameraFailed => 'Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie.';
+	@override String get scanned => 'Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty.';
+	@override String get rescan => 'Zeskanuj inny kod QR';
+	@override String get coordinatorUnsupported => 'Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje.';
+	@override String get loadingFailed => 'Nie udało się wczytać kodu QR płatności. Spróbuj ponownie.';
+	@override String get replacementInstructions => 'Zeskanuj nowy kod QR sklepu na tę samą kwotę CHF co zasilona oferta.';
+	@override String get replacementScanned => 'Nowy kod QR odpowiada kwocie zasilonej oferty.';
+	@override String get qrLabel => 'Kod QR do płatności TWINT';
+	@override String get payInstructions => 'Zeskanuj ten kod QR w TWINT albo zapisz obraz i zaimportuj go z galerii w TWINT. Przed zapłatą sprawdź sprzedawcę i kwotę.';
+	@override String get saveImage => 'Zapisz QR w zdjęciach';
+	@override String get downloadImage => 'Pobierz obraz QR';
+	@override String get saving => 'Zapisywanie obrazu QR…';
+	@override String get saved => 'Obraz QR zapisany. Otwórz TWINT i zaimportuj go z galerii.';
+	@override String get downloadStarted => 'Pobieranie obrazu QR rozpoczęte. Zapisz go w zdjęciach, aby zaimportować go w TWINT.';
+	@override String get saveFailed => 'Nie udało się zapisać obrazu QR. Sprawdź uprawnienia dostępu do zdjęć i wolne miejsce, a następnie spróbuj ponownie.';
+	@override String get expired => 'Ten kod QR wygasł. Nie płać nim ani nie używaj wcześniej zapisanego obrazu.';
 }
 
 // Path: twint.scanner
@@ -3675,6 +3705,28 @@ extension on TranslationsPl {
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
 			'taker.dispute.headline' => 'Otwarto formalny spór',
 			'taker.dispute.body' => 'Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.',
+			'twint.shop.scanTitle' => 'Zeskanuj QR w sklepie',
+			'twint.shop.scanInstructions' => 'Zeskanuj kod QR płatności na terminalu sklepowym. Kwota w CHF zostanie odczytana z kodu.',
+			'twint.shop.invalidQr' => 'Ten kod QR nie jest obsługiwaną płatnością sklepową w CHF. Zeskanuj kod QR płatności wyświetlony na terminalu.',
+			'twint.shop.amountMismatch' => 'Ten kod QR ma inną kwotę. Poproś o nowy kod QR z pierwotną kwotą płatności.',
+			'twint.shop.cameraFailed' => 'Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie.',
+			'twint.shop.scanned' => 'Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty.',
+			'twint.shop.rescan' => 'Zeskanuj inny kod QR',
+			'twint.shop.coordinatorUnsupported' => 'Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje.',
+			'twint.shop.loadingFailed' => 'Nie udało się wczytać kodu QR płatności. Spróbuj ponownie.',
+			'twint.shop.replacementInstructions' => 'Zeskanuj nowy kod QR sklepu na tę samą kwotę CHF co zasilona oferta.',
+			'twint.shop.replacementScanned' => 'Nowy kod QR odpowiada kwocie zasilonej oferty.',
+			'twint.shop.qrLabel' => 'Kod QR do płatności TWINT',
+			'twint.shop.payInstructions' => 'Zeskanuj ten kod QR w TWINT albo zapisz obraz i zaimportuj go z galerii w TWINT. Przed zapłatą sprawdź sprzedawcę i kwotę.',
+			'twint.shop.saveImage' => 'Zapisz QR w zdjęciach',
+			'twint.shop.downloadImage' => 'Pobierz obraz QR',
+			'twint.shop.saving' => 'Zapisywanie obrazu QR…',
+			'twint.shop.saved' => 'Obraz QR zapisany. Otwórz TWINT i zaimportuj go z galerii.',
+			_ => null,
+		} ?? switch (path) {
+			'twint.shop.downloadStarted' => 'Pobieranie obrazu QR rozpoczęte. Zapisz go w zdjęciach, aby zaimportować go w TWINT.',
+			'twint.shop.saveFailed' => 'Nie udało się zapisać obrazu QR. Sprawdź uprawnienia dostępu do zdjęć i wolne miejsce, a następnie spróbuj ponownie.',
+			'twint.shop.expired' => 'Ten kod QR wygasł. Nie płać nim ani nie używaj wcześniej zapisanego obrazu.',
 			'twint.scanner.title' => ({required Object code}) => 'Skanuj kod ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Ustaw kod QR ${code} i tekst z kwotą wewnątrz kadru kamery.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Kod ${code} nie został jeszcze rozpoznany. Trzymaj QR i kwotę w kadrze albo wypełnij formularz ręcznie.',
@@ -3692,8 +3744,6 @@ extension on TranslationsPl {
 			'twint.flow.makerWait.cancelOffer' => 'Anuluj ofertę',
 			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Taker zarezerwował Twoją ofertę i właśnie płaci Twój kod ${code} w swojej aplikacji bankowej. Gdy płatność dotrze do Twojego sprzedawcy, potwierdź ją poniżej.',
 			'twint.flow.makerWait.confirmReceived' => 'Potwierdź otrzymanie płatności',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerWait.confirmDialog.title' => 'Potwierdzić otrzymanie płatności?',
 			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Potwierdź tylko, jeśli masz ABSOLUTNĄ pewność, że płatność ${code} dotarła do Twojego sprzedawcy.\n\nPotwierdzenie rozlicza hold invoice Lightning i natychmiast wysyła satsy do takera — tego nie można cofnąć.',
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Anuluj',

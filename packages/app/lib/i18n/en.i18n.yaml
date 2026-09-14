@@ -878,6 +878,27 @@ taker:
     body: The offer is now under coordinator review. Use the dispute chat below to communicate with the coordinator and provide any requested evidence.
 
 twint:
+  shop:
+    scanTitle: "Scan shop QR code"
+    scanInstructions: "Scan the payment QR code on the shop terminal. The CHF amount will be read from the code."
+    invalidQr: "This QR code is not a supported CHF shop payment. Scan the payment QR shown on the terminal."
+    amountMismatch: "This QR code has a different amount. Ask for a new QR code with the original payment amount."
+    cameraFailed: "Camera unavailable. Allow camera access in your device or browser settings, then try again."
+    scanned: "Shop QR scanned. Check the CHF amount before funding."
+    rescan: "Scan another QR code"
+    coordinatorUnsupported: "This coordinator does not support shop QR payments. Choose a coordinator with shop QR support."
+    loadingFailed: "Could not load the payment QR code. Try again."
+    replacementInstructions: "Scan a new shop QR code for the same CHF amount as the funded offer."
+    replacementScanned: "Replacement QR matches the funded amount."
+    qrLabel: "TWINT payment QR code"
+    payInstructions: "Scan this QR code with TWINT, or save the image and import it from your gallery in TWINT. Check the merchant and amount before paying."
+    saveImage: "Save QR to photos"
+    downloadImage: "Download QR image"
+    saving: "Saving QR image…"
+    saved: "QR image saved. Open TWINT and import it from your gallery."
+    downloadStarted: "QR image download started. Save it to your photos to import it in TWINT."
+    saveFailed: "Could not save the QR image. Check photo permissions and available storage, then try again."
+    expired: "This QR code has expired. Do not pay it or use a previously saved image."
   scanner:
     title: "Scan ${code} code"
     status:

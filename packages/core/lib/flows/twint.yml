@@ -11,7 +11,9 @@
 # - State-level `do:` runs after the state commit. Escrow actions gate the
 #   state's sole auto completion edge and retry from the durable state.
 #
-# Initial state: funded. The maker supplies the TWINT code at offer creation
+# Initial state: funded. The maker supplies the TWINT artifact at offer creation:
+# a 5-digit online code or a scanned CHF shop QR payload. Category-specific
+# validation lives in the shared instrument and coordinator actions.
 # (PaymentSystem.makerProvidesCodeAtOfferCreation).
 
 imports: [common.yml]
@@ -27,7 +29,8 @@ states:
     initial: true
     do: [send_offer_notifications]
     description: >
-      Hold invoice confirmed. Offer carries the maker's TWINT code and is open.
+      Hold invoice confirmed. Offer carries the maker's online TWINT code or
+      full shop QR payload and is open.
     transitions:
       - on: cancel_offer
         by: maker
@@ -38,7 +41,7 @@ states:
         do: [reserve_taker, accept_taker_invoice, send_twint_code_to_taker]
         to: reserved
       - on: timeout
-        after: 300            # 5 min — the TWINT code's lifespan
+        after: $code_validity # 5 min for online codes and shop QR payloads
         from: code_received_at
         do: [clear_taker_fields]
         to: invalidTwint
@@ -51,6 +54,8 @@ states:
     transitions:
       - on: enter_new_twint
         by: maker
+        # Shop QR replacement must match the funded CHF amount before any
+        # payload, timestamp, or reservation change is committed.
         do: [set_new_code, stamp_code_received_at, cancel_reservation]
         to: funded
       - on: cancel_offer
@@ -81,7 +86,7 @@ states:
         do: [assert_assigned_taker, cancel_reservation]
         to: funded
       - on: timeout
-        after: 300            # the TWINT code's lifespan
+        after: $code_validity # instrument validity, from the original timestamp
         from: code_received_at
         to: expiredTwint
         reason: Taker did not pay the code within its lifespan.

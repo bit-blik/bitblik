@@ -18,6 +18,7 @@ import '../../settings/app_preferences.dart';
 import '../../widgets/bolt12_badge.dart';
 import '../coordinator_details_screen.dart';
 import 'twint_code_scanner_screen.dart';
+import 'twint_shop_qr_scanner_screen.dart';
 // CoordinatorRecord comes from bitblik_core
 
 // Progress indicator widget for maker flow
@@ -147,6 +148,13 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
   bool get _usesMakerProvidedCodeFlow =>
       _method.makerProvidesCodeAtOfferCreation;
+  bool get _usesShopQr =>
+      _method.id == 'twint' && _selectedCategory == OfferCategory.shop;
+  String get _makerPayload => _usesShopQr
+      ? _makerCodeController.text
+      : _makerCodeController.text.trim();
+  bool get _validMakerCode =>
+      _instrument?.validate(_makerPayload, bank: _selectedBank) ?? false;
   bool get _makerProvidedFieldsVisible =>
       !_usesMakerProvidedCodeFlow ||
       _showMakerProvidedEntryForm ||
@@ -334,7 +342,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   /// and the amount is still empty.
   void _focusAmountIfManual() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted || _usesShopQr) return;
       if (!_usesMakerProvidedCodeFlow ||
           (_makerProvidedFieldsVisible &&
               _fiatController.text.trim().isEmpty)) {
@@ -624,9 +632,19 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     final fiatString = _fiatController.text.replaceAll(',', '.');
     final fiatAmount = double.parse(fiatString);
-    final makerCode = _makerCodeController.text.trim();
+    final makerCode = _makerPayload;
+    if (_usesShopQr &&
+        _selectedCoordinatorInfo?.supportsTwintShopQr != true) {
+      ref.read(errorProvider.notifier).state = t.twint.shop.coordinatorUnsupported;
+      return;
+    }
+    if (_usesShopQr &&
+        TwintShopQr.tryParse(makerCode)?.matchesAmount(fiatAmount) != true) {
+      ref.read(errorProvider.notifier).state = t.twint.shop.invalidQr;
+      return;
+    }
     if (_method.makerProvidesCodeAtOfferCreation &&
-        !_method.isValidCode(makerCode)) {
+        !_validMakerCode) {
       ref
           .read(errorProvider.notifier)
           .state = t.maker.amountForm.errors.initiating(
@@ -641,11 +659,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     try {
       final offerBank = _needsBank ? _selectedBankId : null;
+      final offerCategory = supportsCategory ? _selectedCategory : null;
       final apiService = ref.read(apiServiceProvider);
       final result = await apiService.initiateOfferFiat(
         fiatAmount: fiatAmount,
         fiatCurrency: _method.currency,
-        category: supportsCategory ? _selectedCategory : null,
+        category: offerCategory,
         coordinatorPubkey: coordinatorPubkey,
         premiumPercent: _premiumPercent,
         blikCode: _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
@@ -677,7 +696,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               coordinatorPubkey: coordinatorPubkey,
               paymentSystemId: _method.id,
               bankId: offerBank,
-              category: supportsCategory ? _selectedCategory : null,
+              category: offerCategory,
               blikCode:
                   _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
               premiumPercent:
@@ -1062,6 +1081,20 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   }
 
   Future<void> _scanTwintCodeAndAmount() async {
+    if (ref.read(isLoadingProvider)) return;
+    if (_usesShopQr) {
+      final result = await Navigator.of(context).push<TwintShopQr>(
+        MaterialPageRoute(builder: (_) => const TwintShopQrScannerScreen()),
+      );
+      if (!mounted || !_usesShopQr || result == null) return;
+      setState(() {
+        _showMakerProvidedEntryForm = true;
+        _makerCodeController.text = result.payload;
+        _fiatController.text = result.amountText;
+      });
+      FocusScope.of(context).unfocus();
+      return;
+    }
     final result = await Navigator.of(context).push<TwintScanResult>(
       MaterialPageRoute(builder: (_) => const TwintCodeScannerScreen()),
     );
@@ -1094,6 +1127,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   }
 
   void _showManualMakerProvidedEntry() {
+    if (_usesShopQr) return;
     setState(() {
       _showMakerProvidedEntryForm = true;
     });
@@ -1149,7 +1183,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      t.maker.amountForm.twintScan.cardBody,
+                      _usesShopQr
+                          ? t.twint.shop.scanInstructions
+                          : t.maker.amountForm.twintScan.cardBody,
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
@@ -1163,7 +1199,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           ),
           const SizedBox(height: 16),
           _buildGradientButton(
-            onPressed: _scanTwintCodeAndAmount,
+            onPressed: ref.watch(isLoadingProvider) ? null : _scanTwintCodeAndAmount,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -1181,7 +1217,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
             ),
           ),
           const SizedBox(height: 8),
-          Center(
+          if (!_usesShopQr) Center(
             child: TextButton(
               onPressed: _showManualMakerProvidedEntry,
               child: Text(t.maker.amountForm.twintScan.manualButton),
@@ -1194,6 +1230,19 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
   Widget _buildMakerProvidedCodeField() {
     final t = Translations.of(context);
+    if (_usesShopQr) {
+      return Column(
+        children: [
+          Text(t.twint.shop.scanned, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: ref.watch(isLoadingProvider) ? null : _scanTwintCodeAndAmount,
+            icon: const Icon(Icons.qr_code_scanner),
+            label: Text(t.twint.shop.rescan),
+          ),
+        ],
+      );
+    }
     final hasValue = _makerCodeController.text.trim().isNotEmpty;
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 4, 20, 14),
@@ -2127,9 +2176,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(999),
                                   onTap:
-                                      isSupported
+                                      isSupported && !isLoading
                                           ? () {
                                             setState(() {
+                                              if (_selectedCategory != category &&
+                                                  _usesMakerProvidedCodeFlow) {
+                                                _makerCodeController.clear();
+                                                _fiatController.clear();
+                                                _showMakerProvidedEntryForm = false;
+                                              }
                                               _selectedCategory = category;
                                               // ATM defaults to preset amounts.
                                               _customAmountMode = false;
@@ -2340,6 +2395,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         child: TextField(
                           focusNode: _amountFocusNode,
                           controller: _fiatController,
+                          readOnly: _usesShopQr,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                             signed: false,
@@ -2376,6 +2432,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 ),
               if (_usesMakerProvidedCodeFlow && _makerProvidedFieldsVisible)
                 _buildMakerProvidedCodeField(),
+              if (_usesShopQr &&
+                  _selectedCoordinatorInfo?.supportsTwintShopQr != true)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(t.twint.shop.coordinatorUnsupported),
+                ),
               if (_amountErrorText != null) ...[
                 Text(
                   _amountErrorText!,
@@ -2773,10 +2835,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             publicKeyAsyncValue.isLoading ||
                             _amountErrorText != null ||
                             _fiatController.text.isEmpty ||
+                            (_usesShopQr &&
+                                _selectedCoordinatorInfo?.supportsTwintShopQr != true) ||
                             (_method.makerProvidesCodeAtOfferCreation &&
-                                !_method.isValidCode(
-                                  _makerCodeController.text.trim(),
-                                )) ||
+                                !_validMakerCode) ||
                             _rate == null ||
                             (_selectedCategory == OfferCategory.online &&
                                 !_ecommerceRiskAccepted) ||
@@ -2857,4 +2919,3 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     }
   }
 }
-

@@ -255,6 +255,7 @@ class _Translations$twint$de extends Translations$twint$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$twint$shop$de shop = _Translations$twint$shop$de._(_root);
 	@override late final _Translations$twint$scanner$de scanner = _Translations$twint$scanner$de._(_root);
 	@override late final _Translations$twint$flow$de flow = _Translations$twint$flow$de._(_root);
 	@override late final _Translations$twint$waitConfirmation$de waitConfirmation = _Translations$twint$waitConfirmation$de._(_root);
@@ -1367,6 +1368,35 @@ class _Translations$taker$dispute$de extends Translations$taker$dispute$en {
 	// Translations
 	@override String get headline => 'Formeller Streitfall eröffnet';
 	@override String get body => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.';
+}
+
+// Path: twint.shop
+class _Translations$twint$shop$de extends Translations$twint$shop$en {
+	_Translations$twint$shop$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Shop-QR-Code scannen';
+	@override String get scanInstructions => 'Scanne den Zahlungs-QR-Code auf dem Terminal im Geschäft. Der CHF-Betrag wird aus dem Code gelesen.';
+	@override String get invalidQr => 'Dieser QR-Code ist keine unterstützte CHF-Zahlung im Geschäft. Scanne den Zahlungs-QR-Code auf dem Terminal.';
+	@override String get amountMismatch => 'Dieser QR-Code hat einen anderen Betrag. Bitte um einen neuen QR-Code mit dem ursprünglichen Zahlungsbetrag.';
+	@override String get cameraFailed => 'Kamera nicht verfügbar. Erlaube den Kamerazugriff in den Geräte- oder Browsereinstellungen und versuche es erneut.';
+	@override String get scanned => 'Shop-QR-Code gescannt. Prüfe den CHF-Betrag vor der Finanzierung.';
+	@override String get rescan => 'Anderen QR-Code scannen';
+	@override String get coordinatorUnsupported => 'Dieser Koordinator unterstützt keine Shop-QR-Zahlungen. Wähle einen Koordinator mit Shop-QR-Unterstützung.';
+	@override String get loadingFailed => 'Zahlungs-QR-Code konnte nicht geladen werden. Versuche es erneut.';
+	@override String get replacementInstructions => 'Scanne einen neuen Shop-QR-Code mit demselben CHF-Betrag wie das finanzierte Angebot.';
+	@override String get replacementScanned => 'Der Ersatz-QR-Code entspricht dem finanzierten Betrag.';
+	@override String get qrLabel => 'TWINT-Zahlungs-QR-Code';
+	@override String get payInstructions => 'Scanne diesen QR-Code mit TWINT oder speichere das Bild und importiere es in TWINT aus deiner Galerie. Prüfe Händler und Betrag vor dem Bezahlen.';
+	@override String get saveImage => 'QR-Code in Fotos speichern';
+	@override String get downloadImage => 'QR-Bild herunterladen';
+	@override String get saving => 'QR-Bild wird gespeichert…';
+	@override String get saved => 'QR-Bild gespeichert. Öffne TWINT und importiere es aus deiner Galerie.';
+	@override String get downloadStarted => 'Download des QR-Bilds gestartet. Speichere es in deinen Fotos, um es in TWINT zu importieren.';
+	@override String get saveFailed => 'QR-Bild konnte nicht gespeichert werden. Prüfe die Fotoberechtigungen und den freien Speicherplatz und versuche es erneut.';
+	@override String get expired => 'Dieser QR-Code ist abgelaufen. Bezahle ihn nicht und verwende kein zuvor gespeichertes Bild.';
 }
 
 // Path: twint.scanner
@@ -3715,10 +3745,30 @@ extension on TranslationsDe {
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}',
 			'taker.dispute.headline' => 'Formeller Streitfall eröffnet',
 			'taker.dispute.body' => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.',
-			'twint.scanner.title' => ({required Object code}) => '${code}-Code scannen',
-			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
+			'twint.shop.scanTitle' => 'Shop-QR-Code scannen',
+			'twint.shop.scanInstructions' => 'Scanne den Zahlungs-QR-Code auf dem Terminal im Geschäft. Der CHF-Betrag wird aus dem Code gelesen.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.shop.invalidQr' => 'Dieser QR-Code ist keine unterstützte CHF-Zahlung im Geschäft. Scanne den Zahlungs-QR-Code auf dem Terminal.',
+			'twint.shop.amountMismatch' => 'Dieser QR-Code hat einen anderen Betrag. Bitte um einen neuen QR-Code mit dem ursprünglichen Zahlungsbetrag.',
+			'twint.shop.cameraFailed' => 'Kamera nicht verfügbar. Erlaube den Kamerazugriff in den Geräte- oder Browsereinstellungen und versuche es erneut.',
+			'twint.shop.scanned' => 'Shop-QR-Code gescannt. Prüfe den CHF-Betrag vor der Finanzierung.',
+			'twint.shop.rescan' => 'Anderen QR-Code scannen',
+			'twint.shop.coordinatorUnsupported' => 'Dieser Koordinator unterstützt keine Shop-QR-Zahlungen. Wähle einen Koordinator mit Shop-QR-Unterstützung.',
+			'twint.shop.loadingFailed' => 'Zahlungs-QR-Code konnte nicht geladen werden. Versuche es erneut.',
+			'twint.shop.replacementInstructions' => 'Scanne einen neuen Shop-QR-Code mit demselben CHF-Betrag wie das finanzierte Angebot.',
+			'twint.shop.replacementScanned' => 'Der Ersatz-QR-Code entspricht dem finanzierten Betrag.',
+			'twint.shop.qrLabel' => 'TWINT-Zahlungs-QR-Code',
+			'twint.shop.payInstructions' => 'Scanne diesen QR-Code mit TWINT oder speichere das Bild und importiere es in TWINT aus deiner Galerie. Prüfe Händler und Betrag vor dem Bezahlen.',
+			'twint.shop.saveImage' => 'QR-Code in Fotos speichern',
+			'twint.shop.downloadImage' => 'QR-Bild herunterladen',
+			'twint.shop.saving' => 'QR-Bild wird gespeichert…',
+			'twint.shop.saved' => 'QR-Bild gespeichert. Öffne TWINT und importiere es aus deiner Galerie.',
+			'twint.shop.downloadStarted' => 'Download des QR-Bilds gestartet. Speichere es in deinen Fotos, um es in TWINT zu importieren.',
+			'twint.shop.saveFailed' => 'QR-Bild konnte nicht gespeichert werden. Prüfe die Fotoberechtigungen und den freien Speicherplatz und versuche es erneut.',
+			'twint.shop.expired' => 'Dieser QR-Code ist abgelaufen. Bezahle ihn nicht und verwende kein zuvor gespeichertes Bild.',
+			'twint.scanner.title' => ({required Object code}) => '${code}-Code scannen',
+			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.',
 			'twint.scanner.status.amountFailed' => 'Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren.',
 			'twint.flow.progress.step1' => '1. Angebot erstellen',

@@ -68,6 +68,7 @@ class TranslationsSk extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$nekoManagement$sk nekoManagement = _Translations$nekoManagement$sk._(_root);
 	@override late final _Translations$relays$sk relays = _Translations$relays$sk._(_root);
 	@override late final _Translations$offerNotifications$sk offerNotifications = _Translations$offerNotifications$sk._(_root);
+	@override late final _Translations$twint$sk twint = _Translations$twint$sk._(_root);
 	@override late final _Translations$altstore$sk altstore = _Translations$altstore$sk._(_root);
 }
 
@@ -475,6 +476,16 @@ class _Translations$offerNotifications$sk extends Translations$offerNotification
 	@override late final _Translations$offerNotifications$takerCharged$sk takerCharged = _Translations$offerNotifications$takerCharged$sk._(_root);
 	@override late final _Translations$offerNotifications$invalidBlik$sk invalidBlik = _Translations$offerNotifications$invalidBlik$sk._(_root);
 	@override late final _Translations$offerNotifications$takerPaid$sk takerPaid = _Translations$offerNotifications$takerPaid$sk._(_root);
+}
+
+// Path: twint
+class _Translations$twint$sk extends Translations$twint$en {
+	_Translations$twint$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$twint$shop$sk shop = _Translations$twint$shop$sk._(_root);
 }
 
 // Path: altstore
@@ -1985,6 +1996,35 @@ class _Translations$offerNotifications$takerPaid$sk extends Translations$offerNo
 	// Translations
 	@override String get title => 'Platba prijatá';
 	@override String get body => 'Tvoja Lightning platba bola odoslaná.';
+}
+
+// Path: twint.shop
+class _Translations$twint$shop$sk extends Translations$twint$shop$en {
+	_Translations$twint$shop$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Naskenovať QR obchodu';
+	@override String get scanInstructions => 'Naskenuj platobný QR kód na termináli v obchode. Suma v CHF sa načíta z kódu.';
+	@override String get invalidQr => 'Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli.';
+	@override String get amountMismatch => 'Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby.';
+	@override String get cameraFailed => 'Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova.';
+	@override String get scanned => 'QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF.';
+	@override String get rescan => 'Naskenovať iný QR kód';
+	@override String get coordinatorUnsupported => 'Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje.';
+	@override String get loadingFailed => 'Platobný QR kód sa nepodarilo načítať. Skús to znova.';
+	@override String get replacementInstructions => 'Naskenuj nový QR kód obchodu s rovnakou sumou v CHF ako financovaná ponuka.';
+	@override String get replacementScanned => 'Náhradný QR kód zodpovedá financovanej sume.';
+	@override String get qrLabel => 'QR kód na platbu cez TWINT';
+	@override String get payInstructions => 'Naskenuj tento QR kód cez TWINT alebo ulož obrázok a importuj ho z galérie do TWINT. Pred platbou skontroluj obchodníka a sumu.';
+	@override String get saveImage => 'Uložiť QR medzi fotky';
+	@override String get downloadImage => 'Stiahnuť obrázok QR';
+	@override String get saving => 'Ukladá sa obrázok QR…';
+	@override String get saved => 'Obrázok QR bol uložený. Otvor TWINT a importuj ho z galérie.';
+	@override String get downloadStarted => 'Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT.';
+	@override String get saveFailed => 'Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova.';
+	@override String get expired => 'Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok.';
 }
 
 // Path: offers.details.categories
@@ -3682,6 +3722,26 @@ extension on TranslationsSk {
 			'offerNotifications.invalidBlik.body' => ({required Object code}) => 'Predávajúci označil tvoj ${code} ako neplatný.',
 			'offerNotifications.takerPaid.title' => 'Platba prijatá',
 			'offerNotifications.takerPaid.body' => 'Tvoja Lightning platba bola odoslaná.',
+			'twint.shop.scanTitle' => 'Naskenovať QR obchodu',
+			'twint.shop.scanInstructions' => 'Naskenuj platobný QR kód na termináli v obchode. Suma v CHF sa načíta z kódu.',
+			'twint.shop.invalidQr' => 'Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli.',
+			'twint.shop.amountMismatch' => 'Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby.',
+			'twint.shop.cameraFailed' => 'Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova.',
+			'twint.shop.scanned' => 'QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF.',
+			'twint.shop.rescan' => 'Naskenovať iný QR kód',
+			'twint.shop.coordinatorUnsupported' => 'Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje.',
+			'twint.shop.loadingFailed' => 'Platobný QR kód sa nepodarilo načítať. Skús to znova.',
+			'twint.shop.replacementInstructions' => 'Naskenuj nový QR kód obchodu s rovnakou sumou v CHF ako financovaná ponuka.',
+			'twint.shop.replacementScanned' => 'Náhradný QR kód zodpovedá financovanej sume.',
+			'twint.shop.qrLabel' => 'QR kód na platbu cez TWINT',
+			'twint.shop.payInstructions' => 'Naskenuj tento QR kód cez TWINT alebo ulož obrázok a importuj ho z galérie do TWINT. Pred platbou skontroluj obchodníka a sumu.',
+			'twint.shop.saveImage' => 'Uložiť QR medzi fotky',
+			'twint.shop.downloadImage' => 'Stiahnuť obrázok QR',
+			'twint.shop.saving' => 'Ukladá sa obrázok QR…',
+			'twint.shop.saved' => 'Obrázok QR bol uložený. Otvor TWINT a importuj ho z galérie.',
+			'twint.shop.downloadStarted' => 'Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT.',
+			'twint.shop.saveFailed' => 'Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova.',
+			'twint.shop.expired' => 'Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok.',
 			'altstore.dialogTitle' => 'AltStore nie je nainštalovaný',
 			'altstore.step1Title' => 'Stiahni a nainštaluj AltStore PAL',
 			'altstore.step1Button' => 'altstore.io/download',

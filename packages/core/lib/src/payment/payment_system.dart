@@ -3,6 +3,7 @@ import 'package:ndk/ndk.dart' show Nip19;
 
 import '../constants/relays.dart';
 import '../models/offer.dart' show OfferCategory, Offer;
+import 'twint_shop_qr.dart';
 
 /// The shape of the payment artifact exchanged in a flow.
 enum InstrumentKind {
@@ -135,6 +136,9 @@ class InstrumentSpec {
   /// TWINT, and any pay-by-square QR).
   final List<BankSpec> banks;
 
+  /// Additional format validation for a QR instrument.
+  final bool Function(String)? payloadValidator;
+
   const InstrumentSpec({
     required this.kind,
     required this.direction,
@@ -148,6 +152,7 @@ class InstrumentSpec {
     this.atmMaxAmount,
     this.atmMapUrl,
     this.banks = const [],
+    this.payloadValidator,
   });
 
   /// Whether this instrument distinguishes banks (only SK ATM today).
@@ -192,8 +197,7 @@ class InstrumentSpec {
 
   /// Whether [payload] is a syntactically valid artifact for this instrument
   /// (and optionally [bank]). Numeric codes must be exactly the expected number
-  /// of digits; QR payloads only need to be non-empty (pay-by-square structure
-  /// validation is deferred to the QR feature).
+  /// of digits; QR payloads use their configured format validator when present.
   bool validate(String payload, {BankSpec? bank}) {
     switch (kind) {
       case InstrumentKind.numericCode:
@@ -202,7 +206,7 @@ class InstrumentSpec {
             payload.length == len &&
             int.tryParse(payload) != null;
       case InstrumentKind.qrPayload:
-        return payload.isNotEmpty;
+        return payloadValidator?.call(payload) ?? payload.isNotEmpty;
     }
   }
 
@@ -305,6 +309,10 @@ class PaymentSystem {
   /// The instrument for [category]; falls back to the sole instrument when the
   /// market has exactly one (so category-unaware callers keep working).
   InstrumentSpec? instrumentFor(OfferCategory? category) {
+    // TWINT offers created before categories existed use online codes.
+    if (category == null && id == 'twint') {
+      return instruments[OfferCategory.online];
+    }
     if (category != null) {
       final direct = instruments[category];
       if (direct != null) return direct;
@@ -459,8 +467,8 @@ const PaymentSystem kMbway = PaymentSystem(
   },
 );
 
-/// Switzerland — TWINT. The maker creates a 5-digit code upfront; the taker
-/// enters it in the TWINT app after taking the offer. Generic engine.
+/// Switzerland — TWINT. Online uses 5-digit codes; shops use scanned QR
+/// payloads. Both are maker-provided and share the same generic flow.
 const PaymentSystem kTwint = PaymentSystem(
   id: 'twint',
   label: 'TWINT',
@@ -474,6 +482,14 @@ const PaymentSystem kTwint = PaymentSystem(
   discoveryPubkeyHex: kTwintPubkeyHex,
   instruments: {
     OfferCategory.online: _twintInstrument,
+    OfferCategory.shop: InstrumentSpec(
+      kind: InstrumentKind.qrPayload,
+      direction: InstrumentDirection.makerProvides,
+      flowId: 'twint',
+      validity: Duration(minutes: 5),
+      codeName: 'TWINT',
+      payloadValidator: isValidTwintShopQr,
+    ),
   },
 );
 
