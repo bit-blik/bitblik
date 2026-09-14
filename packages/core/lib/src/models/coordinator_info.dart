@@ -28,11 +28,16 @@ class CoordinatorInfo {
   /// `0` means the premium feature is disabled for this coordinator.
   final double maxPremiumPercent;
   final List<String> currencies;
+  final List<String> outgoingPaymentTypes;
 
   /// The market id this coordinator serves (e.g. `blik`, `mbway`, `sk`). One
   /// deployment = one market. Older coordinators that don't advertise it fall
   /// back to the method derived from [currencies].
   final String paymentSystem;
+
+  /// Explicit compatibility signal for provisional TWINT shop QR support.
+  /// Missing on older coordinators, which must remain online-only in the app.
+  final bool supportsTwintShopQr;
 
   /// The bank ids this coordinator serves within a bank-scoped market (SK ATM:
   /// a subset of `tatrabanka`, `slsp`, `vub`). Empty for bank-agnostic markets
@@ -67,7 +72,9 @@ class CoordinatorInfo {
     this.disputeEvidencePeriodSeconds,
     this.maxPremiumPercent = 0,
     required this.currencies,
+    this.outgoingPaymentTypes = const ['bolt11'],
     required this.paymentSystem,
+    this.supportsTwintShopQr = false,
     required this.nostrNpub,
     this.banks = const [],
     this.version,
@@ -112,8 +119,13 @@ class CoordinatorInfo {
       currencies: (json['currencies'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      outgoingPaymentTypes: (json['outgoing_payment_types'] as List?)
+              ?.whereType<String>()
+              .toList() ??
+          const ['bolt11'],
       paymentSystem: (json['payment_system'] as String?) ??
           _defaultMethodId(json['currencies']),
+      supportsTwintShopQr: json['twint_shop_qr_v1'] == true,
       banks: _parseBanks(json['banks']),
       nostrNpub: json['nostr_npub'] as String?,
       version: json['version'] as String?,
@@ -137,7 +149,9 @@ class CoordinatorInfo {
         'dispute_evidence_period_seconds': disputeEvidencePeriodSeconds,
       'max_premium_percent': maxPremiumPercent,
       'currencies': currencies,
+      'outgoing_payment_types': outgoingPaymentTypes,
       'payment_system': paymentSystem,
+      if (supportsTwintShopQr) 'twint_shop_qr_v1': true,
       if (banks.isNotEmpty) 'banks': banks,
       'nostr_npub': nostrNpub,
       if (version != null) 'version': version,
@@ -203,8 +217,14 @@ class CoordinatorInfo {
       takerFee: double.tryParse(tags['taker_fee'] ?? '0') ?? 0.0,
       reservationSeconds: int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
       currencies: currencies,
+      outgoingPaymentTypes: (tags['outgoing_payment_types'] ?? 'bolt11')
+          .split(',')
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList(),
       paymentSystem:
           _emptyToNull(tags['payment_system']) ?? _defaultMethodId(currencies),
+      supportsTwintShopQr: tags['twint_shop_qr_v1'] == '1',
       banks: banks,
       version: _emptyToNull(tags['version']),
       nostrNpub: Nip19.encodePubKey(event.pubKey),
@@ -244,7 +264,9 @@ class CoordinatorInfo {
       ['taker_fee', takerFee.toString()],
       ['reservation_seconds', reservationSeconds.toString()],
       ['currencies', currencies.join(',')],
+      ['outgoing_payment_types', outgoingPaymentTypes.join(',')],
       ['payment_system', paymentSystem],
+      if (supportsTwintShopQr) ['twint_shop_qr_v1', '1'],
       if (banks.isNotEmpty) ['banks', banks.join(',')],
       ['version', version ?? ''],
       ['terms_of_usage_naddr', termsOfUsageNaddr ?? ''],

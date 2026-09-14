@@ -28,11 +28,13 @@ Offer? reconcileOfferSnapshot(Offer local, Offer? remote, String? userPubkey) {
   }
   // Participant RPCs omit the taker's code/invoice. Keep locally-held evidence
   // for the same taker, and keep the client-only wallet selection.
+  final keepLocalPayout =
+      takerOnly && remote.takerInvoice == null && remote.takerOffer == null;
   return remote.copyWith(
     paymentWalletId: local.paymentWalletId,
+    disputeAt: remote.disputeAt ?? local.disputeAt,
     blikCode: takerOnly ? remote.blikCode ?? local.blikCode : remote.blikCode,
-    takerInvoice: takerOnly
-        ? remote.takerInvoice ?? local.takerInvoice
-        : remote.takerInvoice,
+    takerInvoice: keepLocalPayout ? local.takerInvoice : remote.takerInvoice,
+    takerOffer: keepLocalPayout ? local.takerOffer : remote.takerOffer,
   );
 }

@@ -165,6 +165,7 @@ offers:
     invalidBlik: "${code} invalide"
     conflict: "Conflit"
     dispute: "Litige"
+    refundedMaker: "Maker remboursé"
     refundingMaker: "Remboursement du maker"
     makerConfirmed: "Confirmée"
     settled: "Réglée"
@@ -257,6 +258,11 @@ exchange:
 # COORDINATOR INFORMATION
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Prise en charge de BOLT12"
+    body: "Ce coordinateur peut payer les portefeuilles qui reçoivent des paiements via des offres BOLT12. Vous pouvez utiliser ces portefeuilles pour les versements aux takers ou les remboursements aux makers."
+    details: "Une offre BOLT12 est une demande de paiement Lightning réutilisable que vous pouvez partager sous forme de texte ou de code QR. La même offre peut recevoir plusieurs paiements, sans devoir créer et partager une nouvelle demande à chaque fois. Votre portefeuille de réception doit prendre en charge les offres BOLT12."
+    learnMore: "En savoir plus sur bolt12.org"
   title: "Coordinateurs"
   info:
     fee: "frais"
@@ -725,6 +731,27 @@ taker:
     body: L'offre est maintenant examinée par le coordinateur. Utilisez le chat du litige ci-dessous pour communiquer avec le coordinateur et fournir les justificatifs demandés.
 
 twint:
+  shop:
+    scanTitle: "Scanner le QR du magasin"
+    scanInstructions: "Scanne le code QR de paiement sur le terminal du magasin. Le montant en CHF sera lu dans le code."
+    invalidQr: "Ce code QR ne correspond pas à un paiement en magasin en CHF pris en charge. Scanne le code QR de paiement affiché sur le terminal."
+    amountMismatch: "Ce code QR indique un montant différent. Demande un nouveau code QR avec le montant initial du paiement."
+    cameraFailed: "Caméra indisponible. Autorise l’accès à la caméra dans les paramètres de ton appareil ou navigateur, puis réessaie."
+    scanned: "QR du magasin scanné. Vérifie le montant en CHF avant de financer l’offre."
+    rescan: "Scanner un autre code QR"
+    coordinatorUnsupported: "Ce coordinateur ne prend pas en charge les paiements QR en magasin. Choisis un coordinateur qui les prend en charge."
+    loadingFailed: "Impossible de charger le code QR de paiement. Réessaie."
+    replacementInstructions: "Scanne un nouveau code QR du magasin avec le même montant en CHF que l’offre financée."
+    replacementScanned: "Le QR de remplacement correspond au montant financé."
+    qrLabel: "Code QR de paiement TWINT"
+    payInstructions: "Scanne ce code QR avec TWINT ou enregistre l’image et importe-la depuis ta galerie dans TWINT. Vérifie le commerçant et le montant avant de payer."
+    saveImage: "Enregistrer le QR dans Photos"
+    downloadImage: "Télécharger l’image QR"
+    saving: "Enregistrement de l’image QR…"
+    saved: "Image QR enregistrée. Ouvre TWINT et importe-la depuis ta galerie."
+    downloadStarted: "Téléchargement de l’image QR lancé. Enregistre-la dans tes photos pour l’importer dans TWINT."
+    saveFailed: "Impossible d’enregistrer l’image QR. Vérifie les autorisations d’accès aux photos et l’espace de stockage disponible, puis réessaie."
+    expired: "Ce code QR a expiré. Ne le paie pas et n’utilise pas d’image enregistrée auparavant."
   scanner:
     title: "Scanner le code ${code}"
     status:
@@ -1206,6 +1233,10 @@ wallet:
     title: Portefeuille de réception requis
     message: Aucun portefeuille configuré pour la réception. Ajoutez-en un dans les réglages du portefeuille pour accepter des offres.
     openSettings: Réglages du portefeuille
+  incompatibleReceiving:
+    title: Portefeuille BOLT11 requis
+    message: Ce coordinateur ne peut payer cette offre qu’en BOLT11.
+    explanation: Votre portefeuille de réception prend en charge les offres BOLT12, mais ne peut pas créer la facture BOLT11 requise. Ajoutez un portefeuille de réception compatible BOLT11.
   details:
     title: Détails du portefeuille
     pendingTitle: Transactions en attente

@@ -270,13 +270,14 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             );
 
                             try {
-                              final takerInvoice =
+                              final takerPayment =
                                   await reserveTakerInvoiceIfNeeded(ref, offer);
                               final reservation = await apiService.reserveOffer(
                                 offer.id,
                                 takerId,
                                 offer.coordinatorPubkey,
-                                takerInvoice: takerInvoice,
+                                takerInvoice: takerPayment?.bolt11,
+                                takerOffer: takerPayment?.bolt12,
                               );
 
                               if (reservation.reservedAt != null ||
@@ -420,7 +421,24 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: offersAsyncValue.when(
-              data: (offers) {
+              data: (publicOffers) {
+                const disputeStates = {
+                  'conflict',
+                  'securingDispute',
+                  'dispute',
+                  'refundingMaker',
+                  'payingMaker',
+                };
+                // Private status updates can precede the public relay event.
+                // Hide a tracked dispute even while its listing says reserved.
+                final offers = publicOffers.where((offer) {
+                  if (disputeStates.contains(offer.statusRaw)) return false;
+                  final tracked = myActiveOffer;
+                  return tracked == null ||
+                      tracked.id != offer.id ||
+                      tracked.coordinatorPubkey != offer.coordinatorPubkey ||
+                      !disputeStates.contains(tracked.statusRaw);
+                }).toList();
                 if (offers.isEmpty) {
                   return Column(
                     children: [
@@ -488,6 +506,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                 final nonActiveStatuses = [
                   OfferStatus.settled,
                   OfferStatus.takerPaid,
+                  OfferStatus.refundedMaker,
                   OfferStatus.expired,
                   OfferStatus.cancelled,
                 ];
@@ -600,7 +619,6 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                   return;
                                                 }
 
-                                                // Check terms acceptance
                                                 final coordinatorInfoAsync = ref
                                                     .read(
                                                       coordinatorInfoByPubkeyProvider(
@@ -610,7 +628,46 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                 final coordInfo =
                                                     coordinatorInfoAsync
                                                         .valueOrNull;
+                                                final coordinatorSupportsBolt12 =
+                                                    coordInfo
+                                                        ?.outgoingPaymentTypes
+                                                        .contains('bolt12') ??
+                                                    false;
+                                                final ndk = ref.read(
+                                                  ndkProvider,
+                                                );
+                                                final wallets = ndk?.wallets
+                                                    .getWalletsForUnit('sat');
+                                                final defaultReceivingWallet =
+                                                    ndk
+                                                        ?.wallets
+                                                        .defaultWalletForReceiving;
+                                                final compatibleWallet =
+                                                    wallets == null
+                                                        ? null
+                                                        : selectReceivingWalletForCoordinator(
+                                                          wallets,
+                                                          coordinatorSupportsBolt12:
+                                                              coordinatorSupportsBolt12,
+                                                          defaultWallet:
+                                                              defaultReceivingWallet,
+                                                        );
+                                                if (compatibleWallet == null) {
+                                                  LightningAddressWidget.showReceivingWalletRequiredDialog(
+                                                    context,
+                                                    ref,
+                                                    t,
+                                                    requiresBolt11:
+                                                        !coordinatorSupportsBolt12 &&
+                                                        wallets != null &&
+                                                        hasOnlyBolt12ReceivingWallets(
+                                                          wallets,
+                                                        ),
+                                                  );
+                                                  return;
+                                                }
 
+                                                // Check terms acceptance
                                                 if (coordInfo
                                                         ?.termsOfUsageNaddr !=
                                                     null) {
@@ -643,7 +700,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     );
 
                                                 try {
-                                                  final takerInvoice =
+                                                  final takerPayment =
                                                       await reserveTakerInvoiceIfNeeded(
                                                         ref,
                                                         offer,
@@ -656,7 +713,11 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                             offer
                                                                 .coordinatorPubkey,
                                                             takerInvoice:
-                                                                takerInvoice,
+                                                                takerPayment
+                                                                    ?.bolt11,
+                                                            takerOffer:
+                                                                takerPayment
+                                                                    ?.bolt12,
                                                           );
 
                                                   if (reservation.reservedAt !=

@@ -411,6 +411,49 @@ void main() {
     },
   );
 
+  test('refresh preserves dispute timestamp omitted by older coordinators', () {
+    final started = DateTime.utc(2026, 9, 14);
+    final local = trade(
+      status: OfferStatus.dispute,
+    ).copyWith(disputeAt: started);
+    final remote = trade(status: OfferStatus.dispute);
+    expect(reconcileOfferSnapshot(local, remote, 'taker')?.disputeAt, started);
+    final corrected = started.add(const Duration(minutes: 1));
+    expect(
+      reconcileOfferSnapshot(
+        local,
+        remote.copyWith(disputeAt: corrected),
+        'taker',
+      )?.disputeAt,
+      corrected,
+    );
+  });
+
+  test(
+    'redacted refresh preserves BOLT12 payout without mixing invoice types',
+    () {
+      final local = trade().copyWith(takerOffer: 'lno-local');
+      final redacted = trade(status: OfferStatus.takerCharged);
+      final preserved = reconcileOfferSnapshot(local, redacted, 'taker');
+      expect(preserved?.takerOffer, 'lno-local');
+      expect(preserved?.takerInvoice, isNull);
+      final switched = reconcileOfferSnapshot(
+        local,
+        redacted.copyWith(takerInvoice: 'lnbc-remote'),
+        'taker',
+      );
+      expect(switched?.takerInvoice, 'lnbc-remote');
+      expect(switched?.takerOffer, isNull);
+      final offer = reconcileOfferSnapshot(
+        trade().copyWith(takerInvoice: 'lnbc-local'),
+        redacted.copyWith(takerOffer: 'lno-remote'),
+        'taker',
+      );
+      expect(offer?.takerOffer, 'lno-remote');
+      expect(offer?.takerInvoice, isNull);
+    },
+  );
+
   test('foreign snapshot cannot replace local trade', () {
     final local = trade();
     expect(

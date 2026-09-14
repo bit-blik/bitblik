@@ -11,6 +11,7 @@ class OfferStatusUpdate {
   final DateTime? createdAt;
   final DateTime? reservedAt;
   final DateTime? blikReceivedAt;
+  final DateTime? disputeAt;
   final DateTime timestamp;
 
   OfferStatusUpdate({
@@ -20,6 +21,7 @@ class OfferStatusUpdate {
     this.createdAt,
     this.reservedAt,
     this.blikReceivedAt,
+    this.disputeAt,
     required this.coordinatorPubkey,
     required this.timestamp,
   });
@@ -49,6 +51,7 @@ class OfferStatusUpdate {
       createdAt: parseEpochSeconds(json['created_at']),
       reservedAt: parseEpochSeconds(json['reserved_at']),
       blikReceivedAt: parseEpochSeconds(json['blik_received_at']),
+      disputeAt: parseEpochSeconds(json['dispute_at']),
       coordinatorPubkey: coordinatorPubkey,
       timestamp: DateTime.fromMillisecondsSinceEpoch(
         (json['timestamp'] as int) * 1000,
@@ -68,6 +71,8 @@ class OfferStatusUpdate {
         'reserved_at': reservedAt!.millisecondsSinceEpoch ~/ 1000,
       if (blikReceivedAt != null)
         'blik_received_at': blikReceivedAt!.millisecondsSinceEpoch ~/ 1000,
+      if (disputeAt != null)
+        'dispute_at': disputeAt!.millisecondsSinceEpoch ~/ 1000,
       'timestamp': timestamp.millisecondsSinceEpoch ~/ 1000,
     };
   }

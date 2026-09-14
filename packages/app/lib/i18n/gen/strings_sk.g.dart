@@ -68,6 +68,7 @@ class TranslationsSk extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$nekoManagement$sk nekoManagement = _Translations$nekoManagement$sk._(_root);
 	@override late final _Translations$relays$sk relays = _Translations$relays$sk._(_root);
 	@override late final _Translations$offerNotifications$sk offerNotifications = _Translations$offerNotifications$sk._(_root);
+	@override late final _Translations$twint$sk twint = _Translations$twint$sk._(_root);
 	@override late final _Translations$altstore$sk altstore = _Translations$altstore$sk._(_root);
 }
 
@@ -160,6 +161,7 @@ class _Translations$coordinator$sk extends Translations$coordinator$en {
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$sk bolt12 = _Translations$coordinator$bolt12$sk._(_root);
 	@override String get title => 'Koordinátori';
 	@override late final _Translations$coordinator$info$sk info = _Translations$coordinator$info$sk._(_root);
 	@override late final _Translations$coordinator$selector$sk selector = _Translations$coordinator$selector$sk._(_root);
@@ -413,6 +415,7 @@ class _Translations$wallet$sk extends Translations$wallet$en {
 	@override String get title => 'Peňaženka';
 	@override String get description => 'Spravuj nastavenia svojej Lightning peňaženky';
 	@override late final _Translations$wallet$missingReceiving$sk missingReceiving = _Translations$wallet$missingReceiving$sk._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$sk incompatibleReceiving = _Translations$wallet$incompatibleReceiving$sk._(_root);
 	@override late final _Translations$wallet$details$sk details = _Translations$wallet$details$sk._(_root);
 }
 
@@ -474,6 +477,16 @@ class _Translations$offerNotifications$sk extends Translations$offerNotification
 	@override late final _Translations$offerNotifications$takerCharged$sk takerCharged = _Translations$offerNotifications$takerCharged$sk._(_root);
 	@override late final _Translations$offerNotifications$invalidBlik$sk invalidBlik = _Translations$offerNotifications$invalidBlik$sk._(_root);
 	@override late final _Translations$offerNotifications$takerPaid$sk takerPaid = _Translations$offerNotifications$takerPaid$sk._(_root);
+}
+
+// Path: twint
+class _Translations$twint$sk extends Translations$twint$en {
+	_Translations$twint$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$twint$shop$sk shop = _Translations$twint$shop$sk._(_root);
 }
 
 // Path: altstore
@@ -713,6 +726,7 @@ class _Translations$offers$status$sk extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => 'Neplatný ${code}';
 	@override String get conflict => 'Konflikt';
 	@override String get dispute => 'Spor';
+	@override String get refundedMaker => 'Makerovi boli vrátené prostriedky';
 	@override String get refundingMaker => 'Vrátenie platby makerovi';
 	@override String get makerConfirmed => 'Potvrdená';
 	@override String get settled => 'Vyrovnaná';
@@ -862,6 +876,19 @@ class _Translations$exchange$errors$sk extends Translations$exchange$errors$en {
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'Suma je príliš vysoká. Maximum je ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Bankomat nedokáže vydať túto sumu. Použi kombináciu bankoviek: ${notes}.';
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} vydá na jeden výber najviac ${limit} ${currency}.';
+}
+
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$sk extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Podpora BOLT12';
+	@override String get body => 'Tento koordinátor môže platiť do peňaženiek, ktoré prijímajú platby cez ponuky BOLT12. Tieto peňaženky môžeš použiť na výplaty pre takerov alebo vrátenie prostriedkov makerom.';
+	@override String get details => 'Ponuka BOLT12 je opakovane použiteľná žiadosť o platbu cez Lightning, ktorú môžeš zdieľať ako text alebo QR kód. Tá istá ponuka môže prijať viacero platieb, takže nemusíš zakaždým vytvárať a zdieľať novú žiadosť o platbu. Tvoja prijímacia peňaženka musí podporovať ponuky BOLT12.';
+	@override String get learnMore => 'Viac informácií na bolt12.org';
 }
 
 // Path: coordinator.info
@@ -1733,6 +1760,18 @@ class _Translations$wallet$missingReceiving$sk extends Translations$wallet$missi
 	@override String get openSettings => 'Nastavenia peňaženky';
 }
 
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$sk extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Vyžaduje sa BOLT11 peňaženka';
+	@override String get message => 'Tento koordinátor môže túto ponuku vyplatiť iba cez BOLT11.';
+	@override String get explanation => 'Tvoja prijímacia peňaženka podporuje ponuky BOLT12, ale nevie vytvoriť požadovanú BOLT11 faktúru. Pridaj prijímaciu peňaženku kompatibilnú s BOLT11.';
+}
+
 // Path: wallet.details
 class _Translations$wallet$details$sk extends Translations$wallet$details$en {
 	_Translations$wallet$details$sk._(TranslationsSk root) : this._root = root, super.internal(root);
@@ -1971,6 +2010,35 @@ class _Translations$offerNotifications$takerPaid$sk extends Translations$offerNo
 	// Translations
 	@override String get title => 'Platba prijatá';
 	@override String get body => 'Tvoja Lightning platba bola odoslaná.';
+}
+
+// Path: twint.shop
+class _Translations$twint$shop$sk extends Translations$twint$shop$en {
+	_Translations$twint$shop$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Naskenovať QR obchodu';
+	@override String get scanInstructions => 'Naskenuj platobný QR kód na termináli v obchode. Suma v CHF sa načíta z kódu.';
+	@override String get invalidQr => 'Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli.';
+	@override String get amountMismatch => 'Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby.';
+	@override String get cameraFailed => 'Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova.';
+	@override String get scanned => 'QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF.';
+	@override String get rescan => 'Naskenovať iný QR kód';
+	@override String get coordinatorUnsupported => 'Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje.';
+	@override String get loadingFailed => 'Platobný QR kód sa nepodarilo načítať. Skús to znova.';
+	@override String get replacementInstructions => 'Naskenuj nový QR kód obchodu s rovnakou sumou v CHF ako financovaná ponuka.';
+	@override String get replacementScanned => 'Náhradný QR kód zodpovedá financovanej sume.';
+	@override String get qrLabel => 'QR kód na platbu cez TWINT';
+	@override String get payInstructions => 'Naskenuj tento QR kód cez TWINT alebo ulož obrázok a importuj ho z galérie do TWINT. Pred platbou skontroluj obchodníka a sumu.';
+	@override String get saveImage => 'Uložiť QR medzi fotky';
+	@override String get downloadImage => 'Stiahnuť obrázok QR';
+	@override String get saving => 'Ukladá sa obrázok QR…';
+	@override String get saved => 'Obrázok QR bol uložený. Otvor TWINT a importuj ho z galérie.';
+	@override String get downloadStarted => 'Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT.';
+	@override String get saveFailed => 'Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova.';
+	@override String get expired => 'Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok.';
 }
 
 // Path: offers.details.categories
@@ -2950,6 +3018,7 @@ extension on TranslationsSk {
 			'offers.status.invalidBlik' => ({required Object code}) => 'Neplatný ${code}',
 			'offers.status.conflict' => 'Konflikt',
 			'offers.status.dispute' => 'Spor',
+			'offers.status.refundedMaker' => 'Makerovi boli vrátené prostriedky',
 			'offers.status.refundingMaker' => 'Vrátenie platby makerovi',
 			'offers.status.makerConfirmed' => 'Potvrdená',
 			'offers.status.settled' => 'Vyrovnaná',
@@ -3009,6 +3078,10 @@ extension on TranslationsSk {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Suma je príliš vysoká. Maximum je ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Bankomat nedokáže vydať túto sumu. Použi kombináciu bankoviek: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} vydá na jeden výber najviac ${limit} ${currency}.',
+			'coordinator.bolt12.title' => 'Podpora BOLT12',
+			'coordinator.bolt12.body' => 'Tento koordinátor môže platiť do peňaženiek, ktoré prijímajú platby cez ponuky BOLT12. Tieto peňaženky môžeš použiť na výplaty pre takerov alebo vrátenie prostriedkov makerom.',
+			'coordinator.bolt12.details' => 'Ponuka BOLT12 je opakovane použiteľná žiadosť o platbu cez Lightning, ktorú môžeš zdieľať ako text alebo QR kód. Tá istá ponuka môže prijať viacero platieb, takže nemusíš zakaždým vytvárať a zdieľať novú žiadosť o platbu. Tvoja prijímacia peňaženka musí podporovať ponuky BOLT12.',
+			'coordinator.bolt12.learnMore' => 'Viac informácií na bolt12.org',
 			'coordinator.title' => 'Koordinátori',
 			'coordinator.info.fee' => 'poplatok',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Suma: ${minAmount}-${maxAmount} ${currency}',
@@ -3353,13 +3426,13 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Skúsiť znova s novým ${code}',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Zrušiť rezerváciu',
 			'taker.waitConfirmation.feedback.makerConfirmed' => 'Predávajúci potvrdil platbu.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Platba úspešná! Čoskoro dostaneš prostriedky.',
 			'taker.waitConfirmation.feedback.chargeReported' => 'Hlásenie o strhnutí platby prijaté. Čaká sa na odpoveď Makera alebo automatické potvrdenie.',
 			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa.',
 			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
 			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Čaká sa na potvrdenie hlásenia. Nie je známe, či bolo doručené. Skontroluj stav a v prípade potreby hlásenie odošli znova. Ak stav zostane nedostupný, kontaktuj podporu.',
-			_ => null,
-		} ?? switch (path) {
 			'taker.paymentProcess.title' => 'Priebeh platby',
 			'taker.paymentProcess.waitingForOfferUpdate' => 'Čaká sa na aktualizáciu stavu ponuky...',
 			'taker.paymentProcess.states.preparing' => 'Príprava na odoslanie platby...',
@@ -3593,6 +3666,9 @@ extension on TranslationsSk {
 			'wallet.missingReceiving.title' => 'Vyžaduje sa peňaženka na prijímanie',
 			'wallet.missingReceiving.message' => 'Nie je nakonfigurovaná žiadna peňaženka na prijímanie. Pridaj jednu v nastaveniach peňaženky, aby si mohol prijímať ponuky.',
 			'wallet.missingReceiving.openSettings' => 'Nastavenia peňaženky',
+			'wallet.incompatibleReceiving.title' => 'Vyžaduje sa BOLT11 peňaženka',
+			'wallet.incompatibleReceiving.message' => 'Tento koordinátor môže túto ponuku vyplatiť iba cez BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'Tvoja prijímacia peňaženka podporuje ponuky BOLT12, ale nevie vytvoriť požadovanú BOLT11 faktúru. Pridaj prijímaciu peňaženku kompatibilnú s BOLT11.',
 			'wallet.details.title' => 'Detaily peňaženky',
 			'wallet.details.pendingTitle' => 'Čakajúce transakcie',
 			'wallet.details.finishedTitle' => 'Dokončené transakcie',
@@ -3668,6 +3744,26 @@ extension on TranslationsSk {
 			'offerNotifications.invalidBlik.body' => ({required Object code}) => 'Predávajúci označil tvoj ${code} ako neplatný.',
 			'offerNotifications.takerPaid.title' => 'Platba prijatá',
 			'offerNotifications.takerPaid.body' => 'Tvoja Lightning platba bola odoslaná.',
+			'twint.shop.scanTitle' => 'Naskenovať QR obchodu',
+			'twint.shop.scanInstructions' => 'Naskenuj platobný QR kód na termináli v obchode. Suma v CHF sa načíta z kódu.',
+			'twint.shop.invalidQr' => 'Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli.',
+			'twint.shop.amountMismatch' => 'Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby.',
+			'twint.shop.cameraFailed' => 'Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova.',
+			'twint.shop.scanned' => 'QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF.',
+			'twint.shop.rescan' => 'Naskenovať iný QR kód',
+			'twint.shop.coordinatorUnsupported' => 'Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje.',
+			'twint.shop.loadingFailed' => 'Platobný QR kód sa nepodarilo načítať. Skús to znova.',
+			'twint.shop.replacementInstructions' => 'Naskenuj nový QR kód obchodu s rovnakou sumou v CHF ako financovaná ponuka.',
+			'twint.shop.replacementScanned' => 'Náhradný QR kód zodpovedá financovanej sume.',
+			'twint.shop.qrLabel' => 'QR kód na platbu cez TWINT',
+			'twint.shop.payInstructions' => 'Naskenuj tento QR kód cez TWINT alebo ulož obrázok a importuj ho z galérie do TWINT. Pred platbou skontroluj obchodníka a sumu.',
+			'twint.shop.saveImage' => 'Uložiť QR medzi fotky',
+			'twint.shop.downloadImage' => 'Stiahnuť obrázok QR',
+			'twint.shop.saving' => 'Ukladá sa obrázok QR…',
+			'twint.shop.saved' => 'Obrázok QR bol uložený. Otvor TWINT a importuj ho z galérie.',
+			'twint.shop.downloadStarted' => 'Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT.',
+			'twint.shop.saveFailed' => 'Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova.',
+			'twint.shop.expired' => 'Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok.',
 			'altstore.dialogTitle' => 'AltStore nie je nainštalovaný',
 			'altstore.step1Title' => 'Stiahni a nainštaluj AltStore PAL',
 			'altstore.step1Button' => 'altstore.io/download',

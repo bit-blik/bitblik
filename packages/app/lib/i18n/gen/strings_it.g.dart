@@ -175,6 +175,7 @@ class _Translations$coordinator$it extends Translations$coordinator$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$it bolt12 = _Translations$coordinator$bolt12$it._(_root);
 	@override String get title => 'Coordinatori';
 	@override late final _Translations$coordinator$info$it info = _Translations$coordinator$info$it._(_root);
 	@override late final _Translations$coordinator$selector$it selector = _Translations$coordinator$selector$it._(_root);
@@ -257,6 +258,7 @@ class _Translations$twint$it extends Translations$twint$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$twint$shop$it shop = _Translations$twint$shop$it._(_root);
 	@override late final _Translations$twint$scanner$it scanner = _Translations$twint$scanner$it._(_root);
 	@override late final _Translations$twint$flow$it flow = _Translations$twint$flow$it._(_root);
 	@override late final _Translations$twint$waitConfirmation$it waitConfirmation = _Translations$twint$waitConfirmation$it._(_root);
@@ -438,9 +440,11 @@ class _Translations$wallet$it extends Translations$wallet$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$wallet$details$it details = _Translations$wallet$details$it._(_root);
 	@override String get title => 'Portafoglio';
 	@override String get description => 'Gestisci le impostazioni del tuo portafoglio Lightning';
 	@override late final _Translations$wallet$missingReceiving$it missingReceiving = _Translations$wallet$missingReceiving$it._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$it incompatibleReceiving = _Translations$wallet$incompatibleReceiving$it._(_root);
 }
 
 // Path: nwc
@@ -787,6 +791,7 @@ class _Translations$offers$status$it extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => '${code} Non Valido';
 	@override String get conflict => 'Conflitto';
 	@override String get dispute => 'Disputa';
+	@override String get refundedMaker => 'Maker rimborsato';
 	@override String get refundingMaker => 'Rimborso del maker';
 	@override String get makerConfirmed => 'Confermata';
 	@override String get settled => 'Conclusa';
@@ -936,6 +941,19 @@ class _Translations$exchange$errors$it extends Translations$exchange$errors$en {
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'L\'importo è troppo alto. Il massimo è ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}.';
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} eroga al massimo ${limit} ${currency} per prelievo.';
+}
+
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$it extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Supporto BOLT12';
+	@override String get body => 'Questo coordinatore può pagare i portafogli che ricevono pagamenti tramite offerte BOLT12. Puoi usare questi portafogli per i pagamenti ai taker o i rimborsi ai maker.';
+	@override String get details => 'Un’offerta BOLT12 è una richiesta di pagamento Lightning riutilizzabile che puoi condividere come testo o codice QR. La stessa offerta può ricevere più pagamenti, quindi non devi creare e condividere una nuova richiesta ogni volta. Il tuo portafoglio di ricezione deve supportare le offerte BOLT12.';
+	@override String get learnMore => 'Scopri di più su bolt12.org';
 }
 
 // Path: coordinator.info
@@ -1377,6 +1395,35 @@ class _Translations$taker$dispute$it extends Translations$taker$dispute$en {
 	// Translations
 	@override String get headline => 'Disputa formale aperta';
 	@override String get body => 'L\'offerta è ora in fase di revisione da parte del coordinatore. Usa la chat della disputa qui sotto per comunicare con il coordinatore e fornire le prove richieste.';
+}
+
+// Path: twint.shop
+class _Translations$twint$shop$it extends Translations$twint$shop$en {
+	_Translations$twint$shop$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Scansiona il QR del negozio';
+	@override String get scanInstructions => 'Scansiona il codice QR di pagamento sul terminale del negozio. L’importo in CHF verrà letto dal codice.';
+	@override String get invalidQr => 'Questo codice QR non è un pagamento in negozio in CHF supportato. Scansiona il codice QR di pagamento sul terminale.';
+	@override String get amountMismatch => 'Questo codice QR ha un importo diverso. Richiedi un nuovo codice QR con l’importo originale del pagamento.';
+	@override String get cameraFailed => 'Fotocamera non disponibile. Consenti l’accesso alla fotocamera nelle impostazioni del dispositivo o del browser, poi riprova.';
+	@override String get scanned => 'QR del negozio scansionato. Controlla l’importo in CHF prima di finanziare l’offerta.';
+	@override String get rescan => 'Scansiona un altro codice QR';
+	@override String get coordinatorUnsupported => 'Questo coordinatore non supporta i pagamenti QR in negozio. Scegli un coordinatore che li supporti.';
+	@override String get loadingFailed => 'Impossibile caricare il codice QR di pagamento. Riprova.';
+	@override String get replacementInstructions => 'Scansiona un nuovo codice QR del negozio con lo stesso importo in CHF dell’offerta finanziata.';
+	@override String get replacementScanned => 'Il QR sostitutivo corrisponde all’importo finanziato.';
+	@override String get qrLabel => 'Codice QR di pagamento TWINT';
+	@override String get payInstructions => 'Scansiona questo codice QR con TWINT oppure salva l’immagine e importala dalla tua galleria in TWINT. Controlla l’esercente e l’importo prima di pagare.';
+	@override String get saveImage => 'Salva il QR nelle foto';
+	@override String get downloadImage => 'Scarica l’immagine QR';
+	@override String get saving => 'Salvataggio dell’immagine QR…';
+	@override String get saved => 'Immagine QR salvata. Apri TWINT e importala dalla tua galleria.';
+	@override String get downloadStarted => 'Download dell’immagine QR avviato. Salvala nelle tue foto per importarla in TWINT.';
+	@override String get saveFailed => 'Impossibile salvare l’immagine QR. Controlla le autorizzazioni per le foto e lo spazio di archiviazione disponibile, poi riprova.';
+	@override String get expired => 'Questo codice QR è scaduto. Non pagarlo e non usare un’immagine salvata in precedenza.';
 }
 
 // Path: twint.scanner
@@ -1850,6 +1897,18 @@ class _Translations$notificationSettings$newOfferAlerts$it extends Translations$
 	@override String description({required Object app}) => 'Se abilitato, ${app} ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.';
 }
 
+// Path: wallet.details
+class _Translations$wallet$details$it extends Translations$wallet$details$en {
+	_Translations$wallet$details$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Dettagli del portafoglio';
+	@override String get pendingTitle => 'Transazioni in sospeso';
+	@override String get finishedTitle => 'Transazioni completate';
+}
+
 // Path: wallet.missingReceiving
 class _Translations$wallet$missingReceiving$it extends Translations$wallet$missingReceiving$en {
 	_Translations$wallet$missingReceiving$it._(TranslationsIt root) : this._root = root, super.internal(root);
@@ -1860,6 +1919,18 @@ class _Translations$wallet$missingReceiving$it extends Translations$wallet$missi
 	@override String get title => 'Portafoglio di ricezione richiesto';
 	@override String get message => 'Nessun portafoglio configurato per ricevere. Aggiungine uno nelle impostazioni Portafoglio per accettare offerte.';
 	@override String get openSettings => 'Impostazioni portafoglio';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$it extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Serve un portafoglio BOLT11';
+	@override String get message => 'Questo coordinatore può pagare questa offerta solo tramite BOLT11.';
+	@override String get explanation => 'Il tuo portafoglio di ricezione supporta le offerte BOLT12, ma non può creare la fattura BOLT11 richiesta. Aggiungi un portafoglio di ricezione compatibile con BOLT11.';
 }
 
 // Path: nwc.labels
@@ -3314,6 +3385,7 @@ extension on TranslationsIt {
 			'offers.status.invalidBlik' => ({required Object code}) => '${code} Non Valido',
 			'offers.status.conflict' => 'Conflitto',
 			'offers.status.dispute' => 'Disputa',
+			'offers.status.refundedMaker' => 'Maker rimborsato',
 			'offers.status.refundingMaker' => 'Rimborso del maker',
 			'offers.status.makerConfirmed' => 'Confermata',
 			'offers.status.settled' => 'Conclusa',
@@ -3373,6 +3445,10 @@ extension on TranslationsIt {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'L\'importo è troppo alto. Il massimo è ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} eroga al massimo ${limit} ${currency} per prelievo.',
+			'coordinator.bolt12.title' => 'Supporto BOLT12',
+			'coordinator.bolt12.body' => 'Questo coordinatore può pagare i portafogli che ricevono pagamenti tramite offerte BOLT12. Puoi usare questi portafogli per i pagamenti ai taker o i rimborsi ai maker.',
+			'coordinator.bolt12.details' => 'Un’offerta BOLT12 è una richiesta di pagamento Lightning riutilizzabile che puoi condividere come testo o codice QR. La stessa offerta può ricevere più pagamenti, quindi non devi creare e condividere una nuova richiesta ogni volta. Il tuo portafoglio di ricezione deve supportare le offerte BOLT12.',
+			'coordinator.bolt12.learnMore' => 'Scopri di più su bolt12.org',
 			'coordinator.title' => 'Coordinatori',
 			'coordinator.info.fee' => 'commissione',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Importo: ${minAmount}-${maxAmount} ${currency}',
@@ -3699,6 +3775,28 @@ extension on TranslationsIt {
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
 			'taker.dispute.headline' => 'Disputa formale aperta',
 			'taker.dispute.body' => 'L\'offerta è ora in fase di revisione da parte del coordinatore. Usa la chat della disputa qui sotto per comunicare con il coordinatore e fornire le prove richieste.',
+			'twint.shop.scanTitle' => 'Scansiona il QR del negozio',
+			'twint.shop.scanInstructions' => 'Scansiona il codice QR di pagamento sul terminale del negozio. L’importo in CHF verrà letto dal codice.',
+			'twint.shop.invalidQr' => 'Questo codice QR non è un pagamento in negozio in CHF supportato. Scansiona il codice QR di pagamento sul terminale.',
+			'twint.shop.amountMismatch' => 'Questo codice QR ha un importo diverso. Richiedi un nuovo codice QR con l’importo originale del pagamento.',
+			'twint.shop.cameraFailed' => 'Fotocamera non disponibile. Consenti l’accesso alla fotocamera nelle impostazioni del dispositivo o del browser, poi riprova.',
+			'twint.shop.scanned' => 'QR del negozio scansionato. Controlla l’importo in CHF prima di finanziare l’offerta.',
+			'twint.shop.rescan' => 'Scansiona un altro codice QR',
+			_ => null,
+		} ?? switch (path) {
+			'twint.shop.coordinatorUnsupported' => 'Questo coordinatore non supporta i pagamenti QR in negozio. Scegli un coordinatore che li supporti.',
+			'twint.shop.loadingFailed' => 'Impossibile caricare il codice QR di pagamento. Riprova.',
+			'twint.shop.replacementInstructions' => 'Scansiona un nuovo codice QR del negozio con lo stesso importo in CHF dell’offerta finanziata.',
+			'twint.shop.replacementScanned' => 'Il QR sostitutivo corrisponde all’importo finanziato.',
+			'twint.shop.qrLabel' => 'Codice QR di pagamento TWINT',
+			'twint.shop.payInstructions' => 'Scansiona questo codice QR con TWINT oppure salva l’immagine e importala dalla tua galleria in TWINT. Controlla l’esercente e l’importo prima di pagare.',
+			'twint.shop.saveImage' => 'Salva il QR nelle foto',
+			'twint.shop.downloadImage' => 'Scarica l’immagine QR',
+			'twint.shop.saving' => 'Salvataggio dell’immagine QR…',
+			'twint.shop.saved' => 'Immagine QR salvata. Apri TWINT e importala dalla tua galleria.',
+			'twint.shop.downloadStarted' => 'Download dell’immagine QR avviato. Salvala nelle tue foto per importarla in TWINT.',
+			'twint.shop.saveFailed' => 'Impossibile salvare l’immagine QR. Controlla le autorizzazioni per le foto e lo spazio di archiviazione disponibile, poi riprova.',
+			'twint.shop.expired' => 'Questo codice QR è scaduto. Non pagarlo e non usare un’immagine salvata in precedenza.',
 			'twint.scanner.title' => ({required Object code}) => 'Scansiona codice ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Allinea il QR ${code} e il testo dell\'importo all\'interno dell\'inquadratura.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Codice ${code} non ancora riconosciuto. Tieni in vista il QR e l\'importo, oppure compila manualmente il modulo.',
@@ -3711,8 +3809,6 @@ extension on TranslationsIt {
 			'twint.flow.makerWait.takerPaying' => 'Il taker sta pagando',
 			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Il tuo codice ${code}',
 			'twint.flow.makerWait.offerExpires' => ({required Object code}) => '${code} scade',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerWait.autoExpires' => 'Scade automaticamente',
 			'twint.flow.makerWait.codeExpiresIn' => ({required Object code}) => '${code} scadrà tra...',
 			'twint.flow.makerWait.cancelOffer' => 'Annulla offerta',
@@ -4017,11 +4113,17 @@ extension on TranslationsIt {
 			'notificationSettings.androidOnly' => 'Le notifiche in background sono attualmente supportate solo su Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Avvisi nuove offerte',
 			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'Se abilitato, ${app} ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l\'app è in background. Potrebbe essere più veloce dei messenger esterni.',
+			'wallet.details.title' => 'Dettagli del portafoglio',
+			'wallet.details.pendingTitle' => 'Transazioni in sospeso',
+			'wallet.details.finishedTitle' => 'Transazioni completate',
 			'wallet.title' => 'Portafoglio',
 			'wallet.description' => 'Gestisci le impostazioni del tuo portafoglio Lightning',
 			'wallet.missingReceiving.title' => 'Portafoglio di ricezione richiesto',
 			'wallet.missingReceiving.message' => 'Nessun portafoglio configurato per ricevere. Aggiungine uno nelle impostazioni Portafoglio per accettare offerte.',
 			'wallet.missingReceiving.openSettings' => 'Impostazioni portafoglio',
+			'wallet.incompatibleReceiving.title' => 'Serve un portafoglio BOLT11',
+			'wallet.incompatibleReceiving.message' => 'Questo coordinatore può pagare questa offerta solo tramite BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'Il tuo portafoglio di ricezione supporta le offerte BOLT12, ma non può creare la fattura BOLT11 richiesta. Aggiungi un portafoglio di ricezione compatibile con BOLT11.',
 			'nwc.title' => 'Nostr Wallet Connect (NWC)',
 			'nwc.description' => 'Connetti il tuo portafoglio Lightning tramite NWC',
 			'nwc.labels.connectionString' => 'Stringa di Connessione NWC',

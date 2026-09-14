@@ -166,6 +166,7 @@ offers:
     invalidBlik: "${code} Non Valido"
     conflict: "Conflitto"
     dispute: "Disputa"
+    refundedMaker: "Maker rimborsato"
     refundingMaker: "Rimborso del maker"
     makerConfirmed: "Confermata"
     settled: "Conclusa"
@@ -258,6 +259,11 @@ exchange:
 # COORDINATOR INFORMATION
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Supporto BOLT12"
+    body: "Questo coordinatore può pagare i portafogli che ricevono pagamenti tramite offerte BOLT12. Puoi usare questi portafogli per i pagamenti ai taker o i rimborsi ai maker."
+    details: "Un’offerta BOLT12 è una richiesta di pagamento Lightning riutilizzabile che puoi condividere come testo o codice QR. La stessa offerta può ricevere più pagamenti, quindi non devi creare e condividere una nuova richiesta ogni volta. Il tuo portafoglio di ricezione deve supportare le offerte BOLT12."
+    learnMore: "Scopri di più su bolt12.org"
   title: "Coordinatori"
   info:
     fee: "commissione"
@@ -708,6 +714,27 @@ taker:
     body: L'offerta è ora in fase di revisione da parte del coordinatore. Usa la chat della disputa qui sotto per comunicare con il coordinatore e fornire le prove richieste.
 
 twint:
+  shop:
+    scanTitle: "Scansiona il QR del negozio"
+    scanInstructions: "Scansiona il codice QR di pagamento sul terminale del negozio. L’importo in CHF verrà letto dal codice."
+    invalidQr: "Questo codice QR non è un pagamento in negozio in CHF supportato. Scansiona il codice QR di pagamento sul terminale."
+    amountMismatch: "Questo codice QR ha un importo diverso. Richiedi un nuovo codice QR con l’importo originale del pagamento."
+    cameraFailed: "Fotocamera non disponibile. Consenti l’accesso alla fotocamera nelle impostazioni del dispositivo o del browser, poi riprova."
+    scanned: "QR del negozio scansionato. Controlla l’importo in CHF prima di finanziare l’offerta."
+    rescan: "Scansiona un altro codice QR"
+    coordinatorUnsupported: "Questo coordinatore non supporta i pagamenti QR in negozio. Scegli un coordinatore che li supporti."
+    loadingFailed: "Impossibile caricare il codice QR di pagamento. Riprova."
+    replacementInstructions: "Scansiona un nuovo codice QR del negozio con lo stesso importo in CHF dell’offerta finanziata."
+    replacementScanned: "Il QR sostitutivo corrisponde all’importo finanziato."
+    qrLabel: "Codice QR di pagamento TWINT"
+    payInstructions: "Scansiona questo codice QR con TWINT oppure salva l’immagine e importala dalla tua galleria in TWINT. Controlla l’esercente e l’importo prima di pagare."
+    saveImage: "Salva il QR nelle foto"
+    downloadImage: "Scarica l’immagine QR"
+    saving: "Salvataggio dell’immagine QR…"
+    saved: "Immagine QR salvata. Apri TWINT e importala dalla tua galleria."
+    downloadStarted: "Download dell’immagine QR avviato. Salvala nelle tue foto per importarla in TWINT."
+    saveFailed: "Impossibile salvare l’immagine QR. Controlla le autorizzazioni per le foto e lo spazio di archiviazione disponibile, poi riprova."
+    expired: "Questo codice QR è scaduto. Non pagarlo e non usare un’immagine salvata in precedenza."
   scanner:
     title: "Scansiona codice ${code}"
     status:
@@ -1183,12 +1210,20 @@ notificationSettings:
     description: Se abilitato, ${app} ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l'app è in background. Potrebbe essere più veloce dei messenger esterni.
 
 wallet:
+  details:
+    title: Dettagli del portafoglio
+    pendingTitle: Transazioni in sospeso
+    finishedTitle: Transazioni completate
   title: Portafoglio
   description: Gestisci le impostazioni del tuo portafoglio Lightning
   missingReceiving:
     title: Portafoglio di ricezione richiesto
     message: Nessun portafoglio configurato per ricevere. Aggiungine uno nelle impostazioni Portafoglio per accettare offerte.
     openSettings: Impostazioni portafoglio
+  incompatibleReceiving:
+    title: Serve un portafoglio BOLT11
+    message: Questo coordinatore può pagare questa offerta solo tramite BOLT11.
+    explanation: Il tuo portafoglio di ricezione supporta le offerte BOLT12, ma non può creare la fattura BOLT11 richiesta. Aggiungi un portafoglio di ricezione compatibile con BOLT11.
 
 nwc:
   title: Nostr Wallet Connect (NWC)

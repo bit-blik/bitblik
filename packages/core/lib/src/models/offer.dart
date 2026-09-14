@@ -33,6 +33,8 @@ enum OfferStatus {
   // Append-only enum — never rename or remove existing values; this catches
   // future statuses introduced by newer coordinators.
   unknown,
+
+  refundedMaker, // Maker successfully refunded after a dispute ruling
 }
 
 enum OfferCategory {
@@ -78,10 +80,12 @@ class Offer {
   // Added fields based on DB schema that might be useful
   final String? takerLightningAddress;
   final String? takerInvoice;
+  final String? takerOffer;
 
   /// Server-only invoice used to resume a coordinator-ruled maker refund.
   /// Intentionally excluded from JSON/RPC serialization.
   final String? makerRefundInvoice;
+  final String? makerRefundOffer;
 
   /// Payment hash of [makerRefundInvoice]. Server-only and unique in the
   /// coordinator database so the same Lightning invoice cannot authorize two
@@ -197,7 +201,9 @@ class Offer {
     this.holdInvoice,
     this.takerLightningAddress,
     this.takerInvoice,
+    this.takerOffer,
     this.makerRefundInvoice,
+    this.makerRefundOffer,
     this.makerRefundPaymentHash,
     this.holdInvoicePreimage,
     this.updatedAt,
@@ -215,10 +221,17 @@ class Offer {
     this.paymentSystemId,
     this.bankId,
     this.clientVersion,
-  }) : statusRaw = statusRaw ?? status.name;
+  })  : assert(takerInvoice == null || takerOffer == null),
+        assert(makerRefundInvoice == null || makerRefundOffer == null),
+        statusRaw = statusRaw ?? status.name;
 
   // Factory constructor to create an Offer from JSON data (Map).
   factory Offer.fromJson(Map<String, dynamic> json) {
+    if (json['taker_invoice'] != null && json['taker_offer'] != null) {
+      throw const FormatException(
+        'Offer contains both taker_invoice and taker_offer',
+      );
+    }
     DateTime? parseOptionalDateTime(dynamic value) {
       if (value == null) return null;
       if (value is int) {
@@ -327,6 +340,7 @@ class Offer {
       // Parse additional fields if present in JSON
       takerLightningAddress: json['taker_lightning_address'] as String?,
       takerInvoice: json['taker_invoice'] as String?,
+      takerOffer: json['taker_offer'] as String?,
       holdInvoicePreimage:
           json['hold_invoice_preimage'] as String?, // Be cautious exposing this
       updatedAt: parseOptionalDateTime(json['updated_at']),
@@ -386,6 +400,7 @@ class Offer {
       'hold_invoice': holdInvoice,
       'taker_lightning_address': takerLightningAddress,
       'taker_invoice': takerInvoice,
+      'taker_offer': takerOffer,
       'hold_invoice_preimage': holdInvoicePreimage,
       'updated_at': updatedAt?.toUtc().toIso8601String(),
       'maker_confirmed_at': makerConfirmedAt?.toUtc().toIso8601String(),
@@ -466,6 +481,7 @@ class Offer {
     }
     if (!includeTakerInvoice) {
       json.remove('taker_invoice');
+      json.remove('taker_offer');
     }
     if (!includeHoldInvoicePreimage) {
       json.remove('hold_invoice_preimage');
@@ -497,7 +513,9 @@ class Offer {
     String? holdInvoice,
     String? takerLightningAddress,
     String? takerInvoice,
+    String? takerOffer,
     String? makerRefundInvoice,
+    String? makerRefundOffer,
     String? makerRefundPaymentHash,
     String? holdInvoicePreimage,
     DateTime? updatedAt,
@@ -536,10 +554,18 @@ class Offer {
       holdInvoice: holdInvoice ?? this.holdInvoice,
       takerLightningAddress:
           takerLightningAddress ?? this.takerLightningAddress,
-      takerInvoice: takerInvoice ?? this.takerInvoice,
-      makerRefundInvoice: makerRefundInvoice ?? this.makerRefundInvoice,
+      takerInvoice:
+          takerOffer != null ? null : takerInvoice ?? this.takerInvoice,
+      takerOffer: takerInvoice != null ? null : takerOffer ?? this.takerOffer,
+      makerRefundInvoice: makerRefundOffer != null
+          ? null
+          : makerRefundInvoice ?? this.makerRefundInvoice,
+      makerRefundOffer: makerRefundInvoice != null
+          ? null
+          : makerRefundOffer ?? this.makerRefundOffer,
+
       makerRefundPaymentHash:
-          makerRefundPaymentHash ?? this.makerRefundPaymentHash,
+          makerRefundOffer != null ? null : makerRefundPaymentHash ?? this.makerRefundPaymentHash,
       holdInvoicePreimage: holdInvoicePreimage ?? this.holdInvoicePreimage,
       updatedAt: updatedAt ?? this.updatedAt,
       makerConfirmedAt: makerConfirmedAt ?? this.makerConfirmedAt,
@@ -582,6 +608,12 @@ class Offer {
     }
 
     final createdAtSecs = int.tryParse(tagMap['created_at'] ?? '0') ?? 0;
+    final nip69Status = tagMap['s'] ?? 'pending';
+    // Disputes remain in-progress in NIP-69; BitBlik adds a narrower status.
+    final status =
+        nip69Status == 'in-progress' && tagMap['bitblik_status'] == 'dispute'
+            ? OfferStatus.dispute
+            : _statusFromNip69(nip69Status) ?? OfferStatus.funded;
 
     return Offer(
       id: tagMap['d'] ?? event.id,
@@ -589,7 +621,7 @@ class Offer {
       makerFees: int.tryParse(tagMap['maker_fees'] ?? '0') ?? 0,
       fiatAmount: double.tryParse(tagMap['fa'] ?? '0') ?? 0.0,
       fiatCurrency: tagMap['f'] ?? 'PLN',
-      status: _statusFromNip69(tagMap['s'] ?? 'pending') ?? OfferStatus.funded,
+      status: status,
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         createdAtSecs * 1000,
         isUtc: true,
@@ -633,6 +665,7 @@ OfferStatus? _statusFromNip69(String s) {
     case 'canceled':
       return OfferStatus.cancelled;
     case 'dispute':
+      // Compatibility with older BitBlik events, outside NIP-69's status set.
       return OfferStatus.conflict;
     default:
       return null;

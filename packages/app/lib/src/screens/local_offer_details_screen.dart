@@ -453,12 +453,15 @@ class _OfferDetailsBody extends ConsumerWidget {
       OfferStatus.unknown,
     };
 
-    return activeStatuses.contains(status) || status == OfferStatus.takerPaid;
+    return activeStatuses.contains(status) ||
+        status == OfferStatus.takerPaid ||
+        status == OfferStatus.refundedMaker;
   }
 
   IconData _statusIcon(OfferStatus status) {
     switch (status) {
       case OfferStatus.takerPaid:
+      case OfferStatus.refundedMaker:
       case OfferStatus.settled:
       case OfferStatus.makerConfirmed:
         return Icons.check_circle;
@@ -490,6 +493,7 @@ class _OfferDetailsBody extends ConsumerWidget {
   Color _statusColor(OfferStatus status) {
     switch (status) {
       case OfferStatus.takerPaid:
+      case OfferStatus.refundedMaker:
       case OfferStatus.settled:
       case OfferStatus.makerConfirmed:
         return Colors.green;

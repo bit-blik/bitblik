@@ -55,6 +55,8 @@ String offerStatusLabel(
       return t.offers.status.dispute;
     case OfferStatus.refundingMaker:
       return t.offers.status.refundingMaker;
+    case OfferStatus.refundedMaker:
+      return t.offers.status.refundedMaker;
     case OfferStatus.makerConfirmed:
       return t.offers.status.makerConfirmed;
     case OfferStatus.settled:

@@ -149,6 +149,7 @@ offers:
     invalidBlik: "Neplatný ${code}"
     conflict: "Konflikt"
     dispute: "Spor"
+    refundedMaker: "Makerovi boli vrátené prostriedky"
     refundingMaker: "Vrátenie platby makerovi"
     makerConfirmed: "Potvrdená"
     settled: "Vyrovnaná"
@@ -241,6 +242,11 @@ exchange:
 # INFORMÁCIE O KOORDINÁTOROVI
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Podpora BOLT12"
+    body: "Tento koordinátor môže platiť do peňaženiek, ktoré prijímajú platby cez ponuky BOLT12. Tieto peňaženky môžeš použiť na výplaty pre takerov alebo vrátenie prostriedkov makerom."
+    details: "Ponuka BOLT12 je opakovane použiteľná žiadosť o platbu cez Lightning, ktorú môžeš zdieľať ako text alebo QR kód. Tá istá ponuka môže prijať viacero platieb, takže nemusíš zakaždým vytvárať a zdieľať novú žiadosť o platbu. Tvoja prijímacia peňaženka musí podporovať ponuky BOLT12."
+    learnMore: "Viac informácií na bolt12.org"
   title: "Koordinátori"
   info:
     fee: "poplatok"
@@ -1088,6 +1094,10 @@ wallet:
     title: Vyžaduje sa peňaženka na prijímanie
     message: Nie je nakonfigurovaná žiadna peňaženka na prijímanie. Pridaj jednu v nastaveniach peňaženky, aby si mohol prijímať ponuky.
     openSettings: Nastavenia peňaženky
+  incompatibleReceiving:
+    title: Vyžaduje sa BOLT11 peňaženka
+    message: Tento koordinátor môže túto ponuku vyplatiť iba cez BOLT11.
+    explanation: Tvoja prijímacia peňaženka podporuje ponuky BOLT12, ale nevie vytvoriť požadovanú BOLT11 faktúru. Pridaj prijímaciu peňaženku kompatibilnú s BOLT11.
   details:
     title: Detaily peňaženky
     pendingTitle: Čakajúce transakcie
@@ -1196,6 +1206,29 @@ offerNotifications:
   takerPaid:
     title: Platba prijatá
     body: Tvoja Lightning platba bola odoslaná.
+
+twint:
+  shop:
+    scanTitle: "Naskenovať QR obchodu"
+    scanInstructions: "Naskenuj platobný QR kód na termináli v obchode. Suma v CHF sa načíta z kódu."
+    invalidQr: "Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli."
+    amountMismatch: "Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby."
+    cameraFailed: "Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova."
+    scanned: "QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF."
+    rescan: "Naskenovať iný QR kód"
+    coordinatorUnsupported: "Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje."
+    loadingFailed: "Platobný QR kód sa nepodarilo načítať. Skús to znova."
+    replacementInstructions: "Naskenuj nový QR kód obchodu s rovnakou sumou v CHF ako financovaná ponuka."
+    replacementScanned: "Náhradný QR kód zodpovedá financovanej sume."
+    qrLabel: "QR kód na platbu cez TWINT"
+    payInstructions: "Naskenuj tento QR kód cez TWINT alebo ulož obrázok a importuj ho z galérie do TWINT. Pred platbou skontroluj obchodníka a sumu."
+    saveImage: "Uložiť QR medzi fotky"
+    downloadImage: "Stiahnuť obrázok QR"
+    saving: "Ukladá sa obrázok QR…"
+    saved: "Obrázok QR bol uložený. Otvor TWINT a importuj ho z galérie."
+    downloadStarted: "Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT."
+    saveFailed: "Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova."
+    expired: "Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok."
 
 # =============================================================================
 # INŠTALÁCIA ALTSTORE

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bitblik_core/core.dart';
 import 'package:ndk/entities.dart' show NwcWallet, Wallet;
 import 'package:ndk/shared/logger/logger.dart';
 
-import '../flow/taker_receive_invoice.dart';
 import '../providers/providers.dart';
 import '../utils/bitcoin_display.dart';
 
@@ -42,14 +42,15 @@ class ReceivingInvoiceFormLabels {
   });
 }
 
-/// Selects a receive-capable wallet or accepts a manually pasted BOLT11.
+/// Selects a compatible receiving wallet or accepts a pasted payout instruction.
 ///
-/// The caller owns the payout-specific action. This widget only creates and
-/// submits an exact-amount invoice.
+/// The caller owns the payout-specific action. This widget creates a compatible
+/// instruction for the requested amount; reusable offers are paid by the caller.
 class ReceivingInvoiceForm extends ConsumerStatefulWidget {
   final int amountSats;
   final ReceivingInvoiceFormLabels labels;
-  final Future<void> Function(String bolt11) onSubmit;
+  final Future<void> Function(String instruction) onSubmit;
+  final bool coordinatorSupportsBolt12;
   final String? invoiceDescription;
   final bool enabled;
 
@@ -59,6 +60,7 @@ class ReceivingInvoiceForm extends ConsumerStatefulWidget {
     required this.labels,
     required this.onSubmit,
     this.invoiceDescription,
+    this.coordinatorSupportsBolt12 = false,
     this.enabled = true,
   });
 
@@ -84,6 +86,15 @@ class _ReceivingInvoiceFormState extends ConsumerState<ReceivingInvoiceForm> {
   }
 
   @override
+  void didUpdateWidget(covariant ReceivingInvoiceForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.coordinatorSupportsBolt12 !=
+        widget.coordinatorSupportsBolt12) {
+      _loadWallets();
+    }
+  }
+
+  @override
   void dispose() {
     _invoiceController.dispose();
     super.dispose();
@@ -105,10 +116,19 @@ class _ReceivingInvoiceFormState extends ConsumerState<ReceivingInvoiceForm> {
     final all = ndk.wallets.getWalletsForUnit('sat');
     // ignore: experimental_member_use
     final defaultWallet = ndk.wallets.defaultWalletForReceiving;
+    final compatible = all.where(
+      (wallet) => walletCanReceiveForCoordinator(
+        wallet,
+        coordinatorSupportsBolt12: widget.coordinatorSupportsBolt12,
+      ),
+    );
     final usableDefault =
-        defaultWallet?.canReceive == true ? defaultWallet : null;
-    final others = all
-        .where((wallet) => wallet.canReceive && wallet.id != usableDefault?.id)
+        defaultWallet != null &&
+            compatible.any((wallet) => wallet.id == defaultWallet.id)
+        ? defaultWallet
+        : null;
+    final others = compatible
+        .where((wallet) => wallet.id != usableDefault?.id)
         .toList(growable: false);
 
     if (!mounted) return;
@@ -134,7 +154,16 @@ class _ReceivingInvoiceFormState extends ConsumerState<ReceivingInvoiceForm> {
       if (ndk == null) throw StateError(widget.labels.walletUnavailableError);
       final description = widget.invoiceDescription?.trim();
       late final String result;
-      if (wallet is NwcWallet &&
+      if (widget.coordinatorSupportsBolt12) {
+        final payment = await createReceivingPayment(
+          ndk,
+          widget.amountSats,
+          coordinatorSupportsBolt12: true,
+          walletId: wallet.id,
+          description: description,
+        );
+        result = payment.encoded;
+      } else if (wallet is NwcWallet &&
           description != null &&
           description.isNotEmpty) {
         var connection = wallet.connection;
@@ -160,7 +189,11 @@ class _ReceivingInvoiceFormState extends ConsumerState<ReceivingInvoiceForm> {
           amountSats: widget.amountSats,
         );
       }
-      final invoice = extractBolt11Invoice(result);
+      final invoice =
+          extractBolt11Invoice(result) ??
+          (widget.coordinatorSupportsBolt12
+              ? extractBolt12Offer(result)
+              : null);
       if (invoice == null) {
         throw FormatException(widget.labels.missingBolt11Error);
       }
@@ -221,11 +254,10 @@ class _ReceivingInvoiceFormState extends ConsumerState<ReceivingInvoiceForm> {
             groupValue: _selectedWalletId,
             onChanged: (walletId) {
               if (walletId == null) return;
-              final wallet =
-                  wallets
-                      .where((entry) => entry.wallet.id == walletId)
-                      .firstOrNull
-                      ?.wallet;
+              final wallet = wallets
+                  .where((entry) => entry.wallet.id == walletId)
+                  .firstOrNull
+                  ?.wallet;
               if (wallet != null) _generateInvoice(wallet);
             },
             child: Column(
@@ -265,14 +297,13 @@ class _ReceivingInvoiceFormState extends ConsumerState<ReceivingInvoiceForm> {
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: _busy || !widget.enabled ? null : _submit,
-          child:
-              _submitting
-                  ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                  : Text(widget.labels.submitLabel),
+          child: _submitting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(widget.labels.submitLabel),
         ),
       ],
     );
@@ -291,10 +322,9 @@ class _ReceivingInvoiceFormState extends ConsumerState<ReceivingInvoiceForm> {
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
       elevation: 0,
-      color:
-          isSelected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.5)
-              : null,
+      color: isSelected
+          ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+          : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(

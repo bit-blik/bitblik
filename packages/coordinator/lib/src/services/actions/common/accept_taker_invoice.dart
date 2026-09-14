@@ -1,15 +1,8 @@
 part of '../../coordinator_service.dart';
 
-/// Stores the taker's payout invoice verbatim from the params (e.g. captured
-/// at reserve time in TWINT). Lightning-address params are ignored — payout
-/// requires a bolt11, enforced at resolve/update/send time.
-class AcceptTakerInvoiceAction extends FlowAction {
+/// Backward-compatible action name for flows created before typed payout
+/// instructions were introduced. It now accepts either BOLT11 or BOLT12.
+class AcceptTakerInvoiceAction extends AcceptTakerPayoutAction {
   @override
   String get name => 'accept_taker_invoice';
-
-  @override
-  Future<void> run(GenericOfferFlow flow, FlowEffectContext ctx) async {
-    ctx.write.takerInvoice = _cleanParam(ctx.params['taker_invoice']) ??
-        _cleanParam(ctx.params['bolt11']);
-  }
 }

@@ -7,12 +7,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ndk/entities.dart';
+import 'package:ndk/ndk.dart' show SoftwareAppRef;
 import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 // ignore_for_file: depend_on_referenced_packages
 import '../services/api_service_nostr.dart';
 import '../services/key_service.dart'; // Import KeyService
@@ -512,6 +514,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   /// Guards against overlapping reconcile passes when connectivity events
   /// arrive in quick succession.
   bool _reconcileInFlight = false;
+  final Set<String> _disputeTimestampFetches = {};
 
   /// Gives the coordinator time to publish the public `s=success` event after
   /// its private `takerPaid` status update reaches this client.
@@ -642,6 +645,57 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       return;
     }
     await _reconcileActiveOfferIfNeeded(active);
+  }
+
+  /// Older coordinators omit dispute_at from status pushes but include it in
+  /// authorized offer details. Repair only the missing clock, never restarting
+  /// it from a notification's delivery time or overwriting a newer lifecycle.
+  Future<void> refreshMissingDisputeTimestamp() async {
+    final requested = state;
+    if (requested == null ||
+        !requested.isDispute ||
+        requested.disputeAt != null ||
+        !_disputeTimestampFetches.add(requested.id)) {
+      return;
+    }
+    try {
+      final api = await _ref.read(initializedApiServiceProvider.future);
+      if (!mounted) return;
+      final response = await api.getOfferDetails(
+        requested,
+        requested.coordinatorPubkey,
+        strict: true,
+      );
+      if (!mounted || response == null || response['id'] != requested.id) {
+        return;
+      }
+      final remote = Offer.fromJson(response);
+      if (remote.disputeAt == null) return;
+      final db = OfferDbService();
+      final latest = await db.getOfferById(requested.id);
+      if (!mounted ||
+          latest == null ||
+          latest.coordinatorPubkey != requested.coordinatorPubkey ||
+          !latest.isDispute ||
+          latest.disputeAt != null) {
+        return;
+      }
+      final repaired = latest.copyWith(disputeAt: remote.disputeAt);
+      await db.upsertOffer(repaired);
+      if (mounted &&
+          state?.id == repaired.id &&
+          state?.isDispute == true &&
+          state?.disputeAt == null) {
+        state = state!.copyWith(disputeAt: repaired.disputeAt);
+      }
+    } catch (error) {
+      Logger.log.w(
+        () =>
+            '[ActiveOfferNotifier] dispute timestamp refresh failed for ${requested.id}: $error',
+      );
+    } finally {
+      _disputeTimestampFetches.remove(requested.id);
+    }
   }
 
   /// Revive wrongly/locally-cancelled offers and sync the active one. Guarded
@@ -813,6 +867,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
             id: remoteId,
             status: remoteStatus,
             statusRaw: remoteStatusRaw,
+            disputeAt: Offer.fromJson(remote).disputeAt,
           );
           await OfferDbService().upsertOffer(revived);
           Logger.log.i(
@@ -999,6 +1054,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       // older coordinator that omits it leaves the local value intact instead
       // of resetting the 2-min timer on the blikSentToMaker transition.
       blikReceivedAt: update.blikReceivedAt?.toLocal(),
+      disputeAt: update.disputeAt?.toLocal(),
       updatedAt: update.timestamp.toLocal(),
     );
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
@@ -1028,6 +1084,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         newStatus == OfferStatus.makerConfirmed ||
         newStatus == OfferStatus.settled ||
         newStatus == OfferStatus.takerPaid ||
+        newStatus == OfferStatus.refundedMaker ||
         update.status == 'refundingMaker' ||
         update.status == 'payingMaker';
     Offer hydrated = updated;
@@ -1077,9 +1134,10 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
                     hydrated.holdInvoicePaymentHash));
 
     if (isCurrent) {
-      if (newStatus == OfferStatus.takerPaid) {
-        // Keep the takerPaid offer in state so the payment-process and
-        // payment-failed screens can observe the success transition. The
+      if (newStatus == OfferStatus.takerPaid ||
+          newStatus == OfferStatus.refundedMaker) {
+        // Keep successful terminal offers in state so their completion screen
+        // can observe the transition. The
         // screen is responsible for clearing active offer when the user
         // taps Done. Auto-promoting here would set state=null before any
         // listener sees takerPaid, causing the dialog to stay stuck forever.
@@ -1098,6 +1156,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       } else {
         state = hydrated;
       }
+      await refreshMissingDisputeTimestamp();
       return;
     }
 
@@ -1417,6 +1476,47 @@ final ndkFlutterProvider = Provider<NdkFlutter?>((ref) {
   final ndk = ref.watch(ndkProvider);
   if (ndk == null) return null;
   return NdkFlutter(ndk: ndk);
+});
+
+final _installedPackageInfoProvider = FutureProvider<PackageInfo>(
+  (ref) => PackageInfo.fromPlatform(),
+);
+
+final zapstoreAppUpdateControllerProvider = Provider<NAppUpdateController?>((
+  ref,
+) {
+  final packageInfo = ref.watch(_installedPackageInfoProvider).valueOrNull;
+  if (packageInfo == null) return null;
+
+  final paymentSystemId = ref.watch(
+    selectedPaymentSystemProvider.select((system) => system.id),
+  );
+  final externalUpdateUrl = externalUpdateUrlForPaymentSystem(paymentSystemId);
+
+  // Package updates still target the installed build, not the selected market.
+  final appIdentifier = switch (buildDefaultPaymentSystemId) {
+    'mbway' => 'me.bitway',
+    'twint' => 'app.bittwint',
+    _ => 'app.bitblik',
+  };
+
+  final ndkFlutter = ref.watch(ndkFlutterProvider);
+  if (ndkFlutter == null) return null;
+
+  final controller = NAppUpdateController.self(
+    ndkFlutter: ndkFlutter,
+    currentVersion: packageInfo.version,
+    externalUpdateUrl: externalUpdateUrl,
+    app: SoftwareAppRef(
+      // npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3
+      publisher: kBitblikPubkeyHex,
+      identifier: appIdentifier,
+    ),
+    channel: 'main',
+    relays: const ['wss://relay.zapstore.dev'],
+  );
+  ref.onDispose(controller.dispose);
+  return controller;
 });
 
 /// Connection state enum for relay websocket
@@ -1908,6 +2008,10 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       } else {
         await ndk.connectivity.tryReconnect();
       }
+
+      await _ref
+          .read(activeOfferProvider.notifier)
+          .refreshMissingDisputeTimestamp();
 
       // Refresh coordinator-derived state after transport recovery so the
       // app rehydrates its custom Bitblik layer, not just the raw sockets.

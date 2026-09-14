@@ -175,6 +175,7 @@ class _Translations$coordinator$pt extends Translations$coordinator$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$pt bolt12 = _Translations$coordinator$bolt12$pt._(_root);
 	@override String get title => 'Coordenadores';
 	@override late final _Translations$coordinator$info$pt info = _Translations$coordinator$info$pt._(_root);
 	@override late final _Translations$coordinator$selector$pt selector = _Translations$coordinator$selector$pt._(_root);
@@ -257,6 +258,7 @@ class _Translations$twint$pt extends Translations$twint$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$twint$shop$pt shop = _Translations$twint$shop$pt._(_root);
 	@override late final _Translations$twint$scanner$pt scanner = _Translations$twint$scanner$pt._(_root);
 	@override late final _Translations$twint$flow$pt flow = _Translations$twint$flow$pt._(_root);
 	@override late final _Translations$twint$waitConfirmation$pt waitConfirmation = _Translations$twint$waitConfirmation$pt._(_root);
@@ -441,6 +443,7 @@ class _Translations$wallet$pt extends Translations$wallet$en {
 	@override String get title => 'Carteira';
 	@override String get description => 'Faça a gestão das definições da sua carteira Lightning';
 	@override late final _Translations$wallet$missingReceiving$pt missingReceiving = _Translations$wallet$missingReceiving$pt._(_root);
+	@override late final _Translations$wallet$incompatibleReceiving$pt incompatibleReceiving = _Translations$wallet$incompatibleReceiving$pt._(_root);
 	@override late final _Translations$wallet$details$pt details = _Translations$wallet$details$pt._(_root);
 }
 
@@ -788,6 +791,7 @@ class _Translations$offers$status$pt extends Translations$offers$status$en {
 	@override String invalidBlik({required Object code}) => '${code} inválido';
 	@override String get conflict => 'Conflito';
 	@override String get dispute => 'Disputa';
+	@override String get refundedMaker => 'Maker reembolsado';
 	@override String get refundingMaker => 'Reembolso do maker';
 	@override String get makerConfirmed => 'Confirmada';
 	@override String get settled => 'Liquidada';
@@ -937,6 +941,19 @@ class _Translations$exchange$errors$pt extends Translations$exchange$errors$en {
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'O montante é demasiado alto. O máximo é ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'O multibanco não consegue dispensar este montante. Use uma combinação de notas: ${notes}.';
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} entrega no máximo ${limit} ${currency} por levantamento.';
+}
+
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$pt extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Suporte BOLT12';
+	@override String get body => 'Este coordenador pode pagar a carteiras que recebem pagamentos através de ofertas BOLT12. Pode usar estas carteiras para pagamentos aos takers ou reembolsos aos makers.';
+	@override String get details => 'Uma oferta BOLT12 é um pedido de pagamento Lightning reutilizável que pode partilhar como texto ou código QR. A mesma oferta pode receber vários pagamentos, pelo que não precisa de criar e partilhar um novo pedido de cada vez. A sua carteira de receção tem de suportar ofertas BOLT12.';
+	@override String get learnMore => 'Saiba mais em bolt12.org';
 }
 
 // Path: coordinator.info
@@ -1379,6 +1396,35 @@ class _Translations$taker$dispute$pt extends Translations$taker$dispute$en {
 	// Translations
 	@override String get headline => 'Disputa formal aberta';
 	@override String get body => 'A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.';
+}
+
+// Path: twint.shop
+class _Translations$twint$shop$pt extends Translations$twint$shop$en {
+	_Translations$twint$shop$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Escanear QR da loja';
+	@override String get scanInstructions => 'Escaneie o código QR de pagamento no terminal da loja. O valor em CHF será lido do código.';
+	@override String get invalidQr => 'Este código QR não é um pagamento em loja em CHF compatível. Escaneie o código QR de pagamento exibido no terminal.';
+	@override String get amountMismatch => 'Este código QR tem um valor diferente. Peça um novo código QR com o valor original do pagamento.';
+	@override String get cameraFailed => 'Câmera indisponível. Permita o acesso à câmera nas configurações do dispositivo ou navegador e tente novamente.';
+	@override String get scanned => 'QR da loja escaneado. Confira o valor em CHF antes de financiar a oferta.';
+	@override String get rescan => 'Escanear outro código QR';
+	@override String get coordinatorUnsupported => 'Este coordenador não aceita pagamentos QR em loja. Escolha um coordenador que aceite.';
+	@override String get loadingFailed => 'Não foi possível carregar o código QR de pagamento. Tente novamente.';
+	@override String get replacementInstructions => 'Escaneie um novo código QR da loja com o mesmo valor em CHF da oferta financiada.';
+	@override String get replacementScanned => 'O QR substituto corresponde ao valor financiado.';
+	@override String get qrLabel => 'Código QR de pagamento TWINT';
+	@override String get payInstructions => 'Escaneie este código QR com o TWINT ou salve a imagem e importe-a da sua galeria no TWINT. Confira o comerciante e o valor antes de pagar.';
+	@override String get saveImage => 'Salvar QR nas fotos';
+	@override String get downloadImage => 'Baixar imagem QR';
+	@override String get saving => 'Salvando imagem QR…';
+	@override String get saved => 'Imagem QR salva. Abra o TWINT e importe-a da sua galeria.';
+	@override String get downloadStarted => 'Download da imagem QR iniciado. Salve-a nas suas fotos para importá-la no TWINT.';
+	@override String get saveFailed => 'Não foi possível salvar a imagem QR. Confira as permissões de acesso às fotos e o espaço de armazenamento disponível e tente novamente.';
+	@override String get expired => 'Este código QR expirou. Não pague com ele nem use uma imagem salva anteriormente.';
 }
 
 // Path: twint.scanner
@@ -1862,6 +1908,18 @@ class _Translations$wallet$missingReceiving$pt extends Translations$wallet$missi
 	@override String get title => 'Carteira de receção necessária';
 	@override String get message => 'Nenhuma carteira configurada para receber. Adicione uma nas definições da Carteira para aceitar ofertas.';
 	@override String get openSettings => 'Definições da carteira';
+}
+
+// Path: wallet.incompatibleReceiving
+class _Translations$wallet$incompatibleReceiving$pt extends Translations$wallet$incompatibleReceiving$en {
+	_Translations$wallet$incompatibleReceiving$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Carteira BOLT11 necessária';
+	@override String get message => 'Este coordenador só pode pagar esta oferta através de BOLT11.';
+	@override String get explanation => 'A sua carteira de receção suporta ofertas BOLT12, mas não consegue criar a fatura BOLT11 necessária. Adicione uma carteira de receção compatível com BOLT11.';
 }
 
 // Path: wallet.details
@@ -3350,6 +3408,7 @@ extension on TranslationsPt {
 			'offers.status.invalidBlik' => ({required Object code}) => '${code} inválido',
 			'offers.status.conflict' => 'Conflito',
 			'offers.status.dispute' => 'Disputa',
+			'offers.status.refundedMaker' => 'Maker reembolsado',
 			'offers.status.refundingMaker' => 'Reembolso do maker',
 			'offers.status.makerConfirmed' => 'Confirmada',
 			'offers.status.settled' => 'Liquidada',
@@ -3409,6 +3468,10 @@ extension on TranslationsPt {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'O montante é demasiado alto. O máximo é ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'O multibanco não consegue dispensar este montante. Use uma combinação de notas: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} entrega no máximo ${limit} ${currency} por levantamento.',
+			'coordinator.bolt12.title' => 'Suporte BOLT12',
+			'coordinator.bolt12.body' => 'Este coordenador pode pagar a carteiras que recebem pagamentos através de ofertas BOLT12. Pode usar estas carteiras para pagamentos aos takers ou reembolsos aos makers.',
+			'coordinator.bolt12.details' => 'Uma oferta BOLT12 é um pedido de pagamento Lightning reutilizável que pode partilhar como texto ou código QR. A mesma oferta pode receber vários pagamentos, pelo que não precisa de criar e partilhar um novo pedido de cada vez. A sua carteira de receção tem de suportar ofertas BOLT12.',
+			'coordinator.bolt12.learnMore' => 'Saiba mais em bolt12.org',
 			'coordinator.title' => 'Coordenadores',
 			'coordinator.info.fee' => 'taxa',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Montante: ${minAmount}-${maxAmount} ${currency}',
@@ -3742,14 +3805,34 @@ extension on TranslationsPt {
 			'taker.conflict.headline' => 'A aguardar a confirmação do maker',
 			'taker.conflict.body' => ({required Object code}) => 'Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.',
 			'taker.conflict.instructions' => 'O maker tem agora de confirmar o resultado. Se confirmar que o pagamento foi bem-sucedido, o seu pagamento continuará. Se confirmar que falhou, ou se o temporizador expirar, a oferta passará para uma disputa formal e o chat da disputa ficará disponível.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'A disputa formal será aberta automaticamente dentro de ${time}',
 			'taker.conflict.actions.back' => 'Voltar ao início',
 			'taker.conflict.feedback.reported' => 'Conflito de pagamento reportado. A aguardar a confirmação do maker.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Erro ao reportar o conflito: ${details}',
 			'taker.dispute.headline' => 'Disputa formal aberta',
-			_ => null,
-		} ?? switch (path) {
 			'taker.dispute.body' => 'A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.',
+			'twint.shop.scanTitle' => 'Escanear QR da loja',
+			'twint.shop.scanInstructions' => 'Escaneie o código QR de pagamento no terminal da loja. O valor em CHF será lido do código.',
+			'twint.shop.invalidQr' => 'Este código QR não é um pagamento em loja em CHF compatível. Escaneie o código QR de pagamento exibido no terminal.',
+			'twint.shop.amountMismatch' => 'Este código QR tem um valor diferente. Peça um novo código QR com o valor original do pagamento.',
+			'twint.shop.cameraFailed' => 'Câmera indisponível. Permita o acesso à câmera nas configurações do dispositivo ou navegador e tente novamente.',
+			'twint.shop.scanned' => 'QR da loja escaneado. Confira o valor em CHF antes de financiar a oferta.',
+			'twint.shop.rescan' => 'Escanear outro código QR',
+			'twint.shop.coordinatorUnsupported' => 'Este coordenador não aceita pagamentos QR em loja. Escolha um coordenador que aceite.',
+			'twint.shop.loadingFailed' => 'Não foi possível carregar o código QR de pagamento. Tente novamente.',
+			'twint.shop.replacementInstructions' => 'Escaneie um novo código QR da loja com o mesmo valor em CHF da oferta financiada.',
+			'twint.shop.replacementScanned' => 'O QR substituto corresponde ao valor financiado.',
+			'twint.shop.qrLabel' => 'Código QR de pagamento TWINT',
+			'twint.shop.payInstructions' => 'Escaneie este código QR com o TWINT ou salve a imagem e importe-a da sua galeria no TWINT. Confira o comerciante e o valor antes de pagar.',
+			'twint.shop.saveImage' => 'Salvar QR nas fotos',
+			'twint.shop.downloadImage' => 'Baixar imagem QR',
+			'twint.shop.saving' => 'Salvando imagem QR…',
+			'twint.shop.saved' => 'Imagem QR salva. Abra o TWINT e importe-a da sua galeria.',
+			'twint.shop.downloadStarted' => 'Download da imagem QR iniciado. Salve-a nas suas fotos para importá-la no TWINT.',
+			'twint.shop.saveFailed' => 'Não foi possível salvar a imagem QR. Confira as permissões de acesso às fotos e o espaço de armazenamento disponível e tente novamente.',
+			'twint.shop.expired' => 'Este código QR expirou. Não pague com ele nem use uma imagem salva anteriormente.',
 			'twint.scanner.title' => ({required Object code}) => 'Ler código ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente.',
@@ -4071,6 +4154,9 @@ extension on TranslationsPt {
 			'wallet.missingReceiving.title' => 'Carteira de receção necessária',
 			'wallet.missingReceiving.message' => 'Nenhuma carteira configurada para receber. Adicione uma nas definições da Carteira para aceitar ofertas.',
 			'wallet.missingReceiving.openSettings' => 'Definições da carteira',
+			'wallet.incompatibleReceiving.title' => 'Carteira BOLT11 necessária',
+			'wallet.incompatibleReceiving.message' => 'Este coordenador só pode pagar esta oferta através de BOLT11.',
+			'wallet.incompatibleReceiving.explanation' => 'A sua carteira de receção suporta ofertas BOLT12, mas não consegue criar a fatura BOLT11 necessária. Adicione uma carteira de receção compatível com BOLT11.',
 			'wallet.details.title' => 'Detalhes da carteira',
 			'wallet.details.pendingTitle' => 'Transações pendentes',
 			'wallet.details.finishedTitle' => 'Transações concluídas',

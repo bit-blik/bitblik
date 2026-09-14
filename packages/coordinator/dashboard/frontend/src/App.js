@@ -6,7 +6,12 @@ import './App.css';
 import OffersPage from './pages/OffersPage';
 import FlowPage from './pages/FlowPage';
 import { buildCoordinatorApiUrl, COORDINATOR_STORAGE_KEY } from './coordinators';
-import { aggregateAnalyticsResults } from './analytics';
+import {
+  aggregateAnalyticsResults,
+  buildCoordinatorProfitSeries,
+  buildCoordinatorVolumeSatsSeries,
+  buildCoordinatorVolumeSeries,
+} from './analytics';
 
 // Stable, saturated colors for known categories; unknowns fall back to the
 // palette. Pill *background* pastels (lime-100/blue-100/...) are near-white and
@@ -26,6 +31,50 @@ const categoryColor = (key, index) =>
 const CLIENT_CHART_PALETTE = ['#2563eb', '#16a34a', '#db2777', '#f59e0b', '#7c3aed', '#0891b2', '#dc2626', '#65a30d'];
 const clientColor = (key, index) =>
   key === 'unknown' ? '#94a3b8' : CLIENT_CHART_PALETTE[index % CLIENT_CHART_PALETTE.length];
+
+const COORDINATOR_CHART_PALETTE = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#e11d48', '#0891b2', '#ea580c', '#4f46e5'];
+const coordinatorColor = (index) =>
+  COORDINATOR_CHART_PALETTE[index % COORDINATOR_CHART_PALETTE.length];
+const EMPTY_COORDINATORS = [];
+
+export const StackedBarTooltip = ({ active, payload = [], label, formatValue }) => {
+  if (!active || payload.length === 0) return null;
+
+  const entries = [...payload].sort(
+    (a, b) => Number(b.value || 0) - Number(a.value || 0)
+  );
+  const total = entries.reduce((sum, entry) => sum + Number(entry.value || 0), 0);
+
+  return (
+    <div className="min-w-48 rounded-lg border border-gray-200 bg-white p-3 text-xs shadow-lg">
+      <p className="mb-2 font-bold text-gray-900">{label}</p>
+      <ul className="space-y-1.5">
+        {entries.map((entry) => (
+          <li
+            key={String(entry.dataKey || entry.name)}
+            className="flex items-center justify-between gap-4 text-gray-700"
+          >
+            <span className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="h-2.5 w-2.5 rounded-sm"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span>{entry.name}</span>
+            </span>
+            <span className="font-semibold tabular-nums text-gray-900">
+              {formatValue(entry.value)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2 flex items-center justify-between gap-4 border-t border-gray-200 pt-2 font-bold text-gray-900">
+        <span>Total</span>
+        <span className="tabular-nums">{formatValue(total)}</span>
+      </div>
+    </div>
+  );
+};
 
 // Locale per currency for Intl number formatting. Falls back to the browser
 // default when a currency isn't listed.
@@ -150,7 +199,7 @@ export const Navigation = ({ coordinators, selectedCoordinatorId, onCoordinatorC
   );
 };
 
-export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], isTotal = false }) => {
+export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = EMPTY_COORDINATORS, isTotal = false }) => {
   const [data, setData] = useState([]);
   const [totals, setTotals] = useState(null);
   const [weekdaySuccess, setWeekdaySuccess] = useState([]);
@@ -160,6 +209,14 @@ export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], i
   const [categoryKeys, setCategoryKeys] = useState([]);
   const [clientData, setClientData] = useState([]);
   const [clientKeys, setClientKeys] = useState([]);
+  const [coordinatorVolumeData, setCoordinatorVolumeData] = useState([]);
+  const [coordinatorVolumeSeries, setCoordinatorVolumeSeries] = useState([]);
+  const [coordinatorVolumeSatsData, setCoordinatorVolumeSatsData] = useState([]);
+  const [coordinatorVolumeSatsSeries, setCoordinatorVolumeSatsSeries] = useState([]);
+  const [coordinatorProfitData, setCoordinatorProfitData] = useState([]);
+  const [coordinatorProfitSeries, setCoordinatorProfitSeries] = useState([]);
+  const [volumeUnit, setVolumeUnit] = useState('fiat');
+  const [profitUnit, setProfitUnit] = useState('fiat');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -371,6 +428,33 @@ export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], i
       ? aggregateAnalyticsResults(rawAnalyticsResults, currency, exchangeRates)
       : rawAnalyticsResults[0];
 
+    if (isTotal) {
+      const volumeBreakdown = buildCoordinatorVolumeSeries(
+        rawAnalyticsResults,
+        coordinators,
+        currency,
+        exchangeRates
+      );
+      setCoordinatorVolumeData(volumeBreakdown.data);
+      setCoordinatorVolumeSeries(volumeBreakdown.series);
+      const volumeSatsBreakdown = buildCoordinatorVolumeSatsSeries(
+        rawAnalyticsResults,
+        coordinators
+      );
+      setCoordinatorVolumeSatsData(volumeSatsBreakdown.data);
+      setCoordinatorVolumeSatsSeries(volumeSatsBreakdown.series);
+      const profitBreakdown = buildCoordinatorProfitSeries(rawAnalyticsResults, coordinators);
+      setCoordinatorProfitData(profitBreakdown.data);
+      setCoordinatorProfitSeries(profitBreakdown.series);
+    } else {
+      setCoordinatorVolumeData([]);
+      setCoordinatorVolumeSeries([]);
+      setCoordinatorVolumeSatsData([]);
+      setCoordinatorVolumeSatsSeries([]);
+      setCoordinatorProfitData([]);
+      setCoordinatorProfitSeries([]);
+    }
+
     setData(result.rows || []);
     setTotals(result.totals || null);
     setPagination(result.pagination || null);
@@ -433,7 +517,7 @@ export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], i
     setError(null);
     setLoading(false);
     setRefreshing(false);
-  }, [currency, exchangeRates, isTotal, rawAnalyticsResults]);
+  }, [coordinators, currency, exchangeRates, isTotal, rawAnalyticsResults]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat(localeForCurrency(currency), {
@@ -518,6 +602,26 @@ export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], i
     const btc = sats / 100000000; // Convert sats to BTC
     return btc * btcFiatRate;
   };
+
+  const profitChartData = (isTotal ? coordinatorProfitData : data).map((row) => {
+    if (profitUnit === 'sats') return row;
+    if (!isTotal) return { ...row, profit: satsToFiat(parseFloat(row.profit || 0)) };
+
+    const converted = { ...row };
+    coordinatorProfitSeries.forEach(({ dataKey }) => {
+      converted[dataKey] = satsToFiat(parseFloat(row[dataKey] || 0));
+    });
+    return converted;
+  });
+  const volumeChartData = isTotal
+    ? (volumeUnit === 'fiat' ? coordinatorVolumeData : coordinatorVolumeSatsData)
+    : data;
+  const volumeChartSeries = volumeUnit === 'fiat'
+    ? coordinatorVolumeSeries
+    : coordinatorVolumeSatsSeries;
+  const formatVolumeChartValue = (value) => volumeUnit === 'fiat'
+    ? formatCurrencyChart(value)
+    : `${formatNumber(value)} sats`;
 
   if (loading) {
     return (
@@ -969,18 +1073,70 @@ export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], i
               </div>
 
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                  Volume ({currency})
-                </h3>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                    Volume
+                  </h3>
+                  <div className="flex rounded-lg border border-green-200 bg-green-50 p-1" aria-label="Volume chart unit">
+                    {[
+                      { value: 'fiat', label: currency },
+                      { value: 'sats', label: 'sats' },
+                    ].map((unit) => (
+                      <button
+                        key={unit.value}
+                        type="button"
+                        onClick={() => setVolumeUnit(unit.value)}
+                        aria-pressed={volumeUnit === unit.value}
+                        className={`rounded-md px-3 py-1 text-xs font-bold transition-colors ${
+                          volumeUnit === unit.value
+                            ? 'bg-green-600 text-white shadow-sm'
+                            : 'text-green-800 hover:bg-green-100'
+                        }`}
+                      >
+                        {unit.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={data}>
+                  <BarChart data={volumeChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                    <YAxis
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      tickFormatter={(value) => volumeUnit === 'fiat' ? formatCurrencyChart(value) : formatNumber(value)}
+                    />
+                    {isTotal ? (
+                      <Tooltip
+                        content={(props) => (
+                          <StackedBarTooltip {...props} formatValue={formatVolumeChartValue} />
+                        )}
+                      />
+                    ) : (
+                      <Tooltip
+                        formatter={formatVolumeChartValue}
+                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                      />
+                    )}
                     <Legend />
-                    <Bar dataKey="volume" fill="#10b981" name="Volume" />
+                    {isTotal ? volumeChartSeries.map((series, index) => (
+                      <Bar
+                        key={series.id}
+                        dataKey={series.dataKey}
+                        stackId="coordinators"
+                        fill={series.color || coordinatorColor(index)}
+                        stroke="#ffffff"
+                        strokeWidth={1}
+                        name={series.name}
+                      />
+                    )) : (
+                      <Bar
+                        dataKey={volumeUnit === 'fiat' ? 'volume' : 'volume_sats'}
+                        fill="#10b981"
+                        name="Volume"
+                      />
+                    )}
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -1006,30 +1162,74 @@ export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], i
               </div>
 
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-amber-500"></div>
-                  Profit Trend (Sats & {currency})
-                </h3>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+                    Profit Trend
+                  </h3>
+                  <div className="flex rounded-lg border border-amber-200 bg-amber-50 p-1" aria-label="Profit chart unit">
+                    {[
+                      { value: 'fiat', label: currency },
+                      { value: 'sats', label: 'sats' },
+                    ].map((unit) => (
+                      <button
+                        key={unit.value}
+                        type="button"
+                        onClick={() => setProfitUnit(unit.value)}
+                        aria-pressed={profitUnit === unit.value}
+                        className={`rounded-md px-3 py-1 text-xs font-bold transition-colors ${
+                          profitUnit === unit.value
+                            ? 'bg-amber-600 text-white shadow-sm'
+                            : 'text-amber-800 hover:bg-amber-100'
+                        }`}
+                      >
+                        {unit.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={data.map(d => ({
-                    ...d,
-                    profit_fiat: satsToFiat(parseFloat(d.profit || 0))
-                  }))}>
+                  <BarChart data={profitChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <YAxis yAxisId="left" tick={{ fill: '#6b7280', fontSize: 12 }} label={{ value: 'Sats', angle: -90, position: 'insideLeft', style: { fill: '#f59e0b' } }} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => value.toFixed(2)} label={{ value: currency, angle: 90, position: 'insideRight', style: { fill: '#10b981' } }} />
-                    <Tooltip
-                      formatter={(value, name) => {
-                        if (name === `Profit (${currency})`) return [formatCurrencyChart(value), name];
-                        return [formatNumber(value) + ' sats', name];
-                      }}
-                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    <YAxis
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      tickFormatter={(value) => profitUnit === 'fiat' ? formatCurrencyChart(value) : formatNumber(value)}
                     />
+                    {isTotal ? (
+                      <Tooltip
+                        content={(props) => (
+                          <StackedBarTooltip
+                            {...props}
+                            formatValue={(value) => profitUnit === 'fiat'
+                              ? formatCurrencyChart(value)
+                              : `${formatNumber(value)} sats`}
+                          />
+                        )}
+                      />
+                    ) : (
+                      <Tooltip
+                        formatter={(value) => profitUnit === 'fiat'
+                          ? formatCurrencyChart(value)
+                          : `${formatNumber(value)} sats`}
+                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                      />
+                    )}
                     <Legend />
-                    <Line yAxisId="left" type="monotone" dataKey="profit" stroke="#f59e0b" strokeWidth={2} name="Profit (Sats)" dot={{ fill: '#f59e0b', r: 4 }} />
-                    <Line yAxisId="right" type="monotone" dataKey="profit_fiat" stroke="#10b981" strokeWidth={2} name={`Profit (${currency})`} dot={{ fill: '#10b981', r: 4 }} />
-                  </LineChart>
+                    {isTotal ? coordinatorProfitSeries.map((series, index) => (
+                      <Bar
+                        key={series.id}
+                        dataKey={series.dataKey}
+                        stackId="coordinators"
+                        fill={series.color || coordinatorColor(index)}
+                        stroke="#ffffff"
+                        strokeWidth={1}
+                        name={series.name}
+                      />
+                    )) : (
+                      <Bar dataKey="profit" fill="#d97706" name="Profit" />
+                    )}
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
@@ -1070,24 +1270,7 @@ export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], i
               </div>
             </div>
 
-            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 ${contentLoadingClass}`}>
-              <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-orange-500"></div>
-                  Volume in Satoshis
-                </h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <Tooltip formatter={(value) => formatNumber(value) + ' sats'} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
-                    <Legend />
-                    <Bar dataKey="volume_sats" fill="#f97316" name="Volume (sats)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
+            <div className={`grid grid-cols-1 gap-6 mb-6 ${contentLoadingClass}`}>
               <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 p-6 card-shine">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-rose-500"></div>
@@ -1267,8 +1450,21 @@ export const AnalyticsDashboard = ({ selectedCoordinatorId, coordinators = [], i
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} tick={{ fill: '#6b7280', fontSize: 12 }} />
                       <YAxis allowDecimals={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                      <Tooltip formatter={(value) => formatNumber(value)} itemSorter={(item) => -(item.value ?? 0)} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
-                      <Legend />
+                      <Tooltip
+                        formatter={(value) => formatNumber(value)}
+                        itemSorter={(item) => -(item.value ?? 0)}
+                        wrapperStyle={{ zIndex: 2 }}
+                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                      />
+                      <Legend
+                        wrapperStyle={{
+                          zIndex: 1,
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          padding: '6px 8px',
+                        }}
+                      />
                       {clientKeys.map((key, index) => (
                         <Line key={key} type="monotone" dataKey={key} stroke={clientColor(key, index)} strokeWidth={2} name={key} dot={{ r: 3 }} connectNulls />
                       ))}
