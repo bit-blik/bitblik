@@ -73,7 +73,7 @@ void main() {
       );
     });
 
-    test('TWINT rejects the disabled shop category', () async {
+    test('TWINT shop category rejects an online numeric code', () async {
       final svc = serviceFor('twint');
       await svc.init();
       expect(
@@ -87,7 +87,7 @@ void main() {
         throwsA(
           predicate(
             (error) => error.toString().contains(
-                  'Unsupported category shop for twint',
+                  'Invalid TWINT shop QR payload',
                 ),
           ),
         ),

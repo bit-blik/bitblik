@@ -421,7 +421,24 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: offersAsyncValue.when(
-              data: (offers) {
+              data: (publicOffers) {
+                const disputeStates = {
+                  'conflict',
+                  'securingDispute',
+                  'dispute',
+                  'refundingMaker',
+                  'payingMaker',
+                };
+                // Private status updates can precede the public relay event.
+                // Hide a tracked dispute even while its listing says reserved.
+                final offers = publicOffers.where((offer) {
+                  if (disputeStates.contains(offer.statusRaw)) return false;
+                  final tracked = myActiveOffer;
+                  return tracked == null ||
+                      tracked.id != offer.id ||
+                      tracked.coordinatorPubkey != offer.coordinatorPubkey ||
+                      !disputeStates.contains(tracked.statusRaw);
+                }).toList();
                 if (offers.isEmpty) {
                   return Column(
                     children: [

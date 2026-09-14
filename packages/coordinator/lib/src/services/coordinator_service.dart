@@ -1839,6 +1839,7 @@ class CoordinatorService {
         createdAt: offer.createdAt,
         reservedAt: offer.reservedAt,
         blikReceivedAt: offer.blikReceivedAt,
+        disputeAt: offer.disputeAt,
         makerPubkey: offer.makerPubkey,
         takerPubkey: offer.takerPubkey,
       );
@@ -2104,13 +2105,25 @@ class CoordinatorService {
           'per cardless withdrawal; requested $fiatAmount.');
     }
     if (instrument.makerProvidesCode) {
-      final normalizedCode = blikCode?.trim() ?? '';
+      final normalizedCode = instrument.kind == InstrumentKind.qrPayload
+          ? blikCode ?? ''
+          : blikCode?.trim() ?? '';
       if (!instrument.validate(normalizedCode, bank: offerBankSpec)) {
+        if (instrument.kind == InstrumentKind.qrPayload) {
+          throw const FormatException('Invalid TWINT shop QR payload.');
+        }
         throw Exception(
             'Invalid ${instrument.codeLabel} code. Expected exactly '
             '${instrument.codeLengthFor(offerBankSpec)} digits.');
       }
       blikCode = normalizedCode;
+      if (_paymentSystem.id == 'twint' && category == OfferCategory.shop) {
+        final qr = TwintShopQr.tryParse(normalizedCode)!;
+        if (fiatCurrency != qr.currency || !qr.matchesAmount(fiatAmount)) {
+          throw const FormatException(
+              'TWINT shop QR amount must exactly match the CHF offer amount.');
+        }
+      }
     }
     // Clamp premium to what this coordinator allows.
     final premium = premiumPercent.clamp(0, _maxPremiumPercent).toDouble();
@@ -2239,6 +2252,7 @@ class CoordinatorService {
           'bolt12',
       ],
       paymentSystem: _paymentSystem.id,
+      supportsTwintShopQr: _paymentSystem.id == 'twint',
       banks: List<String>.from(_servedBanks),
       nostrNpub: null,
       icon: _coordinatorIconUrl.isNotEmpty ? _coordinatorIconUrl : null,

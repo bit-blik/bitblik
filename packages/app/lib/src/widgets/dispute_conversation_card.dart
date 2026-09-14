@@ -178,8 +178,9 @@ class _DisputeConversationCardState
             () => '[DisputeChat] Inbox subscription failed: $exception',
           );
           setState(() {
-            error =
-                Translations.of(context).disputeChat.errors.subscriptionFailed;
+            error = Translations.of(
+              context,
+            ).disputeChat.errors.subscriptionFailed;
           });
         }
       },
@@ -377,9 +378,8 @@ class _DisputeConversationCardState
     if (!mounted || bytes == null) return;
     await showDialog<void>(
       context: context,
-      builder:
-          (context) =>
-              Dialog(child: InteractiveViewer(child: Image.memory(bytes!))),
+      builder: (context) =>
+          Dialog(child: InteractiveViewer(child: Image.memory(bytes!))),
     );
   }
 
@@ -414,12 +414,11 @@ class _DisputeConversationCardState
         coordinator?.profilePicture ?? coordinator?.info?.icon;
     final profileName = coordinator?.profileName?.trim();
     final advertisedName = coordinator?.info?.name.trim();
-    final coordinatorName =
-        profileName != null && profileName.isNotEmpty
-            ? profileName
-            : advertisedName != null && advertisedName.isNotEmpty
-            ? advertisedName
-            : strings.privateConversation;
+    final coordinatorName = profileName != null && profileName.isNotEmpty
+        ? profileName
+        : advertisedName != null && advertisedName.isNotEmpty
+        ? advertisedName
+        : strings.privateConversation;
     final writable = _writable;
     return Card(
       child: Padding(
@@ -432,11 +431,10 @@ class _DisputeConversationCardState
                 Expanded(
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
-                    onTap:
-                        () => openCoordinatorDetails(
-                          context,
-                          widget.offer.coordinatorPubkey,
-                        ),
+                    onTap: () => openCoordinatorDetails(
+                      context,
+                      widget.offer.coordinatorPubkey,
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Row(
@@ -472,10 +470,9 @@ class _DisputeConversationCardState
                 if (!loadingMessages)
                   Chip(
                     visualDensity: VisualDensity.compact,
-                    backgroundColor:
-                        legacyMode
-                            ? Colors.amber.shade200
-                            : Colors.green.shade200,
+                    backgroundColor: legacyMode
+                        ? Colors.amber.shade200
+                        : Colors.green.shade200,
                     label: Text(legacyMode ? 'NIP-04' : 'NIP-17'),
                   ),
                 IconButton(
@@ -488,50 +485,43 @@ class _DisputeConversationCardState
             const SizedBox(height: 12),
             SizedBox(
               height: 260,
-              child:
-                  loadingMessages
-                      ? const Center(child: CircularProgressIndicator())
-                      : messages.isEmpty
-                      ? Center(child: Text(strings.noMessages))
-                      : ListView.builder(
-                        controller: scrollController,
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final message = messages[index];
-                          final file = message.fileMetadata;
-                          return Align(
-                            alignment:
-                                message.isOutgoing
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                            child: Card(
-                              color:
-                                  message.isOutgoing
-                                      ? Theme.of(
-                                        context,
-                                      ).colorScheme.primaryContainer
-                                      : null,
-                              child:
-                                  file == null
-                                      ? Padding(
-                                        padding: const EdgeInsets.all(10),
-                                        child: Text(message.content),
-                                      )
-                                      : _EvidenceThumbnail(
-                                        bytes: _evidenceBytes(
-                                          message.nip17Message!,
-                                        ),
-                                        onTap:
-                                            busy
-                                                ? null
-                                                : () => _previewEvidence(
-                                                  message.nip17Message!,
-                                                ),
-                                      ),
-                            ),
-                          );
-                        },
-                      ),
+              child: loadingMessages
+                  ? const Center(child: CircularProgressIndicator())
+                  : messages.isEmpty
+                  ? Center(child: Text(strings.noMessages))
+                  : ListView.builder(
+                      controller: scrollController,
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+                        final file = message.fileMetadata;
+                        return Align(
+                          alignment: message.isOutgoing
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
+                          child: Card(
+                            color: message.isOutgoing
+                                ? Theme.of(context).colorScheme.primaryContainer
+                                : null,
+                            child: file == null
+                                ? Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: SelectableText(message.content),
+                                  )
+                                : _EvidenceThumbnail(
+                                    bytes: _evidenceBytes(
+                                      message.nip17Message!,
+                                    ),
+                                    onTap: busy
+                                        ? null
+                                        : () => _previewEvidence(
+                                            message.nip17Message!,
+                                          ),
+                                  ),
+                          ),
+                        );
+                      },
+                    ),
             ),
             if (writable) ...[
               const SizedBox(height: 8),
@@ -633,27 +623,26 @@ class _EvidenceThumbnail extends StatelessWidget {
             child: SizedBox(
               width: 144,
               height: 96,
-              child:
-                  loaded != null
-                      ? Image.memory(
-                        loaded,
-                        fit: BoxFit.cover,
-                        gaplessPlayback: true,
-                      )
-                      : snapshot.hasError
-                      ? const ColoredBox(
-                        color: Colors.black12,
-                        child: Center(child: Icon(Icons.broken_image_outlined)),
-                      )
-                      : const ColoredBox(
-                        color: Colors.black12,
-                        child: Center(
-                          child: SizedBox.square(
-                            dimension: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
+              child: loaded != null
+                  ? Image.memory(
+                      loaded,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                    )
+                  : snapshot.hasError
+                  ? const ColoredBox(
+                      color: Colors.black12,
+                      child: Center(child: Icon(Icons.broken_image_outlined)),
+                    )
+                  : const ColoredBox(
+                      color: Colors.black12,
+                      child: Center(
+                        child: SizedBox.square(
+                          dimension: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
+                    ),
             ),
           ),
         ),

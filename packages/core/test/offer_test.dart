@@ -5,6 +5,51 @@ import 'package:ndk/ndk.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('Offer NIP-69 dispute extension', () {
+    Offer parse(String status, {String? bitblikStatus}) =>
+        Offer.fromNostrEvent(Nip01Event(
+          pubKey: 'coordinator',
+          kind: kKindOffer,
+          tags: [
+            ['d', 'offer-dispute'],
+            ['s', status],
+            if (bitblikStatus != null) ['bitblik_status', bitblikStatus],
+            ['dispute_at', '1767301200'],
+          ],
+          content: '',
+        ));
+
+    test('in-progress with dispute marker is an active dispute', () {
+      final offer = parse('in-progress', bitblikStatus: 'dispute');
+      expect(offer.status, OfferStatus.dispute);
+      expect(offer.isDispute, isTrue);
+    });
+
+    test('unmarked in-progress stays reserved despite dispute history', () {
+      expect(parse('in-progress').status, OfferStatus.reserved);
+    });
+
+    test('legacy dispute status remains supported', () {
+      expect(parse('dispute').status, OfferStatus.conflict);
+    });
+
+    test('unknown extension values leave standard status unchanged', () {
+      expect(parse('in-progress', bitblikStatus: 'future-state').status,
+          OfferStatus.reserved);
+    });
+
+    test('dispute marker cannot override pending or terminal status', () {
+      for (final entry in {
+        'pending': OfferStatus.funded,
+        'success': OfferStatus.takerPaid,
+        'canceled': OfferStatus.cancelled,
+      }.entries) {
+        expect(parse(entry.key, bitblikStatus: 'dispute').status, entry.value,
+            reason: entry.key);
+      }
+    });
+  });
+
   group('Offer dispute states', () {
     test('refunding maker remains an active dispute', () {
       final offer = Offer.fromJson({
@@ -180,6 +225,60 @@ void main() {
   });
 
   group('Offer RPC json', () {
+    // These fixtures verify transport only, not shop-format validation.
+    for (final fixture in [
+      (OfferCategory.shop, 'Q4SIXZB8VXJ5000000000710CHF00025837'),
+      (OfferCategory.online, '01234'),
+      (null, '01234'),
+    ]) {
+      test('TWINT ${fixture.$1?.name ?? 'legacy'} payload stays exact in JSON',
+          () {
+        final offer = Offer(
+          id: 'twint-transport',
+          amountSats: 10000,
+          makerFees: 50,
+          status: OfferStatus.reserved,
+          fiatAmount: 7.10,
+          fiatCurrency: 'CHF',
+          paymentSystemId: 'twint',
+          createdAt: DateTime.utc(2026, 9, 14),
+          makerPubkey: 'maker-pubkey',
+          takerPubkey: 'taker-pubkey',
+          coordinatorPubkey: 'coordinator-pubkey',
+          category: fixture.$1,
+          blikCode: fixture.$2,
+          holdInvoice: 'private-hold-invoice',
+          holdInvoicePreimage: 'private-preimage',
+        );
+
+        final restored = Offer.fromJson(
+          jsonDecode(jsonEncode(offer.toJsonWithPubkeys()))
+              as Map<String, dynamic>,
+        );
+        expect(restored.blikCode, fixture.$2);
+        expect(restored.category, fixture.$1);
+        expect(restored.fiatAmount, 7.10);
+
+        final privateResponse = jsonDecode(jsonEncode(
+          restored.toRpcJson(includeBlikCode: true, forTaker: true),
+        )) as Map<String, dynamic>;
+        expect(privateResponse['blik_code'], fixture.$2);
+        expect(privateResponse['category'], fixture.$1?.name);
+        for (final field in [
+          'maker_pubkey',
+          'maker_fees',
+          'hold_invoice',
+          'hold_invoice_preimage',
+        ]) {
+          expect(privateResponse.containsKey(field), isFalse, reason: field);
+        }
+
+        final defaultResponse = restored.toRpcJson();
+        expect(defaultResponse.containsKey('blik_code'), isFalse);
+        expect(jsonEncode(defaultResponse), isNot(contains(fixture.$2)));
+      });
+    }
+
     test('omits bulky and sensitive fields by default', () {
       final offer = Offer(
         id: 'offer-rpc-1',

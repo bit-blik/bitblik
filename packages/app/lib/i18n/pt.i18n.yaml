@@ -259,6 +259,11 @@ exchange:
 # COORDINATOR INFORMATION
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Suporte BOLT12"
+    body: "Este coordenador pode pagar a carteiras que recebem pagamentos através de ofertas BOLT12. Pode usar estas carteiras para pagamentos aos takers ou reembolsos aos makers."
+    details: "Uma oferta BOLT12 é um pedido de pagamento Lightning reutilizável que pode partilhar como texto ou código QR. A mesma oferta pode receber vários pagamentos, pelo que não precisa de criar e partilhar um novo pedido de cada vez. A sua carteira de receção tem de suportar ofertas BOLT12."
+    learnMore: "Saiba mais em bolt12.org"
   title: "Coordenadores"
   info:
     fee: "taxa"
@@ -718,6 +723,27 @@ taker:
     body: A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.
 
 twint:
+  shop:
+    scanTitle: "Escanear QR da loja"
+    scanInstructions: "Escaneie o código QR de pagamento no terminal da loja. O valor em CHF será lido do código."
+    invalidQr: "Este código QR não é um pagamento em loja em CHF compatível. Escaneie o código QR de pagamento exibido no terminal."
+    amountMismatch: "Este código QR tem um valor diferente. Peça um novo código QR com o valor original do pagamento."
+    cameraFailed: "Câmera indisponível. Permita o acesso à câmera nas configurações do dispositivo ou navegador e tente novamente."
+    scanned: "QR da loja escaneado. Confira o valor em CHF antes de financiar a oferta."
+    rescan: "Escanear outro código QR"
+    coordinatorUnsupported: "Este coordenador não aceita pagamentos QR em loja. Escolha um coordenador que aceite."
+    loadingFailed: "Não foi possível carregar o código QR de pagamento. Tente novamente."
+    replacementInstructions: "Escaneie um novo código QR da loja com o mesmo valor em CHF da oferta financiada."
+    replacementScanned: "O QR substituto corresponde ao valor financiado."
+    qrLabel: "Código QR de pagamento TWINT"
+    payInstructions: "Escaneie este código QR com o TWINT ou salve a imagem e importe-a da sua galeria no TWINT. Confira o comerciante e o valor antes de pagar."
+    saveImage: "Salvar QR nas fotos"
+    downloadImage: "Baixar imagem QR"
+    saving: "Salvando imagem QR…"
+    saved: "Imagem QR salva. Abra o TWINT e importe-a da sua galeria."
+    downloadStarted: "Download da imagem QR iniciado. Salve-a nas suas fotos para importá-la no TWINT."
+    saveFailed: "Não foi possível salvar a imagem QR. Confira as permissões de acesso às fotos e o espaço de armazenamento disponível e tente novamente."
+    expired: "Este código QR expirou. Não pague com ele nem use uma imagem salva anteriormente."
   scanner:
     title: "Ler código ${code}"
     status:

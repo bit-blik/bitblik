@@ -175,6 +175,7 @@ class _Translations$coordinator$pl extends Translations$coordinator$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$pl bolt12 = _Translations$coordinator$bolt12$pl._(_root);
 	@override String get title => 'Koordynatorzy';
 	@override late final _Translations$coordinator$info$pl info = _Translations$coordinator$info$pl._(_root);
 	@override late final _Translations$coordinator$selector$pl selector = _Translations$coordinator$selector$pl._(_root);
@@ -256,6 +257,7 @@ class _Translations$twint$pl extends Translations$twint$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$twint$shop$pl shop = _Translations$twint$shop$pl._(_root);
 	@override late final _Translations$twint$scanner$pl scanner = _Translations$twint$scanner$pl._(_root);
 	@override late final _Translations$twint$flow$pl flow = _Translations$twint$flow$pl._(_root);
 	@override late final _Translations$twint$waitConfirmation$pl waitConfirmation = _Translations$twint$waitConfirmation$pl._(_root);
@@ -437,6 +439,7 @@ class _Translations$wallet$pl extends Translations$wallet$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$wallet$details$pl details = _Translations$wallet$details$pl._(_root);
 	@override String get title => 'Portfel';
 	@override String get description => 'Zarządzaj ustawieniami portfela Lightning';
 	@override late final _Translations$wallet$missingReceiving$pl missingReceiving = _Translations$wallet$missingReceiving$pl._(_root);
@@ -938,6 +941,19 @@ class _Translations$exchange$errors$pl extends Translations$exchange$errors$en {
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} wypłaca maksymalnie ${limit} ${currency} na jedną wypłatę.';
 }
 
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$pl extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Obsługa BOLT12';
+	@override String get body => 'Ten koordynator może płacić do portfeli odbierających płatności przez oferty BOLT12. Możesz używać tych portfeli do wypłat dla takera lub zwrotów dla makera.';
+	@override String get details => 'Oferta BOLT12 to wielokrotnego użytku żądanie płatności Lightning, które możesz udostępnić jako tekst lub kod QR. Ta sama oferta może przyjmować wiele płatności, więc nie musisz za każdym razem tworzyć i udostępniać nowego żądania płatności. Twój portfel odbiorczy musi obsługiwać oferty BOLT12.';
+	@override String get learnMore => 'Dowiedz się więcej na bolt12.org';
+}
+
 // Path: coordinator.info
 class _Translations$coordinator$info$pl extends Translations$coordinator$info$en {
 	_Translations$coordinator$info$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -1363,6 +1379,35 @@ class _Translations$taker$dispute$pl extends Translations$taker$dispute$en {
 	// Translations
 	@override String get headline => 'Otwarto formalny spór';
 	@override String get body => 'Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.';
+}
+
+// Path: twint.shop
+class _Translations$twint$shop$pl extends Translations$twint$shop$en {
+	_Translations$twint$shop$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Zeskanuj QR w sklepie';
+	@override String get scanInstructions => 'Zeskanuj kod QR płatności na terminalu sklepowym. Kwota w CHF zostanie odczytana z kodu.';
+	@override String get invalidQr => 'Ten kod QR nie jest obsługiwaną płatnością sklepową w CHF. Zeskanuj kod QR płatności wyświetlony na terminalu.';
+	@override String get amountMismatch => 'Ten kod QR ma inną kwotę. Poproś o nowy kod QR z pierwotną kwotą płatności.';
+	@override String get cameraFailed => 'Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie.';
+	@override String get scanned => 'Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty.';
+	@override String get rescan => 'Zeskanuj inny kod QR';
+	@override String get coordinatorUnsupported => 'Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje.';
+	@override String get loadingFailed => 'Nie udało się wczytać kodu QR płatności. Spróbuj ponownie.';
+	@override String get replacementInstructions => 'Zeskanuj nowy kod QR sklepu na tę samą kwotę CHF co zasilona oferta.';
+	@override String get replacementScanned => 'Nowy kod QR odpowiada kwocie zasilonej oferty.';
+	@override String get qrLabel => 'Kod QR do płatności TWINT';
+	@override String get payInstructions => 'Zeskanuj ten kod QR w TWINT albo zapisz obraz i zaimportuj go z galerii w TWINT. Przed zapłatą sprawdź sprzedawcę i kwotę.';
+	@override String get saveImage => 'Zapisz QR w zdjęciach';
+	@override String get downloadImage => 'Pobierz obraz QR';
+	@override String get saving => 'Zapisywanie obrazu QR…';
+	@override String get saved => 'Obraz QR zapisany. Otwórz TWINT i zaimportuj go z galerii.';
+	@override String get downloadStarted => 'Pobieranie obrazu QR rozpoczęte. Zapisz go w zdjęciach, aby zaimportować go w TWINT.';
+	@override String get saveFailed => 'Nie udało się zapisać obrazu QR. Sprawdź uprawnienia dostępu do zdjęć i wolne miejsce, a następnie spróbuj ponownie.';
+	@override String get expired => 'Ten kod QR wygasł. Nie płać nim ani nie używaj wcześniej zapisanego obrazu.';
 }
 
 // Path: twint.scanner
@@ -1834,6 +1879,18 @@ class _Translations$notificationSettings$newOfferAlerts$pl extends Translations$
 	// Translations
 	@override String get label => 'Alerty o nowych ofertach';
 	@override String description({required Object app}) => 'Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.';
+}
+
+// Path: wallet.details
+class _Translations$wallet$details$pl extends Translations$wallet$details$en {
+	_Translations$wallet$details$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Szczegóły portfela';
+	@override String get pendingTitle => 'Oczekujące transakcje';
+	@override String get finishedTitle => 'Zakończone transakcje';
 }
 
 // Path: wallet.missingReceiving
@@ -3342,6 +3399,10 @@ extension on TranslationsPl {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Bankomat nie wypłaci tej kwoty. Użyj kombinacji nominałów: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} wypłaca maksymalnie ${limit} ${currency} na jedną wypłatę.',
+			'coordinator.bolt12.title' => 'Obsługa BOLT12',
+			'coordinator.bolt12.body' => 'Ten koordynator może płacić do portfeli odbierających płatności przez oferty BOLT12. Możesz używać tych portfeli do wypłat dla takera lub zwrotów dla makera.',
+			'coordinator.bolt12.details' => 'Oferta BOLT12 to wielokrotnego użytku żądanie płatności Lightning, które możesz udostępnić jako tekst lub kod QR. Ta sama oferta może przyjmować wiele płatności, więc nie musisz za każdym razem tworzyć i udostępniać nowego żądania płatności. Twój portfel odbiorczy musi obsługiwać oferty BOLT12.',
+			'coordinator.bolt12.learnMore' => 'Dowiedz się więcej na bolt12.org',
 			'coordinator.title' => 'Koordynatorzy',
 			'coordinator.info.fee' => 'opłata',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Kwota: ${minAmount}-${maxAmount} ${currency}',
@@ -3663,6 +3724,28 @@ extension on TranslationsPl {
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
 			'taker.dispute.headline' => 'Otwarto formalny spór',
 			'taker.dispute.body' => 'Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.',
+			'twint.shop.scanTitle' => 'Zeskanuj QR w sklepie',
+			'twint.shop.scanInstructions' => 'Zeskanuj kod QR płatności na terminalu sklepowym. Kwota w CHF zostanie odczytana z kodu.',
+			'twint.shop.invalidQr' => 'Ten kod QR nie jest obsługiwaną płatnością sklepową w CHF. Zeskanuj kod QR płatności wyświetlony na terminalu.',
+			'twint.shop.amountMismatch' => 'Ten kod QR ma inną kwotę. Poproś o nowy kod QR z pierwotną kwotą płatności.',
+			'twint.shop.cameraFailed' => 'Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie.',
+			'twint.shop.scanned' => 'Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty.',
+			'twint.shop.rescan' => 'Zeskanuj inny kod QR',
+			'twint.shop.coordinatorUnsupported' => 'Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje.',
+			'twint.shop.loadingFailed' => 'Nie udało się wczytać kodu QR płatności. Spróbuj ponownie.',
+			'twint.shop.replacementInstructions' => 'Zeskanuj nowy kod QR sklepu na tę samą kwotę CHF co zasilona oferta.',
+			'twint.shop.replacementScanned' => 'Nowy kod QR odpowiada kwocie zasilonej oferty.',
+			'twint.shop.qrLabel' => 'Kod QR do płatności TWINT',
+			'twint.shop.payInstructions' => 'Zeskanuj ten kod QR w TWINT albo zapisz obraz i zaimportuj go z galerii w TWINT. Przed zapłatą sprawdź sprzedawcę i kwotę.',
+			_ => null,
+		} ?? switch (path) {
+			'twint.shop.saveImage' => 'Zapisz QR w zdjęciach',
+			'twint.shop.downloadImage' => 'Pobierz obraz QR',
+			'twint.shop.saving' => 'Zapisywanie obrazu QR…',
+			'twint.shop.saved' => 'Obraz QR zapisany. Otwórz TWINT i zaimportuj go z galerii.',
+			'twint.shop.downloadStarted' => 'Pobieranie obrazu QR rozpoczęte. Zapisz go w zdjęciach, aby zaimportować go w TWINT.',
+			'twint.shop.saveFailed' => 'Nie udało się zapisać obrazu QR. Sprawdź uprawnienia dostępu do zdjęć i wolne miejsce, a następnie spróbuj ponownie.',
+			'twint.shop.expired' => 'Ten kod QR wygasł. Nie płać nim ani nie używaj wcześniej zapisanego obrazu.',
 			'twint.scanner.title' => ({required Object code}) => 'Skanuj kod ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Ustaw kod QR ${code} i tekst z kwotą wewnątrz kadru kamery.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Kod ${code} nie został jeszcze rozpoznany. Trzymaj QR i kwotę w kadrze albo wypełnij formularz ręcznie.',
@@ -3680,8 +3763,6 @@ extension on TranslationsPl {
 			'twint.flow.makerWait.cancelOffer' => 'Anuluj ofertę',
 			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Taker zarezerwował Twoją ofertę i właśnie płaci Twój kod ${code} w swojej aplikacji bankowej. Gdy płatność dotrze do Twojego sprzedawcy, potwierdź ją poniżej.',
 			'twint.flow.makerWait.confirmReceived' => 'Potwierdź otrzymanie płatności',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerWait.confirmDialog.title' => 'Potwierdzić otrzymanie płatności?',
 			'twint.flow.makerWait.confirmDialog.content' => ({required Object code}) => 'Potwierdź tylko, jeśli masz ABSOLUTNĄ pewność, że płatność ${code} dotarła do Twojego sprzedawcy.\n\nPotwierdzenie rozlicza hold invoice Lightning i natychmiast wysyła satsy do takera — tego nie można cofnąć.',
 			'twint.flow.makerWait.confirmDialog.cancel' => 'Anuluj',
@@ -3982,6 +4063,9 @@ extension on TranslationsPl {
 			'notificationSettings.androidOnly' => 'Powiadomienia w tle są obecnie obsługiwane tylko na Androidzie.',
 			'notificationSettings.newOfferAlerts.label' => 'Alerty o nowych ofertach',
 			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.',
+			'wallet.details.title' => 'Szczegóły portfela',
+			'wallet.details.pendingTitle' => 'Oczekujące transakcje',
+			'wallet.details.finishedTitle' => 'Zakończone transakcje',
 			'wallet.title' => 'Portfel',
 			'wallet.description' => 'Zarządzaj ustawieniami portfela Lightning',
 			'wallet.missingReceiving.title' => 'Wymagany portfel odbiorczy',

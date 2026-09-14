@@ -174,6 +174,7 @@ class _Translations$coordinator$de extends Translations$coordinator$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$de bolt12 = _Translations$coordinator$bolt12$de._(_root);
 	@override String get title => 'Koordinatoren';
 	@override late final _Translations$coordinator$info$de info = _Translations$coordinator$info$de._(_root);
 	@override late final _Translations$coordinator$selector$de selector = _Translations$coordinator$selector$de._(_root);
@@ -255,6 +256,7 @@ class _Translations$twint$de extends Translations$twint$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$twint$shop$de shop = _Translations$twint$shop$de._(_root);
 	@override late final _Translations$twint$scanner$de scanner = _Translations$twint$scanner$de._(_root);
 	@override late final _Translations$twint$flow$de flow = _Translations$twint$flow$de._(_root);
 	@override late final _Translations$twint$waitConfirmation$de waitConfirmation = _Translations$twint$waitConfirmation$de._(_root);
@@ -939,6 +941,19 @@ class _Translations$exchange$errors$de extends Translations$exchange$errors$en {
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} zahlt pro Abhebung höchstens ${limit} ${currency} aus.';
 }
 
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$de extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'BOLT12-Unterstützung';
+	@override String get body => 'Dieser Koordinator kann Zahlungen an Wallets senden, die Zahlungen über BOLT12-Angebote empfangen. Du kannst diese Wallets für Auszahlungen an Taker oder Rückerstattungen an Maker verwenden.';
+	@override String get details => 'Ein BOLT12-Angebot ist eine wiederverwendbare Lightning-Zahlungsanforderung, die du als Text oder QR-Code teilen kannst. Dasselbe Angebot kann mehrere Zahlungen empfangen. Du musst also nicht jedes Mal eine neue Zahlungsanforderung erstellen und teilen. Deine Empfangs-Wallet muss BOLT12-Angebote unterstützen.';
+	@override String get learnMore => 'Mehr erfahren auf bolt12.org';
+}
+
 // Path: coordinator.info
 class _Translations$coordinator$info$de extends Translations$coordinator$info$en {
 	_Translations$coordinator$info$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -1367,6 +1382,35 @@ class _Translations$taker$dispute$de extends Translations$taker$dispute$en {
 	// Translations
 	@override String get headline => 'Formeller Streitfall eröffnet';
 	@override String get body => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.';
+}
+
+// Path: twint.shop
+class _Translations$twint$shop$de extends Translations$twint$shop$en {
+	_Translations$twint$shop$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get scanTitle => 'Shop-QR-Code scannen';
+	@override String get scanInstructions => 'Scanne den Zahlungs-QR-Code auf dem Terminal im Geschäft. Der CHF-Betrag wird aus dem Code gelesen.';
+	@override String get invalidQr => 'Dieser QR-Code ist keine unterstützte CHF-Zahlung im Geschäft. Scanne den Zahlungs-QR-Code auf dem Terminal.';
+	@override String get amountMismatch => 'Dieser QR-Code hat einen anderen Betrag. Bitte um einen neuen QR-Code mit dem ursprünglichen Zahlungsbetrag.';
+	@override String get cameraFailed => 'Kamera nicht verfügbar. Erlaube den Kamerazugriff in den Geräte- oder Browsereinstellungen und versuche es erneut.';
+	@override String get scanned => 'Shop-QR-Code gescannt. Prüfe den CHF-Betrag vor der Finanzierung.';
+	@override String get rescan => 'Anderen QR-Code scannen';
+	@override String get coordinatorUnsupported => 'Dieser Koordinator unterstützt keine Shop-QR-Zahlungen. Wähle einen Koordinator mit Shop-QR-Unterstützung.';
+	@override String get loadingFailed => 'Zahlungs-QR-Code konnte nicht geladen werden. Versuche es erneut.';
+	@override String get replacementInstructions => 'Scanne einen neuen Shop-QR-Code mit demselben CHF-Betrag wie das finanzierte Angebot.';
+	@override String get replacementScanned => 'Der Ersatz-QR-Code entspricht dem finanzierten Betrag.';
+	@override String get qrLabel => 'TWINT-Zahlungs-QR-Code';
+	@override String get payInstructions => 'Scanne diesen QR-Code mit TWINT oder speichere das Bild und importiere es in TWINT aus deiner Galerie. Prüfe Händler und Betrag vor dem Bezahlen.';
+	@override String get saveImage => 'QR-Code in Fotos speichern';
+	@override String get downloadImage => 'QR-Bild herunterladen';
+	@override String get saving => 'QR-Bild wird gespeichert…';
+	@override String get saved => 'QR-Bild gespeichert. Öffne TWINT und importiere es aus deiner Galerie.';
+	@override String get downloadStarted => 'Download des QR-Bilds gestartet. Speichere es in deinen Fotos, um es in TWINT zu importieren.';
+	@override String get saveFailed => 'QR-Bild konnte nicht gespeichert werden. Prüfe die Fotoberechtigungen und den freien Speicherplatz und versuche es erneut.';
+	@override String get expired => 'Dieser QR-Code ist abgelaufen. Bezahle ihn nicht und verwende kein zuvor gespeichertes Bild.';
 }
 
 // Path: twint.scanner
@@ -3380,6 +3424,10 @@ extension on TranslationsDe {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Betrag ist zu hoch. Maximum ist ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Der Geldautomat kann diesen Betrag nicht ausgeben. Verwende eine Kombination von Scheinen: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} zahlt pro Abhebung höchstens ${limit} ${currency} aus.',
+			'coordinator.bolt12.title' => 'BOLT12-Unterstützung',
+			'coordinator.bolt12.body' => 'Dieser Koordinator kann Zahlungen an Wallets senden, die Zahlungen über BOLT12-Angebote empfangen. Du kannst diese Wallets für Auszahlungen an Taker oder Rückerstattungen an Maker verwenden.',
+			'coordinator.bolt12.details' => 'Ein BOLT12-Angebot ist eine wiederverwendbare Lightning-Zahlungsanforderung, die du als Text oder QR-Code teilen kannst. Dasselbe Angebot kann mehrere Zahlungen empfangen. Du musst also nicht jedes Mal eine neue Zahlungsanforderung erstellen und teilen. Deine Empfangs-Wallet muss BOLT12-Angebote unterstützen.',
+			'coordinator.bolt12.learnMore' => 'Mehr erfahren auf bolt12.org',
 			'coordinator.title' => 'Koordinatoren',
 			'coordinator.info.fee' => 'Gebühr',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Betrag: ${minAmount}-${maxAmount} ${currency}',
@@ -3714,12 +3762,32 @@ extension on TranslationsDe {
 			'taker.conflict.actions.back' => 'Zurück zur Startseite',
 			'taker.conflict.feedback.reported' => 'Zahlungskonflikt gemeldet. Warten auf die Bestätigung des Makers.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}',
-			'taker.dispute.headline' => 'Formeller Streitfall eröffnet',
-			'taker.dispute.body' => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.',
-			'twint.scanner.title' => ({required Object code}) => '${code}-Code scannen',
-			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
 			_ => null,
 		} ?? switch (path) {
+			'taker.dispute.headline' => 'Formeller Streitfall eröffnet',
+			'taker.dispute.body' => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.',
+			'twint.shop.scanTitle' => 'Shop-QR-Code scannen',
+			'twint.shop.scanInstructions' => 'Scanne den Zahlungs-QR-Code auf dem Terminal im Geschäft. Der CHF-Betrag wird aus dem Code gelesen.',
+			'twint.shop.invalidQr' => 'Dieser QR-Code ist keine unterstützte CHF-Zahlung im Geschäft. Scanne den Zahlungs-QR-Code auf dem Terminal.',
+			'twint.shop.amountMismatch' => 'Dieser QR-Code hat einen anderen Betrag. Bitte um einen neuen QR-Code mit dem ursprünglichen Zahlungsbetrag.',
+			'twint.shop.cameraFailed' => 'Kamera nicht verfügbar. Erlaube den Kamerazugriff in den Geräte- oder Browsereinstellungen und versuche es erneut.',
+			'twint.shop.scanned' => 'Shop-QR-Code gescannt. Prüfe den CHF-Betrag vor der Finanzierung.',
+			'twint.shop.rescan' => 'Anderen QR-Code scannen',
+			'twint.shop.coordinatorUnsupported' => 'Dieser Koordinator unterstützt keine Shop-QR-Zahlungen. Wähle einen Koordinator mit Shop-QR-Unterstützung.',
+			'twint.shop.loadingFailed' => 'Zahlungs-QR-Code konnte nicht geladen werden. Versuche es erneut.',
+			'twint.shop.replacementInstructions' => 'Scanne einen neuen Shop-QR-Code mit demselben CHF-Betrag wie das finanzierte Angebot.',
+			'twint.shop.replacementScanned' => 'Der Ersatz-QR-Code entspricht dem finanzierten Betrag.',
+			'twint.shop.qrLabel' => 'TWINT-Zahlungs-QR-Code',
+			'twint.shop.payInstructions' => 'Scanne diesen QR-Code mit TWINT oder speichere das Bild und importiere es in TWINT aus deiner Galerie. Prüfe Händler und Betrag vor dem Bezahlen.',
+			'twint.shop.saveImage' => 'QR-Code in Fotos speichern',
+			'twint.shop.downloadImage' => 'QR-Bild herunterladen',
+			'twint.shop.saving' => 'QR-Bild wird gespeichert…',
+			'twint.shop.saved' => 'QR-Bild gespeichert. Öffne TWINT und importiere es aus deiner Galerie.',
+			'twint.shop.downloadStarted' => 'Download des QR-Bilds gestartet. Speichere es in deinen Fotos, um es in TWINT zu importieren.',
+			'twint.shop.saveFailed' => 'QR-Bild konnte nicht gespeichert werden. Prüfe die Fotoberechtigungen und den freien Speicherplatz und versuche es erneut.',
+			'twint.shop.expired' => 'Dieser QR-Code ist abgelaufen. Bezahle ihn nicht und verwende kein zuvor gespeichertes Bild.',
+			'twint.scanner.title' => ({required Object code}) => '${code}-Code scannen',
+			'twint.scanner.status.align' => ({required Object code}) => 'Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus.',
 			'twint.scanner.status.amountFailed' => 'Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren.',
 			'twint.flow.progress.step1' => '1. Angebot erstellen',

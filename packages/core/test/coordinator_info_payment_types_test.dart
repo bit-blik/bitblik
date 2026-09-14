@@ -1,4 +1,5 @@
 import 'package:bitblik_core/core.dart';
+import 'package:ndk/ndk.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -17,6 +18,27 @@ void main() {
       CoordinatorInfo.fromJson(baseJson()).outgoingPaymentTypes,
       ['bolt11'],
     );
+  });
+
+  test('shop QR capability requires explicit advertisement and round trips', () {
+    final legacy = CoordinatorInfo.fromJson(baseJson());
+    expect(legacy.supportsTwintShopQr, isFalse);
+    expect(legacy.toJson().containsKey('twint_shop_qr_v1'), isFalse);
+    for (final advertised in [false, true]) {
+      final info = CoordinatorInfo.fromJson(baseJson()
+        ..['payment_system'] = 'twint'
+        ..['twint_shop_qr_v1'] = advertised);
+      expect(CoordinatorInfo.fromJson(info.toJson()).supportsTwintShopQr,
+          advertised);
+      final event = Nip01Event(
+        pubKey: 'a' * 64,
+        kind: kKindCoordinatorInfo,
+        tags: info.toNostrTags(),
+        content: '',
+      );
+      expect(CoordinatorInfo.fromNostrEvent(event).supportsTwintShopQr,
+          advertised);
+    }
   });
 
   test('round trips advertised BOLT12 capability', () {

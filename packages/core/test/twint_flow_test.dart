@@ -70,6 +70,18 @@ void main() {
     expect(charged!.actions, isNot(contains('accept_taker_invoice')));
   });
 
+  test('payment timeouts use instrument validity without resetting the clock',
+      () {
+    for (final state in ['funded', 'reserved']) {
+      final timeout = engine.timeoutFor(state)!;
+      expect(timeout.durationParam, 'code_validity');
+      expect(timeout.fromField, 'code_received_at');
+    }
+    expect(engine.timeoutFor('expiredTwint')!.durationSeconds, 300);
+    expect(engine.timeoutFor('invalidTwint')!.durationSeconds, 3600);
+    expect(engine.timeoutFor('takerCharged')!.durationSeconds, 3600);
+  });
+
   test('maker can confirm early from reserved and expiredTwint', () {
     for (final s in ['reserved', 'expiredTwint', 'takerCharged']) {
       expect(

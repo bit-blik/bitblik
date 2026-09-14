@@ -814,6 +814,7 @@ class NostrService {
       method: kRpcReserveOffer,
       params: {
         'offer_id': offerId,
+        'twint_shop_qr_v1': true,
         // Generic flows (TWINT) capture the taker's payout details at
         // reserve via the legacy `accept_taker_invoice` effect or its typed
         // alias. Older coordinators (BLIK) ignore these extra params.

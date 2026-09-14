@@ -28,9 +28,10 @@ class NostrOfferMonitor {
     _ndk = Ndk(
       NdkConfig(
         cache: MemCacheManager(),
-        // NDK 06b4accc validates the event ID in Dart and passes only one
-        // fixed-size buffer to Rust, avoiding the old per-tag FFI allocations.
         eventVerifier: RustEventVerifier(),
+        // Prefer a smaller native WebSocket footprint over wire compression
+        // for this low-traffic, long-running service.
+        webSocketCompression: false,
         bootstrapRelays: config.bootstrapRelays,
         // NDK currently initializes its optional wallet use cases even for a
         // read-only client, which otherwise emits an irrelevant Cashu warning.

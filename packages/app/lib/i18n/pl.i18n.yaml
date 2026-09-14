@@ -258,6 +258,11 @@ exchange:
 # COORDINATOR INFORMATION
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Obsługa BOLT12"
+    body: "Ten koordynator może płacić do portfeli odbierających płatności przez oferty BOLT12. Możesz używać tych portfeli do wypłat dla takera lub zwrotów dla makera."
+    details: "Oferta BOLT12 to wielokrotnego użytku żądanie płatności Lightning, które możesz udostępnić jako tekst lub kod QR. Ta sama oferta może przyjmować wiele płatności, więc nie musisz za każdym razem tworzyć i udostępniać nowego żądania płatności. Twój portfel odbiorczy musi obsługiwać oferty BOLT12."
+    learnMore: "Dowiedz się więcej na bolt12.org"
   title: "Koordynatorzy"
   info:
     fee: opłata
@@ -702,6 +707,27 @@ taker:
     body: Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.
 
 twint:
+  shop:
+    scanTitle: "Zeskanuj QR w sklepie"
+    scanInstructions: "Zeskanuj kod QR płatności na terminalu sklepowym. Kwota w CHF zostanie odczytana z kodu."
+    invalidQr: "Ten kod QR nie jest obsługiwaną płatnością sklepową w CHF. Zeskanuj kod QR płatności wyświetlony na terminalu."
+    amountMismatch: "Ten kod QR ma inną kwotę. Poproś o nowy kod QR z pierwotną kwotą płatności."
+    cameraFailed: "Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie."
+    scanned: "Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty."
+    rescan: "Zeskanuj inny kod QR"
+    coordinatorUnsupported: "Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje."
+    loadingFailed: "Nie udało się wczytać kodu QR płatności. Spróbuj ponownie."
+    replacementInstructions: "Zeskanuj nowy kod QR sklepu na tę samą kwotę CHF co zasilona oferta."
+    replacementScanned: "Nowy kod QR odpowiada kwocie zasilonej oferty."
+    qrLabel: "Kod QR do płatności TWINT"
+    payInstructions: "Zeskanuj ten kod QR w TWINT albo zapisz obraz i zaimportuj go z galerii w TWINT. Przed zapłatą sprawdź sprzedawcę i kwotę."
+    saveImage: "Zapisz QR w zdjęciach"
+    downloadImage: "Pobierz obraz QR"
+    saving: "Zapisywanie obrazu QR…"
+    saved: "Obraz QR zapisany. Otwórz TWINT i zaimportuj go z galerii."
+    downloadStarted: "Pobieranie obrazu QR rozpoczęte. Zapisz go w zdjęciach, aby zaimportować go w TWINT."
+    saveFailed: "Nie udało się zapisać obrazu QR. Sprawdź uprawnienia dostępu do zdjęć i wolne miejsce, a następnie spróbuj ponownie."
+    expired: "Ten kod QR wygasł. Nie płać nim ani nie używaj wcześniej zapisanego obrazu."
   scanner:
     title: "Skanuj kod ${code}"
     status:
@@ -1179,6 +1205,10 @@ notificationSettings:
     description: Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.
 
 wallet:
+  details:
+    title: Szczegóły portfela
+    pendingTitle: Oczekujące transakcje
+    finishedTitle: Zakończone transakcje
   title: Portfel
   description: Zarządzaj ustawieniami portfela Lightning
   missingReceiving:
