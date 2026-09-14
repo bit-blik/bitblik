@@ -625,7 +625,11 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
 
   Future<CoordinatorDisputeCase> _fetchCase() async {
     final item = await widget.repository.fetchCase(widget.offerId);
-    latestCase = item;
+    if (mounted) {
+      setState(() => latestCase = item);
+    } else {
+      latestCase = item;
+    }
     return item;
   }
 
@@ -637,12 +641,76 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
     });
   }
 
+  Future<void> showStateHistory(CoordinatorDisputeCase item) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.7,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 8, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'State history (${item.stateHistory.length})',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close state history',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: item.stateHistory.isEmpty
+                    ? const Center(child: Text('No state history'))
+                    : ListView.builder(
+                        itemCount: item.stateHistory.length,
+                        itemBuilder: (context, index) {
+                          final entry = item.stateHistory[index];
+                          return ListTile(
+                            dense: true,
+                            title: Text(
+                              '${entry['from_state'] ?? 'created'} → ${entry['to_state']}',
+                            ),
+                            subtitle: Text(
+                              '${entry['trigger_type']} · ${entry['event'] ?? ''} · '
+                              '${entry['actor'] ?? 'system'} · ${entry['created_at'] ?? ''}'
+                              '${_auditDetails(entry)}',
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Dispute ${widget.offerId}'),
         actions: [
+          IconButton(
+            tooltip: 'State history',
+            onPressed: latestCase == null
+                ? null
+                : () => showStateHistory(latestCase!),
+            icon: const Icon(Icons.history),
+          ),
           IconButton(
             tooltip: 'Refresh dispute',
             onPressed: deciding ? null : refresh,
@@ -693,204 +761,201 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
               : item.isFinal
               ? 'Final · ${offer.statusRaw}'
               : 'Active · ${offer.statusRaw}';
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+          return SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 0,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              '${offer.amountSats} sats · ${offer.fiatAmount} ${offer.fiatCurrency}',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(
+                              caseSummary,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ],
+                        ),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 0,
+                          children: [
+                            Text('State: ${offer.statusRaw}'),
+                            Text(
+                              'Refund invoice: ${item.makerRefundInvoiceReady ? 'submitted' : 'not submitted'}',
+                            ),
+                          ],
+                        ),
+                        if (makerRuled)
+                          Text(
+                            awaitingMakerInvoice
+                                ? 'Refund payment: waiting for the maker'
+                                : 'Refund payment: in progress',
+                          ),
+                        if (item.isFinal)
+                          const Text('Final offer. Chat history is read-only.'),
+                        if (takerPubkey == null)
+                          const Text(
+                            'Taker identity is unavailable; rulings are disabled.',
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (deciding) const LinearProgressIndicator(),
+                if (decisionStatus != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(decisionStatus!),
+                  ),
+                Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '${offer.amountSats} sats · ${offer.fiatAmount} ${offer.fiatCurrency}',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      Text('State: ${offer.statusRaw}'),
-                      Text(
-                        caseSummary,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text(
-                        'Backend: ${item.paymentBackendType} (${item.paymentBackendAvailable ? 'ready' : 'unavailable'})',
-                      ),
-                      Text(
-                        'Maker refund invoice: ${item.makerRefundInvoiceReady ? 'submitted' : 'not submitted'}',
-                      ),
-                      if (makerRuled)
-                        Text(
-                          awaitingMakerInvoice
-                              ? 'Refund payment: waiting for the maker'
-                              : 'Refund payment: in progress',
+                      Material(
+                        color: Theme.of(context).colorScheme.surfaceContainer,
+                        borderRadius: BorderRadius.circular(12),
+                        clipBehavior: Clip.antiAlias,
+                        child: TabBar(
+                          controller: laneTabController,
+                          onTap: (index) {
+                            setState(() => selectedLane = index);
+                          },
+                          tabs: [
+                            Tab(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _NekoAvatar(
+                                    pubkey: offer.makerPubkey,
+                                    size: 30,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text('Maker'),
+                                  if (makerUnread > 0) ...[
+                                    const SizedBox(width: 8),
+                                    Badge.count(count: makerUnread),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            Tab(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (takerPubkey != null)
+                                    _NekoAvatar(pubkey: takerPubkey, size: 30)
+                                  else
+                                    const CircleAvatar(
+                                      radius: 15,
+                                      child: Icon(Icons.person_off_outlined),
+                                    ),
+                                  const SizedBox(width: 8),
+                                  const Text('Taker'),
+                                  if (takerUnread > 0) ...[
+                                    const SizedBox(width: 8),
+                                    Badge.count(count: takerUnread),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      if (item.isFinal)
-                        const Text('Final offer. Chat history is read-only.'),
-                      if (takerPubkey == null)
-                        const Text(
-                          'Taker identity is unavailable; rulings are disabled.',
+                      ),
+                      Expanded(
+                        child: IndexedStack(
+                          index: selectedLane,
+                          sizing: StackFit.expand,
+                          children: [
+                            _ConversationLane(
+                              key: ValueKey(
+                                'maker-${widget.offerId}-${offer.makerPubkey}',
+                              ),
+                              dispute: item,
+                              participantPubkey: offer.makerPubkey,
+                              repository: widget.repository,
+                              unreadTracker: widget.unreadTracker,
+                              isActive: selectedLane == 0,
+                              unreadMessageIds: makerUnreadIds,
+                              onMessagesDisplayed: () => widget.unreadTracker
+                                  .markLaneRead(offer.id, offer.makerPubkey),
+                            ),
+                            takerPubkey == null
+                                ? const Card(
+                                    child: Center(
+                                      child: Text('Taker lane unavailable'),
+                                    ),
+                                  )
+                                : _ConversationLane(
+                                    key: ValueKey(
+                                      'taker-${widget.offerId}-$takerPubkey',
+                                    ),
+                                    dispute: item,
+                                    participantPubkey: takerPubkey,
+                                    repository: widget.repository,
+                                    unreadTracker: widget.unreadTracker,
+                                    isActive: selectedLane == 1,
+                                    unreadMessageIds: takerUnreadIds,
+                                    onMessagesDisplayed: () => widget
+                                        .unreadTracker
+                                        .markLaneRead(offer.id, takerPubkey),
+                                  ),
+                          ],
                         ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-              if (deciding) const LinearProgressIndicator(),
-              if (decisionStatus != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(decisionStatus!),
-                ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 640,
-                child: Column(
+                Row(
                   children: [
-                    Material(
-                      color: Theme.of(context).colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(12),
-                      clipBehavior: Clip.antiAlias,
-                      child: TabBar(
-                        controller: laneTabController,
-                        onTap: (index) {
-                          setState(() => selectedLane = index);
-                        },
-                        tabs: [
-                          Tab(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _NekoAvatar(
-                                  pubkey: offer.makerPubkey,
-                                  size: 30,
-                                ),
-                                const SizedBox(width: 8),
-                                const Text('Maker'),
-                                if (makerUnread > 0) ...[
-                                  const SizedBox(width: 8),
-                                  Badge.count(count: makerUnread),
-                                ],
-                              ],
-                            ),
-                          ),
-                          Tab(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (takerPubkey != null)
-                                  _NekoAvatar(pubkey: takerPubkey, size: 30)
-                                else
-                                  const CircleAvatar(
-                                    radius: 15,
-                                    child: Icon(Icons.person_off_outlined),
-                                  ),
-                                const SizedBox(width: 8),
-                                const Text('Taker'),
-                                if (takerUnread > 0) ...[
-                                  const SizedBox(width: 8),
-                                  Badge.count(count: takerUnread),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: deciding || !isOpen || takerPubkey == null
+                            ? null
+                            : () => confirmDecision(
+                                context,
+                                item,
+                                makerWins: true,
+                              ),
+                        icon: const Icon(Icons.undo),
+                        label: const Text('Rule for maker'),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(width: 4),
                     Expanded(
-                      child: IndexedStack(
-                        index: selectedLane,
-                        sizing: StackFit.expand,
-                        children: [
-                          _ConversationLane(
-                            key: ValueKey(
-                              'maker-${widget.offerId}-${offer.makerPubkey}',
-                            ),
-                            dispute: item,
-                            participantPubkey: offer.makerPubkey,
-                            repository: widget.repository,
-                            unreadTracker: widget.unreadTracker,
-                            isActive: selectedLane == 0,
-                            unreadMessageIds: makerUnreadIds,
-                            onMessagesDisplayed: () => widget.unreadTracker
-                                .markLaneRead(offer.id, offer.makerPubkey),
-                          ),
-                          takerPubkey == null
-                              ? const Card(
-                                  child: Center(
-                                    child: Text('Taker lane unavailable'),
-                                  ),
-                                )
-                              : _ConversationLane(
-                                  key: ValueKey(
-                                    'taker-${widget.offerId}-$takerPubkey',
-                                  ),
-                                  dispute: item,
-                                  participantPubkey: takerPubkey,
-                                  repository: widget.repository,
-                                  unreadTracker: widget.unreadTracker,
-                                  isActive: selectedLane == 1,
-                                  unreadMessageIds: takerUnreadIds,
-                                  onMessagesDisplayed: () => widget
-                                      .unreadTracker
-                                      .markLaneRead(offer.id, takerPubkey),
-                                ),
-                        ],
+                      child: FilledButton.icon(
+                        onPressed:
+                            deciding ||
+                                !isOpen ||
+                                takerPubkey == null ||
+                                !item.paymentBackendAvailable
+                            ? null
+                            : () => confirmDecision(
+                                context,
+                                item,
+                                makerWins: false,
+                              ),
+                        icon: const Icon(Icons.payments),
+                        label: const Text('Rule for taker'),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              ExpansionTile(
-                title: Text('State history (${item.stateHistory.length})'),
-                children: [
-                  for (final entry in item.stateHistory)
-                    ListTile(
-                      dense: true,
-                      title: Text(
-                        '${entry['from_state'] ?? 'created'} → ${entry['to_state']}',
-                      ),
-                      subtitle: Text(
-                        '${entry['trigger_type']} · ${entry['event'] ?? ''} · '
-                        '${entry['actor'] ?? 'system'} · ${entry['created_at'] ?? ''}'
-                        '${_auditDetails(entry)}',
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.tonalIcon(
-                      onPressed: deciding || !isOpen || takerPubkey == null
-                          ? null
-                          : () =>
-                                confirmDecision(context, item, makerWins: true),
-                      icon: const Icon(Icons.undo),
-                      label: const Text('Rule for maker'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed:
-                          deciding ||
-                              !isOpen ||
-                              takerPubkey == null ||
-                              !item.paymentBackendAvailable
-                          ? null
-                          : () => confirmDecision(
-                              context,
-                              item,
-                              makerWins: false,
-                            ),
-                      icon: const Icon(Icons.payments),
-                      label: const Text('Rule for taker'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -910,7 +975,6 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
         title: Text('Rule for $recipient?'),
         content: Text(
           'Recipient: $recipient\nExact amount: $sats sats\n'
-          'Backend: ${item.paymentBackendType}\n'
           '${makerWins ? 'The maker will be asked for a refund invoice after this ruling.' : 'The taker payout starts after this ruling.'}\n\n'
           'This commits an irreversible ruling. Duplicate clicks are idempotently rejected.',
         ),
@@ -1398,9 +1462,13 @@ class _ConversationLaneState extends State<_ConversationLane> {
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: EdgeInsets.zero,
       child: Column(
         children: [
           ListTile(
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
             title: Text(
               Nip19.encodePubKey(widget.participantPubkey),
               maxLines: 1,
@@ -1429,7 +1497,7 @@ class _ConversationLaneState extends State<_ConversationLane> {
                 ? Center(child: Text(loadError.toString()))
                 : ListView.builder(
                     controller: scrollController,
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(4),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final row = messages[index];
@@ -1445,13 +1513,13 @@ class _ConversationLaneState extends State<_ConversationLane> {
                               : null,
                           child: message == null
                               ? Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Text(row.content),
+                                  padding: const EdgeInsets.all(8),
+                                  child: SelectableText(row.content),
                                 )
                               : file == null
                               ? Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Text(message.content),
+                                  padding: const EdgeInsets.all(8),
+                                  child: SelectableText(message.content),
                                 )
                               : _EvidenceThumbnail(
                                   bytes: _evidenceBytes(message),
@@ -1463,7 +1531,7 @@ class _ConversationLaneState extends State<_ConversationLane> {
                   ),
           ),
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Row(
               children: [
                 if (usesLegacyNip04 != true)
