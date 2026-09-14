@@ -160,6 +160,7 @@ class _Translations$coordinator$sk extends Translations$coordinator$en {
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$sk bolt12 = _Translations$coordinator$bolt12$sk._(_root);
 	@override String get title => 'Koordinátori';
 	@override late final _Translations$coordinator$info$sk info = _Translations$coordinator$info$sk._(_root);
 	@override late final _Translations$coordinator$selector$sk selector = _Translations$coordinator$selector$sk._(_root);
@@ -864,6 +865,19 @@ class _Translations$exchange$errors$sk extends Translations$exchange$errors$en {
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'Suma je príliš vysoká. Maximum je ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Bankomat nedokáže vydať túto sumu. Použi kombináciu bankoviek: ${notes}.';
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} vydá na jeden výber najviac ${limit} ${currency}.';
+}
+
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$sk extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Podpora BOLT12';
+	@override String get body => 'Tento koordinátor môže platiť do peňaženiek, ktoré prijímajú platby cez ponuky BOLT12. Tieto peňaženky môžeš použiť na výplaty pre takerov alebo vrátenie prostriedkov makerom.';
+	@override String get details => 'Ponuka BOLT12 je opakovane použiteľná žiadosť o platbu cez Lightning, ktorú môžeš zdieľať ako text alebo QR kód. Tá istá ponuka môže prijať viacero platieb, takže nemusíš zakaždým vytvárať a zdieľať novú žiadosť o platbu. Tvoja prijímacia peňaženka musí podporovať ponuky BOLT12.';
+	@override String get learnMore => 'Viac informácií na bolt12.org';
 }
 
 // Path: coordinator.info
@@ -3022,6 +3036,10 @@ extension on TranslationsSk {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Suma je príliš vysoká. Maximum je ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Bankomat nedokáže vydať túto sumu. Použi kombináciu bankoviek: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} vydá na jeden výber najviac ${limit} ${currency}.',
+			'coordinator.bolt12.title' => 'Podpora BOLT12',
+			'coordinator.bolt12.body' => 'Tento koordinátor môže platiť do peňaženiek, ktoré prijímajú platby cez ponuky BOLT12. Tieto peňaženky môžeš použiť na výplaty pre takerov alebo vrátenie prostriedkov makerom.',
+			'coordinator.bolt12.details' => 'Ponuka BOLT12 je opakovane použiteľná žiadosť o platbu cez Lightning, ktorú môžeš zdieľať ako text alebo QR kód. Tá istá ponuka môže prijať viacero platieb, takže nemusíš zakaždým vytvárať a zdieľať novú žiadosť o platbu. Tvoja prijímacia peňaženka musí podporovať ponuky BOLT12.',
+			'coordinator.bolt12.learnMore' => 'Viac informácií na bolt12.org',
 			'coordinator.title' => 'Koordinátori',
 			'coordinator.info.fee' => 'poplatok',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Suma: ${minAmount}-${maxAmount} ${currency}',
@@ -3366,12 +3384,12 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Zrušiť rezerváciu',
 			'taker.waitConfirmation.feedback.makerConfirmed' => 'Predávajúci potvrdil platbu.',
 			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Platba úspešná! Čoskoro dostaneš prostriedky.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.feedback.conflictReported' => 'Konflikt nahlásený. Koordinátor posúdi situáciu.',
 			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa.',
 			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
 			'taker.paymentProcess.title' => 'Priebeh platby',
-			_ => null,
-		} ?? switch (path) {
 			'taker.paymentProcess.waitingForOfferUpdate' => 'Čaká sa na aktualizáciu stavu ponuky...',
 			'taker.paymentProcess.states.preparing' => 'Príprava na odoslanie platby...',
 			'taker.paymentProcess.states.sending' => 'Odosiela sa platba...',

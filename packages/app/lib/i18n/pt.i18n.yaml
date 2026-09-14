@@ -259,6 +259,11 @@ exchange:
 # COORDINATOR INFORMATION
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Suporte BOLT12"
+    body: "Este coordenador pode pagar a carteiras que recebem pagamentos através de ofertas BOLT12. Pode usar estas carteiras para pagamentos aos takers ou reembolsos aos makers."
+    details: "Uma oferta BOLT12 é um pedido de pagamento Lightning reutilizável que pode partilhar como texto ou código QR. A mesma oferta pode receber vários pagamentos, pelo que não precisa de criar e partilhar um novo pedido de cada vez. A sua carteira de receção tem de suportar ofertas BOLT12."
+    learnMore: "Saiba mais em bolt12.org"
   title: "Coordenadores"
   info:
     fee: "taxa"

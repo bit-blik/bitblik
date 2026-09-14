@@ -5,6 +5,51 @@ import 'package:ndk/ndk.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('Offer NIP-69 dispute extension', () {
+    Offer parse(String status, {String? bitblikStatus}) =>
+        Offer.fromNostrEvent(Nip01Event(
+          pubKey: 'coordinator',
+          kind: kKindOffer,
+          tags: [
+            ['d', 'offer-dispute'],
+            ['s', status],
+            if (bitblikStatus != null) ['bitblik_status', bitblikStatus],
+            ['dispute_at', '1767301200'],
+          ],
+          content: '',
+        ));
+
+    test('in-progress with dispute marker is an active dispute', () {
+      final offer = parse('in-progress', bitblikStatus: 'dispute');
+      expect(offer.status, OfferStatus.dispute);
+      expect(offer.isDispute, isTrue);
+    });
+
+    test('unmarked in-progress stays reserved despite dispute history', () {
+      expect(parse('in-progress').status, OfferStatus.reserved);
+    });
+
+    test('legacy dispute status remains supported', () {
+      expect(parse('dispute').status, OfferStatus.conflict);
+    });
+
+    test('unknown extension values leave standard status unchanged', () {
+      expect(parse('in-progress', bitblikStatus: 'future-state').status,
+          OfferStatus.reserved);
+    });
+
+    test('dispute marker cannot override pending or terminal status', () {
+      for (final entry in {
+        'pending': OfferStatus.funded,
+        'success': OfferStatus.takerPaid,
+        'canceled': OfferStatus.cancelled,
+      }.entries) {
+        expect(parse(entry.key, bitblikStatus: 'dispute').status, entry.value,
+            reason: entry.key);
+      }
+    });
+  });
+
   group('Offer dispute states', () {
     test('refunding maker remains an active dispute', () {
       final offer = Offer.fromJson({

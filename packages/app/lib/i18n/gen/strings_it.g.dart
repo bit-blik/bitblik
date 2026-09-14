@@ -175,6 +175,7 @@ class _Translations$coordinator$it extends Translations$coordinator$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$it bolt12 = _Translations$coordinator$bolt12$it._(_root);
 	@override String get title => 'Coordinatori';
 	@override late final _Translations$coordinator$info$it info = _Translations$coordinator$info$it._(_root);
 	@override late final _Translations$coordinator$selector$it selector = _Translations$coordinator$selector$it._(_root);
@@ -938,6 +939,19 @@ class _Translations$exchange$errors$it extends Translations$exchange$errors$en {
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'L\'importo è troppo alto. Il massimo è ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}.';
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} eroga al massimo ${limit} ${currency} per prelievo.';
+}
+
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$it extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Supporto BOLT12';
+	@override String get body => 'Questo coordinatore può pagare i portafogli che ricevono pagamenti tramite offerte BOLT12. Puoi usare questi portafogli per i pagamenti ai taker o i rimborsi ai maker.';
+	@override String get details => 'Un’offerta BOLT12 è una richiesta di pagamento Lightning riutilizzabile che puoi condividere come testo o codice QR. La stessa offerta può ricevere più pagamenti, quindi non devi creare e condividere una nuova richiesta ogni volta. Il tuo portafoglio di ricezione deve supportare le offerte BOLT12.';
+	@override String get learnMore => 'Scopri di più su bolt12.org';
 }
 
 // Path: coordinator.info
@@ -3358,6 +3372,10 @@ extension on TranslationsIt {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'L\'importo è troppo alto. Il massimo è ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Il bancomat non può erogare questo importo. Usa una combinazione di banconote: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} eroga al massimo ${limit} ${currency} per prelievo.',
+			'coordinator.bolt12.title' => 'Supporto BOLT12',
+			'coordinator.bolt12.body' => 'Questo coordinatore può pagare i portafogli che ricevono pagamenti tramite offerte BOLT12. Puoi usare questi portafogli per i pagamenti ai taker o i rimborsi ai maker.',
+			'coordinator.bolt12.details' => 'Un’offerta BOLT12 è una richiesta di pagamento Lightning riutilizzabile che puoi condividere come testo o codice QR. La stessa offerta può ricevere più pagamenti, quindi non devi creare e condividere una nuova richiesta ogni volta. Il tuo portafoglio di ricezione deve supportare le offerte BOLT12.',
+			'coordinator.bolt12.learnMore' => 'Scopri di più su bolt12.org',
 			'coordinator.title' => 'Coordinatori',
 			'coordinator.info.fee' => 'commissione',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Importo: ${minAmount}-${maxAmount} ${currency}',
@@ -3691,12 +3709,12 @@ extension on TranslationsIt {
 			'twint.flow.takerProgress.step1' => ({required Object code}) => '1. Paga ${code}',
 			'twint.flow.takerProgress.step2' => '2. Ricevi sats',
 			'twint.flow.makerWait.takerPaying' => 'Il taker sta pagando',
+			_ => null,
+		} ?? switch (path) {
 			'twint.flow.makerWait.yourCode' => ({required Object code}) => 'Il tuo codice ${code}',
 			'twint.flow.makerWait.offerExpires' => ({required Object code}) => '${code} scade',
 			'twint.flow.makerWait.autoExpires' => 'Scade automaticamente',
 			'twint.flow.makerWait.codeExpiresIn' => ({required Object code}) => '${code} scadrà tra...',
-			_ => null,
-		} ?? switch (path) {
 			'twint.flow.makerWait.cancelOffer' => 'Annulla offerta',
 			'twint.flow.makerWait.reservedInfo' => ({required Object code}) => 'Un taker ha riservato la tua offerta e sta pagando il tuo codice ${code} nella sua app bancaria. Quando il pagamento arriva al tuo esercente, confermalo qui sotto.',
 			'twint.flow.makerWait.confirmReceived' => 'Conferma pagamento ricevuto',

@@ -608,6 +608,12 @@ class Offer {
     }
 
     final createdAtSecs = int.tryParse(tagMap['created_at'] ?? '0') ?? 0;
+    final nip69Status = tagMap['s'] ?? 'pending';
+    // Disputes remain in-progress in NIP-69; BitBlik adds a narrower status.
+    final status =
+        nip69Status == 'in-progress' && tagMap['bitblik_status'] == 'dispute'
+            ? OfferStatus.dispute
+            : _statusFromNip69(nip69Status) ?? OfferStatus.funded;
 
     return Offer(
       id: tagMap['d'] ?? event.id,
@@ -615,7 +621,7 @@ class Offer {
       makerFees: int.tryParse(tagMap['maker_fees'] ?? '0') ?? 0,
       fiatAmount: double.tryParse(tagMap['fa'] ?? '0') ?? 0.0,
       fiatCurrency: tagMap['f'] ?? 'PLN',
-      status: _statusFromNip69(tagMap['s'] ?? 'pending') ?? OfferStatus.funded,
+      status: status,
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         createdAtSecs * 1000,
         isUtc: true,
@@ -659,6 +665,7 @@ OfferStatus? _statusFromNip69(String s) {
     case 'canceled':
       return OfferStatus.cancelled;
     case 'dispute':
+      // Compatibility with older BitBlik events, outside NIP-69's status set.
       return OfferStatus.conflict;
     default:
       return null;

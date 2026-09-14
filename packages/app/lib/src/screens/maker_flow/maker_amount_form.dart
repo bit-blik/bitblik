@@ -968,18 +968,30 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             ],
                           ),
                           const SizedBox(height: 2),
+                          if (coordinator.version.isNotEmpty ||
+                              coordinator.supportsBolt12Payouts) ...[
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                if (coordinator.version.isNotEmpty)
+                                  Text(
+                                    'v${coordinator.version}',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(color: Colors.grey),
+                                  ),
+                                if (coordinator.supportsBolt12Payouts)
+                                  const Bolt12Badge(compact: true),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                          ],
                           Wrap(
                             spacing: 12,
+                            runSpacing: 4,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              if (coordinator.version.isNotEmpty)
-                                Text(
-                                  'v${coordinator.version}',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(color: Colors.grey),
-                                ),
-                              if (coordinator.supportsBolt12Payouts)
-                                const Bolt12Badge(compact: true),
                               Text(
                                 t.coordinator.info.rangeDisplay(
                                   minAmount: minPln,
@@ -2857,4 +2869,3 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     }
   }
 }
-

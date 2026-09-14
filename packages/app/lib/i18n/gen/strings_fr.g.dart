@@ -174,6 +174,7 @@ class _Translations$coordinator$fr extends Translations$coordinator$en {
 	final TranslationsFr _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$fr bolt12 = _Translations$coordinator$bolt12$fr._(_root);
 	@override String get title => 'Coordinateurs';
 	@override late final _Translations$coordinator$info$fr info = _Translations$coordinator$info$fr._(_root);
 	@override late final _Translations$coordinator$selector$fr selector = _Translations$coordinator$selector$fr._(_root);
@@ -937,6 +938,19 @@ class _Translations$exchange$errors$fr extends Translations$exchange$errors$en {
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'Le montant est trop élevé. Le maximum est ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Le distributeur ne peut pas délivrer ce montant. Utilisez une combinaison de billets : ${notes}.';
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} délivre au maximum ${limit} ${currency} par retrait.';
+}
+
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$fr extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Prise en charge de BOLT12';
+	@override String get body => 'Ce coordinateur peut payer les portefeuilles qui reçoivent des paiements via des offres BOLT12. Vous pouvez utiliser ces portefeuilles pour les versements aux takers ou les remboursements aux makers.';
+	@override String get details => 'Une offre BOLT12 est une demande de paiement Lightning réutilisable que vous pouvez partager sous forme de texte ou de code QR. La même offre peut recevoir plusieurs paiements, sans devoir créer et partager une nouvelle demande à chaque fois. Votre portefeuille de réception doit prendre en charge les offres BOLT12.';
+	@override String get learnMore => 'En savoir plus sur bolt12.org';
 }
 
 // Path: coordinator.info
@@ -3379,6 +3393,10 @@ extension on TranslationsFr {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Le montant est trop élevé. Le maximum est ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Le distributeur ne peut pas délivrer ce montant. Utilisez une combinaison de billets : ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} délivre au maximum ${limit} ${currency} par retrait.',
+			'coordinator.bolt12.title' => 'Prise en charge de BOLT12',
+			'coordinator.bolt12.body' => 'Ce coordinateur peut payer les portefeuilles qui reçoivent des paiements via des offres BOLT12. Vous pouvez utiliser ces portefeuilles pour les versements aux takers ou les remboursements aux makers.',
+			'coordinator.bolt12.details' => 'Une offre BOLT12 est une demande de paiement Lightning réutilisable que vous pouvez partager sous forme de texte ou de code QR. La même offre peut recevoir plusieurs paiements, sans devoir créer et partager une nouvelle demande à chaque fois. Votre portefeuille de réception doit prendre en charge les offres BOLT12.',
+			'coordinator.bolt12.learnMore' => 'En savoir plus sur bolt12.org',
 			'coordinator.title' => 'Coordinateurs',
 			'coordinator.info.fee' => 'frais',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Montant : ${minAmount}-${maxAmount} ${currency}',
@@ -3713,12 +3731,12 @@ extension on TranslationsFr {
 			'taker.conflict.actions.back' => 'Retour à l\'accueil',
 			'taker.conflict.feedback.reported' => 'Conflit de paiement signalé. En attente de la confirmation du maker.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Erreur lors du signalement du conflit : ${details}',
+			_ => null,
+		} ?? switch (path) {
 			'taker.dispute.headline' => 'Litige formel ouvert',
 			'taker.dispute.body' => 'L\'offre est maintenant examinée par le coordinateur. Utilisez le chat du litige ci-dessous pour communiquer avec le coordinateur et fournir les justificatifs demandés.',
 			'twint.scanner.title' => ({required Object code}) => 'Scanner le code ${code}',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alignez le QR ${code} et le texte du montant dans le cadre de la caméra.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Le code ${code} n\'est pas encore reconnu. Gardez le QR et le montant visibles, ou remplissez le formulaire manuellement.',
 			'twint.scanner.status.amountFailed' => 'Le scan caméra n\'a pas pu extraire le montant. Vous pouvez quand même utiliser le résultat du QR et corriger les champs manuellement.',
 			'twint.flow.progress.step1' => '1. Créer l\'offre',

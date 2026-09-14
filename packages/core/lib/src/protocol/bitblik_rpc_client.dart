@@ -38,6 +38,9 @@ class BitblikRpcClient {
   final Random _random = Random.secure();
   NdkResponse? _subscription;
   Future<void>? _rebindInFlight;
+  Future<void> _responseRelayUpdates = Future.value();
+  final Map<String, List<String>> _activeRequestRelays = {};
+  late Set<String> _configuredResponseRelays = relays.toSet();
 
   /// Relays the current response subscription listens on. Starts as [relays].
   late List<String> _responseRelays = List.from(relays);
@@ -64,7 +67,7 @@ class BitblikRpcClient {
 
   /// Subscribe to incoming responses. Must be called before [send].
   Future<void> start() async {
-    await _openSubscription(_responseRelays);
+    await _syncResponseRelays();
   }
 
   /// Switches the client identity without replacing the shared [Ndk] instance.
@@ -124,23 +127,43 @@ class BitblikRpcClient {
   /// unchanged. Falls back to the bootstrap [relays] when [relays] is empty so
   /// the client is never left without a subscription.
   Future<void> updateResponseRelays(Set<String> relays) async {
-    final target = relays.isEmpty ? this.relays.toSet() : relays;
+    _configuredResponseRelays =
+        relays.isEmpty ? this.relays.toSet() : Set.of(relays);
+    await _syncResponseRelays();
+  }
+
+  Future<void> _syncResponseRelays() {
+    // Serialize replacements and compute the union when the update runs, so
+    // concurrent sends cannot overwrite one another's relay additions.
+    final update = _responseRelayUpdates.then((_) => _applyResponseRelays());
+    _responseRelayUpdates = update.then<void>((_) {}, onError: (Object _) {});
+    return update;
+  }
+
+  Future<void> _applyResponseRelays() async {
+    final target = <String>{
+      ..._configuredResponseRelays,
+      for (final relays in _activeRequestRelays.values) ...relays,
+    };
     final current = _responseRelays.toSet();
     if (_subscription != null &&
         target.length == current.length &&
         target.containsAll(current)) {
       return;
     }
-    if (_subscription != null) {
-      await ndk.requests.closeSubscription(_subscription!.requestId);
-      _subscription = null;
-    }
+    final previous = _subscription;
+    // Listen before closing the old subscription, including while health
+    // probes for disabled coordinators are still waiting for replies.
     await _openSubscription(target.toList(growable: false));
+    if (previous != null) {
+      await ndk.requests.closeSubscription(previous.requestId);
+    }
   }
 
   /// Close the response subscription. Pending request futures will hang until
   /// their timeout fires — callers should ensure no in-flight requests remain.
   Future<void> stop() async {
+    await _responseRelayUpdates;
     if (_subscription != null) {
       await ndk.requests.closeSubscription(_subscription!.requestId);
       _subscription = null;
@@ -175,23 +198,17 @@ class BitblikRpcClient {
       client: request.client ?? clientId,
     );
 
-    // Ensure we are listening for the response on the relays we are about to
-    // broadcast to. Per-coordinator routing may target relays the current
-    // subscription doesn't cover (e.g. a freshly discovered coordinator);
-    // expanding here removes the race between discovery and the app's
-    // [updateResponseRelays] call.
-    final needed = broadcastRelays.toSet();
-    if (!_responseRelays.toSet().containsAll(needed)) {
-      await updateResponseRelays(_responseRelays.toSet()..addAll(needed));
-    }
-
     final completer = Completer<NostrResponse>();
     _pending[id] = _PendingRpcRequest(
       completer: completer,
       coordinatorPubkey: coordinatorPubkey,
     );
+    // Pin before awaiting subscription changes. Registry updates may narrow
+    // configured relays to enabled coordinators during a bulk health check.
+    _activeRequestRelays[id] = broadcastRelays;
 
     try {
+      await _syncResponseRelays();
       final event = await ProtocolCodec.encryptRequestWithSigner(
         request: reqWithId,
         signer: signer,
@@ -234,6 +251,11 @@ class BitblikRpcClient {
     } catch (_) {
       _pending.remove(id);
       rethrow;
+    } finally {
+      _activeRequestRelays.remove(id);
+      // Releasing a temporary relay must not turn a successful RPC into an
+      // error if subscription cleanup fails; the next update retries it.
+      unawaited(_syncResponseRelays().catchError((Object _) {}));
     }
   }
 

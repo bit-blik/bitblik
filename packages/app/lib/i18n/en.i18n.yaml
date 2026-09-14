@@ -259,6 +259,11 @@ exchange:
 # COORDINATOR INFORMATION
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "BOLT12 support"
+    body: "This coordinator can pay wallets that receive payments through BOLT12 offers. You can use these wallets for taker payouts or maker refunds."
+    details: "A BOLT12 offer is a reusable Lightning payment request you can share as text or a QR code. The same offer can receive multiple payments, so you do not need to create and share a new payment request each time. Your receiving wallet must support BOLT12 offers."
+    learnMore: "Learn more at bolt12.org"
   title: "Coordinators"
   info:
     fee: "fee"
