@@ -2,6 +2,7 @@ name: Telegram Bot Docker build
 
 on:
   push:
+    branches: [main]
     paths:
       # Keep this list aligned with packages/telegram_bot/Dockerfile. Tests,
       # docs, examples, and local deployment files do not affect the image.
@@ -70,8 +71,6 @@ jobs:
 
   build:
     needs: test
-    # Pull requests compile the executable above but do not publish an image.
-    if: github.event_name != 'pull_request'
     env:
       REGISTRY: ghcr.io
       IMAGENAME: telegram-bot
@@ -104,6 +103,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha
             type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
 
       - name: Build and push Docker image

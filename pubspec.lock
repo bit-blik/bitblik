@@ -1273,8 +1273,8 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/ndk"
-      ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
-      resolved-ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
+      ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
+      resolved-ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
       url: "https://github.com/relaystr/ndk.git"
     source: git
     version: "0.10.0-dev.3"
@@ -1282,8 +1282,8 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/drift"
-      ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
-      resolved-ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
+      ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
+      resolved-ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
       url: "https://github.com/relaystr/ndk.git"
     source: git
     version: "0.1.1-dev.15"
@@ -1291,17 +1291,17 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/ndk_flutter"
-      ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
-      resolved-ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
+      ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
+      resolved-ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.10.0-dev.3"
+    version: "0.10.0-dev.4"
   ndk_objectbox:
     dependency: "direct overridden"
     description:
       path: "packages/objectbox"
-      ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
-      resolved-ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
+      ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
+      resolved-ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
       url: "https://github.com/relaystr/ndk.git"
     source: git
     version: "0.2.12-dev.12"
@@ -2190,14 +2190,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.3"
-  web_socket_client:
-    dependency: transitive
-    description:
-      name: web_socket_client
-      sha256: "394789177aa3bc1b7b071622a1dbf52a4631d7ce23c555c39bb2523e92316b07"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.1"
   webkit_inspection_protocol:
     dependency: transitive
     description:

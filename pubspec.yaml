@@ -5,29 +5,31 @@ environment:
   sdk: ^3.11.0
 
 dependency_overrides:
+  # NIP-82 support plus native WebSocket compression opt-out for long-running
+  # services.
   ndk:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/ndk,
-      ref: 75a469507056b0b652bdff7c263161e65b2df2cc
+      ref: 5b655f7f6647388faee5fb8aa266431210f81cff
     }
   ndk_flutter:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/ndk_flutter,
-      ref: 75a469507056b0b652bdff7c263161e65b2df2cc
+      ref: 5b655f7f6647388faee5fb8aa266431210f81cff
     }
   ndk_drift:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/drift,
-      ref: 75a469507056b0b652bdff7c263161e65b2df2cc
+      ref: 5b655f7f6647388faee5fb8aa266431210f81cff
     }
   ndk_objectbox:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/objectbox,
-      ref: 75a469507056b0b652bdff7c263161e65b2df2cc
+      ref: 5b655f7f6647388faee5fb8aa266431210f81cff
     }
 workspace:
   - packages/app

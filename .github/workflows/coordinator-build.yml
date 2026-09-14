@@ -2,6 +2,7 @@ name: Coordinator Docker build
 
 on:
   push:
+    branches: [main]
     paths:
       - 'packages/coordinator/**'
       - '!packages/coordinator/dashboard/**'
@@ -51,8 +52,6 @@ jobs:
 
   build:
     needs: test
-    # Skip image build/push on pull requests; only test PRs.
-    if: github.event_name != 'pull_request'
     env:
       REGISTRY: ghcr.io
       IMAGENAME: coordinator
