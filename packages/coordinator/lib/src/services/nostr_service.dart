@@ -7,6 +7,7 @@ import 'package:ndk/domain_layer/entities/nip_65.dart';
 import 'package:ndk/domain_layer/entities/read_write_marker.dart';
 
 import 'coordinator_service.dart';
+import 'offer_publication_queue.dart';
 import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
 
@@ -109,6 +110,9 @@ class NostrService {
   // broadcast again, so callers must [forgetOfferTracking] once an offer
   // reaches a terminal state to keep the map bounded.
   final Map<String, int> _lastOfferEventCreatedAtById = {};
+  late final _offerPublications = OfferPublicationQueue(
+    loadOffer: _coordinatorService.getOfferById,
+  );
 
   NostrService(
     this._coordinatorService, {
@@ -1186,7 +1190,7 @@ class NostrService {
   // * reszta = ?
 
   Future<void> broadcastNip69OrderFromOffer(
-    Offer offer, {
+    Offer snapshot, {
     String orderType = 'sell',
     // Default to this coordinator's payment system so the `pm` (method) and `y`
     // (platform) tags match the market it serves; clients filter on `#y`.
@@ -1203,96 +1207,107 @@ class NostrService {
     String document = 'order',
     String bond = "0",
   }) async {
-    // Flow states declare the NIP-69 category in YAML. The raw/enum fallback
-    // handles historical rows whose state is not present in the active flow.
-    final status = _coordinatorService.nip69CategoryForRaw(offer.statusRaw) ??
-        _mapRawStatusToNip69Status(offer.statusRaw, offer.status);
-    final premiumValue = premium ?? offer.premiumPercent;
-    final ps = _coordinatorService.paymentSystem;
-    final resolvedPaymentSystems = paymentSystems ?? [ps.label];
-    final resolvedPlatform = platform ?? ps.platformTag;
-    try {
-      final nowSecs = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      final lastSecs = _lastOfferEventCreatedAtById[offer.id] ?? 0;
-      final eventCreatedAt = nowSecs <= lastSecs ? lastSecs + 1 : nowSecs;
+    await _offerPublications.publish(snapshot.id, (offer) async {
+      // Startup rebroadcasts may have waited minutes since their snapshot was
+      // loaded. Always publish the database state and serialize each offer's
+      // replacements so an old in-progress event cannot supersede a dispute.
+      if (offer.status != OfferStatus.funded) expiration = null;
+      // Flow states declare the NIP-69 category in YAML. The raw/enum fallback
+      // handles historical rows whose state is not present in the active flow.
+      final statusCategory =
+          _coordinatorService.nip69CategoryForRaw(offer.statusRaw) ??
+              _mapRawStatusToNip69Status(offer.statusRaw, offer.status);
+      // Keep the standard status valid while exposing active disputes to BitBlik.
+      final status =
+          statusCategory == 'dispute' ? 'in-progress' : statusCategory;
+      final premiumValue = premium ?? offer.premiumPercent;
+      final ps = _coordinatorService.paymentSystem;
+      final resolvedPaymentSystems = paymentSystems ?? [ps.label];
+      final resolvedPlatform = platform ?? ps.platformTag;
+      try {
+        final nowSecs = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+        final lastSecs = _lastOfferEventCreatedAtById[offer.id] ?? 0;
+        final eventCreatedAt = nowSecs <= lastSecs ? lastSecs + 1 : nowSecs;
 
-      final tags = <List<String>>[
-        ['d', offer.id],
-        ['k', orderType],
-        ['f', offer.fiatCurrency],
-        ['s', status],
-        ['amt', offer.amountSats.toString()],
-        ['fa', offer.fiatAmount.toString()],
-        ['pm', ...resolvedPaymentSystems],
-        ['premium', premiumValue.toString()],
-        if (ratingJson != null) ['rating', ratingJson],
-        [
-          'source',
-          "https://${_coordinatorService.frontendDomain}/offers/${offer.id}",
-        ],
-        ['network', network],
-        ['layer', layer],
-        ['name', name ?? ''],
-        if (geohash != null) ['g', geohash],
-        ['bond', bond],
-        if (expiration != null) ['expiration', expiration.toString()],
-        ['y', resolvedPlatform],
-        ['z', document],
-        [
-          'reserved_at',
-          offer.reservedAt != null
-              ? (offer.reservedAt!.millisecondsSinceEpoch ~/ 1000).toString()
-              : ''
-        ],
-        [
-          'created_at',
-          (offer.createdAt.millisecondsSinceEpoch ~/ 1000).toString()
-        ],
-        [
-          'paid_at',
-          offer.takerPaidAt != null
-              ? (offer.takerPaidAt!.millisecondsSinceEpoch ~/ 1000).toString()
-              : ''
-        ],
-        if (offer.disputeAt != null)
+        final tags = <List<String>>[
+          ['d', offer.id],
+          ['k', orderType],
+          ['f', offer.fiatCurrency],
+          ['s', status],
+          if (statusCategory == 'dispute') ['bitblik_status', 'dispute'],
+          ['amt', offer.amountSats.toString()],
+          ['fa', offer.fiatAmount.toString()],
+          ['pm', ...resolvedPaymentSystems],
+          ['premium', premiumValue.toString()],
+          if (ratingJson != null) ['rating', ratingJson],
           [
-            'dispute_at',
-            (offer.disputeAt!.millisecondsSinceEpoch ~/ 1000).toString(),
+            'source',
+            "https://${_coordinatorService.frontendDomain}/offers/${offer.id}",
           ],
-        if (offer.category != null) ['category', offer.category!.name],
-        // Bank the maker will withdraw at, for bank-scoped markets (SK). Lets
-        // takers filter the feed to banks whose app they hold.
-        if (offer.bankId != null && offer.bankId!.isNotEmpty)
-          ['bank', offer.bankId!],
-        if (offer.takerFees != null && offer.takerFees! > 0)
-          ['taker_fees', offer.takerFees.toString()],
-        if (offer.makerFees > 0) ['maker_fees', offer.makerFees.toString()],
-      ];
+          ['network', network],
+          ['layer', layer],
+          ['name', name ?? ''],
+          if (geohash != null) ['g', geohash],
+          ['bond', bond],
+          if (expiration != null) ['expiration', expiration.toString()],
+          ['y', resolvedPlatform],
+          ['z', document],
+          [
+            'reserved_at',
+            offer.reservedAt != null
+                ? (offer.reservedAt!.millisecondsSinceEpoch ~/ 1000).toString()
+                : ''
+          ],
+          [
+            'created_at',
+            (offer.createdAt.millisecondsSinceEpoch ~/ 1000).toString()
+          ],
+          [
+            'paid_at',
+            offer.takerPaidAt != null
+                ? (offer.takerPaidAt!.millisecondsSinceEpoch ~/ 1000).toString()
+                : ''
+          ],
+          if (offer.disputeAt != null)
+            [
+              'dispute_at',
+              (offer.disputeAt!.millisecondsSinceEpoch ~/ 1000).toString(),
+            ],
+          if (offer.category != null) ['category', offer.category!.name],
+          // Bank the maker will withdraw at, for bank-scoped markets (SK). Lets
+          // takers filter the feed to banks whose app they hold.
+          if (offer.bankId != null && offer.bankId!.isNotEmpty)
+            ['bank', offer.bankId!],
+          if (offer.takerFees != null && offer.takerFees! > 0)
+            ['taker_fees', offer.takerFees.toString()],
+          if (offer.makerFees > 0) ['maker_fees', offer.makerFees.toString()],
+        ];
 
-      final event = Nip01Event(
-        kind: kKindOffer,
-        pubKey: _signer.getPublicKey(),
-        content: '',
-        tags: tags,
-        createdAt: eventCreatedAt,
-      );
+        final event = Nip01Event(
+          kind: kKindOffer,
+          pubKey: _signer.getPublicKey(),
+          content: '',
+          tags: tags,
+          createdAt: eventCreatedAt,
+        );
 
-      await _ndk.broadcast.broadcast(
-          nostrEvent: event,
-          customSigner: _signer,
-          specificRelays: _broadcastRelays);
-      _lastOfferEventCreatedAtById[offer.id] = eventCreatedAt;
-      if (_coordinatorService.isTerminalOffer(offer)) {
-        _lastOfferEventCreatedAtById.remove(offer.id);
+        await _ndk.broadcast.broadcast(
+            nostrEvent: event,
+            customSigner: _signer,
+            specificRelays: _broadcastRelays);
+        _lastOfferEventCreatedAtById[offer.id] = eventCreatedAt;
+        if (_coordinatorService.isTerminalOffer(offer)) {
+          _lastOfferEventCreatedAtById.remove(offer.id);
+        }
+        // AppLogger.info(
+        //     'Broadcasted NIP-69 order event for offer ${offer.id}, status: ${status} id:${event.id}',
+        //     offerId: offer.id);
+      } catch (e) {
+        AppLogger.info(
+            'Error broadcasting NIP-69 order event for offer ${offer.id}: $e',
+            offerId: offer.id);
       }
-      // AppLogger.info(
-      //     'Broadcasted NIP-69 order event for offer ${offer.id}, status: ${status} id:${event.id}',
-      //     offerId: offer.id);
-    } catch (e) {
-      AppLogger.info(
-          'Error broadcasting NIP-69 order event for offer ${offer.id}: $e',
-          offerId: offer.id);
-    }
+    });
   }
 
   /// Rebroadcast all offers to update their status on Nostr relays.

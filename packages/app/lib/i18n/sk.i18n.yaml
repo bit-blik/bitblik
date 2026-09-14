@@ -242,6 +242,11 @@ exchange:
 # INFORMÁCIE O KOORDINÁTOROVI
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Podpora BOLT12"
+    body: "Tento koordinátor môže platiť do peňaženiek, ktoré prijímajú platby cez ponuky BOLT12. Tieto peňaženky môžeš použiť na výplaty pre takerov alebo vrátenie prostriedkov makerom."
+    details: "Ponuka BOLT12 je opakovane použiteľná žiadosť o platbu cez Lightning, ktorú môžeš zdieľať ako text alebo QR kód. Tá istá ponuka môže prijať viacero platieb, takže nemusíš zakaždým vytvárať a zdieľať novú žiadosť o platbu. Tvoja prijímacia peňaženka musí podporovať ponuky BOLT12."
+    learnMore: "Viac informácií na bolt12.org"
   title: "Koordinátori"
   info:
     fee: "poplatok"

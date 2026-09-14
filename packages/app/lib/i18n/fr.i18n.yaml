@@ -258,6 +258,11 @@ exchange:
 # COORDINATOR INFORMATION
 # =============================================================================
 coordinator:
+  bolt12:
+    title: "Prise en charge de BOLT12"
+    body: "Ce coordinateur peut payer les portefeuilles qui reçoivent des paiements via des offres BOLT12. Vous pouvez utiliser ces portefeuilles pour les versements aux takers ou les remboursements aux makers."
+    details: "Une offre BOLT12 est une demande de paiement Lightning réutilisable que vous pouvez partager sous forme de texte ou de code QR. La même offre peut recevoir plusieurs paiements, sans devoir créer et partager une nouvelle demande à chaque fois. Votre portefeuille de réception doit prendre en charge les offres BOLT12."
+    learnMore: "En savoir plus sur bolt12.org"
   title: "Coordinateurs"
   info:
     fee: "frais"

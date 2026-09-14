@@ -174,6 +174,7 @@ class _Translations$coordinator$de extends Translations$coordinator$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$de bolt12 = _Translations$coordinator$bolt12$de._(_root);
 	@override String get title => 'Koordinatoren';
 	@override late final _Translations$coordinator$info$de info = _Translations$coordinator$info$de._(_root);
 	@override late final _Translations$coordinator$selector$de selector = _Translations$coordinator$selector$de._(_root);
@@ -938,6 +939,19 @@ class _Translations$exchange$errors$de extends Translations$exchange$errors$en {
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'Betrag ist zu hoch. Maximum ist ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Der Geldautomat kann diesen Betrag nicht ausgeben. Verwende eine Kombination von Scheinen: ${notes}.';
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} zahlt pro Abhebung höchstens ${limit} ${currency} aus.';
+}
+
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$de extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'BOLT12-Unterstützung';
+	@override String get body => 'Dieser Koordinator kann Zahlungen an Wallets senden, die Zahlungen über BOLT12-Angebote empfangen. Du kannst diese Wallets für Auszahlungen an Taker oder Rückerstattungen an Maker verwenden.';
+	@override String get details => 'Ein BOLT12-Angebot ist eine wiederverwendbare Lightning-Zahlungsanforderung, die du als Text oder QR-Code teilen kannst. Dasselbe Angebot kann mehrere Zahlungen empfangen. Du musst also nicht jedes Mal eine neue Zahlungsanforderung erstellen und teilen. Deine Empfangs-Wallet muss BOLT12-Angebote unterstützen.';
+	@override String get learnMore => 'Mehr erfahren auf bolt12.org';
 }
 
 // Path: coordinator.info
@@ -3409,6 +3423,10 @@ extension on TranslationsDe {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Betrag ist zu hoch. Maximum ist ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Der Geldautomat kann diesen Betrag nicht ausgeben. Verwende eine Kombination von Scheinen: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} zahlt pro Abhebung höchstens ${limit} ${currency} aus.',
+			'coordinator.bolt12.title' => 'BOLT12-Unterstützung',
+			'coordinator.bolt12.body' => 'Dieser Koordinator kann Zahlungen an Wallets senden, die Zahlungen über BOLT12-Angebote empfangen. Du kannst diese Wallets für Auszahlungen an Taker oder Rückerstattungen an Maker verwenden.',
+			'coordinator.bolt12.details' => 'Ein BOLT12-Angebot ist eine wiederverwendbare Lightning-Zahlungsanforderung, die du als Text oder QR-Code teilen kannst. Dasselbe Angebot kann mehrere Zahlungen empfangen. Du musst also nicht jedes Mal eine neue Zahlungsanforderung erstellen und teilen. Deine Empfangs-Wallet muss BOLT12-Angebote unterstützen.',
+			'coordinator.bolt12.learnMore' => 'Mehr erfahren auf bolt12.org',
 			'coordinator.title' => 'Koordinatoren',
 			'coordinator.info.fee' => 'Gebühr',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Betrag: ${minAmount}-${maxAmount} ${currency}',
@@ -3743,12 +3761,12 @@ extension on TranslationsDe {
 			'taker.conflict.actions.back' => 'Zurück zur Startseite',
 			'taker.conflict.feedback.reported' => 'Zahlungskonflikt gemeldet. Warten auf die Bestätigung des Makers.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}',
+			_ => null,
+		} ?? switch (path) {
 			'taker.dispute.headline' => 'Formeller Streitfall eröffnet',
 			'taker.dispute.body' => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.',
 			'twint.shop.scanTitle' => 'Shop-QR-Code scannen',
 			'twint.shop.scanInstructions' => 'Scanne den Zahlungs-QR-Code auf dem Terminal im Geschäft. Der CHF-Betrag wird aus dem Code gelesen.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.shop.invalidQr' => 'Dieser QR-Code ist keine unterstützte CHF-Zahlung im Geschäft. Scanne den Zahlungs-QR-Code auf dem Terminal.',
 			'twint.shop.amountMismatch' => 'Dieser QR-Code hat einen anderen Betrag. Bitte um einen neuen QR-Code mit dem ursprünglichen Zahlungsbetrag.',
 			'twint.shop.cameraFailed' => 'Kamera nicht verfügbar. Erlaube den Kamerazugriff in den Geräte- oder Browsereinstellungen und versuche es erneut.',

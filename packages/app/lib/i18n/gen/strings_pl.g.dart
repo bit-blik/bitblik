@@ -175,6 +175,7 @@ class _Translations$coordinator$pl extends Translations$coordinator$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$coordinator$bolt12$pl bolt12 = _Translations$coordinator$bolt12$pl._(_root);
 	@override String get title => 'Koordynatorzy';
 	@override late final _Translations$coordinator$info$pl info = _Translations$coordinator$info$pl._(_root);
 	@override late final _Translations$coordinator$selector$pl selector = _Translations$coordinator$selector$pl._(_root);
@@ -938,6 +939,19 @@ class _Translations$exchange$errors$pl extends Translations$exchange$errors$en {
 	@override String tooHighFiat({required Object maxAmount, required Object currency}) => 'Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}.';
 	@override String atmNotDispensable({required Object notes}) => 'Bankomat nie wypłaci tej kwoty. Użyj kombinacji nominałów: ${notes}.';
 	@override String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} wypłaca maksymalnie ${limit} ${currency} na jedną wypłatę.';
+}
+
+// Path: coordinator.bolt12
+class _Translations$coordinator$bolt12$pl extends Translations$coordinator$bolt12$en {
+	_Translations$coordinator$bolt12$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Obsługa BOLT12';
+	@override String get body => 'Ten koordynator może płacić do portfeli odbierających płatności przez oferty BOLT12. Możesz używać tych portfeli do wypłat dla takera lub zwrotów dla makera.';
+	@override String get details => 'Oferta BOLT12 to wielokrotnego użytku żądanie płatności Lightning, które możesz udostępnić jako tekst lub kod QR. Ta sama oferta może przyjmować wiele płatności, więc nie musisz za każdym razem tworzyć i udostępniać nowego żądania płatności. Twój portfel odbiorczy musi obsługiwać oferty BOLT12.';
+	@override String get learnMore => 'Dowiedz się więcej na bolt12.org';
 }
 
 // Path: coordinator.info
@@ -3384,6 +3398,10 @@ extension on TranslationsPl {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Kwota jest za wysoka. Maksimum to ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'Bankomat nie wypłaci tej kwoty. Użyj kombinacji nominałów: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} wypłaca maksymalnie ${limit} ${currency} na jedną wypłatę.',
+			'coordinator.bolt12.title' => 'Obsługa BOLT12',
+			'coordinator.bolt12.body' => 'Ten koordynator może płacić do portfeli odbierających płatności przez oferty BOLT12. Możesz używać tych portfeli do wypłat dla takera lub zwrotów dla makera.',
+			'coordinator.bolt12.details' => 'Oferta BOLT12 to wielokrotnego użytku żądanie płatności Lightning, które możesz udostępnić jako tekst lub kod QR. Ta sama oferta może przyjmować wiele płatności, więc nie musisz za każdym razem tworzyć i udostępniać nowego żądania płatności. Twój portfel odbiorczy musi obsługiwać oferty BOLT12.',
+			'coordinator.bolt12.learnMore' => 'Dowiedz się więcej na bolt12.org',
 			'coordinator.title' => 'Koordynatorzy',
 			'coordinator.info.fee' => 'opłata',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Kwota: ${minAmount}-${maxAmount} ${currency}',
@@ -3718,12 +3736,12 @@ extension on TranslationsPl {
 			'twint.shop.replacementScanned' => 'Nowy kod QR odpowiada kwocie zasilonej oferty.',
 			'twint.shop.qrLabel' => 'Kod QR do płatności TWINT',
 			'twint.shop.payInstructions' => 'Zeskanuj ten kod QR w TWINT albo zapisz obraz i zaimportuj go z galerii w TWINT. Przed zapłatą sprawdź sprzedawcę i kwotę.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.shop.saveImage' => 'Zapisz QR w zdjęciach',
 			'twint.shop.downloadImage' => 'Pobierz obraz QR',
 			'twint.shop.saving' => 'Zapisywanie obrazu QR…',
 			'twint.shop.saved' => 'Obraz QR zapisany. Otwórz TWINT i zaimportuj go z galerii.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.shop.downloadStarted' => 'Pobieranie obrazu QR rozpoczęte. Zapisz go w zdjęciach, aby zaimportować go w TWINT.',
 			'twint.shop.saveFailed' => 'Nie udało się zapisać obrazu QR. Sprawdź uprawnienia dostępu do zdjęć i wolne miejsce, a następnie spróbuj ponownie.',
 			'twint.shop.expired' => 'Ten kod QR wygasł. Nie płać nim ani nie używaj wcześniej zapisanego obrazu.',

@@ -185,6 +185,7 @@ class Translations$coordinator$en {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final Translations$coordinator$bolt12$en bolt12 = Translations$coordinator$bolt12$en.internal(_root);
 
 	/// en: 'Coordinators'
 	String get title => 'Coordinators';
@@ -1396,6 +1397,27 @@ class Translations$exchange$errors$en {
 
 	/// en: '${bank} pays out at most ${limit} ${currency} per withdrawal.'
 	String atmOverBankLimit({required Object bank, required Object limit, required Object currency}) => '${bank} pays out at most ${limit} ${currency} per withdrawal.';
+}
+
+// Path: coordinator.bolt12
+class Translations$coordinator$bolt12$en {
+	Translations$coordinator$bolt12$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'BOLT12 support'
+	String get title => 'BOLT12 support';
+
+	/// en: 'This coordinator can pay wallets that receive payments through BOLT12 offers. You can use these wallets for taker payouts or maker refunds.'
+	String get body => 'This coordinator can pay wallets that receive payments through BOLT12 offers. You can use these wallets for taker payouts or maker refunds.';
+
+	/// en: 'A BOLT12 offer is a reusable Lightning payment request you can share as text or a QR code. The same offer can receive multiple payments, so you do not need to create and share a new payment request each time. Your receiving wallet must support BOLT12 offers.'
+	String get details => 'A BOLT12 offer is a reusable Lightning payment request you can share as text or a QR code. The same offer can receive multiple payments, so you do not need to create and share a new payment request each time. Your receiving wallet must support BOLT12 offers.';
+
+	/// en: 'Learn more at bolt12.org'
+	String get learnMore => 'Learn more at bolt12.org';
 }
 
 // Path: coordinator.info
@@ -5947,6 +5969,10 @@ extension on Translations {
 			'exchange.errors.tooHighFiat' => ({required Object maxAmount, required Object currency}) => 'Amount is too high. Maximum is ${maxAmount} ${currency}.',
 			'exchange.errors.atmNotDispensable' => ({required Object notes}) => 'ATM can\'t dispense this amount. Use a combination of notes: ${notes}.',
 			'exchange.errors.atmOverBankLimit' => ({required Object bank, required Object limit, required Object currency}) => '${bank} pays out at most ${limit} ${currency} per withdrawal.',
+			'coordinator.bolt12.title' => 'BOLT12 support',
+			'coordinator.bolt12.body' => 'This coordinator can pay wallets that receive payments through BOLT12 offers. You can use these wallets for taker payouts or maker refunds.',
+			'coordinator.bolt12.details' => 'A BOLT12 offer is a reusable Lightning payment request you can share as text or a QR code. The same offer can receive multiple payments, so you do not need to create and share a new payment request each time. Your receiving wallet must support BOLT12 offers.',
+			'coordinator.bolt12.learnMore' => 'Learn more at bolt12.org',
 			'coordinator.title' => 'Coordinators',
 			'coordinator.info.fee' => 'fee',
 			'coordinator.info.rangeDisplay' => ({required Object minAmount, required Object maxAmount, required Object currency}) => 'Amount: ${minAmount}-${maxAmount} ${currency}',
@@ -6280,12 +6306,12 @@ extension on Translations {
 			'taker.waitConfirmation.categoryReminder.atm' => 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.',
 			'taker.waitConfirmation.categoryReminder.ecommerce' => 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.',
 			'taker.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Waiting for maker to receive your ${code} code...',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Maker has received your ${code} code.',
 			'taker.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.',
 			'taker.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.',
 			'taker.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Resend New ${code} Code',
-			_ => null,
-		} ?? switch (path) {
 			'taker.waitConfirmation.navigatedHome' => 'Navigated home.',
 			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => '${code} Code Expired',
 			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'The maker did not receive the ${code} code so it couldn\'t have used it.',
@@ -6794,12 +6820,12 @@ extension on Translations {
 			'offerNotifications.reserved.body' => 'A taker has reserved your offer.',
 			'offerNotifications.blikReady.title' => ({required Object code}) => '${code} ready',
 			'offerNotifications.blikReady.body' => ({required Object code}) => 'Your ${code} is ready to view.',
+			_ => null,
+		} ?? switch (path) {
 			'offerNotifications.newOffer.title' => 'New offer available',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premium',
 			'offerNotifications.categories.shop' => 'Shop',
-			_ => null,
-		} ?? switch (path) {
 			'offerNotifications.categories.atm' => 'ATM',
 			'offerNotifications.categories.online' => 'Online',
 			'offerNotifications.blikPendingReminder.title' => ({required Object code}) => '${code} waiting for your action',
