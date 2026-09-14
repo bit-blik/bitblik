@@ -1265,17 +1265,17 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/ndk"
-      ref: "1b437608ff46b5175a7c6a9e932da3e53bace285"
-      resolved-ref: "1b437608ff46b5175a7c6a9e932da3e53bace285"
+      ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
+      resolved-ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.10.0-dev.2"
+    version: "0.10.0-dev.3"
   ndk_drift:
     dependency: "direct overridden"
     description:
       path: "packages/drift"
-      ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
-      resolved-ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
+      ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
+      resolved-ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
       url: "https://github.com/relaystr/ndk.git"
     source: git
     version: "0.1.1-dev.15"
@@ -1283,17 +1283,17 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/ndk_flutter"
-      ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
-      resolved-ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
+      ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
+      resolved-ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.10.0-dev.3"
+    version: "0.10.0-dev.4"
   ndk_objectbox:
     dependency: "direct overridden"
     description:
       path: "packages/objectbox"
-      ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
-      resolved-ref: "75a469507056b0b652bdff7c263161e65b2df2cc"
+      ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
+      resolved-ref: "5b655f7f6647388faee5fb8aa266431210f81cff"
       url: "https://github.com/relaystr/ndk.git"
     source: git
     version: "0.2.12-dev.12"
