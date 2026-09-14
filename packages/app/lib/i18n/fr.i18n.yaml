@@ -656,6 +656,13 @@ maker:
 # TAKER FLOW
 # =============================================================================
 taker:
+  waitConfirmation:
+    expiredActions:
+      checkReportStatus: "Vérifier le statut / renvoyer"
+    feedback:
+      chargeReported: "Signalement du débit reçu. En attente de la réponse du Maker ou de la confirmation automatique."
+    errors:
+      reportingConflictUnconfirmed: "Confirmation du signalement en attente. Sa réception est inconnue. Vérifiez le statut pour le renvoyer si nécessaire. Si le statut reste indisponible, contactez l’assistance."
   roleSelection:
     button: VENDRE un code ${code} contre des satoshi
 

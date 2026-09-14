@@ -639,6 +639,13 @@ maker:
 # TAKER FLOW
 # =============================================================================
 taker:
+  waitConfirmation:
+    expiredActions:
+      checkReportStatus: "Controlla stato / riprova"
+    feedback:
+      chargeReported: "Segnalazione di addebito ricevuta. In attesa della risposta del Maker o della conferma automatica."
+    errors:
+      reportingConflictUnconfirmed: "Conferma della segnalazione in attesa. La consegna è incerta. Controlla lo stato per riprovare se la segnalazione è ancora necessaria. Se lo stato resta indisponibile, contatta l’assistenza."
   roleSelection:
     button: VENDI codice ${code} per satoshi
 

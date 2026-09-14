@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'offer_reconciliation.dart';
 import 'package:bitblik_core/core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:ndk/shared/logger/logger.dart';
@@ -310,6 +311,26 @@ class OfferDbService {
         })
         .whereType<Offer>()
         .toList();
+  }
+
+  /// Used by reconnect, status-push hydration and manual history refresh.
+  Future<Offer?> reconcileRemoteOffer(
+    Offer local,
+    Offer? remote,
+    String? userPubkey,
+  ) async {
+    // A status push may have advanced the row while the RPC was in flight.
+    final current = await getOfferById(local.id) ?? local;
+    if (current.statusRaw != local.statusRaw) return current;
+    final resolved = reconcileOfferSnapshot(current, remote, userPubkey);
+    if (identical(resolved, current)) return current;
+    if (resolved == null) {
+      await deleteOfferById(current.id);
+      return null;
+    }
+    await upsertOffer(resolved);
+    if (current.id != resolved.id) await deleteOfferById(current.id);
+    return resolved;
   }
 
   Future<void> deleteOfferById(String id) async {

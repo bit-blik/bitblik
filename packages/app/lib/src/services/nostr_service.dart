@@ -1096,7 +1096,11 @@ class NostrService {
       params: {'offer_id': offerId},
     );
 
-    final response = await sendRequest(request, coordinatorPubkey);
+    final response = await sendRequest(
+      request,
+      coordinatorPubkey,
+      timeoutOverride: const Duration(seconds: 120),
+    );
     _handleResponse(response, (result) => null);
   }
 
@@ -1106,7 +1110,17 @@ class NostrService {
       params: {'offer_id': offerId},
     );
 
-    final response = await sendRequest(request, coordinatorPubkey);
+    // Same 120s budget as updateTakerInvoice/retryTakerPayment: this drives a
+    // state change plus notifications on the coordinator, and the reply has to
+    // travel back over relays. On the 5s default the coordinator regularly
+    // finished the work while the app had already given up — the user saw an
+    // error for a report that had in fact been recorded, which is the worst
+    // possible outcome for someone whose money just left their account.
+    final response = await sendRequest(
+      request,
+      coordinatorPubkey,
+      timeoutOverride: const Duration(seconds: 120),
+    );
     _handleResponse(response, (result) => null);
   }
 
@@ -1116,7 +1130,11 @@ class NostrService {
       params: {'offer_id': offerId},
     );
 
-    final response = await sendRequest(request, coordinatorPubkey);
+    final response = await sendRequest(
+      request,
+      coordinatorPubkey,
+      timeoutOverride: const Duration(seconds: 120),
+    );
     _handleResponse(response, (result) => null);
   }
 

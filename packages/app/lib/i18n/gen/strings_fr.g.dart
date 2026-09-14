@@ -241,6 +241,7 @@ class _Translations$taker$fr extends Translations$taker$en {
 	final TranslationsFr _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$taker$waitConfirmation$fr waitConfirmation = _Translations$taker$waitConfirmation$fr._(_root);
 	@override late final _Translations$taker$roleSelection$fr roleSelection = _Translations$taker$roleSelection$fr._(_root);
 	@override late final _Translations$taker$progress$fr progress = _Translations$taker$progress$fr._(_root);
 	@override late final _Translations$taker$submitBlik$fr submitBlik = _Translations$taker$submitBlik$fr._(_root);
@@ -1298,6 +1299,18 @@ class _Translations$maker$success$fr extends Translations$maker$success$en {
 	@override String get subtitle => 'Le taker va maintenant être payé.';
 	@override String get detailsTitle => 'Détails de l\'offre :';
 	@override String duration({required Object time}) => 'L\'offre a pris ${time} !';
+}
+
+// Path: taker.waitConfirmation
+class _Translations$taker$waitConfirmation$fr extends Translations$taker$waitConfirmation$en {
+	_Translations$taker$waitConfirmation$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$taker$waitConfirmation$expiredActions$fr expiredActions = _Translations$taker$waitConfirmation$expiredActions$fr._(_root);
+	@override late final _Translations$taker$waitConfirmation$feedback$fr feedback = _Translations$taker$waitConfirmation$feedback$fr._(_root);
+	@override late final _Translations$taker$waitConfirmation$errors$fr errors = _Translations$taker$waitConfirmation$errors$fr._(_root);
 }
 
 // Path: taker.roleSelection
@@ -2536,6 +2549,36 @@ class _Translations$maker$conflict$nostrContact$fr extends Translations$maker$co
 	@override String get manageNekoKeys => 'Gérer les clés Neko';
 }
 
+// Path: taker.waitConfirmation.expiredActions
+class _Translations$taker$waitConfirmation$expiredActions$fr extends Translations$taker$waitConfirmation$expiredActions$en {
+	_Translations$taker$waitConfirmation$expiredActions$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkReportStatus => 'Vérifier le statut / renvoyer';
+}
+
+// Path: taker.waitConfirmation.feedback
+class _Translations$taker$waitConfirmation$feedback$fr extends Translations$taker$waitConfirmation$feedback$en {
+	_Translations$taker$waitConfirmation$feedback$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get chargeReported => 'Signalement du débit reçu. En attente de la réponse du Maker ou de la confirmation automatique.';
+}
+
+// Path: taker.waitConfirmation.errors
+class _Translations$taker$waitConfirmation$errors$fr extends Translations$taker$waitConfirmation$errors$en {
+	_Translations$taker$waitConfirmation$errors$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get reportingConflictUnconfirmed => 'Confirmation du signalement en attente. Sa réception est inconnue. Vérifiez le statut pour le renvoyer si nécessaire. Si le statut reste indisponible, contactez l’assistance.';
+}
+
 // Path: taker.submitBlik.actions
 class _Translations$taker$submitBlik$actions$fr extends Translations$taker$submitBlik$actions$en {
 	_Translations$taker$submitBlik$actions$fr._(TranslationsFr root) : this._root = root, super.internal(root);
@@ -3723,6 +3766,9 @@ extension on TranslationsFr {
 			'maker.success.subtitle' => 'Le taker va maintenant être payé.',
 			'maker.success.detailsTitle' => 'Détails de l\'offre :',
 			'maker.success.duration' => ({required Object time}) => 'L\'offre a pris ${time} !',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Vérifier le statut / renvoyer',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Signalement du débit reçu. En attente de la réponse du Maker ou de la confirmation automatique.',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Confirmation du signalement en attente. Sa réception est inconnue. Vérifiez le statut pour le renvoyer si nécessaire. Si le statut reste indisponible, contactez l’assistance.',
 			'taker.roleSelection.button' => ({required Object code}) => 'VENDRE un code ${code} contre des satoshi',
 			'taker.progress.step1' => ({required Object code}) => 'Envoyer le ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Confirmer le ${code}',
@@ -3758,11 +3804,11 @@ extension on TranslationsFr {
 			'taker.conflict.body' => ({required Object code}) => 'Vous avez signalé que le paiement ${code} a été débité, mais le maker a indiqué qu\'il avait échoué. Ces déclarations sont contradictoires.',
 			'taker.conflict.instructions' => 'Le maker doit maintenant confirmer le résultat. S\'il confirme que le paiement a réussi, votre versement continuera. S\'il confirme l\'échec, ou si le délai expire, l\'offre passera en litige formel et le chat du litige deviendra disponible.',
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Ouverture automatique du litige formel dans ${time}',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.actions.back' => 'Retour à l\'accueil',
 			'taker.conflict.feedback.reported' => 'Conflit de paiement signalé. En attente de la confirmation du maker.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Erreur lors du signalement du conflit : ${details}',
-			_ => null,
-		} ?? switch (path) {
 			'taker.dispute.headline' => 'Litige formel ouvert',
 			'taker.dispute.body' => 'L\'offre est maintenant examinée par le coordinateur. Utilisez le chat du litige ci-dessous pour communiquer avec le coordinateur et fournir les justificatifs demandés.',
 			'twint.shop.scanTitle' => 'Scanner le QR du magasin',

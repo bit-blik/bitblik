@@ -242,6 +242,7 @@ class _Translations$taker$pt extends Translations$taker$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$taker$waitConfirmation$pt waitConfirmation = _Translations$taker$waitConfirmation$pt._(_root);
 	@override late final _Translations$taker$roleSelection$pt roleSelection = _Translations$taker$roleSelection$pt._(_root);
 	@override late final _Translations$taker$progress$pt progress = _Translations$taker$progress$pt._(_root);
 	@override late final _Translations$taker$submitBlik$pt submitBlik = _Translations$taker$submitBlik$pt._(_root);
@@ -1299,6 +1300,18 @@ class _Translations$maker$success$pt extends Translations$maker$success$en {
 	@override String get subtitle => 'O taker vai ser pago agora.';
 	@override String get detailsTitle => 'Detalhes da oferta:';
 	@override String duration({required Object time}) => 'A oferta demorou ${time}!';
+}
+
+// Path: taker.waitConfirmation
+class _Translations$taker$waitConfirmation$pt extends Translations$taker$waitConfirmation$en {
+	_Translations$taker$waitConfirmation$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$taker$waitConfirmation$expiredActions$pt expiredActions = _Translations$taker$waitConfirmation$expiredActions$pt._(_root);
+	@override late final _Translations$taker$waitConfirmation$feedback$pt feedback = _Translations$taker$waitConfirmation$feedback$pt._(_root);
+	@override late final _Translations$taker$waitConfirmation$errors$pt errors = _Translations$taker$waitConfirmation$errors$pt._(_root);
 }
 
 // Path: taker.roleSelection
@@ -2537,6 +2550,36 @@ class _Translations$maker$conflict$nostrContact$pt extends Translations$maker$co
 	@override String get manageNekoKeys => 'Gerir chaves Neko';
 }
 
+// Path: taker.waitConfirmation.expiredActions
+class _Translations$taker$waitConfirmation$expiredActions$pt extends Translations$taker$waitConfirmation$expiredActions$en {
+	_Translations$taker$waitConfirmation$expiredActions$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkReportStatus => 'Verificar estado / reenviar relato';
+}
+
+// Path: taker.waitConfirmation.feedback
+class _Translations$taker$waitConfirmation$feedback$pt extends Translations$taker$waitConfirmation$feedback$en {
+	_Translations$taker$waitConfirmation$feedback$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get chargeReported => 'Relato de cobrança recebido. A aguardar a resposta do Maker ou a confirmação automática.';
+}
+
+// Path: taker.waitConfirmation.errors
+class _Translations$taker$waitConfirmation$errors$pt extends Translations$taker$waitConfirmation$errors$en {
+	_Translations$taker$waitConfirmation$errors$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get reportingConflictUnconfirmed => 'Confirmação do relato pendente. Não se sabe se foi entregue. Verifique o estado para reenviar se ainda for necessário. Se o estado continuar indisponível, contacte o suporte.';
+}
+
 // Path: taker.submitBlik.actions
 class _Translations$taker$submitBlik$actions$pt extends Translations$taker$submitBlik$actions$en {
 	_Translations$taker$submitBlik$actions$pt._(TranslationsPt root) : this._root = root, super.internal(root);
@@ -3725,6 +3768,9 @@ extension on TranslationsPt {
 			'maker.success.subtitle' => 'O taker vai ser pago agora.',
 			'maker.success.detailsTitle' => 'Detalhes da oferta:',
 			'maker.success.duration' => ({required Object time}) => 'A oferta demorou ${time}!',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Verificar estado / reenviar relato',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Relato de cobrança recebido. A aguardar a resposta do Maker ou a confirmação automática.',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Confirmação do relato pendente. Não se sabe se foi entregue. Verifique o estado para reenviar se ainda for necessário. Se o estado continuar indisponível, contacte o suporte.',
 			'taker.roleSelection.button' => ({required Object code}) => 'VENDER código ${code} por satoshi',
 			'taker.progress.step1' => ({required Object code}) => 'Submeter ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Confirmar ${code}',
@@ -3759,11 +3805,11 @@ extension on TranslationsPt {
 			'taker.conflict.headline' => 'A aguardar a confirmação do maker',
 			'taker.conflict.body' => ({required Object code}) => 'Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.',
 			'taker.conflict.instructions' => 'O maker tem agora de confirmar o resultado. Se confirmar que o pagamento foi bem-sucedido, o seu pagamento continuará. Se confirmar que falhou, ou se o temporizador expirar, a oferta passará para uma disputa formal e o chat da disputa ficará disponível.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'A disputa formal será aberta automaticamente dentro de ${time}',
 			'taker.conflict.actions.back' => 'Voltar ao início',
 			'taker.conflict.feedback.reported' => 'Conflito de pagamento reportado. A aguardar a confirmação do maker.',
-			_ => null,
-		} ?? switch (path) {
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Erro ao reportar o conflito: ${details}',
 			'taker.dispute.headline' => 'Disputa formal aberta',
 			'taker.dispute.body' => 'A oferta está agora sob análise do coordenador. Utilize o chat da disputa abaixo para comunicar com o coordenador e fornecer as provas solicitadas.',

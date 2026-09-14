@@ -4407,6 +4407,9 @@ class Translations$taker$waitConfirmation$expiredActions$en {
 
 	// Translations
 
+	/// en: 'Check status / retry report'
+	String get checkReportStatus => 'Check status / retry report';
+
 	/// en: '${code} was charged from my bank account'
 	String reportConflict({required Object code}) => '${code} was charged from my bank account';
 
@@ -4431,8 +4434,8 @@ class Translations$taker$waitConfirmation$feedback$en {
 	/// en: 'Payment successful! You will receive funds shortly.'
 	String get paymentSuccessful => 'Payment successful! You will receive funds shortly.';
 
-	/// en: 'Conflict reported. Coordinator will review the situation.'
-	String get conflictReported => 'Conflict reported. Coordinator will review the situation.';
+	/// en: 'Charge report received. Awaiting the maker’s response or automatic confirmation.'
+	String get chargeReported => 'Charge report received. Awaiting the maker’s response or automatic confirmation.';
 }
 
 // Path: taker.waitConfirmation.errors
@@ -4448,6 +4451,9 @@ class Translations$taker$waitConfirmation$errors$en {
 
 	/// en: 'Error reporting conflict: ${details}'
 	String reportingConflict({required Object details}) => 'Error reporting conflict: ${details}';
+
+	/// en: 'Report confirmation pending. Delivery is unknown. Check status to retry if the report is still needed. If status remains unavailable, contact support.'
+	String get reportingConflictUnconfirmed => 'Report confirmation pending. Delivery is unknown. Check status to retry if the report is still needed. If status remains unavailable, contact support.';
 }
 
 // Path: taker.paymentProcess.states
@@ -6322,14 +6328,16 @@ extension on Translations {
 			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'If the ${code} payment was charged from your bank account, do not worry, the bitcoin is still safely locked with the coordinator.',
 			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'You marked ${code} as charged',
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'The maker has ${minutes}min to confirm the payment or dispute the payment. If they do nothing the payment will auto confirm and you will receive the bitcoin.',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Check status / retry report',
 			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} was charged from my bank account',
 			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Try again with new ${code} code',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Cancel reservation',
 			'taker.waitConfirmation.feedback.makerConfirmed' => 'Maker confirmed payment.',
 			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Payment successful! You will receive funds shortly.',
-			'taker.waitConfirmation.feedback.conflictReported' => 'Conflict reported. Coordinator will review the situation.',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Charge report received. Awaiting the maker’s response or automatic confirmation.',
 			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Received an offer with an invalid state for this screen. Resetting.',
 			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Error reporting conflict: ${details}',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Report confirmation pending. Delivery is unknown. Check status to retry if the report is still needed. If status remains unavailable, contact support.',
 			'taker.paymentProcess.title' => 'Payment Process',
 			'taker.paymentProcess.waitingForOfferUpdate' => 'Waiting for offer status update...',
 			'taker.paymentProcess.states.preparing' => 'Preparing to send payment...',
@@ -6818,10 +6826,10 @@ extension on Translations {
 			'offerNotifications.funded.body' => 'Your hold invoice was accepted. Offer is now live.',
 			'offerNotifications.reserved.title' => 'Offer reserved',
 			'offerNotifications.reserved.body' => 'A taker has reserved your offer.',
-			'offerNotifications.blikReady.title' => ({required Object code}) => '${code} ready',
-			'offerNotifications.blikReady.body' => ({required Object code}) => 'Your ${code} is ready to view.',
 			_ => null,
 		} ?? switch (path) {
+			'offerNotifications.blikReady.title' => ({required Object code}) => '${code} ready',
+			'offerNotifications.blikReady.body' => ({required Object code}) => 'Your ${code} is ready to view.',
 			'offerNotifications.newOffer.title' => 'New offer available',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premium',

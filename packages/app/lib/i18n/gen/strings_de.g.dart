@@ -241,6 +241,7 @@ class _Translations$taker$de extends Translations$taker$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$taker$waitConfirmation$de waitConfirmation = _Translations$taker$waitConfirmation$de._(_root);
 	@override late final _Translations$taker$roleSelection$de roleSelection = _Translations$taker$roleSelection$de._(_root);
 	@override late final _Translations$taker$progress$de progress = _Translations$taker$progress$de._(_root);
 	@override late final _Translations$taker$submitBlik$de submitBlik = _Translations$taker$submitBlik$de._(_root);
@@ -1298,6 +1299,18 @@ class _Translations$maker$success$de extends Translations$maker$success$en {
 	@override String get subtitle => 'Der Taker wird jetzt bezahlt.';
 	@override String get detailsTitle => 'Angebotsdetails:';
 	@override String duration({required Object time}) => 'Das Angebot dauerte ${time}!';
+}
+
+// Path: taker.waitConfirmation
+class _Translations$taker$waitConfirmation$de extends Translations$taker$waitConfirmation$en {
+	_Translations$taker$waitConfirmation$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$taker$waitConfirmation$expiredActions$de expiredActions = _Translations$taker$waitConfirmation$expiredActions$de._(_root);
+	@override late final _Translations$taker$waitConfirmation$feedback$de feedback = _Translations$taker$waitConfirmation$feedback$de._(_root);
+	@override late final _Translations$taker$waitConfirmation$errors$de errors = _Translations$taker$waitConfirmation$errors$de._(_root);
 }
 
 // Path: taker.roleSelection
@@ -2536,6 +2549,36 @@ class _Translations$maker$conflict$nostrContact$de extends Translations$maker$co
 	@override String get manageNekoKeys => 'Neko-Schlüssel verwalten';
 }
 
+// Path: taker.waitConfirmation.expiredActions
+class _Translations$taker$waitConfirmation$expiredActions$de extends Translations$taker$waitConfirmation$expiredActions$en {
+	_Translations$taker$waitConfirmation$expiredActions$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkReportStatus => 'Status prüfen / Meldung erneut senden';
+}
+
+// Path: taker.waitConfirmation.feedback
+class _Translations$taker$waitConfirmation$feedback$de extends Translations$taker$waitConfirmation$feedback$en {
+	_Translations$taker$waitConfirmation$feedback$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get chargeReported => 'Belastungsmeldung erhalten. Warten auf die Antwort des Makers oder die automatische Bestätigung.';
+}
+
+// Path: taker.waitConfirmation.errors
+class _Translations$taker$waitConfirmation$errors$de extends Translations$taker$waitConfirmation$errors$en {
+	_Translations$taker$waitConfirmation$errors$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get reportingConflictUnconfirmed => 'Bestätigung der Meldung ausstehend. Die Zustellung ist unklar. Prüfe den Status, um die Meldung bei Bedarf erneut zu senden. Falls der Status weiterhin nicht verfügbar ist, kontaktiere den Support.';
+}
+
 // Path: taker.submitBlik.actions
 class _Translations$taker$submitBlik$actions$de extends Translations$taker$submitBlik$actions$en {
 	_Translations$taker$submitBlik$actions$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -3723,6 +3766,9 @@ extension on TranslationsDe {
 			'maker.success.subtitle' => 'Der Taker wird jetzt bezahlt.',
 			'maker.success.detailsTitle' => 'Angebotsdetails:',
 			'maker.success.duration' => ({required Object time}) => 'Das Angebot dauerte ${time}!',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Status prüfen / Meldung erneut senden',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Belastungsmeldung erhalten. Warten auf die Antwort des Makers oder die automatische Bestätigung.',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Bestätigung der Meldung ausstehend. Die Zustellung ist unklar. Prüfe den Status, um die Meldung bei Bedarf erneut zu senden. Falls der Status weiterhin nicht verfügbar ist, kontaktiere den Support.',
 			'taker.roleSelection.button' => ({required Object code}) => '${code}-Code für Satoshi VERKAUFEN',
 			'taker.progress.step1' => ({required Object code}) => '${code} senden',
 			'taker.progress.step2' => ({required Object code}) => '${code} bestätigen',
@@ -3758,11 +3804,11 @@ extension on TranslationsDe {
 			'taker.conflict.body' => ({required Object code}) => 'Du hast gemeldet, dass die ${code}-Zahlung belastet wurde, aber der Maker hat sie als nicht erfolgreich gemeldet. Diese Meldungen widersprechen sich.',
 			'taker.conflict.instructions' => 'Der Maker muss nun das Ergebnis bestätigen. Bestätigt er den Erfolg der Zahlung, wird deine Auszahlung fortgesetzt. Bestätigt er den Fehlschlag oder läuft der Timer ab, wechselt das Angebot in einen formellen Streitfall und der Streitfall-Chat wird verfügbar.',
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formeller Streitfall wird automatisch eröffnet in ${time}',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.actions.back' => 'Zurück zur Startseite',
 			'taker.conflict.feedback.reported' => 'Zahlungskonflikt gemeldet. Warten auf die Bestätigung des Makers.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}',
-			_ => null,
-		} ?? switch (path) {
 			'taker.dispute.headline' => 'Formeller Streitfall eröffnet',
 			'taker.dispute.body' => 'Das Angebot wird nun vom Koordinator geprüft. Nutze den Streitfall-Chat unten, um mit dem Koordinator zu kommunizieren und angeforderte Nachweise bereitzustellen.',
 			'twint.shop.scanTitle' => 'Shop-QR-Code scannen',

@@ -2500,6 +2500,7 @@ class _Translations$taker$waitConfirmation$expiredActions$sk extends Translation
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
+	@override String get checkReportStatus => 'Skontrolovať stav / zopakovať hlásenie';
 	@override String reportConflict({required Object code}) => '${code} bol strhnutý z môjho bankového účtu';
 	@override String renewReservation({required Object code}) => 'Skúsiť znova s novým ${code}';
 	@override String get cancelReservation => 'Zrušiť rezerváciu';
@@ -2514,7 +2515,7 @@ class _Translations$taker$waitConfirmation$feedback$sk extends Translations$take
 	// Translations
 	@override String get makerConfirmed => 'Predávajúci potvrdil platbu.';
 	@override String get paymentSuccessful => 'Platba úspešná! Čoskoro dostaneš prostriedky.';
-	@override String get conflictReported => 'Konflikt nahlásený. Koordinátor posúdi situáciu.';
+	@override String get chargeReported => 'Hlásenie o strhnutí platby prijaté. Čaká sa na odpoveď Makera alebo automatické potvrdenie.';
 }
 
 // Path: taker.waitConfirmation.errors
@@ -2526,6 +2527,7 @@ class _Translations$taker$waitConfirmation$errors$sk extends Translations$taker$
 	// Translations
 	@override String get invalidOfferStateReceived => 'Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa.';
 	@override String reportingConflict({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}';
+	@override String get reportingConflictUnconfirmed => 'Čaká sa na potvrdenie hlásenia. Nie je známe, či bolo doručené. Skontroluj stav a v prípade potreby hlásenie odošli znova. Ak stav zostane nedostupný, kontaktuj podporu.';
 }
 
 // Path: taker.paymentProcess.states
@@ -3419,16 +3421,18 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.expiredInstruction3' => ({required Object code}) => 'Ak bola platba ${code} strhnutá z tvojho bankového účtu, neboj sa, bitcoin je stále bezpečne uzamknutý u koordinátora.',
 			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Označil si ${code} ako strhnutý',
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Predávajúci má ${minutes} min na potvrdenie platby alebo jej spochybnenie. Ak neurobí nič, platba sa automaticky potvrdí a ty dostaneš bitcoin.',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Skontrolovať stav / zopakovať hlásenie',
 			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} bol strhnutý z môjho bankového účtu',
 			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Skúsiť znova s novým ${code}',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Zrušiť rezerváciu',
 			'taker.waitConfirmation.feedback.makerConfirmed' => 'Predávajúci potvrdil platbu.',
-			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Platba úspešná! Čoskoro dostaneš prostriedky.',
 			_ => null,
 		} ?? switch (path) {
-			'taker.waitConfirmation.feedback.conflictReported' => 'Konflikt nahlásený. Koordinátor posúdi situáciu.',
+			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Platba úspešná! Čoskoro dostaneš prostriedky.',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Hlásenie o strhnutí platby prijaté. Čaká sa na odpoveď Makera alebo automatické potvrdenie.',
 			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa.',
 			'taker.waitConfirmation.errors.reportingConflict' => ({required Object details}) => 'Chyba pri nahlasovaní konfliktu: ${details}',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Čaká sa na potvrdenie hlásenia. Nie je známe, či bolo doručené. Skontroluj stav a v prípade potreby hlásenie odošli znova. Ak stav zostane nedostupný, kontaktuj podporu.',
 			'taker.paymentProcess.title' => 'Priebeh platby',
 			'taker.paymentProcess.waitingForOfferUpdate' => 'Čaká sa na aktualizáciu stavu ponuky...',
 			'taker.paymentProcess.states.preparing' => 'Príprava na odoslanie platby...',

@@ -242,6 +242,7 @@ class _Translations$taker$pl extends Translations$taker$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$taker$waitConfirmation$pl waitConfirmation = _Translations$taker$waitConfirmation$pl._(_root);
 	@override late final _Translations$taker$roleSelection$pl roleSelection = _Translations$taker$roleSelection$pl._(_root);
 	@override late final _Translations$taker$progress$pl progress = _Translations$taker$progress$pl._(_root);
 	@override late final _Translations$taker$submitBlik$pl submitBlik = _Translations$taker$submitBlik$pl._(_root);
@@ -1295,6 +1296,18 @@ class _Translations$maker$success$pl extends Translations$maker$success$en {
 	@override String get subtitle => 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.';
 	@override String get detailsTitle => 'Szczegóły oferty:';
 	@override String duration({required Object time}) => 'Oferta zajęła ${time}!';
+}
+
+// Path: taker.waitConfirmation
+class _Translations$taker$waitConfirmation$pl extends Translations$taker$waitConfirmation$en {
+	_Translations$taker$waitConfirmation$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override late final _Translations$taker$waitConfirmation$expiredActions$pl expiredActions = _Translations$taker$waitConfirmation$expiredActions$pl._(_root);
+	@override late final _Translations$taker$waitConfirmation$feedback$pl feedback = _Translations$taker$waitConfirmation$feedback$pl._(_root);
+	@override late final _Translations$taker$waitConfirmation$errors$pl errors = _Translations$taker$waitConfirmation$errors$pl._(_root);
 }
 
 // Path: taker.roleSelection
@@ -2511,6 +2524,36 @@ class _Translations$maker$conflict$nostrContact$pl extends Translations$maker$co
 	@override String get manageNekoKeys => 'Zarządzaj Kluczami Neko';
 }
 
+// Path: taker.waitConfirmation.expiredActions
+class _Translations$taker$waitConfirmation$expiredActions$pl extends Translations$taker$waitConfirmation$expiredActions$en {
+	_Translations$taker$waitConfirmation$expiredActions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkReportStatus => 'Sprawdź status / ponów zgłoszenie';
+}
+
+// Path: taker.waitConfirmation.feedback
+class _Translations$taker$waitConfirmation$feedback$pl extends Translations$taker$waitConfirmation$feedback$en {
+	_Translations$taker$waitConfirmation$feedback$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get chargeReported => 'Zgłoszenie obciążenia przyjęte. Oczekiwanie na odpowiedź Makera lub automatyczne potwierdzenie.';
+}
+
+// Path: taker.waitConfirmation.errors
+class _Translations$taker$waitConfirmation$errors$pl extends Translations$taker$waitConfirmation$errors$en {
+	_Translations$taker$waitConfirmation$errors$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get reportingConflictUnconfirmed => 'Oczekiwanie na potwierdzenie zgłoszenia. Nie wiadomo, czy dotarło. Sprawdź status, aby ponowić zgłoszenie, jeśli nadal jest potrzebne. Jeśli status pozostaje niedostępny, skontaktuj się z pomocą.';
+}
+
 // Path: taker.submitBlik.actions
 class _Translations$taker$submitBlik$actions$pl extends Translations$taker$submitBlik$actions$en {
 	_Translations$taker$submitBlik$actions$pl._(TranslationsPl root) : this._root = root, super.internal(root);
@@ -3683,6 +3726,9 @@ extension on TranslationsPl {
 			'maker.success.subtitle' => 'Osoba przyjmująca ofertę otrzyma teraz zapłatę.',
 			'maker.success.detailsTitle' => 'Szczegóły oferty:',
 			'maker.success.duration' => ({required Object time}) => 'Oferta zajęła ${time}!',
+			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Sprawdź status / ponów zgłoszenie',
+			'taker.waitConfirmation.feedback.chargeReported' => 'Zgłoszenie obciążenia przyjęte. Oczekiwanie na odpowiedź Makera lub automatyczne potwierdzenie.',
+			'taker.waitConfirmation.errors.reportingConflictUnconfirmed' => 'Oczekiwanie na potwierdzenie zgłoszenia. Nie wiadomo, czy dotarło. Sprawdź status, aby ponowić zgłoszenie, jeśli nadal jest potrzebne. Jeśli status pozostaje niedostępny, skontaktuj się z pomocą.',
 			'taker.roleSelection.button' => ({required Object code}) => 'SPRZEDAJ kod ${code} za satoshi',
 			'taker.progress.step1' => ({required Object code}) => 'Wyślij ${code}',
 			'taker.progress.step2' => ({required Object code}) => 'Potwierdź ${code}',
@@ -3733,11 +3779,11 @@ extension on TranslationsPl {
 			'twint.shop.coordinatorUnsupported' => 'Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje.',
 			'twint.shop.loadingFailed' => 'Nie udało się wczytać kodu QR płatności. Spróbuj ponownie.',
 			'twint.shop.replacementInstructions' => 'Zeskanuj nowy kod QR sklepu na tę samą kwotę CHF co zasilona oferta.',
+			_ => null,
+		} ?? switch (path) {
 			'twint.shop.replacementScanned' => 'Nowy kod QR odpowiada kwocie zasilonej oferty.',
 			'twint.shop.qrLabel' => 'Kod QR do płatności TWINT',
 			'twint.shop.payInstructions' => 'Zeskanuj ten kod QR w TWINT albo zapisz obraz i zaimportuj go z galerii w TWINT. Przed zapłatą sprawdź sprzedawcę i kwotę.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.shop.saveImage' => 'Zapisz QR w zdjęciach',
 			'twint.shop.downloadImage' => 'Pobierz obraz QR',
 			'twint.shop.saving' => 'Zapisywanie obrazu QR…',

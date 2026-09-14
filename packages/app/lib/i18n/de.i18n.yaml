@@ -656,6 +656,13 @@ maker:
 # TAKER FLOW
 # =============================================================================
 taker:
+  waitConfirmation:
+    expiredActions:
+      checkReportStatus: "Status prüfen / Meldung erneut senden"
+    feedback:
+      chargeReported: "Belastungsmeldung erhalten. Warten auf die Antwort des Makers oder die automatische Bestätigung."
+    errors:
+      reportingConflictUnconfirmed: "Bestätigung der Meldung ausstehend. Die Zustellung ist unklar. Prüfe den Status, um die Meldung bei Bedarf erneut zu senden. Falls der Status weiterhin nicht verfügbar ist, kontaktiere den Support."
   roleSelection:
     button: ${code}-Code für Satoshi VERKAUFEN
 

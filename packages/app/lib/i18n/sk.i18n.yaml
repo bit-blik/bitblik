@@ -705,6 +705,7 @@ taker:
       title: "Označil si ${code} ako strhnutý"
       message: "Predávajúci má ${minutes} min na potvrdenie platby alebo jej spochybnenie. Ak neurobí nič, platba sa automaticky potvrdí a ty dostaneš bitcoin."
     expiredActions:
+      checkReportStatus: "Skontrolovať stav / zopakovať hlásenie"
       reportConflict: "${code} bol strhnutý z môjho bankového účtu"
       renewReservation: "Skúsiť znova s novým ${code}"
       cancelReservation: "Zrušiť rezerváciu"
@@ -712,11 +713,12 @@ taker:
     feedback:
       makerConfirmed: Predávajúci potvrdil platbu.
       paymentSuccessful: Platba úspešná! Čoskoro dostaneš prostriedky.
-      conflictReported: Konflikt nahlásený. Koordinátor posúdi situáciu.
+      chargeReported: "Hlásenie o strhnutí platby prijaté. Čaká sa na odpoveď Makera alebo automatické potvrdenie."
 
     errors:
       invalidOfferStateReceived: "Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa."
       reportingConflict: "Chyba pri nahlasovaní konfliktu: ${details}"
+      reportingConflictUnconfirmed: "Čaká sa na potvrdenie hlásenia. Nie je známe, či bolo doručené. Skontroluj stav a v prípade potreby hlásenie odošli znova. Ak stav zostane nedostupný, kontaktuj podporu."
 
   paymentProcess:
     title: Priebeh platby

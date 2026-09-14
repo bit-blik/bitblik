@@ -11,7 +11,6 @@ import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import '../utils/offer_status_label.dart';
 import 'coordinator_details_screen.dart';
-import '../services/offer_db_service.dart';
 import '../utils/bitcoin_display.dart';
 import '../utils/category_icons.dart';
 import '../utils/locale_format.dart';
@@ -96,19 +95,11 @@ class LocalOfferDetailsScreen extends ConsumerWidget {
       return;
     }
 
-    final apiService = await ref.read(initializedApiServiceProvider.future);
-    final remote = await apiService.getOfferDetails(
-      offer,
-      offer.coordinatorPubkey,
-    );
-    if (remote == null) {
-      await OfferDbService().deleteOfferById(offer.id);
-      ref.invalidate(myOffersProvider);
-      return;
+    try {
+      await ref.read(activeOfferProvider.notifier).refreshOfferDetails(offer);
+    } catch (_) {
+      // Unavailable coordinator status must not erase the local trade.
     }
-
-    await OfferDbService().upsertOffer(Offer.fromJson(remote));
-    ref.invalidate(myOffersProvider);
   }
 }
 
