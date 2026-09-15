@@ -35,6 +35,7 @@ class TakerSubmitBlikScreen extends ConsumerStatefulWidget {
 class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
   final _blikController = TextEditingController();
   final _blikFocusNode = FocusNode();
+  final _scrollController = ScrollController();
   Timer? _blikInputTimer;
   Duration? _maxBlikInputTime; // Will be set from coordinatorInfo
   bool _isLoadingDetails = true; // Flag for initial loading
@@ -208,6 +209,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     _blikInputTimer?.cancel();
     _blikController.dispose();
     _blikFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -293,42 +295,45 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         ? offer.blikCode
         : _blikController.text;
     final takerId = ref.read(publicKeyProvider).value;
-    final hasReceivingWallet = await ref.read(
+    final hasReceivingWalletFuture = ref.read(
       hasReceivingWalletProvider.future,
     );
     final ndk = ref.read(ndkProvider);
+    final apiService = ref.read(apiServiceProvider);
+    final activeOfferNotifier = ref.read(activeOfferProvider.notifier);
+    final errorNotifier = ref.read(errorProvider.notifier);
+    final loadingNotifier = ref.read(isLoadingProvider.notifier);
+
+    final hasReceivingWallet = await hasReceivingWalletFuture;
+    if (!mounted) return;
 
     // --- Validations ---
     if (takerId == null) {
-      ref.read(errorProvider.notifier).state =
-          t.taker.paymentProcess.errors.noPublicKey;
+      errorNotifier.state = t.taker.paymentProcess.errors.noPublicKey;
       _startBlikInputTimer(offer);
       return;
     }
     if (offer.status != OfferStatus.reserved || offer.reservedAt == null) {
-      ref.read(errorProvider.notifier).state =
-          t.taker.submitBlik.errors.stateChanged;
+      errorNotifier.state = t.taker.submitBlik.errors.stateChanged;
       _resetToOfferList(t.taker.submitBlik.errors.stateNotValid);
       return;
     }
     if (!_makerProvidedCodeFlow && !_method.isValidCode(blikCode ?? '')) {
-      ref.read(errorProvider.notifier).state = t.taker.submitBlik.validation
-          .invalidFormat(
-            code: _method.localizedCodeLabel,
-            digits: _method.codeLength,
-          );
+      errorNotifier.state = t.taker.submitBlik.validation.invalidFormat(
+        code: _method.localizedCodeLabel,
+        digits: _method.codeLength,
+      );
       _startBlikInputTimer(offer);
       return;
     }
     if (!hasReceivingWallet) {
       LightningAddressWidget.showReceivingWalletRequiredDialog(context, ref, t);
-      ref.read(errorProvider.notifier).state =
-          t.wallet.missingReceiving.message;
+      errorNotifier.state = t.wallet.missingReceiving.message;
       _startBlikInputTimer(offer);
       return;
     }
     if (ndk == null) {
-      ref.read(errorProvider.notifier).state = t.system.errors.generic;
+      errorNotifier.state = t.system.errors.generic;
       _startBlikInputTimer(offer);
       return;
     }
@@ -350,9 +355,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
             !coordinatorSupportsBolt12 &&
             hasOnlyBolt12ReceivingWallets(receivingWallets),
       );
-      ref.read(errorProvider.notifier).state = coordinatorSupportsBolt12
-              ? t.wallet.missingReceiving.message
-              : t.wallet.incompatibleReceiving.message;
+      errorNotifier.state = coordinatorSupportsBolt12
+          ? t.wallet.missingReceiving.message
+          : t.wallet.incompatibleReceiving.message;
       _startBlikInputTimer(offer);
       return;
     }
@@ -367,7 +372,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
             : 0);
     final amountToInvoiceSats = offer.amountSats - takerFeeAmount;
     if (amountToInvoiceSats <= 0) {
-      ref.read(errorProvider.notifier).state = t.system.errors.generic;
+      errorNotifier.state = t.system.errors.generic;
       _startBlikInputTimer(offer);
       return;
     }
@@ -388,8 +393,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         amountSats: amountToInvoiceSats,
         error: e.toString(),
       );
+      if (!mounted) return;
       if (retryPayment == null) {
-        ref.read(errorProvider.notifier).state = t.system.errors.generic;
+        errorNotifier.state = t.system.errors.generic;
         _startBlikInputTimer(offer);
         return;
       }
@@ -397,11 +403,10 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     }
     // --- End Validations ---
 
-    ref.read(isLoadingProvider.notifier).state = true;
-    ref.read(errorProvider.notifier).state = null;
+    loadingNotifier.state = true;
+    errorNotifier.state = null;
 
     try {
-      final apiService = ref.read(apiServiceProvider);
       await apiService.submitBlikCode(
         offerId: offer.id,
         takerId: takerId,
@@ -416,7 +421,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         blikReceivedAt: DateTime.now(),
         blikCode: blikCode,
       );
-      await ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
+      await activeOfferNotifier.setActiveOffer(updatedOffer);
 
       Logger.log.i(
         () =>
@@ -426,15 +431,20 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         context.go(flowRoute, extra: updatedOffer);
       }
     } catch (e) {
-      ref.read(errorProvider.notifier).state = t.taker.submitBlik.errors
-          .submitting(details: e.toString(), code: _method.localizedCodeLabel);
       if (mounted) {
+        errorNotifier.state = t.taker.submitBlik.errors.submitting(
+          details: e.toString(),
+          code: _method.localizedCodeLabel,
+        );
         _startBlikInputTimer(offer);
+      } else {
+        Logger.log.w(
+          () =>
+              '[TakerSubmitBlikScreen] Submit failed after screen disposal: $e',
+        );
       }
     } finally {
-      if (mounted) {
-        ref.read(isLoadingProvider.notifier).state = false;
-      }
+      loadingNotifier.state = false;
     }
   }
 
@@ -644,6 +654,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
 
   Future<void> _pasteFromClipboard() async {
     final textData = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
     setState(() {
       if (textData != null &&
           textData.text != null &&
@@ -747,6 +758,8 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
           FocusScope.of(context).unfocus();
         },
         child: SingleChildScrollView(
+          controller: _scrollController,
+          primary: false,
           padding: const EdgeInsets.all(10.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
