@@ -289,8 +289,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     _blikInputTimer?.cancel();
 
     final offer = _currentOffer;
-    final blikCode =
-        _makerProvidedCodeFlow ? offer.blikCode : _blikController.text;
+    final blikCode = _makerProvidedCodeFlow
+        ? offer.blikCode
+        : _blikController.text;
     final takerId = ref.read(publicKeyProvider).value;
     final hasReceivingWallet = await ref.read(
       hasReceivingWalletProvider.future,
@@ -345,11 +346,11 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
         context,
         ref,
         t,
-        requiresBolt11: !coordinatorSupportsBolt12 &&
+        requiresBolt11:
+            !coordinatorSupportsBolt12 &&
             hasOnlyBolt12ReceivingWallets(receivingWallets),
       );
-      ref.read(errorProvider.notifier).state =
-          coordinatorSupportsBolt12
+      ref.read(errorProvider.notifier).state = coordinatorSupportsBolt12
               ? t.wallet.missingReceiving.message
               : t.wallet.incompatibleReceiving.message;
       _startBlikInputTimer(offer);
@@ -446,8 +447,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     final defaultW = ndk.wallets.defaultWalletForReceiving;
     final coordinatorSupportsBolt12 =
         _coordinatorInfo?.outgoingPaymentTypes.contains('bolt12') ?? false;
-    final receivingWallets =
-        all
+    final receivingWallets = all
             .where(
               (wallet) => walletCanReceiveForCoordinator(
                 wallet,
@@ -517,8 +517,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                     final isGenerating = generatingId == wallet.id;
                     final isDefault = wallet.id == defaultW?.id;
                     return InkWell(
-                      onTap:
-                          generatingId != null
+                      onTap: generatingId != null
                               ? null
                               : () => generateFromWallet(wallet),
                       borderRadius: BorderRadius.circular(8),
@@ -617,8 +616,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed:
-                      generatingId != null
+                  onPressed: generatingId != null
                           ? null
                           : () => Navigator.of(dialogContext).pop(null),
                   child: Text(t.common.buttons.cancel),
@@ -713,21 +711,15 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     );
 
     // Calculate exchange rate and amounts (PLN per BTC) - same as offer details
-    final exchangeRate =
-        activeOffer.amountSats > 0
+    final exchangeRate = activeOffer.amountSats > 0
             ? ((activeOffer.fiatAmount / activeOffer.amountSats) * 100000000)
                 .round()
             : 0;
 
     // Calculate taker fee from coordinator's percentage - same as offer details
     final takerFeeAmount = coordinatorInfoAsync.maybeWhen(
-      data:
-          (coordInfo) =>
-              coordInfo != null
-                  ? OfferQuote.takerFeeSats(
-                    activeOffer.amountSats,
-                    coordInfo.takerFee,
-                  )
+      data: (coordInfo) => coordInfo != null
+          ? OfferQuote.takerFeeSats(activeOffer.amountSats, coordInfo.takerFee)
                   : 0,
       orElse: () => 0,
     );
@@ -742,8 +734,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     }
 
     final blikCode = _blikController.text;
-    final effectiveCode =
-        _makerProvidedCodeFlow
+    final effectiveCode = _makerProvidedCodeFlow
             ? (activeOffer.blikCode ?? _currentOffer.blikCode ?? '')
             : blikCode;
     final validBlik = _method.isValidCode(effectiveCode);
@@ -835,8 +826,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                         Expanded(
                           child: Builder(
                             builder: (context) {
-                              final color =
-                                  Theme.of(context).colorScheme.primary;
+                              final color = Theme.of(
+                                context,
+                              ).colorScheme.primary;
                               final full = t.taker.submitBlik.generateInBank(
                                 bank: bank.label,
                               );
@@ -927,17 +919,14 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                           IconButton(
                             tooltip: 'Copy code',
                             icon: const Icon(Icons.copy, size: 24),
-                            onPressed:
-                                effectiveCode.isEmpty
+                            onPressed: effectiveCode.isEmpty
                                     ? null
                                     : () async {
                                       await Clipboard.setData(
                                         ClipboardData(text: effectiveCode),
                                       );
                                       if (!mounted) return;
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
+                                    ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             t.system.blik.copied(
@@ -965,8 +954,9 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                         0.0,
                         double.infinity,
                       );
-                      final perChar =
-                          codeLength > 0 ? available / codeLength : 0.0;
+                      final perChar = codeLength > 0
+                          ? available / codeLength
+                          : 0.0;
                       final fontSize = (perChar / 0.9).clamp(16.0, 46.0);
                       final letterSpacing = fontSize * 0.3;
                       return TextField(
@@ -1075,8 +1065,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                 height: 44,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  gradient:
-                      isLoading
+                  gradient: isLoading
                           ? null
                           : LinearGradient(
                             begin: Alignment.topCenter,
@@ -1149,13 +1138,15 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
+                    disabledForegroundColor: Theme.of(
+                      context,
+                    ).colorScheme.outline,
                     side: const BorderSide(color: Colors.red, width: 1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  onPressed:
-                      isLoading
+                  onPressed: isLoading
                           ? null
                           : () async {
                             final offer = ref.read(activeOfferProvider);
@@ -1298,8 +1289,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
   void _showExchangeRateSourcesDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder:
-          (context) => Dialog(
+      builder: (context) => Dialog(
             backgroundColor: Colors.transparent,
             child: GestureDetector(
               onTap: () => Navigator.of(context).pop(),
@@ -1312,13 +1302,10 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children:
-                      ApiServiceNostr.exchangeRateSourceNames
+              children: ApiServiceNostr.exchangeRateSourceNames
                           .map(
                             (source) => Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 4.0,
-                              ),
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
                               child: Text(
                                 source,
                                 style: const TextStyle(color: Colors.white),

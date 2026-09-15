@@ -173,8 +173,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                 content: Text(
                   t.maker.waitTaker.errorRetrievingBlik(
                     details: e.toString(),
-                    code:
-                        ref
+                    code: ref
                             .read(selectedPaymentSystemProvider)
                             .localizedCodeLabel,
                   ),
@@ -229,8 +228,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         }
       }
     }
-    wallet ??=
-        ndk.wallets.defaultWalletForSending is NwcWallet
+    wallet ??= ndk.wallets.defaultWalletForSending is NwcWallet
             ? ndk.wallets.defaultWalletForSending as NwcWallet
             : null;
 
@@ -418,7 +416,6 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     if (_isExpired) {
       final expiredOffer = _lastKnownOffer;
       return Scaffold(
-        backgroundColor: Colors.white,
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -445,7 +442,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                   const SizedBox(height: 12),
                   Text(
                     t.maker.waitTaker.offerExpiredMessage,
-                    style: const TextStyle(fontSize: 16, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   if (expiredOffer != null) ...[
@@ -485,13 +485,18 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        disabledForegroundColor: Theme.of(
+                          context,
+                        ).colorScheme.outline,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child:
-                          _isRecreating
+                      child: _isRecreating
                               ? const SizedBox(
                                 width: 20,
                                 height: 20,
@@ -533,13 +538,11 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: MakerWaitingBody(
           offer: offer,
           message: t.maker.waitTaker.message,
-          countdown:
-              offer.status == OfferStatus.funded
+          countdown: offer.status == OfferStatus.funded
                   ? CircularCountdownTimer(
                     startTime: offer.createdAt,
                     maxDuration: const Duration(minutes: 10),
@@ -576,8 +579,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
           actions: SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed:
-                  _isCancelling || (offer.status != OfferStatus.funded)
+              onPressed: _isCancelling || (offer.status != OfferStatus.funded)
                       ? null
                       : _cancelOffer,
               style: OutlinedButton.styleFrom(
@@ -587,8 +589,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child:
-                  _isCancelling
+              child: _isCancelling
                       ? const SizedBox(
                         width: 20,
                         height: 20,
@@ -637,14 +638,17 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 16, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],

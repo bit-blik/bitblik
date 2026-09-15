@@ -9,6 +9,9 @@ import '../config/build_flavor.dart';
 
 enum BitcoinDisplayUnit { sats, bitcoin }
 
+/// `system` is used until the user explicitly chooses an appearance.
+enum AppThemePreference { system, light, dark }
+
 class OfferCreationPreferences {
   const OfferCreationPreferences({
     required this.defaultCategory,
@@ -74,6 +77,7 @@ class AppPreferencesStore {
   static const _preferredCoordinatorKey =
       'offer_creation_preferred_coordinator_pubkey';
   static const _bitcoinDisplayUnitKey = 'display_bitcoin_unit';
+  static const _themeModeKey = 'display_theme_mode';
   static const _selectedPaymentSystemKey = 'selected_payment_system_id';
 
   static const _defaultOfferCreation = OfferCreationPreferences(
@@ -129,6 +133,24 @@ class AppPreferencesStore {
       _bitcoinDisplayUnitKey,
       settings.bitcoinDisplayUnit.name,
     );
+  }
+
+  static Future<AppThemePreference> loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_themeModeKey);
+    return AppThemePreference.values.firstWhere(
+      (value) => value.name == saved,
+      orElse: () => AppThemePreference.system,
+    );
+  }
+
+  static Future<void> saveThemePreference(AppThemePreference preference) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (preference == AppThemePreference.system) {
+      await prefs.remove(_themeModeKey);
+      return;
+    }
+    await prefs.setString(_themeModeKey, preference.name);
   }
 
   static OfferCreationPreferences _loadOfferCreationFromPrefs(

@@ -75,7 +75,9 @@ class TwintMakerProgressIndicator extends ConsumerWidget {
                 fontSize: 13,
                 fontWeight:
                     i + 1 <= activeStep ? FontWeight.w500 : FontWeight.w400,
-                color: i + 1 == activeStep ? Colors.black : Colors.grey,
+                color: i + 1 == activeStep
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -126,7 +128,9 @@ class TwintTakerProgressIndicator extends ConsumerWidget {
                 fontSize: 13,
                 fontWeight:
                     i + 1 <= activeStep ? FontWeight.w500 : FontWeight.w400,
-                color: i + 1 == activeStep ? Colors.black : Colors.grey,
+                color: i + 1 == activeStep
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],

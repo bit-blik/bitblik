@@ -210,8 +210,9 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                   },
                                   child: Text(
                                     t.coordinator.selector.termsAccept,
-                                    style: const TextStyle(
-                                      color: Colors.black,
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).colorScheme.onSurface,
                                       fontSize: 14,
                                     ),
                                     softWrap: true,
@@ -992,12 +993,13 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                                   .fiatCurrency,
                                                         ),
                                                   ),
-                                                  titleTextStyle:
-                                                      const TextStyle(
+                                                  titleTextStyle: TextStyle(
                                                         fontWeight:
                                                             FontWeight.w300,
                                                         fontSize: 24,
-                                                        color: Colors.black,
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurface,
                                                       ),
                                                   subtitle: Column(
                                                     crossAxisAlignment:

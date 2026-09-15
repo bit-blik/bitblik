@@ -199,7 +199,7 @@ void showRelayStatusOverlay(
             child: Material(
               elevation: 8,
               borderRadius: BorderRadius.circular(8),
-              color: Colors.white,
+              color: Theme.of(dialogContext).colorScheme.surfaceContainerHigh,
               child: Container(
                 padding: const EdgeInsets.all(12),
                 constraints: const BoxConstraints(maxWidth: 280),

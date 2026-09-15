@@ -92,4 +92,48 @@ void main() {
       expect(await AppPreferencesStore.loadLastBank('blik'), isNull);
     });
   });
+
+  group('theme preference', () {
+    test('defaults to system when no explicit choice exists', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      expect(
+        await AppPreferencesStore.loadThemePreference(),
+        AppThemePreference.system,
+      );
+    });
+
+    test('loads and saves explicit user choice', () async {
+      SharedPreferences.setMockInitialValues({
+        'display_theme_mode': AppThemePreference.dark.name,
+      });
+
+      expect(
+        await AppPreferencesStore.loadThemePreference(),
+        AppThemePreference.dark,
+      );
+
+      await AppPreferencesStore.saveThemePreference(AppThemePreference.light);
+      expect(
+        await AppPreferencesStore.loadThemePreference(),
+        AppThemePreference.light,
+      );
+    });
+
+    test('system removes explicit preference and invalid values fall back',
+        () async {
+      SharedPreferences.setMockInitialValues({
+        'display_theme_mode': 'unsupported',
+      });
+      expect(
+        await AppPreferencesStore.loadThemePreference(),
+        AppThemePreference.system,
+      );
+
+      await AppPreferencesStore.saveThemePreference(AppThemePreference.dark);
+      await AppPreferencesStore.saveThemePreference(AppThemePreference.system);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('display_theme_mode'), isNull);
+    });
+  });
 }

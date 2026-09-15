@@ -368,7 +368,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           final requiresAtmConsent = offer.category == OfferCategory.atm;
           final requiresEcommerceConsent =
               offer.category == OfferCategory.online;
-          const amountTextColor = Colors.black;
+          final amountTextColor = Theme.of(context).colorScheme.onSurface;
 
           // Get coordinator info for taker fee calculation
           final coordinatorInfoAsync = ref.watch(
@@ -420,8 +420,8 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
               height: 56,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(28),
                   ),
@@ -508,8 +508,8 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
               height: 56,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(28),
                   ),
@@ -538,8 +538,8 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                 height: 56,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28),
                     ),
@@ -1344,15 +1344,19 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
               ],
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w400,
                 ),
               ),
               if (hasInfoIcon) ...[
                 const SizedBox(width: 4),
-                const Icon(Icons.info_outline, size: 16, color: Colors.black),
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ],
             ],
           ),
@@ -1365,7 +1369,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
               value,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
@@ -1465,9 +1469,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -1493,9 +1497,9 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                 ],
                 Text(
                   coordInfo.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

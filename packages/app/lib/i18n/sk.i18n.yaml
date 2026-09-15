@@ -6,6 +6,11 @@ app:
   greeting: Ahoj!
   changelog: Zoznam zmien
 
+theme:
+  switchToLight: Prepnúť na svetlú tému
+  switchToDark: Prepnúť na tmavú tému
+  openNostr: Otvoriť Nostr profil
+
 # =============================================================================
 # SPOLOČNÉ PRVKY UI
 # =============================================================================

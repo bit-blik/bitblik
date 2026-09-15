@@ -83,7 +83,6 @@ class _MakerSuccessScreenState extends ConsumerState<MakerSuccessScreen> {
     final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

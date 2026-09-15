@@ -317,8 +317,8 @@ class _MakerConfirmPaymentScreenState
     // final strings = AppLocalizations.of(context)!; // REMOVE THIS
     final t = Translations.of(context);
 
-    final ref =
-        this.ref; // 'ref' is already available in ConsumerStatefulWidget's state
+    final ref = this
+        .ref; // 'ref' is already available in ConsumerStatefulWidget's state
     // Hard reset any lingering global loader to avoid blocking UI
     // final currentLoading = ref.read(isLoadingProvider);
     // if (currentLoading == true) {
@@ -364,7 +364,7 @@ class _MakerConfirmPaymentScreenState
     final TextStyle blikStyle = TextStyle(
       fontSize: blikFontSize,
       fontWeight: FontWeight.w600,
-      color: Colors.black,
+      color: Theme.of(context).colorScheme.onSurface,
       letterSpacing: 6,
     );
     final TextPainter tp = TextPainter(
@@ -380,7 +380,6 @@ class _MakerConfirmPaymentScreenState
     final double copyButtonWidth = tp.width.clamp(0.0, maxCodeWidth);
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -394,8 +393,7 @@ class _MakerConfirmPaymentScreenState
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final upperContent =
-                        isExpired
+                    final upperContent = isExpired
                             ? _buildExpiredContent(t)
                             : _makerProvidedCodeFlow
                             ? _buildMakerProvidedContent(t)
@@ -481,13 +479,18 @@ class _MakerConfirmPaymentScreenState
 
                   // Confirm Successful Payment button (green)
                   ElevatedButton(
-                    onPressed:
-                        canConfirm
+                    onPressed: canConfirm
                             ? () => _showConfirmationDialog(context, ref)
                             : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      disabledForegroundColor: Theme.of(
+                        context,
+                      ).colorScheme.outline,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
@@ -496,7 +499,7 @@ class _MakerConfirmPaymentScreenState
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.check, color: Colors.white, size: 24),
+                        const Icon(Icons.check, size: 24),
                         const SizedBox(width: 8),
                         Text(
                           t.maker.confirmPayment.actions.confirm,
@@ -512,8 +515,7 @@ class _MakerConfirmPaymentScreenState
 
                   // Invalid BLIK code button (red outlined)
                   OutlinedButton(
-                    onPressed:
-                        canMarkInvalid
+                    onPressed: canMarkInvalid
                             ? () => _markBlikInvalid(context, ref)
                             : null,
                     style: OutlinedButton.styleFrom(
@@ -577,10 +579,10 @@ class _MakerConfirmPaymentScreenState
         // BLIK code received text
         Text(
           t.maker.confirmPayment.title(code: _code),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w400,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           textAlign: TextAlign.center,
         ),
@@ -626,12 +628,18 @@ class _MakerConfirmPaymentScreenState
                 borderRadius: BorderRadius.circular(40),
               ),
               child: ElevatedButton(
-                onPressed:
-                    receivedBlikCode == null
+                onPressed: receivedBlikCode == null
                         ? null
                         : () => _copyToClipboard(receivedBlikCode),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                  disabledForegroundColor: Theme.of(
+                    context,
+                  ).colorScheme.outline,
                   shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -641,12 +649,11 @@ class _MakerConfirmPaymentScreenState
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.copy, color: Colors.white, size: 18),
+                    const Icon(Icons.copy, size: 18),
                     const SizedBox(width: 8),
                     Text(
                       t.maker.confirmPayment.actions.copyBlik(code: _code),
                       style: const TextStyle(
-                        color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                       ),
@@ -673,8 +680,7 @@ class _MakerConfirmPaymentScreenState
 
   Widget _buildMakerProvidedContent(Translations t) {
     final offer = ref.read(activeOfferProvider);
-    final amountText =
-        offer == null
+    final amountText = offer == null
             ? ''
             : '${offer.fiatAmount.toStringAsFixed((offer.fiatAmount * 100).round() % 100 == 0 ? 0 : 2)} ${offer.fiatCurrency}';
     return Column(
@@ -683,10 +689,10 @@ class _MakerConfirmPaymentScreenState
         const SizedBox(height: 12),
         Text(
           'Waiting for taker to complete $_code',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w400,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           textAlign: TextAlign.center,
         ),
@@ -812,10 +818,10 @@ class _MakerConfirmPaymentScreenState
         // Expired title
         Text(
           t.maker.confirmPayment.expiredTitle(code: _code),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           textAlign: TextAlign.center,
         ),
@@ -825,7 +831,10 @@ class _MakerConfirmPaymentScreenState
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
             t.maker.confirmPayment.expiredWarning(code: _code),
-            style: const TextStyle(fontSize: 16, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -914,7 +923,10 @@ class _MakerConfirmPaymentScreenState
           const SizedBox(height: 8),
           Text(
             t.maker.confirmPayment.autoConfirmInfo(code: _code),
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             softWrap: true,
           ),
         ],
@@ -932,8 +944,7 @@ class _MakerConfirmPaymentScreenState
     if (offer == null) return const [];
 
     final fiat = offer.fiatAmount;
-    final amount =
-        (fiat * 100).round() % 100 == 0
+    final amount = (fiat * 100).round() % 100 == 0
             ? fiat.toStringAsFixed(0)
             : fiat.toStringAsFixed(2);
 
@@ -1011,8 +1022,7 @@ class _MakerConfirmPaymentScreenState
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed:
-                () => launchUrl(
+            onPressed: () => launchUrl(
                   Uri.parse(mapUrl),
                   mode: LaunchMode.externalApplication,
                 ),
@@ -1048,17 +1058,20 @@ class _MakerConfirmPaymentScreenState
       children: [
         Text(
           number,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 16, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ),
       ],
