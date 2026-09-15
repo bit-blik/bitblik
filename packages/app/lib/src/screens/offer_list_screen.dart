@@ -620,15 +620,12 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                   return;
                                                 }
 
-                                                final coordinatorInfoAsync = ref
-                                                    .read(
-                                                      coordinatorInfoByPubkeyProvider(
-                                                        offer.coordinatorPubkey,
-                                                      ),
-                                                    );
-                                                final coordInfo =
-                                                    coordinatorInfoAsync
-                                                        .valueOrNull;
+                                                final coordInfo = await ref.read(
+                                                  coordinatorInfoByPubkeyProvider(
+                                                    offer.coordinatorPubkey,
+                                                  ).future,
+                                                );
+                                                if (!context.mounted) return;
                                                 final coordinatorSupportsBolt12 =
                                                     coordInfo
                                                         ?.outgoingPaymentTypes
