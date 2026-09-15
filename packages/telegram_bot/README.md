@@ -15,6 +15,8 @@ The service:
   finished, and canceled/expired offer transitions;
 - follows that identity's NIP-51 mute list and removes messages belonging to a
   newly muted coordinator;
+- excludes coordinator pubkeys configured locally and removes their existing
+  messages;
 - rate-limits only the coordinator pubkey producing offers too quickly;
 - strikes a message when the offer becomes `canceled` and deletes it when the
   offer becomes `success` (`takerPaid`);
@@ -31,6 +33,7 @@ a Telegram channel requires the central bot to be allowed to post.
 export PAYMENT_SYSTEM=blik
 export TELEGRAM_BOT_TOKEN=123456:secret
 export TELEGRAM_CHAT_IDS=-1001234567890
+export EXCLUDED_COORDINATOR_PUBKEYS=<64-character-hex-pubkey>,<another-pubkey>
 export STATE_FILE=./telegram_bot_state.json
 dart run bin/server.dart
 ```
@@ -46,6 +49,9 @@ See [`.env.example`](.env.example) for all settings. `PAYMENT_SYSTEM` accepts
 `blik`, `mbway`, `twint`, or `sk`. Multiple comma-separated chat IDs are
 supported. The bot reads the selected system's canonical project Nostr
 identity from `bitblik_core` for discovery and muting.
+`EXCLUDED_COORDINATOR_PUBKEYS` accepts comma-separated, case-insensitive
+64-character hex pubkeys. Excluded coordinators are removed before offer
+subscription, so their offers never produce Telegram notifications.
 
 CI publishes one generic image under `ghcr.io/<owner>/telegram-bot`. Set
 `PAYMENT_SYSTEM` when starting the container to select the market; the image is

@@ -54,9 +54,10 @@ class NostrOfferMonitor {
       final discoveryRelays = await _resolveDiscoveryRelays();
       final muted = await _loadMutedPubkeys(discoveryRelays);
       _lastMutedPubkeys = muted;
+      final blocked = {...muted, ...config.excludedCoordinatorPubkeys};
       final coordinatorInfo = await _discoverCoordinators(
         discoveryRelays,
-        muted,
+        blocked,
       );
       final coordinatorPubkeys = coordinatorInfo.keys.toSet();
       final resolvedRelaySets = await Future.wait(
@@ -82,7 +83,7 @@ class NostrOfferMonitor {
 
       await controller.updateCoordinatorPolicy(
         allowed: coordinatorPubkeys,
-        muted: muted,
+        muted: blocked,
         coordinatorIdentities: identities,
       );
       await _syncOfferSubscription(coordinatorPubkeys, offerRelays);
@@ -90,7 +91,8 @@ class NostrOfferMonitor {
       print(
         'Monitoring ${coordinatorPubkeys.length} ${config.paymentSystem.id} '
         'coordinator(s) on ${offerRelays.length} relay(s); '
-        '${muted.length} muted',
+        '${muted.length} muted, '
+        '${config.excludedCoordinatorPubkeys.length} excluded by config',
       );
     } catch (error, stackTrace) {
       print('Nostr discovery refresh failed: $error\n$stackTrace');

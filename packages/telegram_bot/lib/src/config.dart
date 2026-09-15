@@ -6,6 +6,7 @@ class TelegramBotConfig {
   final PaymentSystem paymentSystem;
   final String frontendDomain;
   final List<String> bootstrapRelays;
+  final Set<String> excludedCoordinatorPubkeys;
   final String stateFile;
   final Duration coordinatorMinInterval;
   final Duration coordinatorCooldown;
@@ -22,6 +23,7 @@ class TelegramBotConfig {
     required this.paymentSystem,
     required this.frontendDomain,
     required this.bootstrapRelays,
+    required this.excludedCoordinatorPubkeys,
     required this.stateFile,
     required this.coordinatorMinInterval,
     required this.coordinatorCooldown,
@@ -84,6 +86,22 @@ class TelegramBotConfig {
         .where((value) => value.isNotEmpty)
         .toSet();
 
+    final excludedCoordinatorPubkeys =
+        (env['EXCLUDED_COORDINATOR_PUBKEYS'] ?? '')
+            .split(',')
+            .map((value) => value.trim().toLowerCase())
+            .where((value) => value.isNotEmpty)
+            .toSet();
+    final invalidExcludedPubkey = excludedCoordinatorPubkeys
+        .where((pubkey) => !RegExp(r'^[0-9a-f]{64}$').hasMatch(pubkey))
+        .firstOrNull;
+    if (invalidExcludedPubkey != null) {
+      throw FormatException(
+        'EXCLUDED_COORDINATOR_PUBKEYS must contain comma-separated '
+        '64-character hex pubkeys; invalid value "$invalidExcludedPubkey"',
+      );
+    }
+
     return TelegramBotConfig(
       botToken: requiredValue('TELEGRAM_BOT_TOKEN'),
       chatIds: chatIds,
@@ -94,6 +112,7 @@ class TelegramBotConfig {
       bootstrapRelays: relayValues.isEmpty
           ? kDiscoveryRelays
           : relayValues.toList(growable: false),
+      excludedCoordinatorPubkeys: Set.unmodifiable(excludedCoordinatorPubkeys),
       stateFile: env['STATE_FILE']?.trim().isNotEmpty == true
           ? env['STATE_FILE']!.trim()
           : 'telegram_bot_state.json',

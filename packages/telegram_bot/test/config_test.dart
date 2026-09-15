@@ -9,12 +9,20 @@ void main() {
       'PAYMENT_SYSTEM': 'twint',
       'COORDINATOR_MIN_OFFER_INTERVAL_SECONDS': '5',
       'COORDINATOR_RATE_LIMIT_SECONDS': '90',
+      'EXCLUDED_COORDINATOR_PUBKEYS':
+          ' AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA, '
+              'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,'
+              'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ',
     });
 
     expect(config.paymentSystem.id, 'twint');
     expect(config.chatIds, ['-1001', '-1002']);
     expect(config.coordinatorMinInterval, const Duration(seconds: 5));
     expect(config.coordinatorCooldown, const Duration(seconds: 90));
+    expect(config.excludedCoordinatorPubkeys, {
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    });
     expect(config.discoveryRefreshInterval, const Duration(minutes: 5));
     expect(config.subscriptionRotationInterval, const Duration(minutes: 15));
     expect(config.offerStateRetention, const Duration(hours: 48));
@@ -51,6 +59,23 @@ void main() {
         'TELEGRAM_BOT_TOKEN': 'token',
       }),
       throwsFormatException,
+    );
+  });
+
+  test('rejects malformed excluded coordinator pubkeys', () {
+    expect(
+      () => TelegramBotConfig.fromEnvironment({
+        'TELEGRAM_BOT_TOKEN': 'token',
+        'TELEGRAM_CHAT_IDS': '-1001',
+        'EXCLUDED_COORDINATOR_PUBKEYS': 'npub1not-supported,abcd',
+      }),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('EXCLUDED_COORDINATOR_PUBKEYS'),
+        ),
+      ),
     );
   });
 }
