@@ -348,6 +348,20 @@ void main() {
     expect(fake.requestedPaymentIds, everyElement(hash));
   });
 
+  test('settlement recovers when restart lost claimable event', () async {
+    final fake = FakeLdkServerClient()
+      ..payment = buildPayment(ldk_types.PaymentStatus.PENDING,
+          direction: ldk_types.PaymentDirection.INBOUND);
+    final service = await connectedService(fake);
+    addTearDown(service.disconnect);
+
+    await service.settleInvoice(preimageHex: preimage);
+
+    expect(fake.claimed!.paymentId, hash);
+    expect(fake.claimed!.preimage, preimage);
+    expect(fake.claimed!.hasClaimableAmountMsat(), isFalse);
+  });
+
   test('claimable event payment ID, not invoice hash, drives settlement',
       () async {
     final fake = FakeLdkServerClient()

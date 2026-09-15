@@ -581,18 +581,19 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
       if (before.status != ldk_types.PaymentStatus.PENDING) {
         throw StateError('Cannot settle ldk-server invoice in unknown state.');
       }
-      if (claimable == null || claimable.paymentId != paymentId) {
+      if (claimable != null && claimable.paymentId != paymentId) {
         throw StateError('ldk-server invoice is not claimable.');
+      }
+      final claimRequest = ldk_api.Bolt11ClaimForIdRequest(
+        paymentId: paymentId,
+        preimage: preimage,
+      );
+      if (claimable != null) {
+        claimRequest.claimableAmountMsat = Int64(claimable.amountMsat);
       }
       await _rpc(
         'claim invoice',
-        _requireAdapter().bolt11ClaimForId(
-          ldk_api.Bolt11ClaimForIdRequest(
-            paymentId: paymentId,
-            claimableAmountMsat: Int64(claimable.amountMsat),
-            preimage: preimage,
-          ),
-        ),
+        _requireAdapter().bolt11ClaimForId(claimRequest),
       );
       final terminal = await _pollPayment(
           paymentId, ldk_types.PaymentDirection.INBOUND,
