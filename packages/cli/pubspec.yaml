@@ -1,6 +1,6 @@
 name: bitblik_cli
 description: Command-line interface for BitBlik.
-version: 0.1.0
+version: 0.11.0
 resolution: workspace
 publish_to: none
 
@@ -13,6 +13,9 @@ dependencies:
   bip340: ^0.3.0
   ndk: any
   sembast: ^3.7.0
+
+dev_dependencies:
+  test: ^1.24.0
 
 executables:
   bitblik: bitblik

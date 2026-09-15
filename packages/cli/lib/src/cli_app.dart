@@ -9,6 +9,10 @@ import 'flow_cli.dart';
 import 'offer_commands.dart';
 import 'protocol_client.dart';
 import 'secrets_store.dart';
+import 'version.dart';
+
+String cliVersionLine(PaymentSystem paymentSystem) =>
+    '${paymentSystem.brandName} CLI $cliVersion';
 
 /// Entry point shared by every market binary. [paymentSystem] selects the
 /// market (`bitblik` → [kBlik], `bitway` → [kMbway]); it is published to
@@ -17,6 +21,11 @@ import 'secrets_store.dart';
 Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
   activePaymentSystem = paymentSystem;
   final exe = paymentSystem.brandName.toLowerCase();
+
+  if (args.length == 1 && (args.single == '--version' || args.single == '-V')) {
+    stdout.writeln(cliVersionLine(paymentSystem));
+    return 0;
+  }
 
   if (args.isEmpty || args.contains('--help') || args.contains('-h')) {
     await _printHelp(paymentSystem);
@@ -260,6 +269,7 @@ Future<void> _printHelp(PaymentSystem ps) async {
   if (providesCode) flag('--code <code>', '$code code you provide to the taker');
   flag('--offer <id>', 'Offer payment hash or coordinator UUID');
   flag('-h, --help', 'Show this help');
+  flag('-V, --version', 'Show CLI version');
   stdout.writeln('');
 }
 

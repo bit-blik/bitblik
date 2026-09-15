@@ -1,6 +1,8 @@
 # Release process
 
-- increase version number in pubspec.yaml
+- increase app version in `pubspec.yaml` and matching CLI version in
+  `../cli/pubspec.yaml` plus `../cli/lib/src/version.dart` (exclude app `+build`
+  suffix from CLI version)
 - update changelog.md with the new version and all changes since last release
 
 ## iOS

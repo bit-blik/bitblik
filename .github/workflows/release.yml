@@ -19,6 +19,23 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify app and CLI release versions
+        shell: bash
+        run: |
+          app_version="$(sed -nE 's/^version:[[:space:]]*([^+[:space:]]+).*/\1/p' packages/app/pubspec.yaml | head -n1)"
+          cli_version="$(sed -nE 's/^version:[[:space:]]*([^[:space:]]+).*/\1/p' packages/cli/pubspec.yaml | head -n1)"
+          source_version="$(sed -nE "s/^const cliVersion = '([^']+)';/\1/p" packages/cli/lib/src/version.dart)"
+
+          test -n "$app_version"
+          test "$app_version" = "$cli_version"
+          test "$cli_version" = "$source_version"
+
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            test "v$cli_version" = "$GITHUB_REF_NAME"
+          fi
+
       - name: Create draft release
         uses: softprops/action-gh-release@v2
         with:
