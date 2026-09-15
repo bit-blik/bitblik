@@ -163,6 +163,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                     showWalletActions: false,
                     showPendingTransactions: false,
                     showRecentTransactions: false,
+                    addWalletCardBuilder: _buildAddWalletCard,
                     onWalletSelected: (walletId) {
                       context.push(
                         WalletDetailsScreen.routeName,
@@ -190,6 +191,88 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                   );
                 },
               ),
+      ),
+    );
+  }
+
+  Widget _buildAddWalletCard(BuildContext context, VoidCallback? onTap) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final borderRadius = BorderRadius.circular(16);
+    final label = Translations.of(context).nfc.actions.addWallet;
+    final cardColor = isDark
+        ? Color.alphaBlend(
+            colors.primary.withValues(alpha: 0.08),
+            colors.surfaceContainerLow,
+          )
+        : colors.surfaceContainerLow;
+    final accentColor = isDark
+        ? colors.primaryContainer
+        : colors.surfaceContainerHighest;
+    final placeholderColor = isDark
+        ? colors.onSurface.withValues(alpha: 0.12)
+        : colors.onSurface.withValues(alpha: 0.08);
+
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: label,
+      child: Container(
+        width: 280,
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Material(
+          color: cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: borderRadius,
+            side: BorderSide(
+              color: isDark
+                  ? colors.primary.withValues(alpha: 0.42)
+                  : colors.outlineVariant,
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: borderRadius,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.add,
+                      color: isDark
+                          ? colors.onPrimaryContainer
+                          : colors.onSurfaceVariant,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(width: 140, height: 12, color: placeholderColor),
+                  const SizedBox(height: 8),
+                  Container(width: 90, height: 10, color: placeholderColor),
+                  const SizedBox(height: 12),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
