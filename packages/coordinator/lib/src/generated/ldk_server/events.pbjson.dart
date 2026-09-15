@@ -49,6 +49,37 @@ final $typed_data.Uint8List channelClosureInitiatorDescriptor = $convert.base64D
     'QU5ORUxfQ0xPU1VSRV9JTklUSUFUT1JfUkVNT1RFEAISJQohQ0hBTk5FTF9DTE9TVVJFX0lOSV'
     'RJQVRPUl9VTktOT1dOEAM=');
 
+@$core.Deprecated('Use paymentFailureReasonDescriptor instead')
+const PaymentFailureReason$json = {
+  '1': 'PaymentFailureReason',
+  '2': [
+    {'1': 'PAYMENT_FAILURE_REASON_UNSPECIFIED', '2': 0},
+    {'1': 'PAYMENT_FAILURE_REASON_RECIPIENT_REJECTED', '2': 1},
+    {'1': 'PAYMENT_FAILURE_REASON_USER_ABANDONED', '2': 2},
+    {'1': 'PAYMENT_FAILURE_REASON_RETRIES_EXHAUSTED', '2': 3},
+    {'1': 'PAYMENT_FAILURE_REASON_PAYMENT_EXPIRED', '2': 4},
+    {'1': 'PAYMENT_FAILURE_REASON_ROUTE_NOT_FOUND', '2': 5},
+    {'1': 'PAYMENT_FAILURE_REASON_UNEXPECTED_ERROR', '2': 6},
+    {'1': 'PAYMENT_FAILURE_REASON_UNKNOWN_REQUIRED_FEATURES', '2': 7},
+    {'1': 'PAYMENT_FAILURE_REASON_INVOICE_REQUEST_EXPIRED', '2': 8},
+    {'1': 'PAYMENT_FAILURE_REASON_INVOICE_REQUEST_REJECTED', '2': 9},
+    {'1': 'PAYMENT_FAILURE_REASON_BLINDED_PATH_CREATION_FAILED', '2': 10},
+  ],
+};
+
+/// Descriptor for `PaymentFailureReason`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List paymentFailureReasonDescriptor = $convert.base64Decode(
+    'ChRQYXltZW50RmFpbHVyZVJlYXNvbhImCiJQQVlNRU5UX0ZBSUxVUkVfUkVBU09OX1VOU1BFQ0'
+    'lGSUVEEAASLQopUEFZTUVOVF9GQUlMVVJFX1JFQVNPTl9SRUNJUElFTlRfUkVKRUNURUQQARIp'
+    'CiVQQVlNRU5UX0ZBSUxVUkVfUkVBU09OX1VTRVJfQUJBTkRPTkVEEAISLAooUEFZTUVOVF9GQU'
+    'lMVVJFX1JFQVNPTl9SRVRSSUVTX0VYSEFVU1RFRBADEioKJlBBWU1FTlRfRkFJTFVSRV9SRUFT'
+    'T05fUEFZTUVOVF9FWFBJUkVEEAQSKgomUEFZTUVOVF9GQUlMVVJFX1JFQVNPTl9ST1VURV9OT1'
+    'RfRk9VTkQQBRIrCidQQVlNRU5UX0ZBSUxVUkVfUkVBU09OX1VORVhQRUNURURfRVJST1IQBhI0'
+    'CjBQQVlNRU5UX0ZBSUxVUkVfUkVBU09OX1VOS05PV05fUkVRVUlSRURfRkVBVFVSRVMQBxIyCi'
+    '5QQVlNRU5UX0ZBSUxVUkVfUkVBU09OX0lOVk9JQ0VfUkVRVUVTVF9FWFBJUkVEEAgSMwovUEFZ'
+    'TUVOVF9GQUlMVVJFX1JFQVNPTl9JTlZPSUNFX1JFUVVFU1RfUkVKRUNURUQQCRI3CjNQQVlNRU'
+    '5UX0ZBSUxVUkVfUkVBU09OX0JMSU5ERURfUEFUSF9DUkVBVElPTl9GQUlMRUQQCg==');
+
 @$core.Deprecated('Use channelStateChangeReasonKindDescriptor instead')
 const ChannelStateChangeReasonKind$json = {
   '1': 'ChannelStateChangeReasonKind',
@@ -104,6 +135,8 @@ const EventEnvelope$json = {
     {'1': 'payment_forwarded', '3': 6, '4': 1, '5': 11, '6': '.events.PaymentForwarded', '9': 0, '10': 'paymentForwarded'},
     {'1': 'payment_claimable', '3': 7, '4': 1, '5': 11, '6': '.events.PaymentClaimable', '9': 0, '10': 'paymentClaimable'},
     {'1': 'channel_state_changed', '3': 8, '4': 1, '5': 11, '6': '.events.ChannelStateChanged', '9': 0, '10': 'channelStateChanged'},
+    {'1': 'splice_negotiated', '3': 9, '4': 1, '5': 11, '6': '.events.SpliceNegotiated', '9': 0, '10': 'spliceNegotiated'},
+    {'1': 'splice_negotiation_failed', '3': 10, '4': 1, '5': 11, '6': '.events.SpliceNegotiationFailed', '9': 0, '10': 'spliceNegotiationFailed'},
   ],
   '8': [
     {'1': 'event'},
@@ -120,7 +153,10 @@ final $typed_data.Uint8List eventEnvelopeDescriptor = $convert.base64Decode(
     'RIAFIQcGF5bWVudEZvcndhcmRlZBJHChFwYXltZW50X2NsYWltYWJsZRgHIAEoCzIYLmV2ZW50'
     'cy5QYXltZW50Q2xhaW1hYmxlSABSEHBheW1lbnRDbGFpbWFibGUSUQoVY2hhbm5lbF9zdGF0ZV'
     '9jaGFuZ2VkGAggASgLMhsuZXZlbnRzLkNoYW5uZWxTdGF0ZUNoYW5nZWRIAFITY2hhbm5lbFN0'
-    'YXRlQ2hhbmdlZEIHCgVldmVudA==');
+    'YXRlQ2hhbmdlZBJHChFzcGxpY2VfbmVnb3RpYXRlZBgJIAEoCzIYLmV2ZW50cy5TcGxpY2VOZW'
+    'dvdGlhdGVkSABSEHNwbGljZU5lZ290aWF0ZWQSXQoZc3BsaWNlX25lZ290aWF0aW9uX2ZhaWxl'
+    'ZBgKIAEoCzIfLmV2ZW50cy5TcGxpY2VOZWdvdGlhdGlvbkZhaWxlZEgAUhdzcGxpY2VOZWdvdG'
+    'lhdGlvbkZhaWxlZEIHCgVldmVudA==');
 
 @$core.Deprecated('Use counterpartyForceClosedDetailsDescriptor instead')
 const CounterpartyForceClosedDetails$json = {
@@ -237,11 +273,13 @@ const ChannelStateChanged$json = {
     {'1': 'funding_txo', '3': 5, '4': 1, '5': 9, '9': 1, '10': 'fundingTxo', '17': true},
     {'1': 'reason', '3': 6, '4': 1, '5': 11, '6': '.events.ChannelStateChangeReason', '9': 2, '10': 'reason', '17': true},
     {'1': 'closure_initiator', '3': 7, '4': 1, '5': 14, '6': '.events.ChannelClosureInitiator', '10': 'closureInitiator'},
+    {'1': 'former_temporary_channel_id', '3': 8, '4': 1, '5': 9, '9': 3, '10': 'formerTemporaryChannelId', '17': true},
   ],
   '8': [
     {'1': '_counterparty_node_id'},
     {'1': '_funding_txo'},
     {'1': '_reason'},
+    {'1': '_former_temporary_channel_id'},
   ],
 };
 
@@ -253,57 +291,112 @@ final $typed_data.Uint8List channelStateChangedDescriptor = $convert.base64Decod
     'ZlbnRzLkNoYW5uZWxTdGF0ZVIFc3RhdGUSJAoLZnVuZGluZ190eG8YBSABKAlIAVIKZnVuZGlu'
     'Z1R4b4gBARI9CgZyZWFzb24YBiABKAsyIC5ldmVudHMuQ2hhbm5lbFN0YXRlQ2hhbmdlUmVhc2'
     '9uSAJSBnJlYXNvbogBARJMChFjbG9zdXJlX2luaXRpYXRvchgHIAEoDjIfLmV2ZW50cy5DaGFu'
-    'bmVsQ2xvc3VyZUluaXRpYXRvclIQY2xvc3VyZUluaXRpYXRvckIXChVfY291bnRlcnBhcnR5X2'
-    '5vZGVfaWRCDgoMX2Z1bmRpbmdfdHhvQgkKB19yZWFzb24=');
+    'bmVsQ2xvc3VyZUluaXRpYXRvclIQY2xvc3VyZUluaXRpYXRvchJCChtmb3JtZXJfdGVtcG9yYX'
+    'J5X2NoYW5uZWxfaWQYCCABKAlIA1IYZm9ybWVyVGVtcG9yYXJ5Q2hhbm5lbElkiAEBQhcKFV9j'
+    'b3VudGVycGFydHlfbm9kZV9pZEIOCgxfZnVuZGluZ190eG9CCQoHX3JlYXNvbkIeChxfZm9ybW'
+    'VyX3RlbXBvcmFyeV9jaGFubmVsX2lk');
+
+@$core.Deprecated('Use spliceNegotiatedDescriptor instead')
+const SpliceNegotiated$json = {
+  '1': 'SpliceNegotiated',
+  '2': [
+    {'1': 'channel_id', '3': 1, '4': 1, '5': 9, '10': 'channelId'},
+    {'1': 'user_channel_id', '3': 2, '4': 1, '5': 9, '10': 'userChannelId'},
+    {'1': 'counterparty_node_id', '3': 3, '4': 1, '5': 9, '10': 'counterpartyNodeId'},
+    {'1': 'new_funding_txo', '3': 4, '4': 1, '5': 9, '10': 'newFundingTxo'},
+  ],
+};
+
+/// Descriptor for `SpliceNegotiated`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List spliceNegotiatedDescriptor = $convert.base64Decode(
+    'ChBTcGxpY2VOZWdvdGlhdGVkEh0KCmNoYW5uZWxfaWQYASABKAlSCWNoYW5uZWxJZBImCg91c2'
+    'VyX2NoYW5uZWxfaWQYAiABKAlSDXVzZXJDaGFubmVsSWQSMAoUY291bnRlcnBhcnR5X25vZGVf'
+    'aWQYAyABKAlSEmNvdW50ZXJwYXJ0eU5vZGVJZBImCg9uZXdfZnVuZGluZ190eG8YBCABKAlSDW'
+    '5ld0Z1bmRpbmdUeG8=');
+
+@$core.Deprecated('Use spliceNegotiationFailedDescriptor instead')
+const SpliceNegotiationFailed$json = {
+  '1': 'SpliceNegotiationFailed',
+  '2': [
+    {'1': 'channel_id', '3': 1, '4': 1, '5': 9, '10': 'channelId'},
+    {'1': 'user_channel_id', '3': 2, '4': 1, '5': 9, '10': 'userChannelId'},
+    {'1': 'counterparty_node_id', '3': 3, '4': 1, '5': 9, '10': 'counterpartyNodeId'},
+  ],
+};
+
+/// Descriptor for `SpliceNegotiationFailed`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List spliceNegotiationFailedDescriptor = $convert.base64Decode(
+    'ChdTcGxpY2VOZWdvdGlhdGlvbkZhaWxlZBIdCgpjaGFubmVsX2lkGAEgASgJUgljaGFubmVsSW'
+    'QSJgoPdXNlcl9jaGFubmVsX2lkGAIgASgJUg11c2VyQ2hhbm5lbElkEjAKFGNvdW50ZXJwYXJ0'
+    'eV9ub2RlX2lkGAMgASgJUhJjb3VudGVycGFydHlOb2RlSWQ=');
 
 @$core.Deprecated('Use paymentReceivedDescriptor instead')
 const PaymentReceived$json = {
   '1': 'PaymentReceived',
   '2': [
-    {'1': 'payment', '3': 1, '4': 1, '5': 11, '6': '.types.Payment', '10': 'payment'},
-    {'1': 'custom_records', '3': 2, '4': 3, '5': 11, '6': '.types.CustomTlvRecord', '10': 'customRecords'},
+    {'1': 'payment_id', '3': 1, '4': 1, '5': 9, '10': 'paymentId'},
+    {'1': 'payment', '3': 2, '4': 1, '5': 11, '6': '.types.Payment', '10': 'payment'},
+    {'1': 'custom_records', '3': 3, '4': 3, '5': 11, '6': '.types.CustomTlvRecord', '10': 'customRecords'},
   ],
 };
 
 /// Descriptor for `PaymentReceived`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List paymentReceivedDescriptor = $convert.base64Decode(
-    'Cg9QYXltZW50UmVjZWl2ZWQSKAoHcGF5bWVudBgBIAEoCzIOLnR5cGVzLlBheW1lbnRSB3BheW'
-    '1lbnQSPQoOY3VzdG9tX3JlY29yZHMYAiADKAsyFi50eXBlcy5DdXN0b21UbHZSZWNvcmRSDWN1'
-    'c3RvbVJlY29yZHM=');
+    'Cg9QYXltZW50UmVjZWl2ZWQSHQoKcGF5bWVudF9pZBgBIAEoCVIJcGF5bWVudElkEigKB3BheW'
+    '1lbnQYAiABKAsyDi50eXBlcy5QYXltZW50UgdwYXltZW50Ej0KDmN1c3RvbV9yZWNvcmRzGAMg'
+    'AygLMhYudHlwZXMuQ3VzdG9tVGx2UmVjb3JkUg1jdXN0b21SZWNvcmRz');
 
 @$core.Deprecated('Use paymentSuccessfulDescriptor instead')
 const PaymentSuccessful$json = {
   '1': 'PaymentSuccessful',
   '2': [
-    {'1': 'payment', '3': 1, '4': 1, '5': 11, '6': '.types.Payment', '10': 'payment'},
+    {'1': 'payment_id', '3': 1, '4': 1, '5': 9, '10': 'paymentId'},
+    {'1': 'payment', '3': 2, '4': 1, '5': 11, '6': '.types.Payment', '10': 'payment'},
+    {'1': 'payment_preimage', '3': 3, '4': 1, '5': 9, '9': 0, '10': 'paymentPreimage', '17': true},
+    {'1': 'bolt12_invoice', '3': 4, '4': 1, '5': 9, '9': 1, '10': 'bolt12Invoice', '17': true},
+  ],
+  '8': [
+    {'1': '_payment_preimage'},
+    {'1': '_bolt12_invoice'},
   ],
 };
 
 /// Descriptor for `PaymentSuccessful`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List paymentSuccessfulDescriptor = $convert.base64Decode(
-    'ChFQYXltZW50U3VjY2Vzc2Z1bBIoCgdwYXltZW50GAEgASgLMg4udHlwZXMuUGF5bWVudFIHcG'
-    'F5bWVudA==');
+    'ChFQYXltZW50U3VjY2Vzc2Z1bBIdCgpwYXltZW50X2lkGAEgASgJUglwYXltZW50SWQSKAoHcG'
+    'F5bWVudBgCIAEoCzIOLnR5cGVzLlBheW1lbnRSB3BheW1lbnQSLgoQcGF5bWVudF9wcmVpbWFn'
+    'ZRgDIAEoCUgAUg9wYXltZW50UHJlaW1hZ2WIAQESKgoOYm9sdDEyX2ludm9pY2UYBCABKAlIAV'
+    'INYm9sdDEySW52b2ljZYgBAUITChFfcGF5bWVudF9wcmVpbWFnZUIRCg9fYm9sdDEyX2ludm9p'
+    'Y2U=');
 
 @$core.Deprecated('Use paymentFailedDescriptor instead')
 const PaymentFailed$json = {
   '1': 'PaymentFailed',
   '2': [
-    {'1': 'payment', '3': 1, '4': 1, '5': 11, '6': '.types.Payment', '10': 'payment'},
+    {'1': 'payment_id', '3': 1, '4': 1, '5': 9, '10': 'paymentId'},
+    {'1': 'payment', '3': 2, '4': 1, '5': 11, '6': '.types.Payment', '10': 'payment'},
+    {'1': 'reason', '3': 3, '4': 1, '5': 14, '6': '.events.PaymentFailureReason', '9': 0, '10': 'reason', '17': true},
+  ],
+  '8': [
+    {'1': '_reason'},
   ],
 };
 
 /// Descriptor for `PaymentFailed`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List paymentFailedDescriptor = $convert.base64Decode(
-    'Cg1QYXltZW50RmFpbGVkEigKB3BheW1lbnQYASABKAsyDi50eXBlcy5QYXltZW50UgdwYXltZW'
-    '50');
+    'Cg1QYXltZW50RmFpbGVkEh0KCnBheW1lbnRfaWQYASABKAlSCXBheW1lbnRJZBIoCgdwYXltZW'
+    '50GAIgASgLMg4udHlwZXMuUGF5bWVudFIHcGF5bWVudBI5CgZyZWFzb24YAyABKA4yHC5ldmVu'
+    'dHMuUGF5bWVudEZhaWx1cmVSZWFzb25IAFIGcmVhc29uiAEBQgkKB19yZWFzb24=');
 
 @$core.Deprecated('Use paymentClaimableDescriptor instead')
 const PaymentClaimable$json = {
   '1': 'PaymentClaimable',
   '2': [
-    {'1': 'payment', '3': 1, '4': 1, '5': 11, '6': '.types.Payment', '10': 'payment'},
-    {'1': 'custom_records', '3': 2, '4': 3, '5': 11, '6': '.types.CustomTlvRecord', '10': 'customRecords'},
-    {'1': 'claim_deadline', '3': 3, '4': 1, '5': 13, '9': 0, '10': 'claimDeadline', '17': true},
+    {'1': 'payment_id', '3': 1, '4': 1, '5': 9, '10': 'paymentId'},
+    {'1': 'payment', '3': 2, '4': 1, '5': 11, '6': '.types.Payment', '10': 'payment'},
+    {'1': 'custom_records', '3': 3, '4': 3, '5': 11, '6': '.types.CustomTlvRecord', '10': 'customRecords'},
+    {'1': 'claim_deadline', '3': 4, '4': 1, '5': 13, '9': 0, '10': 'claimDeadline', '17': true},
+    {'1': 'claimable_amount_msat', '3': 5, '4': 1, '5': 4, '10': 'claimableAmountMsat'},
   ],
   '8': [
     {'1': '_claim_deadline'},
@@ -312,10 +405,11 @@ const PaymentClaimable$json = {
 
 /// Descriptor for `PaymentClaimable`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List paymentClaimableDescriptor = $convert.base64Decode(
-    'ChBQYXltZW50Q2xhaW1hYmxlEigKB3BheW1lbnQYASABKAsyDi50eXBlcy5QYXltZW50UgdwYX'
-    'ltZW50Ej0KDmN1c3RvbV9yZWNvcmRzGAIgAygLMhYudHlwZXMuQ3VzdG9tVGx2UmVjb3JkUg1j'
-    'dXN0b21SZWNvcmRzEioKDmNsYWltX2RlYWRsaW5lGAMgASgNSABSDWNsYWltRGVhZGxpbmWIAQ'
-    'FCEQoPX2NsYWltX2RlYWRsaW5l');
+    'ChBQYXltZW50Q2xhaW1hYmxlEh0KCnBheW1lbnRfaWQYASABKAlSCXBheW1lbnRJZBIoCgdwYX'
+    'ltZW50GAIgASgLMg4udHlwZXMuUGF5bWVudFIHcGF5bWVudBI9Cg5jdXN0b21fcmVjb3JkcxgD'
+    'IAMoCzIWLnR5cGVzLkN1c3RvbVRsdlJlY29yZFINY3VzdG9tUmVjb3JkcxIqCg5jbGFpbV9kZW'
+    'FkbGluZRgEIAEoDUgAUg1jbGFpbURlYWRsaW5liAEBEjIKFWNsYWltYWJsZV9hbW91bnRfbXNh'
+    'dBgFIAEoBFITY2xhaW1hYmxlQW1vdW50TXNhdEIRCg9fY2xhaW1fZGVhZGxpbmU=');
 
 @$core.Deprecated('Use paymentForwardedDescriptor instead')
 const PaymentForwarded$json = {

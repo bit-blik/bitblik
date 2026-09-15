@@ -71,6 +71,7 @@ class GetNodeInfoResponse extends $pb.GeneratedMessage {
     $core.Iterable<$core.String>? nodeUris,
     $2.Network? network,
     $pb.PbMap<$core.int, $2.Feature>? features,
+    $fixnum.Int64? latestPathfindingScoresSyncTimestamp,
   }) {
     final $result = create();
     if (nodeId != null) {
@@ -112,6 +113,9 @@ class GetNodeInfoResponse extends $pb.GeneratedMessage {
     if (features != null) {
       $result.features.addAll(features);
     }
+    if (latestPathfindingScoresSyncTimestamp != null) {
+      $result.latestPathfindingScoresSyncTimestamp = latestPathfindingScoresSyncTimestamp;
+    }
     return $result;
   }
   GetNodeInfoResponse._() : super();
@@ -132,6 +136,7 @@ class GetNodeInfoResponse extends $pb.GeneratedMessage {
     ..pPS(12, _omitFieldNames ? '' : 'nodeUris')
     ..e<$2.Network>(13, _omitFieldNames ? '' : 'network', $pb.PbFieldType.OE, defaultOrMaker: $2.Network.BITCOIN, valueOf: $2.Network.valueOf, enumValues: $2.Network.values)
     ..m<$core.int, $2.Feature>(14, _omitFieldNames ? '' : 'features', entryClassName: 'GetNodeInfoResponse.FeaturesEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: $2.Feature.create, valueDefaultOrMaker: $2.Feature.getDefault, packageName: const $pb.PackageName('api'))
+    ..a<$fixnum.Int64>(15, _omitFieldNames ? '' : 'latestPathfindingScoresSyncTimestamp', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false
   ;
 
@@ -287,6 +292,20 @@ class GetNodeInfoResponse extends $pb.GeneratedMessage {
   /// Features advertised by this node, keyed by the signaled BOLT feature bit.
   @$pb.TagNumber(14)
   $pb.PbMap<$core.int, $2.Feature> get features => $_getMap(12);
+
+  ///  The timestamp, in seconds since start of the UNIX epoch, when we last successfully merged
+  ///  external pathfinding scores.
+  ///
+  ///  Will be `None` if background pathfinding score syncing isn't configured, or no scores have
+  ///  been merged since the node was initialized.
+  @$pb.TagNumber(15)
+  $fixnum.Int64 get latestPathfindingScoresSyncTimestamp => $_getI64(13);
+  @$pb.TagNumber(15)
+  set latestPathfindingScoresSyncTimestamp($fixnum.Int64 v) { $_setInt64(13, v); }
+  @$pb.TagNumber(15)
+  $core.bool hasLatestPathfindingScoresSyncTimestamp() => $_has(13);
+  @$pb.TagNumber(15)
+  void clearLatestPathfindingScoresSyncTimestamp() => $_clearField(15);
 }
 
 /// Retrieve a new on-chain funding address.
@@ -719,8 +738,8 @@ class Bolt11ReceiveResponse extends $pb.GeneratedMessage {
 
 /// Return a BOLT11 payable invoice for a given payment hash.
 /// The inbound payment will NOT be automatically claimed upon arrival.
-/// Instead, the payment will need to be manually claimed by calling `Bolt11ClaimForHash`
-/// or manually failed by calling `Bolt11FailForHash`.
+/// Instead, the payment will need to be manually claimed by calling `Bolt11ClaimForId`
+/// or manually failed by calling `Bolt11FailForId`.
 /// See more:
 /// - https://docs.rs/ldk-node/latest/ldk_node/payment/struct.Bolt11Payment.html#method.receive_for_hash
 /// - https://docs.rs/ldk-node/latest/ldk_node/payment/struct.Bolt11Payment.html#method.receive_variable_amount_for_hash
@@ -813,6 +832,7 @@ class Bolt11ReceiveForHashRequest extends $pb.GeneratedMessage {
   void clearExpirySecs() => $_clearField(3);
 
   /// The hex-encoded 32-byte payment hash to use for the invoice.
+  /// Use a new payment hash for each invoice. Reuse is unsafe and can cause loss of funds.
   @$pb.TagNumber(4)
   $core.String get paymentHash => $_getSZ(3);
   @$pb.TagNumber(4)
@@ -877,18 +897,18 @@ class Bolt11ReceiveForHashResponse extends $pb.GeneratedMessage {
   void clearInvoice() => $_clearField(1);
 }
 
-/// Manually claim a payment for a given payment hash with the corresponding preimage.
+/// Manually claim a payment for a given payment ID with the corresponding preimage.
 /// This should be used to claim payments created via `Bolt11ReceiveForHash`.
-/// See more: https://docs.rs/ldk-node/latest/ldk_node/payment/struct.Bolt11Payment.html#method.claim_for_hash
-class Bolt11ClaimForHashRequest extends $pb.GeneratedMessage {
-  factory Bolt11ClaimForHashRequest({
-    $core.String? paymentHash,
+/// See more: https://docs.rs/ldk-node/latest/ldk_node/payment/struct.Bolt11Payment.html#method.claim_for_id
+class Bolt11ClaimForIdRequest extends $pb.GeneratedMessage {
+  factory Bolt11ClaimForIdRequest({
+    $core.String? paymentId,
     $fixnum.Int64? claimableAmountMsat,
     $core.String? preimage,
   }) {
     final $result = create();
-    if (paymentHash != null) {
-      $result.paymentHash = paymentHash;
+    if (paymentId != null) {
+      $result.paymentId = paymentId;
     }
     if (claimableAmountMsat != null) {
       $result.claimableAmountMsat = claimableAmountMsat;
@@ -898,12 +918,12 @@ class Bolt11ClaimForHashRequest extends $pb.GeneratedMessage {
     }
     return $result;
   }
-  Bolt11ClaimForHashRequest._() : super();
-  factory Bolt11ClaimForHashRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory Bolt11ClaimForHashRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  Bolt11ClaimForIdRequest._() : super();
+  factory Bolt11ClaimForIdRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt11ClaimForIdRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt11ClaimForHashRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'paymentHash')
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt11ClaimForIdRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'paymentId')
     ..a<$fixnum.Int64>(2, _omitFieldNames ? '' : 'claimableAmountMsat', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
     ..aOS(3, _omitFieldNames ? '' : 'preimage')
     ..hasRequiredFields = false
@@ -913,36 +933,38 @@ class Bolt11ClaimForHashRequest extends $pb.GeneratedMessage {
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
   'Will be removed in next major version')
-  Bolt11ClaimForHashRequest clone() => Bolt11ClaimForHashRequest()..mergeFromMessage(this);
+  Bolt11ClaimForIdRequest clone() => Bolt11ClaimForIdRequest()..mergeFromMessage(this);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
   'Will be removed in next major version')
-  Bolt11ClaimForHashRequest copyWith(void Function(Bolt11ClaimForHashRequest) updates) => super.copyWith((message) => updates(message as Bolt11ClaimForHashRequest)) as Bolt11ClaimForHashRequest;
+  Bolt11ClaimForIdRequest copyWith(void Function(Bolt11ClaimForIdRequest) updates) => super.copyWith((message) => updates(message as Bolt11ClaimForIdRequest)) as Bolt11ClaimForIdRequest;
 
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static Bolt11ClaimForHashRequest create() => Bolt11ClaimForHashRequest._();
-  Bolt11ClaimForHashRequest createEmptyInstance() => create();
-  static $pb.PbList<Bolt11ClaimForHashRequest> createRepeated() => $pb.PbList<Bolt11ClaimForHashRequest>();
+  static Bolt11ClaimForIdRequest create() => Bolt11ClaimForIdRequest._();
+  Bolt11ClaimForIdRequest createEmptyInstance() => create();
+  static $pb.PbList<Bolt11ClaimForIdRequest> createRepeated() => $pb.PbList<Bolt11ClaimForIdRequest>();
   @$core.pragma('dart2js:noInline')
-  static Bolt11ClaimForHashRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt11ClaimForHashRequest>(create);
-  static Bolt11ClaimForHashRequest? _defaultInstance;
+  static Bolt11ClaimForIdRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt11ClaimForIdRequest>(create);
+  static Bolt11ClaimForIdRequest? _defaultInstance;
 
-  /// The hex-encoded 32-byte payment hash.
-  /// If provided, it will be used to verify that the preimage matches.
+  /// The hex-encoded 32-byte payment ID from `PaymentClaimable`.
   @$pb.TagNumber(1)
-  $core.String get paymentHash => $_getSZ(0);
+  $core.String get paymentId => $_getSZ(0);
   @$pb.TagNumber(1)
-  set paymentHash($core.String v) { $_setString(0, v); }
+  set paymentId($core.String v) { $_setString(0, v); }
   @$pb.TagNumber(1)
-  $core.bool hasPaymentHash() => $_has(0);
+  $core.bool hasPaymentId() => $_has(0);
   @$pb.TagNumber(1)
-  void clearPaymentHash() => $_clearField(1);
+  void clearPaymentId() => $_clearField(1);
 
-  /// The amount in millisatoshi that is claimable.
-  /// If not provided, skips amount verification.
+  /// The claimable amount in millisatoshis from the PaymentClaimable event.
+  /// LDK Node rejects a value below its stored payment amount, less any skimmed fee.
+  /// A larger value passes this check. This is not an exact amount check or a request
+  /// to claim that many millisatoshis. Validate the event's amount before claiming.
+  /// If not provided, skips this amount check.
   @$pb.TagNumber(2)
   $fixnum.Int64 get claimableAmountMsat => $_getI64(1);
   @$pb.TagNumber(2)
@@ -963,14 +985,14 @@ class Bolt11ClaimForHashRequest extends $pb.GeneratedMessage {
   void clearPreimage() => $_clearField(3);
 }
 
-/// The response for the `Bolt11ClaimForHash` RPC. On failure, a gRPC error status is returned.
-class Bolt11ClaimForHashResponse extends $pb.GeneratedMessage {
-  factory Bolt11ClaimForHashResponse() => create();
-  Bolt11ClaimForHashResponse._() : super();
-  factory Bolt11ClaimForHashResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory Bolt11ClaimForHashResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+/// The response for the `Bolt11ClaimForId` RPC. On failure, a gRPC error status is returned.
+class Bolt11ClaimForIdResponse extends $pb.GeneratedMessage {
+  factory Bolt11ClaimForIdResponse() => create();
+  Bolt11ClaimForIdResponse._() : super();
+  factory Bolt11ClaimForIdResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt11ClaimForIdResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt11ClaimForHashResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt11ClaimForIdResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
     ..hasRequiredFields = false
   ;
 
@@ -978,43 +1000,43 @@ class Bolt11ClaimForHashResponse extends $pb.GeneratedMessage {
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
   'Will be removed in next major version')
-  Bolt11ClaimForHashResponse clone() => Bolt11ClaimForHashResponse()..mergeFromMessage(this);
+  Bolt11ClaimForIdResponse clone() => Bolt11ClaimForIdResponse()..mergeFromMessage(this);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
   'Will be removed in next major version')
-  Bolt11ClaimForHashResponse copyWith(void Function(Bolt11ClaimForHashResponse) updates) => super.copyWith((message) => updates(message as Bolt11ClaimForHashResponse)) as Bolt11ClaimForHashResponse;
+  Bolt11ClaimForIdResponse copyWith(void Function(Bolt11ClaimForIdResponse) updates) => super.copyWith((message) => updates(message as Bolt11ClaimForIdResponse)) as Bolt11ClaimForIdResponse;
 
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static Bolt11ClaimForHashResponse create() => Bolt11ClaimForHashResponse._();
-  Bolt11ClaimForHashResponse createEmptyInstance() => create();
-  static $pb.PbList<Bolt11ClaimForHashResponse> createRepeated() => $pb.PbList<Bolt11ClaimForHashResponse>();
+  static Bolt11ClaimForIdResponse create() => Bolt11ClaimForIdResponse._();
+  Bolt11ClaimForIdResponse createEmptyInstance() => create();
+  static $pb.PbList<Bolt11ClaimForIdResponse> createRepeated() => $pb.PbList<Bolt11ClaimForIdResponse>();
   @$core.pragma('dart2js:noInline')
-  static Bolt11ClaimForHashResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt11ClaimForHashResponse>(create);
-  static Bolt11ClaimForHashResponse? _defaultInstance;
+  static Bolt11ClaimForIdResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt11ClaimForIdResponse>(create);
+  static Bolt11ClaimForIdResponse? _defaultInstance;
 }
 
-/// Manually fail a payment for a given payment hash.
+/// Manually fail a payment for a given payment ID.
 /// This should be used to reject payments created via `Bolt11ReceiveForHash`.
-/// See more: https://docs.rs/ldk-node/latest/ldk_node/payment/struct.Bolt11Payment.html#method.fail_for_hash
-class Bolt11FailForHashRequest extends $pb.GeneratedMessage {
-  factory Bolt11FailForHashRequest({
-    $core.String? paymentHash,
+/// See more: https://docs.rs/ldk-node/latest/ldk_node/payment/struct.Bolt11Payment.html#method.fail_for_id
+class Bolt11FailForIdRequest extends $pb.GeneratedMessage {
+  factory Bolt11FailForIdRequest({
+    $core.String? paymentId,
   }) {
     final $result = create();
-    if (paymentHash != null) {
-      $result.paymentHash = paymentHash;
+    if (paymentId != null) {
+      $result.paymentId = paymentId;
     }
     return $result;
   }
-  Bolt11FailForHashRequest._() : super();
-  factory Bolt11FailForHashRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory Bolt11FailForHashRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  Bolt11FailForIdRequest._() : super();
+  factory Bolt11FailForIdRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt11FailForIdRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt11FailForHashRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'paymentHash')
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt11FailForIdRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'paymentId')
     ..hasRequiredFields = false
   ;
 
@@ -1022,42 +1044,42 @@ class Bolt11FailForHashRequest extends $pb.GeneratedMessage {
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
   'Will be removed in next major version')
-  Bolt11FailForHashRequest clone() => Bolt11FailForHashRequest()..mergeFromMessage(this);
+  Bolt11FailForIdRequest clone() => Bolt11FailForIdRequest()..mergeFromMessage(this);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
   'Will be removed in next major version')
-  Bolt11FailForHashRequest copyWith(void Function(Bolt11FailForHashRequest) updates) => super.copyWith((message) => updates(message as Bolt11FailForHashRequest)) as Bolt11FailForHashRequest;
+  Bolt11FailForIdRequest copyWith(void Function(Bolt11FailForIdRequest) updates) => super.copyWith((message) => updates(message as Bolt11FailForIdRequest)) as Bolt11FailForIdRequest;
 
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static Bolt11FailForHashRequest create() => Bolt11FailForHashRequest._();
-  Bolt11FailForHashRequest createEmptyInstance() => create();
-  static $pb.PbList<Bolt11FailForHashRequest> createRepeated() => $pb.PbList<Bolt11FailForHashRequest>();
+  static Bolt11FailForIdRequest create() => Bolt11FailForIdRequest._();
+  Bolt11FailForIdRequest createEmptyInstance() => create();
+  static $pb.PbList<Bolt11FailForIdRequest> createRepeated() => $pb.PbList<Bolt11FailForIdRequest>();
   @$core.pragma('dart2js:noInline')
-  static Bolt11FailForHashRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt11FailForHashRequest>(create);
-  static Bolt11FailForHashRequest? _defaultInstance;
+  static Bolt11FailForIdRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt11FailForIdRequest>(create);
+  static Bolt11FailForIdRequest? _defaultInstance;
 
-  /// The hex-encoded 32-byte payment hash.
+  /// The hex-encoded 32-byte payment ID from `PaymentClaimable`.
   @$pb.TagNumber(1)
-  $core.String get paymentHash => $_getSZ(0);
+  $core.String get paymentId => $_getSZ(0);
   @$pb.TagNumber(1)
-  set paymentHash($core.String v) { $_setString(0, v); }
+  set paymentId($core.String v) { $_setString(0, v); }
   @$pb.TagNumber(1)
-  $core.bool hasPaymentHash() => $_has(0);
+  $core.bool hasPaymentId() => $_has(0);
   @$pb.TagNumber(1)
-  void clearPaymentHash() => $_clearField(1);
+  void clearPaymentId() => $_clearField(1);
 }
 
-/// The response for the `Bolt11FailForHash` RPC. On failure, a gRPC error status is returned.
-class Bolt11FailForHashResponse extends $pb.GeneratedMessage {
-  factory Bolt11FailForHashResponse() => create();
-  Bolt11FailForHashResponse._() : super();
-  factory Bolt11FailForHashResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory Bolt11FailForHashResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+/// The response for the `Bolt11FailForId` RPC. On failure, a gRPC error status is returned.
+class Bolt11FailForIdResponse extends $pb.GeneratedMessage {
+  factory Bolt11FailForIdResponse() => create();
+  Bolt11FailForIdResponse._() : super();
+  factory Bolt11FailForIdResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt11FailForIdResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt11FailForHashResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt11FailForIdResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
     ..hasRequiredFields = false
   ;
 
@@ -1065,22 +1087,22 @@ class Bolt11FailForHashResponse extends $pb.GeneratedMessage {
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
   'Will be removed in next major version')
-  Bolt11FailForHashResponse clone() => Bolt11FailForHashResponse()..mergeFromMessage(this);
+  Bolt11FailForIdResponse clone() => Bolt11FailForIdResponse()..mergeFromMessage(this);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
   'Will be removed in next major version')
-  Bolt11FailForHashResponse copyWith(void Function(Bolt11FailForHashResponse) updates) => super.copyWith((message) => updates(message as Bolt11FailForHashResponse)) as Bolt11FailForHashResponse;
+  Bolt11FailForIdResponse copyWith(void Function(Bolt11FailForIdResponse) updates) => super.copyWith((message) => updates(message as Bolt11FailForIdResponse)) as Bolt11FailForIdResponse;
 
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static Bolt11FailForHashResponse create() => Bolt11FailForHashResponse._();
-  Bolt11FailForHashResponse createEmptyInstance() => create();
-  static $pb.PbList<Bolt11FailForHashResponse> createRepeated() => $pb.PbList<Bolt11FailForHashResponse>();
+  static Bolt11FailForIdResponse create() => Bolt11FailForIdResponse._();
+  Bolt11FailForIdResponse createEmptyInstance() => create();
+  static $pb.PbList<Bolt11FailForIdResponse> createRepeated() => $pb.PbList<Bolt11FailForIdResponse>();
   @$core.pragma('dart2js:noInline')
-  static Bolt11FailForHashResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt11FailForHashResponse>(create);
-  static Bolt11FailForHashResponse? _defaultInstance;
+  static Bolt11FailForIdResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt11FailForIdResponse>(create);
+  static Bolt11FailForIdResponse? _defaultInstance;
 }
 
 /// Return a BOLT11 payable invoice that can be used to request and receive a payment via an
@@ -1995,6 +2017,435 @@ class Bolt12SendResponse extends $pb.GeneratedMessage {
   $core.bool hasPaymentId() => $_has(0);
   @$pb.TagNumber(1)
   void clearPaymentId() => $_clearField(1);
+}
+
+/// Returns a BOLT12 refund for the given amount. The refund recipient can use it to request
+/// payment from this node.
+/// See more:
+/// - https://docs.rs/ldk-node/latest/ldk_node/payment/struct.Bolt12Payment.html#method.initiate_refund
+class Bolt12SendRefundRequest extends $pb.GeneratedMessage {
+  factory Bolt12SendRefundRequest({
+    $fixnum.Int64? amountMsat,
+    $core.int? expirySecs,
+    $fixnum.Int64? quantity,
+    $core.String? payerNote,
+    $2.RouteParametersConfig? routeParameters,
+  }) {
+    final $result = create();
+    if (amountMsat != null) {
+      $result.amountMsat = amountMsat;
+    }
+    if (expirySecs != null) {
+      $result.expirySecs = expirySecs;
+    }
+    if (quantity != null) {
+      $result.quantity = quantity;
+    }
+    if (payerNote != null) {
+      $result.payerNote = payerNote;
+    }
+    if (routeParameters != null) {
+      $result.routeParameters = routeParameters;
+    }
+    return $result;
+  }
+  Bolt12SendRefundRequest._() : super();
+  factory Bolt12SendRefundRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt12SendRefundRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt12SendRefundRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+    ..a<$fixnum.Int64>(1, _omitFieldNames ? '' : 'amountMsat', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'expirySecs', $pb.PbFieldType.OU3)
+    ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'quantity', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
+    ..aOS(4, _omitFieldNames ? '' : 'payerNote')
+    ..aOM<$2.RouteParametersConfig>(5, _omitFieldNames ? '' : 'routeParameters', subBuilder: $2.RouteParametersConfig.create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Bolt12SendRefundRequest clone() => Bolt12SendRefundRequest()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Bolt12SendRefundRequest copyWith(void Function(Bolt12SendRefundRequest) updates) => super.copyWith((message) => updates(message as Bolt12SendRefundRequest)) as Bolt12SendRefundRequest;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Bolt12SendRefundRequest create() => Bolt12SendRefundRequest._();
+  Bolt12SendRefundRequest createEmptyInstance() => create();
+  static $pb.PbList<Bolt12SendRefundRequest> createRepeated() => $pb.PbList<Bolt12SendRefundRequest>();
+  @$core.pragma('dart2js:noInline')
+  static Bolt12SendRefundRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt12SendRefundRequest>(create);
+  static Bolt12SendRefundRequest? _defaultInstance;
+
+  /// The amount in millisatoshis to refund.
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get amountMsat => $_getI64(0);
+  @$pb.TagNumber(1)
+  set amountMsat($fixnum.Int64 v) { $_setInt64(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasAmountMsat() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAmountMsat() => $_clearField(1);
+
+  /// Refund expiry time in seconds. A value of zero is rejected.
+  @$pb.TagNumber(2)
+  $core.int get expirySecs => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set expirySecs($core.int v) { $_setUnsignedInt32(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasExpirySecs() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearExpirySecs() => $_clearField(2);
+
+  /// If set, it represents the number of items being refunded.
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get quantity => $_getI64(2);
+  @$pb.TagNumber(3)
+  set quantity($fixnum.Int64 v) { $_setInt64(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasQuantity() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearQuantity() => $_clearField(3);
+
+  /// If set, it will be seen by the recipient and reflected back in the invoice.
+  @$pb.TagNumber(4)
+  $core.String get payerNote => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set payerNote($core.String v) { $_setString(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasPayerNote() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearPayerNote() => $_clearField(4);
+
+  /// Configuration options for payment routing and pathfinding.
+  @$pb.TagNumber(5)
+  $2.RouteParametersConfig get routeParameters => $_getN(4);
+  @$pb.TagNumber(5)
+  set routeParameters($2.RouteParametersConfig v) { $_setField(5, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasRouteParameters() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearRouteParameters() => $_clearField(5);
+  @$pb.TagNumber(5)
+  $2.RouteParametersConfig ensureRouteParameters() => $_ensure(4);
+}
+
+/// The response for the `Bolt12SendRefund` RPC. On failure, a gRPC error status is returned.
+class Bolt12SendRefundResponse extends $pb.GeneratedMessage {
+  factory Bolt12SendRefundResponse({
+    $core.String? refund,
+  }) {
+    final $result = create();
+    if (refund != null) {
+      $result.refund = refund;
+    }
+    return $result;
+  }
+  Bolt12SendRefundResponse._() : super();
+  factory Bolt12SendRefundResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt12SendRefundResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt12SendRefundResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'refund')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Bolt12SendRefundResponse clone() => Bolt12SendRefundResponse()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Bolt12SendRefundResponse copyWith(void Function(Bolt12SendRefundResponse) updates) => super.copyWith((message) => updates(message as Bolt12SendRefundResponse)) as Bolt12SendRefundResponse;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Bolt12SendRefundResponse create() => Bolt12SendRefundResponse._();
+  Bolt12SendRefundResponse createEmptyInstance() => create();
+  static $pb.PbList<Bolt12SendRefundResponse> createRepeated() => $pb.PbList<Bolt12SendRefundResponse>();
+  @$core.pragma('dart2js:noInline')
+  static Bolt12SendRefundResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt12SendRefundResponse>(create);
+  static Bolt12SendRefundResponse? _defaultInstance;
+
+  /// A BOLT12 refund that the recipient can use to request the refund payment.
+  @$pb.TagNumber(1)
+  $core.String get refund => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set refund($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasRefund() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRefund() => $_clearField(1);
+}
+
+/// Requests payment for a BOLT12 refund from another node.
+/// See more:
+/// - https://docs.rs/ldk-node/latest/ldk_node/payment/struct.Bolt12Payment.html#method.request_refund_payment
+class Bolt12ReceiveRefundRequest extends $pb.GeneratedMessage {
+  factory Bolt12ReceiveRefundRequest({
+    $core.String? refund,
+  }) {
+    final $result = create();
+    if (refund != null) {
+      $result.refund = refund;
+    }
+    return $result;
+  }
+  Bolt12ReceiveRefundRequest._() : super();
+  factory Bolt12ReceiveRefundRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt12ReceiveRefundRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt12ReceiveRefundRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'refund')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Bolt12ReceiveRefundRequest clone() => Bolt12ReceiveRefundRequest()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Bolt12ReceiveRefundRequest copyWith(void Function(Bolt12ReceiveRefundRequest) updates) => super.copyWith((message) => updates(message as Bolt12ReceiveRefundRequest)) as Bolt12ReceiveRefundRequest;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Bolt12ReceiveRefundRequest create() => Bolt12ReceiveRefundRequest._();
+  Bolt12ReceiveRefundRequest createEmptyInstance() => create();
+  static $pb.PbList<Bolt12ReceiveRefundRequest> createRepeated() => $pb.PbList<Bolt12ReceiveRefundRequest>();
+  @$core.pragma('dart2js:noInline')
+  static Bolt12ReceiveRefundRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt12ReceiveRefundRequest>(create);
+  static Bolt12ReceiveRefundRequest? _defaultInstance;
+
+  /// A BOLT12 refund from the node that will send the payment.
+  @$pb.TagNumber(1)
+  $core.String get refund => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set refund($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasRefund() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRefund() => $_clearField(1);
+}
+
+/// The response for the `Bolt12ReceiveRefund` RPC. On failure, a gRPC error status is returned.
+class Bolt12ReceiveRefundResponse extends $pb.GeneratedMessage {
+  factory Bolt12ReceiveRefundResponse({
+    $core.String? paymentHash,
+  }) {
+    final $result = create();
+    if (paymentHash != null) {
+      $result.paymentHash = paymentHash;
+    }
+    return $result;
+  }
+  Bolt12ReceiveRefundResponse._() : super();
+  factory Bolt12ReceiveRefundResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt12ReceiveRefundResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt12ReceiveRefundResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'paymentHash')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Bolt12ReceiveRefundResponse clone() => Bolt12ReceiveRefundResponse()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Bolt12ReceiveRefundResponse copyWith(void Function(Bolt12ReceiveRefundResponse) updates) => super.copyWith((message) => updates(message as Bolt12ReceiveRefundResponse)) as Bolt12ReceiveRefundResponse;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Bolt12ReceiveRefundResponse create() => Bolt12ReceiveRefundResponse._();
+  Bolt12ReceiveRefundResponse createEmptyInstance() => create();
+  static $pb.PbList<Bolt12ReceiveRefundResponse> createRepeated() => $pb.PbList<Bolt12ReceiveRefundResponse>();
+  @$core.pragma('dart2js:noInline')
+  static Bolt12ReceiveRefundResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt12ReceiveRefundResponse>(create);
+  static Bolt12ReceiveRefundResponse? _defaultInstance;
+
+  /// The payment hash for the incoming refund payment in hex-encoded form.
+  @$pb.TagNumber(1)
+  $core.String get paymentHash => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set paymentHash($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasPaymentHash() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPaymentHash() => $_clearField(1);
+}
+
+/// Create a BOLT 12 payer proof for a payment this node made.
+/// Inputs come from `PaymentSuccessful`: `payment_id`, `payment_preimage`, and `bolt12_invoice`.
+/// See more: https://docs.rs/ldk-node/latest/ldk_node/payment/struct.Bolt12Payment.html#method.create_payer_proof
+class Bolt12CreatePayerProofRequest extends $pb.GeneratedMessage {
+  factory Bolt12CreatePayerProofRequest({
+    $core.String? paymentId,
+    $core.String? paymentPreimage,
+    $core.String? invoice,
+    $2.PayerProofOptions? options,
+  }) {
+    final $result = create();
+    if (paymentId != null) {
+      $result.paymentId = paymentId;
+    }
+    if (paymentPreimage != null) {
+      $result.paymentPreimage = paymentPreimage;
+    }
+    if (invoice != null) {
+      $result.invoice = invoice;
+    }
+    if (options != null) {
+      $result.options = options;
+    }
+    return $result;
+  }
+  Bolt12CreatePayerProofRequest._() : super();
+  factory Bolt12CreatePayerProofRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt12CreatePayerProofRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt12CreatePayerProofRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'paymentId')
+    ..aOS(2, _omitFieldNames ? '' : 'paymentPreimage')
+    ..aOS(3, _omitFieldNames ? '' : 'invoice')
+    ..aOM<$2.PayerProofOptions>(4, _omitFieldNames ? '' : 'options', subBuilder: $2.PayerProofOptions.create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Bolt12CreatePayerProofRequest clone() => Bolt12CreatePayerProofRequest()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Bolt12CreatePayerProofRequest copyWith(void Function(Bolt12CreatePayerProofRequest) updates) => super.copyWith((message) => updates(message as Bolt12CreatePayerProofRequest)) as Bolt12CreatePayerProofRequest;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Bolt12CreatePayerProofRequest create() => Bolt12CreatePayerProofRequest._();
+  Bolt12CreatePayerProofRequest createEmptyInstance() => create();
+  static $pb.PbList<Bolt12CreatePayerProofRequest> createRepeated() => $pb.PbList<Bolt12CreatePayerProofRequest>();
+  @$core.pragma('dart2js:noInline')
+  static Bolt12CreatePayerProofRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt12CreatePayerProofRequest>(create);
+  static Bolt12CreatePayerProofRequest? _defaultInstance;
+
+  /// The local identifier used to track the payment, in hex-encoded form.
+  @$pb.TagNumber(1)
+  $core.String get paymentId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set paymentId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasPaymentId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPaymentId() => $_clearField(1);
+
+  /// The hex-encoded 32-byte payment preimage from `PaymentSuccessful`.
+  @$pb.TagNumber(2)
+  $core.String get paymentPreimage => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set paymentPreimage($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasPaymentPreimage() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPaymentPreimage() => $_clearField(2);
+
+  /// The hex-encoded BOLT 12 invoice from `PaymentSuccessful.bolt12_invoice`.
+  /// Static invoices used for async payments cannot be proven.
+  @$pb.TagNumber(3)
+  $core.String get invoice => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set invoice($core.String v) { $_setString(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasInvoice() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearInvoice() => $_clearField(3);
+
+  /// Controls which optional invoice fields the proof discloses.
+  @$pb.TagNumber(4)
+  $2.PayerProofOptions get options => $_getN(3);
+  @$pb.TagNumber(4)
+  set options($2.PayerProofOptions v) { $_setField(4, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasOptions() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearOptions() => $_clearField(4);
+  @$pb.TagNumber(4)
+  $2.PayerProofOptions ensureOptions() => $_ensure(3);
+}
+
+/// The response for the `Bolt12CreatePayerProof` RPC. On failure, a gRPC error status is returned.
+class Bolt12CreatePayerProofResponse extends $pb.GeneratedMessage {
+  factory Bolt12CreatePayerProofResponse({
+    $core.String? payerProof,
+  }) {
+    final $result = create();
+    if (payerProof != null) {
+      $result.payerProof = payerProof;
+    }
+    return $result;
+  }
+  Bolt12CreatePayerProofResponse._() : super();
+  factory Bolt12CreatePayerProofResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Bolt12CreatePayerProofResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Bolt12CreatePayerProofResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'payerProof')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Bolt12CreatePayerProofResponse clone() => Bolt12CreatePayerProofResponse()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Bolt12CreatePayerProofResponse copyWith(void Function(Bolt12CreatePayerProofResponse) updates) => super.copyWith((message) => updates(message as Bolt12CreatePayerProofResponse)) as Bolt12CreatePayerProofResponse;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Bolt12CreatePayerProofResponse create() => Bolt12CreatePayerProofResponse._();
+  Bolt12CreatePayerProofResponse createEmptyInstance() => create();
+  static $pb.PbList<Bolt12CreatePayerProofResponse> createRepeated() => $pb.PbList<Bolt12CreatePayerProofResponse>();
+  @$core.pragma('dart2js:noInline')
+  static Bolt12CreatePayerProofResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Bolt12CreatePayerProofResponse>(create);
+  static Bolt12CreatePayerProofResponse? _defaultInstance;
+
+  /// The bech32-encoded payer proof.
+  @$pb.TagNumber(1)
+  $core.String get payerProof => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set payerProof($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasPayerProof() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPayerProof() => $_clearField(1);
 }
 
 /// Send a spontaneous payment, also known as "keysend", to a node.
@@ -3249,7 +3700,7 @@ class GetPaymentDetailsResponse extends $pb.GeneratedMessage {
 /// See more: https://docs.rs/ldk-node/latest/ldk_node/struct.Node.html#method.list_payments
 class ListPaymentsRequest extends $pb.GeneratedMessage {
   factory ListPaymentsRequest({
-    $2.PageToken? pageToken,
+    $core.String? pageToken,
   }) {
     final $result = create();
     if (pageToken != null) {
@@ -3262,7 +3713,7 @@ class ListPaymentsRequest extends $pb.GeneratedMessage {
   factory ListPaymentsRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ListPaymentsRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
-    ..aOM<$2.PageToken>(1, _omitFieldNames ? '' : 'pageToken', subBuilder: $2.PageToken.create)
+    ..aOS(1, _omitFieldNames ? '' : 'pageToken')
     ..hasRequiredFields = false
   ;
 
@@ -3287,29 +3738,27 @@ class ListPaymentsRequest extends $pb.GeneratedMessage {
   static ListPaymentsRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ListPaymentsRequest>(create);
   static ListPaymentsRequest? _defaultInstance;
 
-  ///  `page_token` is a pagination token.
+  ///  `page_token` is an opaque pagination token string.
   ///
   ///  To query for the first page, `page_token` must not be specified.
   ///
   ///  For subsequent pages, use the value that was returned as `next_page_token` in the previous
   ///  page's response.
   @$pb.TagNumber(1)
-  $2.PageToken get pageToken => $_getN(0);
+  $core.String get pageToken => $_getSZ(0);
   @$pb.TagNumber(1)
-  set pageToken($2.PageToken v) { $_setField(1, v); }
+  set pageToken($core.String v) { $_setString(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasPageToken() => $_has(0);
   @$pb.TagNumber(1)
   void clearPageToken() => $_clearField(1);
-  @$pb.TagNumber(1)
-  $2.PageToken ensurePageToken() => $_ensure(0);
 }
 
 /// The response for the `ListPayments` RPC. On failure, a gRPC error status is returned.
 class ListPaymentsResponse extends $pb.GeneratedMessage {
   factory ListPaymentsResponse({
     $core.Iterable<$2.Payment>? payments,
-    $2.PageToken? nextPageToken,
+    $core.String? nextPageToken,
   }) {
     final $result = create();
     if (payments != null) {
@@ -3326,7 +3775,7 @@ class ListPaymentsResponse extends $pb.GeneratedMessage {
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ListPaymentsResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
     ..pc<$2.Payment>(1, _omitFieldNames ? '' : 'payments', $pb.PbFieldType.PM, subBuilder: $2.Payment.create)
-    ..aOM<$2.PageToken>(2, _omitFieldNames ? '' : 'nextPageToken', subBuilder: $2.PageToken.create)
+    ..aOS(2, _omitFieldNames ? '' : 'nextPageToken')
     ..hasRequiredFields = false
   ;
 
@@ -3355,7 +3804,8 @@ class ListPaymentsResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   $pb.PbList<$2.Payment> get payments => $_getList(0);
 
-  ///  `next_page_token` is a pagination token, used to retrieve the next page of results.
+  ///  `next_page_token` is an opaque pagination token string used to retrieve the next page of
+  ///  results.
   ///  Use this value to query for next-page of paginated operation, by specifying
   ///  this value as the `page_token` in the next request.
   ///
@@ -3369,22 +3819,20 @@ class ListPaymentsResponse extends $pb.GeneratedMessage {
   ///  **Caution**: Clients must not assume a specific number of records to be present in a page for
   ///  paginated response.
   @$pb.TagNumber(2)
-  $2.PageToken get nextPageToken => $_getN(1);
+  $core.String get nextPageToken => $_getSZ(1);
   @$pb.TagNumber(2)
-  set nextPageToken($2.PageToken v) { $_setField(2, v); }
+  set nextPageToken($core.String v) { $_setString(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasNextPageToken() => $_has(1);
   @$pb.TagNumber(2)
   void clearNextPageToken() => $_clearField(2);
-  @$pb.TagNumber(2)
-  $2.PageToken ensureNextPageToken() => $_ensure(1);
 }
 
 /// Retrieves list of all forwarded payments.
 /// See more: https://docs.rs/ldk-node/latest/ldk_node/enum.Event.html#variant.PaymentForwarded
 class ListForwardedPaymentsRequest extends $pb.GeneratedMessage {
   factory ListForwardedPaymentsRequest({
-    $2.PageToken? pageToken,
+    $core.String? pageToken,
   }) {
     final $result = create();
     if (pageToken != null) {
@@ -3397,7 +3845,7 @@ class ListForwardedPaymentsRequest extends $pb.GeneratedMessage {
   factory ListForwardedPaymentsRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ListForwardedPaymentsRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
-    ..aOM<$2.PageToken>(1, _omitFieldNames ? '' : 'pageToken', subBuilder: $2.PageToken.create)
+    ..aOS(1, _omitFieldNames ? '' : 'pageToken')
     ..hasRequiredFields = false
   ;
 
@@ -3422,29 +3870,27 @@ class ListForwardedPaymentsRequest extends $pb.GeneratedMessage {
   static ListForwardedPaymentsRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ListForwardedPaymentsRequest>(create);
   static ListForwardedPaymentsRequest? _defaultInstance;
 
-  ///  `page_token` is a pagination token.
+  ///  `page_token` is an opaque pagination token string.
   ///
   ///  To query for the first page, `page_token` must not be specified.
   ///
   ///  For subsequent pages, use the value that was returned as `next_page_token` in the previous
   ///  page's response.
   @$pb.TagNumber(1)
-  $2.PageToken get pageToken => $_getN(0);
+  $core.String get pageToken => $_getSZ(0);
   @$pb.TagNumber(1)
-  set pageToken($2.PageToken v) { $_setField(1, v); }
+  set pageToken($core.String v) { $_setString(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasPageToken() => $_has(0);
   @$pb.TagNumber(1)
   void clearPageToken() => $_clearField(1);
-  @$pb.TagNumber(1)
-  $2.PageToken ensurePageToken() => $_ensure(0);
 }
 
 /// The response for the `ListForwardedPayments` RPC. On failure, a gRPC error status is returned.
 class ListForwardedPaymentsResponse extends $pb.GeneratedMessage {
   factory ListForwardedPaymentsResponse({
     $core.Iterable<$2.ForwardedPayment>? forwardedPayments,
-    $2.PageToken? nextPageToken,
+    $core.String? nextPageToken,
   }) {
     final $result = create();
     if (forwardedPayments != null) {
@@ -3461,7 +3907,7 @@ class ListForwardedPaymentsResponse extends $pb.GeneratedMessage {
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ListForwardedPaymentsResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'api'), createEmptyInstance: create)
     ..pc<$2.ForwardedPayment>(1, _omitFieldNames ? '' : 'forwardedPayments', $pb.PbFieldType.PM, subBuilder: $2.ForwardedPayment.create)
-    ..aOM<$2.PageToken>(2, _omitFieldNames ? '' : 'nextPageToken', subBuilder: $2.PageToken.create)
+    ..aOS(2, _omitFieldNames ? '' : 'nextPageToken')
     ..hasRequiredFields = false
   ;
 
@@ -3490,7 +3936,8 @@ class ListForwardedPaymentsResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   $pb.PbList<$2.ForwardedPayment> get forwardedPayments => $_getList(0);
 
-  ///  `next_page_token` is a pagination token, used to retrieve the next page of results.
+  ///  `next_page_token` is an opaque pagination token string used to retrieve the next page of
+  ///  results.
   ///  Use this value to query for next-page of paginated operation, by specifying
   ///  this value as the `page_token` in the next request.
   ///
@@ -3504,15 +3951,13 @@ class ListForwardedPaymentsResponse extends $pb.GeneratedMessage {
   ///  **Caution**: Clients must not assume a specific number of records to be present in a page for
   ///  paginated response.
   @$pb.TagNumber(2)
-  $2.PageToken get nextPageToken => $_getN(1);
+  $core.String get nextPageToken => $_getSZ(1);
   @$pb.TagNumber(2)
-  set nextPageToken($2.PageToken v) { $_setField(2, v); }
+  set nextPageToken($core.String v) { $_setString(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasNextPageToken() => $_has(1);
   @$pb.TagNumber(2)
   void clearNextPageToken() => $_clearField(2);
-  @$pb.TagNumber(2)
-  $2.PageToken ensureNextPageToken() => $_ensure(1);
 }
 
 /// Sign a message with the node's secret key.
@@ -5414,7 +5859,15 @@ class DecodeOfferResponse extends $pb.GeneratedMessage {
   void clearIsExpired() => $_clearField(12);
 }
 
-/// Subscribe to a stream of server events.
+///  Subscribe to a best-effort stream of new server events.
+///
+///  Events are not persisted for subscribers or replayed after reconnecting, and the server does not
+///  wait for client acknowledgement. Slow or disconnected subscribers may miss events. Reconcile
+///  recoverable state with the listing and detail APIs after reconnecting. Some event fields,
+///  including inputs required for payer proofs, cannot be recovered through these APIs.
+///
+///  If a PaymentClaimable event is missed and the payment is not otherwise claimed or failed, LDK
+///  Node automatically fails the HTLC backward at its claim_deadline.
 class SubscribeEventsRequest extends $pb.GeneratedMessage {
   factory SubscribeEventsRequest() => create();
   SubscribeEventsRequest._() : super();

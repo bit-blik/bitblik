@@ -11,6 +11,7 @@
 
 import 'dart:core' as $core;
 
+import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
 import 'events.pbenum.dart';
@@ -27,6 +28,8 @@ enum EventEnvelope_Event {
   paymentForwarded, 
   paymentClaimable, 
   channelStateChanged, 
+  spliceNegotiated, 
+  spliceNegotiationFailed, 
   notSet
 }
 
@@ -39,6 +42,8 @@ class EventEnvelope extends $pb.GeneratedMessage {
     PaymentForwarded? paymentForwarded,
     PaymentClaimable? paymentClaimable,
     ChannelStateChanged? channelStateChanged,
+    SpliceNegotiated? spliceNegotiated,
+    SpliceNegotiationFailed? spliceNegotiationFailed,
   }) {
     final $result = create();
     if (paymentReceived != null) {
@@ -59,6 +64,12 @@ class EventEnvelope extends $pb.GeneratedMessage {
     if (channelStateChanged != null) {
       $result.channelStateChanged = channelStateChanged;
     }
+    if (spliceNegotiated != null) {
+      $result.spliceNegotiated = spliceNegotiated;
+    }
+    if (spliceNegotiationFailed != null) {
+      $result.spliceNegotiationFailed = spliceNegotiationFailed;
+    }
     return $result;
   }
   EventEnvelope._() : super();
@@ -72,16 +83,20 @@ class EventEnvelope extends $pb.GeneratedMessage {
     6 : EventEnvelope_Event.paymentForwarded,
     7 : EventEnvelope_Event.paymentClaimable,
     8 : EventEnvelope_Event.channelStateChanged,
+    9 : EventEnvelope_Event.spliceNegotiated,
+    10 : EventEnvelope_Event.spliceNegotiationFailed,
     0 : EventEnvelope_Event.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'EventEnvelope', package: const $pb.PackageName(_omitMessageNames ? '' : 'events'), createEmptyInstance: create)
-    ..oo(0, [2, 3, 4, 6, 7, 8])
+    ..oo(0, [2, 3, 4, 6, 7, 8, 9, 10])
     ..aOM<PaymentReceived>(2, _omitFieldNames ? '' : 'paymentReceived', subBuilder: PaymentReceived.create)
     ..aOM<PaymentSuccessful>(3, _omitFieldNames ? '' : 'paymentSuccessful', subBuilder: PaymentSuccessful.create)
     ..aOM<PaymentFailed>(4, _omitFieldNames ? '' : 'paymentFailed', subBuilder: PaymentFailed.create)
     ..aOM<PaymentForwarded>(6, _omitFieldNames ? '' : 'paymentForwarded', subBuilder: PaymentForwarded.create)
     ..aOM<PaymentClaimable>(7, _omitFieldNames ? '' : 'paymentClaimable', subBuilder: PaymentClaimable.create)
     ..aOM<ChannelStateChanged>(8, _omitFieldNames ? '' : 'channelStateChanged', subBuilder: ChannelStateChanged.create)
+    ..aOM<SpliceNegotiated>(9, _omitFieldNames ? '' : 'spliceNegotiated', subBuilder: SpliceNegotiated.create)
+    ..aOM<SpliceNegotiationFailed>(10, _omitFieldNames ? '' : 'spliceNegotiationFailed', subBuilder: SpliceNegotiationFailed.create)
     ..hasRequiredFields = false
   ;
 
@@ -174,6 +189,28 @@ class EventEnvelope extends $pb.GeneratedMessage {
   void clearChannelStateChanged() => $_clearField(8);
   @$pb.TagNumber(8)
   ChannelStateChanged ensureChannelStateChanged() => $_ensure(5);
+
+  @$pb.TagNumber(9)
+  SpliceNegotiated get spliceNegotiated => $_getN(6);
+  @$pb.TagNumber(9)
+  set spliceNegotiated(SpliceNegotiated v) { $_setField(9, v); }
+  @$pb.TagNumber(9)
+  $core.bool hasSpliceNegotiated() => $_has(6);
+  @$pb.TagNumber(9)
+  void clearSpliceNegotiated() => $_clearField(9);
+  @$pb.TagNumber(9)
+  SpliceNegotiated ensureSpliceNegotiated() => $_ensure(6);
+
+  @$pb.TagNumber(10)
+  SpliceNegotiationFailed get spliceNegotiationFailed => $_getN(7);
+  @$pb.TagNumber(10)
+  set spliceNegotiationFailed(SpliceNegotiationFailed v) { $_setField(10, v); }
+  @$pb.TagNumber(10)
+  $core.bool hasSpliceNegotiationFailed() => $_has(7);
+  @$pb.TagNumber(10)
+  void clearSpliceNegotiationFailed() => $_clearField(10);
+  @$pb.TagNumber(10)
+  SpliceNegotiationFailed ensureSpliceNegotiationFailed() => $_ensure(7);
 }
 
 class CounterpartyForceClosedDetails extends $pb.GeneratedMessage {
@@ -628,6 +665,7 @@ class ChannelStateChanged extends $pb.GeneratedMessage {
     $core.String? fundingTxo,
     ChannelStateChangeReason? reason,
     ChannelClosureInitiator? closureInitiator,
+    $core.String? formerTemporaryChannelId,
   }) {
     final $result = create();
     if (channelId != null) {
@@ -651,6 +689,9 @@ class ChannelStateChanged extends $pb.GeneratedMessage {
     if (closureInitiator != null) {
       $result.closureInitiator = closureInitiator;
     }
+    if (formerTemporaryChannelId != null) {
+      $result.formerTemporaryChannelId = formerTemporaryChannelId;
+    }
     return $result;
   }
   ChannelStateChanged._() : super();
@@ -665,6 +706,7 @@ class ChannelStateChanged extends $pb.GeneratedMessage {
     ..aOS(5, _omitFieldNames ? '' : 'fundingTxo')
     ..aOM<ChannelStateChangeReason>(6, _omitFieldNames ? '' : 'reason', subBuilder: ChannelStateChangeReason.create)
     ..e<ChannelClosureInitiator>(7, _omitFieldNames ? '' : 'closureInitiator', $pb.PbFieldType.OE, defaultOrMaker: ChannelClosureInitiator.CHANNEL_CLOSURE_INITIATOR_UNSPECIFIED, valueOf: ChannelClosureInitiator.valueOf, enumValues: ChannelClosureInitiator.values)
+    ..aOS(8, _omitFieldNames ? '' : 'formerTemporaryChannelId')
     ..hasRequiredFields = false
   ;
 
@@ -753,15 +795,205 @@ class ChannelStateChanged extends $pb.GeneratedMessage {
   $core.bool hasClosureInitiator() => $_has(6);
   @$pb.TagNumber(7)
   void clearClosureInitiator() => $_clearField(7);
+
+  ///  The `temporary_channel_id` this channel used to be known by during channel establishment.
+  ///
+  ///  Only set when `state` is `CHANNEL_STATE_PENDING`.
+  @$pb.TagNumber(8)
+  $core.String get formerTemporaryChannelId => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set formerTemporaryChannelId($core.String v) { $_setString(7, v); }
+  @$pb.TagNumber(8)
+  $core.bool hasFormerTemporaryChannelId() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearFormerTemporaryChannelId() => $_clearField(8);
+}
+
+/// SpliceNegotiated indicates a channel splice has been negotiated and the funding
+/// transaction is pending confirmation on-chain.
+class SpliceNegotiated extends $pb.GeneratedMessage {
+  factory SpliceNegotiated({
+    $core.String? channelId,
+    $core.String? userChannelId,
+    $core.String? counterpartyNodeId,
+    $core.String? newFundingTxo,
+  }) {
+    final $result = create();
+    if (channelId != null) {
+      $result.channelId = channelId;
+    }
+    if (userChannelId != null) {
+      $result.userChannelId = userChannelId;
+    }
+    if (counterpartyNodeId != null) {
+      $result.counterpartyNodeId = counterpartyNodeId;
+    }
+    if (newFundingTxo != null) {
+      $result.newFundingTxo = newFundingTxo;
+    }
+    return $result;
+  }
+  SpliceNegotiated._() : super();
+  factory SpliceNegotiated.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory SpliceNegotiated.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SpliceNegotiated', package: const $pb.PackageName(_omitMessageNames ? '' : 'events'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'channelId')
+    ..aOS(2, _omitFieldNames ? '' : 'userChannelId')
+    ..aOS(3, _omitFieldNames ? '' : 'counterpartyNodeId')
+    ..aOS(4, _omitFieldNames ? '' : 'newFundingTxo')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  SpliceNegotiated clone() => SpliceNegotiated()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  SpliceNegotiated copyWith(void Function(SpliceNegotiated) updates) => super.copyWith((message) => updates(message as SpliceNegotiated)) as SpliceNegotiated;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static SpliceNegotiated create() => SpliceNegotiated._();
+  SpliceNegotiated createEmptyInstance() => create();
+  static $pb.PbList<SpliceNegotiated> createRepeated() => $pb.PbList<SpliceNegotiated>();
+  @$core.pragma('dart2js:noInline')
+  static SpliceNegotiated getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SpliceNegotiated>(create);
+  static SpliceNegotiated? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get channelId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set channelId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasChannelId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearChannelId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get userChannelId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set userChannelId($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasUserChannelId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearUserChannelId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get counterpartyNodeId => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set counterpartyNodeId($core.String v) { $_setString(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasCounterpartyNodeId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearCounterpartyNodeId() => $_clearField(3);
+
+  /// The outpoint of the channel's splice funding transaction.
+  @$pb.TagNumber(4)
+  $core.String get newFundingTxo => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set newFundingTxo($core.String v) { $_setString(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasNewFundingTxo() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearNewFundingTxo() => $_clearField(4);
+}
+
+/// SpliceNegotiationFailed indicates a channel splice negotiation round has failed.
+class SpliceNegotiationFailed extends $pb.GeneratedMessage {
+  factory SpliceNegotiationFailed({
+    $core.String? channelId,
+    $core.String? userChannelId,
+    $core.String? counterpartyNodeId,
+  }) {
+    final $result = create();
+    if (channelId != null) {
+      $result.channelId = channelId;
+    }
+    if (userChannelId != null) {
+      $result.userChannelId = userChannelId;
+    }
+    if (counterpartyNodeId != null) {
+      $result.counterpartyNodeId = counterpartyNodeId;
+    }
+    return $result;
+  }
+  SpliceNegotiationFailed._() : super();
+  factory SpliceNegotiationFailed.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory SpliceNegotiationFailed.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'SpliceNegotiationFailed', package: const $pb.PackageName(_omitMessageNames ? '' : 'events'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'channelId')
+    ..aOS(2, _omitFieldNames ? '' : 'userChannelId')
+    ..aOS(3, _omitFieldNames ? '' : 'counterpartyNodeId')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  SpliceNegotiationFailed clone() => SpliceNegotiationFailed()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  SpliceNegotiationFailed copyWith(void Function(SpliceNegotiationFailed) updates) => super.copyWith((message) => updates(message as SpliceNegotiationFailed)) as SpliceNegotiationFailed;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static SpliceNegotiationFailed create() => SpliceNegotiationFailed._();
+  SpliceNegotiationFailed createEmptyInstance() => create();
+  static $pb.PbList<SpliceNegotiationFailed> createRepeated() => $pb.PbList<SpliceNegotiationFailed>();
+  @$core.pragma('dart2js:noInline')
+  static SpliceNegotiationFailed getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SpliceNegotiationFailed>(create);
+  static SpliceNegotiationFailed? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get channelId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set channelId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasChannelId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearChannelId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get userChannelId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set userChannelId($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasUserChannelId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearUserChannelId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get counterpartyNodeId => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set counterpartyNodeId($core.String v) { $_setString(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasCounterpartyNodeId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearCounterpartyNodeId() => $_clearField(3);
 }
 
 /// PaymentReceived indicates a payment has been received.
 class PaymentReceived extends $pb.GeneratedMessage {
   factory PaymentReceived({
+    $core.String? paymentId,
     $2.Payment? payment,
     $core.Iterable<$2.CustomTlvRecord>? customRecords,
   }) {
     final $result = create();
+    if (paymentId != null) {
+      $result.paymentId = paymentId;
+    }
     if (payment != null) {
       $result.payment = payment;
     }
@@ -775,8 +1007,9 @@ class PaymentReceived extends $pb.GeneratedMessage {
   factory PaymentReceived.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'PaymentReceived', package: const $pb.PackageName(_omitMessageNames ? '' : 'events'), createEmptyInstance: create)
-    ..aOM<$2.Payment>(1, _omitFieldNames ? '' : 'payment', subBuilder: $2.Payment.create)
-    ..pc<$2.CustomTlvRecord>(2, _omitFieldNames ? '' : 'customRecords', $pb.PbFieldType.PM, subBuilder: $2.CustomTlvRecord.create)
+    ..aOS(1, _omitFieldNames ? '' : 'paymentId')
+    ..aOM<$2.Payment>(2, _omitFieldNames ? '' : 'payment', subBuilder: $2.Payment.create)
+    ..pc<$2.CustomTlvRecord>(3, _omitFieldNames ? '' : 'customRecords', $pb.PbFieldType.PM, subBuilder: $2.CustomTlvRecord.create)
     ..hasRequiredFields = false
   ;
 
@@ -801,31 +1034,53 @@ class PaymentReceived extends $pb.GeneratedMessage {
   static PaymentReceived getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PaymentReceived>(create);
   static PaymentReceived? _defaultInstance;
 
+  /// The local identifier used to track the payment, in hex-encoded form.
+  @$pb.TagNumber(1)
+  $core.String get paymentId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set paymentId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasPaymentId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPaymentId() => $_clearField(1);
+
   /// The payment details for the payment in event.
-  @$pb.TagNumber(1)
-  $2.Payment get payment => $_getN(0);
-  @$pb.TagNumber(1)
-  set payment($2.Payment v) { $_setField(1, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasPayment() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearPayment() => $_clearField(1);
-  @$pb.TagNumber(1)
-  $2.Payment ensurePayment() => $_ensure(0);
+  @$pb.TagNumber(2)
+  $2.Payment get payment => $_getN(1);
+  @$pb.TagNumber(2)
+  set payment($2.Payment v) { $_setField(2, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasPayment() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPayment() => $_clearField(2);
+  @$pb.TagNumber(2)
+  $2.Payment ensurePayment() => $_ensure(1);
 
   /// Custom TLV records attached to the incoming payment, if any.
-  @$pb.TagNumber(2)
-  $pb.PbList<$2.CustomTlvRecord> get customRecords => $_getList(1);
+  @$pb.TagNumber(3)
+  $pb.PbList<$2.CustomTlvRecord> get customRecords => $_getList(2);
 }
 
 /// PaymentSuccessful indicates a sent payment was successful.
 class PaymentSuccessful extends $pb.GeneratedMessage {
   factory PaymentSuccessful({
+    $core.String? paymentId,
     $2.Payment? payment,
+    $core.String? paymentPreimage,
+    $core.String? bolt12Invoice,
   }) {
     final $result = create();
+    if (paymentId != null) {
+      $result.paymentId = paymentId;
+    }
     if (payment != null) {
       $result.payment = payment;
+    }
+    if (paymentPreimage != null) {
+      $result.paymentPreimage = paymentPreimage;
+    }
+    if (bolt12Invoice != null) {
+      $result.bolt12Invoice = bolt12Invoice;
     }
     return $result;
   }
@@ -834,7 +1089,10 @@ class PaymentSuccessful extends $pb.GeneratedMessage {
   factory PaymentSuccessful.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'PaymentSuccessful', package: const $pb.PackageName(_omitMessageNames ? '' : 'events'), createEmptyInstance: create)
-    ..aOM<$2.Payment>(1, _omitFieldNames ? '' : 'payment', subBuilder: $2.Payment.create)
+    ..aOS(1, _omitFieldNames ? '' : 'paymentId')
+    ..aOM<$2.Payment>(2, _omitFieldNames ? '' : 'payment', subBuilder: $2.Payment.create)
+    ..aOS(3, _omitFieldNames ? '' : 'paymentPreimage')
+    ..aOS(4, _omitFieldNames ? '' : 'bolt12Invoice')
     ..hasRequiredFields = false
   ;
 
@@ -859,27 +1117,66 @@ class PaymentSuccessful extends $pb.GeneratedMessage {
   static PaymentSuccessful getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PaymentSuccessful>(create);
   static PaymentSuccessful? _defaultInstance;
 
+  /// The local identifier used to track the payment, in hex-encoded form.
+  @$pb.TagNumber(1)
+  $core.String get paymentId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set paymentId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasPaymentId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPaymentId() => $_clearField(1);
+
   /// The payment details for the payment in event.
-  @$pb.TagNumber(1)
-  $2.Payment get payment => $_getN(0);
-  @$pb.TagNumber(1)
-  set payment($2.Payment v) { $_setField(1, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasPayment() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearPayment() => $_clearField(1);
-  @$pb.TagNumber(1)
-  $2.Payment ensurePayment() => $_ensure(0);
+  @$pb.TagNumber(2)
+  $2.Payment get payment => $_getN(1);
+  @$pb.TagNumber(2)
+  set payment($2.Payment v) { $_setField(2, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasPayment() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPayment() => $_clearField(2);
+  @$pb.TagNumber(2)
+  $2.Payment ensurePayment() => $_ensure(1);
+
+  /// The hex-encoded payment preimage. Needed to build a BOLT 12 payer proof.
+  @$pb.TagNumber(3)
+  $core.String get paymentPreimage => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set paymentPreimage($core.String v) { $_setString(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasPaymentPreimage() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPaymentPreimage() => $_clearField(3);
+
+  /// The hex-encoded paid BOLT 12 invoice, when the payment was for a standard BOLT 12 invoice.
+  /// Unset for non-BOLT12 payments and for static invoices used in async payments.
+  @$pb.TagNumber(4)
+  $core.String get bolt12Invoice => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set bolt12Invoice($core.String v) { $_setString(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasBolt12Invoice() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearBolt12Invoice() => $_clearField(4);
 }
 
 /// PaymentFailed indicates a sent payment has failed.
 class PaymentFailed extends $pb.GeneratedMessage {
   factory PaymentFailed({
+    $core.String? paymentId,
     $2.Payment? payment,
+    PaymentFailureReason? reason,
   }) {
     final $result = create();
+    if (paymentId != null) {
+      $result.paymentId = paymentId;
+    }
     if (payment != null) {
       $result.payment = payment;
+    }
+    if (reason != null) {
+      $result.reason = reason;
     }
     return $result;
   }
@@ -888,7 +1185,9 @@ class PaymentFailed extends $pb.GeneratedMessage {
   factory PaymentFailed.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'PaymentFailed', package: const $pb.PackageName(_omitMessageNames ? '' : 'events'), createEmptyInstance: create)
-    ..aOM<$2.Payment>(1, _omitFieldNames ? '' : 'payment', subBuilder: $2.Payment.create)
+    ..aOS(1, _omitFieldNames ? '' : 'paymentId')
+    ..aOM<$2.Payment>(2, _omitFieldNames ? '' : 'payment', subBuilder: $2.Payment.create)
+    ..e<PaymentFailureReason>(3, _omitFieldNames ? '' : 'reason', $pb.PbFieldType.OE, defaultOrMaker: PaymentFailureReason.PAYMENT_FAILURE_REASON_UNSPECIFIED, valueOf: PaymentFailureReason.valueOf, enumValues: PaymentFailureReason.values)
     ..hasRequiredFields = false
   ;
 
@@ -913,28 +1212,62 @@ class PaymentFailed extends $pb.GeneratedMessage {
   static PaymentFailed getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PaymentFailed>(create);
   static PaymentFailed? _defaultInstance;
 
+  /// The local identifier used to track the payment, in hex-encoded form.
+  @$pb.TagNumber(1)
+  $core.String get paymentId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set paymentId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasPaymentId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPaymentId() => $_clearField(1);
+
   /// The payment details for the payment in event.
-  @$pb.TagNumber(1)
-  $2.Payment get payment => $_getN(0);
-  @$pb.TagNumber(1)
-  set payment($2.Payment v) { $_setField(1, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasPayment() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearPayment() => $_clearField(1);
-  @$pb.TagNumber(1)
-  $2.Payment ensurePayment() => $_ensure(0);
+  @$pb.TagNumber(2)
+  $2.Payment get payment => $_getN(1);
+  @$pb.TagNumber(2)
+  set payment($2.Payment v) { $_setField(2, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasPayment() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPayment() => $_clearField(2);
+  @$pb.TagNumber(2)
+  $2.Payment ensurePayment() => $_ensure(1);
+
+  ///  The reason the payment failed, if known.
+  ///
+  ///  This is only available on the emitted event; `GetPaymentDetails` cannot
+  ///  recover it as LDK Node does not currently persist the failure reason in
+  ///  `PaymentDetails`.
+  @$pb.TagNumber(3)
+  PaymentFailureReason get reason => $_getN(2);
+  @$pb.TagNumber(3)
+  set reason(PaymentFailureReason v) { $_setField(3, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasReason() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearReason() => $_clearField(3);
 }
 
 /// PaymentClaimable indicates a payment has arrived and is waiting to be manually claimed or failed.
 /// This event is only emitted for payments created via `Bolt11ReceiveForHash`.
+/// Handle every event by its payment ID before `claim_deadline`.
+/// The same invoice can produce more than one event. Fail unexpected duplicate or late payments.
+/// Delivery through SubscribeEvents is best-effort and is not replayed. If the event is missed and
+/// the payment is not otherwise claimed or failed, LDK Node automatically fails the HTLC backward at
+/// claim_deadline.
 class PaymentClaimable extends $pb.GeneratedMessage {
   factory PaymentClaimable({
+    $core.String? paymentId,
     $2.Payment? payment,
     $core.Iterable<$2.CustomTlvRecord>? customRecords,
     $core.int? claimDeadline,
+    $fixnum.Int64? claimableAmountMsat,
   }) {
     final $result = create();
+    if (paymentId != null) {
+      $result.paymentId = paymentId;
+    }
     if (payment != null) {
       $result.payment = payment;
     }
@@ -944,6 +1277,9 @@ class PaymentClaimable extends $pb.GeneratedMessage {
     if (claimDeadline != null) {
       $result.claimDeadline = claimDeadline;
     }
+    if (claimableAmountMsat != null) {
+      $result.claimableAmountMsat = claimableAmountMsat;
+    }
     return $result;
   }
   PaymentClaimable._() : super();
@@ -951,9 +1287,11 @@ class PaymentClaimable extends $pb.GeneratedMessage {
   factory PaymentClaimable.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'PaymentClaimable', package: const $pb.PackageName(_omitMessageNames ? '' : 'events'), createEmptyInstance: create)
-    ..aOM<$2.Payment>(1, _omitFieldNames ? '' : 'payment', subBuilder: $2.Payment.create)
-    ..pc<$2.CustomTlvRecord>(2, _omitFieldNames ? '' : 'customRecords', $pb.PbFieldType.PM, subBuilder: $2.CustomTlvRecord.create)
-    ..a<$core.int>(3, _omitFieldNames ? '' : 'claimDeadline', $pb.PbFieldType.OU3)
+    ..aOS(1, _omitFieldNames ? '' : 'paymentId')
+    ..aOM<$2.Payment>(2, _omitFieldNames ? '' : 'payment', subBuilder: $2.Payment.create)
+    ..pc<$2.CustomTlvRecord>(3, _omitFieldNames ? '' : 'customRecords', $pb.PbFieldType.PM, subBuilder: $2.CustomTlvRecord.create)
+    ..a<$core.int>(4, _omitFieldNames ? '' : 'claimDeadline', $pb.PbFieldType.OU3)
+    ..a<$fixnum.Int64>(5, _omitFieldNames ? '' : 'claimableAmountMsat', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false
   ;
 
@@ -978,31 +1316,52 @@ class PaymentClaimable extends $pb.GeneratedMessage {
   static PaymentClaimable getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PaymentClaimable>(create);
   static PaymentClaimable? _defaultInstance;
 
+  /// The local identifier used to track the payment, in hex-encoded form.
+  @$pb.TagNumber(1)
+  $core.String get paymentId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set paymentId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasPaymentId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPaymentId() => $_clearField(1);
+
   /// The payment details for the claimable payment.
-  @$pb.TagNumber(1)
-  $2.Payment get payment => $_getN(0);
-  @$pb.TagNumber(1)
-  set payment($2.Payment v) { $_setField(1, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasPayment() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearPayment() => $_clearField(1);
-  @$pb.TagNumber(1)
-  $2.Payment ensurePayment() => $_ensure(0);
+  @$pb.TagNumber(2)
+  $2.Payment get payment => $_getN(1);
+  @$pb.TagNumber(2)
+  set payment($2.Payment v) { $_setField(2, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasPayment() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPayment() => $_clearField(2);
+  @$pb.TagNumber(2)
+  $2.Payment ensurePayment() => $_ensure(1);
 
   /// Custom TLV records attached to the claimable payment, if any.
-  @$pb.TagNumber(2)
-  $pb.PbList<$2.CustomTlvRecord> get customRecords => $_getList(1);
+  @$pb.TagNumber(3)
+  $pb.PbList<$2.CustomTlvRecord> get customRecords => $_getList(2);
 
   /// The block height by which this payment must be claimed before it is failed back.
-  @$pb.TagNumber(3)
-  $core.int get claimDeadline => $_getIZ(2);
-  @$pb.TagNumber(3)
-  set claimDeadline($core.int v) { $_setUnsignedInt32(2, v); }
-  @$pb.TagNumber(3)
-  $core.bool hasClaimDeadline() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearClaimDeadline() => $_clearField(3);
+  @$pb.TagNumber(4)
+  $core.int get claimDeadline => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set claimDeadline($core.int v) { $_setUnsignedInt32(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasClaimDeadline() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearClaimDeadline() => $_clearField(4);
+
+  /// The amount in millisatoshis that is claimable. Validate this against the amount you expect
+  /// before calling Bolt11ClaimForId, and pass this value as its claimable_amount_msat.
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get claimableAmountMsat => $_getI64(4);
+  @$pb.TagNumber(5)
+  set claimableAmountMsat($fixnum.Int64 v) { $_setInt64(4, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasClaimableAmountMsat() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearClaimableAmountMsat() => $_clearField(5);
 }
 
 /// PaymentForwarded indicates a payment was forwarded through the node.

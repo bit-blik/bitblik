@@ -38,17 +38,24 @@ class LdkServerEventSubscription {
   });
 }
 
+class _ClaimablePayment {
+  final String paymentId;
+  final int amountMsat;
+
+  const _ClaimablePayment(this.paymentId, this.amountMsat);
+}
+
 abstract interface class LdkServerClientAdapter {
   Future<ldk_api.GetNodeInfoResponse> getNodeInfo();
 
   Future<ldk_api.Bolt11ReceiveForHashResponse> bolt11ReceiveForHash(
       ldk_api.Bolt11ReceiveForHashRequest request);
 
-  Future<ldk_api.Bolt11ClaimForHashResponse> bolt11ClaimForHash(
-      ldk_api.Bolt11ClaimForHashRequest request);
+  Future<ldk_api.Bolt11ClaimForIdResponse> bolt11ClaimForId(
+      ldk_api.Bolt11ClaimForIdRequest request);
 
-  Future<ldk_api.Bolt11FailForHashResponse> bolt11FailForHash(
-      ldk_api.Bolt11FailForHashRequest request);
+  Future<ldk_api.Bolt11FailForIdResponse> bolt11FailForId(
+      ldk_api.Bolt11FailForIdRequest request);
 
   Future<ldk_api.Bolt11SendResponse> bolt11Send(
       ldk_api.Bolt11SendRequest request);
@@ -124,17 +131,16 @@ class GrpcLdkServerClientAdapter implements LdkServerClientAdapter {
   }
 
   @override
-  Future<ldk_api.Bolt11ClaimForHashResponse> bolt11ClaimForHash(
-      ldk_api.Bolt11ClaimForHashRequest request) {
-    return client.bolt11ClaimForHash(request,
+  Future<ldk_api.Bolt11ClaimForIdResponse> bolt11ClaimForId(
+      ldk_api.Bolt11ClaimForIdRequest request) {
+    return client.bolt11ClaimForId(request,
         options: signer.optionsFor(request));
   }
 
   @override
-  Future<ldk_api.Bolt11FailForHashResponse> bolt11FailForHash(
-      ldk_api.Bolt11FailForHashRequest request) {
-    return client.bolt11FailForHash(request,
-        options: signer.optionsFor(request));
+  Future<ldk_api.Bolt11FailForIdResponse> bolt11FailForId(
+      ldk_api.Bolt11FailForIdRequest request) {
+    return client.bolt11FailForId(request, options: signer.optionsFor(request));
   }
 
   @override
@@ -204,7 +210,9 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
   StreamSubscription<ldk_events.EventEnvelope>? _eventSubscription;
   StreamController<InvoiceUpdate> _updates =
       StreamController<InvoiceUpdate>.broadcast();
-  final Set<String> _claimableHashes = {};
+  final Map<String, _ClaimablePayment> _claimablePayments = {};
+  final Map<String, int> _invoiceAmountsMsat = {};
+  final Map<String, String> _paymentIdsByHash = {};
   final Map<String, Future<void>> _hashLocks = {};
   late Duration _reconnectDelay;
   bool _stopping = false;
@@ -370,31 +378,53 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
         final event = envelope.paymentClaimable;
         if (!event.hasPayment()) return;
         final payment = event.payment;
+        final paymentId = _normalizeHash(event.paymentId, 'event payment ID');
         final hash = _validatedPaymentHash(
           payment,
           ldk_types.PaymentDirection.INBOUND,
+          expectedPaymentId: paymentId,
         );
         if (hash == null) return;
-        _claimableHashes.add(hash);
+        final amountMsat = event.claimableAmountMsat.toInt();
+        final expectedAmountMsat = _invoiceAmountsMsat[hash];
+        if (amountMsat <= 0 ||
+            (payment.hasAmountMsat() &&
+                payment.amountMsat.toInt() != amountMsat) ||
+            (expectedAmountMsat != null && expectedAmountMsat != amountMsat)) {
+          AppLogger.warning(
+              'Rejecting ldk-server invoice ${_prefix(hash)} with unexpected claimable amount.');
+          unawaited(_failClaimablePayment(paymentId));
+          return;
+        }
+        final existing = _claimablePayments[hash];
+        if (existing != null && existing.paymentId != paymentId) {
+          AppLogger.warning(
+              'Rejecting duplicate ldk-server payment for invoice ${_prefix(hash)}.');
+          unawaited(_failClaimablePayment(paymentId));
+          return;
+        }
+        _claimablePayments[hash] = _ClaimablePayment(paymentId, amountMsat);
+        _paymentIdsByHash[hash] = paymentId;
         AppLogger.info(
             'ldk-server invoice ${_prefix(hash)} claimable${event.hasClaimDeadline() ? ' until block ${event.claimDeadline}' : ''}.');
         _updates.add(InvoiceUpdate(
           paymentHash: hash,
           status: InvoiceStatus.ACCEPTED,
-          amountPaidSat: payment.hasAmountMsat()
-              ? payment.amountMsat.toInt() ~/ 1000
-              : null,
+          amountPaidSat: amountMsat ~/ 1000,
         ));
       } else if (envelope.hasPaymentReceived()) {
         final event = envelope.paymentReceived;
         if (!event.hasPayment()) return;
         final payment = event.payment;
+        final paymentId = _normalizeHash(event.paymentId, 'event payment ID');
         final hash = _validatedPaymentHash(
           payment,
           ldk_types.PaymentDirection.INBOUND,
+          expectedPaymentId: paymentId,
         );
         if (hash == null) return;
-        _claimableHashes.remove(hash);
+        _paymentIdsByHash[hash] = paymentId;
+        _claimablePayments.remove(hash);
         AppLogger.info('ldk-server invoice ${_prefix(hash)} settled.');
         _updates.add(InvoiceUpdate(
           paymentHash: hash,
@@ -421,7 +451,9 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
     _channel = null;
     _adapter = null;
     _network = null;
-    _claimableHashes.clear();
+    _claimablePayments.clear();
+    _invoiceAmountsMsat.clear();
+    _paymentIdsByHash.clear();
     if (!_updates.isClosed) await _updates.close();
   }
 
@@ -447,6 +479,7 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
     if (response.invoice.trim().isEmpty) {
       throw StateError('ldk-server returned an empty BOLT11 invoice.');
     }
+    _invoiceAmountsMsat[hash] = amountMsat;
     return CreateHoldInvoiceResult(
         invoice: response.invoice, paymentHash: hash);
   }
@@ -463,7 +496,7 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
         subscription = _updates.stream
             .where((update) => update.paymentHash == hash)
             .listen(controller.add, onError: controller.addError);
-        if (_claimableHashes.contains(hash)) {
+        if (_claimablePayments.containsKey(hash)) {
           controller.add(
               InvoiceUpdate(paymentHash: hash, status: InvoiceStatus.ACCEPTED));
         }
@@ -477,7 +510,7 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
   Future<InvoiceDetails> lookupInvoice({required String paymentHashHex}) async {
     final hash = _normalizeHash(paymentHashHex, 'payment hash');
     try {
-      final payment = await _getPayment(hash);
+      final payment = await _findBolt11Payment(hash);
       if (payment == null) {
         return InvoiceDetails(
           paymentHash: hash,
@@ -485,12 +518,17 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
           error: 'ldk-server payment not found.',
         );
       }
-      _requirePayment(payment, hash, ldk_types.PaymentDirection.INBOUND);
+      _requirePayment(
+        payment,
+        _normalizeHash(payment.paymentId, 'payment ID'),
+        ldk_types.PaymentDirection.INBOUND,
+        expectedHash: hash,
+      );
       if (payment.status != ldk_types.PaymentStatus.PENDING) {
-        _claimableHashes.remove(hash);
+        _claimablePayments.remove(hash);
       }
       final status = switch (payment.status) {
-        ldk_types.PaymentStatus.PENDING => _claimableHashes.contains(hash)
+        ldk_types.PaymentStatus.PENDING => _claimablePayments.containsKey(hash)
             ? InvoiceStatus.ACCEPTED
             : InvoiceStatus.OPEN,
         ldk_types.PaymentStatus.SUCCEEDED => InvoiceStatus.SETTLED,
@@ -525,11 +563,16 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
     final preimage = _normalizeHash(preimageHex, 'preimage');
     final hash = sha256.convert(_hexToBytes(preimage)).toString();
     await _withHashLock(hash, () async {
-      final before = await _getPayment(hash);
+      final claimable = _claimablePayments[hash];
+      final before = claimable == null
+          ? await _findBolt11Payment(hash)
+          : await _getPayment(claimable.paymentId);
       if (before == null) throw StateError('ldk-server payment not found.');
-      _requirePayment(before, hash, ldk_types.PaymentDirection.INBOUND);
+      final paymentId = _normalizeHash(before.paymentId, 'payment ID');
+      _requirePayment(before, paymentId, ldk_types.PaymentDirection.INBOUND,
+          expectedHash: hash);
       if (before.status == ldk_types.PaymentStatus.SUCCEEDED) {
-        _claimableHashes.remove(hash);
+        _claimablePayments.remove(hash);
         return;
       }
       if (before.status == ldk_types.PaymentStatus.FAILED) {
@@ -538,24 +581,30 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
       if (before.status != ldk_types.PaymentStatus.PENDING) {
         throw StateError('Cannot settle ldk-server invoice in unknown state.');
       }
+      if (claimable == null || claimable.paymentId != paymentId) {
+        throw StateError('ldk-server invoice is not claimable.');
+      }
       await _rpc(
         'claim invoice',
-        _requireAdapter().bolt11ClaimForHash(
-          ldk_api.Bolt11ClaimForHashRequest(
-            paymentHash: hash,
+        _requireAdapter().bolt11ClaimForId(
+          ldk_api.Bolt11ClaimForIdRequest(
+            paymentId: paymentId,
+            claimableAmountMsat: Int64(claimable.amountMsat),
             preimage: preimage,
           ),
         ),
       );
-      final terminal =
-          await _pollPayment(hash, ldk_types.PaymentDirection.INBOUND);
+      final terminal = await _pollPayment(
+          paymentId, ldk_types.PaymentDirection.INBOUND,
+          expectedHash: hash);
       if (terminal?.status != ldk_types.PaymentStatus.SUCCEEDED) {
         throw StateError(terminal?.status == ldk_types.PaymentStatus.FAILED
             ? 'ldk-server invoice failed while settling.'
             : 'Timed out confirming ldk-server invoice settlement.');
       }
-      _requirePayment(terminal!, hash, ldk_types.PaymentDirection.INBOUND);
-      _claimableHashes.remove(hash);
+      _requirePayment(terminal!, paymentId, ldk_types.PaymentDirection.INBOUND,
+          expectedHash: hash);
+      _claimablePayments.remove(hash);
       AppLogger.info('ldk-server invoice ${_prefix(hash)} settled.');
     });
   }
@@ -565,14 +614,16 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
       {required String paymentHashHex}) async {
     final hash = _normalizeHash(paymentHashHex, 'payment hash');
     return _withHashLock(hash, () async {
-      final before = await _getPayment(hash);
+      final before = await _findBolt11Payment(hash);
       if (before == null) return const CancelInvoiceResult.alreadyMissing();
-      _requirePayment(before, hash, ldk_types.PaymentDirection.INBOUND);
+      final paymentId = _normalizeHash(before.paymentId, 'payment ID');
+      _requirePayment(before, paymentId, ldk_types.PaymentDirection.INBOUND,
+          expectedHash: hash);
       if (before.status == ldk_types.PaymentStatus.SUCCEEDED) {
         throw StateError('Cannot cancel settled ldk-server invoice.');
       }
       if (before.status == ldk_types.PaymentStatus.FAILED) {
-        _claimableHashes.remove(hash);
+        _claimablePayments.remove(hash);
         _updates.add(
             InvoiceUpdate(paymentHash: hash, status: InvoiceStatus.CANCELED));
         return const CancelInvoiceResult.cancelled();
@@ -584,29 +635,33 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
       try {
         await _rpc(
           'fail invoice',
-          _requireAdapter().bolt11FailForHash(
-            ldk_api.Bolt11FailForHashRequest(paymentHash: hash),
+          _requireAdapter().bolt11FailForId(
+            ldk_api.Bolt11FailForIdRequest(paymentId: paymentId),
           ),
         );
       } catch (_) {
-        final reconciled = await _getPayment(hash);
+        final reconciled = await _getPayment(paymentId);
         if (reconciled == null) {
           return const CancelInvoiceResult.alreadyMissing();
         }
-        _requirePayment(reconciled, hash, ldk_types.PaymentDirection.INBOUND);
+        _requirePayment(
+            reconciled, paymentId, ldk_types.PaymentDirection.INBOUND,
+            expectedHash: hash);
         if (reconciled.status == ldk_types.PaymentStatus.SUCCEEDED) {
           throw StateError('Cannot cancel settled ldk-server invoice.');
         }
         if (reconciled.status != ldk_types.PaymentStatus.FAILED) rethrow;
       }
 
-      final terminal =
-          await _pollPayment(hash, ldk_types.PaymentDirection.INBOUND);
+      final terminal = await _pollPayment(
+          paymentId, ldk_types.PaymentDirection.INBOUND,
+          expectedHash: hash);
       if (terminal == null) {
         throw StateError(
             'Timed out confirming ldk-server invoice cancellation.');
       }
-      _requirePayment(terminal, hash, ldk_types.PaymentDirection.INBOUND);
+      _requirePayment(terminal, paymentId, ldk_types.PaymentDirection.INBOUND,
+          expectedHash: hash);
       if (terminal.status == ldk_types.PaymentStatus.SUCCEEDED) {
         throw StateError('Cannot cancel settled ldk-server invoice.');
       }
@@ -614,7 +669,7 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
         throw StateError(
             'Timed out confirming ldk-server invoice cancellation.');
       }
-      _claimableHashes.remove(hash);
+      _claimablePayments.remove(hash);
       AppLogger.info('ldk-server invoice ${_prefix(hash)} canceled.');
       _updates.add(
           InvoiceUpdate(paymentHash: hash, status: InvoiceStatus.CANCELED));
@@ -877,7 +932,7 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
       } else {
         payment = await _findBolt12Payment(info.offerId, note);
         if (payment == null) return null;
-        normalizedId = _normalizeHash(payment.id, 'payment ID');
+        normalizedId = _normalizeHash(payment.paymentId, 'payment ID');
         _requireBolt12Payment(payment, normalizedId, info.offerId, note);
       }
       return _outgoingOfferResult(payment, normalizedId);
@@ -888,40 +943,78 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
     }
   }
 
-  Future<ldk_types.Payment?> _findBolt12Payment(
-      String offerId, String payerNote) async {
-    final matches = <ldk_types.Payment>[];
-    ldk_types.PageToken? pageToken;
+  Future<void> _failClaimablePayment(String paymentId) async {
+    try {
+      await _rpc(
+        'fail invoice',
+        _requireAdapter().bolt11FailForId(
+          ldk_api.Bolt11FailForIdRequest(paymentId: paymentId),
+        ),
+      );
+    } catch (error) {
+      AppLogger.warning('Failed to reject invalid ldk-server payment.',
+          error: error);
+    }
+  }
+
+  Future<ldk_types.Payment?> _findBolt11Payment(String hash) async {
+    final knownPaymentId = _paymentIdsByHash[hash];
+    if (knownPaymentId != null) {
+      final known = await _getPayment(knownPaymentId);
+      if (known != null) return known;
+      _paymentIdsByHash.remove(hash);
+    }
+    final payments = await _listAllPayments();
+    final matches = payments.where((payment) {
+      return payment.direction == ldk_types.PaymentDirection.INBOUND &&
+          payment.hasKind() &&
+          payment.kind.hasBolt11() &&
+          payment.kind.bolt11.hash.trim().toLowerCase() == hash;
+    }).toList()
+      ..sort((a, b) => b.latestUpdateTimestamp.compareTo(
+            a.latestUpdateTimestamp,
+          ));
+    if (matches.isEmpty) return null;
+    final match = matches.firstWhere(
+      (payment) => payment.status == ldk_types.PaymentStatus.SUCCEEDED,
+      orElse: () => matches.first,
+    );
+    _paymentIdsByHash[hash] = _normalizeHash(match.paymentId, 'payment ID');
+    return match;
+  }
+
+  Future<List<ldk_types.Payment>> _listAllPayments() async {
+    final payments = <ldk_types.Payment>[];
+    String? pageToken;
     final seenTokens = <String>{};
-    var reachedLastPage = false;
     for (var page = 0; page < 100; page++) {
-      final request = ldk_api.ListPaymentsRequest(pageToken: pageToken);
-      final response =
-          await _rpc('list payments', _requireAdapter().listPayments(request));
-      for (final payment in response.payments) {
-        if (payment.direction == ldk_types.PaymentDirection.OUTBOUND &&
-            payment.hasKind() &&
-            payment.kind.hasBolt12Offer() &&
-            payment.kind.bolt12Offer.offerId.toLowerCase() == offerId &&
-            payment.kind.bolt12Offer.hasPayerNote() &&
-            payment.kind.bolt12Offer.payerNote == payerNote) {
-          matches.add(payment);
-        }
-      }
-      if (!response.hasNextPageToken()) {
-        reachedLastPage = true;
-        break;
-      }
+      final response = await _rpc(
+        'list payments',
+        _requireAdapter().listPayments(
+          ldk_api.ListPaymentsRequest(pageToken: pageToken),
+        ),
+      );
+      payments.addAll(response.payments);
+      if (!response.hasNextPageToken()) return payments;
       final next = response.nextPageToken;
-      final key = '${next.token}:${next.index}';
-      if (!seenTokens.add(key)) {
+      if (!seenTokens.add(next)) {
         throw StateError('ldk-server repeated a payment page token.');
       }
       pageToken = next;
     }
-    if (!reachedLastPage) {
-      throw StateError('ldk-server payment history exceeded page limit.');
-    }
+    throw StateError('ldk-server payment history exceeded page limit.');
+  }
+
+  Future<ldk_types.Payment?> _findBolt12Payment(
+      String offerId, String payerNote) async {
+    final matches = (await _listAllPayments()).where((payment) {
+      return payment.direction == ldk_types.PaymentDirection.OUTBOUND &&
+          payment.hasKind() &&
+          payment.kind.hasBolt12Offer() &&
+          payment.kind.bolt12Offer.offerId.toLowerCase() == offerId &&
+          payment.kind.bolt12Offer.hasPayerNote() &&
+          payment.kind.bolt12Offer.payerNote == payerNote;
+    }).toList();
     return matches.length == 1 ? matches.single : null;
   }
 
@@ -949,7 +1042,7 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
 
   void _requireBolt12Payment(ldk_types.Payment payment, String expectedId,
       String expectedOfferId, String expectedPayerNote) {
-    if (_normalizeHash(payment.id, 'payment ID') != expectedId ||
+    if (_normalizeHash(payment.paymentId, 'payment ID') != expectedId ||
         !payment.hasKind() ||
         !payment.kind.hasBolt12Offer() ||
         _normalizeHash(payment.kind.bolt12Offer.offerId, 'BOLT12 offer ID') !=
@@ -1068,13 +1161,16 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
   }
 
   Future<ldk_types.Payment?> _pollPayment(
-      String hash, ldk_types.PaymentDirection direction) async {
+      String paymentId, ldk_types.PaymentDirection direction,
+      {String? expectedHash}) async {
     final deadline = clock.now().add(operationTimeout);
     ldk_types.Payment? last;
     while (clock.now().isBefore(deadline)) {
       final remaining = deadline.difference(clock.now());
-      last = await _getPayment(hash, timeout: remaining);
-      if (last != null) _requirePayment(last, hash, direction);
+      last = await _getPayment(paymentId, timeout: remaining);
+      if (last != null) {
+        _requirePayment(last, paymentId, direction, expectedHash: expectedHash);
+      }
       if (last == null || last.status != ldk_types.PaymentStatus.PENDING) {
         return last;
       }
@@ -1097,10 +1193,17 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
       };
 
   String? _validatedPaymentHash(
-      ldk_types.Payment payment, ldk_types.PaymentDirection direction) {
+      ldk_types.Payment payment, ldk_types.PaymentDirection direction,
+      {String? expectedPaymentId}) {
     try {
-      final hash = _normalizeHash(payment.id, 'payment ID');
-      _requirePayment(payment, hash, direction);
+      if (!payment.hasKind() || !payment.kind.hasBolt11()) {
+        throw StateError('ldk-server returned non-BOLT11 payment details.');
+      }
+      final hash =
+          _normalizeHash(payment.kind.bolt11.hash, 'BOLT11 payment hash');
+      final paymentId = _normalizeHash(payment.paymentId, 'payment ID');
+      _requirePayment(payment, expectedPaymentId ?? paymentId, direction,
+          expectedHash: hash);
       return hash;
     } catch (error) {
       AppLogger.warning('Skipping unrelated ldk-server payment event.',
@@ -1109,13 +1212,14 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
     }
   }
 
-  void _requirePayment(ldk_types.Payment payment, String expectedHash,
-      ldk_types.PaymentDirection direction) {
-    if (_normalizeHash(payment.id, 'payment ID') != expectedHash ||
+  void _requirePayment(ldk_types.Payment payment, String expectedPaymentId,
+      ldk_types.PaymentDirection direction,
+      {String? expectedHash}) {
+    if (_normalizeHash(payment.paymentId, 'payment ID') != expectedPaymentId ||
         !payment.hasKind() ||
         !payment.kind.hasBolt11() ||
         _normalizeHash(payment.kind.bolt11.hash, 'BOLT11 payment hash') !=
-            expectedHash ||
+            (expectedHash ?? expectedPaymentId) ||
         payment.direction != direction) {
       throw StateError('ldk-server returned mismatched payment details.');
     }

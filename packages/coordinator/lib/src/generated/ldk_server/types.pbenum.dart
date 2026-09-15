@@ -79,6 +79,65 @@ class Network extends $pb.ProtobufEnum {
   const Network._(super.v, super.n);
 }
 
+/// ChannelShutdownState mirrors LDK's `lightning::ln::channel_state::ChannelShutdownState`,
+/// indicating how far along a channel is in the cooperative close process.
+class ChannelShutdownState extends $pb.ProtobufEnum {
+  static const ChannelShutdownState CHANNEL_SHUTDOWN_STATE_UNSPECIFIED = ChannelShutdownState._(0, _omitEnumNames ? '' : 'CHANNEL_SHUTDOWN_STATE_UNSPECIFIED');
+  /// Channel has not sent or received a shutdown message.
+  static const ChannelShutdownState CHANNEL_SHUTDOWN_STATE_NOT_SHUTTING_DOWN = ChannelShutdownState._(1, _omitEnumNames ? '' : 'CHANNEL_SHUTDOWN_STATE_NOT_SHUTTING_DOWN');
+  /// Local node has sent a shutdown message for this channel.
+  static const ChannelShutdownState CHANNEL_SHUTDOWN_STATE_SHUTDOWN_INITIATED = ChannelShutdownState._(2, _omitEnumNames ? '' : 'CHANNEL_SHUTDOWN_STATE_SHUTDOWN_INITIATED');
+  /// Shutdown message exchanges have concluded and the channels are in the midst of
+  /// resolving all existing open HTLCs before closing can continue.
+  static const ChannelShutdownState CHANNEL_SHUTDOWN_STATE_RESOLVING_HTLCS = ChannelShutdownState._(3, _omitEnumNames ? '' : 'CHANNEL_SHUTDOWN_STATE_RESOLVING_HTLCS');
+  /// All HTLCs have been resolved, nodes are currently negotiating channel close onchain fee
+  /// rates.
+  static const ChannelShutdownState CHANNEL_SHUTDOWN_STATE_NEGOTIATING_CLOSING_FEE = ChannelShutdownState._(4, _omitEnumNames ? '' : 'CHANNEL_SHUTDOWN_STATE_NEGOTIATING_CLOSING_FEE');
+  /// We've successfully negotiated a closing_signed dance. At this point the channel is about
+  /// to be dropped.
+  static const ChannelShutdownState CHANNEL_SHUTDOWN_STATE_SHUTDOWN_COMPLETE = ChannelShutdownState._(5, _omitEnumNames ? '' : 'CHANNEL_SHUTDOWN_STATE_SHUTDOWN_COMPLETE');
+
+  static const $core.List<ChannelShutdownState> values = <ChannelShutdownState> [
+    CHANNEL_SHUTDOWN_STATE_UNSPECIFIED,
+    CHANNEL_SHUTDOWN_STATE_NOT_SHUTTING_DOWN,
+    CHANNEL_SHUTDOWN_STATE_SHUTDOWN_INITIATED,
+    CHANNEL_SHUTDOWN_STATE_RESOLVING_HTLCS,
+    CHANNEL_SHUTDOWN_STATE_NEGOTIATING_CLOSING_FEE,
+    CHANNEL_SHUTDOWN_STATE_SHUTDOWN_COMPLETE,
+  ];
+
+  static final $core.Map<$core.int, ChannelShutdownState> _byValue = $pb.ProtobufEnum.initByValue(values);
+  static ChannelShutdownState? valueOf($core.int value) => _byValue[value];
+
+  const ChannelShutdownState._(super.v, super.n);
+}
+
+/// ReserveType mirrors LDK Node's `ReserveType`, indicating the kind of on-chain reserve
+/// maintained for a channel, if any has been determined yet.
+class ReserveType extends $pb.ProtobufEnum {
+  static const ReserveType RESERVE_TYPE_UNSPECIFIED = ReserveType._(0, _omitEnumNames ? '' : 'RESERVE_TYPE_UNSPECIFIED');
+  /// An anchor outputs channel where we maintain a per-channel on-chain reserve for fee
+  /// bumping force-close transactions.
+  static const ReserveType RESERVE_TYPE_ADAPTIVE = ReserveType._(1, _omitEnumNames ? '' : 'RESERVE_TYPE_ADAPTIVE');
+  /// An anchor outputs channel where we do not maintain any reserve, because the counterparty
+  /// is in our trusted_peers_no_reserve list.
+  static const ReserveType RESERVE_TYPE_TRUSTED_PEERS_NO_RESERVE = ReserveType._(2, _omitEnumNames ? '' : 'RESERVE_TYPE_TRUSTED_PEERS_NO_RESERVE');
+  /// A legacy (pre-anchor) channel using only option_static_remotekey.
+  static const ReserveType RESERVE_TYPE_LEGACY = ReserveType._(3, _omitEnumNames ? '' : 'RESERVE_TYPE_LEGACY');
+
+  static const $core.List<ReserveType> values = <ReserveType> [
+    RESERVE_TYPE_UNSPECIFIED,
+    RESERVE_TYPE_ADAPTIVE,
+    RESERVE_TYPE_TRUSTED_PEERS_NO_RESERVE,
+    RESERVE_TYPE_LEGACY,
+  ];
+
+  static final $core.Map<$core.int, ReserveType> _byValue = $pb.ProtobufEnum.initByValue(values);
+  static ReserveType? valueOf($core.int value) => _byValue[value];
+
+  const ReserveType._(super.v, super.n);
+}
+
 /// Indicates whether the balance is derived from a cooperative close, a force-close (for holder or counterparty),
 /// or whether it is for an HTLC.
 class BalanceSource extends $pb.ProtobufEnum {

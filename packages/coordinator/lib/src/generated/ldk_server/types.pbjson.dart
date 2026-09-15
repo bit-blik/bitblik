@@ -58,6 +58,45 @@ final $typed_data.Uint8List networkDescriptor = $convert.base64Decode(
     'CgdOZXR3b3JrEgsKB0JJVENPSU4QABILCgdURVNUTkVUEAESDAoIVEVTVE5FVDQQAhIKCgZTSU'
     'dORVQQAxILCgdSRUdURVNUEAQ=');
 
+@$core.Deprecated('Use channelShutdownStateDescriptor instead')
+const ChannelShutdownState$json = {
+  '1': 'ChannelShutdownState',
+  '2': [
+    {'1': 'CHANNEL_SHUTDOWN_STATE_UNSPECIFIED', '2': 0},
+    {'1': 'CHANNEL_SHUTDOWN_STATE_NOT_SHUTTING_DOWN', '2': 1},
+    {'1': 'CHANNEL_SHUTDOWN_STATE_SHUTDOWN_INITIATED', '2': 2},
+    {'1': 'CHANNEL_SHUTDOWN_STATE_RESOLVING_HTLCS', '2': 3},
+    {'1': 'CHANNEL_SHUTDOWN_STATE_NEGOTIATING_CLOSING_FEE', '2': 4},
+    {'1': 'CHANNEL_SHUTDOWN_STATE_SHUTDOWN_COMPLETE', '2': 5},
+  ],
+};
+
+/// Descriptor for `ChannelShutdownState`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List channelShutdownStateDescriptor = $convert.base64Decode(
+    'ChRDaGFubmVsU2h1dGRvd25TdGF0ZRImCiJDSEFOTkVMX1NIVVRET1dOX1NUQVRFX1VOU1BFQ0'
+    'lGSUVEEAASLAooQ0hBTk5FTF9TSFVURE9XTl9TVEFURV9OT1RfU0hVVFRJTkdfRE9XThABEi0K'
+    'KUNIQU5ORUxfU0hVVERPV05fU1RBVEVfU0hVVERPV05fSU5JVElBVEVEEAISKgomQ0hBTk5FTF'
+    '9TSFVURE9XTl9TVEFURV9SRVNPTFZJTkdfSFRMQ1MQAxIyCi5DSEFOTkVMX1NIVVRET1dOX1NU'
+    'QVRFX05FR09USUFUSU5HX0NMT1NJTkdfRkVFEAQSLAooQ0hBTk5FTF9TSFVURE9XTl9TVEFURV'
+    '9TSFVURE9XTl9DT01QTEVURRAF');
+
+@$core.Deprecated('Use reserveTypeDescriptor instead')
+const ReserveType$json = {
+  '1': 'ReserveType',
+  '2': [
+    {'1': 'RESERVE_TYPE_UNSPECIFIED', '2': 0},
+    {'1': 'RESERVE_TYPE_ADAPTIVE', '2': 1},
+    {'1': 'RESERVE_TYPE_TRUSTED_PEERS_NO_RESERVE', '2': 2},
+    {'1': 'RESERVE_TYPE_LEGACY', '2': 3},
+  ],
+};
+
+/// Descriptor for `ReserveType`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List reserveTypeDescriptor = $convert.base64Decode(
+    'CgtSZXNlcnZlVHlwZRIcChhSRVNFUlZFX1RZUEVfVU5TUEVDSUZJRUQQABIZChVSRVNFUlZFX1'
+    'RZUEVfQURBUFRJVkUQARIpCiVSRVNFUlZFX1RZUEVfVFJVU1RFRF9QRUVSU19OT19SRVNFUlZF'
+    'EAISFwoTUkVTRVJWRV9UWVBFX0xFR0FDWRAD');
+
 @$core.Deprecated('Use balanceSourceDescriptor instead')
 const BalanceSource$json = {
   '1': 'BalanceSource',
@@ -91,7 +130,7 @@ final $typed_data.Uint8List channelDirectionDescriptor = $convert.base64Decode(
 const Payment$json = {
   '1': 'Payment',
   '2': [
-    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'payment_id', '3': 1, '4': 1, '5': 9, '10': 'paymentId'},
     {'1': 'kind', '3': 2, '4': 1, '5': 11, '6': '.types.PaymentKind', '10': 'kind'},
     {'1': 'amount_msat', '3': 3, '4': 1, '5': 4, '9': 0, '10': 'amountMsat', '17': true},
     {'1': 'fee_paid_msat', '3': 7, '4': 1, '5': 4, '9': 1, '10': 'feePaidMsat', '17': true},
@@ -107,13 +146,38 @@ const Payment$json = {
 
 /// Descriptor for `Payment`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List paymentDescriptor = $convert.base64Decode(
-    'CgdQYXltZW50Eg4KAmlkGAEgASgJUgJpZBImCgRraW5kGAIgASgLMhIudHlwZXMuUGF5bWVudE'
-    'tpbmRSBGtpbmQSJAoLYW1vdW50X21zYXQYAyABKARIAFIKYW1vdW50TXNhdIgBARInCg1mZWVf'
-    'cGFpZF9tc2F0GAcgASgESAFSC2ZlZVBhaWRNc2F0iAEBEjUKCWRpcmVjdGlvbhgEIAEoDjIXLn'
-    'R5cGVzLlBheW1lbnREaXJlY3Rpb25SCWRpcmVjdGlvbhIsCgZzdGF0dXMYBSABKA4yFC50eXBl'
-    'cy5QYXltZW50U3RhdHVzUgZzdGF0dXMSNgoXbGF0ZXN0X3VwZGF0ZV90aW1lc3RhbXAYBiABKA'
-    'RSFWxhdGVzdFVwZGF0ZVRpbWVzdGFtcEIOCgxfYW1vdW50X21zYXRCEAoOX2ZlZV9wYWlkX21z'
-    'YXQ=');
+    'CgdQYXltZW50Eh0KCnBheW1lbnRfaWQYASABKAlSCXBheW1lbnRJZBImCgRraW5kGAIgASgLMh'
+    'IudHlwZXMuUGF5bWVudEtpbmRSBGtpbmQSJAoLYW1vdW50X21zYXQYAyABKARIAFIKYW1vdW50'
+    'TXNhdIgBARInCg1mZWVfcGFpZF9tc2F0GAcgASgESAFSC2ZlZVBhaWRNc2F0iAEBEjUKCWRpcm'
+    'VjdGlvbhgEIAEoDjIXLnR5cGVzLlBheW1lbnREaXJlY3Rpb25SCWRpcmVjdGlvbhIsCgZzdGF0'
+    'dXMYBSABKA4yFC50eXBlcy5QYXltZW50U3RhdHVzUgZzdGF0dXMSNgoXbGF0ZXN0X3VwZGF0ZV'
+    '90aW1lc3RhbXAYBiABKARSFWxhdGVzdFVwZGF0ZVRpbWVzdGFtcEIOCgxfYW1vdW50X21zYXRC'
+    'EAoOX2ZlZV9wYWlkX21zYXQ=');
+
+@$core.Deprecated('Use payerProofOptionsDescriptor instead')
+const PayerProofOptions$json = {
+  '1': 'PayerProofOptions',
+  '2': [
+    {'1': 'note', '3': 1, '4': 1, '5': 9, '9': 0, '10': 'note', '17': true},
+    {'1': 'include_offer_description', '3': 2, '4': 1, '5': 8, '10': 'includeOfferDescription'},
+    {'1': 'include_offer_issuer', '3': 3, '4': 1, '5': 8, '10': 'includeOfferIssuer'},
+    {'1': 'include_invoice_amount', '3': 4, '4': 1, '5': 8, '10': 'includeInvoiceAmount'},
+    {'1': 'include_invoice_created_at', '3': 5, '4': 1, '5': 8, '10': 'includeInvoiceCreatedAt'},
+    {'1': 'extra_tlv_types', '3': 6, '4': 3, '5': 4, '10': 'extraTlvTypes'},
+  ],
+  '8': [
+    {'1': '_note'},
+  ],
+};
+
+/// Descriptor for `PayerProofOptions`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List payerProofOptionsDescriptor = $convert.base64Decode(
+    'ChFQYXllclByb29mT3B0aW9ucxIXCgRub3RlGAEgASgJSABSBG5vdGWIAQESOgoZaW5jbHVkZV'
+    '9vZmZlcl9kZXNjcmlwdGlvbhgCIAEoCFIXaW5jbHVkZU9mZmVyRGVzY3JpcHRpb24SMAoUaW5j'
+    'bHVkZV9vZmZlcl9pc3N1ZXIYAyABKAhSEmluY2x1ZGVPZmZlcklzc3VlchI0ChZpbmNsdWRlX2'
+    'ludm9pY2VfYW1vdW50GAQgASgIUhRpbmNsdWRlSW52b2ljZUFtb3VudBI7ChppbmNsdWRlX2lu'
+    'dm9pY2VfY3JlYXRlZF9hdBgFIAEoCFIXaW5jbHVkZUludm9pY2VDcmVhdGVkQXQSJgoPZXh0cm'
+    'FfdGx2X3R5cGVzGAYgAygEUg1leHRyYVRsdlR5cGVzQgcKBV9ub3Rl');
 
 @$core.Deprecated('Use paymentKindDescriptor instead')
 const PaymentKind$json = {
@@ -145,13 +209,155 @@ const Onchain$json = {
   '2': [
     {'1': 'txid', '3': 1, '4': 1, '5': 9, '10': 'txid'},
     {'1': 'status', '3': 2, '4': 1, '5': 11, '6': '.types.ConfirmationStatus', '10': 'status'},
+    {'1': 'tx_type', '3': 3, '4': 1, '5': 11, '6': '.types.TransactionType', '9': 0, '10': 'txType', '17': true},
+  ],
+  '8': [
+    {'1': '_tx_type'},
   ],
 };
 
 /// Descriptor for `Onchain`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List onchainDescriptor = $convert.base64Decode(
     'CgdPbmNoYWluEhIKBHR4aWQYASABKAlSBHR4aWQSMQoGc3RhdHVzGAIgASgLMhkudHlwZXMuQ2'
-    '9uZmlybWF0aW9uU3RhdHVzUgZzdGF0dXM=');
+    '9uZmlybWF0aW9uU3RhdHVzUgZzdGF0dXMSNAoHdHhfdHlwZRgDIAEoCzIWLnR5cGVzLlRyYW5z'
+    'YWN0aW9uVHlwZUgAUgZ0eFR5cGWIAQFCCgoIX3R4X3R5cGU=');
+
+@$core.Deprecated('Use transactionChannelDescriptor instead')
+const TransactionChannel$json = {
+  '1': 'TransactionChannel',
+  '2': [
+    {'1': 'counterparty_node_id', '3': 1, '4': 1, '5': 9, '10': 'counterpartyNodeId'},
+    {'1': 'channel_id', '3': 2, '4': 1, '5': 9, '10': 'channelId'},
+  ],
+};
+
+/// Descriptor for `TransactionChannel`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List transactionChannelDescriptor = $convert.base64Decode(
+    'ChJUcmFuc2FjdGlvbkNoYW5uZWwSMAoUY291bnRlcnBhcnR5X25vZGVfaWQYASABKAlSEmNvdW'
+    '50ZXJwYXJ0eU5vZGVJZBIdCgpjaGFubmVsX2lkGAIgASgJUgljaGFubmVsSWQ=');
+
+@$core.Deprecated('Use transactionTypeDescriptor instead')
+const TransactionType$json = {
+  '1': 'TransactionType',
+  '2': [
+    {'1': 'funding', '3': 1, '4': 1, '5': 11, '6': '.types.Funding', '9': 0, '10': 'funding'},
+    {'1': 'cooperative_close', '3': 2, '4': 1, '5': 11, '6': '.types.CooperativeClose', '9': 0, '10': 'cooperativeClose'},
+    {'1': 'unilateral_close', '3': 3, '4': 1, '5': 11, '6': '.types.UnilateralClose', '9': 0, '10': 'unilateralClose'},
+    {'1': 'anchor_bump', '3': 4, '4': 1, '5': 11, '6': '.types.AnchorBump', '9': 0, '10': 'anchorBump'},
+    {'1': 'claim', '3': 5, '4': 1, '5': 11, '6': '.types.Claim', '9': 0, '10': 'claim'},
+    {'1': 'sweep', '3': 6, '4': 1, '5': 11, '6': '.types.Sweep', '9': 0, '10': 'sweep'},
+    {'1': 'interactive_funding', '3': 7, '4': 1, '5': 11, '6': '.types.InteractiveFunding', '9': 0, '10': 'interactiveFunding'},
+  ],
+  '8': [
+    {'1': 'kind'},
+  ],
+};
+
+/// Descriptor for `TransactionType`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List transactionTypeDescriptor = $convert.base64Decode(
+    'Cg9UcmFuc2FjdGlvblR5cGUSKgoHZnVuZGluZxgBIAEoCzIOLnR5cGVzLkZ1bmRpbmdIAFIHZn'
+    'VuZGluZxJGChFjb29wZXJhdGl2ZV9jbG9zZRgCIAEoCzIXLnR5cGVzLkNvb3BlcmF0aXZlQ2xv'
+    'c2VIAFIQY29vcGVyYXRpdmVDbG9zZRJDChB1bmlsYXRlcmFsX2Nsb3NlGAMgASgLMhYudHlwZX'
+    'MuVW5pbGF0ZXJhbENsb3NlSABSD3VuaWxhdGVyYWxDbG9zZRI0CgthbmNob3JfYnVtcBgEIAEo'
+    'CzIRLnR5cGVzLkFuY2hvckJ1bXBIAFIKYW5jaG9yQnVtcBIkCgVjbGFpbRgFIAEoCzIMLnR5cG'
+    'VzLkNsYWltSABSBWNsYWltEiQKBXN3ZWVwGAYgASgLMgwudHlwZXMuU3dlZXBIAFIFc3dlZXAS'
+    'TAoTaW50ZXJhY3RpdmVfZnVuZGluZxgHIAEoCzIZLnR5cGVzLkludGVyYWN0aXZlRnVuZGluZ0'
+    'gAUhJpbnRlcmFjdGl2ZUZ1bmRpbmdCBgoEa2luZA==');
+
+@$core.Deprecated('Use fundingDescriptor instead')
+const Funding$json = {
+  '1': 'Funding',
+  '2': [
+    {'1': 'channels', '3': 1, '4': 3, '5': 11, '6': '.types.TransactionChannel', '10': 'channels'},
+  ],
+};
+
+/// Descriptor for `Funding`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List fundingDescriptor = $convert.base64Decode(
+    'CgdGdW5kaW5nEjUKCGNoYW5uZWxzGAEgAygLMhkudHlwZXMuVHJhbnNhY3Rpb25DaGFubmVsUg'
+    'hjaGFubmVscw==');
+
+@$core.Deprecated('Use cooperativeCloseDescriptor instead')
+const CooperativeClose$json = {
+  '1': 'CooperativeClose',
+  '2': [
+    {'1': 'counterparty_node_id', '3': 1, '4': 1, '5': 9, '10': 'counterpartyNodeId'},
+    {'1': 'channel_id', '3': 2, '4': 1, '5': 9, '10': 'channelId'},
+  ],
+};
+
+/// Descriptor for `CooperativeClose`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List cooperativeCloseDescriptor = $convert.base64Decode(
+    'ChBDb29wZXJhdGl2ZUNsb3NlEjAKFGNvdW50ZXJwYXJ0eV9ub2RlX2lkGAEgASgJUhJjb3VudG'
+    'VycGFydHlOb2RlSWQSHQoKY2hhbm5lbF9pZBgCIAEoCVIJY2hhbm5lbElk');
+
+@$core.Deprecated('Use unilateralCloseDescriptor instead')
+const UnilateralClose$json = {
+  '1': 'UnilateralClose',
+  '2': [
+    {'1': 'counterparty_node_id', '3': 1, '4': 1, '5': 9, '10': 'counterpartyNodeId'},
+    {'1': 'channel_id', '3': 2, '4': 1, '5': 9, '10': 'channelId'},
+  ],
+};
+
+/// Descriptor for `UnilateralClose`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List unilateralCloseDescriptor = $convert.base64Decode(
+    'Cg9VbmlsYXRlcmFsQ2xvc2USMAoUY291bnRlcnBhcnR5X25vZGVfaWQYASABKAlSEmNvdW50ZX'
+    'JwYXJ0eU5vZGVJZBIdCgpjaGFubmVsX2lkGAIgASgJUgljaGFubmVsSWQ=');
+
+@$core.Deprecated('Use anchorBumpDescriptor instead')
+const AnchorBump$json = {
+  '1': 'AnchorBump',
+  '2': [
+    {'1': 'counterparty_node_id', '3': 1, '4': 1, '5': 9, '10': 'counterpartyNodeId'},
+    {'1': 'channel_id', '3': 2, '4': 1, '5': 9, '10': 'channelId'},
+  ],
+};
+
+/// Descriptor for `AnchorBump`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List anchorBumpDescriptor = $convert.base64Decode(
+    'CgpBbmNob3JCdW1wEjAKFGNvdW50ZXJwYXJ0eV9ub2RlX2lkGAEgASgJUhJjb3VudGVycGFydH'
+    'lOb2RlSWQSHQoKY2hhbm5lbF9pZBgCIAEoCVIJY2hhbm5lbElk');
+
+@$core.Deprecated('Use claimDescriptor instead')
+const Claim$json = {
+  '1': 'Claim',
+  '2': [
+    {'1': 'counterparty_node_id', '3': 1, '4': 1, '5': 9, '10': 'counterpartyNodeId'},
+    {'1': 'channel_id', '3': 2, '4': 1, '5': 9, '10': 'channelId'},
+  ],
+};
+
+/// Descriptor for `Claim`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List claimDescriptor = $convert.base64Decode(
+    'CgVDbGFpbRIwChRjb3VudGVycGFydHlfbm9kZV9pZBgBIAEoCVISY291bnRlcnBhcnR5Tm9kZU'
+    'lkEh0KCmNoYW5uZWxfaWQYAiABKAlSCWNoYW5uZWxJZA==');
+
+@$core.Deprecated('Use sweepDescriptor instead')
+const Sweep$json = {
+  '1': 'Sweep',
+  '2': [
+    {'1': 'channels', '3': 1, '4': 3, '5': 11, '6': '.types.TransactionChannel', '10': 'channels'},
+  ],
+};
+
+/// Descriptor for `Sweep`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List sweepDescriptor = $convert.base64Decode(
+    'CgVTd2VlcBI1CghjaGFubmVscxgBIAMoCzIZLnR5cGVzLlRyYW5zYWN0aW9uQ2hhbm5lbFIIY2'
+    'hhbm5lbHM=');
+
+@$core.Deprecated('Use interactiveFundingDescriptor instead')
+const InteractiveFunding$json = {
+  '1': 'InteractiveFunding',
+  '2': [
+    {'1': 'channels', '3': 1, '4': 3, '5': 11, '6': '.types.TransactionChannel', '10': 'channels'},
+  ],
+};
+
+/// Descriptor for `InteractiveFunding`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List interactiveFundingDescriptor = $convert.base64Decode(
+    'ChJJbnRlcmFjdGl2ZUZ1bmRpbmcSNQoIY2hhbm5lbHMYASADKAsyGS50eXBlcy5UcmFuc2FjdG'
+    'lvbkNoYW5uZWxSCGNoYW5uZWxz');
 
 @$core.Deprecated('Use confirmationStatusDescriptor instead')
 const ConfirmationStatus$json = {
@@ -318,10 +524,12 @@ const HtlcLocator$json = {
     {'1': 'channel_id', '3': 1, '4': 1, '5': 9, '10': 'channelId'},
     {'1': 'user_channel_id', '3': 2, '4': 1, '5': 9, '9': 0, '10': 'userChannelId', '17': true},
     {'1': 'node_id', '3': 3, '4': 1, '5': 9, '9': 1, '10': 'nodeId', '17': true},
+    {'1': 'amount_msat', '3': 4, '4': 1, '5': 4, '9': 2, '10': 'amountMsat', '17': true},
   ],
   '8': [
     {'1': '_user_channel_id'},
     {'1': '_node_id'},
+    {'1': '_amount_msat'},
   ],
 };
 
@@ -329,7 +537,8 @@ const HtlcLocator$json = {
 final $typed_data.Uint8List htlcLocatorDescriptor = $convert.base64Decode(
     'CgtIdGxjTG9jYXRvchIdCgpjaGFubmVsX2lkGAEgASgJUgljaGFubmVsSWQSKwoPdXNlcl9jaG'
     'FubmVsX2lkGAIgASgJSABSDXVzZXJDaGFubmVsSWSIAQESHAoHbm9kZV9pZBgDIAEoCUgBUgZu'
-    'b2RlSWSIAQFCEgoQX3VzZXJfY2hhbm5lbF9pZEIKCghfbm9kZV9pZA==');
+    'b2RlSWSIAQESJAoLYW1vdW50X21zYXQYBCABKARIAlIKYW1vdW50TXNhdIgBAUISChBfdXNlcl'
+    '9jaGFubmVsX2lkQgoKCF9ub2RlX2lkQg4KDF9hbW91bnRfbXNhdA==');
 
 @$core.Deprecated('Use forwardedPaymentDescriptor instead')
 const ForwardedPayment$json = {
@@ -389,7 +598,17 @@ const Channel$json = {
     {'1': 'counterparty_forwarding_info_fee_base_msat', '3': 23, '4': 1, '5': 13, '9': 7, '10': 'counterpartyForwardingInfoFeeBaseMsat', '17': true},
     {'1': 'counterparty_forwarding_info_fee_proportional_millionths', '3': 24, '4': 1, '5': 13, '9': 8, '10': 'counterpartyForwardingInfoFeeProportionalMillionths', '17': true},
     {'1': 'counterparty_forwarding_info_cltv_expiry_delta', '3': 25, '4': 1, '5': 13, '9': 9, '10': 'counterpartyForwardingInfoCltvExpiryDelta', '17': true},
+    {'1': 'short_channel_id', '3': 26, '4': 1, '5': 4, '9': 10, '10': 'shortChannelId', '17': true},
+    {'1': 'outbound_scid_alias', '3': 27, '4': 1, '5': 4, '9': 11, '10': 'outboundScidAlias', '17': true},
+    {'1': 'inbound_scid_alias', '3': 28, '4': 1, '5': 4, '9': 12, '10': 'inboundScidAlias', '17': true},
+    {'1': 'inbound_htlc_minimum_msat', '3': 29, '4': 1, '5': 4, '10': 'inboundHtlcMinimumMsat'},
+    {'1': 'inbound_htlc_maximum_msat', '3': 30, '4': 1, '5': 4, '9': 13, '10': 'inboundHtlcMaximumMsat', '17': true},
+    {'1': 'channel_shutdown_state', '3': 31, '4': 1, '5': 14, '6': '.types.ChannelShutdownState', '9': 14, '10': 'channelShutdownState', '17': true},
+    {'1': 'reserve_type', '3': 32, '4': 1, '5': 14, '6': '.types.ReserveType', '9': 15, '10': 'reserveType', '17': true},
+    {'1': 'channel_type', '3': 33, '4': 3, '5': 11, '6': '.types.Channel.ChannelTypeEntry', '10': 'channelType'},
+    {'1': 'counterparty_features', '3': 34, '4': 3, '5': 11, '6': '.types.Channel.CounterpartyFeaturesEntry', '10': 'counterpartyFeatures'},
   ],
+  '3': [Channel_ChannelTypeEntry$json, Channel_CounterpartyFeaturesEntry$json],
   '8': [
     {'1': '_funding_txo'},
     {'1': '_unspendable_punishment_reserve'},
@@ -401,7 +620,33 @@ const Channel$json = {
     {'1': '_counterparty_forwarding_info_fee_base_msat'},
     {'1': '_counterparty_forwarding_info_fee_proportional_millionths'},
     {'1': '_counterparty_forwarding_info_cltv_expiry_delta'},
+    {'1': '_short_channel_id'},
+    {'1': '_outbound_scid_alias'},
+    {'1': '_inbound_scid_alias'},
+    {'1': '_inbound_htlc_maximum_msat'},
+    {'1': '_channel_shutdown_state'},
+    {'1': '_reserve_type'},
   ],
+};
+
+@$core.Deprecated('Use channelDescriptor instead')
+const Channel_ChannelTypeEntry$json = {
+  '1': 'ChannelTypeEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 13, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 11, '6': '.types.Feature', '10': 'value'},
+  ],
+  '7': {'7': true},
+};
+
+@$core.Deprecated('Use channelDescriptor instead')
+const Channel_CounterpartyFeaturesEntry$json = {
+  '1': 'CounterpartyFeaturesEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 13, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 11, '6': '.types.Feature', '10': 'value'},
+  ],
+  '7': {'7': true},
 };
 
 /// Descriptor for `Channel`. Decode as a `google.protobuf.DescriptorProto`.
@@ -434,14 +679,30 @@ final $typed_data.Uint8List channelDescriptor = $convert.base64Decode(
     '9ydGlvbmFsX21pbGxpb250aHMYGCABKA1ICFIzY291bnRlcnBhcnR5Rm9yd2FyZGluZ0luZm9G'
     'ZWVQcm9wb3J0aW9uYWxNaWxsaW9udGhziAEBEmYKLmNvdW50ZXJwYXJ0eV9mb3J3YXJkaW5nX2'
     'luZm9fY2x0dl9leHBpcnlfZGVsdGEYGSABKA1ICVIpY291bnRlcnBhcnR5Rm9yd2FyZGluZ0lu'
-    'Zm9DbHR2RXhwaXJ5RGVsdGGIAQFCDgoMX2Z1bmRpbmdfdHhvQiEKH191bnNwZW5kYWJsZV9wdW'
-    '5pc2htZW50X3Jlc2VydmVCGQoXX2NvbmZpcm1hdGlvbnNfcmVxdWlyZWRCEAoOX2NvbmZpcm1h'
-    'dGlvbnNCGgoYX2ZvcmNlX2Nsb3NlX3NwZW5kX2RlbGF5QioKKF9jb3VudGVycGFydHlfb3V0Ym'
-    '91bmRfaHRsY19taW5pbXVtX21zYXRCKgooX2NvdW50ZXJwYXJ0eV9vdXRib3VuZF9odGxjX21h'
-    'eGltdW1fbXNhdEItCitfY291bnRlcnBhcnR5X2ZvcndhcmRpbmdfaW5mb19mZWVfYmFzZV9tc2'
-    'F0QjsKOV9jb3VudGVycGFydHlfZm9yd2FyZGluZ19pbmZvX2ZlZV9wcm9wb3J0aW9uYWxfbWls'
-    'bGlvbnRoc0IxCi9fY291bnRlcnBhcnR5X2ZvcndhcmRpbmdfaW5mb19jbHR2X2V4cGlyeV9kZW'
-    'x0YQ==');
+    'Zm9DbHR2RXhwaXJ5RGVsdGGIAQESLQoQc2hvcnRfY2hhbm5lbF9pZBgaIAEoBEgKUg5zaG9ydE'
+    'NoYW5uZWxJZIgBARIzChNvdXRib3VuZF9zY2lkX2FsaWFzGBsgASgESAtSEW91dGJvdW5kU2Np'
+    'ZEFsaWFziAEBEjEKEmluYm91bmRfc2NpZF9hbGlhcxgcIAEoBEgMUhBpbmJvdW5kU2NpZEFsaW'
+    'FziAEBEjkKGWluYm91bmRfaHRsY19taW5pbXVtX21zYXQYHSABKARSFmluYm91bmRIdGxjTWlu'
+    'aW11bU1zYXQSPgoZaW5ib3VuZF9odGxjX21heGltdW1fbXNhdBgeIAEoBEgNUhZpbmJvdW5kSH'
+    'RsY01heGltdW1Nc2F0iAEBElYKFmNoYW5uZWxfc2h1dGRvd25fc3RhdGUYHyABKA4yGy50eXBl'
+    'cy5DaGFubmVsU2h1dGRvd25TdGF0ZUgOUhRjaGFubmVsU2h1dGRvd25TdGF0ZYgBARI6CgxyZX'
+    'NlcnZlX3R5cGUYICABKA4yEi50eXBlcy5SZXNlcnZlVHlwZUgPUgtyZXNlcnZlVHlwZYgBARJC'
+    'CgxjaGFubmVsX3R5cGUYISADKAsyHy50eXBlcy5DaGFubmVsLkNoYW5uZWxUeXBlRW50cnlSC2'
+    'NoYW5uZWxUeXBlEl0KFWNvdW50ZXJwYXJ0eV9mZWF0dXJlcxgiIAMoCzIoLnR5cGVzLkNoYW5u'
+    'ZWwuQ291bnRlcnBhcnR5RmVhdHVyZXNFbnRyeVIUY291bnRlcnBhcnR5RmVhdHVyZXMaTgoQQ2'
+    'hhbm5lbFR5cGVFbnRyeRIQCgNrZXkYASABKA1SA2tleRIkCgV2YWx1ZRgCIAEoCzIOLnR5cGVz'
+    'LkZlYXR1cmVSBXZhbHVlOgI4ARpXChlDb3VudGVycGFydHlGZWF0dXJlc0VudHJ5EhAKA2tleR'
+    'gBIAEoDVIDa2V5EiQKBXZhbHVlGAIgASgLMg4udHlwZXMuRmVhdHVyZVIFdmFsdWU6AjgBQg4K'
+    'DF9mdW5kaW5nX3R4b0IhCh9fdW5zcGVuZGFibGVfcHVuaXNobWVudF9yZXNlcnZlQhkKF19jb2'
+    '5maXJtYXRpb25zX3JlcXVpcmVkQhAKDl9jb25maXJtYXRpb25zQhoKGF9mb3JjZV9jbG9zZV9z'
+    'cGVuZF9kZWxheUIqCihfY291bnRlcnBhcnR5X291dGJvdW5kX2h0bGNfbWluaW11bV9tc2F0Qi'
+    'oKKF9jb3VudGVycGFydHlfb3V0Ym91bmRfaHRsY19tYXhpbXVtX21zYXRCLQorX2NvdW50ZXJw'
+    'YXJ0eV9mb3J3YXJkaW5nX2luZm9fZmVlX2Jhc2VfbXNhdEI7CjlfY291bnRlcnBhcnR5X2Zvcn'
+    'dhcmRpbmdfaW5mb19mZWVfcHJvcG9ydGlvbmFsX21pbGxpb250aHNCMQovX2NvdW50ZXJwYXJ0'
+    'eV9mb3J3YXJkaW5nX2luZm9fY2x0dl9leHBpcnlfZGVsdGFCEwoRX3Nob3J0X2NoYW5uZWxfaW'
+    'RCFgoUX291dGJvdW5kX3NjaWRfYWxpYXNCFQoTX2luYm91bmRfc2NpZF9hbGlhc0IcChpfaW5i'
+    'b3VuZF9odGxjX21heGltdW1fbXNhdEIZChdfY2hhbm5lbF9zaHV0ZG93bl9zdGF0ZUIPCg1fcm'
+    'VzZXJ2ZV90eXBl');
 
 @$core.Deprecated('Use channelConfigDescriptor instead')
 const ChannelConfig$json = {
@@ -746,20 +1007,6 @@ final $typed_data.Uint8List awaitingThresholdConfirmationsDescriptor = $convert.
     'aW5nVHhpZBIrChFjb25maXJtYXRpb25faGFzaBgDIAEoCVIQY29uZmlybWF0aW9uSGFzaBIvCh'
     'Njb25maXJtYXRpb25faGVpZ2h0GAQgASgNUhJjb25maXJtYXRpb25IZWlnaHQSJwoPYW1vdW50'
     'X3NhdG9zaGlzGAUgASgEUg5hbW91bnRTYXRvc2hpc0INCgtfY2hhbm5lbF9pZA==');
-
-@$core.Deprecated('Use pageTokenDescriptor instead')
-const PageToken$json = {
-  '1': 'PageToken',
-  '2': [
-    {'1': 'token', '3': 1, '4': 1, '5': 9, '10': 'token'},
-    {'1': 'index', '3': 2, '4': 1, '5': 3, '10': 'index'},
-  ],
-};
-
-/// Descriptor for `PageToken`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List pageTokenDescriptor = $convert.base64Decode(
-    'CglQYWdlVG9rZW4SFAoFdG9rZW4YASABKAlSBXRva2VuEhQKBWluZGV4GAIgASgDUgVpbmRleA'
-    '==');
 
 @$core.Deprecated('Use bolt11InvoiceDescriptionDescriptor instead')
 const Bolt11InvoiceDescription$json = {

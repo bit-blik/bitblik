@@ -24,7 +24,7 @@ export 'types.pbenum.dart';
 /// See more: https://docs.rs/ldk-node/latest/ldk_node/payment/struct.PaymentDetails.html
 class Payment extends $pb.GeneratedMessage {
   factory Payment({
-    $core.String? id,
+    $core.String? paymentId,
     PaymentKind? kind,
     $fixnum.Int64? amountMsat,
     PaymentDirection? direction,
@@ -33,8 +33,8 @@ class Payment extends $pb.GeneratedMessage {
     $fixnum.Int64? feePaidMsat,
   }) {
     final $result = create();
-    if (id != null) {
-      $result.id = id;
+    if (paymentId != null) {
+      $result.paymentId = paymentId;
     }
     if (kind != null) {
       $result.kind = kind;
@@ -61,7 +61,7 @@ class Payment extends $pb.GeneratedMessage {
   factory Payment.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Payment', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'id')
+    ..aOS(1, _omitFieldNames ? '' : 'paymentId')
     ..aOM<PaymentKind>(2, _omitFieldNames ? '' : 'kind', subBuilder: PaymentKind.create)
     ..a<$fixnum.Int64>(3, _omitFieldNames ? '' : 'amountMsat', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
     ..e<PaymentDirection>(4, _omitFieldNames ? '' : 'direction', $pb.PbFieldType.OE, defaultOrMaker: PaymentDirection.INBOUND, valueOf: PaymentDirection.valueOf, enumValues: PaymentDirection.values)
@@ -94,13 +94,13 @@ class Payment extends $pb.GeneratedMessage {
 
   /// An identifier used to uniquely identify a payment in hex-encoded form.
   @$pb.TagNumber(1)
-  $core.String get id => $_getSZ(0);
+  $core.String get paymentId => $_getSZ(0);
   @$pb.TagNumber(1)
-  set id($core.String v) { $_setString(0, v); }
+  set paymentId($core.String v) { $_setString(0, v); }
   @$pb.TagNumber(1)
-  $core.bool hasId() => $_has(0);
+  $core.bool hasPaymentId() => $_has(0);
   @$pb.TagNumber(1)
-  void clearId() => $_clearField(1);
+  void clearPaymentId() => $_clearField(1);
 
   /// The kind of the payment.
   @$pb.TagNumber(2)
@@ -166,6 +166,128 @@ class Payment extends $pb.GeneratedMessage {
   $core.bool hasFeePaidMsat() => $_has(6);
   @$pb.TagNumber(7)
   void clearFeePaidMsat() => $_clearField(7);
+}
+
+/// Options that control which BOLT 12 invoice fields a payer proof discloses.
+/// See more: https://docs.rs/ldk-node/latest/ldk_node/payment/struct.PayerProofOptions.html
+class PayerProofOptions extends $pb.GeneratedMessage {
+  factory PayerProofOptions({
+    $core.String? note,
+    $core.bool? includeOfferDescription,
+    $core.bool? includeOfferIssuer,
+    $core.bool? includeInvoiceAmount,
+    $core.bool? includeInvoiceCreatedAt,
+    $core.Iterable<$fixnum.Int64>? extraTlvTypes,
+  }) {
+    final $result = create();
+    if (note != null) {
+      $result.note = note;
+    }
+    if (includeOfferDescription != null) {
+      $result.includeOfferDescription = includeOfferDescription;
+    }
+    if (includeOfferIssuer != null) {
+      $result.includeOfferIssuer = includeOfferIssuer;
+    }
+    if (includeInvoiceAmount != null) {
+      $result.includeInvoiceAmount = includeInvoiceAmount;
+    }
+    if (includeInvoiceCreatedAt != null) {
+      $result.includeInvoiceCreatedAt = includeInvoiceCreatedAt;
+    }
+    if (extraTlvTypes != null) {
+      $result.extraTlvTypes.addAll(extraTlvTypes);
+    }
+    return $result;
+  }
+  PayerProofOptions._() : super();
+  factory PayerProofOptions.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory PayerProofOptions.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'PayerProofOptions', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'note')
+    ..aOB(2, _omitFieldNames ? '' : 'includeOfferDescription')
+    ..aOB(3, _omitFieldNames ? '' : 'includeOfferIssuer')
+    ..aOB(4, _omitFieldNames ? '' : 'includeInvoiceAmount')
+    ..aOB(5, _omitFieldNames ? '' : 'includeInvoiceCreatedAt')
+    ..p<$fixnum.Int64>(6, _omitFieldNames ? '' : 'extraTlvTypes', $pb.PbFieldType.KU6)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  PayerProofOptions clone() => PayerProofOptions()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  PayerProofOptions copyWith(void Function(PayerProofOptions) updates) => super.copyWith((message) => updates(message as PayerProofOptions)) as PayerProofOptions;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static PayerProofOptions create() => PayerProofOptions._();
+  PayerProofOptions createEmptyInstance() => create();
+  static $pb.PbList<PayerProofOptions> createRepeated() => $pb.PbList<PayerProofOptions>();
+  @$core.pragma('dart2js:noInline')
+  static PayerProofOptions getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PayerProofOptions>(create);
+  static PayerProofOptions? _defaultInstance;
+
+  /// An optional note to attach to the payer proof itself.
+  @$pb.TagNumber(1)
+  $core.String get note => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set note($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasNote() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearNote() => $_clearField(1);
+
+  /// Whether to disclose the offer description.
+  @$pb.TagNumber(2)
+  $core.bool get includeOfferDescription => $_getBF(1);
+  @$pb.TagNumber(2)
+  set includeOfferDescription($core.bool v) { $_setBool(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasIncludeOfferDescription() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearIncludeOfferDescription() => $_clearField(2);
+
+  /// Whether to disclose the offer issuer.
+  @$pb.TagNumber(3)
+  $core.bool get includeOfferIssuer => $_getBF(2);
+  @$pb.TagNumber(3)
+  set includeOfferIssuer($core.bool v) { $_setBool(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasIncludeOfferIssuer() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearIncludeOfferIssuer() => $_clearField(3);
+
+  /// Whether to disclose the invoice amount.
+  @$pb.TagNumber(4)
+  $core.bool get includeInvoiceAmount => $_getBF(3);
+  @$pb.TagNumber(4)
+  set includeInvoiceAmount($core.bool v) { $_setBool(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasIncludeInvoiceAmount() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearIncludeInvoiceAmount() => $_clearField(4);
+
+  /// Whether to disclose the invoice creation timestamp.
+  @$pb.TagNumber(5)
+  $core.bool get includeInvoiceCreatedAt => $_getBF(4);
+  @$pb.TagNumber(5)
+  set includeInvoiceCreatedAt($core.bool v) { $_setBool(4, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasIncludeInvoiceCreatedAt() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearIncludeInvoiceCreatedAt() => $_clearField(5);
+
+  /// Additional TLV types to disclose, for fields not covered by the flags above.
+  @$pb.TagNumber(6)
+  $pb.PbList<$fixnum.Int64> get extraTlvTypes => $_getList(5);
 }
 
 enum PaymentKind_Kind {
@@ -310,6 +432,7 @@ class Onchain extends $pb.GeneratedMessage {
   factory Onchain({
     $core.String? txid,
     ConfirmationStatus? status,
+    TransactionType? txType,
   }) {
     final $result = create();
     if (txid != null) {
@@ -317,6 +440,9 @@ class Onchain extends $pb.GeneratedMessage {
     }
     if (status != null) {
       $result.status = status;
+    }
+    if (txType != null) {
+      $result.txType = txType;
     }
     return $result;
   }
@@ -327,6 +453,7 @@ class Onchain extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Onchain', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'txid')
     ..aOM<ConfirmationStatus>(2, _omitFieldNames ? '' : 'status', subBuilder: ConfirmationStatus.create)
+    ..aOM<TransactionType>(3, _omitFieldNames ? '' : 'txType', subBuilder: TransactionType.create)
     ..hasRequiredFields = false
   ;
 
@@ -372,6 +499,670 @@ class Onchain extends $pb.GeneratedMessage {
   void clearStatus() => $_clearField(2);
   @$pb.TagNumber(2)
   ConfirmationStatus ensureStatus() => $_ensure(1);
+
+  ///  The classification of this transaction, as reported by LDK when it was broadcast.
+  ///
+  ///  Unset for plain on-chain sends, and for payments recorded before this classification was
+  ///  tracked.
+  @$pb.TagNumber(3)
+  TransactionType get txType => $_getN(2);
+  @$pb.TagNumber(3)
+  set txType(TransactionType v) { $_setField(3, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasTxType() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTxType() => $_clearField(3);
+  @$pb.TagNumber(3)
+  TransactionType ensureTxType() => $_ensure(2);
+}
+
+/// A channel referenced by a TransactionType variant.
+class TransactionChannel extends $pb.GeneratedMessage {
+  factory TransactionChannel({
+    $core.String? counterpartyNodeId,
+    $core.String? channelId,
+  }) {
+    final $result = create();
+    if (counterpartyNodeId != null) {
+      $result.counterpartyNodeId = counterpartyNodeId;
+    }
+    if (channelId != null) {
+      $result.channelId = channelId;
+    }
+    return $result;
+  }
+  TransactionChannel._() : super();
+  factory TransactionChannel.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory TransactionChannel.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'TransactionChannel', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'counterpartyNodeId')
+    ..aOS(2, _omitFieldNames ? '' : 'channelId')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  TransactionChannel clone() => TransactionChannel()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  TransactionChannel copyWith(void Function(TransactionChannel) updates) => super.copyWith((message) => updates(message as TransactionChannel)) as TransactionChannel;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static TransactionChannel create() => TransactionChannel._();
+  TransactionChannel createEmptyInstance() => create();
+  static $pb.PbList<TransactionChannel> createRepeated() => $pb.PbList<TransactionChannel>();
+  @$core.pragma('dart2js:noInline')
+  static TransactionChannel getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<TransactionChannel>(create);
+  static TransactionChannel? _defaultInstance;
+
+  /// The `node_id` of the channel counterparty.
+  @$pb.TagNumber(1)
+  $core.String get counterpartyNodeId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set counterpartyNodeId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasCounterpartyNodeId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCounterpartyNodeId() => $_clearField(1);
+
+  /// The ID of the channel.
+  @$pb.TagNumber(2)
+  $core.String get channelId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set channelId($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasChannelId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearChannelId() => $_clearField(2);
+}
+
+enum TransactionType_Kind {
+  funding, 
+  cooperativeClose, 
+  unilateralClose, 
+  anchorBump, 
+  claim, 
+  sweep, 
+  interactiveFunding, 
+  notSet
+}
+
+/// The classification of an on-chain transaction, mirroring LDK Node's
+/// `ldk_node::payment::TransactionType`.
+class TransactionType extends $pb.GeneratedMessage {
+  factory TransactionType({
+    Funding? funding,
+    CooperativeClose? cooperativeClose,
+    UnilateralClose? unilateralClose,
+    AnchorBump? anchorBump,
+    Claim? claim,
+    Sweep? sweep,
+    InteractiveFunding? interactiveFunding,
+  }) {
+    final $result = create();
+    if (funding != null) {
+      $result.funding = funding;
+    }
+    if (cooperativeClose != null) {
+      $result.cooperativeClose = cooperativeClose;
+    }
+    if (unilateralClose != null) {
+      $result.unilateralClose = unilateralClose;
+    }
+    if (anchorBump != null) {
+      $result.anchorBump = anchorBump;
+    }
+    if (claim != null) {
+      $result.claim = claim;
+    }
+    if (sweep != null) {
+      $result.sweep = sweep;
+    }
+    if (interactiveFunding != null) {
+      $result.interactiveFunding = interactiveFunding;
+    }
+    return $result;
+  }
+  TransactionType._() : super();
+  factory TransactionType.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory TransactionType.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static const $core.Map<$core.int, TransactionType_Kind> _TransactionType_KindByTag = {
+    1 : TransactionType_Kind.funding,
+    2 : TransactionType_Kind.cooperativeClose,
+    3 : TransactionType_Kind.unilateralClose,
+    4 : TransactionType_Kind.anchorBump,
+    5 : TransactionType_Kind.claim,
+    6 : TransactionType_Kind.sweep,
+    7 : TransactionType_Kind.interactiveFunding,
+    0 : TransactionType_Kind.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'TransactionType', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..oo(0, [1, 2, 3, 4, 5, 6, 7])
+    ..aOM<Funding>(1, _omitFieldNames ? '' : 'funding', subBuilder: Funding.create)
+    ..aOM<CooperativeClose>(2, _omitFieldNames ? '' : 'cooperativeClose', subBuilder: CooperativeClose.create)
+    ..aOM<UnilateralClose>(3, _omitFieldNames ? '' : 'unilateralClose', subBuilder: UnilateralClose.create)
+    ..aOM<AnchorBump>(4, _omitFieldNames ? '' : 'anchorBump', subBuilder: AnchorBump.create)
+    ..aOM<Claim>(5, _omitFieldNames ? '' : 'claim', subBuilder: Claim.create)
+    ..aOM<Sweep>(6, _omitFieldNames ? '' : 'sweep', subBuilder: Sweep.create)
+    ..aOM<InteractiveFunding>(7, _omitFieldNames ? '' : 'interactiveFunding', subBuilder: InteractiveFunding.create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  TransactionType clone() => TransactionType()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  TransactionType copyWith(void Function(TransactionType) updates) => super.copyWith((message) => updates(message as TransactionType)) as TransactionType;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static TransactionType create() => TransactionType._();
+  TransactionType createEmptyInstance() => create();
+  static $pb.PbList<TransactionType> createRepeated() => $pb.PbList<TransactionType>();
+  @$core.pragma('dart2js:noInline')
+  static TransactionType getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<TransactionType>(create);
+  static TransactionType? _defaultInstance;
+
+  TransactionType_Kind whichKind() => _TransactionType_KindByTag[$_whichOneof(0)]!;
+  void clearKind() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  Funding get funding => $_getN(0);
+  @$pb.TagNumber(1)
+  set funding(Funding v) { $_setField(1, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasFunding() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearFunding() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Funding ensureFunding() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  CooperativeClose get cooperativeClose => $_getN(1);
+  @$pb.TagNumber(2)
+  set cooperativeClose(CooperativeClose v) { $_setField(2, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasCooperativeClose() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCooperativeClose() => $_clearField(2);
+  @$pb.TagNumber(2)
+  CooperativeClose ensureCooperativeClose() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  UnilateralClose get unilateralClose => $_getN(2);
+  @$pb.TagNumber(3)
+  set unilateralClose(UnilateralClose v) { $_setField(3, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasUnilateralClose() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearUnilateralClose() => $_clearField(3);
+  @$pb.TagNumber(3)
+  UnilateralClose ensureUnilateralClose() => $_ensure(2);
+
+  @$pb.TagNumber(4)
+  AnchorBump get anchorBump => $_getN(3);
+  @$pb.TagNumber(4)
+  set anchorBump(AnchorBump v) { $_setField(4, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasAnchorBump() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearAnchorBump() => $_clearField(4);
+  @$pb.TagNumber(4)
+  AnchorBump ensureAnchorBump() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  Claim get claim => $_getN(4);
+  @$pb.TagNumber(5)
+  set claim(Claim v) { $_setField(5, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasClaim() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearClaim() => $_clearField(5);
+  @$pb.TagNumber(5)
+  Claim ensureClaim() => $_ensure(4);
+
+  @$pb.TagNumber(6)
+  Sweep get sweep => $_getN(5);
+  @$pb.TagNumber(6)
+  set sweep(Sweep v) { $_setField(6, v); }
+  @$pb.TagNumber(6)
+  $core.bool hasSweep() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearSweep() => $_clearField(6);
+  @$pb.TagNumber(6)
+  Sweep ensureSweep() => $_ensure(5);
+
+  @$pb.TagNumber(7)
+  InteractiveFunding get interactiveFunding => $_getN(6);
+  @$pb.TagNumber(7)
+  set interactiveFunding(InteractiveFunding v) { $_setField(7, v); }
+  @$pb.TagNumber(7)
+  $core.bool hasInteractiveFunding() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearInteractiveFunding() => $_clearField(7);
+  @$pb.TagNumber(7)
+  InteractiveFunding ensureInteractiveFunding() => $_ensure(6);
+}
+
+/// A funding transaction establishing one or more new channels.
+class Funding extends $pb.GeneratedMessage {
+  factory Funding({
+    $core.Iterable<TransactionChannel>? channels,
+  }) {
+    final $result = create();
+    if (channels != null) {
+      $result.channels.addAll(channels);
+    }
+    return $result;
+  }
+  Funding._() : super();
+  factory Funding.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Funding.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Funding', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..pc<TransactionChannel>(1, _omitFieldNames ? '' : 'channels', $pb.PbFieldType.PM, subBuilder: TransactionChannel.create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Funding clone() => Funding()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Funding copyWith(void Function(Funding) updates) => super.copyWith((message) => updates(message as Funding)) as Funding;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Funding create() => Funding._();
+  Funding createEmptyInstance() => create();
+  static $pb.PbList<Funding> createRepeated() => $pb.PbList<Funding>();
+  @$core.pragma('dart2js:noInline')
+  static Funding getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Funding>(create);
+  static Funding? _defaultInstance;
+
+  /// The channels being funded.
+  @$pb.TagNumber(1)
+  $pb.PbList<TransactionChannel> get channels => $_getList(0);
+}
+
+/// A transaction cooperatively closing a channel.
+class CooperativeClose extends $pb.GeneratedMessage {
+  factory CooperativeClose({
+    $core.String? counterpartyNodeId,
+    $core.String? channelId,
+  }) {
+    final $result = create();
+    if (counterpartyNodeId != null) {
+      $result.counterpartyNodeId = counterpartyNodeId;
+    }
+    if (channelId != null) {
+      $result.channelId = channelId;
+    }
+    return $result;
+  }
+  CooperativeClose._() : super();
+  factory CooperativeClose.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory CooperativeClose.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'CooperativeClose', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'counterpartyNodeId')
+    ..aOS(2, _omitFieldNames ? '' : 'channelId')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  CooperativeClose clone() => CooperativeClose()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  CooperativeClose copyWith(void Function(CooperativeClose) updates) => super.copyWith((message) => updates(message as CooperativeClose)) as CooperativeClose;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static CooperativeClose create() => CooperativeClose._();
+  CooperativeClose createEmptyInstance() => create();
+  static $pb.PbList<CooperativeClose> createRepeated() => $pb.PbList<CooperativeClose>();
+  @$core.pragma('dart2js:noInline')
+  static CooperativeClose getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CooperativeClose>(create);
+  static CooperativeClose? _defaultInstance;
+
+  /// The `node_id` of the channel counterparty.
+  @$pb.TagNumber(1)
+  $core.String get counterpartyNodeId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set counterpartyNodeId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasCounterpartyNodeId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCounterpartyNodeId() => $_clearField(1);
+
+  /// The ID of the channel being closed.
+  @$pb.TagNumber(2)
+  $core.String get channelId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set channelId($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasChannelId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearChannelId() => $_clearField(2);
+}
+
+/// A transaction force-closing a channel.
+class UnilateralClose extends $pb.GeneratedMessage {
+  factory UnilateralClose({
+    $core.String? counterpartyNodeId,
+    $core.String? channelId,
+  }) {
+    final $result = create();
+    if (counterpartyNodeId != null) {
+      $result.counterpartyNodeId = counterpartyNodeId;
+    }
+    if (channelId != null) {
+      $result.channelId = channelId;
+    }
+    return $result;
+  }
+  UnilateralClose._() : super();
+  factory UnilateralClose.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory UnilateralClose.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UnilateralClose', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'counterpartyNodeId')
+    ..aOS(2, _omitFieldNames ? '' : 'channelId')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  UnilateralClose clone() => UnilateralClose()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  UnilateralClose copyWith(void Function(UnilateralClose) updates) => super.copyWith((message) => updates(message as UnilateralClose)) as UnilateralClose;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UnilateralClose create() => UnilateralClose._();
+  UnilateralClose createEmptyInstance() => create();
+  static $pb.PbList<UnilateralClose> createRepeated() => $pb.PbList<UnilateralClose>();
+  @$core.pragma('dart2js:noInline')
+  static UnilateralClose getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UnilateralClose>(create);
+  static UnilateralClose? _defaultInstance;
+
+  /// The `node_id` of the channel counterparty.
+  @$pb.TagNumber(1)
+  $core.String get counterpartyNodeId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set counterpartyNodeId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasCounterpartyNodeId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCounterpartyNodeId() => $_clearField(1);
+
+  /// The ID of the channel being force-closed.
+  @$pb.TagNumber(2)
+  $core.String get channelId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set channelId($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasChannelId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearChannelId() => $_clearField(2);
+}
+
+/// An anchor transaction CPFP fee-bumping a closing transaction.
+class AnchorBump extends $pb.GeneratedMessage {
+  factory AnchorBump({
+    $core.String? counterpartyNodeId,
+    $core.String? channelId,
+  }) {
+    final $result = create();
+    if (counterpartyNodeId != null) {
+      $result.counterpartyNodeId = counterpartyNodeId;
+    }
+    if (channelId != null) {
+      $result.channelId = channelId;
+    }
+    return $result;
+  }
+  AnchorBump._() : super();
+  factory AnchorBump.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory AnchorBump.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'AnchorBump', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'counterpartyNodeId')
+    ..aOS(2, _omitFieldNames ? '' : 'channelId')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  AnchorBump clone() => AnchorBump()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  AnchorBump copyWith(void Function(AnchorBump) updates) => super.copyWith((message) => updates(message as AnchorBump)) as AnchorBump;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static AnchorBump create() => AnchorBump._();
+  AnchorBump createEmptyInstance() => create();
+  static $pb.PbList<AnchorBump> createRepeated() => $pb.PbList<AnchorBump>();
+  @$core.pragma('dart2js:noInline')
+  static AnchorBump getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<AnchorBump>(create);
+  static AnchorBump? _defaultInstance;
+
+  /// The `node_id` of the channel counterparty.
+  @$pb.TagNumber(1)
+  $core.String get counterpartyNodeId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set counterpartyNodeId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasCounterpartyNodeId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCounterpartyNodeId() => $_clearField(1);
+
+  /// The ID of the channel whose closing transaction is being fee-bumped.
+  @$pb.TagNumber(2)
+  $core.String get channelId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set channelId($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasChannelId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearChannelId() => $_clearField(2);
+}
+
+/// A transaction resolving an output spendable by both us and our counterparty.
+class Claim extends $pb.GeneratedMessage {
+  factory Claim({
+    $core.String? counterpartyNodeId,
+    $core.String? channelId,
+  }) {
+    final $result = create();
+    if (counterpartyNodeId != null) {
+      $result.counterpartyNodeId = counterpartyNodeId;
+    }
+    if (channelId != null) {
+      $result.channelId = channelId;
+    }
+    return $result;
+  }
+  Claim._() : super();
+  factory Claim.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Claim.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Claim', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'counterpartyNodeId')
+    ..aOS(2, _omitFieldNames ? '' : 'channelId')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Claim clone() => Claim()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Claim copyWith(void Function(Claim) updates) => super.copyWith((message) => updates(message as Claim)) as Claim;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Claim create() => Claim._();
+  Claim createEmptyInstance() => create();
+  static $pb.PbList<Claim> createRepeated() => $pb.PbList<Claim>();
+  @$core.pragma('dart2js:noInline')
+  static Claim getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Claim>(create);
+  static Claim? _defaultInstance;
+
+  /// The `node_id` of the channel counterparty.
+  @$pb.TagNumber(1)
+  $core.String get counterpartyNodeId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set counterpartyNodeId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasCounterpartyNodeId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCounterpartyNodeId() => $_clearField(1);
+
+  /// The ID of the channel from which outputs are being claimed.
+  @$pb.TagNumber(2)
+  $core.String get channelId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set channelId($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasChannelId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearChannelId() => $_clearField(2);
+}
+
+/// A transaction sweeping spendable outputs to the on-chain wallet.
+class Sweep extends $pb.GeneratedMessage {
+  factory Sweep({
+    $core.Iterable<TransactionChannel>? channels,
+  }) {
+    final $result = create();
+    if (channels != null) {
+      $result.channels.addAll(channels);
+    }
+    return $result;
+  }
+  Sweep._() : super();
+  factory Sweep.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Sweep.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Sweep', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..pc<TransactionChannel>(1, _omitFieldNames ? '' : 'channels', $pb.PbFieldType.PM, subBuilder: TransactionChannel.create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Sweep clone() => Sweep()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Sweep copyWith(void Function(Sweep) updates) => super.copyWith((message) => updates(message as Sweep)) as Sweep;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Sweep create() => Sweep._();
+  Sweep createEmptyInstance() => create();
+  static $pb.PbList<Sweep> createRepeated() => $pb.PbList<Sweep>();
+  @$core.pragma('dart2js:noInline')
+  static Sweep getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Sweep>(create);
+  static Sweep? _defaultInstance;
+
+  /// The channels from which outputs are being swept, if known.
+  @$pb.TagNumber(1)
+  $pb.PbList<TransactionChannel> get channels => $_getList(0);
+}
+
+/// An interactively-negotiated funding transaction: a splice, or (once supported) a V2
+/// dual-funded channel open.
+class InteractiveFunding extends $pb.GeneratedMessage {
+  factory InteractiveFunding({
+    $core.Iterable<TransactionChannel>? channels,
+  }) {
+    final $result = create();
+    if (channels != null) {
+      $result.channels.addAll(channels);
+    }
+    return $result;
+  }
+  InteractiveFunding._() : super();
+  factory InteractiveFunding.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory InteractiveFunding.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'InteractiveFunding', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
+    ..pc<TransactionChannel>(1, _omitFieldNames ? '' : 'channels', $pb.PbFieldType.PM, subBuilder: TransactionChannel.create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  InteractiveFunding clone() => InteractiveFunding()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  InteractiveFunding copyWith(void Function(InteractiveFunding) updates) => super.copyWith((message) => updates(message as InteractiveFunding)) as InteractiveFunding;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static InteractiveFunding create() => InteractiveFunding._();
+  InteractiveFunding createEmptyInstance() => create();
+  static $pb.PbList<InteractiveFunding> createRepeated() => $pb.PbList<InteractiveFunding>();
+  @$core.pragma('dart2js:noInline')
+  static InteractiveFunding getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<InteractiveFunding>(create);
+  static InteractiveFunding? _defaultInstance;
+
+  /// The channels participating in the negotiation.
+  @$pb.TagNumber(1)
+  $pb.PbList<TransactionChannel> get channels => $_getList(0);
 }
 
 enum ConfirmationStatus_Status {
@@ -1067,6 +1858,7 @@ class HtlcLocator extends $pb.GeneratedMessage {
     $core.String? channelId,
     $core.String? userChannelId,
     $core.String? nodeId,
+    $fixnum.Int64? amountMsat,
   }) {
     final $result = create();
     if (channelId != null) {
@@ -1078,6 +1870,9 @@ class HtlcLocator extends $pb.GeneratedMessage {
     if (nodeId != null) {
       $result.nodeId = nodeId;
     }
+    if (amountMsat != null) {
+      $result.amountMsat = amountMsat;
+    }
     return $result;
   }
   HtlcLocator._() : super();
@@ -1088,6 +1883,7 @@ class HtlcLocator extends $pb.GeneratedMessage {
     ..aOS(1, _omitFieldNames ? '' : 'channelId')
     ..aOS(2, _omitFieldNames ? '' : 'userChannelId')
     ..aOS(3, _omitFieldNames ? '' : 'nodeId')
+    ..a<$fixnum.Int64>(4, _omitFieldNames ? '' : 'amountMsat', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
     ..hasRequiredFields = false
   ;
 
@@ -1143,6 +1939,18 @@ class HtlcLocator extends $pb.GeneratedMessage {
   $core.bool hasNodeId() => $_has(2);
   @$pb.TagNumber(3)
   void clearNodeId() => $_clearField(3);
+
+  /// The amount in millisatoshis of the HTLC that was sent or received, if known.
+  /// This can be unset for events serialized by LDK Node v0.7.0 and prior,
+  /// or forwarding records stored by LDK Server before this field was added.
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get amountMsat => $_getI64(3);
+  @$pb.TagNumber(4)
+  set amountMsat($fixnum.Int64 v) { $_setInt64(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasAmountMsat() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearAmountMsat() => $_clearField(4);
 }
 
 ///  A forwarded payment through our node.
@@ -1310,6 +2118,15 @@ class Channel extends $pb.GeneratedMessage {
     $core.int? counterpartyForwardingInfoFeeBaseMsat,
     $core.int? counterpartyForwardingInfoFeeProportionalMillionths,
     $core.int? counterpartyForwardingInfoCltvExpiryDelta,
+    $fixnum.Int64? shortChannelId,
+    $fixnum.Int64? outboundScidAlias,
+    $fixnum.Int64? inboundScidAlias,
+    $fixnum.Int64? inboundHtlcMinimumMsat,
+    $fixnum.Int64? inboundHtlcMaximumMsat,
+    ChannelShutdownState? channelShutdownState,
+    ReserveType? reserveType,
+    $pb.PbMap<$core.int, Feature>? channelType,
+    $pb.PbMap<$core.int, Feature>? counterpartyFeatures,
   }) {
     final $result = create();
     if (channelId != null) {
@@ -1387,6 +2204,33 @@ class Channel extends $pb.GeneratedMessage {
     if (counterpartyForwardingInfoCltvExpiryDelta != null) {
       $result.counterpartyForwardingInfoCltvExpiryDelta = counterpartyForwardingInfoCltvExpiryDelta;
     }
+    if (shortChannelId != null) {
+      $result.shortChannelId = shortChannelId;
+    }
+    if (outboundScidAlias != null) {
+      $result.outboundScidAlias = outboundScidAlias;
+    }
+    if (inboundScidAlias != null) {
+      $result.inboundScidAlias = inboundScidAlias;
+    }
+    if (inboundHtlcMinimumMsat != null) {
+      $result.inboundHtlcMinimumMsat = inboundHtlcMinimumMsat;
+    }
+    if (inboundHtlcMaximumMsat != null) {
+      $result.inboundHtlcMaximumMsat = inboundHtlcMaximumMsat;
+    }
+    if (channelShutdownState != null) {
+      $result.channelShutdownState = channelShutdownState;
+    }
+    if (reserveType != null) {
+      $result.reserveType = reserveType;
+    }
+    if (channelType != null) {
+      $result.channelType.addAll(channelType);
+    }
+    if (counterpartyFeatures != null) {
+      $result.counterpartyFeatures.addAll(counterpartyFeatures);
+    }
     return $result;
   }
   Channel._() : super();
@@ -1419,6 +2263,15 @@ class Channel extends $pb.GeneratedMessage {
     ..a<$core.int>(23, _omitFieldNames ? '' : 'counterpartyForwardingInfoFeeBaseMsat', $pb.PbFieldType.OU3)
     ..a<$core.int>(24, _omitFieldNames ? '' : 'counterpartyForwardingInfoFeeProportionalMillionths', $pb.PbFieldType.OU3)
     ..a<$core.int>(25, _omitFieldNames ? '' : 'counterpartyForwardingInfoCltvExpiryDelta', $pb.PbFieldType.OU3)
+    ..a<$fixnum.Int64>(26, _omitFieldNames ? '' : 'shortChannelId', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(27, _omitFieldNames ? '' : 'outboundScidAlias', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(28, _omitFieldNames ? '' : 'inboundScidAlias', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(29, _omitFieldNames ? '' : 'inboundHtlcMinimumMsat', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
+    ..a<$fixnum.Int64>(30, _omitFieldNames ? '' : 'inboundHtlcMaximumMsat', $pb.PbFieldType.OU6, defaultOrMaker: $fixnum.Int64.ZERO)
+    ..e<ChannelShutdownState>(31, _omitFieldNames ? '' : 'channelShutdownState', $pb.PbFieldType.OE, defaultOrMaker: ChannelShutdownState.CHANNEL_SHUTDOWN_STATE_UNSPECIFIED, valueOf: ChannelShutdownState.valueOf, enumValues: ChannelShutdownState.values)
+    ..e<ReserveType>(32, _omitFieldNames ? '' : 'reserveType', $pb.PbFieldType.OE, defaultOrMaker: ReserveType.RESERVE_TYPE_UNSPECIFIED, valueOf: ReserveType.valueOf, enumValues: ReserveType.values)
+    ..m<$core.int, Feature>(33, _omitFieldNames ? '' : 'channelType', entryClassName: 'Channel.ChannelTypeEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: Feature.create, valueDefaultOrMaker: Feature.getDefault, packageName: const $pb.PackageName('types'))
+    ..m<$core.int, Feature>(34, _omitFieldNames ? '' : 'counterpartyFeatures', entryClassName: 'Channel.CounterpartyFeaturesEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: Feature.create, valueDefaultOrMaker: Feature.getDefault, packageName: const $pb.PackageName('types'))
     ..hasRequiredFields = false
   ;
 
@@ -1747,6 +2600,103 @@ class Channel extends $pb.GeneratedMessage {
   $core.bool hasCounterpartyForwardingInfoCltvExpiryDelta() => $_has(24);
   @$pb.TagNumber(25)
   void clearCounterpartyForwardingInfoCltvExpiryDelta() => $_clearField(25);
+
+  ///  The channel's `short_channel_id`, if we've negotiated the funding transaction with our
+  ///  counterparty already and it's reached the required number of confirmations.
+  ///
+  ///  Note that if an inbound SCID alias is set, that will be used for invoices and inbound
+  ///  payments instead of this value.
+  @$pb.TagNumber(26)
+  $fixnum.Int64 get shortChannelId => $_getI64(25);
+  @$pb.TagNumber(26)
+  set shortChannelId($fixnum.Int64 v) { $_setInt64(25, v); }
+  @$pb.TagNumber(26)
+  $core.bool hasShortChannelId() => $_has(25);
+  @$pb.TagNumber(26)
+  void clearShortChannelId() => $_clearField(26);
+
+  /// An optional `short_channel_id` alias for this channel, randomly generated by us and usable
+  /// in place of `short_channel_id` to reference the channel in outbound routes when the channel
+  /// has not yet been confirmed.
+  @$pb.TagNumber(27)
+  $fixnum.Int64 get outboundScidAlias => $_getI64(26);
+  @$pb.TagNumber(27)
+  set outboundScidAlias($fixnum.Int64 v) { $_setInt64(26, v); }
+  @$pb.TagNumber(27)
+  $core.bool hasOutboundScidAlias() => $_has(26);
+  @$pb.TagNumber(27)
+  void clearOutboundScidAlias() => $_clearField(27);
+
+  /// An optional `short_channel_id` alias for this channel, randomly generated by our
+  /// counterparty and usable in place of `short_channel_id` in invoice route hints. Our
+  /// counterparty will recognize the alias provided here in place of the `short_channel_id`
+  /// when they see a payment to be routed to us.
+  @$pb.TagNumber(28)
+  $fixnum.Int64 get inboundScidAlias => $_getI64(27);
+  @$pb.TagNumber(28)
+  set inboundScidAlias($fixnum.Int64 v) { $_setInt64(27, v); }
+  @$pb.TagNumber(28)
+  $core.bool hasInboundScidAlias() => $_has(27);
+  @$pb.TagNumber(28)
+  void clearInboundScidAlias() => $_clearField(28);
+
+  /// The smallest value HTLC (in msat) we will accept, for this channel.
+  @$pb.TagNumber(29)
+  $fixnum.Int64 get inboundHtlcMinimumMsat => $_getI64(28);
+  @$pb.TagNumber(29)
+  set inboundHtlcMinimumMsat($fixnum.Int64 v) { $_setInt64(28, v); }
+  @$pb.TagNumber(29)
+  $core.bool hasInboundHtlcMinimumMsat() => $_has(28);
+  @$pb.TagNumber(29)
+  void clearInboundHtlcMinimumMsat() => $_clearField(29);
+
+  /// The largest value HTLC (in msat) we currently will accept, for this channel.
+  @$pb.TagNumber(30)
+  $fixnum.Int64 get inboundHtlcMaximumMsat => $_getI64(29);
+  @$pb.TagNumber(30)
+  set inboundHtlcMaximumMsat($fixnum.Int64 v) { $_setInt64(29, v); }
+  @$pb.TagNumber(30)
+  $core.bool hasInboundHtlcMaximumMsat() => $_has(29);
+  @$pb.TagNumber(30)
+  void clearInboundHtlcMaximumMsat() => $_clearField(30);
+
+  ///  The current shutdown state of the channel, if any.
+  ///
+  ///  Will be unset for objects serialized with LDK Node v0.1 and earlier.
+  @$pb.TagNumber(31)
+  ChannelShutdownState get channelShutdownState => $_getN(30);
+  @$pb.TagNumber(31)
+  set channelShutdownState(ChannelShutdownState v) { $_setField(31, v); }
+  @$pb.TagNumber(31)
+  $core.bool hasChannelShutdownState() => $_has(30);
+  @$pb.TagNumber(31)
+  void clearChannelShutdownState() => $_clearField(31);
+
+  ///  The type of on-chain reserve maintained for this channel.
+  ///
+  ///  Will be unset until channel negotiation has completed and determined whether this channel
+  ///  uses anchor or legacy reserve behavior.
+  @$pb.TagNumber(32)
+  ReserveType get reserveType => $_getN(31);
+  @$pb.TagNumber(32)
+  set reserveType(ReserveType v) { $_setField(32, v); }
+  @$pb.TagNumber(32)
+  $core.bool hasReserveType() => $_has(31);
+  @$pb.TagNumber(32)
+  void clearReserveType() => $_clearField(32);
+
+  /// The negotiated channel-type features, keyed by the signaled BOLT feature bit.
+  /// This map is empty until channel negotiation determines the channel type.
+  @$pb.TagNumber(33)
+  $pb.PbMap<$core.int, Feature> get channelType => $_getMap(32);
+
+  ///  The features our counterparty provided upon last connection, keyed by the signaled BOLT
+  ///  feature bit.
+  ///
+  ///  Useful for routing, as it is the most up-to-date copy of the counterparty's features and
+  ///  many routing-relevant features are present in the init context.
+  @$pb.TagNumber(34)
+  $pb.PbMap<$core.int, Feature> get counterpartyFeatures => $_getMap(33);
 }
 
 enum ChannelConfig_MaxDustHtlcExposure {
@@ -3354,71 +4304,6 @@ class AwaitingThresholdConfirmations extends $pb.GeneratedMessage {
   $core.bool hasAmountSatoshis() => $_has(4);
   @$pb.TagNumber(5)
   void clearAmountSatoshis() => $_clearField(5);
-}
-
-/// Token used to determine start of next page in paginated APIs.
-class PageToken extends $pb.GeneratedMessage {
-  factory PageToken({
-    $core.String? token,
-    $fixnum.Int64? index,
-  }) {
-    final $result = create();
-    if (token != null) {
-      $result.token = token;
-    }
-    if (index != null) {
-      $result.index = index;
-    }
-    return $result;
-  }
-  PageToken._() : super();
-  factory PageToken.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory PageToken.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'PageToken', package: const $pb.PackageName(_omitMessageNames ? '' : 'types'), createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'token')
-    ..aInt64(2, _omitFieldNames ? '' : 'index')
-    ..hasRequiredFields = false
-  ;
-
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
-  PageToken clone() => PageToken()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  PageToken copyWith(void Function(PageToken) updates) => super.copyWith((message) => updates(message as PageToken)) as PageToken;
-
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static PageToken create() => PageToken._();
-  PageToken createEmptyInstance() => create();
-  static $pb.PbList<PageToken> createRepeated() => $pb.PbList<PageToken>();
-  @$core.pragma('dart2js:noInline')
-  static PageToken getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PageToken>(create);
-  static PageToken? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $core.String get token => $_getSZ(0);
-  @$pb.TagNumber(1)
-  set token($core.String v) { $_setString(0, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasToken() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearToken() => $_clearField(1);
-
-  @$pb.TagNumber(2)
-  $fixnum.Int64 get index => $_getI64(1);
-  @$pb.TagNumber(2)
-  set index($fixnum.Int64 v) { $_setInt64(1, v); }
-  @$pb.TagNumber(2)
-  $core.bool hasIndex() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearIndex() => $_clearField(2);
 }
 
 enum Bolt11InvoiceDescription_Kind {

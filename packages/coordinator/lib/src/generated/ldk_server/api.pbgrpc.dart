@@ -46,14 +46,14 @@ class LightningNodeClient extends $grpc.Client {
       '/api.LightningNode/Bolt11ReceiveForHash',
       ($0.Bolt11ReceiveForHashRequest value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.Bolt11ReceiveForHashResponse.fromBuffer(value));
-  static final _$bolt11ClaimForHash = $grpc.ClientMethod<$0.Bolt11ClaimForHashRequest, $0.Bolt11ClaimForHashResponse>(
-      '/api.LightningNode/Bolt11ClaimForHash',
-      ($0.Bolt11ClaimForHashRequest value) => value.writeToBuffer(),
-      ($core.List<$core.int> value) => $0.Bolt11ClaimForHashResponse.fromBuffer(value));
-  static final _$bolt11FailForHash = $grpc.ClientMethod<$0.Bolt11FailForHashRequest, $0.Bolt11FailForHashResponse>(
-      '/api.LightningNode/Bolt11FailForHash',
-      ($0.Bolt11FailForHashRequest value) => value.writeToBuffer(),
-      ($core.List<$core.int> value) => $0.Bolt11FailForHashResponse.fromBuffer(value));
+  static final _$bolt11ClaimForId = $grpc.ClientMethod<$0.Bolt11ClaimForIdRequest, $0.Bolt11ClaimForIdResponse>(
+      '/api.LightningNode/Bolt11ClaimForId',
+      ($0.Bolt11ClaimForIdRequest value) => value.writeToBuffer(),
+      ($core.List<$core.int> value) => $0.Bolt11ClaimForIdResponse.fromBuffer(value));
+  static final _$bolt11FailForId = $grpc.ClientMethod<$0.Bolt11FailForIdRequest, $0.Bolt11FailForIdResponse>(
+      '/api.LightningNode/Bolt11FailForId',
+      ($0.Bolt11FailForIdRequest value) => value.writeToBuffer(),
+      ($core.List<$core.int> value) => $0.Bolt11FailForIdResponse.fromBuffer(value));
   static final _$bolt11ReceiveViaJitChannel = $grpc.ClientMethod<$0.Bolt11ReceiveViaJitChannelRequest, $0.Bolt11ReceiveViaJitChannelResponse>(
       '/api.LightningNode/Bolt11ReceiveViaJitChannel',
       ($0.Bolt11ReceiveViaJitChannelRequest value) => value.writeToBuffer(),
@@ -78,6 +78,18 @@ class LightningNodeClient extends $grpc.Client {
       '/api.LightningNode/Bolt12Send',
       ($0.Bolt12SendRequest value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.Bolt12SendResponse.fromBuffer(value));
+  static final _$bolt12SendRefund = $grpc.ClientMethod<$0.Bolt12SendRefundRequest, $0.Bolt12SendRefundResponse>(
+      '/api.LightningNode/Bolt12SendRefund',
+      ($0.Bolt12SendRefundRequest value) => value.writeToBuffer(),
+      ($core.List<$core.int> value) => $0.Bolt12SendRefundResponse.fromBuffer(value));
+  static final _$bolt12ReceiveRefund = $grpc.ClientMethod<$0.Bolt12ReceiveRefundRequest, $0.Bolt12ReceiveRefundResponse>(
+      '/api.LightningNode/Bolt12ReceiveRefund',
+      ($0.Bolt12ReceiveRefundRequest value) => value.writeToBuffer(),
+      ($core.List<$core.int> value) => $0.Bolt12ReceiveRefundResponse.fromBuffer(value));
+  static final _$bolt12CreatePayerProof = $grpc.ClientMethod<$0.Bolt12CreatePayerProofRequest, $0.Bolt12CreatePayerProofResponse>(
+      '/api.LightningNode/Bolt12CreatePayerProof',
+      ($0.Bolt12CreatePayerProofRequest value) => value.writeToBuffer(),
+      ($core.List<$core.int> value) => $0.Bolt12CreatePayerProofResponse.fromBuffer(value));
   static final _$spontaneousSend = $grpc.ClientMethod<$0.SpontaneousSendRequest, $0.SpontaneousSendResponse>(
       '/api.LightningNode/SpontaneousSend',
       ($0.SpontaneousSendRequest value) => value.writeToBuffer(),
@@ -209,12 +221,12 @@ class LightningNodeClient extends $grpc.Client {
     return $createUnaryCall(_$bolt11ReceiveForHash, request, options: options);
   }
 
-  $grpc.ResponseFuture<$0.Bolt11ClaimForHashResponse> bolt11ClaimForHash($0.Bolt11ClaimForHashRequest request, {$grpc.CallOptions? options}) {
-    return $createUnaryCall(_$bolt11ClaimForHash, request, options: options);
+  $grpc.ResponseFuture<$0.Bolt11ClaimForIdResponse> bolt11ClaimForId($0.Bolt11ClaimForIdRequest request, {$grpc.CallOptions? options}) {
+    return $createUnaryCall(_$bolt11ClaimForId, request, options: options);
   }
 
-  $grpc.ResponseFuture<$0.Bolt11FailForHashResponse> bolt11FailForHash($0.Bolt11FailForHashRequest request, {$grpc.CallOptions? options}) {
-    return $createUnaryCall(_$bolt11FailForHash, request, options: options);
+  $grpc.ResponseFuture<$0.Bolt11FailForIdResponse> bolt11FailForId($0.Bolt11FailForIdRequest request, {$grpc.CallOptions? options}) {
+    return $createUnaryCall(_$bolt11FailForId, request, options: options);
   }
 
   $grpc.ResponseFuture<$0.Bolt11ReceiveViaJitChannelResponse> bolt11ReceiveViaJitChannel($0.Bolt11ReceiveViaJitChannelRequest request, {$grpc.CallOptions? options}) {
@@ -239,6 +251,18 @@ class LightningNodeClient extends $grpc.Client {
 
   $grpc.ResponseFuture<$0.Bolt12SendResponse> bolt12Send($0.Bolt12SendRequest request, {$grpc.CallOptions? options}) {
     return $createUnaryCall(_$bolt12Send, request, options: options);
+  }
+
+  $grpc.ResponseFuture<$0.Bolt12SendRefundResponse> bolt12SendRefund($0.Bolt12SendRefundRequest request, {$grpc.CallOptions? options}) {
+    return $createUnaryCall(_$bolt12SendRefund, request, options: options);
+  }
+
+  $grpc.ResponseFuture<$0.Bolt12ReceiveRefundResponse> bolt12ReceiveRefund($0.Bolt12ReceiveRefundRequest request, {$grpc.CallOptions? options}) {
+    return $createUnaryCall(_$bolt12ReceiveRefund, request, options: options);
+  }
+
+  $grpc.ResponseFuture<$0.Bolt12CreatePayerProofResponse> bolt12CreatePayerProof($0.Bolt12CreatePayerProofRequest request, {$grpc.CallOptions? options}) {
+    return $createUnaryCall(_$bolt12CreatePayerProof, request, options: options);
   }
 
   $grpc.ResponseFuture<$0.SpontaneousSendResponse> spontaneousSend($0.SpontaneousSendRequest request, {$grpc.CallOptions? options}) {
@@ -389,20 +413,20 @@ abstract class LightningNodeServiceBase extends $grpc.Service {
         false,
         ($core.List<$core.int> value) => $0.Bolt11ReceiveForHashRequest.fromBuffer(value),
         ($0.Bolt11ReceiveForHashResponse value) => value.writeToBuffer()));
-    $addMethod($grpc.ServiceMethod<$0.Bolt11ClaimForHashRequest, $0.Bolt11ClaimForHashResponse>(
-        'Bolt11ClaimForHash',
-        bolt11ClaimForHash_Pre,
+    $addMethod($grpc.ServiceMethod<$0.Bolt11ClaimForIdRequest, $0.Bolt11ClaimForIdResponse>(
+        'Bolt11ClaimForId',
+        bolt11ClaimForId_Pre,
         false,
         false,
-        ($core.List<$core.int> value) => $0.Bolt11ClaimForHashRequest.fromBuffer(value),
-        ($0.Bolt11ClaimForHashResponse value) => value.writeToBuffer()));
-    $addMethod($grpc.ServiceMethod<$0.Bolt11FailForHashRequest, $0.Bolt11FailForHashResponse>(
-        'Bolt11FailForHash',
-        bolt11FailForHash_Pre,
+        ($core.List<$core.int> value) => $0.Bolt11ClaimForIdRequest.fromBuffer(value),
+        ($0.Bolt11ClaimForIdResponse value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.Bolt11FailForIdRequest, $0.Bolt11FailForIdResponse>(
+        'Bolt11FailForId',
+        bolt11FailForId_Pre,
         false,
         false,
-        ($core.List<$core.int> value) => $0.Bolt11FailForHashRequest.fromBuffer(value),
-        ($0.Bolt11FailForHashResponse value) => value.writeToBuffer()));
+        ($core.List<$core.int> value) => $0.Bolt11FailForIdRequest.fromBuffer(value),
+        ($0.Bolt11FailForIdResponse value) => value.writeToBuffer()));
     $addMethod($grpc.ServiceMethod<$0.Bolt11ReceiveViaJitChannelRequest, $0.Bolt11ReceiveViaJitChannelResponse>(
         'Bolt11ReceiveViaJitChannel',
         bolt11ReceiveViaJitChannel_Pre,
@@ -445,6 +469,27 @@ abstract class LightningNodeServiceBase extends $grpc.Service {
         false,
         ($core.List<$core.int> value) => $0.Bolt12SendRequest.fromBuffer(value),
         ($0.Bolt12SendResponse value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.Bolt12SendRefundRequest, $0.Bolt12SendRefundResponse>(
+        'Bolt12SendRefund',
+        bolt12SendRefund_Pre,
+        false,
+        false,
+        ($core.List<$core.int> value) => $0.Bolt12SendRefundRequest.fromBuffer(value),
+        ($0.Bolt12SendRefundResponse value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.Bolt12ReceiveRefundRequest, $0.Bolt12ReceiveRefundResponse>(
+        'Bolt12ReceiveRefund',
+        bolt12ReceiveRefund_Pre,
+        false,
+        false,
+        ($core.List<$core.int> value) => $0.Bolt12ReceiveRefundRequest.fromBuffer(value),
+        ($0.Bolt12ReceiveRefundResponse value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.Bolt12CreatePayerProofRequest, $0.Bolt12CreatePayerProofResponse>(
+        'Bolt12CreatePayerProof',
+        bolt12CreatePayerProof_Pre,
+        false,
+        false,
+        ($core.List<$core.int> value) => $0.Bolt12CreatePayerProofRequest.fromBuffer(value),
+        ($0.Bolt12CreatePayerProofResponse value) => value.writeToBuffer()));
     $addMethod($grpc.ServiceMethod<$0.SpontaneousSendRequest, $0.SpontaneousSendResponse>(
         'SpontaneousSend',
         spontaneousSend_Pre,
@@ -646,12 +691,12 @@ abstract class LightningNodeServiceBase extends $grpc.Service {
     return bolt11ReceiveForHash($call, await $request);
   }
 
-  $async.Future<$0.Bolt11ClaimForHashResponse> bolt11ClaimForHash_Pre($grpc.ServiceCall $call, $async.Future<$0.Bolt11ClaimForHashRequest> $request) async {
-    return bolt11ClaimForHash($call, await $request);
+  $async.Future<$0.Bolt11ClaimForIdResponse> bolt11ClaimForId_Pre($grpc.ServiceCall $call, $async.Future<$0.Bolt11ClaimForIdRequest> $request) async {
+    return bolt11ClaimForId($call, await $request);
   }
 
-  $async.Future<$0.Bolt11FailForHashResponse> bolt11FailForHash_Pre($grpc.ServiceCall $call, $async.Future<$0.Bolt11FailForHashRequest> $request) async {
-    return bolt11FailForHash($call, await $request);
+  $async.Future<$0.Bolt11FailForIdResponse> bolt11FailForId_Pre($grpc.ServiceCall $call, $async.Future<$0.Bolt11FailForIdRequest> $request) async {
+    return bolt11FailForId($call, await $request);
   }
 
   $async.Future<$0.Bolt11ReceiveViaJitChannelResponse> bolt11ReceiveViaJitChannel_Pre($grpc.ServiceCall $call, $async.Future<$0.Bolt11ReceiveViaJitChannelRequest> $request) async {
@@ -676,6 +721,18 @@ abstract class LightningNodeServiceBase extends $grpc.Service {
 
   $async.Future<$0.Bolt12SendResponse> bolt12Send_Pre($grpc.ServiceCall $call, $async.Future<$0.Bolt12SendRequest> $request) async {
     return bolt12Send($call, await $request);
+  }
+
+  $async.Future<$0.Bolt12SendRefundResponse> bolt12SendRefund_Pre($grpc.ServiceCall $call, $async.Future<$0.Bolt12SendRefundRequest> $request) async {
+    return bolt12SendRefund($call, await $request);
+  }
+
+  $async.Future<$0.Bolt12ReceiveRefundResponse> bolt12ReceiveRefund_Pre($grpc.ServiceCall $call, $async.Future<$0.Bolt12ReceiveRefundRequest> $request) async {
+    return bolt12ReceiveRefund($call, await $request);
+  }
+
+  $async.Future<$0.Bolt12CreatePayerProofResponse> bolt12CreatePayerProof_Pre($grpc.ServiceCall $call, $async.Future<$0.Bolt12CreatePayerProofRequest> $request) async {
+    return bolt12CreatePayerProof($call, await $request);
   }
 
   $async.Future<$0.SpontaneousSendResponse> spontaneousSend_Pre($grpc.ServiceCall $call, $async.Future<$0.SpontaneousSendRequest> $request) async {
@@ -784,14 +841,17 @@ abstract class LightningNodeServiceBase extends $grpc.Service {
   $async.Future<$0.OnchainSendResponse> onchainSend($grpc.ServiceCall call, $0.OnchainSendRequest request);
   $async.Future<$0.Bolt11ReceiveResponse> bolt11Receive($grpc.ServiceCall call, $0.Bolt11ReceiveRequest request);
   $async.Future<$0.Bolt11ReceiveForHashResponse> bolt11ReceiveForHash($grpc.ServiceCall call, $0.Bolt11ReceiveForHashRequest request);
-  $async.Future<$0.Bolt11ClaimForHashResponse> bolt11ClaimForHash($grpc.ServiceCall call, $0.Bolt11ClaimForHashRequest request);
-  $async.Future<$0.Bolt11FailForHashResponse> bolt11FailForHash($grpc.ServiceCall call, $0.Bolt11FailForHashRequest request);
+  $async.Future<$0.Bolt11ClaimForIdResponse> bolt11ClaimForId($grpc.ServiceCall call, $0.Bolt11ClaimForIdRequest request);
+  $async.Future<$0.Bolt11FailForIdResponse> bolt11FailForId($grpc.ServiceCall call, $0.Bolt11FailForIdRequest request);
   $async.Future<$0.Bolt11ReceiveViaJitChannelResponse> bolt11ReceiveViaJitChannel($grpc.ServiceCall call, $0.Bolt11ReceiveViaJitChannelRequest request);
   $async.Future<$0.Bolt11ReceiveVariableAmountViaJitChannelResponse> bolt11ReceiveVariableAmountViaJitChannel($grpc.ServiceCall call, $0.Bolt11ReceiveVariableAmountViaJitChannelRequest request);
   $async.Future<$0.Bolt11SendResponse> bolt11Send($grpc.ServiceCall call, $0.Bolt11SendRequest request);
   $async.Future<$0.Bolt11SendUnderpayingResponse> bolt11SendUnderpaying($grpc.ServiceCall call, $0.Bolt11SendUnderpayingRequest request);
   $async.Future<$0.Bolt12ReceiveResponse> bolt12Receive($grpc.ServiceCall call, $0.Bolt12ReceiveRequest request);
   $async.Future<$0.Bolt12SendResponse> bolt12Send($grpc.ServiceCall call, $0.Bolt12SendRequest request);
+  $async.Future<$0.Bolt12SendRefundResponse> bolt12SendRefund($grpc.ServiceCall call, $0.Bolt12SendRefundRequest request);
+  $async.Future<$0.Bolt12ReceiveRefundResponse> bolt12ReceiveRefund($grpc.ServiceCall call, $0.Bolt12ReceiveRefundRequest request);
+  $async.Future<$0.Bolt12CreatePayerProofResponse> bolt12CreatePayerProof($grpc.ServiceCall call, $0.Bolt12CreatePayerProofRequest request);
   $async.Future<$0.SpontaneousSendResponse> spontaneousSend($grpc.ServiceCall call, $0.SpontaneousSendRequest request);
   $async.Future<$0.OpenChannelResponse> openChannel($grpc.ServiceCall call, $0.OpenChannelRequest request);
   $async.Future<$0.SpliceInResponse> spliceIn($grpc.ServiceCall call, $0.SpliceInRequest request);

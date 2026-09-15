@@ -53,6 +53,53 @@ class ChannelClosureInitiator extends $pb.ProtobufEnum {
   const ChannelClosureInitiator._(super.v, super.n);
 }
 
+/// PaymentFailureReason mirrors LDK's `lightning::events::PaymentFailureReason`,
+/// indicating why a sent payment failed.
+class PaymentFailureReason extends $pb.ProtobufEnum {
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_UNSPECIFIED = PaymentFailureReason._(0, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_UNSPECIFIED');
+  /// The intended recipient rejected our payment.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_RECIPIENT_REJECTED = PaymentFailureReason._(1, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_RECIPIENT_REJECTED');
+  /// The user chose to abandon this payment by calling `abandon_payment`.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_USER_ABANDONED = PaymentFailureReason._(2, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_USER_ABANDONED');
+  /// We exhausted all of our retry attempts while trying to send the payment,
+  /// or we exhausted the configured retry timeout.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_RETRIES_EXHAUSTED = PaymentFailureReason._(3, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_RETRIES_EXHAUSTED');
+  /// Either the BOLT12 invoice was expired by the time we received it or the
+  /// payment expired while retrying.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_PAYMENT_EXPIRED = PaymentFailureReason._(4, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_PAYMENT_EXPIRED');
+  /// We failed to find a route while sending or retrying the payment.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_ROUTE_NOT_FOUND = PaymentFailureReason._(5, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_ROUTE_NOT_FOUND');
+  /// An unexpected error occurred, generally indicating a problem with the router.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_UNEXPECTED_ERROR = PaymentFailureReason._(6, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_UNEXPECTED_ERROR');
+  /// An invoice was received that required unknown features.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_UNKNOWN_REQUIRED_FEATURES = PaymentFailureReason._(7, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_UNKNOWN_REQUIRED_FEATURES');
+  /// A BOLT12 invoice was not received in a reasonable amount of time.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_INVOICE_REQUEST_EXPIRED = PaymentFailureReason._(8, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_INVOICE_REQUEST_EXPIRED');
+  /// An invoice request for the payment was rejected by the recipient.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_INVOICE_REQUEST_REJECTED = PaymentFailureReason._(9, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_INVOICE_REQUEST_REJECTED');
+  /// Failed to create a blinded path back to ourselves.
+  static const PaymentFailureReason PAYMENT_FAILURE_REASON_BLINDED_PATH_CREATION_FAILED = PaymentFailureReason._(10, _omitEnumNames ? '' : 'PAYMENT_FAILURE_REASON_BLINDED_PATH_CREATION_FAILED');
+
+  static const $core.List<PaymentFailureReason> values = <PaymentFailureReason> [
+    PAYMENT_FAILURE_REASON_UNSPECIFIED,
+    PAYMENT_FAILURE_REASON_RECIPIENT_REJECTED,
+    PAYMENT_FAILURE_REASON_USER_ABANDONED,
+    PAYMENT_FAILURE_REASON_RETRIES_EXHAUSTED,
+    PAYMENT_FAILURE_REASON_PAYMENT_EXPIRED,
+    PAYMENT_FAILURE_REASON_ROUTE_NOT_FOUND,
+    PAYMENT_FAILURE_REASON_UNEXPECTED_ERROR,
+    PAYMENT_FAILURE_REASON_UNKNOWN_REQUIRED_FEATURES,
+    PAYMENT_FAILURE_REASON_INVOICE_REQUEST_EXPIRED,
+    PAYMENT_FAILURE_REASON_INVOICE_REQUEST_REJECTED,
+    PAYMENT_FAILURE_REASON_BLINDED_PATH_CREATION_FAILED,
+  ];
+
+  static final $core.Map<$core.int, PaymentFailureReason> _byValue = $pb.ProtobufEnum.initByValue(values);
+  static PaymentFailureReason? valueOf($core.int value) => _byValue[value];
+
+  const PaymentFailureReason._(super.v, super.n);
+}
+
 class ChannelStateChangeReasonKind extends $pb.ProtobufEnum {
   static const ChannelStateChangeReasonKind CHANNEL_STATE_CHANGE_REASON_KIND_UNSPECIFIED = ChannelStateChangeReasonKind._(0, _omitEnumNames ? '' : 'CHANNEL_STATE_CHANGE_REASON_KIND_UNSPECIFIED');
   static const ChannelStateChangeReasonKind CHANNEL_STATE_CHANGE_REASON_KIND_COUNTERPARTY_FORCE_CLOSED = ChannelStateChangeReasonKind._(1, _omitEnumNames ? '' : 'CHANNEL_STATE_CHANGE_REASON_KIND_COUNTERPARTY_FORCE_CLOSED');

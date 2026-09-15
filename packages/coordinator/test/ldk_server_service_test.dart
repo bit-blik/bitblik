@@ -74,7 +74,7 @@ void main() {
     );
 
     final options = signer.optionsFor(
-      ldk_api.Bolt11FailForHashRequest(paymentHash: hash),
+      ldk_api.Bolt11FailForIdRequest(paymentId: hash),
     );
 
     expect(
@@ -180,7 +180,7 @@ void main() {
         InvoiceStatus.OPEN);
 
     fake.events.add(ldk_events.EventEnvelope(
-      paymentClaimable: ldk_events.PaymentClaimable(payment: fake.payment),
+      paymentClaimable: claimableEvent(fake.payment!),
     ));
     await pumpEventQueue();
 
@@ -200,17 +200,15 @@ void main() {
         service.subscribeToInvoiceUpdates(paymentHashHex: otherHash).first;
 
     fake.events.add(ldk_events.EventEnvelope(
-      paymentClaimable: ldk_events.PaymentClaimable(
-        payment: buildPayment(ldk_types.PaymentStatus.PENDING,
-            direction: ldk_types.PaymentDirection.INBOUND,
-            paymentHash: otherHash),
-      ),
+      paymentClaimable: claimableEvent(buildPayment(
+          ldk_types.PaymentStatus.PENDING,
+          direction: ldk_types.PaymentDirection.INBOUND,
+          paymentHash: otherHash)),
     ));
     fake.events.add(ldk_events.EventEnvelope(
-      paymentClaimable: ldk_events.PaymentClaimable(
-        payment: buildPayment(ldk_types.PaymentStatus.PENDING,
-            direction: ldk_types.PaymentDirection.INBOUND),
-      ),
+      paymentClaimable: claimableEvent(buildPayment(
+          ldk_types.PaymentStatus.PENDING,
+          direction: ldk_types.PaymentDirection.INBOUND)),
     ));
 
     expect((await first).paymentHash, hash);
@@ -231,13 +229,12 @@ void main() {
         .toList();
 
     fake.events.add(ldk_events.EventEnvelope(
-      paymentClaimable: ldk_events.PaymentClaimable(payment: fake.payment),
+      paymentClaimable: claimableEvent(fake.payment!),
     ));
     fake.events.add(ldk_events.EventEnvelope(
-      paymentReceived: ldk_events.PaymentReceived(
-        payment: buildPayment(ldk_types.PaymentStatus.SUCCEEDED,
-            direction: ldk_types.PaymentDirection.INBOUND),
-      ),
+      paymentReceived: receivedEvent(buildPayment(
+          ldk_types.PaymentStatus.SUCCEEDED,
+          direction: ldk_types.PaymentDirection.INBOUND)),
     ));
 
     expect((await updates).map((update) => update.status),
@@ -255,16 +252,14 @@ void main() {
         service.subscribeToInvoiceUpdates(paymentHashHex: hash).first;
 
     fake.events.add(ldk_events.EventEnvelope(
-      paymentClaimable: ldk_events.PaymentClaimable(
-        payment: buildPayment(ldk_types.PaymentStatus.PENDING,
-            direction: ldk_types.PaymentDirection.OUTBOUND),
-      ),
+      paymentClaimable: claimableEvent(buildPayment(
+          ldk_types.PaymentStatus.PENDING,
+          direction: ldk_types.PaymentDirection.OUTBOUND)),
     ));
     fake.events.add(ldk_events.EventEnvelope(
-      paymentClaimable: ldk_events.PaymentClaimable(
-        payment: buildPayment(ldk_types.PaymentStatus.PENDING,
-            direction: ldk_types.PaymentDirection.INBOUND),
-      ),
+      paymentClaimable: claimableEvent(buildPayment(
+          ldk_types.PaymentStatus.PENDING,
+          direction: ldk_types.PaymentDirection.INBOUND)),
     ));
 
     expect((await update).status, InvoiceStatus.ACCEPTED);
@@ -340,13 +335,38 @@ void main() {
           direction: ldk_types.PaymentDirection.INBOUND);
     final service = await connectedService(fake);
     addTearDown(service.disconnect);
+    fake.events.add(ldk_events.EventEnvelope(
+      paymentClaimable: claimableEvent(fake.payment!),
+    ));
+    await pumpEventQueue();
 
     await service.settleInvoice(preimageHex: preimage.toUpperCase());
 
-    expect(fake.claimed!.paymentHash, hash);
+    expect(fake.claimed!.paymentId, hash);
     expect(fake.claimed!.preimage, preimage);
-    expect(fake.claimed!.hasClaimableAmountMsat(), isFalse);
+    expect(fake.claimed!.claimableAmountMsat.toInt(), 100000);
     expect(fake.requestedPaymentIds, everyElement(hash));
+  });
+
+  test('claimable event payment ID, not invoice hash, drives settlement',
+      () async {
+    final fake = FakeLdkServerClient()
+      ..payment = buildPayment(
+        ldk_types.PaymentStatus.PENDING,
+        direction: ldk_types.PaymentDirection.INBOUND,
+        paymentId: bolt12PaymentId,
+      );
+    final service = await connectedService(fake);
+    addTearDown(service.disconnect);
+    fake.events.add(ldk_events.EventEnvelope(
+      paymentClaimable: claimableEvent(fake.payment!),
+    ));
+    await pumpEventQueue();
+
+    await service.settleInvoice(preimageHex: preimage);
+
+    expect(fake.claimed!.paymentId, bolt12PaymentId);
+    expect(fake.requestedPaymentIds, everyElement(bolt12PaymentId));
   });
 
   test('settlement and cancellation clear claimable observation', () async {
@@ -357,7 +377,7 @@ void main() {
       final service = await connectedService(fake);
       addTearDown(service.disconnect);
       fake.events.add(ldk_events.EventEnvelope(
-        paymentClaimable: ldk_events.PaymentClaimable(payment: fake.payment),
+        paymentClaimable: claimableEvent(fake.payment!),
       ));
       await pumpEventQueue();
       expect((await service.lookupInvoice(paymentHashHex: hash)).status,
@@ -382,6 +402,8 @@ void main() {
       () async {
     final fake = FakeLdkServerClient()
       ..autoCompleteClaim = false
+      ..payment = buildPayment(ldk_types.PaymentStatus.PENDING,
+          direction: ldk_types.PaymentDirection.INBOUND)
       ..paymentResponses.addAll([
         buildPayment(ldk_types.PaymentStatus.PENDING,
             direction: ldk_types.PaymentDirection.INBOUND),
@@ -400,6 +422,10 @@ void main() {
     );
     await service.connect();
     addTearDown(service.disconnect);
+    fake.events.add(ldk_events.EventEnvelope(
+      paymentClaimable: claimableEvent(fake.payment!),
+    ));
+    await pumpEventQueue();
 
     await service.settleInvoice(preimageHex: preimage);
 
@@ -419,6 +445,10 @@ void main() {
     );
     await service.connect();
     addTearDown(service.disconnect);
+    fake.events.add(ldk_events.EventEnvelope(
+      paymentClaimable: claimableEvent(fake.payment!),
+    ));
+    await pumpEventQueue();
 
     await expectLater(
       service.settleInvoice(preimageHex: preimage),
@@ -435,6 +465,10 @@ void main() {
       ..claimGate = claimGate.future;
     final service = await connectedService(fake);
     addTearDown(service.disconnect);
+    fake.events.add(ldk_events.EventEnvelope(
+      paymentClaimable: claimableEvent(fake.payment!),
+    ));
+    await pumpEventQueue();
 
     final settling = service.settleInvoice(preimageHex: preimage);
     await pumpEventQueue();
@@ -462,6 +496,10 @@ void main() {
     );
     await service.connect();
     addTearDown(service.disconnect);
+    fake.events.add(ldk_events.EventEnvelope(
+      paymentClaimable: claimableEvent(fake.payment!),
+    ));
+    await pumpEventQueue();
 
     await expectLater(
       service.settleInvoice(preimageHex: preimage),
@@ -474,14 +512,11 @@ void main() {
   test('mismatched inbound record is rejected before mutation', () async {
     const otherHash =
         '1111111111111111111111111111111111111111111111111111111111111111';
-    final wrongId = buildPayment(ldk_types.PaymentStatus.PENDING,
-        direction: ldk_types.PaymentDirection.INBOUND)
-      ..id = otherHash;
     final wrongHash = buildPayment(ldk_types.PaymentStatus.PENDING,
         direction: ldk_types.PaymentDirection.INBOUND)
       ..kind.bolt11.hash = otherHash;
     final wrongKind = ldk_types.Payment(
-      id: hash,
+      paymentId: hash,
       kind: ldk_types.PaymentKind(onchain: ldk_types.Onchain(txid: otherHash)),
       direction: ldk_types.PaymentDirection.INBOUND,
       status: ldk_types.PaymentStatus.PENDING,
@@ -489,7 +524,7 @@ void main() {
     final wrongDirection = buildPayment(ldk_types.PaymentStatus.PENDING,
         direction: ldk_types.PaymentDirection.OUTBOUND);
 
-    for (final payment in [wrongId, wrongHash, wrongKind, wrongDirection]) {
+    for (final payment in [wrongHash, wrongKind, wrongDirection]) {
       final settleFake = FakeLdkServerClient()..payment = payment;
       final settleService = await connectedService(settleFake);
       addTearDown(settleService.disconnect);
@@ -500,8 +535,10 @@ void main() {
       final cancelFake = FakeLdkServerClient()..payment = payment;
       final cancelService = await connectedService(cancelFake);
       addTearDown(cancelService.disconnect);
-      await expectLater(
-          cancelService.cancelInvoice(paymentHashHex: hash), throwsStateError);
+      expect(
+          (await cancelService.cancelInvoice(paymentHashHex: hash))
+              .isAlreadyMissing,
+          isTrue);
       expect(cancelFake.failCalls, 0);
     }
   });
@@ -528,10 +565,10 @@ void main() {
 
   test('cancellation reconciles ambiguous fail RPC outcomes', () async {
     final failedFake = FakeLdkServerClient()
+      ..payment = buildPayment(ldk_types.PaymentStatus.PENDING,
+          direction: ldk_types.PaymentDirection.INBOUND)
       ..failError = const GrpcError.unavailable()
       ..paymentResponses.addAll([
-        buildPayment(ldk_types.PaymentStatus.PENDING,
-            direction: ldk_types.PaymentDirection.INBOUND),
         buildPayment(ldk_types.PaymentStatus.FAILED,
             direction: ldk_types.PaymentDirection.INBOUND),
         buildPayment(ldk_types.PaymentStatus.FAILED,
@@ -544,10 +581,10 @@ void main() {
         isTrue);
 
     final missingFake = FakeLdkServerClient()
+      ..payment = buildPayment(ldk_types.PaymentStatus.PENDING,
+          direction: ldk_types.PaymentDirection.INBOUND)
       ..failError = const GrpcError.unavailable()
       ..paymentResponses.addAll([
-        buildPayment(ldk_types.PaymentStatus.PENDING,
-            direction: ldk_types.PaymentDirection.INBOUND),
         null,
       ]);
     final missingService = await connectedService(missingFake);
@@ -558,10 +595,10 @@ void main() {
         isTrue);
 
     final settledFake = FakeLdkServerClient()
+      ..payment = buildPayment(ldk_types.PaymentStatus.PENDING,
+          direction: ldk_types.PaymentDirection.INBOUND)
       ..failError = const GrpcError.unavailable()
       ..paymentResponses.addAll([
-        buildPayment(ldk_types.PaymentStatus.PENDING,
-            direction: ldk_types.PaymentDirection.INBOUND),
         buildPayment(ldk_types.PaymentStatus.SUCCEEDED,
             direction: ldk_types.PaymentDirection.INBOUND,
             paymentPreimage: preimage),
@@ -627,7 +664,7 @@ void main() {
     await fake.controllers.first.close();
     await pumpEventQueue();
     fake.controllers[1].add(ldk_events.EventEnvelope(
-      paymentClaimable: ldk_events.PaymentClaimable(payment: fake.payment),
+      paymentClaimable: claimableEvent(fake.payment!),
     ));
 
     expect((await update).status, InvoiceStatus.ACCEPTED);
@@ -867,7 +904,7 @@ void main() {
     );
     fake.paymentPages.addAll([
       ldk_api.ListPaymentsResponse(
-        nextPageToken: ldk_types.PageToken(token: 'next', index: Int64.ONE),
+        nextPageToken: 'next',
       ),
       ldk_api.ListPaymentsResponse(payments: [payment]),
     ]);
@@ -913,9 +950,10 @@ ldk_types.Payment buildPayment(
   String? paymentPreimage,
   int? feeMsat,
   String paymentHash = hash,
+  String? paymentId,
 }) {
   return ldk_types.Payment(
-    id: paymentHash,
+    paymentId: paymentId ?? paymentHash,
     kind: ldk_types.PaymentKind(
       bolt11: ldk_types.Bolt11(
         hash: paymentHash,
@@ -937,7 +975,7 @@ ldk_types.Payment buildBolt12Payment(
   int? feeMsat,
 }) {
   return ldk_types.Payment(
-    id: bolt12PaymentId,
+    paymentId: bolt12PaymentId,
     kind: ldk_types.PaymentKind(
       bolt12Offer: ldk_types.Bolt12Offer(
         hash: paymentPreimage == null ? null : hash,
@@ -953,6 +991,19 @@ ldk_types.Payment buildBolt12Payment(
   );
 }
 
+ldk_events.PaymentClaimable claimableEvent(ldk_types.Payment payment) =>
+    ldk_events.PaymentClaimable(
+      paymentId: payment.paymentId,
+      payment: payment,
+      claimableAmountMsat: payment.amountMsat,
+    );
+
+ldk_events.PaymentReceived receivedEvent(ldk_types.Payment payment) =>
+    ldk_events.PaymentReceived(
+      paymentId: payment.paymentId,
+      payment: payment,
+    );
+
 class FakeLdkServerClient implements LdkServerClientAdapter {
   final events = StreamController<ldk_events.EventEnvelope>.broadcast();
   Future<void> eventReady = Future<void>.value();
@@ -961,7 +1012,7 @@ class FakeLdkServerClient implements LdkServerClientAdapter {
   final List<ldk_types.Payment?> paymentResponses = [];
   ldk_api.DecodeInvoiceResponse decoded = ldk_api.DecodeInvoiceResponse();
   ldk_api.Bolt11ReceiveForHashRequest? received;
-  ldk_api.Bolt11ClaimForHashRequest? claimed;
+  ldk_api.Bolt11ClaimForIdRequest? claimed;
   ldk_api.Bolt11SendRequest? sent;
   ldk_api.Bolt12SendRequest? bolt12Sent;
   final List<ldk_api.ListPaymentsResponse> paymentPages = [];
@@ -1025,33 +1076,41 @@ class FakeLdkServerClient implements LdkServerClientAdapter {
   Future<ldk_api.ListPaymentsResponse> listPayments(
           ldk_api.ListPaymentsRequest request) async =>
       paymentPages.isEmpty
-          ? ldk_api.ListPaymentsResponse()
+          ? ldk_api.ListPaymentsResponse(
+              payments: payment == null ? const [] : [payment!],
+            )
           : paymentPages.removeAt(0);
 
   @override
-  Future<ldk_api.Bolt11FailForHashResponse> bolt11FailForHash(
-      ldk_api.Bolt11FailForHashRequest request) async {
+  Future<ldk_api.Bolt11FailForIdResponse> bolt11FailForId(
+      ldk_api.Bolt11FailForIdRequest request) async {
     failCalls++;
     if (failError case final error?) throw error;
     payment = paymentWithStatus(ldk_types.PaymentStatus.FAILED);
-    return ldk_api.Bolt11FailForHashResponse();
+    return ldk_api.Bolt11FailForIdResponse();
   }
 
   ldk_types.Payment paymentWithStatus(ldk_types.PaymentStatus status) =>
-      buildPayment(status, direction: ldk_types.PaymentDirection.INBOUND);
+      buildPayment(
+        status,
+        direction: ldk_types.PaymentDirection.INBOUND,
+        paymentHash: payment?.kind.bolt11.hash ?? hash,
+        paymentId: payment?.paymentId,
+      );
 
   @override
-  Future<ldk_api.Bolt11ClaimForHashResponse> bolt11ClaimForHash(
-      ldk_api.Bolt11ClaimForHashRequest request) async {
+  Future<ldk_api.Bolt11ClaimForIdResponse> bolt11ClaimForId(
+      ldk_api.Bolt11ClaimForIdRequest request) async {
     claimCalls++;
     claimed = request;
     await claimGate;
     if (autoCompleteClaim) {
       payment = buildPayment(ldk_types.PaymentStatus.SUCCEEDED,
           direction: ldk_types.PaymentDirection.INBOUND,
+          paymentId: request.paymentId,
           paymentPreimage: request.preimage);
     }
-    return ldk_api.Bolt11ClaimForHashResponse();
+    return ldk_api.Bolt11ClaimForIdResponse();
   }
 
   @override

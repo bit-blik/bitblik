@@ -5,7 +5,7 @@ package types;
 // See more: https://docs.rs/ldk-node/latest/ldk_node/payment/struct.PaymentDetails.html
 message Payment {
   // An identifier used to uniquely identify a payment in hex-encoded form.
-  string id = 1;
+  string payment_id = 1;
 
   // The kind of the payment.
   PaymentKind kind = 2;
@@ -29,6 +29,28 @@ message Payment {
   uint64 latest_update_timestamp = 6;
 }
 
+// Options that control which BOLT 12 invoice fields a payer proof discloses.
+// See more: https://docs.rs/ldk-node/latest/ldk_node/payment/struct.PayerProofOptions.html
+message PayerProofOptions {
+  // An optional note to attach to the payer proof itself.
+  optional string note = 1;
+
+  // Whether to disclose the offer description.
+  bool include_offer_description = 2;
+
+  // Whether to disclose the offer issuer.
+  bool include_offer_issuer = 3;
+
+  // Whether to disclose the invoice amount.
+  bool include_invoice_amount = 4;
+
+  // Whether to disclose the invoice creation timestamp.
+  bool include_invoice_created_at = 5;
+
+  // Additional TLV types to disclose, for fields not covered by the flags above.
+  repeated uint64 extra_tlv_types = 6;
+}
+
 message PaymentKind {
   oneof kind {
     Onchain onchain = 1;
@@ -46,6 +68,90 @@ message Onchain {
 
   // The confirmation status of this payment.
   ConfirmationStatus status = 2;
+
+  // The classification of this transaction, as reported by LDK when it was broadcast.
+  //
+  // Unset for plain on-chain sends, and for payments recorded before this classification was
+  // tracked.
+  optional TransactionType tx_type = 3;
+}
+
+// A channel referenced by a TransactionType variant.
+message TransactionChannel {
+  // The `node_id` of the channel counterparty.
+  string counterparty_node_id = 1;
+
+  // The ID of the channel.
+  string channel_id = 2;
+}
+
+// The classification of an on-chain transaction, mirroring LDK Node's
+// `ldk_node::payment::TransactionType`.
+message TransactionType {
+  oneof kind {
+    Funding funding = 1;
+    CooperativeClose cooperative_close = 2;
+    UnilateralClose unilateral_close = 3;
+    AnchorBump anchor_bump = 4;
+    Claim claim = 5;
+    Sweep sweep = 6;
+    InteractiveFunding interactive_funding = 7;
+  }
+}
+
+// A funding transaction establishing one or more new channels.
+message Funding {
+  // The channels being funded.
+  repeated TransactionChannel channels = 1;
+}
+
+// A transaction cooperatively closing a channel.
+message CooperativeClose {
+  // The `node_id` of the channel counterparty.
+  string counterparty_node_id = 1;
+
+  // The ID of the channel being closed.
+  string channel_id = 2;
+}
+
+// A transaction force-closing a channel.
+message UnilateralClose {
+  // The `node_id` of the channel counterparty.
+  string counterparty_node_id = 1;
+
+  // The ID of the channel being force-closed.
+  string channel_id = 2;
+}
+
+// An anchor transaction CPFP fee-bumping a closing transaction.
+message AnchorBump {
+  // The `node_id` of the channel counterparty.
+  string counterparty_node_id = 1;
+
+  // The ID of the channel whose closing transaction is being fee-bumped.
+  string channel_id = 2;
+}
+
+// A transaction resolving an output spendable by both us and our counterparty.
+message Claim {
+  // The `node_id` of the channel counterparty.
+  string counterparty_node_id = 1;
+
+  // The ID of the channel from which outputs are being claimed.
+  string channel_id = 2;
+}
+
+// A transaction sweeping spendable outputs to the on-chain wallet.
+message Sweep {
+  // The channels from which outputs are being swept, if known.
+  repeated TransactionChannel channels = 1;
+}
+
+// An interactively-negotiated funding transaction: a splice, or (once supported) a V2
+// dual-funded channel open.
+message InteractiveFunding {
+  // The channels participating in the negotiation.
+  repeated TransactionChannel channels = 1;
 }
 
 message ConfirmationStatus {
@@ -213,6 +319,11 @@ message HtlcLocator {
   // The node id of the counterparty for this HTLC.
   // This can be unset for older serialized events.
   optional string node_id = 3;
+
+  // The amount in millisatoshis of the HTLC that was sent or received, if known.
+  // This can be unset for events serialized by LDK Node v0.7.0 and prior,
+  // or forwarding records stored by LDK Server before this field was added.
+  optional uint64 amount_msat = 4;
 }
 
 // A forwarded payment through our node.
@@ -258,6 +369,39 @@ message ForwardedPayment{
   // This is the canonical outgoing HTLC representation.
   repeated HtlcLocator next_htlcs = 6;
 
+}
+
+// ChannelShutdownState mirrors LDK's `lightning::ln::channel_state::ChannelShutdownState`,
+// indicating how far along a channel is in the cooperative close process.
+enum ChannelShutdownState {
+  CHANNEL_SHUTDOWN_STATE_UNSPECIFIED = 0;
+  // Channel has not sent or received a shutdown message.
+  CHANNEL_SHUTDOWN_STATE_NOT_SHUTTING_DOWN = 1;
+  // Local node has sent a shutdown message for this channel.
+  CHANNEL_SHUTDOWN_STATE_SHUTDOWN_INITIATED = 2;
+  // Shutdown message exchanges have concluded and the channels are in the midst of
+  // resolving all existing open HTLCs before closing can continue.
+  CHANNEL_SHUTDOWN_STATE_RESOLVING_HTLCS = 3;
+  // All HTLCs have been resolved, nodes are currently negotiating channel close onchain fee
+  // rates.
+  CHANNEL_SHUTDOWN_STATE_NEGOTIATING_CLOSING_FEE = 4;
+  // We've successfully negotiated a closing_signed dance. At this point the channel is about
+  // to be dropped.
+  CHANNEL_SHUTDOWN_STATE_SHUTDOWN_COMPLETE = 5;
+}
+
+// ReserveType mirrors LDK Node's `ReserveType`, indicating the kind of on-chain reserve
+// maintained for a channel, if any has been determined yet.
+enum ReserveType {
+  RESERVE_TYPE_UNSPECIFIED = 0;
+  // An anchor outputs channel where we maintain a per-channel on-chain reserve for fee
+  // bumping force-close transactions.
+  RESERVE_TYPE_ADAPTIVE = 1;
+  // An anchor outputs channel where we do not maintain any reserve, because the counterparty
+  // is in our trusted_peers_no_reserve list.
+  RESERVE_TYPE_TRUSTED_PEERS_NO_RESERVE = 2;
+  // A legacy (pre-anchor) channel using only option_static_remotekey.
+  RESERVE_TYPE_LEGACY = 3;
 }
 
 message Channel {
@@ -386,6 +530,51 @@ message Channel {
   // The minimum difference in CLTV expiry between an ingoing HTLC and its outgoing counterpart,
   // such that the outgoing HTLC is forwardable to this counterparty.
   optional uint32 counterparty_forwarding_info_cltv_expiry_delta = 25;
+  // The channel's `short_channel_id`, if we've negotiated the funding transaction with our
+  // counterparty already and it's reached the required number of confirmations.
+  //
+  // Note that if an inbound SCID alias is set, that will be used for invoices and inbound
+  // payments instead of this value.
+  optional uint64 short_channel_id = 26;
+
+  // An optional `short_channel_id` alias for this channel, randomly generated by us and usable
+  // in place of `short_channel_id` to reference the channel in outbound routes when the channel
+  // has not yet been confirmed.
+  optional uint64 outbound_scid_alias = 27;
+
+  // An optional `short_channel_id` alias for this channel, randomly generated by our
+  // counterparty and usable in place of `short_channel_id` in invoice route hints. Our
+  // counterparty will recognize the alias provided here in place of the `short_channel_id`
+  // when they see a payment to be routed to us.
+  optional uint64 inbound_scid_alias = 28;
+
+  // The smallest value HTLC (in msat) we will accept, for this channel.
+  uint64 inbound_htlc_minimum_msat = 29;
+
+  // The largest value HTLC (in msat) we currently will accept, for this channel.
+  optional uint64 inbound_htlc_maximum_msat = 30;
+
+  // The current shutdown state of the channel, if any.
+  //
+  // Will be unset for objects serialized with LDK Node v0.1 and earlier.
+  optional ChannelShutdownState channel_shutdown_state = 31;
+
+  // The type of on-chain reserve maintained for this channel.
+  //
+  // Will be unset until channel negotiation has completed and determined whether this channel
+  // uses anchor or legacy reserve behavior.
+  optional ReserveType reserve_type = 32;
+
+  // The negotiated channel-type features, keyed by the signaled BOLT feature bit.
+  // This map is empty until channel negotiation determines the channel type.
+  map<uint32, Feature> channel_type = 33;
+
+  // The features our counterparty provided upon last connection, keyed by the signaled BOLT
+  // feature bit.
+  //
+  // Useful for routing, as it is the most up-to-date copy of the counterparty's features and
+  // many routing-relevant features are present in the init context.
+  map<uint32, Feature> counterparty_features = 34;
 }
 
 // ChannelConfig represents the configuration settings for a channel in a Lightning Network node.
@@ -696,12 +885,6 @@ message AwaitingThresholdConfirmations {
 
   // The amount, in satoshis, of the output being swept.
   uint64 amount_satoshis = 5;
-}
-
-// Token used to determine start of next page in paginated APIs.
-message PageToken {
-  string token = 1;
-  int64 index = 2;
 }
 
 message Bolt11InvoiceDescription {

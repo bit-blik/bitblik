@@ -39,6 +39,7 @@ const GetNodeInfoResponse$json = {
     {'1': 'node_uris', '3': 12, '4': 3, '5': 9, '10': 'nodeUris'},
     {'1': 'network', '3': 13, '4': 1, '5': 14, '6': '.types.Network', '10': 'network'},
     {'1': 'features', '3': 14, '4': 3, '5': 11, '6': '.api.GetNodeInfoResponse.FeaturesEntry', '10': 'features'},
+    {'1': 'latest_pathfinding_scores_sync_timestamp', '3': 15, '4': 1, '5': 4, '9': 6, '10': 'latestPathfindingScoresSyncTimestamp', '17': true},
   ],
   '3': [GetNodeInfoResponse_FeaturesEntry$json],
   '8': [
@@ -48,6 +49,7 @@ const GetNodeInfoResponse$json = {
     {'1': '_latest_rgs_snapshot_timestamp'},
     {'1': '_latest_node_announcement_broadcast_timestamp'},
     {'1': '_node_alias'},
+    {'1': '_latest_pathfinding_scores_sync_timestamp'},
   ],
 };
 
@@ -77,13 +79,15 @@ final $typed_data.Uint8List getNodeInfoResponseDescriptor = $convert.base64Decod
     '9hZGRyZXNzZXMYCiADKAlSFWFubm91bmNlbWVudEFkZHJlc3NlcxIiCgpub2RlX2FsaWFzGAsg'
     'ASgJSAVSCW5vZGVBbGlhc4gBARIbCglub2RlX3VyaXMYDCADKAlSCG5vZGVVcmlzEigKB25ldH'
     'dvcmsYDSABKA4yDi50eXBlcy5OZXR3b3JrUgduZXR3b3JrEkIKCGZlYXR1cmVzGA4gAygLMiYu'
-    'YXBpLkdldE5vZGVJbmZvUmVzcG9uc2UuRmVhdHVyZXNFbnRyeVIIZmVhdHVyZXMaSwoNRmVhdH'
-    'VyZXNFbnRyeRIQCgNrZXkYASABKA1SA2tleRIkCgV2YWx1ZRgCIAEoCzIOLnR5cGVzLkZlYXR1'
-    'cmVSBXZhbHVlOgI4AUIpCidfbGF0ZXN0X2xpZ2h0bmluZ193YWxsZXRfc3luY190aW1lc3RhbX'
-    'BCJwolX2xhdGVzdF9vbmNoYWluX3dhbGxldF9zeW5jX3RpbWVzdGFtcEIpCidfbGF0ZXN0X2Zl'
-    'ZV9yYXRlX2NhY2hlX3VwZGF0ZV90aW1lc3RhbXBCIAoeX2xhdGVzdF9yZ3Nfc25hcHNob3RfdG'
-    'ltZXN0YW1wQi8KLV9sYXRlc3Rfbm9kZV9hbm5vdW5jZW1lbnRfYnJvYWRjYXN0X3RpbWVzdGFt'
-    'cEINCgtfbm9kZV9hbGlhcw==');
+    'YXBpLkdldE5vZGVJbmZvUmVzcG9uc2UuRmVhdHVyZXNFbnRyeVIIZmVhdHVyZXMSWwoobGF0ZX'
+    'N0X3BhdGhmaW5kaW5nX3Njb3Jlc19zeW5jX3RpbWVzdGFtcBgPIAEoBEgGUiRsYXRlc3RQYXRo'
+    'ZmluZGluZ1Njb3Jlc1N5bmNUaW1lc3RhbXCIAQEaSwoNRmVhdHVyZXNFbnRyeRIQCgNrZXkYAS'
+    'ABKA1SA2tleRIkCgV2YWx1ZRgCIAEoCzIOLnR5cGVzLkZlYXR1cmVSBXZhbHVlOgI4AUIpCidf'
+    'bGF0ZXN0X2xpZ2h0bmluZ193YWxsZXRfc3luY190aW1lc3RhbXBCJwolX2xhdGVzdF9vbmNoYW'
+    'luX3dhbGxldF9zeW5jX3RpbWVzdGFtcEIpCidfbGF0ZXN0X2ZlZV9yYXRlX2NhY2hlX3VwZGF0'
+    'ZV90aW1lc3RhbXBCIAoeX2xhdGVzdF9yZ3Nfc25hcHNob3RfdGltZXN0YW1wQi8KLV9sYXRlc3'
+    'Rfbm9kZV9hbm5vdW5jZW1lbnRfYnJvYWRjYXN0X3RpbWVzdGFtcEINCgtfbm9kZV9hbGlhc0Ir'
+    'CilfbGF0ZXN0X3BhdGhmaW5kaW5nX3Njb3Jlc19zeW5jX3RpbWVzdGFtcA==');
 
 @$core.Deprecated('Use onchainReceiveRequestDescriptor instead')
 const OnchainReceiveRequest$json = {
@@ -210,57 +214,56 @@ final $typed_data.Uint8List bolt11ReceiveForHashResponseDescriptor = $convert.ba
     'ChxCb2x0MTFSZWNlaXZlRm9ySGFzaFJlc3BvbnNlEhgKB2ludm9pY2UYASABKAlSB2ludm9pY2'
     'U=');
 
-@$core.Deprecated('Use bolt11ClaimForHashRequestDescriptor instead')
-const Bolt11ClaimForHashRequest$json = {
-  '1': 'Bolt11ClaimForHashRequest',
+@$core.Deprecated('Use bolt11ClaimForIdRequestDescriptor instead')
+const Bolt11ClaimForIdRequest$json = {
+  '1': 'Bolt11ClaimForIdRequest',
   '2': [
-    {'1': 'payment_hash', '3': 1, '4': 1, '5': 9, '9': 0, '10': 'paymentHash', '17': true},
-    {'1': 'claimable_amount_msat', '3': 2, '4': 1, '5': 4, '9': 1, '10': 'claimableAmountMsat', '17': true},
+    {'1': 'payment_id', '3': 1, '4': 1, '5': 9, '10': 'paymentId'},
+    {'1': 'claimable_amount_msat', '3': 2, '4': 1, '5': 4, '9': 0, '10': 'claimableAmountMsat', '17': true},
     {'1': 'preimage', '3': 3, '4': 1, '5': 9, '10': 'preimage'},
   ],
   '8': [
-    {'1': '_payment_hash'},
     {'1': '_claimable_amount_msat'},
   ],
 };
 
-/// Descriptor for `Bolt11ClaimForHashRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List bolt11ClaimForHashRequestDescriptor = $convert.base64Decode(
-    'ChlCb2x0MTFDbGFpbUZvckhhc2hSZXF1ZXN0EiYKDHBheW1lbnRfaGFzaBgBIAEoCUgAUgtwYX'
-    'ltZW50SGFzaIgBARI3ChVjbGFpbWFibGVfYW1vdW50X21zYXQYAiABKARIAVITY2xhaW1hYmxl'
-    'QW1vdW50TXNhdIgBARIaCghwcmVpbWFnZRgDIAEoCVIIcHJlaW1hZ2VCDwoNX3BheW1lbnRfaG'
-    'FzaEIYChZfY2xhaW1hYmxlX2Ftb3VudF9tc2F0');
+/// Descriptor for `Bolt11ClaimForIdRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt11ClaimForIdRequestDescriptor = $convert.base64Decode(
+    'ChdCb2x0MTFDbGFpbUZvcklkUmVxdWVzdBIdCgpwYXltZW50X2lkGAEgASgJUglwYXltZW50SW'
+    'QSNwoVY2xhaW1hYmxlX2Ftb3VudF9tc2F0GAIgASgESABSE2NsYWltYWJsZUFtb3VudE1zYXSI'
+    'AQESGgoIcHJlaW1hZ2UYAyABKAlSCHByZWltYWdlQhgKFl9jbGFpbWFibGVfYW1vdW50X21zYX'
+    'Q=');
 
-@$core.Deprecated('Use bolt11ClaimForHashResponseDescriptor instead')
-const Bolt11ClaimForHashResponse$json = {
-  '1': 'Bolt11ClaimForHashResponse',
+@$core.Deprecated('Use bolt11ClaimForIdResponseDescriptor instead')
+const Bolt11ClaimForIdResponse$json = {
+  '1': 'Bolt11ClaimForIdResponse',
 };
 
-/// Descriptor for `Bolt11ClaimForHashResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List bolt11ClaimForHashResponseDescriptor = $convert.base64Decode(
-    'ChpCb2x0MTFDbGFpbUZvckhhc2hSZXNwb25zZQ==');
+/// Descriptor for `Bolt11ClaimForIdResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt11ClaimForIdResponseDescriptor = $convert.base64Decode(
+    'ChhCb2x0MTFDbGFpbUZvcklkUmVzcG9uc2U=');
 
-@$core.Deprecated('Use bolt11FailForHashRequestDescriptor instead')
-const Bolt11FailForHashRequest$json = {
-  '1': 'Bolt11FailForHashRequest',
+@$core.Deprecated('Use bolt11FailForIdRequestDescriptor instead')
+const Bolt11FailForIdRequest$json = {
+  '1': 'Bolt11FailForIdRequest',
   '2': [
-    {'1': 'payment_hash', '3': 1, '4': 1, '5': 9, '10': 'paymentHash'},
+    {'1': 'payment_id', '3': 1, '4': 1, '5': 9, '10': 'paymentId'},
   ],
 };
 
-/// Descriptor for `Bolt11FailForHashRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List bolt11FailForHashRequestDescriptor = $convert.base64Decode(
-    'ChhCb2x0MTFGYWlsRm9ySGFzaFJlcXVlc3QSIQoMcGF5bWVudF9oYXNoGAEgASgJUgtwYXltZW'
-    '50SGFzaA==');
+/// Descriptor for `Bolt11FailForIdRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt11FailForIdRequestDescriptor = $convert.base64Decode(
+    'ChZCb2x0MTFGYWlsRm9ySWRSZXF1ZXN0Eh0KCnBheW1lbnRfaWQYASABKAlSCXBheW1lbnRJZA'
+    '==');
 
-@$core.Deprecated('Use bolt11FailForHashResponseDescriptor instead')
-const Bolt11FailForHashResponse$json = {
-  '1': 'Bolt11FailForHashResponse',
+@$core.Deprecated('Use bolt11FailForIdResponseDescriptor instead')
+const Bolt11FailForIdResponse$json = {
+  '1': 'Bolt11FailForIdResponse',
 };
 
-/// Descriptor for `Bolt11FailForHashResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List bolt11FailForHashResponseDescriptor = $convert.base64Decode(
-    'ChlCb2x0MTFGYWlsRm9ySGFzaFJlc3BvbnNl');
+/// Descriptor for `Bolt11FailForIdResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt11FailForIdResponseDescriptor = $convert.base64Decode(
+    'ChdCb2x0MTFGYWlsRm9ySWRSZXNwb25zZQ==');
 
 @$core.Deprecated('Use bolt11ReceiveViaJitChannelRequestDescriptor instead')
 const Bolt11ReceiveViaJitChannelRequest$json = {
@@ -473,6 +476,103 @@ const Bolt12SendResponse$json = {
 /// Descriptor for `Bolt12SendResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List bolt12SendResponseDescriptor = $convert.base64Decode(
     'ChJCb2x0MTJTZW5kUmVzcG9uc2USHQoKcGF5bWVudF9pZBgBIAEoCVIJcGF5bWVudElk');
+
+@$core.Deprecated('Use bolt12SendRefundRequestDescriptor instead')
+const Bolt12SendRefundRequest$json = {
+  '1': 'Bolt12SendRefundRequest',
+  '2': [
+    {'1': 'amount_msat', '3': 1, '4': 1, '5': 4, '10': 'amountMsat'},
+    {'1': 'expiry_secs', '3': 2, '4': 1, '5': 13, '10': 'expirySecs'},
+    {'1': 'quantity', '3': 3, '4': 1, '5': 4, '9': 0, '10': 'quantity', '17': true},
+    {'1': 'payer_note', '3': 4, '4': 1, '5': 9, '9': 1, '10': 'payerNote', '17': true},
+    {'1': 'route_parameters', '3': 5, '4': 1, '5': 11, '6': '.types.RouteParametersConfig', '9': 2, '10': 'routeParameters', '17': true},
+  ],
+  '8': [
+    {'1': '_quantity'},
+    {'1': '_payer_note'},
+    {'1': '_route_parameters'},
+  ],
+};
+
+/// Descriptor for `Bolt12SendRefundRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt12SendRefundRequestDescriptor = $convert.base64Decode(
+    'ChdCb2x0MTJTZW5kUmVmdW5kUmVxdWVzdBIfCgthbW91bnRfbXNhdBgBIAEoBFIKYW1vdW50TX'
+    'NhdBIfCgtleHBpcnlfc2VjcxgCIAEoDVIKZXhwaXJ5U2VjcxIfCghxdWFudGl0eRgDIAEoBEgA'
+    'UghxdWFudGl0eYgBARIiCgpwYXllcl9ub3RlGAQgASgJSAFSCXBheWVyTm90ZYgBARJMChByb3'
+    'V0ZV9wYXJhbWV0ZXJzGAUgASgLMhwudHlwZXMuUm91dGVQYXJhbWV0ZXJzQ29uZmlnSAJSD3Jv'
+    'dXRlUGFyYW1ldGVyc4gBAUILCglfcXVhbnRpdHlCDQoLX3BheWVyX25vdGVCEwoRX3JvdXRlX3'
+    'BhcmFtZXRlcnM=');
+
+@$core.Deprecated('Use bolt12SendRefundResponseDescriptor instead')
+const Bolt12SendRefundResponse$json = {
+  '1': 'Bolt12SendRefundResponse',
+  '2': [
+    {'1': 'refund', '3': 1, '4': 1, '5': 9, '10': 'refund'},
+  ],
+};
+
+/// Descriptor for `Bolt12SendRefundResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt12SendRefundResponseDescriptor = $convert.base64Decode(
+    'ChhCb2x0MTJTZW5kUmVmdW5kUmVzcG9uc2USFgoGcmVmdW5kGAEgASgJUgZyZWZ1bmQ=');
+
+@$core.Deprecated('Use bolt12ReceiveRefundRequestDescriptor instead')
+const Bolt12ReceiveRefundRequest$json = {
+  '1': 'Bolt12ReceiveRefundRequest',
+  '2': [
+    {'1': 'refund', '3': 1, '4': 1, '5': 9, '10': 'refund'},
+  ],
+};
+
+/// Descriptor for `Bolt12ReceiveRefundRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt12ReceiveRefundRequestDescriptor = $convert.base64Decode(
+    'ChpCb2x0MTJSZWNlaXZlUmVmdW5kUmVxdWVzdBIWCgZyZWZ1bmQYASABKAlSBnJlZnVuZA==');
+
+@$core.Deprecated('Use bolt12ReceiveRefundResponseDescriptor instead')
+const Bolt12ReceiveRefundResponse$json = {
+  '1': 'Bolt12ReceiveRefundResponse',
+  '2': [
+    {'1': 'payment_hash', '3': 1, '4': 1, '5': 9, '10': 'paymentHash'},
+  ],
+};
+
+/// Descriptor for `Bolt12ReceiveRefundResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt12ReceiveRefundResponseDescriptor = $convert.base64Decode(
+    'ChtCb2x0MTJSZWNlaXZlUmVmdW5kUmVzcG9uc2USIQoMcGF5bWVudF9oYXNoGAEgASgJUgtwYX'
+    'ltZW50SGFzaA==');
+
+@$core.Deprecated('Use bolt12CreatePayerProofRequestDescriptor instead')
+const Bolt12CreatePayerProofRequest$json = {
+  '1': 'Bolt12CreatePayerProofRequest',
+  '2': [
+    {'1': 'payment_id', '3': 1, '4': 1, '5': 9, '10': 'paymentId'},
+    {'1': 'payment_preimage', '3': 2, '4': 1, '5': 9, '10': 'paymentPreimage'},
+    {'1': 'invoice', '3': 3, '4': 1, '5': 9, '10': 'invoice'},
+    {'1': 'options', '3': 4, '4': 1, '5': 11, '6': '.types.PayerProofOptions', '9': 0, '10': 'options', '17': true},
+  ],
+  '8': [
+    {'1': '_options'},
+  ],
+};
+
+/// Descriptor for `Bolt12CreatePayerProofRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt12CreatePayerProofRequestDescriptor = $convert.base64Decode(
+    'Ch1Cb2x0MTJDcmVhdGVQYXllclByb29mUmVxdWVzdBIdCgpwYXltZW50X2lkGAEgASgJUglwYX'
+    'ltZW50SWQSKQoQcGF5bWVudF9wcmVpbWFnZRgCIAEoCVIPcGF5bWVudFByZWltYWdlEhgKB2lu'
+    'dm9pY2UYAyABKAlSB2ludm9pY2USNwoHb3B0aW9ucxgEIAEoCzIYLnR5cGVzLlBheWVyUHJvb2'
+    'ZPcHRpb25zSABSB29wdGlvbnOIAQFCCgoIX29wdGlvbnM=');
+
+@$core.Deprecated('Use bolt12CreatePayerProofResponseDescriptor instead')
+const Bolt12CreatePayerProofResponse$json = {
+  '1': 'Bolt12CreatePayerProofResponse',
+  '2': [
+    {'1': 'payer_proof', '3': 1, '4': 1, '5': 9, '10': 'payerProof'},
+  ],
+};
+
+/// Descriptor for `Bolt12CreatePayerProofResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List bolt12CreatePayerProofResponseDescriptor = $convert.base64Decode(
+    'Ch5Cb2x0MTJDcmVhdGVQYXllclByb29mUmVzcG9uc2USHwoLcGF5ZXJfcHJvb2YYASABKAlSCn'
+    'BheWVyUHJvb2Y=');
 
 @$core.Deprecated('Use spontaneousSendRequestDescriptor instead')
 const SpontaneousSendRequest$json = {
@@ -759,7 +859,7 @@ final $typed_data.Uint8List getPaymentDetailsResponseDescriptor = $convert.base6
 const ListPaymentsRequest$json = {
   '1': 'ListPaymentsRequest',
   '2': [
-    {'1': 'page_token', '3': 1, '4': 1, '5': 11, '6': '.types.PageToken', '9': 0, '10': 'pageToken', '17': true},
+    {'1': 'page_token', '3': 1, '4': 1, '5': 9, '9': 0, '10': 'pageToken', '17': true},
   ],
   '8': [
     {'1': '_page_token'},
@@ -768,15 +868,15 @@ const ListPaymentsRequest$json = {
 
 /// Descriptor for `ListPaymentsRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listPaymentsRequestDescriptor = $convert.base64Decode(
-    'ChNMaXN0UGF5bWVudHNSZXF1ZXN0EjQKCnBhZ2VfdG9rZW4YASABKAsyEC50eXBlcy5QYWdlVG'
-    '9rZW5IAFIJcGFnZVRva2VuiAEBQg0KC19wYWdlX3Rva2Vu');
+    'ChNMaXN0UGF5bWVudHNSZXF1ZXN0EiIKCnBhZ2VfdG9rZW4YASABKAlIAFIJcGFnZVRva2VuiA'
+    'EBQg0KC19wYWdlX3Rva2Vu');
 
 @$core.Deprecated('Use listPaymentsResponseDescriptor instead')
 const ListPaymentsResponse$json = {
   '1': 'ListPaymentsResponse',
   '2': [
     {'1': 'payments', '3': 1, '4': 3, '5': 11, '6': '.types.Payment', '10': 'payments'},
-    {'1': 'next_page_token', '3': 2, '4': 1, '5': 11, '6': '.types.PageToken', '9': 0, '10': 'nextPageToken', '17': true},
+    {'1': 'next_page_token', '3': 2, '4': 1, '5': 9, '9': 0, '10': 'nextPageToken', '17': true},
   ],
   '8': [
     {'1': '_next_page_token'},
@@ -786,14 +886,14 @@ const ListPaymentsResponse$json = {
 /// Descriptor for `ListPaymentsResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listPaymentsResponseDescriptor = $convert.base64Decode(
     'ChRMaXN0UGF5bWVudHNSZXNwb25zZRIqCghwYXltZW50cxgBIAMoCzIOLnR5cGVzLlBheW1lbn'
-    'RSCHBheW1lbnRzEj0KD25leHRfcGFnZV90b2tlbhgCIAEoCzIQLnR5cGVzLlBhZ2VUb2tlbkgA'
-    'Ug1uZXh0UGFnZVRva2VuiAEBQhIKEF9uZXh0X3BhZ2VfdG9rZW4=');
+    'RSCHBheW1lbnRzEisKD25leHRfcGFnZV90b2tlbhgCIAEoCUgAUg1uZXh0UGFnZVRva2VuiAEB'
+    'QhIKEF9uZXh0X3BhZ2VfdG9rZW4=');
 
 @$core.Deprecated('Use listForwardedPaymentsRequestDescriptor instead')
 const ListForwardedPaymentsRequest$json = {
   '1': 'ListForwardedPaymentsRequest',
   '2': [
-    {'1': 'page_token', '3': 1, '4': 1, '5': 11, '6': '.types.PageToken', '9': 0, '10': 'pageToken', '17': true},
+    {'1': 'page_token', '3': 1, '4': 1, '5': 9, '9': 0, '10': 'pageToken', '17': true},
   ],
   '8': [
     {'1': '_page_token'},
@@ -802,15 +902,15 @@ const ListForwardedPaymentsRequest$json = {
 
 /// Descriptor for `ListForwardedPaymentsRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listForwardedPaymentsRequestDescriptor = $convert.base64Decode(
-    'ChxMaXN0Rm9yd2FyZGVkUGF5bWVudHNSZXF1ZXN0EjQKCnBhZ2VfdG9rZW4YASABKAsyEC50eX'
-    'Blcy5QYWdlVG9rZW5IAFIJcGFnZVRva2VuiAEBQg0KC19wYWdlX3Rva2Vu');
+    'ChxMaXN0Rm9yd2FyZGVkUGF5bWVudHNSZXF1ZXN0EiIKCnBhZ2VfdG9rZW4YASABKAlIAFIJcG'
+    'FnZVRva2VuiAEBQg0KC19wYWdlX3Rva2Vu');
 
 @$core.Deprecated('Use listForwardedPaymentsResponseDescriptor instead')
 const ListForwardedPaymentsResponse$json = {
   '1': 'ListForwardedPaymentsResponse',
   '2': [
     {'1': 'forwarded_payments', '3': 1, '4': 3, '5': 11, '6': '.types.ForwardedPayment', '10': 'forwardedPayments'},
-    {'1': 'next_page_token', '3': 2, '4': 1, '5': 11, '6': '.types.PageToken', '9': 0, '10': 'nextPageToken', '17': true},
+    {'1': 'next_page_token', '3': 2, '4': 1, '5': 9, '9': 0, '10': 'nextPageToken', '17': true},
   ],
   '8': [
     {'1': '_next_page_token'},
@@ -820,9 +920,9 @@ const ListForwardedPaymentsResponse$json = {
 /// Descriptor for `ListForwardedPaymentsResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listForwardedPaymentsResponseDescriptor = $convert.base64Decode(
     'Ch1MaXN0Rm9yd2FyZGVkUGF5bWVudHNSZXNwb25zZRJGChJmb3J3YXJkZWRfcGF5bWVudHMYAS'
-    'ADKAsyFy50eXBlcy5Gb3J3YXJkZWRQYXltZW50UhFmb3J3YXJkZWRQYXltZW50cxI9Cg9uZXh0'
-    'X3BhZ2VfdG9rZW4YAiABKAsyEC50eXBlcy5QYWdlVG9rZW5IAFINbmV4dFBhZ2VUb2tlbogBAU'
-    'ISChBfbmV4dF9wYWdlX3Rva2Vu');
+    'ADKAsyFy50eXBlcy5Gb3J3YXJkZWRQYXltZW50UhFmb3J3YXJkZWRQYXltZW50cxIrCg9uZXh0'
+    'X3BhZ2VfdG9rZW4YAiABKAlIAFINbmV4dFBhZ2VUb2tlbogBAUISChBfbmV4dF9wYWdlX3Rva2'
+    'Vu');
 
 @$core.Deprecated('Use signMessageRequestDescriptor instead')
 const SignMessageRequest$json = {
