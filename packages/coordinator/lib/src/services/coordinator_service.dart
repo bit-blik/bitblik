@@ -68,6 +68,7 @@ part 'actions/twint/set_new_code.dart';
 
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
+const int kMinimumTakerRoutingFeeSats = 10;
 
 class _PendingOfferRecord {
   final Map<String, dynamic> data;

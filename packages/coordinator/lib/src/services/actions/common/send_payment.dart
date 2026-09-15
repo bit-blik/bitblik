@@ -36,7 +36,10 @@ class SendPaymentAction extends FlowAction {
       throw FlowTransitionFailure(e.toString());
     }
 
-    final feeLimitSat = (takerFees * kTakerFeeLimitFactor).ceil();
+    final feeLimitSat = max(
+      kMinimumTakerRoutingFeeSats,
+      (takerFees * kTakerFeeLimitFactor).ceil(),
+    );
     final res = await c._attemptOutgoingPayment(
       offer: offer,
       purpose: 'taker_payout',
