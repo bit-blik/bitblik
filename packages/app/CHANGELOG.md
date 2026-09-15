@@ -4,6 +4,7 @@
 - feat: bolt12 wallet payout (only for supported coordinators)
 - feat: new release version update information from nip-82 event (zapstore)
 - feat: self update to newest version from the app
+- feat: TWINT codes for in shop category supported now
 - fix: cashu backup/restore to/from file
 - feat: dark theme
 - feat: refund maker with invoice entered in app when dispute ruled against taker
