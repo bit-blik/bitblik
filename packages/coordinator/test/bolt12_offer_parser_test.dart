@@ -20,11 +20,18 @@ void main() {
     final variable = parser.decode(minimal);
     expect(variable.isVariableAmount, isTrue);
     expect(variable.amountMsat, isNull);
-    expect(variable.offerId, hasLength(64));
+    expect(
+      variable.offerId,
+      '0e8fee07fd5f23ac74553b96e7d72b89cae29a2b5d0eb21dcea4a34c4ee71fcc',
+    );
 
     final fixed = parser.decode(amount10Sats);
     expect(fixed.isVariableAmount, isFalse);
     expect(fixed.amountMsat, 10000);
+    expect(
+      fixed.offerId,
+      '3d0636a8ad052c88c1adfdf3d4a425cb670da26518b681d5527baa8f9b5dd448',
+    );
   });
 
   test('normalizes BIP-321, uppercase, and continuation form', () {
