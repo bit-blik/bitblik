@@ -15,12 +15,15 @@ import '../generated/ldk_server/events.pb.dart' as ldk_events;
 import '../generated/ldk_server/types.pb.dart' as ldk_types;
 import '../logging/app_logger.dart';
 import '../models/cancel_invoice_result.dart';
+import '../models/bolt12_offer_info.dart';
 import '../models/create_hold_invoice_result.dart';
 import '../models/invoice_details.dart';
 import '../models/invoice_status.dart';
 import '../models/invoice_update.dart';
 import '../models/pay_invoice_result.dart';
+import '../models/pay_offer_result.dart';
 import '../models/payment_status.dart' as domain;
+import 'bolt12_offer_parser.dart';
 import 'payment_service.dart';
 
 typedef LdkServerDelay = Future<void> Function(Duration duration);
@@ -49,6 +52,12 @@ abstract interface class LdkServerClientAdapter {
 
   Future<ldk_api.Bolt11SendResponse> bolt11Send(
       ldk_api.Bolt11SendRequest request);
+
+  Future<ldk_api.Bolt12SendResponse> bolt12Send(
+      ldk_api.Bolt12SendRequest request);
+
+  Future<ldk_api.ListPaymentsResponse> listPayments(
+      ldk_api.ListPaymentsRequest request);
 
   Future<ldk_api.GetPaymentDetailsResponse> getPaymentDetails(String paymentId);
 
@@ -135,6 +144,18 @@ class GrpcLdkServerClientAdapter implements LdkServerClientAdapter {
   }
 
   @override
+  Future<ldk_api.Bolt12SendResponse> bolt12Send(
+      ldk_api.Bolt12SendRequest request) {
+    return client.bolt12Send(request, options: signer.optionsFor(request));
+  }
+
+  @override
+  Future<ldk_api.ListPaymentsResponse> listPayments(
+      ldk_api.ListPaymentsRequest request) {
+    return client.listPayments(request, options: signer.optionsFor(request));
+  }
+
+  @override
   Future<ldk_api.GetPaymentDetailsResponse> getPaymentDetails(
       String paymentId) {
     final request = ldk_api.GetPaymentDetailsRequest(paymentId: paymentId);
@@ -160,7 +181,7 @@ class GrpcLdkServerClientAdapter implements LdkServerClientAdapter {
   }
 }
 
-class LdkServerService implements PaymentService {
+class LdkServerService implements PaymentService, Bolt12PaymentService {
   static const _startupTimeout = Duration(seconds: 10);
   static const _operationTimeout = Duration(seconds: 60);
   static const _initialReconnectDelay = Duration(seconds: 1);
@@ -193,6 +214,7 @@ class LdkServerService implements PaymentService {
   int _eventStreamDisconnects = 0;
   int _eventStreamReconnects = 0;
   DateTime? _lastEventAt;
+  String? _network;
 
   LdkServerService({
     required this.host,
@@ -243,6 +265,7 @@ class LdkServerService implements PaymentService {
       }
 
       final info = await _adapter!.getNodeInfo().timeout(startupTimeout);
+      _network = _networkName(info.network);
       await _startEventStream(initial: true);
       AppLogger.info(
           'Connected to ldk-server at $host:$port (node ${_prefix(info.nodeId)}).');
@@ -397,6 +420,7 @@ class LdkServerService implements PaymentService {
     await _channel?.shutdown();
     _channel = null;
     _adapter = null;
+    _network = null;
     _claimableHashes.clear();
     if (!_updates.isClosed) await _updates.close();
   }
@@ -645,13 +669,7 @@ class LdkServerService implements PaymentService {
       request.amountMsat = Int64(_satsToMsat(amountSat!, 'payment amount'));
     }
     if (feeLimitSat != null) {
-      request.routeParameters = ldk_types.RouteParametersConfig(
-        maxTotalRoutingFeeMsat:
-            Int64(_satsToMsat(feeLimitSat, 'fee limit', allowZero: true)),
-        maxTotalCltvExpiryDelta: 1008,
-        maxPathCount: 10,
-        maxChannelSaturationPowerOfHalf: 2,
-      );
+      request.routeParameters = _routeParameters(feeLimitSat);
     }
 
     try {
@@ -731,6 +749,267 @@ class LdkServerService implements PaymentService {
         paymentId: hash,
         paymentError: error.toString(),
       );
+    }
+  }
+
+  @override
+  bool get isBolt12Available => _adapter != null && _network != null;
+
+  @override
+  Future<Bolt12OfferInfo> decodeOffer({required String offer}) async {
+    _requireAdapter();
+    final network = _network;
+    if (network == null) {
+      throw StateError('ldk-server BOLT12 is unavailable on this network.');
+    }
+    return Bolt12OfferParser(expectedNetwork: network).decode(offer);
+  }
+
+  @override
+  Future<PayOfferResult> payOffer({
+    required String offer,
+    required int amountSat,
+    int? feeLimitSat,
+    required String paymentAttemptId,
+  }) async {
+    if (amountSat <= 0) {
+      return const PayOfferResult(
+        status: domain.PaymentStatus.FAILED,
+        paymentError: 'BOLT12 payment amount must be positive.',
+      );
+    }
+    if (!isBolt12Available) {
+      return const PayOfferResult(
+        status: domain.PaymentStatus.FAILED,
+        paymentError: 'ldk-server BOLT12 is unavailable.',
+      );
+    }
+
+    late final Bolt12OfferInfo info;
+    try {
+      info = await decodeOffer(offer: offer);
+    } catch (error) {
+      return PayOfferResult(
+        status: domain.PaymentStatus.FAILED,
+        paymentError: error.toString(),
+      );
+    }
+    if (info.isExpired) {
+      return const PayOfferResult(
+        status: domain.PaymentStatus.FAILED,
+        paymentError: 'BOLT12 offer is expired.',
+      );
+    }
+    final expectedAmountMsat = _satsToMsat(amountSat, 'payment amount');
+    if (info.amountMsat != null &&
+        (info.amountMsat! < (amountSat - 100) * 1000 ||
+            info.amountMsat! > (amountSat + 10) * 1000)) {
+      return PayOfferResult(
+        status: domain.PaymentStatus.FAILED,
+        paymentError:
+            'BOLT12 offer amount ${info.amountMsat} msat does not match $expectedAmountMsat msat.',
+      );
+    }
+
+    final note = _payerNote(paymentAttemptId);
+    final request = ldk_api.Bolt12SendRequest(
+      offer: info.normalized,
+      payerNote: note,
+    );
+    if (info.isVariableAmount) request.amountMsat = Int64(expectedAmountMsat);
+    if (feeLimitSat != null) {
+      request.routeParameters = _routeParameters(feeLimitSat);
+    }
+
+    late final String paymentId;
+    try {
+      final response = await _rpc(
+          'send BOLT12 payment', _requireAdapter().bolt12Send(request));
+      paymentId = _normalizeHash(response.paymentId, 'payment ID');
+    } catch (error) {
+      return PayOfferResult(
+        status: domain.PaymentStatus.UNKNOWN,
+        paymentError: _operationError('send BOLT12 payment', error).toString(),
+      );
+    }
+
+    late final ldk_types.Payment? payment;
+    try {
+      payment = await _pollBolt12Payment(
+        paymentId,
+        info.offerId,
+        note,
+      );
+    } catch (error) {
+      return PayOfferResult(
+        status: domain.PaymentStatus.UNKNOWN,
+        paymentId: paymentId,
+        paymentError: _operationError('track BOLT12 payment', error).toString(),
+      );
+    }
+    if (payment == null) {
+      return PayOfferResult(
+        status: domain.PaymentStatus.UNKNOWN,
+        paymentId: paymentId,
+        paymentError: 'Could not confirm ldk-server BOLT12 payment state.',
+      );
+    }
+    return _outgoingOfferResult(payment, paymentId);
+  }
+
+  @override
+  Future<PayOfferResult?> reconcileOutgoingOffer({
+    required String offer,
+    required String paymentAttemptId,
+    String? paymentId,
+  }) async {
+    if (!isBolt12Available) return null;
+    try {
+      final info = await decodeOffer(offer: offer);
+      final note = _payerNote(paymentAttemptId);
+      ldk_types.Payment? payment;
+      String? normalizedId;
+      if (paymentId != null) {
+        normalizedId = _normalizeHash(paymentId, 'payment ID');
+        payment = await _getPayment(normalizedId);
+        if (payment == null) return null;
+        _requireBolt12Payment(payment, normalizedId, info.offerId, note);
+      } else {
+        payment = await _findBolt12Payment(info.offerId, note);
+        if (payment == null) return null;
+        normalizedId = _normalizeHash(payment.id, 'payment ID');
+        _requireBolt12Payment(payment, normalizedId, info.offerId, note);
+      }
+      return _outgoingOfferResult(payment, normalizedId);
+    } catch (error) {
+      AppLogger.warning('ldk-server BOLT12 reconciliation unavailable.',
+          error: error);
+      return null;
+    }
+  }
+
+  Future<ldk_types.Payment?> _findBolt12Payment(
+      String offerId, String payerNote) async {
+    final matches = <ldk_types.Payment>[];
+    ldk_types.PageToken? pageToken;
+    final seenTokens = <String>{};
+    var reachedLastPage = false;
+    for (var page = 0; page < 100; page++) {
+      final request = ldk_api.ListPaymentsRequest(pageToken: pageToken);
+      final response =
+          await _rpc('list payments', _requireAdapter().listPayments(request));
+      for (final payment in response.payments) {
+        if (payment.direction == ldk_types.PaymentDirection.OUTBOUND &&
+            payment.hasKind() &&
+            payment.kind.hasBolt12Offer() &&
+            payment.kind.bolt12Offer.offerId.toLowerCase() == offerId &&
+            payment.kind.bolt12Offer.hasPayerNote() &&
+            payment.kind.bolt12Offer.payerNote == payerNote) {
+          matches.add(payment);
+        }
+      }
+      if (!response.hasNextPageToken()) {
+        reachedLastPage = true;
+        break;
+      }
+      final next = response.nextPageToken;
+      final key = '${next.token}:${next.index}';
+      if (!seenTokens.add(key)) {
+        throw StateError('ldk-server repeated a payment page token.');
+      }
+      pageToken = next;
+    }
+    if (!reachedLastPage) {
+      throw StateError('ldk-server payment history exceeded page limit.');
+    }
+    return matches.length == 1 ? matches.single : null;
+  }
+
+  Future<ldk_types.Payment?> _pollBolt12Payment(
+      String paymentId, String offerId, String payerNote) async {
+    final deadline = clock.now().add(operationTimeout);
+    ldk_types.Payment? last;
+    while (clock.now().isBefore(deadline)) {
+      final remaining = deadline.difference(clock.now());
+      last = await _getPayment(paymentId, timeout: remaining);
+      if (last != null) {
+        _requireBolt12Payment(last, paymentId, offerId, payerNote);
+      }
+      if (last == null || last.status != ldk_types.PaymentStatus.PENDING) {
+        return last;
+      }
+      final afterLookup = deadline.difference(clock.now());
+      if (afterLookup <= Duration.zero) break;
+      await delay(afterLookup < const Duration(milliseconds: 250)
+          ? afterLookup
+          : const Duration(milliseconds: 250));
+    }
+    return last;
+  }
+
+  void _requireBolt12Payment(ldk_types.Payment payment, String expectedId,
+      String expectedOfferId, String expectedPayerNote) {
+    if (_normalizeHash(payment.id, 'payment ID') != expectedId ||
+        !payment.hasKind() ||
+        !payment.kind.hasBolt12Offer() ||
+        _normalizeHash(payment.kind.bolt12Offer.offerId, 'BOLT12 offer ID') !=
+            expectedOfferId ||
+        !payment.kind.bolt12Offer.hasPayerNote() ||
+        payment.kind.bolt12Offer.payerNote != expectedPayerNote ||
+        payment.direction != ldk_types.PaymentDirection.OUTBOUND) {
+      throw StateError(
+          'ldk-server returned mismatched BOLT12 payment details.');
+    }
+  }
+
+  PayOfferResult _outgoingOfferResult(
+      ldk_types.Payment payment, String paymentId) {
+    switch (payment.status) {
+      case ldk_types.PaymentStatus.PENDING:
+        return PayOfferResult(
+          status: domain.PaymentStatus.PENDING,
+          paymentId: paymentId,
+          paymentError: 'ldk-server BOLT12 payment is pending.',
+        );
+      case ldk_types.PaymentStatus.FAILED:
+        return PayOfferResult(
+          status: domain.PaymentStatus.FAILED,
+          paymentId: paymentId,
+          paymentError: 'ldk-server BOLT12 payment failed.',
+        );
+      case ldk_types.PaymentStatus.SUCCEEDED:
+        final details = payment.kind.bolt12Offer;
+        final hash =
+            details.hasHash() ? details.hash.trim().toLowerCase() : null;
+        final preimage = details.hasPreimage()
+            ? details.preimage.trim().toLowerCase()
+            : null;
+        if (hash == null ||
+            preimage == null ||
+            !_isHex32(hash) ||
+            !_isHex32(preimage) ||
+            sha256.convert(_hexToBytes(preimage)).toString() != hash) {
+          return PayOfferResult(
+            status: domain.PaymentStatus.UNKNOWN,
+            paymentId: paymentId,
+            paymentError:
+                'ldk-server BOLT12 success has no valid matching preimage.',
+          );
+        }
+        return PayOfferResult(
+          status: domain.PaymentStatus.SUCCEEDED,
+          paymentId: paymentId,
+          paymentPreimage: preimage,
+          feeSat: payment.hasFeePaidMsat()
+              ? (payment.feePaidMsat.toInt() / 1000).round()
+              : 0,
+        );
+      default:
+        return PayOfferResult(
+          status: domain.PaymentStatus.UNKNOWN,
+          paymentId: paymentId,
+          paymentError: 'Unknown ldk-server BOLT12 payment status.',
+        );
     }
   }
 
@@ -877,6 +1156,30 @@ class LdkServerService implements PaymentService {
     }
     return sats * 1000;
   }
+
+  static ldk_types.RouteParametersConfig _routeParameters(int feeLimitSat) =>
+      ldk_types.RouteParametersConfig(
+        maxTotalRoutingFeeMsat:
+            Int64(_satsToMsat(feeLimitSat, 'fee limit', allowZero: true)),
+        maxTotalCltvExpiryDelta: 1008,
+        maxPathCount: 10,
+        maxChannelSaturationPowerOfHalf: 2,
+      );
+
+  static String _payerNote(String paymentAttemptId) {
+    final token = paymentAttemptId.replaceAll('-', '');
+    final shortToken = token.length <= 12 ? token : token.substring(0, 12);
+    return 'BitBlik payout $shortToken';
+  }
+
+  static String? _networkName(ldk_types.Network network) => switch (network) {
+        ldk_types.Network.BITCOIN => 'mainnet',
+        ldk_types.Network.TESTNET => 'testnet',
+        ldk_types.Network.SIGNET => 'signet',
+        ldk_types.Network.REGTEST => 'regtest',
+        ldk_types.Network.TESTNET4 => null,
+        _ => null,
+      };
 
   static String _normalizeHash(String value, String name) {
     final normalized = value.trim().toLowerCase();

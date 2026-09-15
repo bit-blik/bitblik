@@ -8,19 +8,44 @@ import 'package:bitblik_coordinator/src/generated/ldk_server/types.pb.dart'
     as ldk_types;
 import 'package:bitblik_coordinator/src/models/invoice_status.dart';
 import 'package:bitblik_coordinator/src/models/payment_status.dart' as domain;
+import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:bitblik_coordinator/src/services/ldk_server_service.dart';
 import 'package:clock/clock.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:grpc/grpc.dart';
 import 'package:test/test.dart';
 
+import 'test_mocks.mocks.dart';
+
 const apiKey =
     '0000000000000000000000000000000000000000000000000000000000000000';
 const hash = '66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925';
 const preimage =
     '0000000000000000000000000000000000000000000000000000000000000000';
+const variableOffer =
+    'lno1zcss9mk8y3wkklfvevcrszlmu23kfrxh49px20665dqwmn4p72pksese';
+const fixedOffer =
+    'lno1pqpzwyq2p32x2um5ypmx2cm5dae8x93pqthvwfzadd7jejes8q9lhc4rvjxd022zv5l44g6qah82ru5rdpnpj';
+const bolt12PaymentId =
+    '1111111111111111111111111111111111111111111111111111111111111111';
 
 void main() {
+  test('connected ldk-server backend advertises BOLT12 in coordinator info',
+      () async {
+    final service = await connectedService(FakeLdkServerClient());
+    addTearDown(service.disconnect);
+    final coordinator = CoordinatorService(
+      MockDatabaseService(),
+      paymentServiceForTest: service,
+    );
+    await coordinator.init();
+
+    final info = await coordinator.getCoordinatorInfo();
+
+    expect(info.outgoingPaymentTypes, ['bolt11', 'bolt12']);
+    expect(info.toJson()['outgoing_payment_types'], ['bolt11', 'bolt12']);
+  });
+
   test('signs empty streaming request with textual API key bytes', () {
     final signer = LdkServerRequestSigner(
       apiKey: apiKey,
@@ -770,6 +795,105 @@ void main() {
     expect(reconciled!.status, domain.PaymentStatus.UNKNOWN);
     expect(reconciled.paymentId, hash);
   });
+
+  test('pays variable BOLT12 offer with amount, note, and route limits',
+      () async {
+    final fake = FakeLdkServerClient();
+    final service = await connectedService(fake);
+    addTearDown(service.disconnect);
+    final info = await service.decodeOffer(offer: variableOffer);
+    fake.payment = buildBolt12Payment(
+      ldk_types.PaymentStatus.SUCCEEDED,
+      offerId: info.offerId,
+      payerNote: 'BitBlik payout attempt12345',
+      paymentPreimage: preimage,
+      feeMsat: 1500,
+    );
+
+    final result = await service.payOffer(
+      offer: variableOffer,
+      amountSat: 100,
+      feeLimitSat: 2,
+      paymentAttemptId: 'attempt-1234567890',
+    );
+
+    expect(result.status, domain.PaymentStatus.SUCCEEDED);
+    expect(result.paymentId, bolt12PaymentId);
+    expect(result.paymentPreimage, preimage);
+    expect(result.feeSat, 2);
+    expect(fake.bolt12Sent!.offer, variableOffer);
+    expect(fake.bolt12Sent!.amountMsat.toInt(), 100000);
+    expect(fake.bolt12Sent!.payerNote, 'BitBlik payout attempt12345');
+    expect(
+        fake.bolt12Sent!.routeParameters.maxTotalRoutingFeeMsat.toInt(), 2000);
+    expect(fake.bolt12Sent!.routeParameters.maxTotalCltvExpiryDelta, 1008);
+    expect(fake.bolt12Sent!.routeParameters.maxPathCount, 10);
+    expect(fake.bolt12Sent!.routeParameters.maxChannelSaturationPowerOfHalf, 2);
+  });
+
+  test('fixed BOLT12 offer omits caller-supplied amount', () async {
+    final fake = FakeLdkServerClient();
+    final service = await connectedService(fake);
+    addTearDown(service.disconnect);
+    final info = await service.decodeOffer(offer: fixedOffer);
+    fake.payment = buildBolt12Payment(
+      ldk_types.PaymentStatus.SUCCEEDED,
+      offerId: info.offerId,
+      payerNote: 'BitBlik payout fixed123',
+      paymentPreimage: preimage,
+    );
+
+    final result = await service.payOffer(
+      offer: fixedOffer,
+      amountSat: 10,
+      paymentAttemptId: 'fixed-123',
+    );
+
+    expect(result.status, domain.PaymentStatus.SUCCEEDED);
+    expect(fake.bolt12Sent!.hasAmountMsat(), isFalse);
+  });
+
+  test('reconciles lost BOLT12 send response from paginated payment history',
+      () async {
+    final fake = FakeLdkServerClient();
+    final service = await connectedService(fake);
+    addTearDown(service.disconnect);
+    final info = await service.decodeOffer(offer: variableOffer);
+    final payment = buildBolt12Payment(
+      ldk_types.PaymentStatus.SUCCEEDED,
+      offerId: info.offerId,
+      payerNote: 'BitBlik payout recover12345',
+      paymentPreimage: preimage,
+    );
+    fake.paymentPages.addAll([
+      ldk_api.ListPaymentsResponse(
+        nextPageToken: ldk_types.PageToken(token: 'next', index: Int64.ONE),
+      ),
+      ldk_api.ListPaymentsResponse(payments: [payment]),
+    ]);
+
+    final result = await service.reconcileOutgoingOffer(
+      offer: variableOffer,
+      paymentAttemptId: 'recover-123456789',
+    );
+
+    expect(result, isNotNull);
+    expect(result!.status, domain.PaymentStatus.SUCCEEDED);
+    expect(result.paymentId, bolt12PaymentId);
+  });
+
+  test('testnet4 ldk-server does not advertise unsupported offer parsing',
+      () async {
+    final fake = FakeLdkServerClient()
+      ..nodeInfoResponse = Future.value(ldk_api.GetNodeInfoResponse(
+        nodeId: '02abcdef',
+        network: ldk_types.Network.TESTNET4,
+      ));
+    final service = await connectedService(fake);
+    addTearDown(service.disconnect);
+
+    expect(service.isBolt12Available, isFalse);
+  });
 }
 
 Future<LdkServerService> connectedService(FakeLdkServerClient fake) async {
@@ -805,6 +929,30 @@ ldk_types.Payment buildPayment(
   );
 }
 
+ldk_types.Payment buildBolt12Payment(
+  ldk_types.PaymentStatus status, {
+  required String offerId,
+  required String payerNote,
+  String? paymentPreimage,
+  int? feeMsat,
+}) {
+  return ldk_types.Payment(
+    id: bolt12PaymentId,
+    kind: ldk_types.PaymentKind(
+      bolt12Offer: ldk_types.Bolt12Offer(
+        hash: paymentPreimage == null ? null : hash,
+        preimage: paymentPreimage,
+        offerId: offerId,
+        payerNote: payerNote,
+      ),
+    ),
+    amountMsat: Int64(100000),
+    feePaidMsat: feeMsat == null ? null : Int64(feeMsat),
+    direction: ldk_types.PaymentDirection.OUTBOUND,
+    status: status,
+  );
+}
+
 class FakeLdkServerClient implements LdkServerClientAdapter {
   final events = StreamController<ldk_events.EventEnvelope>.broadcast();
   Future<void> eventReady = Future<void>.value();
@@ -815,6 +963,8 @@ class FakeLdkServerClient implements LdkServerClientAdapter {
   ldk_api.Bolt11ReceiveForHashRequest? received;
   ldk_api.Bolt11ClaimForHashRequest? claimed;
   ldk_api.Bolt11SendRequest? sent;
+  ldk_api.Bolt12SendRequest? bolt12Sent;
+  final List<ldk_api.ListPaymentsResponse> paymentPages = [];
   Object? paymentLookupError;
   Object? sendError;
   Object? failError;
@@ -822,6 +972,7 @@ class FakeLdkServerClient implements LdkServerClientAdapter {
   Future<void>? claimGate;
   bool autoCompleteClaim = true;
   String sendPaymentId = hash;
+  String bolt12SendPaymentId = bolt12PaymentId;
   int subscribeCalls = 0;
   int paymentLookupCalls = 0;
   final List<String> requestedPaymentIds = [];
@@ -861,6 +1012,21 @@ class FakeLdkServerClient implements LdkServerClientAdapter {
     if (sendError case final error?) throw error;
     return ldk_api.Bolt11SendResponse(paymentId: sendPaymentId);
   }
+
+  @override
+  Future<ldk_api.Bolt12SendResponse> bolt12Send(
+      ldk_api.Bolt12SendRequest request) async {
+    bolt12Sent = request;
+    if (sendError case final error?) throw error;
+    return ldk_api.Bolt12SendResponse(paymentId: bolt12SendPaymentId);
+  }
+
+  @override
+  Future<ldk_api.ListPaymentsResponse> listPayments(
+          ldk_api.ListPaymentsRequest request) async =>
+      paymentPages.isEmpty
+          ? ldk_api.ListPaymentsResponse()
+          : paymentPages.removeAt(0);
 
   @override
   Future<ldk_api.Bolt11FailForHashResponse> bolt11FailForHash(
