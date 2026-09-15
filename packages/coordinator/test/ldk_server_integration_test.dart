@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bitblik_coordinator/src/models/invoice_status.dart';
+import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart';
 import 'package:bitblik_coordinator/src/models/payment_status.dart';
 import 'package:bitblik_coordinator/src/services/ldk_server_service.dart';
 import 'package:crypto/crypto.dart';
@@ -50,6 +51,14 @@ void main() {
         (await receiver.lookupInvoice(paymentHashHex: paymentHash)).status,
         InvoiceStatus.SETTLED,
       );
+      await expectLater(
+        receiver.cancelInvoice(paymentHashHex: paymentHash),
+        throwsStateError,
+      );
+      expect(
+        (await receiver.lookupInvoice(paymentHashHex: paymentHash)).status,
+        InvoiceStatus.SETTLED,
+      );
 
       await payer.disconnect();
       services.remove(payer);
@@ -77,6 +86,40 @@ void main() {
         (await receiver.lookupInvoice(paymentHashHex: canceledHash)).status,
         InvoiceStatus.CANCELED,
       );
+
+      final failedPreimage = randomHex32();
+      final failedHash = sha256.convert(hexToBytes(failedPreimage)).toString();
+      final failedInvoice = await receiver.createHoldInvoice(
+        amountSats: 1000,
+        memo: 'BitBlik ldk-server integration failed outgoing payment',
+        paymentHashHex: failedHash,
+      );
+      await receiver.cancelInvoice(paymentHashHex: failedHash);
+      final failed = await reconnectedPayer.payInvoice(
+        invoice: failedInvoice.invoice,
+        amountSat: 1000,
+        feeLimitSat: 100,
+      );
+      expect(failed.status, isNot(PaymentStatus.SUCCEEDED));
+      expect(
+        (await waitForReconciledStatus(
+          reconnectedPayer,
+          failedInvoice.invoice,
+          PaymentStatus.FAILED,
+        ))
+            ?.status,
+        PaymentStatus.FAILED,
+      );
+
+      await reconnectedPayer.disconnect();
+      services.remove(reconnectedPayer);
+      final finalPayer = serviceFromEnvironment('PAYER');
+      services.add(finalPayer);
+      await finalPayer.connect();
+      final reconciledFailure = await finalPayer.reconcileOutgoingPayment(
+        invoice: failedInvoice.invoice,
+      );
+      expect(reconciledFailure?.status, PaymentStatus.FAILED);
     },
     skip: integrationEnabled
         ? false
@@ -118,3 +161,17 @@ List<int> hexToBytes(String value) => [
       for (var i = 0; i < value.length; i += 2)
         int.parse(value.substring(i, i + 2), radix: 16),
     ];
+
+Future<PayInvoiceResult?> waitForReconciledStatus(
+  LdkServerService service,
+  String invoice,
+  PaymentStatus expected,
+) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 90));
+  while (DateTime.now().isBefore(deadline)) {
+    final result = await service.reconcileOutgoingPayment(invoice: invoice);
+    if (result?.status == expected) return result;
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+  }
+  return service.reconcileOutgoingPayment(invoice: invoice);
+}

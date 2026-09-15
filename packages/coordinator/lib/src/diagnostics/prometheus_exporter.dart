@@ -302,6 +302,33 @@ class _PrometheusFormatter {
       'Whether Telegram is configured (1 or 0).',
       _asBoolNum(coordinator['telegram_configured']),
     );
+
+    final ldkServer = coordinator['ldk_server'];
+    if (ldkServer is Map<String, dynamic>) {
+      gauge(
+        'bitblik_ldk_server_event_stream_connected',
+        'Whether ldk-server event stream is connected (1 or 0).',
+        _asBoolNum(ldkServer['event_stream_connected']),
+      );
+      counter(
+        'bitblik_ldk_server_event_stream_disconnects_total',
+        'Total established ldk-server event stream disconnections.',
+        _asNum(ldkServer['event_stream_disconnects']),
+      );
+      counter(
+        'bitblik_ldk_server_event_stream_reconnects_total',
+        'Total successful ldk-server event stream reconnections.',
+        _asNum(ldkServer['event_stream_reconnects']),
+      );
+      final lastEventTimestamp = ldkServer['last_event_timestamp'];
+      if (lastEventTimestamp is num) {
+        gauge(
+          'bitblik_ldk_server_last_event_timestamp_seconds',
+          'Unix timestamp of last ldk-server event received.',
+          lastEventTimestamp,
+        );
+      }
+    }
   }
 
   void _writeNostr(Map<String, dynamic>? nostr) {

@@ -884,6 +884,10 @@ class CoordinatorService {
     final ldkHost = _env['LDK_SERVER_HOST'];
     final ldkCertPath = _env['LDK_SERVER_CERT_PATH'];
     final ldkApiKey = _env['LDK_SERVER_API_KEY'];
+    final ldkPortText = _env['LDK_SERVER_PORT'];
+    final ldkPort = ldkPortText == null || ldkPortText.trim().isEmpty
+        ? 3536
+        : int.tryParse(ldkPortText) ?? 0;
     final hasLdkConfiguration = ldkHost?.isNotEmpty == true &&
         ldkCertPath?.isNotEmpty == true &&
         ldkApiKey?.isNotEmpty == true;
@@ -910,7 +914,7 @@ class CoordinatorService {
         connect: () async {
           final service = LdkServerService(
             host: ldkHost!,
-            port: int.tryParse(_env['LDK_SERVER_PORT'] ?? '') ?? 3536,
+            port: ldkPort,
             certificatePath: ldkCertPath!,
             apiKey: ldkApiKey!,
             clock: _clock,
@@ -1971,6 +1975,9 @@ class CoordinatorService {
       'cached_rate_timestamps': _cachedRateTimes.length,
       'matrix_initialized': _matrixClient != null,
       'telegram_configured': _telegramService?.isConfigured ?? false,
+      'ldk_server': _paymentBackend is LdkServerService
+          ? (_paymentBackend as LdkServerService).debugSnapshot()
+          : null,
       'flow_counters': flowCounters,
     };
   }

@@ -181,14 +181,18 @@ class LdkServerService implements PaymentService {
   ClientChannel? _channel;
   LdkServerClientAdapter? _adapter;
   StreamSubscription<ldk_events.EventEnvelope>? _eventSubscription;
-  final StreamController<InvoiceUpdate> _updates =
+  StreamController<InvoiceUpdate> _updates =
       StreamController<InvoiceUpdate>.broadcast();
   final Set<String> _claimableHashes = {};
   final Map<String, Future<void>> _hashLocks = {};
-  Timer? _reconnectTimer;
   late Duration _reconnectDelay;
   bool _stopping = false;
   bool _reconnectPending = false;
+  int _reconnectGeneration = 0;
+  bool _eventStreamConnected = false;
+  int _eventStreamDisconnects = 0;
+  int _eventStreamReconnects = 0;
+  DateTime? _lastEventAt;
 
   LdkServerService({
     required this.host,
@@ -212,6 +216,9 @@ class LdkServerService implements PaymentService {
     if (_adapter != null) return;
     _validateConfiguration();
     _stopping = false;
+    if (_updates.isClosed) {
+      _updates = StreamController<InvoiceUpdate>.broadcast();
+    }
 
     try {
       if (_injectedAdapter != null) {
@@ -264,9 +271,15 @@ class LdkServerService implements PaymentService {
   Future<void> _startEventStream({required bool initial}) async {
     final eventStream = _adapter!.subscribeEvents();
     var ended = false;
+    var ready = false;
     late final StreamSubscription<ldk_events.EventEnvelope> nextSubscription;
     void disconnected([Object? error, StackTrace? stack]) {
+      if (ended) return;
       ended = true;
+      if (ready && !_stopping) {
+        _eventStreamConnected = false;
+        _eventStreamDisconnects++;
+      }
       if (error != null) {
         AppLogger.warning('ldk-server event stream disconnected.',
             error: error);
@@ -291,8 +304,11 @@ class LdkServerService implements PaymentService {
     final previousSubscription = _eventSubscription;
     _eventSubscription = nextSubscription;
     await previousSubscription?.cancel();
+    ready = true;
+    _eventStreamConnected = !ended;
     _reconnectDelay = initialReconnectDelay;
     _reconnectPending = false;
+    if (!initial) _eventStreamReconnects++;
     AppLogger.info(initial
         ? 'ldk-server event stream connected.'
         : 'ldk-server event stream reconnected.');
@@ -303,22 +319,29 @@ class LdkServerService implements PaymentService {
     if (_stopping || _adapter == null || _reconnectPending) return;
     _reconnectPending = true;
     final wait = _reconnectDelay;
+    final generation = _reconnectGeneration;
     final doubled = _reconnectDelay * 2;
     _reconnectDelay = doubled > maxReconnectDelay ? maxReconnectDelay : doubled;
-    _reconnectTimer = Timer(wait, () async {
-      _reconnectTimer = null;
-      try {
-        await _startEventStream(initial: false);
-      } catch (error) {
-        _reconnectPending = false;
-        AppLogger.warning('ldk-server event stream reconnect failed.',
-            error: error);
-        _scheduleReconnect();
-      }
-    });
+    unawaited(_reconnectAfter(wait, generation));
+  }
+
+  Future<void> _reconnectAfter(Duration wait, int generation) async {
+    await delay(wait);
+    if (_stopping || generation != _reconnectGeneration || _adapter == null) {
+      return;
+    }
+    try {
+      await _startEventStream(initial: false);
+    } catch (error) {
+      _reconnectPending = false;
+      AppLogger.warning('ldk-server event stream reconnect failed.',
+          error: error);
+      _scheduleReconnect();
+    }
   }
 
   void _handleEvent(ldk_events.EventEnvelope envelope) {
+    _lastEventAt = clock.now().toUtc();
     try {
       if (envelope.hasPaymentClaimable()) {
         final event = envelope.paymentClaimable;
@@ -367,10 +390,10 @@ class LdkServerService implements PaymentService {
   Future<void> disconnect() async {
     _stopping = true;
     _reconnectPending = false;
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
+    _reconnectGeneration++;
     await _eventSubscription?.cancel();
     _eventSubscription = null;
+    _eventStreamConnected = false;
     await _channel?.shutdown();
     _channel = null;
     _adapter = null;
@@ -393,7 +416,10 @@ class LdkServerService implements PaymentService {
       expirySecs: 86400,
       paymentHash: hash,
     );
-    final response = await adapter.bolt11ReceiveForHash(request);
+    final response = await _rpc(
+      'create hold invoice',
+      adapter.bolt11ReceiveForHash(request),
+    );
     if (response.invoice.trim().isEmpty) {
       throw StateError('ldk-server returned an empty BOLT11 invoice.');
     }
@@ -485,13 +511,20 @@ class LdkServerService implements PaymentService {
       if (before.status == ldk_types.PaymentStatus.FAILED) {
         throw StateError('Cannot settle canceled ldk-server invoice.');
       }
-      await _requireAdapter().bolt11ClaimForHash(
-        ldk_api.Bolt11ClaimForHashRequest(
-          paymentHash: hash,
-          preimage: preimage,
+      if (before.status != ldk_types.PaymentStatus.PENDING) {
+        throw StateError('Cannot settle ldk-server invoice in unknown state.');
+      }
+      await _rpc(
+        'claim invoice',
+        _requireAdapter().bolt11ClaimForHash(
+          ldk_api.Bolt11ClaimForHashRequest(
+            paymentHash: hash,
+            preimage: preimage,
+          ),
         ),
       );
-      final terminal = await _pollPayment(hash);
+      final terminal =
+          await _pollPayment(hash, ldk_types.PaymentDirection.INBOUND);
       if (terminal?.status != ldk_types.PaymentStatus.SUCCEEDED) {
         throw StateError(terminal?.status == ldk_types.PaymentStatus.FAILED
             ? 'ldk-server invoice failed while settling.'
@@ -520,10 +553,16 @@ class LdkServerService implements PaymentService {
             InvoiceUpdate(paymentHash: hash, status: InvoiceStatus.CANCELED));
         return const CancelInvoiceResult.cancelled();
       }
+      if (before.status != ldk_types.PaymentStatus.PENDING) {
+        throw StateError('Cannot cancel ldk-server invoice in unknown state.');
+      }
 
       try {
-        await _requireAdapter().bolt11FailForHash(
-          ldk_api.Bolt11FailForHashRequest(paymentHash: hash),
+        await _rpc(
+          'fail invoice',
+          _requireAdapter().bolt11FailForHash(
+            ldk_api.Bolt11FailForHashRequest(paymentHash: hash),
+          ),
         );
       } catch (_) {
         final reconciled = await _getPayment(hash);
@@ -537,7 +576,8 @@ class LdkServerService implements PaymentService {
         if (reconciled.status != ldk_types.PaymentStatus.FAILED) rethrow;
       }
 
-      final terminal = await _pollPayment(hash);
+      final terminal =
+          await _pollPayment(hash, ldk_types.PaymentDirection.INBOUND);
       if (terminal == null) {
         throw StateError(
             'Timed out confirming ldk-server invoice cancellation.');
@@ -567,7 +607,7 @@ class LdkServerService implements PaymentService {
     final adapter = _requireAdapter();
     late ldk_api.DecodeInvoiceResponse decoded;
     try {
-      decoded = await adapter.decodeInvoice(invoice);
+      decoded = await _rpc('decode invoice', adapter.decodeInvoice(invoice));
     } catch (error) {
       return PayInvoiceResult(
         status: domain.PaymentStatus.FAILED,
@@ -615,7 +655,7 @@ class LdkServerService implements PaymentService {
     }
 
     try {
-      final response = await adapter.bolt11Send(request);
+      final response = await _rpc('send payment', adapter.bolt11Send(request));
       final returnedId = _normalizeHash(response.paymentId, 'payment ID');
       if (returnedId != hash) {
         throw StateError('ldk-server returned mismatched payment ID.');
@@ -630,7 +670,7 @@ class LdkServerService implements PaymentService {
 
     late final ldk_types.Payment? payment;
     try {
-      payment = await _pollPayment(hash);
+      payment = await _pollPayment(hash, ldk_types.PaymentDirection.OUTBOUND);
     } catch (error) {
       return PayInvoiceResult(
         status: domain.PaymentStatus.UNKNOWN,
@@ -663,7 +703,8 @@ class LdkServerService implements PaymentService {
     final adapter = _requireAdapter();
     late final String hash;
     try {
-      final decoded = await adapter.decodeInvoice(invoice);
+      final decoded =
+          await _rpc('decode invoice', adapter.decodeInvoice(invoice));
       hash = _normalizeHash(decoded.paymentHash, 'decoded payment hash');
     } catch (error) {
       AppLogger.warning('ldk-server outgoing invoice decode unavailable.',
@@ -737,23 +778,44 @@ class LdkServerService implements PaymentService {
     }
   }
 
-  Future<ldk_types.Payment?> _getPayment(String hash) async {
-    final response = await _requireAdapter().getPaymentDetails(hash);
+  Future<ldk_types.Payment?> _getPayment(String hash,
+      {Duration? timeout}) async {
+    final response = await _rpc(
+      'lookup payment',
+      _requireAdapter().getPaymentDetails(hash),
+      timeout: timeout,
+    );
     return response.hasPayment() ? response.payment : null;
   }
 
-  Future<ldk_types.Payment?> _pollPayment(String hash) async {
+  Future<ldk_types.Payment?> _pollPayment(
+      String hash, ldk_types.PaymentDirection direction) async {
     final deadline = clock.now().add(operationTimeout);
     ldk_types.Payment? last;
-    while (!clock.now().isAfter(deadline)) {
-      last = await _getPayment(hash);
+    while (clock.now().isBefore(deadline)) {
+      final remaining = deadline.difference(clock.now());
+      last = await _getPayment(hash, timeout: remaining);
+      if (last != null) _requirePayment(last, hash, direction);
       if (last == null || last.status != ldk_types.PaymentStatus.PENDING) {
         return last;
       }
-      await delay(const Duration(milliseconds: 250));
+      final afterLookup = deadline.difference(clock.now());
+      if (afterLookup <= Duration.zero) break;
+      await delay(afterLookup < const Duration(milliseconds: 250)
+          ? afterLookup
+          : const Duration(milliseconds: 250));
     }
     return last;
   }
+
+  Map<String, dynamic> debugSnapshot() => {
+        'event_stream_connected': _eventStreamConnected,
+        'event_stream_disconnects': _eventStreamDisconnects,
+        'event_stream_reconnects': _eventStreamReconnects,
+        'last_event_timestamp': _lastEventAt == null
+            ? null
+            : _lastEventAt!.millisecondsSinceEpoch ~/ 1000,
+      };
 
   String? _validatedPaymentHash(
       ldk_types.Payment payment, ldk_types.PaymentDirection direction) {
@@ -796,6 +858,15 @@ class LdkServerService implements PaymentService {
 
   LdkServerClientAdapter _requireAdapter() {
     return _adapter ?? (throw StateError('ldk-server is not connected.'));
+  }
+
+  Future<T> _rpc<T>(String operation, Future<T> future,
+      {Duration? timeout}) async {
+    try {
+      return await future.timeout(timeout ?? operationTimeout);
+    } catch (error) {
+      throw _operationError(operation, error);
+    }
   }
 
   static int _satsToMsat(int sats, String name, {bool allowZero = false}) {

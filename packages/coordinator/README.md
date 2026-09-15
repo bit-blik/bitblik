@@ -93,6 +93,18 @@ limitation manually, disconnect coordinator after invoice creation and before
 payment reaches receiver; reconnect and verify `lookupInvoice` reports `OPEN`
 for server-side `PENDING`, never `ACCEPTED`.
 
+When metrics exporter is enabled, monitor
+`bitblik_ldk_server_event_stream_connected`,
+`bitblik_ldk_server_event_stream_disconnects_total`,
+`bitblik_ldk_server_event_stream_reconnects_total`, and
+`bitblik_ldk_server_last_event_timestamp_seconds`. Stream health cannot detect
+events silently dropped by ldk-server's bounded broadcast channel.
+
+Vendored gRPC definitions come from ldk-server revision recorded in
+`protos/ldk_server/REVISION`. Regenerate committed Dart bindings with
+`tool/generate_ldk_server_protos.sh`; script is tested with libprotoc 3.21.12
+and Dart `protoc_plugin` 22.0.1.
+
 ### 4. Setup notifications (optional)
 
 TODO
