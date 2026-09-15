@@ -43,6 +43,7 @@ dependencies:
   #flutter_openssl_crypto: ^0.5.0
   path: ^1.8.0
   clock: ^1.1.1
+  crypto: ^3.0.6
 #  flutter_vodozemac: ^0.2.2
 #
 

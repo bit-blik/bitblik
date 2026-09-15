@@ -19,6 +19,7 @@ import 'package:uuid/uuid.dart';
 
 import 'package:bitblik_core/core.dart';
 import 'database_service.dart';
+import 'ldk_server_service.dart';
 import 'lnd_service.dart';
 import 'nwc_service.dart';
 import 'payment_service.dart';
@@ -67,6 +68,7 @@ part 'actions/twint/set_new_code.dart';
 
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
+const int kMinimumTakerRoutingFeeSats = 10;
 
 class _PendingOfferRecord {
   final Map<String, dynamic> data;
@@ -97,17 +99,46 @@ class _OutgoingPaymentResult {
 }
 
 /// Obtains a payment backend: a connected service plus the type name to report
-/// ("lnd" / "nwc"), or `(null, "none")` when the configured backend could not
+/// ("lnd" / "nwc" / "ldk-server"), or `(null, "none")` when the configured backend could not
 /// be reached. Throwing means the coordinator is misconfigured, which is fatal
 /// at startup; returning `(null, "none")` means "down right now", which is not.
 typedef PaymentBackendConnector
     = Future<({PaymentService? backend, String type})> Function();
 
+class PaymentBackendCandidate {
+  final String type;
+  final Future<PaymentService> Function() connect;
+
+  const PaymentBackendCandidate({required this.type, required this.connect});
+}
+
+Future<({PaymentService? backend, String type})>
+    connectPaymentBackendCandidates(
+        List<PaymentBackendCandidate> candidates) async {
+  if (candidates.isEmpty) {
+    throw Exception(
+        'CRITICAL: No payment backend configured. Hold invoice functionality will be disabled.');
+  }
+  for (final candidate in candidates) {
+    AppLogger.info('Initializing ${candidate.type} payment backend...');
+    try {
+      final backend = await candidate.connect();
+      AppLogger.info('${candidate.type} payment backend connected.');
+      return (backend: backend, type: candidate.type);
+    } catch (error) {
+      AppLogger.warning(
+          '${candidate.type} payment backend failed; trying next.',
+          error: error);
+    }
+  }
+  return (backend: null, type: 'none');
+}
+
 class CoordinatorService {
   final DatabaseService _dbService;
   PaymentService? _paymentBackend; // Unified payment backend
   String _paymentBackendType =
-      "none"; // To track active backend: "lnd", "nwc", or "none"
+      "none"; // To track active backend: "lnd", "nwc", "ldk-server", or "none"
 
   /// Active backend type; "none" while no backend is connected.
   String get paymentBackendType => _paymentBackendType;
@@ -851,52 +882,66 @@ class CoordinatorService {
       _connectPaymentBackendFromEnv() async {
     final nwcUri = _env['NWC_URI'];
     final lndHost = _env['LND_HOST'];
+    final ldkHost = _env['LDK_SERVER_HOST'];
+    final ldkCertPath = _env['LDK_SERVER_CERT_PATH'];
+    final ldkApiKey = _env['LDK_SERVER_API_KEY'];
+    final ldkPortText = _env['LDK_SERVER_PORT'];
+    final ldkPort = ldkPortText == null || ldkPortText.trim().isEmpty
+        ? 3536
+        : int.tryParse(ldkPortText) ?? 0;
+    final hasLdkConfiguration = ldkHost?.isNotEmpty == true &&
+        ldkCertPath?.isNotEmpty == true &&
+        ldkApiKey?.isNotEmpty == true;
+    final candidates = <PaymentBackendCandidate>[];
 
     if (nwcUri != null && nwcUri.isNotEmpty) {
-      AppLogger.info('NWC_URI found. Initializing NwcService...');
-      try {
-        final nwcService = NwcService(
-          nwcUri: nwcUri,
-          enableBolt12Recovery:
-              nwcBolt12RecoveryEnabled(_env['NWC_BOLT12_RECOVERY']),
-        );
-        await nwcService.connect();
-        AppLogger.info('NwcService initialized and connected successfully.');
-        return (backend: nwcService, type: "nwc");
-      } catch (e) {
-        AppLogger.info('Error initializing NwcService: $e');
-        AppLogger.info(
-            'Falling back to LND check due to NWC initialization error.');
-        if (lndHost != null && lndHost.isNotEmpty) {
-          return _connectLndService(lndHost);
-        } else {
-          throw Exception("CRITICAL: NWC failed and LND_HOST not configured");
-        }
-      }
-    } else if (lndHost != null && lndHost.isNotEmpty) {
-      return _connectLndService(lndHost);
-    } else {
-      throw Exception(
-          "CRITICAL: No payment backend configured (NWC_URI or LND_HOST not set). Hold invoice functionality will be disabled.");
+      candidates.add(PaymentBackendCandidate(
+        type: 'nwc',
+        connect: () async {
+          final service = NwcService(
+            nwcUri: nwcUri,
+            enableBolt12Recovery:
+                nwcBolt12RecoveryEnabled(_env['NWC_BOLT12_RECOVERY']),
+          );
+          await service.connect();
+          return service;
+        },
+      ));
     }
-  }
 
-  Future<({PaymentService? backend, String type})> _connectLndService(
-      String lndHost) async {
-    AppLogger.info(
-        'LND_HOST found ($lndHost). Initializing LndService (uses internal env vars for details)...');
-    try {
-      final lndService = LndService();
-      await lndService.connect();
-      AppLogger.info('LndService initialized and connected successfully.');
-      return (backend: lndService, type: "lnd");
-    } catch (e) {
-      // Not fatal and not permanent: LND is commonly still booting or has a
-      // locked wallet while the coordinator starts. Report no backend and let
-      // the retry pick it up.
-      AppLogger.severe('Error initializing LndService: $e');
-      return (backend: null, type: "none");
+    if (hasLdkConfiguration) {
+      candidates.add(PaymentBackendCandidate(
+        type: 'ldk-server',
+        connect: () async {
+          final service = LdkServerService(
+            host: ldkHost!,
+            port: ldkPort,
+            certificatePath: ldkCertPath!,
+            apiKey: ldkApiKey!,
+            clock: _clock,
+          );
+          await service.connect();
+          return service;
+        },
+      ));
+    } else if (ldkHost?.isNotEmpty == true ||
+        ldkCertPath?.isNotEmpty == true ||
+        ldkApiKey?.isNotEmpty == true) {
+      AppLogger.warning('Incomplete ldk-server configuration; LDK_SERVER_HOST, '
+          'LDK_SERVER_CERT_PATH, and LDK_SERVER_API_KEY are all required.');
     }
+
+    if (lndHost != null && lndHost.isNotEmpty) {
+      candidates.add(PaymentBackendCandidate(
+        type: 'lnd',
+        connect: () async {
+          final service = LndService();
+          await service.connect();
+          return service;
+        },
+      ));
+    }
+    return connectPaymentBackendCandidates(candidates);
   }
 
   /// Re-attempts the payment backend connection after a failed one.
@@ -1931,6 +1976,9 @@ class CoordinatorService {
       'cached_rate_timestamps': _cachedRateTimes.length,
       'matrix_initialized': _matrixClient != null,
       'telegram_configured': _telegramService?.isConfigured ?? false,
+      'ldk_server': _paymentBackend is LdkServerService
+          ? (_paymentBackend as LdkServerService).debugSnapshot()
+          : null,
       'flow_counters': flowCounters,
     };
   }

@@ -11,7 +11,9 @@ encrypted picture evidence uses an existing coordinator kind-10063 Blossom
 list when available. If none exists, `BLOSSOM_SERVERS` is published as a
 fallback, or nostr.download and blossom.jumble.social when that setting is empty. An existing
 kind-10063 list always takes precedence over environment configuration.
-Currently supported are LND or a NWC connection with `make_hold_invoice` capability.
+Supported payment backends are NWC, ldk-server, and LND. When several are
+configured, coordinator tries them in that order and falls through when a
+backend cannot connect.
 
 ## Setup
 
@@ -27,7 +29,7 @@ Then copy the nsec to the `NOSTR_PRIVATE_KEY` field in the `docker-compose.yml`
 
 ### 3. Setup connection to your Lightning node
 
-you have two options:
+Choose one or configure several for fallback:
 ####  LND
 
 Copy your `admin.macaroon` and `tls.cert` files from your LND.
@@ -35,6 +37,73 @@ Copy your `admin.macaroon` and `tls.cert` files from your LND.
 #### NWC
 
 generate a new NWC connection with supported permission `make_hold_invoice` and paste it to the `NWC_URI` field in the `docker-compose.yml`
+
+#### ldk-server
+
+Copy `tls.crt` from the ldk-server data/configuration directory and copy its
+64-character lowercase API-key text. Configure:
+
+```yaml
+environment:
+  LDK_SERVER_HOST: ldk-server
+  LDK_SERVER_PORT: 3536
+  LDK_SERVER_CERT_PATH: /app/ldk-server-tls.crt
+  LDK_SERVER_API_KEY: <64-character-lowercase-api-key>
+volumes:
+  - ./ldk-server-tls.crt:/app/ldk-server-tls.crt:ro
+```
+
+`LDK_SERVER_HOST` must match a DNS name or IP address in certificate SAN. With
+Docker networking, use service DNS name only when certificate includes it.
+Keep coordinator and ldk-server clocks synchronized: signed requests permit
+only 60 seconds of clock skew at pinned API revision.
+
+ldk-server claimable events have a major availability limitation. They use a
+bounded live broadcast stream without replay. ldk-server also silently skips
+events when its subscriber falls behind. If coordinator is stopped,
+disconnected, or lagged when `PaymentClaimable` occurs, it cannot distinguish
+funded hold invoice from unpaid invoice through `GetPaymentDetails`; both are
+`PENDING`. Coordinator conservatively reports `OPEN`, so funded offer may never
+be published and incoming HTLC eventually times out. Monitor stream
+disconnect/reconnect logs and keep connection stable.
+
+Only coordinator should settle or cancel its ldk-server hold invoices. Local
+operations are serialized, but pinned server API provides no atomic guard
+against another process settling while coordinator cancels.
+
+Run opt-in integration coverage against two funded, connected regtest/signet
+ldk-server nodes:
+
+```bash
+LDK_SERVER_INTEGRATION=1 \
+LDK_SERVER_INTEGRATION_RECEIVER_HOST=receiver.example \
+LDK_SERVER_INTEGRATION_RECEIVER_PORT=3536 \
+LDK_SERVER_INTEGRATION_RECEIVER_CERT_PATH=/path/to/receiver/tls.crt \
+LDK_SERVER_INTEGRATION_RECEIVER_API_KEY=<receiver-api-key> \
+LDK_SERVER_INTEGRATION_PAYER_HOST=payer.example \
+LDK_SERVER_INTEGRATION_PAYER_PORT=3536 \
+LDK_SERVER_INTEGRATION_PAYER_CERT_PATH=/path/to/payer/tls.crt \
+LDK_SERVER_INTEGRATION_PAYER_API_KEY=<payer-api-key> \
+dart test test/ldk_server_integration_test.dart
+```
+
+Test pays 1000 sats plus routing fee allowance from payer. Nodes must share
+network and have route/liquidity between them. To exercise accepted event-loss
+limitation manually, disconnect coordinator after invoice creation and before
+payment reaches receiver; reconnect and verify `lookupInvoice` reports `OPEN`
+for server-side `PENDING`, never `ACCEPTED`.
+
+When metrics exporter is enabled, monitor
+`bitblik_ldk_server_event_stream_connected`,
+`bitblik_ldk_server_event_stream_disconnects_total`,
+`bitblik_ldk_server_event_stream_reconnects_total`, and
+`bitblik_ldk_server_last_event_timestamp_seconds`. Stream health cannot detect
+events silently dropped by ldk-server's bounded broadcast channel.
+
+Vendored gRPC definitions come from ldk-server revision recorded in
+`protos/ldk_server/REVISION`. Regenerate committed Dart bindings with
+`tool/generate_ldk_server_protos.sh`; script is tested with libprotoc 3.21.12
+and Dart `protoc_plugin` 22.0.1.
 
 ### 4. Setup notifications (optional)
 

@@ -131,7 +131,9 @@ class Bolt12OfferParser {
 
     return Bolt12OfferInfo(
       normalized: normalized,
-      offerId: hex.encode(_merkleRoot(fields)),
+      offerId: hex.encode(
+        _taggedHash(utf8.encode('LDK Offer ID'), _merkleRoot(fields)),
+      ),
       network: expectedNetwork,
       amountMsat: amountMsat,
       isExpired: expired,

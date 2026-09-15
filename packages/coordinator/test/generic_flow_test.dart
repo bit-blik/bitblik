@@ -699,12 +699,16 @@ void main() {
       expect(current, 'takerPaymentFailed');
     });
 
-    test('variable BOLT12 payout sends exact amount and needs no preimage',
+    test('variable BOLT12 payout sends exact amount with minimum route fee',
         () async {
       const offer =
           'lno1zcss9mk8y3wkklfvevcrszlmu23kfrxh49px20665dqwmn4p72pksese';
       when(gdb.getOfferById('p1'))
-          .thenAnswer((_) async => payoutOffer(takerOffer: offer));
+          .thenAnswer((_) async => payoutOffer(
+                takerOffer: offer,
+                amountSats: 102,
+                takerFees: 1,
+              ));
       stubCas();
       when(gpay.isBolt12Available).thenReturn(true);
       when(gpay.decodeOffer(offer: anyNamed('offer'))).thenAnswer(
@@ -740,13 +744,13 @@ void main() {
       await pumpEventQueue(times: 100);
 
       expect(current, 'takerPaid');
-      final amounts = verify(gpay.payOffer(
+      final paymentArguments = verify(gpay.payOffer(
         offer: offer,
         amountSat: captureAnyNamed('amountSat'),
-        feeLimitSat: anyNamed('feeLimitSat'),
+        feeLimitSat: captureAnyNamed('feeLimitSat'),
         paymentAttemptId: anyNamed('paymentAttemptId'),
       )).captured;
-      expect(amounts.single, 1500);
+      expect(paymentArguments, [101, 10]);
     });
 
     test('submitted unknown attempt is reconciled and never resent', () async {
@@ -793,6 +797,34 @@ void main() {
       await pumpEventQueue(times: 100);
 
       expect(current, 'takerPaid');
+      verifyNever(gpay.payInvoice(
+        invoice: anyNamed('invoice'),
+        amountSat: anyNamed('amountSat'),
+        feeLimitSat: anyNamed('feeLimitSat'),
+      ));
+    });
+
+    test('submitted attempt finalized as failed is not resent', () async {
+      stubOutgoingPaymentAttempts(
+        gdb,
+        initialState: OutgoingPaymentAttemptState.submitted,
+      );
+      when(gdb.getOfferById('p1'))
+          .thenAnswer((_) async => payoutOffer(takerInvoice: invoice));
+      stubCas();
+      when(gpay.reconcileOutgoingPayment(invoice: anyNamed('invoice')))
+          .thenAnswer(
+        (_) async => PayInvoiceResult(
+          status: PaymentStatus.FAILED,
+          paymentId: 'wallet-transaction',
+          paymentError: 'payment failed',
+        ),
+      );
+
+      await gsvc.flow.handleRpc('confirm_payment', {'offer_id': 'p1'}, maker);
+      await pumpEventQueue(times: 100);
+
+      expect(current, 'takerPaymentFailed');
       verifyNever(gpay.payInvoice(
         invoice: anyNamed('invoice'),
         amountSat: anyNamed('amountSat'),

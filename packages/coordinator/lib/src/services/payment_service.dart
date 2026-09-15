@@ -61,11 +61,12 @@ abstract class PaymentService {
   ///
   /// [payInvoice] is not idempotent: a timeout or transport error does not
   /// prove the payment failed — the wallet may have settled it anyway. This
-  /// queries the backend for the outgoing payment state and returns a
-  /// successful [PayInvoiceResult] (preimage + fee) when the invoice is
-  /// already settled, or `null` when it is not settled / cannot be confirmed.
-  /// Used before declaring failure and before retrying, to avoid marking a
-  /// paid offer as failed or double-paying the taker.
+  /// queries the backend for the outgoing payment state. A non-null result
+  /// carries an explicit status: succeeded with proof, pending, failed, or
+  /// unknown. `null` means no authoritative record was found or lookup was
+  /// unavailable. Callers must inspect [PayInvoiceResult.status]. Used before
+  /// declaring failure and before retrying, to avoid marking a paid offer as
+  /// failed or double-paying the taker.
   Future<PayInvoiceResult?> reconcileOutgoingPayment({required String invoice});
 }
 
