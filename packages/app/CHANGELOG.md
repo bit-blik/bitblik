@@ -9,7 +9,6 @@
 - feat: dark theme
 - feat: refund maker with invoice entered in app when dispute ruled against taker
 - fix: preserve wallet state when generating or restoring a Neko
-- fix: many security issues discovered with LLMs and with help from SK contributors
 
 ## [0.10.1] - 2026-08-22
 
