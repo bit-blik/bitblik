@@ -1,7 +1,9 @@
 ## [0.11.0] - 2026-09-??
+
 - feat: dispute chat with coordinator
-- feat: bolt12 wallet support
-- feat: automatic new release version update from nip-82 event (zapstore)
+- feat: bolt12 wallet payout (only for supported coordinators)
+- feat: new release version update information from nip-82 event (zapstore)
+- feat: self update to newest version from the app
 - fix: cashu backup/restore to/from file
 - feat: dark theme
 - feat: refund maker with invoice entered in app when dispute ruled against taker
@@ -9,30 +11,36 @@
 - fix: many security issues discovered with LLMs
 
 ## [0.10.1] - 2026-08-22
+
 - feat: add new SK Prima bank
 - fix: SK VÚB code validity is 10 minutes, not 3
 
 ## [0.10.0] - 2026-08-11
+
 - feat: support Slovakian payment system ATM for 3 banks (Tatra, SLSP, VUB)
 - feat: add SK translation
 - feat: support NFC reading on LNURL lightning addresses and adding wallet
 - fix: providing a new invoice for paying out the taker doesn't get stored
 - fix: keep taker charged actions visible on small screens and warn before abandoning a potentially charged code
 - feat: support TWINT Swiss payment system
-- feat: add DE & FR language translations
+- feat: add DE &amp; FR language translations
 
 ## [0.8.3] - 2026-06-22
+
 - feat: discover coordinators onboarding
 
 ## [0.8.2]  - 2026-06-19
+
 - fix: make code input flexible to amount of digits
 - fix: add mbway instructions for using the code
 
 ## [0.8.1]  - 2026-06-18
+
 - fix: extract code with digits amount from pasted text
 - fix: remove 10EUR bank note denomination
 
 ## [0.8.0] - 2026-06-18
+
 - feat: choice of payment system per country
 - feat: support MB WAY for Portugal with 10 digit codes for ATMs
 - feat: portuguese translation
@@ -43,6 +51,7 @@
 - fix: improve finished offers stats by doing it client-side
 
 ## [0.7.0] - 2026-06-04
+
 - feat: premium % option for makers
 - feat: nip-65 for dynamic coordinator relay discovery
 - feat: use kind 0 metadata for coordinator photo/name
@@ -52,11 +61,12 @@
 - feat: coordinator details screen
 
 ## [0.6.0] - 2026-06-01
+
 - feat: new category field: shop/atm/online
 - feat: local notifications for change of status
 - feat: optional background service monitoring new offers
 - feat: my offers list
-- feat: coordinator list sorted by most used (locally & globally)
+- feat: coordinator list sorted by most used (locally &amp; globally)
 - feat: choose wallet for paying if default has no balance/budget
 - feat: choose wallet for generating new invoice if taker payment failed
 - feat: finished orders filter by coordinator
@@ -64,43 +74,52 @@
 - fix: ios keyboard during takerPaymentFailed doesn't hide on un-focus
 
 ## [0.5.1] - 2026-04-02
+
 - fix: wallet initialization
 - fix: NWC cached permissions to improve UX
 - feat: Alby Go NWC connect available on iOS
 
 ## [0.5.0] - 2026-04-01
+
 - multiple wallets support
 - cashu wallet
 - taker receive to any wallet that supports it, like NWC or cashu, not just LNURL
 - better privacy since lnurl is no longer sent to the coordinator, just the invoice
 
 ## [0.4.6] - 2026-01-24
+
 - fix: numeric keyboard not hiding on un-focus
 - fix: apple app links support
 
 ## [0.4.5] - 2025-12-15
+
 - add relay connection indicator in app bar 
 - improve relay connection handling
 - connect wallet popup with Alby Go 1-click connection
 - NWC connection QR scanner screen
 
-
 ## [0.4.4] - 2025-12-13
+
 ### Fixed
+
 - fix reconnect to relays when app goes to background
 
 ## [0.4.3]
+
 - 🇮🇹 italian translation
 - improve FAQ
 - don't check coordinator health immediately, assume healthy
 
 ## [0.4.0]
+
 - initial NWC wallet support
 - fix offer's list state update bug
 
 ## [0.3.0]
-- use nostr relays & websockets for client/coordinator communication
+
+- use nostr relays &amp; websockets for client/coordinator communication
 - backup/restore private keys
 - multi coordinators
-- Telegram & Signal notifications support
+- Telegram &amp; Signal notifications support
 - new design/graphics UI/UX
+
