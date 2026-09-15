@@ -1,8 +1,12 @@
 import 'package:bitblik_telegram_bot/bitblik_telegram_bot.dart';
+import 'package:ndk/ndk.dart' show Nip19;
 import 'package:test/test.dart';
 
 void main() {
   test('parses market, deduplicated chats, and rate-limit settings', () {
+    final coordinatorBNpub = Nip19.encodePubKey(
+      'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    );
     final config = TelegramBotConfig.fromEnvironment({
       'TELEGRAM_BOT_TOKEN': 'token',
       'TELEGRAM_CHAT_IDS': '-1001, -1002, -1001',
@@ -11,7 +15,7 @@ void main() {
       'COORDINATOR_RATE_LIMIT_SECONDS': '90',
       'EXCLUDED_COORDINATOR_PUBKEYS':
           ' AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA, '
-              'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,'
+              '$coordinatorBNpub,'
               'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ',
     });
 
@@ -67,7 +71,7 @@ void main() {
       () => TelegramBotConfig.fromEnvironment({
         'TELEGRAM_BOT_TOKEN': 'token',
         'TELEGRAM_CHAT_IDS': '-1001',
-        'EXCLUDED_COORDINATOR_PUBKEYS': 'npub1not-supported,abcd',
+        'EXCLUDED_COORDINATOR_PUBKEYS': 'npub1invalid,abcd',
       }),
       throwsA(
         isA<FormatException>().having(

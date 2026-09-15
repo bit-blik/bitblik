@@ -33,7 +33,7 @@ a Telegram channel requires the central bot to be allowed to post.
 export PAYMENT_SYSTEM=blik
 export TELEGRAM_BOT_TOKEN=123456:secret
 export TELEGRAM_CHAT_IDS=-1001234567890
-export EXCLUDED_COORDINATOR_PUBKEYS=<64-character-hex-pubkey>,<another-pubkey>
+export EXCLUDED_COORDINATOR_PUBKEYS=npub1example,<64-character-hex-pubkey>
 export STATE_FILE=./telegram_bot_state.json
 dart run bin/server.dart
 ```
@@ -49,9 +49,10 @@ See [`.env.example`](.env.example) for all settings. `PAYMENT_SYSTEM` accepts
 `blik`, `mbway`, `twint`, or `sk`. Multiple comma-separated chat IDs are
 supported. The bot reads the selected system's canonical project Nostr
 identity from `bitblik_core` for discovery and muting.
-`EXCLUDED_COORDINATOR_PUBKEYS` accepts comma-separated, case-insensitive
-64-character hex pubkeys. Excluded coordinators are removed before offer
-subscription, so their offers never produce Telegram notifications.
+`EXCLUDED_COORDINATOR_PUBKEYS` accepts comma-separated `npub` or
+case-insensitive 64-character hex pubkeys. Excluded coordinators are removed
+before offer subscription, so their offers never produce Telegram
+notifications.
 
 CI publishes one generic image under `ghcr.io/<owner>/telegram-bot`. Set
 `PAYMENT_SYSTEM` when starting the container to select the market; the image is

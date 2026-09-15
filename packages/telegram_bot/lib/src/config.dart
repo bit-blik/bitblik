@@ -1,4 +1,5 @@
 import 'package:bitblik_core/core.dart';
+import 'package:ndk/ndk.dart' show Nip19;
 
 class TelegramBotConfig {
   final String botToken;
@@ -86,20 +87,26 @@ class TelegramBotConfig {
         .where((value) => value.isNotEmpty)
         .toSet();
 
-    final excludedCoordinatorPubkeys =
-        (env['EXCLUDED_COORDINATOR_PUBKEYS'] ?? '')
-            .split(',')
-            .map((value) => value.trim().toLowerCase())
-            .where((value) => value.isNotEmpty)
-            .toSet();
-    final invalidExcludedPubkey = excludedCoordinatorPubkeys
-        .where((pubkey) => !RegExp(r'^[0-9a-f]{64}$').hasMatch(pubkey))
-        .firstOrNull;
-    if (invalidExcludedPubkey != null) {
-      throw FormatException(
-        'EXCLUDED_COORDINATOR_PUBKEYS must contain comma-separated '
-        '64-character hex pubkeys; invalid value "$invalidExcludedPubkey"',
-      );
+    final excludedCoordinatorPubkeys = <String>{};
+    for (final rawValue
+        in (env['EXCLUDED_COORDINATOR_PUBKEYS'] ?? '').split(',')) {
+      final value = rawValue.trim().toLowerCase();
+      if (value.isEmpty) continue;
+      String pubkey;
+      try {
+        pubkey = value.startsWith('npub') ? Nip19.decode(value) : value;
+      } catch (_) {
+        throw FormatException(
+          'EXCLUDED_COORDINATOR_PUBKEYS contains invalid pubkey "$value"',
+        );
+      }
+      pubkey = pubkey.toLowerCase();
+      if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(pubkey)) {
+        throw FormatException(
+          'EXCLUDED_COORDINATOR_PUBKEYS contains invalid pubkey "$value"',
+        );
+      }
+      excludedCoordinatorPubkeys.add(pubkey);
     }
 
     return TelegramBotConfig(
