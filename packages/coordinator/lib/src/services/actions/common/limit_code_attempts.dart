@@ -1,5 +1,9 @@
 part of '../../coordinator_service.dart';
 
+// Cap on how many times a maker may mark a submitted code invalid before its
+// taker is blocked from re-reserving that offer.
+const int kMaxInvalidCodeAttempts = 3;
+
 /// Caps how many times a taker may re-reserve an offer out of `invalidBlik`.
 ///
 /// Without a cap the maker's "mark invalid" verdict lets the taker loop

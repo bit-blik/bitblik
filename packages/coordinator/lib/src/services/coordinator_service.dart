@@ -70,11 +70,6 @@ part 'actions/twint/set_new_code.dart';
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
 
-// Cap on how many times the maker may mark a submitted code invalid on the
-// same offer before the taker is blocked from re-reserving it (SK ATM: an
-// unbounded submit/invalid loop let the same withdrawal code be resubmitted).
-const int kMaxInvalidCodeAttempts = 3;
-
 /// Bilingual (English/local language) wording used in chat notifications
 /// (Telegram/Matrix/SimpleX/Signal) for new-offer announcements.
 class OfferNotificationStrings {
