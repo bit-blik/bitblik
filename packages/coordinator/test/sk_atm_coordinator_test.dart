@@ -577,14 +577,10 @@ void main() {
     });
   });
 
-  // ADDENDUM: `funded` re-entries (a cancelled/timed-out reservation reverting
-  // to funded) re-announced the offer as if it were new — 42 times since
-  // 2026-08-10, one messenger message per re-entry, often for an offer that
-  // expired in the same second. The re-entry's notification also lost the
-  // bank label: a DB re-fetch always has paymentSystemId == null (not a DB
-  // column), so the old bankForOffer(offer) fell back to the first EUR
-  // market (MB WAY), which has no `tatrabanka` bank.
-  group('funded re-entry: single notification, label survives a DB re-fetch',
+  // SendOfferNotificationsAction runs on every entry into `funded`. A DB-loaded
+  // offer has no paymentSystemId, so every notification must resolve the bank
+  // through this coordinator's payment system.
+  group('funded-entry notifications preserve bank label after a DB re-fetch',
       () {
     late MockDatabaseService db;
     late _CountingTelegramService telegram;
@@ -683,7 +679,7 @@ void main() {
       expect(telegram.sentMessages.single, contains('[Tatra banka]'));
     });
 
-    test('a second funded entry (re-list) sends no further notification',
+    test('a second funded entry sends another correctly labelled notification',
         () async {
       await svc.flow
           .handleRpc('cancel_reservation', {'offer_id': 'sk-relist'}, taker);
@@ -691,8 +687,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(telegram.sentMessages, hasLength(1));
 
-      // Taker reserves again and cancels a second time -> a re-list, not a
-      // new offer; the kind-38383 relay event still republishes regardless.
+      // Taker reserves again and cancels a second time, re-entering `funded`.
       await svc.flow
           .handleRpc('reserve_offer', {'offer_id': 'sk-relist'}, taker);
       expect(status, 'reserved');
@@ -701,8 +696,11 @@ void main() {
       expect(status, 'funded');
       await Future<void>.delayed(Duration.zero);
 
-      expect(telegram.sentMessages, hasLength(1),
-          reason: 're-entering funded must not re-announce the offer');
+      expect(telegram.sentMessages, hasLength(2));
+      expect(
+        telegram.sentMessages,
+        everyElement(contains('[Tatra banka]')),
+      );
     });
   });
 }
