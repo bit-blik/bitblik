@@ -2082,6 +2082,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final t = Translations.of(context);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final supportsCategory = _supportsOfferCategory(
       _selectedCoordinatorInfo?.version,
     );
@@ -2149,10 +2150,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         final selected =
                             isSupported && _selectedCategory == category;
                         final Color accent = !isSupported
-                                ? Colors.grey.shade400
+                                ? (isDark
+                                    ? colors.onSurfaceVariant
+                                    : Colors.grey.shade400)
                                 : selected
                                 ? Colors.red
-                                : Colors.grey[700]!;
+                                : (isDark
+                                    ? colors.onSurfaceVariant
+                                    : Colors.grey[700]!);
                         return Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(
@@ -2207,14 +2212,28 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                       border: Border.all(
                                         color: selected
                                                 ? Colors.red
+                                                : isDark
+                                                ? colors.outlineVariant
                                                 : Colors.grey.shade300,
                                         width: selected ? 1.6 : 1,
                                       ),
                                       color: !isSupported
-                                              ? Colors.grey.shade100
+                                              ? (isDark
+                                                  ? colors.surfaceContainerLow
+                                                  : Colors.grey.shade100)
                                               : selected
-                                              ? const Color(0xFFFFF2F6)
-                                              : Colors.white,
+                                              ? (isDark
+                                                  ? Color.alphaBlend(
+                                                      Colors.red.withValues(
+                                                        alpha: 0.14,
+                                                      ),
+                                                      colors
+                                                          .surfaceContainerHigh,
+                                                    )
+                                                  : const Color(0xFFFFF2F6))
+                                              : (isDark
+                                                  ? colors.surfaceContainerHigh
+                                                  : Colors.white),
                                     ),
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
@@ -2377,29 +2396,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 _buildAtmAmountPresets(t)
               else
                 // Large amount input field
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  curve: Curves.easeOutCubic,
+                Container(
                   padding: const EdgeInsets.symmetric(
                     vertical: 22.0,
                     horizontal: 20,
                   ),
-                  decoration:
-                      theme.brightness == Brightness.dark
-                          ? BoxDecoration(
-                            color: colors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color:
-                                  _amountFocusNode.hasFocus
-                                      ? colors.primary.withValues(alpha: 0.9)
-                                      : colors.outlineVariant.withValues(
-                                        alpha: 0.72,
-                                      ),
-                              width: _amountFocusNode.hasFocus ? 1.5 : 1,
-                            ),
-                          )
-                          : null,
+                  decoration: isDark
+                      ? BoxDecoration(
+                          color: colors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(16),
+                        )
+                      : null,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -2428,6 +2435,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               fontWeight: FontWeight.w300,
                             ),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
                             errorText: null, // Error shown below
                             contentPadding: EdgeInsets.zero,
                           ),
