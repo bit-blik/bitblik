@@ -1,8 +1,7 @@
 # BitBlik Telegram bot
 
 One central Telegram bot announces public funded offers from every discovered
-coordinator in one payment system. It replaces the per-coordinator Telegram
-bot permissions formerly needed for a generic group.
+coordinator in one payment system.
 
 The service:
 
