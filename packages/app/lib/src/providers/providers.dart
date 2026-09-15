@@ -1723,6 +1723,22 @@ class BitcoinDisplayUnitNotifier extends StateNotifier<BitcoinDisplayUnit> {
   }
 }
 
+final themePreferenceProvider = StateNotifierProvider<
+  ThemePreferenceNotifier,
+  AppThemePreference
+>((ref) => ThemePreferenceNotifier());
+
+class ThemePreferenceNotifier extends StateNotifier<AppThemePreference> {
+  ThemePreferenceNotifier([
+    super.initialPreference = AppThemePreference.system,
+  ]);
+
+  Future<void> set(AppThemePreference preference) async {
+    state = preference;
+    await AppPreferencesStore.saveThemePreference(preference);
+  }
+}
+
 /// Active payment method (country/payment-system) selected by the user. Drives
 /// code-length validation, the confirmation countdown, currency labels, and the
 /// filtering of coordinators/offers shown in the app. Defaults to BLIK.

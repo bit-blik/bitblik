@@ -53,7 +53,9 @@ class TakerProgressIndicator extends ConsumerWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: number <= active ? FontWeight.w500 : FontWeight.w400,
-            color: number == active ? Colors.black : Colors.grey,
+            color: number == active
+                ? Theme.of(context).colorScheme.onSurface
+                : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       );

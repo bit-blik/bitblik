@@ -237,15 +237,11 @@ class _MakerWaitForBlikScreenState
     });
 
     if (_isLoadingConfig) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_configError != null) {
       return Scaffold(
-        backgroundColor: Colors.white,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -266,7 +262,6 @@ class _MakerWaitForBlikScreenState
         offer.reservedAt == null ||
         _reservationDuration == null) {
       return Scaffold(
-        backgroundColor: Colors.white,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -284,7 +279,6 @@ class _MakerWaitForBlikScreenState
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -352,9 +346,9 @@ class _MakerWaitForBlikScreenState
                                   .read(selectedPaymentSystemProvider)
                                   .localizedCodeLabel,
                         ),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 24,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         textAlign: TextAlign.center,
                         softWrap: true,
@@ -406,9 +400,9 @@ class _MakerWaitForBlikScreenState
                         children: [
                           Text(
                             t.offers.labels.premium,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
-                              color: Colors.black87,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           PremiumChip(premiumPercent: offer.premiumPercent),
@@ -431,14 +425,17 @@ class _MakerWaitForBlikScreenState
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 16, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],

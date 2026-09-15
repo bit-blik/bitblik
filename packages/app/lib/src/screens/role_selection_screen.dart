@@ -283,7 +283,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                   ),
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: MediaQuery.of(context).size.width > 600 ? 48 : 32,
                   ),
                   textAlign: TextAlign.center,
@@ -300,7 +300,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                             .localizedCodeLabel,
                   ),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w400,
                     fontSize: 20,
                   ),
@@ -376,9 +376,12 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                                         .localizedCodeLabel,
                               ),
                               iconImage: 'assets/sell-blik.png',
-                              backgroundColor: Colors.white,
-                              textColor: const Color(0xFF000000),
-                              borderColor: Colors.grey[300],
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerLow,
+                              textColor: Theme.of(context).colorScheme.onSurface,
+                              borderColor:
+                                  Theme.of(context).colorScheme.outlineVariant,
                               onTap: () {
                                 if (kIsWeb) {
                                   context.go("/offers");
@@ -411,12 +414,15 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                       Icon(
                         Icons.help_outline,
                         size: 20,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         t.landing.actions.howItWorks,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 16,
+                        ),
                       ),
                     ],
                   ),

@@ -135,10 +135,13 @@ flutter:
     - assets/logo-trans.png
     - assets/nostr.png
     - assets/logo-horizontal.png
+    - assets/logo-horizontal-dark.png
     - assets/sell-blik.png
     - assets/bitway.png
+    - assets/bitway-dark.png
     - assets/bitway-icon.png
     - assets/bittwint.png
+    - assets/bittwint-dark.png
     - assets/bittwint-icon.png
     - assets/apk.png
     - assets/zapstore.png

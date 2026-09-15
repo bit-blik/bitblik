@@ -531,8 +531,9 @@ class _CoordinatorSelectorState extends ConsumerState<CoordinatorSelector> {
                                 },
                                 child: Text(
                                   t.coordinator.selector.termsAccept,
-                                  style: const TextStyle(
-                                    color: Colors.black,
+                                  style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                     fontSize: 14,
                                   ),
                                 ),

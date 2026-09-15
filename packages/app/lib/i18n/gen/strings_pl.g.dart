@@ -40,6 +40,7 @@ class TranslationsPl extends Translations with BaseTranslations<AppLocale, Trans
 
 	// Translations
 	@override late final _Translations$app$pl app = _Translations$app$pl._(_root);
+	@override late final _Translations$theme$pl theme = _Translations$theme$pl._(_root);
 	@override late final _Translations$common$pl common = _Translations$common$pl._(_root);
 	@override late final _Translations$lightningAddress$pl lightningAddress = _Translations$lightningAddress$pl._(_root);
 	@override late final _Translations$nfc$pl nfc = _Translations$nfc$pl._(_root);
@@ -83,6 +84,18 @@ class _Translations$app$pl extends Translations$app$en {
 	@override String title({required Object app}) => '${app}';
 	@override String get greeting => 'Cześć!';
 	@override String get changelog => 'Historia zmian';
+}
+
+// Path: theme
+class _Translations$theme$pl extends Translations$theme$en {
+	_Translations$theme$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get switchToLight => 'Przełącz na jasny motyw';
+	@override String get switchToDark => 'Przełącz na ciemny motyw';
+	@override String get openNostr => 'Otwórz profil Nostr';
 }
 
 // Path: common
@@ -3270,6 +3283,9 @@ extension on TranslationsPl {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Cześć!',
 			'app.changelog' => 'Historia zmian',
+			'theme.switchToLight' => 'Przełącz na jasny motyw',
+			'theme.switchToDark' => 'Przełącz na ciemny motyw',
+			'theme.openNostr' => 'Otwórz profil Nostr',
 			'common.code' => 'kod',
 			'common.buttons.cancel' => 'Anuluj',
 			'common.buttons.save' => 'Zapisz',
@@ -3776,11 +3792,11 @@ extension on TranslationsPl {
 			'twint.shop.cameraFailed' => 'Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie.',
 			'twint.shop.scanned' => 'Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty.',
 			'twint.shop.rescan' => 'Zeskanuj inny kod QR',
+			_ => null,
+		} ?? switch (path) {
 			'twint.shop.coordinatorUnsupported' => 'Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje.',
 			'twint.shop.loadingFailed' => 'Nie udało się wczytać kodu QR płatności. Spróbuj ponownie.',
 			'twint.shop.replacementInstructions' => 'Zeskanuj nowy kod QR sklepu na tę samą kwotę CHF co zasilona oferta.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.shop.replacementScanned' => 'Nowy kod QR odpowiada kwocie zasilonej oferty.',
 			'twint.shop.qrLabel' => 'Kod QR do płatności TWINT',
 			'twint.shop.payInstructions' => 'Zeskanuj ten kod QR w TWINT albo zapisz obraz i zaimportuj go z galerii w TWINT. Przed zapłatą sprawdź sprzedawcę i kwotę.',

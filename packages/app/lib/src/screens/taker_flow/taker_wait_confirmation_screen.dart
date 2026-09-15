@@ -1054,8 +1054,7 @@ Widget _buildInstructions(BuildContext context, List<String> instructions) {
     padding: const EdgeInsets.symmetric(horizontal: 12),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children:
-          instructions.asMap().entries.map((entry) {
+      children: instructions.asMap().entries.map((entry) {
             return Padding(
               padding: EdgeInsets.only(top: entry.key > 0 ? 8 : 0),
               child: _buildInstructionItem('-', entry.value),
@@ -1127,6 +1126,10 @@ Widget _buildPrimaryButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
+        disabledBackgroundColor: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest,
+        disabledForegroundColor: Theme.of(context).colorScheme.outline,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),

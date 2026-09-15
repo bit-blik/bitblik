@@ -40,6 +40,7 @@ class TranslationsPt extends Translations with BaseTranslations<AppLocale, Trans
 
 	// Translations
 	@override late final _Translations$app$pt app = _Translations$app$pt._(_root);
+	@override late final _Translations$theme$pt theme = _Translations$theme$pt._(_root);
 	@override late final _Translations$common$pt common = _Translations$common$pt._(_root);
 	@override late final _Translations$lightningAddress$pt lightningAddress = _Translations$lightningAddress$pt._(_root);
 	@override late final _Translations$nfc$pt nfc = _Translations$nfc$pt._(_root);
@@ -83,6 +84,18 @@ class _Translations$app$pt extends Translations$app$en {
 	@override String title({required Object app}) => '${app}';
 	@override String get greeting => 'Olá!';
 	@override String get changelog => 'Registo de alterações';
+}
+
+// Path: theme
+class _Translations$theme$pt extends Translations$theme$en {
+	_Translations$theme$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get switchToLight => 'Mudar para o tema claro';
+	@override String get switchToDark => 'Mudar para o tema escuro';
+	@override String get openNostr => 'Abrir perfil Nostr';
 }
 
 // Path: common
@@ -3296,6 +3309,9 @@ extension on TranslationsPt {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Olá!',
 			'app.changelog' => 'Registo de alterações',
+			'theme.switchToLight' => 'Mudar para o tema claro',
+			'theme.switchToDark' => 'Mudar para o tema escuro',
+			'theme.openNostr' => 'Abrir perfil Nostr',
 			'common.code' => 'código',
 			'common.buttons.cancel' => 'Cancelar',
 			'common.buttons.save' => 'Guardar',
@@ -3802,11 +3818,11 @@ extension on TranslationsPt {
 			'taker.criticalCodeDecision.actions.cancel' => 'Voltar e verificar o banco',
 			'taker.criticalCodeDecision.actions.proceed' => 'NÃO fui debitado — continuar',
 			'taker.conflict.title' => 'Confirmação do pagamento pendente',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.headline' => 'A aguardar a confirmação do maker',
 			'taker.conflict.body' => ({required Object code}) => 'Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.',
 			'taker.conflict.instructions' => 'O maker tem agora de confirmar o resultado. Se confirmar que o pagamento foi bem-sucedido, o seu pagamento continuará. Se confirmar que falhou, ou se o temporizador expirar, a oferta passará para uma disputa formal e o chat da disputa ficará disponível.',
-			_ => null,
-		} ?? switch (path) {
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'A disputa formal será aberta automaticamente dentro de ${time}',
 			'taker.conflict.actions.back' => 'Voltar ao início',
 			'taker.conflict.feedback.reported' => 'Conflito de pagamento reportado. A aguardar a confirmação do maker.',

@@ -6,6 +6,11 @@ app:
   greeting: Hallo!
   changelog: Änderungsprotokoll
 
+theme:
+  switchToLight: Zum hellen Design wechseln
+  switchToDark: Zum dunklen Design wechseln
+  openNostr: Nostr-Profil öffnen
+
 # =============================================================================
 # COMMON UI ELEMENTS
 # =============================================================================

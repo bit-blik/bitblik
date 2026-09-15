@@ -210,16 +210,16 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
               _isDisputeOpened || widget.offer.isDispute
                   ? t.maker.conflict.feedback.disputeOpenedSuccess
                   : t.maker.conflict.body(
-                    code:
-                        paymentSystemForOffer(widget.offer).localizedCodeLabel,
+                      code: paymentSystemForOffer(
+                        widget.offer,
+                      ).localizedCodeLabel,
                   ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             if (_isDisputeOpened || widget.offer.isDispute) ...[
               DisputeConversationCard(
-                offer:
-                    widget.offer.isDispute
+                offer: widget.offer.isDispute
                         ? widget.offer
                         : widget.offer.copyWith(
                           status: OfferStatus.dispute,
@@ -255,10 +255,8 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                                       widget.offer.statusRaw,
                                       widget.offer,
                                     ),
-                                    label:
-                                        (time) => t.maker.conflict.timeoutLabel(
-                                          time: time,
-                                        ),
+                                    label: (time) => t.maker.conflict
+                                        .timeoutLabel(time: time),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.deepOrange,
@@ -276,17 +274,21 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      disabledForegroundColor: Theme.of(
+                        context,
+                      ).colorScheme.outline,
                     ),
                     // Keep the conflict explanation and countdown visible
                     // while the request is running; only disable its actions.
-                    onPressed:
-                        _isSubmitting
+                    onPressed: _isSubmitting
                             ? null
                             : () => _showConfirmationDialog(context, ref),
                     child: Text(
                       t.maker.conflict.actions.confirmPayment(
-                        code:
-                            paymentSystemForOffer(
+                        code: paymentSystemForOffer(
                               widget.offer,
                             ).localizedCodeLabel,
                       ),
@@ -297,13 +299,19 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.error,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      disabledForegroundColor: Theme.of(
+                        context,
+                      ).colorScheme.outline,
                     ),
-                    onPressed:
-                        _isSubmitting ? null : () => _openDispute(context, ref),
+                    onPressed: _isSubmitting
+                        ? null
+                        : () => _openDispute(context, ref),
                     child: Text(
                       t.maker.conflict.actions.openDispute(
-                        code:
-                            paymentSystemForOffer(
+                        code: paymentSystemForOffer(
                               widget.offer,
                             ).localizedCodeLabel,
                       ),

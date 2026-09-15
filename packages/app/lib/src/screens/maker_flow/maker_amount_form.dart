@@ -19,6 +19,7 @@ import '../../widgets/bolt12_badge.dart';
 import '../coordinator_details_screen.dart';
 import 'twint_code_scanner_screen.dart';
 import 'twint_shop_qr_scanner_screen.dart';
+
 // CoordinatorRecord comes from bitblik_core
 
 // Progress indicator widget for maker flow
@@ -45,7 +46,9 @@ class MakerProgressIndicator extends ConsumerWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: activeStep >= 1 ? FontWeight.w500 : FontWeight.w400,
-              color: activeStep == 1 ? Colors.black : Colors.grey,
+              color: activeStep == 1
+                  ? Theme.of(context).colorScheme.onSurface
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const Text('>', style: TextStyle(fontSize: 14, color: Colors.grey)),
@@ -55,7 +58,9 @@ class MakerProgressIndicator extends ConsumerWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: activeStep >= 2 ? FontWeight.w500 : FontWeight.w400,
-              color: activeStep == 2 ? Colors.black : Colors.grey,
+              color: activeStep == 2
+                  ? Theme.of(context).colorScheme.onSurface
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const Text('>', style: TextStyle(fontSize: 14, color: Colors.grey)),
@@ -65,7 +70,9 @@ class MakerProgressIndicator extends ConsumerWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: activeStep == 3 ? FontWeight.w500 : FontWeight.w400,
-              color: activeStep >= 3 ? Colors.black : Colors.grey,
+              color: activeStep >= 3
+                  ? Theme.of(context).colorScheme.onSurface
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -85,16 +92,14 @@ class _OnboardingBeakPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final shadowPath =
-        Path()
+    final shadowPath = Path()
           ..moveTo(size.width * 0.5, 0)
           ..lineTo(0, size.height)
           ..lineTo(size.width, size.height)
           ..close();
     canvas.drawShadow(shadowPath, shadowColor, 2, false);
 
-    final fillPath =
-        Path()
+    final fillPath = Path()
           ..moveTo(size.width * 0.5, 0)
           ..lineTo(size.width * 0.15, size.height)
           ..lineTo(size.width * 0.85, size.height)
@@ -300,8 +305,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         _premiumEnabled = preferences.offerCreation.premiumEnabled;
         _defaultPremiumPreference =
             preferences.offerCreation.defaultPremiumPercent;
-        _premiumPercent =
-            preferences.offerCreation.premiumEnabled
+        _premiumPercent = preferences.offerCreation.premiumEnabled
                 ? preferences.offerCreation.defaultPremiumPercent
                 : 0;
         _preferredCoordinatorPubkey =
@@ -357,8 +361,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final coordinatorsAsync = ref.read(enabledCoordinatorsProvider);
     if (coordinatorsAsync is AsyncData<List<CoordinatorRecord>>) {
       final coordinators = _filterByAmount(coordinatorsAsync.value);
-      final responsiveCoordinators =
-          coordinators.where((c) => c.responsive == true).toList();
+      final responsiveCoordinators = coordinators
+          .where((c) => c.responsive == true)
+          .toList();
       if (responsiveCoordinators.isNotEmpty) {
         _selectCoordinator(_choosePreferredCoordinator(responsiveCoordinators));
       }
@@ -366,6 +371,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   }
 
   void _onAmountFocusChange() {
+    if (mounted) setState(() {});
     if (!_amountFocusNode.hasFocus) {
       _reSelectCoordinatorForAmount();
     }
@@ -443,8 +449,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         final supported = _method.supportedCategories;
         if (_selectedCategory == null ||
             !supported.contains(_selectedCategory)) {
-          _selectedCategory =
-              supported.contains(_defaultCategoryPreference)
+          _selectedCategory = supported.contains(_defaultCategoryPreference)
                   ? _defaultCategoryPreference
                   : supported.first;
         }
@@ -503,8 +508,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     // Validate against the union of all enabled coordinators' ranges.
     // "Too low/high" only when no coordinator fits at all.
     final enabledAsync = ref.read(enabledCoordinatorsProvider);
-    final enabled =
-        enabledAsync is AsyncData<List<CoordinatorRecord>>
+    final enabled = enabledAsync is AsyncData<List<CoordinatorRecord>>
             ? enabledAsync.value
             : const <CoordinatorRecord>[];
 
@@ -527,8 +531,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
             .reduce((a, b) => a > b ? a : b);
         final minFiat =
             ((globalMinSats / 100000000.0) * _rate! * 100).ceil() / 100;
-        final maxFiat =
-            ((globalMaxSats / 100000000.0) * _rate!).floor().toDouble();
+        final maxFiat = ((globalMaxSats / 100000000.0) * _rate!)
+            .floor()
+            .toDouble();
         if (parsedFiat! < minFiat) {
           currentError = t.exchange.errors.tooLowFiat(
             minAmount: minFiat.toStringAsFixed(2),
@@ -604,9 +609,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       return;
     }
     if (_needsBank && _selectedBankId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.maker.amountForm.bank.required)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.maker.amountForm.bank.required)));
       return;
     }
     if (supportsCategory &&
@@ -633,9 +638,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final fiatString = _fiatController.text.replaceAll(',', '.');
     final fiatAmount = double.parse(fiatString);
     final makerCode = _makerPayload;
-    if (_usesShopQr &&
-        _selectedCoordinatorInfo?.supportsTwintShopQr != true) {
-      ref.read(errorProvider.notifier).state = t.twint.shop.coordinatorUnsupported;
+    if (_usesShopQr && _selectedCoordinatorInfo?.supportsTwintShopQr != true) {
+      ref.read(errorProvider.notifier).state =
+          t.twint.shop.coordinatorUnsupported;
       return;
     }
     if (_usesShopQr &&
@@ -643,8 +648,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       ref.read(errorProvider.notifier).state = t.twint.shop.invalidQr;
       return;
     }
-    if (_method.makerProvidesCodeAtOfferCreation &&
-        !_validMakerCode) {
+    if (_method.makerProvidesCodeAtOfferCreation && !_validMakerCode) {
       ref
           .read(errorProvider.notifier)
           .state = t.maker.amountForm.errors.initiating(
@@ -697,8 +701,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               paymentSystemId: _method.id,
               bankId: offerBank,
               category: offerCategory,
-              blikCode:
-                  _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
+              blikCode: _method.makerProvidesCodeAtOfferCreation
+                  ? makerCode
+                  : null,
               premiumPercent:
                   (result['premiumPercent'] as num?)?.toDouble() ??
                   _premiumPercent,
@@ -723,15 +728,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   // falling back to the kind-15125 info name.
   String _selectedCoordinatorName() {
     final pk = _selectedCoordinatorPubkey;
-    final record =
-        pk == null ? null : ref.watch(coordinatorRecordByPubkeyProvider(pk));
+    final record = pk == null
+        ? null
+        : ref.watch(coordinatorRecordByPubkeyProvider(pk));
     return record?.name ?? _selectedCoordinatorInfo?.name ?? '';
   }
 
   Widget _buildSelectedCoordinatorLogo() {
     final pk = _selectedCoordinatorPubkey;
-    final icon =
-        pk == null
+    final icon = pk == null
             ? null
             : ref.watch(coordinatorRecordByPubkeyProvider(pk))?.icon;
     if (icon != null && icon.isNotEmpty) {
@@ -740,8 +745,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
             icon,
             width: 22,
             height: 22,
-            errorBuilder:
-                (_, _, _) => const Icon(Icons.account_circle, size: 24),
+              errorBuilder: (_, _, _) =>
+                  const Icon(Icons.account_circle, size: 24),
           )
           : Image.asset(icon, width: 22, height: 22);
     }
@@ -790,8 +795,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final t = Translations.of(context);
     showDialog(
       context: context,
-      builder:
-          (context) => Dialog(
+      builder: (context) => Dialog(
             backgroundColor: Colors.transparent,
             child: GestureDetector(
               onTap: () => Navigator.of(context).pop(),
@@ -802,9 +806,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                   color: Colors.grey[800],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: FutureBuilder<
-                  ({Map<String, double?> rates, DateTime fetchedAt})
-                >(
+            child: FutureBuilder<({Map<String, double?> rates, DateTime fetchedAt})>(
                   future: apiService.getSourceRates(_method.currency),
                   builder: (context, snapshot) {
                     final data = snapshot.data;
@@ -825,8 +827,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         const SizedBox(height: 8),
                         ...ApiServiceNostr.exchangeRateSourceNames.map((name) {
                           final rate = rates?[name];
-                          final rateText =
-                              rates == null
+                      final rateText = rates == null
                                   ? '…'
                                   : rate != null
                                   ? '${_formatNumber(rate.round())} ${_method.currency}/BTC'
@@ -844,8 +845,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 Text(
                                   rateText,
                                   style: TextStyle(
-                                    color:
-                                        rate != null
+                                color: rate != null
                                             ? Colors.white
                                             : Colors.grey[500],
                                     fontWeight: FontWeight.w500,
@@ -859,10 +859,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           const SizedBox(height: 10),
                           Text(
                             '${t.offers.tooltips.ratesFetchedAt} ${data.fetchedAt.hour.toString().padLeft(2, '0')}:${data.fetchedAt.minute.toString().padLeft(2, '0')}',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 11,
-                            ),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 11),
                             textAlign: TextAlign.right,
                           ),
                         ],
@@ -900,15 +897,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           return SafeArea(
             child: ListView(
               shrinkWrap: true,
-              children:
-                  coordinators.map((coordinator) {
+              children: coordinators.map((coordinator) {
                     final rate = _rate ?? 1.0;
-                    final minPln = (coordinator.minAmountSats /
-                            100000000.0 *
-                            rate)
+                final minPln = (coordinator.minAmountSats / 100000000.0 * rate)
                         .toStringAsFixed(2);
-                    final maxPln =
-                        (coordinator.maxAmountSats / 100000000.0 * rate)
+                final maxPln = (coordinator.maxAmountSats / 100000000.0 * rate)
                             .floor()
                             .toString();
                     final feePct = coordinator.makerFee.toStringAsFixed(2);
@@ -935,8 +928,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                         coordinator.icon!,
                                         width: 32,
                                         height: 32,
-                                        errorBuilder:
-                                            (_, _, _) => const Icon(
+                                        errorBuilder: (_, _, _) => const Icon(
                                               Icons.account_circle,
                                               size: 32,
                                             ),
@@ -952,9 +944,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 child: Text(
                                   coordinator.name,
                                   overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleMedium?.copyWith(
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: disabled ? Colors.grey : null,
                                   ),
@@ -973,8 +964,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               Radio<String>(
                                 value: coordinator.pubkey,
                                 groupValue: _selectedCoordinatorPubkey,
-                                onChanged:
-                                    disabled
+                            onChanged: disabled
                                         ? null
                                         : (_) {
                                           Navigator.of(context).pop();
@@ -1017,9 +1007,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   maxAmount: maxPln,
                                   currency: _method.currencySymbol,
                                 ),
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
                                   color: disabled ? Colors.grey : null,
                                 ),
                               ),
@@ -1037,18 +1026,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           ),
                         ],
                       ),
-                      onTap:
-                          disabled
+                  onTap: disabled
                               ? null
                               : () {
                                 Navigator.of(context).pop();
-                                _selectCoordinator(
-                                  coordinator,
-                                  userInitiated: true,
-                                );
+                          _selectCoordinator(coordinator, userInitiated: true);
                               },
-                      tileColor:
-                          disabled ? Colors.grey.withValues(alpha: 0.15) : null,
+                  tileColor: disabled
+                      ? Colors.grey.withValues(alpha: 0.15)
+                      : null,
                     );
                   }).toList(),
             ),
@@ -1063,13 +1049,25 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     required VoidCallback? onPressed,
     required Widget child,
   }) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isEnabled = onPressed != null;
+    final foregroundColor = switch ((isEnabled, theme.brightness)) {
+      (true, _) => Colors.white,
+      (false, Brightness.dark) => colors.outline,
+      (false, Brightness.light) => colors.onSurface.withValues(alpha: 0.38),
+    };
+    final disabledBackgroundColor = theme.brightness == Brightness.dark
+        ? colors.surfaceContainerHighest
+        : Colors.grey[300];
+
     return Container(
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient:
-            onPressed != null
+            isEnabled
                 ? const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -1079,14 +1077,22 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                   ],
                 )
                 : null,
-        color: onPressed == null ? Colors.grey[300] : null,
+        color: isEnabled ? null : disabledBackgroundColor,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(24),
-          child: Center(child: child),
+          child: Center(
+            child: IconTheme.merge(
+              data: IconThemeData(color: foregroundColor),
+              child: DefaultTextStyle.merge(
+                style: TextStyle(color: foregroundColor),
+                child: child,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1211,16 +1217,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           ),
           const SizedBox(height: 16),
           _buildGradientButton(
-            onPressed: ref.watch(isLoadingProvider) ? null : _scanTwintCodeAndAmount,
+            onPressed: ref.watch(isLoadingProvider)
+                ? null
+                : _scanTwintCodeAndAmount,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.camera_alt_rounded, color: Colors.white),
+                const Icon(Icons.camera_alt_rounded),
                 const SizedBox(width: 10),
                 Text(
                   t.maker.amountForm.twintScan.scanButton,
                   style: const TextStyle(
-                    color: Colors.white,
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1229,7 +1236,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
             ),
           ),
           const SizedBox(height: 8),
-          if (!_usesShopQr) Center(
+          if (!_usesShopQr)
+            Center(
             child: TextButton(
               onPressed: _showManualMakerProvidedEntry,
               child: Text(t.maker.amountForm.twintScan.manualButton),
@@ -1248,7 +1256,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           Text(t.twint.shop.scanned, textAlign: TextAlign.center),
           const SizedBox(height: 8),
           OutlinedButton.icon(
-            onPressed: ref.watch(isLoadingProvider) ? null : _scanTwintCodeAndAmount,
+            onPressed: ref.watch(isLoadingProvider)
+                ? null
+                : _scanTwintCodeAndAmount,
             icon: const Icon(Icons.qr_code_scanner),
             label: Text(t.twint.shop.rescan),
           ),
@@ -1296,8 +1306,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 0.0,
                 double.infinity,
               );
-              final perChar =
-                  _method.codeLength > 0 ? available / _method.codeLength : 0.0;
+              final perChar = _method.codeLength > 0
+                  ? available / _method.codeLength
+                  : 0.0;
               final fontSize = (perChar / 1.25).clamp(28.0, 52.0);
               final letterSpacing = (fontSize * 0.22).clamp(4.0, 10.0);
               final textStyle = TextStyle(
@@ -1466,8 +1477,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         };
                         return Padding(
                           padding: EdgeInsets.only(
-                            bottom:
-                                category != OfferCategory.values.last ? 8 : 0,
+                            bottom: category != OfferCategory.values.last
+                                ? 8
+                                : 0,
                           ),
                           child: Row(
                             children: [
@@ -1570,8 +1582,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       ),
                     ),
                   ),
-                  crossFadeState:
-                      _categoryOnboardingExpanded
+                  crossFadeState: _categoryOnboardingExpanded
                           ? CrossFadeState.showSecond
                           : CrossFadeState.showFirst,
                   duration: const Duration(milliseconds: 180),
@@ -1611,25 +1622,22 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final t = Translations.of(context);
     showDialog<void>(
       context: context,
-      builder:
-          (context) => AlertDialog(
+      builder: (context) => AlertDialog(
             title: Text(t.maker.amountForm.category.label),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children:
-                    OfferCategory.values.map((category) {
+            children: OfferCategory.values.map((category) {
                       final hint = switch (category) {
-                        OfferCategory.shop => t.maker.amountForm.category
-                            .physicalShopHint(
+                OfferCategory.shop =>
+                  t.maker.amountForm.category.physicalShopHint(
                               code: _method.localizedCodeLabel,
                               app: _method.brandName,
                             ),
-                        OfferCategory.atm =>
-                          t.maker.amountForm.category.atmHint,
-                        OfferCategory.online => t.maker.amountForm.category
-                            .ecommerceWarningBody(
+                OfferCategory.atm => t.maker.amountForm.category.atmHint,
+                OfferCategory.online =>
+                  t.maker.amountForm.category.ecommerceWarningBody(
                               code: _method.localizedCodeLabel,
                             ),
                       };
@@ -1643,19 +1651,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       };
                       return Padding(
                         padding: EdgeInsets.only(
-                          bottom:
-                              category != OfferCategory.values.last ? 16 : 0,
+                  bottom: category != OfferCategory.values.last ? 16 : 0,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                _categoryIconWidget(
-                                  category,
-                                  22,
-                                  Colors.grey[700]!,
-                                ),
+                        _categoryIconWidget(category, 22, Colors.grey[700]!),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -1742,8 +1745,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           visualDensity: VisualDensity.compact,
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
-                          labelPadding:
-                              const EdgeInsets.symmetric(horizontal: 4),
+                          labelPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                          ),
                           onSelected: (_) {
                             setState(() => _selectedBankId = b.id);
                             // Presets/denominations changed → revalidate.
@@ -1918,8 +1922,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     showDialog<void>(
       context: context,
-      builder:
-          (context) => StatefulBuilder(
+      builder: (context) => StatefulBuilder(
             builder: (context, setDialogState) {
               Widget? content;
 
@@ -1929,18 +1932,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                   decoration: BoxDecoration(
                     color: Colors.blue.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Colors.blue.withValues(alpha: 0.25),
-                    ),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.25)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: Colors.blue,
-                        size: 20,
-                      ),
+                  const Icon(Icons.info_outline, color: Colors.blue, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -1960,9 +1957,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                   decoration: BoxDecoration(
                     color: Colors.orange.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Colors.orange.withValues(alpha: 0.3),
-                    ),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -2047,15 +2042,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             child: Padding(
                               padding: const EdgeInsets.only(top: 10),
                               child: Text(
-                                t
-                                    .maker
-                                    .amountForm
-                                    .category
-                                    .ecommerceConfirmation,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  height: 1.4,
-                                ),
+                            t.maker.amountForm.category.ecommerceConfirmation,
+                            style: const TextStyle(fontSize: 13, height: 1.4),
                               ),
                             ),
                           ),
@@ -2092,6 +2080,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
     final coordinatorsAsync = ref.watch(enabledCoordinatorsProvider);
     final t = Translations.of(context);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final supportsCategory = _supportsOfferCategory(
       _selectedCoordinatorInfo?.version,
     );
@@ -2158,25 +2149,28 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             .contains(category);
                         final selected =
                             isSupported && _selectedCategory == category;
-                        final Color accent =
-                            !isSupported
-                                ? Colors.grey.shade400
+                        final Color accent = !isSupported
+                                ? (isDark
+                                    ? colors.onSurfaceVariant
+                                    : Colors.grey.shade400)
                                 : selected
                                 ? Colors.red
-                                : Colors.grey[700]!;
+                                : (isDark
+                                    ? colors.onSurfaceVariant
+                                    : Colors.grey[700]!);
                         return Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(
-                              right:
-                                  category != OfferCategory.values.last ? 8 : 0,
+                              right: category != OfferCategory.values.last
+                                  ? 8
+                                  : 0,
                             ),
                             // Empty message for supported tiles: the InkWell
                             // consumes the tap so the tooltip never fires. For
                             // disabled tiles the InkWell is inert, so a tap
                             // falls through and shows the explanation.
                             child: Tooltip(
-                              message:
-                                  isSupported
+                              message: isSupported
                                       ? ''
                                       : t.maker.amountForm.category
                                           .unsupportedForSystem(
@@ -2187,15 +2181,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 opacity: isSupported ? 1.0 : 0.5,
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(999),
-                                  onTap:
-                                      isSupported && !isLoading
+                                  onTap: isSupported && !isLoading
                                           ? () {
                                             setState(() {
                                               if (_selectedCategory != category &&
                                                   _usesMakerProvidedCodeFlow) {
                                                 _makerCodeController.clear();
                                                 _fiatController.clear();
-                                                _showMakerProvidedEntryForm = false;
+                                              _showMakerProvidedEntryForm =
+                                                  false;
                                               }
                                               _selectedCategory = category;
                                               // ATM defaults to preset amounts.
@@ -2216,18 +2210,30 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(999),
                                       border: Border.all(
-                                        color:
-                                            selected
+                                        color: selected
                                                 ? Colors.red
+                                                : isDark
+                                                ? colors.outlineVariant
                                                 : Colors.grey.shade300,
                                         width: selected ? 1.6 : 1,
                                       ),
-                                      color:
-                                          !isSupported
-                                              ? Colors.grey.shade100
+                                      color: !isSupported
+                                              ? (isDark
+                                                  ? colors.surfaceContainerLow
+                                                  : Colors.grey.shade100)
                                               : selected
-                                              ? const Color(0xFFFFF2F6)
-                                              : Colors.white,
+                                              ? (isDark
+                                                  ? Color.alphaBlend(
+                                                      Colors.red.withValues(
+                                                        alpha: 0.14,
+                                                      ),
+                                                      colors
+                                                          .surfaceContainerHigh,
+                                                    )
+                                                  : const Color(0xFFFFF2F6))
+                                              : (isDark
+                                                  ? colors.surfaceContainerHigh
+                                                  : Colors.white),
                                     ),
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
@@ -2246,8 +2252,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                             _categoryShortLabel(category, t),
                                             style: TextStyle(
                                               fontSize: 13,
-                                              fontWeight:
-                                                  selected
+                                              fontWeight: selected
                                                       ? FontWeight.w600
                                                       : FontWeight.w400,
                                               color: accent,
@@ -2333,10 +2338,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: GestureDetector(
-                              onTap:
-                                  () => _showCategoryInfoDialog(
-                                    OfferCategory.online,
-                                  ),
+                              onTap: () =>
+                                  _showCategoryInfoDialog(OfferCategory.online),
                               child: Text(
                                 t
                                     .maker
@@ -2367,10 +2370,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               color: Colors.amber,
                               size: 18,
                             ),
-                            onPressed:
-                                () => _showCategoryInfoDialog(
-                                  OfferCategory.online,
-                                ),
+                            onPressed: () =>
+                                _showCategoryInfoDialog(OfferCategory.online),
                           ),
                         ],
                       ),
@@ -2400,6 +2401,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     vertical: 22.0,
                     horizontal: 20,
                   ),
+                  decoration: isDark
+                      ? BoxDecoration(
+                          color: colors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(16),
+                        )
+                      : null,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -2418,13 +2425,21 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             height: 1.2,
                           ),
                           decoration: InputDecoration(
+                            filled: false,
                             hintText: t.maker.amountForm.labels.enterAmount,
                             hintStyle: TextStyle(
                               fontSize: 36,
-                              color: Colors.grey[400],
+                              color: colors.onSurfaceVariant.withValues(
+                                alpha: 0.72,
+                              ),
                               fontWeight: FontWeight.w300,
                             ),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
                             errorText: null, // Error shown below
                             contentPadding: EdgeInsets.zero,
                           ),
@@ -2433,10 +2448,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       const SizedBox(width: 8),
                       Text(
                         _method.currencySymbol,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 44,
                           fontWeight: FontWeight.w400,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -2465,7 +2480,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               Container(
                 padding: const EdgeInsets.only(left: 10.0, right: 10.0),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -2590,20 +2605,19 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           if (_selectedCoordinatorInfo != null) {
                             showDialog(
                               context: context,
-                              builder:
-                                  (context) => AlertDialog(
+                              builder: (context) => AlertDialog(
                                     title: Text(t.maker.amountForm.labels.fee),
                                     content: Text(
                                       t.maker.amountForm.tooltips.feeInfo(
-                                        feePercent:
-                                            _selectedCoordinatorInfo!.makerFee
+                                    feePercent: _selectedCoordinatorInfo!
+                                        .makerFee
                                                 .toString(),
                                       ),
                                     ),
                                     actions: [
                                       TextButton(
-                                        onPressed:
-                                            () => Navigator.of(context).pop(),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
                                         child: Text(t.common.buttons.close),
                                       ),
                                     ],
@@ -2664,8 +2678,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                           .maxPremiumPercent,
                                     ),
                                     min: 0,
-                                    max:
-                                        _selectedCoordinatorInfo!
+                                    max: _selectedCoordinatorInfo!
                                             .maxPremiumPercent,
                                     divisions:
                                         (_selectedCoordinatorInfo!
@@ -2692,8 +2705,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color:
-                                    _premiumPercent > 0
+                                color: _premiumPercent > 0
                                         ? const Color(0xFFFF007F)
                                         : Colors.grey,
                               ),
@@ -2715,7 +2727,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   _satsEquivalent! *
                                           (1 - _premiumPercent / 100) +
                                       (_satsEquivalent! *
-                                          _selectedCoordinatorInfo!.makerFee /
+                                              _selectedCoordinatorInfo!
+                                                  .makerFee /
                                           100),
                                   approximate: true,
                                 )
@@ -2729,8 +2742,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           onInfoTap: () {
                             showDialog(
                               context: context,
-                              builder:
-                                  (context) => AlertDialog(
+                                builder: (context) => AlertDialog(
                                     title: Text(
                                       t.maker.amountForm.labels.satoshisToPay,
                                     ),
@@ -2739,8 +2751,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                     ),
                                     actions: [
                                       TextButton(
-                                        onPressed:
-                                            () => Navigator.of(context).pop(),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
                                         child: Text(t.common.buttons.close),
                                       ),
                                     ],
@@ -2800,8 +2812,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         },
                         child: RichText(
                           text: TextSpan(
-                            style: const TextStyle(
-                              color: Colors.black,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 14,
                               fontWeight: FontWeight.normal,
                             ),
@@ -2812,12 +2824,13 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                               const TextSpan(text: ' '),
                               TextSpan(
                                 text: t.coordinator.selector.termsOfUsage,
-                                style: const TextStyle(
-                                  color: Colors.black,
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                   decoration: TextDecoration.underline,
                                 ),
-                                recognizer:
-                                    TapGestureRecognizer()
+                                recognizer: TapGestureRecognizer()
                                       ..onTap = () async {
                                         final url =
                                             'https://njump.to/${_selectedCoordinatorInfo!.termsOfUsageNaddr}';
@@ -2848,14 +2861,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             _amountErrorText != null ||
                             _fiatController.text.isEmpty ||
                             (_usesShopQr &&
-                                _selectedCoordinatorInfo?.supportsTwintShopQr != true) ||
+                            _selectedCoordinatorInfo?.supportsTwintShopQr !=
+                                true) ||
                             (_method.makerProvidesCodeAtOfferCreation &&
                                 !_validMakerCode) ||
                             _rate == null ||
                             (_selectedCategory == OfferCategory.online &&
                                 !_ecommerceRiskAccepted) ||
-                            (_selectedCoordinatorInfo?.termsOfUsageNaddr !=
-                                    null &&
+                        (_selectedCoordinatorInfo?.termsOfUsageNaddr != null &&
                                 !_termsAccepted)
                         ? null
                         : () {
@@ -2863,14 +2876,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         },
                 child:
                     isLoading
-                        ? const SizedBox(
+                        ? SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
+                            color: Theme.of(context).colorScheme.outline,
                           ),
                         )
                         : Text(
@@ -2878,7 +2889,6 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
                           ),
                         ),
               ),
@@ -2899,8 +2909,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final t = Translations.of(context);
     showDialog<void>(
       context: context,
-      builder:
-          (context) => AlertDialog(
+      builder: (context) => AlertDialog(
             title: Text(t.maker.amountForm.labels.premium),
             content: Text(t.maker.amountForm.tooltips.premiumInfo),
             actions: [

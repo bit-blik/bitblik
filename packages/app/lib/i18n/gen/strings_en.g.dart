@@ -41,6 +41,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 
 	// Translations
 	late final Translations$app$en app = Translations$app$en.internal(_root);
+	late final Translations$theme$en theme = Translations$theme$en.internal(_root);
 	late final Translations$common$en common = Translations$common$en.internal(_root);
 	late final Translations$lightningAddress$en lightningAddress = Translations$lightningAddress$en.internal(_root);
 	late final Translations$nfc$en nfc = Translations$nfc$en.internal(_root);
@@ -90,6 +91,24 @@ class Translations$app$en {
 
 	/// en: 'Changelog'
 	String get changelog => 'Changelog';
+}
+
+// Path: theme
+class Translations$theme$en {
+	Translations$theme$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Switch to light theme'
+	String get switchToLight => 'Switch to light theme';
+
+	/// en: 'Switch to dark theme'
+	String get switchToDark => 'Switch to dark theme';
+
+	/// en: 'Open Nostr profile'
+	String get openNostr => 'Open Nostr profile';
 }
 
 // Path: common
@@ -5803,6 +5822,9 @@ extension on Translations {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Hello!',
 			'app.changelog' => 'Changelog',
+			'theme.switchToLight' => 'Switch to light theme',
+			'theme.switchToDark' => 'Switch to dark theme',
+			'theme.openNostr' => 'Open Nostr profile',
 			'common.code' => 'code',
 			'common.buttons.cancel' => 'Cancel',
 			'common.buttons.save' => 'Save',
@@ -6309,11 +6331,11 @@ extension on Translations {
 			'taker.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}.',
 			'taker.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.',
 			'taker.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'The maker must now enter your ${code} code at the ATM within ${minutes} minutes.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.categoryReminder.atm' => 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.',
 			'taker.waitConfirmation.categoryReminder.ecommerce' => 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.',
 			'taker.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Waiting for maker to receive your ${code} code...',
-			_ => null,
-		} ?? switch (path) {
 			'taker.waitConfirmation.makerReceivedBlik' => ({required Object code}) => 'Maker has received your ${code} code.',
 			'taker.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed. Waiting for maker to confirm or mark code as invalid.',
 			'taker.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => '${code} ${minutes}m expiration time has passed but the maker hasn\'t received the ${code} code. You can resend a new ${code} code or cancel.',
@@ -6823,11 +6845,11 @@ extension on Translations {
 			'offerNotifications.activeService.title' => 'Waiting for new offers',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Nostr service monitoring events of ${app} offers.',
 			'offerNotifications.funded.title' => 'Offer funded',
+			_ => null,
+		} ?? switch (path) {
 			'offerNotifications.funded.body' => 'Your hold invoice was accepted. Offer is now live.',
 			'offerNotifications.reserved.title' => 'Offer reserved',
 			'offerNotifications.reserved.body' => 'A taker has reserved your offer.',
-			_ => null,
-		} ?? switch (path) {
 			'offerNotifications.blikReady.title' => ({required Object code}) => '${code} ready',
 			'offerNotifications.blikReady.body' => ({required Object code}) => 'Your ${code} is ready to view.',
 			'offerNotifications.newOffer.title' => 'New offer available',

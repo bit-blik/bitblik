@@ -29,6 +29,7 @@ import 'src/config/build_flavor.dart';
 import 'src/config/runtime_config.dart';
 import 'src/providers/providers.dart';
 import 'src/settings/app_preferences.dart';
+import 'src/theme/app_theme.dart';
 import 'src/services/notification_service.dart';
 import 'src/screens/coordinator_details_screen.dart';
 import 'src/screens/coordinator_console_access_screen.dart';
@@ -251,6 +252,7 @@ Future<void> main() async {
   final savedMethod = await AppPreferencesStore.loadSelectedPaymentSystem(
     deploymentDefaultPaymentSystemId: deploymentDefaultPaymentSystemId,
   );
+  final savedThemePreference = await AppPreferencesStore.loadThemePreference();
   runApp(
     TranslationProvider(
       // Wrap with TranslationProvider
@@ -260,6 +262,9 @@ Future<void> main() async {
             (ref) => SelectedPaymentSystemNotifier(savedMethod),
           ),
           needsMarketOnboardingProvider.overrideWith((ref) => !marketSelected),
+          themePreferenceProvider.overrideWith(
+            (ref) => ThemePreferenceNotifier(savedThemePreference),
+          ),
         ],
         child: const SafeArea(child: MyApp()),
       ),
@@ -692,17 +697,20 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
+    final themePreference = ref.watch(themePreferenceProvider);
     final t = Translations.of(context);
 
     return MaterialApp.router(
       title: t.app.title(
         app: ref.watch(selectedPaymentSystemProvider).brandName,
       ),
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-        scaffoldBackgroundColor: Colors.white,
-      ),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: switch (themePreference) {
+        AppThemePreference.system => ThemeMode.system,
+        AppThemePreference.light => ThemeMode.light,
+        AppThemePreference.dark => ThemeMode.dark,
+      },
       locale: LocaleSettings.currentLocale.flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,
       localizationsDelegates: [
@@ -740,6 +748,7 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
     final t = Translations.of(context);
     final method = ref.watch(selectedPaymentSystemProvider);
     final brand = method.brandName;
+    final colors = Theme.of(context).colorScheme;
     final showInfoPanel = state.origin == CoordinatorColdStartOrigin.onboarding;
 
     void dismiss() {
@@ -758,7 +767,7 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
               maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
             child: Material(
-              color: Colors.white,
+              color: colors.surfaceContainerHigh,
               elevation: 12,
               borderRadius: BorderRadius.circular(20),
               child: SingleChildScrollView(
@@ -789,7 +798,7 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
                       Text(
                         t.coordinator.coldStart.body(app: brand),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[700],
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -867,21 +876,21 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
                         const SizedBox(height: 16),
                         DecoratedBox(
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEAF3FF),
+                            color: colors.secondaryContainer,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFB8D4FF)),
+                            border: Border.all(color: colors.outlineVariant),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 1),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 1),
                                   child: Icon(
                                     Icons.info_outline,
                                     size: 18,
-                                    color: Color(0xFF1E5BB8),
+                                    color: colors.onSecondaryContainer,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -891,7 +900,7 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall?.copyWith(
-                                      color: const Color(0xFF184A96),
+                                          color: colors.onSecondaryContainer,
                                       height: 1.35,
                                     ),
                                   ),
@@ -1018,10 +1027,11 @@ class _ColdStartStatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -1038,7 +1048,7 @@ class _ColdStartStatChip extends StatelessWidget {
             label,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+            ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
           ),
         ],
       ),
@@ -1388,7 +1398,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
   ) {
     final t = Translations.of(context);
     return Drawer(
-      backgroundColor: Colors.white,
       child: publicKeyAsync.when(
         data: (publicKey) {
           if (publicKey == null) {
@@ -1403,7 +1412,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
             padding: EdgeInsets.zero,
             children: [
               DrawerHeader(
-                decoration: const BoxDecoration(color: Colors.white),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
@@ -1615,6 +1623,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
   Widget build(BuildContext context) {
     final publicKeyAsync = ref.watch(publicKeyProvider);
     final appUpdateController = ref.watch(zapstoreAppUpdateControllerProvider);
+    final colorScheme = Theme.of(context).colorScheme;
 
     Widget appBarTitle;
     // bool canGoBack = GoRouter.of(context).canGoBack(); // Removed this line
@@ -1622,6 +1631,17 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     if (widget.pageTitle != null && widget.pageTitle!.isNotEmpty) {
       appBarTitle = Text(widget.pageTitle!);
     } else {
+      final providerLogoAsset =
+          ref.watch(selectedPaymentSystemProvider).logoAsset;
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final logoAsset = switch ((providerLogoAsset, isDark)) {
+        ('assets/bitway.png', true) => 'assets/bitway-dark.png',
+        ('assets/bittwint.png', true) => 'assets/bittwint-dark.png',
+        (final asset?, _) => asset,
+        (null, true) => 'assets/logo-horizontal-dark.png',
+        (null, false) => 'assets/logo-horizontal.png',
+      };
+      final needsLightAssetBacking = logoAsset == 'assets/bittwint.png';
       appBarTitle = MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
@@ -1637,15 +1657,23 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
             // Navigate to home
             context.go('/');
           },
-          child: Image.asset(
-            // BLIK → BitBlik logo; MB WAY → bitway logo (shown larger).
-            ref.watch(selectedPaymentSystemProvider).logoAsset ??
-                'assets/logo-horizontal.png',
-            height:
-                ref.watch(selectedPaymentSystemProvider).logoAsset != null
-                    ? 44
-                    : 30,
-            fit: BoxFit.contain,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: needsLightAssetBacking ? Colors.white : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: needsLightAssetBacking
+                  ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
+                  : EdgeInsets.zero,
+              child: Image.asset(
+                // BitBlik uses a dedicated dark-mode wordmark; opaque Bittwint
+                // artwork keeps its light backing in both themes.
+                logoAsset,
+                height: providerLogoAsset != null ? 40 : 30,
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
         ),
       );
@@ -1654,7 +1682,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         automaticallyImplyLeading:
             !widget.hideBackButton &&
             ((widget.pageTitle != null && widget.pageTitle!.isNotEmpty) ||
@@ -1821,7 +1849,8 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
       ),
       endDrawer: _buildNekoDrawer(context, publicKeyAsync),
       bottomNavigationBar: SizedBox(
-        height: 60,
+        // 8px outer padding + 8px divider + 48px icon row + 4px row padding.
+        height: 68,
         child: Padding(
           padding: const EdgeInsets.all(4.0),
           child: Column(
@@ -1849,17 +1878,17 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                   _clientVersion != null
                                       ? 'v$_clientVersion'
                                       : '',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.black45,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 )
                               : NAppVersion(
                                   controller: appUpdateController,
                                   fallbackVersion: _clientVersion,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.black45,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                         ),
@@ -1997,26 +2026,60 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                           );
                         },
                           ),
+                        IconButton(
+                          constraints: const BoxConstraints.tightFor(
+                            width: 48,
+                            height: 48,
+                          ),
+                          tooltip:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? t.theme.switchToLight
+                                  : t.theme.switchToDark,
+                          onPressed: () async {
+                            final next = Theme.of(context).brightness ==
+                                    Brightness.dark
+                                ? AppThemePreference.light
+                                : AppThemePreference.dark;
+                            await ref
+                                .read(themePreferenceProvider.notifier)
+                                .set(next);
+                          },
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            child: Icon(
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Icons.light_mode_rounded
+                                  : Icons.dark_mode_rounded,
+                              key: ValueKey(Theme.of(context).brightness),
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                         Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: InkWell(
-                            onTap: () async {
-                              final npub =
-                                  ref
-                                      .read(selectedPaymentSystemProvider)
-                                      .discoveryNpub;
-                              final Uri url = Uri.parse(
-                                'https://njump.to/$npub',
-                              );
+                          padding: const EdgeInsets.only(right: 4),
+                          child: IconButton(
+                            constraints: const BoxConstraints.tightFor(
+                              width: 48,
+                              height: 48,
+                            ),
+                            padding: const EdgeInsets.all(7),
+                            tooltip: t.theme.openNostr,
+                            onPressed: () async {
+                              final npub = ref
+                                  .read(selectedPaymentSystemProvider)
+                                  .discoveryNpub;
+                              final url = Uri.parse('https://njump.to/$npub');
                               await launchUrl(
                                 url,
                                 mode: LaunchMode.externalApplication,
                               );
                             },
-                            child: Image.asset(
+                            icon: Image.asset(
                               'assets/nostr.png',
-                              width: 38,
-                              height: 38,
+                              width: 34,
+                              height: 34,
                             ),
                           ),
                         ),

@@ -270,9 +270,9 @@ class _OfferDetailsBody extends ConsumerWidget {
                           Flexible(
                             child: Text(
                               coordinatorName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.black,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -712,10 +712,12 @@ class _ActiveOfferCta extends StatelessWidget {
             color:
                 onTap == null
                     ? theme.colorScheme.surfaceContainerHighest
-                    : Colors.black,
+                    : theme.colorScheme.primary,
             borderRadius: BorderRadius.circular(26),
             border: Border.all(
-              color: onTap == null ? theme.dividerColor : Colors.black,
+              color: onTap == null
+                  ? theme.dividerColor
+                  : theme.colorScheme.primary,
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -727,7 +729,9 @@ class _ActiveOfferCta extends StatelessWidget {
                   label,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: onTap == null ? theme.disabledColor : Colors.white,
+                    color: onTap == null
+                        ? theme.disabledColor
+                        : theme.colorScheme.onPrimary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -735,7 +739,9 @@ class _ActiveOfferCta extends StatelessWidget {
               const SizedBox(width: 12),
               Icon(
                 Icons.arrow_forward_ios,
-                color: onTap == null ? theme.disabledColor : Colors.white,
+                color: onTap == null
+                    ? theme.disabledColor
+                    : theme.colorScheme.onPrimary,
                 size: 16,
               ),
             ],

@@ -40,6 +40,7 @@ class TranslationsSk extends Translations with BaseTranslations<AppLocale, Trans
 
 	// Translations
 	@override late final _Translations$app$sk app = _Translations$app$sk._(_root);
+	@override late final _Translations$theme$sk theme = _Translations$theme$sk._(_root);
 	@override late final _Translations$common$sk common = _Translations$common$sk._(_root);
 	@override late final _Translations$lightningAddress$sk lightningAddress = _Translations$lightningAddress$sk._(_root);
 	@override late final _Translations$offers$sk offers = _Translations$offers$sk._(_root);
@@ -82,6 +83,18 @@ class _Translations$app$sk extends Translations$app$en {
 	@override String title({required Object app}) => '${app}';
 	@override String get greeting => 'Ahoj!';
 	@override String get changelog => 'Zoznam zmien';
+}
+
+// Path: theme
+class _Translations$theme$sk extends Translations$theme$en {
+	_Translations$theme$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get switchToLight => 'Prepnúť na svetlú tému';
+	@override String get switchToDark => 'Prepnúť na tmavú tému';
+	@override String get openNostr => 'Otvoriť Nostr profil';
 }
 
 // Path: common
@@ -2917,6 +2930,9 @@ extension on TranslationsSk {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Ahoj!',
 			'app.changelog' => 'Zoznam zmien',
+			'theme.switchToLight' => 'Prepnúť na svetlú tému',
+			'theme.switchToDark' => 'Prepnúť na tmavú tému',
+			'theme.openNostr' => 'Otvoriť Nostr profil',
 			'common.code' => 'kód',
 			'common.buttons.cancel' => 'Zrušiť',
 			'common.buttons.save' => 'Uložiť',
@@ -3423,11 +3439,11 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Predávajúci má ${minutes} min na potvrdenie platby alebo jej spochybnenie. Ak neurobí nič, platba sa automaticky potvrdí a ty dostaneš bitcoin.',
 			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Skontrolovať stav / zopakovať hlásenie',
 			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} bol strhnutý z môjho bankového účtu',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Skúsiť znova s novým ${code}',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Zrušiť rezerváciu',
 			'taker.waitConfirmation.feedback.makerConfirmed' => 'Predávajúci potvrdil platbu.',
-			_ => null,
-		} ?? switch (path) {
 			'taker.waitConfirmation.feedback.paymentSuccessful' => 'Platba úspešná! Čoskoro dostaneš prostriedky.',
 			'taker.waitConfirmation.feedback.chargeReported' => 'Hlásenie o strhnutí platby prijaté. Čaká sa na odpoveď Makera alebo automatické potvrdenie.',
 			'taker.waitConfirmation.errors.invalidOfferStateReceived' => 'Prijatá ponuka s neplatným stavom pre túto obrazovku. Resetuje sa.',

@@ -237,8 +237,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
         }
       }
     }
-    wallet ??=
-        ndk.wallets.defaultWalletForSending is NwcWallet
+    wallet ??= ndk.wallets.defaultWalletForSending is NwcWallet
             ? ndk.wallets.defaultWalletForSending as NwcWallet
             : null;
 
@@ -278,8 +277,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     if (defaultWallet is! NwcWallet || defaultWallet.connection == null) return;
 
     // Skip if wallet doesn't advertise get_budget support.
-    final effectivePerms =
-        defaultWallet.connection!.permissions.isNotEmpty
+    final effectivePerms = defaultWallet.connection!.permissions.isNotEmpty
             ? defaultWallet.connection!.permissions
             : defaultWallet.cachedPermissions;
     if (!effectivePerms.contains(NwcMethod.GET_BUDGET.name)) return;
@@ -296,8 +294,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
           .getBudget(defaultWallet.connection!)
           .timeout(const Duration(seconds: 10));
       // totalBudget == 0 → no spending limit configured → null (unlimited).
-      defaultWallet.cachedRemainingBudgetSats =
-          budget.totalBudget > 0
+      defaultWallet.cachedRemainingBudgetSats = budget.totalBudget > 0
               ? budget.totalBudgetSats - budget.userBudgetSats
               : null;
     } catch (e) {
@@ -414,8 +411,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     // otherwise waits for the NWC round-trip to populate the cache.
     int balance = await _walletSatBalance(ndk, defaultWallet.id);
     final hasBalanceIssue = balance < requiredSats;
-    int? remainingBudget =
-        defaultWallet is NwcWallet
+    int? remainingBudget = defaultWallet is NwcWallet
             ? defaultWallet.cachedRemainingBudgetSats
             : null;
     bool hasBudgetIssue =
@@ -471,8 +467,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     // Fetch info for every other NWC+canSend wallet for the picker.
     // Live get_budget call per wallet so budget issues and renewal times
     // are accurate at the moment the dialog is shown.
-    final allSendingWallets =
-        ndk.wallets
+    final allSendingWallets = ndk.wallets
             .getWalletsForUnit('sat')
             .where((w) => w.canSend && w.id != defaultWallet.id)
             .toList();
@@ -616,8 +611,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                   final b = await ndk.nwc
                       .getBudget(wallet.connection!)
                       .timeout(const Duration(seconds: 5));
-                  newBudget =
-                      b.totalBudget > 0
+                  newBudget = b.totalBudget > 0
                           ? b.totalBudgetSats - b.userBudgetSats
                           : null;
                   newRenewsAt = b.renewsAt;
@@ -677,8 +671,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
 
             // "Pay" button in actions enabled only when a wallet without
             // funding issues is selected.
-            final selectedAlt =
-                selectedAlternativeId != null
+            final selectedAlt = selectedAlternativeId != null
                     ? otherWalletInfos.cast<_WalletBudgetInfo?>().firstWhere(
                       (w) => w!.walletId == selectedAlternativeId,
                       orElse: () => null,
@@ -741,8 +734,9 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                           liveDefault.balance,
                         ),
                       ),
-                      color:
-                          liveDefault.hasBalanceIssue ? Colors.red[700] : null,
+                      color: liveDefault.hasBalanceIssue
+                          ? Colors.red[700]
+                          : null,
                     ),
                     if (liveDefault.remainingBudget != null)
                       infoRow(
@@ -754,8 +748,9 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                             liveDefault.remainingBudget!,
                           ),
                         ),
-                        color:
-                            liveDefault.hasBudgetIssue ? Colors.red[700] : null,
+                        color: liveDefault.hasBudgetIssue
+                            ? Colors.red[700]
+                            : null,
                       ),
                     if (liveDefault.hasBudgetIssue &&
                         liveDefault.budgetRenewsAt != null &&
@@ -799,8 +794,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                         // "Try anyway" hidden once wallet looks fine.
                         if (!allClear)
                           TextButton(
-                            onPressed:
-                                () => Navigator.of(ctx).pop(
+                            onPressed: () => Navigator.of(ctx).pop(
                                   _BudgetDialogResult(
                                     proceed: true,
                                     selectedWalletId: null,
@@ -811,8 +805,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                         // Refresh spinner / button
                         IconButton(
                           tooltip: 'Refresh',
-                          icon:
-                              isRefreshing
+                          icon: isRefreshing
                                   ? const SizedBox(
                                     width: 18,
                                     height: 18,
@@ -833,8 +826,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                               backgroundColor: Colors.orange[700],
                               foregroundColor: Colors.white,
                             ),
-                            onPressed:
-                                () => Navigator.of(ctx).pop(
+                            onPressed: () => Navigator.of(ctx).pop(
                                   _BudgetDialogResult(
                                     proceed: true,
                                     selectedWalletId: null,
@@ -900,8 +892,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                         final subLine = parts.join(' · ');
 
                         return InkWell(
-                          onTap:
-                              () => setDialogState(
+                          onTap: () => setDialogState(
                                 () => selectedAlternativeId = info.walletId,
                               ),
                           borderRadius: BorderRadius.circular(8),
@@ -911,16 +902,12 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  isSelected
+                              color: isSelected
                                       ? Colors.orange.shade50
                                       : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
-                              border:
-                                  isSelected
-                                      ? Border.all(
-                                        color: Colors.orange.shade200,
-                                      )
+                              border: isSelected
+                                  ? Border.all(color: Colors.orange.shade200)
                                       : null,
                             ),
                             child: Row(
@@ -931,8 +918,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                                       ? Icons.radio_button_checked
                                       : Icons.radio_button_unchecked,
                                   size: 20,
-                                  color:
-                                      isSelected
+                                  color: isSelected
                                           ? Colors.orange[700]
                                           : Colors.grey[400],
                                 ),
@@ -989,8 +975,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                 ),
               ),
               // "Pay with selected wallet" — only active when selection is good
-              actions:
-                  otherWalletInfos.isEmpty
+              actions: otherWalletInfos.isEmpty
                       ? null
                       : [
                         SizedBox(
@@ -999,17 +984,14 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                             icon: const Icon(Icons.bolt),
                             label: Text(t.maker.payInvoice.actions.payWithNwc),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  canPayWithAlt
+                            backgroundColor: canPayWithAlt
                                       ? Colors.orange[700]
                                       : Colors.grey[300],
-                              foregroundColor:
-                                  canPayWithAlt
+                            foregroundColor: canPayWithAlt
                                       ? Colors.white
                                       : Colors.grey[600],
                             ),
-                            onPressed:
-                                canPayWithAlt
+                          onPressed: canPayWithAlt
                                     ? () => Navigator.of(ctx).pop(
                                       _BudgetDialogResult(
                                         proceed: true,
@@ -1203,8 +1185,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        icon:
-            _isPayingWithWallet
+        icon: _isPayingWithWallet
                 ? const SizedBox(
                   width: 16,
                   height: 16,
@@ -1224,9 +1205,14 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.orange[700],
           foregroundColor: Colors.white,
+          disabledBackgroundColor: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest,
+          disabledForegroundColor: Theme.of(context).colorScheme.outline,
         ),
-        onPressed:
-            _isPayingWithWallet ? null : () => _checkBudgetAndPay(holdInvoice),
+        onPressed: _isPayingWithWallet
+            ? null
+            : () => _checkBudgetAndPay(holdInvoice),
       ),
     );
   }
@@ -1451,8 +1437,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        icon:
-                            _isCancelling
+                        icon: _isCancelling
                                 ? const SizedBox(
                                   width: 16,
                                   height: 16,
@@ -1466,9 +1451,14 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                          disabledForegroundColor: Theme.of(
+                            context,
+                          ).colorScheme.outline,
                         ),
-                        onPressed:
-                            (_isCancelling || _isPayingWithWallet)
+                        onPressed: (_isCancelling || _isPayingWithWallet)
                                 ? null
                                 : _handleCancelPressed,
                       ),

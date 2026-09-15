@@ -89,9 +89,9 @@ class MakerWaitingBody extends ConsumerWidget {
                   Flexible(
                     child: Text(
                       message!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
-                        color: Colors.black87,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                       softWrap: true,
@@ -112,11 +112,13 @@ class MakerWaitingBody extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildDetailRow(
+                  context,
                   t.offers.details.amountLabel,
                   '$fiat ${offer.fiatCurrency}',
                 ),
                 const SizedBox(height: 8),
                 _buildDetailRow(
+                  context,
                   t.maker.amountForm.labels.fee,
                   formatBitcoinAmount(
                     context,
@@ -129,6 +131,7 @@ class MakerWaitingBody extends ConsumerWidget {
                   GestureDetector(
                     onTap: () => showPremiumInfoDialog(context),
                     child: _buildDetailRow(
+                      context,
                       t.offers.labels.premium,
                       '+${formatPremium(offer.premiumPercent)}%',
                     ),
@@ -145,20 +148,23 @@ class MakerWaitingBody extends ConsumerWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 16, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],

@@ -40,6 +40,7 @@ class TranslationsDe extends Translations with BaseTranslations<AppLocale, Trans
 
 	// Translations
 	@override late final _Translations$app$de app = _Translations$app$de._(_root);
+	@override late final _Translations$theme$de theme = _Translations$theme$de._(_root);
 	@override late final _Translations$common$de common = _Translations$common$de._(_root);
 	@override late final _Translations$lightningAddress$de lightningAddress = _Translations$lightningAddress$de._(_root);
 	@override late final _Translations$nfc$de nfc = _Translations$nfc$de._(_root);
@@ -83,6 +84,18 @@ class _Translations$app$de extends Translations$app$en {
 	@override String title({required Object app}) => '${app}';
 	@override String get greeting => 'Hallo!';
 	@override String get changelog => 'Änderungsprotokoll';
+}
+
+// Path: theme
+class _Translations$theme$de extends Translations$theme$en {
+	_Translations$theme$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get switchToLight => 'Zum hellen Design wechseln';
+	@override String get switchToDark => 'Zum dunklen Design wechseln';
+	@override String get openNostr => 'Nostr-Profil öffnen';
 }
 
 // Path: common
@@ -3295,6 +3308,9 @@ extension on TranslationsDe {
 			'app.title' => ({required Object app}) => '${app}',
 			'app.greeting' => 'Hallo!',
 			'app.changelog' => 'Änderungsprotokoll',
+			'theme.switchToLight' => 'Zum hellen Design wechseln',
+			'theme.switchToDark' => 'Zum dunklen Design wechseln',
+			'theme.openNostr' => 'Nostr-Profil öffnen',
 			'common.buttons.cancel' => 'Abbrechen',
 			'common.buttons.save' => 'Speichern',
 			'common.buttons.done' => 'Fertig',
@@ -3801,11 +3817,11 @@ extension on TranslationsDe {
 			'taker.criticalCodeDecision.actions.proceed' => 'Ich wurde NICHT belastet – fortfahren',
 			'taker.conflict.title' => 'Zahlungsbestätigung ausstehend',
 			'taker.conflict.headline' => 'Warten auf die Bestätigung des Makers',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.body' => ({required Object code}) => 'Du hast gemeldet, dass die ${code}-Zahlung belastet wurde, aber der Maker hat sie als nicht erfolgreich gemeldet. Diese Meldungen widersprechen sich.',
 			'taker.conflict.instructions' => 'Der Maker muss nun das Ergebnis bestätigen. Bestätigt er den Erfolg der Zahlung, wird deine Auszahlung fortgesetzt. Bestätigt er den Fehlschlag oder läuft der Timer ab, wechselt das Angebot in einen formellen Streitfall und der Streitfall-Chat wird verfügbar.',
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formeller Streitfall wird automatisch eröffnet in ${time}',
-			_ => null,
-		} ?? switch (path) {
 			'taker.conflict.actions.back' => 'Zurück zur Startseite',
 			'taker.conflict.feedback.reported' => 'Zahlungskonflikt gemeldet. Warten auf die Bestätigung des Makers.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Fehler beim Melden des Konflikts: ${details}',
