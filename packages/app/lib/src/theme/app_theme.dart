@@ -86,36 +86,39 @@ abstract final class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: scheme.outlineVariant),
+          borderSide: isDark
+              ? BorderSide.none
+              : BorderSide(color: scheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDark
-                ? scheme.outlineVariant.withValues(alpha: 0.72)
-                : scheme.outlineVariant,
-          ),
+          borderSide: isDark
+              ? BorderSide.none
+              : BorderSide(color: scheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: scheme.primary.withValues(alpha: isDark ? 0.9 : 1),
-            width: 1.5,
-          ),
+          borderSide: isDark
+              ? BorderSide.none
+              : BorderSide(color: scheme.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: scheme.error),
+          borderSide: isDark ? BorderSide.none : BorderSide(color: scheme.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: scheme.error, width: 1.5),
+          borderSide: isDark
+              ? BorderSide.none
+              : BorderSide(color: scheme.error, width: 1.5),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.45),
-          ),
+          borderSide: isDark
+              ? BorderSide.none
+              : BorderSide(
+                  color: scheme.outlineVariant.withValues(alpha: 0.45),
+                ),
         ),
       ),
       snackBarTheme: SnackBarThemeData(

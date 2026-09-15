@@ -69,19 +69,21 @@ void main() {
     expect(style?.foregroundColor?.resolve(states), isNull);
   });
 
-  test('dark inputs use an elevated surface and explicit state borders', () {
+  test('dark inputs use an elevated surface without borders', () {
     final theme = AppTheme.dark;
     final input = theme.inputDecorationTheme;
 
     expect(input.filled, isTrue);
     expect(input.fillColor, theme.colorScheme.surfaceContainerLow);
-    expect(
-      (input.enabledBorder! as OutlineInputBorder).borderSide.color,
-      theme.colorScheme.outlineVariant.withValues(alpha: 0.72),
-    );
-    expect(
-      (input.focusedBorder! as OutlineInputBorder).borderSide.width,
-      1.5,
-    );
+    for (final border in [
+      input.border,
+      input.enabledBorder,
+      input.focusedBorder,
+      input.errorBorder,
+      input.focusedErrorBorder,
+      input.disabledBorder,
+    ]) {
+      expect((border! as OutlineInputBorder).borderSide, BorderSide.none);
+    }
   });
 }

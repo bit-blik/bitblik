@@ -1433,7 +1433,7 @@ final FlowBody twintTakerWaitConfirmBody = (context, ref, offer, engine, role) {
         ),
       ),
       const SizedBox(height: 20),
-      // Big green/white countdown matching the BLIK takerCharged circle.
+      // Large countdown matching the BLIK takerCharged circle.
       flowCountdownFor(
         context,
         engine,
@@ -1443,7 +1443,6 @@ final FlowBody twintTakerWaitConfirmBody = (context, ref, offer, engine, role) {
         strokeWidth: 16,
         fontSize: 48,
         progressColor: Colors.green,
-        backgroundColor: Colors.white,
       ),
       const SizedBox(height: 20),
       // Blue info box: auto-confirm explanation.

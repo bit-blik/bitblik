@@ -366,7 +366,6 @@ class _MakerWaitForBlikScreenState
                     size: 200,
                     strokeWidth: 16,
                     progressColor: Colors.green,
-                    backgroundColor: Colors.white,
                     fontSize: 48,
                   ),
                 ),

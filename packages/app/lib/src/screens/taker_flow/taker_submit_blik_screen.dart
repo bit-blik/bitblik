@@ -879,7 +879,6 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   maxDuration: _maxBlikInputTime!,
                   strokeWidth: 16,
                   progressColor: Colors.green,
-                  backgroundColor: Colors.white,
                   fontSize: 48,
                 )
               else
@@ -1225,13 +1224,16 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
-            color: Colors.black87,
+            color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1320,7 +1322,6 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
     );
   }
 }
-
 /// Extracts a [codeLength]-digit code from arbitrary text (e.g. the message
 /// shared from the mBWAY app). Returns the first run of digits whose length
 /// equals [codeLength], so amounts like "200 €" or "30 minutos" don't break

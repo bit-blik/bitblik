@@ -549,7 +549,6 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                     size: 200,
                     strokeWidth: 16,
                     progressColor: Colors.green,
-                    backgroundColor: Colors.white,
                     fontSize: 48,
                   )
                   : const CircularProgressIndicator(),

@@ -73,7 +73,6 @@ class TakerProgressIndicator extends ConsumerWidget {
     );
   }
 }
-
 // Widget for 10min Funded Offer Progress Bar
 class FundedOfferProgressIndicator extends ConsumerStatefulWidget {
   final DateTime createdAt;
@@ -506,7 +505,7 @@ class CircularCountdownTimer extends StatefulWidget {
   final double size;
   final double strokeWidth;
   final Color progressColor;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final double fontSize;
 
   const CircularCountdownTimer({
@@ -516,7 +515,7 @@ class CircularCountdownTimer extends StatefulWidget {
     this.size = 120,
     this.strokeWidth = 12,
     this.progressColor = Colors.green,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
     this.fontSize = 40,
   });
 
@@ -609,6 +608,9 @@ class _CircularCountdownTimerState extends State<CircularCountdownTimer> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final backgroundColor =
+        widget.backgroundColor ?? colorScheme.surfaceContainerHighest;
     // Upper-bound font size based on widget size. The text is wrapped in a
     // FittedBox constrained to the circle's inner width, so a short value like
     // "24s" renders at this size while a longer "30:00" is scaled down to fit
@@ -623,23 +625,23 @@ class _CircularCountdownTimerState extends State<CircularCountdownTimer> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Background circle (white background for text)
+          // Theme-aware inner surface keeps the timer integrated with its page.
           Container(
             width: widget.size,
             height: widget.size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: colorScheme.surfaceContainerLow,
             ),
           ),
-          // Circular progress indicator (spent time - background color/white)
+          // Circular progress indicator: colored elapsed arc and themed track.
           SizedBox(
             width: widget.size,
             height: widget.size,
             child: CircularProgressIndicator(
               value: _progress,
               backgroundColor: widget.progressColor,
-              valueColor: AlwaysStoppedAnimation<Color>(widget.backgroundColor),
+              valueColor: AlwaysStoppedAnimation<Color>(backgroundColor),
               strokeWidth: widget.strokeWidth,
             ),
           ),
@@ -655,7 +657,7 @@ class _CircularCountdownTimerState extends State<CircularCountdownTimer> {
                 style: TextStyle(
                   fontSize: dynamicFontSize,
                   fontWeight: FontWeight.normal,
-                  color: Colors.black,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),

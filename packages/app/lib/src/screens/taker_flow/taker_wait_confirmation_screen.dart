@@ -627,7 +627,6 @@ class _BlikReceivedWidget extends StatelessWidget {
             maxDuration: maxConfirmationTime,
             strokeWidth: 16,
             progressColor: Colors.blue,
-            backgroundColor: Colors.white,
             fontSize: 8,
           )
         else if (timerExpired)
@@ -698,7 +697,6 @@ class _BlikSentToMakerWidget extends StatelessWidget {
             maxDuration: maxConfirmationTime,
             strokeWidth: 16,
             progressColor: Colors.blue,
-            backgroundColor: Colors.white,
             fontSize: 8,
           )
         else if (timerExpired)
@@ -776,7 +774,6 @@ class _ExpiredBlikWidget extends ConsumerWidget {
           maxDuration: const Duration(seconds: 60),
           strokeWidth: 8,
           progressColor: Colors.orange,
-          backgroundColor: Colors.white,
           fontSize: 6,
         ),
         const SizedBox(height: 10),
@@ -893,7 +890,6 @@ class _TakerChargedWidget extends ConsumerWidget {
             maxDuration: autoConfirmDuration,
             strokeWidth: 16,
             progressColor: Colors.green,
-            backgroundColor: Colors.white,
             fontSize: 4,
           ),
         const SizedBox(height: 20),
