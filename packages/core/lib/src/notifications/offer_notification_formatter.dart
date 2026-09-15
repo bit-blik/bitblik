@@ -6,13 +6,16 @@ import '../payment/payment_system.dart';
 String formatFundedOfferNotification(
   Offer offer, {
   required String frontendDomain,
+  PaymentSystem? paymentSystem,
 }) {
-  final paymentSystem = paymentSystemForOffer(offer);
-  final strings =
-      _stringsByCountry[paymentSystem.country] ?? _stringsByCountry['PL']!;
+  final resolvedPaymentSystem = paymentSystem ?? paymentSystemForOffer(offer);
+  final strings = _stringsByCountry[resolvedPaymentSystem.country] ??
+      _stringsByCountry['PL']!;
   final fiatText =
       '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
-  final bank = bankForOffer(offer);
+  final bank = resolvedPaymentSystem
+      .instrumentFor(offer.category)
+      ?.bankById(offer.bankId);
   final bankTag = bank == null ? '' : ' [${bank.label}]';
   final categoryText = _formatCategory(offer.category, strings);
   final categorySuffix = categoryText == null ? '' : ', $categoryText';

@@ -70,24 +70,6 @@ part 'actions/twint/set_new_code.dart';
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
 
-/// Bilingual (English/local language) wording used in chat notifications
-/// (Telegram/Matrix/SimpleX/Signal) for new-offer announcements.
-class OfferNotificationStrings {
-  final String newOffer;
-  final String premium;
-  final String shop;
-  final String atm;
-  final String online;
-
-  const OfferNotificationStrings({
-    required this.newOffer,
-    required this.premium,
-    required this.shop,
-    required this.atm,
-    required this.online,
-  });
-}
-
 class _PendingOfferRecord {
   final Map<String, dynamic> data;
 
@@ -1316,13 +1298,6 @@ class CoordinatorService {
   }
 
   String _buildFundedOfferNotification(Offer offer) {
-    final strings = _notificationStrings;
-    final fiatText =
-        '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
-    // The general channel mixes every bank of a multi-bank market, so the bank
-    // goes up front: a taker must see whose ATM the code is for without opening
-    // the offer. Empty for bank-agnostic markets (BLIK/MB WAY/TWINT).
-    //
     // Resolved through THIS coordinator's own market/instrument, not the
     // global bankForOffer(offer): offer.paymentSystemId is not a DB column, so
     // a DB-loaded offer always has it null, and bankForOffer's currency
@@ -1330,14 +1305,11 @@ class CoordinatorService {
     // market (MB WAY) rather than sk — silently dropping the bank tag for
     // every re-list notification (see SendOfferNotificationsAction for why
     // re-lists are now suppressed instead of just mislabeled).
-    final bank = _instrumentForCategory(offer.category).bankById(offer.bankId);
-    final bankTag = bank == null ? '' : ' [${bank.label}]';
-    final categoryText = _formatCategoryForNotification(offer.category);
-    final categorySuffix = categoryText == null ? '' : ', $categoryText';
-    final premiumSuffix = offer.premiumPercent > 0
-        ? ', +${_formatPremium(offer.premiumPercent)}% ${strings.premium}'
-        : '';
-    return '${strings.newOffer}$bankTag: ${offer.amountSats} sats ($fiatText)$categorySuffix$premiumSuffix -> https://${frontendDomain}/offers/${offer.id}';
+    return formatFundedOfferNotification(
+      offer,
+      frontendDomain: frontendDomain,
+      paymentSystem: _paymentSystem,
+    );
   }
 
   /// General target [general] (dropped if empty) unioned with the offer bank's
