@@ -10,6 +10,12 @@
 # their banking app and submits it; the maker withdraws the cash at that bank's
 # ATM. There is nothing for the taker to confirm in an app.
 #
+# Two guards bound the submit/invalid loop a maker's verdict opens up:
+# reject_reused_code (reserved -> submit_blik) rejects a code already used on
+# this offer, and limit_code_attempts (invalidBlik -> reserve_offer) caps the
+# number of mark_blik_invalid verdicts before the taker must pick another
+# offer — both fixes for an unbounded taker retry seen in production.
+#
 # v2 model:
 # - A transition is an attempt. When `on` fires, run `do`; if every action
 #   succeeds, commit and advance to `to`. If any action fails, the state does
@@ -56,7 +62,7 @@ states:
     transitions:
       - on: submit_blik
         by: taker
-        do: [assert_assigned_taker, validate_code, resolve_taker_invoice, stamp_code_received_at]
+        do: [assert_assigned_taker, validate_code, reject_reused_code, resolve_taker_invoice, stamp_code_received_at]
         to: blikReceived
       - on: cancel_reservation
         by: taker
@@ -131,7 +137,7 @@ states:
         to: conflict
       - on: reserve_offer
         by: taker
-        do: [assert_assigned_taker, stamp_reserved_at]
+        do: [assert_assigned_taker, limit_code_attempts, stamp_reserved_at]
         to: reserved
       - on: cancel_reservation
         by: taker

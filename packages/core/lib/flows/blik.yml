@@ -49,7 +49,7 @@ states:
     transitions:
       - on: submit_blik
         by: taker
-        do: [assert_assigned_taker, validate_code, resolve_taker_invoice, stamp_code_received_at]
+        do: [assert_assigned_taker, validate_code, reject_reused_code, resolve_taker_invoice, stamp_code_received_at]
         to: blikReceived
       - on: cancel_reservation
         by: taker
@@ -129,7 +129,7 @@ states:
         to: conflict
       - on: reserve_offer
         by: taker
-        do: [assert_assigned_taker, stamp_reserved_at]
+        do: [assert_assigned_taker, limit_code_attempts, stamp_reserved_at]
         to: reserved
       - on: cancel_reservation
         by: taker

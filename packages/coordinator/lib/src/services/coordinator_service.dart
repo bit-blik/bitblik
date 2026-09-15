@@ -45,7 +45,9 @@ part 'actions/common/assert_assigned_taker.dart';
 part 'actions/common/cancel_hold_invoice.dart';
 part 'actions/common/cancel_reservation.dart';
 part 'actions/common/clear_taker_fields.dart';
+part 'actions/common/limit_code_attempts.dart';
 part 'actions/common/refund_maker.dart';
+part 'actions/common/reject_reused_code.dart';
 part 'actions/common/require_maker_refund_invoice.dart';
 part 'actions/common/require_maker_refund_payout.dart';
 part 'actions/common/resolve_taker_invoice.dart';
@@ -1341,9 +1343,17 @@ class CoordinatorService {
   }
 
   String _buildFundedOfferNotification(Offer offer) {
+    // Resolved through THIS coordinator's own market/instrument, not the
+    // global bankForOffer(offer): offer.paymentSystemId is not a DB column, so
+    // a DB-loaded offer always has it null, and bankForOffer's currency
+    // fallback (paymentSystemForCurrency('EUR')) resolves to the first EUR
+    // market (MB WAY) rather than sk — silently dropping the bank tag for
+    // every re-list notification (see SendOfferNotificationsAction for why
+    // re-lists are now suppressed instead of just mislabeled).
     return formatFundedOfferNotification(
       offer,
       frontendDomain: frontendDomain,
+      paymentSystem: _paymentSystem,
     );
   }
 

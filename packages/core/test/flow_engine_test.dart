@@ -156,4 +156,22 @@ void main() {
       },
     );
   });
+
+  test('BLIK and MB WAY protect invalid-code retry loop', () async {
+    for (final flowName in ['blik.yml', 'mbway.yml']) {
+      final source = File('lib/flows/$flowName').readAsStringSync();
+      final flow = await FlowEngine.fromYamlWithImports(source, loadFlowImport);
+
+      expect(
+        flow.transitionFor('reserved', 'submit_blik')?.actions,
+        containsAll(['reject_reused_code']),
+        reason: '$flowName must reject a reused withdrawal code',
+      );
+      expect(
+        flow.transitionFor('invalidBlik', 'reserve_offer')?.actions,
+        containsAll(['limit_code_attempts']),
+        reason: '$flowName must cap invalid-code retries',
+      );
+    }
+  });
 }
