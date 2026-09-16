@@ -11,25 +11,25 @@ dependency_overrides:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/ndk,
-      ref: c767c6555d6b0b51724f18e3854562f3798b5c2a
+      ref: feat/sample-app/cashu-restore-quote
     }
   ndk_flutter:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/ndk_flutter,
-      ref: c767c6555d6b0b51724f18e3854562f3798b5c2a
+      ref: feat/sample-app/cashu-restore-quote
     }
   ndk_drift:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/drift,
-      ref: c767c6555d6b0b51724f18e3854562f3798b5c2a
+      ref: feat/sample-app/cashu-restore-quote
     }
   ndk_objectbox:
     git: {
       url: https://github.com/relaystr/ndk.git,
       path: packages/objectbox,
-      ref: c767c6555d6b0b51724f18e3854562f3798b5c2a
+      ref: feat/sample-app/cashu-restore-quote
     }
 workspace:
   - packages/app

@@ -15,7 +15,7 @@ dependencies:
     git:
       url: https://github.com/relaystr/ndk.git
       path: packages/ndk
-      ref: 214f1dbf08de1809b32ebeb0ab1d9b47b3996993
+      ref: feat/sample-app/cashu-restore-quote
   yaml: ^3.1.3
 
 dev_dependencies:
