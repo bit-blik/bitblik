@@ -95,8 +95,8 @@ jobs:
         run: flutter pub get
         working-directory: .
 
-      # Two declared executables (bitblik = BLIK market, bitway = MB WAY
-      # market). Build each target into its own self-contained bundle. Each
+      # Three declared executables (bitblik = BLIK market, bitway = MB WAY,
+      # bittwint = TWINT market). Build each target into a self-contained bundle. Each
       # bundle carries its own bin/ + lib/ (NDK rust dylib) and ships as a
       # separate downloadable asset per binary.
       - name: Build CLI (both binaries)
@@ -108,6 +108,15 @@ jobs:
           $BUILD -t bin/bitblik.dart -o build/cli-bitblik
           $BUILD -t bin/bitway.dart -o build/cli-bitway
           $BUILD -t bin/bittwint.dart -o build/cli-bittwint
+
+      # Standalone AOT bundles have no package config, so ship every canonical
+      # flow definition beside each binary for FlowFileLoader to resolve.
+      - name: Bundle flow definitions
+        run: |
+          for app in bitblik bitway bittwint; do
+            mkdir -p "build/cli-${app}/bundle/bin/flows"
+            cp ../core/lib/flows/*.yml "build/cli-${app}/bundle/bin/flows/"
+          done
 
       - name: Package CLI bundles (Unix)
         if: matrix.target != 'windows_x64'
