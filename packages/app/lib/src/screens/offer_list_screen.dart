@@ -377,6 +377,23 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
   @override
   Widget build(BuildContext context) {
     final router = GoRouter.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final noOffersTipBackground = isDark
+        ? Color.alphaBlend(
+            colorScheme.primary.withValues(alpha: 0.12),
+            colorScheme.surfaceContainerHigh,
+          )
+        : const Color(0xFFEFF6FF);
+    final noOffersTipBorder = isDark
+        ? colorScheme.primary.withValues(alpha: 0.4)
+        : const Color(0xFFBFDBFE);
+    final noOffersTipForeground = isDark
+        ? colorScheme.onSurface
+        : const Color(0xFF1D4ED8);
+    final noOffersTipIcon = isDark
+        ? colorScheme.primary
+        : const Color(0xFF2563EB);
     final hasReceivingWalletAsync = ref.watch(hasReceivingWalletProvider);
     final t = Translations.of(context);
     final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
@@ -454,16 +471,16 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: noOffersTipBackground,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                            border: Border.all(color: noOffersTipBorder),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.info_outline,
-                                color: Color(0xFF2563EB),
+                                color: noOffersTipIcon,
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
@@ -473,8 +490,8 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                     app: selectedSystem.brandName,
                                   ),
                                   textAlign: TextAlign.left,
-                                  style: const TextStyle(
-                                    color: Color(0xFF1D4ED8),
+                                  style: TextStyle(
+                                    color: noOffersTipForeground,
                                   ),
                                 ),
                               ),
@@ -1265,16 +1282,16 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: noOffersTipBackground,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                          border: Border.all(color: noOffersTipBorder),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.info_outline,
-                              color: Color(0xFF2563EB),
+                              color: noOffersTipIcon,
                               size: 18,
                             ),
                             const SizedBox(width: 8),
@@ -1284,8 +1301,8 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                   app: selectedSystem.brandName,
                                 ),
                                 textAlign: TextAlign.left,
-                                style: const TextStyle(
-                                  color: Color(0xFF1D4ED8),
+                                style: TextStyle(
+                                  color: noOffersTipForeground,
                                 ),
                               ),
                             ),

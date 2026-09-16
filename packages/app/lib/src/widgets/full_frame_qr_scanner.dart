@@ -101,6 +101,7 @@ class _FullFrameQrScannerState extends State<FullFrameQrScanner>
   Future<void> _runCamera(int generation) async {
     final renderer = RTCVideoRenderer();
     MediaStream? stream;
+    String? scannedValue;
     try {
       if (kIsWeb) {
         await zxing.zx.startCameraProcessing();
@@ -175,7 +176,7 @@ class _FullFrameQrScannerState extends State<FullFrameQrScanner>
               'returning scan result',
             );
           }
-          widget.onScan(value);
+          scannedValue = value;
           break;
         }
         // No overlapping captures or queued decodes on slower machines.
@@ -193,6 +194,12 @@ class _FullFrameQrScannerState extends State<FullFrameQrScanner>
           _renderer = null;
         }
       }
+      if (kIsWeb) {
+        // Let Flutter remove the video view before its renderer and DOM
+        // element are disposed. Release builds otherwise race CanvasKit's
+        // pending frame flush.
+        await WidgetsBinding.instance.endOfFrame;
+      }
       if (stream != null) {
         for (final track in stream.getTracks()) {
           await track.stop();
@@ -201,6 +208,9 @@ class _FullFrameQrScannerState extends State<FullFrameQrScanner>
       }
       await renderer.dispose();
       if (kIsWeb) zxing.zx.stopCameraProcessing();
+    }
+    if (scannedValue != null && _isCurrent(generation)) {
+      widget.onScan(scannedValue);
     }
   }
 

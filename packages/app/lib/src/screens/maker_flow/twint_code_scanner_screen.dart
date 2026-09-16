@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../i18n/gen/strings.g.dart';
+import '../../widgets/full_frame_qr_scanner.dart';
 
 class TwintScanResult {
   final String? code;
@@ -33,19 +34,27 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     r'(?<!\d)([0-9]{1,4}[.,][0-9]{1,2})(?!\d)',
   );
 
-  final MobileScannerController _controller = MobileScannerController(
-    formats: const [BarcodeFormat.qrCode],
-    detectionSpeed: DetectionSpeed.noDuplicates,
-    returnImage: !kIsWeb,
-  );
+  MobileScannerController? _controller;
   final TextRecognizer _textRecognizer = TextRecognizer();
 
   bool _isHandlingCapture = false;
   _TwintScannerStatus _status = _TwintScannerStatus.align;
 
   @override
+  void initState() {
+    super.initState();
+    if (!kIsWeb) {
+      _controller = MobileScannerController(
+        formats: const [BarcodeFormat.qrCode],
+        detectionSpeed: DetectionSpeed.noDuplicates,
+        returnImage: true,
+      );
+    }
+  }
+
+  @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     _textRecognizer.close();
     super.dispose();
   }
@@ -79,10 +88,8 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
 
       if (code != null || amount != null) {
         if (!mounted) return;
-        // On web the camera renders via an HtmlElementView platform view;
-        // stop it and let teardown settle before popping, otherwise mobile
-        // browsers leave the previous route painted white.
-        await _controller.stop();
+        // Release the camera before removing its preview route.
+        await _controller!.stop();
         if (!mounted) return;
         Navigator.of(context).pop(TwintScanResult(code: code, amount: amount));
         return;
@@ -104,6 +111,23 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     }
   }
 
+  void _handleWebScan(String raw) {
+    if (!mounted || _isHandlingCapture) return;
+    final code = _extractCode(raw);
+    if (code == null) {
+      setState(() => _status = _TwintScannerStatus.notRecognized);
+      return;
+    }
+    _isHandlingCapture = true;
+    Navigator.of(context).pop(TwintScanResult(code: code));
+  }
+
+  void _handleWebError(Object _) {
+    if (mounted) {
+      setState(() => _status = _TwintScannerStatus.amountFailed);
+    }
+  }
+
   String? _extractCode(String text) {
     final match = _codePattern.firstMatch(text);
     return match?.group(1);
@@ -113,8 +137,8 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     final directMatch = _amountPattern.firstMatch(text);
     final raw =
         directMatch?.group(1) ??
-            directMatch?.group(2) ??
-            _fallbackDecimalPattern.firstMatch(text)?.group(1);
+        directMatch?.group(2) ??
+        _fallbackDecimalPattern.firstMatch(text)?.group(1);
     if (raw == null) return null;
     return double.tryParse(raw.replaceAll(',', '.'));
   }
@@ -124,17 +148,22 @@ class _TwintCodeScannerScreenState extends State<TwintCodeScannerScreen> {
     final t = Translations.of(context);
     const codeLabel = 'TWINT';
     final statusText = switch (_status) {
-      _TwintScannerStatus.align => t.twint.scanner.status.align(code: codeLabel),
-      _TwintScannerStatus.notRecognized =>
-          t.twint.scanner.status.notRecognized(code: codeLabel),
-      _TwintScannerStatus.amountFailed =>
-      t.twint.scanner.status.amountFailed,
+      _TwintScannerStatus.align => t.twint.scanner.status.align(
+        code: codeLabel,
+      ),
+      _TwintScannerStatus.notRecognized => t.twint.scanner.status.notRecognized(
+        code: codeLabel,
+      ),
+      _TwintScannerStatus.amountFailed => t.twint.scanner.status.amountFailed,
     };
     return Scaffold(
       appBar: AppBar(title: Text(t.twint.scanner.title(code: codeLabel))),
       body: Stack(
         children: [
-          MobileScanner(controller: _controller, onDetect: _handleDetect),
+          if (kIsWeb)
+            FullFrameQrScanner(onScan: _handleWebScan, onError: _handleWebError)
+          else
+            MobileScanner(controller: _controller!, onDetect: _handleDetect),
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(

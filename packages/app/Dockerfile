@@ -50,7 +50,8 @@ RUN cp web_shells/${APP_FLAVOR}/index.html web/index.html \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-2x.png web/splash/img/dark-2x.png \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-3x.png web/splash/img/dark-3x.png \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-4x.png web/splash/img/dark-4x.png \
- && flutter build web --${BUILD_MODE} --target=${FLUTTER_TARGET} --no-web-resources-cdn
+ && flutter build web --${BUILD_MODE} --target=${FLUTTER_TARGET} --no-web-resources-cdn \
+      --dart-define=WEBRTC_USE_HTML_ELEMENT_VIEW=true
 
 # Stage 2: Serve via Nginx
 FROM nginx:stable-alpine
