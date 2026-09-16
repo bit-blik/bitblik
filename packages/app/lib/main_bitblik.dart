@@ -20,7 +20,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/link.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import 'i18n/gen/strings.g.dart'; // Import Slang from new path
@@ -64,6 +63,34 @@ final double kTakerFeePercentage = 0.5;
 final SharedPreferencesAsync asyncPrefs = SharedPreferencesAsync();
 late AppLocale appLocale;
 final rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Builds link controls without url_launcher's web `HtmlElementView`.
+///
+/// Persistent invisible anchor platform views can outlive their compositor
+/// frame in optimized CanvasKit builds. Direct launches preserve behavior
+/// without adding platform views to the Flutter scene.
+class _PlatformFreeLink extends StatelessWidget {
+  final Uri uri;
+  final bool openInNewTab;
+  final Widget Function(BuildContext, VoidCallback?) builder;
+
+  const _PlatformFreeLink({
+    required this.uri,
+    this.openInNewTab = false,
+    required this.builder,
+  });
+
+  @override
+  Widget build(BuildContext context) => builder(context, () {
+    unawaited(
+      launchUrl(
+        uri,
+        mode: LaunchMode.platformDefault,
+        webOnlyWindowName: openInNewTab ? '_blank' : '_self',
+      ),
+    );
+  });
+}
 
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -1162,11 +1189,11 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                   const SizedBox(height: 8),
                                   SizedBox(
                                     width: double.infinity,
-                                    child: Link(
+                                    child: _PlatformFreeLink(
                                       uri: Uri.parse(
                                         'https://altstore.io/download',
                                       ),
-                                      target: LinkTarget.blank,
+                                      openInNewTab: true,
                                       builder:
                                           (
                                             context,
@@ -1248,7 +1275,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                   const SizedBox(height: 8),
                                   SizedBox(
                                     width: double.infinity,
-                                    child: Link(
+                                    child: _PlatformFreeLink(
                                       uri: Uri.parse(
                                         'altstore://source?url=$buildAltStoreSourceUrl',
                                       ),
@@ -1980,7 +2007,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                 ),
                               const SizedBox(width: 8),
                               // Android GitHub APK button
-                              Link(
+                              _PlatformFreeLink(
                                 uri: Uri.parse(
                                   isMbway
                                       ? 'https://github.com/bit-blik/bitway/releases'
@@ -1988,7 +2015,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                       ? 'https://github.com/bit-blik/bittwint/releases'
                                       : 'https://github.com/bit-blik/bitblik/releases',
                                 ),
-                                target: LinkTarget.blank,
+                                openInNewTab: true,
                                 builder:
                                     (context, followLink) => InkWell(
                                       onTap: followLink,
@@ -2002,7 +2029,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                               ),
                               const SizedBox(width: 8),
                               // Android Zapstore button
-                              Link(
+                              _PlatformFreeLink(
                                 uri: Uri.parse(
                                   isMbway
                                       ? 'https://zapstore.dev/apps/me.bitway'

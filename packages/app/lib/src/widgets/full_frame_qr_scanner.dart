@@ -64,6 +64,7 @@ class FullFrameQrScanner extends StatefulWidget {
 class _FullFrameQrScannerState extends State<FullFrameQrScanner>
     with WidgetsBindingObserver {
   RTCVideoRenderer? _renderer;
+  Uint8List? _webPreviewFrame;
   Future<void>? _session;
   int _generation = 0;
   int _decodeAttempts = 0;
@@ -157,6 +158,7 @@ class _FullFrameQrScannerState extends State<FullFrameQrScanner>
             ? await captureWebQrFrame(renderer)
             : (await tracks.first.captureFrame()).asUint8List();
         if (!_isCurrent(generation)) break;
+        if (kIsWeb) setState(() => _webPreviewFrame = bytes);
         _decodeAttempts++;
         if (kDebugMode && (_decodeAttempts == 1 || _decodeAttempts % 10 == 0)) {
           debugPrint(
@@ -189,16 +191,14 @@ class _FullFrameQrScannerState extends State<FullFrameQrScanner>
     } finally {
       if (identical(_renderer, renderer)) {
         if (mounted) {
-          setState(() => _renderer = null);
+          setState(() {
+            _renderer = null;
+            _webPreviewFrame = null;
+          });
         } else {
           _renderer = null;
+          _webPreviewFrame = null;
         }
-      }
-      if (kIsWeb) {
-        // Let Flutter remove the video view before its renderer and DOM
-        // element are disposed. Release builds otherwise race CanvasKit's
-        // pending frame flush.
-        await WidgetsBinding.instance.endOfFrame;
       }
       if (stream != null) {
         for (final track in stream.getTracks()) {
@@ -224,11 +224,20 @@ class _FullFrameQrScannerState extends State<FullFrameQrScanner>
   @override
   Widget build(BuildContext context) {
     final renderer = _renderer;
-    return renderer == null
-        ? const ColoredBox(color: Colors.black)
-        : RTCVideoView(
-            renderer,
-            objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitContain,
-          );
+    if (renderer == null) return const ColoredBox(color: Colors.black);
+    if (kIsWeb) {
+      final previewFrame = _webPreviewFrame;
+      return previewFrame == null
+          ? const ColoredBox(color: Colors.black)
+          : Image.memory(
+              previewFrame,
+              fit: BoxFit.contain,
+              gaplessPlayback: true,
+            );
+    }
+    return RTCVideoView(
+      renderer,
+      objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitContain,
+    );
   }
 }
