@@ -168,6 +168,180 @@ void main() {
     const bolt12 =
         'lno1zcss9mk8y3wkklfvevcrszlmu23kfrxh49px20665dqwmn4p72pksese';
 
+    Future<Map<String, dynamic>> retryAsCoordinator(
+            {String? expectedState, String actor = coordinator}) =>
+        service.flow.handleRpc(
+            kRpcRetryCoordinatorPayment,
+            {
+              'offer_id': 'dispute-1',
+              'expected_state': expectedState ?? currentStatus
+            },
+            actor);
+
+    test('coordinator retry rejects participant and stale state', () async {
+      currentStatus = 'payingTaker';
+      storedTakerInvoice = invoice;
+      await expectLater(retryAsCoordinator(actor: maker), throwsStateError);
+      await expectLater(retryAsCoordinator(expectedState: 'takerPaymentFailed'),
+          throwsStateError);
+      verifyNever(payment.payInvoice(
+          invoice: anyNamed('invoice'),
+          amountSat: anyNamed('amountSat'),
+          feeLimitSat: anyNamed('feeLimitSat')));
+    });
+
+    test('coordinator cannot retry refund without maker instruction', () async {
+      currentStatus = 'refundingMaker';
+      await expectLater(retryAsCoordinator(),
+          throwsA(predicate((e) => '$e'.contains('Maker must submit'))));
+      expect(currentStatus, 'refundingMaker');
+      verifyNever(payment.payInvoice(
+          invoice: anyNamed('invoice'),
+          amountSat: anyNamed('amountSat'),
+          feeLimitSat: anyNamed('feeLimitSat')));
+    });
+
+    test('coordinator resumes unknown taker payment by reconciliation only',
+        () async {
+      currentStatus = 'payingTaker';
+      amountSats = 1500;
+      storedTakerInvoice = invoice;
+      stubOutgoingPaymentAttempts(db,
+          initialState: OutgoingPaymentAttemptState.unknown);
+      when(payment.reconcileOutgoingPayment(invoice: invoice)).thenAnswer(
+          (_) async => PayInvoiceResult(paymentPreimage: 'paid', feeSat: 1));
+      await retryAsCoordinator();
+      expect(currentStatus, 'takerPaid');
+      verifyNever(payment.payInvoice(
+          invoice: anyNamed('invoice'),
+          amountSat: anyNamed('amountSat'),
+          feeLimitSat: anyNamed('feeLimitSat')));
+    });
+
+    test('coordinator retries failed maker refund and preserves amount',
+        () async {
+      currentStatus = 'refundingMaker';
+      storedMakerInvoice = invoice;
+      storedMakerHash = 'hash';
+      await retryAsCoordinator();
+      expect(currentStatus, 'refundedMaker');
+      verify(payment.payInvoice(
+              invoice: invoice, amountSat: 1500, feeLimitSat: 15))
+          .called(1);
+      expect(transitionMeta.first.event, kRpcRetryCoordinatorPayment);
+      expect(transitionMeta.first.actorPubkey, coordinator);
+    });
+
+    test('manual retry does not resend unresolved payment and exposes error',
+        () async {
+      currentStatus = 'payingTaker';
+      amountSats = 1500;
+      storedTakerInvoice = invoice;
+      stubOutgoingPaymentAttempts(db,
+          initialState: OutgoingPaymentAttemptState.unknown);
+      await retryAsCoordinator();
+      expect(currentStatus, 'payingTaker');
+      verifyNever(payment.payInvoice(
+          invoice: anyNamed('invoice'),
+          amountSat: anyNamed('amountSat'),
+          feeLimitSat: anyNamed('feeLimitSat')));
+      final diagnostics = await service.getPaymentDiagnostics(currentOffer());
+      expect(diagnostics['retry_supported'], isTrue);
+      expect((diagnostics['last_error'] as Map)['message'], isNotEmpty);
+      expect((diagnostics['last_error'] as Map)['stack_trace'], isNotEmpty);
+      verify(db.recordOfferTransition(
+        offerId: 'dispute-1',
+        fromState: 'payingTaker',
+        toState: 'payingTaker',
+        meta: argThat(
+            predicate<StateTransitionMeta>((m) => m.trigger == 'payment_error'),
+            named: 'meta'),
+      )).called(1);
+    });
+
+    test('diagnostics expose attempt details but never payment proofs',
+        () async {
+      when(db.getOutgoingPaymentAttempts('dispute-1')).thenAnswer((_) async => [
+            OutgoingPaymentAttempt(
+                id: 'attempt-1',
+                offerId: 'dispute-1',
+                purpose: 'refund',
+                generation: 2,
+                paymentType: OutgoingPaymentType.bolt11,
+                expectedAmountSats: 1500,
+                feeLimitSats: 15,
+                backendType: 'nwc',
+                state: OutgoingPaymentAttemptState.unknown,
+                createdAt: invoiceCreatedAt,
+                updatedAt: invoiceCreatedAt,
+                bolt11Invoice: invoice,
+                preimage: 'private-preimage',
+                payerProof: 'private-proof',
+                failureReason:
+                    'InvoiceRequestExpired private-proof private-preimage $invoice'),
+          ]);
+      final diagnostics = await service.getPaymentDiagnostics(currentOffer());
+      final attempt = (diagnostics['attempts'] as List).single as Map;
+      expect(attempt['generation'], 2);
+      expect(attempt['backend_type'], 'nwc');
+      expect(attempt['fee_limit_sats'], 15);
+      expect(attempt['failure_reason'], contains('InvoiceRequestExpired'));
+      expect(attempt.containsKey('preimage'), isFalse);
+      for (final secret in ['private-proof', 'private-preimage', invoice]) {
+        expect(diagnostics.toString(), isNot(contains(secret)));
+      }
+    });
+
+    test('manual retry resends definitively failed invoice in new generation',
+        () async {
+      currentStatus = 'payingTaker';
+      amountSats = 1500;
+      storedTakerInvoice = invoice;
+      when(payment.reconcileOutgoingPayment(invoice: invoice)).thenAnswer(
+          (_) async => PayInvoiceResult(
+              status: PaymentStatus.FAILED, paymentError: 'RouteNotFound'));
+      await retryAsCoordinator();
+      expect(currentStatus, 'takerPaymentFailed');
+      verifyNever(payment.payInvoice(
+          invoice: anyNamed('invoice'),
+          amountSat: anyNamed('amountSat'),
+          feeLimitSat: anyNamed('feeLimitSat')));
+      await retryAsCoordinator();
+      expect(currentStatus, 'takerPaid');
+      verify(payment.payInvoice(
+              invoice: invoice,
+              amountSat: 1500,
+              feeLimitSat: anyNamed('feeLimitSat')))
+          .called(1);
+    });
+
+    test('concurrent coordinator retries submit only once', () async {
+      currentStatus = 'payingMaker';
+      storedMakerInvoice = invoice;
+      final sent = Completer<void>();
+      final finish = Completer<PayInvoiceResult>();
+      when(payment.payInvoice(
+              invoice: invoice,
+              amountSat: anyNamed('amountSat'),
+              feeLimitSat: anyNamed('feeLimitSat')))
+          .thenAnswer((_) {
+        sent.complete();
+        return finish.future;
+      });
+      final first = retryAsCoordinator();
+      await sent.future;
+      final second = await retryAsCoordinator();
+      expect(second['message'], contains('already running'));
+      finish.complete(PayInvoiceResult(paymentPreimage: 'paid', feeSat: 1));
+      await first;
+      expect(currentStatus, 'refundedMaker');
+      verify(payment.payInvoice(
+              invoice: invoice,
+              amountSat: anyNamed('amountSat'),
+              feeLimitSat: anyNamed('feeLimitSat')))
+          .called(1);
+    });
+
     void stubBolt12(
         {int? amountMsat,
         String network = 'mainnet',

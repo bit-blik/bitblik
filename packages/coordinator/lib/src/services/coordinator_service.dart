@@ -29,6 +29,7 @@ import '../models/pay_invoice_result.dart';
 import '../models/pay_offer_result.dart';
 import '../models/payment_status.dart';
 import '../models/outgoing_payment_attempt.dart';
+import 'payment_diagnostics.dart';
 import 'nostr_service.dart';
 import 'telegram_service.dart';
 import '../flow/flow_loader.dart';
@@ -1571,13 +1572,31 @@ class CoordinatorService {
     }
 
     final reconciled = await _reconcileAttempt(backend, attempt);
-    if (reconciled != null) {
+    // Only a new generation may resubmit a definitively failed invoice.
+    final retryFailedInvoice = invoice != null &&
+        attempt.generation > 0 &&
+        attempt.state == OutgoingPaymentAttemptState.prepared &&
+        reconciled?.status == PaymentStatus.FAILED;
+    if (reconciled != null && !retryFailedInvoice) {
       attempt = await _persistAttemptResult(attempt, reconciled);
       if (reconciled.status != PaymentStatus.UNKNOWN) return reconciled;
     }
 
     if (attempt.state != OutgoingPaymentAttemptState.prepared) {
       return _resultFromAttempt(attempt);
+    }
+
+    try {
+      await _validateOutgoingInstruction(
+          invoice: invoice,
+          offer: bolt12Offer,
+          expectedAmountSats: amountSats,
+          action: purpose);
+    } catch (error) {
+      final failed = _OutgoingPaymentResult(
+          status: PaymentStatus.FAILED, error: error.toString());
+      await _persistAttemptResult(attempt, failed);
+      return failed;
     }
 
     // Persist the submission claim before making the external call. A crash
@@ -2382,6 +2401,81 @@ class CoordinatorService {
 
   Future<List<Map<String, dynamic>>> getOfferStateHistory(String offerId) =>
       _dbService.getOfferStateHistory(offerId);
+
+  Future<Map<String, dynamic>> getPaymentDiagnostics(Offer offer) async {
+    final attempts = await _dbService.getOutgoingPaymentAttempts(offer.id);
+    final history = await _dbService.getOfferStateHistory(offer.id);
+    final secrets = <String?>[
+      offer.holdInvoicePreimage,
+      offer.takerInvoice,
+      offer.takerOffer,
+      offer.makerRefundInvoice,
+      offer.makerRefundOffer,
+      for (final a in attempts) ...[
+        a.preimage,
+        a.payerProof,
+        a.bolt11Invoice,
+        a.bolt12Offer
+      ],
+    ];
+    String? safe(String? value) =>
+        value == null ? null : redactPaymentDiagnostic(value, secrets: secrets);
+    final failures = <Map<String, dynamic>>[];
+    for (final row in history.reversed) {
+      final meta = row['metadata'];
+      if (meta is Map && meta['payment_error'] is Map) {
+        final error = meta['payment_error'] as Map;
+        failures.add({
+          'at': row['created_at'],
+          'state': row['from_state'],
+          'message': safe(error['message']?.toString()),
+          'stack_trace': safe(error['stack_trace']?.toString()),
+        });
+        if (failures.length == 10) break;
+      }
+    }
+    return {
+      'retry_supported': const {
+        'payingTaker',
+        'takerPaymentFailed',
+        'refundingMaker',
+        'payingMaker'
+      }.contains(offer.statusRaw),
+      'processing':
+          flow._runningPaymentStates.any((entry) => entry.$1 == offer.id),
+      'last_error': flow._paymentErrors[offer.id] == null
+          ? null
+          : {
+              ...flow._paymentErrors[offer.id]!,
+              'message':
+                  safe(flow._paymentErrors[offer.id]!['message'] as String?),
+              'stack_trace': safe(
+                  flow._paymentErrors[offer.id]!['stack_trace'] as String?),
+            },
+      'offer_error': safe(offer.takerPaymentFailureReason),
+      'state_errors': failures,
+      'attempts': [
+        for (final a in attempts)
+          {
+            'id': a.id,
+            'purpose': a.purpose,
+            'generation': a.generation,
+            'payment_type': a.paymentType.name,
+            'backend_type': a.backendType,
+            'state': a.state.name,
+            'amount_sats': a.expectedAmountSats,
+            'fee_limit_sats': a.feeLimitSats,
+            'fee_paid_sats': a.feePaidSats,
+            'backend_payment_id': a.backendPaymentId,
+            'payment_hash': a.paymentHash,
+            'failure_reason': safe(a.failureReason),
+            'created_at': a.createdAt.toUtc().toIso8601String(),
+            'updated_at': a.updatedAt.toUtc().toIso8601String(),
+            'settled_at': a.settledAt?.toUtc().toIso8601String(),
+          }
+      ],
+    };
+  }
 
   Future<Offer?> getOfferDetailsForParticipant(
     String userPubkey, {

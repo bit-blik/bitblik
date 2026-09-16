@@ -25,6 +25,7 @@ import '../models/pay_offer_result.dart';
 import '../models/payment_status.dart' as domain;
 import 'bolt12_offer_parser.dart';
 import 'payment_service.dart';
+import 'payment_diagnostics.dart';
 
 typedef LdkServerDelay = Future<void> Function(Duration duration);
 
@@ -1311,7 +1312,8 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
           ? ' Check host clock synchronization.'
           : '';
       return Exception(
-          'ldk-server $operation failed (gRPC ${error.codeName}).$clockHint');
+          'ldk-server $operation failed (gRPC ${error.codeName}).$clockHint'
+          '${error.message == null || error.code == StatusCode.unauthenticated || error.code == StatusCode.permissionDenied ? '' : ' ${redactPaymentDiagnostic(error.message!)}'}');
     }
     return Exception('ldk-server $operation failed: $error');
   }
