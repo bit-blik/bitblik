@@ -919,11 +919,15 @@ class NostrService {
               'coordinator_pubkey': coordinatorKey.toLowerCase(),
             'payment_system': _coordinatorService.paymentSystem.id,
             if (isCoordinator || offer.makerPubkey == userPubkey)
-              'maker_refund_invoice_ready': offer.makerRefundInvoice != null &&
-                  offer.makerRefundPaymentHash != null,
+              'maker_refund_invoice_ready': offer.makerRefundOffer != null ||
+                  (offer.makerRefundInvoice != null &&
+                      offer.makerRefundPaymentHash != null),
             if (isCoordinator)
               'state_history':
                   await _coordinatorService.getOfferStateHistory(offer.id),
+            if (isCoordinator)
+              'payment_diagnostics':
+                  await _coordinatorService.getPaymentDiagnostics(offer),
             if (isCoordinator)
               'is_final': _coordinatorService.isTerminalOffer(offer),
             if (isCoordinator)

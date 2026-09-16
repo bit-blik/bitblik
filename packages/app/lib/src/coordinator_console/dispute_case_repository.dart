@@ -12,6 +12,7 @@ class CoordinatorDisputeCase {
   final bool paymentBackendAvailable;
   final int makerRefundSats;
   final int takerPayoutSats;
+  final Map<String, dynamic> paymentDiagnostics;
 
   const CoordinatorDisputeCase({
     required this.offer,
@@ -22,6 +23,7 @@ class CoordinatorDisputeCase {
     required this.paymentBackendAvailable,
     required this.makerRefundSats,
     required this.takerPayoutSats,
+    this.paymentDiagnostics = const {},
   });
 }
 
@@ -253,6 +255,9 @@ class DisputeCaseRepository {
           ? backend['type']?.toString() ?? 'unknown'
           : 'unknown',
       paymentBackendAvailable: backend is Map && backend['available'] == true,
+      paymentDiagnostics: result['payment_diagnostics'] is Map
+          ? Map<String, dynamic>.from(result['payment_diagnostics'] as Map)
+          : const {},
       makerRefundSats: amounts is Map
           ? (amounts['maker_refund_sats'] as num?)?.toInt() ?? 0
           : 0,
@@ -265,6 +270,32 @@ class DisputeCaseRepository {
   Future<void> ruleForMaker(CoordinatorDisputeCase dispute) async {
     _requireOpen(dispute);
     await _decision(dispute.offer.id, 'resolve_dispute_refund_maker');
+  }
+
+  Future<String> retryPayment(CoordinatorDisputeCase item) async {
+    final coordinator = session.expectedCoordinatorPubkey;
+    final rpc = session.rpc;
+    if (coordinator == null || rpc == null) {
+      throw StateError('Coordinator signer is not authenticated.');
+    }
+    final response = await rpc.send(
+      NostrRequest(
+        method: kRpcRetryCoordinatorPayment,
+        params: {
+          'offer_id': item.offer.id,
+          'expected_state': item.offer.statusRaw,
+        },
+      ),
+      coordinator,
+      relays: session.coordinatorRelays,
+    );
+    if (response.error != null) {
+      throw StateError(
+        response.error!['message']?.toString() ?? 'Payment check failed.',
+      );
+    }
+    return response.result?['message']?.toString() ??
+        'Payment check requested. Refresh for the result.';
   }
 
   Future<void> ruleForTaker(CoordinatorDisputeCase dispute) =>

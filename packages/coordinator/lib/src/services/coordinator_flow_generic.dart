@@ -115,6 +115,9 @@ class GenericOfferFlow {
   GenericOfferFlow(this._c);
 
   final Map<String, Timer> _stateTimers = {};
+  final Set<(String, String)> _runningPaymentStates = {};
+  final Set<String> _manualPaymentRetries = {};
+  final Map<String, Map<String, dynamic>> _paymentErrors = {};
   static const Duration _timeoutRetryBackoff = Duration(seconds: 30);
 
   static const Set<String> _validNip69 = {
@@ -138,7 +141,8 @@ class GenericOfferFlow {
           t.event!,
   };
 
-  bool handlesRpc(String method) => _handledEvents.contains(method);
+  bool handlesRpc(String method) =>
+      method == kRpcRetryCoordinatorPayment || _handledEvents.contains(method);
 
   /// Deep startup validation of the loaded flow (beyond [FlowDefinition.parse]'s
   /// structural checks). Throws [StateError] listing every problem found.
@@ -232,6 +236,9 @@ class GenericOfferFlow {
       throw Exception('Missing required parameter: offer_id');
     final offer = await _c._dbService.getOfferById(offerId);
     if (offer == null) throw Exception('Offer not found');
+    if (method == kRpcRetryCoordinatorPayment) {
+      return _retryCoordinatorPayment(offer, userPubkey, params);
+    }
 
     // Older takers cannot render the shop artifact. Reject their reservation
     // before claiming the offer or returning its private payment payload.
@@ -347,6 +354,127 @@ class GenericOfferFlow {
       }
     }
     return null;
+  }
+
+  Future<Map<String, dynamic>> _retryCoordinatorPayment(
+      Offer offer, String actor, Map<String, dynamic> params) async {
+    if (!_identityOk(offer, actor, FlowActor.coordinator, false)) {
+      throw StateError('Only the coordinator can retry payments.');
+    }
+    if (!const {
+      'payingTaker',
+      'takerPaymentFailed',
+      'refundingMaker',
+      'payingMaker'
+    }.contains(offer.statusRaw)) {
+      throw StateError('Payment retry is not allowed from ${offer.statusRaw}.');
+    }
+    if (params['expected_state'] != offer.statusRaw) {
+      throw StateError(
+          'Offer changed state. Refresh payment details before retrying.');
+    }
+    if (_runningPaymentStates.any((entry) => entry.$1 == offer.id) ||
+        !_manualPaymentRetries.add(offer.id)) {
+      return {
+        'status': offer.statusRaw,
+        'message': 'A payment check is already running. Refresh for its result.'
+      };
+    }
+    try {
+      if (_c._paymentBackend == null)
+        throw StateError('Payment backend unavailable.');
+      final refund = offer.statusRaw == 'refundingMaker' ||
+          offer.statusRaw == 'payingMaker';
+      final invoice = refund ? offer.makerRefundInvoice : offer.takerInvoice;
+      final bolt12 = refund ? offer.makerRefundOffer : offer.takerOffer;
+      if ((invoice == null) == (bolt12 == null)) {
+        throw StateError(refund
+            ? 'Maker must submit a refund invoice or BOLT12 offer before retrying.'
+            : 'Taker must submit a payout invoice or BOLT12 offer before retrying.');
+      }
+      final target = refund ? 'payingMaker' : 'payingTaker';
+      final state = _engine.definition.state(target);
+      if (state == null ||
+          !state.actions.contains(refund ? 'refund_maker' : 'send_payment')) {
+        throw StateError(
+            'This flow does not support the requested payment retry.');
+      }
+      if (offer.statusRaw == target) {
+        await _c._dbService.recordOfferTransition(
+          offerId: offer.id,
+          fromState: target,
+          toState: target,
+          meta: StateTransitionMeta(
+              trigger: 'user_action',
+              event: kRpcRetryCoordinatorPayment,
+              actor: 'coordinator',
+              actorPubkey: actor,
+              extra: {'payment_backend': _c._paymentBackendType}),
+        );
+        _cancelTimer(offer.id);
+        await _enterState(offer);
+      } else {
+        final applied = await _applyTransition(
+            offer,
+            FlowTransition(
+              trigger: FlowTriggerType.userAction,
+              event: kRpcRetryCoordinatorPayment,
+              actor: FlowActor.coordinator,
+              target: target,
+              actions: const [],
+            ),
+            const {},
+            trigger: 'user_action',
+            actorName: 'coordinator',
+            actorPubkey: actor);
+        if (!applied)
+          throw StateError('Offer changed state. Refresh before retrying.');
+      }
+      final updated = await _c._dbService.getOfferById(offer.id);
+      return {
+        'status': updated?.statusRaw,
+        'message':
+            'Payment check completed. Current state: ${updated?.statusRaw}.',
+      };
+    } catch (error, stack) {
+      await _recordPaymentError(offer, error, stack);
+      rethrow;
+    } finally {
+      _manualPaymentRetries.remove(offer.id);
+    }
+  }
+
+  Future<void> _recordPaymentError(
+      Offer offer, Object error, StackTrace stack) async {
+    final message = redactPaymentDiagnostic(
+        error is FlowTransitionFailure ? error.reason : error.toString(),
+        secrets: [
+          offer.holdInvoicePreimage,
+          offer.takerInvoice,
+          offer.takerOffer,
+          offer.makerRefundInvoice,
+          offer.makerRefundOffer,
+        ]);
+    if (_paymentErrors[offer.id]?['message'] == message) return;
+    final detail = <String, dynamic>{
+      'message': message,
+      'stack_trace': redactPaymentDiagnostic(stack.toString()),
+      'at': _c._clock.now().toUtc().toIso8601String(),
+      'state': offer.statusRaw
+    };
+    _paymentErrors[offer.id] = detail;
+    try {
+      await _c._dbService.recordOfferTransition(
+          offerId: offer.id,
+          fromState: offer.statusRaw,
+          toState: offer.statusRaw,
+          meta: StateTransitionMeta(
+              trigger: 'payment_error',
+              actor: 'coordinator',
+              extra: {'payment_error': detail}));
+    } catch (e) {
+      AppLogger.warning('Could not persist payment error for ${offer.id}: $e');
+    }
   }
 
   bool _identityOk(
@@ -502,41 +630,50 @@ class GenericOfferFlow {
     // validateDefinition(), so an external effect can never belong to a losing
     // transition CAS.
     if (hasCommittedActions) {
-      final completion = state!.transitions.single;
+      final runningKey = (offer.id, offer.statusRaw);
+      if (!_runningPaymentStates.add(runningKey)) return;
       try {
-        final write = await _runStateActions(offer, strict: true);
-        write.audit['post_commit_do'] = state.actions;
-        final current = await _c._dbService.getOfferById(offer.id);
-        if (current == null || current.statusRaw != offer.statusRaw) return;
-        await _applyTransition(current, completion, const {},
-            trigger: 'auto', actorName: 'coordinator', initialWrite: write);
-      } on FlowTransitionFailure catch (e) {
-        if (completion.onFailTarget != null) {
+        final completion = state!.transitions.single;
+        try {
+          final write = await _runStateActions(offer, strict: true);
+          _paymentErrors.remove(offer.id);
+          write.audit['post_commit_do'] = state.actions;
           final current = await _c._dbService.getOfferById(offer.id);
           if (current == null || current.statusRaw != offer.statusRaw) return;
-          final failureWrite = OfferWriteSpec()
-            ..audit['post_commit_do'] = state.actions;
           await _applyTransition(current, completion, const {},
-              trigger: 'auto',
-              actorName: 'coordinator',
-              initialWrite: failureWrite,
-              initialFailure: e);
-        } else {
+              trigger: 'auto', actorName: 'coordinator', initialWrite: write);
+        } on FlowTransitionFailure catch (e, st) {
+          await _recordPaymentError(offer, e, st);
+          if (completion.onFailTarget != null) {
+            final current = await _c._dbService.getOfferById(offer.id);
+            if (current == null || current.statusRaw != offer.statusRaw) return;
+            final failureWrite = OfferWriteSpec()
+              ..audit['post_commit_do'] = state.actions;
+            await _applyTransition(current, completion, const {},
+                trigger: 'auto',
+                actorName: 'coordinator',
+                initialWrite: failureWrite,
+                initialFailure: e);
+          } else {
+            AppLogger.warning(
+                'Generic post-commit state action failed for offer ${offer.id} '
+                'in state "${offer.statusRaw}": ${e.reason}',
+                offerId: offer.id,
+                error: e);
+            _scheduleStateActionRetry(offer);
+          }
+        } catch (e, st) {
+          await _recordPaymentError(offer, e, st);
           AppLogger.warning(
               'Generic post-commit state action failed for offer ${offer.id} '
-              'in state "${offer.statusRaw}": ${e.reason}',
+              'in state "${offer.statusRaw}": $e',
               offerId: offer.id,
-              error: e);
+              error: e,
+              stackTrace: st);
           _scheduleStateActionRetry(offer);
         }
-      } catch (e, st) {
-        AppLogger.warning(
-            'Generic post-commit state action failed for offer ${offer.id} '
-            'in state "${offer.statusRaw}": $e',
-            offerId: offer.id,
-            error: e,
-            stackTrace: st);
-        _scheduleStateActionRetry(offer);
+      } finally {
+        _runningPaymentStates.remove(runningKey);
       }
       return;
     }

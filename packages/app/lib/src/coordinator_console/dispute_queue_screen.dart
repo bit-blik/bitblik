@@ -9,6 +9,7 @@ import 'package:ndk_flutter/ndk_flutter.dart';
 
 import 'coordinator_session.dart';
 import 'dispute_case_repository.dart';
+import 'payment_diagnostics_panel.dart';
 import 'dispute_read_store.dart';
 
 class DisputeQueueScreen extends StatefulWidget {
@@ -817,10 +818,19 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
                   ),
                 ),
                 if (deciding) const LinearProgressIndicator(),
+                PaymentDiagnosticsPanel(
+                  item: item,
+                  busy: deciding,
+                  onRetry: () => retryPayment(item),
+                ),
                 if (decisionStatus != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(decisionStatus!),
+                    child: Text(
+                      decisionStatus!,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 Expanded(
                   child: Column(
@@ -960,6 +970,51 @@ class _DisputeCaseScreenState extends State<_DisputeCaseScreen>
         },
       ),
     );
+  }
+
+  Future<void> retryPayment(CoordinatorDisputeCase item) async {
+    final refund = const {
+      'refundingMaker',
+      'payingMaker',
+    }.contains(item.offer.statusRaw);
+    final recipient = refund ? 'maker' : 'taker';
+    final amount = refund ? item.makerRefundSats : item.takerPayoutSats;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Retry $recipient payment?'),
+        content: Text(
+          'Amount: $amount sats\nBackend: ${item.paymentBackendType}\n\n'
+          'The coordinator checks the saved payment first. A new payment is sent only when safe, using the saved recipient and fee limit.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Check and retry'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() {
+      deciding = true;
+      decisionStatus = 'Checking payment status…';
+    });
+    try {
+      final message = await widget.repository.retryPayment(item);
+      if (mounted) setState(() => decisionStatus = message);
+    } catch (error) {
+      if (mounted) setState(() => decisionStatus = '$error');
+    } finally {
+      if (mounted) {
+        setState(() => deciding = false);
+        refresh();
+      }
+    }
   }
 
   Future<void> confirmDecision(

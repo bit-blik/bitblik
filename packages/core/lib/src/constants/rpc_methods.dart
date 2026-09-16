@@ -23,6 +23,7 @@ const String kRpcSubmitBlik = 'submit_blik';
 const String kRpcCancelReservation = 'cancel_reservation';
 const String kRpcUpdateTakerInvoice = 'update_taker_invoice';
 const String kRpcRetryTakerPayment = 'retry_taker_payment';
+const String kRpcRetryCoordinatorPayment = 'retry_coordinator_payment';
 const String kRpcMarkBlikCharged = 'mark_blik_charged';
 
 // Queries

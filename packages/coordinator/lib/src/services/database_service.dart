@@ -363,6 +363,17 @@ class DatabaseService {
     return attempt;
   }
 
+  Future<List<OutgoingPaymentAttempt>> getOutgoingPaymentAttempts(
+      String offerId) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final rows = await _connection!.query(
+      '''SELECT * FROM outgoing_payment_attempts WHERE offer_id = @offer_id
+         ORDER BY created_at DESC, generation DESC LIMIT 50''',
+      substitutionValues: {'offer_id': offerId},
+    );
+    return rows.map(_mapRowToOutgoingPaymentAttempt).toList();
+  }
+
   void _validateOutgoingPaymentAttempt(
     OutgoingPaymentAttempt attempt, {
     required int expectedAmountSats,
@@ -373,7 +384,11 @@ class DatabaseService {
         attempt.feeLimitSats != feeLimitSats ||
         attempt.backendType != backendType) {
       throw StateError(
-        'Outgoing payment attempt parameters do not match persisted state',
+        'Outgoing payment attempt ${attempt.id} parameters do not match persisted state: '
+        'backend ${attempt.backendType} -> $backendType; '
+        'amount ${attempt.expectedAmountSats} -> $expectedAmountSats sats; '
+        'fee limit ${attempt.feeLimitSats} -> $feeLimitSats sats. '
+        'Reconcile the original backend before retrying; do not reset an unresolved attempt.',
       );
     }
   }
