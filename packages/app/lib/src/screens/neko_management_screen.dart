@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import '../config/build_flavor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +33,8 @@ class _NekoManagementScreenState extends ConsumerState<NekoManagementScreen> {
     final publicKeyAsync = ref.watch(publicKeyProvider);
     final keyService = ref.read(keyServiceProvider);
     final t = Translations.of(context);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -218,28 +219,67 @@ class _NekoManagementScreenState extends ConsumerState<NekoManagementScreen> {
                               children: [
                                 Text(
                                   t.backup.description,
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                                const SizedBox(height: 16),
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(8),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                    height: 1.45,
                                   ),
-                                  child: SelectableText(
-                                    isRevealed
-                                        ? Nip19.encodePrivateKey(privateKey)
-                                        : '****************************************************************',
-                                    style: const TextStyle(
-                                      fontFamily: 'monospace',
+                                ),
+                                const SizedBox(height: 20),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: colors.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: colors.outlineVariant,
                                     ),
                                   ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.lock_outline_rounded,
+                                            size: 18,
+                                            color: colors.onSurfaceVariant,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            t.restore.labels.privateKey,
+                                            style: theme.textTheme.labelLarge
+                                                ?.copyWith(
+                                                  color:
+                                                      colors.onSurfaceVariant,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      SelectableText(
+                                        isRevealed
+                                            ? Nip19.encodePrivateKey(privateKey)
+                                            : '•' * 48,
+                                        style: theme.textTheme.bodyLarge
+                                            ?.copyWith(
+                                              color: colors.onSurface,
+                                              fontFamily: 'monospace',
+                                              height: 1.4,
+                                              letterSpacing:
+                                                  isRevealed ? 0 : 1.5,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 16),
-                                Row(
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
                                   children: [
-                                    TextButton.icon(
+                                    FilledButton.tonalIcon(
                                       icon: Icon(
                                         isRevealed
                                             ? Icons.visibility_off
