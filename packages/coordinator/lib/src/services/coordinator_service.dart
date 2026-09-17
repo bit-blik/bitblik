@@ -88,6 +88,7 @@ class _OutgoingPaymentResult {
   final String? payerProof;
   final String? error;
   final int feeSat;
+  final OutgoingPaymentAttempt? attempt;
 
   const _OutgoingPaymentResult({
     required this.status,
@@ -96,6 +97,7 @@ class _OutgoingPaymentResult {
     this.payerProof,
     this.error,
     this.feeSat = 0,
+    this.attempt,
   });
 
   bool get isSuccess => status == PaymentStatus.SUCCEEDED;
@@ -1551,6 +1553,7 @@ class CoordinatorService {
       id: const Uuid().v4(),
       offerId: offer.id,
       purpose: purpose,
+      offerStateRevision: offer.stateRevision,
       paymentType: invoice != null
           ? OutgoingPaymentType.bolt11
           : OutgoingPaymentType.bolt12,
@@ -1572,14 +1575,10 @@ class CoordinatorService {
     }
 
     final reconciled = await _reconcileAttempt(backend, attempt);
-    // Only a new generation may resubmit a definitively failed invoice.
-    final retryFailedInvoice = invoice != null &&
-        attempt.generation > 0 &&
-        attempt.state == OutgoingPaymentAttemptState.prepared &&
-        reconciled?.status == PaymentStatus.FAILED;
-    if (reconciled != null && !retryFailedInvoice) {
+    if (reconciled != null) {
       attempt = await _persistAttemptResult(attempt, reconciled);
-      if (reconciled.status != PaymentStatus.UNKNOWN) return reconciled;
+      if (reconciled.status != PaymentStatus.UNKNOWN)
+        return _resultFromAttempt(attempt);
     }
 
     if (attempt.state != OutgoingPaymentAttemptState.prepared) {
@@ -1595,8 +1594,7 @@ class CoordinatorService {
     } catch (error) {
       final failed = _OutgoingPaymentResult(
           status: PaymentStatus.FAILED, error: error.toString());
-      await _persistAttemptResult(attempt, failed);
-      return failed;
+      return _resultFromAttempt(await _persistAttemptResult(attempt, failed));
     }
 
     // Persist the submission claim before making the external call. A crash
@@ -1604,6 +1602,7 @@ class CoordinatorService {
     attempt = await _dbService.updateOutgoingPaymentAttempt(
       attempt.id,
       state: OutgoingPaymentAttemptState.submitted,
+      expectedRevision: attempt.revision,
     );
     _OutgoingPaymentResult submitted;
     try {
@@ -1636,8 +1635,7 @@ class CoordinatorService {
         error: e.toString(),
       );
     }
-    await _persistAttemptResult(attempt, submitted);
-    return submitted;
+    return _resultFromAttempt(await _persistAttemptResult(attempt, submitted));
   }
 
   Future<
@@ -1814,6 +1812,7 @@ class CoordinatorService {
     };
     return _dbService.updateOutgoingPaymentAttempt(
       attempt.id,
+      expectedRevision: attempt.revision,
       state: state,
       backendPaymentId: result.paymentId,
       preimage: result.preimage,
@@ -1844,6 +1843,7 @@ class CoordinatorService {
 
   _OutgoingPaymentResult _resultFromAttempt(OutgoingPaymentAttempt attempt) =>
       _OutgoingPaymentResult(
+        attempt: attempt,
         status: switch (attempt.state) {
           OutgoingPaymentAttemptState.succeeded => PaymentStatus.SUCCEEDED,
           OutgoingPaymentAttemptState.failed => PaymentStatus.FAILED,

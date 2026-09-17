@@ -172,6 +172,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
     required String? id,
     required String? offerId,
     required String? purpose,
+    required int? offerStateRevision,
     required _i2.OutgoingPaymentType? paymentType,
     required String? encoded,
     required int? expectedAmountSats,
@@ -186,6 +187,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
             #id: id,
             #offerId: offerId,
             #purpose: purpose,
+            #offerStateRevision: offerStateRevision,
             #paymentType: paymentType,
             #encoded: encoded,
             #expectedAmountSats: expectedAmountSats,
@@ -203,6 +205,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
               #id: id,
               #offerId: offerId,
               #purpose: purpose,
+              #offerStateRevision: offerStateRevision,
               #paymentType: paymentType,
               #encoded: encoded,
               #expectedAmountSats: expectedAmountSats,
@@ -222,6 +225,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
               #id: id,
               #offerId: offerId,
               #purpose: purpose,
+              #offerStateRevision: offerStateRevision,
               #paymentType: paymentType,
               #encoded: encoded,
               #expectedAmountSats: expectedAmountSats,
@@ -251,6 +255,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
   _i11.Future<_i2.OutgoingPaymentAttempt> updateOutgoingPaymentAttempt(
     String? id, {
     required _i2.OutgoingPaymentAttemptState? state,
+    required int? expectedRevision,
     String? backendPaymentId,
     String? paymentHash,
     String? preimage,
@@ -264,6 +269,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
           [id],
           {
             #state: state,
+            #expectedRevision: expectedRevision,
             #backendPaymentId: backendPaymentId,
             #paymentHash: paymentHash,
             #preimage: preimage,
@@ -280,6 +286,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
             [id],
             {
               #state: state,
+              #expectedRevision: expectedRevision,
               #backendPaymentId: backendPaymentId,
               #paymentHash: paymentHash,
               #preimage: preimage,
@@ -298,6 +305,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
             [id],
             {
               #state: state,
+              #expectedRevision: expectedRevision,
               #backendPaymentId: backendPaymentId,
               #paymentHash: paymentHash,
               #preimage: preimage,
@@ -534,6 +542,8 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
     String? id,
     String? newStatus, {
     List<String>? expectedCurrentStatuses,
+    int? expectedStateRevision,
+    _i2.OutgoingPaymentAttempt? expectedPaymentAttempt,
     String? expectedTakerPubkey,
     String? takerPubkey,
     String? code,
@@ -565,6 +575,8 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
           ],
           {
             #expectedCurrentStatuses: expectedCurrentStatuses,
+            #expectedStateRevision: expectedStateRevision,
+            #expectedPaymentAttempt: expectedPaymentAttempt,
             #expectedTakerPubkey: expectedTakerPubkey,
             #takerPubkey: takerPubkey,
             #code: code,

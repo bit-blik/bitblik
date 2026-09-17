@@ -15,6 +15,32 @@ Supported payment backends are NWC, ldk-server, and LND. When several are
 configured, coordinator tries them in that order and falls through when a
 backend cannot connect.
 
+## Payment-safety upgrades and recovery
+
+Stop all coordinator workers before upgrading to revision-fenced payment
+execution. Startup adds `offers.state_revision` and the payment-attempt
+`revision` and `offer_state_revision` columns without deleting existing records.
+Do not run older workers alongside the upgraded version: older code does not
+honor these guards.
+
+Submitted, pending and unknown attempts keep funds reserved. A timeout, missing
+lookup record or unreachable wallet never authorizes a replacement. Keep the
+original wallet available for reconciliation; do not delete/reset attempts or
+switch wallets to force a retry. A definitive BOLT11 failure requires a fresh
+invoice with a new payment hash. BOLT12 retries use a new attempt identity only
+after the flow advances to a new payment attempt.
+
+Before upgrading from a version without an attempt ledger, reconcile historical
+failed/in-flight payouts with the original wallet. The ledger cannot reconstruct
+previously overwritten invoices or payments made outside its records.
+
+Database regression tests use a disposable local PostgreSQL database named
+`payment_safety_test`, with `PAYMENT_SAFETY_DB_TEST=1`, `DB_HOST=127.0.0.1`,
+the corresponding `DB_PORT`, `DB_USER` and `DB_PASSWORD`, and empty
+`SIMPLEX_CHAT_EXEC`, `SIGNAL_CLI_EXEC`, `TELEGRAM_BOT_TOKEN` and `MATRIX_USER`.
+Run `dart test test_integration/payment_safety_test.dart` from this package.
+These tests use synthetic wallet responses and never send Lightning payments.
+
 ## Setup
 
 ### 1. Copy docker-compose.example.yml to docker-compose.yml

@@ -3,7 +3,7 @@
 - feat: dispute chat with coordinator
 - feat: bolt12 wallet payout (only for supported coordinators)
 - feat: new release version update information from nip-82 event (zapstore)
-- feat: self update to newest version from the app
+- feat: self update to newest version from the app (android only)
 - feat: TWINT codes for in shop category support
 - fix: cashu backup/restore to/from file
 - feat: dark theme

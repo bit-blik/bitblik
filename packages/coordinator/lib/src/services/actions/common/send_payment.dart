@@ -25,17 +25,6 @@ class SendPaymentAction extends FlowAction {
       );
     }
 
-    try {
-      await c._validateOutgoingInstruction(
-        invoice: invoice,
-        offer: bolt12Offer,
-        expectedAmountSats: netAmountSats,
-        action: 'pay_taker',
-      );
-    } catch (e) {
-      throw FlowTransitionFailure(e.toString());
-    }
-
     final feeLimitSat = max(
       kMinimumTakerRoutingFeeSats,
       (takerFees * kTakerFeeLimitFactor).ceil(),
@@ -48,8 +37,10 @@ class SendPaymentAction extends FlowAction {
       amountSats: netAmountSats,
       feeLimitSat: feeLimitSat,
     );
+    ctx.write.paymentAttempt = res.attempt;
     if (res.status == PaymentStatus.FAILED) {
-      throw FlowTransitionFailure(res.error ?? 'Payment failed');
+      throw FlowTransitionFailure(res.error ?? 'Payment failed',
+          paymentAttempt: res.attempt);
     }
     if (!res.isSuccess) {
       throw StateError(

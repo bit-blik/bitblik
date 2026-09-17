@@ -24,7 +24,6 @@ class RefundMakerAction extends FlowAction {
     }
     final refundSats = offer.amountSats + offer.makerFees;
     final feeLimit = (refundSats * 0.01).ceil().clamp(10, refundSats);
-    // PILA refund maker should not attempt to pay taker, WTF!?
     final res = await flow._c._attemptOutgoingPayment(
       offer: offer,
       purpose: 'maker_refund',
@@ -33,6 +32,7 @@ class RefundMakerAction extends FlowAction {
       amountSats: refundSats,
       feeLimitSat: feeLimit,
     );
+    ctx.write.paymentAttempt = res.attempt;
     if (res.isSuccess) {
       AppLogger.info(
           'Dispute refund paid to maker for offer ${offer.id} '
@@ -43,6 +43,7 @@ class RefundMakerAction extends FlowAction {
     if (res.status == PaymentStatus.FAILED) {
       throw FlowTransitionFailure(
         res.error ?? 'Dispute refund payment failed',
+        paymentAttempt: res.attempt,
       );
     }
     throw StateError(

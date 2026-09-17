@@ -74,7 +74,10 @@ class _CountingTelegramService extends TelegramService {
 
 /// Slovak multi-bank ATM market on the generic engine (one `sk_atm` flow serves
 /// all banks; per-bank code validity comes from `$code_validity`).
+int _stateRevision = 0;
+
 void main() {
+  setUp(() => _stateRevision = 0);
   const maker = 'maker_pubkey';
   const taker = 'taker_pubkey';
 
@@ -104,8 +107,8 @@ void main() {
     });
 
     test('serves every bank of the market when BANKS is unset', () {
-      expect(svc.servedBanks.toSet(),
-          {'tatrabanka', 'slsp', 'vub', 'primabanka'});
+      expect(
+          svc.servedBanks.toSet(), {'tatrabanka', 'slsp', 'vub', 'primabanka'});
     });
 
     test('coordinator info advertises the market id', () async {
@@ -212,6 +215,7 @@ void main() {
         var updatedAt = codeReceivedAt;
 
         Offer offer() => Offer(
+              stateRevision: _stateRevision,
               id: 'sk1',
               amountSats: 90000,
               makerFees: 0,
@@ -245,6 +249,8 @@ void main() {
           any,
           any,
           expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+          expectedStateRevision: anyNamed('expectedStateRevision'),
+          expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
           expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
           takerPubkey: anyNamed('takerPubkey'),
           reservedAt: anyNamed('reservedAt'),
@@ -263,10 +269,14 @@ void main() {
           preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
           transitionMeta: anyNamed('transitionMeta'),
         )).thenAnswer((inv) async {
+          if (inv.namedArguments[#expectedStateRevision] != null &&
+              inv.namedArguments[#expectedStateRevision] != _stateRevision)
+            return false;
           final expected =
               inv.namedArguments[const Symbol('expectedCurrentStatuses')]
                   as List<String>?;
           if (expected != null && !expected.contains(status)) return false;
+          _stateRevision++;
           status = inv.positionalArguments[1] as String;
           updatedAt = testClock.now().toUtc();
           return true;
@@ -421,6 +431,7 @@ void main() {
     late List<Map<String, dynamic>> history;
 
     Offer offer() => Offer(
+          stateRevision: _stateRevision,
           id: 'sk-loop',
           amountSats: 1550,
           makerFees: 0,
@@ -463,6 +474,8 @@ void main() {
         any,
         any,
         expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedStateRevision: anyNamed('expectedStateRevision'),
+        expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
         expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         takerPubkey: anyNamed('takerPubkey'),
         reservedAt: anyNamed('reservedAt'),
@@ -481,6 +494,9 @@ void main() {
         preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
         transitionMeta: anyNamed('transitionMeta'),
       )).thenAnswer((inv) async {
+        if (inv.namedArguments[#expectedStateRevision] != null &&
+            inv.namedArguments[#expectedStateRevision] != _stateRevision)
+          return false;
         final expected =
             inv.namedArguments[const Symbol('expectedCurrentStatuses')]
                 as List<String>?;
@@ -494,6 +510,7 @@ void main() {
           'to_state': newStatus,
           'metadata': meta?.extra,
         });
+        _stateRevision++;
         status = newStatus;
         if (code != null) blikCode = code;
         return true;
@@ -589,6 +606,7 @@ void main() {
     late List<Map<String, dynamic>> history;
 
     Offer offer() => Offer(
+          stateRevision: _stateRevision,
           id: 'sk-relist',
           amountSats: 148025,
           makerFees: 0,
@@ -632,6 +650,8 @@ void main() {
         any,
         any,
         expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedStateRevision: anyNamed('expectedStateRevision'),
+        expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
         expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         takerPubkey: anyNamed('takerPubkey'),
         reservedAt: anyNamed('reservedAt'),
@@ -650,6 +670,9 @@ void main() {
         preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
         transitionMeta: anyNamed('transitionMeta'),
       )).thenAnswer((inv) async {
+        if (inv.namedArguments[#expectedStateRevision] != null &&
+            inv.namedArguments[#expectedStateRevision] != _stateRevision)
+          return false;
         final expected =
             inv.namedArguments[const Symbol('expectedCurrentStatuses')]
                 as List<String>?;
@@ -662,6 +685,7 @@ void main() {
           'to_state': newStatus,
           'metadata': meta?.extra,
         });
+        _stateRevision++;
         status = newStatus;
         return true;
       });

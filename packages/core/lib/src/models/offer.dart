@@ -68,6 +68,9 @@ class Offer {
   /// [statusRaw] instead.
   final String statusRaw;
 
+  /// Server-only revision used to fence stale flow workers.
+  final int stateRevision;
+
   final DateTime createdAt;
   final String makerPubkey;
   final String coordinatorPubkey; // Added coordinator pubkey
@@ -188,6 +191,7 @@ class Offer {
     required this.makerFees,
     required this.status,
     String? statusRaw,
+    this.stateRevision = 0,
     required this.fiatAmount,
     required this.fiatCurrency,
     required this.createdAt,
@@ -502,6 +506,7 @@ class Offer {
     int? makerFees, // Renamed parameter
     OfferStatus? status,
     String? statusRaw,
+    int? stateRevision,
     DateTime? createdAt,
     String? makerPubkey,
     String? coordinatorPubkey,
@@ -540,6 +545,7 @@ class Offer {
       makerFees: makerFees ?? this.makerFees, // Renamed parameter and field
       status: status ?? this.status,
       statusRaw: statusRaw ?? (status != null ? status.name : this.statusRaw),
+      stateRevision: stateRevision ?? this.stateRevision,
       fiatAmount: fiatAmount,
       fiatCurrency: fiatCurrency,
       createdAt: createdAt ?? this.createdAt,
@@ -564,8 +570,9 @@ class Offer {
           ? null
           : makerRefundOffer ?? this.makerRefundOffer,
 
-      makerRefundPaymentHash:
-          makerRefundOffer != null ? null : makerRefundPaymentHash ?? this.makerRefundPaymentHash,
+      makerRefundPaymentHash: makerRefundOffer != null
+          ? null
+          : makerRefundPaymentHash ?? this.makerRefundPaymentHash,
       holdInvoicePreimage: holdInvoicePreimage ?? this.holdInvoicePreimage,
       updatedAt: updatedAt ?? this.updatedAt,
       makerConfirmedAt: makerConfirmedAt ?? this.makerConfirmedAt,

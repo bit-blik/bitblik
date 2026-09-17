@@ -14,6 +14,8 @@ class OutgoingPaymentAttempt {
   final String offerId;
   final String purpose;
   final int generation;
+  final int revision;
+  final int offerStateRevision;
   final OutgoingPaymentType paymentType;
   final String? bolt11Invoice;
   final String? bolt12Offer;
@@ -36,6 +38,8 @@ class OutgoingPaymentAttempt {
     required this.offerId,
     required this.purpose,
     required this.generation,
+    this.revision = 0,
+    this.offerStateRevision = 0,
     required this.paymentType,
     required this.expectedAmountSats,
     required this.backendType,

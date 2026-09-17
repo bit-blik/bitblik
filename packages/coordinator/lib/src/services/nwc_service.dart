@@ -33,9 +33,11 @@ bool hasSafeNwcBolt12Capability({
     advertisedMethods.contains('pay') &&
     advertisedMethods.contains('list_transactions');
 
-bool nwcBolt12RecoveryEnabled(String? configuredValue) =>
-    !const {'0', 'false', 'no'}
-        .contains((configuredValue ?? '').trim().toLowerCase());
+bool nwcBolt12RecoveryEnabled(String? configuredValue) => !const {
+      '0',
+      'false',
+      'no'
+    }.contains((configuredValue ?? '').trim().toLowerCase());
 
 /// Service to interact with Nostr Wallet Connect (NWC) for hold invoices.
 class NwcService implements PaymentService, Bolt12PaymentService {
@@ -337,7 +339,9 @@ class NwcService implements PaymentService, Bolt12PaymentService {
         AppLogger.info(
             'NWC Service: Error paying invoice: ${response.errorCode} - ${response.errorMessage}');
         return PayInvoiceResult(
-          status: PaymentStatus.FAILED,
+          // An RPC error is not authoritative outgoing-payment history.
+          // In particular INTERNAL/timeout errors may follow wallet acceptance.
+          status: PaymentStatus.UNKNOWN,
           paymentError: // Use paymentError
               '${response.errorCode}: ${response.errorMessage ?? "Unknown NWC error"}',
         );

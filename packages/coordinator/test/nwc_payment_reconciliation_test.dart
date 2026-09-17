@@ -60,6 +60,7 @@ class _StubConnection extends Fake implements NwcConnection {
 class _StubNwc extends Fake implements Nwc {
   LookupInvoiceResponse response = _lookup();
   Object? lookupError;
+  PayInvoiceResponse? paymentResponse;
   String? lookedUpInvoice;
 
   @override
@@ -80,9 +81,11 @@ class _StubNwc extends Fake implements Nwc {
     required String invoice,
     int? maxFeeMsat,
     Duration? timeout,
-  }) async =>
-      throw Exception(
-          'error pay_invoice code: INTERNAL ldk-server reported payment failure');
+  }) async {
+    if (paymentResponse != null) return paymentResponse!;
+    throw Exception(
+        'error pay_invoice code: INTERNAL ldk-server reported payment failure');
+  }
 
   @override
   Future<LookupInvoiceResponse> lookupInvoice(
@@ -117,6 +120,18 @@ void main() {
   });
 
   tearDown(() async => service.disconnect());
+
+  for (final code in ['INTERNAL', 'OTHER', 'NOT_FOUND', 'PAYMENT_FAILED']) {
+    test('returned $code error cannot authorize replacement', () async {
+      nwc.paymentResponse =
+          PayInvoiceResponse(resultType: 'pay_invoice', feesPaid: 0)
+            ..errorCode = code
+            ..errorMessage = 'Wallet response lost';
+      final result = await service.payInvoice(invoice: _invoice);
+      expect(result.status, PaymentStatus.UNKNOWN);
+      expect(result.paymentError, contains(code));
+    });
+  }
 
   test('reconciles an ambiguous NWC error as a confirmed outgoing failure',
       () async {

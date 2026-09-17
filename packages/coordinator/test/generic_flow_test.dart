@@ -73,7 +73,10 @@ class _BlockingTelegramService extends TelegramService {
 /// Coordinator-level tests for the generic (yaml-driven) TWINT executor.
 /// Verifies routing, enforcement and identity guards without the full payout
 /// chain (covered structurally by core's twint_flow_test).
+int _stateRevision = 0;
+
 void main() {
+  setUp(() => _stateRevision = 0);
   test('legacy payout action names remain registered as compatibility aliases',
       () {
     final actionsByName = {
@@ -104,6 +107,7 @@ void main() {
   const taker = 'taker_pubkey';
 
   Offer twintOffer(String statusRaw, {String? takerPubkey}) => Offer(
+        stateRevision: _stateRevision,
         id: 'o1',
         amountSats: 10000,
         makerFees: 50,
@@ -225,6 +229,8 @@ void main() {
       any,
       any,
       expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+      expectedStateRevision: anyNamed('expectedStateRevision'),
+      expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
       expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
       takerPubkey: anyNamed('takerPubkey'),
       reservedAt: anyNamed('reservedAt'),
@@ -243,6 +249,7 @@ void main() {
       preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
       transitionMeta: anyNamed('transitionMeta'),
     )).thenAnswer((inv) async {
+      _stateRevision++;
       currentStatus = inv.positionalArguments[1] as String;
       return true;
     });
@@ -255,6 +262,8 @@ void main() {
       'o1',
       captureAny,
       expectedCurrentStatuses: captureAnyNamed('expectedCurrentStatuses'),
+      expectedStateRevision: anyNamed('expectedStateRevision'),
+      expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
       expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
       takerPubkey: anyNamed('takerPubkey'),
       reservedAt: anyNamed('reservedAt'),
@@ -294,6 +303,8 @@ void main() {
       any,
       any,
       expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+      expectedStateRevision: anyNamed('expectedStateRevision'),
+      expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
       expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
       takerPubkey: anyNamed('takerPubkey'),
       reservedAt: anyNamed('reservedAt'),
@@ -329,6 +340,7 @@ void main() {
     Offer blikOffer(String statusRaw,
             {String? takerPubkey, String? blikCode}) =>
         Offer(
+          stateRevision: _stateRevision,
           id: 'b1',
           amountSats: 10000,
           makerFees: 50,
@@ -371,6 +383,8 @@ void main() {
         'b1',
         'blikSentToMaker',
         expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedStateRevision: anyNamed('expectedStateRevision'),
+        expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
         expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         takerPubkey: anyNamed('takerPubkey'),
         reservedAt: anyNamed('reservedAt'),
@@ -430,6 +444,7 @@ void main() {
             testClock.now().toUtc().subtract(const Duration(minutes: 1));
 
         Offer currentOffer() => Offer(
+              stateRevision: _stateRevision,
               id: 'b-race',
               amountSats: 10000,
               makerFees: 50,
@@ -458,6 +473,8 @@ void main() {
           any,
           any,
           expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+          expectedStateRevision: anyNamed('expectedStateRevision'),
+          expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
           expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
           takerPubkey: anyNamed('takerPubkey'),
           reservedAt: anyNamed('reservedAt'),
@@ -476,12 +493,17 @@ void main() {
           preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
           transitionMeta: anyNamed('transitionMeta'),
         )).thenAnswer((inv) async {
+          if (inv.namedArguments[#expectedStateRevision] != null &&
+              inv.namedArguments[#expectedStateRevision] != _stateRevision)
+            return false;
           final expected =
               inv.namedArguments[const Symbol('expectedCurrentStatuses')]
                   as List<String>?;
           if (expected != null && !expected.contains(currentStatus)) {
             return false;
           }
+
+          _stateRevision++;
 
           currentStatus = inv.positionalArguments[1] as String;
           currentUpdatedAt = testClock.now().toUtc();
@@ -549,6 +571,7 @@ void main() {
             int amountSats = 1550,
             int takerFees = 50}) =>
         Offer(
+          stateRevision: _stateRevision,
           id: 'p1',
           amountSats: amountSats,
           makerFees: 0,
@@ -574,6 +597,8 @@ void main() {
         any,
         any,
         expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedStateRevision: anyNamed('expectedStateRevision'),
+        expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
         expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         takerPubkey: anyNamed('takerPubkey'),
         reservedAt: anyNamed('reservedAt'),
@@ -591,11 +616,15 @@ void main() {
         clearTakerFields: anyNamed('clearTakerFields'),
         transitionMeta: anyNamed('transitionMeta'),
       )).thenAnswer((inv) async {
+        if (inv.namedArguments[#expectedStateRevision] != null &&
+            inv.namedArguments[#expectedStateRevision] != _stateRevision)
+          return false;
         final target = inv.positionalArguments[1] as String;
         final expected =
             inv.namedArguments[const Symbol('expectedCurrentStatuses')]
                 as List<String>?;
         if (expected == null || expected.contains(current)) {
+          _stateRevision++;
           current = target;
           return true;
         }
@@ -652,6 +681,8 @@ void main() {
         any,
         'takerPaid',
         expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedStateRevision: anyNamed('expectedStateRevision'),
+        expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
         expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         takerPubkey: anyNamed('takerPubkey'),
         reservedAt: anyNamed('reservedAt'),
@@ -703,12 +734,11 @@ void main() {
         () async {
       const offer =
           'lno1zcss9mk8y3wkklfvevcrszlmu23kfrxh49px20665dqwmn4p72pksese';
-      when(gdb.getOfferById('p1'))
-          .thenAnswer((_) async => payoutOffer(
-                takerOffer: offer,
-                amountSats: 102,
-                takerFees: 1,
-              ));
+      when(gdb.getOfferById('p1')).thenAnswer((_) async => payoutOffer(
+            takerOffer: offer,
+            amountSats: 102,
+            takerFees: 1,
+          ));
       stubCas();
       when(gpay.isBolt12Available).thenReturn(true);
       when(gpay.decodeOffer(offer: anyNamed('offer'))).thenAnswer(
@@ -873,6 +903,26 @@ void main() {
       expect(current, 'takerPaid');
     });
 
+    test(
+        'startup reconciliation cannot complete a newer failed-state incarnation',
+        () async {
+      current = 'takerPaymentFailed';
+      when(gdb.getOffersNotInRawStatuses(any)).thenAnswer((_) async => []);
+      when(gdb.getOffersByRawStatus('takerPaymentFailed',
+              limit: anyNamed('limit')))
+          .thenAnswer((_) async => [payoutOffer(takerInvoice: invoice)]);
+      when(gdb.getOfferById('p1'))
+          .thenAnswer((_) async => payoutOffer(takerInvoice: invoice));
+      stubCas();
+      when(gpay.reconcileOutgoingPayment(invoice: invoice))
+          .thenAnswer((_) async {
+        _stateRevision += 2;
+        return PayInvoiceResult(status: PaymentStatus.SUCCEEDED);
+      });
+      await gsvc.flow.recoverTimers();
+      expect(current, 'takerPaymentFailed');
+    });
+
     test('startup reconcile: still-unpaid stays takerPaymentFailed', () async {
       current = 'takerPaymentFailed';
       when(gdb.getOffersNotInRawStatuses(any)).thenAnswer((_) async => []);
@@ -906,6 +956,7 @@ void main() {
     late String? storedInvoice;
 
     Offer failedOffer() => Offer(
+          stateRevision: _stateRevision,
           id: 'p1',
           amountSats: 1550,
           makerFees: 0,
@@ -926,6 +977,8 @@ void main() {
         any,
         any,
         expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedStateRevision: anyNamed('expectedStateRevision'),
+        expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
         expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
         takerPubkey: anyNamed('takerPubkey'),
         reservedAt: anyNamed('reservedAt'),
@@ -943,11 +996,15 @@ void main() {
         clearTakerFields: anyNamed('clearTakerFields'),
         transitionMeta: anyNamed('transitionMeta'),
       )).thenAnswer((inv) async {
+        if (inv.namedArguments[#expectedStateRevision] != null &&
+            inv.namedArguments[#expectedStateRevision] != _stateRevision)
+          return false;
         final target = inv.positionalArguments[1] as String;
         final expected =
             inv.namedArguments[const Symbol('expectedCurrentStatuses')]
                 as List<String>?;
         if (expected == null || expected.contains(current)) {
+          _stateRevision++;
           current = target;
           final written =
               inv.namedArguments[const Symbol('takerInvoice')] as String?;
@@ -1050,6 +1107,7 @@ void main() {
     test('wrong-amount invoice rejects the RPC and stays in takerPaymentFailed',
         () async {
       when(gdb.getOfferById('p1')).thenAnswer((_) async => Offer(
+            stateRevision: _stateRevision,
             id: 'p1',
             amountSats: 10000,
             makerFees: 0,

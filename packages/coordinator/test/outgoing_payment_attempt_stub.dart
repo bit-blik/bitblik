@@ -14,6 +14,7 @@ void stubOutgoingPaymentAttempts(
     id: anyNamed('id'),
     offerId: anyNamed('offerId'),
     purpose: anyNamed('purpose'),
+    offerStateRevision: anyNamed('offerStateRevision'),
     paymentType: anyNamed('paymentType'),
     encoded: anyNamed('encoded'),
     expectedAmountSats: anyNamed('expectedAmountSats'),
@@ -22,12 +23,23 @@ void stubOutgoingPaymentAttempts(
   )).thenAnswer((invocation) async {
     final now = DateTime.now().toUtc();
     final previous = current;
-    if (previous?.state == OutgoingPaymentAttemptState.failed) current = null;
+    if (previous != null &&
+        previous.encoded != invocation.namedArguments[#encoded] &&
+        previous.state != OutgoingPaymentAttemptState.failed) {
+      throw StateError('Cannot replace an unresolved or successful attempt');
+    }
+    if (previous?.state == OutgoingPaymentAttemptState.failed &&
+        (previous!.encoded != invocation.namedArguments[#encoded] ||
+            (previous.paymentType == OutgoingPaymentType.bolt12 &&
+                previous.offerStateRevision !=
+                    invocation.namedArguments[#offerStateRevision])))
+      current = null;
     current ??= OutgoingPaymentAttempt(
       id: invocation.namedArguments[#id] as String,
       offerId: invocation.namedArguments[#offerId] as String,
       purpose: invocation.namedArguments[#purpose] as String,
       generation: previous == null ? 0 : previous.generation + 1,
+      offerStateRevision: invocation.namedArguments[#offerStateRevision] as int,
       paymentType:
           invocation.namedArguments[#paymentType] as OutgoingPaymentType,
       bolt11Invoice:
@@ -51,6 +63,7 @@ void stubOutgoingPaymentAttempts(
   when(db.updateOutgoingPaymentAttempt(
     any,
     state: anyNamed('state'),
+    expectedRevision: anyNamed('expectedRevision'),
     backendPaymentId: anyNamed('backendPaymentId'),
     paymentHash: anyNamed('paymentHash'),
     preimage: anyNamed('preimage'),
@@ -59,12 +72,22 @@ void stubOutgoingPaymentAttempts(
     failureReason: anyNamed('failureReason'),
   )).thenAnswer((invocation) async {
     final old = current!;
+    if (old.id != invocation.positionalArguments[0] ||
+        old.isTerminal ||
+        old.revision != invocation.namedArguments[#expectedRevision] ||
+        (invocation.namedArguments[#state] ==
+                OutgoingPaymentAttemptState.submitted &&
+            old.state != OutgoingPaymentAttemptState.prepared)) {
+      throw StateError('Stale payment attempt');
+    }
     final now = DateTime.now().toUtc();
     current = OutgoingPaymentAttempt(
       id: old.id,
       offerId: old.offerId,
       purpose: old.purpose,
       generation: old.generation,
+      revision: old.revision + 1,
+      offerStateRevision: old.offerStateRevision,
       paymentType: old.paymentType,
       bolt11Invoice: old.bolt11Invoice,
       bolt12Offer: old.bolt12Offer,

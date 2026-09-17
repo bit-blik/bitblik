@@ -16,7 +16,10 @@ import 'package:test/test.dart';
 import 'test_mocks.mocks.dart';
 import 'outgoing_payment_attempt_stub.dart';
 
+int _stateRevision = 0;
+
 void main() {
+  setUp(() => _stateRevision = 0);
   const maker = 'maker';
   const taker = 'taker';
   const coordinator = 'coordinator';
@@ -46,6 +49,7 @@ void main() {
     final transitionMeta = <StateTransitionMeta>[];
 
     Offer currentOffer() => Offer(
+          stateRevision: _stateRevision,
           id: 'dispute-1',
           amountSats: amountSats,
           makerFees: makerFees,
@@ -73,6 +77,8 @@ void main() {
           any,
           any,
           expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+          expectedStateRevision: anyNamed('expectedStateRevision'),
+          expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
           expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
           takerPubkey: anyNamed('takerPubkey'),
           code: anyNamed('code'),
@@ -98,6 +104,7 @@ void main() {
         final expected = invocation
             .namedArguments[const Symbol('expectedCurrentStatuses')] as List?;
         if (expected != null && !expected.contains(currentStatus)) return false;
+        _stateRevision++;
         currentStatus = invocation.positionalArguments[1] as String;
         final newInvoice =
             invocation.namedArguments[#makerRefundInvoice] as String?;
@@ -292,7 +299,7 @@ void main() {
       }
     });
 
-    test('manual retry resends definitively failed invoice in new generation',
+    test('manual retry requires a fresh invoice after definitive failure',
         () async {
       currentStatus = 'payingTaker';
       amountSats = 1500;
@@ -307,13 +314,40 @@ void main() {
           amountSat: anyNamed('amountSat'),
           feeLimitSat: anyNamed('feeLimitSat')));
       await retryAsCoordinator();
-      expect(currentStatus, 'takerPaid');
-      verify(payment.payInvoice(
-              invoice: invoice,
-              amountSat: 1500,
-              feeLimitSat: anyNamed('feeLimitSat')))
-          .called(1);
+      expect(currentStatus, 'takerPaymentFailed');
+      verifyNever(payment.payInvoice(
+          invoice: anyNamed('invoice'),
+          amountSat: anyNamed('amountSat'),
+          feeLimitSat: anyNamed('feeLimitSat')));
     });
+
+    for (final result in [PaymentStatus.SUCCEEDED, PaymentStatus.FAILED]) {
+      test(
+          'stale $result worker cannot complete a newer payingMaker incarnation',
+          () async {
+        currentStatus = 'payingMaker';
+        storedMakerInvoice = invoice;
+        final sent = Completer<void>();
+        final finish = Completer<PayInvoiceResult>();
+        when(payment.payInvoice(
+                invoice: invoice,
+                amountSat: anyNamed('amountSat'),
+                feeLimitSat: anyNamed('feeLimitSat')))
+            .thenAnswer((_) {
+          sent.complete();
+          return finish.future;
+        });
+        final oldWorker = retryAsCoordinator();
+        await sent.future;
+        // Another executor advanced through refundingMaker back to payingMaker.
+        _stateRevision += 2;
+        final newRevision = _stateRevision;
+        finish.complete(PayInvoiceResult(status: result));
+        await oldWorker;
+        expect(currentStatus, 'payingMaker');
+        expect(_stateRevision, newRevision);
+      });
+    }
 
     test('concurrent coordinator retries submit only once', () async {
       currentStatus = 'payingMaker';
@@ -650,8 +684,7 @@ void main() {
       );
     });
 
-    test('failed maker refund requests a fresh invoice and can retry',
-        () async {
+    test('failed maker refund cannot resend the same invoice', () async {
       when(
         payment.payInvoice(
           invoice: anyNamed('invoice'),
@@ -682,14 +715,14 @@ void main() {
       await submitMakerInvoice();
       await pumpEventQueue(times: 100);
 
-      expect(currentStatus, 'refundedMaker');
+      expect(currentStatus, 'refundingMaker');
       verify(
         payment.payInvoice(
           invoice: invoice,
           amountSat: 1500,
           feeLimitSat: anyNamed('feeLimitSat'),
         ),
-      ).called(2);
+      ).called(1);
     });
 
     test('coordinator can rule for taker without maker invoice', () async {

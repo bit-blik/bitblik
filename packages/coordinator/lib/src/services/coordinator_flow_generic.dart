@@ -25,6 +25,7 @@ class OfferWriteSpec {
   /// persisted to `taker_invoice_fees`.
   int? takerInvoiceFees;
   String? failureReason;
+  OutgoingPaymentAttempt? paymentAttempt;
   bool clearTakerFields = false;
   bool preserveCodeOnClear = false;
   final Map<String, dynamic> audit = {};
@@ -37,7 +38,10 @@ class FlowTransitionFailure implements Exception {
   final String reason;
   final Map<String, dynamic>? auditExtra;
 
-  const FlowTransitionFailure(this.reason, {this.auditExtra});
+  final OutgoingPaymentAttempt? paymentAttempt;
+
+  const FlowTransitionFailure(this.reason,
+      {this.auditExtra, this.paymentAttempt});
 }
 
 /// One yaml action keyword (`do:` entry), implemented as a self-describing
@@ -535,6 +539,7 @@ class GenericOfferFlow {
       if (t.onFailTarget == null) rethrow;
       targetState = t.onFailTarget!;
       ctx.write.failureReason ??= e.reason;
+      ctx.write.paymentAttempt ??= e.paymentAttempt;
       if (e.auditExtra != null) {
         ctx.write.audit.addAll(e.auditExtra!);
       }
@@ -573,6 +578,8 @@ class GenericOfferFlow {
       offer.id,
       targetState,
       expectedCurrentStatuses: [offer.statusRaw],
+      expectedStateRevision: offer.stateRevision,
+      expectedPaymentAttempt: w.paymentAttempt,
       expectedTakerPubkey: w.expectedTakerPubkey,
       takerPubkey: w.takerPubkey,
       reservedAt: w.reservedAt,
@@ -605,7 +612,11 @@ class GenericOfferFlow {
 
     _cancelTimer(offer.id);
     final updated = await _c._dbService.getOfferById(offer.id);
-    if (updated != null) await _enterState(updated);
+    if (updated != null &&
+        updated.statusRaw == targetState &&
+        updated.stateRevision == offer.stateRevision + 1) {
+      await _enterState(updated);
+    }
     return true;
   }
 
@@ -624,11 +635,9 @@ class GenericOfferFlow {
       _armTimer(offer);
     }
 
-    // A committed-effect state is a durable, exclusive claim. Run its
-    // irreversible action before exposing/advancing the state, then atomically
-    // finalize through its sole auto edge. No competing edge is allowed by
-    // validateDefinition(), so an external effect can never belong to a losing
-    // transition CAS.
+    // The state authorizes the effect, but does not claim its execution.
+    // Outgoing payments acquire a database revision claim before sending.
+    // Completion must still match this offer incarnation and payment attempt.
     if (hasCommittedActions) {
       final runningKey = (offer.id, offer.statusRaw);
       if (!_runningPaymentStates.add(runningKey)) return;
@@ -639,17 +648,21 @@ class GenericOfferFlow {
           _paymentErrors.remove(offer.id);
           write.audit['post_commit_do'] = state.actions;
           final current = await _c._dbService.getOfferById(offer.id);
-          if (current == null || current.statusRaw != offer.statusRaw) return;
-          await _applyTransition(current, completion, const {},
+          if (current == null ||
+              current.statusRaw != offer.statusRaw ||
+              current.stateRevision != offer.stateRevision) return;
+          await _applyTransition(offer, completion, const {},
               trigger: 'auto', actorName: 'coordinator', initialWrite: write);
         } on FlowTransitionFailure catch (e, st) {
           await _recordPaymentError(offer, e, st);
           if (completion.onFailTarget != null) {
             final current = await _c._dbService.getOfferById(offer.id);
-            if (current == null || current.statusRaw != offer.statusRaw) return;
+            if (current == null ||
+                current.statusRaw != offer.statusRaw ||
+                current.stateRevision != offer.stateRevision) return;
             final failureWrite = OfferWriteSpec()
               ..audit['post_commit_do'] = state.actions;
-            await _applyTransition(current, completion, const {},
+            await _applyTransition(offer, completion, const {},
                 trigger: 'auto',
                 actorName: 'coordinator',
                 initialWrite: failureWrite,
@@ -693,7 +706,9 @@ class GenericOfferFlow {
     // Side effects above may take long enough for a newer transition to commit.
     // Only launch detached auto edges if this state is still current.
     final current = await _c._dbService.getOfferById(offer.id);
-    if (current == null || current.statusRaw != offer.statusRaw) return;
+    if (current == null ||
+        current.statusRaw != offer.statusRaw ||
+        current.stateRevision != offer.stateRevision) return;
     _driveAuto(current);
   }
 
@@ -733,7 +748,9 @@ class GenericOfferFlow {
     _stateTimers[offer.id] = Timer(_timeoutRetryBackoff, () async {
       _stateTimers.remove(offer.id);
       final current = await _c._dbService.getOfferById(offer.id);
-      if (current == null || current.statusRaw != offer.statusRaw) return;
+      if (current == null ||
+          current.statusRaw != offer.statusRaw ||
+          current.stateRevision != offer.stateRevision) return;
       await _enterState(current);
     });
   }
@@ -805,12 +822,13 @@ class GenericOfferFlow {
 
   /// Finalize a reconciled successful taker payment from the payout-failed
   /// state into the send_payment transition's success target.
-  Future<void> _markPaid(String offerId, String fromState,
-      FlowTransition sendPayment, int takerFees, int feeSat) async {
-    await _c._dbService.updateOfferRawStatusIfCurrent(
-      offerId,
+  Future<bool> _markPaid(Offer offer, FlowTransition sendPayment, int takerFees,
+      int feeSat) async {
+    final applied = await _c._dbService.updateOfferRawStatusIfCurrent(
+      offer.id,
       sendPayment.target,
-      expectedCurrentStatuses: [fromState],
+      expectedCurrentStatuses: [offer.statusRaw],
+      expectedStateRevision: offer.stateRevision,
       takerPaidAt: _c._clock.now().toUtc(),
       takerFees: takerFees,
       takerInvoiceFees: feeSat,
@@ -824,12 +842,16 @@ class GenericOfferFlow {
         }),
       ),
     );
-    final paid = await _c._dbService.getOfferById(offerId);
-    if (paid != null) {
+    if (!applied) return false;
+    final paid = await _c._dbService.getOfferById(offer.id);
+    if (paid != null &&
+        paid.statusRaw == sendPayment.target &&
+        paid.stateRevision == offer.stateRevision + 1) {
       await _c._publishStatusUpdate(paid);
       await _c._nostrService?.broadcastNip69OrderFromOffer(paid);
     }
-    await _c._deleteTelegramOfferMessages(offerId);
+    await _c._deleteTelegramOfferMessages(offer.id);
+    return true;
   }
 
   ({String payingState, String failedState, FlowTransition transition})?
@@ -998,8 +1020,9 @@ class GenericOfferFlow {
         continue;
       }
       if (rec != null && rec.isSuccess) {
-        await _markPaid(o.id, tail.failedState, tail.transition,
-            _c._effectiveTakerFeeSats(o), rec.feeSat ?? 0);
+        final applied = await _markPaid(
+            o, tail.transition, _c._effectiveTakerFeeSats(o), rec.feeSat ?? 0);
+        if (!applied) continue;
         reconciled++;
         AppLogger.info(
             'FLOW ENGINE: offer ${o.id} reconciled to paid on startup '

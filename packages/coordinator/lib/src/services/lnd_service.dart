@@ -6,6 +6,7 @@ import 'package:grpc/grpc.dart';
 // Add path dependency if not already there
 import 'package:fixnum/fixnum.dart'; // Import fixnum for Int64
 import 'package:dotenv/dotenv.dart';
+import 'package:bolt11_decoder/bolt11_decoder.dart';
 
 import 'payment_service.dart'; // Import the interface
 import '../models/cancel_invoice_result.dart';
@@ -45,7 +46,10 @@ class LndService implements PaymentService {
   lnd_router.RouterClient? _routerClient; // Use aliased type
   late DotEnv _env;
 
-  LndService() {
+  LndService(
+      {LightningClient? lightningClient, lnd_router.RouterClient? routerClient})
+      : _lightningClient = lightningClient,
+        _routerClient = routerClient {
     _env = DotEnv(includePlatformEnvironment: true)..load();
   }
 
@@ -317,13 +321,19 @@ class LndService implements PaymentService {
             'LND: Exception during trackPaymentV2 for $paymentHashHex: $e');
       }
       return PayInvoiceResult(
+        status: domain.PaymentStatus.UNKNOWN,
+        paymentId: paymentHashHex,
         paymentError:
             'Payment stream completed without definitive status, and tracking did not resolve it.',
       );
     } catch (e) {
       AppLogger.info(
           'LND: Exception during sendPaymentV2 for $paymentHashHex: $e');
+      final tracked = await _trackPaymentV2(paymentHashHex);
+      if (tracked != null) return tracked;
       return PayInvoiceResult(
+        status: domain.PaymentStatus.UNKNOWN,
+        paymentId: paymentHashHex,
         paymentError: e.toString(),
       );
     }
@@ -336,7 +346,8 @@ class LndService implements PaymentService {
     final req = lnd_router.TrackPaymentRequest()
       ..paymentHash = paymentHashBytes;
     try {
-      await for (final update in _routerClient!.trackPaymentV2(req)) {
+      await for (final update in _routerClient!.trackPaymentV2(req,
+          options: CallOptions(timeout: const Duration(seconds: 10)))) {
         AppLogger.info(
             '!!!!!!!!!!!!!!!!!!!!!!! LND: Payment status : ${update.status}');
         if (update.status == Payment_PaymentStatus.SUCCEEDED) {
@@ -351,11 +362,14 @@ class LndService implements PaymentService {
           AppLogger.info(
               'LND: trackPaymentV2: Payment FAILED. Reason: ${update.failureReason}');
           return PayInvoiceResult(
+            status: domain.PaymentStatus.FAILED,
+            paymentId: paymentHashHex,
             paymentError: update.failureReason.toString(),
           );
         } else if (update.status == Payment_PaymentStatus.IN_FLIGHT) {
           AppLogger.info('LND: trackPaymentV2: Payment still IN_FLIGHT...');
-          // Continue listening
+          return PayInvoiceResult(
+              status: domain.PaymentStatus.PENDING, paymentId: paymentHashHex);
         }
       }
       AppLogger.info(
@@ -425,10 +439,16 @@ class LndService implements PaymentService {
   @override
   Future<PayInvoiceResult?> reconcileOutgoingPayment(
       {required String invoice}) async {
-    // LND's payInvoice already consumes sendPaymentV2 (and falls back to
-    // trackPaymentV2) until a terminal SUCCEEDED/FAILED state, so a reported
-    // failure is authoritative — there is no NWC-style 5s-timeout idempotency
-    // gap to reconcile here. Returning null leaves the existing result intact.
-    return null;
+    if (_routerClient == null) return null;
+    try {
+      final request = Bolt11PaymentRequest(invoice);
+      final hash = request.tags
+          .firstWhere((tag) => tag.type == 'payment_hash')
+          .data as String;
+      return await _trackPaymentV2(hash);
+    } catch (e) {
+      AppLogger.warning('LND outgoing reconciliation unavailable.', error: e);
+      return null;
+    }
   }
 }

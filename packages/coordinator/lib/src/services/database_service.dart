@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:postgres/postgres.dart';
+import 'package:bolt11_decoder/bolt11_decoder.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
@@ -146,6 +147,10 @@ class DatabaseService {
         bank TEXT
       );
     ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS state_revision BIGINT NOT NULL DEFAULT 0;
+    ''');
     // LNURL payout was removed: drop the taker's Lightning-address column on
     // existing databases (fresh schemas above no longer create it).
     await _connection!.execute('''
@@ -268,6 +273,11 @@ class DatabaseService {
       );
     ''');
     await _connection!.execute('''
+      ALTER TABLE outgoing_payment_attempts
+      ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS offer_state_revision BIGINT NOT NULL DEFAULT 0;
+    ''');
+    await _connection!.execute('''
       CREATE INDEX IF NOT EXISTS idx_outgoing_attempts_nonterminal
         ON outgoing_payment_attempts (state, updated_at)
         WHERE state IN ('prepared','submitted','pending','unknown');
@@ -278,6 +288,7 @@ class DatabaseService {
     required String id,
     required String offerId,
     required String purpose,
+    required int offerStateRevision,
     required OutgoingPaymentType paymentType,
     required String encoded,
     required int expectedAmountSats,
@@ -291,12 +302,17 @@ class DatabaseService {
          ORDER BY generation DESC LIMIT 1''',
       substitutionValues: {'offer_id': offerId, 'purpose': purpose},
     );
+    final paymentHash = paymentType == OutgoingPaymentType.bolt11
+        ? _invoicePaymentHash(encoded)
+        : null;
     var generation = 0;
     if (latestResult.isNotEmpty) {
       final latest = _mapRowToOutgoingPaymentAttempt(latestResult.first);
       if (latest.paymentType == paymentType &&
           latest.encoded == encoded &&
-          latest.state != OutgoingPaymentAttemptState.failed) {
+          (latest.state != OutgoingPaymentAttemptState.failed ||
+              paymentType == OutgoingPaymentType.bolt11 ||
+              latest.offerStateRevision == offerStateRevision)) {
         _validateOutgoingPaymentAttempt(
           latest,
           expectedAmountSats: expectedAmountSats,
@@ -313,21 +329,36 @@ class DatabaseService {
       generation = latest.generation + 1;
     }
 
+    // Never reuse a BOLT11 hash from a previous generation: a wallet lookup
+    // cannot distinguish its old failure from a new in-flight submission.
+    if (paymentHash != null && generation > 0) {
+      final previous = await _connection!.query(
+        "SELECT bolt11_invoice FROM outgoing_payment_attempts "
+        "WHERE offer_id = @offer_id AND purpose = @purpose AND payment_type = 'bolt11'",
+        substitutionValues: {'offer_id': offerId, 'purpose': purpose},
+      );
+      if (previous
+          .any((row) => _invoicePaymentHash(row[0] as String) == paymentHash)) {
+        throw StateError(
+            'A failed BOLT11 payment requires a fresh payment hash');
+      }
+    }
     await _connection!.execute(
       '''INSERT INTO outgoing_payment_attempts (
-           id, offer_id, purpose, generation, payment_type,
+           id, offer_id, purpose, generation, offer_state_revision, payment_type,
            bolt11_invoice, bolt12_offer, expected_amount_sats, fee_limit_sats,
-           backend_type, state, created_at, updated_at
+           backend_type, payment_hash, state, created_at, updated_at
          ) VALUES (
-           @id, @offer_id, @purpose, @generation, @payment_type,
+           @id, @offer_id, @purpose, @generation, @offer_state_revision, @payment_type,
            @bolt11_invoice, @bolt12_offer, @expected_amount_sats, @fee_limit_sats,
-           @backend_type, 'prepared', @now, @now
+           @backend_type, @payment_hash, 'prepared', @now, @now
          ) ON CONFLICT (offer_id, purpose, generation) DO NOTHING''',
       substitutionValues: {
         'id': id,
         'offer_id': offerId,
         'purpose': purpose,
         'generation': generation,
+        'offer_state_revision': offerStateRevision,
         'payment_type': paymentType.name,
         'bolt11_invoice':
             paymentType == OutgoingPaymentType.bolt11 ? encoded : null,
@@ -336,6 +367,7 @@ class DatabaseService {
         'expected_amount_sats': expectedAmountSats,
         'fee_limit_sats': feeLimitSats,
         'backend_type': backendType,
+        'payment_hash': paymentHash,
         'now': DateTime.now().toUtc(),
       },
     );
@@ -393,9 +425,24 @@ class DatabaseService {
     }
   }
 
+  String _invoicePaymentHash(String invoice) {
+    final hashes = Bolt11PaymentRequest(invoice)
+        .tags
+        .where((tag) => tag.type == 'payment_hash')
+        .map((tag) => tag.data.toString().toLowerCase());
+    if (hashes.length != 1 ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(hashes.single)) {
+      throw StateError('Outgoing invoice has no valid payment hash');
+    }
+    return hashes.single;
+  }
+
+  /// Claims submission or records a result only for the observed revision.
+  /// Terminal results are immutable; stale workers must reconcile again.
   Future<OutgoingPaymentAttempt> updateOutgoingPaymentAttempt(
     String id, {
     required OutgoingPaymentAttemptState state,
+    required int expectedRevision,
     String? backendPaymentId,
     String? paymentHash,
     String? preimage,
@@ -407,7 +454,7 @@ class DatabaseService {
     final now = DateTime.now().toUtc();
     final result = await _connection!.query(
       '''UPDATE outgoing_payment_attempts SET
-           state = @state,
+           state = @state, revision = revision + 1,
            backend_payment_id = COALESCE(@backend_payment_id, backend_payment_id),
            payment_hash = COALESCE(@payment_hash, payment_hash),
            preimage = COALESCE(@preimage, preimage),
@@ -419,10 +466,18 @@ class DatabaseService {
            END,
            updated_at = @now,
            settled_at = CASE WHEN @state = 'succeeded' THEN COALESCE(settled_at, @now) ELSE settled_at END
-         WHERE id = @id RETURNING *''',
+         WHERE id = @id AND revision = @expected_revision
+           AND state NOT IN ('succeeded', 'failed')
+           AND (@state <> 'submitted' OR (state = 'prepared' AND EXISTS (
+             SELECT 1 FROM offers o WHERE o.id = offer_id
+               AND o.state_revision = offer_state_revision
+           )))
+           AND @state <> 'prepared'
+         RETURNING *''',
       substitutionValues: {
         'id': id,
         'state': state.name,
+        'expected_revision': expectedRevision,
         'backend_payment_id': backendPaymentId,
         'payment_hash': paymentHash,
         'preimage': preimage,
@@ -433,7 +488,8 @@ class DatabaseService {
       },
     );
     if (result.isEmpty)
-      throw StateError('Outgoing payment attempt $id not found');
+      throw StateError(
+          'Outgoing payment attempt $id changed; reconcile before continuing');
     return _mapRowToOutgoingPaymentAttempt(result.single);
   }
 
@@ -446,6 +502,8 @@ class DatabaseService {
       offerId: map['offer_id'].toString(),
       purpose: map['purpose'] as String,
       generation: map['generation'] as int,
+      revision: map['revision'] as int,
+      offerStateRevision: map['offer_state_revision'] as int,
       paymentType:
           OutgoingPaymentType.values.byName(map['payment_type'] as String),
       bolt11Invoice: map['bolt11_invoice'] as String?,
@@ -893,6 +951,8 @@ class DatabaseService {
     String id,
     String newStatus, {
     List<String>? expectedCurrentStatuses,
+    int? expectedStateRevision,
+    OutgoingPaymentAttempt? expectedPaymentAttempt,
     String? expectedTakerPubkey,
     String? takerPubkey,
     String? code,
@@ -931,7 +991,11 @@ class DatabaseService {
       'status': newStatus,
       'updated_at': now,
     };
-    final set = <String>['status = @status', 'updated_at = @updated_at'];
+    final set = <String>[
+      'status = @status',
+      'updated_at = @updated_at',
+      'state_revision = state_revision + 1'
+    ];
 
     void put(String col, String key, dynamic value) {
       params[key] = value;
@@ -1007,6 +1071,28 @@ class DatabaseService {
     }
 
     final where = <String>['id = @id'];
+    if (expectedStateRevision != null) {
+      params['expected_state_revision'] = expectedStateRevision;
+      where.add('state_revision = @expected_state_revision');
+    }
+    if (expectedPaymentAttempt != null) {
+      params.addAll({
+        'attempt_id': expectedPaymentAttempt.id,
+        'attempt_revision': expectedPaymentAttempt.revision,
+        'attempt_purpose': expectedPaymentAttempt.purpose,
+      });
+      where.add("""EXISTS (
+        SELECT 1 FROM outgoing_payment_attempts a
+        WHERE a.id = @attempt_id AND a.offer_id = @id
+          AND a.purpose = @attempt_purpose AND a.revision = @attempt_revision
+          AND a.state IN ('succeeded', 'failed')
+          AND NOT EXISTS (
+            SELECT 1 FROM outgoing_payment_attempts newer
+            WHERE newer.offer_id = a.offer_id AND newer.purpose = a.purpose
+              AND newer.generation > a.generation
+          )
+      )""");
+    }
     if (expectedCurrentStatuses != null && expectedCurrentStatuses.isNotEmpty) {
       params['expected_current_statuses'] = expectedCurrentStatuses;
       where.add('status = ANY(CAST(@expected_current_statuses AS TEXT[]))');
@@ -1207,6 +1293,7 @@ class DatabaseService {
         }
       }(),
       statusRaw: map['status'] as String,
+      stateRevision: map['state_revision'] as int,
       createdAt: (map['created_at'] as DateTime).toLocal(),
       fiatAmount: double.parse(map['fiat_amount']),
       fiatCurrency: map['fiat_currency'] ?? '?',
