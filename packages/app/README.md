@@ -1,5 +1,17 @@
 # Bitblik app
 
+## App links
+
+Native app links accept both root-hosted URLs such as
+`https://bitblik.app/offers/<id>` and nsite URLs under `/app/`.
+Opening `/app` or `/app/` opens the home screen; `/app/offers/<id>` opens the
+offer. The deployment prefix is removed only for native route matching.
+
+Web navigation uses Flutter's HTML base href. For a web deployment under
+`/app/`, build with `flutter build web -t lib/main_bitblik.dart --base-href /app/`
+and configure the host to serve the app shell for nested routes. Browser routes
+then retain `/app/`, including `/app/offers/<id>`.
+
 ## App updates
 
 The footer uses NDK's version widget and green download badge. The badge appears

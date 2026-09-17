@@ -30,6 +30,7 @@ import 'src/providers/providers.dart';
 import 'src/settings/app_preferences.dart';
 import 'src/theme/app_theme.dart';
 import 'src/services/notification_service.dart';
+import 'src/utils/app_link_uri.dart';
 import 'src/screens/coordinator_details_screen.dart';
 import 'src/screens/coordinator_console_access_screen.dart';
 import 'src/screens/coordinator_management_screen.dart';
@@ -102,6 +103,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: true,
     initialLocation: startOnboarding ? MarketOnboardingScreen.routeName : '/',
     navigatorKey: rootNavigatorKey,
+    redirect: (context, state) {
+      if (kIsWeb) return null;
+      final appUri = normalizeAppLinkUri(state.uri);
+      return appUri == state.uri ? null : appUri.toString();
+    },
     routes: [
       // Top-level (outside the ShellRoute) so onboarding renders full-screen
       // without the app's nav chrome.
@@ -623,16 +629,19 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
 
     // Handle https deep links (BitBlik / BitWay domains / bittwint.app)
     if (scheme == 'https') {
-      // Support both path-based (/offers/:id) and fragment-based (#/offers) links.
-      final segments =
-          uri.pathSegments.isNotEmpty
-              ? uri.pathSegments
-              : Uri.parse(uri.fragment).pathSegments;
+      final appUri = normalizeAppLinkUri(uri);
+      final segments = appUri.pathSegments;
+      if (appUri.path == '/') {
+        router.go(appUri.toString());
+        return;
+      }
       if (segments.isNotEmpty && segments.first == 'offers') {
         if (segments.length >= 2 && segments[1].isNotEmpty) {
-          router.push('/offers/${segments[1]}');
+          router.push(
+            appUri.replace(pathSegments: ['', 'offers', segments[1]]).toString(),
+          );
         } else {
-          router.push('/offers');
+          router.push(appUri.replace(path: '/offers').toString());
         }
       }
     }
