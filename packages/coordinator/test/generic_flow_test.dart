@@ -804,33 +804,39 @@ void main() {
       ));
     });
 
-    test('submitted attempt finalized as failed is not resent', () async {
-      stubOutgoingPaymentAttempts(
-        gdb,
-        initialState: OutgoingPaymentAttemptState.submitted,
-      );
-      when(gdb.getOfferById('p1'))
-          .thenAnswer((_) async => payoutOffer(takerInvoice: invoice));
-      stubCas();
-      when(gpay.reconcileOutgoingPayment(invoice: anyNamed('invoice')))
-          .thenAnswer(
-        (_) async => PayInvoiceResult(
-          status: PaymentStatus.FAILED,
-          paymentId: 'wallet-transaction',
-          paymentError: 'payment failed',
-        ),
-      );
+    for (final initialState in [
+      OutgoingPaymentAttemptState.submitted,
+      OutgoingPaymentAttemptState.unknown,
+    ]) {
+      test('${initialState.name} attempt finalized as failed is not resent',
+          () async {
+        stubOutgoingPaymentAttempts(
+          gdb,
+          initialState: initialState,
+        );
+        when(gdb.getOfferById('p1'))
+            .thenAnswer((_) async => payoutOffer(takerInvoice: invoice));
+        stubCas();
+        when(gpay.reconcileOutgoingPayment(invoice: anyNamed('invoice')))
+            .thenAnswer(
+          (_) async => PayInvoiceResult(
+            status: PaymentStatus.FAILED,
+            paymentId: 'wallet-transaction',
+            paymentError: 'payment failed',
+          ),
+        );
 
-      await gsvc.flow.handleRpc('confirm_payment', {'offer_id': 'p1'}, maker);
-      await pumpEventQueue(times: 100);
+        await gsvc.flow.handleRpc('confirm_payment', {'offer_id': 'p1'}, maker);
+        await pumpEventQueue(times: 100);
 
-      expect(current, 'takerPaymentFailed');
-      verifyNever(gpay.payInvoice(
-        invoice: anyNamed('invoice'),
-        amountSat: anyNamed('amountSat'),
-        feeLimitSat: anyNamed('feeLimitSat'),
-      ));
-    });
+        expect(current, 'takerPaymentFailed');
+        verifyNever(gpay.payInvoice(
+          invoice: anyNamed('invoice'),
+          amountSat: anyNamed('amountSat'),
+          feeLimitSat: anyNamed('feeLimitSat'),
+        ));
+      });
+    }
 
     test('setup failure (no invoice) -> takerPaymentFailed', () async {
       when(gdb.getOfferById('p1')).thenAnswer((_) async => payoutOffer());

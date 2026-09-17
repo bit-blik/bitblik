@@ -62,17 +62,19 @@ class NwcService implements PaymentService, Bolt12PaymentService {
   NwcService({
     required String nwcUri,
     this.enableBolt12Recovery = true,
+    Ndk? ndk,
   }) : _nwcUri = nwcUri {
-    _ndk = Ndk(
-      NdkConfig(
-        cache: MemCacheManager(),
-        eventVerifier: Bip340EventVerifier(),
-        bootstrapRelays: const [],
-        // NWC is another long-lived relay connection owned by the coordinator.
-        // Avoid retaining native WebSocket compression state here as well.
-        webSocketCompression: false,
-      ),
-    );
+    _ndk = ndk ??
+        Ndk(
+          NdkConfig(
+            cache: MemCacheManager(),
+            eventVerifier: Bip340EventVerifier(),
+            bootstrapRelays: const [],
+            // NWC is another long-lived relay connection owned by the coordinator.
+            // Avoid retaining native WebSocket compression state here as well.
+            webSocketCompression: false,
+          ),
+        );
   }
 
   @override
@@ -473,16 +475,15 @@ class NwcService implements PaymentService, Bolt12PaymentService {
     }
     AppLogger.info('NWC Service: Reconciling outgoing payment via lookup...');
     try {
-      // Look up by the BOLT11 invoice itself so we don't have to decode it for
-      // the payment hash. A non-null `settledAt` means the wallet completed the
-      // payment despite whatever error payInvoice reported.
+      // Look up by the BOLT11 invoice itself. Settlement can resolve an
+      // ambiguous pay_invoice error, as can an explicit outgoing failure.
       final response = await _ndk.nwc.lookupInvoice(
         _nwcConnection!,
         invoice: invoice,
       );
 
       if (response.errorCode != null) {
-        // NOT_FOUND etc. — treat as "cannot confirm settled".
+        // NOT_FOUND etc. do not prove whether an outgoing payment completed.
         AppLogger.info(
             'NWC Service: reconcileOutgoingPayment lookup error: ${response.errorCode} - ${response.errorMessage}');
         return null;
@@ -500,8 +501,21 @@ class NwcService implements PaymentService, Bolt12PaymentService {
         );
       }
 
-      AppLogger.info(
-          'NWC Service: reconciliation: invoice not settled (settledAt=${response.settledAt}).');
+      // A missing settlement timestamp alone does not prove failure. In
+      // particular, incoming invoice expiry must not authorize another payout.
+      if (response.type == 'outgoing' && response.state == 'failed') {
+        AppLogger.info('NWC Service: reconciliation found FAILED outgoing '
+            'payment ${response.paymentHash}.');
+        return PayInvoiceResult(
+          status: PaymentStatus.FAILED,
+          paymentId: response.paymentHash,
+          paymentError: 'Wallet confirmed outgoing payment failed',
+        );
+      }
+
+      AppLogger.info('NWC Service: reconciliation: payment unresolved '
+          '(type=${response.type}, state=${response.state}, '
+          'settledAt=${response.settledAt}).');
       return null;
     } catch (e) {
       AppLogger.info('NWC Service: Exception in reconcileOutgoingPayment: $e');
