@@ -24,6 +24,8 @@ import 'webln_stub.dart' if (dart.library.js) 'webln_web.dart';
 import 'maker_amount_form.dart'; // Import MakerProgressIndicator
 import '../../utils/bitcoin_display.dart';
 import '../../widgets/premium_info.dart';
+import '../../widgets/funding_invoice_gate.dart';
+import '../../services/funding_payment.dart';
 
 // ---------------------------------------------------------------------------
 // Budget warning helpers
@@ -72,8 +74,7 @@ class MakerPayInvoiceScreen extends ConsumerStatefulWidget {
 }
 
 class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
-  bool isWallet = false;
-  bool _sentWeblnPayment = false;
+  FundingPaymentAuthorization? _fundingAuthorization;
   bool _isPayingWithWallet = false;
   bool _attemptedPay = false;
   bool _hasSendingWallet = false;
@@ -124,24 +125,6 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
   void initState() {
     super.initState();
 
-    try {
-      checkWeblnSupport((supported) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text('checking webLN support')),
-        // ); // Can be localized if needed
-        // print("!!!!!!!!!!!!!!! isWallet: $isWallet, supported: $supported");
-        if (mounted) {
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(content: Text('webLN support: $supported')),
-          // ); // Can be localized if needed
-          setState(() {
-            isWallet = supported;
-          });
-        }
-      });
-    } catch (e) {
-      // print("!!!!catch $e");
-    }
     _syncWalletState();
     _fetchDefaultWalletBudget();
     final ndk = ref.read(ndkProvider);
@@ -380,7 +363,25 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
   /// Called when the user taps Pay. Checks balance and (pre-fetched) NWC
   /// budget for the default wallet. If either is too low, shows a warning
   /// dialog that lets the user pick an alternate wallet or proceed anyway.
+  bool _validateFundingUse(String invoice) {
+    try {
+      final approval = _fundingAuthorization;
+      if (approval == null) throw const FormatException('The funding invoice has not passed validation.');
+      approval.requireCurrent(ref.read(activeOfferProvider), invoice,
+        network: ref.read(fundingNetworkProvider),
+        makerPubkey: ref.read(publicKeyProvider).value ?? '');
+      return true;
+    } on FormatException catch (e) {
+      if (mounted) {
+        setState(() => _fundingAuthorization = null);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+      return false;
+    }
+  }
+
   Future<void> _checkBudgetAndPay(String invoice) async {
+    if (!_validateFundingUse(invoice)) return;
     // Retry-safe: a previous attempt may have already locked the hold invoice
     // (e.g. NWC pay_invoice timed out after the HTLC was accepted). Re-check the
     // coordinator's authoritative status first; if already funded, advance
@@ -392,6 +393,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       if (_paymentAccepted(ref.read(activeOfferProvider)?.statusEnum)) return;
     }
 
+    if (!mounted || !_validateFundingUse(invoice)) return;
     final ndk = ref.read(ndkProvider);
     final offer = ref.read(activeOfferProvider);
 
@@ -400,7 +402,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       return;
     }
 
-    final requiredSats = offer.amountSats + offer.makerFees;
+    final requiredSats = _fundingAuthorization!.totalSats;
     final defaultWallet = ndk.wallets.defaultWalletForSending;
     if (defaultWallet == null) {
       await _payWithNwc(invoice);
@@ -1011,6 +1013,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
 
   // --- Intent/URL Launching ---
   Future<void> _launchLightningUrl(String invoice) async {
+    if (!_validateFundingUse(invoice)) return;
     if (kIsWeb) {
       Logger.log.d(() => "!! launch lightning URL -> sending invoice");
       bool webLnSuccess = true;
@@ -1027,6 +1030,8 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
       }
     }
 
+    // WebLN can return after the offer changed or the invoice expired.
+    if (!mounted || !_validateFundingUse(invoice)) return;
     final link = 'lightning:$invoice';
     try {
       if (!kIsWeb && Platform.isAndroid) {
@@ -1068,6 +1073,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
   }
 
   Future<void> _payWithNwc(String invoice, {String? walletId}) async {
+    if (!_validateFundingUse(invoice)) return;
     final t = Translations.of(context);
     final ndk = ref.read(ndkProvider);
     final defaultWallet = ref.read(defaultWalletProvider);
@@ -1226,59 +1232,34 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
     });
 
     final offer = ref.watch(activeOfferProvider);
-    final t = Translations.of(context);
 
     final holdInvoiceFromProvider = ref.watch(holdInvoiceProvider);
     // Get hold invoice from either provider or active offer
-    final holdInvoice = holdInvoiceFromProvider ?? offer?.holdInvoice;
+    final holdInvoice = offer?.holdInvoice ?? holdInvoiceFromProvider;
 
-    // WebLN auto-pay logic
-    if (isWallet && holdInvoice != null && !_sentWeblnPayment) {
-      Logger.log.d(
-        () => "isWallet: $isWallet, _sentWeblnPayment: $_sentWeblnPayment",
-      );
-      sendWeblnPayment(holdInvoice)
-          .then((_) {
-            if (mounted) {
-              setState(() {
-                _sentWeblnPayment = true;
-              });
-            }
-          })
-          .catchError((e) {
-            // Handle error if needed
-          });
-    }
+    final estimate = ref.watch(fundingEstimateProvider);
+    // Authorization belongs to the gate, never to an incoming offer/status update.
+    _fundingAuthorization = null;
+    return FundingInvoiceGate(
+      offer: offer, invoice: holdInvoice,
+      makerPubkey: ref.watch(publicKeyProvider).value ?? '',
+      network: ref.watch(fundingNetworkProvider),
+      estimate: estimate?.offerId == offer?.id ? estimate?.estimate : null,
+      onCancel: _handleCancelPressed,
+      builder: (context, approval) {
+        _fundingAuthorization = approval;
+        return _buildApprovedPayment(context, approval.funding.invoice);
+      },
+    );
+  }
+
+  Widget _buildApprovedPayment(BuildContext context, String holdInvoice) {
+    final offer = ref.watch(activeOfferProvider);
+    final t = Translations.of(context);
 
     // Add Scaffold wrapper
     return Builder(
       builder: (context) {
-        if (holdInvoice == null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  t.offers.errors.detailsMissing,
-                  style: Theme.of(context).textTheme.titleMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Hold invoice not available for this offer.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.go('/'),
-                  child: Text(t.common.buttons.goHome),
-                ),
-              ],
-            ),
-          );
-        }
-
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
@@ -1352,18 +1333,14 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                 Builder(
                   builder: (context) {
                     if (offer == null) return const SizedBox.shrink();
-                    final sats = offer.amountSats + offer.makerFees;
+                    final sats = _fundingAuthorization!.totalSats;
                     final fiat = offer.fiatAmount;
                     final bitcoinDisplayUnit = ref.watch(
                       bitcoinDisplayUnitProvider,
                     );
-                    final apiService = ref.watch(apiServiceProvider);
-                    final coordinatorInfo = apiService
-                        .getCoordinatorInfoByPubkey(offer.coordinatorPubkey);
                     String formatFiat(double value) => value.toStringAsFixed(
                       value.truncateToDouble() == value ? 0 : 2,
                     );
-                    if (coordinatorInfo == null) return const SizedBox.shrink();
                     // final feeFiat = fiat * feePct / 100;
                     // final totalFiat = fiat + feeFiat;
                     return Column(
@@ -1424,6 +1401,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                           foregroundColor: Colors.black,
                         ),
                         onPressed: () {
+                          if (!_validateFundingUse(holdInvoice)) return;
                           Clipboard.setData(ClipboardData(text: holdInvoice));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

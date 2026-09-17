@@ -14,6 +14,7 @@ import '../../../i18n/gen/strings.g.dart';
 import 'package:bitblik_core/core.dart';
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
+import '../../services/funding_payment.dart';
 import '../../settings/app_preferences.dart';
 import '../../widgets/bolt12_badge.dart';
 import '../coordinator_details_screen.dart';
@@ -664,6 +665,19 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     try {
       final offerBank = _needsBank ? _selectedBankId : null;
       final offerCategory = supportsCategory ? _selectedCategory : null;
+      final satsEstimate = _satsEquivalent;
+      final coordinatorInfo = _selectedCoordinatorInfo;
+      if (satsEstimate == null || coordinatorInfo == null) {
+        throw const FormatException('A funding estimate is required.');
+      }
+      final estimate = FundingEstimate(
+        coordinatorPubkey: coordinatorPubkey, makerPubkey: makerId,
+        fiatAmount: fiatAmount, fiatCurrency: _method.currency,
+        premiumPercent: _premiumPercent,
+        totalSats: (satsEstimate * (1 - _premiumPercent / 100) +
+            satsEstimate * coordinatorInfo.makerFee / 100).round(),
+        makerFeesSats: (satsEstimate * coordinatorInfo.makerFee / 100).ceil(),
+      );
       final apiService = ref.read(apiServiceProvider);
       final result = await apiService.initiateOfferFiat(
         fiatAmount: fiatAmount,
@@ -677,13 +691,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       if (offerBank != null) {
         await AppPreferencesStore.saveLastBank(_method.id, offerBank);
       }
+      if (!mounted) return;
       final paymentHash = result['paymentHash'] as String;
-      ref.read(holdInvoiceProvider.notifier).state = result['holdInvoice'];
-      ref.read(paymentHashProvider.notifier).state = paymentHash;
-      await ref
-          .read(activeOfferProvider.notifier)
-          .setActiveOffer(
-            Offer(
+      final createdOffer = Offer(
               id: paymentHash,
               // Keep Offer.amountSats as the trade principal. The hold invoice
               // itself is principal + makerFees; storing that gross amount
@@ -706,9 +716,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                   : null,
               premiumPercent:
                   (result['premiumPercent'] as num?)?.toDouble() ??
-                  _premiumPercent,
-            ),
-          );
+                  estimate.premiumPercent,
+            );
+      // The payment gate validates the invoice before exposing payment controls.
+      // Keep the original estimate even when validation fails, for diagnostics.
+      ref.read(fundingEstimateProvider.notifier).state = (
+        offerId: createdOffer.id,
+        estimate: estimate,
+      );
+      ref.read(holdInvoiceProvider.notifier).state = createdOffer.holdInvoice;
+      ref.read(paymentHashProvider.notifier).state = paymentHash;
+      await ref.read(activeOfferProvider.notifier).setActiveOffer(createdOffer);
       if (mounted) {
         context.push("/pay");
       }

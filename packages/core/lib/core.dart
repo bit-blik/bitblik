@@ -24,3 +24,5 @@ export 'src/protocol/bitblik_rpc_client.dart';
 export 'src/quote/offer_quote.dart';
 export 'src/protocol/protocol_codec.dart';
 export 'src/protocol/rpc_envelope.dart';
+
+export 'src/payment/funding_invoice.dart';
