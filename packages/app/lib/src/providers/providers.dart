@@ -1759,6 +1759,8 @@ final selectedPaymentSystemProvider =
 final needsMarketOnboardingProvider = StateProvider<bool>((ref) => false);
 
 class SelectedPaymentSystemNotifier extends StateNotifier<PaymentSystem> {
+  bool _hasTemporaryOverride = false;
+
   /// [initial] seeds the state synchronously (used at startup with the saved
   /// market preloaded in main), so discovery targets the right market from the
   /// first sweep. When null, falls back to the build default and loads the saved
@@ -1769,12 +1771,21 @@ class SelectedPaymentSystemNotifier extends StateNotifier<PaymentSystem> {
   }
 
   Future<void> _load() async {
-    state = await AppPreferencesStore.loadSelectedPaymentSystem();
+    final saved = await AppPreferencesStore.loadSelectedPaymentSystem();
+    if (!_hasTemporaryOverride) state = saved;
   }
 
   Future<void> set(PaymentSystem value) async {
+    _hasTemporaryOverride = false;
     state = value;
     await AppPreferencesStore.saveSelectedPaymentSystem(value);
+  }
+
+  /// Changes active market for current app session without changing user's
+  /// saved preference. Used when web app opens direct link to another market.
+  void setTemporarily(PaymentSystem value) {
+    _hasTemporaryOverride = true;
+    state = value;
   }
 }
 

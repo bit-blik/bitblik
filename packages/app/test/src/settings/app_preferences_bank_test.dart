@@ -1,4 +1,5 @@
 import 'package:bitblik/src/settings/app_preferences.dart';
+import 'package:bitblik/src/providers/providers.dart';
 import 'package:bitblik_core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -79,6 +80,33 @@ void main() {
         ),
         kBlik,
       );
+    });
+  });
+
+  group('temporary payment-system selection', () {
+    test('changes active system without replacing saved preference', () async {
+      SharedPreferences.setMockInitialValues({
+        'selected_payment_system_id': 'mbway',
+      });
+      final notifier = SelectedPaymentSystemNotifier(kMbway);
+
+      notifier.setTemporarily(kBlik);
+
+      expect(notifier.state, kBlik);
+      expect(await AppPreferencesStore.loadSelectedPaymentSystem(), kMbway);
+    });
+
+    test('later explicit selection still persists normally', () async {
+      SharedPreferences.setMockInitialValues({
+        'selected_payment_system_id': 'mbway',
+      });
+      final notifier = SelectedPaymentSystemNotifier(kMbway);
+      notifier.setTemporarily(kBlik);
+
+      await notifier.set(kTwint);
+
+      expect(notifier.state, kTwint);
+      expect(await AppPreferencesStore.loadSelectedPaymentSystem(), kTwint);
     });
   });
 

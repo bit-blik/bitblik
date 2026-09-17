@@ -1,4 +1,5 @@
 import 'package:bitblik/src/utils/code_label_ext.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -49,6 +50,25 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
   void initState() {
     super.initState();
     _loadConsentAcceptance();
+    if (kIsWeb) {
+      ref.listenManual<AsyncValue<Offer?>>(
+        offerDetailsProvider(widget.offerId),
+        (previous, next) {
+          final offer = next.valueOrNull;
+          if (offer == null) return;
+
+          final linkedPaymentSystem = paymentSystemForOffer(offer);
+          if (ref.read(selectedPaymentSystemProvider).id ==
+              linkedPaymentSystem.id) {
+            return;
+          }
+          ref
+              .read(selectedPaymentSystemProvider.notifier)
+              .setTemporarily(linkedPaymentSystem);
+        },
+        fireImmediately: true,
+      );
+    }
   }
 
   Future<void> _loadConsentAcceptance() async {
