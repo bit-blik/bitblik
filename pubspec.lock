@@ -1281,38 +1281,38 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/ndk"
-      ref: "feat/sample-app/cashu-restore-quote"
-      resolved-ref: "4e8ea74bdc67ffbe61975a4c94ca72e3990559fa"
+      ref: "6335af2cee4d6658d42ba976f51f826234dfb1a7"
+      resolved-ref: "6335af2cee4d6658d42ba976f51f826234dfb1a7"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.10.0-dev.3"
+    version: "0.10.0-dev.4"
   ndk_drift:
     dependency: "direct overridden"
     description:
       path: "packages/drift"
-      ref: "feat/sample-app/cashu-restore-quote"
-      resolved-ref: "4e8ea74bdc67ffbe61975a4c94ca72e3990559fa"
+      ref: "6335af2cee4d6658d42ba976f51f826234dfb1a7"
+      resolved-ref: "6335af2cee4d6658d42ba976f51f826234dfb1a7"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.1.1-dev.15"
+    version: "0.1.1-dev.16"
   ndk_flutter:
     dependency: "direct overridden"
     description:
       path: "packages/ndk_flutter"
-      ref: "feat/sample-app/cashu-restore-quote"
-      resolved-ref: "4e8ea74bdc67ffbe61975a4c94ca72e3990559fa"
+      ref: "6335af2cee4d6658d42ba976f51f826234dfb1a7"
+      resolved-ref: "6335af2cee4d6658d42ba976f51f826234dfb1a7"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.10.0-dev.4"
+    version: "0.10.0-dev.5"
   ndk_objectbox:
     dependency: "direct overridden"
     description:
       path: "packages/objectbox"
-      ref: "feat/sample-app/cashu-restore-quote"
-      resolved-ref: "4e8ea74bdc67ffbe61975a4c94ca72e3990559fa"
+      ref: "6335af2cee4d6658d42ba976f51f826234dfb1a7"
+      resolved-ref: "6335af2cee4d6658d42ba976f51f826234dfb1a7"
       url: "https://github.com/relaystr/ndk.git"
     source: git
-    version: "0.2.12-dev.12"
+    version: "0.2.12-dev.13"
   nfc_manager:
     dependency: transitive
     description:
