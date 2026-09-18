@@ -19,6 +19,8 @@ import 'test_mocks.mocks.dart';
 import 'outgoing_payment_attempt_stub.dart';
 
 class _FakeTelegramService extends TelegramService {
+  bool cleanupSucceeds = true;
+  Completer<void>? editGate;
   int editCalls = 0;
   int deleteCalls = 0;
   String? lastEditedText;
@@ -34,7 +36,8 @@ class _FakeTelegramService extends TelegramService {
   }) async {
     editCalls++;
     lastEditedText = text;
-    return true;
+    await editGate?.future;
+    return cleanupSucceeds;
   }
 
   @override
@@ -43,7 +46,7 @@ class _FakeTelegramService extends TelegramService {
     required int messageId,
   }) async {
     deleteCalls++;
-    return true;
+    return cleanupSucceeds;
   }
 }
 
@@ -135,9 +138,16 @@ void main() {
       paymentSystemIdForTest: 'twint',
     );
     await svc.init(); // loads twint.yml -> engine
+    addTearDown(svc.shutdown);
     when(pay.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
         .thenAnswer((_) async => const CancelInvoiceResult.cancelled());
-    when(db.deleteTelegramOfferMessages(any)).thenAnswer((_) async {});
+    var cleanupPending = true;
+    when(db.getTelegramCleanupOfferIds(
+            afterId: anyNamed('afterId'), limit: anyNamed('limit')))
+        .thenAnswer((_) async => cleanupPending ? ['o1'] : []);
+    when(db.deleteTelegramOfferMessage(any)).thenAnswer((_) async {
+      cleanupPending = false;
+    });
     when(db.getTelegramOfferMessages(any)).thenAnswer((_) async => [
           TelegramOfferMessage(
             offerId: 'o1',
@@ -218,84 +228,99 @@ void main() {
     );
   });
 
-  test('maker_cancels: funded -> cancelled (terminal) with field clear',
-      () async {
-    // Stateful so the post-apply re-fetch reflects the new state, as the real
-    // DB would. handleGenericRpc returns the re-fetched offer json.
-    var currentStatus = 'funded';
-    when(db.getOfferById('o1'))
-        .thenAnswer((_) async => twintOffer(currentStatus));
-    when(db.updateOfferRawStatusIfCurrent(
-      any,
-      any,
-      expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
-      expectedStateRevision: anyNamed('expectedStateRevision'),
-      expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
-      expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
-      takerPubkey: anyNamed('takerPubkey'),
-      reservedAt: anyNamed('reservedAt'),
-      takerChargedAt: anyNamed('takerChargedAt'),
-      makerConfirmedAt: anyNamed('makerConfirmedAt'),
-      settledAt: anyNamed('settledAt'),
-      takerPaidAt: anyNamed('takerPaidAt'),
-      takerInvoice: anyNamed('takerInvoice'),
-      code: anyNamed('code'),
-      codeReceivedAt: anyNamed('codeReceivedAt'),
-      disputeAt: anyNamed('disputeAt'),
-      takerFees: anyNamed('takerFees'),
-      takerInvoiceFees: anyNamed('takerInvoiceFees'),
-      failureReason: anyNamed('failureReason'),
-      clearTakerFields: anyNamed('clearTakerFields'),
-      preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
-      transitionMeta: anyNamed('transitionMeta'),
-    )).thenAnswer((inv) async {
-      _stateRevision++;
-      currentStatus = inv.positionalArguments[1] as String;
-      return true;
+  for (final cleanupSucceeds in [true, false]) {
+    test(
+        'maker_cancels commits despite Telegram cleanup success=$cleanupSucceeds',
+        () async {
+      telegram.cleanupSucceeds = cleanupSucceeds;
+      if (cleanupSucceeds) telegram.editGate = Completer<void>();
+      // Stateful so the post-apply re-fetch reflects the new state, as the real
+      // DB would. handleGenericRpc returns the re-fetched offer json.
+      var currentStatus = 'funded';
+      when(db.getOfferById('o1'))
+          .thenAnswer((_) async => twintOffer(currentStatus));
+      when(db.updateOfferRawStatusIfCurrent(
+        any,
+        any,
+        expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedStateRevision: anyNamed('expectedStateRevision'),
+        expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
+        expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+        takerPubkey: anyNamed('takerPubkey'),
+        reservedAt: anyNamed('reservedAt'),
+        takerChargedAt: anyNamed('takerChargedAt'),
+        makerConfirmedAt: anyNamed('makerConfirmedAt'),
+        settledAt: anyNamed('settledAt'),
+        takerPaidAt: anyNamed('takerPaidAt'),
+        takerInvoice: anyNamed('takerInvoice'),
+        code: anyNamed('code'),
+        codeReceivedAt: anyNamed('codeReceivedAt'),
+        disputeAt: anyNamed('disputeAt'),
+        takerFees: anyNamed('takerFees'),
+        takerInvoiceFees: anyNamed('takerInvoiceFees'),
+        failureReason: anyNamed('failureReason'),
+        clearTakerFields: anyNamed('clearTakerFields'),
+        preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
+        transitionMeta: anyNamed('transitionMeta'),
+      )).thenAnswer((inv) async {
+        _stateRevision++;
+        currentStatus = inv.positionalArguments[1] as String;
+        return true;
+      });
+
+      final res = await svc.flow
+          .handleRpc('cancel_offer', {'offer_id': 'o1'}, maker)
+          .timeout(const Duration(seconds: 2))
+          .whenComplete(() {
+        // The RPC must finish even while Telegram remains blocked.
+        telegram.editGate?.complete();
+      });
+      await Future<void>.delayed(Duration.zero);
+      expect(res['status'], 'cancelled');
+
+      final captured = verify(db.updateOfferRawStatusIfCurrent(
+        'o1',
+        captureAny,
+        expectedCurrentStatuses: captureAnyNamed('expectedCurrentStatuses'),
+        expectedStateRevision: anyNamed('expectedStateRevision'),
+        expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
+        expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+        takerPubkey: anyNamed('takerPubkey'),
+        reservedAt: anyNamed('reservedAt'),
+        takerChargedAt: anyNamed('takerChargedAt'),
+        makerConfirmedAt: anyNamed('makerConfirmedAt'),
+        settledAt: anyNamed('settledAt'),
+        takerPaidAt: anyNamed('takerPaidAt'),
+        takerInvoice: anyNamed('takerInvoice'),
+        code: anyNamed('code'),
+        codeReceivedAt: anyNamed('codeReceivedAt'),
+        disputeAt: anyNamed('disputeAt'),
+        takerFees: anyNamed('takerFees'),
+        takerInvoiceFees: anyNamed('takerInvoiceFees'),
+        failureReason: anyNamed('failureReason'),
+        clearTakerFields: captureAnyNamed('clearTakerFields'),
+        preserveCodeOnClear: captureAnyNamed('preserveCodeOnClear'),
+        transitionMeta: anyNamed('transitionMeta'),
+      )).captured;
+
+      // The first CAS durably claims cancellation and clears taker fields; only
+      // then does cancel_hold_invoice run. Its completion edge is a second CAS.
+      expect(captured[0], 'cancelling');
+      expect(captured[1], ['funded']);
+      expect(captured[2], isTrue);
+      // TWINT: the code is the maker's — it survives taker-field clears.
+      expect(captured[3], isTrue);
+      expect(captured[4], 'cancelled');
+      expect(captured[5], ['cancelling']);
+      expect(telegram.editCalls, greaterThanOrEqualTo(1));
+      expect(telegram.lastEditedText, '<s>New offer</s>');
+      if (cleanupSucceeds) {
+        verify(db.deleteTelegramOfferMessage(any)).called(1);
+      } else {
+        verifyNever(db.deleteTelegramOfferMessage(any));
+      }
     });
-
-    final res =
-        await svc.flow.handleRpc('cancel_offer', {'offer_id': 'o1'}, maker);
-    expect(res['status'], 'cancelled');
-
-    final captured = verify(db.updateOfferRawStatusIfCurrent(
-      'o1',
-      captureAny,
-      expectedCurrentStatuses: captureAnyNamed('expectedCurrentStatuses'),
-      expectedStateRevision: anyNamed('expectedStateRevision'),
-      expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
-      expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
-      takerPubkey: anyNamed('takerPubkey'),
-      reservedAt: anyNamed('reservedAt'),
-      takerChargedAt: anyNamed('takerChargedAt'),
-      makerConfirmedAt: anyNamed('makerConfirmedAt'),
-      settledAt: anyNamed('settledAt'),
-      takerPaidAt: anyNamed('takerPaidAt'),
-      takerInvoice: anyNamed('takerInvoice'),
-      code: anyNamed('code'),
-      codeReceivedAt: anyNamed('codeReceivedAt'),
-      disputeAt: anyNamed('disputeAt'),
-      takerFees: anyNamed('takerFees'),
-      takerInvoiceFees: anyNamed('takerInvoiceFees'),
-      failureReason: anyNamed('failureReason'),
-      clearTakerFields: captureAnyNamed('clearTakerFields'),
-      preserveCodeOnClear: captureAnyNamed('preserveCodeOnClear'),
-      transitionMeta: anyNamed('transitionMeta'),
-    )).captured;
-
-    // The first CAS durably claims cancellation and clears taker fields; only
-    // then does cancel_hold_invoice run. Its completion edge is a second CAS.
-    expect(captured[0], 'cancelling');
-    expect(captured[1], ['funded']);
-    expect(captured[2], isTrue);
-    // TWINT: the code is the maker's — it survives taker-field clears.
-    expect(captured[3], isTrue);
-    expect(captured[4], 'cancelled');
-    expect(captured[5], ['cancelling']);
-    expect(telegram.editCalls, 1);
-    expect(telegram.lastEditedText, '<s>New offer</s>');
-    verify(db.deleteTelegramOfferMessages('o1')).called(1);
-  });
+  }
 
   test('losing cancellation CAS never cancels the hold invoice', () async {
     when(db.getOfferById('o1')).thenAnswer((_) async => twintOffer('funded'));
@@ -645,10 +670,17 @@ void main() {
         paymentSystemIdForTest: 'blik',
       );
       await gsvc.init();
+      addTearDown(gsvc.shutdown);
       current = 'blikSentToMaker';
       when(gpay.settleInvoice(preimageHex: anyNamed('preimageHex')))
           .thenAnswer((_) async {});
-      when(gdb.deleteTelegramOfferMessages(any)).thenAnswer((_) async {});
+      var cleanupPending = true;
+      when(gdb.getTelegramCleanupOfferIds(
+              afterId: anyNamed('afterId'), limit: anyNamed('limit')))
+          .thenAnswer((_) async => cleanupPending ? ['p1'] : []);
+      when(gdb.deleteTelegramOfferMessage(any)).thenAnswer((_) async {
+        cleanupPending = false;
+      });
       when(gdb.getTelegramOfferMessages(any)).thenAnswer((_) async => [
             TelegramOfferMessage(
               offerId: 'p1',
@@ -708,8 +740,9 @@ void main() {
         feeLimitSat: anyNamed('feeLimitSat'),
       )).captured;
       expect(paidAmounts.single, 1500);
+      await Future<void>.delayed(Duration.zero);
       expect(gtelegram.deleteCalls, 1);
-      verify(gdb.deleteTelegramOfferMessages('p1')).called(1);
+      verify(gdb.deleteTelegramOfferMessage(any)).called(1);
     });
 
     test('payment failure (no reconcile) -> takerPaymentFailed', () async {
@@ -1028,6 +1061,7 @@ void main() {
         paymentSystemIdForTest: 'blik',
       );
       await gsvc.init();
+      addTearDown(gsvc.shutdown);
       current = 'takerPaymentFailed';
       storedInvoice = 'old-broken-invoice';
       when(gdb.getOfferById('p1')).thenAnswer((_) async => failedOffer());

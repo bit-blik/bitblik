@@ -693,7 +693,7 @@ class GenericOfferFlow {
 
     await _c._publishStatusUpdate(offer);
     await _c._nostrService?.broadcastNip69OrderFromOffer(offer);
-    await _c._syncTelegramOfferMessagesForState(offer);
+    _c._syncTelegramOfferMessagesForState(offer);
     await _runStateActions(offer);
 
     if (isTerminal) {
@@ -850,7 +850,7 @@ class GenericOfferFlow {
       await _c._publishStatusUpdate(paid);
       await _c._nostrService?.broadcastNip69OrderFromOffer(paid);
     }
-    await _c._deleteTelegramOfferMessages(offer.id);
+    _c._telegramCleanup?.wake();
     return true;
   }
 

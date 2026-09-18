@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:bitblik_core/core.dart';
 import 'package:bitblik_coordinator/src/models/create_hold_invoice_result.dart';
 import 'package:bitblik_coordinator/src/models/invoice_update.dart';
+import 'package:bitblik_coordinator/src/models/pending_offer_intent.dart';
 import 'package:bitblik_coordinator/src/services/coordinator_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -46,6 +47,10 @@ void main() {
       paymentSystemIdForTest: 'twint',
     );
     await service.init();
+    await service.reconcilePendingOffers();
+    clearInteractions(db);
+    clearInteractions(pay);
+    addTearDown(service.shutdown);
   });
 
   test('invalid shop creation never reaches payment or database work',
@@ -87,6 +92,8 @@ void main() {
           200)),
     );
     await creator.init();
+    await creator.reconcilePendingOffers();
+    clearInteractions(db);
     addTearDown(creator.shutdown);
     when(pay.createHoldInvoice(
       amountSats: anyNamed('amountSats'),
@@ -114,8 +121,12 @@ void main() {
       memo: anyNamed('memo'),
       paymentHashHex: anyNamed('paymentHashHex'),
     )).called(1);
-    // No funding event was simulated; no external payment or offer broadcast.
-    verifyZeroInteractions(db);
+    // Persist recovery material, but do not publish a trade before funding.
+    final intent = verify(db.savePendingOfferIntent(captureAny)).captured.single
+        as PendingOfferIntent;
+    expect(intent.data['blikCode'], payload);
+    expect(intent.data['category'], 'shop');
+    verifyNever(db.createOffer(any));
   });
 
   test('rejected replacement does not write payload, clock or state', () async {

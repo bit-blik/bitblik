@@ -687,11 +687,18 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         premiumPercent: _premiumPercent,
         blikCode: _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
         bank: offerBank,
+        fundingEstimate: estimate,
       );
       if (offerBank != null) {
         await AppPreferencesStore.saveLastBank(_method.id, offerBank);
       }
       if (!mounted) return;
+      if (result.containsKey('_clientFundingEstimate') &&
+          result['_clientFundingEstimate'] == null) {
+        throw const FormatException(
+          'The original client estimate is unavailable. Payment remains blocked; do not replace it with a new estimate.',
+        );
+      }
       final paymentHash = result['paymentHash'] as String;
       final createdOffer = Offer(
               id: paymentHash,
@@ -722,11 +729,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       // Keep the original estimate even when validation fails, for diagnostics.
       ref.read(fundingEstimateProvider.notifier).state = (
         offerId: createdOffer.id,
-        estimate: estimate,
+        estimate: result['_clientFundingEstimate'] is Map
+            ? FundingEstimate.fromJson(Map<String, dynamic>.from(result['_clientFundingEstimate'] as Map))
+            : estimate,
       );
       ref.read(holdInvoiceProvider.notifier).state = createdOffer.holdInvoice;
       ref.read(paymentHashProvider.notifier).state = paymentHash;
       await ref.read(activeOfferProvider.notifier).setActiveOffer(createdOffer);
+      await apiService.completeOfferInitiation(paymentHash);
       if (mounted) {
         context.push("/pay");
       }

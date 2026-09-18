@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:bitblik_coordinator/src/services/telegram_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
 class _RecordingClient extends http.BaseClient {
@@ -41,6 +43,108 @@ class _RecordingClient extends http.BaseClient {
 }
 
 void main() {
+  test('hung chat does not block healthy chat or erase its message id',
+      () async {
+    final hanging = Completer<http.Response>();
+    var requests = 0;
+    final service = TelegramService(
+      botToken: 'token',
+      chatIds: ['hung', 'healthy'],
+      requestTimeout: const Duration(milliseconds: 500),
+      httpClient: MockClient((request) {
+        requests++;
+        return jsonDecode(request.body)['chat_id'] == 'hung'
+            ? hanging.future
+            : Future.value(http.Response('{"result":{"message_id":42}}', 200));
+      }),
+    );
+    final result = await service
+        .sendMessageDetailed('hello')
+        .timeout(const Duration(seconds: 1));
+    expect(requests, 2);
+    expect(result.allSucceeded, isFalse);
+    expect(result.sentMessages.single.chatId, 'healthy');
+    expect(result.sentMessages.single.messageId, 42);
+    // Late client errors must be consumed after our deadline.
+    hanging.completeError(StateError('late socket error'));
+    await Future<void>.delayed(Duration.zero);
+  });
+
+  test('send deadline is shared by all chats, with at most two requests active',
+      () async {
+    final client = _AbortedClient(stallBody: false);
+    final service = TelegramService(
+      botToken: 'token',
+      chatIds: ['1', '2', '3', '4', '5'],
+      requestTimeout: const Duration(milliseconds: 500),
+      httpClient: client,
+    );
+    final result = await service
+        .sendMessageDetailed('hello')
+        .timeout(const Duration(seconds: 1));
+    expect(result.allSucceeded, isFalse);
+    await Future<void>.delayed(Duration.zero);
+    expect(client.started, greaterThan(0));
+    expect(client.peak, lessThanOrEqualTo(2));
+    expect(client.aborted, client.started);
+  });
+
+  for (final stallBody in [false, true]) {
+    test('edit/delete abort stalled ${stallBody ? 'body' : 'headers'}',
+        () async {
+      final client = _AbortedClient(stallBody: stallBody);
+      final service = TelegramService(
+          botToken: 'token',
+          chatIds: ['chat'],
+          requestTimeout: const Duration(milliseconds: 30),
+          httpClient: client);
+      expect(
+          await service
+              .editMessage(chatId: 'chat', messageId: 42, text: 'changed')
+              .timeout(const Duration(seconds: 1)),
+          isFalse);
+      expect(
+          await service
+              .deleteMessage(chatId: 'chat', messageId: 42)
+              .timeout(const Duration(seconds: 1)),
+          isFalse);
+      await Future<void>.delayed(Duration.zero);
+      expect(client.aborted, 2);
+    });
+  }
+
+  test('idempotent cleanup recognizes already edited/deleted messages',
+      () async {
+    final client = _RecordingClient(statusCodes: [
+      400,
+      400
+    ], responseBodies: [
+      '{"description":"Bad Request: message is not modified"}',
+      '{"description":"Bad Request: message to delete not found"}',
+    ]);
+    final service = TelegramService(
+        botToken: 'token', chatIds: ['chat'], httpClient: client);
+    expect(
+        await service.editMessage(
+            chatId: 'chat', messageId: 42, text: 'changed'),
+        isTrue);
+    expect(await service.deleteMessage(chatId: 'chat', messageId: 42), isTrue);
+  });
+
+  test('permission failures are not successful cleanup', () async {
+    final service = TelegramService(
+        botToken: 'token',
+        chatIds: ['chat'],
+        httpClient: _RecordingClient(
+            statusCodes: [403],
+            responseBodies: ['{"description":"Forbidden: bot was kicked"}']));
+    expect(
+        await service.editMessage(
+            chatId: 'chat', messageId: 42, text: 'changed'),
+        isFalse);
+    expect(await service.deleteMessage(chatId: 'chat', messageId: 42), isFalse);
+  });
+
   test('sendMessage sends the same message to all configured chat ids',
       () async {
     final client = _RecordingClient();
@@ -222,4 +326,36 @@ void main() {
 
     expect(result, isFalse);
   });
+}
+
+class _AbortedClient extends http.BaseClient {
+  final bool stallBody;
+  int aborted = 0;
+  int started = 0;
+  int active = 0;
+  int peak = 0;
+  _AbortedClient({required this.stallBody});
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    started++;
+    active++;
+    if (active > peak) peak = active;
+    final abortable = request as http.AbortableRequest;
+    final headers = Completer<http.StreamedResponse>();
+    final body = StreamController<List<int>>();
+    unawaited(abortable.abortTrigger!.then((_) {
+      aborted++;
+      active--;
+      if (stallBody) {
+        body.addError(http.RequestAbortedException());
+        unawaited(body.close());
+      } else {
+        headers.completeError(http.RequestAbortedException());
+      }
+    }));
+    return stallBody
+        ? Future.value(http.StreamedResponse(body.stream, 200))
+        : headers.future;
+  }
 }

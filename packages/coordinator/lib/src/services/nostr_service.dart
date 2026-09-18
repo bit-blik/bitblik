@@ -8,8 +8,11 @@ import 'package:ndk/domain_layer/entities/read_write_marker.dart';
 
 import 'coordinator_service.dart';
 import 'offer_publication_queue.dart';
+import 'coordinator_request_listener.dart';
+import 'relay_delivery.dart';
 import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
+import '../models/offer_initiation_receipt.dart';
 
 /// Service to handle Nostr communication for the coordinator
 /// Implements info replaceable events and NIP-44 encrypted request/response
@@ -88,12 +91,7 @@ class NostrService {
       {..._graceRelays, ..._relays}.toList(growable: false);
 
   // Subscription for incoming requests
-  NdkResponse? _requestSubscription;
-  // Dart-side listener over [_requestSubscription]. Must be cancelled when the
-  // ndk subscription is closed, otherwise the listener closure + any buffered
-  // events stay reachable until GC walks them. Each relay refresh/grace flip
-  // allocates a new one, so without explicit cancel the leak accumulates.
-  StreamSubscription<Nip01Event>? _requestListenerSub;
+  CoordinatorRequestListener? _requestListener;
   Timer? _relayRefreshTimer;
   Timer? _relayGraceTimer;
   int _requestsReceived = 0;
@@ -607,10 +605,12 @@ class NostrService {
         offerId: offerId,
       );
 
-      await _sendEncryptedStatusUpdate(makerPubkey, payload, offerId);
-      if (takerPubkey != null && takerPubkey.isNotEmpty) {
-        await _sendEncryptedStatusUpdate(takerPubkey, payload, offerId);
-      }
+      // Different recipients do not depend on each other's relay ACKs.
+      await Future.wait([
+        _sendEncryptedStatusUpdate(makerPubkey, payload, offerId),
+        if (takerPubkey != null && takerPubkey.isNotEmpty)
+          _sendEncryptedStatusUpdate(takerPubkey, payload, offerId),
+      ]);
     } catch (e) {
       AppLogger.info('Error sending encrypted offer status updates: $e',
           offerId: offerId);
@@ -642,15 +642,18 @@ class NostrService {
         recipientPubkey: recipientPubkey,
       );
 
-      await _signer.sign(event);
       final broadcastResponse = _ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: _signer,
         specificRelays: _broadcastRelays,
         saveToCache: false,
       );
-      await broadcastResponse.broadcastDoneFuture;
-      await _clearEphemeralBroadcastTracking(event.id);
+      await awaitRelayAcceptance(
+        broadcastResponse,
+        onAcceptedSettled: () => _clearEphemeralBroadcastTracking(event.id),
+        onBackgroundError: (error) =>
+            AppLogger.warning('Status relay delivery bookkeeping: $error'),
+      );
       AppLogger.info(
         'Sent status update offer=$offerId status=${payload['status']} to=${_shortKey(recipientPubkey)} event=${event.id}',
         offerId: offerId,
@@ -667,42 +670,15 @@ class NostrService {
   }
 
   Future<void> _restartRequestListener(List<String> relays) async {
-    try {
-      if (_requestSubscription != null) {
-        await _requestListenerSub?.cancel();
-        _requestListenerSub = null;
-        await _ndk.requests.closeSubscription(_requestSubscription!.requestId);
-        _requestSubscription = null;
-      }
-      final filter = Filter(
-        kinds: [kKindCoordinatorRequest],
-        pTags: [_signer.getPublicKey()], // Events tagged with our pubkey
-        since: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      );
-
-      final response = _ndk.requests.subscription(
-        name: "coordinator-requests",
-        filter: filter,
-        // Listen on our working relays (NIP-65 set), which may differ from the
-        // bootstrap/discovery relays.
-        explicitRelays: relays,
-      );
-      _requestSubscription = response;
-
-      _requestListenerSub = response.stream.listen(
-        _handleRequest,
-        onError: (Object e) {
-          AppLogger.info('!!!!!!!!!!!!!! Error in request listener: $e');
-          AppLogger.info('!!!!!!!!!!!!!! SHOULD RETRY subscription');
-        },
-        cancelOnError: false,
-      );
-
-      AppLogger.info(
-          'Started listening for coordinator requests on kind ${kKindCoordinatorRequest} via relays: $relays');
-    } catch (e) {
-      AppLogger.info('Error starting request listener: $e');
-    }
+    final listener = _requestListener ??= CoordinatorRequestListener(
+      requests: _ndk.requests,
+      pubkey: _signer.getPublicKey(),
+      onRequest: _handleRequest,
+      waitUntilSent: (id, relays, timeout) =>
+          awaitSubscriptionSent(_ndk, id, relays, timeout),
+      onError: (error) => AppLogger.warning('Coordinator RPC listener: $error'),
+    );
+    await listener.replace(relays);
   }
 
   /// Handle incoming encrypted requests
@@ -729,8 +705,10 @@ class NostrService {
     try {
       final response = await _processRequest(
           request.method, request.params, event.pubKey,
-          clientVersion: request.client);
+          clientVersion: request.client, requestId: id);
       await _sendResponse(event.pubKey, id, response);
+    } on OfferInitiationException catch (e) {
+      await _sendErrorResponse(event.pubKey, id, e.code, e.message);
     } catch (e) {
       AppLogger.info('Error handling request: $e');
       await _sendErrorResponse(
@@ -741,7 +719,7 @@ class NostrService {
   /// Process a coordinator request
   Future<Map<String, dynamic>> _processRequest(
       String method, Map<String, dynamic> params, String userPubkey,
-      {String? clientVersion}) async {
+      {String? clientVersion, required String requestId}) async {
     try {
       // Offer-action RPCs (the state machine) are owned by the active flow
       // strategy — YAML-driven generic flow. Query/info RPCs fall through to
@@ -753,6 +731,12 @@ class NostrService {
       }
 
       switch (method) {
+        case kRpcGetOfferInitiation:
+          return await _coordinatorService.getOfferInitiation(
+            makerId: userPubkey,
+            operationId: params['operation_id'] as String? ?? '',
+          );
+
         case kRpcGetInfo:
           final info = await _coordinatorService.getCoordinatorInfo();
           return info.toJson();
@@ -792,6 +776,9 @@ class NostrService {
             blikCode: blikCode,
             bank: bank,
             clientVersion: clientVersion,
+            // Legacy clients still gain same-request replay protection.
+            // New clients can retain operation_id across fresh RPC envelopes.
+            operationId: params['operation_id'] as String? ?? requestId,
           );
 
         // DEPRECATED: clients now resolve a local-only offer (id == payment
@@ -979,6 +966,7 @@ class NostrService {
           throw Exception('Unknown method: $method');
       }
     } catch (e) {
+      if (e is OfferInitiationException) rethrow;
       throw Exception('Error processing request: $e');
     }
   }
@@ -1018,15 +1006,18 @@ class NostrService {
         recipientPubkey: recipientPubkey,
       );
 
-      await _signer.sign(event);
       final broadcastResponse = _ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: _signer,
         specificRelays: _broadcastRelays,
         saveToCache: false,
       );
-      await broadcastResponse.broadcastDoneFuture;
-      await _clearEphemeralBroadcastTracking(event.id);
+      await awaitRelayAcceptance(
+        broadcastResponse,
+        onAcceptedSettled: () => _clearEphemeralBroadcastTracking(event.id),
+        onBackgroundError: (error) =>
+            AppLogger.warning('RPC relay delivery bookkeeping: $error'),
+      );
       _responsesSent++;
 
       AppLogger.info(
@@ -1052,11 +1043,8 @@ class NostrService {
   Future<void> disconnect() async {
     _relayRefreshTimer?.cancel();
     _relayGraceTimer?.cancel();
-    await _requestListenerSub?.cancel();
-    _requestListenerSub = null;
-    if (_requestSubscription != null) {
-      await _ndk.requests.closeSubscription(_requestSubscription!.requestId);
-    }
+    await _requestListener?.close();
+    _requestListener = null;
     await _ndk.destroy();
   }
 
@@ -1069,8 +1057,8 @@ class NostrService {
   }
 
   Map<String, dynamic> debugSnapshot() => {
-        'request_subscription_active': _requestSubscription != null,
-        'request_listener_active': _requestListenerSub != null,
+        'request_subscription_active': _requestListener?.isActive ?? false,
+        'request_listener_active': _requestListener?.isActive ?? false,
         'relay_refresh_timer_active': _relayRefreshTimer?.isActive ?? false,
         'relay_grace_timer_active': _relayGraceTimer?.isActive ?? false,
         'env_relay_count': _envRelays.length,

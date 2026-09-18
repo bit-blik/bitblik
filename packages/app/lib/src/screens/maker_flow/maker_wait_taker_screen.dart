@@ -283,6 +283,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         category: offer.category,
         coordinatorPubkey: offer.coordinatorPubkey,
         premiumPercent: offer.premiumPercent,
+        bank: offer.bankId,
       );
       final paymentHash = result['paymentHash'] as String;
       ref.read(holdInvoiceProvider.notifier).state = result['holdInvoice'];
@@ -306,12 +307,14 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
               makerPubkey: makerId,
               coordinatorPubkey: offer.coordinatorPubkey,
               paymentSystemId: offer.paymentSystemId,
+              bankId: offer.bankId,
               category: offer.category,
               premiumPercent:
                   (result['premiumPercent'] as num?)?.toDouble() ??
                   offer.premiumPercent,
             ),
           );
+      await apiService.completeOfferInitiation(paymentHash);
       if (mounted) context.go(flowRoute);
     } catch (e) {
       if (mounted) {

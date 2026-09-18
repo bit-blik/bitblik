@@ -1,13 +1,16 @@
 {{flutter_js}}
 {{flutter_build_config}}
 
-const isFirefox = /Firefox\//.test(navigator.userAgent);
+// Keep accelerated rendering on every browser. Software rendering remains an
+// opt-in escape hatch for devices affected by a CanvasKit/WebGL driver crash:
+// append ?rendering=software, or set appConfig.forceSoftwareRendering=true.
+const rendering = new URLSearchParams(window.location.search).get('rendering');
+const softwareRendering = rendering === 'software' ||
+  (rendering !== 'hardware' && window.appConfig?.forceSoftwareRendering === true);
 
 _flutter.loader.load({
   config: {
-    // Firefox can abort inside CanvasKit's WebGL surface flush even when app
-    // scene data is valid. Keep CanvasKit, but use its software surface there.
-    canvasKitForceCpuOnly: isFirefox,
+    canvasKitForceCpuOnly: softwareRendering,
   },
   serviceWorkerSettings: {
     serviceWorkerVersion: {{flutter_service_worker_version}},

@@ -2,6 +2,9 @@
 // Docker. An empty paymentSystem lets the app use its normal startup behavior.
 
 window.appConfig = {
+  // Compatibility escape hatch for a confirmed CanvasKit/WebGL driver crash.
+  // Prefer the default accelerated renderer; ?rendering=software overrides per visit.
+  forceSoftwareRendering: false,
   paymentSystem: '',
   telegramGroupLink: '',
   matrixGroupLink: '',

@@ -13,6 +13,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:bitblik/src/services/funding_payment.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _OfferState extends StateNotifier<Offer?> implements ActiveOfferNotifier {
@@ -48,6 +49,7 @@ class _MakerApi implements ApiServiceNostr {
     double premiumPercent = 0,
     String? blikCode,
     String? bank,
+    FundingEstimate? fundingEstimate,
   }) async {
     submitted = {
       'amount': fiatAmount,
