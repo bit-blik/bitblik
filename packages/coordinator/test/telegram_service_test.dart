@@ -113,6 +113,25 @@ void main() {
     });
   }
 
+  test('timeout stops dispatch before asynchronous request abort completes',
+      () async {
+    final client =
+        _AbortedClient(stallBody: false, earlyTimeout: true, delayAbort: true);
+    final service = TelegramService(
+        botToken: 'token',
+        chatIds: ['1', '2', '3', '4', '5'],
+        requestTimeout: const Duration(milliseconds: 100),
+        httpClient: client);
+    final result = await service
+        .sendMessageDetailed('hello')
+        .timeout(const Duration(seconds: 2));
+    await client.waitForAborts().timeout(const Duration(seconds: 1));
+    expect(result.allSucceeded, isFalse);
+    expect(client.peak, lessThanOrEqualTo(2));
+    expect(client.started, 2);
+    expect(client.aborted, client.started);
+  });
+
   test('idempotent cleanup recognizes already edited/deleted messages',
       () async {
     final client = _RecordingClient(statusCodes: [
@@ -330,11 +349,21 @@ void main() {
 
 class _AbortedClient extends http.BaseClient {
   final bool stallBody;
+  final bool earlyTimeout;
+  final bool delayAbort;
   int aborted = 0;
   int started = 0;
   int active = 0;
   int peak = 0;
-  _AbortedClient({required this.stallBody});
+  final List<Future<void>> _abortCompletions = [];
+  _AbortedClient(
+      {required this.stallBody,
+      this.earlyTimeout = false,
+      this.delayAbort = false});
+
+  Future<void> waitForAborts() async {
+    await Future.wait(_abortCompletions);
+  }
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
@@ -344,16 +373,22 @@ class _AbortedClient extends http.BaseClient {
     final abortable = request as http.AbortableRequest;
     final headers = Completer<http.StreamedResponse>();
     final body = StreamController<List<int>>();
-    unawaited(abortable.abortTrigger!.then((_) {
+    _abortCompletions.add(abortable.abortTrigger!.then((_) async {
+      if (delayAbort) await Future<void>.delayed(Duration.zero);
       aborted++;
       active--;
       if (stallBody) {
         body.addError(http.RequestAbortedException());
         unawaited(body.close());
       } else {
-        headers.completeError(http.RequestAbortedException());
+        if (!headers.isCompleted) {
+          headers.completeError(http.RequestAbortedException());
+        }
       }
     }));
+    if (earlyTimeout && started == 1) {
+      headers.completeError(TimeoutException('transport deadline fired'));
+    }
     return stallBody
         ? Future.value(http.StreamedResponse(body.stream, 200))
         : headers.future;

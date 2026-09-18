@@ -119,10 +119,11 @@ class TelegramService {
     final clock = Stopwatch()..start();
     var next = 0;
     var allSucceeded = true;
+    var deadlineReached = false;
     final sentMessages =
         List<TelegramSentMessage?>.filled(targets.length, null);
     Future<void> worker() async {
-      while (next < targets.length) {
+      while (next < targets.length && !deadlineReached) {
         final index = next++;
         final chatId = targets[index];
         try {
@@ -150,6 +151,13 @@ class TelegramService {
           }
         } catch (error) {
           allSucceeded = false;
+          // Treat the timeout signal as authoritative. Timer precision can
+          // leave a small positive Stopwatch remainder while cancellation is
+          // still asynchronous; do not spend that remainder on another chat.
+          if (error is TimeoutException ||
+              error is http.RequestAbortedException) {
+            deadlineReached = true;
+          }
           // Client exceptions can embed the URL, which contains the bot token.
           AppLogger.info(
               'Exception sending Telegram notification to $chatId: ${error.runtimeType}');
