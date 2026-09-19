@@ -125,55 +125,10 @@ class _MakerWaitForBlikScreenState
 
     Logger.log.d(() => "[MakerWaitForBlik] Status update received: $status");
 
-    if (status == OfferStatus.blikReceived) {
-      Logger.log.i(
-        () => "[MakerWaitForBlik] BLIK received/sent. Fetching code via API...",
-      );
-
-      try {
-        final apiService = ref.read(apiServiceProvider);
-        final blikCode = await apiService.getBlikCodeForMaker(
-          offer.id,
-          makerId,
-          coordinatorPubkey,
-        );
-        Logger.log.d(
-          () => "[MakerWaitForBlik] API returned blikCode: $blikCode",
-        );
-
-        if (blikCode != null && blikCode.isNotEmpty) {
-          if (!mounted) return;
-          Logger.log.d(
-            () =>
-                "[MakerWaitForBlik] BLIK code is valid. Storing in provider...",
-          );
-          ref.read(receivedBlikCodeProvider.notifier).state = blikCode;
-          Logger.log.i(
-            () => "[MakerWaitForBlik] Stored BLIK code from API: $blikCode",
-          );
-
-          Logger.log.d(
-            () =>
-                "[MakerWaitForBlik] Navigating to MakerConfirmPaymentScreen...",
-          );
-          context.go(flowRoute);
-        } else {
-          Logger.log.e(
-            () =>
-                "[MakerWaitForBlik] Error: Status is $status but API returned no BLIK code. Resetting.",
-          );
-          if (mounted) {
-            // _resetToRoleSelection(t.system.errors.generic);
-          }
-        }
-      } catch (e) {
-        Logger.log.e(
-          () => "[MakerWaitForBlik] Error calling getBlikCodeForMaker: $e",
-        );
-        if (mounted) {
-          // _resetToRoleSelection(t.system.errors.generic);
-        }
-      }
+    if (status == OfferStatus.blikReceived ||
+        status == OfferStatus.blikSentToMaker) {
+      // The flow's confirmation screen owns fetching and retrying the code.
+      if (mounted) context.go(flowRoute);
     } else if (status == OfferStatus.funded) {
       Logger.log.i(
         () =>

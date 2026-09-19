@@ -251,8 +251,10 @@ final Map<String, Map<FlowActor, FlowBody>> _codeFlowBodies = {
             TakerSubmitBlikScreen(initialOffer: offer),
   },
   'blikReceived': {
+    // Keep the fetch owner mounted when get_blik advances to blikSentToMaker,
+    // even if the status push arrives before the RPC response.
     FlowActor.maker:
-        (context, ref, offer, engine, role) => const MakerWaitForBlikScreen(),
+        (context, ref, offer, engine, role) => const MakerConfirmPaymentScreen(),
     FlowActor.taker:
         (context, ref, offer, engine, role) =>
             TakerWaitConfirmationScreen(offer: offer),

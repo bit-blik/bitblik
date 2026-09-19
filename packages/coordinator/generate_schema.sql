@@ -32,6 +32,32 @@ CREATE INDEX IF NOT EXISTS idx_offers_status ON offers (status);
 CREATE INDEX IF NOT EXISTS idx_offers_maker_pubkey ON offers (maker_pubkey);
 CREATE INDEX IF NOT EXISTS idx_offers_taker_pubkey ON offers (taker_pubkey);
 
+-- Pending hold invoice intents are persisted before calling the wallet.
+-- Keep this recovery table on rollback, including its settlement preimages.
+CREATE TABLE IF NOT EXISTS pending_offer_intents (
+  payment_hash TEXT PRIMARY KEY,
+  payment_system TEXT NOT NULL,
+  data JSONB NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pending_offer_market_hash
+  ON pending_offer_intents (payment_system, payment_hash);
+
+-- Keep receipts after pending intent cleanup; deleting them allows old RPCs
+-- to create another invoice. No preimage or maker payment code belongs here.
+CREATE TABLE IF NOT EXISTS offer_initiation_receipts (
+  payment_system TEXT NOT NULL,
+  maker_pubkey TEXT NOT NULL,
+  operation_id TEXT NOT NULL,
+  fingerprint TEXT NOT NULL,
+  payment_hash TEXT NOT NULL UNIQUE,
+  quote JSONB NOT NULL,
+  hold_invoice TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (payment_system, maker_pubkey, operation_id)
+);
+
 -- Durable outgoing payout/refund attempts. The legacy offer columns above
 -- hold either a BOLT11 invoice or a BOLT12 offer; attempts make that type
 -- explicit and prevent an indeterminate NWC request from being sent twice.

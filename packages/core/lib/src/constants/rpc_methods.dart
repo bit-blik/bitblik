@@ -28,6 +28,7 @@ const String kRpcMarkBlikCharged = 'mark_blik_charged';
 
 // Queries
 const String kRpcGetOfferDetails = 'get_offer_details';
+const String kRpcGetOfferInitiation = 'get_offer_initiation';
 const String kRpcListDisputes = 'list_disputes';
 
 // DEPRECATED: clients now resolve a local-only offer (id == payment hash, no

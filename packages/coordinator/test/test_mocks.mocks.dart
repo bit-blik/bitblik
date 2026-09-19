@@ -12,17 +12,21 @@ import 'package:bitblik_coordinator/src/models/cancel_invoice_result.dart'
 import 'package:bitblik_coordinator/src/models/create_hold_invoice_result.dart'
     as _i4;
 import 'package:bitblik_coordinator/src/models/invoice_details.dart' as _i7;
-import 'package:bitblik_coordinator/src/models/invoice_update.dart' as _i13;
+import 'package:bitblik_coordinator/src/models/invoice_update.dart' as _i15;
+import 'package:bitblik_coordinator/src/models/offer_initiation_receipt.dart'
+    as _i13;
 import 'package:bitblik_coordinator/src/models/outgoing_payment_attempt.dart'
     as _i2;
 import 'package:bitblik_coordinator/src/models/pay_invoice_result.dart' as _i6;
 import 'package:bitblik_coordinator/src/models/pay_offer_result.dart' as _i9;
+import 'package:bitblik_coordinator/src/models/pending_offer_intent.dart'
+    as _i12;
 import 'package:bitblik_coordinator/src/services/database_service.dart' as _i10;
-import 'package:bitblik_coordinator/src/services/payment_service.dart' as _i12;
+import 'package:bitblik_coordinator/src/services/payment_service.dart' as _i14;
 import 'package:bitblik_core/core.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 
-import 'test_mocks.dart' as _i14;
+import 'test_mocks.dart' as _i16;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -162,6 +166,130 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
         Invocation.method(
           #disconnect,
           [],
+        ),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
+
+  @override
+  _i11.Future<void> ensurePendingOfferIntentsTable() => (super.noSuchMethod(
+        Invocation.method(
+          #ensurePendingOfferIntentsTable,
+          [],
+        ),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
+
+  @override
+  _i11.Future<void> ensureOfferInitiationReceiptsTable() => (super.noSuchMethod(
+        Invocation.method(
+          #ensureOfferInitiationReceiptsTable,
+          [],
+        ),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
+
+  @override
+  _i11.Future<bool> claimOfferInitiation({
+    required String? operationId,
+    required String? fingerprint,
+    required _i12.PendingOfferIntent? intent,
+    required Map<String, dynamic>? quote,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #claimOfferInitiation,
+          [],
+          {
+            #operationId: operationId,
+            #fingerprint: fingerprint,
+            #intent: intent,
+            #quote: quote,
+          },
+        ),
+        returnValue: _i11.Future<bool>.value(false),
+        returnValueForMissingStub: _i11.Future<bool>.value(false),
+      ) as _i11.Future<bool>);
+
+  @override
+  _i11.Future<_i13.OfferInitiationReceipt?> getOfferInitiation({
+    required String? paymentSystem,
+    required String? makerId,
+    required String? operationId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOfferInitiation,
+          [],
+          {
+            #paymentSystem: paymentSystem,
+            #makerId: makerId,
+            #operationId: operationId,
+          },
+        ),
+        returnValue: _i11.Future<_i13.OfferInitiationReceipt?>.value(),
+        returnValueForMissingStub:
+            _i11.Future<_i13.OfferInitiationReceipt?>.value(),
+      ) as _i11.Future<_i13.OfferInitiationReceipt?>);
+
+  @override
+  _i11.Future<void> saveOfferInitiationInvoice(
+    String? paymentHash,
+    String? invoice,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveOfferInitiationInvoice,
+          [
+            paymentHash,
+            invoice,
+          ],
+        ),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
+
+  @override
+  _i11.Future<void> savePendingOfferIntent(_i12.PendingOfferIntent? intent) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #savePendingOfferIntent,
+          [intent],
+        ),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
+
+  @override
+  _i11.Future<List<_i12.PendingOfferIntent>> getPendingOfferIntents(
+    String? paymentSystem, {
+    String? afterHash,
+    int? limit = 100,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPendingOfferIntents,
+          [paymentSystem],
+          {
+            #afterHash: afterHash,
+            #limit: limit,
+          },
+        ),
+        returnValue: _i11.Future<List<_i12.PendingOfferIntent>>.value(
+            <_i12.PendingOfferIntent>[]),
+        returnValueForMissingStub:
+            _i11.Future<List<_i12.PendingOfferIntent>>.value(
+                <_i12.PendingOfferIntent>[]),
+      ) as _i11.Future<List<_i12.PendingOfferIntent>>);
+
+  @override
+  _i11.Future<void> deletePendingOfferIntent(String? paymentHash) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deletePendingOfferIntent,
+          [paymentHash],
         ),
         returnValue: _i11.Future<void>.value(),
         returnValueForMissingStub: _i11.Future<void>.value(),
@@ -397,6 +525,36 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
         Invocation.method(
           #deleteTelegramOfferMessages,
           [offerId],
+        ),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
+
+  @override
+  _i11.Future<List<String>> getTelegramCleanupOfferIds({
+    String? afterId,
+    int? limit = 100,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getTelegramCleanupOfferIds,
+          [],
+          {
+            #afterId: afterId,
+            #limit: limit,
+          },
+        ),
+        returnValue: _i11.Future<List<String>>.value(<String>[]),
+        returnValueForMissingStub: _i11.Future<List<String>>.value(<String>[]),
+      ) as _i11.Future<List<String>>);
+
+  @override
+  _i11.Future<void> deleteTelegramOfferMessage(
+          _i10.TelegramOfferMessage? message) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteTelegramOfferMessage,
+          [message],
         ),
         returnValue: _i11.Future<void>.value(),
         returnValueForMissingStub: _i11.Future<void>.value(),
@@ -654,7 +812,7 @@ class MockDatabaseService extends _i1.Mock implements _i10.DatabaseService {
 /// A class which mocks [PaymentService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockPaymentService extends _i1.Mock implements _i12.PaymentService {
+class MockPaymentService extends _i1.Mock implements _i14.PaymentService {
   @override
   _i11.Future<void> connect() => (super.noSuchMethod(
         Invocation.method(
@@ -806,7 +964,7 @@ class MockPaymentService extends _i1.Mock implements _i12.PaymentService {
       ) as _i11.Future<_i6.PayInvoiceResult>);
 
   @override
-  _i11.Stream<_i13.InvoiceUpdate> subscribeToInvoiceUpdates(
+  _i11.Stream<_i15.InvoiceUpdate> subscribeToInvoiceUpdates(
           {required String? paymentHashHex}) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -814,9 +972,9 @@ class MockPaymentService extends _i1.Mock implements _i12.PaymentService {
           [],
           {#paymentHashHex: paymentHashHex},
         ),
-        returnValue: _i11.Stream<_i13.InvoiceUpdate>.empty(),
-        returnValueForMissingStub: _i11.Stream<_i13.InvoiceUpdate>.empty(),
-      ) as _i11.Stream<_i13.InvoiceUpdate>);
+        returnValue: _i11.Stream<_i15.InvoiceUpdate>.empty(),
+        returnValueForMissingStub: _i11.Stream<_i15.InvoiceUpdate>.empty(),
+      ) as _i11.Stream<_i15.InvoiceUpdate>);
 
   @override
   _i11.Future<_i7.InvoiceDetails> lookupInvoice(
@@ -865,7 +1023,7 @@ class MockPaymentService extends _i1.Mock implements _i12.PaymentService {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockCombinedPaymentService extends _i1.Mock
-    implements _i14.CombinedPaymentService {
+    implements _i16.CombinedPaymentService {
   @override
   bool get isBolt12Available => (super.noSuchMethod(
         Invocation.getter(#isBolt12Available),
@@ -1024,7 +1182,7 @@ class MockCombinedPaymentService extends _i1.Mock
       ) as _i11.Future<_i6.PayInvoiceResult>);
 
   @override
-  _i11.Stream<_i13.InvoiceUpdate> subscribeToInvoiceUpdates(
+  _i11.Stream<_i15.InvoiceUpdate> subscribeToInvoiceUpdates(
           {required String? paymentHashHex}) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1032,9 +1190,9 @@ class MockCombinedPaymentService extends _i1.Mock
           [],
           {#paymentHashHex: paymentHashHex},
         ),
-        returnValue: _i11.Stream<_i13.InvoiceUpdate>.empty(),
-        returnValueForMissingStub: _i11.Stream<_i13.InvoiceUpdate>.empty(),
-      ) as _i11.Stream<_i13.InvoiceUpdate>);
+        returnValue: _i11.Stream<_i15.InvoiceUpdate>.empty(),
+        returnValueForMissingStub: _i11.Stream<_i15.InvoiceUpdate>.empty(),
+      ) as _i11.Stream<_i15.InvoiceUpdate>);
 
   @override
   _i11.Future<_i7.InvoiceDetails> lookupInvoice(

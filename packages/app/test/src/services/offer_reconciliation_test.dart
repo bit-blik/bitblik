@@ -40,6 +40,18 @@ class TestApi extends Fake implements ApiServiceNostr {
   final snapshots = <String, Offer?>{};
   Object? error;
   int reads = 0;
+  final List<CoordinatorRecord> coordinators = [];
+  Future<Offer?> Function(String)? recover;
+  final recoveryCalls = <String>[];
+
+  @override
+  List<CoordinatorRecord> get allConfiguredCoordinators => coordinators;
+
+  @override
+  Future<Offer?> getMyActiveOffer(String pubkey) async {
+    recoveryCalls.add(pubkey);
+    return await recover?.call(pubkey);
+  }
 
   @override
   Stream<bool> get relayConnectionState {
@@ -67,6 +79,19 @@ void main() {
   late TestApi api;
   late ActiveOfferNotifier notifier;
 
+  ProviderContainer createContainer() => ProviderContainer(
+    overrides: [
+      keyServiceProvider.overrideWithValue(TestKeys()),
+      publicKeyProvider.overrideWith((ref) async => 'taker'),
+      apiServiceProvider.overrideWithValue(api),
+      initializedApiServiceProvider.overrideWith((ref) async => api),
+      selectedPaymentSystemProvider.overrideWith(
+        (ref) => SelectedPaymentSystemNotifier(kBlik),
+      ),
+      appLifecycleProvider.overrideWith((ref) => AppLifecycleNotifier(ref)),
+    ],
+  );
+
   setUpAll(() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
@@ -81,15 +106,7 @@ void main() {
     await db.clearAll();
     await db.upsertOffer(trade());
     api = TestApi();
-    container = ProviderContainer(
-      overrides: [
-        keyServiceProvider.overrideWithValue(TestKeys()),
-        publicKeyProvider.overrideWith((ref) async => 'taker'),
-        apiServiceProvider.overrideWithValue(api),
-        initializedApiServiceProvider.overrideWith((ref) async => api),
-        appLifecycleProvider.overrideWith((ref) => AppLifecycleNotifier(ref)),
-      ],
-    );
+    container = createContainer();
     notifier = container.read(activeOfferProvider.notifier);
     await api.listening.future;
   });
@@ -97,6 +114,53 @@ void main() {
     container.dispose();
     await api.connected.close();
   });
+
+  test(
+    'empty storage installs listener before bounded network recovery',
+    () async {
+      container.dispose();
+      await api.connected.close();
+      await db.clearAll();
+      api = TestApi();
+      const info = CoordinatorInfo(
+        name: 'test',
+        reservationSeconds: 60,
+        makerFee: 1,
+        takerFee: 1,
+        minAmountSats: 1,
+        maxAmountSats: 100000,
+        currencies: ['PLN'],
+        paymentSystem: 'blik',
+        nostrNpub: null,
+      );
+      api.coordinators.addAll(
+        List.generate(
+          4,
+          (i) => CoordinatorRecord(
+            pubkeyHex: 'coordinator-$i',
+            info: info,
+            enabled: true,
+          ),
+        ),
+      );
+      final gate = Completer<Offer?>();
+      api.recover = (_) => gate.future;
+      container = createContainer();
+      notifier = container.read(activeOfferProvider.notifier);
+      await api.listening.future.timeout(const Duration(seconds: 1));
+      expect(api.recoveryCalls, isEmpty);
+      api.connected.add(true);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(api.recoveryCalls.length, 2);
+      // A trade opened while recovery is in flight must not be replaced.
+      final current = trade(id: 'new-trade');
+      await notifier.setActiveOffer(current);
+      gate.complete(trade(id: 'recovered'));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(container.read(activeOfferProvider)?.id, 'new-trade');
+      expect(api.recoveryCalls.length, 2);
+    },
+  );
 
   test('lost reply after accepted report reconciles and confirms', () async {
     final result = await reportTakerCharged(

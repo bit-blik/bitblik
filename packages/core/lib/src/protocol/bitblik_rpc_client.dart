@@ -7,8 +7,32 @@ import '../constants/kinds.dart';
 import '../constants/relays.dart';
 import 'protocol_codec.dart';
 import 'rpc_envelope.dart';
+import 'subscription_readiness.dart';
 
 const Duration kRelayRequestGrace = Duration(seconds: 3);
+
+/// A timeout is not proof that the coordinator was offline. Keep transport
+/// evidence separate so callers do not penalize it for local/relay failures.
+class RpcTimeoutException extends TimeoutException {
+  final String method;
+  final String stage;
+  final bool relayAccepted;
+  final bool responsePathAvailable;
+
+  RpcTimeoutException({
+    required this.method,
+    required this.stage,
+    required this.relayAccepted,
+    required this.responsePathAvailable,
+    required Duration duration,
+    Object? cause,
+  }) : super(
+            'Bitblik RPC $method timed out during $stage'
+            '${cause == null ? '' : ': $cause'}',
+            duration);
+
+  bool get coordinatorResponseMissing => relayAccepted && responsePathAvailable;
+}
 
 /// Client-side transport for the Bitblik JSON-RPC over Nostr.
 ///
@@ -37,6 +61,10 @@ class BitblikRpcClient {
   final Map<String, _PendingRpcRequest> _pending = {};
   final Random _random = Random.secure();
   NdkResponse? _subscription;
+  final Map<String, StreamSubscription<Nip01Event>> _listeners = {};
+  final Set<String> _retiredSubscriptions = {};
+  Timer? _subscriptionRetry;
+  bool _stopped = false;
   Future<void>? _rebindInFlight;
   Future<void> _responseRelayUpdates = Future.value();
   final Map<String, List<String>> _activeRequestRelays = {};
@@ -67,6 +95,7 @@ class BitblikRpcClient {
 
   /// Subscribe to incoming responses. Must be called before [send].
   Future<void> start() async {
+    _stopped = false;
     await _syncResponseRelays();
   }
 
@@ -111,14 +140,38 @@ class BitblikRpcClient {
     final filter = Filter(
       kinds: [kKindCoordinatorResponse],
       pTags: [signer.getPublicKey()],
-      since: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      // Ephemeral responses need no history filter. A relay/coordinator clock
+      // behind ours must not silently filter a live reply.
     );
     _subscription = ndk.requests.subscription(
       name: subscriptionName,
       filter: filter,
       explicitRelays: relays,
     );
-    _subscription!.stream.listen(_onResponse);
+    final subscription = _subscription!;
+    void interrupted() {
+      if (_stopped || !identical(_subscription, subscription)) return;
+      _subscription = null;
+      _retiredSubscriptions.add(subscription.requestId);
+      _subscriptionRetry?.cancel();
+      _subscriptionRetry = Timer(const Duration(seconds: 1), () {
+        if (!_stopped) {
+          unawaited(_syncResponseRelays().catchError((Object error) {
+            Logger.log
+                .w(() => 'RPC response subscription recovery failed: $error');
+          }));
+        }
+      });
+    }
+
+    _listeners[subscription.requestId] = subscription.stream.listen(
+      _onResponse,
+      onError: (Object error) {
+        Logger.log.w(() => 'RPC response subscription interrupted: $error');
+        interrupted();
+      },
+      onDone: interrupted,
+    );
     _responseRelays = List.from(relays);
   }
 
@@ -141,14 +194,16 @@ class BitblikRpcClient {
   }
 
   Future<void> _applyResponseRelays() async {
+    if (_stopped) return;
     final target = <String>{
       ..._configuredResponseRelays,
       for (final relays in _activeRequestRelays.values) ...relays,
     };
     final current = _responseRelays.toSet();
     if (_subscription != null &&
-        target.length == current.length &&
-        target.containsAll(current)) {
+        current.containsAll(target) &&
+        (target.length == current.length || _pending.isNotEmpty)) {
+      await _closeRetiredSubscriptions();
       return;
     }
     final previous = _subscription;
@@ -156,41 +211,90 @@ class BitblikRpcClient {
     // probes for disabled coordinators are still waiting for replies.
     await _openSubscription(target.toList(growable: false));
     if (previous != null) {
-      await ndk.requests.closeSubscription(previous.requestId);
+      _retiredSubscriptions.add(previous.requestId);
+    }
+    // Keep old listeners through in-flight calls. Opening an NDK subscription
+    // is synchronous; its REQ may not yet have reached the relay.
+    await _closeRetiredSubscriptions();
+  }
+
+  Future<void> _closeRetiredSubscriptions() async {
+    if (_pending.isNotEmpty) return;
+    for (final id in _retiredSubscriptions.toList()) {
+      await _listeners.remove(id)?.cancel();
+      await ndk.requests.closeSubscription(id);
+      _retiredSubscriptions.remove(id);
     }
   }
 
   /// Close the response subscription. Pending request futures will hang until
   /// their timeout fires — callers should ensure no in-flight requests remain.
   Future<void> stop() async {
+    _stopped = true;
+    _subscriptionRetry?.cancel();
     await _responseRelayUpdates;
-    if (_subscription != null) {
-      await ndk.requests.closeSubscription(_subscription!.requestId);
-      _subscription = null;
+    final ids = {
+      ..._retiredSubscriptions,
+      if (_subscription != null) _subscription!.requestId
+    };
+    _subscription = null;
+    for (final id in ids) {
+      await _listeners.remove(id)?.cancel();
+      await ndk.requests.closeSubscription(id);
     }
+    _retiredSubscriptions.clear();
   }
 
   /// Send an encrypted request to [coordinatorPubkey] and await the matching
-  /// response. Throws [TimeoutException] after [timeout] (or [timeoutOverride]) elapses.
+  /// response. One deadline covers setup, publication and response processing:
+  /// [timeout] (or [timeoutOverride]) plus [kRelayRequestGrace] for transport.
   Future<NostrResponse> send(
     NostrRequest request,
     String coordinatorPubkey, {
     Duration? timeoutOverride,
     List<String>? relays,
   }) async {
+    final effectiveTimeout = timeoutOverride ?? timeout;
+    final budget = effectiveTimeout + kRelayRequestGrace;
+    final clock = Stopwatch()..start();
+    var stage = 'signer';
+    Object? broadcastFailure;
+    var relayAccepted = false;
+    List<String> responseTargets = const [];
+    StreamSubscription? broadcastUpdates;
+    RpcTimeoutException deadlineError() => RpcTimeoutException(
+          method: request.method,
+          stage: stage,
+          relayAccepted: relayAccepted,
+          responsePathAvailable: _subscription != null &&
+              subscriptionHasOpenTransport(
+                  ndk, _subscription!.requestId, responseTargets),
+          duration: budget,
+          cause: broadcastFailure,
+        );
+    Duration remaining() {
+      final value = budget - clock.elapsed;
+      if (value <= Duration.zero) throw deadlineError();
+      return value;
+    }
+
     final rebind = _rebindInFlight;
-    if (rebind != null) await rebind;
+    if (rebind != null) {
+      await rebind.timeout(remaining(), onTimeout: () => throw deadlineError());
+    }
 
     final targetRelays =
         (relays == null || relays.isEmpty) ? this.relays : relays;
-    final effectiveTimeout = timeoutOverride ?? timeout;
-    // Prefer relays that are currently connected to avoid paying a connect
-    // timeout on dead relays. Fall back to the full set when none are
-    // connected, so NDK still attempts to (re)connect and we never end up
-    // broadcasting to nothing.
-    final connected = _connectedAmong(targetRelays);
-    final broadcastRelays = connected.isNotEmpty ? connected : targetRelays;
+    // A connected socket can reject/rate-limit publication. Keep all known
+    // routes: NDK sends in parallel and a valid reply already wins over slow
+    // ACKs, so dropping a disconnected-but-usable route gains nothing.
+    final broadcastRelays =
+        targetRelays.map(normalizeRelayUrl).toSet().toList();
+    responseTargets = broadcastRelays;
     final id = request.id ?? _nextId();
+    if (_pending.containsKey(id)) {
+      throw StateError('RPC request $id is already in flight.');
+    }
     final reqWithId = NostrRequest(
       method: request.method,
       params: request.params,
@@ -208,69 +312,78 @@ class BitblikRpcClient {
     _activeRequestRelays[id] = broadcastRelays;
 
     try {
-      await _syncResponseRelays();
+      stage = 'response subscription';
+      await _syncResponseRelays().timeout(
+        remaining(),
+        onTimeout: () => throw deadlineError(),
+      );
+      final subscription = _subscription;
+      if (subscription == null) {
+        throw StateError('RPC response listener is unavailable.');
+      }
+      try {
+        await awaitSubscriptionSent(
+            ndk, subscription.requestId, broadcastRelays, remaining());
+      } on TimeoutException {
+        throw deadlineError();
+      }
+      stage = 'encryption';
       final event = await ProtocolCodec.encryptRequestWithSigner(
         request: reqWithId,
         signer: signer,
         coordinatorPubkey: coordinatorPubkey,
-      );
+      ).timeout(remaining(), onTimeout: () => throw deadlineError());
+      stage = 'publication/response';
       final broadcastResponse = ndk.broadcast.broadcast(
         nostrEvent: event,
         customSigner: signer,
         specificRelays: broadcastRelays,
+        timeout: remaining(),
+        saveToCache: false,
       );
-      final relayResults = await broadcastResponse.broadcastDoneFuture.timeout(
-        effectiveTimeout + kRelayRequestGrace,
-        onTimeout: () => throw TimeoutException(
-          'Bitblik RPC broadcast timed out',
-          effectiveTimeout + kRelayRequestGrace,
-        ),
-      );
-      final anyRelayAccepted = relayResults.any(
-        (response) => response.broadcastSuccessful,
-      );
-      if (!anyRelayAccepted) {
-        final details = relayResults
-            .map((response) => '${response.relayUrl}: ${response.msg}')
-            .join(', ');
-        throw StateError(
-          'Failed to broadcast RPC request to relays: $details',
-        );
+      // NDK's stream reports each relay result; its future additionally waits
+      // for every relay and delivery bookkeeping. Health needs early evidence.
+      // Some adapters expose a single-subscription stream already consumed by
+      // their completion future. Those adapters provide final evidence only.
+      if (broadcastResponse.broadcastDone.isBroadcast) {
+        broadcastUpdates = broadcastResponse.broadcastDone.listen((results) {
+          if (results.any((result) => result.broadcastSuccessful)) {
+            relayAccepted = true;
+            stage = 'coordinator response';
+          }
+        }, onError: (Object error) {
+          broadcastFailure = error;
+        });
       }
-
+      // A coordinator response proves delivery. A slow relay ACK or cache
+      // write must never delay or invalidate it. Consume late broadcast errors
+      // as well, including after this request has already completed.
+      unawaited(broadcastResponse.broadcastDoneFuture.then<void>((results) {
+        if (results.any((result) => result.broadcastSuccessful)) {
+          relayAccepted = true;
+          stage = 'coordinator response';
+        } else {
+          broadcastFailure = StateError('No relay accepted the RPC request: '
+              '${results.map((r) => '${r.relayUrl}: ${r.msg}').join(', ')}');
+        }
+      }, onError: (Object error) {
+        broadcastFailure = error;
+      }));
       return await completer.future.timeout(
-        effectiveTimeout,
-        onTimeout: () {
-          _pending.remove(id);
-          throw TimeoutException(
-            'Bitblik RPC request timed out',
-            effectiveTimeout,
-          );
-        },
+        remaining(),
+        onTimeout: () => throw deadlineError(),
       );
-    } catch (_) {
-      _pending.remove(id);
-      rethrow;
     } finally {
+      final updates = broadcastUpdates;
+      if (updates != null) {
+        unawaited(updates.cancel().catchError((Object _) {}));
+      }
+      _pending.remove(id);
       _activeRequestRelays.remove(id);
       // Releasing a temporary relay must not turn a successful RPC into an
       // error if subscription cleanup fails; the next update retries it.
       unawaited(_syncResponseRelays().catchError((Object _) {}));
     }
-  }
-
-  /// Subset of [urls] whose relay is currently connected in NDK's pool.
-  /// Matches on normalized URLs (NDK may store a cleaned form).
-  List<String> _connectedAmong(List<String> urls) {
-    final connected = <String>{};
-    ndk.relays.globalState.relays.forEach((url, rc) {
-      try {
-        if (rc.isConnected) connected.add(normalizeRelayUrl(url.url));
-      } catch (_) {}
-    });
-    return urls
-        .where((u) => connected.contains(normalizeRelayUrl(u)))
-        .toList(growable: false);
   }
 
   Future<void> _onResponse(Nip01Event event) async {

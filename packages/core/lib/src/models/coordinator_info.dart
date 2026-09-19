@@ -39,6 +39,10 @@ class CoordinatorInfo {
   /// Missing on older coordinators, which must remain online-only in the app.
   final bool supportsTwintShopQr;
 
+  /// Durable maker-scoped initiation receipts and read-only result lookup.
+  /// Absence is deliberately false for mixed-version deployments.
+  final bool supportsOfferInitiationRecovery;
+
   /// The bank ids this coordinator serves within a bank-scoped market (SK ATM:
   /// a subset of `tatrabanka`, `slsp`, `vub`). Empty for bank-agnostic markets
   /// or when the coordinator serves all of the market's banks.
@@ -75,6 +79,7 @@ class CoordinatorInfo {
     this.outgoingPaymentTypes = const ['bolt11'],
     required this.paymentSystem,
     this.supportsTwintShopQr = false,
+    this.supportsOfferInitiationRecovery = false,
     required this.nostrNpub,
     this.banks = const [],
     this.version,
@@ -126,6 +131,7 @@ class CoordinatorInfo {
       paymentSystem: (json['payment_system'] as String?) ??
           _defaultMethodId(json['currencies']),
       supportsTwintShopQr: json['twint_shop_qr_v1'] == true,
+      supportsOfferInitiationRecovery: json['offer_initiation_v1'] == true,
       banks: _parseBanks(json['banks']),
       nostrNpub: json['nostr_npub'] as String?,
       version: json['version'] as String?,
@@ -152,6 +158,7 @@ class CoordinatorInfo {
       'outgoing_payment_types': outgoingPaymentTypes,
       'payment_system': paymentSystem,
       if (supportsTwintShopQr) 'twint_shop_qr_v1': true,
+      if (supportsOfferInitiationRecovery) 'offer_initiation_v1': true,
       if (banks.isNotEmpty) 'banks': banks,
       'nostr_npub': nostrNpub,
       if (version != null) 'version': version,
@@ -225,6 +232,7 @@ class CoordinatorInfo {
       paymentSystem:
           _emptyToNull(tags['payment_system']) ?? _defaultMethodId(currencies),
       supportsTwintShopQr: tags['twint_shop_qr_v1'] == '1',
+      supportsOfferInitiationRecovery: tags['offer_initiation_v1'] == '1',
       banks: banks,
       version: _emptyToNull(tags['version']),
       nostrNpub: Nip19.encodePubKey(event.pubKey),
@@ -267,6 +275,7 @@ class CoordinatorInfo {
       ['outgoing_payment_types', outgoingPaymentTypes.join(',')],
       ['payment_system', paymentSystem],
       if (supportsTwintShopQr) ['twint_shop_qr_v1', '1'],
+      if (supportsOfferInitiationRecovery) ['offer_initiation_v1', '1'],
       if (banks.isNotEmpty) ['banks', banks.join(',')],
       ['version', version ?? ''],
       ['terms_of_usage_naddr', termsOfUsageNaddr ?? ''],

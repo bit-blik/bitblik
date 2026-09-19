@@ -92,7 +92,17 @@ class CoordinatorRegistry {
   Future<void>? _discoveryInFlight;
   Future<void>? _refreshDiscoveryRelaysInFlight;
   Future<void>? _finishedCountsRefreshInFlight;
-  bool _finishedCountsRefreshPending = false;
+  final Set<String> _pendingStatsPubkeys = {};
+  final Set<String> _statsInFlightPubkeys = {};
+  final Map<String, DateTime> _lastStatsAttempt = {};
+  final Map<String, Future<void>> _healthInFlight = {};
+  final Map<String, int> _healthFailures = {};
+  final Map<String, int> _healthRetryAttempts = {};
+  final Map<String, int> _rpcResponseVersions = {};
+  final Map<String, DateTime> _lastRpcSuccess = {};
+  final Map<String, Timer> _healthRetries = {};
+  final Duration healthSuccessGrace;
+  bool _disposed = false;
   final Set<String> _mutedPubkeys = {};
   CoordinatorColdStartState? _coldStartState;
   bool _coldStartDismissed = false;
@@ -107,6 +117,7 @@ class CoordinatorRegistry {
     this.probeStaleAfter = const Duration(seconds: 60),
     this.manualAddTimeout = const Duration(seconds: 5),
     this.networkFinishedWindow = const Duration(days: 30),
+    this.healthSuccessGrace = const Duration(minutes: 2),
   }) {
     _bootstrapRelays = List.from(relays);
   }
@@ -450,48 +461,134 @@ class CoordinatorRegistry {
     return relays.map(normalizeRelayUrl).toList(growable: false);
   }
 
-  /// Probe a single coordinator via `get_info` and update its record.
+  /// Record any authenticated RPC reply, including an application error. It
+  /// proves reachability without another get_info request. Call only after
+  /// BitblikRpcClient has validated the author and correlation ID.
+  void recordRpcResponse(String pubkey) {
+    final hex = _normalize(pubkey);
+    final current = _records[hex];
+    if (_disposed || current == null) return;
+    final now = DateTime.now();
+    _rpcResponseVersions[hex] = (_rpcResponseVersions[hex] ?? 0) + 1;
+    _lastRpcSuccess[hex] = now;
+    _healthFailures.remove(hex);
+    _healthRetryAttempts.remove(hex);
+    _healthRetries.remove(hex)?.cancel();
+    _records[hex] = current.copyWith(responsive: true, lastHealthCheck: now);
+    _schedulePersist();
+    if (current.responsive != true) _emit();
+  }
+
+  /// Probe through cached trading relays. Discovery owns NIP-65 refresh;
+  /// ordinary health checks must not wait for an unrelated discovery query.
   Future<void> probeHealth(
     String pubkey, {
     Duration? timeoutOverride,
-    bool refreshRelayList = true,
+    bool refreshRelayList = false,
   }) async {
     final hex = _normalize(pubkey);
-    if (_records[hex] == null) return;
-    // Refresh the NIP-65 relay list before probing so health checks track
-    // coordinators that move relays, and the probe goes to current relays.
-    if (refreshRelayList) {
-      await _refreshRelayList(hex);
+    if (_disposed || _records[hex] == null) return;
+    final existing = _healthInFlight[hex];
+    if (existing != null) return existing;
+    final probe = _probeHealth(hex,
+        timeoutOverride: timeoutOverride, refreshRelayList: refreshRelayList);
+    _healthInFlight[hex] = probe;
+    try {
+      await probe;
+    } finally {
+      _healthInFlight.remove(hex);
     }
-    final existing = _records[hex];
-    if (existing == null) return;
-    final coordRelays = relaysFor(hex);
-    // Hard outer cap: `rpcClient.send` only time-boxes the broadcast + response
-    // wait, NOT the relay (re)connect / encrypt steps that run first. A dead
-    // coordinator's relays can stall those awaits forever, hanging the probe —
-    // and with it the cold-start `Future.wait`, leaving the dialog spinner
-    // stuck. This guarantees the probe always resolves so we can mark it red.
+  }
+
+  Future<void> _probeHealth(
+    String hex, {
+    Duration? timeoutOverride,
+    required bool refreshRelayList,
+  }) async {
+    _healthRetries.remove(hex)?.cancel();
+    final responseVersion = _rpcResponseVersions[hex] ?? 0;
+    // Explicit refreshes may resolve a moved coordinator; routine probes use
+    // cached routes and spend their budget on RPC, not discovery.
     final effectiveTimeout = timeoutOverride ?? rpcClient.timeout;
     try {
-      await rpcClient
-          .send(
-            const NostrRequest(method: kRpcGetInfo, params: {}),
-            hex,
-            relays: coordRelays,
-            timeoutOverride: timeoutOverride,
-          )
-          .timeout(effectiveTimeout + kRelayRequestGrace);
-      _records[hex] = existing.copyWith(
+      if (refreshRelayList) {
+        try {
+          await _refreshRelayList(hex).timeout(effectiveTimeout);
+        } catch (error) {
+          // Discovery failure is not evidence the coordinator is down. Its
+          // last known trading relays may still be fully operational.
+          Logger.log
+              .w(() => 'NIP-65 refresh failed; probing cached relays: $error');
+        }
+      }
+      if (_disposed || !_records.containsKey(hex)) return;
+      final response = await rpcClient.send(
+        const NostrRequest(method: kRpcGetInfo, params: {}),
+        hex,
+        relays: relaysFor(hex),
+        timeoutOverride: timeoutOverride,
+      );
+      recordRpcResponse(hex);
+      if (!response.isSuccess || response.result == null) {
+        // A method/configuration error is not an offline coordinator.
+        Logger.log.w(() => 'Coordinator replied to get_info with an RPC error');
+        return;
+      }
+      CoordinatorInfo info;
+      try {
+        info = CoordinatorInfo.fromJson(response.result!);
+      } catch (error) {
+        Logger.log.w(() =>
+            'Invalid get_info payload from reachable coordinator: $error');
+        return;
+      }
+      final current = _records[hex];
+      if (_disposed || current == null) return;
+      _healthFailures.remove(hex);
+      _records[hex] = current.copyWith(
+        info: info,
         responsive: true,
         lastHealthCheck: DateTime.now(),
-        successfulProbes: existing.successfulProbes + 1,
+        successfulProbes: current.successfulProbes + 1,
       );
-    } catch (_) {
-      _records[hex] = existing.copyWith(
-        responsive: false,
+    } catch (error) {
+      final current = _records[hex];
+      if (_disposed || current == null) return;
+      // A newer offer RPC reply outranks an older probe's timeout.
+      if ((_rpcResponseVersions[hex] ?? 0) != responseVersion) return;
+      final confirmedMiss =
+          error is RpcTimeoutException && error.coordinatorResponseMissing;
+      final failures = confirmedMiss ? (_healthFailures[hex] ?? 0) + 1 : 0;
+      _healthFailures[hex] = failures;
+      final lastSuccess = _lastRpcSuccess[hex] ??
+          (current.responsive == true ? current.lastHealthCheck : null);
+      if (lastSuccess != null) _lastRpcSuccess[hex] = lastSuccess;
+      final recentlyReachable = lastSuccess != null &&
+          DateTime.now().difference(lastSuccess) < healthSuccessGrace;
+      _records[hex] = current.copyWith(
+        // Never infer coordinator failure from absent relay acceptance, a
+        // disconnected reply path, signing/setup failure or an untyped timeout.
+        responsive: recentlyReachable ? true : (failures >= 2 ? false : null),
         lastHealthCheck: DateTime.now(),
-        failedProbes: existing.failedProbes + 1,
+        failedProbes: current.failedProbes + (confirmedMiss ? 1 : 0),
       );
+      Logger.log.w(() =>
+          'Coordinator get_info inconclusive/missing reply ($failures confirmed misses): $error');
+      final attempts = (_healthRetryAttempts[hex] ?? 0) + 1;
+      _healthRetryAttempts[hex] = attempts;
+      if (attempts <= 2) {
+        _healthRetries[hex] = Timer(
+          Duration(
+              milliseconds:
+                  (attempts == 1 ? 1500 : 8000) + hex.hashCode.abs() % 1000),
+          () {
+            _healthRetries.remove(hex);
+            if (!_disposed) {
+              unawaited(probeHealth(hex, refreshRelayList: false));
+            }
+          },
+        );
+      }
     }
     _schedulePersist();
     _emit();
@@ -565,7 +662,7 @@ class CoordinatorRegistry {
         .map((r) => r.pubkeyHex)
         .toList();
     if (due.isEmpty) return;
-    await Future.wait(due.map(probeHealth));
+    await _probeInBatches(due);
   }
 
   /// Probe every listed coordinator, regardless of enabled state or probe age.
@@ -574,7 +671,13 @@ class CoordinatorRegistry {
   Future<void> probeAllListed() async {
     final listed = all.map((r) => r.pubkeyHex).toList(growable: false);
     if (listed.isEmpty) return;
-    await Future.wait(listed.map(probeHealth));
+    await _probeInBatches(listed);
+  }
+
+  Future<void> _probeInBatches(List<String> pubkeys) async {
+    for (var offset = 0; offset < pubkeys.length && !_disposed; offset += 2) {
+      await Future.wait(pubkeys.skip(offset).take(2).map(probeHealth));
+    }
   }
 
   /// Reset a coordinator's responsiveness to unknown and emit, so the UI can
@@ -583,6 +686,9 @@ class CoordinatorRegistry {
     final hex = _normalize(pubkey);
     final existing = _records[hex];
     if (existing == null) return;
+    if (existing.responsive == true && existing.lastHealthCheck != null) {
+      _lastRpcSuccess.putIfAbsent(hex, () => existing.lastHealthCheck!);
+    }
     _records[hex] = existing.copyWith(responsive: null);
     _emit();
   }
@@ -671,7 +777,6 @@ class CoordinatorRegistry {
   /// avoid feedback loops with providers that watch [changes] and also
   /// call this.
   void updateLocalFinishedCounts(Map<String, int> counts) {
-    final now = DateTime.now();
     var changed = false;
     counts.forEach((pubkey, count) {
       final hex = _normalize(pubkey);
@@ -680,7 +785,6 @@ class CoordinatorRegistry {
       if (r.localFinishedCount == count) return;
       _records[hex] = r.copyWith(
         localFinishedCount: count,
-        lastFinishedCountUpdate: now,
       );
       changed = true;
     });
@@ -699,14 +803,32 @@ class CoordinatorRegistry {
   /// coordinator on [relaysFor] its pubkey rather than the discovery set.
   /// Querying discovery relays here badly under-reports (only the few
   /// stray offer events that happen to land there are visible).
-  Future<void> fetchNetworkFinishedCounts() async {
-    final inFlight = _finishedCountsRefreshInFlight;
-    if (inFlight != null) {
-      // Do not lose a trigger that arrives while a query is running (notably
-      // the retry after a coordinator publishes a new successful event).
-      _finishedCountsRefreshPending = true;
-      return inFlight;
+  Future<void> fetchNetworkFinishedCounts({
+    bool force = false,
+    Set<String>? pubkeys,
+  }) async {
+    if (_disposed) return;
+    final now = DateTime.now();
+    for (final record in _records.values) {
+      if (_mutedPubkeys.contains(record.pubkeyHex)) continue;
+      if (pubkeys != null
+          ? !pubkeys.contains(record.pubkeyHex)
+          : record.paymentSystem != activePaymentSystemId) continue;
+      final fresh = record.lastFinishedCountUpdate;
+      final attempted = _lastStatsAttempt[record.pubkeyHex];
+      if (!force &&
+          (_statsInFlightPubkeys.contains(record.pubkeyHex) ||
+              (fresh != null &&
+                  now.difference(fresh) < const Duration(minutes: 10)) ||
+              (attempted != null &&
+                  now.difference(attempted) < const Duration(seconds: 30)))) {
+        continue;
+      }
+      _pendingStatsPubkeys.add(record.pubkeyHex);
     }
+    final inFlight = _finishedCountsRefreshInFlight;
+    if (inFlight != null) return inFlight;
+    if (_pendingStatsPubkeys.isEmpty) return;
     final refresh = _drainNetworkFinishedCountRefreshes();
     _finishedCountsRefreshInFlight = refresh;
     try {
@@ -719,52 +841,44 @@ class CoordinatorRegistry {
   }
 
   Future<void> _drainNetworkFinishedCountRefreshes() async {
-    do {
-      _finishedCountsRefreshPending = false;
-      await _fetchNetworkFinishedCounts();
-    } while (_finishedCountsRefreshPending);
+    while (!_disposed && _pendingStatsPubkeys.isNotEmpty) {
+      final batch = _pendingStatsPubkeys.take(2).toList();
+      _pendingStatsPubkeys.removeAll(batch);
+      _statsInFlightPubkeys.addAll(batch);
+      await _fetchNetworkFinishedCounts(batch);
+      _statsInFlightPubkeys.removeAll(batch);
+      // Yield to interaction and response processing between batches.
+      await Future<void>.delayed(Duration.zero);
+    }
   }
 
-  Future<void> _fetchNetworkFinishedCounts() async {
+  Future<void> _fetchNetworkFinishedCounts(List<String> pubkeys) async {
     final now = DateTime.now();
-
-    // Snapshot pubkeys up front; the per-coordinator awaits below let other
-    // code mutate `_records`, so we don't iterate it live.
-    final pubkeys = _records.values
-        .where((r) => r.paymentSystem == activePaymentSystemId)
-        .map((r) => r.pubkeyHex)
-        .toList();
-
-    // Query all coordinators in parallel — each hits its own relays, so there
-    // is no shared-relay bottleneck. Apply each result as soon as it arrives:
-    // one bad relay or malformed event must not discard every other
-    // coordinator's successfully fetched stats.
+    var changed = false;
     await Future.wait(
       pubkeys.map((pubkey) async {
+        _lastStatsAttempt[pubkey] = now;
         try {
           final stats = await _fetchFinishedStatsFor(pubkey);
           final r = _records[pubkey];
-          if (r == null) return;
-          if (r.networkFinishedCount == stats.count &&
-              r.networkDistinctCounterpartyCount ==
-                  stats.distinctCounterpartyCount &&
-              r.networkFinishedVolumeSats == stats.volumeSats) {
-            return;
-          }
+          if (_disposed || r == null) return;
           _records[pubkey] = r.copyWith(
             networkFinishedCount: stats.count,
             networkDistinctCounterpartyCount: stats.distinctCounterpartyCount,
             networkFinishedVolumeSats: stats.volumeSats,
             lastFinishedCountUpdate: now,
           );
-          _schedulePersist();
-          _emit();
+          changed = true;
         } catch (_) {
           // Best-effort background refresh. A future refresh retries this
           // coordinator without preventing healthy coordinators from updating.
         }
       }),
     );
+    if (changed && !_disposed) {
+      _schedulePersist();
+      _emit();
+    }
   }
 
   /// Count `#s=success` [kKindOffer] events for a single coordinator within
@@ -807,10 +921,7 @@ class CoordinatorRegistry {
 
       var pageCount = 0;
       var oldest = until;
-      await for (final event in response.stream.timeout(
-        _queryTimeout,
-        onTimeout: (sink) => sink.close(),
-      )) {
+      await for (final event in response.stream.timeout(_queryTimeout)) {
         if (event.pubKey != pubkey) continue;
         pageCount++;
         if (event.createdAt < oldest) oldest = event.createdAt;
@@ -836,6 +947,14 @@ class CoordinatorRegistry {
         }
       }
 
+      // Failed/partial relay queries must not replace persisted statistics
+      // with zero or mark them fresh for the next ten minutes.
+      final outcomes = response.relayOutcomes.values;
+      if (!outcomes
+          .any((outcome) => outcome.status == RelayRequestStatus.eose)) {
+        throw StateError('Coordinator statistics query did not reach EOSE');
+      }
+
       // Last page reached when the relay returned fewer than requested.
       if (pageCount < pageSize) break;
       // Advance the cursor just past the oldest event seen. Guard against a
@@ -853,6 +972,12 @@ class CoordinatorRegistry {
   }
 
   Future<void> dispose() async {
+    _disposed = true;
+    _pendingStatsPubkeys.clear();
+    for (final retry in _healthRetries.values) {
+      retry.cancel();
+    }
+    _healthRetries.clear();
     _saveDebouncer?.cancel();
     if (!_coldStart.isClosed) {
       await _coldStart.close();
@@ -1217,10 +1342,10 @@ class CoordinatorRegistry {
   /// Refresh [hex] relay list from coordinator's own NIP-65 publication.
   /// Keeps existing/fallback relays when no NIP-65 list is found.
   Future<void> _refreshRelayList(String hex) async {
-    final existing = _records[hex];
-    if (existing == null) return;
+    if (_disposed || !_records.containsKey(hex)) return;
     final relayList = await _fetchRelayList(hex);
-    if (relayList == null) return;
+    final existing = _records[hex];
+    if (_disposed || existing == null || relayList == null) return;
     final sameRelays = existing.relays.length == relayList.length &&
         existing.relays.toSet().containsAll(relayList);
     if (sameRelays && existing.relayListFromNip65) {
@@ -1242,9 +1367,7 @@ class CoordinatorRegistry {
     String hex, {
     Duration timeout = const Duration(seconds: 3),
   }) async {
-    final existing = _records[hex];
-    if (existing == null) return;
-
+    if (_disposed || !_records.containsKey(hex)) return;
     Nip01Event? newest;
     try {
       final response = ndk.requests.query(
@@ -1269,7 +1392,8 @@ class CoordinatorRegistry {
       return;
     }
 
-    if (newest == null) return;
+    final existing = _records[hex];
+    if (_disposed || existing == null || newest == null) return;
 
     final relayList = <String>{};
     for (final tag in newest.tags) {
@@ -1301,6 +1425,7 @@ class CoordinatorRegistry {
   }
 
   void _schedulePersist() {
+    if (_disposed) return;
     _saveDebouncer?.cancel();
     _saveDebouncer = Timer(const Duration(milliseconds: 200), () {
       store.save(_records.values.toList());

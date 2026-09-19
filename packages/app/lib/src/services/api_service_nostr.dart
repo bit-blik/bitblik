@@ -9,6 +9,9 @@ import 'package:bitblik_core/core.dart';
 import 'key_service.dart';
 import 'nostr_service.dart';
 import 'offer_db_service.dart';
+import 'offer_initiation_store.dart';
+import 'offer_initiation_recovery.dart';
+import 'funding_payment.dart';
 
 class ApiServiceNostr {
   static String _btcRateCacheKey(String currency) =>
@@ -20,6 +23,9 @@ class ApiServiceNostr {
 
   final NostrService _nostrService;
   final KeyService _keyService;
+  late final _initiationStore = OfferInitiationStore(() => OfferDbService().database);
+  late final _initiationRecovery = OfferInitiationRecovery(
+      store: _initiationStore, lookup: _nostrService.getOfferInitiation);
 
   ApiServiceNostr(this._keyService) : _nostrService = NostrService(_keyService);
 
@@ -67,24 +73,58 @@ class ApiServiceNostr {
     double premiumPercent = 0,
     String? blikCode,
     String? bank,
+    FundingEstimate? fundingEstimate,
   }) async {
     try {
       if (coordinatorPubkey == null) {
         throw Exception('Coordinator pubkey is required for offer creation');
       }
-      return await _nostrService.initiateOfferFiat(
-        fiatAmount: fiatAmount,
-        fiatCurrency: fiatCurrency,
-        category: category,
-        coordinatorPubkey: coordinatorPubkey,
-        premiumPercent: premiumPercent,
-        blikCode: blikCode,
-        bank: bank,
+      final maker = _keyService.publicKeyHex;
+      if (maker == null) throw StateError('Maker identity is not initialized');
+      final info = getCoordinatorInfoByPubkey(coordinatorPubkey);
+      final result = await _initiationRecovery.initiate(
+        maker: maker,
+        coordinator: coordinatorPubkey,
+        supportsRecovery: info?.supportsOfferInitiationRecovery == true,
+        params: {
+          'fiat_amount': fiatAmount, 'fiat_currency': fiatCurrency,
+          'category': category?.name, 'premium_percent': premiumPercent,
+          'blik_code': blikCode, 'bank': bank,
+        },
+        estimate: fundingEstimate?.toJson(),
+        send: (operationId) => _nostrService.initiateOfferFiat(
+          fiatAmount: fiatAmount,
+          fiatCurrency: fiatCurrency,
+          category: category,
+          coordinatorPubkey: coordinatorPubkey,
+          premiumPercent: premiumPercent,
+          blikCode: blikCode,
+          bank: bank,
+          operationId: operationId,
+        ),
       );
+      // Never downgrade a locally known funded/terminal offer when recovering
+      // a receipt that outlived UI acknowledgement.
+      final hash = result['paymentHash'];
+      if (hash is String) {
+        final existing = await OfferDbService().getOfferByPaymentHash(hash);
+        if (existing != null && existing.status != OfferStatus.created) {
+          await _initiationStore.complete(maker, hash);
+          throw StateError('This invoice already belongs to an existing offer. Resume that offer from home.');
+        }
+      }
+      return result;
     } catch (e) {
-      Logger.log.e(() => 'Error calling initiateOfferFiat: $e');
+      // SQLite/codec exceptions can include bound maker codes or invoice data.
+      Logger.log.e(() => 'Error calling initiateOfferFiat: ${e.runtimeType}');
       rethrow;
     }
+  }
+
+  Future<void> completeOfferInitiation(String paymentHash) async {
+    final maker = _keyService.publicKeyHex;
+    if (maker == null) throw StateError('Maker identity is not initialized');
+    await _initiationStore.complete(maker, paymentHash);
   }
 
   // Build the exchange-rate sources for [currency] (case-insensitive).

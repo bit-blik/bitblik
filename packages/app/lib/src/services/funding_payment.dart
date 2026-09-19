@@ -21,6 +21,26 @@ class FundingEstimate {
     required this.makerFeesSats,
   });
 
+  Map<String, dynamic> toJson() => {
+    'coordinatorPubkey': coordinatorPubkey,
+    'makerPubkey': makerPubkey,
+    'fiatAmount': fiatAmount,
+    'fiatCurrency': fiatCurrency,
+    'premiumPercent': premiumPercent,
+    'totalSats': totalSats,
+    'makerFeesSats': makerFeesSats,
+  };
+
+  factory FundingEstimate.fromJson(Map<String, dynamic> json) => FundingEstimate(
+    coordinatorPubkey: json['coordinatorPubkey'] as String,
+    makerPubkey: json['makerPubkey'] as String,
+    fiatAmount: (json['fiatAmount'] as num).toDouble(),
+    fiatCurrency: json['fiatCurrency'] as String,
+    premiumPercent: (json['premiumPercent'] as num).toDouble(),
+    totalSats: json['totalSats'] as int,
+    makerFeesSats: json['makerFeesSats'] as int,
+  );
+
   // 0.5%, rounded down, with a tiny rounding floor and an absolute loss cap.
   int get toleranceSats => (totalSats ~/ 200).clamp(5, 100);
   int get feeToleranceSats =>

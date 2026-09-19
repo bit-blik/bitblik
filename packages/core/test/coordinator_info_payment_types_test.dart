@@ -20,7 +20,8 @@ void main() {
     );
   });
 
-  test('shop QR capability requires explicit advertisement and round trips', () {
+  test('shop QR capability requires explicit advertisement and round trips',
+      () {
     final legacy = CoordinatorInfo.fromJson(baseJson());
     expect(legacy.supportsTwintShopQr, isFalse);
     expect(legacy.toJson().containsKey('twint_shop_qr_v1'), isFalse);
@@ -46,6 +47,28 @@ void main() {
     final info = CoordinatorInfo.fromJson(json);
     expect(info.outgoingPaymentTypes, ['bolt11', 'bolt12']);
     expect(info.toJson()['outgoing_payment_types'], ['bolt11', 'bolt12']);
+  });
+
+  test('initiation recovery requires explicit capability and round trips', () {
+    for (final advertised in [null, false, true, 'true']) {
+      final info = CoordinatorInfo.fromJson(
+          baseJson()..['offer_initiation_v1'] = advertised);
+      final enabled = advertised == true;
+      expect(info.supportsOfferInitiationRecovery, enabled);
+      expect(
+          CoordinatorInfo.fromJson(info.toJson())
+              .supportsOfferInitiationRecovery,
+          enabled);
+      expect(
+          CoordinatorInfo.fromNostrEvent(Nip01Event(
+                  pubKey: 'a' * 64,
+                  kind: kKindCoordinatorInfo,
+                  tags: info.toNostrTags(),
+                  content: ''))
+              .supportsOfferInitiationRecovery,
+          enabled);
+      expect(info.toJson().containsKey('offer_initiation_v1'), enabled);
+    }
   });
 
   test('coordinator record exposes capabilities with legacy fallback', () {

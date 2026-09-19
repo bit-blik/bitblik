@@ -576,27 +576,16 @@ class NostrService {
       await RelayReconnectGate.instance.ensureReady();
     }
 
-    try {
-      return await _rpcClient!.send(
-        request,
-        coordinatorPubkey,
-        timeoutOverride: timeoutOverride,
-        relays: _coordinatorRegistry?.relaysFor(coordinatorPubkey),
-      );
-    } on TimeoutException {
-      // Trigger a health check for this coordinator, unless this WAS the
-      // health check (avoid infinite recursion).
-      if (request.method != kRpcGetInfo) {
-        _coordinatorRegistry?.probeHealth(coordinatorPubkey).catchError((
-          error,
-        ) {
-          Logger.log.w(
-            () => '⚠️ Error during health check after timeout: $error',
-          );
-        });
-      }
-      rethrow;
-    }
+    final response = await _rpcClient!.send(
+      request,
+      coordinatorPubkey,
+      timeoutOverride: timeoutOverride,
+      relays: _coordinatorRegistry?.relaysFor(coordinatorPubkey),
+    );
+    // An authenticated offer reply already proves reachability. Conversely,
+    // an offer timeout must not generate a competing get_info traffic burst.
+    _coordinatorRegistry?.recordRpcResponse(coordinatorPubkey);
+    return response;
   }
 
   /// Helper method to handle response and throw exceptions on error
@@ -629,10 +618,13 @@ class NostrService {
     double premiumPercent = 0,
     String? blikCode,
     String? bank,
+    String? operationId,
   }) async {
     final request = NostrRequest(
       method: kRpcInitiateOffer,
+      id: operationId,
       params: {
+        'operation_id': ?operationId,
         'fiat_amount': fiatAmount,
         'fiat_currency': fiatCurrency,
         if (category != null) 'category': category.name,
@@ -646,6 +638,17 @@ class NostrService {
       request,
       coordinatorPubkey,
       timeoutOverride: _initiateOfferRpcTimeout,
+    );
+    return _handleResponse(response, (result) => result);
+  }
+
+  Future<Map<String, dynamic>> getOfferInitiation(
+      String coordinatorPubkey, String operationId) async {
+    final response = await sendRequest(
+      NostrRequest(method: kRpcGetOfferInitiation,
+          params: {'operation_id': operationId}),
+      coordinatorPubkey,
+      timeoutOverride: const Duration(seconds: 10),
     );
     return _handleResponse(response, (result) => result);
   }
@@ -1417,17 +1420,27 @@ class NostrService {
   /// Get NDK instance (for connectivity management)
   Ndk? get ndk => _ndk;
 
-  /// Emits `true` whenever at least one relay is connected and `false` when
-  /// none are. Backed by a BehaviorSubject, so a new listener immediately
-  /// receives the current state; deduplicated so it only fires on actual
-  /// connect/disconnect transitions (including reconnects after the app
-  /// returns from background). Empty until [ndk] is initialized.
+  /// Emits on changes to the connected coordinator relay set. An unrelated
+  /// wallet/discovery connection must not mask recovery of a trading relay.
   Stream<bool> get relayConnectionState {
     final ndk = _ndk;
     if (ndk == null) return const Stream<bool>.empty();
     return ndk.connectivity.relayConnectivityChanges
-        .map((relays) => relays.any((relay) => relay.isConnected))
-        .distinct();
+        .map((relays) {
+          final relevant = _enabledCoordinatorRelays()
+              .map(normalizeRelayUrl)
+              .toSet();
+          return relays
+              .where(
+                (relay) =>
+                    relay.isConnected &&
+                    relevant.contains(normalizeRelayUrl(relay.url)),
+              )
+              .map((relay) => relay.key)
+              .toSet();
+        })
+        .distinct((previous, next) => setEquals(previous, next))
+        .map((connected) => connected.isNotEmpty);
   }
 }
 

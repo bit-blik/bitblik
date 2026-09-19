@@ -6,6 +6,8 @@ import 'package:dotenv/dotenv.dart';
 import 'package:bitblik_core/core.dart';
 import '../logging/app_logger.dart';
 import '../models/outgoing_payment_attempt.dart';
+import '../models/pending_offer_intent.dart';
+import '../models/offer_initiation_receipt.dart';
 
 /// Context for a single offer state transition, recorded in
 /// `offer_state_history` when [DatabaseService.recordStateHistory] is on.
@@ -61,7 +63,7 @@ class DatabaseService {
   /// Enabled for the generic YAML flow, where it replaces the log_audit trail.
   bool recordStateHistory = false;
 
-  DatabaseService() {
+  DatabaseService({PostgreSQLConnection? connection}) : _connection = connection {
     _env = DotEnv(includePlatformEnvironment: true)..load();
   }
 
@@ -91,6 +93,8 @@ class DatabaseService {
       await _ensureLogAuditTable();
       await _ensureOfferStateHistoryTable();
       await _ensureOutgoingPaymentAttemptsTable();
+      await ensurePendingOfferIntentsTable();
+      await ensureOfferInitiationReceiptsTable();
       await _backfillDisputeAt();
       await _ensureTelegramOfferMessagesTable();
     } catch (e) {
@@ -109,6 +113,133 @@ class DatabaseService {
     _connection = null;
     AppLogger.info('Database connection closed.',
         action: 'database.connection.closed');
+  }
+
+  /// Additive migration: old readers ignore this table. Do not drop it on
+  /// rollback; it may be the only recovery material for a wallet-held invoice.
+  Future<void> ensurePendingOfferIntentsTable() async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute('''
+      CREATE TABLE IF NOT EXISTS pending_offer_intents (
+        payment_hash TEXT PRIMARY KEY,
+        payment_system TEXT NOT NULL,
+        data JSONB NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    ''');
+    await _connection!.execute('''CREATE INDEX IF NOT EXISTS idx_pending_offer_market_hash
+      ON pending_offer_intents (payment_system, payment_hash)''');
+  }
+
+  Future<void> ensureOfferInitiationReceiptsTable() async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute('''CREATE TABLE IF NOT EXISTS offer_initiation_receipts (
+      payment_system TEXT NOT NULL,
+      maker_pubkey TEXT NOT NULL,
+      operation_id TEXT NOT NULL,
+      fingerprint TEXT NOT NULL,
+      payment_hash TEXT NOT NULL UNIQUE,
+      quote JSONB NOT NULL,
+      hold_invoice TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (payment_system, maker_pubkey, operation_id)
+    )''');
+  }
+
+  /// The claim and secret recovery intent commit in one statement. Only the
+  /// winner may call the wallet. A lost commit acknowledgement never permits
+  /// retrying creation; a later lookup reads the retained claim instead.
+  Future<bool> claimOfferInitiation({
+    required String operationId,
+    required String fingerprint,
+    required PendingOfferIntent intent,
+    required Map<String, dynamic> quote,
+  }) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final rows = await _connection!.query('''WITH claimed AS (
+      INSERT INTO offer_initiation_receipts
+        (payment_system, maker_pubkey, operation_id, fingerprint, payment_hash, quote)
+      VALUES (@market, @maker, @operation, @fingerprint, @hash, @quote::jsonb)
+      ON CONFLICT (payment_system, maker_pubkey, operation_id) DO NOTHING
+      RETURNING payment_hash
+    ) INSERT INTO pending_offer_intents
+        (payment_hash, payment_system, data, expires_at)
+      SELECT payment_hash, @market, @data::jsonb, @expires FROM claimed
+      RETURNING payment_hash''', substitutionValues: {
+      'market': intent.paymentSystem,
+      'maker': intent.data['makerId'],
+      'operation': operationId,
+      'fingerprint': fingerprint,
+      'hash': intent.paymentHash,
+      'quote': jsonEncode(quote),
+      'data': jsonEncode(intent.data),
+      'expires': intent.expiresAt.toUtc(),
+    });
+    return rows.isNotEmpty;
+  }
+
+  Future<OfferInitiationReceipt?> getOfferInitiation({
+    required String paymentSystem,
+    required String makerId,
+    required String operationId,
+  }) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final rows = await _connection!.query('''SELECT fingerprint, payment_hash, quote, hold_invoice
+      FROM offer_initiation_receipts WHERE payment_system = @market
+      AND maker_pubkey = @maker AND operation_id = @operation''', substitutionValues: {
+      'market': paymentSystem, 'maker': makerId, 'operation': operationId,
+    });
+    if (rows.isEmpty) return null;
+    final row = rows.single;
+    return OfferInitiationReceipt(fingerprint: row[0] as String,
+        paymentHash: row[1] as String,
+        quote: Map<String, dynamic>.from(row[2] as Map),
+        holdInvoice: row[3] as String?);
+  }
+
+  /// First known invoice wins; retries cannot replace the original result.
+  /// No matching row is normal for intents created before receipt support.
+  Future<void> saveOfferInitiationInvoice(String paymentHash, String invoice) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    if (invoice.isEmpty) throw ArgumentError('Invoice must not be empty');
+    await _connection!.execute('''UPDATE offer_initiation_receipts
+      SET hold_invoice = COALESCE(hold_invoice, @invoice)
+      WHERE payment_hash = @hash''', substitutionValues: {
+      'hash': paymentHash, 'invoice': invoice,
+    });
+  }
+
+  Future<void> savePendingOfferIntent(PendingOfferIntent intent) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    // Deliberately no upsert: a collision must never overwrite recovery data.
+    await _connection!.execute('''INSERT INTO pending_offer_intents
+      (payment_hash, payment_system, data, expires_at)
+      VALUES (@hash, @market, @data::jsonb, @expires)''', substitutionValues: {
+      'hash': intent.paymentHash, 'market': intent.paymentSystem,
+      'data': jsonEncode(intent.data), 'expires': intent.expiresAt.toUtc(),
+    });
+  }
+
+  Future<List<PendingOfferIntent>> getPendingOfferIntents(String paymentSystem,
+      {String? afterHash, int limit = 100}) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final rows = await _connection!.query('''SELECT payment_hash, data, expires_at
+      FROM pending_offer_intents WHERE payment_system = @market
+      ${afterHash == null ? '' : 'AND payment_hash > @after_hash'}
+      ORDER BY payment_hash LIMIT @limit''', substitutionValues: {
+      'market': paymentSystem, if (afterHash != null) 'after_hash': afterHash,
+      'limit': limit.clamp(1, 100),
+    });
+    return rows.map((row) => PendingOfferIntent(paymentHash: row[0] as String,
+        paymentSystem: paymentSystem, data: Map<String, dynamic>.from(row[1] as Map),
+        expiresAt: (row[2] as DateTime).toUtc())).toList();
+  }
+
+  Future<void> deletePendingOfferIntent(String paymentHash) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute('DELETE FROM pending_offer_intents WHERE payment_hash = @hash',
+        substitutionValues: {'hash': paymentHash});
   }
 
   Future<void> _ensureOffersTable() async {
@@ -726,13 +857,8 @@ class DatabaseService {
         PRIMARY KEY (offer_id, chat_id)
       );
     ''');
-    // Rows for offers that completed normally are never struck out and
-    // would accumulate forever; funded offers expire within hours, so
-    // anything older than 7 days can no longer need editing.
-    await _connection!.execute('''
-      DELETE FROM telegram_offer_messages
-      WHERE created_at < NOW() - INTERVAL '7 days';
-    ''');
+    // Rows are retry data, including long-running disputes. Only successful
+    // reconciliation removes them; age alone is not proof of remote cleanup.
     AppLogger.info('telegram_offer_messages table checked/created.',
         action: 'database.schema.telegram_offer_messages.ready');
   }
@@ -783,6 +909,39 @@ class DatabaseService {
       'DELETE FROM telegram_offer_messages WHERE offer_id = @offer_id',
       substitutionValues: {'offer_id': offerId},
     );
+  }
+
+  /// Existing message references plus committed terminal state are durable
+  /// cleanup work. Keyset pagination keeps failed old messages from starving
+  /// later offers without introducing a second source of lifecycle state.
+  Future<List<String>> getTelegramCleanupOfferIds(
+      {String? afterId, int limit = 100}) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    final rows = await _connection!.query('''
+      SELECT DISTINCT m.offer_id
+      FROM telegram_offer_messages m JOIN offers o ON o.id = m.offer_id
+      WHERE o.status IN ('cancelled', 'expired', 'takerPaid', 'refundedMaker')
+        ${afterId == null ? '' : 'AND m.offer_id > @after_id::uuid'}
+      ORDER BY m.offer_id LIMIT @limit
+    ''', substitutionValues: {
+      if (afterId != null) 'after_id': afterId,
+      'limit': limit.clamp(1, 100),
+    });
+    return rows.map((row) => row[0] as String).toList();
+  }
+
+  /// Compare-and-delete: a late cleanup must never erase a newer notification
+  /// saved for this offer/chat while its HTTP request was still pending.
+  Future<void> deleteTelegramOfferMessage(TelegramOfferMessage message) async {
+    if (_connection == null) throw StateError('Database not connected.');
+    await _connection!.execute('''
+      DELETE FROM telegram_offer_messages
+      WHERE offer_id = @offer_id AND chat_id = @chat_id AND message_id = @message_id
+    ''', substitutionValues: {
+      'offer_id': message.offerId,
+      'chat_id': message.chatId,
+      'message_id': message.messageId,
+    });
   }
 
   Future<void> insertAuditLog({

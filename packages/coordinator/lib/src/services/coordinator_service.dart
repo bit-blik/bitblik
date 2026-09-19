@@ -29,9 +29,12 @@ import '../models/pay_invoice_result.dart';
 import '../models/pay_offer_result.dart';
 import '../models/payment_status.dart';
 import '../models/outgoing_payment_attempt.dart';
+import '../models/pending_offer_intent.dart';
+import '../models/offer_initiation_receipt.dart';
 import 'payment_diagnostics.dart';
 import 'nostr_service.dart';
 import 'telegram_service.dart';
+import 'telegram_offer_cleanup.dart';
 import '../flow/flow_loader.dart';
 import '../logging/app_logger.dart';
 
@@ -72,14 +75,6 @@ part 'actions/twint/set_new_code.dart';
 // Taker payment fee limit as a fraction of taker fees (0.2 = 20%)
 const double kTakerFeeLimitFactor = 0.2;
 const int kMinimumTakerRoutingFeeSats = 10;
-
-class _PendingOfferRecord {
-  final Map<String, dynamic> data;
-
-  const _PendingOfferRecord({
-    required this.data,
-  });
-}
 
 class _OutgoingPaymentResult {
   final PaymentStatus status;
@@ -165,6 +160,7 @@ class CoordinatorService {
 
   matrix.Client? _matrixClient; // Matrix client instance
   TelegramService? _telegramService; // Telegram service for notifications
+  TelegramOfferCleanup? _telegramCleanup;
 
   late final String _matrixHomeserver;
   late final String _matrixUser;
@@ -547,9 +543,16 @@ class CoordinatorService {
     }
   }
 
-  final Map<String, _PendingOfferRecord> _pendingOffers = {};
+  final Map<String, PendingOfferIntent> _pendingOffers = {};
   final Map<String, StreamSubscription> _invoiceSubscriptions = {};
+  final Map<String, Object> _invoiceSubscriptionTokens = {};
   final Map<String, Timer> _pendingOfferTimeouts = {};
+  final Map<String, Future<void>> _pendingOfferWork = {};
+  final Set<String> _pendingNeedsLookup = {};
+  Timer? _pendingRecoveryTimer;
+  Future<void>? _pendingRecovery;
+  String? _pendingRecoveryCursor;
+  bool _shuttingDown = false;
   // Per-stage offer timers live in the generic flow. The coordinator keeps
   // only the shared republish timer.
   final Map<String, Timer> _statusRepublishTimers = {};
@@ -750,6 +753,15 @@ class CoordinatorService {
       await _initializePaymentBackend();
     }
     await _loadFlowEngine();
+    if (_telegramService?.isConfigured == true) {
+      _telegramCleanup ??= TelegramOfferCleanup(
+        database: _dbService,
+        telegram: _telegramService!,
+        onError: (error) => AppLogger.warning(
+            'Telegram offer cleanup failed: ${error.runtimeType}'),
+      );
+      _telegramCleanup!.start();
+    }
     AppLogger.info(
         'CoordinatorService initialized with $_paymentBackendType backend '
         '(generic YAML flow).');
@@ -989,18 +1001,111 @@ class CoordinatorService {
     });
   }
 
+  /// One bounded page per pass. Read-only wallet reconciliation never retries
+  /// invoice creation, even when the original backend call timed out.
+  Future<void> reconcilePendingOffers() {
+    if (_shuttingDown) return Future.value();
+    return _pendingRecovery ??= _recoverPendingOfferPage()
+        .whenComplete(() => _pendingRecovery = null);
+  }
+
+  Future<void> _recoverPendingOfferPage() async {
+    try {
+      final intents = await _dbService.getPendingOfferIntents(_paymentSystem.id,
+          afterHash: _pendingRecoveryCursor);
+      _pendingRecoveryCursor = intents.length == 100 ? intents.last.paymentHash : null;
+      for (var index = 0; index < intents.length && !_shuttingDown; index += 2) {
+        await Future.wait(intents.skip(index).take(2).map((intent) async {
+          final hash = intent.paymentHash;
+          _pendingOffers.putIfAbsent(hash, () => intent);
+          await _withPendingOffer(hash, () => _reconcilePendingOffer(hash));
+        }));
+      }
+    } catch (error) {
+      AppLogger.warning('Pending offer recovery failed: ${error.runtimeType}');
+    }
+  }
+
+  Future<void> _withPendingOffer(String hash, Future<void> Function() work) {
+    final previous = _pendingOfferWork[hash] ?? Future<void>.value();
+    final operation = previous.then((_) async {
+      if (!_shuttingDown && _pendingOffers.containsKey(hash)) await work();
+    }).catchError((Object error) {
+      // Do not log recovery payloads or backend exception bodies: they may
+      // contain settlement preimages or invoice details.
+      AppLogger.warning('Pending offer $hash recovery failed: ${error.runtimeType}');
+    });
+    _pendingOfferWork[hash] = operation;
+    unawaited(operation.then((_) {
+      if (identical(_pendingOfferWork[hash], operation)) _pendingOfferWork.remove(hash);
+    }));
+    return operation;
+  }
+
+  Future<void> _reconcilePendingOffer(String hash) async {
+    final intent = _pendingOffers[hash];
+    final backend = _paymentBackend;
+    if (intent == null || backend == null || _shuttingDown) return;
+    if (intent.data['backendType'] != _paymentBackendType) {
+      AppLogger.warning('Pending offer $hash belongs to a different backend type; retained for reconciliation');
+      return;
+    }
+    final existing = await _dbService.getOfferByPaymentHash(hash);
+    if (existing != null) {
+      await _createOfferFromFundedInvoice(hash);
+      return;
+    }
+    final details = await backend.lookupInvoice(paymentHashHex: hash)
+        .timeout(const Duration(seconds: 5));
+    if (_shuttingDown) return;
+    if (details.error != null || details.paymentHash != hash ||
+        details.type == 'outgoing') return;
+    if (intent.data['operationId'] != null &&
+        intent.data['initiationInvoiceSaved'] != true &&
+        (details.status == InvoiceStatus.OPEN || details.status == InvoiceStatus.ACCEPTED) &&
+        details.invoice?.isNotEmpty == true) {
+      await _dbService.saveOfferInitiationInvoice(hash, details.invoice!);
+      intent.data['initiationInvoiceSaved'] = true;
+    }
+    switch (details.status) {
+      case InvoiceStatus.ACCEPTED:
+        await _createOfferFromFundedInvoice(hash);
+      case InvoiceStatus.CANCELED:
+        await _clearPendingOffer(hash, reason: 'wallet confirmed canceled');
+      case InvoiceStatus.OPEN:
+        if (!intent.expiresAt.isAfter(_clock.now().toUtc())) {
+          await _expirePendingOffer(hash);
+        } else {
+          _armPendingOfferTimeout(hash);
+          _startInvoiceSubscription(hash);
+        }
+      default:
+        // Unknown/missing/settled is not evidence of a canceled hold. Retain
+        // the durable record; never fabricate a funded offer or recreate it.
+        AppLogger.warning('Pending offer $hash has no recoverable hold state; retained');
+    }
+  }
+
   Future<void> _removeInvoiceSubscription(String paymentHashHex) async {
+    _invoiceSubscriptionTokens.remove(paymentHashHex);
     final subscription = _invoiceSubscriptions.remove(paymentHashHex);
     await subscription?.cancel();
   }
 
   void _armPendingOfferTimeout(String paymentHashHex) {
+    final pending = _pendingOffers[paymentHashHex];
+    if (pending == null || _shuttingDown) return;
+    final remaining = pending.expiresAt.difference(_clock.now().toUtc());
+    // Expired/unknown outcomes are checked by the bounded recovery sweep;
+    // never create a tight loop of zero-duration timers.
+    if (remaining <= Duration.zero) return;
     _pendingOfferTimeouts[paymentHashHex]?.cancel();
     _pendingOfferTimeouts[paymentHashHex] = Timer(
-      Duration(seconds: _pendingOfferTimeoutSeconds),
+      remaining,
       () {
         _pendingOfferTimeouts.remove(paymentHashHex);
-        unawaited(_expirePendingOffer(paymentHashHex));
+        unawaited(_withPendingOffer(paymentHashHex,
+            () => _reconcilePendingOffer(paymentHashHex)));
       },
     );
   }
@@ -1014,14 +1119,13 @@ class CoordinatorService {
       'window (${_pendingOfferTimeoutSeconds}s). Cleaning up.',
     );
 
-    try {
-      await _paymentBackend?.cancelInvoice(paymentHashHex: paymentHashHex);
-    } catch (e) {
-      AppLogger.info(
-        'Failed to cancel timed-out pending hold invoice $paymentHashHex: $e',
-      );
-    }
-
+    // Caller first verified OPEN, with no committed offer. A timeout is an
+    // unknown cancellation outcome: retain recovery data until a later lookup.
+    final backend = _paymentBackend;
+    if (backend == null) return;
+    _pendingNeedsLookup.add(paymentHashHex);
+    await backend.cancelInvoice(paymentHashHex: paymentHashHex)
+        .timeout(const Duration(seconds: 10));
     await _clearPendingOffer(paymentHashHex, reason: 'pending offer timeout');
   }
 
@@ -1029,6 +1133,8 @@ class CoordinatorService {
     String paymentHashHex, {
     String? reason,
   }) async {
+    await _dbService.deletePendingOfferIntent(paymentHashHex);
+    _pendingNeedsLookup.remove(paymentHashHex);
     _pendingOfferTimeouts.remove(paymentHashHex)?.cancel();
     _pendingOffers.remove(paymentHashHex);
     await _removeInvoiceSubscription(paymentHashHex);
@@ -1040,73 +1146,66 @@ class CoordinatorService {
   }
 
   void _startInvoiceSubscription(String paymentHashHex) {
-    unawaited(_removeInvoiceSubscription(paymentHashHex));
+    if (_shuttingDown || _invoiceSubscriptions.containsKey(paymentHashHex) ||
+        !_pendingOffers.containsKey(paymentHashHex)) return;
     AppLogger.info('Starting subscription for invoice: $paymentHashHex');
 
     if (_paymentBackend == null) {
       AppLogger.info(
           'CRITICAL: No payment backend configured for _startInvoiceSubscription.');
-      unawaited(_clearPendingOffer(
-        paymentHashHex,
-        reason: 'no payment backend available',
-      ));
       return;
     }
 
+    final token = Object();
+    _invoiceSubscriptionTokens[paymentHashHex] = token;
+    void interrupted() {
+      if (!identical(_invoiceSubscriptionTokens[paymentHashHex], token)) return;
+      _invoiceSubscriptionTokens.remove(paymentHashHex);
+      final subscription = _invoiceSubscriptions.remove(paymentHashHex);
+      unawaited(subscription?.cancel().catchError((Object _) {}));
+      // The durable intent remains. Recovery looks up the wallet and reopens
+      // the stream on its next bounded pass.
+    }
     try {
       final subscription = _paymentBackend!
           .subscribeToInvoiceUpdates(paymentHashHex: paymentHashHex)
           .listen(
-        (InvoiceUpdate update) async {
+        (InvoiceUpdate update) {
+          if (!identical(_invoiceSubscriptionTokens[paymentHashHex], token) ||
+              update.paymentHash != paymentHashHex || _shuttingDown) return;
           AppLogger.info(
               '$_paymentBackendType Invoice Update for $paymentHashHex: Status=${update.status}');
           if (update.status == InvoiceStatus.ACCEPTED) {
             AppLogger.info(
                 '$_paymentBackendType Invoice ACCEPTED (funded): $paymentHashHex');
-            await _createOfferFromFundedInvoice(paymentHashHex);
-            await _clearPendingOffer(
-              paymentHashHex,
-              reason: 'invoice accepted',
-            );
+            unawaited(_withPendingOffer(paymentHashHex,
+                () => _pendingNeedsLookup.contains(paymentHashHex)
+                    ? _reconcilePendingOffer(paymentHashHex)
+                    : _createOfferFromFundedInvoice(paymentHashHex)));
           } else if (update.status == InvoiceStatus.CANCELED) {
             AppLogger.info(
                 '$_paymentBackendType Invoice CANCELED: $paymentHashHex');
-            await _clearPendingOffer(
-              paymentHashHex,
-              reason: 'invoice canceled',
-            );
+            unawaited(_withPendingOffer(paymentHashHex,
+                () => _clearPendingOffer(paymentHashHex, reason: 'invoice canceled')));
           } else if (update.status == InvoiceStatus.SETTLED) {
+            _pendingNeedsLookup.add(paymentHashHex);
             // This case might be less common for hold invoices before BLIK,
             // but good to handle if the backend sends it.
             AppLogger.info(
                 '$_paymentBackendType Invoice SETTLED: $paymentHashHex');
-            await _clearPendingOffer(
-              paymentHashHex,
-              reason: 'invoice settled before offer creation',
-            );
+            // Unexpected settlement is not a normal funded hold. Keep its
+            // recovery material for operator reconciliation, never erase it.
           }
         },
         onError: (error) {
           AppLogger.info(
               'Error in $_paymentBackendType subscription stream for $paymentHashHex: $error');
-          unawaited(_clearPendingOffer(
-            paymentHashHex,
-            reason: 'invoice subscription error',
-          ));
+          interrupted();
         },
         onDone: () {
           AppLogger.info(
               '$_paymentBackendType Subscription stream closed for $paymentHashHex');
-          // For NWC, onDone might not mean the end of the world if it's a shared stream.
-          // However, for a specific invoice subscription, it usually means it's over.
-          // LND typically closes after final state.
-          // To be safe, if it's not already removed by ACCEPTED/CANCELED/ERROR, remove it.
-          if (_invoiceSubscriptions.containsKey(paymentHashHex)) {
-            unawaited(_clearPendingOffer(
-              paymentHashHex,
-              reason: 'invoice subscription completed',
-            ));
-          }
+          interrupted();
         },
         cancelOnError: true,
       );
@@ -1114,16 +1213,12 @@ class CoordinatorService {
     } catch (e) {
       AppLogger.info(
           'Failed to initiate $_paymentBackendType subscription for $paymentHashHex: $e');
-      unawaited(_clearPendingOffer(
-        paymentHashHex,
-        reason: 'failed to start invoice subscription',
-      ));
+      interrupted();
     }
   }
 
   Future<void> _createOfferFromFundedInvoice(String paymentHashHex) async {
-    final pending = _pendingOffers.remove(paymentHashHex);
-    _pendingOfferTimeouts.remove(paymentHashHex)?.cancel();
+    final pending = _pendingOffers[paymentHashHex];
     final pendingData = pending?.data;
     if (pendingData == null) {
       AppLogger.info(
@@ -1142,8 +1237,20 @@ class CoordinatorService {
     AppLogger.info(
         'Creating offer in DB for funded payment hash: $paymentHashHex');
     try {
+      // Covers a committed INSERT whose acknowledgement was lost. The unique
+      // payment-hash constraint also arbitrates concurrent coordinator workers.
+      final existing = await _dbService.getOfferByPaymentHash(paymentHashHex);
+      if (existing != null) {
+        if (existing.makerPubkey != pendingData['makerId']) {
+          throw StateError('Pending invoice maker differs from committed offer');
+        }
+        if (existing.statusRaw == _flowEngine.initialState) flow._armTimer(existing);
+        await _clearPendingOffer(paymentHashHex, reason: 'offer already committed');
+        await _publishStatusUpdate(existing);
+        return;
+      }
       final offer = Offer(
-        id: const Uuid().v4(),
+        id: pendingData['offerId'] as String,
         createdAt: DateTime.now().toUtc(),
         coordinatorPubkey: _nostrService?.coordinatorPubkey ?? '',
         amountSats: pendingData['amountSats'],
@@ -1184,6 +1291,10 @@ class CoordinatorService {
         clientVersion: pendingData['clientVersion'] as String?,
       );
       await _dbService.createOffer(offer);
+      // State/timers are installed before optional network publication. The
+      // intent is only discarded after the authoritative offer is persisted.
+      flow.onOfferFunded(offer);
+      await _clearPendingOffer(paymentHashHex, reason: 'offer committed');
       // --- Begin: broadcast NIP-69 order event ---
       final expirationUnix = offer.createdAt
               .add(Duration(seconds: _fundedExpirySeconds))
@@ -1192,15 +1303,13 @@ class CoordinatorService {
       await _nostrService?.broadcastNip69OrderFromOffer(offer,
           expiration: expirationUnix, premium: offer.premiumPercent);
       // --- End: broadcast NIP-69 order event ---
-      flow.onOfferFunded(offer);
-
       // Publish status update
       await _publishStatusUpdate(offer);
 
       AppLogger.info('Offer ${offer.id} created successfully in DB.',
           offerId: offer.id);
     } catch (e) {
-      AppLogger.info('Error creating offer in DB for $paymentHashHex: $e');
+      AppLogger.warning('Error creating offer in DB for $paymentHashHex: ${e.runtimeType}');
     }
   }
 
@@ -1259,69 +1368,21 @@ class CoordinatorService {
               offerId: offerId);
         }
       }
+      // The offer may have completed while Telegram was sending its initial
+      // message. Reconcile late persisted references against current state.
+      _telegramCleanup?.wake();
     } catch (e) {
       AppLogger.info('Error sending Telegram notification: $e');
     }
   }
 
-  /// Edit the Telegram notification(s) for an offer to strikethrough,
-  /// signalling the offer is no longer available (cancelled/expired).
-  Future<void> _strikeTelegramOfferMessages(String offerId) async {
-    if (_telegramService == null || !_telegramService!.isConfigured) {
-      return;
-    }
-    try {
-      final messages = await _dbService.getTelegramOfferMessages(offerId);
-      if (messages.isEmpty) return;
-
-      for (final message in messages) {
-        await _telegramService!.editMessage(
-          chatId: message.chatId,
-          messageId: message.messageId,
-          text: '<s>${message.messageText}</s>',
-        );
-      }
-      await _dbService.deleteTelegramOfferMessages(offerId);
-    } catch (e) {
-      AppLogger.info(
-          'Error striking out Telegram message(s) for offer $offerId: $e',
-          offerId: offerId);
-    }
-  }
-
-  /// Delete the Telegram notification(s) for an offer (e.g. once it has
-  /// been successfully paid and is no longer relevant to the channel).
-  Future<void> _deleteTelegramOfferMessages(String offerId) async {
-    if (_telegramService == null || !_telegramService!.isConfigured) {
-      return;
-    }
-    try {
-      final messages = await _dbService.getTelegramOfferMessages(offerId);
-      if (messages.isEmpty) return;
-
-      for (final message in messages) {
-        await _telegramService!.deleteMessage(
-          chatId: message.chatId,
-          messageId: message.messageId,
-        );
-      }
-      await _dbService.deleteTelegramOfferMessages(offerId);
-    } catch (e) {
-      AppLogger.info(
-          'Error deleting Telegram message(s) for offer $offerId: $e',
-          offerId: offerId);
-    }
-  }
-
-  Future<void> _syncTelegramOfferMessagesForState(Offer offer) async {
+  void _syncTelegramOfferMessagesForState(Offer offer) {
     switch (offer.statusRaw) {
       case 'cancelled':
       case 'expired':
-        await _strikeTelegramOfferMessages(offer.id);
-        return;
       case 'takerPaid':
       case 'refundedMaker':
-        await _deleteTelegramOfferMessages(offer.id);
+        _telegramCleanup?.wake();
         return;
       default:
         return;
@@ -1883,6 +1944,15 @@ class CoordinatorService {
   void setNostrService(NostrService nostrService) {
     _nostrService = nostrService;
 
+    // Startup initializes the flow before Nostr identity/transport. Recovered
+    // offers must not be inserted with an empty coordinator pubkey or lose
+    // their initial publication because the publisher is not installed yet.
+    if (!_shuttingDown) {
+      _pendingRecoveryTimer ??= Timer.periodic(const Duration(seconds: 30),
+          (_) => unawaited(reconcilePendingOffers()));
+      unawaited(reconcilePendingOffers());
+    }
+
     AppLogger.info('Nostr service set for status update publishing');
   }
 
@@ -1968,6 +2038,10 @@ class CoordinatorService {
   }
 
   Future<void> shutdown() async {
+    _shuttingDown = true;
+    _pendingRecoveryTimer?.cancel();
+    _pendingRecoveryTimer = null;
+    await _telegramCleanup?.close();
     _backendRetryTimer?.cancel();
     _backendRetryTimer = null;
 
@@ -1981,11 +2055,15 @@ class CoordinatorService {
     }
     _statusRepublishTimers.clear();
 
-    for (final subscription in _invoiceSubscriptions.values) {
+    for (final subscription in _invoiceSubscriptions.values.toList()) {
       await subscription.cancel();
     }
     _invoiceSubscriptions.clear();
+    _invoiceSubscriptionTokens.clear();
+    await _pendingRecovery;
+    await Future.wait(_pendingOfferWork.values.toList());
     _pendingOffers.clear();
+    _pendingNeedsLookup.clear();
 
     await _paymentBackend?.disconnect();
     _httpClient.close();
@@ -2000,6 +2078,7 @@ class CoordinatorService {
       'pending_offers': _pendingOffers.length,
       'invoice_subscriptions': _invoiceSubscriptions.length,
       'pending_offer_timeouts': _pendingOfferTimeouts.length,
+      'pending_offer_recovery_running': _pendingRecovery != null,
       'status_republish_timers': _statusRepublishTimers.length,
       'cached_rates': _cachedRates.length,
       'cached_rate_timestamps': _cachedRateTimes.length,
@@ -2119,7 +2198,9 @@ class CoordinatorService {
     String? blikCode,
     String? bank,
     String? clientVersion,
+    String? operationId,
   }) {
+    var timedOut = false;
     return _initiateOfferFiat(
       fiatAmount: fiatAmount,
       makerId: makerId,
@@ -2129,16 +2210,22 @@ class CoordinatorService {
       blikCode: blikCode,
       bank: bank,
       clientVersion: clientVersion,
+      operationId: operationId,
+      canStartInvoice: () => !timedOut && !_shuttingDown,
     ).timeout(
       _initiateOfferDeadline,
-      onTimeout: () => throw TimeoutException(
+      onTimeout: () {
+        timedOut = true;
+        throw TimeoutException(
         'initiate_offer exceeded the ${_initiateOfferDeadline.inSeconds}s coordinator deadline',
         _initiateOfferDeadline,
-      ),
+        );
+      },
     );
   }
 
   Future<Map<String, dynamic>> _initiateOfferFiat({
+    required bool Function() canStartInvoice,
     required double fiatAmount,
     required String makerId,
     String? fiatCurrency,
@@ -2147,7 +2234,25 @@ class CoordinatorService {
     String? blikCode,
     String? bank,
     String? clientVersion,
+    String? operationId,
   }) async {
+    String? fingerprint;
+    if (operationId != null) {
+      _validateInitiationId(operationId);
+      // Fixed field order, no transient client version or changing quote/rate.
+      // An ID belongs to exactly one maker intent, not just one sats amount.
+      fingerprint = sha256.convert(utf8.encode(jsonEncode({
+        'fiatAmount': fiatAmount,
+        'fiatCurrency': (fiatCurrency ?? _paymentSystem.currency).toUpperCase(),
+        'category': category?.name,
+        'premiumPercent': premiumPercent,
+        'blikCode': blikCode,
+        'bank': bank,
+      }))).toString();
+      final existing = await _dbService.getOfferInitiation(
+          paymentSystem: _paymentSystem.id, makerId: makerId, operationId: operationId);
+      if (existing != null) return _replayInitiation(existing, fingerprint);
+    }
     // Resolve the currency: client-supplied, else this coordinator's method
     // currency. Reject currencies this coordinator does not serve.
     final currency = (fiatCurrency ?? _paymentSystem.currency).toUpperCase();
@@ -2237,7 +2342,6 @@ class CoordinatorService {
         '${_coordinatorName} - Payment $fiatAmount $fiatCurrency reference: $paymentHashHex. This payment WILL FREEZE IN YOUR WALLET, check on BitBlik if the lock was successful. It will be unlocked (fail) unless you cheat or cancel unilaterally.';
 
     String holdInvoice;
-    String returnedPaymentHashHex = paymentHashHex;
 
     if (_paymentBackend == null) {
       AppLogger.info(
@@ -2245,6 +2349,63 @@ class CoordinatorService {
       throw Exception("No payment backend configured to create hold invoice.");
     }
 
+    final quote = <String, dynamic>{
+      'paymentHash': paymentHashHex,
+      'fiatAmount': fiatAmount,
+      'fiatCurrency': fiatCurrency,
+      'amountSats': satsAmount,
+      'makerFees': makerFees,
+      'totalAmountSats': totalAmountSats,
+      'premiumPercent': premium,
+      'rate': rate,
+    };
+    final intent = PendingOfferIntent(
+      paymentHash: paymentHashHex,
+      paymentSystem: _paymentSystem.id,
+      expiresAt: _clock.now().toUtc().add(Duration(seconds: _pendingOfferTimeoutSeconds)),
+      data: {
+        'offerId': const Uuid().v4(),
+        'backendType': _paymentBackendType,
+        'amountSats': satsAmount,
+        'makerFees': makerFees,
+        'takerFees': takerFees,
+        'makerId': makerId,
+        'preimageHex': preimage.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join(''),
+        'fiatAmount': fiatAmount,
+        'fiatCurrency': fiatCurrency,
+        'blikCode': blikCode,
+        'category': category?.name,
+        'bank': resolvedBank,
+        'premiumPercent': premium,
+        'clientVersion': clientVersion,
+        if (operationId != null) 'operationId': operationId,
+      },
+    );
+    var claimed = true;
+    try {
+      if (operationId == null) {
+        await _dbService.savePendingOfferIntent(intent);
+      } else {
+        claimed = await _dbService.claimOfferInitiation(operationId: operationId,
+            fingerprint: fingerprint!, intent: intent, quote: quote);
+      }
+    } catch (_) {
+      throw StateError('Unable to persist offer recovery data; wallet was not called');
+    }
+    if (!claimed) {
+      final existing = await _dbService.getOfferInitiation(
+          paymentSystem: _paymentSystem.id, makerId: makerId, operationId: operationId!);
+      if (existing == null) throw StateError('Initiation claim could not be read');
+      return _replayInitiation(existing, fingerprint!);
+    }
+    if (!canStartInvoice()) {
+      // This invocation has not called the wallet, and recovery never creates
+      // invoices. Deleting this unused intent is safe; failure retains it.
+      await _dbService.deletePendingOfferIntent(paymentHashHex);
+      throw TimeoutException('initiate_offer expired before wallet request');
+    }
+    _pendingOffers[paymentHashHex] = intent;
+    _armPendingOfferTimeout(paymentHashHex);
     final backendResponse = await _paymentBackend!.createHoldInvoice(
         amountSats: totalAmountSats,
         memo: memo,
@@ -2256,45 +2417,60 @@ class CoordinatorService {
         AppLogger.info(
             'NWC returned payment hash ${backendResponse.paymentHash} different from requested $paymentHashHex. Keeping the requested hash for offer lifecycle operations.');
       } else {
-        returnedPaymentHashHex = backendResponse.paymentHash;
+        if (backendResponse.paymentHash != paymentHashHex) {
+          // We cannot settle a different hash with the persisted preimage.
+          // Do not hand an unmanageable invoice to the maker.
+          throw StateError('Hold invoice backend returned an unexpected payment hash');
+        }
       }
     }
-
-    final preimageHex =
-        preimage.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join('');
-    _pendingOfferTimeouts.remove(returnedPaymentHashHex)?.cancel();
-    _pendingOffers[returnedPaymentHashHex] = _PendingOfferRecord(
-      data: {
-        'amountSats': satsAmount,
-        'makerFees': makerFees,
-        'takerFees': takerFees,
-        'makerId': makerId,
-        'preimageHex': preimageHex,
-        'fiatAmount': fiatAmount,
-        'fiatCurrency': fiatCurrency,
-        'blikCode': blikCode,
-        'category': category?.name,
-        'bank': resolvedBank,
-        'premiumPercent': premium,
-        'clientVersion': clientVersion,
-        'actualPaymentHashForSubscription': returnedPaymentHashHex,
-      },
-    );
     AppLogger.info(
-        'Pending offer stored for payment hash $returnedPaymentHashHex');
-    _armPendingOfferTimeout(returnedPaymentHashHex);
-    _startInvoiceSubscription(returnedPaymentHashHex);
+        'Pending offer stored for payment hash $paymentHashHex');
+    if (operationId != null) {
+      // Save even if the RPC already timed out. A lost response must still be
+      // retrievable without sending another wallet mutation.
+      await _dbService.saveOfferInitiationInvoice(paymentHashHex, holdInvoice);
+      intent.data['initiationInvoiceSaved'] = true;
+    }
+    _startInvoiceSubscription(paymentHashHex);
     return {
+      ...quote,
       'holdInvoice': holdInvoice,
-      'paymentHash': returnedPaymentHashHex,
-      'fiatAmount': fiatAmount,
-      'fiatCurrency': fiatCurrency,
-      'amountSats': satsAmount,
-      'makerFees': makerFees,
-      'totalAmountSats': totalAmountSats,
-      'premiumPercent': premium,
-      'rate': rate,
     };
+  }
+
+  static void _validateInitiationId(String operationId) {
+    if (!RegExp(r'^[\x21-\x7e]{1,128}$').hasMatch(operationId)) {
+      throw const OfferInitiationException('INVALID_OPERATION_ID',
+          'operation_id must contain 1–128 printable non-space ASCII characters');
+    }
+  }
+
+  Map<String, dynamic> _replayInitiation(
+      OfferInitiationReceipt receipt, String fingerprint) {
+    if (receipt.fingerprint != fingerprint) {
+      throw const OfferInitiationException('INITIATION_CONFLICT',
+          'This operation ID was already used with different offer parameters');
+    }
+    final result = receipt.result;
+    if (result != null) return result;
+    throw const OfferInitiationException('INITIATION_PENDING',
+        'Invoice creation outcome is pending or unknown; use get_offer_initiation with the same operation_id. No new invoice was created by this retry.');
+  }
+
+  /// Authenticated maker-only result retrieval. Never calls createHoldInvoice.
+  Future<Map<String, dynamic>> getOfferInitiation({
+    required String makerId,
+    required String operationId,
+  }) async {
+    _validateInitiationId(operationId);
+    final receipt = await _dbService.getOfferInitiation(
+        paymentSystem: _paymentSystem.id, makerId: makerId, operationId: operationId);
+    if (receipt == null) return {'status': 'not_found'};
+    final result = receipt.result;
+    return result == null
+        ? {'status': 'pending', 'paymentHash': receipt.paymentHash}
+        : {'status': 'ready', 'result': result};
   }
 
   Future<CoordinatorInfo> getCoordinatorInfo() async {
@@ -2330,6 +2506,7 @@ class CoordinatorService {
       ],
       paymentSystem: _paymentSystem.id,
       supportsTwintShopQr: _paymentSystem.id == 'twint',
+      supportsOfferInitiationRecovery: true,
       banks: List<String>.from(_servedBanks),
       nostrNpub: null,
       icon: _coordinatorIconUrl.isNotEmpty ? _coordinatorIconUrl : null,
