@@ -44,7 +44,9 @@ class _DisputeConversationCardState
   String? myPubkey;
   bool loadingMessages = true;
   bool busy = false;
-  bool legacyMode = false;
+  DisputeTextTransport? textTransport;
+  bool get legacyMode => textTransport == DisputeTextTransport.legacyNip04;
+  int loadGeneration = 0;
   String? error;
   StreamSubscription<Nip17Message>? dmInboxEvents;
   bool ownsDmInboxLease = false;
@@ -63,7 +65,8 @@ class _DisputeConversationCardState
     super.didUpdateWidget(oldWidget);
     if (oldWidget.offer.id != widget.offer.id ||
         oldWidget.offer.statusRaw != widget.offer.statusRaw) {
-      legacyMode = false;
+      textTransport = null;
+      loadGeneration++;
       evidenceBytesByMessageId.clear();
       _initialize();
     }
@@ -153,6 +156,7 @@ class _DisputeConversationCardState
 
   Iterable<String> get _nip17RelayDiscoveryRelays => <String>{
     ...kDiscoveryRelays,
+    ...ref.read(discoveryRelaysProvider),
     ..._legacyRendezvousRelays,
   };
 
@@ -222,7 +226,12 @@ class _DisputeConversationCardState
   Future<List<_ConversationMessage>> _load({bool forceRefresh = false}) async {
     final pubkey = myPubkey;
     if (pubkey == null) return const [];
-    if (legacyMode) {
+    final nip17 = await _communication.loadMessagesSnapshot(
+      offer: widget.offer,
+      myPubkey: pubkey,
+    );
+    final loaded = nip17.map(_ConversationMessage.fromNip17).toList();
+    if (_legacyRendezvousRelays.isNotEmpty) {
       final legacy = await _communication.loadLegacyMessages(
         offer: widget.offer,
         myPubkey: pubkey,
@@ -230,34 +239,38 @@ class _DisputeConversationCardState
         forceRefresh: forceRefresh,
         includeUnbound: true,
       );
-      return legacy
-          .map(_ConversationMessage.fromLegacy)
-          .toList(growable: false);
+      loaded.addAll(legacy.map(_ConversationMessage.fromLegacy));
     }
-    final nip17 = await _communication.loadMessagesSnapshot(
-      offer: widget.offer,
-      myPubkey: pubkey,
-    );
-    return nip17.map(_ConversationMessage.fromNip17).toList(growable: false);
+    return loaded;
   }
 
   void _refresh() => unawaited(_replaceMessages(forceRefresh: true));
 
   Future<void> _replaceMessages({required bool forceRefresh}) async {
+    final generation = ++loadGeneration;
+    final pubkey = myPubkey;
+    if (pubkey == null) return;
     final initialLoad = loadingMessages;
     try {
       final loaded = await _load(forceRefresh: forceRefresh);
-      if (!mounted) return;
+      if (!mounted || generation != loadGeneration) return;
+      // Merge history so a live message received during the relay query is
+      // not erased by an older snapshot.
+      _appendMessages(loaded);
+      final transport = await _communication.resolveTextTransport(
+        offer: widget.offer,
+        myPubkey: pubkey,
+        recipientDmRelayDiscoveryRelays: _nip17RelayDiscoveryRelays,
+      );
+      if (!mounted || generation != loadGeneration) return;
       setState(() {
-        messages
-          ..clear()
-          ..addAll(loaded);
+        textTransport = transport;
         loadingMessages = false;
         error = null;
       });
       _scrollToBottom(immediate: initialLoad);
     } catch (exception) {
-      if (!mounted) return;
+      if (!mounted || generation != loadGeneration) return;
       Logger.log.e(() => '[DisputeChat] Message loading failed: $exception');
       setState(() {
         loadingMessages = false;
@@ -313,7 +326,9 @@ class _DisputeConversationCardState
       if (mounted) {
         Logger.log.e(() => '[DisputeChat] Operation failed: $exception');
         setState(() {
-          error = Translations.of(context).disputeChat.errors.operationFailed;
+          error = exception is EvidenceImageException
+              ? exception.message
+              : Translations.of(context).disputeChat.errors.operationFailed;
         });
       }
     } finally {
@@ -337,9 +352,9 @@ class _DisputeConversationCardState
         recipientDmRelayDiscoveryRelays: _nip17RelayDiscoveryRelays,
         legacyRendezvousRelays: _legacyRendezvousRelays,
       );
-      if (transport == DisputeTextTransport.legacyNip04 && mounted) {
+      if (mounted) {
         setState(() {
-          legacyMode = true;
+          textTransport = transport;
         });
       }
       messageController.clear();
@@ -348,17 +363,18 @@ class _DisputeConversationCardState
   }
 
   Future<void> _attachEvidence() async {
-    if (legacyMode) {
-      throw StateError(
-        Translations.of(context).disputeChat.errors.attachmentsRequireNip17,
-      );
-    }
     final pubkey = myPubkey;
     if (pubkey == null) return;
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-    final bytes = await picked.readAsBytes();
     await _run(() async {
+      if (legacyMode) {
+        throw EvidenceImageException(
+          Translations.of(context).disputeChat.errors.attachmentsRequireNip17,
+        );
+      }
+      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (picked == null || !mounted) return;
+      final bytes = await picked.readAsBytes();
+      if (!mounted) return;
       await _communication.sendEvidence(
         offer: widget.offer,
         myPubkey: pubkey,
@@ -467,7 +483,7 @@ class _DisputeConversationCardState
                     ),
                   ),
                 ),
-                if (!loadingMessages)
+                if (!loadingMessages && textTransport != null)
                   Chip(
                     visualDensity: VisualDensity.compact,
                     backgroundColor: legacyMode
@@ -527,7 +543,7 @@ class _DisputeConversationCardState
               const SizedBox(height: 8),
               Row(
                 children: [
-                  if (!legacyMode)
+                  if (textTransport == DisputeTextTransport.nip17)
                     IconButton(
                       tooltip: strings.tooltips.attachEvidence,
                       onPressed: busy ? null : _attachEvidence,

@@ -354,6 +354,29 @@ class DisputeCommunicationService {
     }
   }
 
+  /// Resolves the recipient's advertised transport independently of history.
+  /// A legacy message in a conversation does not make the whole lane legacy.
+  Future<DisputeTextTransport> resolveTextTransport({
+    required Offer offer,
+    required String myPubkey,
+    String? participantPubkey,
+    Iterable<String>? recipientDmRelayDiscoveryRelays,
+  }) async {
+    final peer = _peerFor(
+      offer,
+      myPubkey,
+      participantPubkey: participantPubkey,
+    );
+    final relays = await ndk.userRelayLists.getDmRelays(
+      peer,
+      forceRefresh: true,
+      discoveryRelays: recipientDmRelayDiscoveryRelays,
+    );
+    return relays == null || relays.isEmpty
+        ? DisputeTextTransport.legacyNip04
+        : DisputeTextTransport.nip17;
+  }
+
   Future<DisputeTextTransport> sendText({
     required Offer offer,
     required String myPubkey,
@@ -657,8 +680,8 @@ class DisputeCommunicationService {
     }
   }
 
-  /// Loads only bound legacy NIP-04 text after the caller has explicitly
-  /// entered compatibility mode. This is human-assistance content, never case
+  /// Loads legacy NIP-04 history regardless of the current send transport.
+  /// This is human-assistance content, never case
   /// evidence or an authorization signal.
   Future<List<LegacyNip04Message>> loadLegacyMessages({
     required Offer offer,
@@ -894,6 +917,20 @@ class DisputeCommunicationService {
       participantPubkey: participantPubkey,
     );
     final sanitized = imageSanitizer.sanitize(imageBytes);
+    // Check before uploading: an unavailable NIP-17 recipient cannot receive
+    // the decryption metadata, even when Blossom accepts the encrypted blob.
+    final transport = await resolveTextTransport(
+      offer: offer,
+      myPubkey: myPubkey,
+      participantPubkey: participantPubkey,
+      recipientDmRelayDiscoveryRelays: recipientDmRelayDiscoveryRelays,
+    );
+    if (transport != DisputeTextTransport.nip17) {
+      throw const EvidenceImageException(
+        'The recipient\'s NIP-17 relay list could not be found. '
+        'Refresh the conversation and try again before attaching an image.',
+      );
+    }
     final encrypted = await Nip17FileCrypto.encrypt(sanitized.bytes);
 
     // Always resolve the standard kind-10063 list authored by the coordinator.

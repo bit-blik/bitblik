@@ -6,7 +6,62 @@ import 'package:image/image.dart' as image;
 import 'package:ndk/ndk.dart';
 import 'package:ndk/shared/nips/nip01/bip340.dart';
 
+class _UnavailableNip17Communication extends DisputeCommunicationService {
+  _UnavailableNip17Communication({required super.ndk});
+
+  @override
+  Future<DisputeTextTransport> resolveTextTransport({
+    required Offer offer,
+    required String myPubkey,
+    String? participantPubkey,
+    Iterable<String>? recipientDmRelayDiscoveryRelays,
+  }) async => DisputeTextTransport.legacyNip04;
+}
+
 void main() {
+  test(
+    'evidence rejects an unavailable NIP-17 recipient before Blossom',
+    () async {
+      final ndk = Ndk(
+        NdkConfig(
+          cache: MemCacheManager(),
+          eventVerifier: Bip340EventVerifier(),
+          bootstrapRelays: const [],
+        ),
+      );
+      addTearDown(ndk.destroy);
+      final offer = Offer(
+        id: 'evidence-case',
+        amountSats: 1000,
+        makerFees: 5,
+        status: OfferStatus.dispute,
+        statusRaw: OfferStatus.dispute.name,
+        fiatAmount: 10,
+        fiatCurrency: 'PLN',
+        createdAt: DateTime.utc(2026),
+        makerPubkey: 'maker',
+        coordinatorPubkey: 'coordinator',
+        takerPubkey: 'taker',
+      );
+      // No account or Blossom server is configured: reaching the upload would
+      // produce a different failure instead of this actionable relay error.
+      await expectLater(
+        _UnavailableNip17Communication(ndk: ndk).sendEvidence(
+          offer: offer,
+          myPubkey: 'taker',
+          imageBytes: image.encodePng(image.Image(width: 2, height: 2)),
+        ),
+        throwsA(
+          isA<EvidenceImageException>().having(
+            (error) => error.message,
+            'message',
+            contains('NIP-17 relay list could not be found'),
+          ),
+        ),
+      );
+    },
+  );
+
   test('normalizes trailing slashes from kind-10063 Blossom servers', () {
     expect(
       normalizeBlossomServerUrls([
@@ -290,13 +345,12 @@ void main() {
         ),
       );
       try {
-        final owner = DisputeCommunicationService(
-          ndk: ndk,
-        ).routeLegacyMessageToOffer(
-          offers: [oldOffer, futureOffer, newerResolvedOffer, currentOffer],
-          myPubkey: coordinator,
-          message: unbound,
-        );
+        final owner = DisputeCommunicationService(ndk: ndk)
+            .routeLegacyMessageToOffer(
+              offers: [oldOffer, futureOffer, newerResolvedOffer, currentOffer],
+              myPubkey: coordinator,
+              message: unbound,
+            );
         expect(owner?.id, currentOffer.id);
 
         final rumor = Nip01Event(
@@ -386,11 +440,10 @@ void main() {
             pubKey: taker,
             kind: Dms.kLegacyNip04MessageKind,
             createdAt: Nip01Event.secondsSinceEpoch(),
-            content:
-                (await Bip340EventSigner(
-                  privateKey: takerPrivateKey,
-                  publicKey: taker,
-                ).encrypt('plain external client message', coordinator))!,
+            content: (await Bip340EventSigner(
+              privateKey: takerPrivateKey,
+              publicKey: taker,
+            ).encrypt('plain external client message', coordinator))!,
             tags: [
               ['p', coordinator, 'wss://relay-hint.example'],
             ],
