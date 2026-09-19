@@ -1,4 +1,3 @@
-import 'package:bitblik/src/utils/code_label_ext.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -30,7 +29,6 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
   bool _isCancelling = false;
   bool _isExpired = false;
   bool _isRecreating = false;
-  bool _isFetchingBlik = false;
   Timer? _expiryTimer;
   Offer?
   _lastKnownOffer; // snapshot so expired UI has offer details even after state→null
@@ -53,8 +51,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
   /// timer. Once a taker has engaged (reserved/blik*), the trade is live on the
   /// coordinator: showing "expired" here strands the maker while the
   /// coordinator still expects a BLIK confirmation — which auto-settles the
-  /// hold invoice against the maker after the dispute timeout. See [_goHome] and
-  /// [_fetchBlikAndNavigate].
+  /// hold invoice against the maker after the dispute timeout. See [_goHome].
   static bool _isExpirableStatus(OfferStatus? status) {
     return status == null ||
         status == OfferStatus.created ||
@@ -106,7 +103,8 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       // Continue waiting
     } else if (status == OfferStatus.blikReceived ||
         status == OfferStatus.blikSentToMaker) {
-      await _fetchBlikAndNavigate(offer, makerId, coordinatorPubkey);
+      // The flow's confirmation screen owns fetching and retrying the code.
+      if (mounted) context.go(flowRoute);
     } else if (status == OfferStatus.expired) {
       if (mounted) {
         setState(() => _isExpired = true);
@@ -117,75 +115,6 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         //   t.maker.waitTaker.offerNoLongerAvailable(status: status.name),
         // );
       }
-    }
-  }
-
-  /// A taker submitted a BLIK. The coordinator flips the offer to
-  /// `blikSentToMaker` the moment we fetch the code, which makes the maker
-  /// liable: if no confirmation arrives within the coordinator's BLIK-confirm
-  /// window the hold invoice is auto-settled against the maker. So we must NEVER
-  /// silently fail here — keep retrying until the code is shown or the offer
-  /// leaves the BLIK state, and surface every failure to the user.
-  Future<void> _fetchBlikAndNavigate(
-    Offer offer,
-    String makerId,
-    String coordinatorPubkey,
-  ) async {
-    if (_isFetchingBlik) return;
-    _isFetchingBlik = true;
-    // Trade is live — clear any stale expired UI so the maker isn't stranded.
-    if (_isExpired && mounted) {
-      setState(() => _isExpired = false);
-    }
-    final apiService = ref.read(apiServiceProvider);
-    try {
-      while (mounted) {
-        final current = ref.read(activeOfferProvider);
-        final status = current?.statusEnum;
-        if (status != OfferStatus.blikReceived &&
-            status != OfferStatus.blikSentToMaker) {
-          // Offer moved on (confirmed/expired/etc) — stop; the listener handles it.
-          return;
-        }
-        try {
-          final blikCode = await apiService.getBlikCodeForMaker(
-            offer.id,
-            makerId,
-            coordinatorPubkey,
-          );
-          if (blikCode != null && blikCode.isNotEmpty) {
-            ref.read(receivedBlikCodeProvider.notifier).state = blikCode;
-            if (mounted) context.go(flowRoute);
-            return;
-          }
-          Logger.log.w(
-            () =>
-                '[MakerWaitTaker] BLIK fetch returned empty for offer ${offer.id}, retrying.',
-          );
-        } catch (e) {
-          Logger.log.w(
-            () =>
-                '[MakerWaitTaker] BLIK fetch failed for offer ${offer.id}: $e',
-          );
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  t.maker.waitTaker.errorRetrievingBlik(
-                    details: e.toString(),
-                    code: ref
-                            .read(selectedPaymentSystemProvider)
-                            .localizedCodeLabel,
-                  ),
-                ),
-              ),
-            );
-          }
-        }
-        await Future.delayed(const Duration(seconds: 3));
-      }
-    } finally {
-      _isFetchingBlik = false;
     }
   }
 

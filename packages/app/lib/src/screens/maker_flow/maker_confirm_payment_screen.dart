@@ -23,7 +23,11 @@ class MakerConfirmPaymentScreen extends ConsumerStatefulWidget {
 
 class _MakerConfirmPaymentScreenState
     extends ConsumerState<MakerConfirmPaymentScreen> {
-  bool _fetchAttempted = false;
+  bool _fetchInFlight = false;
+  bool _fetchFailed = false;
+  Timer? _fetchRetry;
+  Offer? _loadedOffer;
+  String? _loadedCode;
 
   /// Active offer's payment method, resolved from its payment-system id (falls
   /// back to the app's selected method when there is no active offer).
@@ -74,16 +78,9 @@ class _MakerConfirmPaymentScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(isLoadingProvider.notifier).state = false;
-      }
-    });
-    // Only attempt to fetch BLIK code if status is NOT expired
-    if (!_isPostBlikWindowStatus() && !_makerProvidedCodeFlow) {
-      // Attempt immediately if key is already available
-      final pkNow = ref.read(publicKeyProvider).value;
-      if (pkNow != null) {
         _fetchBlikCode();
       }
-    }
+    });
     // If we land here already in takerCharged (incl. app reopen), start the
     // 1s repaint ticker. The displayed remaining time is always recomputed
     // from the persisted offer.createdAt, so it reflects real elapsed time
@@ -105,26 +102,86 @@ class _MakerConfirmPaymentScreenState
   @override
   void dispose() {
     _autoConfirmTicker?.cancel();
+    _fetchRetry?.cancel();
     super.dispose();
   }
 
+  // Status and updatedAt may change while get_blik is in flight. The code
+  // belongs to a reservation/submission, not to a particular status update.
+  bool _sameCodeAttempt(Offer? a, Offer? b) =>
+      a != null &&
+      b != null &&
+      a.id == b.id &&
+      a.coordinatorPubkey == b.coordinatorPubkey &&
+      a.makerPubkey == b.makerPubkey &&
+      a.takerPubkey == b.takerPubkey &&
+      a.reservedAt == b.reservedAt &&
+      a.blikReceivedAt == b.blikReceivedAt;
+
+  bool _canFetchCode(Offer? offer) =>
+      offer != null &&
+      !_makerProvidedCodeFlow &&
+      (offer.status == OfferStatus.blikReceived ||
+          offer.status == OfferStatus.blikSentToMaker) &&
+      DateTime.now().isBefore(
+        (offer.blikReceivedAt ?? offer.updatedAt ?? offer.createdAt).add(
+          validityForOffer(offer),
+        ),
+      );
+
   Future<void> _fetchBlikCode() async {
-    if (_fetchAttempted) return;
-    _fetchAttempted = true;
-    // Previous screen (MakerWaitForBlik/WaitTaker) may have already fetched the code;
-    // avoid a redundant RPC call to the coordinator.
-    if (ref.read(receivedBlikCodeProvider) != null) return;
+    if (!mounted || _fetchInFlight || (_fetchRetry?.isActive ?? false)) return;
     final offer = ref.read(activeOfferProvider);
     final makerId = ref.read(publicKeyProvider).value;
-    if (offer == null || makerId == null) return;
+    if (!_canFetchCode(offer) ||
+        makerId == null ||
+        offer!.makerPubkey != makerId ||
+        _sameCodeAttempt(_loadedOffer, offer)) {
+      return;
+    }
+
+    _fetchInFlight = true;
+    setState(() => _fetchFailed = false);
     final apiService = ref.read(apiServiceProvider);
-    final blikCode = await apiService.getBlikCodeForMaker(
-      offer.id,
-      makerId,
-      offer.coordinatorPubkey,
-    );
-    if (blikCode != null) {
-      ref.read(receivedBlikCodeProvider.notifier).state = blikCode;
+    try {
+      final code = await apiService.getBlikCodeForMaker(
+        offer.id,
+        makerId,
+        offer.coordinatorPubkey,
+      );
+      if (!mounted) return;
+      final current = ref.read(activeOfferProvider);
+      if (!_sameCodeAttempt(offer, current) ||
+          !_canFetchCode(current) ||
+          ref.read(publicKeyProvider).value != makerId) {
+        return;
+      }
+      setState(() {
+        _fetchFailed = code == null || code.isEmpty;
+        if (!_fetchFailed) {
+          _loadedOffer = current;
+          _loadedCode = code;
+        }
+      });
+    } catch (error) {
+      // Never log the returned code or a transport URL containing secrets.
+      Logger.log.w(
+        () => '[MakerConfirmPayment] Code fetch failed: ${error.runtimeType}',
+      );
+      if (mounted && _sameCodeAttempt(offer, ref.read(activeOfferProvider))) {
+        setState(() => _fetchFailed = true);
+      }
+    } finally {
+      _fetchInFlight = false;
+      if (mounted) {
+        final current = ref.read(activeOfferProvider);
+        if (_canFetchCode(current) &&
+            !_sameCodeAttempt(_loadedOffer, current)) {
+          // One retry after completion, never parallel calls or notification-
+          // driven retry storms. Expiry/navigation stops further requests.
+          _fetchRetry = Timer(const Duration(seconds: 3), _fetchBlikCode);
+        }
+      }
     }
   }
 
@@ -327,15 +384,17 @@ class _MakerConfirmPaymentScreenState
     // Listen for public key availability (must be done during build)
     // Only fetch BLIK code if status is not expired
     ref.listen(publicKeyProvider, (previous, next) {
-      if (!_fetchAttempted &&
-          next.value != null &&
-          !_isPostBlikWindowStatus() &&
-          !_makerProvidedCodeFlow) {
+      if (next.value != null) {
         _fetchBlikCode();
       }
     });
     // Listen to the active offer provider for status changes
     ref.listen<Offer?>(activeOfferProvider, (previous, next) {
+      if (!_sameCodeAttempt(previous, next) || !_canFetchCode(next)) {
+        _fetchRetry?.cancel();
+        _fetchFailed = false;
+      }
+      _fetchBlikCode();
       if (next != null) {
         // Handle status update only if the status has actually changed
         if (previous == null || previous.status != next.status) {
@@ -345,7 +404,10 @@ class _MakerConfirmPaymentScreenState
     });
 
     final errorMessage = ref.watch(errorProvider);
-    final receivedBlikCode = ref.watch(receivedBlikCodeProvider);
+    final activeOffer = ref.watch(activeOfferProvider);
+    final receivedBlikCode = _sameCodeAttempt(_loadedOffer, activeOffer)
+        ? _loadedCode
+        : null;
     final isExpired = _isPostBlikWindowStatus();
     final offerStatus = ref.watch(activeOfferProvider)?.statusEnum;
     final canConfirm = offerStatus != null && _canConfirmPayment(offerStatus);
@@ -466,6 +528,24 @@ class _MakerConfirmPaymentScreenState
                     _buildAutoConfirmCountdown(ref.watch(activeOfferProvider)!),
                   ],
                   // Error message
+                  if (_fetchFailed && _canFetchCode(activeOffer)) ...[
+                    Text(
+                      t.system.errors.generic,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    TextButton(
+                      onPressed: _fetchInFlight
+                          ? null
+                          : () {
+                              _fetchRetry?.cancel();
+                              _fetchBlikCode();
+                            },
+                      child: Text(t.common.buttons.retry),
+                    ),
+                  ],
                   if (errorMessage != null) ...[
                     Text(
                       errorMessage,
