@@ -165,19 +165,31 @@ app.use(express.static(buildDir, { index: false }));
 const coordinators = new Map(
   coordinatorConfigs.map((config) => {
     console.log(`Attempting connection to coordinator ${config.id}...`);
+    const pool = new Pool({
+      connectionString: buildConnectionString(config),
+      // Cap how long any dashboard query waits on a lock (e.g. table DDL elsewhere)
+      // so read paths like the offers snapshot fail fast instead of hanging.
+      // Does not limit query execution time, only lock acquisition.
+      options: '-c lock_timeout=5s',
+    });
+
+    // pg emits errors from idle pooled clients as EventEmitter events. Without
+    // a listener, a temporary network outage terminates the Node process.
+    pool.on('error', (error) => {
+      console.error(`PostgreSQL pool connection error (${config.id}):`, error.message);
+    });
+
     return [
       config.id,
       {
         ...config,
         connectionString: buildConnectionString(config),
-        pool: new Pool({
-          connectionString: buildConnectionString(config),
-          // Cap how long any dashboard query waits on a lock (e.g. table DDL elsewhere)
-          // so read paths like the offers snapshot fail fast instead of hanging.
-          // Does not limit query execution time, only lock acquisition.
-          options: '-c lock_timeout=5s',
-        }),
+        pool,
         wsClients: new Set(),
+        realtimeClient: null,
+        realtimeConnecting: false,
+        realtimeRetryAttempt: 0,
+        realtimeRetryTimer: null,
       }
     ];
   })
@@ -654,17 +666,61 @@ const setupRealtimeTriggers = async (pool) => {
   );
 };
 
+const REALTIME_RETRY_BASE_MS = 1000;
+const REALTIME_RETRY_MAX_MS = 60000;
+
+const scheduleRealtimeReconnect = (coordinator) => {
+  if (coordinator.realtimeRetryTimer || coordinator.realtimeClient || coordinator.realtimeConnecting) {
+    return;
+  }
+
+  const delay = Math.min(
+    REALTIME_RETRY_BASE_MS * (2 ** coordinator.realtimeRetryAttempt),
+    REALTIME_RETRY_MAX_MS
+  );
+  coordinator.realtimeRetryAttempt += 1;
+  console.log(`Retrying realtime listener for ${coordinator.id} in ${delay}ms`);
+
+  coordinator.realtimeRetryTimer = setTimeout(() => {
+    coordinator.realtimeRetryTimer = null;
+    void startRealtimeListener(coordinator);
+  }, delay);
+};
+
 const startRealtimeListener = async (coordinator) => {
+  if (coordinator.realtimeConnecting || coordinator.realtimeClient) {
+    return;
+  }
+
+  coordinator.realtimeConnecting = true;
+  let listenerClient = null;
+
   try {
     await setupRealtimeTriggers(coordinator.pool);
 
-    const listenerClient = new Client({
+    listenerClient = new Client({
       connectionString: coordinator.connectionString
     });
+
+    const handleDisconnect = (event, error) => {
+      if (coordinator.realtimeClient === listenerClient) {
+        coordinator.realtimeClient = null;
+      }
+      console.error(
+        `PostgreSQL LISTEN client ${event} (${coordinator.id}):`,
+        error?.message || 'connection closed'
+      );
+      scheduleRealtimeReconnect(coordinator);
+    };
+
+    listenerClient.once('error', (error) => handleDisconnect('error', error));
+    listenerClient.once('end', () => handleDisconnect('ended'));
 
     await listenerClient.connect();
     await listenerClient.query('LISTEN offers_changes');
     await listenerClient.query('LISTEN log_audit_changes');
+    coordinator.realtimeClient = listenerClient;
+    coordinator.realtimeRetryAttempt = 0;
 
     listenerClient.on('notification', async (message) => {
       if (!message.payload) {
@@ -726,13 +782,18 @@ const startRealtimeListener = async (coordinator) => {
       }
     });
 
-    listenerClient.on('error', (error) => {
-      console.error(`PostgreSQL LISTEN client error (${coordinator.id}):`, error);
-    });
-
     console.log(`Realtime listener connected for ${coordinator.id} (LISTEN offers_changes, log_audit_changes)`);
   } catch (error) {
-    console.error(`Failed to start realtime listener for ${coordinator.id}:`, error);
+    console.error(`Failed to start realtime listener for ${coordinator.id}:`, error.message);
+    if (listenerClient) {
+      listenerClient.removeAllListeners();
+      await listenerClient.end().catch(() => {});
+    }
+  } finally {
+    coordinator.realtimeConnecting = false;
+    if (!coordinator.realtimeClient) {
+      scheduleRealtimeReconnect(coordinator);
+    }
   }
 };
 
