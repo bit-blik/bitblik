@@ -530,6 +530,7 @@ class _DisputeConversationCardState
                     backgroundColor: legacyMode
                         ? Colors.amber.shade200
                         : Colors.green.shade200,
+                    labelStyle: const TextStyle(color: Colors.black87),
                     label: Text(legacyMode ? 'NIP-04' : 'NIP-17'),
                   ),
                 IconButton(

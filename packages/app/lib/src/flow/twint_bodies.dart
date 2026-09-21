@@ -28,12 +28,12 @@ import 'flow_timeout.dart';
 /// Signature for a body that renders one (state, role) of a flow-driven screen.
 typedef FlowBody =
     Widget Function(
-  BuildContext context,
-  WidgetRef ref,
-  Offer offer,
-  FlowEngine engine,
-  FlowActor role,
-);
+      BuildContext context,
+      WidgetRef ref,
+      Offer offer,
+      FlowEngine engine,
+      FlowActor role,
+    );
 
 // ─── shared bits ────────────────────────────────────────────────────────────
 
@@ -73,8 +73,9 @@ class TwintMakerProgressIndicator extends ConsumerWidget {
               labels[i],
               style: TextStyle(
                 fontSize: 13,
-                fontWeight:
-                    i + 1 <= activeStep ? FontWeight.w500 : FontWeight.w400,
+                fontWeight: i + 1 <= activeStep
+                    ? FontWeight.w500
+                    : FontWeight.w400,
                 color: i + 1 == activeStep
                     ? Theme.of(context).colorScheme.onSurface
                     : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -99,8 +100,7 @@ class TwintTakerProgressIndicator extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
     final offer = ref.watch(activeOfferProvider);
-    final method =
-        offer != null
+    final method = offer != null
         ? (paymentSystemForCurrency(offer.fiatCurrency) ?? kBlik)
         : ref.watch(selectedPaymentSystemProvider);
     final code = method.codeLabel;
@@ -126,8 +126,9 @@ class TwintTakerProgressIndicator extends ConsumerWidget {
               labels[i],
               style: TextStyle(
                 fontSize: 13,
-                fontWeight:
-                    i + 1 <= activeStep ? FontWeight.w500 : FontWeight.w400,
+                fontWeight: i + 1 <= activeStep
+                    ? FontWeight.w500
+                    : FontWeight.w400,
                 color: i + 1 == activeStep
                     ? Theme.of(context).colorScheme.onSurface
                     : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -193,7 +194,7 @@ Widget _titled(
           if (breadcrumb != null) ...[breadcrumb, const SizedBox(height: 20)],
           Text(
             title,
-              textAlign: TextAlign.center,
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 20),
@@ -221,7 +222,10 @@ Widget _titledWithActions(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (breadcrumb != null) ...[breadcrumb, const SizedBox(height: 20)],
+                if (breadcrumb != null) ...[
+                  breadcrumb,
+                  const SizedBox(height: 20),
+                ],
                 Text(
                   title,
                   textAlign: TextAlign.center,
@@ -306,8 +310,7 @@ final FlowBody twintMakerWaitBody = (context, ref, offer, engine, role) {
     // Reserved: the info box below explains the state — no spinner line.
     message: waitingForTaker ? t.maker.waitTaker.message : null,
     // Once reserved, explain what the taker is doing (BLIK-style info box).
-    extra:
-        waitingForTaker
+    extra: waitingForTaker
         ? const []
         : [
             Container(
@@ -321,11 +324,11 @@ final FlowBody twintMakerWaitBody = (context, ref, offer, engine, role) {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.blue.shade700,
-                      size: 22,
-                    ),
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.blue.shade700,
+                    size: 22,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -345,8 +348,7 @@ final FlowBody twintMakerWaitBody = (context, ref, offer, engine, role) {
       context,
       engine,
       offer,
-      caption:
-          waitingForTaker
+      caption: waitingForTaker
           ? t.twint.flow.makerWait.offerExpires(code: codeLabel)
           : t.twint.flow.makerWait.codeExpiresIn(code: codeLabel),
       size: waitingForTaker ? 200 : 100,
@@ -366,15 +368,14 @@ final FlowBody twintMakerWaitBody = (context, ref, offer, engine, role) {
       labels: {'cancel_offer': t.twint.flow.makerWait.cancelOffer},
       confirmEvents: const {'cancel_offer'},
       overrides: {
-        'confirm_payment':
-            (_) => _makerConfirmPaymentButton(context, ref, offer, t),
-        'cancel_offer':
-            (_) => _makerCancelButton(
-              context,
-              ref,
-              offer,
-              t.twint.flow.makerWait.cancelOffer,
-            ),
+        'confirm_payment': (_) =>
+            _makerConfirmPaymentButton(context, ref, offer, t),
+        'cancel_offer': (_) => _makerCancelButton(
+          context,
+          ref,
+          offer,
+          t.twint.flow.makerWait.cancelOffer,
+        ),
       },
     ),
   );
@@ -463,8 +464,7 @@ Widget _makerConfirmPaymentButton(
         final confirmed = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
-          builder:
-              (dialogContext) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: Text(strings.confirmDialog.title),
             content: Text(strings.confirmDialog.content(code: codeLabel)),
             actions: [
@@ -518,63 +518,66 @@ final FlowBody twintMakerExpiredBody = (context, ref, offer, engine, role) {
   final t = Translations.of(context);
   const codeLabel = 'TWINT';
   final strings = t.twint.flow.makerExpired;
-  return _titledWithActions(context, strings.title(code: codeLabel), [
+  return _titledWithActions(
+    context,
+    strings.title(code: codeLabel),
+    [
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(
-              Icons.warning_amber_rounded,
-              color: Colors.orange,
-              size: 24,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 24,
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              strings.warning(code: codeLabel),
-              style: const TextStyle(fontSize: 14, height: 1.4),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                strings.warning(code: codeLabel),
+                style: const TextStyle(fontSize: 14, height: 1.4),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-    // Countdown until the yaml timeout moves the offer on (expiredTwint →
-    // invalidTwint). Orange to match the warning tone.
-    flowCountdownFor(
-      context,
-      engine,
-      offer,
-      caption: strings.timerCaption,
-      size: 100,
-      strokeWidth: 8,
-      fontSize: 24,
-      progressColor: Colors.orange,
-    ),
-    const SizedBox(height: 14),
-    Text(
-      strings.disputeHint,
-      textAlign: TextAlign.center,
-      style: TextStyle(fontSize: 13, height: 1.4, color: Colors.grey[700]),
-    ),
-    // Yaml allows confirm_payment for the maker here — same green success
-    // button + irreversibility dialog as in `reserved`.
-  ],
+      // Countdown until the yaml timeout moves the offer on (expiredTwint →
+      // invalidTwint). Orange to match the warning tone.
+      flowCountdownFor(
+        context,
+        engine,
+        offer,
+        caption: strings.timerCaption,
+        size: 100,
+        strokeWidth: 8,
+        fontSize: 24,
+        progressColor: Colors.orange,
+      ),
+      const SizedBox(height: 14),
+      Text(
+        strings.disputeHint,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 13, height: 1.4, color: Colors.grey[700]),
+      ),
+      // Yaml allows confirm_payment for the maker here — same green success
+      // button + irreversibility dialog as in `reserved`.
+    ],
     actions: FlowActionsBar(
       offer: offer,
       engine: engine,
       role: role,
       overrides: {
-        'confirm_payment':
-            (_) => _makerConfirmPaymentButton(context, ref, offer, t),
+        'confirm_payment': (_) =>
+            _makerConfirmPaymentButton(context, ref, offer, t),
       },
     ),
     breadcrumb: const TwintMakerProgressIndicator(activeStep: 3),
@@ -590,32 +593,32 @@ final FlowBody twintMakerVerifyBody = (context, ref, offer, engine, role) {
     Text(
       t.twint.flow.makerVerify.body(amount: _amount(offer), code: codeLabel),
       textAlign: TextAlign.center,
-          ),
-      const SizedBox(height: 8),
+    ),
+    const SizedBox(height: 8),
     Text(
       t.twint.flow.makerVerify.hint,
-          textAlign: TextAlign.center,
+      textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodySmall,
     ),
-      flowCountdownFor(
-        context,
-        engine,
-        offer,
-        caption: t.twint.flow.makerVerify.autoConfirms,
-      ),
-      const SizedBox(height: 24),
-      FlowActionsBar(
-        offer: offer,
-        engine: engine,
-        role: role,
+    flowCountdownFor(
+      context,
+      engine,
+      offer,
+      caption: t.twint.flow.makerVerify.autoConfirms,
+    ),
+    const SizedBox(height: 24),
+    FlowActionsBar(
+      offer: offer,
+      engine: engine,
+      role: role,
       labels: {'confirm_payment': t.twint.flow.makerVerify.confirmReceived},
-        overrides: {
-        'confirm_payment':
-            (_) => _makerConfirmPaymentButton(context, ref, offer, t),
-        'start_dispute':
-            (_) => _makerStartDisputeButton(context, ref, offer, t),
-        },
-      ),
+      overrides: {
+        'confirm_payment': (_) =>
+            _makerConfirmPaymentButton(context, ref, offer, t),
+        'start_dispute': (_) =>
+            _makerStartDisputeButton(context, ref, offer, t),
+      },
+    ),
   ], breadcrumb: const TwintMakerProgressIndicator(activeStep: 3));
 };
 
@@ -644,8 +647,7 @@ Widget _makerStartDisputeButton(
         final confirmed = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
-          builder:
-              (dialogContext) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: Text(dialogStrings.title),
             content: Text(dialogStrings.content(code: codeLabel)),
             actions: [
@@ -688,9 +690,8 @@ Widget _makerStartDisputeButton(
 
 // ─── maker: invalidTwint (enter a new code) ──────────────────────────────────
 
-final FlowBody twintMakerReCodeBody =
-    (context, ref, offer, engine, role) =>
-        _TwintReCodeBody(offer: offer, engine: engine, role: role);
+final FlowBody twintMakerReCodeBody = (context, ref, offer, engine, role) =>
+    _TwintReCodeBody(offer: offer, engine: engine, role: role);
 
 class _TwintReCodeBody extends ConsumerStatefulWidget {
   final Offer offer;
@@ -777,7 +778,10 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
     if (_busy ||
         instrumentForOffer(widget.offer)?.validate(code) != true ||
         (_isShopQr &&
-            TwintShopQr.tryParse(code)?.matchesAmount(widget.offer.fiatAmount) != true)) {
+            TwintShopQr.tryParse(
+                  code,
+                )?.matchesAmount(widget.offer.fiatAmount) !=
+                true)) {
       return;
     }
     setState(() => _busy = true);
@@ -811,8 +815,7 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
       height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient:
-            onPressed != null
+        gradient: onPressed != null
             ? const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -899,8 +902,8 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
                 Text(
                   t.maker.amountForm.twintScan.scanButton,
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
+                    color: Colors.white,
+                    fontSize: 17,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -908,12 +911,13 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
             ),
           ),
           const SizedBox(height: 8),
-          if (!_isShopQr) Center(
-            child: TextButton(
-              onPressed: _showManual,
-              child: Text(t.maker.amountForm.twintScan.manualButton),
+          if (!_isShopQr)
+            Center(
+              child: TextButton(
+                onPressed: _showManual,
+                child: Text(t.maker.amountForm.twintScan.manualButton),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -939,8 +943,8 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
               Text(
                 t.twint.flow.makerRecode.fieldLabel(code: _method.codeLabel),
                 style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                   color: Colors.grey[700],
                 ),
               ),
@@ -963,8 +967,9 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
                 0.0,
                 double.infinity,
               );
-              final perChar =
-                  _method.codeLength > 0 ? available / _method.codeLength : 0.0;
+              final perChar = _method.codeLength > 0
+                  ? available / _method.codeLength
+                  : 0.0;
               final fontSize = (perChar / 1.25).clamp(28.0, 52.0);
               final letterSpacing = (fontSize * 0.22).clamp(4.0, 10.0);
               final textStyle = TextStyle(
@@ -1018,11 +1023,11 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
           Text(
             hasValue
                 ? t.maker.amountForm.twintScan.helperFilled(
-                  code: _method.codeLabel,
-                )
+                    code: _method.codeLabel,
+                  )
                 : t.maker.amountForm.twintScan.helperEmpty(
-                  digits: _method.codeLength,
-                ),
+                    digits: _method.codeLength,
+                  ),
             style: TextStyle(
               fontSize: 12.5,
               height: 1.35,
@@ -1041,8 +1046,13 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
     final manualVisible =
         _showManualEntry || _controller.text.trim().isNotEmpty;
     final code = _isShopQr ? _controller.text : _controller.text.trim();
-    final codeComplete = instrumentForOffer(widget.offer)?.validate(code) == true &&
-        (!_isShopQr || TwintShopQr.tryParse(code)?.matchesAmount(widget.offer.fiatAmount) == true);
+    final codeComplete =
+        instrumentForOffer(widget.offer)?.validate(code) == true &&
+        (!_isShopQr ||
+            TwintShopQr.tryParse(
+                  code,
+                )?.matchesAmount(widget.offer.fiatAmount) ==
+                true);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -1065,8 +1075,14 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
             Text(_amount(widget.offer), textAlign: TextAlign.center),
             _scanCard(t),
             if (codeComplete)
-              Text(t.twint.shop.replacementScanned, textAlign: TextAlign.center),
-          ] else if (!manualVisible) _scanCard(t) else _codeField(t),
+              Text(
+                t.twint.shop.replacementScanned,
+                textAlign: TextAlign.center,
+              ),
+          ] else if (!manualVisible)
+            _scanCard(t)
+          else
+            _codeField(t),
           flowCountdownFor(
             context,
             widget.engine,
@@ -1077,23 +1093,22 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
           if (manualVisible)
             _gradientButton(
               onPressed: _busy || !codeComplete ? null : _submit,
-              child:
-                  _busy
+              child: _busy
                   ? const SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : Text(
                       t.twint.flow.makerRecode.relist,
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
             ),
           const SizedBox(height: 8),
@@ -1106,13 +1121,12 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
             // enter_new_twint is handled by the custom field above.
             overrides: {
               'enter_new_twint': (_) => const SizedBox.shrink(),
-              'cancel_offer':
-                  (_) => _makerCancelButton(
-                    context,
-                    ref,
-                    widget.offer,
-                    t.twint.flow.makerRecode.cancelOffer,
-                  ),
+              'cancel_offer': (_) => _makerCancelButton(
+                context,
+                ref,
+                widget.offer,
+                t.twint.flow.makerRecode.cancelOffer,
+              ),
             },
           ),
         ],
@@ -1126,8 +1140,7 @@ class _TwintReCodeBodyState extends ConsumerState<_TwintReCodeBody> {
 // Taker pays the TWINT code externally, then taps "I've paid". The payout
 // invoice was already captured at reserve, so mark_twint_charged carries no
 // params. This body also hydrates the maker's code (server-only) for display.
-FlowBody twintTakerPayBody =
-    (context, ref, offer, engine, role) =>
+FlowBody twintTakerPayBody = (context, ref, offer, engine, role) =>
     _TwintTakerPayBody(offer: offer, engine: engine, role: role);
 
 class _TwintTakerPayBody extends ConsumerStatefulWidget {
@@ -1297,8 +1310,7 @@ Widget _takerPaidButton(
         final confirmed = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
-          builder:
-              (dialogContext) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: Text(dialog.title),
             content: Text(dialog.content(code: codeLabel)),
             actions: [
@@ -1371,8 +1383,7 @@ Widget _takerCancelButton(
         final confirmed = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
-          builder:
-              (dialogContext) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: Text(dialog.title),
             content: Text(dialog.content(code: codeLabel)),
             actions: [
@@ -1440,77 +1451,77 @@ final FlowBody twintTakerWaitConfirmBody = (context, ref, offer, engine, role) {
   final t = Translations.of(context);
   const codeLabel = 'TWINT';
   return _titled(context, t.twint.flow.takerWait.title, [
-      // Green info box: what's happening right now.
-      Container(
-        padding: const EdgeInsets.all(12),
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 2),
+    // Green info box: what's happening right now.
+    Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
             child: Icon(
               Icons.check_circle_outline,
               color: Colors.green,
               size: 20,
             ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              t.twint.flow.takerWait.body(code: codeLabel),
+              style: const TextStyle(fontSize: 13, color: Colors.green),
+              softWrap: true,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                t.twint.flow.takerWait.body(code: codeLabel),
-                style: const TextStyle(fontSize: 13, color: Colors.green),
-                softWrap: true,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-      const SizedBox(height: 20),
-      // Large countdown matching the BLIK takerCharged circle.
-      flowCountdownFor(
-        context,
-        engine,
-        offer,
-        caption: t.twint.flow.takerWait.autoConfirms,
-        size: 200,
-        strokeWidth: 16,
-        fontSize: 48,
-        progressColor: Colors.green,
+    ),
+    const SizedBox(height: 20),
+    // Large countdown matching the BLIK takerCharged circle.
+    flowCountdownFor(
+      context,
+      engine,
+      offer,
+      caption: t.twint.flow.takerWait.autoConfirms,
+      size: 200,
+      strokeWidth: 16,
+      fontSize: 48,
+      progressColor: Colors.green,
+    ),
+    const SizedBox(height: 20),
+    // Blue info box: auto-confirm explanation.
+    Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
       ),
-      const SizedBox(height: 20),
-      // Blue info box: auto-confirm explanation.
-      Container(
-        padding: const EdgeInsets.all(12),
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.blue.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
             child: Icon(Icons.info_outline, color: Colors.blue, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              t.twint.flow.takerWait.info,
+              style: const TextStyle(fontSize: 13, color: Colors.blue),
+              softWrap: true,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                t.twint.flow.takerWait.info,
-                style: const TextStyle(fontSize: 13, color: Colors.blue),
-                softWrap: true,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
+    ),
   ], breadcrumb: const TwintTakerProgressIndicator(activeStep: 2));
 };
 
@@ -1522,21 +1533,21 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
   final strings = t.twint.flow.takerExpired;
 
   Widget optionRow(IconData icon, Color color, String text) => Padding(
-        padding: const EdgeInsets.only(top: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(width: 12),
-            Expanded(
+    padding: const EdgeInsets.only(top: 12),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: color, size: 22),
+        const SizedBox(width: 12),
+        Expanded(
           child: Text(
             text,
             style: const TextStyle(fontSize: 13.5, height: 1.4),
           ),
-            ),
-          ],
         ),
-      );
+      ],
+    ),
+  );
 
   Future<void> fireWithDialog({
     required String event,
@@ -1550,8 +1561,7 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder:
-          (dialogContext) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(title),
         content: Text(content),
         actions: [
@@ -1561,9 +1571,9 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                  backgroundColor: confirmColor,
-                  foregroundColor: Colors.white,
-                ),
+              backgroundColor: confirmColor,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(confirmLabel),
           ),
@@ -1591,7 +1601,10 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
     }
   }
 
-  return _titledWithActions(context, strings.title(code: codeLabel), [
+  return _titledWithActions(
+    context,
+    strings.title(code: codeLabel),
+    [
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -1599,133 +1612,126 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
         ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
-                child: Icon(
-                  Icons.warning_amber_rounded,
-                  color: Colors.orange,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  strings.warning(code: codeLabel),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.4,
-                    fontWeight: FontWeight.w600,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.orange,
+                    size: 24,
                   ),
                 ),
-              ),
-            ],
-          ),
-          optionRow(
-            Icons.check_circle_outline,
-            Colors.green,
-            strings.optionPaid(code: codeLabel),
-          ),
-          optionRow(Icons.cancel_outlined, Colors.red, strings.optionCancel),
-          optionRow(
-            Icons.hourglass_bottom,
-            Colors.orange,
-            strings.noDecision(code: codeLabel),
-          ),
-        ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    strings.warning(code: codeLabel),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            optionRow(
+              Icons.check_circle_outline,
+              Colors.green,
+              strings.optionPaid(code: codeLabel),
+            ),
+            optionRow(Icons.cancel_outlined, Colors.red, strings.optionCancel),
+            optionRow(
+              Icons.hourglass_bottom,
+              Colors.orange,
+              strings.noDecision(code: codeLabel),
+            ),
+          ],
+        ),
       ),
-    ),
-    flowCountdownFor(
-      context,
-      engine,
-      offer,
-      caption: strings.timerCaption,
-      size: 100,
-      strokeWidth: 8,
-      fontSize: 24,
-      progressColor: Colors.orange,
-    ),
-  ],
+      flowCountdownFor(
+        context,
+        engine,
+        offer,
+        caption: strings.timerCaption,
+        size: 100,
+        strokeWidth: 8,
+        fontSize: 24,
+        progressColor: Colors.orange,
+      ),
+    ],
     actions: FlowActionsBar(
       offer: offer,
       engine: engine,
       role: role,
       overrides: {
         // "I paid" — green success button, commits the taker to the claim.
-        'mark_twint_charged':
-            (_) => SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-                onPressed:
-                    () => fireWithDialog(
-                  event: 'mark_twint_charged',
-                  title: strings.markPaidDialog.title,
-                  content: strings.markPaidDialog.content(code: codeLabel),
-                  cancelLabel: strings.markPaidDialog.cancel,
-                  confirmLabel: strings.markPaidDialog.confirmButton,
-                  confirmColor: Colors.green,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.check, color: Colors.white, size: 24),
-                    const SizedBox(width: 8),
-                    Text(
-                      strings.markPaid(code: codeLabel),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+        'mark_twint_charged': (_) => SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
               ),
             ),
-        // Cancel — red outlined, irreversible walk-away.
-        'cancel_reservation':
-            (_) => SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red, width: 2),
-                  foregroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                ),
-                ),
-                onPressed:
-                    () => fireWithDialog(
-                  event: 'cancel_reservation',
-                  title: strings.cancelDialog.title,
-                  content: strings.cancelDialog.content(code: codeLabel),
-                  cancelLabel: strings.cancelDialog.cancel,
-                  confirmLabel: strings.cancelDialog.confirmButton,
-                  confirmColor: Colors.red,
-                  leavesOffer: true,
-                ),
-                child: Text(
-                  strings.cancel,
+            onPressed: () => fireWithDialog(
+              event: 'mark_twint_charged',
+              title: strings.markPaidDialog.title,
+              content: strings.markPaidDialog.content(code: codeLabel),
+              cancelLabel: strings.markPaidDialog.cancel,
+              confirmLabel: strings.markPaidDialog.confirmButton,
+              confirmColor: Colors.green,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.check, color: Colors.white, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  strings.markPaid(code: codeLabel),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+              ],
+            ),
+          ),
+        ),
+        // Cancel — red outlined, irreversible walk-away.
+        'cancel_reservation': (_) => SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.red, width: 2),
+              foregroundColor: Colors.red,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
               ),
             ),
+            onPressed: () => fireWithDialog(
+              event: 'cancel_reservation',
+              title: strings.cancelDialog.title,
+              content: strings.cancelDialog.content(code: codeLabel),
+              cancelLabel: strings.cancelDialog.cancel,
+              confirmLabel: strings.cancelDialog.confirmButton,
+              confirmColor: Colors.red,
+              leavesOffer: true,
+            ),
+            child: Text(
+              strings.cancel,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ),
       },
     ),
     breadcrumb: const TwintTakerProgressIndicator(activeStep: 1),
@@ -1734,10 +1740,10 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
 
 // ─── both roles: dispute ─────────────────────────────────────────────────────
 
-class _DisputeEvidenceDeadlineCard extends ConsumerWidget {
+class DisputeEvidenceDeadlineCard extends ConsumerWidget {
   final Offer offer;
 
-  const _DisputeEvidenceDeadlineCard({required this.offer});
+  const DisputeEvidenceDeadlineCard({super.key, required this.offer});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1804,8 +1810,8 @@ class _DisputeEvidenceCountdownCardState
     final message = startedAt == null
         ? strings.period(time: _format(period))
         : expired
-            ? strings.expired
-            : strings.remaining(time: _format(remaining!));
+        ? strings.expired
+        : strings.remaining(time: _format(remaining!));
 
     return Card(
       color: color.withValues(alpha: 0.10),
@@ -1859,7 +1865,7 @@ final FlowBody twintDisputeBody = (context, ref, offer, engine, role) {
       ),
       const SizedBox(height: 12),
       Text(_amount(offer), style: Theme.of(context).textTheme.titleLarge),
-      _DisputeEvidenceDeadlineCard(offer: offer),
+      DisputeEvidenceDeadlineCard(offer: offer),
       DisputeConversationCard(offer: offer),
     ],
   );

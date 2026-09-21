@@ -1716,33 +1716,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
         actions: [
           // Relay Connectivity Indicator
           _buildRelayConnectivityIndicator(),
-          Transform.translate(
-            offset: const Offset(8, 0),
-            child: IconButton(
-              constraints: const BoxConstraints.tightFor(width: 48, height: 48),
-              tooltip: Theme.of(context).brightness == Brightness.dark
-                  ? t.theme.switchToLight
-                  : t.theme.switchToDark,
-              onPressed: () async {
-                final next = Theme.of(context).brightness == Brightness.dark
-                    ? AppThemePreference.light
-                    : AppThemePreference.dark;
-                await ref.read(themePreferenceProvider.notifier).set(next);
-              },
-              icon: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                child: Icon(
-                  Theme.of(context).brightness == Brightness.dark
-                      ? Icons.light_mode_rounded
-                      : Icons.dark_mode_rounded,
-                  key: ValueKey(Theme.of(context).brightness),
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
           // Language Switcher Dropdown
           DropdownButtonHideUnderline(
             child: DropdownButton<AppLocale>(
@@ -2020,6 +1993,37 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                               );
                             },
                           ),
+                        IconButton(
+                          constraints: const BoxConstraints.tightFor(
+                            width: 48,
+                            height: 48,
+                          ),
+                          tooltip:
+                              Theme.of(context).brightness == Brightness.dark
+                              ? t.theme.switchToLight
+                              : t.theme.switchToDark,
+                          onPressed: () async {
+                            final next =
+                                Theme.of(context).brightness == Brightness.dark
+                                ? AppThemePreference.light
+                                : AppThemePreference.dark;
+                            await ref
+                                .read(themePreferenceProvider.notifier)
+                                .set(next);
+                          },
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            child: Icon(
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Icons.light_mode_rounded
+                                  : Icons.dark_mode_rounded,
+                              key: ValueKey(Theme.of(context).brightness),
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                         Padding(
                           padding: const EdgeInsets.only(right: 4),
                           child: IconButton(

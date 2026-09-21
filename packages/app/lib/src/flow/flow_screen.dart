@@ -123,15 +123,15 @@ final Map<String, Map<FlowActor, FlowBody>> _payoutTailBodies = {
   ])
     state: {
       FlowActor.maker: (context, ref, offer, engine, role) =>
-              MakerSuccessScreen(completedOffer: offer),
+          MakerSuccessScreen(completedOffer: offer),
       FlowActor.taker: (context, ref, offer, engine, role) =>
-              const TakerPaymentProcessScreen(),
+          const TakerPaymentProcessScreen(),
     },
   'takerPaymentFailed': {
     FlowActor.maker: (context, ref, offer, engine, role) =>
-            MakerSuccessScreen(completedOffer: offer),
+        MakerSuccessScreen(completedOffer: offer),
     FlowActor.taker: (context, ref, offer, engine, role) =>
-            TakerPaymentFailedScreen(offer: offer),
+        TakerPaymentFailedScreen(offer: offer),
   },
 };
 
@@ -143,7 +143,7 @@ final Map<String, Map<FlowActor, FlowBody>> _disputeBodies = {
   },
   'refundingMaker': {
     FlowActor.maker: (context, ref, offer, engine, role) =>
-            MakerRefundInvoiceRequiredScreen(offer: offer),
+        MakerRefundInvoiceRequiredScreen(offer: offer),
     FlowActor.taker: twintDisputeBody,
   },
 };
@@ -160,61 +160,61 @@ bool _hasPostRulingHistory(Offer offer) =>
 Future<void> _showDisputeHistory(BuildContext context, Offer offer) async {
   final strings = Translations.of(context).disputeChat;
   final ruling = _makerRulingStates.contains(offer.statusRaw)
-          ? strings.ruledForMaker
-          : strings.ruledForTaker;
+      ? strings.ruledForMaker
+      : strings.ruledForTaker;
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     builder: (sheetContext) => FractionallySizedBox(
-          heightFactor: 0.85,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(top: 10, bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(sheetContext).colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
+      heightFactor: 0.85,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 10, bottom: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    strings.historyTitle,
+                    style: Theme.of(sheetContext).textTheme.titleLarge,
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        strings.historyTitle,
-                        style: Theme.of(sheetContext).textTheme.titleLarge,
-                      ),
-                    ),
-                    Chip(label: Text(ruling)),
-                    IconButton(
-                      tooltip: MaterialLocalizations.of(
-                        sheetContext,
-                      ).closeButtonTooltip,
-                      onPressed: () => Navigator.of(sheetContext).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
+                Chip(label: Text(ruling)),
+                IconButton(
+                  tooltip: MaterialLocalizations.of(
+                    sheetContext,
+                  ).closeButtonTooltip,
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  icon: const Icon(Icons.close),
                 ),
-              ),
-              Expanded(
+              ],
+            ),
+          ),
+          Expanded(
             child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
               child: DisputeConversationCard(
                 offer: offer,
                 fillAvailableHeight: true,
               ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
+      ),
+    ),
   );
 }
 
@@ -238,7 +238,7 @@ final Map<String, Map<FlowActor, FlowBody>> _codeFlowBodies = {
     FlowActor.maker: (context, ref, offer, engine, role) =>
         const MakerWaitForBlikScreen(),
     FlowActor.taker: (context, ref, offer, engine, role) =>
-            TakerSubmitBlikScreen(initialOffer: offer),
+        TakerSubmitBlikScreen(initialOffer: offer),
   },
   'blikReceived': {
     // Keep the fetch owner mounted when get_blik advances to blikSentToMaker,
@@ -246,43 +246,43 @@ final Map<String, Map<FlowActor, FlowBody>> _codeFlowBodies = {
     FlowActor.maker: (context, ref, offer, engine, role) =>
         const MakerConfirmPaymentScreen(),
     FlowActor.taker: (context, ref, offer, engine, role) =>
-            TakerWaitConfirmationScreen(offer: offer),
+        TakerWaitConfirmationScreen(offer: offer),
   },
   'blikSentToMaker': {
     FlowActor.maker: (context, ref, offer, engine, role) =>
-            const MakerConfirmPaymentScreen(),
+        const MakerConfirmPaymentScreen(),
     FlowActor.taker: (context, ref, offer, engine, role) =>
-            TakerWaitConfirmationScreen(offer: offer),
+        TakerWaitConfirmationScreen(offer: offer),
   },
   'takerCharged': {
     FlowActor.maker: (context, ref, offer, engine, role) =>
-            const MakerConfirmPaymentScreen(),
+        const MakerConfirmPaymentScreen(),
     FlowActor.taker: (context, ref, offer, engine, role) =>
-            TakerWaitConfirmationScreen(offer: offer),
+        TakerWaitConfirmationScreen(offer: offer),
   },
   'expiredSentBlik': {
     FlowActor.maker: (context, ref, offer, engine, role) =>
-            const MakerConfirmPaymentScreen(),
+        const MakerConfirmPaymentScreen(),
     FlowActor.taker: (context, ref, offer, engine, role) =>
-            TakerWaitConfirmationScreen(offer: offer),
+        TakerWaitConfirmationScreen(offer: offer),
   },
   // expiredBlik: maker has no actions there → genericFlowBody; the taker
   // keeps the wait screen (re-take / cancel handling).
   'expiredBlik': {
     FlowActor.taker: (context, ref, offer, engine, role) =>
-            TakerWaitConfirmationScreen(offer: offer),
+        TakerWaitConfirmationScreen(offer: offer),
   },
   'invalidBlik': {
     FlowActor.maker: (context, ref, offer, engine, role) =>
-            MakerInvalidBlikScreen(offer: offer),
+        MakerInvalidBlikScreen(offer: offer),
     FlowActor.taker: (context, ref, offer, engine, role) =>
-            TakerInvalidBlikScreen(offer: offer),
+        TakerInvalidBlikScreen(offer: offer),
   },
   'conflict': {
     FlowActor.maker: (context, ref, offer, engine, role) =>
-            MakerConflictScreen(offer: offer, engine: engine),
+        MakerConflictScreen(offer: offer, engine: engine),
     FlowActor.taker: (context, ref, offer, engine, role) =>
-            TakerConflictScreen(offer: offer, engine: engine),
+        TakerConflictScreen(offer: offer, engine: engine),
   },
   // Payout tail (makerConfirmed, settled, payingTaker, takerPaid,
   // takerPaymentFailed) is shared across every flow.
@@ -450,24 +450,64 @@ class _ActiveDisputePane extends StatelessWidget {
     final t = Translations.of(context);
     final isMaker = role == FlowActor.maker;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            isMaker ? t.maker.conflict.headline : t.taker.dispute.headline,
-            style: Theme.of(context).textTheme.titleLarge,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  isMaker
+                      ? t.maker.conflict.headline
+                      : t.taker.dispute.headline,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              IconButton(
+                tooltip: isMaker
+                    ? t.maker.conflict.headline
+                    : t.taker.dispute.headline,
+                onPressed: () => _showDisputeExplanation(context, t, isMaker),
+                icon: const Icon(Icons.info_outline),
+              ),
+            ],
           ),
           const SizedBox(height: 2),
-          Text(
-            '${offer.fiatAmount} ${offer.fiatCurrency}',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
+          DisputeEvidenceDeadlineCard(offer: offer),
           const SizedBox(height: 8),
           Expanded(
             child: DisputeConversationCard(
               offer: offer,
               fillAvailableHeight: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDisputeExplanation(
+    BuildContext context,
+    Translations t,
+    bool isMaker,
+  ) {
+    final title = isMaker
+        ? t.maker.conflict.headline
+        : t.taker.dispute.headline;
+    final message = isMaker
+        ? t.maker.conflict.feedback.disputeOpenedSuccess
+        : t.taker.dispute.body;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              MaterialLocalizations.of(dialogContext).closeButtonLabel,
             ),
           ),
         ],

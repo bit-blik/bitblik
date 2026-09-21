@@ -187,13 +187,74 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
     }
   }
 
+  Widget _buildActionFooter(BuildContext context) {
+    final disputeOpened = _isDisputeOpened || widget.offer.isDispute;
+    final code = paymentSystemForOffer(widget.offer).localizedCodeLabel;
+    final colors = Theme.of(context).colorScheme;
+    final darkTheme = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      elevation: 12,
+      color: colors.surface,
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (disputeOpened)
+              FilledButton(
+                onPressed: () => context.go('/'),
+                child: Text(t.common.buttons.goHome),
+              )
+            else ...[
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: colors.surfaceContainerHighest,
+                  disabledForegroundColor: colors.outline,
+                ),
+                onPressed: _isSubmitting
+                    ? null
+                    : () => _showConfirmationDialog(context, ref),
+                child: Text(
+                  t.maker.conflict.actions.confirmPayment(code: code),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      darkTheme ? colors.errorContainer : colors.error,
+                  foregroundColor:
+                      darkTheme ? colors.onErrorContainer : Colors.white,
+                  disabledBackgroundColor: colors.surfaceContainerHighest,
+                  disabledForegroundColor: colors.outline,
+                ),
+                onPressed: _isSubmitting
+                    ? null
+                    : () => _openDispute(context, ref),
+                child: Text(t.maker.conflict.actions.openDispute(code: code)),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final engine = widget.engine ?? ref.watch(flowEngineProvider).valueOrNull;
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      body: SafeArea(
         child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -226,15 +287,8 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                           statusRaw: OfferStatus.dispute.name,
                         ),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.go('/'),
-                child: Text(t.common.buttons.goHome),
-              ),
             ] else
-              Column(
-                children: [
-                  Card(
+              Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Row(
@@ -269,64 +323,14 @@ class _MakerConflictScreenState extends ConsumerState<MakerConflictScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
-                      disabledForegroundColor: Theme.of(
-                        context,
-                      ).colorScheme.outline,
-                    ),
-                    // Keep the conflict explanation and countdown visible
-                    // while the request is running; only disable its actions.
-                    onPressed: _isSubmitting
-                            ? null
-                            : () => _showConfirmationDialog(context, ref),
-                    child: Text(
-                      t.maker.conflict.actions.confirmPayment(
-                        code: paymentSystemForOffer(
-                              widget.offer,
-                            ).localizedCodeLabel,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
-                      disabledForegroundColor: Theme.of(
-                        context,
-                      ).colorScheme.outline,
-                    ),
-                    onPressed: _isSubmitting
-                        ? null
-                        : () => _openDispute(context, ref),
-                    child: Text(
-                      t.maker.conflict.actions.openDispute(
-                        code: paymentSystemForOffer(
-                              widget.offer,
-                            ).localizedCodeLabel,
-                      ),
-                    ),
-                  ),
-                  // const SizedBox(height: 16),
-                  // TextButton(
-                  //   onPressed: () => context.go('/'),
-                  //   child: Text(t.common.actions.cancelAndReturnHome),
-                  // ),
                 ],
               ),
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
+      ),
+      bottomNavigationBar: _buildActionFooter(context),
     );
   }
 }
