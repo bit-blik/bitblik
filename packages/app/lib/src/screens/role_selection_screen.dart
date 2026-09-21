@@ -145,8 +145,9 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
             '[RoleSelectionScreen] Fetched offer result: ${fetchedOffer != null ? "found" : "null"}',
       );
 
-      final fetchedOfferObj =
-          fetchedOffer != null ? Offer.fromJson(fetchedOffer) : null;
+      final fetchedOfferObj = fetchedOffer != null
+          ? Offer.fromJson(fetchedOffer)
+          : null;
       if (fetchedOfferObj == null) {
         Logger.log.i(
           () =>
@@ -262,6 +263,25 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
         (activeOffer.statusEnum != OfferStatus.refundedMaker);
     final isTakerPaid =
         hasActiveOffer && activeOffer.status == OfferStatus.takerPaid;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isCompactHeight = screenHeight < 700;
+    final isExtraCompactHeight = screenHeight < 600;
+    final heightScale = screenHeight / 800;
+    final topSpacing = hasActiveOffer
+        ? 40.0
+        : (isExtraCompactHeight
+              ? 24.0
+              : (80 * heightScale).clamp(48.0, 120.0).toDouble());
+    final sectionSpacing = hasActiveOffer
+        ? 40.0
+        : (isExtraCompactHeight
+              ? 28.0
+              : (100 * heightScale).clamp(56.0, 140.0).toDouble());
+    final actionCardHeight = isExtraCompactHeight
+        ? 144.0
+        : (isCompactHeight
+              ? 168.0
+              : (220 * heightScale).clamp(220.0, 280.0).toDouble());
 
     return SingleChildScrollView(
       child: Column(
@@ -271,43 +291,43 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                SizedBox(height: hasActiveOffer ? 40 : 80),
+                SizedBox(height: topSpacing),
 
                 // Main title
                 Text(
                   t.landing.mainTitle(
-                    code:
-                        ref
-                            .watch(selectedPaymentSystemProvider)
-                            .localizedCodeLabel,
+                    code: ref
+                        .watch(selectedPaymentSystemProvider)
+                        .localizedCodeLabel,
                   ),
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: MediaQuery.of(context).size.width > 600 ? 48 : 32,
+                    fontSize: MediaQuery.of(context).size.width > 600
+                        ? 48
+                        : (isCompactHeight ? 28 : 32),
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 20),
+                SizedBox(height: isCompactHeight ? 12 : 20),
 
                 // Subtitle
                 Text(
                   t.landing.subtitle(
-                    code:
-                        ref
-                            .watch(selectedPaymentSystemProvider)
-                            .localizedCodeLabel,
+                    code: ref
+                        .watch(selectedPaymentSystemProvider)
+                        .localizedCodeLabel,
                   ),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w400,
-                    fontSize: 20,
+                    fontSize: isCompactHeight ? 18 : 20,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                SizedBox(height: hasActiveOffer ? 40 : 100),
+                SizedBox(height: sectionSpacing),
 
                 if (hasActiveOffer && !isTakerPaid) ...[
                   _buildActiveOfferSection(
@@ -323,22 +343,18 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                 // Action cards
                 Builder(
                   builder: (context) {
-                    final cardHeight =
-                        220.0; //screenWidth > 600 ? 200.0 : 180.0; // Responsive height
-
                     return Row(
                       children: [
                         // Pay BLIK card (gradient)
                         Expanded(
                           child: SizedBox(
-                            height: cardHeight,
+                            height: actionCardHeight,
                             child: _buildActionCard(
                               context: context,
                               title: t.landing.actions.payBlik(
-                                code:
-                                    ref
-                                        .watch(selectedPaymentSystemProvider)
-                                        .localizedCodeLabel,
+                                code: ref
+                                    .watch(selectedPaymentSystemProvider)
+                                    .localizedCodeLabel,
                               ),
                               subtitle: t.landing.actions.payBlikSubtitle,
                               icon: Icons.flash_on,
@@ -351,6 +367,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                                 ],
                               ),
                               textColor: Colors.white,
+                              compact: isCompactHeight,
                               onTap: () {
                                 if (kIsWeb) {
                                   context.go("/create");
@@ -361,27 +378,30 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 24),
+                        SizedBox(width: isCompactHeight ? 16 : 24),
                         // Sell BLIK card (white)
                         Expanded(
                           child: SizedBox(
-                            height: cardHeight,
+                            height: actionCardHeight,
                             child: _buildActionCard(
                               context: context,
                               title: t.landing.actions.sellBlik,
                               subtitle: t.landing.actions.sellBlikSubtitle(
-                                code:
-                                    ref
-                                        .watch(selectedPaymentSystemProvider)
-                                        .localizedCodeLabel,
+                                code: ref
+                                    .watch(selectedPaymentSystemProvider)
+                                    .localizedCodeLabel,
                               ),
                               iconImage: 'assets/sell-blik.png',
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerLow,
-                              textColor: Theme.of(context).colorScheme.onSurface,
-                              borderColor:
-                                  Theme.of(context).colorScheme.outlineVariant,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerLow,
+                              textColor: Theme.of(
+                                context,
+                              ).colorScheme.onSurface,
+                              borderColor: Theme.of(
+                                context,
+                              ).colorScheme.outlineVariant,
+                              compact: isCompactHeight,
                               onTap: () {
                                 if (kIsWeb) {
                                   context.go("/offers");
@@ -397,7 +417,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                   },
                 ),
 
-                const SizedBox(height: 20),
+                SizedBox(height: isCompactHeight ? 8 : 20),
 
                 // FAQ link
                 TextButton(
@@ -476,10 +496,9 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
     Object error,
     Translations t,
   ) {
-    final message =
-        error is KeyServiceInitializationException
-            ? error.message
-            : error.toString();
+    final message = error is KeyServiceInitializationException
+        ? error.message
+        : error.toString();
 
     return Center(
       child: ConstrainedBox(
@@ -540,6 +559,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
     Gradient? gradient,
     required Color textColor,
     Color? borderColor,
+    bool compact = false,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -555,7 +575,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
             gradient: gradient,
             border: borderColor != null ? Border.all(color: borderColor) : null,
           ),
-          padding: const EdgeInsets.all(16), // Reduced from 24 to 16
+          padding: EdgeInsets.all(compact ? 12 : 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min, // Added to prevent overflow
@@ -563,23 +583,19 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
               if (iconImage != null)
                 Image.asset(
                   iconImage,
-                  width: 44,
-                  height: 44,
+                  width: compact ? 36 : 44,
+                  height: compact ? 36 : 44,
                   fit: BoxFit.contain,
                 )
               else if (icon != null)
-                Icon(
-                  icon,
-                  size: 44, // Reduced from 48 to 40
-                  color: textColor,
-                ),
-              const SizedBox(height: 14), // Reduced from 16 to 12
+                Icon(icon, size: compact ? 36 : 44, color: textColor),
+              SizedBox(height: compact ? 8 : 14),
               Flexible(
                 // Wrapped title in Flexible
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 22, // Reduced from 24 to 20
+                    fontSize: compact ? 18 : 22,
                     fontWeight: FontWeight.bold,
                     color: textColor,
                   ),
@@ -588,13 +604,13 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(height: 2), // Reduced from 4 to 2
+              SizedBox(height: compact ? 0 : 2),
               Flexible(
                 // Wrapped subtitle in Flexible
                 child: Text(
                   subtitle,
                   style: TextStyle(
-                    fontSize: 14, // Reduced from 16 to 14
+                    fontSize: compact ? 12 : 14,
                     color: textColor.withValues(alpha: 0.8),
                   ),
                   textAlign: TextAlign.center,
@@ -632,16 +648,15 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
           child: OfferListTile(
             offer: activeOffer,
             showPremium: true,
-            onTap:
-                activeOffer.status == OfferStatus.takerPaid
-                    ? () {}
-                    : () => _handleActiveOfferTap(
-                      context,
-                      ref,
-                      activeOffer,
-                      currentPubKey,
-                      t,
-                    ),
+            onTap: activeOffer.status == OfferStatus.takerPaid
+                ? () {}
+                : () => _handleActiveOfferTap(
+                    context,
+                    ref,
+                    activeOffer,
+                    currentPubKey,
+                    t,
+                  ),
           ),
         ),
       ],
