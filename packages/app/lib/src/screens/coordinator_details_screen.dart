@@ -36,9 +36,7 @@ class _CoordinatorDetailsScreenState
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
-    final record = ref.watch(
-      coordinatorRecordByPubkeyProvider(widget.pubkey),
-    );
+    final record = ref.watch(coordinatorRecordByPubkeyProvider(widget.pubkey));
     final debugInfoSourcesAsync = ref.watch(
       coordinatorInfoEventSourcesProvider(widget.pubkey),
     );
@@ -53,276 +51,274 @@ class _CoordinatorDetailsScreenState
     final name = record?.name ?? t.coordinator.details.title;
     final icon = record?.icon;
     final allowLogo = record != null && (record.enabled || _showUntrustedLogo);
+    final nostrProfileId = record == null ? null : _nostrProfileId(record);
 
     return Scaffold(
       appBar: AppBar(title: Text(t.coordinator.details.title)),
       body: RefreshIndicator(
         onRefresh: () => _refresh(ref),
-        child:
-            record == null
-                ? ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: const [
-                    SizedBox(height: 200),
-                    Center(child: CircularProgressIndicator()),
-                  ],
-                )
-                : ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _logoArea(
-                          context,
-                          icon,
-                          allowRemoteLogo: allowLogo,
-                          canReveal:
-                              record.icon != null &&
-                              record.icon!.isNotEmpty &&
-                              !record.enabled &&
-                              !_showUntrustedLogo,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                name,
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                              if (record.version.isNotEmpty ||
-                                  record.supportsBolt12Payouts)
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 5,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    if (record.version.isNotEmpty)
-                                      Text(
-                                        'v${record.version}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(color: Colors.grey),
-                                      ),
-                                    if (record.supportsBolt12Payouts)
-                                      const Bolt12Badge(),
-                                  ],
-                                ),
-                            ],
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            _statusChip(context, t, record.responsive),
-                            // Offline/unknown status may just be stale — offer
-                            // an explicit refresh (same as the pull-down
-                            // gesture) for mouse/desktop users.
-                            if (record.responsive != true)
-                              _refreshing
-                                  ? const Padding(
-                                      padding: EdgeInsets.only(left: 8),
-                                      child: SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
-                                    )
-                                  : IconButton(
-                                      icon: const Icon(Icons.refresh, size: 20),
-                                      visualDensity: VisualDensity.compact,
-                                      tooltip:
-                                          MaterialLocalizations.of(
-                                            context,
-                                          ).refreshIndicatorSemanticLabel,
-                                      onPressed: () async {
-                                        setState(() => _refreshing = true);
-                                        try {
-                                          await _refresh(ref);
-                                        } finally {
-                                          if (mounted) {
-                                            setState(
-                                              () => _refreshing = false,
-                                            );
-                                          }
-                                        }
-                                      },
-                                    ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _infoRow(
-                      context,
-                      t.coordinator.details.makerFee,
-                      '${record.makerFee.toStringAsFixed(2)}%',
-                    ),
-                    _infoRow(
-                      context,
-                      t.coordinator.details.takerFee,
-                      '${record.takerFee.toStringAsFixed(2)}%',
-                    ),
-                    _infoRow(
-                      context,
-                      t.coordinator.details.amountRange,
-                      formatBitcoinRange(
+        child: record == null
+            ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(height: 200),
+                  Center(child: CircularProgressIndicator()),
+                ],
+              )
+            : ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _logoArea(
                         context,
-                        bitcoinDisplayUnit,
-                        record.minAmountSats,
-                        record.maxAmountSats,
+                        icon,
+                        allowRemoteLogo: allowLogo,
+                        canReveal:
+                            record.icon != null &&
+                            record.icon!.isNotEmpty &&
+                            !record.enabled &&
+                            !_showUntrustedLogo,
                       ),
-                    ),
-                    if (record.maxPremium > 0)
-                      _infoRow(
-                        context,
-                        t.coordinator.details.maxPremium,
-                        '${record.maxPremium.toStringAsFixed(1).replaceAll(RegExp(r'\\.0$'), '')}%',
-                        onInfoTap: () => _showInfoDialog(
-                          context,
-                          t.coordinator.details.maxPremiumInfoTitle,
-                          t.coordinator.details.maxPremiumInfoBody,
-                        ),
-                      ),
-                    if (record.reservationSeconds > 0)
-                      _infoRow(
-                        context,
-                        t.coordinator.details.reservationTime,
-                        '${record.reservationSeconds}s',
-                      ),
-                    if (record.paymentSystem != null)
-                      _infoRow(
-                        context,
-                        t.coordinator.details.paymentSystem,
-                        _paymentSystemDisplay(t, record.paymentSystem!),
-                      ),
-                    if (record.currencies.isNotEmpty)
-                      _infoRow(
-                        context,
-                        t.coordinator.details.currencies,
-                        record.currencies.join(', '),
-                      ),
-                    _infoRow(
-                      context,
-                      t.coordinator.details.yourOffers,
-                      '${record.localFinishedCount}',
-                    ),
-                    _infoRow(
-                      context,
-                      t.coordinator.details.successfulOffers,
-                      '${record.networkFinishedCount}',
-                    ),
-                    ..._notificationLinksSection(context, t, record),
-                    const Divider(height: 32),
-
-                    // ── Relays in use ────────────────────────────────────────
-                    Text(
-                      t.coordinator.details.relaysInUse,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      t.coordinator.details.relaysInUseHint,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 8),
-                    if (record.relays.isEmpty)
-                      Text(
-                        t.coordinator.details.noRelays,
-                        style: const TextStyle(color: Colors.grey),
-                      )
-                    else
-                      ...record.relays.map(
-                        (relay) => _relayTile(context, relay, connectivity),
-                      ),
-
-                    if (kDebugMode) ...[
-                      const SizedBox(height: 24),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.orange),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                      const SizedBox(width: 12),
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'DEBUG · 15125 sources',
-                              style: TextStyle(
-                                color: Colors.orange[700],
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                              ),
+                              name,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Relays that served this coordinator\'s kind-15125 '
-                              'on the most recent live query. Pull to refresh to '
-                              're-fetch. Empty = record came from disk cache.',
-                              style: TextStyle(
-                                color: Colors.orange[700],
-                                fontSize: 11,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            if (debugInfoSources.isEmpty)
-                              const Text(
-                                '(none — no live query since startup)',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              )
-                            else
-                              ...debugInfoSources.map(
-                                (src) => Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 2),
-                                  child: Text(
-                                    src,
-                                    style: const TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 12,
+                            if (record.version.isNotEmpty ||
+                                record.supportsBolt12Payouts)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 5,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  if (record.version.isNotEmpty)
+                                    Text(
+                                      'v${record.version}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(color: Colors.grey),
                                     ),
-                                  ),
-                                ),
+                                  if (record.supportsBolt12Payouts)
+                                    const Bolt12Badge(),
+                                ],
                               ),
                           ],
                         ),
                       ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          _statusChip(context, t, record.responsive),
+                          // Offline/unknown status may just be stale — offer
+                          // an explicit refresh (same as the pull-down
+                          // gesture) for mouse/desktop users.
+                          if (record.responsive != true)
+                            _refreshing
+                                ? const Padding(
+                                    padding: EdgeInsets.only(left: 8),
+                                    child: SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  )
+                                : IconButton(
+                                    icon: const Icon(Icons.refresh, size: 20),
+                                    visualDensity: VisualDensity.compact,
+                                    tooltip: MaterialLocalizations.of(
+                                      context,
+                                    ).refreshIndicatorSemanticLabel,
+                                    onPressed: () async {
+                                      setState(() => _refreshing = true);
+                                      try {
+                                        await _refresh(ref);
+                                      } finally {
+                                        if (mounted) {
+                                          setState(() => _refreshing = false);
+                                        }
+                                      }
+                                    },
+                                  ),
+                        ],
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  _infoRow(
+                    context,
+                    t.coordinator.details.makerFee,
+                    '${record.makerFee.toStringAsFixed(2)}%',
+                  ),
+                  _infoRow(
+                    context,
+                    t.coordinator.details.takerFee,
+                    '${record.takerFee.toStringAsFixed(2)}%',
+                  ),
+                  _infoRow(
+                    context,
+                    t.coordinator.details.amountRange,
+                    formatBitcoinRange(
+                      context,
+                      bitcoinDisplayUnit,
+                      record.minAmountSats,
+                      record.maxAmountSats,
+                    ),
+                  ),
+                  if (record.maxPremium > 0)
+                    _infoRow(
+                      context,
+                      t.coordinator.details.maxPremium,
+                      '${record.maxPremium.toStringAsFixed(1).replaceAll(RegExp(r'\\.0$'), '')}%',
+                      onInfoTap: () => _showInfoDialog(
+                        context,
+                        t.coordinator.details.maxPremiumInfoTitle,
+                        t.coordinator.details.maxPremiumInfoBody,
+                      ),
+                    ),
+                  if (record.reservationSeconds > 0)
+                    _infoRow(
+                      context,
+                      t.coordinator.details.reservationTime,
+                      '${record.reservationSeconds}s',
+                    ),
+                  if (record.paymentSystem != null)
+                    _infoRow(
+                      context,
+                      t.coordinator.details.paymentSystem,
+                      _paymentSystemDisplay(t, record.paymentSystem!),
+                    ),
+                  if (record.currencies.isNotEmpty)
+                    _infoRow(
+                      context,
+                      t.coordinator.details.currencies,
+                      record.currencies.join(', '),
+                    ),
+                  _infoRow(
+                    context,
+                    t.coordinator.details.yourOffers,
+                    '${record.localFinishedCount}',
+                  ),
+                  _infoRow(
+                    context,
+                    t.coordinator.details.successfulOffers,
+                    '${record.networkFinishedCount}',
+                  ),
+                  ..._notificationLinksSection(context, t, record),
+                  const Divider(height: 32),
 
+                  // ── Relays in use ────────────────────────────────────────
+                  Text(
+                    t.coordinator.details.relaysInUse,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    t.coordinator.details.relaysInUseHint,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  if (record.relays.isEmpty)
+                    Text(
+                      t.coordinator.details.noRelays,
+                      style: const TextStyle(color: Colors.grey),
+                    )
+                  else
+                    ...record.relays.map(
+                      (relay) => _relayTile(context, relay, connectivity),
+                    ),
+
+                  if (kDebugMode) ...[
                     const SizedBox(height: 24),
-                    if (record.info?.nostrNpub != null)
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.open_in_new, size: 16),
-                        label: Text(t.coordinator.details.openNostrProfile),
-                        onPressed: () => _openNjump(record.info!.nostrNpub!),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.orange),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    if (record.termsOfUsageNaddr != null) ...[
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.description_outlined, size: 16),
-                        label: Text(t.coordinator.details.termsOfUsage),
-                        onPressed: () => _openNjump(record.termsOfUsageNaddr!),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'DEBUG · 15125 sources',
+                            style: TextStyle(
+                              color: Colors.orange[700],
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Relays that served this coordinator\'s kind-15125 '
+                            'on the most recent live query. Pull to refresh to '
+                            're-fetch. Empty = record came from disk cache.',
+                            style: TextStyle(
+                              color: Colors.orange[700],
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (debugInfoSources.isEmpty)
+                            const Text(
+                              '(none — no live query since startup)',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            )
+                          else
+                            ...debugInfoSources.map(
+                              (src) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 2,
+                                ),
+                                child: Text(
+                                  src,
+                                  style: const TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                    ],
+                    ),
                   ],
-                ),
+
+                  const SizedBox(height: 24),
+                  if (nostrProfileId != null)
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.open_in_new, size: 16),
+                      label: Text(t.coordinator.details.openNostrProfile),
+                      onPressed: () => _openNjump(nostrProfileId),
+                    ),
+                  if (record.termsOfUsageNaddr != null) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.description_outlined, size: 16),
+                      label: Text(t.coordinator.details.termsOfUsage),
+                      onPressed: () => _openNjump(record.termsOfUsageNaddr!),
+                    ),
+                  ],
+                ],
+              ),
       ),
     );
   }
@@ -357,9 +353,7 @@ class _CoordinatorDetailsScreenState
       borderRadius: BorderRadius.circular(6),
       child: SizedBox(
         width: 56,
-        child: Center(
-          child: _logo(icon, 48, allowRemoteLogo: allowRemoteLogo),
-        ),
+        child: Center(child: _logo(icon, 48, allowRemoteLogo: allowRemoteLogo)),
       ),
     );
   }
@@ -632,8 +626,11 @@ class _CoordinatorDetailsScreenState
       const SizedBox(height: 12),
       if (links.isNotEmpty) ...[
         if (hasBankScopes)
-          _scopeHeader(context, Icons.public,
-              Text(t.home.notifications.scopeAllBanks)),
+          _scopeHeader(
+            context,
+            Icons.public,
+            Text(t.home.notifications.scopeAllBanks),
+          ),
         _linksWrap(t, links),
       ],
       for (final entry in bankLinks.entries) ...[
@@ -665,10 +662,10 @@ class _CoordinatorDetailsScreenState
           const SizedBox(width: 6),
           Flexible(
             child: DefaultTextStyle.merge(
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
-                  ?.copyWith(color: color, fontWeight: FontWeight.w600),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
               child: label,
             ),
           ),
@@ -683,20 +680,34 @@ class _CoordinatorDetailsScreenState
     final idx = full.indexOf(bank);
     if (idx < 0) return Text(full);
     return Text.rich(
-      TextSpan(children: [
-        TextSpan(text: full.substring(0, idx)),
-        TextSpan(
-          text: bank,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        TextSpan(text: full.substring(idx + bank.length)),
-      ]),
+      TextSpan(
+        children: [
+          TextSpan(text: full.substring(0, idx)),
+          TextSpan(
+            text: bank,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          TextSpan(text: full.substring(idx + bank.length)),
+        ],
+      ),
     );
   }
 
   Future<void> _openNjump(String idOrAddr) async {
     final url = 'https://njump.to/$idOrAddr';
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  String? _nostrProfileId(CoordinatorRecord record) {
+    final advertisedNpub = record.info?.nostrNpub?.trim();
+    if (advertisedNpub != null && advertisedNpub.isNotEmpty) {
+      return advertisedNpub;
+    }
+    try {
+      return Nip19.encodePubKey(record.pubkeyHex);
+    } catch (_) {
+      return null;
+    }
   }
 }
 
@@ -716,4 +727,3 @@ void openCoordinatorDetails(BuildContext context, String pubkey) {
     context.push(location);
   }
 }
-
