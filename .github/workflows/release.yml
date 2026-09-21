@@ -6,6 +6,16 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+
       - v[0-9]+.[0-9]+.[0-9]+-*
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to backfill (for example, v0.11.0)
+        required: false
+        type: string
+      veksli_cli_backfill:
+        description: Build and upload only Veksli CLI artifacts
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -13,6 +23,7 @@ permissions:
 
 env:
   FLUTTER_VERSION: "3.47.0"
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 jobs:
   # ── 1. Create draft release ────────────────────────────────────────────────
@@ -32,47 +43,63 @@ jobs:
           test "$app_version" = "$cli_version"
           test "$cli_version" = "$source_version"
 
-          if [ "$GITHUB_REF_TYPE" = tag ]; then
-            test "v$cli_version" = "$GITHUB_REF_NAME"
+          if [ "${{ inputs.veksli_cli_backfill }}" = true ]; then
+            test -n "${{ inputs.release_tag }}"
           fi
 
+          if [ "$GITHUB_REF_TYPE" = tag ] || [ -n "${{ inputs.release_tag }}" ]; then
+            test "v$cli_version" = "$RELEASE_TAG"
+          fi
+
+      - name: Verify published Veksli release
+        if: ${{ inputs.veksli_cli_backfill }}
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
+        run: |
+          is_draft="$(gh release view "$RELEASE_TAG" --repo bit-blik/veksli --json isDraft --jq .isDraft)"
+          test "$is_draft" = false
+
       - name: Create draft release
+        if: ${{ !inputs.veksli_cli_backfill }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Release ${{ env.RELEASE_TAG }}
           draft: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
 
       - name: Create Bitway draft release
+        if: ${{ !inputs.veksli_cli_backfill }}
         uses: softprops/action-gh-release@v2
         with:
           repository: bit-blik/bitway
           token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Release ${{ env.RELEASE_TAG }}
           draft: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
 
       - name: Create BitTwint draft release
+        if: ${{ !inputs.veksli_cli_backfill }}
         uses: softprops/action-gh-release@v2
         with:
           repository: bit-blik/bittwint
           token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Release ${{ env.RELEASE_TAG }}
           draft: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
 
       - name: Create Veksli draft release
+        if: ${{ !inputs.veksli_cli_backfill }}
         uses: softprops/action-gh-release@v2
         with:
           repository: bit-blik/veksli
           token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Release ${{ env.RELEASE_TAG }}
           draft: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
 
   # ── 2. CLI cross-platform native binaries ─────────────────────────────────
   build_cli:
@@ -136,16 +163,22 @@ jobs:
           if [ "${{ matrix.target }}" = "macos_x64" ]; then
             BUILD="arch -x86_64 dart build cli"
           fi
-          $BUILD -t bin/bitblik.dart -o build/cli-bitblik
-          $BUILD -t bin/bitway.dart -o build/cli-bitway
-          $BUILD -t bin/bittwint.dart -o build/cli-bittwint
+          if [ "${{ inputs.veksli_cli_backfill }}" != true ]; then
+            $BUILD -t bin/bitblik.dart -o build/cli-bitblik
+            $BUILD -t bin/bitway.dart -o build/cli-bitway
+            $BUILD -t bin/bittwint.dart -o build/cli-bittwint
+          fi
           $BUILD -t bin/veksli.dart -o build/cli-veksli
 
       # Standalone AOT bundles have no package config, so ship every canonical
       # flow definition beside each binary for FlowFileLoader to resolve.
       - name: Bundle flow definitions
         run: |
-          for app in bitblik bitway bittwint veksli; do
+          apps="bitblik bitway bittwint veksli"
+          if [ "${{ inputs.veksli_cli_backfill }}" = true ]; then
+            apps="veksli"
+          fi
+          for app in $apps; do
             mkdir -p "build/cli-${app}/bundle/bin/flows"
             cp ../core/lib/flows/*.yml "build/cli-${app}/bundle/bin/flows/"
           done
@@ -153,7 +186,11 @@ jobs:
       - name: Package CLI bundles (Unix)
         if: matrix.target != 'windows_x64'
         run: |
-          for app in bitblik bitway bittwint veksli; do
+          apps="bitblik bitway bittwint veksli"
+          if [ "${{ inputs.veksli_cli_backfill }}" = true ]; then
+            apps="veksli"
+          fi
+          for app in $apps; do
             tar -czf "build/${app}-cli-${{ matrix.platform_name }}.tar.gz" \
               -C "build/cli-${app}/bundle" .
           done
@@ -161,7 +198,11 @@ jobs:
       - name: Package CLI bundles (Windows)
         if: matrix.target == 'windows_x64'
         run: |
-          for app in bitblik bitway bittwint veksli; do
+          apps="bitblik bitway bittwint veksli"
+          if [ "${{ inputs.veksli_cli_backfill }}" = true ]; then
+            apps="veksli"
+          fi
+          for app in $apps; do
             ( cd "build/cli-${app}/bundle" \
               && 7z a -tzip "../../${app}-cli-${{ matrix.platform_name }}.zip" . )
           done
@@ -170,7 +211,11 @@ jobs:
         if: matrix.target == 'linux_x64'
         run: |
           pkg_version="$(grep -m1 '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')"
-          for app in bitblik bitway bittwint veksli; do
+          apps="bitblik bitway bittwint veksli"
+          if [ "${{ inputs.veksli_cli_backfill }}" = true ]; then
+            apps="veksli"
+          fi
+          for app in $apps; do
             deb_root="build/deb-root-${app}"
             rm -rf "$deb_root"
             mkdir -p "$deb_root/DEBIAN" "$deb_root/usr/lib/${app}" "$deb_root/usr/bin"
@@ -193,9 +238,10 @@ jobs:
       # skipped (fail_on_unmatched_files defaults to false), so the same step
       # works for every matrix target.
       - name: Upload BitBlik CLI assets
+        if: ${{ !inputs.veksli_cli_backfill }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           draft: true
           files: |
             packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.tar.gz
@@ -203,11 +249,12 @@ jobs:
             packages/cli/build/bitblik-cli-linux-x64.deb
 
       - name: Upload Bitway CLI assets
+        if: ${{ !inputs.veksli_cli_backfill }}
         uses: softprops/action-gh-release@v2
         with:
           repository: bit-blik/bitway
           token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           draft: true
           files: |
             packages/cli/build/bitway-cli-${{ matrix.platform_name }}.tar.gz
@@ -215,11 +262,12 @@ jobs:
             packages/cli/build/bitway-cli-linux-x64.deb
 
       - name: Upload BitTwint CLI assets
+        if: ${{ !inputs.veksli_cli_backfill }}
         uses: softprops/action-gh-release@v2
         with:
           repository: bit-blik/bittwint
           token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           draft: true
           files: |
             packages/cli/build/bittwint-cli-${{ matrix.platform_name }}.tar.gz
@@ -231,8 +279,8 @@ jobs:
         with:
           repository: bit-blik/veksli
           token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
-          draft: true
+          tag_name: ${{ env.RELEASE_TAG }}
+          draft: ${{ !inputs.veksli_cli_backfill }}
           files: |
             packages/cli/build/veksli-cli-${{ matrix.platform_name }}.tar.gz
             packages/cli/build/veksli-cli-${{ matrix.platform_name }}.zip
@@ -240,6 +288,7 @@ jobs:
 
   # ── 3. Android APK (bitblik, bitway, bittwint, and veksli flavors) ─────────
   build_android:
+    if: ${{ !inputs.veksli_cli_backfill }}
     needs: release
     runs-on: ubuntu-latest
     strategy:
@@ -310,7 +359,7 @@ jobs:
         with:
           repository: ${{ matrix.repository }}
           token: ${{ matrix.flavor == 'bitblik' && github.token || secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           draft: true
           files: packages/app/build/release-apks/*.apk
 
@@ -379,12 +428,13 @@ jobs:
 #      - name: Upload IPA to release
 #        uses: softprops/action-gh-release@v2
 #        with:
-#          tag_name: ${{ github.ref_name }}
+#          tag_name: ${{ env.RELEASE_TAG }}
 #          draft: true
 #          files: packages/app/build/ipa/Runner.ipa
 
   # ── 5. Publish release when all builds succeed ────────────────────────────
   publish_release:
+    if: ${{ !inputs.veksli_cli_backfill }}
     needs: [release, build_cli, build_android]
     runs-on: ubuntu-latest
     steps:
@@ -393,31 +443,31 @@ jobs:
         with:
           repository: bit-blik/bitway
           token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
 
       - name: Publish BitTwint release
         uses: softprops/action-gh-release@v2
         with:
           repository: bit-blik/bittwint
           token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
 
       - name: Publish Veksli release
         uses: softprops/action-gh-release@v2
         with:
           repository: bit-blik/veksli
           token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
 
       - name: Publish BitBlik release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
