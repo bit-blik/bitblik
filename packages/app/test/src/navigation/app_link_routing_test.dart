@@ -26,6 +26,7 @@ void main() {
       '/offers/offer-123?source=link#details',
     ),
     ('https://bitblik.app/offers/offer-123', '/offers/offer-123'),
+    ('https://app.veks.li/offers/offer-123', '/offers/offer-123'),
     ('/offers/offer-123', '/offers/offer-123'),
   ]) {
     testWidgets('native app link $link resolves to $expected', (tester) async {

@@ -274,9 +274,9 @@ class PaymentSystem {
   /// offers and status updates. An explicit, **wire-frozen** identifier —
   /// independent of both [id] (coordinator/currency logic) and [brandName]
   /// (display only). For the ASCII-clean legacy markets it happens to equal the
-  /// brand (`Bitblik`, `Bitway`, `Bittwint`); SK's brand `Bitvýber` carries a
-  /// diacritic, so its tag is the ASCII `Bitvyber`. Never change an existing
-  /// market's tag or older peers become invisible to this filter.
+  /// brand (`Bitblik`, `Bitway`, `Bittwint`); SK was previously branded
+  /// `Bitvýber`, so its wire tag remains the ASCII `Bitvyber`. Never change an
+  /// existing market's tag or older peers become invisible to this filter.
   final String platformTag;
 
   /// Per-category payment instruments. The map keys are the categories this
@@ -509,8 +509,9 @@ const InstrumentSpec _twintInstrument = InstrumentSpec(
 /// per-withdrawal cap — one flow serves all of them.
 const PaymentSystem kSlovakia = PaymentSystem(
   id: 'sk',
-  label: 'Slovensko',
-  brandName: 'Bitvýber',
+  label: 'SK ATMs',
+  brandName: 'Veksli',
+  logoAsset: 'assets/veksli.png',
   platformTag: 'Bitvyber',
   country: 'SK',
   flag: '🇸🇰',

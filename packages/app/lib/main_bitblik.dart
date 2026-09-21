@@ -1655,6 +1655,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
       final logoAsset = switch ((providerLogoAsset, isDark)) {
         ('assets/bitway.png', true) => 'assets/bitway-dark.png',
         ('assets/bittwint.png', true) => 'assets/bittwint-dark.png',
+        ('assets/veksli.png', true) => 'assets/veksli-dark.png',
         (final asset?, _) => asset,
         (null, true) => 'assets/logo-horizontal-dark.png',
         (null, false) => 'assets/logo-horizontal.png',

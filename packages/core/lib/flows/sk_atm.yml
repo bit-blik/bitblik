@@ -1,4 +1,4 @@
-# Bitvýber offer state machine — Slovak cardless ATM withdrawal, schema v2.
+# Veksli offer state machine — Slovak cardless ATM withdrawal, schema v2.
 #
 # One flow serves all three Slovak banks (Tatra banka, Slovenská sporiteľňa,
 # VÚB). The banks differ only in how long their withdrawal code stays valid

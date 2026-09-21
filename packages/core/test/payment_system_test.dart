@@ -38,7 +38,8 @@ void main() {
       expect(kTwint.currency, 'CHF');
       expect(i.makerProvidesCode, isTrue);
       expect(i.flowId, isNotEmpty);
-      expect(kTwint.supportedCategories, [OfferCategory.online, OfferCategory.shop]);
+      expect(kTwint.supportedCategories,
+          [OfferCategory.online, OfferCategory.shop]);
       expect(kTwint.hasCategoryChoice, isTrue);
     });
 
@@ -66,11 +67,12 @@ void main() {
       expect(blik.canDispenseAtmAmount(5), isFalse); // no 5 PLN note
     });
 
-    test('platformTag falls back to brandName, SK overrides to Bitvyber', () {
+    test('platformTag falls back to brandName, SK preserves legacy Bitvyber',
+        () {
       expect(kBlik.platformTag, kBlik.brandName);
       expect(kMbway.platformTag, kMbway.brandName);
       expect(kSlovakia.platformTag, 'Bitvyber');
-      expect(kSlovakia.brandName, 'Bitvýber');
+      expect(kSlovakia.brandName, 'Veksli');
     });
 
     test('paymentSystemById maps legacy SK ids to sk, else falls back to blik',

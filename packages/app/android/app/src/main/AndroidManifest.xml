@@ -37,6 +37,7 @@
                 <data android:scheme="https" android:host="bitblik.xyz" android:pathPrefix="/" />
                 <data android:scheme="https" android:host="bitway.me" android:pathPrefix="/" />
                 <data android:scheme="https" android:host="bittwint.app" android:pathPrefix="/" />
+                <data android:scheme="https" android:host="app.veks.li" android:pathPrefix="/" />
             </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
