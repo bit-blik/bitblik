@@ -81,6 +81,10 @@ class ApiServiceNostr {
       }
       final maker = _keyService.publicKeyHex;
       if (maker == null) throw StateError('Maker identity is not initialized');
+      // Repair journals left by older clients that persisted and cancelled an
+      // offer before acknowledging its initiation result. Only an exact,
+      // locally-cancelled offer may release the one-at-a-time guard.
+      await _initiationStore.completeCancelled(maker);
       final info = getCoordinatorInfoByPubkey(coordinatorPubkey);
       final result = await _initiationRecovery.initiate(
         maker: maker,

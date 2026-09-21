@@ -16,6 +16,7 @@ Offer trade({
   String id = 'trade',
   OfferStatus status = OfferStatus.expiredSentBlik,
   String? taker = 'taker',
+  String? paymentHash,
 }) => Offer(
   id: id,
   amountSats: 1000,
@@ -27,6 +28,7 @@ Offer trade({
   makerPubkey: 'maker',
   coordinatorPubkey: 'coordinator',
   takerPubkey: taker,
+  holdInvoicePaymentHash: paymentHash,
 );
 
 class TestKeys extends Fake implements KeyService {
@@ -43,6 +45,7 @@ class TestApi extends Fake implements ApiServiceNostr {
   final List<CoordinatorRecord> coordinators = [];
   Future<Offer?> Function(String)? recover;
   final recoveryCalls = <String>[];
+  final completedInitiations = <String>[];
 
   @override
   List<CoordinatorRecord> get allConfiguredCoordinators => coordinators;
@@ -57,6 +60,11 @@ class TestApi extends Fake implements ApiServiceNostr {
   Stream<bool> get relayConnectionState {
     if (!listening.isCompleted) listening.complete();
     return connected.stream;
+  }
+
+  @override
+  Future<void> completeOfferInitiation(String paymentHash) async {
+    completedInitiations.add(paymentHash);
   }
 
   @override
@@ -79,18 +87,27 @@ void main() {
   late TestApi api;
   late ActiveOfferNotifier notifier;
 
-  ProviderContainer createContainer() => ProviderContainer(
-    overrides: [
-      keyServiceProvider.overrideWithValue(TestKeys()),
-      publicKeyProvider.overrideWith((ref) async => 'taker'),
-      apiServiceProvider.overrideWithValue(api),
-      initializedApiServiceProvider.overrideWith((ref) async => api),
-      selectedPaymentSystemProvider.overrideWith(
-        (ref) => SelectedPaymentSystemNotifier(kBlik),
-      ),
-      appLifecycleProvider.overrideWith((ref) => AppLifecycleNotifier(ref)),
-    ],
-  );
+  ProviderContainer createContainer({bool rejectLifecycleRead = false}) =>
+      ProviderContainer(
+        overrides: [
+          keyServiceProvider.overrideWithValue(TestKeys()),
+          publicKeyProvider.overrideWith((ref) async => 'taker'),
+          apiServiceProvider.overrideWithValue(api),
+          initializedApiServiceProvider.overrideWith((ref) async => api),
+          selectedPaymentSystemProvider.overrideWith(
+            (ref) => SelectedPaymentSystemNotifier(kBlik),
+          ),
+          activeOfferNotificationsProvider.overrideWith(
+            (ref) => ActiveOfferNotificationsNotifier(load: false),
+          ),
+          appLifecycleProvider.overrideWith((ref) {
+            if (rejectLifecycleRead) {
+              throw StateError('active offer synchronously entered lifecycle');
+            }
+            return AppLifecycleNotifier(ref);
+          }),
+        ],
+      );
 
   setUpAll(() async {
     sqfliteFfiInit();
@@ -161,6 +178,37 @@ void main() {
       expect(api.recoveryCalls.length, 2);
     },
   );
+
+  test('setting active offer does not synchronously enter lifecycle', () async {
+    container.dispose();
+    await api.connected.close();
+    api = TestApi();
+    container = createContainer(rejectLifecycleRead: true);
+    notifier = container.read(activeOfferProvider.notifier);
+    await api.listening.future;
+
+    await notifier.setActiveOffer(trade(id: 'cycle-regression'));
+
+    expect(container.read(activeOfferProvider)?.id, 'cycle-regression');
+  });
+
+  test('cancelling created offer acknowledges its initiation', () async {
+    final created = trade(
+      id: 'created-offer',
+      status: OfferStatus.created,
+      paymentHash: 'payment-hash',
+    );
+    await notifier.setActiveOffer(created);
+
+    await notifier.cancelActiveOffer();
+
+    expect(api.completedInitiations, ['payment-hash']);
+    expect(container.read(activeOfferProvider), isNull);
+    expect(
+      (await db.getOfferById('created-offer'))?.status,
+      OfferStatus.cancelled,
+    );
+  });
 
   test('lost reply after accepted report reconciles and confirms', () async {
     final result = await reportTakerCharged(

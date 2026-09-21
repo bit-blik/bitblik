@@ -38,6 +38,7 @@ RUN cp web_shells/${APP_FLAVOR}/index.html web/index.html \
  && ([ -f web_shells/${APP_FLAVOR}/bitway-icon.png ] && cp web_shells/${APP_FLAVOR}/bitway-icon.png web/bitway-icon.png || true) \
  && ([ -f web_shells/${APP_FLAVOR}/bitblik-icon.png ] && cp web_shells/${APP_FLAVOR}/bitblik-icon.png web/bitblik-icon.png || true) \
  && ([ -f web_shells/${APP_FLAVOR}/bittwint-icon.png ] && cp web_shells/${APP_FLAVOR}/bittwint-icon.png web/bittwint-icon.png || true) \
+ && ([ -f web_shells/${APP_FLAVOR}/veksli-icon.png ] && cp web_shells/${APP_FLAVOR}/veksli-icon.png web/veksli-icon.png || true) \
  && cp web_shells/${APP_FLAVOR}/icons/Icon-192.png web/icons/Icon-192.png \
  && cp web_shells/${APP_FLAVOR}/icons/Icon-512.png web/icons/Icon-512.png \
  && cp web_shells/${APP_FLAVOR}/icons/Icon-maskable-192.png web/icons/Icon-maskable-192.png \

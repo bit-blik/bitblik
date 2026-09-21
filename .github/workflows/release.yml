@@ -231,6 +231,9 @@ jobs:
           - flavor: bittwint
             entrypoint: lib/main_bittwint.dart
             repository: bit-blik/bittwint
+          - flavor: veksli
+            entrypoint: lib/main_veksli.dart
+            repository: bit-blik/veksli
     defaults:
       run:
         working-directory: ./packages/app

@@ -933,7 +933,6 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       );
     }
     state = offer;
-    _ref.read(appLifecycleProvider)._updateForegroundService();
     if (offer != null) {
       unawaited(
         _ref
@@ -1038,6 +1037,19 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
     final cancelled = current.copyWith(status: OfferStatus.cancelled);
     await OfferDbService().upsertOffer(cancelled);
+    final paymentHash = current.holdInvoicePaymentHash;
+    if (paymentHash != null && paymentHash.isNotEmpty) {
+      try {
+        await apiService.completeOfferInitiation(paymentHash);
+      } catch (e) {
+        // Cancellation remains authoritative. A later create attempt also
+        // clears this exact cancelled journal before requesting a new invoice.
+        Logger.log.w(
+          () =>
+              '[ActiveOfferNotifier] failed clearing cancelled offer initiation: $e',
+        );
+      }
+    }
     // Cancellation is an explicit exit from this trade. Do not promote an
     // older active row here: the current flow screen would immediately redraw
     // that offer (for example an old dispute), making it look as though the
@@ -1176,7 +1188,6 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         // taps Done. Auto-promoting here would set state=null before any
         // listener sees takerPaid, causing the dialog to stay stuck forever.
         state = hydrated;
-        _ref.read(appLifecycleProvider)._updateForegroundService();
       } else if (OfferDbService.terminalStatuses.contains(newStatus)) {
         if (newStatus == OfferStatus.cancelled) {
           // A cancelled offer exits to home. Promoting another persisted offer
@@ -1186,7 +1197,6 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
         } else {
           await _promoteMostRecentActiveOffer();
         }
-        _ref.read(appLifecycleProvider)._updateForegroundService();
       } else {
         state = hydrated;
       }
@@ -1744,8 +1754,8 @@ final activeOfferNotificationsProvider =
     );
 
 class ActiveOfferNotificationsNotifier extends StateNotifier<bool> {
-  ActiveOfferNotificationsNotifier() : super(false) {
-    _load();
+  ActiveOfferNotificationsNotifier({bool load = true}) : super(false) {
+    if (load) _load();
   }
 
   Future<void> _load() async {

@@ -115,6 +115,37 @@ class OfferInitiationStore {
     if (count != 1) throw StateError('Offer initiation record is unavailable');
   }
 
+  /// Clears a stale initiation only when its exact result was persisted as a
+  /// locally cancelled offer. Unknown and in-flight attempts remain protected.
+  Future<void> completeCancelled(String maker) async {
+    await _ensure();
+    await (await database()).transaction((txn) async {
+      final rows = await txn.query(
+        'offer_initiations',
+        where: 'maker = ?',
+        whereArgs: [maker],
+      );
+      if (rows.isEmpty) return;
+      final attempt = LocalOfferInitiation.fromRow(rows.single);
+      final paymentHash = attempt.result?['paymentHash'];
+      if (paymentHash is! String || paymentHash.isEmpty) return;
+      final cancelled = await txn.query(
+        'offers',
+        columns: ['id'],
+        where:
+            'maker_pubkey = ? AND coordinator_pubkey = ? AND hold_invoice_payment_hash = ? AND status = ?',
+        whereArgs: [maker, attempt.coordinator, paymentHash, 'cancelled'],
+        limit: 1,
+      );
+      if (cancelled.isEmpty) return;
+      await txn.delete(
+        'offer_initiations',
+        where: 'maker = ? AND operation_id = ?',
+        whereArgs: [maker, attempt.operationId],
+      );
+    });
+  }
+
   /// A caller/UI acknowledgement alone is insufficient. Require the matching
   /// offer already persisted locally; retain the attempt on write failure.
   Future<void> complete(String maker, String paymentHash) async {

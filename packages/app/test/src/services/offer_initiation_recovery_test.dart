@@ -106,7 +106,7 @@ void main() {
     db = await databaseFactoryFfi.openDatabase('${directory.path}/offers.db');
     await db.execute(
       '''CREATE TABLE offers (id TEXT PRIMARY KEY, maker_pubkey TEXT,
-      coordinator_pubkey TEXT, hold_invoice_payment_hash TEXT)''',
+      coordinator_pubkey TEXT, hold_invoice_payment_hash TEXT, status TEXT)''',
     );
     store = OfferInitiationStore(() async => db);
     sends = 0;
@@ -287,6 +287,29 @@ void main() {
     expect(await store.read('other-maker'), isNull);
     await store.complete('other-maker', 'hash');
     expect(await store.read('maker'), isNotNull);
+  });
+
+  test('cancelled persisted offer releases stale initiation guard', () async {
+    await initiate();
+    await db.insert('offers', {
+      'id': 'hash',
+      'maker_pubkey': 'maker',
+      'coordinator_pubkey': 'coordinator',
+      'hold_invoice_payment_hash': 'hash',
+      'status': 'created',
+    });
+
+    await store.completeCancelled('maker');
+    expect(await store.read('maker'), isNotNull);
+
+    await db.update(
+      'offers',
+      {'status': 'cancelled'},
+      where: 'id = ?',
+      whereArgs: ['hash'],
+    );
+    await store.completeCancelled('maker');
+    expect(await store.read('maker'), isNull);
   });
 
   test(

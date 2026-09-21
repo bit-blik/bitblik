@@ -61,6 +61,7 @@
                 <data android:scheme="bitblik" />
                 <data android:scheme="bitway" />
                 <data android:scheme="bittwint" />
+                <data android:scheme="veksli" />
             </intent-filter>
             <!-- Deep link for nostr+walletconnect:// scheme (NWC) -->
             <intent-filter>

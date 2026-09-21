@@ -1,0 +1,17 @@
+# Launcher icons for the `veksli` flavor.
+# Generate with:
+#   dart run flutter_launcher_icons -f flutter_launcher_icons-veksli.yaml
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/veksli-icon.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/veksli-icon.png"
+  adaptive_icon_foreground_inset: 26
+  min_sdk_android: 21
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false

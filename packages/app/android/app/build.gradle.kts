@@ -130,6 +130,7 @@ android {
     //   flutter build apk --flavor bitblik -t lib/main_bitblik.dart
     //   flutter build apk --flavor bitway -t lib/main_bitway.dart
     //   flutter build apk --flavor bittwint -t lib/main_bittwint.dart
+    //   flutter build apk --flavor veksli -t lib/main_veksli.dart
     flavorDimensions += "system"
     productFlavors {
         create("bitblik") {
@@ -146,6 +147,11 @@ android {
             dimension = "system"
             applicationId = "app.bittwint"
             resValue("string", "app_name", "bittwint")
+        }
+        create("veksli") {
+            dimension = "system"
+            applicationId = "li.veks"
+            resValue("string", "app_name", "Veksli")
         }
     }
 }

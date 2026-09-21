@@ -29,6 +29,7 @@ String buildQrLogoAsset = 'assets/logo2.png';
 String get buildAppScheme => switch (buildDefaultPaymentSystemId) {
   'mbway' => 'bitway',
   'twint' => 'bittwint',
+  'sk' => 'veksli',
   _ => 'bitblik',
 };
 
@@ -36,6 +37,7 @@ String get buildAppScheme => switch (buildDefaultPaymentSystemId) {
 Uri externalUpdateUrlForPaymentSystem(String paymentSystemId) =>
     Uri.parse(switch (paymentSystemId) {
       'mbway' => 'https://bitway.me',
+      'sk' => 'https://veks.li',
       _ => 'https://bitblik.app',
     });
 
@@ -43,6 +45,7 @@ String get buildPrimaryHost => switch (buildDefaultPaymentSystemId) {
   'mbway' =>
     'npub180nj93uqjvvjksryaxaz8fk9gxwwtg06gxlkd5csrj6rqfg3phhs09n5s9.nsite.lol',
   'twint' => 'bittwint.app',
+  'sk' => 'app.veks.li',
   _ =>
     'npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3.nsite.lol',
 };
@@ -79,18 +82,21 @@ void _apply(String id) {
   buildAppName = switch (id) {
     'mbway' => 'BitWay',
     'twint' => 'Bittwint',
+    'sk' => 'Veksli',
     _ => 'BitBlik',
   };
   buildNwcIconUrl = switch (id) {
     'mbway' =>
       'https://npub180nj93uqjvvjksryaxaz8fk9gxwwtg06gxlkd5csrj6rqfg3phhs09n5s9.nsite.lol/app/assets/assets/bitway-icon.png',
     'twint' => 'https://bittwint.app/assets/assets/bittwint-icon.png',
+    'sk' => 'https://app.veks.li/assets/assets/veksli-icon.png',
     _ =>
       'https://npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3.nsite.lol/app/assets/assets/logo.png',
   };
   buildQrLogoAsset = switch (id) {
     'mbway' => 'assets/bitway-icon.png',
     'twint' => 'assets/bittwint-icon.png',
+    'sk' => 'assets/veksli-icon.png',
     _ => 'assets/logo2.png',
   };
 }
@@ -118,6 +124,8 @@ Future<void> initBuildFlavor() async {
     id = 'mbway';
   } else if (appFlavor == 'bittwint' || pkg.contains('bittwint')) {
     id = 'twint';
+  } else if (appFlavor == 'veksli' || pkg == 'li.veks') {
+    id = 'sk';
   } else {
     id = 'blik';
   }

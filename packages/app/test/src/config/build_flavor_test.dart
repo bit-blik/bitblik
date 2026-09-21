@@ -19,4 +19,19 @@ void main() {
       );
     }
   });
+
+  test('Veksli flavor pins Slovak ATM branding and links', () {
+    forcePaymentSystem('sk');
+
+    expect(buildDefaultPaymentSystemId, 'sk');
+    expect(buildAppName, 'Veksli');
+    expect(buildAppScheme, 'veksli');
+    expect(buildPrimaryHost, 'app.veks.li');
+    expect(
+      externalUpdateUrlForPaymentSystem('sk'),
+      Uri.parse('https://veks.li'),
+    );
+    expect(buildQrLogoAsset, 'assets/veksli-icon.png');
+    expect(isBuildPaymentSystemForced, isTrue);
+  });
 }

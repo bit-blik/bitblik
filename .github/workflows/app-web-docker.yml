@@ -35,6 +35,9 @@ jobs:
           - flavor: bittwint
             flutter_target: lib/main_bittwint.dart
             build_mode: release
+          - flavor: veksli
+            flutter_target: lib/main_veksli.dart
+            build_mode: release
 
     steps:
       - uses: actions/checkout@v4

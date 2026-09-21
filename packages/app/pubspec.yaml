@@ -145,6 +145,7 @@ flutter:
     - assets/bittwint-icon.png
     - assets/veksli.png
     - assets/veksli-dark.png
+    - assets/veksli-icon.png
     - assets/apk.png
     - assets/zapstore.png
     - assets/telegram.png

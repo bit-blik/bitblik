@@ -608,8 +608,11 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       await _handleNwcDeepLink(uri.toString());
       return;
     }
-    // Handle app-specific deep-link schemes (bitblik://, bitway://, bittwint://)
-    if (scheme == 'bitblik' || scheme == 'bitway' || scheme == 'bittwint') {
+    // Handle app-specific deep-link schemes.
+    if (scheme == 'bitblik' ||
+        scheme == 'bitway' ||
+        scheme == 'bittwint' ||
+        scheme == 'veksli') {
       final path = uri.host + uri.path;
       if (path.endsWith('nwc-callback') ||
           path.startsWith('value') ||
@@ -1689,7 +1692,11 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                 // BitBlik uses a dedicated dark-mode wordmark; opaque Bittwint
                 // artwork keeps its light backing in both themes.
                 logoAsset,
-                height: providerLogoAsset != null ? 40 : 30,
+                height: providerLogoAsset == 'assets/veksli.png'
+                    ? 36
+                    : providerLogoAsset != null
+                    ? 40
+                    : 30,
                 fit: BoxFit.contain,
               ),
             ),
