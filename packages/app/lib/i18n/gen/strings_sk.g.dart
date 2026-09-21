@@ -483,6 +483,7 @@ class _Translations$offerNotifications$sk extends Translations$offerNotification
 
 	// Translations
 	@override late final _Translations$offerNotifications$activeService$sk activeService = _Translations$offerNotifications$activeService$sk._(_root);
+	@override late final _Translations$offerNotifications$activeOfferService$sk activeOfferService = _Translations$offerNotifications$activeOfferService$sk._(_root);
 	@override late final _Translations$offerNotifications$funded$sk funded = _Translations$offerNotifications$funded$sk._(_root);
 	@override late final _Translations$offerNotifications$reserved$sk reserved = _Translations$offerNotifications$reserved$sk._(_root);
 	@override late final _Translations$offerNotifications$blikReady$sk blikReady = _Translations$offerNotifications$blikReady$sk._(_root);
@@ -1937,6 +1938,17 @@ class _Translations$offerNotifications$activeService$sk extends Translations$off
 	// Translations
 	@override String get title => 'Čaká sa na nové ponuky';
 	@override String body({required Object app}) => 'Nostr služba monitoruje udalosti ponúk ${app}.';
+}
+
+// Path: offerNotifications.activeOfferService
+class _Translations$offerNotifications$activeOfferService$sk extends Translations$offerNotifications$activeOfferService$en {
+	_Translations$offerNotifications$activeOfferService$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Sledovanie aktívnej ponuky';
+	@override String body({required Object app}) => 'Nostr služba monitoruje aktualizácie tvojej aktívnej ponuky ${app}.';
 }
 
 // Path: offerNotifications.funded
@@ -3785,6 +3797,8 @@ extension on TranslationsSk {
 			'relays.popup.connectingMessage' => 'Pripája sa k relayom...',
 			'offerNotifications.activeService.title' => 'Čaká sa na nové ponuky',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Nostr služba monitoruje udalosti ponúk ${app}.',
+			'offerNotifications.activeOfferService.title' => 'Sledovanie aktívnej ponuky',
+			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'Nostr služba monitoruje aktualizácie tvojej aktívnej ponuky ${app}.',
 			'offerNotifications.funded.title' => 'Ponuka financovaná',
 			'offerNotifications.funded.body' => 'Tvoja hold faktúra bola prijatá. Ponuka je teraz aktívna.',
 			'offerNotifications.reserved.title' => 'Ponuka rezervovaná',

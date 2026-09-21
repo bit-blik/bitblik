@@ -628,6 +628,7 @@ class Translations$offerNotifications$en {
 
 	// Translations
 	late final Translations$offerNotifications$activeService$en activeService = Translations$offerNotifications$activeService$en.internal(_root);
+	late final Translations$offerNotifications$activeOfferService$en activeOfferService = Translations$offerNotifications$activeOfferService$en.internal(_root);
 	late final Translations$offerNotifications$funded$en funded = Translations$offerNotifications$funded$en.internal(_root);
 	late final Translations$offerNotifications$reserved$en reserved = Translations$offerNotifications$reserved$en.internal(_root);
 	late final Translations$offerNotifications$blikReady$en blikReady = Translations$offerNotifications$blikReady$en.internal(_root);
@@ -3515,6 +3516,21 @@ class Translations$offerNotifications$activeService$en {
 
 	/// en: 'Nostr service monitoring events of ${app} offers.'
 	String body({required Object app}) => 'Nostr service monitoring events of ${app} offers.';
+}
+
+// Path: offerNotifications.activeOfferService
+class Translations$offerNotifications$activeOfferService$en {
+	Translations$offerNotifications$activeOfferService$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Tracking active offer'
+	String get title => 'Tracking active offer';
+
+	/// en: 'Nostr service monitoring updates to your active ${app} offer.'
+	String body({required Object app}) => 'Nostr service monitoring updates to your active ${app} offer.';
 }
 
 // Path: offerNotifications.funded
@@ -6887,6 +6903,8 @@ extension on Translations {
 			'relays.popup.connectingMessage' => 'Connecting to relays...',
 			'offerNotifications.activeService.title' => 'Waiting for new offers',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Nostr service monitoring events of ${app} offers.',
+			'offerNotifications.activeOfferService.title' => 'Tracking active offer',
+			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'Nostr service monitoring updates to your active ${app} offer.',
 			'offerNotifications.funded.title' => 'Offer funded',
 			'offerNotifications.funded.body' => 'Your hold invoice was accepted. Offer is now live.',
 			'offerNotifications.reserved.title' => 'Offer reserved',

@@ -136,7 +136,7 @@ states:
         do: [assert_assigned_taker, cancel_reservation]
         to: funded
       - on: timeout
-        after: 3600           # conflict/dispute escalation, 60 min
+        after: 1800           # conflict/dispute escalation, 30 min
         to: securingDispute
         reason: autoInvalidBlikTimeout — taker silent; settle and escalate.
 
@@ -183,7 +183,7 @@ states:
         do: [assert_assigned_taker, stamp_reserved_at]
         to: reserved
       - on: timeout
-        after: 3600           # dispute escalation, 60 min
+        after: 1800           # dispute escalation, 30 min
         to: securingDispute
         reason: autoExpiredSentBlikTimeout — settle and escalate.
 
@@ -202,7 +202,7 @@ states:
         do: []
         to: conflict
       - on: timeout
-        after: 1800           # TAKER_CHARGED_AUTO_CONFIRM_SECONDS, default 3600
+        after: 1800           # TAKER_CHARGED_AUTO_CONFIRM_SECONDS, default 1800
         do: [stamp_maker_confirmed_at]
         to: makerConfirmed
         reason: >
@@ -226,6 +226,6 @@ states:
         by: maker
         to: securingDispute
       - on: timeout
-        after: 3600           # dispute escalation, 60 min
+        after: 1800           # dispute escalation, 30 min
         to: securingDispute
         reason: autoConflictTimeout — settle and escalate to dispute.

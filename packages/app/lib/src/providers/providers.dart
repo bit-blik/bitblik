@@ -308,8 +308,8 @@ final coordinatorTakerChargedAutoConfirmDurationProvider =
       );
       return coordinatorInfoAsync.maybeWhen(
         data: (info) => info != null
-                    ? Duration(seconds: info.takerChargedAutoConfirmSeconds)
-                    : null,
+            ? Duration(seconds: info.takerChargedAutoConfirmSeconds)
+            : null,
         orElse: () => null,
       );
     });
@@ -332,9 +332,9 @@ final coordinatorDisputeEvidenceDurationProvider =
       );
       return coordinatorInfoAsync.maybeWhen(
         data: (info) =>
-                info?.disputeEvidencePeriodSeconds == null ||
-                        info!.disputeEvidencePeriodSeconds! <= 0
-                    ? null
+            info?.disputeEvidencePeriodSeconds == null ||
+                info!.disputeEvidencePeriodSeconds! <= 0
+            ? null
             : Duration(seconds: info.disputeEvidencePeriodSeconds!),
         orElse: () => null,
       );
@@ -391,9 +391,9 @@ Future<List<Offer>> refreshAvailableOffersCache(
 ) async {
   final currentOffers = List<Offer>.from(apiService.knownOffers);
   final enabledCoordinatorPubkeys = apiService.discoveredCoordinators
-          .where((record) => record.enabled)
-          .map((record) => record.pubkeyHex)
-          .toSet();
+      .where((record) => record.enabled)
+      .map((record) => record.pubkeyHex)
+      .toSet();
   if (currentOffers.isEmpty) {
     return List<Offer>.from(
       apiService.knownOffers
@@ -446,13 +446,13 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   final discoveredCoordinators = ref.watch(discoveredCoordinatorsProvider);
   final enabledCoordinatorPubkeys = discoveredCoordinators.maybeWhen(
     data: (records) => records
-                .where((record) => record.enabled)
-                .map((record) => record.pubkeyHex)
-                .toSet(),
+        .where((record) => record.enabled)
+        .map((record) => record.pubkeyHex)
+        .toSet(),
     orElse: () => apiService.discoveredCoordinators
-                .where((record) => record.enabled)
-                .map((record) => record.pubkeyHex)
-                .toSet(),
+        .where((record) => record.enabled)
+        .map((record) => record.pubkeyHex)
+        .toSet(),
   );
   // Emit the latest cached snapshot immediately so pull-to-refresh and
   // provider rebuilds don't hang waiting for a future live event.
@@ -2049,12 +2049,15 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         !OfferDbService.terminalStatuses.contains(offer.status);
     if (newOfferAlertsEnabled || (activeOfferAlertsEnabled && hasActiveOffer)) {
       final strings = t.offerNotifications;
-      NotificationService().startOfferForegroundService(
-        strings.activeService.title,
-        strings.activeService.body(
-          app: _ref.read(selectedPaymentSystemProvider).brandName,
-        ),
-      );
+      final app = _ref.read(selectedPaymentSystemProvider).brandName;
+      final tracksActiveOffer = activeOfferAlertsEnabled && hasActiveOffer;
+      final title = tracksActiveOffer
+          ? strings.activeOfferService.title
+          : strings.activeService.title;
+      final body = tracksActiveOffer
+          ? strings.activeOfferService.body(app: app)
+          : strings.activeService.body(app: app);
+      NotificationService().startOfferForegroundService(title, body);
     } else {
       NotificationService().stopOfferForegroundService();
     }

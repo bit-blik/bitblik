@@ -1329,6 +1329,9 @@ offerNotifications:
   activeService:
     title: En attente de nouvelles offres
     body: Service Nostr surveillant les événements des offres ${app}.
+  activeOfferService:
+    title: Suivi de l'offre active
+    body: Service Nostr surveillant les mises à jour de votre offre ${app} active.
   funded:
     title: Offre financée
     body: Votre facture hold a été acceptée. L'offre est maintenant en ligne.

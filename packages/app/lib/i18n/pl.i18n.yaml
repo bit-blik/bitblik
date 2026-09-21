@@ -1313,6 +1313,9 @@ offerNotifications:
   activeService:
     title: Oczekiwanie na nowe oferty
     body: Usługa w tle monitorująca ofert ${app}.
+  activeOfferService:
+    title: Śledzenie aktywnej oferty
+    body: Usługa Nostr monitoruje aktualizacje Twojej aktywnej oferty ${app}.
   funded:
     title: Oferta zasilona
     body: Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.

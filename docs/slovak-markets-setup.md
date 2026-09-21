@@ -156,7 +156,7 @@ a vlož ho do `NOSTR_PRIVATE_KEY`.
       # z sk_atm.yml, takže tieto hodnoty sú len informatívne.
       RESERVATION_SECONDS: 120
       FUNDED_EXPIRY_SECONDS: 1800
-      TAKER_CHARGED_AUTO_CONFIRM_SECONDS: 3600
+      TAKER_CHARGED_AUTO_CONFIRM_SECONDS: 1800
       # --- Limity a poplatky ---
       MIN_AMOUNT_SATS: 1000
       # 912000 sats ≈ 500 € = max bezkartový výber (jednorazový kód) TB/SLSP/VÚB.

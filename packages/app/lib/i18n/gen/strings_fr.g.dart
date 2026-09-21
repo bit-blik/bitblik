@@ -510,6 +510,7 @@ class _Translations$offerNotifications$fr extends Translations$offerNotification
 
 	// Translations
 	@override late final _Translations$offerNotifications$activeService$fr activeService = _Translations$offerNotifications$activeService$fr._(_root);
+	@override late final _Translations$offerNotifications$activeOfferService$fr activeOfferService = _Translations$offerNotifications$activeOfferService$fr._(_root);
 	@override late final _Translations$offerNotifications$funded$fr funded = _Translations$offerNotifications$funded$fr._(_root);
 	@override late final _Translations$offerNotifications$reserved$fr reserved = _Translations$offerNotifications$reserved$fr._(_root);
 	@override late final _Translations$offerNotifications$blikReady$fr blikReady = _Translations$offerNotifications$blikReady$fr._(_root);
@@ -2088,6 +2089,17 @@ class _Translations$offerNotifications$activeService$fr extends Translations$off
 	// Translations
 	@override String get title => 'En attente de nouvelles offres';
 	@override String body({required Object app}) => 'Service Nostr surveillant les événements des offres ${app}.';
+}
+
+// Path: offerNotifications.activeOfferService
+class _Translations$offerNotifications$activeOfferService$fr extends Translations$offerNotifications$activeOfferService$en {
+	_Translations$offerNotifications$activeOfferService$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Suivi de l\'offre active';
+	@override String body({required Object app}) => 'Service Nostr surveillant les mises à jour de votre offre ${app} active.';
 }
 
 // Path: offerNotifications.funded
@@ -4251,6 +4263,8 @@ extension on TranslationsFr {
 			'relays.popup.connectingMessage' => 'Connexion aux relais...',
 			'offerNotifications.activeService.title' => 'En attente de nouvelles offres',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Service Nostr surveillant les événements des offres ${app}.',
+			'offerNotifications.activeOfferService.title' => 'Suivi de l\'offre active',
+			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'Service Nostr surveillant les mises à jour de votre offre ${app} active.',
 			'offerNotifications.funded.title' => 'Offre financée',
 			'offerNotifications.funded.body' => 'Votre facture hold a été acceptée. L\'offre est maintenant en ligne.',
 			'offerNotifications.reserved.title' => 'Offre réservée',

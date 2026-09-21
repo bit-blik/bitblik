@@ -511,6 +511,7 @@ class _Translations$offerNotifications$pl extends Translations$offerNotification
 
 	// Translations
 	@override late final _Translations$offerNotifications$activeService$pl activeService = _Translations$offerNotifications$activeService$pl._(_root);
+	@override late final _Translations$offerNotifications$activeOfferService$pl activeOfferService = _Translations$offerNotifications$activeOfferService$pl._(_root);
 	@override late final _Translations$offerNotifications$funded$pl funded = _Translations$offerNotifications$funded$pl._(_root);
 	@override late final _Translations$offerNotifications$reserved$pl reserved = _Translations$offerNotifications$reserved$pl._(_root);
 	@override late final _Translations$offerNotifications$blikReady$pl blikReady = _Translations$offerNotifications$blikReady$pl._(_root);
@@ -2085,6 +2086,17 @@ class _Translations$offerNotifications$activeService$pl extends Translations$off
 	// Translations
 	@override String get title => 'Oczekiwanie na nowe oferty';
 	@override String body({required Object app}) => 'Usługa w tle monitorująca ofert ${app}.';
+}
+
+// Path: offerNotifications.activeOfferService
+class _Translations$offerNotifications$activeOfferService$pl extends Translations$offerNotifications$activeOfferService$en {
+	_Translations$offerNotifications$activeOfferService$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Śledzenie aktywnej oferty';
+	@override String body({required Object app}) => 'Usługa Nostr monitoruje aktualizacje Twojej aktywnej oferty ${app}.';
 }
 
 // Path: offerNotifications.funded
@@ -4211,6 +4223,8 @@ extension on TranslationsPl {
 			'relays.popup.connectingMessage' => 'Łączenie z przekaźnikami...',
 			'offerNotifications.activeService.title' => 'Oczekiwanie na nowe oferty',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Usługa w tle monitorująca ofert ${app}.',
+			'offerNotifications.activeOfferService.title' => 'Śledzenie aktywnej oferty',
+			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'Usługa Nostr monitoruje aktualizacje Twojej aktywnej oferty ${app}.',
 			'offerNotifications.funded.title' => 'Oferta zasilona',
 			'offerNotifications.funded.body' => 'Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.',
 			'offerNotifications.reserved.title' => 'Oferta zarezerwowana',

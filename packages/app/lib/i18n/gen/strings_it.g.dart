@@ -511,6 +511,7 @@ class _Translations$offerNotifications$it extends Translations$offerNotification
 
 	// Translations
 	@override late final _Translations$offerNotifications$activeService$it activeService = _Translations$offerNotifications$activeService$it._(_root);
+	@override late final _Translations$offerNotifications$activeOfferService$it activeOfferService = _Translations$offerNotifications$activeOfferService$it._(_root);
 	@override late final _Translations$offerNotifications$funded$it funded = _Translations$offerNotifications$funded$it._(_root);
 	@override late final _Translations$offerNotifications$reserved$it reserved = _Translations$offerNotifications$reserved$it._(_root);
 	@override late final _Translations$offerNotifications$blikReady$it blikReady = _Translations$offerNotifications$blikReady$it._(_root);
@@ -2088,6 +2089,17 @@ class _Translations$offerNotifications$activeService$it extends Translations$off
 	// Translations
 	@override String get title => 'In attesa di nuove offerte';
 	@override String body({required Object app}) => 'Servizio in background che monitora gli eventi Nostr delle offerte ${app}.';
+}
+
+// Path: offerNotifications.activeOfferService
+class _Translations$offerNotifications$activeOfferService$it extends Translations$offerNotifications$activeOfferService$en {
+	_Translations$offerNotifications$activeOfferService$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Monitoraggio offerta attiva';
+	@override String body({required Object app}) => 'Il servizio Nostr monitora gli aggiornamenti della tua offerta ${app} attiva.';
 }
 
 // Path: offerNotifications.funded
@@ -4217,6 +4229,8 @@ extension on TranslationsIt {
 			'relays.popup.connectingMessage' => 'Connessione ai relay...',
 			'offerNotifications.activeService.title' => 'In attesa di nuove offerte',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Servizio in background che monitora gli eventi Nostr delle offerte ${app}.',
+			'offerNotifications.activeOfferService.title' => 'Monitoraggio offerta attiva',
+			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'Il servizio Nostr monitora gli aggiornamenti della tua offerta ${app} attiva.',
 			'offerNotifications.funded.title' => 'Offerta finanziata',
 			'offerNotifications.funded.body' => 'La tua fattura hold è stata accettata. L\'offerta è ora attiva.',
 			'offerNotifications.reserved.title' => 'Offerta prenotata',

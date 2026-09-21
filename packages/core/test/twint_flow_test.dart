@@ -78,8 +78,8 @@ void main() {
       expect(timeout.fromField, 'code_received_at');
     }
     expect(engine.timeoutFor('expiredTwint')!.durationSeconds, 300);
-    expect(engine.timeoutFor('invalidTwint')!.durationSeconds, 3600);
-    expect(engine.timeoutFor('takerCharged')!.durationSeconds, 3600);
+    expect(engine.timeoutFor('invalidTwint')!.durationSeconds, 1800);
+    expect(engine.timeoutFor('takerCharged')!.durationSeconds, 1800);
   });
 
   test('maker can confirm early from reserved and expiredTwint', () {

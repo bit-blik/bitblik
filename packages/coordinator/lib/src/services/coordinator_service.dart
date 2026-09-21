@@ -685,7 +685,7 @@ class CoordinatorService {
         int.tryParse(_env['FUNDED_EXPIRY_SECONDS'] ?? '') ?? 600;
     _takerChargedAutoConfirmTimeoutSeconds =
         int.tryParse(_env['TAKER_CHARGED_AUTO_CONFIRM_SECONDS'] ?? '') ??
-            3600; // 1h
+            1800; // 30 min
     final configuredDisputeEvidencePeriod = int.tryParse(
       _env['DISPUTE_EVIDENCE_PERIOD_SECONDS'] ?? '',
     );

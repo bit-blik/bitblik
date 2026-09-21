@@ -1186,6 +1186,9 @@ offerNotifications:
   activeService:
     title: Čaká sa na nové ponuky
     body: Nostr služba monitoruje udalosti ponúk ${app}.
+  activeOfferService:
+    title: Sledovanie aktívnej ponuky
+    body: Nostr služba monitoruje aktualizácie tvojej aktívnej ponuky ${app}.
   funded:
     title: Ponuka financovaná
     body: Tvoja hold faktúra bola prijatá. Ponuka je teraz aktívna.

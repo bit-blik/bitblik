@@ -1312,6 +1312,9 @@ offerNotifications:
   activeService:
     title: In attesa di nuove offerte
     body: Servizio in background che monitora gli eventi Nostr delle offerte ${app}.
+  activeOfferService:
+    title: Monitoraggio offerta attiva
+    body: Il servizio Nostr monitora gli aggiornamenti della tua offerta ${app} attiva.
   funded:
     title: Offerta finanziata
     body: La tua fattura hold è stata accettata. L'offerta è ora attiva.

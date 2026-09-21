@@ -63,7 +63,7 @@ states:
         do: [clear_taker_fields]
         to: cancelling
       - on: timeout
-        after: 3600           # cancel
+        after: 1800           # cancel after 30 min
         to: cancelling
 
   reserved:
@@ -130,7 +130,7 @@ states:
         by: maker
         to: securingDispute
       - on: timeout
-        after: 3600           # 60 min
+        after: 1800           # 30 min
         do: [stamp_maker_confirmed_at]
         to: makerConfirmed
         reason: Maker silent; auto-confirm in the taker's favour.
