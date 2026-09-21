@@ -742,6 +742,8 @@ twint:
     invalidQr: "Dieser QR-Code ist keine unterstützte CHF-Zahlung im Geschäft. Scanne den Zahlungs-QR-Code auf dem Terminal."
     amountMismatch: "Dieser QR-Code hat einen anderen Betrag. Bitte um einen neuen QR-Code mit dem ursprünglichen Zahlungsbetrag."
     cameraFailed: "Kamera nicht verfügbar. Erlaube den Kamerazugriff in den Geräte- oder Browsereinstellungen und versuche es erneut."
+    importImage: "QR-Bild importieren"
+    imageFailed: "Aus diesem Bild konnte kein unterstützter CHF-Shop-QR-Code gelesen werden. Wähle ein anderes Bild."
     scanned: "Shop-QR-Code gescannt. Prüfe den CHF-Betrag vor der Finanzierung."
     rescan: "Anderen QR-Code scannen"
     coordinatorUnsupported: "Dieser Koordinator unterstützt keine Shop-QR-Zahlungen. Wähle einen Koordinator mit Shop-QR-Unterstützung."
@@ -759,10 +761,12 @@ twint:
     expired: "Dieser QR-Code ist abgelaufen. Bezahle ihn nicht und verwende kein zuvor gespeichertes Bild."
   scanner:
     title: "${code}-Code scannen"
+    importImage: "Screenshot importieren"
     status:
       align: "Richte den ${code}-QR-Code und den Betragstext innerhalb des Kamerarahmens aus."
       notRecognized: "${code}-Code noch nicht erkannt. Halte den QR-Code und den Betrag im Bild, oder fülle das Formular manuell aus."
       amountFailed: "Der Kamerascan konnte den Betrag nicht auslesen. Du kannst das QR-Ergebnis trotzdem verwenden und die Felder manuell korrigieren."
+      imageFailed: "In diesem Screenshot konnte kein TWINT-Code oder CHF-Betrag gefunden werden. Wähle ein anderes Bild."
   flow:
     progress:
       step1: "1. Angebot erstellen"
@@ -1226,6 +1230,9 @@ notificationSettings:
   newOfferAlerts:
     label: Benachrichtigungen über neue Angebote
     description: Wenn aktiviert, benachrichtigt dich ${app} über neue annehmbare Angebote deiner aktivierten Koordinatoren, während die App im Hintergrund läuft. Das kann schneller sein als externe Messenger.
+  activeOfferAlerts:
+    label: Benachrichtigungen zum aktiven Angebot
+    description: Wenn aktiviert, benachrichtigt dich ${app}, wenn sich der Status deines aktiven Angebots ändert. Der Hintergrunddienst läuft nur, solange du ein aktives Angebot hast.
 
 onboarding:
   title: Wähle deinen Markt
@@ -1362,3 +1369,4 @@ altstore:
   step2Title: "${app} installieren"
   step2Button: "${app} installieren"
   step2Fallback: "Funktioniert immer noch nicht? Füge die Quelle in AltStore ein"
+  approvalNotice: "${app} wartet auf die iOS-Freigabe von Apple. Installiere in der Zwischenzeit BitBlik: dieselbe Codebasis unterstützt ${paymentSystem}. Ändere Land/Zahlungssystem in den Einstellungen."

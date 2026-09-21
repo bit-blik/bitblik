@@ -93,7 +93,6 @@ class _PlatformFreeLink extends StatelessWidget {
   });
 }
 
-
 final routerProvider = Provider<GoRouter>((ref) {
   // On a fresh install (no market saved yet), start at the market-selection
   // onboarding so the first coordinator-discovery sweep only runs after the
@@ -638,7 +637,9 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       if (segments.isNotEmpty && segments.first == 'offers') {
         if (segments.length >= 2 && segments[1].isNotEmpty) {
           router.push(
-            appUri.replace(pathSegments: ['', 'offers', segments[1]]).toString(),
+            appUri
+                .replace(pathSegments: ['', 'offers', segments[1]])
+                .toString(),
           );
         } else {
           router.push(appUri.replace(path: '/offers').toString());
@@ -756,13 +757,12 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         // "locale not supported by all localization delegates".
         const _NdkLocalizationsFallbackDelegate(),
       ],
-      builder:
-          (context, child) => Stack(
-            children: [
-              if (child != null) child,
-              const _CoordinatorColdStartOverlay(),
-            ],
-          ),
+      builder: (context, child) => Stack(
+        children: [
+          if (child != null) child,
+          const _CoordinatorColdStartOverlay(),
+        ],
+      ),
       routerConfig: router,
     );
   }
@@ -878,8 +878,8 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
                           child: ListView.separated(
                             shrinkWrap: true,
                             itemCount: state.records.length,
-                            separatorBuilder:
-                                (_, index) => const Divider(height: 1),
+                            separatorBuilder: (_, index) =>
+                                const Divider(height: 1),
                             itemBuilder: (context, index) {
                               final record = state.records[index];
                               return ListTile(
@@ -933,12 +933,11 @@ class _CoordinatorColdStartOverlay extends ConsumerWidget {
                                 Expanded(
                                   child: Text(
                                     t.coordinator.coldStart.settingsHint,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall?.copyWith(
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
                                           color: colors.onSecondaryContainer,
-                                      height: 1.35,
-                                    ),
+                                          height: 1.35,
+                                        ),
                                   ),
                                 ),
                               ],
@@ -1138,293 +1137,278 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
   void _showAltStoreDialog(BuildContext context) {
     final t = Translations.of(context);
     bool showFallback = false;
+    final useSharedBitblikIosApp = usesSharedBitblikIosApp;
+    final altStoreAppName = buildAltStoreAppName;
+    final sharedIosPaymentSystem = buildDefaultPaymentSystemId == 'mbway'
+        ? 'MB WAY'
+        : 'TWINT';
 
     showDialog(
       context: context,
-      builder:
-          (context) => StatefulBuilder(
-            builder:
-                (context, setState) => Dialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title with emoji
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      t.altstore.dialogTitle,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('🫣', style: TextStyle(fontSize: 22)),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                if (useSharedBitblikIosApp) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      t.altstore.approvalNotice(
+                        app: buildAppName,
+                        paymentSystem: sharedIosPaymentSystem,
+                      ),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSecondaryContainer,
+                      ),
+                    ),
                   ),
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Title with emoji
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              t.altstore.dialogTitle,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text('🫣', style: TextStyle(fontSize: 22)),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+                ],
 
-                        // Step 1
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              '1',
-                              style: TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    t.altstore.step1Title,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: _PlatformFreeLink(
-                                      uri: Uri.parse(
-                                        'https://altstore.io/download',
-                                      ),
-                                      openInNewTab: true,
-                                      builder:
-                                          (
-                                            context,
-                                            followLink,
-                                          ) => ElevatedButton(
-                                            onPressed: followLink,
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(
-                                                0xFFE8F5E9,
-                                              ),
-                                              foregroundColor: Colors.black,
-                                              elevation: 0,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 14,
-                                                  ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(24),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              t.altstore.step1Button,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    t.altstore.step1Warning,
-                                    style: const TextStyle(
-                                      color: Colors.pink,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Step 2
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              '2',
-                              style: TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    t.altstore.step2Title(
-                                      app:
-                                          ref
-                                              .watch(
-                                                selectedPaymentSystemProvider,
-                                              )
-                                              .brandName,
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: _PlatformFreeLink(
-                                      uri: Uri.parse(
-                                        'altstore://source?url=$buildAltStoreSourceUrl',
-                                      ),
-                                      // builder:
-                                      //     (context, followLink) => InkWell(
-                                      //   onTap: () {
-                                      //     showFallback = true;
-                                      //     followLink?.call();
-                                      //   },
-                                      //   child: Image.asset(
-                                      //     'assets/apk.png',
-                                      //     width: 100,
-                                      //     height: 31,
-                                      //     fit: BoxFit.contain,
-                                      //   ),
-                                      // ),
-                                      //
-                                      builder:
-                                          (
-                                            context,
-                                            followLink,
-                                          ) => ElevatedButton(
-                                            onPressed: () {
-                                              followLink?.call();
-                                              Future.delayed(
-                                                const Duration(
-                                                  milliseconds: 3000,
-                                                ),
-                                              ).then((_) {
-                                                if (mounted) {
-                                                  setState(() {
-                                                    showFallback = true;
-                                                  });
-                                                }
-                                              });
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(
-                                                0xFFE3F2FD,
-                                              ),
-                                              foregroundColor: Colors.blue,
-                                              elevation: 0,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 14,
-                                                  ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(24),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              t.altstore.step2Button(
-                                                app:
-                                                    ref
-                                                        .watch(
-                                                          selectedPaymentSystemProvider,
-                                                        )
-                                                        .brandName,
-                                              ),
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                    ),
-                                  ),
-                                  // Fallback: manual source URL (shown after button click)
-                                  if (showFallback) ...[
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      t.altstore.step2Fallback,
-                                      style: const TextStyle(
-                                        color: Colors.pink,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        Clipboard.setData(
-                                          ClipboardData(
-                                            text: buildAltStoreSourceUrl,
-                                          ),
-                                        );
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              t.common.clipboard.copied,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[100],
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          '$buildPrimaryHost/.well-known/sources/alt-store-source.json',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontFamily: 'monospace',
-                                            color: Colors.grey[700],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Close button
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(
-                            t.common.buttons.close,
+                // Step 1
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '1',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t.altstore.step1Title,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: _PlatformFreeLink(
+                              uri: Uri.parse('https://altstore.io/download'),
+                              openInNewTab: true,
+                              builder: (context, followLink) => ElevatedButton(
+                                onPressed: followLink,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE8F5E9),
+                                  foregroundColor: Colors.black,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                ),
+                                child: Text(
+                                  t.altstore.step1Button,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            t.altstore.step1Warning,
+                            style: const TextStyle(
+                              color: Colors.pink,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Step 2
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '2',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t.altstore.step2Title(app: altStoreAppName),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: _PlatformFreeLink(
+                              uri: Uri.parse(
+                                'altstore://source?url=$buildAltStoreSourceUrl',
+                              ),
+                              // builder:
+                              //     (context, followLink) => InkWell(
+                              //   onTap: () {
+                              //     showFallback = true;
+                              //     followLink?.call();
+                              //   },
+                              //   child: Image.asset(
+                              //     'assets/apk.png',
+                              //     width: 100,
+                              //     height: 31,
+                              //     fit: BoxFit.contain,
+                              //   ),
+                              // ),
+                              //
+                              builder: (context, followLink) => ElevatedButton(
+                                onPressed: () {
+                                  followLink?.call();
+                                  Future.delayed(
+                                    const Duration(milliseconds: 3000),
+                                  ).then((_) {
+                                    if (mounted) {
+                                      setState(() {
+                                        showFallback = true;
+                                      });
+                                    }
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE3F2FD),
+                                  foregroundColor: Colors.blue,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                ),
+                                child: Text(
+                                  t.altstore.step2Button(app: altStoreAppName),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Fallback: manual source URL (shown after button click)
+                          if (showFallback) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              t.altstore.step2Fallback,
+                              style: const TextStyle(
+                                color: Colors.pink,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: () {
+                                Clipboard.setData(
+                                  ClipboardData(text: buildAltStoreSourceUrl),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(t.common.clipboard.copied),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  buildAltStoreSourceUrl,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontFamily: 'monospace',
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                // Close button
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    t.common.buttons.close,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
+              ],
+            ),
           ),
+        ),
+      ),
     );
   }
 
@@ -1464,10 +1448,10 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                       borderRadius: BorderRadius.circular(40),
                       child: CachedNetworkImage(
                         imageUrl: 'https://robohash.org/$publicKey?set=set4',
-                        placeholder:
-                            (context, url) => const CircularProgressIndicator(),
-                        errorWidget:
-                            (context, url, error) => const Icon(Icons.error),
+                        placeholder: (context, url) =>
+                            const CircularProgressIndicator(),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.error),
                         width: 80,
                         height: 80,
                       ),
@@ -1508,10 +1492,9 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                 leading: const Icon(Icons.flash_on, color: Color(0xFFFF0000)),
                 title: Text(
                   t.landing.actions.payBlik(
-                    code:
-                        ref
-                            .read(selectedPaymentSystemProvider)
-                            .localizedCodeLabel,
+                    code: ref
+                        .read(selectedPaymentSystemProvider)
+                        .localizedCodeLabel,
                   ),
                 ),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -1584,20 +1567,18 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
             ],
           );
         },
-        loading:
-            () => const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(),
-              ),
-            ),
-        error:
-            (error, stack) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text('Error: ${error.toString()}'),
-              ),
-            ),
+        loading: () => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        error: (error, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text('Error: ${error.toString()}'),
+          ),
+        ),
       ),
     );
   }
@@ -1667,8 +1648,9 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     if (widget.pageTitle != null && widget.pageTitle!.isNotEmpty) {
       appBarTitle = Text(widget.pageTitle!);
     } else {
-      final providerLogoAsset =
-          ref.watch(selectedPaymentSystemProvider).logoAsset;
+      final providerLogoAsset = ref
+          .watch(selectedPaymentSystemProvider)
+          .logoAsset;
       final isDark = Theme.of(context).brightness == Brightness.dark;
       final logoAsset = switch ((providerLogoAsset, isDark)) {
         ('assets/bitway.png', true) => 'assets/bitway-dark.png',
@@ -1733,6 +1715,30 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
         actions: [
           // Relay Connectivity Indicator
           _buildRelayConnectivityIndicator(),
+          IconButton(
+            constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+            tooltip: Theme.of(context).brightness == Brightness.dark
+                ? t.theme.switchToLight
+                : t.theme.switchToDark,
+            onPressed: () async {
+              final next = Theme.of(context).brightness == Brightness.dark
+                  ? AppThemePreference.light
+                  : AppThemePreference.dark;
+              await ref.read(themePreferenceProvider.notifier).set(next);
+            },
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: Icon(
+                Theme.of(context).brightness == Brightness.dark
+                    ? Icons.light_mode_rounded
+                    : Icons.dark_mode_rounded,
+                key: ValueKey(Theme.of(context).brightness),
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
           // Language Switcher Dropdown
           DropdownButtonHideUnderline(
             child: DropdownButton<AppLocale>(
@@ -1793,30 +1799,28 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                     AppLocale.fr,
                     AppLocale.sk,
                   ].map<DropdownMenuItem<AppLocale>>((AppLocale locale) {
-                    final String flagEmoji =
-                        locale.languageCode == 'en'
-                            ? '🇬🇧'
-                            : locale.languageCode == 'pl'
-                            ? '🇵🇱'
-                            : locale.languageCode == 'it'
-                            ? '🇮🇹'
-                            : locale.languageCode == 'pt'
-                            ? '🇵🇹'
-                            : locale.languageCode == 'de'
-                            ? '🇩🇪'
-                            : locale.languageCode == 'fr'
-                            ? '🇫🇷'
-                            : locale.languageCode == 'sk'
-                            ? '🇸🇰'
-                            : '';
-                    final String displayName =
-                        locale.languageCode == 'en'
-                            ? 'EN'
-                            : locale.languageCode == 'pl'
-                            ? 'PL'
-                            : locale.languageCode == 'fr'
-                            ? 'FR'
-                            : locale.languageCode.toUpperCase();
+                    final String flagEmoji = locale.languageCode == 'en'
+                        ? '🇬🇧'
+                        : locale.languageCode == 'pl'
+                        ? '🇵🇱'
+                        : locale.languageCode == 'it'
+                        ? '🇮🇹'
+                        : locale.languageCode == 'pt'
+                        ? '🇵🇹'
+                        : locale.languageCode == 'de'
+                        ? '🇩🇪'
+                        : locale.languageCode == 'fr'
+                        ? '🇫🇷'
+                        : locale.languageCode == 'sk'
+                        ? '🇸🇰'
+                        : '';
+                    final String displayName = locale.languageCode == 'en'
+                        ? 'EN'
+                        : locale.languageCode == 'pl'
+                        ? 'PL'
+                        : locale.languageCode == 'fr'
+                        ? 'FR'
+                        : locale.languageCode.toUpperCase();
                     return DropdownMenuItem<AppLocale>(
                       value: locale,
                       child: Row(
@@ -1839,39 +1843,31 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
           ),
           // Neko icon - opens side menu
           publicKeyAsync.when(
-            data:
-                (publicKey) =>
-                    publicKey != null
-                        ? Builder(
-                          builder:
-                              (builderContext) => IconButton(
-                                icon: ClipOval(
-                                  child: CachedNetworkImage(
-                                    imageUrl:
-                                        'https://robohash.org/$publicKey?set=set4',
-                                    placeholder:
-                                        (context, url) => const SizedBox(
-                                          width: 32,
-                                          height: 32,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
-                                    errorWidget:
-                                        (context, url, error) =>
-                                            const Icon(Icons.error, size: 24),
-                                    width: 32,
-                                    height: 32,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                tooltip: t.nekoInfo.title,
-                                onPressed: () {
-                                  Scaffold.of(builderContext).openEndDrawer();
-                                },
-                              ),
-                        )
-                        : const SizedBox.shrink(),
+            data: (publicKey) => publicKey != null
+                ? Builder(
+                    builder: (builderContext) => IconButton(
+                      icon: ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: 'https://robohash.org/$publicKey?set=set4',
+                          placeholder: (context, url) => const SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error, size: 24),
+                          width: 32,
+                          height: 32,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      tooltip: t.nekoInfo.title,
+                      onPressed: () {
+                        Scaffold.of(builderContext).openEndDrawer();
+                      },
+                    ),
+                  )
+                : const SizedBox.shrink(),
             loading: () => const SizedBox.shrink(),
             error: (_, error) => const SizedBox.shrink(),
           ),
@@ -1936,97 +1932,55 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                         // Download buttons on the right (only when on web)
                         if (kIsWeb)
                           Builder(
-                        builder: (context) {
-                          // Download links follow the build flavor (pinned at
-                          // startup), not the user's runtime currency switch.
-                          final isMbway =
-                              buildDefaultPaymentSystemId == 'mbway';
-                          final isTwint =
-                              buildDefaultPaymentSystemId == 'twint';
-                          return Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              // iOS section: AltStore install (blik) or "coming soon" (mbway/twint)
-                              if (!isMbway && !isTwint)
-                                InkWell(
-                                  onTap: () async {
-                                    final uri = Uri.parse(
-                                      'altstore://source?url=$buildAltStoreSourceUrl',
-                                    );
-                                    try {
-                                      await launchUrl(
-                                        uri,
-                                        mode: LaunchMode.platformDefault,
-                                        webOnlyWindowName: '_self',
+                            builder: (context) {
+                              // Download links follow the build flavor (pinned at
+                              // startup), not the user's runtime currency switch.
+                              final isMbway =
+                                  buildDefaultPaymentSystemId == 'mbway';
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  // iOS AltStore install for every web flavor.
+                                  InkWell(
+                                    onTap: () async {
+                                      final uri = Uri.parse(
+                                        'altstore://source?url=$buildAltStoreSourceUrl',
                                       );
-                                      if (context.mounted) {
-                                        _showAltStoreDialog(context);
+                                      try {
+                                        await launchUrl(
+                                          uri,
+                                          mode: LaunchMode.platformDefault,
+                                          webOnlyWindowName: '_self',
+                                        );
+                                        if (context.mounted) {
+                                          _showAltStoreDialog(context);
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          _showAltStoreDialog(context);
+                                        }
                                       }
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        _showAltStoreDialog(context);
-                                      }
-                                    }
-                                  },
-                                  child: Image.asset(
-                                    'assets/altstore.png',
-                                    width: 80,
-                                    height: 25,
-                                    fit: BoxFit.contain,
+                                    },
+                                    child: Image.asset(
+                                      'assets/altstore.png',
+                                      width: 80,
+                                      height: 25,
+                                      fit: BoxFit.contain,
+                                    ),
                                   ),
-                                )
-                              else
-                                Stack(
-                                  clipBehavior: Clip.none,
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Opacity(
-                                      opacity: 0.4,
-                                      child: Image.asset(
-                                        'assets/altstore.png',
-                                        width: 80,
-                                        height: 25,
-                                        fit: BoxFit.contain,
-                                      ),
+                                  const SizedBox(width: 8),
+                                  // Android GitHub APK button
+                                  _PlatformFreeLink(
+                                    uri: Uri.parse(
+                                      isMbway
+                                          ? 'https://github.com/bit-blik/bitway/releases'
+                                          : buildDefaultPaymentSystemId ==
+                                                'twint'
+                                          ? 'https://github.com/bit-blik/bittwint/releases'
+                                          : 'https://github.com/bit-blik/bitblik/releases',
                                     ),
-                                    Positioned(
-                                      top: -6,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 1,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.redAccent,
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'COMING SOON',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              const SizedBox(width: 8),
-                              // Android GitHub APK button
-                              _PlatformFreeLink(
-                                uri: Uri.parse(
-                                  isMbway
-                                      ? 'https://github.com/bit-blik/bitway/releases'
-                                      : buildDefaultPaymentSystemId == 'twint'
-                                      ? 'https://github.com/bit-blik/bittwint/releases'
-                                      : 'https://github.com/bit-blik/bitblik/releases',
-                                ),
-                                openInNewTab: true,
-                                builder:
-                                    (context, followLink) => InkWell(
+                                    openInNewTab: true,
+                                    builder: (context, followLink) => InkWell(
                                       onTap: followLink,
                                       child: Image.asset(
                                         'assets/apk.png',
@@ -2035,19 +1989,19 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                         fit: BoxFit.contain,
                                       ),
                                     ),
-                              ),
-                              const SizedBox(width: 8),
-                              // Android Zapstore button
-                              _PlatformFreeLink(
-                                uri: Uri.parse(
-                                  isMbway
-                                      ? 'https://zapstore.dev/apps/me.bitway'
-                                      : buildDefaultPaymentSystemId == 'twint'
-                                      ? 'https://zapstore.dev/apps/app.bittwint'
-                                      : 'https://zapstore.dev/apps/app.bitblik',
-                                ),
-                                builder:
-                                    (context, followLink) => InkWell(
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // Android Zapstore button
+                                  _PlatformFreeLink(
+                                    uri: Uri.parse(
+                                      isMbway
+                                          ? 'https://zapstore.dev/apps/me.bitway'
+                                          : buildDefaultPaymentSystemId ==
+                                                'twint'
+                                          ? 'https://zapstore.dev/apps/app.bittwint'
+                                          : 'https://zapstore.dev/apps/app.bitblik',
+                                    ),
+                                    builder: (context, followLink) => InkWell(
                                       onTap: followLink,
                                       child: Image.asset(
                                         'assets/zapstore.png',
@@ -2056,43 +2010,12 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                         fit: BoxFit.contain,
                                       ),
                                     ),
-                              ),
-                              const SizedBox(width: 8),
-                            ],
-                          );
-                        },
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                              );
+                            },
                           ),
-                        IconButton(
-                          constraints: const BoxConstraints.tightFor(
-                            width: 48,
-                            height: 48,
-                          ),
-                          tooltip:
-                              Theme.of(context).brightness == Brightness.dark
-                                  ? t.theme.switchToLight
-                                  : t.theme.switchToDark,
-                          onPressed: () async {
-                            final next = Theme.of(context).brightness ==
-                                    Brightness.dark
-                                ? AppThemePreference.light
-                                : AppThemePreference.dark;
-                            await ref
-                                .read(themePreferenceProvider.notifier)
-                                .set(next);
-                          },
-                          icon: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 180),
-                            switchInCurve: Curves.easeOutCubic,
-                            switchOutCurve: Curves.easeInCubic,
-                            child: Icon(
-                              Theme.of(context).brightness == Brightness.dark
-                                  ? Icons.light_mode_rounded
-                                  : Icons.dark_mode_rounded,
-                              key: ValueKey(Theme.of(context).brightness),
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
                         Padding(
                           padding: const EdgeInsets.only(right: 4),
                           child: IconButton(
@@ -2100,7 +2023,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                               width: 48,
                               height: 48,
                             ),
-                            padding: const EdgeInsets.all(7),
+                            padding: const EdgeInsets.all(4),
                             tooltip: t.theme.openNostr,
                             onPressed: () async {
                               final npub = ref
@@ -2114,8 +2037,8 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                             },
                             icon: Image.asset(
                               'assets/nostr.png',
-                              width: 34,
-                              height: 34,
+                              width: 40,
+                              height: 40,
                             ),
                           ),
                         ),

@@ -725,6 +725,8 @@ twint:
     invalidQr: "Questo codice QR non è un pagamento in negozio in CHF supportato. Scansiona il codice QR di pagamento sul terminale."
     amountMismatch: "Questo codice QR ha un importo diverso. Richiedi un nuovo codice QR con l’importo originale del pagamento."
     cameraFailed: "Fotocamera non disponibile. Consenti l’accesso alla fotocamera nelle impostazioni del dispositivo o del browser, poi riprova."
+    importImage: "Importa immagine QR"
+    imageFailed: "Impossibile leggere un QR di negozio CHF supportato da questa immagine. Scegli un’altra immagine."
     scanned: "QR del negozio scansionato. Controlla l’importo in CHF prima di finanziare l’offerta."
     rescan: "Scansiona un altro codice QR"
     coordinatorUnsupported: "Questo coordinatore non supporta i pagamenti QR in negozio. Scegli un coordinatore che li supporti."
@@ -742,10 +744,12 @@ twint:
     expired: "Questo codice QR è scaduto. Non pagarlo e non usare un’immagine salvata in precedenza."
   scanner:
     title: "Scansiona codice ${code}"
+    importImage: "Importa schermata"
     status:
       align: "Allinea il QR ${code} e il testo dell'importo all'interno dell'inquadratura."
       notRecognized: "Codice ${code} non ancora riconosciuto. Tieni in vista il QR e l'importo, oppure compila manualmente il modulo."
       amountFailed: "La scansione della fotocamera non è riuscita a estrarre l'importo. Puoi comunque usare il risultato del QR e correggere i campi manualmente."
+      imageFailed: "Impossibile trovare un codice TWINT o importo CHF in questa schermata. Scegli un’altra immagine."
   flow:
     progress:
       step1: "1. Crea offerta"
@@ -1213,6 +1217,9 @@ notificationSettings:
   newOfferAlerts:
     label: Avvisi nuove offerte
     description: Se abilitato, ${app} ti notificherà delle nuove offerte disponibili da accettare dai tuoi coordinatori abilitati mentre l'app è in background. Potrebbe essere più veloce dei messenger esterni.
+  activeOfferAlerts:
+    label: Avvisi offerta attiva
+    description: Se abilitato, ${app} ti avviserà quando lo stato della tua offerta attiva cambia. Il servizio in background resta attivo solo finché hai un'offerta attiva.
 
 wallet:
   details:
@@ -1345,3 +1352,4 @@ altstore:
   step2Title: "Installa ${app}"
   step2Button: "Installa ${app}"
   step2Fallback: "Non funziona? Incolla la sorgente in AltStore"
+  approvalNotice: "${app} è in attesa dell'approvazione iOS di Apple. Nel frattempo, installa BitBlik: stesso codice, supporta ${paymentSystem}. Cambia paese/sistema di pagamento nelle Impostazioni."

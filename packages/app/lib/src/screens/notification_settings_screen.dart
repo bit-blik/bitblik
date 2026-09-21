@@ -1,6 +1,4 @@
 import 'dart:io';
-import '../config/build_flavor.dart';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +16,10 @@ class NotificationSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
-    final enabled = ref.watch(newOfferNotificationsProvider);
+    final newOfferAlertsEnabled = ref.watch(newOfferNotificationsProvider);
+    final activeOfferAlertsEnabled = ref.watch(
+      activeOfferNotificationsProvider,
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(t.notificationSettings.title)),
@@ -35,8 +36,12 @@ class NotificationSettingsScreen extends ConsumerWidget {
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
             title: Text(t.notificationSettings.newOfferAlerts.label),
-            subtitle: Text(t.notificationSettings.newOfferAlerts.description(app: ref.watch(selectedPaymentSystemProvider).brandName)),
-            value: _isAndroid && enabled,
+            subtitle: Text(
+              t.notificationSettings.newOfferAlerts.description(
+                app: ref.watch(selectedPaymentSystemProvider).brandName,
+              ),
+            ),
+            value: _isAndroid && newOfferAlertsEnabled,
             onChanged: _isAndroid
                 ? (value) async {
                     if (!value) {
@@ -50,6 +55,33 @@ class NotificationSettingsScreen extends ConsumerWidget {
                     if (granted) {
                       await ref
                           .read(newOfferNotificationsProvider.notifier)
+                          .set(true);
+                    }
+                  }
+                : null,
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.sync_outlined),
+            title: Text(t.notificationSettings.activeOfferAlerts.label),
+            subtitle: Text(
+              t.notificationSettings.activeOfferAlerts.description(
+                app: ref.watch(selectedPaymentSystemProvider).brandName,
+              ),
+            ),
+            value: _isAndroid && activeOfferAlertsEnabled,
+            onChanged: _isAndroid
+                ? (value) async {
+                    if (!value) {
+                      await ref
+                          .read(activeOfferNotificationsProvider.notifier)
+                          .set(false);
+                      return;
+                    }
+                    final granted = await NotificationService()
+                        .requestPermissions();
+                    if (granted) {
+                      await ref
+                          .read(activeOfferNotificationsProvider.notifier)
                           .set(true);
                     }
                   }

@@ -19,6 +19,9 @@ class DisputeConversationCard extends ConsumerStatefulWidget {
   final Offer offer;
   final DisputeCommunicationService? communication;
 
+  /// Lets a dedicated dispute screen give this card all remaining height.
+  final bool fillAvailableHeight;
+
   /// Coordinator-owned relays explicitly supplied for the legacy NIP-04
   /// compatibility channel. An empty list keeps the privacy downgrade off.
   final Iterable<String> legacyRendezvousRelays;
@@ -27,6 +30,7 @@ class DisputeConversationCard extends ConsumerStatefulWidget {
     super.key,
     required this.offer,
     this.communication,
+    this.fillAvailableHeight = false,
     this.legacyRendezvousRelays = const <String>[],
   });
 
@@ -436,9 +440,46 @@ class _DisputeConversationCardState
         ? advertisedName
         : strings.privateConversation;
     final writable = _writable;
+    final chatHeight = (MediaQuery.sizeOf(context).height * .52).clamp(
+      280.0,
+      560.0,
+    );
+    final transcript = loadingMessages
+        ? const Center(child: CircularProgressIndicator())
+        : messages.isEmpty
+        ? Center(child: Text(strings.noMessages))
+        : ListView.builder(
+            controller: scrollController,
+            itemCount: messages.length,
+            itemBuilder: (context, index) {
+              final message = messages[index];
+              final file = message.fileMetadata;
+              return Align(
+                alignment: message.isOutgoing
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Card(
+                  color: message.isOutgoing
+                      ? Theme.of(context).colorScheme.primaryContainer
+                      : null,
+                  child: file == null
+                      ? Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: SelectableText(message.content),
+                        )
+                      : _EvidenceThumbnail(
+                          bytes: _evidenceBytes(message.nip17Message!),
+                          onTap: busy
+                              ? null
+                              : () => _previewEvidence(message.nip17Message!),
+                        ),
+                ),
+              );
+            },
+          );
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -456,7 +497,7 @@ class _DisputeConversationCardState
                       child: Row(
                         children: [
                           _CoordinatorLogo(icon: coordinatorIcon),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -498,49 +539,12 @@ class _DisputeConversationCardState
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 260,
-              child: loadingMessages
-                  ? const Center(child: CircularProgressIndicator())
-                  : messages.isEmpty
-                  ? Center(child: Text(strings.noMessages))
-                  : ListView.builder(
-                      controller: scrollController,
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) {
-                        final message = messages[index];
-                        final file = message.fileMetadata;
-                        return Align(
-                          alignment: message.isOutgoing
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: Card(
-                            color: message.isOutgoing
-                                ? Theme.of(context).colorScheme.primaryContainer
-                                : null,
-                            child: file == null
-                                ? Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: SelectableText(message.content),
-                                  )
-                                : _EvidenceThumbnail(
-                                    bytes: _evidenceBytes(
-                                      message.nip17Message!,
-                                    ),
-                                    onTap: busy
-                                        ? null
-                                        : () => _previewEvidence(
-                                            message.nip17Message!,
-                                          ),
-                                  ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
+            const SizedBox(height: 6),
+            widget.fillAvailableHeight
+                ? Expanded(child: transcript)
+                : SizedBox(height: chatHeight, child: transcript),
             if (writable) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Row(
                 children: [
                   if (textTransport == DisputeTextTransport.nip17)
@@ -553,7 +557,14 @@ class _DisputeConversationCardState
                     child: TextField(
                       controller: messageController,
                       enabled: !busy,
-                      decoration: InputDecoration(hintText: strings.replyHint),
+                      minLines: 1,
+                      maxLines: 3,
+                      textInputAction: TextInputAction.send,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: strings.replyHint,
+                        border: const OutlineInputBorder(),
+                      ),
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
@@ -566,13 +577,13 @@ class _DisputeConversationCardState
               ),
             ] else
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 6),
                 child: Text(strings.readOnly),
               ),
             if (busy) const LinearProgressIndicator(),
             if (error != null)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 6),
                 child: Text(error!, style: const TextStyle(color: Colors.red)),
               ),
           ],

@@ -1091,6 +1091,9 @@ notificationSettings:
   newOfferAlerts:
     label: Upozornenia na nové ponuky
     description: Keď je zapnuté, ${app} ťa upozorní na nové ponuky dostupné na prijatie od tvojich zapnutých koordinátorov, kým je aplikácia na pozadí. Môže to byť rýchlejšie než externé messengery.
+  activeOfferAlerts:
+    label: Upozornenia na aktívnu ponuku
+    description: Keď je zapnuté, ${app} ťa upozorní na zmenu stavu aktívnej ponuky. Služba na pozadí beží len kým máš aktívnu ponuku.
 
 wallet:
   title: Peňaženka
@@ -1219,6 +1222,8 @@ twint:
     invalidQr: "Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli."
     amountMismatch: "Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby."
     cameraFailed: "Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova."
+    importImage: "Importovať obrázok QR"
+    imageFailed: "Z tohto obrázka sa nepodarilo načítať podporovaný QR kód obchodu v CHF. Vyber iný obrázok."
     scanned: "QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF."
     rescan: "Naskenovať iný QR kód"
     coordinatorUnsupported: "Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje."
@@ -1234,6 +1239,14 @@ twint:
     downloadStarted: "Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT."
     saveFailed: "Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova."
     expired: "Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok."
+  scanner:
+    title: "Skenovať kód ${code}"
+    importImage: "Importovať snímku obrazovky"
+    status:
+      align: "Zarovnaj QR kód ${code} a text so sumou do rámu kamery."
+      notRecognized: "Kód ${code} sa zatiaľ nerozpoznal. Drž QR kód a sumu v zábere alebo vyplň formulár ručne."
+      amountFailed: "Skenovanie kamerou nedokázalo načítať sumu. Výsledok QR môžeš použiť a polia opraviť ručne."
+      imageFailed: "Na tejto snímke sa nepodarilo nájsť TWINT kód ani sumu v CHF. Vyber iný obrázok."
 
 # =============================================================================
 # INŠTALÁCIA ALTSTORE
@@ -1246,3 +1259,4 @@ altstore:
   step2Title: "Nainštaluj ${app}"
   step2Button: "Nainštalovať ${app}"
   step2Fallback: "Stále to nefunguje? Vlož zdroj do AltStore"
+  approvalNotice: "${app} čaká na schválenie Apple pre iOS. Medzitým nainštaluj BitBlik: rovnaký kód podporuje ${paymentSystem}. Krajinu/platobný systém zmeníš v Nastaveniach."

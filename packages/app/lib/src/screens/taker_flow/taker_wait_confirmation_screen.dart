@@ -750,7 +750,10 @@ class _ExpiredBlikWidget extends ConsumerWidget {
       children: [
         _buildExpiredIcon(),
         const SizedBox(height: 12),
-        _buildExpiredTitle(t.taker.waitConfirmation.expiredTitle(code: code)),
+        _buildExpiredTitle(
+          context,
+          t.taker.waitConfirmation.expiredTitle(code: code),
+        ),
         const SizedBox(height: 10),
         _buildWarningBox(
           context,
@@ -759,11 +762,7 @@ class _ExpiredBlikWidget extends ConsumerWidget {
         const SizedBox(height: 10),
         Text(
           t['taker.waitConfirmation.expiredRelistCountdownLabel'],
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-          ),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
@@ -827,7 +826,10 @@ class _ExpiredSentBlikWidget extends ConsumerWidget {
       children: [
         _buildExpiredIcon(),
         const SizedBox(height: 20),
-        _buildExpiredTitle(t.taker.waitConfirmation.expiredTitle(code: code)),
+        _buildExpiredTitle(
+          context,
+          t.taker.waitConfirmation.expiredTitle(code: code),
+        ),
         const SizedBox(height: 16),
         _buildWarningBox(context, t.taker.waitConfirmation.expiredSentWarning),
         const SizedBox(height: 20),
@@ -1030,15 +1032,16 @@ Widget _buildExpiredIcon() {
   );
 }
 
-Widget _buildExpiredTitle(String title) {
+Widget _buildExpiredTitle(BuildContext context, String title) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 12),
     child: Text(
       title,
-      style: const TextStyle(
+      style: Theme.of(
+        context,
+      ).textTheme.titleLarge?.copyWith(
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        color: Colors.black87,
       ),
       textAlign: TextAlign.center,
     ),
@@ -1053,14 +1056,14 @@ Widget _buildInstructions(BuildContext context, List<String> instructions) {
       children: instructions.asMap().entries.map((entry) {
             return Padding(
               padding: EdgeInsets.only(top: entry.key > 0 ? 8 : 0),
-              child: _buildInstructionItem('-', entry.value),
+              child: _buildInstructionItem(context, '-', entry.value),
             );
           }).toList(),
     ),
   );
 }
 
-Widget _buildInstructionItem(String bullet, String text) {
+Widget _buildInstructionItem(BuildContext context, String bullet, String text) {
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -1086,7 +1089,7 @@ Widget _buildInstructionItem(String bullet, String text) {
       Expanded(
         child: Text(
           text,
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
         ),
       ),
     ],

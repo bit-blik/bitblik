@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:bitblik_core/core.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc_zxing/flutter_webrtc_zxing.dart' as zxing;
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../i18n/gen/strings.g.dart';
@@ -12,6 +16,25 @@ typedef ShopQrCameraBuilder =
       ValueChanged<String> onScan,
       ValueChanged<Object> onError,
     );
+
+Future<TwintShopQr?> importTwintShopQrImage() async {
+  final image = await FilePicker.pickFile(type: FileType.image);
+  if (image == null) return null;
+  final result = await zxing.zx.readBarcodeImagePath(
+    image.xFile,
+    zxing.DecodeParams(
+      // The native image-path reader converts decoded pixels to RGB bytes.
+      imageFormat: zxing.ImageFormat.rgb,
+      format: zxing.Format.qrCode,
+      tryHarder: true,
+      tryRotate: true,
+      tryInverted: true,
+      tryDownscale: true,
+      maxSize: 4096,
+    ),
+  );
+  return result.isValid ? TwintShopQr.tryParse(result.text ?? '') : null;
+}
 
 /// QR-only capture. Returns the parsed payload and amount together, or null
 /// when cancelled. Replacement scans can require the funded centime amount.
@@ -37,12 +60,13 @@ class _TwintShopQrScannerScreenState extends State<TwintShopQrScannerScreen> {
   _ScanError? _error;
   bool _returned = false;
   int _attempt = 0;
+  Timer? _invalidQrTimer;
 
   void _onScan(String raw) {
     if (!mounted || _returned || _error != null) return;
     final qr = TwintShopQr.tryParse(raw);
     if (qr == null) {
-      setState(() => _error = _ScanError.invalid);
+      _showInvalidQrTemporarily();
       return;
     }
     if (widget.requiredCentimes != null &&
@@ -58,6 +82,24 @@ class _TwintShopQrScannerScreenState extends State<TwintShopQrScannerScreen> {
     if (mounted && !_returned && _error == null) {
       setState(() => _error = _ScanError.camera);
     }
+  }
+
+  void _showInvalidQrTemporarily() {
+    _invalidQrTimer?.cancel();
+    setState(() => _error = _ScanError.invalid);
+    _invalidQrTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted || _error != _ScanError.invalid) return;
+      setState(() {
+        _error = null;
+        _attempt++;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _invalidQrTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -83,6 +125,7 @@ class _TwintShopQrScannerScreenState extends State<TwintShopQrScannerScreen> {
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () => setState(() {
+                        _invalidQrTimer?.cancel();
                         _error = null;
                         _attempt++;
                       }),

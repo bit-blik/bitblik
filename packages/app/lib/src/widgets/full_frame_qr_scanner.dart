@@ -9,6 +9,9 @@ import 'package:image/image.dart' as image;
 import 'web_qr_frame_capture_stub.dart'
     if (dart.library.js_interop) 'web_qr_frame_capture_web.dart';
 
+typedef QrFrameScanGuard =
+    FutureOr<bool> Function(String value, Uint8List frameBytes);
+
 /// Decodes original camera pixels without the ReaderWidget's 768px resize and
 /// central crop, which discard detail and finder patterns in dense offer QRs.
 /// Called through compute so image conversion and detection stay off the UI.
@@ -50,11 +53,13 @@ Future<String?> decodeWebQrFrame(Uint8List bytes) async {
 class FullFrameQrScanner extends StatefulWidget {
   final ValueChanged<String> onScan;
   final ValueChanged<Exception> onError;
+  final QrFrameScanGuard? shouldAcceptScan;
 
   const FullFrameQrScanner({
     super.key,
     required this.onScan,
     required this.onError,
+    this.shouldAcceptScan,
   });
 
   @override
@@ -171,6 +176,12 @@ class _FullFrameQrScannerState extends State<FullFrameQrScanner>
             : await compute(decodeLinuxQrFrame, bytes);
         if (!_isCurrent(generation)) break;
         if (value != null && value.trim().isNotEmpty) {
+          final accepted =
+              await widget.shouldAcceptScan?.call(value, bytes) ?? true;
+          if (!accepted) {
+            await Future<void>.delayed(const Duration(milliseconds: 250));
+            continue;
+          }
           if (kDebugMode) {
             // QR payloads can contain wallet credentials; never log contents.
             debugPrint(

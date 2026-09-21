@@ -416,6 +416,7 @@ class _Translations$notificationSettings$sk extends Translations$notificationSet
 	@override String get title => 'Notifikácie';
 	@override String get androidOnly => 'Notifikácie na pozadí sú momentálne podporované iba na Androide.';
 	@override late final _Translations$notificationSettings$newOfferAlerts$sk newOfferAlerts = _Translations$notificationSettings$newOfferAlerts$sk._(_root);
+	@override late final _Translations$notificationSettings$activeOfferAlerts$sk activeOfferAlerts = _Translations$notificationSettings$activeOfferAlerts$sk._(_root);
 }
 
 // Path: wallet
@@ -500,6 +501,7 @@ class _Translations$twint$sk extends Translations$twint$en {
 
 	// Translations
 	@override late final _Translations$twint$shop$sk shop = _Translations$twint$shop$sk._(_root);
+	@override late final _Translations$twint$scanner$sk scanner = _Translations$twint$scanner$sk._(_root);
 }
 
 // Path: altstore
@@ -516,6 +518,7 @@ class _Translations$altstore$sk extends Translations$altstore$en {
 	@override String step2Title({required Object app}) => 'Nainštaluj ${app}';
 	@override String step2Button({required Object app}) => 'Nainštalovať ${app}';
 	@override String get step2Fallback => 'Stále to nefunguje? Vlož zdroj do AltStore';
+	@override String approvalNotice({required Object app, required Object paymentSystem}) => '${app} čaká na schválenie Apple pre iOS. Medzitým nainštaluj BitBlik: rovnaký kód podporuje ${paymentSystem}. Krajinu/platobný systém zmeníš v Nastaveniach.';
 }
 
 // Path: common.buttons
@@ -1761,6 +1764,17 @@ class _Translations$notificationSettings$newOfferAlerts$sk extends Translations$
 	@override String description({required Object app}) => 'Keď je zapnuté, ${app} ťa upozorní na nové ponuky dostupné na prijatie od tvojich zapnutých koordinátorov, kým je aplikácia na pozadí. Môže to byť rýchlejšie než externé messengery.';
 }
 
+// Path: notificationSettings.activeOfferAlerts
+class _Translations$notificationSettings$activeOfferAlerts$sk extends Translations$notificationSettings$activeOfferAlerts$en {
+	_Translations$notificationSettings$activeOfferAlerts$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Upozornenia na aktívnu ponuku';
+	@override String description({required Object app}) => 'Keď je zapnuté, ${app} ťa upozorní na zmenu stavu aktívnej ponuky. Služba na pozadí beží len kým máš aktívnu ponuku.';
+}
+
 // Path: wallet.missingReceiving
 class _Translations$wallet$missingReceiving$sk extends Translations$wallet$missingReceiving$en {
 	_Translations$wallet$missingReceiving$sk._(TranslationsSk root) : this._root = root, super.internal(root);
@@ -2037,6 +2051,8 @@ class _Translations$twint$shop$sk extends Translations$twint$shop$en {
 	@override String get invalidQr => 'Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli.';
 	@override String get amountMismatch => 'Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby.';
 	@override String get cameraFailed => 'Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova.';
+	@override String get importImage => 'Importovať obrázok QR';
+	@override String get imageFailed => 'Z tohto obrázka sa nepodarilo načítať podporovaný QR kód obchodu v CHF. Vyber iný obrázok.';
 	@override String get scanned => 'QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF.';
 	@override String get rescan => 'Naskenovať iný QR kód';
 	@override String get coordinatorUnsupported => 'Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje.';
@@ -2052,6 +2068,18 @@ class _Translations$twint$shop$sk extends Translations$twint$shop$en {
 	@override String get downloadStarted => 'Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT.';
 	@override String get saveFailed => 'Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova.';
 	@override String get expired => 'Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok.';
+}
+
+// Path: twint.scanner
+class _Translations$twint$scanner$sk extends Translations$twint$scanner$en {
+	_Translations$twint$scanner$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object code}) => 'Skenovať kód ${code}';
+	@override String get importImage => 'Importovať snímku obrazovky';
+	@override late final _Translations$twint$scanner$status$sk status = _Translations$twint$scanner$status$sk._(_root);
 }
 
 // Path: offers.details.categories
@@ -2860,6 +2888,19 @@ class _Translations$settings$paymentSystem$countries$sk extends Translations$set
 	@override String get PT => 'Portugalsko';
 	@override String get CH => 'Švajčiarsko';
 	@override String get SK => 'Slovensko';
+}
+
+// Path: twint.scanner.status
+class _Translations$twint$scanner$status$sk extends Translations$twint$scanner$status$en {
+	_Translations$twint$scanner$status$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String align({required Object code}) => 'Zarovnaj QR kód ${code} a text so sumou do rámu kamery.';
+	@override String notRecognized({required Object code}) => 'Kód ${code} sa zatiaľ nerozpoznal. Drž QR kód a sumu v zábere alebo vyplň formulár ručne.';
+	@override String get amountFailed => 'Skenovanie kamerou nedokázalo načítať sumu. Výsledok QR môžeš použiť a polia opraviť ručne.';
+	@override String get imageFailed => 'Na tejto snímke sa nepodarilo nájsť TWINT kód ani sumu v CHF. Vyber iný obrázok.';
 }
 
 // Path: maker.amountForm.category.options
@@ -3677,6 +3718,8 @@ extension on TranslationsSk {
 			'notificationSettings.androidOnly' => 'Notifikácie na pozadí sú momentálne podporované iba na Androide.',
 			'notificationSettings.newOfferAlerts.label' => 'Upozornenia na nové ponuky',
 			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'Keď je zapnuté, ${app} ťa upozorní na nové ponuky dostupné na prijatie od tvojich zapnutých koordinátorov, kým je aplikácia na pozadí. Môže to byť rýchlejšie než externé messengery.',
+			'notificationSettings.activeOfferAlerts.label' => 'Upozornenia na aktívnu ponuku',
+			'notificationSettings.activeOfferAlerts.description' => ({required Object app}) => 'Keď je zapnuté, ${app} ťa upozorní na zmenu stavu aktívnej ponuky. Služba na pozadí beží len kým máš aktívnu ponuku.',
 			'wallet.title' => 'Peňaženka',
 			'wallet.description' => 'Spravuj nastavenia svojej Lightning peňaženky',
 			'wallet.missingReceiving.title' => 'Vyžaduje sa peňaženka na prijímanie',
@@ -3765,6 +3808,8 @@ extension on TranslationsSk {
 			'twint.shop.invalidQr' => 'Tento QR kód nie je podporovaná platba v obchode v CHF. Naskenuj platobný QR kód zobrazený na termináli.',
 			'twint.shop.amountMismatch' => 'Tento QR kód má inú sumu. Požiadaj o nový QR kód s pôvodnou sumou platby.',
 			'twint.shop.cameraFailed' => 'Kamera nie je dostupná. Povoľ prístup ku kamere v nastaveniach zariadenia alebo prehliadača a skús to znova.',
+			'twint.shop.importImage' => 'Importovať obrázok QR',
+			'twint.shop.imageFailed' => 'Z tohto obrázka sa nepodarilo načítať podporovaný QR kód obchodu v CHF. Vyber iný obrázok.',
 			'twint.shop.scanned' => 'QR obchodu bol naskenovaný. Pred financovaním ponuky skontroluj sumu v CHF.',
 			'twint.shop.rescan' => 'Naskenovať iný QR kód',
 			'twint.shop.coordinatorUnsupported' => 'Tento koordinátor nepodporuje QR platby v obchode. Vyber koordinátora, ktorý ich podporuje.',
@@ -3780,6 +3825,12 @@ extension on TranslationsSk {
 			'twint.shop.downloadStarted' => 'Sťahovanie obrázka QR sa začalo. Ulož ho medzi fotky, aby sa dal importovať do TWINT.',
 			'twint.shop.saveFailed' => 'Obrázok QR sa nepodarilo uložiť. Skontroluj povolenia na prístup k fotkám a voľné miesto v úložisku a skús to znova.',
 			'twint.shop.expired' => 'Platnosť tohto QR kódu vypršala. Neplať ním ani nepoužívaj predtým uložený obrázok.',
+			'twint.scanner.title' => ({required Object code}) => 'Skenovať kód ${code}',
+			'twint.scanner.importImage' => 'Importovať snímku obrazovky',
+			'twint.scanner.status.align' => ({required Object code}) => 'Zarovnaj QR kód ${code} a text so sumou do rámu kamery.',
+			'twint.scanner.status.notRecognized' => ({required Object code}) => 'Kód ${code} sa zatiaľ nerozpoznal. Drž QR kód a sumu v zábere alebo vyplň formulár ručne.',
+			'twint.scanner.status.amountFailed' => 'Skenovanie kamerou nedokázalo načítať sumu. Výsledok QR môžeš použiť a polia opraviť ručne.',
+			'twint.scanner.status.imageFailed' => 'Na tejto snímke sa nepodarilo nájsť TWINT kód ani sumu v CHF. Vyber iný obrázok.',
 			'altstore.dialogTitle' => 'AltStore nie je nainštalovaný',
 			'altstore.step1Title' => 'Stiahni a nainštaluj AltStore PAL',
 			'altstore.step1Button' => 'altstore.io/download',
@@ -3787,6 +3838,7 @@ extension on TranslationsSk {
 			'altstore.step2Title' => ({required Object app}) => 'Nainštaluj ${app}',
 			'altstore.step2Button' => ({required Object app}) => 'Nainštalovať ${app}',
 			'altstore.step2Fallback' => 'Stále to nefunguje? Vlož zdroj do AltStore',
+			'altstore.approvalNotice' => ({required Object app, required Object paymentSystem}) => '${app} čaká na schválenie Apple pre iOS. Medzitým nainštaluj BitBlik: rovnaký kód podporuje ${paymentSystem}. Krajinu/platobný systém zmeníš v Nastaveniach.',
 			_ => null,
 		};
 	}

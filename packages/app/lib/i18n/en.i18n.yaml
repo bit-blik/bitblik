@@ -896,6 +896,8 @@ twint:
     invalidQr: "This QR code is not a supported CHF shop payment. Scan the payment QR shown on the terminal."
     amountMismatch: "This QR code has a different amount. Ask for a new QR code with the original payment amount."
     cameraFailed: "Camera unavailable. Allow camera access in your device or browser settings, then try again."
+    importImage: "Import image"
+    imageFailed: "Could not read a supported CHF shop QR code from this image. Choose another image."
     scanned: "Shop QR scanned. Check the CHF amount before funding."
     rescan: "Scan another QR code"
     coordinatorUnsupported: "This coordinator does not support shop QR payments. Choose a coordinator with shop QR support."
@@ -913,10 +915,12 @@ twint:
     expired: "This QR code has expired. Do not pay it or use a previously saved image."
   scanner:
     title: "Scan ${code} code"
+    importImage: "Import image"
     status:
       align: "Align the ${code} QR code and amount text inside the camera frame."
       notRecognized: "${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually."
       amountFailed: "Camera scan could not extract the amount. You can still use the QR result and correct the fields manually."
+      imageFailed: "Could not find a TWINT code or CHF amount in this screenshot. Choose another image."
   flow:
     progress:
       step1: "1. Create offer"
@@ -1387,6 +1391,9 @@ notificationSettings:
   newOfferAlerts:
     label: New offer alerts
     description: When enabled, ${app} will notify you about new offers available to take from your enabled coordinators while the app is in the background. This may be faster than external messengers.
+  activeOfferAlerts:
+    label: Active offer alerts
+    description: When enabled, ${app} will notify you when your active offer changes status. Background service runs only while you have an active offer.
 
 wallet:
   title: Wallet
@@ -1519,3 +1526,4 @@ altstore:
   step2Title: "Install ${app}"
   step2Button: "Install ${app}"
   step2Fallback: "Still not working? Paste the source into AltStore"
+  approvalNotice: "${app} is waiting for Apple iOS approval. Meanwhile, install BitBlik: same codebase supports ${paymentSystem}. Change country/payment system in Settings."

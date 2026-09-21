@@ -47,8 +47,17 @@ String get buildPrimaryHost => switch (buildDefaultPaymentSystemId) {
     'npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3.nsite.lol',
 };
 
+/// Bitway and Bittwint await Apple approval. Their iOS users install the
+/// shared BitBlik app, then select their country and payment system in-app.
+bool get usesSharedBitblikIosApp =>
+    buildDefaultPaymentSystemId == 'mbway' ||
+    buildDefaultPaymentSystemId == 'twint';
+
 String get buildAltStoreSourceUrl =>
-    'https://$buildPrimaryHost/.well-known/sources/alt-store-source.json';
+    'https://${usesSharedBitblikIosApp ? 'bitblik.app' : buildPrimaryHost}/.well-known/sources/alt-store-source.json';
+
+String get buildAltStoreAppName =>
+    usesSharedBitblikIosApp ? 'BitBlik' : buildAppName;
 
 bool _forced = false;
 

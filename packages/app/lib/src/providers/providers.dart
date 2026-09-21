@@ -307,9 +307,7 @@ final coordinatorTakerChargedAutoConfirmDurationProvider =
         coordinatorInfoByPubkeyProvider(coordinatorPubkey),
       );
       return coordinatorInfoAsync.maybeWhen(
-        data:
-            (info) =>
-                info != null
+        data: (info) => info != null
                     ? Duration(seconds: info.takerChargedAutoConfirmSeconds)
                     : null,
         orElse: () => null,
@@ -333,14 +331,11 @@ final coordinatorDisputeEvidenceDurationProvider =
         coordinatorInfoByPubkeyProvider(coordinatorPubkey),
       );
       return coordinatorInfoAsync.maybeWhen(
-        data:
-            (info) =>
+        data: (info) =>
                 info?.disputeEvidencePeriodSeconds == null ||
                         info!.disputeEvidencePeriodSeconds! <= 0
                     ? null
-                    : Duration(
-                      seconds: info.disputeEvidencePeriodSeconds!,
-                    ),
+            : Duration(seconds: info.disputeEvidencePeriodSeconds!),
         orElse: () => null,
       );
     });
@@ -353,11 +348,8 @@ final coordinatorReservationDurationProvider =
         coordinatorInfoByPubkeyProvider(coordinatorPubkey),
       );
       return coordinatorInfoAsync.maybeWhen(
-        data:
-            (info) =>
-                info != null
-                    ? Duration(seconds: info.reservationSeconds)
-                    : null,
+        data: (info) =>
+            info != null ? Duration(seconds: info.reservationSeconds) : null,
         orElse: () => null,
       );
     });
@@ -398,8 +390,7 @@ Future<List<Offer>> refreshAvailableOffersCache(
   PaymentSystem method,
 ) async {
   final currentOffers = List<Offer>.from(apiService.knownOffers);
-  final enabledCoordinatorPubkeys =
-      apiService.discoveredCoordinators
+  final enabledCoordinatorPubkeys = apiService.discoveredCoordinators
           .where((record) => record.enabled)
           .map((record) => record.pubkeyHex)
           .toSet();
@@ -454,15 +445,11 @@ final availableOffersProvider = StreamProvider<List<Offer>>((ref) async* {
   final method = ref.watch(selectedPaymentSystemProvider);
   final discoveredCoordinators = ref.watch(discoveredCoordinatorsProvider);
   final enabledCoordinatorPubkeys = discoveredCoordinators.maybeWhen(
-    data:
-        (records) =>
-            records
+    data: (records) => records
                 .where((record) => record.enabled)
                 .map((record) => record.pubkeyHex)
                 .toSet(),
-    orElse:
-        () =>
-            apiService.discoveredCoordinators
+    orElse: () => apiService.discoveredCoordinators
                 .where((record) => record.enabled)
                 .map((record) => record.pubkeyHex)
                 .toSet(),
@@ -946,6 +933,14 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       );
     }
     state = offer;
+    _ref.read(appLifecycleProvider)._updateForegroundService();
+    if (offer != null) {
+      unawaited(
+        _ref
+            .read(activeOfferNotificationsProvider.notifier)
+            .requestPermissionForFirstActiveOffer(),
+      );
+    }
   }
 
   /// Cancel the currently active offer, with a coordinator pre-check.
@@ -1213,6 +1208,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   }
 
   void _maybeNotify(Offer offer, OfferStatus newStatus) {
+    if (!_ref.read(activeOfferNotificationsProvider)) return;
     final lifecycle = _ref.read(appLifecycleProvider).currentState;
     if (lifecycle == AppLifecycleState.resumed ||
         lifecycle == AppLifecycleState.inactive)
@@ -1444,8 +1440,8 @@ final successfulOffersStatsProvider = FutureProvider<Map<String, dynamic>>((
   ref.watch(
     discoveredCoordinatorsProvider.select(
       (async) => async.maybeWhen(
-        data:
-            (records) => (records
+        data: (records) =>
+            (records
                     .where(
                       (r) => r.enabled && r.paymentSystem == selectedSystem.id,
                     )
@@ -1717,6 +1713,9 @@ final coordinatorRelaysInUseProvider = Provider<Set<String>>((ref) {
 final pendingAutoTakeOfferIdProvider = StateProvider<String?>((ref) => null);
 
 const _kNewOfferNotificationsKey = 'new_offer_notifications';
+const _kActiveOfferNotificationsKey = 'active_offer_notifications';
+const _kActiveOfferNotificationPermissionRequestedKey =
+    'active_offer_notification_permission_requested';
 
 final newOfferNotificationsProvider =
     StateNotifierProvider<NewOfferNotificationsNotifier, bool>(
@@ -1736,6 +1735,45 @@ class NewOfferNotificationsNotifier extends StateNotifier<bool> {
   Future<void> set(bool value) async {
     state = value;
     await SharedPreferencesAsync().setBool(_kNewOfferNotificationsKey, value);
+  }
+}
+
+final activeOfferNotificationsProvider =
+    StateNotifierProvider<ActiveOfferNotificationsNotifier, bool>(
+      (ref) => ActiveOfferNotificationsNotifier(),
+    );
+
+class ActiveOfferNotificationsNotifier extends StateNotifier<bool> {
+  ActiveOfferNotificationsNotifier() : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = SharedPreferencesAsync();
+    state = await prefs.getBool(_kActiveOfferNotificationsKey) ?? true;
+  }
+
+  Future<void> set(bool value) async {
+    state = value;
+    await SharedPreferencesAsync().setBool(
+      _kActiveOfferNotificationsKey,
+      value,
+    );
+  }
+
+  Future<void> requestPermissionForFirstActiveOffer() async {
+    if (kIsWeb || !Platform.isAndroid) return;
+
+    final prefs = SharedPreferencesAsync();
+    final enabled = await prefs.getBool(_kActiveOfferNotificationsKey) ?? true;
+    if (!enabled) return;
+    final alreadyRequested =
+        await prefs.getBool(_kActiveOfferNotificationPermissionRequestedKey) ??
+        false;
+    if (alreadyRequested) return;
+
+    await prefs.setBool(_kActiveOfferNotificationPermissionRequestedKey, true);
+    await NotificationService().requestPermissions();
   }
 }
 
@@ -1762,10 +1800,10 @@ class BitcoinDisplayUnitNotifier extends StateNotifier<BitcoinDisplayUnit> {
   }
 }
 
-final themePreferenceProvider = StateNotifierProvider<
-  ThemePreferenceNotifier,
-  AppThemePreference
->((ref) => ThemePreferenceNotifier());
+final themePreferenceProvider =
+    StateNotifierProvider<ThemePreferenceNotifier, AppThemePreference>(
+      (ref) => ThemePreferenceNotifier(),
+    );
 
 class ThemePreferenceNotifier extends StateNotifier<AppThemePreference> {
   ThemePreferenceNotifier([
@@ -1966,11 +2004,10 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
   }
 
   void _initMobileMonitoring() {
-    final enabled = _ref.read(newOfferNotificationsProvider);
-    if (enabled) {
-      _updateForegroundService();
+    if (_ref.read(newOfferNotificationsProvider)) {
       unawaited(_startNewOfferMonitoring());
     }
+    _updateForegroundService();
     _ref.listen<bool>(newOfferNotificationsProvider, (_, enabled) {
       _updateForegroundService();
       if (enabled) {
@@ -1978,6 +2015,12 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       } else {
         _stopNewOfferMonitoring();
       }
+    });
+    _ref.listen<bool>(activeOfferNotificationsProvider, (_, _) {
+      _updateForegroundService();
+    });
+    _ref.listen<Offer?>(activeOfferProvider, (_, _) {
+      _updateForegroundService();
     });
   }
 
@@ -1997,11 +2040,14 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
   void _updateForegroundService() {
     if (kIsWeb || !Platform.isAndroid) return;
     final offer = _ref.read(activeOfferProvider);
-    final settingEnabled = _ref.read(newOfferNotificationsProvider);
+    final newOfferAlertsEnabled = _ref.read(newOfferNotificationsProvider);
+    final activeOfferAlertsEnabled = _ref.read(
+      activeOfferNotificationsProvider,
+    );
     final hasActiveOffer =
         offer != null &&
         !OfferDbService.terminalStatuses.contains(offer.status);
-    if (hasActiveOffer || settingEnabled) {
+    if (newOfferAlertsEnabled || (activeOfferAlertsEnabled && hasActiveOffer)) {
       final strings = t.offerNotifications;
       NotificationService().startOfferForegroundService(
         strings.activeService.title,
@@ -2100,8 +2146,11 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
     // the offers screen (offersSubscriptionInitializer is lazy).
     await _ref.read(offersSubscriptionInitializer.future);
     // Snapshot currently known offer IDs so we only notify for truly new ones.
-    _seenOfferIds =
-        _ref.read(apiServiceProvider).knownOffers.map((o) => o.id).toSet();
+    _seenOfferIds = _ref
+        .read(apiServiceProvider)
+        .knownOffers
+        .map((o) => o.id)
+        .toSet();
     final apiService = _ref.read(apiServiceProvider);
     _newOfferSub = apiService.offersStream.listen((offer) async {
       // Public-event consistency trigger: the coordinator re-broadcasts the
@@ -2141,8 +2190,8 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         }
       }
       final strings = t.offerNotifications;
-      final locale =
-          LocaleSettings.instance.currentLocale.flutterLocale.toString();
+      final locale = LocaleSettings.instance.currentLocale.flutterLocale
+          .toString();
       final numFmt = NumberFormat.decimalPatternDigits(
         locale: locale,
         decimalDigits: 2,

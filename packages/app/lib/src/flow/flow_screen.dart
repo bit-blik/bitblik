@@ -35,8 +35,7 @@ import '../screens/taker_flow/taker_submit_blik_screen.dart'
     show TakerSubmitBlikScreen;
 import '../screens/taker_flow/taker_wait_confirmation_screen.dart'
     show TakerWaitConfirmationScreen;
-import '../utils/offer_status_label.dart'
-    show offerCodeLabel, offerStatusLabel;
+import '../utils/offer_status_label.dart' show offerCodeLabel, offerStatusLabel;
 import '../widgets/dispute_conversation_card.dart';
 import 'flow_actions_bar.dart';
 import 'flow_controller.dart';
@@ -123,19 +122,15 @@ final Map<String, Map<FlowActor, FlowBody>> _payoutTailBodies = {
     'takerPaid',
   ])
     state: {
-      FlowActor.maker:
-          (context, ref, offer, engine, role) =>
+      FlowActor.maker: (context, ref, offer, engine, role) =>
               MakerSuccessScreen(completedOffer: offer),
-      FlowActor.taker:
-          (context, ref, offer, engine, role) =>
+      FlowActor.taker: (context, ref, offer, engine, role) =>
               const TakerPaymentProcessScreen(),
     },
   'takerPaymentFailed': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.maker: (context, ref, offer, engine, role) =>
             MakerSuccessScreen(completedOffer: offer),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.taker: (context, ref, offer, engine, role) =>
             TakerPaymentFailedScreen(offer: offer),
   },
 };
@@ -147,19 +142,14 @@ final Map<String, Map<FlowActor, FlowBody>> _disputeBodies = {
     FlowActor.taker: twintDisputeBody,
   },
   'refundingMaker': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.maker: (context, ref, offer, engine, role) =>
             MakerRefundInvoiceRequiredScreen(offer: offer),
     FlowActor.taker: twintDisputeBody,
   },
 };
 
 const _makerRulingStates = {'refundingMaker', 'payingMaker', 'refundedMaker'};
-const _takerRulingStates = {
-  'payingTaker',
-  'takerPaymentFailed',
-  'takerPaid',
-};
+const _takerRulingStates = {'payingTaker', 'takerPaymentFailed', 'takerPaid'};
 
 bool _hasPostRulingHistory(Offer offer) =>
     offer.disputeAt != null &&
@@ -169,16 +159,14 @@ bool _hasPostRulingHistory(Offer offer) =>
 
 Future<void> _showDisputeHistory(BuildContext context, Offer offer) async {
   final strings = Translations.of(context).disputeChat;
-  final ruling =
-      _makerRulingStates.contains(offer.statusRaw)
+  final ruling = _makerRulingStates.contains(offer.statusRaw)
           ? strings.ruledForMaker
           : strings.ruledForTaker;
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder:
-        (sheetContext) => FractionallySizedBox(
+    builder: (sheetContext) => FractionallySizedBox(
           heightFactor: 0.85,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -216,9 +204,12 @@ Future<void> _showDisputeHistory(BuildContext context, Offer offer) async {
                 ),
               ),
               Expanded(
-                child: SingleChildScrollView(
+            child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
-                  child: DisputeConversationCard(offer: offer),
+              child: DisputeConversationCard(
+                offer: offer,
+                fillAvailableHeight: true,
+              ),
                 ),
               ),
             ],
@@ -236,74 +227,61 @@ Future<void> _showDisputeHistory(BuildContext context, Offer offer) async {
 final Map<String, Map<FlowActor, FlowBody>> _codeFlowBodies = {
   // Client-side pre-funding status, same arrangement as TWINT.
   'created': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) => const MakerPayInvoiceScreen(),
+    FlowActor.maker: (context, ref, offer, engine, role) =>
+        const MakerPayInvoiceScreen(),
   },
   'funded': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) => const MakerWaitTakerScreen(),
+    FlowActor.maker: (context, ref, offer, engine, role) =>
+        const MakerWaitTakerScreen(),
   },
   'reserved': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) => const MakerWaitForBlikScreen(),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.maker: (context, ref, offer, engine, role) =>
+        const MakerWaitForBlikScreen(),
+    FlowActor.taker: (context, ref, offer, engine, role) =>
             TakerSubmitBlikScreen(initialOffer: offer),
   },
   'blikReceived': {
     // Keep the fetch owner mounted when get_blik advances to blikSentToMaker,
     // even if the status push arrives before the RPC response.
-    FlowActor.maker:
-        (context, ref, offer, engine, role) => const MakerConfirmPaymentScreen(),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.maker: (context, ref, offer, engine, role) =>
+        const MakerConfirmPaymentScreen(),
+    FlowActor.taker: (context, ref, offer, engine, role) =>
             TakerWaitConfirmationScreen(offer: offer),
   },
   'blikSentToMaker': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.maker: (context, ref, offer, engine, role) =>
             const MakerConfirmPaymentScreen(),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.taker: (context, ref, offer, engine, role) =>
             TakerWaitConfirmationScreen(offer: offer),
   },
   'takerCharged': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.maker: (context, ref, offer, engine, role) =>
             const MakerConfirmPaymentScreen(),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.taker: (context, ref, offer, engine, role) =>
             TakerWaitConfirmationScreen(offer: offer),
   },
   'expiredSentBlik': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.maker: (context, ref, offer, engine, role) =>
             const MakerConfirmPaymentScreen(),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.taker: (context, ref, offer, engine, role) =>
             TakerWaitConfirmationScreen(offer: offer),
   },
   // expiredBlik: maker has no actions there → genericFlowBody; the taker
   // keeps the wait screen (re-take / cancel handling).
   'expiredBlik': {
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.taker: (context, ref, offer, engine, role) =>
             TakerWaitConfirmationScreen(offer: offer),
   },
   'invalidBlik': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.maker: (context, ref, offer, engine, role) =>
             MakerInvalidBlikScreen(offer: offer),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.taker: (context, ref, offer, engine, role) =>
             TakerInvalidBlikScreen(offer: offer),
   },
   'conflict': {
-    FlowActor.maker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.maker: (context, ref, offer, engine, role) =>
             MakerConflictScreen(offer: offer, engine: engine),
-    FlowActor.taker:
-        (context, ref, offer, engine, role) =>
+    FlowActor.taker: (context, ref, offer, engine, role) =>
             TakerConflictScreen(offer: offer, engine: engine),
   },
   // Payout tail (makerConfirmed, settled, payingTaker, takerPaid,
@@ -322,8 +300,8 @@ final Map<String, Map<String, Map<FlowActor, FlowBody>>> _flowBodies = {
     // the invoice screen owns it; it re-enters `/flow` on funding via
     // flowRoute.
     'created': {
-      FlowActor.maker:
-          (context, ref, offer, engine, role) => const MakerPayInvoiceScreen(),
+      FlowActor.maker: (context, ref, offer, engine, role) =>
+          const MakerPayInvoiceScreen(),
     },
     'funded': {FlowActor.maker: twintMakerWaitBody},
     'reserved': {
@@ -389,6 +367,9 @@ class FlowScreen extends ConsumerWidget {
               return _homeError(context, 'You are not a participant.');
             }
             final state = offer.statusRaw;
+            if (state == OfferStatus.dispute.name) {
+              return _ActiveDisputePane(offer: offer, role: role);
+            }
             final body = _bodyFor(engine.definition.id, state, role)(
               context,
               ref,
@@ -412,9 +393,7 @@ class FlowScreen extends ConsumerWidget {
                         onPressed: () => _showDisputeHistory(context, offer),
                         icon: const Icon(Icons.forum_outlined),
                         label: Text(
-                          Translations.of(
-                            context,
-                          ).disputeChat.viewHistory,
+                          Translations.of(context).disputeChat.viewHistory,
                         ),
                       ),
                     ),
@@ -456,6 +435,45 @@ class FlowScreen extends ConsumerWidget {
       ],
     ),
   );
+}
+
+/// Dispute is conversation-first. Keep its compact case context above a
+/// full-height chat so transcript alone scrolls and composer stays reachable.
+class _ActiveDisputePane extends StatelessWidget {
+  const _ActiveDisputePane({required this.offer, required this.role});
+
+  final Offer offer;
+  final FlowActor role;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Translations.of(context);
+    final isMaker = role == FlowActor.maker;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            isMaker ? t.maker.conflict.headline : t.taker.dispute.headline,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${offer.fiatAmount} ${offer.fiatCurrency}',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: DisputeConversationCard(
+              offer: offer,
+              fillAvailableHeight: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Client-side safety net for missed status pushes: when the current state's

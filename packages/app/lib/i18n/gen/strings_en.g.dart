@@ -540,6 +540,7 @@ class Translations$notificationSettings$en {
 	String get androidOnly => 'Background notifications are currently only supported on Android.';
 
 	late final Translations$notificationSettings$newOfferAlerts$en newOfferAlerts = Translations$notificationSettings$newOfferAlerts$en.internal(_root);
+	late final Translations$notificationSettings$activeOfferAlerts$en activeOfferAlerts = Translations$notificationSettings$activeOfferAlerts$en.internal(_root);
 }
 
 // Path: wallet
@@ -663,6 +664,9 @@ class Translations$altstore$en {
 
 	/// en: 'Still not working? Paste the source into AltStore'
 	String get step2Fallback => 'Still not working? Paste the source into AltStore';
+
+	/// en: '${app} is waiting for Apple iOS approval. Meanwhile, install BitBlik: same codebase supports ${paymentSystem}. Change country/payment system in Settings.'
+	String approvalNotice({required Object app, required Object paymentSystem}) => '${app} is waiting for Apple iOS approval. Meanwhile, install BitBlik: same codebase supports ${paymentSystem}. Change country/payment system in Settings.';
 }
 
 // Path: common.buttons
@@ -2400,6 +2404,12 @@ class Translations$twint$shop$en {
 	/// en: 'Camera unavailable. Allow camera access in your device or browser settings, then try again.'
 	String get cameraFailed => 'Camera unavailable. Allow camera access in your device or browser settings, then try again.';
 
+	/// en: 'Import image'
+	String get importImage => 'Import image';
+
+	/// en: 'Could not read a supported CHF shop QR code from this image. Choose another image.'
+	String get imageFailed => 'Could not read a supported CHF shop QR code from this image. Choose another image.';
+
 	/// en: 'Shop QR scanned. Check the CHF amount before funding.'
 	String get scanned => 'Shop QR scanned. Check the CHF amount before funding.';
 
@@ -2456,6 +2466,9 @@ class Translations$twint$scanner$en {
 
 	/// en: 'Scan ${code} code'
 	String title({required Object code}) => 'Scan ${code} code';
+
+	/// en: 'Import image'
+	String get importImage => 'Import image';
 
 	late final Translations$twint$scanner$status$en status = Translations$twint$scanner$status$en.internal(_root);
 }
@@ -3211,6 +3224,21 @@ class Translations$notificationSettings$newOfferAlerts$en {
 
 	/// en: 'When enabled, ${app} will notify you about new offers available to take from your enabled coordinators while the app is in the background. This may be faster than external messengers.'
 	String description({required Object app}) => 'When enabled, ${app} will notify you about new offers available to take from your enabled coordinators while the app is in the background. This may be faster than external messengers.';
+}
+
+// Path: notificationSettings.activeOfferAlerts
+class Translations$notificationSettings$activeOfferAlerts$en {
+	Translations$notificationSettings$activeOfferAlerts$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Active offer alerts'
+	String get label => 'Active offer alerts';
+
+	/// en: 'When enabled, ${app} will notify you when your active offer changes status. Background service runs only while you have an active offer.'
+	String description({required Object app}) => 'When enabled, ${app} will notify you when your active offer changes status. Background service runs only while you have an active offer.';
 }
 
 // Path: wallet.missingReceiving
@@ -4870,6 +4898,9 @@ class Translations$twint$scanner$status$en {
 
 	/// en: 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.'
 	String get amountFailed => 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.';
+
+	/// en: 'Could not find a TWINT code or CHF amount in this screenshot. Choose another image.'
+	String get imageFailed => 'Could not find a TWINT code or CHF amount in this screenshot. Choose another image.';
 }
 
 // Path: twint.flow.progress
@@ -6450,6 +6481,8 @@ extension on Translations {
 			'twint.shop.invalidQr' => 'This QR code is not a supported CHF shop payment. Scan the payment QR shown on the terminal.',
 			'twint.shop.amountMismatch' => 'This QR code has a different amount. Ask for a new QR code with the original payment amount.',
 			'twint.shop.cameraFailed' => 'Camera unavailable. Allow camera access in your device or browser settings, then try again.',
+			'twint.shop.importImage' => 'Import image',
+			'twint.shop.imageFailed' => 'Could not read a supported CHF shop QR code from this image. Choose another image.',
 			'twint.shop.scanned' => 'Shop QR scanned. Check the CHF amount before funding.',
 			'twint.shop.rescan' => 'Scan another QR code',
 			'twint.shop.coordinatorUnsupported' => 'This coordinator does not support shop QR payments. Choose a coordinator with shop QR support.',
@@ -6466,9 +6499,11 @@ extension on Translations {
 			'twint.shop.saveFailed' => 'Could not save the QR image. Check photo permissions and available storage, then try again.',
 			'twint.shop.expired' => 'This QR code has expired. Do not pay it or use a previously saved image.',
 			'twint.scanner.title' => ({required Object code}) => 'Scan ${code} code',
+			'twint.scanner.importImage' => 'Import image',
 			'twint.scanner.status.align' => ({required Object code}) => 'Align the ${code} QR code and amount text inside the camera frame.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => '${code} code not recognized yet. Keep the QR and amount text in view, or fill the form manually.',
 			'twint.scanner.status.amountFailed' => 'Camera scan could not extract the amount. You can still use the QR result and correct the fields manually.',
+			'twint.scanner.status.imageFailed' => 'Could not find a TWINT code or CHF amount in this screenshot. Choose another image.',
 			'twint.flow.progress.step1' => '1. Create offer',
 			'twint.flow.progress.step2' => '2. Wait for taker',
 			'twint.flow.progress.step3' => '3. Confirm',
@@ -6781,6 +6816,8 @@ extension on Translations {
 			'notificationSettings.androidOnly' => 'Background notifications are currently only supported on Android.',
 			'notificationSettings.newOfferAlerts.label' => 'New offer alerts',
 			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'When enabled, ${app} will notify you about new offers available to take from your enabled coordinators while the app is in the background. This may be faster than external messengers.',
+			'notificationSettings.activeOfferAlerts.label' => 'Active offer alerts',
+			'notificationSettings.activeOfferAlerts.description' => ({required Object app}) => 'When enabled, ${app} will notify you when your active offer changes status. Background service runs only while you have an active offer.',
 			'wallet.title' => 'Wallet',
 			'wallet.description' => 'Manage your Lightning wallet settings',
 			'wallet.missingReceiving.title' => 'Receiving wallet required',
@@ -6839,14 +6876,14 @@ extension on Translations {
 			'relays.status.connected' => 'Connected',
 			'relays.status.connecting' => 'Connecting',
 			'relays.status.reconnecting' => 'Reconnecting',
+			_ => null,
+		} ?? switch (path) {
 			'relays.status.disconnected' => 'Disconnected',
 			'relays.popup.title' => ({required Object connected, required Object total}) => 'Relays (${connected}/${total} connected)',
 			'relays.popup.connectingMessage' => 'Connecting to relays...',
 			'offerNotifications.activeService.title' => 'Waiting for new offers',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Nostr service monitoring events of ${app} offers.',
 			'offerNotifications.funded.title' => 'Offer funded',
-			_ => null,
-		} ?? switch (path) {
 			'offerNotifications.funded.body' => 'Your hold invoice was accepted. Offer is now live.',
 			'offerNotifications.reserved.title' => 'Offer reserved',
 			'offerNotifications.reserved.body' => 'A taker has reserved your offer.',
@@ -6873,6 +6910,7 @@ extension on Translations {
 			'altstore.step2Title' => ({required Object app}) => 'Install ${app}',
 			'altstore.step2Button' => ({required Object app}) => 'Install ${app}',
 			'altstore.step2Fallback' => 'Still not working? Paste the source into AltStore',
+			'altstore.approvalNotice' => ({required Object app, required Object paymentSystem}) => '${app} is waiting for Apple iOS approval. Meanwhile, install BitBlik: same codebase supports ${paymentSystem}. Change country/payment system in Settings.',
 			_ => null,
 		};
 	}

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:bitblik/i18n/gen/strings.g.dart';
 import 'package:bitblik/src/flow/twint_bodies.dart';
 import 'package:bitblik/src/screens/maker_flow/maker_amount_form.dart';
+import 'package:bitblik/src/screens/maker_flow/twint_code_scanner_screen.dart';
 import 'package:bitblik/src/providers/providers.dart';
 import 'package:bitblik/src/services/api_service_nostr.dart';
 import 'package:bitblik/src/widgets/twint_payment_qr.dart';
@@ -334,15 +335,21 @@ void main() {
   Future<void> completeScan(
     WidgetTester tester,
     String label,
-    String? value,
-  ) async {
+    String? rawQr, {
+    String? code,
+    double? amount,
+  }) async {
     await tester.ensureVisible(find.text(label));
     await tester.tap(find.text(label));
     // Supply the scanner route's result before building a physical camera in
     // this form test. Decoder/error behavior has separate scanner coverage.
     tester
         .state<NavigatorState>(find.byType(Navigator))
-        .pop(value == null ? null : TwintShopQr.tryParse(value));
+        .pop(
+          rawQr == null && code == null && amount == null
+              ? null
+              : TwintScanResult(code: code, amount: amount, rawQr: rawQr),
+        );
     await tester.pumpAndSettle();
   }
 
@@ -351,6 +358,7 @@ void main() {
     (tester) async {
       final api = await showMaker(tester);
       expect(find.byType(TextField), findsNothing);
+      expect(find.text(t.twint.shop.importImage), findsOneWidget);
       expect(
         find.text(t.maker.amountForm.twintScan.manualButton),
         findsNothing,
@@ -412,6 +420,52 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsNothing);
     expect(find.text(t.maker.amountForm.twintScan.manualButton), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets(
+    'shop scan switches online and keeps recognized code and amount',
+    (tester) async {
+      await showMaker(tester);
+      await completeScan(
+        tester,
+        t.maker.amountForm.twintScan.scanButton,
+        '54576',
+        amount: 9.90,
+      );
+
+      final fields = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .toList();
+      final values = fields.map((field) => field.controller?.text).toSet();
+      expect(values, containsAll(<String>{'54576', '9.90'}));
+      expect(
+        fields
+            .singleWhere((field) => field.controller?.text == '9.90')
+            .readOnly,
+        isFalse,
+      );
+      expect(find.text(t.twint.shop.invalidQr), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets('online scan switches shop and keeps QR amount', (tester) async {
+    await showMaker(tester);
+    final online = find.text(t.maker.amountForm.category.shortLabels.online);
+    await tester.ensureVisible(online);
+    await tester.tap(online);
+    await tester.pumpAndSettle();
+
+    await completeScan(
+      tester,
+      t.maker.amountForm.twintScan.scanButton,
+      payload,
+    );
+
+    final amount = tester.widget<TextField>(find.byType(TextField));
+    expect(amount.controller!.text, '7.10');
+    expect(amount.readOnly, isTrue);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 

@@ -725,6 +725,8 @@ twint:
     invalidQr: "Ten kod QR nie jest obsługiwaną płatnością sklepową w CHF. Zeskanuj kod QR płatności wyświetlony na terminalu."
     amountMismatch: "Ten kod QR ma inną kwotę. Poproś o nowy kod QR z pierwotną kwotą płatności."
     cameraFailed: "Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie."
+    importImage: "Importuj obraz QR"
+    imageFailed: "Nie udało się odczytać obsługiwanego sklepowego kodu QR CHF z tego obrazu. Wybierz inny obraz."
     scanned: "Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty."
     rescan: "Zeskanuj inny kod QR"
     coordinatorUnsupported: "Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje."
@@ -742,10 +744,12 @@ twint:
     expired: "Ten kod QR wygasł. Nie płać nim ani nie używaj wcześniej zapisanego obrazu."
   scanner:
     title: "Skanuj kod ${code}"
+    importImage: "Importuj zrzut ekranu"
     status:
       align: "Ustaw kod QR ${code} i tekst z kwotą wewnątrz kadru kamery."
       notRecognized: "Kod ${code} nie został jeszcze rozpoznany. Trzymaj QR i kwotę w kadrze albo wypełnij formularz ręcznie."
       amountFailed: "Skanowanie kamerą nie odczytało kwoty. Nadal możesz użyć wyniku QR i ręcznie poprawić pola."
+      imageFailed: "Nie udało się znaleźć kodu TWINT ani kwoty CHF na tym zrzucie ekranu. Wybierz inny obraz."
   flow:
     progress:
       step1: "1. Utwórz ofertę"
@@ -1214,6 +1218,9 @@ notificationSettings:
   newOfferAlerts:
     label: Alerty o nowych ofertach
     description: Po włączeniu ${app} będzie powiadamiać o nowych ofertach dostępnych do wzięcia od włączonych koordynatorów, gdy aplikacja działa w tle. Może to być szybsze niż zewnętrzne komunikatory.
+  activeOfferAlerts:
+    label: Alerty aktywnej oferty
+    description: Po włączeniu ${app} powiadomi Cię o zmianie statusu aktywnej oferty. Usługa w tle działa tylko, gdy masz aktywną ofertę.
 
 wallet:
   details:
@@ -1346,3 +1353,4 @@ altstore:
   step2Title: "Zainstaluj ${app}"
   step2Button: "Zainstaluj ${app}"
   step2Fallback: "Nie działa? Wklej źródło do AltStore"
+  approvalNotice: "${app} czeka na zatwierdzenie przez Apple dla iOS. W międzyczasie zainstaluj BitBlik: ten sam kod obsługuje ${paymentSystem}. Zmień kraj/system płatności w Ustawieniach."

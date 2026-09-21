@@ -444,6 +444,7 @@ class _Translations$notificationSettings$pt extends Translations$notificationSet
 	@override String get title => 'Notificações';
 	@override String get androidOnly => 'As notificações em segundo plano são atualmente suportadas apenas no Android.';
 	@override late final _Translations$notificationSettings$newOfferAlerts$pt newOfferAlerts = _Translations$notificationSettings$newOfferAlerts$pt._(_root);
+	@override late final _Translations$notificationSettings$activeOfferAlerts$pt activeOfferAlerts = _Translations$notificationSettings$activeOfferAlerts$pt._(_root);
 }
 
 // Path: wallet
@@ -534,6 +535,7 @@ class _Translations$altstore$pt extends Translations$altstore$en {
 	@override String step2Title({required Object app}) => 'Instalar o ${app}';
 	@override String step2Button({required Object app}) => 'Instalar o ${app}';
 	@override String get step2Fallback => 'Continua sem funcionar? Cole a fonte na AltStore';
+	@override String approvalNotice({required Object app, required Object paymentSystem}) => '${app} aguarda aprovação da Apple para iOS. Entretanto, instale o BitBlik: usa o mesmo código e suporta ${paymentSystem}. Altere o país/sistema de pagamento nas Definições.';
 }
 
 // Path: common.buttons
@@ -1423,6 +1425,8 @@ class _Translations$twint$shop$pt extends Translations$twint$shop$en {
 	@override String get invalidQr => 'Este código QR não é um pagamento em loja em CHF compatível. Escaneie o código QR de pagamento exibido no terminal.';
 	@override String get amountMismatch => 'Este código QR tem um valor diferente. Peça um novo código QR com o valor original do pagamento.';
 	@override String get cameraFailed => 'Câmera indisponível. Permita o acesso à câmera nas configurações do dispositivo ou navegador e tente novamente.';
+	@override String get importImage => 'Importar imagem QR';
+	@override String get imageFailed => 'Não foi possível ler um QR de loja CHF compatível desta imagem. Escolha outra imagem.';
 	@override String get scanned => 'QR da loja escaneado. Confira o valor em CHF antes de financiar a oferta.';
 	@override String get rescan => 'Escanear outro código QR';
 	@override String get coordinatorUnsupported => 'Este coordenador não aceita pagamentos QR em loja. Escolha um coordenador que aceite.';
@@ -1448,6 +1452,7 @@ class _Translations$twint$scanner$pt extends Translations$twint$scanner$en {
 
 	// Translations
 	@override String title({required Object code}) => 'Ler código ${code}';
+	@override String get importImage => 'Importar captura de ecrã';
 	@override late final _Translations$twint$scanner$status$pt status = _Translations$twint$scanner$status$pt._(_root);
 }
 
@@ -1909,6 +1914,17 @@ class _Translations$notificationSettings$newOfferAlerts$pt extends Translations$
 	// Translations
 	@override String get label => 'Alertas de novas ofertas';
 	@override String description({required Object app}) => 'Quando ativado, o ${app} notifica-o sobre novas ofertas disponíveis para aceitar dos seus coordenadores ativos enquanto a app está em segundo plano. Isto pode ser mais rápido do que os messengers externos.';
+}
+
+// Path: notificationSettings.activeOfferAlerts
+class _Translations$notificationSettings$activeOfferAlerts$pt extends Translations$notificationSettings$activeOfferAlerts$en {
+	_Translations$notificationSettings$activeOfferAlerts$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Alertas de oferta ativa';
+	@override String description({required Object app}) => 'Quando ativado, o ${app} notifica-o quando o estado da sua oferta ativa muda. O serviço em segundo plano só funciona enquanto tiver uma oferta ativa.';
 }
 
 // Path: wallet.missingReceiving
@@ -2703,6 +2719,7 @@ class _Translations$twint$scanner$status$pt extends Translations$twint$scanner$s
 	@override String align({required Object code}) => 'Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara.';
 	@override String notRecognized({required Object code}) => 'O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente.';
 	@override String get amountFailed => 'A leitura pela câmara não conseguiu extrair o montante. Ainda pode usar o resultado do QR e corrigir os campos manualmente.';
+	@override String get imageFailed => 'Não foi possível encontrar um código TWINT ou valor CHF nesta captura. Escolha outra imagem.';
 }
 
 // Path: twint.flow.progress
@@ -3834,6 +3851,8 @@ extension on TranslationsPt {
 			'twint.shop.invalidQr' => 'Este código QR não é um pagamento em loja em CHF compatível. Escaneie o código QR de pagamento exibido no terminal.',
 			'twint.shop.amountMismatch' => 'Este código QR tem um valor diferente. Peça um novo código QR com o valor original do pagamento.',
 			'twint.shop.cameraFailed' => 'Câmera indisponível. Permita o acesso à câmera nas configurações do dispositivo ou navegador e tente novamente.',
+			'twint.shop.importImage' => 'Importar imagem QR',
+			'twint.shop.imageFailed' => 'Não foi possível ler um QR de loja CHF compatível desta imagem. Escolha outra imagem.',
 			'twint.shop.scanned' => 'QR da loja escaneado. Confira o valor em CHF antes de financiar a oferta.',
 			'twint.shop.rescan' => 'Escanear outro código QR',
 			'twint.shop.coordinatorUnsupported' => 'Este coordenador não aceita pagamentos QR em loja. Escolha um coordenador que aceite.',
@@ -3850,9 +3869,11 @@ extension on TranslationsPt {
 			'twint.shop.saveFailed' => 'Não foi possível salvar a imagem QR. Confira as permissões de acesso às fotos e o espaço de armazenamento disponível e tente novamente.',
 			'twint.shop.expired' => 'Este código QR expirou. Não pague com ele nem use uma imagem salva anteriormente.',
 			'twint.scanner.title' => ({required Object code}) => 'Ler código ${code}',
+			'twint.scanner.importImage' => 'Importar captura de ecrã',
 			'twint.scanner.status.align' => ({required Object code}) => 'Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara.',
 			'twint.scanner.status.notRecognized' => ({required Object code}) => 'O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente.',
 			'twint.scanner.status.amountFailed' => 'A leitura pela câmara não conseguiu extrair o montante. Ainda pode usar o resultado do QR e corrigir os campos manualmente.',
+			'twint.scanner.status.imageFailed' => 'Não foi possível encontrar um código TWINT ou valor CHF nesta captura. Escolha outra imagem.',
 			'twint.flow.progress.step1' => '1. Criar oferta',
 			'twint.flow.progress.step2' => '2. Esperar pelo taker',
 			'twint.flow.progress.step3' => '3. Confirmar',
@@ -4165,6 +4186,8 @@ extension on TranslationsPt {
 			'notificationSettings.androidOnly' => 'As notificações em segundo plano são atualmente suportadas apenas no Android.',
 			'notificationSettings.newOfferAlerts.label' => 'Alertas de novas ofertas',
 			'notificationSettings.newOfferAlerts.description' => ({required Object app}) => 'Quando ativado, o ${app} notifica-o sobre novas ofertas disponíveis para aceitar dos seus coordenadores ativos enquanto a app está em segundo plano. Isto pode ser mais rápido do que os messengers externos.',
+			'notificationSettings.activeOfferAlerts.label' => 'Alertas de oferta ativa',
+			'notificationSettings.activeOfferAlerts.description' => ({required Object app}) => 'Quando ativado, o ${app} notifica-o quando o estado da sua oferta ativa muda. O serviço em segundo plano só funciona enquanto tiver uma oferta ativa.',
 			'wallet.title' => 'Carteira',
 			'wallet.description' => 'Faça a gestão das definições da sua carteira Lightning',
 			'wallet.missingReceiving.title' => 'Carteira de receção necessária',
@@ -4255,6 +4278,7 @@ extension on TranslationsPt {
 			'altstore.step2Title' => ({required Object app}) => 'Instalar o ${app}',
 			'altstore.step2Button' => ({required Object app}) => 'Instalar o ${app}',
 			'altstore.step2Fallback' => 'Continua sem funcionar? Cole a fonte na AltStore',
+			'altstore.approvalNotice' => ({required Object app, required Object paymentSystem}) => '${app} aguarda aprovação da Apple para iOS. Entretanto, instale o BitBlik: usa o mesmo código e suporta ${paymentSystem}. Altere o país/sistema de pagamento nas Definições.',
 			_ => null,
 		};
 	}

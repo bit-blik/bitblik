@@ -73,6 +73,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(t.twint.shop.invalidQr), findsOneWidget);
     expect(completed, isFalse);
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.text(t.twint.shop.invalidQr), findsNothing);
+    expect(completed, isFalse);
+    detect(' $payload');
+    await tester.pumpAndSettle();
     await tester.tap(find.text(t.common.buttons.retry));
     await tester.pumpAndSettle();
     detect(payload.replaceFirst('000000000710', '000000000711'));

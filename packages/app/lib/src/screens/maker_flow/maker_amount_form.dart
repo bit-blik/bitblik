@@ -19,7 +19,6 @@ import '../../settings/app_preferences.dart';
 import '../../widgets/bolt12_badge.dart';
 import '../coordinator_details_screen.dart';
 import 'twint_code_scanner_screen.dart';
-import 'twint_shop_qr_scanner_screen.dart';
 
 // CoordinatorRecord comes from bitblik_core
 
@@ -94,17 +93,17 @@ class _OnboardingBeakPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final shadowPath = Path()
-          ..moveTo(size.width * 0.5, 0)
-          ..lineTo(0, size.height)
-          ..lineTo(size.width, size.height)
-          ..close();
+      ..moveTo(size.width * 0.5, 0)
+      ..lineTo(0, size.height)
+      ..lineTo(size.width, size.height)
+      ..close();
     canvas.drawShadow(shadowPath, shadowColor, 2, false);
 
     final fillPath = Path()
-          ..moveTo(size.width * 0.5, 0)
-          ..lineTo(size.width * 0.15, size.height)
-          ..lineTo(size.width * 0.85, size.height)
-          ..close();
+      ..moveTo(size.width * 0.5, 0)
+      ..lineTo(size.width * 0.15, size.height)
+      ..lineTo(size.width * 0.85, size.height)
+      ..close();
     final paint = Paint()..color = color;
     canvas.drawPath(fillPath, paint);
   }
@@ -183,6 +182,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   bool _showMakerProvidedEntryForm = false;
 
   bool _isLoadingInitialData = true;
+  bool _isImportingTwint = false;
   String? _coordinatorInfoError;
 
   String? _selectedCoordinatorPubkey; // Remember selected coordinator pubkey
@@ -307,8 +307,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         _defaultPremiumPreference =
             preferences.offerCreation.defaultPremiumPercent;
         _premiumPercent = preferences.offerCreation.premiumEnabled
-                ? preferences.offerCreation.defaultPremiumPercent
-                : 0;
+            ? preferences.offerCreation.defaultPremiumPercent
+            : 0;
         _preferredCoordinatorPubkey =
             preferences.offerCreation.preferredCoordinatorPubkey;
         _bitcoinDisplayUnit = preferences.display.bitcoinDisplayUnit;
@@ -451,8 +451,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         if (_selectedCategory == null ||
             !supported.contains(_selectedCategory)) {
           _selectedCategory = supported.contains(_defaultCategoryPreference)
-                  ? _defaultCategoryPreference
-                  : supported.first;
+              ? _defaultCategoryPreference
+              : supported.first;
         }
       }
       // Clamp premium to the newly selected coordinator's advertised max.
@@ -510,8 +510,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     // "Too low/high" only when no coordinator fits at all.
     final enabledAsync = ref.read(enabledCoordinatorsProvider);
     final enabled = enabledAsync is AsyncData<List<CoordinatorRecord>>
-            ? enabledAsync.value
-            : const <CoordinatorRecord>[];
+        ? enabledAsync.value
+        : const <CoordinatorRecord>[];
 
     if (currentError == null && sats != null && enabled.isNotEmpty) {
       final satsInt = sats.round();
@@ -671,11 +671,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         throw const FormatException('A funding estimate is required.');
       }
       final estimate = FundingEstimate(
-        coordinatorPubkey: coordinatorPubkey, makerPubkey: makerId,
-        fiatAmount: fiatAmount, fiatCurrency: _method.currency,
+        coordinatorPubkey: coordinatorPubkey,
+        makerPubkey: makerId,
+        fiatAmount: fiatAmount,
+        fiatCurrency: _method.currency,
         premiumPercent: _premiumPercent,
-        totalSats: (satsEstimate * (1 - _premiumPercent / 100) +
-            satsEstimate * coordinatorInfo.makerFee / 100).round(),
+        totalSats:
+            (satsEstimate * (1 - _premiumPercent / 100) +
+                    satsEstimate * coordinatorInfo.makerFee / 100)
+                .round(),
         makerFeesSats: (satsEstimate * coordinatorInfo.makerFee / 100).ceil(),
       );
       final apiService = ref.read(apiServiceProvider);
@@ -701,36 +705,38 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       }
       final paymentHash = result['paymentHash'] as String;
       final createdOffer = Offer(
-              id: paymentHash,
-              // Keep Offer.amountSats as the trade principal. The hold invoice
-              // itself is principal + makerFees; storing that gross amount
-              // here made later refund code add the fee a second time.
-              amountSats: result['amountSats'],
-              makerFees: result['makerFees'],
-              status: OfferStatus.created,
-              fiatAmount: fiatAmount,
-              fiatCurrency: _method.currency,
-              createdAt: DateTime.now(),
-              holdInvoicePaymentHash: paymentHash,
-              holdInvoice: result['holdInvoice'],
-              makerPubkey: makerId,
-              coordinatorPubkey: coordinatorPubkey,
-              paymentSystemId: _method.id,
-              bankId: offerBank,
-              category: offerCategory,
-              blikCode: _method.makerProvidesCodeAtOfferCreation
-                  ? makerCode
-                  : null,
-              premiumPercent:
-                  (result['premiumPercent'] as num?)?.toDouble() ??
-                  estimate.premiumPercent,
-            );
+        id: paymentHash,
+        // Keep Offer.amountSats as the trade principal. The hold invoice
+        // itself is principal + makerFees; storing that gross amount
+        // here made later refund code add the fee a second time.
+        amountSats: result['amountSats'],
+        makerFees: result['makerFees'],
+        status: OfferStatus.created,
+        fiatAmount: fiatAmount,
+        fiatCurrency: _method.currency,
+        createdAt: DateTime.now(),
+        holdInvoicePaymentHash: paymentHash,
+        holdInvoice: result['holdInvoice'],
+        makerPubkey: makerId,
+        coordinatorPubkey: coordinatorPubkey,
+        paymentSystemId: _method.id,
+        bankId: offerBank,
+        category: offerCategory,
+        blikCode: _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
+        premiumPercent:
+            (result['premiumPercent'] as num?)?.toDouble() ??
+            estimate.premiumPercent,
+      );
       // The payment gate validates the invoice before exposing payment controls.
       // Keep the original estimate even when validation fails, for diagnostics.
       ref.read(fundingEstimateProvider.notifier).state = (
         offerId: createdOffer.id,
         estimate: result['_clientFundingEstimate'] is Map
-            ? FundingEstimate.fromJson(Map<String, dynamic>.from(result['_clientFundingEstimate'] as Map))
+            ? FundingEstimate.fromJson(
+                Map<String, dynamic>.from(
+                  result['_clientFundingEstimate'] as Map,
+                ),
+              )
             : estimate,
       );
       ref.read(holdInvoiceProvider.notifier).state = createdOffer.holdInvoice;
@@ -765,17 +771,17 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   Widget _buildSelectedCoordinatorLogo() {
     final pk = _selectedCoordinatorPubkey;
     final icon = pk == null
-            ? null
-            : ref.watch(coordinatorRecordByPubkeyProvider(pk))?.icon;
+        ? null
+        : ref.watch(coordinatorRecordByPubkeyProvider(pk))?.icon;
     if (icon != null && icon.isNotEmpty) {
       return icon.startsWith('http')
           ? Image.network(
-            icon,
-            width: 22,
-            height: 22,
+              icon,
+              width: 22,
+              height: 22,
               errorBuilder: (_, _, _) =>
                   const Icon(Icons.account_circle, size: 24),
-          )
+            )
           : Image.asset(icon, width: 22, height: 22);
     }
     return const Icon(Icons.account_circle, size: 24);
@@ -824,80 +830,80 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-            backgroundColor: Colors.transparent,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                padding: const EdgeInsets.all(16.0),
-                constraints: const BoxConstraints(maxWidth: 320),
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(8),
-                ),
+        backgroundColor: Colors.transparent,
+        child: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            constraints: const BoxConstraints(maxWidth: 320),
+            decoration: BoxDecoration(
+              color: Colors.grey[800],
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: FutureBuilder<({Map<String, double?> rates, DateTime fetchedAt})>(
-                  future: apiService.getSourceRates(_method.currency),
-                  builder: (context, snapshot) {
-                    final data = snapshot.data;
-                    final rates = data?.rates;
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          t.offers.tooltips.ratesSources,
-                          style: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ...ApiServiceNostr.exchangeRateSourceNames.map((name) {
-                          final rate = rates?[name];
+              future: apiService.getSourceRates(_method.currency),
+              builder: (context, snapshot) {
+                final data = snapshot.data;
+                final rates = data?.rates;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      t.offers.tooltips.ratesSources,
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...ApiServiceNostr.exchangeRateSourceNames.map((name) {
+                      final rate = rates?[name];
                       final rateText = rates == null
-                                  ? '…'
-                                  : rate != null
-                                  ? '${_formatNumber(rate.round())} ${_method.currency}/BTC'
-                                  : '—';
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  name,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                const SizedBox(width: 16),
-                                Text(
-                                  rateText,
-                                  style: TextStyle(
-                                color: rate != null
-                                            ? Colors.white
-                                            : Colors.grey[500],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                          ? '…'
+                          : rate != null
+                          ? '${_formatNumber(rate.round())} ${_method.currency}/BTC'
+                          : '—';
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(color: Colors.white),
                             ),
-                          );
-                        }),
-                        if (data != null) ...[
-                          const SizedBox(height: 10),
-                          Text(
-                            '${t.offers.tooltips.ratesFetchedAt} ${data.fetchedAt.hour.toString().padLeft(2, '0')}:${data.fetchedAt.minute.toString().padLeft(2, '0')}',
+                            const SizedBox(width: 16),
+                            Text(
+                              rateText,
+                              style: TextStyle(
+                                color: rate != null
+                                    ? Colors.white
+                                    : Colors.grey[500],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    if (data != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        '${t.offers.tooltips.ratesFetchedAt} ${data.fetchedAt.hour.toString().padLeft(2, '0')}:${data.fetchedAt.minute.toString().padLeft(2, '0')}',
                         style: TextStyle(color: Colors.grey[500], fontSize: 11),
-                            textAlign: TextAlign.right,
-                          ),
-                        ],
-                      ],
-                    );
-                  },
-                ),
-              ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ],
+                  ],
+                );
+              },
             ),
           ),
+        ),
+      ),
     );
   }
 
@@ -926,145 +932,145 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
             child: ListView(
               shrinkWrap: true,
               children: coordinators.map((coordinator) {
-                    final rate = _rate ?? 1.0;
+                final rate = _rate ?? 1.0;
                 final minPln = (coordinator.minAmountSats / 100000000.0 * rate)
-                        .toStringAsFixed(2);
+                    .toStringAsFixed(2);
                 final maxPln = (coordinator.maxAmountSats / 100000000.0 * rate)
-                            .floor()
-                            .toString();
-                    final feePct = coordinator.makerFee.toStringAsFixed(2);
-                    final t = Translations.of(context);
-                    final sats = _satsEquivalent;
-                    final outOfRange =
-                        sats != null &&
-                        (sats.round() < coordinator.minAmountSats ||
-                            sats.round() > coordinator.maxAmountSats);
-                    final notResponsive =
-                        coordinator.responsive == false ||
-                        coordinator.responsive == null;
-                    final disabled = notResponsive || outOfRange;
-                    return ListTile(
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    .floor()
+                    .toString();
+                final feePct = coordinator.makerFee.toStringAsFixed(2);
+                final t = Translations.of(context);
+                final sats = _satsEquivalent;
+                final outOfRange =
+                    sats != null &&
+                    (sats.round() < coordinator.minAmountSats ||
+                        sats.round() > coordinator.maxAmountSats);
+                final notResponsive =
+                    coordinator.responsive == false ||
+                    coordinator.responsive == null;
+                final disabled = notResponsive || outOfRange;
+                return ListTile(
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              (coordinator.icon != null &&
-                                      coordinator.icon!.isNotEmpty)
-                                  ? (coordinator.icon!.startsWith('http')
-                                      ? Image.network(
+                          (coordinator.icon != null &&
+                                  coordinator.icon!.isNotEmpty)
+                              ? (coordinator.icon!.startsWith('http')
+                                    ? Image.network(
                                         coordinator.icon!,
                                         width: 32,
                                         height: 32,
                                         errorBuilder: (_, _, _) => const Icon(
-                                              Icons.account_circle,
-                                              size: 32,
-                                            ),
+                                          Icons.account_circle,
+                                          size: 32,
+                                        ),
                                       )
-                                      : Image.asset(
+                                    : Image.asset(
                                         coordinator.icon!,
                                         width: 32,
                                         height: 32,
                                       ))
-                                  : const Icon(Icons.account_circle, size: 32),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  coordinator.name,
-                                  overflow: TextOverflow.ellipsis,
+                              : const Icon(Icons.account_circle, size: 32),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              coordinator.name,
+                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: disabled ? Colors.grey : null,
                                   ),
-                                ),
-                              ),
-                              if (coordinator.responsive == true && !outOfRange)
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 4.0),
-                                  child: Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green,
-                                    size: 18,
-                                  ),
-                                ),
-                              const Spacer(),
-                              Radio<String>(
-                                value: coordinator.pubkey,
-                                groupValue: _selectedCoordinatorPubkey,
-                            onChanged: disabled
-                                        ? null
-                                        : (_) {
-                                          Navigator.of(context).pop();
-                                          _selectCoordinator(
-                                            coordinator,
-                                            userInitiated: true,
-                                          );
-                                        },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          if (coordinator.version.isNotEmpty ||
-                              coordinator.supportsBolt12Payouts) ...[
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                if (coordinator.version.isNotEmpty)
-                                  Text(
-                                    'v${coordinator.version}',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(color: Colors.grey),
-                                  ),
-                                if (coordinator.supportsBolt12Payouts)
-                                  const Bolt12Badge(compact: true),
-                              ],
                             ),
-                            const SizedBox(height: 6),
-                          ],
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 4,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
+                          ),
+                          if (coordinator.responsive == true && !outOfRange)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 4.0),
+                              child: Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 18,
+                              ),
+                            ),
+                          const Spacer(),
+                          Radio<String>(
+                            value: coordinator.pubkey,
+                            groupValue: _selectedCoordinatorPubkey,
+                            onChanged: disabled
+                                ? null
+                                : (_) {
+                                    Navigator.of(context).pop();
+                                    _selectCoordinator(
+                                      coordinator,
+                                      userInitiated: true,
+                                    );
+                                  },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      if (coordinator.version.isNotEmpty ||
+                          coordinator.supportsBolt12Payouts) ...[
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            if (coordinator.version.isNotEmpty)
                               Text(
-                                t.coordinator.info.rangeDisplay(
-                                  minAmount: minPln,
-                                  maxAmount: maxPln,
-                                  currency: _method.currencySymbol,
-                                ),
+                                'v${coordinator.version}',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.grey),
+                              ),
+                            if (coordinator.supportsBolt12Payouts)
+                              const Bolt12Badge(compact: true),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            t.coordinator.info.rangeDisplay(
+                              minAmount: minPln,
+                              maxAmount: maxPln,
+                              currency: _method.currencySymbol,
+                            ),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: disabled ? Colors.grey : null,
                                 ),
-                              ),
-                              Text(
-                                t.coordinator.info.feeDisplay(fee: feePct),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: Colors.blueGrey),
-                              ),
-                              Text(
-                                '${t.coordinator.management.metricNetworkOffers}: ${coordinator.networkFinishedCount}',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: Colors.green),
-                              ),
-                            ],
+                          ),
+                          Text(
+                            t.coordinator.info.feeDisplay(fee: feePct),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: Colors.blueGrey),
+                          ),
+                          Text(
+                            '${t.coordinator.management.metricNetworkOffers}: ${coordinator.networkFinishedCount}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: Colors.green),
                           ),
                         ],
                       ),
+                    ],
+                  ),
                   onTap: disabled
-                              ? null
-                              : () {
-                                Navigator.of(context).pop();
+                      ? null
+                      : () {
+                          Navigator.of(context).pop();
                           _selectCoordinator(coordinator, userInitiated: true);
-                              },
+                        },
                   tileColor: disabled
                       ? Colors.grey.withValues(alpha: 0.15)
                       : null,
-                    );
-                  }).toList(),
+                );
+              }).toList(),
             ),
           );
         },
@@ -1076,6 +1082,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   Widget _buildGradientButton({
     required VoidCallback? onPressed,
     required Widget child,
+    double height = 56,
   }) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
@@ -1091,20 +1098,19 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     return Container(
       width: double.infinity,
-      height: 56,
+      height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient:
-            isEnabled
-                ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFFFF0000), // Bright red/pink
-                    Color(0xFFFF007F), // Bright magenta/pink
-                  ],
-                )
-                : null,
+        gradient: isEnabled
+            ? const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFFF0000), // Bright red/pink
+                  Color(0xFFFF007F), // Bright magenta/pink
+                ],
+              )
+            : null,
         color: isEnabled ? null : disabledBackgroundColor,
       ),
       child: Material(
@@ -1129,22 +1135,35 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   Future<void> _scanTwintCodeAndAmount() async {
     if (ref.read(isLoadingProvider)) return;
     if (_usesShopQr) {
-      final result = await Navigator.of(context).push<TwintShopQr>(
-        MaterialPageRoute(builder: (_) => const TwintShopQrScannerScreen()),
+      final result = await Navigator.of(context).push<TwintScanResult>(
+        MaterialPageRoute(
+          builder: (_) => const TwintCodeScannerScreen(acceptShopQr: true),
+        ),
       );
       if (!mounted || !_usesShopQr || result == null) return;
+      final shopQr = TwintShopQr.tryParse(result.rawQr ?? '');
+      if (shopQr == null) {
+        if (!_applyOnlineTwintResult(result)) {
+          _showInvalidShopQr();
+        }
+        return;
+      }
       setState(() {
         _showMakerProvidedEntryForm = true;
-        _makerCodeController.text = result.payload;
-        _fiatController.text = result.amountText;
+        _makerCodeController.text = shopQr.payload;
+        _fiatController.text = shopQr.amountText;
       });
       FocusScope.of(context).unfocus();
       return;
     }
     final result = await Navigator.of(context).push<TwintScanResult>(
-      MaterialPageRoute(builder: (_) => const TwintCodeScannerScreen()),
+      MaterialPageRoute(
+        builder: (_) => const TwintCodeScannerScreen(acceptShopQr: true),
+      ),
     );
     if (!mounted || result == null) return;
+
+    if (_applyShopTwintResult(result)) return;
 
     setState(() {
       _showMakerProvidedEntryForm = true;
@@ -1172,6 +1191,149 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     });
   }
 
+  Future<void> _importTwintCodeAndAmount() async {
+    if (ref.read(isLoadingProvider) || _isImportingTwint) return;
+    setState(() => _isImportingTwint = true);
+    try {
+      if (_usesShopQr) {
+        final result = await importTwintScreenshot(
+          scanAmount: true,
+          allowOnlineOcrUpload: _confirmOnlineOcrUpload,
+        );
+        if (!mounted || !_usesShopQr) return;
+        if (result == null) {
+          _showImportFailure();
+          return;
+        }
+        final shopQr = TwintShopQr.tryParse(result.rawQr ?? '');
+        if (shopQr == null) {
+          if (!_applyOnlineTwintResult(result)) {
+            _showInvalidShopQr();
+          }
+          return;
+        }
+        setState(() {
+          _showMakerProvidedEntryForm = true;
+          _makerCodeController.text = shopQr.payload;
+          _fiatController.text = shopQr.amountText;
+        });
+      } else {
+        final result = await importTwintScreenshot(
+          scanAmount: true,
+          allowOnlineOcrUpload: _confirmOnlineOcrUpload,
+        );
+        if (!mounted) return;
+        if (result == null) {
+          _showImportFailure();
+          return;
+        }
+        if (_applyShopTwintResult(result)) return;
+        setState(() => _showMakerProvidedEntryForm = true);
+        if (result.code != null && result.code!.isNotEmpty) {
+          _makerCodeController.text = result.code!;
+        }
+        if (result.amount != null && result.amount! > 0) {
+          _fiatController.text = result.amount!
+              .toStringAsFixed(2)
+              .replaceFirst(RegExp(r'\.00$'), '');
+        }
+      }
+      FocusScope.of(context).unfocus();
+    } catch (_) {
+      if (mounted) _showImportFailure();
+    } finally {
+      if (mounted) setState(() => _isImportingTwint = false);
+    }
+  }
+
+  void _showImportFailure() {
+    final t = Translations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _usesShopQr
+              ? t.twint.shop.imageFailed
+              : t.twint.scanner.status.imageFailed,
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _confirmOnlineOcrUpload() async {
+    if (!mounted) return false;
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Use online OCR?'),
+            content: const Text(
+              'The CHF amount could not be read on this device. '
+              'OCR.space will receive this image to extract text. '
+              'Do you want to upload it?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  void _showInvalidShopQr() {
+    final t = Translations.of(context);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(t.twint.shop.invalidQr)));
+  }
+
+  bool _applyOnlineTwintResult(TwintScanResult result) {
+    final code =
+        result.code ??
+        parseTwintScreenshotText(result.rawQr ?? '', scanAmount: false)?.code;
+    if (code == null ||
+        code.isEmpty ||
+        !_method.supportedCategories.contains(OfferCategory.online)) {
+      return false;
+    }
+    setState(() {
+      _selectedCategory = OfferCategory.online;
+      _makerCodeController.text = code;
+      _fiatController.text = result.amount == null
+          ? ''
+          : result.amount!
+                .toStringAsFixed(2)
+                .replaceFirst(RegExp(r'\.00$'), '');
+      _showMakerProvidedEntryForm = true;
+      _customAmountMode = false;
+      _ecommerceRiskAccepted = false;
+    });
+    FocusScope.of(context).unfocus();
+    return true;
+  }
+
+  bool _applyShopTwintResult(TwintScanResult result) {
+    final shopQr = TwintShopQr.tryParse(result.rawQr ?? '');
+    if (shopQr == null ||
+        !_method.supportedCategories.contains(OfferCategory.shop)) {
+      return false;
+    }
+    setState(() {
+      _selectedCategory = OfferCategory.shop;
+      _makerCodeController.text = shopQr.payload;
+      _fiatController.text = shopQr.amountText;
+      _showMakerProvidedEntryForm = true;
+      _customAmountMode = false;
+    });
+    FocusScope.of(context).unfocus();
+    return true;
+  }
+
   void _showManualMakerProvidedEntry() {
     if (_usesShopQr) return;
     setState(() {
@@ -1189,14 +1351,18 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
   Widget _buildMakerProvidedScanCard() {
     final t = Translations.of(context);
-    final accent = const Color(0xFF0D8C7A);
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = isDark ? colors.onPrimaryContainer : const Color(0xFF0D8C7A);
     return Container(
       margin: const EdgeInsets.only(top: 10, bottom: 18),
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: const Color(0xFFF2FBF9),
-        border: Border.all(color: const Color(0xFFCFEDE7)),
+        color: isDark ? colors.surfaceContainerLow : const Color(0xFFF2FBF9),
+        border: Border.all(
+          color: isDark ? colors.outlineVariant : const Color(0xFFCFEDE7),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1208,7 +1374,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDDF5F0),
+                  color: isDark
+                      ? colors.primaryContainer
+                      : const Color(0xFFDDF5F0),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(Icons.qr_code_scanner_rounded, color: accent),
@@ -1235,7 +1403,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
-                        color: Colors.grey[700],
+                        color: isDark
+                            ? colors.onSurfaceVariant
+                            : Colors.grey[700],
                       ),
                     ),
                   ],
@@ -1244,20 +1414,65 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildGradientButton(
-            onPressed: ref.watch(isLoadingProvider)
-                ? null
-                : _scanTwintCodeAndAmount,
+          SizedBox(
+            height: 44,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.camera_alt_rounded),
-                const SizedBox(width: 10),
-                Text(
-                  t.maker.amountForm.twintScan.scanButton,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  flex: 7,
+                  child: _buildGradientButton(
+                    onPressed: ref.watch(isLoadingProvider) || _isImportingTwint
+                        ? null
+                        : _scanTwintCodeAndAmount,
+                    height: 44,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.camera_alt_rounded),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            t.maker.amountForm.twintScan.scanButton,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: OutlinedButton(
+                    onPressed: ref.watch(isLoadingProvider) || _isImportingTwint
+                        ? null
+                        : _importTwintCodeAndAmount,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colors.error,
+                      side: BorderSide(color: colors.error),
+                      minimumSize: const Size(0, 44),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    child: _isImportingTwint
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.error,
+                            ),
+                          )
+                        : FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              _usesShopQr
+                                  ? t.twint.shop.importImage
+                                  : t.twint.scanner.importImage,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -1266,11 +1481,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           const SizedBox(height: 8),
           if (!_usesShopQr)
             Center(
-            child: TextButton(
-              onPressed: _showManualMakerProvidedEntry,
-              child: Text(t.maker.amountForm.twintScan.manualButton),
+              child: TextButton(
+                onPressed: _showManualMakerProvidedEntry,
+                child: Text(t.maker.amountForm.twintScan.manualButton),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -1278,6 +1493,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
   Widget _buildMakerProvidedCodeField() {
     final t = Translations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_usesShopQr) {
       return Column(
         children: [
@@ -1298,9 +1515,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       margin: const EdgeInsets.fromLTRB(20, 4, 20, 14),
       padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: isDark ? colors.surfaceContainerLow : Colors.grey[50],
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+          color: isDark ? colors.outlineVariant : Colors.grey.shade300,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1312,7 +1531,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
+                  color: isDark ? colors.onSurfaceVariant : Colors.grey[700],
                 ),
               ),
               const Spacer(),
@@ -1321,7 +1540,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 icon: const Icon(Icons.center_focus_strong, size: 16),
                 label: Text(t.maker.amountForm.twintScan.rescan),
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.grey[700],
+                  foregroundColor: isDark
+                      ? colors.onSurfaceVariant
+                      : Colors.grey[700],
                   visualDensity: VisualDensity.compact,
                 ),
               ),
@@ -1373,7 +1594,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         fontSize: fontSize,
                         fontWeight: FontWeight.w400,
                         letterSpacing: letterSpacing,
-                        color: Colors.grey[350],
+                        color: isDark
+                            ? colors.onSurfaceVariant.withValues(alpha: 0.55)
+                            : Colors.grey[350],
                         height: 1.1,
                       ),
                       border: InputBorder.none,
@@ -1390,15 +1613,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
           Text(
             hasValue
                 ? t.maker.amountForm.twintScan.helperFilled(
-                  code: _method.codeLabel,
-                )
+                    code: _method.codeLabel,
+                  )
                 : t.maker.amountForm.twintScan.helperEmpty(
-                  digits: _method.codeLength,
-                ),
+                    digits: _method.codeLength,
+                  ),
             style: TextStyle(
               fontSize: 12.5,
               height: 1.35,
-              color: Colors.grey[700],
+              color: isDark ? colors.onSurfaceVariant : Colors.grey[700],
             ),
           ),
         ],
@@ -1611,8 +1834,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     ),
                   ),
                   crossFadeState: _categoryOnboardingExpanded
-                          ? CrossFadeState.showSecond
-                          : CrossFadeState.showFirst,
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
                   duration: const Duration(milliseconds: 180),
                 ),
                 const SizedBox(height: 8),
@@ -1651,72 +1874,72 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-            title: Text(t.maker.amountForm.category.label),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+        title: Text(t.maker.amountForm.category.label),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: OfferCategory.values.map((category) {
-                      final hint = switch (category) {
+              final hint = switch (category) {
                 OfferCategory.shop =>
                   t.maker.amountForm.category.physicalShopHint(
-                              code: _method.localizedCodeLabel,
-                              app: _method.brandName,
-                            ),
+                    code: _method.localizedCodeLabel,
+                    app: _method.brandName,
+                  ),
                 OfferCategory.atm => t.maker.amountForm.category.atmHint,
                 OfferCategory.online =>
                   t.maker.amountForm.category.ecommerceWarningBody(
-                              code: _method.localizedCodeLabel,
-                            ),
-                      };
-                      final name = switch (category) {
-                        OfferCategory.shop =>
-                          t.maker.amountForm.category.options.physicalShop,
-                        OfferCategory.atm =>
-                          t.maker.amountForm.category.options.atmCashout,
-                        OfferCategory.online =>
-                          t.maker.amountForm.category.options.onlineService,
-                      };
-                      return Padding(
-                        padding: EdgeInsets.only(
+                    code: _method.localizedCodeLabel,
+                  ),
+              };
+              final name = switch (category) {
+                OfferCategory.shop =>
+                  t.maker.amountForm.category.options.physicalShop,
+                OfferCategory.atm =>
+                  t.maker.amountForm.category.options.atmCashout,
+                OfferCategory.online =>
+                  t.maker.amountForm.category.options.onlineService,
+              };
+              return Padding(
+                padding: EdgeInsets.only(
                   bottom: category != OfferCategory.values.last ? 16 : 0,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
                         _categoryIconWidget(category, 22, Colors.grey[700]!),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              hint,
-                              style: const TextStyle(fontSize: 13, height: 1.4),
-                            ),
-                          ],
+                          ),
                         ),
-                      );
-                    }).toList(),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(t.common.buttons.close),
-              ),
-            ],
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      hint,
+                      style: const TextStyle(fontSize: 13, height: 1.4),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(t.common.buttons.close),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1800,8 +2023,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                       minutes: selected.validity.inMinutes,
                     ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.amber.shade800,
-                        ),
+                      color: Colors.amber.shade800,
+                    ),
                   ),
                 ),
               ],
@@ -1951,149 +2174,149 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
-            builder: (context, setDialogState) {
-              Widget? content;
+        builder: (context, setDialogState) {
+          Widget? content;
 
-              if (category == OfferCategory.shop) {
-                content = Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(8),
+          if (category == OfferCategory.shop) {
+            content = Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.blue.withValues(alpha: 0.25)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   const Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          t.maker.amountForm.category.physicalShopHint(
-                            code: _method.localizedCodeLabel,
-                            app: _method.brandName,
-                          ),
-                          style: const TextStyle(fontSize: 13, height: 1.4),
-                        ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      t.maker.amountForm.category.physicalShopHint(
+                        code: _method.localizedCodeLabel,
+                        app: _method.brandName,
                       ),
-                    ],
+                      style: const TextStyle(fontSize: 13, height: 1.4),
+                    ),
                   ),
-                );
-              } else if (category == OfferCategory.atm) {
-                content = Container(
+                ],
+              ),
+            );
+          } else if (category == OfferCategory.atm) {
+            content = Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: Colors.orange,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      t.maker.amountForm.category.atmHint,
+                      style: const TextStyle(fontSize: 13, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else if (category == OfferCategory.online) {
+            final warningColor = Colors.amber[700]!;
+            content = Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.08),
+                    color: warningColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: warningColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: Colors.orange,
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: warningColor,
                         size: 20,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          t.maker.amountForm.category.atmHint,
+                          t.maker.amountForm.category.ecommerceWarningBody(
+                            code: _method.localizedCodeLabel,
+                          ),
                           style: const TextStyle(fontSize: 13, height: 1.4),
                         ),
                       ),
                     ],
                   ),
-                );
-              } else if (category == OfferCategory.online) {
-                final warningColor = Colors.amber[700]!;
-                content = Column(
-                  mainAxisSize: MainAxisSize.min,
+                ),
+                const SizedBox(height: 12),
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: warningColor.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: warningColor.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded,
-                            color: warningColor,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              t.maker.amountForm.category.ecommerceWarningBody(
-                                code: _method.localizedCodeLabel,
-                              ),
-                              style: const TextStyle(fontSize: 13, height: 1.4),
-                            ),
-                          ),
-                        ],
-                      ),
+                    Checkbox(
+                      value: _ecommerceRiskAccepted,
+                      activeColor: Colors.red,
+                      visualDensity: VisualDensity.compact,
+                      onChanged: (value) {
+                        final v = value ?? false;
+                        setState(() {
+                          _ecommerceRiskAccepted = v;
+                        });
+                        setDialogState(() {});
+                        _saveEcommerceRiskAccepted(v);
+                      },
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Checkbox(
-                          value: _ecommerceRiskAccepted,
-                          activeColor: Colors.red,
-                          visualDensity: VisualDensity.compact,
-                          onChanged: (value) {
-                            final v = value ?? false;
-                            setState(() {
-                              _ecommerceRiskAccepted = v;
-                            });
-                            setDialogState(() {});
-                            _saveEcommerceRiskAccepted(v);
-                          },
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              final v = !_ecommerceRiskAccepted;
-                              setState(() {
-                                _ecommerceRiskAccepted = v;
-                              });
-                              setDialogState(() {});
-                              _saveEcommerceRiskAccepted(v);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 10),
-                              child: Text(
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          final v = !_ecommerceRiskAccepted;
+                          setState(() {
+                            _ecommerceRiskAccepted = v;
+                          });
+                          setDialogState(() {});
+                          _saveEcommerceRiskAccepted(v);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(
                             t.maker.amountForm.category.ecommerceConfirmation,
                             style: const TextStyle(fontSize: 13, height: 1.4),
-                              ),
-                            ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
-                );
-              }
+                ),
+              ],
+            );
+          }
 
-              return AlertDialog(
-                title: Text(title),
-                content: content,
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(t.common.buttons.close),
-                  ),
-                ],
-              );
-            },
-          ),
+          return AlertDialog(
+            title: Text(title),
+            content: content,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(t.common.buttons.close),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -2178,14 +2401,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         final selected =
                             isSupported && _selectedCategory == category;
                         final Color accent = !isSupported
-                                ? (isDark
-                                    ? colors.onSurfaceVariant
-                                    : Colors.grey.shade400)
-                                : selected
-                                ? Colors.red
-                                : (isDark
-                                    ? colors.onSurfaceVariant
-                                    : Colors.grey[700]!);
+                            ? (isDark
+                                  ? colors.onSurfaceVariant
+                                  : Colors.grey.shade400)
+                            : selected
+                            ? Colors.red
+                            : (isDark
+                                  ? colors.onSurfaceVariant
+                                  : Colors.grey[700]!);
                         return Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(
@@ -2199,36 +2422,36 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             // falls through and shows the explanation.
                             child: Tooltip(
                               message: isSupported
-                                      ? ''
-                                      : t.maker.amountForm.category
-                                          .unsupportedForSystem(
-                                            system: _method.label,
-                                          ),
+                                  ? ''
+                                  : t.maker.amountForm.category
+                                        .unsupportedForSystem(
+                                          system: _method.label,
+                                        ),
                               triggerMode: TooltipTriggerMode.tap,
                               child: Opacity(
                                 opacity: isSupported ? 1.0 : 0.5,
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(999),
                                   onTap: isSupported && !isLoading
-                                          ? () {
-                                            setState(() {
-                                              if (_selectedCategory != category &&
-                                                  _usesMakerProvidedCodeFlow) {
-                                                _makerCodeController.clear();
-                                                _fiatController.clear();
+                                      ? () {
+                                          setState(() {
+                                            if (_selectedCategory != category &&
+                                                _usesMakerProvidedCodeFlow) {
+                                              _makerCodeController.clear();
+                                              _fiatController.clear();
                                               _showMakerProvidedEntryForm =
                                                   false;
-                                              }
-                                              _selectedCategory = category;
-                                              // ATM defaults to preset amounts.
-                                              _customAmountMode = false;
-                                              if (category !=
-                                                  OfferCategory.online) {
-                                                _ecommerceRiskAccepted = false;
-                                              }
-                                            });
-                                          }
-                                          : null,
+                                            }
+                                            _selectedCategory = category;
+                                            // ATM defaults to preset amounts.
+                                            _customAmountMode = false;
+                                            if (category !=
+                                                OfferCategory.online) {
+                                              _ecommerceRiskAccepted = false;
+                                            }
+                                          });
+                                        }
+                                      : null,
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 120),
                                     padding: const EdgeInsets.symmetric(
@@ -2239,29 +2462,28 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                       borderRadius: BorderRadius.circular(999),
                                       border: Border.all(
                                         color: selected
-                                                ? Colors.red
-                                                : isDark
-                                                ? colors.outlineVariant
-                                                : Colors.grey.shade300,
+                                            ? Colors.red
+                                            : isDark
+                                            ? colors.outlineVariant
+                                            : Colors.grey.shade300,
                                         width: selected ? 1.6 : 1,
                                       ),
                                       color: !isSupported
-                                              ? (isDark
-                                                  ? colors.surfaceContainerLow
-                                                  : Colors.grey.shade100)
-                                              : selected
-                                              ? (isDark
-                                                  ? Color.alphaBlend(
-                                                      Colors.red.withValues(
-                                                        alpha: 0.14,
-                                                      ),
-                                                      colors
-                                                          .surfaceContainerHigh,
-                                                    )
-                                                  : const Color(0xFFFFF2F6))
-                                              : (isDark
-                                                  ? colors.surfaceContainerHigh
-                                                  : Colors.white),
+                                          ? (isDark
+                                                ? colors.surfaceContainerLow
+                                                : Colors.grey.shade100)
+                                          : selected
+                                          ? (isDark
+                                                ? Color.alphaBlend(
+                                                    Colors.red.withValues(
+                                                      alpha: 0.14,
+                                                    ),
+                                                    colors.surfaceContainerHigh,
+                                                  )
+                                                : const Color(0xFFFFF2F6))
+                                          : (isDark
+                                                ? colors.surfaceContainerHigh
+                                                : Colors.white),
                                     ),
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
@@ -2281,8 +2503,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                             style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: selected
-                                                      ? FontWeight.w600
-                                                      : FontWeight.w400,
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w400,
                                               color: accent,
                                             ),
                                           ),
@@ -2617,11 +2839,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                           (_selectedCoordinatorInfo != null &&
                                   _satsEquivalent != null)
                               ? _formatBitcoinAmount(
-                                _satsEquivalent! *
-                                    _selectedCoordinatorInfo!.makerFee /
-                                    100,
-                                approximate: true,
-                              )
+                                  _satsEquivalent! *
+                                      _selectedCoordinatorInfo!.makerFee /
+                                      100,
+                                  approximate: true,
+                                )
                               : '-',
                           style: const TextStyle(
                             fontSize: 14,
@@ -2634,22 +2856,22 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             showDialog(
                               context: context,
                               builder: (context) => AlertDialog(
-                                    title: Text(t.maker.amountForm.labels.fee),
-                                    content: Text(
-                                      t.maker.amountForm.tooltips.feeInfo(
+                                title: Text(t.maker.amountForm.labels.fee),
+                                content: Text(
+                                  t.maker.amountForm.tooltips.feeInfo(
                                     feePercent: _selectedCoordinatorInfo!
                                         .makerFee
-                                                .toString(),
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
+                                        .toString(),
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
                                     onPressed: () =>
                                         Navigator.of(context).pop(),
-                                        child: Text(t.common.buttons.close),
-                                      ),
-                                    ],
+                                    child: Text(t.common.buttons.close),
                                   ),
+                                ],
+                              ),
                             );
                           }
                         },
@@ -2707,7 +2929,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                     ),
                                     min: 0,
                                     max: _selectedCoordinatorInfo!
-                                            .maxPremiumPercent,
+                                        .maxPremiumPercent,
                                     divisions:
                                         (_selectedCoordinatorInfo!
                                                     .maxPremiumPercent /
@@ -2734,8 +2956,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: _premiumPercent > 0
-                                        ? const Color(0xFFFF007F)
-                                        : Colors.grey,
+                                    ? const Color(0xFFFF007F)
+                                    : Colors.grey,
                               ),
                             ),
                           ],
@@ -2748,46 +2970,46 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     // Satoshis to pay row
                     _selectedCoordinatorInfo != null
                         ? _buildDetailRow(
-                          t.maker.amountForm.labels.satoshisToPay,
-                          Text(
-                            _satsEquivalent != null
-                                ? _formatBitcoinAmount(
-                                  _satsEquivalent! *
-                                          (1 - _premiumPercent / 100) +
-                                      (_satsEquivalent! *
+                            t.maker.amountForm.labels.satoshisToPay,
+                            Text(
+                              _satsEquivalent != null
+                                  ? _formatBitcoinAmount(
+                                      _satsEquivalent! *
+                                              (1 - _premiumPercent / 100) +
+                                          (_satsEquivalent! *
                                               _selectedCoordinatorInfo!
                                                   .makerFee /
-                                          100),
-                                  approximate: true,
-                                )
-                                : '-',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                                              100),
+                                      approximate: true,
+                                    )
+                                  : '-',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                          infoIcon: Icons.info_outline,
-                          onInfoTap: () {
-                            showDialog(
-                              context: context,
+                            infoIcon: Icons.info_outline,
+                            onInfoTap: () {
+                              showDialog(
+                                context: context,
                                 builder: (context) => AlertDialog(
-                                    title: Text(
-                                      t.maker.amountForm.labels.satoshisToPay,
-                                    ),
-                                    content: Text(
-                                      t.maker.amountForm.tooltips.payInfo,
-                                    ),
-                                    actions: [
-                                      TextButton(
+                                  title: Text(
+                                    t.maker.amountForm.labels.satoshisToPay,
+                                  ),
+                                  content: Text(
+                                    t.maker.amountForm.tooltips.payInfo,
+                                  ),
+                                  actions: [
+                                    TextButton(
                                       onPressed: () =>
                                           Navigator.of(context).pop(),
-                                        child: Text(t.common.buttons.close),
-                                      ),
-                                    ],
-                                  ),
-                            );
-                          },
-                        )
+                                      child: Text(t.common.buttons.close),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          )
                         : Container(),
                   ],
                 ),
@@ -2859,14 +3081,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                   decoration: TextDecoration.underline,
                                 ),
                                 recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final url =
-                                            'https://njump.to/${_selectedCoordinatorInfo!.termsOfUsageNaddr}';
-                                        await launchUrl(
-                                          Uri.parse(url),
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                      },
+                                  ..onTap = () async {
+                                    final url =
+                                        'https://njump.to/${_selectedCoordinatorInfo!.termsOfUsageNaddr}';
+                                    await launchUrl(
+                                      Uri.parse(url),
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  },
                               ),
                             ],
                           ),
@@ -2882,43 +3104,42 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               _buildGradientButton(
                 onPressed:
                     _selectedCoordinatorPubkey == null ||
-                            (supportsCategory && _selectedCategory == null) ||
-                            isLoading ||
-                            _isLoadingInitialData ||
-                            publicKeyAsyncValue.isLoading ||
-                            _amountErrorText != null ||
-                            _fiatController.text.isEmpty ||
-                            (_usesShopQr &&
+                        (supportsCategory && _selectedCategory == null) ||
+                        isLoading ||
+                        _isLoadingInitialData ||
+                        publicKeyAsyncValue.isLoading ||
+                        _amountErrorText != null ||
+                        _fiatController.text.isEmpty ||
+                        (_usesShopQr &&
                             _selectedCoordinatorInfo?.supportsTwintShopQr !=
                                 true) ||
-                            (_method.makerProvidesCodeAtOfferCreation &&
-                                !_validMakerCode) ||
-                            _rate == null ||
-                            (_selectedCategory == OfferCategory.online &&
-                                !_ecommerceRiskAccepted) ||
+                        (_method.makerProvidesCodeAtOfferCreation &&
+                            !_validMakerCode) ||
+                        _rate == null ||
+                        (_selectedCategory == OfferCategory.online &&
+                            !_ecommerceRiskAccepted) ||
                         (_selectedCoordinatorInfo?.termsOfUsageNaddr != null &&
-                                !_termsAccepted)
-                        ? null
-                        : () {
-                          _initiateOffer();
-                        },
-                child:
-                    isLoading
-                        ? SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                        )
-                        : Text(
-                          t.maker.amountForm.actions.generateInvoice,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                            !_termsAccepted)
+                    ? null
+                    : () {
+                        _initiateOffer();
+                      },
+                child: isLoading
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Theme.of(context).colorScheme.outline,
                         ),
+                      )
+                    : Text(
+                        t.maker.amountForm.actions.generateInvoice,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ],
           ),
@@ -2938,15 +3159,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-            title: Text(t.maker.amountForm.labels.premium),
-            content: Text(t.maker.amountForm.tooltips.premiumInfo),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(t.common.buttons.close),
-              ),
-            ],
+        title: Text(t.maker.amountForm.labels.premium),
+        content: Text(t.maker.amountForm.tooltips.premiumInfo),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(t.common.buttons.close),
           ),
+        ],
+      ),
     );
   }
 

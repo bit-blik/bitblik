@@ -741,6 +741,8 @@ twint:
     invalidQr: "Este código QR não é um pagamento em loja em CHF compatível. Escaneie o código QR de pagamento exibido no terminal."
     amountMismatch: "Este código QR tem um valor diferente. Peça um novo código QR com o valor original do pagamento."
     cameraFailed: "Câmera indisponível. Permita o acesso à câmera nas configurações do dispositivo ou navegador e tente novamente."
+    importImage: "Importar imagem QR"
+    imageFailed: "Não foi possível ler um QR de loja CHF compatível desta imagem. Escolha outra imagem."
     scanned: "QR da loja escaneado. Confira o valor em CHF antes de financiar a oferta."
     rescan: "Escanear outro código QR"
     coordinatorUnsupported: "Este coordenador não aceita pagamentos QR em loja. Escolha um coordenador que aceite."
@@ -758,10 +760,12 @@ twint:
     expired: "Este código QR expirou. Não pague com ele nem use uma imagem salva anteriormente."
   scanner:
     title: "Ler código ${code}"
+    importImage: "Importar captura de ecrã"
     status:
       align: "Alinhe o QR ${code} e o texto do montante dentro da moldura da câmara."
       notRecognized: "O código ${code} ainda não foi reconhecido. Mantenha o QR e o montante visíveis ou preencha o formulário manualmente."
       amountFailed: "A leitura pela câmara não conseguiu extrair o montante. Ainda pode usar o resultado do QR e corrigir os campos manualmente."
+      imageFailed: "Não foi possível encontrar um código TWINT ou valor CHF nesta captura. Escolha outra imagem."
   flow:
     progress:
       step1: "1. Criar oferta"
@@ -1229,6 +1233,9 @@ notificationSettings:
   newOfferAlerts:
     label: Alertas de novas ofertas
     description: Quando ativado, o ${app} notifica-o sobre novas ofertas disponíveis para aceitar dos seus coordenadores ativos enquanto a app está em segundo plano. Isto pode ser mais rápido do que os messengers externos.
+  activeOfferAlerts:
+    label: Alertas de oferta ativa
+    description: Quando ativado, o ${app} notifica-o quando o estado da sua oferta ativa muda. O serviço em segundo plano só funciona enquanto tiver uma oferta ativa.
 
 wallet:
   title: Carteira
@@ -1361,3 +1368,4 @@ altstore:
   step2Title: "Instalar o ${app}"
   step2Button: "Instalar o ${app}"
   step2Fallback: "Continua sem funcionar? Cole a fonte na AltStore"
+  approvalNotice: "${app} aguarda aprovação da Apple para iOS. Entretanto, instale o BitBlik: usa o mesmo código e suporta ${paymentSystem}. Altere o país/sistema de pagamento nas Definições."
