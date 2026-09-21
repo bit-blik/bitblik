@@ -50,7 +50,8 @@ RUN cp web_shells/${APP_FLAVOR}/index.html web/index.html \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-2x.png web/splash/img/dark-2x.png \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-3x.png web/splash/img/dark-3x.png \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-4x.png web/splash/img/dark-4x.png \
- && flutter build web --${BUILD_MODE} --target=${FLUTTER_TARGET} --no-web-resources-cdn
+ && flutter build web --${BUILD_MODE} --target=${FLUTTER_TARGET} --no-web-resources-cdn \
+ && cp web/twint_ocr.js web/twint_ocr_worker.js web/twint_amount_ocr.js build/web/
 
 # Stage 2: Serve via Nginx
 FROM nginx:stable-alpine

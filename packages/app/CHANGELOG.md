@@ -1,11 +1,11 @@
-## [0.11.0] - 2026-09-??
+## [0.11.0] - 2026-09-21
 
 - feat: dispute chat with coordinator
 - feat: bolt12 wallet payout (only for supported coordinators)
 - feat: new release version update information from nip-82 event (zapstore)
 - feat: self update to newest version from the app (android only)
-- feat: TWINT codes for in shop category support
-- fix: cashu backup/restore to/from file
+- feat: TWINT codes for in shop category support + import from image
+- fix: cashu backup/restore to/from file + restore from mint with seed
 - feat: dark theme
 - feat: refund maker with invoice entered in app when dispute ruled against taker
 - fix: preserve wallet state when generating or restoring a Neko
