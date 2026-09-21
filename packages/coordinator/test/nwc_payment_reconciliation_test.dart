@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bitblik_coordinator/src/models/invoice_status.dart';
 import 'package:bitblik_coordinator/src/models/payment_status.dart';
 import 'package:bitblik_coordinator/src/services/nwc_service.dart';
 import 'package:mockito/mockito.dart';
@@ -120,6 +121,15 @@ void main() {
   });
 
   tearDown(() async => service.disconnect());
+
+  test('does not treat an unpaid pending incoming invoice as accepted',
+      () async {
+    nwc.response = _lookup(type: 'incoming', state: 'pending');
+
+    final result = await service.lookupInvoice(paymentHashHex: _paymentHash);
+
+    expect(result.status, InvoiceStatus.OPEN);
+  });
 
   for (final code in ['INTERNAL', 'OTHER', 'NOT_FOUND', 'PAYMENT_FAILED']) {
     test('returned $code error cannot authorize replacement', () async {

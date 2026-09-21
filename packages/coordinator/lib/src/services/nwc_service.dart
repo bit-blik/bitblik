@@ -438,7 +438,10 @@ class NwcService implements PaymentService, Bolt12PaymentService {
       } else if (nwcResponse.settledAt != null && nwcResponse.settledAt! > 0) {
         status = InvoiceStatus.SETTLED;
       } else if (nwcResponse.state == 'pending') {
-        status = InvoiceStatus.ACCEPTED;
+        // NWC uses `pending` for a newly-created, unpaid incoming invoice too.
+        // Hold acceptance is only proven by `hold_invoice_accepted`; treating a
+        // lookup's `pending` as ACCEPTED creates unfunded offers.
+        status = InvoiceStatus.OPEN;
       } else {
         status = InvoiceStatus.OPEN; // Default to OPEN if not settled
       }
