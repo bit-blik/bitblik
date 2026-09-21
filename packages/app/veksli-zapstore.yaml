@@ -1,4 +1,4 @@
-repository: https://gitworkshop.dev/bitblik.app/relay.ngit.dev/bitblik
+repository: https://github.com/bit-blik/veksli
 name: Veksli
 description: Pay with Bitcoin using SK ATM codes. Buy Bitcoin selling SK ATM codes.
 summary: Bitcoin SK ATM codes exchange app
