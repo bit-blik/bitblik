@@ -44,6 +44,26 @@ jobs:
           draft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
 
+      - name: Create Bitway draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: bit-blik/bitway
+          token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+      - name: Create BitTwint draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: bit-blik/bittwint
+          token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
   # ── 2. CLI cross-platform native binaries ─────────────────────────────────
   build_cli:
     needs: release
@@ -99,7 +119,7 @@ jobs:
       # bittwint = TWINT market). Build each target into a self-contained bundle. Each
       # bundle carries its own bin/ + lib/ (NDK rust dylib) and ships as a
       # separate downloadable asset per binary.
-      - name: Build CLI (both binaries)
+      - name: Build CLI binaries
         run: |
           BUILD="dart build cli"
           if [ "${{ matrix.target }}" = "macos_x64" ]; then
@@ -160,7 +180,7 @@ jobs:
       # softprops uploads files under their on-disk names; missing patterns are
       # skipped (fail_on_unmatched_files defaults to false), so the same step
       # works for every matrix target.
-      - name: Upload CLI assets to release
+      - name: Upload BitBlik CLI assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -169,14 +189,32 @@ jobs:
             packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.tar.gz
             packages/cli/build/bitblik-cli-${{ matrix.platform_name }}.zip
             packages/cli/build/bitblik-cli-linux-x64.deb
+
+      - name: Upload Bitway CLI assets
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: bit-blik/bitway
+          token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          draft: true
+          files: |
             packages/cli/build/bitway-cli-${{ matrix.platform_name }}.tar.gz
             packages/cli/build/bitway-cli-${{ matrix.platform_name }}.zip
             packages/cli/build/bitway-cli-linux-x64.deb
+
+      - name: Upload BitTwint CLI assets
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: bit-blik/bittwint
+          token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          draft: true
+          files: |
             packages/cli/build/bittwint-cli-${{ matrix.platform_name }}.tar.gz
             packages/cli/build/bittwint-cli-${{ matrix.platform_name }}.zip
             packages/cli/build/bittwint-cli-linux-x64.deb
 
-  # ── 3. Android APK (both flavors: bitblik & bitway) ───────────────────────
+  # ── 3. Android APK (bitblik, bitway, and bittwint flavors) ────────────────
   build_android:
     needs: release
     runs-on: ubuntu-latest
@@ -186,10 +224,13 @@ jobs:
         include:
           - flavor: bitblik
             entrypoint: lib/main_bitblik.dart
+            repository: ${{ github.repository }}
           - flavor: bitway
             entrypoint: lib/main_bitway.dart
+            repository: bit-blik/bitway
           - flavor: bittwint
             entrypoint: lib/main_bittwint.dart
+            repository: bit-blik/bittwint
     defaults:
       run:
         working-directory: ./packages/app
@@ -240,6 +281,8 @@ jobs:
       - name: Upload APKs to release
         uses: softprops/action-gh-release@v2
         with:
+          repository: ${{ matrix.repository }}
+          token: ${{ matrix.flavor == 'bitblik' && github.token || secrets.CROSS_REPO_RELEASE_TOKEN }}
           tag_name: ${{ github.ref_name }}
           draft: true
           files: packages/app/build/release-apks/*.apk
@@ -318,7 +361,25 @@ jobs:
     needs: [release, build_cli, build_android]
     runs-on: ubuntu-latest
     steps:
-      - name: Flip draft → published
+      - name: Publish Bitway release
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: bit-blik/bitway
+          token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+      - name: Publish BitTwint release
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: bit-blik/bittwint
+          token: ${{ secrets.CROSS_REPO_RELEASE_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+      - name: Publish BitBlik release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
