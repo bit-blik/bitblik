@@ -4,7 +4,7 @@ description: Peer-to-peer fiat/Lightning exchange CLI (BLIK, MB WAY, TWINT, Slov
 license: MIT
 metadata:
   author: bitblik
-  version: "0.6.0"
+  version: "0.11.0"
 ---
 
 # BitBlik Agent Skill
