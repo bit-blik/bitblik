@@ -15,6 +15,7 @@ theme:
 # COMMON UI ELEMENTS
 # =============================================================================
 common:
+  sk_atms: ATM code
   code: code
   buttons:
     cancel: Cancel

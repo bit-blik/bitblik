@@ -15,6 +15,7 @@ theme:
 # COMMON UI ELEMENTS
 # =============================================================================
 common:
+  sk_atms: code DAB
   buttons:
     cancel: Annuler
     save: Enregistrer
@@ -1142,7 +1143,7 @@ myOffers:
 
 landing:
   mainTitle: "Votre passerelle ${code} ⇄ bitcoin"
-  subtitle: "Payez ou vendez votre code ${code} avec du bitcoin"
+  subtitle: "Payez ou vendez votre ${code} avec du bitcoin"
   partnership: "partenariat"
 
   actions:

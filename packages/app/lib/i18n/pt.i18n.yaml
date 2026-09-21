@@ -15,6 +15,7 @@ theme:
 # COMMON UI ELEMENTS
 # =============================================================================
 common:
+  sk_atms: código ATM
   code: código
   buttons:
     cancel: Cancelar
@@ -1145,7 +1146,7 @@ myOffers:
 
 landing:
   mainTitle: "A sua ponte ${code} ⇄ bitcoin"
-  subtitle: "Pague ou venda o seu código ${code} com bitcoin"
+  subtitle: "Pague ou venda o seu ${code} com bitcoin"
   partnership: "parceria"
 
   actions:

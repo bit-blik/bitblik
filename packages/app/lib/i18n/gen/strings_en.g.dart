@@ -119,6 +119,9 @@ class Translations$common$en {
 
 	// Translations
 
+	/// en: 'ATM code'
+	String get sk_atms => 'ATM code';
+
 	/// en: 'code'
 	String get code => 'code';
 
@@ -5856,6 +5859,7 @@ extension on Translations {
 			'theme.switchToLight' => 'Switch to light theme',
 			'theme.switchToDark' => 'Switch to dark theme',
 			'theme.openNostr' => 'Open Nostr profile',
+			'common.sk_atms' => 'ATM code',
 			'common.code' => 'code',
 			'common.buttons.cancel' => 'Cancel',
 			'common.buttons.save' => 'Save',
@@ -6361,9 +6365,9 @@ extension on Translations {
 			'taker.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: Make sure you only accept ${code} confirmation for ${amount} ${currency}',
 			'taker.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}.',
 			'taker.waitConfirmation.instructions' => ({required Object minutes, required Object code}) => 'The maker must now enter it into the payment terminal within ${minutes} minutes. You then must accept the ${code} code in your banking app.',
-			'taker.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'The maker must now enter your ${code} code at the ATM within ${minutes} minutes.',
 			_ => null,
 		} ?? switch (path) {
+			'taker.waitConfirmation.instructionsNoConfirm' => ({required Object code, required Object minutes}) => 'The maker must now enter your ${code} code at the ATM within ${minutes} minutes.',
 			'taker.waitConfirmation.categoryReminder.atm' => 'ATM offer reminder: your bank may still ask you to approve an extra ATM fee on top of the main amount.',
 			'taker.waitConfirmation.categoryReminder.ecommerce' => 'Online order reminder: if the merchant sends an automatic refund to your bank account, contact the coordinator and return it.',
 			'taker.waitConfirmation.waitingForMakerToReceive' => ({required Object code}) => 'Waiting for maker to receive your ${code} code...',
@@ -6875,9 +6879,9 @@ extension on Translations {
 			'relays.discoveryRelays' => 'Discovery relays',
 			'relays.status.connected' => 'Connected',
 			'relays.status.connecting' => 'Connecting',
-			'relays.status.reconnecting' => 'Reconnecting',
 			_ => null,
 		} ?? switch (path) {
+			'relays.status.reconnecting' => 'Reconnecting',
 			'relays.status.disconnected' => 'Disconnected',
 			'relays.popup.title' => ({required Object connected, required Object total}) => 'Relays (${connected}/${total} connected)',
 			'relays.popup.connectingMessage' => 'Connecting to relays...',

@@ -105,6 +105,7 @@ class _Translations$common$pt extends Translations$common$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override String get sk_atms => 'código ATM';
 	@override String get code => 'código';
 	@override late final _Translations$common$buttons$pt buttons = _Translations$common$buttons$pt._(_root);
 	@override late final _Translations$common$labels$pt labels = _Translations$common$labels$pt._(_root);
@@ -404,7 +405,7 @@ class _Translations$landing$pt extends Translations$landing$en {
 
 	// Translations
 	@override String mainTitle({required Object code}) => 'A sua ponte ${code} ⇄ bitcoin';
-	@override String subtitle({required Object code}) => 'Pague ou venda o seu código ${code} com bitcoin';
+	@override String subtitle({required Object code}) => 'Pague ou venda o seu ${code} com bitcoin';
 	@override String get partnership => 'parceria';
 	@override late final _Translations$landing$actions$pt actions = _Translations$landing$actions$pt._(_root);
 }
@@ -3329,6 +3330,7 @@ extension on TranslationsPt {
 			'theme.switchToLight' => 'Mudar para o tema claro',
 			'theme.switchToDark' => 'Mudar para o tema escuro',
 			'theme.openNostr' => 'Abrir perfil Nostr',
+			'common.sk_atms' => 'código ATM',
 			'common.code' => 'código',
 			'common.buttons.cancel' => 'Cancelar',
 			'common.buttons.save' => 'Guardar',
@@ -3834,9 +3836,9 @@ extension on TranslationsPt {
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Se o seu banco debitou o pagamento ${code}, NÃO continue. O maker pode ter usado o seu código e, após esta ação, o coordenador poderá já não conseguir garantir o pagamento dos seus bitcoins.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Voltar e verificar o banco',
 			'taker.criticalCodeDecision.actions.proceed' => 'NÃO fui debitado — continuar',
-			'taker.conflict.title' => 'Confirmação do pagamento pendente',
 			_ => null,
 		} ?? switch (path) {
+			'taker.conflict.title' => 'Confirmação do pagamento pendente',
 			'taker.conflict.headline' => 'A aguardar a confirmação do maker',
 			'taker.conflict.body' => ({required Object code}) => 'Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.',
 			'taker.conflict.instructions' => 'O maker tem agora de confirmar o resultado. Se confirmar que o pagamento foi bem-sucedido, o seu pagamento continuará. Se confirmar que falhou, ou se o temporizador expirar, a oferta passará para uma disputa formal e o chat da disputa ficará disponível.',
@@ -4121,7 +4123,7 @@ extension on TranslationsPt {
 			'myOffers.details.continueActiveOffer' => 'Continuar oferta ativa',
 			'myOffers.details.after' => ({required Object duration}) => 'após ${duration}',
 			'landing.mainTitle' => ({required Object code}) => 'A sua ponte ${code} ⇄ bitcoin',
-			'landing.subtitle' => ({required Object code}) => 'Pague ou venda o seu código ${code} com bitcoin',
+			'landing.subtitle' => ({required Object code}) => 'Pague ou venda o seu ${code} com bitcoin',
 			'landing.partnership' => 'parceria',
 			'landing.actions.payBlik' => ({required Object code}) => 'Pagar ${code}',
 			'landing.actions.payBlikSubtitle' => 'com bitcoin',

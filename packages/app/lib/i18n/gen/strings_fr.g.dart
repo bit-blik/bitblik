@@ -105,6 +105,7 @@ class _Translations$common$fr extends Translations$common$en {
 	final TranslationsFr _root; // ignore: unused_field
 
 	// Translations
+	@override String get sk_atms => 'code DAB';
 	@override late final _Translations$common$buttons$fr buttons = _Translations$common$buttons$fr._(_root);
 	@override late final _Translations$common$labels$fr labels = _Translations$common$labels$fr._(_root);
 	@override late final _Translations$common$notifications$fr notifications = _Translations$common$notifications$fr._(_root);
@@ -392,7 +393,7 @@ class _Translations$landing$fr extends Translations$landing$en {
 
 	// Translations
 	@override String mainTitle({required Object code}) => 'Votre passerelle ${code} ⇄ bitcoin';
-	@override String subtitle({required Object code}) => 'Payez ou vendez votre code ${code} avec du bitcoin';
+	@override String subtitle({required Object code}) => 'Payez ou vendez votre ${code} avec du bitcoin';
 	@override String get partnership => 'partenariat';
 	@override late final _Translations$landing$actions$fr actions = _Translations$landing$actions$fr._(_root);
 }
@@ -3328,6 +3329,7 @@ extension on TranslationsFr {
 			'theme.switchToLight' => 'Passer au thème clair',
 			'theme.switchToDark' => 'Passer au thème sombre',
 			'theme.openNostr' => 'Ouvrir le profil Nostr',
+			'common.sk_atms' => 'code DAB',
 			'common.buttons.cancel' => 'Annuler',
 			'common.buttons.save' => 'Enregistrer',
 			'common.buttons.done' => 'Terminé',
@@ -3833,9 +3835,9 @@ extension on TranslationsFr {
 			'taker.criticalCodeDecision.actions.cancel' => 'Retourner vérifier ma banque',
 			'taker.criticalCodeDecision.actions.proceed' => 'Je n’ai PAS été débité — continuer',
 			'taker.conflict.title' => 'Confirmation du paiement en attente',
-			'taker.conflict.headline' => 'En attente de la confirmation du maker',
 			_ => null,
 		} ?? switch (path) {
+			'taker.conflict.headline' => 'En attente de la confirmation du maker',
 			'taker.conflict.body' => ({required Object code}) => 'Vous avez signalé que le paiement ${code} a été débité, mais le maker a indiqué qu\'il avait échoué. Ces déclarations sont contradictoires.',
 			'taker.conflict.instructions' => 'Le maker doit maintenant confirmer le résultat. S\'il confirme que le paiement a réussi, votre versement continuera. S\'il confirme l\'échec, ou si le délai expire, l\'offre passera en litige formel et le chat du litige deviendra disponible.',
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Ouverture automatique du litige formel dans ${time}',
@@ -4117,7 +4119,7 @@ extension on TranslationsFr {
 			'myOffers.details.continueActiveOffer' => 'Reprendre l\'offre active',
 			'myOffers.details.after' => ({required Object duration}) => 'après ${duration}',
 			'landing.mainTitle' => ({required Object code}) => 'Votre passerelle ${code} ⇄ bitcoin',
-			'landing.subtitle' => ({required Object code}) => 'Payez ou vendez votre code ${code} avec du bitcoin',
+			'landing.subtitle' => ({required Object code}) => 'Payez ou vendez votre ${code} avec du bitcoin',
 			'landing.partnership' => 'partenariat',
 			'landing.actions.payBlik' => ({required Object code}) => 'Payer en ${code}',
 			'landing.actions.payBlikSubtitle' => 'avec du bitcoin',

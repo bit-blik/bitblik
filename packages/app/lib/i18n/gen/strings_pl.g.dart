@@ -105,6 +105,7 @@ class _Translations$common$pl extends Translations$common$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override String get sk_atms => 'kod ATM';
 	@override String get code => 'kod';
 	@override late final _Translations$common$buttons$pl buttons = _Translations$common$buttons$pl._(_root);
 	@override late final _Translations$common$labels$pl labels = _Translations$common$labels$pl._(_root);
@@ -404,7 +405,7 @@ class _Translations$landing$pl extends Translations$landing$en {
 
 	// Translations
 	@override String mainTitle({required Object code}) => 'Wymiana\n ${code} ⇄ bitcoin';
-	@override String subtitle({required Object code}) => 'Płać lub sprzedawaj kod ${code} za bitcoin';
+	@override String subtitle({required Object code}) => 'Płać lub sprzedawaj ${code} za bitcoin';
 	@override String get partnership => 'współpraca';
 	@override late final _Translations$landing$actions$pl actions = _Translations$landing$actions$pl._(_root);
 }
@@ -3303,6 +3304,7 @@ extension on TranslationsPl {
 			'theme.switchToLight' => 'Przełącz na jasny motyw',
 			'theme.switchToDark' => 'Przełącz na ciemny motyw',
 			'theme.openNostr' => 'Otwórz profil Nostr',
+			'common.sk_atms' => 'kod ATM',
 			'common.code' => 'kod',
 			'common.buttons.cancel' => 'Anuluj',
 			'common.buttons.save' => 'Zapisz',
@@ -3808,9 +3810,9 @@ extension on TranslationsPl {
 			'twint.shop.amountMismatch' => 'Ten kod QR ma inną kwotę. Poproś o nowy kod QR z pierwotną kwotą płatności.',
 			'twint.shop.cameraFailed' => 'Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie.',
 			'twint.shop.importImage' => 'Importuj obraz QR',
-			'twint.shop.imageFailed' => 'Nie udało się odczytać obsługiwanego sklepowego kodu QR CHF z tego obrazu. Wybierz inny obraz.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.shop.imageFailed' => 'Nie udało się odczytać obsługiwanego sklepowego kodu QR CHF z tego obrazu. Wybierz inny obraz.',
 			'twint.shop.scanned' => 'Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty.',
 			'twint.shop.rescan' => 'Zeskanuj inny kod QR',
 			'twint.shop.coordinatorUnsupported' => 'Ten koordynator nie obsługuje płatności QR w sklepie. Wybierz koordynatora, który je obsługuje.',
@@ -4079,7 +4081,7 @@ extension on TranslationsPl {
 			'myOffers.details.continueActiveOffer' => 'Przejdź do aktywnej oferty',
 			'myOffers.details.after' => ({required Object duration}) => 'po ${duration}',
 			'landing.mainTitle' => ({required Object code}) => 'Wymiana\n ${code} ⇄ bitcoin',
-			'landing.subtitle' => ({required Object code}) => 'Płać lub sprzedawaj kod ${code} za bitcoin',
+			'landing.subtitle' => ({required Object code}) => 'Płać lub sprzedawaj ${code} za bitcoin',
 			'landing.partnership' => 'współpraca',
 			'landing.actions.payBlik' => ({required Object code}) => 'Zapłać ${code}',
 			'landing.actions.payBlikSubtitle' => 'używając bitcoin',

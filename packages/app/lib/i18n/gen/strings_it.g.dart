@@ -105,6 +105,7 @@ class _Translations$common$it extends Translations$common$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override String get sk_atms => 'codice ATM';
 	@override String get code => 'codice';
 	@override late final _Translations$common$buttons$it buttons = _Translations$common$buttons$it._(_root);
 	@override late final _Translations$common$labels$it labels = _Translations$common$labels$it._(_root);
@@ -404,7 +405,7 @@ class _Translations$landing$it extends Translations$landing$en {
 
 	// Translations
 	@override String mainTitle({required Object code}) => 'Il tuo ponte ${code} ⇄ bitcoin';
-	@override String subtitle({required Object code}) => 'Paga o vendi il tuo codice ${code} con bitcoin';
+	@override String subtitle({required Object code}) => 'Paga o vendi il tuo ${code} con bitcoin';
 	@override String get partnership => 'partnership';
 	@override late final _Translations$landing$actions$it actions = _Translations$landing$actions$it._(_root);
 }
@@ -3306,6 +3307,7 @@ extension on TranslationsIt {
 			'theme.switchToLight' => 'Passa al tema chiaro',
 			'theme.switchToDark' => 'Passa al tema scuro',
 			'theme.openNostr' => 'Apri il profilo Nostr',
+			'common.sk_atms' => 'codice ATM',
 			'common.code' => 'codice',
 			'common.buttons.cancel' => 'Annulla',
 			'common.buttons.save' => 'Salva',
@@ -3811,9 +3813,9 @@ extension on TranslationsIt {
 			'twint.shop.scanTitle' => 'Scansiona il QR del negozio',
 			'twint.shop.scanInstructions' => 'Scansiona il codice QR di pagamento sul terminale del negozio. L’importo in CHF verrà letto dal codice.',
 			'twint.shop.invalidQr' => 'Questo codice QR non è un pagamento in negozio in CHF supportato. Scansiona il codice QR di pagamento sul terminale.',
-			'twint.shop.amountMismatch' => 'Questo codice QR ha un importo diverso. Richiedi un nuovo codice QR con l’importo originale del pagamento.',
 			_ => null,
 		} ?? switch (path) {
+			'twint.shop.amountMismatch' => 'Questo codice QR ha un importo diverso. Richiedi un nuovo codice QR con l’importo originale del pagamento.',
 			'twint.shop.cameraFailed' => 'Fotocamera non disponibile. Consenti l’accesso alla fotocamera nelle impostazioni del dispositivo o del browser, poi riprova.',
 			'twint.shop.importImage' => 'Importa immagine QR',
 			'twint.shop.imageFailed' => 'Impossibile leggere un QR di negozio CHF supportato da questa immagine. Scegli un’altra immagine.',
@@ -4085,7 +4087,7 @@ extension on TranslationsIt {
 			'myOffers.details.continueActiveOffer' => 'Continua offerta attiva',
 			'myOffers.details.after' => ({required Object duration}) => 'dopo ${duration}',
 			'landing.mainTitle' => ({required Object code}) => 'Il tuo ponte ${code} ⇄ bitcoin',
-			'landing.subtitle' => ({required Object code}) => 'Paga o vendi il tuo codice ${code} con bitcoin',
+			'landing.subtitle' => ({required Object code}) => 'Paga o vendi il tuo ${code} con bitcoin',
 			'landing.partnership' => 'partnership',
 			'landing.actions.payBlik' => ({required Object code}) => 'Paga ${code}',
 			'landing.actions.payBlikSubtitle' => 'con bitcoin',

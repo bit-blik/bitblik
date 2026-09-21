@@ -4,14 +4,14 @@ import '../../i18n/gen/strings.g.dart';
 
 /// Localized payment-code term for UI text.
 ///
-/// Uses the payment system's branded [PaymentSystem.codeName] (e.g. "BLIK",
-/// "MB WAY") when present, otherwise a translated generic word ("code" / "kód"
-/// / …) from `common.code`, so bank markets — which have no branded code name —
-/// read naturally in the active language instead of showing the English "code".
+/// Uses `common.sk_atms` for the Slovak ATM flow, the payment system's branded
+/// [PaymentSystem.codeName] (e.g. "BLIK", "MB WAY") for branded codes, and
+/// `common.code` as the generic fallback.
 ///
 /// Resolves against the current locale via slang's global `t`; screens rebuild
 /// on locale change (via their context translations + the app locale switch),
 /// so the value follows the selected language.
 extension LocalizedCodeLabel on PaymentSystem {
-  String get localizedCodeLabel => codeName ?? t.common.code;
+  String get localizedCodeLabel =>
+      flowId == 'sk_atm' ? t.common.sk_atms : codeName ?? t.common.code;
 }

@@ -15,6 +15,7 @@ theme:
 # SPOLOČNÉ PRVKY UI
 # =============================================================================
 common:
+  sk_atms: ATM kód
   code: kód
   buttons:
     cancel: Zrušiť

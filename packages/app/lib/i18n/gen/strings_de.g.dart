@@ -105,6 +105,7 @@ class _Translations$common$de extends Translations$common$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override String get sk_atms => 'ATM-Code';
 	@override late final _Translations$common$buttons$de buttons = _Translations$common$buttons$de._(_root);
 	@override late final _Translations$common$labels$de labels = _Translations$common$labels$de._(_root);
 	@override late final _Translations$common$notifications$de notifications = _Translations$common$notifications$de._(_root);
@@ -392,7 +393,7 @@ class _Translations$landing$de extends Translations$landing$en {
 
 	// Translations
 	@override String mainTitle({required Object code}) => 'Deine ${code} ⇄ Bitcoin-Brücke';
-	@override String subtitle({required Object code}) => 'Bezahle mit oder verkaufe deinen ${code}-Code für Bitcoin';
+	@override String subtitle({required Object code}) => 'Bezahle mit oder verkaufe deinen ${code} für Bitcoin';
 	@override String get partnership => 'Partnerschaft';
 	@override late final _Translations$landing$actions$de actions = _Translations$landing$actions$de._(_root);
 }
@@ -3328,6 +3329,7 @@ extension on TranslationsDe {
 			'theme.switchToLight' => 'Zum hellen Design wechseln',
 			'theme.switchToDark' => 'Zum dunklen Design wechseln',
 			'theme.openNostr' => 'Nostr-Profil öffnen',
+			'common.sk_atms' => 'ATM-Code',
 			'common.buttons.cancel' => 'Abbrechen',
 			'common.buttons.save' => 'Speichern',
 			'common.buttons.done' => 'Fertig',
@@ -3833,9 +3835,9 @@ extension on TranslationsDe {
 			'taker.criticalCodeDecision.actions.cancel' => 'Zurück und Bankkonto prüfen',
 			'taker.criticalCodeDecision.actions.proceed' => 'Ich wurde NICHT belastet – fortfahren',
 			'taker.conflict.title' => 'Zahlungsbestätigung ausstehend',
-			'taker.conflict.headline' => 'Warten auf die Bestätigung des Makers',
 			_ => null,
 		} ?? switch (path) {
+			'taker.conflict.headline' => 'Warten auf die Bestätigung des Makers',
 			'taker.conflict.body' => ({required Object code}) => 'Du hast gemeldet, dass die ${code}-Zahlung belastet wurde, aber der Maker hat sie als nicht erfolgreich gemeldet. Diese Meldungen widersprechen sich.',
 			'taker.conflict.instructions' => 'Der Maker muss nun das Ergebnis bestätigen. Bestätigt er den Erfolg der Zahlung, wird deine Auszahlung fortgesetzt. Bestätigt er den Fehlschlag oder läuft der Timer ab, wechselt das Angebot in einen formellen Streitfall und der Streitfall-Chat wird verfügbar.',
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formeller Streitfall wird automatisch eröffnet in ${time}',
@@ -4117,7 +4119,7 @@ extension on TranslationsDe {
 			'myOffers.details.continueActiveOffer' => 'Aktives Angebot fortsetzen',
 			'myOffers.details.after' => ({required Object duration}) => 'nach ${duration}',
 			'landing.mainTitle' => ({required Object code}) => 'Deine ${code} ⇄ Bitcoin-Brücke',
-			'landing.subtitle' => ({required Object code}) => 'Bezahle mit oder verkaufe deinen ${code}-Code für Bitcoin',
+			'landing.subtitle' => ({required Object code}) => 'Bezahle mit oder verkaufe deinen ${code} für Bitcoin',
 			'landing.partnership' => 'Partnerschaft',
 			'landing.actions.payBlik' => ({required Object code}) => '${code} bezahlen',
 			'landing.actions.payBlikSubtitle' => 'mit Bitcoin',

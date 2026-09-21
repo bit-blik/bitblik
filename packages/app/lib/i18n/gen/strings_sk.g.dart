@@ -104,6 +104,7 @@ class _Translations$common$sk extends Translations$common$en {
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
+	@override String get sk_atms => 'ATM kód';
 	@override String get code => 'kód';
 	@override late final _Translations$common$buttons$sk buttons = _Translations$common$buttons$sk._(_root);
 	@override late final _Translations$common$labels$sk labels = _Translations$common$labels$sk._(_root);
@@ -2974,6 +2975,7 @@ extension on TranslationsSk {
 			'theme.switchToLight' => 'Prepnúť na svetlú tému',
 			'theme.switchToDark' => 'Prepnúť na tmavú tému',
 			'theme.openNostr' => 'Otvoriť Nostr profil',
+			'common.sk_atms' => 'ATM kód',
 			'common.code' => 'kód',
 			'common.buttons.cancel' => 'Zrušiť',
 			'common.buttons.save' => 'Uložiť',
@@ -3479,9 +3481,9 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Označil si ${code} ako strhnutý',
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Predávajúci má ${minutes} min na potvrdenie platby alebo jej spochybnenie. Ak neurobí nič, platba sa automaticky potvrdí a ty dostaneš bitcoin.',
 			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Skontrolovať stav / zopakovať hlásenie',
-			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} bol strhnutý z môjho bankového účtu',
 			_ => null,
 		} ?? switch (path) {
+			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} bol strhnutý z môjho bankového účtu',
 			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Skúsiť znova s novým ${code}',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Zrušiť rezerváciu',
 			'taker.waitConfirmation.feedback.makerConfirmed' => 'Predávajúci potvrdil platbu.',
