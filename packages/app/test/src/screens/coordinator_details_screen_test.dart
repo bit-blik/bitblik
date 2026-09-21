@@ -48,6 +48,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Open Nostr profile'), findsOneWidget);
+    final profileButton = find.text('Open Nostr profile');
+    await tester.scrollUntilVisible(profileButton, 300);
+    expect(profileButton, findsOneWidget);
   });
 }
