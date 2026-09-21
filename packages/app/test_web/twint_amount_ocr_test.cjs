@@ -9,7 +9,10 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 (async () => {
   const server = http.createServer(async (req, res) => {
     try {
+      // Match the isolated production page and its worker responses.
+      res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
       if (req.url === "/") {
+        res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
         res.setHeader("Content-Type", "text/html");
         return res.end('<script src="twint_ocr.js"></script>');
       }
@@ -41,6 +44,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
   try {
     const page = await browser.newPage();
     await page.goto(`http://127.0.0.1:${server.address().port}/`);
+    assert.equal(await page.evaluate(() => crossOriginIsolated), true);
     const readText = (options) =>
       page.evaluate(async (options) => {
         const canvas = document.createElement("canvas");
