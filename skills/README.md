@@ -8,8 +8,6 @@ Agent skills for Claude Code. Each skill is a self-contained directory with a `S
 
 > Peer-to-peer BLIK/Lightning exchange CLI — create maker offers, retrieve BLIK codes from takers, confirm payments. Operates via Nostr coordinator network.
 
-**Version:** 0.6.0 · **License:** MIT
-
 #### 🚀 Install with single command
 
 ```bash
