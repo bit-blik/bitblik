@@ -2450,6 +2450,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                               _ecommerceRiskAccepted = false;
                                             }
                                           });
+                                          // Category-specific validation (ATM
+                                          // denominations and bank limits) must
+                                          // be recalculated after switching.
+                                          _validateAndRecalculate();
                                         }
                                       : null,
                                   child: AnimatedContainer(
