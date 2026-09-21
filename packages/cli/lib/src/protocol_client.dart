@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 
 import 'package:bip340/bip340.dart' as bip340;
 import 'package:bitblik_core/core.dart';
+import 'package:ndk/data_layer/repositories/wallets/mem_wallets_repo.dart';
 import 'package:ndk/ndk.dart';
 import 'package:ndk/domain_layer/entities/cashu/cashu_user_seedphrase.dart';
 
@@ -51,6 +52,7 @@ class BitblikProtocolClient {
     _ndk = Ndk(
       NdkConfig(
         cache: MemCacheManager(),
+        walletsRepo: MemWalletsRepo(),
         eventVerifier: RustEventVerifier(),
         bootstrapRelays: relays,
         cashuUserSeedphrase:
@@ -134,14 +136,10 @@ class BitblikProtocolClient {
   }
 
   Future<List<CoordinatorRecord>> discoverCoordinators() async {
-    final effectiveTimeout = timeout + kRelayRequestGrace;
-    await _registry.discover().timeout(
-          effectiveTimeout,
-          onTimeout: () => throw TimeoutException(
-            'Coordinator discovery timed out',
-            effectiveTimeout,
-          ),
-        );
+    // Registry discovery performs several sequential relay queries, each with
+    // its own timeout. A single RPC-sized timeout around the whole pipeline
+    // expires during normal cold starts before enrichment can finish.
+    await _registry.discover();
     await _rpc.updateResponseRelays(_registry.relaysForEnabled());
     return _registry.all;
   }
