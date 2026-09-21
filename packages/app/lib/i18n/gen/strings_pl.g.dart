@@ -2095,8 +2095,8 @@ class _Translations$offerNotifications$activeOfferService$pl extends Translation
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Śledzenie aktywnej oferty';
-	@override String body({required Object app}) => 'Usługa Nostr monitoruje aktualizacje Twojej aktywnej oferty ${app}.';
+	@override String title({required Object amount}) => 'Śledzenie aktywnej oferty · ${amount}';
+	@override String get body => 'Usługa Nostr monitoruje aktualizacje';
 }
 
 // Path: offerNotifications.funded
@@ -4223,8 +4223,8 @@ extension on TranslationsPl {
 			'relays.popup.connectingMessage' => 'Łączenie z przekaźnikami...',
 			'offerNotifications.activeService.title' => 'Oczekiwanie na nowe oferty',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Usługa w tle monitorująca ofert ${app}.',
-			'offerNotifications.activeOfferService.title' => 'Śledzenie aktywnej oferty',
-			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'Usługa Nostr monitoruje aktualizacje Twojej aktywnej oferty ${app}.',
+			'offerNotifications.activeOfferService.title' => ({required Object amount}) => 'Śledzenie aktywnej oferty · ${amount}',
+			'offerNotifications.activeOfferService.body' => 'Usługa Nostr monitoruje aktualizacje',
 			'offerNotifications.funded.title' => 'Oferta zasilona',
 			'offerNotifications.funded.body' => 'Twoja faktura hold została zaakceptowana. Oferta jest teraz aktywna.',
 			'offerNotifications.reserved.title' => 'Oferta zarezerwowana',

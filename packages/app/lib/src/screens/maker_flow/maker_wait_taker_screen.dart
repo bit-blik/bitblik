@@ -349,10 +349,13 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
       final expiredOffer = _lastKnownOffer;
       return Scaffold(
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const MakerProgressIndicator(activeStep: 2),
@@ -410,6 +413,16 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                     ],
                   ],
                   const SizedBox(height: 30),
+                ],
+              ),
+            ),
+          ),
+        ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -460,6 +473,7 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                 ],
               ),
             ),
+            ],
           ),
         ),
       );

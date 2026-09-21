@@ -3526,11 +3526,11 @@ class Translations$offerNotifications$activeOfferService$en {
 
 	// Translations
 
-	/// en: 'Tracking active offer'
-	String get title => 'Tracking active offer';
+	/// en: 'Tracking active offer · ${amount}'
+	String title({required Object amount}) => 'Tracking active offer · ${amount}';
 
-	/// en: 'Nostr service monitoring updates to your active ${app} offer.'
-	String body({required Object app}) => 'Nostr service monitoring updates to your active ${app} offer.';
+	/// en: 'Nostr service monitoring updates'
+	String get body => 'Nostr service monitoring updates';
 }
 
 // Path: offerNotifications.funded
@@ -6903,8 +6903,8 @@ extension on Translations {
 			'relays.popup.connectingMessage' => 'Connecting to relays...',
 			'offerNotifications.activeService.title' => 'Waiting for new offers',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Nostr service monitoring events of ${app} offers.',
-			'offerNotifications.activeOfferService.title' => 'Tracking active offer',
-			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'Nostr service monitoring updates to your active ${app} offer.',
+			'offerNotifications.activeOfferService.title' => ({required Object amount}) => 'Tracking active offer · ${amount}',
+			'offerNotifications.activeOfferService.body' => 'Nostr service monitoring updates',
 			'offerNotifications.funded.title' => 'Offer funded',
 			'offerNotifications.funded.body' => 'Your hold invoice was accepted. Offer is now live.',
 			'offerNotifications.reserved.title' => 'Offer reserved',

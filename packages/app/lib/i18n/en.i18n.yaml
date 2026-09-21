@@ -1487,8 +1487,8 @@ offerNotifications:
     title: Waiting for new offers
     body: Nostr service monitoring events of ${app} offers.
   activeOfferService:
-    title: Tracking active offer
-    body: Nostr service monitoring updates to your active ${app} offer.
+    title: Tracking active offer · ${amount}
+    body: Nostr service monitoring updates
   funded:
     title: Offer funded
     body: Your hold invoice was accepted. Offer is now live.

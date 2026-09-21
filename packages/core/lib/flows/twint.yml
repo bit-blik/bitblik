@@ -130,7 +130,7 @@ states:
         by: maker
         to: securingDispute
       - on: timeout
-        after: 1800           # 30 min
+        after: $taker_charged_auto_confirm
         do: [stamp_maker_confirmed_at]
         to: makerConfirmed
         reason: Maker silent; auto-confirm in the taker's favour.

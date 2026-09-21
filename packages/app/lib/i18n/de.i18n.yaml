@@ -1330,8 +1330,8 @@ offerNotifications:
     title: Warte auf neue Angebote
     body: Nostr-Dienst überwacht Ereignisse von ${app}-Angeboten.
   activeOfferService:
-    title: Aktives Angebot wird verfolgt
-    body: Nostr-Dienst überwacht Aktualisierungen deines aktiven ${app}-Angebots.
+    title: Aktives Angebot verfolgen · ${amount}
+    body: Nostr-Dienst überwacht Aktualisierungen
   funded:
     title: Angebot finanziert
     body: Deine Hold-Invoice wurde akzeptiert. Das Angebot ist jetzt live.

@@ -2051,11 +2051,14 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       final strings = t.offerNotifications;
       final app = _ref.read(selectedPaymentSystemProvider).brandName;
       final tracksActiveOffer = activeOfferAlertsEnabled && hasActiveOffer;
+      final activeOfferAmount = tracksActiveOffer
+          ? '${NumberFormat.decimalPattern(LocaleSettings.instance.currentLocale.flutterLocale.toString()).format(offer.fiatAmount)} ${offer.fiatCurrency.toUpperCase()}'
+          : null;
       final title = tracksActiveOffer
-          ? strings.activeOfferService.title
+          ? strings.activeOfferService.title(amount: activeOfferAmount!)
           : strings.activeService.title;
       final body = tracksActiveOffer
-          ? strings.activeOfferService.body(app: app)
+          ? strings.activeOfferService.body
           : strings.activeService.body(app: app);
       NotificationService().startOfferForegroundService(title, body);
     } else {

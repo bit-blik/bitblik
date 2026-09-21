@@ -189,7 +189,7 @@ states:
         do: []
         to: conflict
       - on: timeout
-        after: 1800
+        after: $taker_charged_auto_confirm
         do: [stamp_maker_confirmed_at]
         to: makerConfirmed
         reason: Maker silent; auto-confirm in the taker's favour.

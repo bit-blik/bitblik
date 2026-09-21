@@ -1947,8 +1947,8 @@ class _Translations$offerNotifications$activeOfferService$sk extends Translation
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Sledovanie aktívnej ponuky';
-	@override String body({required Object app}) => 'Nostr služba monitoruje aktualizácie tvojej aktívnej ponuky ${app}.';
+	@override String title({required Object amount}) => 'Sledovanie aktívnej ponuky · ${amount}';
+	@override String get body => 'Nostr služba monitoruje aktualizácie';
 }
 
 // Path: offerNotifications.funded
@@ -3797,8 +3797,8 @@ extension on TranslationsSk {
 			'relays.popup.connectingMessage' => 'Pripája sa k relayom...',
 			'offerNotifications.activeService.title' => 'Čaká sa na nové ponuky',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Nostr služba monitoruje udalosti ponúk ${app}.',
-			'offerNotifications.activeOfferService.title' => 'Sledovanie aktívnej ponuky',
-			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'Nostr služba monitoruje aktualizácie tvojej aktívnej ponuky ${app}.',
+			'offerNotifications.activeOfferService.title' => ({required Object amount}) => 'Sledovanie aktívnej ponuky · ${amount}',
+			'offerNotifications.activeOfferService.body' => 'Nostr služba monitoruje aktualizácie',
 			'offerNotifications.funded.title' => 'Ponuka financovaná',
 			'offerNotifications.funded.body' => 'Tvoja hold faktúra bola prijatá. Ponuka je teraz aktívna.',
 			'offerNotifications.reserved.title' => 'Ponuka rezervovaná',

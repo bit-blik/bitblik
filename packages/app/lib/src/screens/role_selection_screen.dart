@@ -279,9 +279,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen>
               : (100 * heightScale).clamp(56.0, 140.0).toDouble());
     final actionCardHeight = isExtraCompactHeight
         ? 144.0
-        : (isCompactHeight
-              ? 168.0
-              : (220 * heightScale).clamp(220.0, 280.0).toDouble());
+        : (isCompactHeight ? 168.0 : 220.0);
 
     return SingleChildScrollView(
       child: Column(

@@ -281,21 +281,78 @@ class _TakerWaitConfirmationScreenState
     }
 
     final isLoading = ref.watch(isLoadingProvider);
+    final showExpiredActions =
+        offer.statusEnum == OfferStatus.expiredBlik ||
+        offer.statusEnum == OfferStatus.expiredSentBlik;
     final showChargedAction = offer.statusEnum == OfferStatus.expiredSentBlik;
     return Scaffold(
       body: _buildContentForStatus(context, offer),
-      bottomNavigationBar: showChargedAction
-          ? CriticalChargedActionBar(
-              actionKey: const ValueKey('expired_sent_blik_charged_action'),
-              label: _chargeReportPending
-                  ? t.taker.waitConfirmation.expiredActions.checkReportStatus
-                  : t.taker.waitConfirmation.expiredActions.reportConflict(
-                      code: offerCodeLabel(offer),
-                    ),
-              onPressed: isLoading ? null : () => _reportCharged(offer),
-              isLoading: isLoading,
+      bottomNavigationBar: showExpiredActions || showChargedAction
+          ? Material(
+              elevation: 12,
+              color: Theme.of(context).colorScheme.surface,
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showExpiredActions)
+                      _buildExpiredActions(context, offer),
+                    if (showChargedAction)
+                      CriticalChargedActionBar(
+                        actionKey: const ValueKey(
+                          'expired_sent_blik_charged_action',
+                        ),
+                        label: _chargeReportPending
+                            ? t.taker.waitConfirmation.expiredActions
+                                .checkReportStatus
+                            : t.taker.waitConfirmation.expiredActions
+                                .reportConflict(code: offerCodeLabel(offer)),
+                        onPressed: isLoading
+                            ? null
+                            : () => _reportCharged(offer),
+                        isLoading: isLoading,
+                      ),
+                  ],
+                ),
+              ),
             )
           : null,
+    );
+  }
+
+  Widget _buildExpiredActions(BuildContext context, Offer offer) {
+    final t = Translations.of(context);
+    final isLoading = ref.watch(isLoadingProvider);
+    final code = offerCodeLabel(offer);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+      child: Column(
+        children: [
+          _buildPrimaryButton(
+            context,
+            t.taker.waitConfirmation.expiredActions.renewReservation(
+              code: code,
+            ),
+            Icons.refresh,
+            Colors.green,
+            isLoading ? null : () => _resendBlik(offer),
+            isLoading: isLoading,
+          ),
+          if (offer.statusEnum == OfferStatus.expiredBlik) ...[
+            const SizedBox(height: 8),
+            _buildOutlinedButton(
+              context,
+              t.taker.waitConfirmation.expiredActions.cancelReservation,
+              Icons.close,
+              Colors.red,
+              isLoading || _expiredBlikWindowExpired
+                  ? null
+                  : () => _cancelReservation(offer),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -439,14 +496,9 @@ class _TakerWaitConfirmationScreenState
           validityMinutes: _confirmationDuration.inMinutes,
         );
       case OfferStatus.expiredBlik:
-        return _ExpiredBlikWidget(
-          offer: offer,
-          onResendBlik: _resendBlik,
-          onCancelReservation: _cancelReservation,
-          relistExpired: _expiredBlikWindowExpired,
-        );
+        return _ExpiredBlikWidget(offer: offer);
       case OfferStatus.expiredSentBlik:
-        return _ExpiredSentBlikWidget(offer: offer, onResendBlik: _resendBlik);
+        return _ExpiredSentBlikWidget(offer: offer);
       case OfferStatus.takerCharged:
         return _TakerChargedWidget(offer: offer);
       default:
@@ -726,24 +778,14 @@ class _BlikSentToMakerWidget extends StatelessWidget {
 
 class _ExpiredBlikWidget extends ConsumerWidget {
   final Offer offer;
-  final Future<void> Function(Offer) onResendBlik;
-  final Future<void> Function(Offer) onCancelReservation;
-  final bool relistExpired;
 
-  const _ExpiredBlikWidget({
-    required this.offer,
-    required this.onResendBlik,
-    required this.onCancelReservation,
-    required this.relistExpired,
-  });
+  const _ExpiredBlikWidget({required this.offer});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
-    final isLoading = ref.watch(isLoadingProvider);
     final errorMessage = ref.watch(errorProvider);
     final relistStart = offer.updatedAt ?? DateTime.now();
-    final canCancel = !isLoading && !relistExpired;
     final code = offerCodeLabel(offer);
 
     return Column(
@@ -785,22 +827,7 @@ class _ExpiredBlikWidget extends ConsumerWidget {
           _buildErrorMessage(context, errorMessage),
           const SizedBox(height: 10),
         ],
-        _buildPrimaryButton(
-          context,
-          t.taker.waitConfirmation.expiredActions.renewReservation(code: code),
-          Icons.refresh,
-          Colors.green,
-          isLoading ? null : () => onResendBlik(offer),
-          isLoading: isLoading,
-        ),
-        const SizedBox(height: 8),
-        _buildOutlinedButton(
-          context,
-          t.taker.waitConfirmation.expiredActions.cancelReservation,
-          Icons.close,
-          Colors.red,
-          canCancel ? () => onCancelReservation(offer) : null,
-        ),
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -808,17 +835,12 @@ class _ExpiredBlikWidget extends ConsumerWidget {
 
 class _ExpiredSentBlikWidget extends ConsumerWidget {
   final Offer offer;
-  final Future<void> Function(Offer) onResendBlik;
 
-  const _ExpiredSentBlikWidget({
-    required this.offer,
-    required this.onResendBlik,
-  });
+  const _ExpiredSentBlikWidget({required this.offer});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
-    final isLoading = ref.watch(isLoadingProvider);
     final errorMessage = ref.watch(errorProvider);
     final code = offerCodeLabel(offer);
 
@@ -842,14 +864,6 @@ class _ExpiredSentBlikWidget extends ConsumerWidget {
           _buildErrorMessage(context, errorMessage),
           const SizedBox(height: 16),
         ],
-        _buildPrimaryButton(
-          context,
-          t.taker.waitConfirmation.expiredActions.renewReservation(code: code),
-          Icons.refresh,
-          Colors.green,
-          isLoading ? null : () => onResendBlik(offer),
-          isLoading: isLoading,
-        ),
         const SizedBox(height: 12),
       ],
     );
@@ -864,8 +878,8 @@ class _TakerChargedWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
-    // Auto-confirm window advertised by the coordinator. Mirrors the
-    // coordinator's timer which fires at offer.createdAt + this duration.
+    // Auto-confirm window advertised by the coordinator. It starts when the
+    // taker reports a charge, not when the offer was created.
     final autoConfirmDuration = ref.watch(
       coordinatorTakerChargedAutoConfirmDurationProvider(
         offer.coordinatorPubkey,
@@ -882,13 +896,14 @@ class _TakerChargedWidget extends ConsumerWidget {
           Colors.green,
         ),
         const SizedBox(height: 20),
-        // Countdown until the coordinator auto-confirms. Anchored to
-        // offer.createdAt so it reflects real elapsed time across restarts.
+        // Countdown until coordinator auto-confirms. Persisted charge time
+        // keeps it correct across restarts and late taker reports.
         if (autoConfirmDuration != null)
           CircularCountdownTimer(
             size: 200,
             key: ValueKey('taker_charged_timer_${offer.id}'),
-            startTime: offer.createdAt,
+            startTime:
+                offer.takerChargedAt ?? offer.updatedAt ?? offer.createdAt,
             maxDuration: autoConfirmDuration,
             strokeWidth: 16,
             progressColor: Colors.green,

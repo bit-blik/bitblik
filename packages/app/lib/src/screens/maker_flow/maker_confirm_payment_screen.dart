@@ -941,9 +941,8 @@ class _MakerConfirmPaymentScreenState
   }
 
   Widget _buildAutoConfirmCountdown(Offer offer) {
-    // Expiry mirrors the coordinator's auto-confirm timer: createdAt plus the
-    // coordinator-advertised takerCharged auto-confirm duration. Computed from
-    // the persisted createdAt every repaint, so it survives app restarts.
+    // Expiry mirrors the coordinator's auto-confirm timer, which starts when
+    // the taker reports a charge—not when the offer was created.
     final duration = ref.watch(
       coordinatorTakerChargedAutoConfirmDurationProvider(
         offer.coordinatorPubkey,
@@ -952,7 +951,9 @@ class _MakerConfirmPaymentScreenState
     if (duration == null || duration.inSeconds <= 0) {
       return const SizedBox.shrink();
     }
-    final expiresAt = offer.createdAt.toUtc().add(duration);
+    final takerChargedAt =
+        offer.takerChargedAt ?? offer.updatedAt ?? offer.createdAt;
+    final expiresAt = takerChargedAt.toUtc().add(duration);
     final remaining = expiresAt.difference(DateTime.now().toUtc());
     final remainingSeconds = remaining.inSeconds.clamp(0, duration.inSeconds);
     final progress = remainingSeconds / duration.inSeconds;

@@ -204,6 +204,44 @@ Widget _titled(
   );
 }
 
+/// Expired flows keep decisions visible while long guidance scrolls.
+Widget _titledWithActions(
+  BuildContext context,
+  String title,
+  List<Widget> children, {
+  required Widget actions,
+  Widget? breadcrumb,
+}) {
+  return Column(
+    children: [
+      Expanded(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (breadcrumb != null) ...[breadcrumb, const SizedBox(height: 20)],
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 20),
+                ...children,
+              ],
+            ),
+          ),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+        child: actions,
+      ),
+    ],
+  );
+}
+
 /// Big monospace TWINT code display, with a copy button when a code is shown.
 Widget _codeBox(BuildContext context, String? code) {
   return Container(
@@ -480,7 +518,7 @@ final FlowBody twintMakerExpiredBody = (context, ref, offer, engine, role) {
   final t = Translations.of(context);
   const codeLabel = 'TWINT';
   final strings = t.twint.flow.makerExpired;
-  return _titled(context, strings.title(code: codeLabel), [
+  return _titledWithActions(context, strings.title(code: codeLabel), [
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -527,10 +565,10 @@ final FlowBody twintMakerExpiredBody = (context, ref, offer, engine, role) {
       textAlign: TextAlign.center,
       style: TextStyle(fontSize: 13, height: 1.4, color: Colors.grey[700]),
     ),
-    const SizedBox(height: 24),
     // Yaml allows confirm_payment for the maker here — same green success
     // button + irreversibility dialog as in `reserved`.
-    FlowActionsBar(
+  ],
+    actions: FlowActionsBar(
       offer: offer,
       engine: engine,
       role: role,
@@ -539,7 +577,8 @@ final FlowBody twintMakerExpiredBody = (context, ref, offer, engine, role) {
             (_) => _makerConfirmPaymentButton(context, ref, offer, t),
       },
     ),
-  ], breadcrumb: const TwintMakerProgressIndicator(activeStep: 3));
+    breadcrumb: const TwintMakerProgressIndicator(activeStep: 3),
+  );
 };
 
 // ─── maker: takerCharged (verify receipt) ────────────────────────────────────
@@ -1552,7 +1591,7 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
     }
   }
 
-  return _titled(context, strings.title(code: codeLabel), [
+  return _titledWithActions(context, strings.title(code: codeLabel), [
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -1611,8 +1650,8 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
       fontSize: 24,
       progressColor: Colors.orange,
     ),
-    const SizedBox(height: 24),
-    FlowActionsBar(
+  ],
+    actions: FlowActionsBar(
       offer: offer,
       engine: engine,
       role: role,
@@ -1689,7 +1728,8 @@ final FlowBody twintTakerExpiredBody = (context, ref, offer, engine, role) {
             ),
       },
     ),
-  ], breadcrumb: const TwintTakerProgressIndicator(activeStep: 1));
+    breadcrumb: const TwintTakerProgressIndicator(activeStep: 1),
+  );
 };
 
 // ─── both roles: dispute ─────────────────────────────────────────────────────

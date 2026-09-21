@@ -2098,8 +2098,8 @@ class _Translations$offerNotifications$activeOfferService$fr extends Translation
 	final TranslationsFr _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Suivi de l\'offre active';
-	@override String body({required Object app}) => 'Service Nostr surveillant les mises à jour de votre offre ${app} active.';
+	@override String title({required Object amount}) => 'Suivi de l\'offre active · ${amount}';
+	@override String get body => 'Service Nostr surveillant les mises à jour';
 }
 
 // Path: offerNotifications.funded
@@ -4263,8 +4263,8 @@ extension on TranslationsFr {
 			'relays.popup.connectingMessage' => 'Connexion aux relais...',
 			'offerNotifications.activeService.title' => 'En attente de nouvelles offres',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'Service Nostr surveillant les événements des offres ${app}.',
-			'offerNotifications.activeOfferService.title' => 'Suivi de l\'offre active',
-			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'Service Nostr surveillant les mises à jour de votre offre ${app} active.',
+			'offerNotifications.activeOfferService.title' => ({required Object amount}) => 'Suivi de l\'offre active · ${amount}',
+			'offerNotifications.activeOfferService.body' => 'Service Nostr surveillant les mises à jour',
 			'offerNotifications.funded.title' => 'Offre financée',
 			'offerNotifications.funded.body' => 'Votre facture hold a été acceptée. L\'offre est maintenant en ligne.',
 			'offerNotifications.reserved.title' => 'Offre réservée',

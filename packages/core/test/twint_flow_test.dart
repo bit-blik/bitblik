@@ -79,7 +79,10 @@ void main() {
     }
     expect(engine.timeoutFor('expiredTwint')!.durationSeconds, 300);
     expect(engine.timeoutFor('invalidTwint')!.durationSeconds, 1800);
-    expect(engine.timeoutFor('takerCharged')!.durationSeconds, 1800);
+    expect(
+      engine.timeoutFor('takerCharged')!.durationParam,
+      'taker_charged_auto_confirm',
+    );
   });
 
   test('maker can confirm early from reserved and expiredTwint', () {

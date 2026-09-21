@@ -2099,8 +2099,8 @@ class _Translations$offerNotifications$activeOfferService$pt extends Translation
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'A acompanhar oferta ativa';
-	@override String body({required Object app}) => 'O serviço Nostr está a monitorizar atualizações da sua oferta ${app} ativa.';
+	@override String title({required Object amount}) => 'A acompanhar oferta ativa · ${amount}';
+	@override String get body => 'Serviço Nostr a monitorizar atualizações';
 }
 
 // Path: offerNotifications.funded
@@ -4265,8 +4265,8 @@ extension on TranslationsPt {
 			'relays.popup.connectingMessage' => 'A ligar aos relays...',
 			'offerNotifications.activeService.title' => 'À espera de novas ofertas',
 			'offerNotifications.activeService.body' => ({required Object app}) => 'O serviço Nostr está a monitorizar eventos de ofertas do ${app}.',
-			'offerNotifications.activeOfferService.title' => 'A acompanhar oferta ativa',
-			'offerNotifications.activeOfferService.body' => ({required Object app}) => 'O serviço Nostr está a monitorizar atualizações da sua oferta ${app} ativa.',
+			'offerNotifications.activeOfferService.title' => ({required Object amount}) => 'A acompanhar oferta ativa · ${amount}',
+			'offerNotifications.activeOfferService.body' => 'Serviço Nostr a monitorizar atualizações',
 			'offerNotifications.funded.title' => 'Oferta financiada',
 			'offerNotifications.funded.body' => 'A sua hold invoice foi aceite. A oferta está agora ativa.',
 			'offerNotifications.reserved.title' => 'Oferta reservada',

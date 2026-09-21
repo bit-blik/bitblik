@@ -267,11 +267,15 @@ class CoordinatorService {
   }
 
   /// Flow timeout parameters this coordinator can resolve (yaml `after: $name`).
-  static const Set<String> _knownFlowDurationParams = {'code_validity'};
+  static const Set<String> _knownFlowDurationParams = {
+    'code_validity',
+    'taker_charged_auto_confirm',
+  };
 
   /// Resolve a timeout edge's duration for [offer]: a fixed `after:` int, or a
-  /// `$param` resolved per offer (today only `$code_validity`, from the offer's
-  /// bank). Null when the edge has neither (no timer) or an unknown param.
+  /// `$param` resolved per offer. `code_validity` comes from the offer's bank;
+  /// `taker_charged_auto_confirm` comes from coordinator configuration. Null
+  /// when the edge has neither (no timer) or an unknown param.
   int? _resolveTimeoutSeconds(Offer offer, FlowTransition t) {
     if (t.durationSeconds != null) return t.durationSeconds;
     final param = t.durationParam;
@@ -279,6 +283,8 @@ class CoordinatorService {
     switch (param) {
       case 'code_validity':
         return _codeValidityForOffer(offer).inSeconds;
+      case 'taker_charged_auto_confirm':
+        return _takerChargedAutoConfirmTimeoutSeconds;
       default:
         AppLogger.warning(
             'FLOW ENGINE: unknown timeout param "\$$param" for offer '

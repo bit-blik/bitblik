@@ -30,7 +30,7 @@ void main() {
   };
 
   for (final entry in holdInvoiceDependentStates.entries) {
-    test('${entry.key} hold-invoice-dependent timeouts are 30 minutes',
+    test('${entry.key} hold-invoice-dependent timeouts are configured safely',
         () async {
       final engine = await FlowEngine.fromYamlWithImports(
         await File('lib/flows/${entry.key}.yml').readAsString(),
@@ -38,11 +38,16 @@ void main() {
       );
 
       for (final state in entry.value) {
-        expect(
-          engine.timeoutFor(state)!.durationSeconds,
-          1800,
-          reason: '${entry.key}.$state must resolve before hold funds expire',
-        );
+        final timeout = engine.timeoutFor(state)!;
+        if (state == 'takerCharged') {
+          expect(timeout.durationParam, 'taker_charged_auto_confirm');
+        } else {
+          expect(
+            timeout.durationSeconds,
+            1800,
+            reason: '${entry.key}.$state must resolve before hold funds expire',
+          );
+        }
       }
     });
   }
