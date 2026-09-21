@@ -7,5 +7,6 @@ void main() {
     expect(cliVersionLine(kBlik), 'Bitblik CLI 0.11.0');
     expect(cliVersionLine(kMbway), 'Bitway CLI 0.11.0');
     expect(cliVersionLine(kTwint), 'Bittwint CLI 0.11.0');
+    expect(cliVersionLine(kSlovakia), 'Veksli CLI 0.11.0');
   });
 }
