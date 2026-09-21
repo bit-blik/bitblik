@@ -16,6 +16,7 @@ LookupInvoiceResponse _lookup({
   String type = 'outgoing',
   String? state,
   int? settledAt,
+  int? settleDeadline,
   String preimage = '',
   int feesPaid = 0,
 }) =>
@@ -34,6 +35,7 @@ LookupInvoiceResponse _lookup({
         'created_at': 1789652559,
         'expires_at': 1792244559,
         'settled_at': settledAt,
+        'settle_deadline': settleDeadline,
       },
     });
 
@@ -129,6 +131,19 @@ void main() {
     final result = await service.lookupInvoice(paymentHashHex: _paymentHash);
 
     expect(result.status, InvoiceStatus.OPEN);
+  });
+
+  test('recovers an accepted hold invoice from its settlement deadline',
+      () async {
+    nwc.response = _lookup(
+      type: 'incoming',
+      state: 'pending',
+      settleDeadline: 1789652619,
+    );
+
+    final result = await service.lookupInvoice(paymentHashHex: _paymentHash);
+
+    expect(result.status, InvoiceStatus.ACCEPTED);
   });
 
   for (final code in ['INTERNAL', 'OTHER', 'NOT_FOUND', 'PAYMENT_FAILED']) {

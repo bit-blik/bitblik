@@ -437,11 +437,12 @@ class NwcService implements PaymentService, Bolt12PaymentService {
         status = InvoiceStatus.CANCELED;
       } else if (nwcResponse.settledAt != null && nwcResponse.settledAt! > 0) {
         status = InvoiceStatus.SETTLED;
-      } else if (nwcResponse.state == 'pending') {
-        // NWC uses `pending` for a newly-created, unpaid incoming invoice too.
-        // Hold acceptance is only proven by `hold_invoice_accepted`; treating a
-        // lookup's `pending` as ACCEPTED creates unfunded offers.
-        status = InvoiceStatus.OPEN;
+      } else if (nwcResponse.state == 'pending' &&
+          nwcResponse.settleDeadline != null &&
+          nwcResponse.settleDeadline! > 0) {
+        // A hold invoice remains NWC `pending` before and after acceptance.
+        // A settlement deadline proves the wallet is holding an incoming HTLC.
+        status = InvoiceStatus.ACCEPTED;
       } else {
         status = InvoiceStatus.OPEN; // Default to OPEN if not settled
       }
