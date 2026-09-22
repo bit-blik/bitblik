@@ -228,7 +228,9 @@ class NostrService {
         // for this long-running service.
         webSocketCompression: false,
         bootstrapRelays: bootstrap,
-        logLevel: LogLevel.info,
+        // NDK logger is process-global; INFO logs every NWC lookup response,
+        // including invoice payloads, during pending-offer recovery.
+        logLevel: LogLevel.warning,
         cacheEvictionEnabled: true,
         cacheEvictionPolicy: _cacheEvictionPolicy,
         cacheEvictionStartupDelay: _cacheEvictionStartupDelay,

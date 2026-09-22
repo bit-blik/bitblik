@@ -412,7 +412,6 @@ class NwcService implements PaymentService, Bolt12PaymentService {
     if (_nwcConnection == null) {
       throw Exception('NWC Service: Not connected.');
     }
-    AppLogger.info('NWC Service: Looking up invoice for hash: $paymentHashHex');
     try {
       // The NDK's lookupInvoice returns a response object (e.g. NwcPayInvoiceResponse or LookupInvoiceResponse)
       // which should have top-level fields like errorCode, errorMessage, and then specific invoice fields.
