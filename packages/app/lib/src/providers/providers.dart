@@ -1542,6 +1542,7 @@ final zapstoreAppUpdateControllerProvider = Provider<NAppUpdateController?>((
   final appIdentifier = switch (buildDefaultPaymentSystemId) {
     'mbway' => 'me.bitway',
     'twint' => 'app.bittwint',
+    'sk' => 'li.veks',
     _ => 'app.bitblik',
   };
 

@@ -15,6 +15,7 @@ void main() {
     ('blik', 'app.bitblik'),
     ('mbway', 'me.bitway'),
     ('twint', 'app.bittwint'),
+    ('sk', 'li.veks'),
   ]) {
     test(
       '$flavor download URL follows payment selection, not package identity',
@@ -50,7 +51,7 @@ void main() {
         for (final (paymentSystem, expectedUrl) in [
           (kMbway, 'https://bitway.me'),
           (kTwint, 'https://bitblik.app'),
-          (kSlovakia, 'https://bitblik.app'),
+          (kSlovakia, 'https://veks.li'),
           (kBlik, 'https://bitblik.app'),
         ]) {
           await container
