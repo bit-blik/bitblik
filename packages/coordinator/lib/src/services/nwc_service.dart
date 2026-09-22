@@ -42,7 +42,7 @@ bool nwcBolt12RecoveryEnabled(String? configuredValue) => !const {
 /// Service to interact with Nostr Wallet Connect (NWC) for hold invoices.
 class NwcService implements PaymentService, Bolt12PaymentService {
   static const Duration _makeHoldInvoiceTimeout = Duration(seconds: 10);
-  static const int _holdInvoiceExpirySeconds = 86400;
+  static const int _holdInvoiceExpirySeconds = 3600;
 
   final String _nwcUri;
 

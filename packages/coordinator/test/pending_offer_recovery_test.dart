@@ -42,9 +42,13 @@ void main() {
   late bool failInvoiceSave;
   late String? lookupInvoice;
 
-  Future<CoordinatorService> createService({bool reconcile = true}) async {
+  Future<CoordinatorService> createService(
+      {bool reconcile = true, String? backendType}) async {
     final result = CoordinatorService(db,
-        paymentServiceForTest: wallet,
+        paymentServiceForTest: backendType == null ? wallet : null,
+        paymentBackendConnectorForTest: backendType == null
+            ? null
+            : () async => (backend: wallet, type: backendType),
         paymentSystemIdForTest: 'mbway',
         clock: Clock(() => now),
         httpClient: MockClient((request) async => http.Response(
@@ -494,6 +498,32 @@ void main() {
     await service.reconcilePendingOffers();
     expect(intents, isEmpty);
     expect(offers, isEmpty);
+  });
+
+  test('NWC pending intent expires two hours after creation', () async {
+    await service.shutdown();
+    service = await createService(backendType: 'nwc');
+    await initiate();
+    expect(intents.values.single.expiresAt, now.add(const Duration(hours: 2)));
+
+    now = now.add(const Duration(hours: 2, seconds: 1));
+    await service.reconcilePendingOffers();
+    expect(intents, isEmpty);
+    verify(wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
+        .called(1);
+  });
+
+  test('NWC accepted hold remains recoverable after pending timeout', () async {
+    await service.shutdown();
+    service = await createService(backendType: 'nwc');
+    await initiate();
+
+    now = now.add(const Duration(hours: 2, seconds: 1));
+    walletState = InvoiceStatus.ACCEPTED;
+    await service.reconcilePendingOffers();
+    expect(offers, hasLength(1));
+    verifyNever(
+        wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')));
   });
 
   test('expired but ACCEPTED is recovered, never canceled as unused', () async {

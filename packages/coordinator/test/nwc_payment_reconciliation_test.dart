@@ -65,6 +65,7 @@ class _StubNwc extends Fake implements Nwc {
   Object? lookupError;
   PayInvoiceResponse? paymentResponse;
   String? lookedUpInvoice;
+  int? holdInvoiceExpiry;
 
   @override
   Future<NwcConnection> connect(
@@ -88,6 +89,31 @@ class _StubNwc extends Fake implements Nwc {
     if (paymentResponse != null) return paymentResponse!;
     throw Exception(
         'error pay_invoice code: INTERNAL ldk-server reported payment failure');
+  }
+
+  @override
+  Future<MakeInvoiceResponse> makeHoldInvoice(
+    NwcConnection connection, {
+    required int amountSats,
+    String? description,
+    String? descriptionHash,
+    int? expiry,
+    required String paymentHash,
+    Duration? timeout,
+  }) async {
+    holdInvoiceExpiry = expiry;
+    return MakeInvoiceResponse(
+      type: 'incoming',
+      invoice: _invoice,
+      description: description ?? '',
+      descriptionHash: '',
+      preimage: '',
+      paymentHash: paymentHash,
+      amountMsat: amountSats * 1000,
+      feesPaid: 0,
+      createdAt: 0,
+      resultType: 'make_hold_invoice',
+    );
   }
 
   @override
@@ -123,6 +149,12 @@ void main() {
   });
 
   tearDown(() async => service.disconnect());
+
+  test('new hold invoices expire after one hour', () async {
+    await service.createHoldInvoice(
+        amountSats: 1000, memo: 'test', paymentHashHex: _paymentHash);
+    expect(nwc.holdInvoiceExpiry, 3600);
+  });
 
   test('does not treat an unpaid pending incoming invoice as accepted',
       () async {
