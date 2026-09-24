@@ -143,7 +143,7 @@ class FundingPaymentAuthorization {
         !offer.fiatAmount.isFinite ||
         offer.fiatAmount <= 0 ||
         !offer.premiumPercent.isFinite ||
-        offer.premiumPercent < 0 ||
+        offer.premiumPercent <= -100 ||
         offer.premiumPercent > 100) {
       throw const FormatException('Invalid funding quote.');
     }

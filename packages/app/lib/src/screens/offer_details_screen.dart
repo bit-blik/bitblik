@@ -1128,16 +1128,19 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
                                     const SizedBox(height: 12),
                                   ],
 
-                                  // Premium row (only when offer carries one)
-                                  if (offer.premiumPercent > 0) ...[
+                                  // Premium/discount row (only when offer
+                                  // carries one)
+                                  if (offer.premiumPercent != 0) ...[
                                     _buildInfoRow(
-                                      t.offers.labels.premium,
-                                      '+${formatPremium(offer.premiumPercent)}%',
+                                      premiumLabel(t, offer.premiumPercent),
+                                      '${formatSignedPremium(offer.premiumPercent)}%',
                                       hasInfoIcon: true,
                                       onInfoTap:
                                           () => showPremiumInfoDialog(
                                             context,
                                             viewerRole: PremiumViewerRole.taker,
+                                            premiumPercent:
+                                                offer.premiumPercent,
                                           ),
                                     ),
                                     const SizedBox(height: 12),

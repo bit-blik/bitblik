@@ -1026,7 +1026,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                       OfferBankBadge(
                                                         offer: offer,
                                                       ),
-                                                      if (offer.premiumPercent >
+                                                      if (offer.premiumPercent !=
                                                           0) ...[
                                                         const SizedBox(
                                                           height: 6,
@@ -1242,7 +1242,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                       TextOverflow.ellipsis,
                                                   maxLines: 1,
                                                 ),
-                                                if (offer.premiumPercent >
+                                                if (offer.premiumPercent !=
                                                     0) ...[
                                                   const SizedBox(height: 4),
                                                   PremiumChip(

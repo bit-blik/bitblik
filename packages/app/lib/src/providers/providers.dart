@@ -2234,11 +2234,14 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         sats: formattedSats,
       );
       if (categoryStr.isNotEmpty) body += ' · $categoryStr';
-      if (offer.premiumPercent > 0) {
+      if (offer.premiumPercent != 0) {
         final premiumStr = offer.premiumPercent
+            .abs()
             .toStringAsFixed(1)
             .replaceAll(RegExp(r'\.0$'), '');
-        body += ' · ${strings.newOffer.premiumSuffix(percent: premiumStr)}';
+        body += offer.premiumPercent > 0
+            ? ' · ${strings.newOffer.premiumSuffix(percent: premiumStr)}'
+            : ' · ${strings.newOffer.discountSuffix(percent: premiumStr)}';
       }
       NotificationService().showNewOffer(
         id: 20,

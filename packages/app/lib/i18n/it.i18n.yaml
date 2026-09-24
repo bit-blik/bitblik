@@ -144,10 +144,13 @@ offers:
   labels:
     premium: "Premio"
     premiumBadge: "+${percent}% premio"
+    discount: "Sconto"
+    discountBadge: "-${percent}% sconto"
 
   tooltips:
     takerFeeInfo: "Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall'importo che ricevi"
     premiumInfoTaker: "Un premio significa che questa offerta è prezzata sopra il mercato. Per lo stesso importo fiat, il maker blocca meno sat nella fattura hold, quindi paghi sopra il mercato e ricevi meno sat rispetto al tasso di mercato. Il premio massimo è impostato dal coordinatore."
+    discountInfoTaker: "Uno sconto significa che questa offerta è prezzata sotto il mercato. Per lo stesso importo fiat, il maker blocca più sat nella fattura hold, quindi ricevi più sat rispetto al tasso di mercato. Lo sconto massimo è impostato dal coordinatore."
     ratesFetchedAt: "Recuperato alle"
     ratesSources: "Fonti tasso medio"
 
@@ -305,6 +308,8 @@ coordinator:
     maxPremium: "Premio max"
     maxPremiumInfoTitle: "Premio"
     maxPremiumInfoBody: "Il premio è un sovrapprezzo opzionale rispetto al tasso di mercato che un maker può impostare su un'offerta. Con un premio, il maker blocca meno satoshi per lo stesso importo in fiat, quindi il taker paga sopra il mercato e il maker trattiene la differenza. Questo valore è il premio massimo che questo coordinatore consente sulle sue offerte."
+    premiumRange: "Intervallo del premio"
+    premiumRangeInfoBody: "In questo intervallo un maker può impostare un premio (prezzo sopra il mercato) o uno sconto (prezzo sotto il mercato). Con uno sconto, il maker blocca più satoshi per lo stesso importo in fiat, quindi il taker riceve più satoshi rispetto al tasso di mercato. Con un premio, blocca meno satoshi e trattiene la differenza."
     reservationTime: "Tempo di prenotazione"
     currencies: "Valute"
     paymentSystem: "Sistema di pagamento"
@@ -441,6 +446,7 @@ maker:
       customAmount: Personalizzato
       tapToSelect: Tocca per selezionare
       premium: Premio
+      discount: "Sconto"
     actions:
       generateInvoice: Genera Fattura
     bank:
@@ -461,6 +467,7 @@ maker:
       feeInfo: "Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning."
       payInfo: "Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l'importo esatto, e l'importo della fattura sarà quello finale e definitivo da pagare."
       premiumInfo: "Un premio opzionale ti permette di vendere i tuoi sat sopra il prezzo di mercato. Il premio riduce i sat bloccati nella tua fattura hold per lo stesso importo fiat, così il taker paga sopra il mercato e tu trattieni la differenza. Predefinito disattivato (0%). Il premio massimo è impostato dal coordinatore selezionato."
+      discountInfo: "Uno sconto opzionale ti permette di vendere i tuoi sat sotto il prezzo di mercato, rendendo la tua offerta più interessante per i taker. Lo sconto aumenta i sat bloccati nella tua fattura hold per lo stesso importo fiat, quindi il taker riceve più sat rispetto al tasso di mercato. Predefinito disattivato (0%). Lo sconto massimo è impostato dal coordinatore selezionato."
 
     category:
       label: "Categoria offerta"
@@ -1183,6 +1190,7 @@ settings:
     enablePremium: Abilita premio di prezzo
     enablePremiumDescription: Mostra il cursore del premio durante la creazione delle offerte maker.
     defaultPremium: Premio predefinito
+    defaultDiscount: "Sconto predefinito"
     defaultPremiumDisabled: Abilita il premio di prezzo per impostare un premio predefinito.
     premiumPerCoordinatorNote: "Ogni coordinatore imposta il proprio premio massimo, quindi il tuo valore predefinito è limitato dal coordinatore usato per un'offerta."
     categoryOptions:
@@ -1328,6 +1336,7 @@ offerNotifications:
     title: Nuova offerta disponibile
     body: "${amount} ${currency} · ${sats}"
     premiumSuffix: "+${percent}% premio"
+    discountSuffix: "-${percent}% sconto"
   categories:
     shop: Negozio
     atm: ATM

@@ -400,14 +400,17 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
                         expiredOffer.makerFees,
                       ),
                     ),
-                    if (expiredOffer.premiumPercent > 0) ...[
+                    if (expiredOffer.premiumPercent != 0) ...[
                       const SizedBox(height: 8),
                       GestureDetector(
-                        onTap: () => showPremiumInfoDialog(context),
+                        onTap: () => showPremiumInfoDialog(
+                          context,
+                          premiumPercent: expiredOffer.premiumPercent,
+                        ),
                         child: _buildDetailRow(
                           context,
-                          t.offers.labels.premium,
-                          '+${formatPremium(expiredOffer.premiumPercent)}%',
+                          premiumLabel(t, expiredOffer.premiumPercent),
+                          '${formatSignedPremium(expiredOffer.premiumPercent)}%',
                         ),
                       ),
                     ],

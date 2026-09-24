@@ -126,14 +126,17 @@ class MakerWaitingBody extends ConsumerWidget {
                     offer.makerFees,
                   ),
                 ),
-                if (offer.premiumPercent > 0) ...[
+                if (offer.premiumPercent != 0) ...[
                   const SizedBox(height: 8),
                   GestureDetector(
-                    onTap: () => showPremiumInfoDialog(context),
+                    onTap: () => showPremiumInfoDialog(
+                      context,
+                      premiumPercent: offer.premiumPercent,
+                    ),
                     child: _buildDetailRow(
                       context,
-                      t.offers.labels.premium,
-                      '+${formatPremium(offer.premiumPercent)}%',
+                      premiumLabel(t, offer.premiumPercent),
+                      '${formatSignedPremium(offer.premiumPercent)}%',
                     ),
                   ),
                 ],
