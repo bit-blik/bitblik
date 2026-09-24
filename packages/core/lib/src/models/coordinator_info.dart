@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:ndk/ndk.dart';
 
 import '../payment/payment_system.dart';
+import '../quote/premium_range.dart';
 
 @immutable
 class CoordinatorInfo {
@@ -27,6 +28,16 @@ class CoordinatorInfo {
   /// Maximum maker premium (%) this coordinator allows above market price.
   /// `0` means the premium feature is disabled for this coordinator.
   final double maxPremiumPercent;
+
+  /// Minimum maker premium (%) this coordinator allows. A negative value lets
+  /// makers set a discount below market price. `0` (the default, and what
+  /// coordinators that don't advertise it mean) allows no discount.
+  final double minPremiumPercent;
+
+  /// The premium range makers may choose from, with unusable advertised
+  /// bounds replaced by market price (see [PremiumRange.sanitized]).
+  PremiumRange get premiumRange =>
+      PremiumRange.sanitized(min: minPremiumPercent, max: maxPremiumPercent);
   final List<String> currencies;
   final List<String> outgoingPaymentTypes;
 
@@ -75,6 +86,7 @@ class CoordinatorInfo {
     this.takerChargedAutoConfirmSeconds = 3600,
     this.disputeEvidencePeriodSeconds,
     this.maxPremiumPercent = 0,
+    this.minPremiumPercent = 0,
     required this.currencies,
     this.outgoingPaymentTypes = const ['bolt11'],
     required this.paymentSystem,
@@ -121,6 +133,7 @@ class CoordinatorInfo {
       disputeEvidencePeriodSeconds:
           (json['dispute_evidence_period_seconds'] as num?)?.toInt(),
       maxPremiumPercent: (json['max_premium_percent'] as num?)?.toDouble() ?? 0,
+      minPremiumPercent: (json['min_premium_percent'] as num?)?.toDouble() ?? 0,
       currencies: (json['currencies'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
@@ -154,6 +167,7 @@ class CoordinatorInfo {
       if (disputeEvidencePeriodSeconds != null)
         'dispute_evidence_period_seconds': disputeEvidencePeriodSeconds,
       'max_premium_percent': maxPremiumPercent,
+      if (minPremiumPercent != 0) 'min_premium_percent': minPremiumPercent,
       'currencies': currencies,
       'outgoing_payment_types': outgoingPaymentTypes,
       'payment_system': paymentSystem,
@@ -220,6 +234,8 @@ class CoordinatorInfo {
           int.tryParse(tags['dispute_evidence_period_seconds'] ?? ''),
       maxPremiumPercent:
           double.tryParse(tags['max_premium_percent'] ?? '0') ?? 0.0,
+      minPremiumPercent:
+          double.tryParse(tags['min_premium_percent'] ?? '0') ?? 0.0,
       makerFee: double.tryParse(tags['maker_fee'] ?? '0') ?? 0.0,
       takerFee: double.tryParse(tags['taker_fee'] ?? '0') ?? 0.0,
       reservationSeconds: int.tryParse(tags['reservation_seconds'] ?? '0') ?? 0,
@@ -268,6 +284,8 @@ class CoordinatorInfo {
           disputeEvidencePeriodSeconds.toString()
         ],
       ['max_premium_percent', maxPremiumPercent.toString()],
+      if (minPremiumPercent != 0)
+        ['min_premium_percent', minPremiumPercent.toString()],
       ['maker_fee', makerFee.toString()],
       ['taker_fee', takerFee.toString()],
       ['reservation_seconds', reservationSeconds.toString()],

@@ -134,6 +134,39 @@ Future<({PaymentService? backend, String type})>
   return (backend: null, type: 'none');
 }
 
+/// Reads the maker premium range from the `MIN_PREMIUM` / `MAX_PREMIUM`
+/// settings (percent). Unset means `0`, so an unconfigured coordinator allows
+/// neither a premium nor a discount. A negative `MIN_PREMIUM` allows a
+/// discount; it must stay above -100 and not exceed `MAX_PREMIUM`. Invalid
+/// values are reported through [onInvalid] and replaced by market price
+/// (see [PremiumRange.sanitized]), so a typo can never widen the range.
+PremiumRange parsePremiumRangeConfig({
+  String? minPremium,
+  String? maxPremium,
+  void Function(String message)? onInvalid,
+}) {
+  double parse(String name, String? raw) {
+    final trimmed = raw?.trim() ?? '';
+    if (trimmed.isEmpty) return 0;
+    final value = double.tryParse(trimmed);
+    if (value == null || !value.isFinite || value <= -100 || value >= 100) {
+      onInvalid?.call('$name="$raw" is not a percentage between -100 and 100 '
+          '(exclusive); using 0.');
+      return 0;
+    }
+    return value;
+  }
+
+  final min = parse('MIN_PREMIUM', minPremium);
+  final max = parse('MAX_PREMIUM', maxPremium);
+  final range = PremiumRange.sanitized(min: min, max: max);
+  if (range.min != min || range.max != max) {
+    onInvalid?.call('MIN_PREMIUM ($min) is above MAX_PREMIUM ($max); using '
+        'MIN_PREMIUM=${range.min}, MAX_PREMIUM=${range.max}.');
+  }
+  return range;
+}
+
 class CoordinatorService {
   final DatabaseService _dbService;
   PaymentService? _paymentBackend; // Unified payment backend
@@ -216,8 +249,9 @@ class CoordinatorService {
   late final int _minAmountSats;
   late final int _maxAmountSats;
 
-  // Maximum maker premium (%) above market price. 0 = feature disabled.
-  late final double _maxPremiumPercent;
+  // Maker premium range (%). max > 0 allows a premium above market price;
+  // min < 0 allows a discount below it. Both 0 = feature disabled.
+  late final PremiumRange _premiumRange;
 
   // The single payment method this coordinator serves (BLIK, MB WAY, ...).
   // Drives the code-confirmation window and the default currency.
@@ -590,6 +624,7 @@ class CoordinatorService {
       String? paymentSystemIdForTest,
       String? coordinatorPubkeyForTest,
       FlowEngine? flowEngineForTest,
+      PremiumRange? premiumRangeForTest,
       PaymentBackendConnector? paymentBackendConnectorForTest})
       : _clock = clock ?? const Clock(),
         _httpClient = httpClient ?? http.Client(),
@@ -637,8 +672,14 @@ class CoordinatorService {
     _minAmountSats = int.tryParse(_env['MIN_AMOUNT_SATS'] ?? '') ?? 1000;
     _maxAmountSats = int.tryParse(_env['MAX_AMOUNT_SATS'] ?? '') ?? 250000;
 
-    // Maker premium cap (%). Default 0 = feature off; operator opts in.
-    _maxPremiumPercent = double.tryParse(_env['MAX_PREMIUM'] ?? '') ?? 0;
+    // Maker premium range (%). Defaults 0/0 = feature off; operator opts in.
+    // MIN_PREMIUM below 0 lets makers offer a discount.
+    _premiumRange = premiumRangeForTest ??
+        parsePremiumRangeConfig(
+          minPremium: _env['MIN_PREMIUM'],
+          maxPremium: _env['MAX_PREMIUM'],
+          onInvalid: AppLogger.warning,
+        );
 
     // One method per deployment. Default 'blik' keeps existing PL coordinators
     // unchanged. The method's currency is the default when CURRENCIES is unset.
@@ -2341,8 +2382,8 @@ class CoordinatorService {
         }
       }
     }
-    // Clamp premium to what this coordinator allows.
-    final premium = premiumPercent.clamp(0, _maxPremiumPercent).toDouble();
+    // Clamp premium (or discount) to what this coordinator allows.
+    final premium = _premiumRange.clamp(premiumPercent);
     AppLogger.info(
         'Initiating offer: fiatAmount=$fiatAmount $fiatCurrency, maker=$makerId, category=${category?.name}, premium=$premium%');
     final rate = await _getRate(fiatCurrency);
@@ -2360,8 +2401,9 @@ class CoordinatorService {
           'Amount $baseSats sats exceeds maximum $_maxAmountSats sats');
     }
 
-    // Premium reduces the sats the maker locks for the same fiat amount.
-    final satsAmount = (baseSats * (1 - premium / 100)).round();
+    // Premium reduces the sats the maker locks for the same fiat amount; a
+    // discount (negative premium) increases them.
+    final satsAmount = PremiumRange.adjustedSats(baseSats, premium);
 
     // Maker fee is charged on the original market value, unaffected by premium.
     final makerFees = OfferQuote.makerFeeSats(baseSats, _makerFeePercentage);
@@ -2544,7 +2586,8 @@ class CoordinatorService {
       maxAmountSats: _maxAmountSats,
       takerChargedAutoConfirmSeconds: _takerChargedAutoConfirmTimeoutSeconds,
       disputeEvidencePeriodSeconds: _disputeEvidencePeriodSeconds,
-      maxPremiumPercent: _maxPremiumPercent,
+      maxPremiumPercent: _premiumRange.max,
+      minPremiumPercent: _premiumRange.min,
       currencies: List<String>.from(_supportedCurrencies),
       outgoingPaymentTypes: [
         'bolt11',

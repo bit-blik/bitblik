@@ -170,6 +170,28 @@ docker compose --profile telegram-bot up -d --build telegram-bot
 The container uses `PAYMENT_SYSTEM` from the same `.env`; its mute-list project
 identity is resolved from `bitblik_core` for that payment system.
 
+### 5. Maker premium and discount (optional)
+
+Makers can price an offer above or below the market rate within a range you
+set, in percent:
+
+- `MAX_PREMIUM` (default `0`): highest premium. A premium locks fewer sats for
+  the same fiat amount, so the taker pays above market.
+- `MIN_PREMIUM` (default `0`): lowest premium. A negative value allows a
+  discount: the maker locks more sats for the same fiat amount, so the taker
+  receives more sats than at the market rate.
+
+With both unset, makers can only offer market price. For example,
+`MIN_PREMIUM: -3` and `MAX_PREMIUM: 3` allow anything from a 3% discount to a
+3% premium. Requests outside the range are clamped, not rejected. Values must
+be between -100 and 100 (exclusive) and `MIN_PREMIUM` must not exceed
+`MAX_PREMIUM`; otherwise the coordinator logs a warning and uses `0` for the
+invalid bound. Both limits are advertised in the coordinator info as
+`min_premium_percent` (only when not `0`) and `max_premium_percent`. The maker
+fee is always charged on the market value, and `MIN_AMOUNT_SATS` /
+`MAX_AMOUNT_SATS` are checked against the market value, before the premium or
+discount is applied.
+
 ## Memory Profiling
 
 ### Runtime snapshots
