@@ -83,6 +83,10 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "28.2.13676358"
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     buildFeatures {
         resValues = true
     }
@@ -167,5 +171,15 @@ flutter {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
+
+// Flutter supplies merged assets outside AGP's normal unit-test dependency chain.
+tasks.configureEach {
+    val variant = Regex("package(.+)UnitTestForUnitTest").matchEntire(name)?.groupValues?.get(1)
+    if (variant != null) {
+        dependsOn("copyFlutterAssets$variant")
+    }
 }

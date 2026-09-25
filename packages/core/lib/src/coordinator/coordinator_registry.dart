@@ -49,6 +49,10 @@ class CoordinatorRegistry {
   final BitblikRpcClient rpcClient;
   final CoordinatorStore store;
 
+  /// App-wide lifecycle guard, including discovery's internal ranking scan.
+  /// Headless consumers can omit this to retain unrestricted refreshes.
+  final bool Function()? shouldRefreshStatistics;
+
   /// Discovery relays — used ONLY to find coordinators (their kind
   /// [kKindCoordinatorInfo] and kind [kKindRelayList] events). All
   /// per-coordinator communication is routed to each coordinator's own
@@ -92,8 +96,8 @@ class CoordinatorRegistry {
   Future<void>? _discoveryInFlight;
   Future<void>? _refreshDiscoveryRelaysInFlight;
   Future<void>? _finishedCountsRefreshInFlight;
-  final Set<String> _pendingStatsPubkeys = {};
-  final Set<String> _statsInFlightPubkeys = {};
+  final Map<String, _StatsRefreshRequest> _pendingStatsRequests = {};
+  final Map<String, _StatsRefreshRequest> _statsInFlightRequests = {};
   final Map<String, DateTime> _lastStatsAttempt = {};
   final Map<String, Future<void>> _healthInFlight = {};
   final Map<String, int> _healthFailures = {};
@@ -112,6 +116,7 @@ class CoordinatorRegistry {
     required this.rpcClient,
     required this.store,
     required this.relays,
+    this.shouldRefreshStatistics,
     this.discoveryPubkeyHex = kBitblikPubkeyHex,
     this.activePaymentSystemId = 'blik',
     this.probeStaleAfter = const Duration(seconds: 60),
@@ -354,7 +359,10 @@ class CoordinatorRegistry {
           CoordinatorColdStartPhase.loadingStats,
           discovered: discovered,
         );
-        await fetchNetworkFinishedCounts();
+        await fetchNetworkFinishedCounts(force: true, pubkeys: discovered);
+        // Resume onboarding later rather than persist a ranking from a scan
+        // intentionally cancelled by the app lifecycle.
+        if (shouldRefreshStatistics?.call() == false) return;
         final selection = await _finalizeColdStartDefaults(discovered);
         await store.saveBootstrapCompleted(activePaymentSystemId, true);
         _setColdStartState(
@@ -796,7 +804,10 @@ class CoordinatorRegistry {
 
   /// Background query for `kind=kKindOffer` events with `#s=success`
   /// within [networkFinishedWindow]. Updates `networkFinishedCount` per
-  /// known record.
+  /// enabled record. Explicit forced [pubkeys] can include disabled records
+  /// for onboarding or a user-requested refresh. [shouldContinue] is checked
+  /// before each coordinator/page and while consuming events; cancelled scans
+  /// preserve the previous statistics and freshness timestamp.
   ///
   /// Offer events are published to each coordinator's OWN relays (its
   /// NIP-65 set), NOT to the discovery relays — so we query each
@@ -806,29 +817,48 @@ class CoordinatorRegistry {
   Future<void> fetchNetworkFinishedCounts({
     bool force = false,
     Set<String>? pubkeys,
+    bool Function()? shouldContinue,
   }) async {
-    if (_disposed) return;
+    if (_disposed ||
+        shouldRefreshStatistics?.call() == false ||
+        shouldContinue?.call() == false) return;
     final now = DateTime.now();
     for (final record in _records.values) {
-      if (_mutedPubkeys.contains(record.pubkeyHex)) continue;
-      if (pubkeys != null
-          ? !pubkeys.contains(record.pubkeyHex)
-          : record.paymentSystem != activePaymentSystemId) continue;
+      bool canContinue() {
+        final current = _records[record.pubkeyHex];
+        return !_disposed &&
+            current != null &&
+            !_mutedPubkeys.contains(record.pubkeyHex) &&
+            (current.enabled || (force && pubkeys != null)) &&
+            (pubkeys != null
+                ? pubkeys.contains(record.pubkeyHex)
+                : current.paymentSystem == activePaymentSystemId) &&
+            (shouldRefreshStatistics?.call() ?? true) &&
+            (shouldContinue?.call() ?? true);
+      }
+
+      if (!canContinue()) continue;
+      final inFlight = _statsInFlightRequests[record.pubkeyHex];
+      if (!force && inFlight != null) {
+        inFlight.continuationChecks.add(canContinue);
+        continue;
+      }
       final fresh = record.lastFinishedCountUpdate;
       final attempted = _lastStatsAttempt[record.pubkeyHex];
       if (!force &&
-          (_statsInFlightPubkeys.contains(record.pubkeyHex) ||
-              (fresh != null &&
+          ((fresh != null &&
                   now.difference(fresh) < const Duration(minutes: 10)) ||
               (attempted != null &&
                   now.difference(attempted) < const Duration(seconds: 30)))) {
         continue;
       }
-      _pendingStatsPubkeys.add(record.pubkeyHex);
+      final pending = _pendingStatsRequests.putIfAbsent(
+          record.pubkeyHex, () => _StatsRefreshRequest(record.pubkeyHex));
+      pending.continuationChecks.add(canContinue);
     }
     final inFlight = _finishedCountsRefreshInFlight;
     if (inFlight != null) return inFlight;
-    if (_pendingStatsPubkeys.isEmpty) return;
+    if (_pendingStatsRequests.isEmpty) return;
     final refresh = _drainNetworkFinishedCountRefreshes();
     _finishedCountsRefreshInFlight = refresh;
     try {
@@ -841,25 +871,42 @@ class CoordinatorRegistry {
   }
 
   Future<void> _drainNetworkFinishedCountRefreshes() async {
-    while (!_disposed && _pendingStatsPubkeys.isNotEmpty) {
-      final batch = _pendingStatsPubkeys.take(2).toList();
-      _pendingStatsPubkeys.removeAll(batch);
-      _statsInFlightPubkeys.addAll(batch);
-      await _fetchNetworkFinishedCounts(batch);
-      _statsInFlightPubkeys.removeAll(batch);
+    while (!_disposed && _pendingStatsRequests.isNotEmpty) {
+      final batch = _pendingStatsRequests.values.take(2).toList();
+      for (final request in batch) {
+        _pendingStatsRequests.remove(request.pubkey);
+        _statsInFlightRequests[request.pubkey] = request;
+      }
+      try {
+        await _fetchNetworkFinishedCounts(batch);
+      } finally {
+        for (final request in batch) {
+          _statsInFlightRequests.remove(request.pubkey);
+        }
+      }
       // Yield to interaction and response processing between batches.
       await Future<void>.delayed(Duration.zero);
     }
   }
 
-  Future<void> _fetchNetworkFinishedCounts(List<String> pubkeys) async {
+  Future<void> _fetchNetworkFinishedCounts(
+      List<_StatsRefreshRequest> requests) async {
     final now = DateTime.now();
     var changed = false;
     await Future.wait(
-      pubkeys.map((pubkey) async {
+      requests.map((request) async {
+        if (!request.shouldContinue()) return;
+        final pubkey = request.pubkey;
         _lastStatsAttempt[pubkey] = now;
         try {
-          final stats = await _fetchFinishedStatsFor(pubkey);
+          final stats =
+              await _fetchFinishedStatsFor(pubkey, request.shouldContinue);
+          if (stats == null || !request.shouldContinue()) {
+            // Lifecycle cancellation is not a failed relay attempt. Resume may
+            // retry immediately instead of waiting for the failure cooldown.
+            _lastStatsAttempt.remove(pubkey);
+            return;
+          }
           final r = _records[pubkey];
           if (_disposed || r == null) return;
           _records[pubkey] = r.copyWith(
@@ -870,6 +917,7 @@ class CoordinatorRegistry {
           );
           changed = true;
         } catch (_) {
+          if (!request.shouldContinue()) _lastStatsAttempt.remove(pubkey);
           // Best-effort background refresh. A future refresh retries this
           // coordinator without preventing healthy coordinators from updating.
         }
@@ -883,7 +931,8 @@ class CoordinatorRegistry {
 
   /// Count `#s=success` [kKindOffer] events for a single coordinator within
   /// [networkFinishedWindow], querying that coordinator's own relays.
-  Future<_FinishedOfferStats> _fetchFinishedStatsFor(String pubkey) async {
+  Future<_FinishedOfferStats?> _fetchFinishedStatsFor(
+      String pubkey, bool Function() shouldContinue) async {
     final since =
         DateTime.now().subtract(networkFinishedWindow).millisecondsSinceEpoch ~/
             1000;
@@ -904,6 +953,7 @@ class CoordinatorRegistry {
 
     var until = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     while (true) {
+      if (!shouldContinue()) return null;
       final response = ndk.requests.query(
         name: 'coordinator-network-finished',
         filter: Filter(
@@ -922,6 +972,10 @@ class CoordinatorRegistry {
       var pageCount = 0;
       var oldest = until;
       await for (final event in response.stream.timeout(_queryTimeout)) {
+        if (!shouldContinue()) {
+          await ndk.requests.closeSubscription(response.requestId);
+          return null;
+        }
         if (event.pubKey != pubkey) continue;
         pageCount++;
         if (event.createdAt < oldest) oldest = event.createdAt;
@@ -946,6 +1000,8 @@ class CoordinatorRegistry {
           counterpartyCounts[counterparty] = count + 1;
         }
       }
+
+      if (!shouldContinue()) return null;
 
       // Failed/partial relay queries must not replace persisted statistics
       // with zero or mark them fresh for the next ten minutes.
@@ -973,7 +1029,7 @@ class CoordinatorRegistry {
 
   Future<void> dispose() async {
     _disposed = true;
-    _pendingStatsPubkeys.clear();
+    _pendingStatsRequests.clear();
     for (final retry in _healthRetries.values) {
       retry.cancel();
     }
@@ -1593,4 +1649,14 @@ class CoordinatorColdStartRecord {
     required this.enabled,
     required this.candidate,
   });
+}
+
+/// Shared scans stay useful while any coalesced caller still needs them.
+class _StatsRefreshRequest {
+  final String pubkey;
+  final List<bool Function()> continuationChecks = [];
+
+  _StatsRefreshRequest(this.pubkey);
+
+  bool shouldContinue() => continuationChecks.any((check) => check());
 }

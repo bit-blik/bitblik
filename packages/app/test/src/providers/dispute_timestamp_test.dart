@@ -84,6 +84,9 @@ void main() {
         publicKeyProvider.overrideWith((ref) async => role),
         initializedApiServiceProvider.overrideWith((ref) async => api),
         appLifecycleProvider.overrideWith((ref) => _Lifecycle()),
+        activeOfferNotificationsProvider.overrideWith(
+          (ref) => ActiveOfferNotificationsNotifier(load: false),
+        ),
       ],
     );
     final loaded = Completer<void>();

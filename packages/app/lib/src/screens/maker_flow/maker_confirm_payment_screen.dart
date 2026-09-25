@@ -22,7 +22,9 @@ class MakerConfirmPaymentScreen extends ConsumerStatefulWidget {
 }
 
 class _MakerConfirmPaymentScreenState
-    extends ConsumerState<MakerConfirmPaymentScreen> {
+    extends ConsumerState<MakerConfirmPaymentScreen>
+    with WidgetsBindingObserver {
+  bool _appVisible = true;
   bool _fetchInFlight = false;
   bool _fetchFailed = false;
   Timer? _fetchRetry;
@@ -72,6 +74,12 @@ class _MakerConfirmPaymentScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _appVisible =
+        lifecycle != AppLifecycleState.hidden &&
+        lifecycle != AppLifecycleState.paused &&
+        lifecycle != AppLifecycleState.detached;
     // Reset any lingering loading state in post-frame; modifying a provider
     // synchronously inside initState throws
     // "Tried to modify a provider while the widget tree was building".
@@ -90,10 +98,34 @@ class _MakerConfirmPaymentScreenState
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Inactive also covers transient focus changes (dialogs/system overlays).
+    // Only a real resume should restart work stopped while hidden.
+    if (state == AppLifecycleState.inactive) return;
+    final visible = state == AppLifecycleState.resumed;
+    if (_appVisible == visible) return;
+    _appVisible = visible;
+    if (!visible) {
+      _fetchRetry?.cancel();
+      _fetchRetry = null;
+      _autoConfirmTicker?.cancel();
+      _autoConfirmTicker = null;
+      return;
+    }
+    if (!mounted) return;
+    _fetchBlikCode();
+    if (ref.read(activeOfferProvider)?.status == OfferStatus.takerCharged) {
+      _startAutoConfirmTicker();
+    }
+    // Remaining time derives from timestamps, including time spent hidden.
+    setState(() {});
+  }
+
   // Ticker only schedules repaints; it carries no countdown state, so closing
   // and reopening the app or navigating away and back cannot reset the timer.
   void _startAutoConfirmTicker() {
-    if (_autoConfirmTicker != null) return;
+    if (!_appVisible || _autoConfirmTicker != null) return;
     _autoConfirmTicker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -101,6 +133,7 @@ class _MakerConfirmPaymentScreenState
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _autoConfirmTicker?.cancel();
     _fetchRetry?.cancel();
     super.dispose();
@@ -130,7 +163,12 @@ class _MakerConfirmPaymentScreenState
       );
 
   Future<void> _fetchBlikCode() async {
-    if (!mounted || _fetchInFlight || (_fetchRetry?.isActive ?? false)) return;
+    if (!mounted ||
+        !_appVisible ||
+        _fetchInFlight ||
+        (_fetchRetry?.isActive ?? false)) {
+      return;
+    }
     final offer = ref.read(activeOfferProvider);
     final makerId = ref.read(publicKeyProvider).value;
     if (!_canFetchCode(offer) ||
@@ -173,7 +211,7 @@ class _MakerConfirmPaymentScreenState
       }
     } finally {
       _fetchInFlight = false;
-      if (mounted) {
+      if (mounted && _appVisible) {
         final current = ref.read(activeOfferProvider);
         if (_canFetchCode(current) &&
             !_sameCodeAttempt(_loadedOffer, current)) {
@@ -1160,6 +1198,10 @@ class _MakerConfirmPaymentScreenState
   }
 
   void _handleStatusUpdate(OfferStatus statusEnum) {
+    if (statusEnum != OfferStatus.takerCharged) {
+      _autoConfirmTicker?.cancel();
+      _autoConfirmTicker = null;
+    }
     if (statusEnum == OfferStatus.takerCharged) {
       // Begin the auto-confirm countdown repaint ticker (idempotent).
       _startAutoConfirmTicker();

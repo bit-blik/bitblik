@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  collection: ^1.19.1
   flutter:
     sdk: flutter
   flutter_webln: ^0.0.1
@@ -83,7 +84,7 @@ dependencies:
   flutter_webrtc: ^1.6.2+hotfix.1
   flutter_webrtc_zxing: ^0.2.1
   web: ^1.1.1
-  flutter_local_notifications: ^20.1.0
+  flutter_local_notifications: ^22.3.1
   google_mlkit_text_recognition: ^0.16.0
   nfc_manager: ^4.2.1
   nfc_manager_ndef: ^1.1.0

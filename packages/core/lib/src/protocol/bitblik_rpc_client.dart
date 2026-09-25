@@ -64,7 +64,10 @@ class BitblikRpcClient {
   final Map<String, StreamSubscription<Nip01Event>> _listeners = {};
   final Set<String> _retiredSubscriptions = {};
   Timer? _subscriptionRetry;
+  Timer? _subscriptionStable;
+  int _subscriptionFailures = 0;
   bool _stopped = false;
+  bool _networkAvailable = true;
   Future<void>? _rebindInFlight;
   Future<void> _responseRelayUpdates = Future.value();
   final Map<String, List<String>> _activeRequestRelays = {};
@@ -97,6 +100,23 @@ class BitblikRpcClient {
   Future<void> start() async {
     _stopped = false;
     await _syncResponseRelays();
+  }
+
+  /// OS reachability hint; do not wake retry timers while networking is absent.
+  /// Existing requests keep their normal timeout/response semantics.
+  void setNetworkAvailable(bool available) {
+    if (_networkAvailable == available) return;
+    _networkAvailable = available;
+    if (!available) {
+      _subscriptionRetry?.cancel();
+      _subscriptionRetry = null;
+      _subscriptionStable?.cancel();
+    } else if (!_stopped) {
+      unawaited(_syncResponseRelays().catchError((Object error) {
+        Logger.log.w(
+            () => 'RPC response recovery after network restore failed: $error');
+      }));
+    }
   }
 
   /// Switches the client identity without replacing the shared [Ndk] instance.
@@ -149,19 +169,26 @@ class BitblikRpcClient {
       explicitRelays: relays,
     );
     final subscription = _subscription!;
+    _subscriptionRetry?.cancel();
+    _subscriptionRetry = null;
+    _subscriptionStable?.cancel();
+    if (_subscriptionFailures > 0) {
+      // Reopening a stream is not proof of recovery: rejected subscriptions
+      // can close immediately. Reset only once the replacement stays open.
+      _subscriptionStable = Timer(const Duration(seconds: 30), () {
+        if (!_stopped &&
+            identical(_subscription, subscription) &&
+            subscriptionHasOpenTransport(ndk, subscription.requestId, relays)) {
+          _subscriptionFailures = 0;
+        }
+      });
+    }
     void interrupted() {
       if (_stopped || !identical(_subscription, subscription)) return;
       _subscription = null;
       _retiredSubscriptions.add(subscription.requestId);
-      _subscriptionRetry?.cancel();
-      _subscriptionRetry = Timer(const Duration(seconds: 1), () {
-        if (!_stopped) {
-          unawaited(_syncResponseRelays().catchError((Object error) {
-            Logger.log
-                .w(() => 'RPC response subscription recovery failed: $error');
-          }));
-        }
-      });
+      _subscriptionStable?.cancel();
+      _scheduleSubscriptionRetry();
     }
 
     _listeners[subscription.requestId] = subscription.stream.listen(
@@ -173,6 +200,33 @@ class BitblikRpcClient {
       onDone: interrupted,
     );
     _responseRelays = List.from(relays);
+  }
+
+  void _scheduleSubscriptionRetry() {
+    if (_stopped ||
+        !_networkAvailable ||
+        (_configuredResponseRelays.isEmpty &&
+            _activeRequestRelays.values.every((relays) => relays.isEmpty))) {
+      return;
+    }
+    _subscriptionRetry?.cancel();
+    // Equal jitter keeps fleet reconnects apart without permitting a tight
+    // loop. Retry indefinitely for notification reliability, at most twice a
+    // minute after persistent failure, and let new routes recover promptly.
+    final ceilingMs = min(60000, 1000 * (1 << min(_subscriptionFailures, 6)));
+    _subscriptionFailures = min(_subscriptionFailures + 1, 7);
+    final floorMs = ceilingMs ~/ 2;
+    final delay = Duration(
+        milliseconds: floorMs + _random.nextInt(ceilingMs - floorMs + 1));
+    _subscriptionRetry = Timer(delay, () {
+      _subscriptionRetry = null;
+      if (!_stopped) {
+        unawaited(_syncResponseRelays().catchError((Object error) {
+          Logger.log
+              .w(() => 'RPC response subscription recovery failed: $error');
+        }));
+      }
+    });
   }
 
   /// Re-point the response subscription at [relays] (the union of the relays
@@ -194,12 +248,35 @@ class BitblikRpcClient {
   }
 
   Future<void> _applyResponseRelays() async {
+    if (!_networkAvailable) return;
     if (_stopped) return;
     final target = <String>{
       ..._configuredResponseRelays,
       for (final relays in _activeRequestRelays.values) ...relays,
     };
+    if (target.isEmpty) {
+      _subscriptionRetry?.cancel();
+      _subscriptionRetry = null;
+      _subscriptionStable?.cancel();
+      _subscriptionFailures = 0;
+      final previous = _subscription;
+      _subscription = null;
+      _responseRelays = [];
+      if (previous != null) _retiredSubscriptions.add(previous.requestId);
+      await _closeRetiredSubscriptions();
+      return;
+    }
     final current = _responseRelays.toSet();
+    if (_subscription == null &&
+        _subscriptionRetry?.isActive == true &&
+        _pending.isEmpty &&
+        current.length == target.length &&
+        current.containsAll(target)) {
+      // Registry refreshes must not bypass backoff. An explicit request or
+      // changed route can still establish a response path immediately.
+      await _closeRetiredSubscriptions();
+      return;
+    }
     if (_subscription != null &&
         current.containsAll(target) &&
         (target.length == current.length || _pending.isNotEmpty)) {
@@ -209,7 +286,12 @@ class BitblikRpcClient {
     final previous = _subscription;
     // Listen before closing the old subscription, including while health
     // probes for disabled coordinators are still waiting for replies.
-    await _openSubscription(target.toList(growable: false));
+    try {
+      await _openSubscription(target.toList(growable: false));
+    } catch (_) {
+      if (_subscription == null) _scheduleSubscriptionRetry();
+      rethrow;
+    }
     if (previous != null) {
       _retiredSubscriptions.add(previous.requestId);
     }
@@ -232,6 +314,9 @@ class BitblikRpcClient {
   Future<void> stop() async {
     _stopped = true;
     _subscriptionRetry?.cancel();
+    _subscriptionRetry = null;
+    _subscriptionStable?.cancel();
+    _subscriptionFailures = 0;
     await _responseRelayUpdates;
     final ids = {
       ..._retiredSubscriptions,

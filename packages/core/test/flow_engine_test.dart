@@ -126,10 +126,15 @@ void main() {
         expect(t!.target, target);
         // Duration is tunable config — only require it to be present + positive,
         // not a fixed value, so retuning the yml doesn't break this test.
-        expect(t.durationSeconds, isNotNull,
-            reason: '$state timeout has no duration_seconds');
-        expect(t.durationSeconds! > 0, isTrue,
-            reason: '$state duration must be positive');
+        if (state == 'takerCharged') {
+          expect(t.durationParam, 'taker_charged_auto_confirm');
+          expect(t.durationSeconds, isNull);
+        } else {
+          expect(t.durationSeconds, isNotNull,
+              reason: '$state timeout has no duration_seconds');
+          expect(t.durationSeconds! > 0, isTrue,
+              reason: '$state duration must be positive');
+        }
       });
     });
   });

@@ -5,6 +5,7 @@ import 'package:bitblik/i18n/gen/strings.g.dart';
 import 'package:bitblik/src/flow/flow_provider.dart';
 import 'package:bitblik/src/flow/flow_screen.dart';
 import 'package:bitblik/src/providers/providers.dart';
+import 'package:bitblik/src/screens/maker_flow/maker_confirm_payment_screen.dart';
 import 'package:bitblik/src/services/api_service_nostr.dart';
 import 'package:bitblik/src/services/key_service.dart';
 import 'package:bitblik/src/settings/app_preferences.dart';
@@ -102,6 +103,10 @@ void main() {
     _Api api, {
     Future<String?>? key,
   }) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    addTearDown(() {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    });
     final router = GoRouter(
       initialLocation: '/flow',
       routes: [
@@ -115,6 +120,8 @@ void main() {
           activeOfferProvider.overrideWith((ref) => active),
           apiServiceProvider.overrideWithValue(api),
           keyServiceProvider.overrideWithValue(_Key()),
+          coordinatorTakerChargedAutoConfirmDurationProvider('coordinator')
+              .overrideWithValue(const Duration(minutes: 1)),
           publicKeyProvider.overrideWith((ref) => key ?? Future.value('maker')),
           flowEngineProvider.overrideWith((ref) async => engine),
           bitcoinDisplayUnitProvider.overrideWith((ref) => _Display()),
@@ -173,6 +180,102 @@ void main() {
       },
     );
   }
+
+  for (final hiddenState in [
+    AppLifecycleState.hidden,
+    AppLifecycleState.paused,
+    AppLifecycleState.detached,
+  ]) {
+    testWidgets('retry stops while $hiddenState and resumes once', (
+      tester,
+    ) async {
+      final api = _Api((call) async => call == 1 ? null : '123456');
+      await mount(tester, _Active(original), api);
+      expect(api.calls.length, 1);
+      tester.binding.handleAppLifecycleStateChanged(hiddenState);
+      await tester.pump(const Duration(seconds: 10));
+      expect(api.calls.length, 1);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pump(const Duration(seconds: 3));
+      expect(api.calls.length, 1);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(api.calls.length, 2);
+      expect(find.text('123 456'), findsOneWidget);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump(const Duration(seconds: 3));
+      expect(api.calls.length, 2);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
+  testWidgets(
+    'background completion retains code without duplicate resume fetch',
+    (tester) async {
+      final pending = Completer<String?>();
+      final api = _Api((_) => pending.future);
+      await mount(tester, _Active(original), api);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      pending.complete('123456');
+      await tester.pump(const Duration(seconds: 5));
+      expect(api.calls.length, 1);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(api.calls.length, 1);
+      expect(find.text('123 456'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets('resume during in-flight fetch waits for same response', (
+    tester,
+  ) async {
+    final pending = Completer<String?>();
+    final api = _Api((_) => pending.future);
+    await mount(tester, _Active(original), api);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump(const Duration(seconds: 5));
+    expect(api.calls.length, 1);
+    pending.complete('123456');
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('123 456'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('auto-confirm repaint ticker pauses and restarts on resume', (
+    tester,
+  ) async {
+    final api = _Api((_) async => '123456');
+    await mount(
+      tester,
+      _Active(original.copyWith(status: OfferStatus.takerCharged)),
+      api,
+    );
+    var repaints = 0;
+    final previousCallback = debugOnRebuildDirtyWidget;
+    debugOnRebuildDirtyWidget = (element, builtOnce) {
+      previousCallback?.call(element, builtOnce);
+      if (element.widget is MakerConfirmPaymentScreen) repaints++;
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = previousCallback);
+    await tester.pump(const Duration(seconds: 1));
+    expect(repaints, greaterThan(0));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    repaints = 0;
+    await tester.pump(const Duration(seconds: 5));
+    expect(repaints, 0);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    repaints = 0;
+    await tester.pump(const Duration(seconds: 1));
+    expect(repaints, greaterThan(0));
+    expect(api.calls, isEmpty);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets('status push before reply keeps one request and displays reply', (
     tester,

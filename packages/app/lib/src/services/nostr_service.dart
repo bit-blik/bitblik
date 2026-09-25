@@ -88,6 +88,13 @@ class NostrService {
   StreamSubscription<Nip01Event>? _dmInboxEvents;
   Future<void>? _dmInboxStartInFlight;
   bool _dmInboxReady = false;
+  bool _backgrounded = false;
+  bool _networkAvailable = true;
+  bool _offersSuspended = false;
+  Future<void> _lifecycleUpdate = Future.value();
+  int _offerStatusGeneration = 0;
+  Future<void> _offerSubscriptionUpdates = Future.value();
+  Timer? _idleConnectionCleanup;
   int _dmInboxLeases = 0;
   final _dmMessageController = StreamController<Nip17Message>.broadcast();
   final Map<String, Nip17Message> _dmMessagesByRumorId = {};
@@ -161,6 +168,7 @@ class NostrService {
       ndk: _ndk!,
       rpcClient: _rpcClient!,
       store: CoordinatorPrefsStore(),
+      shouldRefreshStatistics: () => !_backgrounded,
       relays: _relayUrls,
     );
     await _coordinatorRegistry!.init();
@@ -168,11 +176,10 @@ class NostrService {
     _coordinatorRegistryChangesSub = _coordinatorRegistry!.changes.listen((
       records,
     ) {
-      final enabledPubkeys =
-          records
-              .where((record) => record.enabled)
-              .map((record) => record.pubkeyHex)
-              .toSet();
+      final enabledPubkeys = records
+          .where((record) => record.enabled)
+          .map((record) => record.pubkeyHex)
+          .toSet();
       _pruneKnownOffers(enabledPubkeys);
       // Keep the RPC response subscription pointed at the relays of all
       // enabled coordinators so we receive replies regardless of where each
@@ -270,6 +277,9 @@ class NostrService {
     // reconnect cannot flush a durable queued event as an anonymous account.
     _ensureClientSigner();
     _ndk!.accounts.loginExternalSigner(signer: _clientSigner!);
+    // Wallet API is pinned with our lifecycle patch.
+    // ignore: experimental_member_use
+    _ndk!.wallets.setBackgrounded(_backgrounded);
 
     await IsolateManager.instance.ready;
 
@@ -345,20 +355,80 @@ class NostrService {
       subscriptionName: 'client-responses',
       clientId: clientId,
     );
+    _rpcClient!.setNetworkAvailable(_networkAvailable);
     await _rpcClient!.start();
     Logger.log.i(() => '👂 Subscribed to coordinator responses');
   }
 
+  void setNetworkAvailable(bool available) {
+    _networkAvailable = available;
+    _rpcClient?.setNetworkAvailable(available);
+  }
+
+  /// Suspend optional UI work while keeping offer alerts and RPCs available.
+  Future<void> setBackgrounded(
+    bool backgrounded, {
+    required bool keepOfferAlerts,
+  }) {
+    _backgrounded = backgrounded;
+    _idleConnectionCleanup?.cancel();
+    if (backgrounded) {
+      // One follow-up after existing short queries settle; never a polling loop.
+      _idleConnectionCleanup = Timer(const Duration(seconds: 30), () {
+        if (_backgrounded) {
+          unawaited(
+            _ndk?.relays.closeIdleConnections().catchError((Object error) {
+              Logger.log.w(
+                () => 'Could not release idle relays: ${error.runtimeType}',
+              );
+            }),
+          );
+        }
+      });
+    }
+    _offersSuspended = backgrounded && !keepOfferAlerts;
+    // ignore: experimental_member_use
+    _ndk?.wallets.setBackgrounded(backgrounded);
+    final update = _lifecycleUpdate.then((_) async {
+      if (!_isInitialized) return;
+      if (_backgrounded) {
+        try {
+          await _dmInboxStartInFlight;
+        } catch (_) {
+          // A failed optional inbox start must not prevent suspension.
+        }
+        _dmInboxReady = false;
+        await _stopDmInbox(preserveMessages: true);
+      } else if (_dmInboxLeases > 0) {
+        try {
+          await ensureDmInboxReady();
+        } catch (error) {
+          Logger.log.w(
+            () => 'Could not resume optional DM inbox: ${error.runtimeType}',
+          );
+        }
+      }
+      if (_offerSubscriptionRequested) {
+        await _syncOfferSubscription(
+          coordinatorRegistry.enabled.map((record) => record.pubkeyHex).toSet(),
+        );
+      }
+      if (_backgrounded) await _ndk?.relays.closeIdleConnections();
+    });
+    _lifecycleUpdate = update.catchError((Object _) {});
+    return update;
+  }
+
   /// Starts the shared NIP-17 inbox used by mounted dispute conversations.
   Future<void> ensureDmInboxReady() async {
-    if (_dmInboxReady) return;
+    if (_dmInboxReady || _backgrounded) return;
     final existing = _dmInboxStartInFlight;
     if (existing != null) return existing;
     final future = _startDmInbox();
     _dmInboxStartInFlight = future;
     try {
       await future;
-      _dmInboxReady = true;
+      _dmInboxReady = !_backgrounded && _dmInboxSubscription != null;
     } finally {
       _dmInboxStartInFlight = null;
     }
@@ -394,8 +464,7 @@ class NostrService {
         'NostrService must be initialized before switching Neko',
       );
     }
-    if (_keyService.publicKeyHex == null ||
-        _keyService.privateKeyHex == null) {
+    if (_keyService.publicKeyHex == null || _keyService.privateKeyHex == null) {
       throw StateError('KeyService does not contain a usable Neko');
     }
     if (_clientSigner?.getPublicKey() == _keyService.publicKeyHex) return;
@@ -479,7 +548,8 @@ class NostrService {
       );
     }
 
-    await _stopDmInbox();
+    await _stopDmInbox(preserveMessages: true);
+    if (_backgrounded || _dmInboxLeases == 0) return;
     final subscription = ndk.requests.subscription(
       name: 'bitblik-dm-live',
       explicitRelays: inboxRelays,
@@ -523,10 +593,10 @@ class NostrService {
     }
   }
 
-  Future<void> _stopDmInbox() async {
+  Future<void> _stopDmInbox({bool preserveMessages = false}) async {
     await _dmInboxEvents?.cancel();
     _dmInboxEvents = null;
-    _dmMessagesByRumorId.clear();
+    if (!preserveMessages) _dmMessagesByRumorId.clear();
     final subscription = _dmInboxSubscription;
     _dmInboxSubscription = null;
     if (subscription != null && _ndk != null) {
@@ -643,10 +713,14 @@ class NostrService {
   }
 
   Future<Map<String, dynamic>> getOfferInitiation(
-      String coordinatorPubkey, String operationId) async {
+    String coordinatorPubkey,
+    String operationId,
+  ) async {
     final response = await sendRequest(
-      NostrRequest(method: kRpcGetOfferInitiation,
-          params: {'operation_id': operationId}),
+      NostrRequest(
+        method: kRpcGetOfferInitiation,
+        params: {'operation_id': operationId},
+      ),
       coordinatorPubkey,
       timeoutOverride: const Duration(seconds: 10),
     );
@@ -675,8 +749,9 @@ class NostrService {
     }
     _offerSubscriptionRequested = true;
     _offerPlatformTag = platformTag;
-    final enabledPubkeys =
-        coordinatorRegistry.enabled.map((record) => record.pubkeyHex).toSet();
+    final enabledPubkeys = coordinatorRegistry.enabled
+        .map((record) => record.pubkeyHex)
+        .toSet();
     await _syncOfferSubscription(enabledPubkeys);
   }
 
@@ -691,25 +766,28 @@ class NostrService {
   }
 
   /// Stop the live offer subscription
-  Future<void> stopOfferSubscription() async {
+  Future<void> stopOfferSubscription() {
     _offerSubscriptionRequested = false;
-    if (_offerSubscription != null) {
-      await _ndk!.requests.closeSubscription(_offerSubscription!.requestId);
-      _offerSubscription = null;
-    }
-    _offerSubscriptionAuthors = const {};
-    _liveOfferSubscriptionPlatformTag = null;
-    await _offerStreamController.close();
-    _offerStreamController =
-        StreamController<Offer>.broadcast(); // so can restart
+    return _syncOfferSubscription(const {});
   }
 
-  Future<void> _syncOfferSubscription(Set<String> enabledPubkeys) async {
+  Future<void> _syncOfferSubscription(Set<String> enabledPubkeys) {
+    final update = _offerSubscriptionUpdates.then(
+      (_) => _applyOfferSubscription(enabledPubkeys),
+    );
+    _offerSubscriptionUpdates = update.catchError((Object _) {});
+    return update;
+  }
+
+  Future<void> _applyOfferSubscription(Set<String> enabledPubkeys) async {
     _pruneKnownOffers(enabledPubkeys);
-    if (enabledPubkeys.isEmpty) {
-      if (_offerSubscription != null) {
-        await _ndk!.requests.closeSubscription(_offerSubscription!.requestId);
-        _offerSubscription = null;
+    if (enabledPubkeys.isEmpty ||
+        _offersSuspended ||
+        !_offerSubscriptionRequested) {
+      final previous = _offerSubscription;
+      _offerSubscription = null;
+      if (previous != null) {
+        await _ndk!.requests.closeSubscription(previous.requestId);
       }
       _offerSubscriptionAuthors = const {};
       _liveOfferSubscriptionPlatformTag = null;
@@ -724,9 +802,12 @@ class NostrService {
       return;
     }
 
-    if (_offerSubscription != null) {
-      await _ndk!.requests.closeSubscription(_offerSubscription!.requestId);
+    final previous = _offerSubscription;
+    _offerSubscription = null;
+    if (previous != null) {
+      await _ndk!.requests.closeSubscription(previous.requestId);
     }
+    if (_offersSuspended || !_offerSubscriptionRequested) return;
 
     final filter = Filter(
       kinds: [kKindOffer],
@@ -1162,12 +1243,11 @@ class NostrService {
     }
 
     // Only aggregate coordinators serving the selected payment system.
-    final coordinators =
-        paymentSystemId == null
-            ? coordinatorRegistry.enabled
-            : coordinatorRegistry.enabled
-                .where((c) => c.paymentSystem == paymentSystemId)
-                .toList();
+    final coordinators = paymentSystemId == null
+        ? coordinatorRegistry.enabled
+        : coordinatorRegistry.enabled
+              .where((c) => c.paymentSystem == paymentSystemId)
+              .toList();
     if (coordinators.isEmpty) {
       Logger.log.w(() => "No coordinators enabled, cannot get stats.");
       return _emptyStats();
@@ -1314,14 +1394,15 @@ class NostrService {
     String coordinatorPubKey,
     String userPubkey,
   ) async {
-    if (!_isInitialized) {
-      await init();
+    final generation = ++_offerStatusGeneration;
+    if (!_isInitialized) await init();
+    if (generation != _offerStatusGeneration) return;
+    final previous = _offerStatusSubscription;
+    _offerStatusSubscription = null;
+    if (previous != null) {
+      await _ndk!.requests.closeSubscription(previous.requestId);
     }
-
-    // Close existing subscription if any
-    if (_offerStatusSubscription != null) {
-      await stopOfferStatusSubscription();
-    }
+    if (generation != _offerStatusGeneration) return;
 
     final filter = Filter(
       kinds: [kKindOfferStatusUpdate],
@@ -1341,11 +1422,11 @@ class NostrService {
   }
 
   Future<void> stopOfferStatusSubscription() async {
-    if (_offerStatusSubscription != null) {
-      await _ndk!.requests.closeSubscription(
-        _offerStatusSubscription!.requestId,
-      );
-      _offerStatusSubscription = null;
+    _offerStatusGeneration++;
+    final previous = _offerStatusSubscription;
+    _offerStatusSubscription = null;
+    if (previous != null) {
+      await _ndk!.requests.closeSubscription(previous.requestId);
       Logger.log.i(() => '📊 Stopped offer status subscription');
     }
   }
@@ -1382,6 +1463,12 @@ class NostrService {
 
   /// Dispose resources
   Future<void> dispose() async {
+    _idleConnectionCleanup?.cancel();
+    _offerSubscriptionRequested = false;
+    _offersSuspended = true;
+    _offerStatusGeneration++;
+    await _offerSubscriptionUpdates;
+    await _lifecycleUpdate;
     _initInFlight = null;
     _dmInboxReady = false;
     _dmInboxStartInFlight = null;
@@ -1422,25 +1509,30 @@ class NostrService {
 
   /// Emits on changes to the connected coordinator relay set. An unrelated
   /// wallet/discovery connection must not mask recovery of a trading relay.
-  Stream<bool> get relayConnectionState {
+  Stream<bool> get relayConnectionState async* {
     final ndk = _ndk;
-    if (ndk == null) return const Stream<bool>.empty();
-    return ndk.connectivity.relayConnectivityChanges
-        .map((relays) {
-          final relevant = _enabledCoordinatorRelays()
-              .map(normalizeRelayUrl)
-              .toSet();
-          return relays
-              .where(
-                (relay) =>
-                    relay.isConnected &&
-                    relevant.contains(normalizeRelayUrl(relay.url)),
-              )
-              .map((relay) => relay.key)
-              .toSet();
-        })
-        .distinct((previous, next) => setEquals(previous, next))
-        .map((connected) => connected.isNotEmpty);
+    if (ndk == null) return;
+    var previous = <RelayConnectionKey>{};
+    await for (final relays in ndk.connectivity.relayConnectivityChanges) {
+      final relevant = _enabledCoordinatorRelays()
+          .map(normalizeRelayUrl)
+          .toSet();
+      final connected = relays
+          .where(
+            (relay) =>
+                relay.isConnected &&
+                relevant.contains(normalizeRelayUrl(relay.url)),
+          )
+          .map((relay) => relay.key)
+          .toSet();
+      final gainedRoute = connected.difference(previous).isNotEmpty;
+      final lostAll = connected.isEmpty && previous.isNotEmpty;
+      previous = connected;
+      // Losing a redundant route is not a recovery trigger. An authenticated
+      // route returning still triggers recovery even if anonymous stayed up.
+      if (gainedRoute) yield true;
+      if (lostAll) yield false;
+    }
   }
 }
 

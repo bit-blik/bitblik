@@ -7,6 +7,7 @@ import 'package:ndk/domain_layer/entities/broadcast_state.dart';
 import 'package:ndk/domain_layer/entities/relay_connectivity.dart';
 import 'package:ndk/domain_layer/entities/connection_source.dart';
 import 'package:test/test.dart';
+import 'package:fake_async/fake_async.dart';
 
 void main() {
   const firstPrivateKey =
@@ -65,6 +66,131 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 1100));
     expect(ndk.requests.active.length, 1);
     expect(ndk.requests.active.keys.single, isNot(oldId));
+  });
+
+  test('rejected reply streams back off even during repeated relay updates',
+      () async {
+    final clock = FakeAsync();
+    final ndk = _TestNdk();
+    late BitblikRpcClient client;
+    clock.run((_) {
+      ndk.requests.closeImmediately = true;
+      client = BitblikRpcClient(
+          ndk: ndk,
+          signer: Bip340EventSigner(
+              privateKey: firstPrivateKey,
+              publicKey: bip340.getPublicKey(firstPrivateKey)),
+          relays: const ['wss://enabled.example']);
+      unawaited(client.start());
+    });
+    for (var i = 0; i < 600; i++) {
+      clock.run((_) =>
+          unawaited(client.updateResponseRelays({'wss://enabled.example'})));
+      await _advance(clock, const Duration(seconds: 1));
+    }
+    // Persistent rejection must not reopen once per second. Jitter allows
+    // at most one attempt per 30 seconds after reaching the 60-second cap.
+    expect(ndk.requests._nextId, inInclusiveRange(8, 28));
+    final attempts = ndk.requests._nextId;
+    ndk.requests.closeImmediately = false;
+    clock.run((_) =>
+        unawaited(client.updateResponseRelays({'wss://replacement.example'})));
+    await _advance(clock, Duration.zero);
+    expect(ndk.requests._nextId, attempts + 1);
+    expect(ndk.requests.active.values.single.$1, {'wss://replacement.example'});
+    clock.run((_) => unawaited(client.stop()));
+    await _advance(clock, const Duration(minutes: 2));
+    expect(ndk.requests._nextId, attempts + 1);
+    expect(ndk.requests.active, isEmpty);
+    await ndk.destroy();
+  });
+
+  test('OS offline hint suspends retries until network returns', () async {
+    final clock = FakeAsync();
+    final ndk = _TestNdk();
+    late BitblikRpcClient client;
+    clock.run((_) {
+      ndk.requests.closeImmediately = true;
+      client = BitblikRpcClient(
+          ndk: ndk,
+          signer: Bip340EventSigner(
+              privateKey: firstPrivateKey,
+              publicKey: bip340.getPublicKey(firstPrivateKey)),
+          relays: const ['wss://enabled.example']);
+      unawaited(client.start());
+    });
+    await _advance(clock, Duration.zero);
+    clock.run((_) => client.setNetworkAvailable(false));
+    final attempts = ndk.requests._nextId;
+    await _advance(clock, const Duration(minutes: 10));
+    expect(ndk.requests._nextId, attempts);
+    ndk.requests.closeImmediately = false;
+    clock.run((_) => client.setNetworkAvailable(true));
+    await _advance(clock, Duration.zero);
+    expect(ndk.requests._nextId, attempts + 1);
+    clock.run((_) => unawaited(client.stop()));
+    await _advance(clock, Duration.zero);
+    await ndk.destroy();
+  });
+
+  test('reply retry backoff resets after a stable open transport', () async {
+    final clock = FakeAsync();
+    final ndk = _TestNdk();
+    late BitblikRpcClient client;
+    clock.run((_) {
+      ndk.requests.closeImmediately = true;
+      client = BitblikRpcClient(
+          ndk: ndk,
+          signer: Bip340EventSigner(
+              privateKey: firstPrivateKey,
+              publicKey: bip340.getPublicKey(firstPrivateKey)),
+          relays: const ['wss://enabled.example']);
+      unawaited(client.start());
+    });
+    for (var i = 0; i < 180; i++) {
+      await _advance(clock, const Duration(seconds: 1));
+    }
+    ndk.requests.closeImmediately = false;
+    for (var i = 0; i < 91; i++) {
+      await _advance(clock, const Duration(seconds: 1));
+    }
+    final attempts = ndk.requests._nextId;
+    clock.run((_) => unawaited(ndk.requests.active.values.single.$2.close()));
+    await _advance(clock, Duration.zero);
+    await _advance(clock, const Duration(milliseconds: 1100));
+    expect(ndk.requests._nextId, attempts + 1);
+    clock.run((_) => unawaited(client.stop()));
+    await _advance(clock, Duration.zero);
+    await ndk.destroy();
+  });
+
+  test('empty relay set stays idle and adding a relay starts listening',
+      () async {
+    final clock = FakeAsync();
+    final ndk = _TestNdk();
+    late BitblikRpcClient client;
+    clock.run((_) {
+      client = BitblikRpcClient(
+          ndk: ndk,
+          signer: Bip340EventSigner(
+              privateKey: firstPrivateKey,
+              publicKey: bip340.getPublicKey(firstPrivateKey)),
+          relays: const []);
+      unawaited(client.start());
+    });
+    await _advance(clock, const Duration(minutes: 2));
+    expect(ndk.requests._nextId, 0);
+    clock.run((_) =>
+        unawaited(client.updateResponseRelays({'wss://enabled.example'})));
+    await _advance(clock, Duration.zero);
+    expect(ndk.requests._nextId, 1);
+    clock.run((_) => unawaited(client.updateResponseRelays({})));
+    await _advance(clock, const Duration(minutes: 2));
+    expect(ndk.requests.active, isEmpty);
+    expect(ndk.requests._nextId, 1);
+    clock.run((_) => unawaited(client.stop()));
+    await _advance(clock, Duration.zero);
+    await ndk.destroy();
   });
 
   test('valid reply wins before aggregate ACKs and late broadcast errors',
@@ -300,6 +426,17 @@ void main() {
   });
 }
 
+// Stream cancellation can return a shared completed future created outside
+// the fake zone. Drain those real microtasks between virtual time advances.
+Future<void> _advance(FakeAsync clock, Duration duration) async {
+  clock.elapse(duration);
+  await pumpEventQueue(times: 2);
+  clock.flushMicrotasks();
+  clock.elapse(Duration.zero);
+  await pumpEventQueue(times: 2);
+  clock.flushMicrotasks();
+}
+
 class _TestNdk extends Ndk {
   @override
   final _TestRequests requests = _TestRequests();
@@ -338,6 +475,7 @@ class _TestRequests implements Requests {
   Completer<void>? readiness;
   late void Function(String, Iterable<String>) onSent;
   int _nextId = 0;
+  bool closeImmediately = false;
 
   void deliver(String relay, Nip01Event event) {
     for (final (relays, controller) in active.values) {
@@ -360,6 +498,7 @@ class _TestRequests implements Requests {
           invocation.namedArguments[#explicitRelays] as Iterable<String>;
       final controller = StreamController<Nip01Event>();
       active[id] = (relays.toSet(), controller);
+      if (closeImmediately) Timer.run(() => unawaited(controller.close()));
       unawaited(Future<void>(() async {
         await readiness?.future;
         if (active.containsKey(id)) onSent(id, relays);

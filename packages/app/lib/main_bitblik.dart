@@ -1900,6 +1900,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                   ),
                                 )
                               : NAppVersion(
+                                  watchReleases: false,
                                   controller: appUpdateController,
                                   fallbackVersion: _clientVersion,
                                   style: TextStyle(

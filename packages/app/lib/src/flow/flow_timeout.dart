@@ -64,13 +64,21 @@ class FlowCountdown extends StatefulWidget {
   State<FlowCountdown> createState() => _FlowCountdownState();
 }
 
-class _FlowCountdownState extends State<FlowCountdown> {
+class _FlowCountdownState extends State<FlowCountdown>
+    with WidgetsBindingObserver {
+  bool _backgrounded = false;
   Timer? _timer;
   bool _firedExpired = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final state = WidgetsBinding.instance.lifecycleState;
+    _backgrounded =
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached;
     _startTicker();
   }
 
@@ -83,14 +91,23 @@ class _FlowCountdownState extends State<FlowCountdown> {
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) return;
+    _backgrounded = state != AppLifecycleState.resumed;
+    if (!_backgrounded && mounted) setState(() {});
+    _startTicker();
+  }
+
   void _startTicker() {
     _timer?.cancel();
-    if (widget.deadline == null) return;
+    if (_backgrounded || widget.deadline == null || _firedExpired) return;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {});
       if (_remaining() <= Duration.zero && !_firedExpired) {
         _firedExpired = true;
+        _timer?.cancel();
         widget.onExpired?.call();
       }
     });
@@ -105,6 +122,7 @@ class _FlowCountdownState extends State<FlowCountdown> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }

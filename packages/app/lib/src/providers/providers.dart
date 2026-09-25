@@ -23,11 +23,17 @@ import '../services/relay_reconnect_gate.dart';
 import '../utils/offer_status_label.dart';
 import '../services/notification_service.dart';
 import '../services/offer_db_service.dart';
+import '../services/offer_reconciliation.dart';
 import '../../i18n/gen/strings.g.dart';
 import '../settings/app_preferences.dart';
 import '../config/build_flavor.dart';
 import '../utils/bitcoin_display.dart';
 import '../utils/platform_detection.dart';
+
+final appForegroundProvider = StateProvider<bool>((ref) {
+  final state = WidgetsBinding.instance.lifecycleState;
+  return state == null || state == AppLifecycleState.resumed;
+});
 
 final keyServiceProvider = Provider<KeyService>((ref) {
   final service = KeyService();
@@ -137,10 +143,11 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
 
   // Periodic refresh — same 10min cadence as before.
   final timer = Timer.periodic(const Duration(seconds: 600), (_) async {
+    if (!ref.read(appForegroundProvider)) return;
     try {
       await registry.discover();
       await registry.probeAllEnabled();
-      unawaited(_refreshNetworkFinishedCounts(registry));
+      unawaited(_refreshNetworkFinishedCounts(ref, registry));
     } catch (e) {
       Logger.log.e(() => 'Periodic coordinator refresh failed: $e');
     }
@@ -159,7 +166,7 @@ final coordinatorDiscoveryBootstrapProvider = FutureProvider<void>((ref) async {
   try {
     await registry.discover();
     await registry.probeAllEnabled();
-    unawaited(_refreshNetworkFinishedCounts(registry));
+    unawaited(_refreshNetworkFinishedCounts(ref, registry));
     // Best-effort: count the user's own successful offers per coordinator.
     unawaited(_refreshLocalFinishedCounts(ref, registry));
   } catch (e) {
@@ -168,13 +175,19 @@ final coordinatorDiscoveryBootstrapProvider = FutureProvider<void>((ref) async {
 });
 
 Future<void> _refreshNetworkFinishedCounts(
+  Ref ref,
   CoordinatorRegistry registry, {
   String? changedCoordinator,
 }) async {
+  var disposed = false;
+  bool shouldContinue() => !disposed && ref.read(appForegroundProvider);
   try {
+    ref.onDispose(() => disposed = true);
+    if (!shouldContinue()) return;
     // Let first-frame/navigation/foreground RPC work run before history scans.
     await Future<void>.delayed(const Duration(seconds: 1));
     await registry.fetchNetworkFinishedCounts(
+      shouldContinue: shouldContinue,
       force: changedCoordinator != null,
       pubkeys: changedCoordinator == null ? null : {changedCoordinator},
     );
@@ -382,7 +395,7 @@ final discoveryIdentityInitializer = FutureProvider<void>((ref) async {
   );
   await registry.discover();
   await registry.probeAllEnabled();
-  unawaited(_refreshNetworkFinishedCounts(registry));
+  unawaited(_refreshNetworkFinishedCounts(ref, registry));
 });
 
 Future<List<Offer>> refreshAvailableOffersCache(
@@ -492,11 +505,20 @@ final activeOfferProvider = StateNotifierProvider<ActiveOfferNotifier, Offer?>(
 );
 
 class ActiveOfferNotifier extends StateNotifier<Offer?> {
-  ActiveOfferNotifier(this._ref) : super(null) {
+  ActiveOfferNotifier(this._ref, {DateTime Function()? now})
+    : _now = now ?? DateTime.now,
+      super(null) {
     _init();
   }
 
   final Ref _ref;
+  final DateTime Function() _now;
+  final Map<String, DateTime> _recoveryAttempts = {};
+  DateTime? _lastReconcileAt;
+  DateTime? _lastCancelledReconcileAt;
+  Timer? _reconcileTimer;
+  static const _reconcileCooldown = Duration(seconds: 30);
+  static const _recoveryCooldown = Duration(minutes: 5);
 
   /// Reconcile is driven by relay connectivity so it never runs against a
   /// dead connection. This subscription fires on every connect/reconnect.
@@ -539,6 +561,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       if (!mounted) return;
       unawaited(
         _refreshNetworkFinishedCounts(
+          _ref,
           registry,
           changedCoordinator: offer.coordinatorPubkey,
         ),
@@ -583,7 +606,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
   }
 
   Future<void> _recoverMissingActiveOffer() async {
-    if (!mounted || state != null) return;
+    if (!mounted || state != null || !_ref.read(appForegroundProvider)) return;
 
     // Recover a signed user's current offer when local desktop storage is
     // empty. A dispute is included in the coordinator's active-offer query.
@@ -600,18 +623,23 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
     if (!mounted || state != null) return;
     final market = _ref.read(selectedPaymentSystemProvider).id;
     final coordinators =
-        apiService.allConfiguredCoordinators
-            .where((record) => record.enabled)
-            .toList()
-          ..sort(
-            (a, b) => (b.paymentSystem == market ? 1 : 0).compareTo(
-              a.paymentSystem == market ? 1 : 0,
-            ),
-          );
+        apiService.allConfiguredCoordinators.where((record) {
+          final last = _recoveryAttempts[record.pubkeyHex];
+          return record.enabled &&
+              (last == null || _now().difference(last) >= _recoveryCooldown);
+        }).toList()..sort(
+          (a, b) => (b.paymentSystem == market ? 1 : 0).compareTo(
+            a.paymentSystem == market ? 1 : 0,
+          ),
+        );
     for (var offset = 0; offset < coordinators.length; offset += 2) {
-      if (!mounted || state != null) return;
+      if (!mounted || state != null || !_ref.read(appForegroundProvider)) {
+        return;
+      }
       await Future.wait(
         coordinators.skip(offset).take(2).map((coordinator) async {
+          // Record attempts before awaiting, including errors and empty replies.
+          _recoveryAttempts[coordinator.pubkeyHex] = _now();
           final recovered = await apiService.getMyActiveOffer(
             coordinator.pubkeyHex,
           );
@@ -715,18 +743,54 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
   /// Revive wrongly/locally-cancelled offers and sync the active one. Guarded
   /// so overlapping connectivity events don't run it concurrently.
+  /// A deliberate foreground return gets one fresh recovery pass, even if a
+  /// previous background reconnect exhausted its cooldown.
+  Future<void> reconcileAfterResume() async {
+    _recoveryAttempts.clear();
+    _lastReconcileAt = null;
+    _lastCancelledReconcileAt = null;
+    _reconcileTimer?.cancel();
+    await _reconcileAll();
+  }
+
   Future<void> _reconcileAll() async {
     if (!mounted) return;
+    // With no local trade there is nothing urgent to recover in background.
+    // A foreground return explicitly runs recovery again.
+    if (state == null && !_ref.read(appForegroundProvider)) return;
     if (_reconcileInFlight) {
       _reconcilePending = true;
       return;
     }
+    final last = _lastReconcileAt;
+    if (last != null) {
+      final cooldown = _ref.read(appForegroundProvider)
+          ? _reconcileCooldown
+          : _recoveryCooldown;
+      final remaining = cooldown - _now().difference(last);
+      if (remaining > Duration.zero) {
+        _reconcileTimer ??= Timer(remaining, () {
+          _reconcileTimer = null;
+          unawaited(_reconcileAll());
+        });
+        return;
+      }
+    }
+    _reconcileTimer?.cancel();
+    _reconcileTimer = null;
+    _lastReconcileAt = _now();
     _reconcileInFlight = true;
     try {
       await _recoverMissingActiveOffer();
       if (!mounted) return;
       // listRecentCancelled is a single indexed query — cheap.
-      await _reconcileCancelledOffersIfNeeded();
+      if (_ref.read(appForegroundProvider) &&
+          (_lastCancelledReconcileAt == null ||
+              _now().difference(_lastCancelledReconcileAt!) >=
+                  _recoveryCooldown)) {
+        _lastCancelledReconcileAt = _now();
+        await _reconcileCancelledOffersIfNeeded();
+      }
       if (!mounted) return;
       final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;
       final active =
@@ -783,12 +847,12 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
           continue;
         }
 
-        await db.reconcileRemoteOffer(
+        final resolved = await db.reconcileRemoteOffer(
           localOffer,
           Offer.fromJson(remote),
           myPubkey,
         );
-        changed = true;
+        changed = changed || !sameOfferSnapshot(localOffer, resolved);
       } catch (e) {
         Logger.log.w(
           () =>
@@ -819,14 +883,16 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       snapshot,
       _ref.read(keyServiceProvider).publicKeyHex,
     );
-    _ref.read(_offerHistoryRevisionProvider.notifier).state++;
+    if (!sameOfferSnapshot(localOffer, resolved)) {
+      _ref.read(_offerHistoryRevisionProvider.notifier).state++;
+    }
     if (state?.id == localOffer.id) {
       if (resolved == null) {
         await _promoteMostRecentActiveOffer();
       } else if (OfferDbService.terminalStatuses.contains(resolved.status) &&
           resolved.status != OfferStatus.takerPaid) {
         state = null;
-      } else {
+      } else if (!sameOfferSnapshot(state, resolved)) {
         state = resolved;
       }
     }
@@ -1291,6 +1357,7 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
 
   @override
   void dispose() {
+    _reconcileTimer?.cancel();
     _connectivitySub?.cancel();
     _successfulOfferStatsRefreshTimer?.cancel();
     super.dispose();
@@ -1418,6 +1485,7 @@ final offerStatusSubscriptionManagerProvider = Provider<void>((ref) {
             "[SubscriptionManager] Active offer cleared. Subscription stopped.",
       );
       _currentOfferId = null;
+      unawaited(ref.read(apiServiceProvider).stopOfferStatusSubscription());
     }
   }, fireImmediately: true); // fireImmediately to handle initial state
 });
@@ -1999,11 +2067,15 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
   Set<String> _seenOfferIds = {};
   bool _relayReconnectInFlight = false;
   bool _lastNetworkReachable = true;
+  bool _disposed = false;
 
   AppLifecycleState get currentState => _currentState;
 
   void initialize() {
+    _currentState =
+        WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
     WidgetsBinding.instance.addObserver(this);
+    unawaited(_syncBackgroundWork());
     if (!kIsWeb) {
       unawaited(_startNetworkConnectivityMonitoring());
       if (Platform.isAndroid || Platform.isIOS) {
@@ -2014,6 +2086,19 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _syncBackgroundWork() async {
+    try {
+      final api = await _ref.read(initializedApiServiceProvider.future);
+      if (_disposed) return;
+      await api.setBackgrounded(
+        !_ref.read(appForegroundProvider),
+        keepOfferAlerts: _ref.read(newOfferNotificationsProvider),
+      );
+    } catch (error) {
+      Logger.log.w(() => 'Could not update background monitoring: $error');
+    }
+  }
+
   void _initMobileMonitoring() {
     if (_ref.read(newOfferNotificationsProvider)) {
       unawaited(_startNewOfferMonitoring());
@@ -2021,6 +2106,7 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
     _updateForegroundService();
     _ref.listen<bool>(newOfferNotificationsProvider, (_, enabled) {
       _updateForegroundService();
+      unawaited(_syncBackgroundWork());
       if (enabled) {
         unawaited(_startNewOfferMonitoring());
       } else {
@@ -2071,13 +2157,28 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       final body = tracksActiveOffer
           ? strings.activeOfferService.body
           : strings.activeService.body(app: app);
-      NotificationService().startOfferForegroundService(title, body);
+      unawaited(
+        NotificationService()
+            .startOfferForegroundService(title, body)
+            .catchError((Object error) {
+              Logger.log.w(
+                () => 'Offer foreground service unavailable: $error',
+              );
+            }),
+      );
     } else {
-      NotificationService().stopOfferForegroundService();
+      unawaited(
+        NotificationService().stopOfferForegroundService().catchError((
+          Object error,
+        ) {
+          Logger.log.w(() => 'Could not stop offer foreground service: $error');
+        }),
+      );
     }
   }
 
   void dispose() {
+    _disposed = true;
     _newOfferSub?.cancel();
     _connectivityMonitorSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
@@ -2095,12 +2196,15 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
       );
     }
 
+    if (_disposed) return;
+    _ref.read(apiServiceProvider).setNetworkAvailable(_lastNetworkReachable);
     _connectivityMonitorSub = connectivity.onConnectivityChanged.listen((
       results,
     ) {
       final hasNetwork = _hasNetwork(results);
       final regainedNetwork = !_lastNetworkReachable && hasNetwork;
       _lastNetworkReachable = hasNetwork;
+      _ref.read(apiServiceProvider).setNetworkAvailable(hasNetwork);
 
       if (regainedNetwork) {
         unawaited(
@@ -2142,11 +2246,17 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
           .read(activeOfferProvider.notifier)
           .refreshMissingDisputeTimestamp();
 
+      if (_ref.read(appForegroundProvider)) {
+        await _ref.read(activeOfferProvider.notifier).reconcileAfterResume();
+      }
+      if (!_ref.read(appForegroundProvider)) return;
       // Refresh coordinator-derived state after transport recovery so the
       // app rehydrates its custom Bitblik layer, not just the raw sockets.
       await apiService.coordinatorRegistry.discover();
       await apiService.coordinatorRegistry.probeAllEnabled();
-      unawaited(_refreshNetworkFinishedCounts(apiService.coordinatorRegistry));
+      unawaited(
+        _refreshNetworkFinishedCounts(_ref, apiService.coordinatorRegistry),
+      );
     } catch (e) {
       Logger.log.w(
         () =>
@@ -2162,6 +2272,7 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
     // Ensure the Nostr offer subscription is running even if user never visited
     // the offers screen (offersSubscriptionInitializer is lazy).
     await _ref.read(offersSubscriptionInitializer.future);
+    if (_disposed || !_ref.read(newOfferNotificationsProvider)) return;
     // Snapshot currently known offer IDs so we only notify for truly new ones.
     _seenOfferIds = _ref
         .read(apiServiceProvider)
@@ -2258,10 +2369,19 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _currentState = state;
+    // Inactive is transient focus loss (permissions, notification shade).
+    // Hidden/paused/detached are the boundaries for suspending background work.
+    if (state != AppLifecycleState.inactive) {
+      _ref.read(appForegroundProvider.notifier).state =
+          state == AppLifecycleState.resumed;
+      unawaited(_syncBackgroundWork());
+    }
 
     switch (state) {
       case AppLifecycleState.resumed:
         unawaited(_restoreCoordinatorRelayConnectivity(reason: 'app resumed'));
+        NotificationService().resetForegroundServiceAfterResume();
+        _updateForegroundService();
         NotificationService().cancelBlikReminder();
         break;
       case AppLifecycleState.inactive:

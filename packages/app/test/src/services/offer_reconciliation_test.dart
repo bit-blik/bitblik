@@ -179,6 +179,64 @@ void main() {
     },
   );
 
+  test(
+    'identical snapshots do not emit active state, changed details do',
+    () async {
+      api.snapshots['trade'] = trade();
+      var emissions = 0;
+      final subscription = container.listen(
+        activeOfferProvider,
+        (_, _) => emissions++,
+      );
+      for (var i = 0; i < 3; i++) {
+        await notifier.refreshOfferDetails(trade());
+      }
+      expect(emissions, 0);
+      api.snapshots['trade'] = trade().copyWith(
+        disputeAt: DateTime.utc(2026, 9, 25),
+      );
+      await notifier.refreshOfferDetails(trade());
+      expect(emissions, 1);
+      subscription.close();
+    },
+  );
+
+  test(
+    'relay flaps do not repeat empty recovery, resume explicitly retries',
+    () async {
+      await db.clearAll();
+      await notifier.setActiveOffer(null);
+      api.coordinators.add(
+        CoordinatorRecord(pubkeyHex: 'coordinator', enabled: true),
+      );
+      api.connected.add(true);
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      expect(api.recoveryCalls, ['coordinator']);
+      for (var i = 0; i < 10; i++) {
+        api.connected.add(true);
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      expect(api.recoveryCalls, ['coordinator']);
+      await notifier.reconcileAfterResume();
+      expect(api.recoveryCalls, ['coordinator', 'coordinator']);
+    },
+  );
+
+  test('no-trade recovery stays idle in background', () async {
+    await db.clearAll();
+    await notifier.setActiveOffer(null);
+    api.coordinators.add(
+      CoordinatorRecord(pubkeyHex: 'coordinator', enabled: true),
+    );
+    container.read(appForegroundProvider.notifier).state = false;
+    api.connected.add(true);
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(api.recoveryCalls, isEmpty);
+    container.read(appForegroundProvider.notifier).state = true;
+    await notifier.reconcileAfterResume();
+    expect(api.recoveryCalls, ['coordinator']);
+  });
+
   test('setting active offer does not synchronously enter lifecycle', () async {
     container.dispose();
     await api.connected.close();

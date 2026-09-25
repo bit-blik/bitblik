@@ -56,6 +56,11 @@ class ApiServiceNostr {
   /// Fires on every connect/reconnect (boot, network restore, app resume).
   Stream<bool> get relayConnectionState => _nostrService.relayConnectionState;
 
+  void setNetworkAvailable(bool available) => _nostrService.setNetworkAvailable(available);
+
+  Future<void> setBackgrounded(bool backgrounded, {required bool keepOfferAlerts}) =>
+      _nostrService.setBackgrounded(backgrounded, keepOfferAlerts: keepOfferAlerts);
+
   Future<void> acquireDmInbox() => _nostrService.acquireDmInbox();
 
   Future<void> releaseDmInbox() => _nostrService.releaseDmInbox();

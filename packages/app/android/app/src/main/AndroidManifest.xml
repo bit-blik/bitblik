@@ -72,7 +72,7 @@
             </intent-filter>
         </activity>
         <service
-            android:name="com.dexterous.flutterlocalnotifications.ForegroundService"
+            android:name="app.bitblik.OfferMonitoringService"
             android:exported="false"
             android:stopWithTask="true"
             android:foregroundServiceType="dataSync"/>

@@ -73,6 +73,7 @@ class TakerProgressIndicator extends ConsumerWidget {
     );
   }
 }
+
 // Widget for 10min Funded Offer Progress Bar
 class FundedOfferProgressIndicator extends ConsumerStatefulWidget {
   final DateTime createdAt;
@@ -85,8 +86,11 @@ class FundedOfferProgressIndicator extends ConsumerStatefulWidget {
 }
 
 class _FundedOfferProgressIndicatorState
-    extends ConsumerState<FundedOfferProgressIndicator> {
+    extends ConsumerState<FundedOfferProgressIndicator>
+    with WidgetsBindingObserver {
   Timer? _timer;
+  bool _appVisible = true;
+  bool _refreshTriggered = false;
   double _progress = 1.0;
   int _remainingSeconds = 600; // 10 minutes
   final Duration _maxFundedTime = const Duration(minutes: 10);
@@ -94,6 +98,12 @@ class _FundedOfferProgressIndicatorState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _appVisible =
+        lifecycle != AppLifecycleState.hidden &&
+        lifecycle != AppLifecycleState.paused &&
+        lifecycle != AppLifecycleState.detached;
     _calculateProgress();
     if (_progress <= 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _triggerRefresh());
@@ -106,6 +116,7 @@ class _FundedOfferProgressIndicatorState
   void didUpdateWidget(covariant FundedOfferProgressIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.createdAt != oldWidget.createdAt) {
+      _refreshTriggered = false;
       _timer?.cancel();
       _calculateProgress();
       if (_progress > 0) {
@@ -117,7 +128,28 @@ class _FundedOfferProgressIndicatorState
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) return;
+    final visible = state == AppLifecycleState.resumed;
+    if (_appVisible == visible) return;
+    _appVisible = visible;
+    if (!visible) {
+      _timer?.cancel();
+      _timer = null;
+      return;
+    }
+    if (!mounted) return;
+    _calculateProgress();
+    if (_progress <= 0) {
+      _triggerRefresh();
+    } else {
+      _startTimer();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }
@@ -141,9 +173,9 @@ class _FundedOfferProgressIndicatorState
 
   void _startTimer() {
     _timer?.cancel();
-    if (_progress <= 0) return;
+    if (!_appVisible || _progress <= 0) return;
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!mounted) {
+      if (!mounted || !_appVisible) {
         timer.cancel();
         return;
       }
@@ -156,6 +188,8 @@ class _FundedOfferProgressIndicatorState
   }
 
   Future<void> _triggerRefresh() async {
+    if (!mounted || !_appVisible || _refreshTriggered || _progress > 0) return;
+    _refreshTriggered = true;
     if (mounted) {
       ref.invalidate(availableOffersProvider);
     }
@@ -220,14 +254,23 @@ class ReservationProgressIndicator extends ConsumerStatefulWidget {
 }
 
 class _ReservationProgressIndicatorState
-    extends ConsumerState<ReservationProgressIndicator> {
+    extends ConsumerState<ReservationProgressIndicator>
+    with WidgetsBindingObserver {
   Timer? _timer;
+  bool _appVisible = true;
+  bool _refreshTriggered = false;
   double _progress = 1.0;
   late int _remainingSeconds; // Will be initialized in initState
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _appVisible =
+        lifecycle != AppLifecycleState.hidden &&
+        lifecycle != AppLifecycleState.paused &&
+        lifecycle != AppLifecycleState.detached;
     _remainingSeconds =
         widget.maxDuration.inSeconds; // Initialize with widget.maxDuration
     _calculateProgress();
@@ -248,6 +291,7 @@ class _ReservationProgressIndicatorState
         () =>
             "[ReservationProgress] reservedAt or maxDuration changed. Recalculating.",
       );
+      _refreshTriggered = false;
       _timer?.cancel();
       _remainingSeconds =
           widget.maxDuration.inSeconds; // Re-initialize with new maxDuration
@@ -262,7 +306,28 @@ class _ReservationProgressIndicatorState
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) return;
+    final visible = state == AppLifecycleState.resumed;
+    if (_appVisible == visible) return;
+    _appVisible = visible;
+    if (!visible) {
+      _timer?.cancel();
+      _timer = null;
+      return;
+    }
+    if (!mounted) return;
+    _calculateProgress();
+    if (_progress <= 0) {
+      _triggerRefresh();
+    } else {
+      _startTimer();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }
@@ -293,9 +358,9 @@ class _ReservationProgressIndicatorState
 
   void _startTimer() {
     _timer?.cancel();
-    if (_progress <= 0) return;
+    if (!_appVisible || _progress <= 0) return;
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!mounted) {
+      if (!mounted || !_appVisible) {
         timer.cancel();
         return;
       }
@@ -308,6 +373,8 @@ class _ReservationProgressIndicatorState
   }
 
   Future<void> _triggerRefresh() async {
+    if (!mounted || !_appVisible || _refreshTriggered || _progress > 0) return;
+    _refreshTriggered = true;
     Logger.log.d(
       () => "[ReservationProgress] Timer expired. Refreshing providers.",
     );
@@ -375,8 +442,11 @@ class BlikConfirmationProgressIndicator extends ConsumerStatefulWidget {
 }
 
 class _BlikConfirmationProgressIndicatorState
-    extends ConsumerState<BlikConfirmationProgressIndicator> {
+    extends ConsumerState<BlikConfirmationProgressIndicator>
+    with WidgetsBindingObserver {
   Timer? _timer;
+  bool _appVisible = true;
+  bool _refreshTriggered = false;
   double _progress = 1.0;
   late int _remainingSeconds = _maxConfirmationTime.inSeconds;
   Duration get _maxConfirmationTime => widget.maxConfirmationTime;
@@ -384,6 +454,12 @@ class _BlikConfirmationProgressIndicatorState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _appVisible =
+        lifecycle != AppLifecycleState.hidden &&
+        lifecycle != AppLifecycleState.paused &&
+        lifecycle != AppLifecycleState.detached;
     _calculateProgress();
     if (_progress <= 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _triggerRefresh());
@@ -395,10 +471,12 @@ class _BlikConfirmationProgressIndicatorState
   @override
   void didUpdateWidget(covariant BlikConfirmationProgressIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.blikReceivedAt != oldWidget.blikReceivedAt) {
+    if (widget.blikReceivedAt != oldWidget.blikReceivedAt ||
+        widget.maxConfirmationTime != oldWidget.maxConfirmationTime) {
       Logger.log.d(
         () => "[BlikConfirmProgress] blikReceivedAt changed. Recalculating.",
       );
+      _refreshTriggered = false;
       _timer?.cancel();
       _calculateProgress();
       if (_progress > 0) {
@@ -410,7 +488,28 @@ class _BlikConfirmationProgressIndicatorState
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) return;
+    final visible = state == AppLifecycleState.resumed;
+    if (_appVisible == visible) return;
+    _appVisible = visible;
+    if (!visible) {
+      _timer?.cancel();
+      _timer = null;
+      return;
+    }
+    if (!mounted) return;
+    _calculateProgress();
+    if (_progress <= 0) {
+      _triggerRefresh();
+    } else {
+      _startTimer();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }
@@ -437,9 +536,9 @@ class _BlikConfirmationProgressIndicatorState
 
   void _startTimer() {
     _timer?.cancel();
-    if (_progress <= 0) return;
+    if (!_appVisible || _progress <= 0) return;
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!mounted) {
+      if (!mounted || !_appVisible) {
         timer.cancel();
         return;
       }
@@ -452,6 +551,8 @@ class _BlikConfirmationProgressIndicatorState
   }
 
   Future<void> _triggerRefresh() async {
+    if (!mounted || !_appVisible || _refreshTriggered || _progress > 0) return;
+    _refreshTriggered = true;
     Logger.log.d(
       () => "[BlikConfirmProgress] Timer expired. Refreshing providers.",
     );
@@ -523,14 +624,22 @@ class CircularCountdownTimer extends StatefulWidget {
   State<CircularCountdownTimer> createState() => _CircularCountdownTimerState();
 }
 
-class _CircularCountdownTimerState extends State<CircularCountdownTimer> {
+class _CircularCountdownTimerState extends State<CircularCountdownTimer>
+    with WidgetsBindingObserver {
   Timer? _timer;
+  bool _appVisible = true;
   double _progress = 1.0;
   int _remainingSeconds = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _appVisible =
+        lifecycle != AppLifecycleState.hidden &&
+        lifecycle != AppLifecycleState.paused &&
+        lifecycle != AppLifecycleState.detached;
     _calculateProgress();
     if (_remainingSeconds > 0) {
       _startTimer();
@@ -549,7 +658,24 @@ class _CircularCountdownTimerState extends State<CircularCountdownTimer> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) return;
+    final visible = state == AppLifecycleState.resumed;
+    if (_appVisible == visible) return;
+    _appVisible = visible;
+    if (!visible) {
+      _timer?.cancel();
+      _timer = null;
+      return;
+    }
+    if (!mounted) return;
+    _calculateProgress();
+    _startTimer();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }
@@ -580,10 +706,10 @@ class _CircularCountdownTimerState extends State<CircularCountdownTimer> {
 
   void _startTimer() {
     _timer?.cancel();
-    if (_remainingSeconds <= 0) return;
+    if (!_appVisible || _remainingSeconds <= 0) return;
 
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!mounted) {
+      if (!mounted || !_appVisible) {
         timer.cancel();
         return;
       }

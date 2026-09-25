@@ -42,15 +42,17 @@ same `packages/app/Dockerfile` artifact as web image, with `WEB_BASE_HREF=/app/`
 
 ### One-time setup
 
-1. Install [`nsyte`](https://nsite.run/) and ensure Docker daemon runs.
+1. Install [`nsyte`](https://nsite.run/), `nak`, `jq`, and `sha256sum`, and
+   ensure the Docker daemon runs.
 2. Create a restricted NIP-46 CI credential with `nsyte ci`.
 3. Store resulting `nbunksec` in secret manager as `NSITE_SECRET`. Never
    commit an `nsec`, hex private key, or `nbunksec`.
 
 ### Preview release
 
-Run from repository root. Dry run still builds Docker artifact, but does not
-upload blobs or publish Nostr events.
+Run from repository root. The script checks the signing identity before
+building the Docker artifact. Dry run does not upload blobs or publish site
+manifests (a remote signer may exchange NIP-46 messages).
 
 ```bash
 packages/app/tool/publish_nsite.sh --flavor bitblik --dry-run --prompt-secret
@@ -70,6 +72,23 @@ manifest to skip files whose SHA-256 hash is unchanged, then `nsyte put` updates
 only changed `/app` paths. BitBlik and BitWay pubkeys come from app config.
 For another target, set `NSITE_PUBKEY` or pass `--pubkey`. Use credential
 belonging to target flavor's existing nsite identity.
+
+`--flavor` selects the build and expected site identity; it cannot make a
+BitBlik signing key publish to BitWay. The script now checks the credential's
+resolved pubkey against the target before any build or upload, including in
+dry-run mode. A mismatch aborts with the expected and actual public keys.
+`--prompt-secret` reads the credential once and reuses it throughout the run.
+
+To publish BitWay from `packages/app`, enter the credential for the BitWay
+npub shown in `lib/src/config/build_flavor.dart`:
+
+```bash
+tool/publish_nsite.sh --flavor bitway --prompt-secret
+```
+
+If an older script was run with the wrong key, it may have uploaded that
+flavor to the signing key's site while the intended site stayed unchanged.
+Republish each affected flavor with its own matching credential.
 
 ### Root-site safety
 

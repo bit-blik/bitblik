@@ -33,6 +33,8 @@ class TestRequests implements Requests {
   int peak = 0;
   bool hold = false;
   bool fail = false;
+  Stream<Nip01Event> Function(Filter)? statsStream;
+  int closedQueries = 0;
   @override
   dynamic noSuchMethod(Invocation call) {
     if (call.memberName == #query) {
@@ -48,6 +50,7 @@ class TestRequests implements Requests {
             pending.add(gate);
             await gate.future;
           }
+          if (statsStream != null) yield* statsStream!(filter!);
           active--;
         }
       }
@@ -59,7 +62,10 @@ class TestRequests implements Requests {
                     : RelayRequestStatus.eose),
               });
     }
-    if (call.memberName == #closeSubscription) return Future<void>.value();
+    if (call.memberName == #closeSubscription) {
+      closedQueries++;
+      return Future<void>.value();
+    }
     return super.noSuchMethod(call);
   }
 }
@@ -246,6 +252,120 @@ void main() {
     await registry.fetchNetworkFinishedCounts(
         force: true, pubkeys: {registry.all.first.pubkeyHex});
     expect(ndk.requests.statsQueries, 6);
+  });
+
+  test('routine history skips disabled coordinators; explicit force can fetch',
+      () async {
+    for (final record in registry.all) {
+      await registry.setEnabled(record.pubkeyHex, false);
+    }
+    await registry.fetchNetworkFinishedCounts();
+    expect(ndk.requests.statsQueries, 0);
+    await registry.fetchNetworkFinishedCounts(
+        force: true, pubkeys: {registry.all.first.pubkeyHex});
+    expect(ndk.requests.statsQueries, 1);
+  });
+
+  test('cancelled history preserves stats and retries immediately on resume',
+      () async {
+    var foreground = true;
+    final key = registry.all.first.pubkeyHex;
+    ndk.requests.statsStream = (filter) async* {
+      for (var i = 0; i < 2; i++) {
+        yield Nip01Event(
+          pubKey: key,
+          kind: kKindOffer,
+          createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000 - i,
+          tags: [
+            ['d', 'offer-$i'],
+            ['s', 'success']
+          ],
+          content: '{}',
+        );
+        foreground = false;
+      }
+    };
+    await registry.fetchNetworkFinishedCounts(
+        pubkeys: {key}, shouldContinue: () => foreground);
+    final record = registry.all.firstWhere((r) => r.pubkeyHex == key);
+    expect(record.networkFinishedCount, 7);
+    expect(record.lastFinishedCountUpdate, isNull);
+    expect(ndk.requests.statsQueries, 1);
+    expect(ndk.requests.closedQueries, 1);
+
+    foreground = true;
+    ndk.requests.statsStream = null;
+    await registry.fetchNetworkFinishedCounts(
+        pubkeys: {key}, shouldContinue: () => foreground);
+    expect(ndk.requests.statsQueries, 2);
+    expect(
+        registry.all
+            .firstWhere((r) => r.pubkeyHex == key)
+            .lastFinishedCountUpdate,
+        isNotNull);
+  });
+
+  test('cancelled full history page does not fetch next page or mark fresh',
+      () async {
+    var foreground = true;
+    final key = registry.all.first.pubkeyHex;
+    ndk.requests.statsStream = (filter) async* {
+      for (var i = 0; i < 500; i++) {
+        yield Nip01Event(
+          pubKey: key,
+          kind: kKindOffer,
+          createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000 - i,
+          tags: [
+            ['d', 'offer-$i'],
+            ['s', 'success']
+          ],
+          content: '{}',
+        );
+      }
+      foreground = false;
+    };
+    await registry.fetchNetworkFinishedCounts(
+        pubkeys: {key}, shouldContinue: () => foreground);
+    final record = registry.all.firstWhere((r) => r.pubkeyHex == key);
+    expect(record.networkFinishedCount, 7);
+    expect(record.lastFinishedCountUpdate, isNull);
+    expect(ndk.requests.statsQueries, 1);
+  });
+
+  test('lifecycle cancellation skips remaining coordinator batches', () async {
+    var foreground = true;
+    ndk.requests.hold = true;
+    final refresh =
+        registry.fetchNetworkFinishedCounts(shouldContinue: () => foreground);
+    await Future<void>.delayed(Duration.zero);
+    expect(ndk.requests.statsQueries, 2);
+    foreground = false;
+    ndk.requests.hold = false;
+    for (final gate in ndk.requests.pending) {
+      gate.complete();
+    }
+    await refresh;
+    expect(ndk.requests.statsQueries, 2);
+    expect(registry.all.map((r) => r.lastFinishedCountUpdate),
+        everyElement(isNull));
+  });
+
+  test('coalesced caller can keep an in-flight scan alive', () async {
+    var foreground = true;
+    ndk.requests.hold = true;
+    final first =
+        registry.fetchNetworkFinishedCounts(shouldContinue: () => foreground);
+    await Future<void>.delayed(Duration.zero);
+    final second = registry.fetchNetworkFinishedCounts();
+    foreground = false;
+    ndk.requests.hold = false;
+    for (final gate in ndk.requests.pending) {
+      gate.complete();
+    }
+    await Future.wait([first, second]);
+    expect(ndk.requests.statsQueries, 5);
+    expect(registry.all.map((r) => r.lastFinishedCountUpdate),
+        everyElement(isNotNull));
   });
 
   test('failed history query preserves cached count', () async {

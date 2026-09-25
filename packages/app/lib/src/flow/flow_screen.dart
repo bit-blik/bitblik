@@ -531,7 +531,11 @@ class _FlowDeadlineSync extends ConsumerStatefulWidget {
   ConsumerState<_FlowDeadlineSync> createState() => _FlowDeadlineSyncState();
 }
 
-class _FlowDeadlineSyncState extends ConsumerState<_FlowDeadlineSync> {
+class _FlowDeadlineSyncState extends ConsumerState<_FlowDeadlineSync>
+    with WidgetsBindingObserver {
+  bool _backgrounded = false;
+  bool _syncing = false;
+  int _generation = 0;
   Timer? _timer;
   static const _postDeadlineGrace = Duration(seconds: 2);
   static const _retryInterval = Duration(seconds: 10);
@@ -539,13 +543,18 @@ class _FlowDeadlineSyncState extends ConsumerState<_FlowDeadlineSync> {
   @override
   void initState() {
     super.initState();
-    _arm();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _backgrounded =
+        lifecycle == AppLifecycleState.hidden ||
+        lifecycle == AppLifecycleState.paused ||
+        lifecycle == AppLifecycleState.detached;
     // One-shot sync on entering the flow screen: catches updates missed while
     // the user was away (e.g. an ex-taker resuming an offer that was relisted
     // without them — no push reaches ex-participants who were offline).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
+      if (mounted && !_backgrounded) {
+        unawaited(_sync());
       }
     });
   }
@@ -562,12 +571,23 @@ class _FlowDeadlineSyncState extends ConsumerState<_FlowDeadlineSync> {
 
   @override
   void dispose() {
+    _generation++;
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) return;
+    _backgrounded = state != AppLifecycleState.resumed;
+    _arm();
+  }
+
   void _arm() {
+    _generation++;
     _timer?.cancel();
+    if (_backgrounded) return;
     final deadline = flowStateDeadline(
       widget.engine,
       widget.offer.statusRaw,
@@ -581,9 +601,29 @@ class _FlowDeadlineSyncState extends ConsumerState<_FlowDeadlineSync> {
   }
 
   Future<void> _sync() async {
-    if (!mounted) return;
-    await ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
-    if (!mounted) return;
+    if (!mounted || _backgrounded || _syncing) return;
+    final generation = _generation;
+    _syncing = true;
+    try {
+      await ref.read(activeOfferProvider.notifier).reconcileActiveOfferNow();
+    } finally {
+      _syncing = false;
+    }
+    if (!mounted || _backgrounded) return;
+    if (generation != _generation) {
+      _arm();
+      return;
+    }
+    final deadline = flowStateDeadline(
+      widget.engine,
+      widget.offer.statusRaw,
+      widget.offer,
+    );
+    if (deadline == null) return;
+    if (deadline.add(_postDeadlineGrace).isAfter(DateTime.now().toUtc())) {
+      _arm();
+      return;
+    }
     // State still stale (coordinator timer lag / transient fetch failure) —
     // retry until a status change re-arms or unmounts us.
     _timer = Timer(_retryInterval, _sync);
