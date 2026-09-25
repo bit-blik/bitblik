@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
 
+import '../quote/premium_range.dart';
 import 'coordinator_info.dart';
 
 /// Persisted, in-memory view of a single coordinator.
@@ -101,6 +102,8 @@ class CoordinatorRecord {
   double get makerFee => info?.makerFee ?? 0.0;
   double get takerFee => info?.takerFee ?? 0.0;
   double get maxPremium => info?.maxPremiumPercent ?? 0.0;
+  double get minPremium => info?.minPremiumPercent ?? 0.0;
+  PremiumRange get premiumRange => info?.premiumRange ?? PremiumRange.none;
   int get reservationSeconds => info?.reservationSeconds ?? 0;
   List<String> get currencies => info?.currencies ?? const [];
   List<String> get outgoingPaymentTypes =>

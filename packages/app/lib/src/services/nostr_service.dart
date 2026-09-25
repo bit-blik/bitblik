@@ -698,7 +698,7 @@ class NostrService {
         'fiat_amount': fiatAmount,
         'fiat_currency': fiatCurrency,
         if (category != null) 'category': category.name,
-        if (premiumPercent > 0) 'premium_percent': premiumPercent,
+        if (premiumPercent != 0) 'premium_percent': premiumPercent,
         if (blikCode != null && blikCode.isNotEmpty) 'blik_code': blikCode,
         if (bank != null && bank.isNotEmpty) 'bank': bank,
       },

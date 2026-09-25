@@ -34,6 +34,10 @@ services:
       MAX_AMOUNT_SATS: 25000
       MAKER_FEE: 0.25
       TAKER_FEE: 0.75
+      # Optional maker premium range in percent (both default to 0 = off).
+      # A negative MIN_PREMIUM lets makers offer a discount below market price.
+      ##MIN_PREMIUM: -3
+      ##MAX_PREMIUM: 3
       # Payment method this coordinator serves (one per deployment).
       # 'blik' (PL, PLN, 6-digit, 2-min codes) is the default.
       # For Portugal/MB WAY (EUR, 10-digit, 30-min codes) use:
