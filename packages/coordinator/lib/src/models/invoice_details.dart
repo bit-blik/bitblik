@@ -15,6 +15,9 @@ class InvoiceDetails {
   final Map<String, dynamic>? metadata;
   final InvoiceStatus? status; // Use enum instead of String
   final String? error; // To convey any lookup errors
+  /// The wallet reports expiry but may still be holding an accepted payment.
+  /// This permits cancellation of an overdue pending offer, not an active trade.
+  final bool hasAmbiguousHoldExpiry;
 
   InvoiceDetails({
     this.type,
@@ -31,6 +34,7 @@ class InvoiceDetails {
     this.metadata,
     this.status,
     this.error,
+    this.hasAmbiguousHoldExpiry = false,
   });
 
   // Consider adding a factory constructor fromMap if needed, or toJson

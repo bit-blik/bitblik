@@ -1090,6 +1090,7 @@ class CoordinatorService {
       case InvoiceStatus.CANCELED:
         await _clearPendingOffer(hash, reason: 'wallet confirmed canceled');
       case InvoiceStatus.OPEN:
+      case InvoiceStatus.UNKNOWN when details.hasAmbiguousHoldExpiry:
         if (!intent.expiresAt.isAfter(_clock.now().toUtc())) {
           await _expirePendingOffer(hash);
         } else {
@@ -1137,8 +1138,8 @@ class CoordinatorService {
       'window (${_pendingOfferTimeoutSeconds}s). Cleaning up.',
     );
 
-    // Caller first verified OPEN, with no committed offer. A timeout is an
-    // unknown cancellation outcome: retain recovery data until a later lookup.
+    // Caller verified OPEN or ambiguous hold expiry, with no committed offer.
+    // A cancellation timeout retains recovery data for a later lookup/retry.
     final backend = _paymentBackend;
     if (backend == null) return;
     _pendingNeedsLookup.add(paymentHashHex);

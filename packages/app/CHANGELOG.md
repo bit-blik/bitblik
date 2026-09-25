@@ -1,3 +1,6 @@
+## [0.11.1] - 2026-09-25
+- fix: background service battery usage
+
 ## [0.11.0] - 2026-09-21
 
 - feat: dispute chat with coordinator

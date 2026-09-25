@@ -178,6 +178,84 @@ void main() {
     expect(result.status, InvoiceStatus.ACCEPTED);
   });
 
+  for (final deadline in <int?>[null, 900000]) {
+    test('recovers explicit accepted state with deadline $deadline', () async {
+      nwc.response = _lookup(
+        type: 'incoming',
+        state: 'accepted',
+        settleDeadline: deadline,
+      );
+
+      final result = await service.lookupInvoice(paymentHashHex: _paymentHash);
+
+      expect(result.status, InvoiceStatus.ACCEPTED);
+    });
+  }
+
+  for (final deadline in [0, 900000]) {
+    test('expired hold with deadline $deadline is not proof of cancellation',
+        () async {
+      // Affected Alby versions return this for both held and canceled invoices.
+      nwc.response = _lookup(
+        type: 'incoming',
+        state: 'expired',
+        settleDeadline: deadline,
+      );
+
+      final result = await service.lookupInvoice(paymentHashHex: _paymentHash);
+
+      expect(result.status, InvoiceStatus.UNKNOWN);
+      expect(result.hasAmbiguousHoldExpiry, isTrue);
+    });
+  }
+
+  test('expired invoice without a hold deadline remains canceled', () async {
+    nwc.response = _lookup(type: 'incoming', state: 'expired');
+
+    final result = await service.lookupInvoice(paymentHashHex: _paymentHash);
+
+    expect(result.status, InvoiceStatus.CANCELED);
+    expect(result.hasAmbiguousHoldExpiry, isFalse);
+  });
+
+  test('explicit cancellation remains terminal with a hold deadline', () async {
+    nwc.response = _lookup(
+      type: 'incoming',
+      state: 'canceled',
+      settleDeadline: 900000,
+    );
+
+    final result = await service.lookupInvoice(paymentHashHex: _paymentHash);
+
+    expect(result.status, InvoiceStatus.CANCELED);
+  });
+
+  test('settlement evidence takes precedence over accepted state', () async {
+    nwc.response = _lookup(
+      type: 'incoming',
+      state: 'accepted',
+      settleDeadline: 900000,
+      settledAt: 1789652606,
+    );
+
+    final result = await service.lookupInvoice(paymentHashHex: _paymentHash);
+
+    expect(result.status, InvoiceStatus.SETTLED);
+  });
+
+  test('expiry with settlement evidence never authorizes hold cleanup', () async {
+    nwc.response = _lookup(
+      type: 'incoming',
+      state: 'expired',
+      settleDeadline: 900000,
+      settledAt: 1789652606,
+    );
+
+    final result = await service.lookupInvoice(paymentHashHex: _paymentHash);
+
+    expect(result.hasAmbiguousHoldExpiry, isFalse);
+  });
+
   for (final code in ['INTERNAL', 'OTHER', 'NOT_FOUND', 'PAYMENT_FAILED']) {
     test('returned $code error cannot authorize replacement', () async {
       nwc.paymentResponse =

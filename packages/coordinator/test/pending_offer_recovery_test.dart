@@ -28,6 +28,7 @@ void main() {
   late List<StreamController<InvoiceUpdate>> streams;
   late DateTime now;
   late InvoiceStatus walletState;
+  late bool walletHasAmbiguousHoldExpiry;
   late int walletCreates;
   late int insertAttempts;
   late bool failSave;
@@ -88,6 +89,7 @@ void main() {
     streams = [];
     now = DateTime.utc(2026, 9, 18);
     walletState = InvoiceStatus.OPEN;
+    walletHasAmbiguousHoldExpiry = false;
     walletCreates = 0;
     insertAttempts = 0;
     failSave = false;
@@ -181,6 +183,7 @@ void main() {
             type: 'incoming',
             invoice: lookupInvoice,
             status: walletState,
+            hasAmbiguousHoldExpiry: walletHasAmbiguousHoldExpiry,
             error: lookupFails ? 'wallet unavailable' : null));
     when(wallet.subscribeToInvoiceUpdates(
             paymentHashHex: anyNamed('paymentHashHex')))
@@ -429,10 +432,19 @@ void main() {
     await flush();
     expect(offers, hasLength(1));
     expect(intents, hasLength(1));
+    now = now.add(const Duration(hours: 27));
+    walletState = InvoiceStatus.UNKNOWN;
+    walletHasAmbiguousHoldExpiry = true;
+    clearInteractions(wallet);
     await service.reconcilePendingOffers();
     expect(intents, isEmpty);
+    expect(offers, hasLength(1));
     expect(insertAttempts, 1);
     expect(walletCreates, 1);
+    verifyNever(
+        wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')));
+    verifyNever(
+        wallet.lookupInvoice(paymentHashHex: anyNamed('paymentHashHex')));
   });
 
   test('restart recovers funded intent with original preimage and offer ID',
@@ -464,6 +476,7 @@ void main() {
 
   test('unknown or settled wallet state retains recovery material', () async {
     await initiate();
+    now = now.add(const Duration(hours: 27));
     for (final state in [InvoiceStatus.UNKNOWN, InvoiceStatus.SETTLED]) {
       walletState = state;
       await service.reconcilePendingOffers();
@@ -475,6 +488,8 @@ void main() {
     await service.reconcilePendingOffers();
     expect(intents, hasLength(1));
     expect(walletCreates, 1);
+    verifyNever(
+        wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')));
   });
 
   test('authoritative cancellation clears intent, not transport error',
@@ -512,6 +527,70 @@ void main() {
     verify(wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
         .called(1);
   });
+
+  test('ambiguous expired hold is canceled only after pending timeout', () async {
+    await service.shutdown();
+    service = await createService(backendType: 'nwc');
+    await initiate();
+    walletState = InvoiceStatus.UNKNOWN;
+    walletHasAmbiguousHoldExpiry = true;
+
+    now = now.add(const Duration(hours: 1));
+    await service.reconcilePendingOffers();
+    expect(intents, hasLength(1));
+    expect(offers, isEmpty);
+    verifyNever(
+        wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')));
+
+    now = now.add(const Duration(hours: 1));
+    lookupFails = true;
+    await service.reconcilePendingOffers();
+    expect(intents, hasLength(1));
+    verifyNever(
+        wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')));
+
+    lookupFails = false;
+    await service.reconcilePendingOffers();
+    expect(intents, isEmpty);
+    expect(offers, isEmpty);
+    verify(wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
+        .called(1);
+    expect(walletCreates, 1);
+  });
+
+  for (final failure in [
+    StateError('wallet unavailable'),
+    TimeoutException('unknown cancellation outcome'),
+  ]) {
+    test('ambiguous hold cancellation retries after restart: $failure', () async {
+      await service.shutdown();
+      service = await createService(backendType: 'nwc');
+      await initiate();
+      now = now.add(const Duration(hours: 2));
+      walletState = InvoiceStatus.UNKNOWN;
+      walletHasAmbiguousHoldExpiry = true;
+      when(wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
+          .thenThrow(failure);
+
+      await service.reconcilePendingOffers();
+      expect(intents, hasLength(1));
+      expect(offers, isEmpty);
+      verify(wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
+          .called(1);
+
+      await service.shutdown();
+      when(wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
+          .thenAnswer((_) async => failure is TimeoutException
+              ? const CancelInvoiceResult.alreadyMissing()
+              : const CancelInvoiceResult.cancelled());
+      service = await createService(backendType: 'nwc');
+      expect(intents, isEmpty);
+      expect(offers, isEmpty);
+      verify(wallet.cancelInvoice(paymentHashHex: anyNamed('paymentHashHex')))
+          .called(1);
+      expect(walletCreates, 1);
+    });
+  }
 
   test('NWC accepted hold remains recoverable after pending timeout', () async {
     await service.shutdown();

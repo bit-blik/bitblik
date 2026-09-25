@@ -432,15 +432,21 @@ class NwcService implements PaymentService, Bolt12PaymentService {
 
       // Determine status from the explicit NWC state first, then fall back.
       InvoiceStatus? status;
-      if (nwcResponse.state == 'expired' || nwcResponse.state == 'canceled') {
+      if (nwcResponse.state == 'expired' && nwcResponse.settleDeadline != null) {
+        // Some Alby versions report both held and canceled invoices as expired
+        // after BOLT11 expiry, retaining the deadline in either case.
+        status = InvoiceStatus.UNKNOWN;
+      } else if (nwcResponse.state == 'expired' ||
+          nwcResponse.state == 'canceled') {
         status = InvoiceStatus.CANCELED;
       } else if (nwcResponse.settledAt != null && nwcResponse.settledAt! > 0) {
         status = InvoiceStatus.SETTLED;
-      } else if (nwcResponse.state == 'pending' &&
-          nwcResponse.settleDeadline != null &&
-          nwcResponse.settleDeadline! > 0) {
-        // A hold invoice remains NWC `pending` before and after acceptance.
-        // A settlement deadline proves the wallet is holding an incoming HTLC.
+      } else if (nwcResponse.state == 'accepted' ||
+          (nwcResponse.state == 'pending' &&
+              nwcResponse.settleDeadline != null &&
+              nwcResponse.settleDeadline! > 0)) {
+        // NIP-47 reports accepted holds explicitly. Keep pending + deadline
+        // as a compatibility fallback.
         status = InvoiceStatus.ACCEPTED;
       } else {
         status = InvoiceStatus.OPEN; // Default to OPEN if not settled
@@ -462,6 +468,9 @@ class NwcService implements PaymentService, Bolt12PaymentService {
         settledAt: nwcResponse.settledAt,
         // metadata: nwcResponse.metadata, // Removed as NWC response doesn't have this directly
         status: status, // Inferred status
+        hasAmbiguousHoldExpiry: nwcResponse.state == 'expired' &&
+            nwcResponse.settleDeadline != null &&
+            (nwcResponse.settledAt == null || nwcResponse.settledAt! <= 0),
       );
     } catch (e) {
       AppLogger.info(
