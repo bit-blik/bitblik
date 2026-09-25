@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:bitblik_core/core.dart';
 
 import 'cli_context.dart';
+import 'coordinator_listing.dart';
 import 'flow_cli.dart';
 import 'offer_commands.dart';
 import 'protocol_client.dart';
@@ -80,6 +81,21 @@ Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
     final jsonOutput = args.contains('--json');
     final withHealth = args.contains('--health');
     final relays = _parseRelayArgs(args);
+
+    if (!withHealth) {
+      final coordinators = await listCoordinatorAdvertisements(
+        paymentSystem: paymentSystem,
+        bootstrapRelays: relays ?? BitblikProtocolClient.defaultRelays,
+      );
+      if (jsonOutput) {
+        stdout.writeln(const JsonEncoder.withIndent('  ').convert(
+          coordinators.map(_coordinatorToCliJson).toList(),
+        ));
+      } else {
+        _printCoordinatorTable(coordinators, showHealth: false);
+      }
+      return 0;
+    }
 
     final secrets = await SecretsStore.loadOrCreate();
     final client = BitblikProtocolClient(secrets: secrets, relays: relays);

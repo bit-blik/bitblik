@@ -6,8 +6,10 @@ cat > /usr/share/nginx/html/config.js <<EOF
 // Runtime configuration
 // Generated from environment variables at container startup
 window.appConfig = {
+  forceSoftwareRendering: false,
   paymentSystem: '${PAYMENT_SYSTEM:-}',
   telegramGroupLink: '${TELEGRAM_GROUP_LINK:-}',
+  matrixGroupLink: '${MATRIX_GROUP_LINK:-}',
   elementGroupLink: '${ELEMENT_GROUP_LINK:-}',
   simplexGroupLink: '${SIMPLEX_GROUP_LINK:-}',
   signalGroupLink: '${SIGNAL_GROUP_LINK:-}'

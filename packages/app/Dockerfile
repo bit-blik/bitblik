@@ -5,6 +5,8 @@ FROM ghcr.io/gmeligio/flutter-android:3.47.0 AS build
 ARG APP_FLAVOR=bitblik
 ARG BUILD_MODE=release
 ARG FLUTTER_TARGET=lib/main_bitblik.dart
+# Default preserves root-hosted Docker deployments. nsite build uses /app/.
+ARG WEB_BASE_HREF=/
 
 USER root
 RUN apt-get update && apt-get install -y ca-certificates
@@ -51,7 +53,7 @@ RUN cp web_shells/${APP_FLAVOR}/index.html web/index.html \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-2x.png web/splash/img/dark-2x.png \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-3x.png web/splash/img/dark-3x.png \
  && cp web_shells/${APP_FLAVOR}/splash/img/dark-4x.png web/splash/img/dark-4x.png \
- && flutter build web --${BUILD_MODE} --target=${FLUTTER_TARGET} --no-web-resources-cdn \
+ && flutter build web --${BUILD_MODE} --target=${FLUTTER_TARGET} --base-href=${WEB_BASE_HREF} --no-web-resources-cdn \
  && cp web/twint_ocr.js web/twint_ocr_worker.js web/twint_amount_ocr.js build/web/
 
 # Stage 2: Serve via Nginx

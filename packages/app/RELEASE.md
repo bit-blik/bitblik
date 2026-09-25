@@ -32,6 +32,60 @@
 
 ## Web
 
-todo
+- Docker image uses `packages/app/Dockerfile`; root-hosted deployments keep
+  default `WEB_BASE_HREF=/`.
+
+## nsite
+
+Publish Flutter web build to existing nsite root under `/app/`. Script builds
+same `packages/app/Dockerfile` artifact as web image, with `WEB_BASE_HREF=/app/`.
+
+### One-time setup
+
+1. Install [`nsyte`](https://nsite.run/) and ensure Docker daemon runs.
+2. Create a restricted NIP-46 CI credential with `nsyte ci`.
+3. Store resulting `nbunksec` in secret manager as `NSITE_SECRET`. Never
+   commit an `nsec`, hex private key, or `nbunksec`.
+
+### Preview release
+
+Run from repository root. Dry run still builds Docker artifact, but does not
+upload blobs or publish Nostr events.
+
+```bash
+packages/app/tool/publish_nsite.sh --flavor bitblik --dry-run --prompt-secret
+```
+
+### Publish release
+
+```bash
+NSITE_SECRET='nbunksec1...' \
+  packages/app/tool/publish_nsite.sh --flavor bitblik
+```
+
+### Flavors and target site
+
+Use `--flavor bitblik`, `bitway`, `bittwint`, or `veksli`. Script reads current
+manifest to skip files whose SHA-256 hash is unchanged, then `nsyte put` updates
+only changed `/app` paths. BitBlik and BitWay pubkeys come from app config.
+For another target, set `NSITE_PUBKEY` or pass `--pubkey`. Use credential
+belonging to target flavor's existing nsite identity.
+
+### Root-site safety
+
+Script calls `nsyte put` once per Docker artifact file under `/app/*`. Each
+call updates only that existing root-manifest path; all other path tags remain
+verbatim. Existing landing-page paths, including `/index.html`, `/404.html`,
+`/ios/*`, and root assets, are never downloaded, staged, changed, or deleted.
+Updates use strictly increasing timestamps so every sequential root manifest
+replaces its predecessor deterministically.
+
+Set `NSITE_RELAYS` or `NSITE_SERVERS` for comma-separated infrastructure
+overrides. Default servers match current BitBlik root-manifest server hints;
+do not narrow this list unless full-root download succeeds. See all options:
+
+```bash
+packages/app/tool/publish_nsite.sh --help
+```
 
 ## post on Nostr
