@@ -2009,12 +2009,13 @@ final walletProtocolDispatcherProvider = Provider<WalletProtocolDispatcher>((
   return WalletProtocolDispatcher();
 });
 
-/// App-level background wallet warmup.
-/// Ensures NWC wallets are initialized even if the user never opens /wallet.
+/// Initializes NWC wallets while the app is visible, even outside /wallet.
 final walletWarmupProvider = Provider<void>((ref) {
   StreamSubscription? walletsSubscription;
+  var disposed = false;
 
   void warmupWallets(Iterable<Wallet> wallets) {
+    if (disposed || !ref.read(appForegroundProvider)) return;
     final ndk = ref.read(ndkProvider);
     if (ndk == null) return;
 
@@ -2035,6 +2036,7 @@ final walletWarmupProvider = Provider<void>((ref) {
   Future<void> startWarmup() async {
     try {
       await ref.read(initializedApiServiceProvider.future);
+      if (disposed) return;
       final ndk = ref.read(ndkProvider);
       if (ndk == null) return;
 
@@ -2050,7 +2052,28 @@ final walletWarmupProvider = Provider<void>((ref) {
 
   unawaited(startWarmup());
 
+  ref.listen(appForegroundProvider, (previous, foreground) {
+    if (!foreground || previous != false) return;
+    final ndk = ref.read(ndkProvider);
+    if (ndk == null) return;
+    // Idle wallet notifications are suspended in the background. Fetch once
+    // on return so incoming payments are reflected without replaying history.
+    for (final wallet in ndk.wallets.getWalletsForUnit('sat')) {
+      if (wallet.type != WalletType.NWC) continue;
+      unawaited(
+        ndk.wallets.refreshBalance(wallet.id).catchError((Object error) {
+          Logger.log.w(
+            () => 'NWC balance refresh failed: ${error.runtimeType}',
+          );
+          return <WalletBalance>[];
+        }),
+      );
+    }
+    warmupWallets(ndk.wallets.getWalletsForUnit('sat'));
+  });
+
   ref.onDispose(() {
+    disposed = true;
     walletsSubscription?.cancel();
   });
 });
@@ -2075,7 +2098,16 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
     _currentState =
         WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
     WidgetsBinding.instance.addObserver(this);
-    unawaited(_syncBackgroundWork());
+    // Startup may cache foreground before this observer is registered. Seed
+    // from the latest lifecycle state after Riverpod finishes building us.
+    scheduleMicrotask(() {
+      if (_disposed) return;
+      if (_currentState != AppLifecycleState.inactive) {
+        _ref.read(appForegroundProvider.notifier).state =
+            _currentState == AppLifecycleState.resumed;
+      }
+      unawaited(_syncBackgroundWork());
+    });
     if (!kIsWeb) {
       unawaited(_startNetworkConnectivityMonitoring());
       if (Platform.isAndroid || Platform.isIOS) {

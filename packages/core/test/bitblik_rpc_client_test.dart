@@ -15,6 +15,242 @@ void main() {
   const secondPrivateKey =
       '0000000000000000000000000000000000000000000000000000000000000002';
 
+  test('passive pause stays idle through ten minutes of route/network updates',
+      () async {
+    final clock = FakeAsync();
+    final ndk = _TestNdk();
+    late BitblikRpcClient client;
+    var idleCalls = 0;
+    clock.run((_) {
+      ndk.requests.closeImmediately = true;
+      client = BitblikRpcClient(
+        ndk: ndk,
+        signer: Bip340EventSigner(
+            privateKey: firstPrivateKey,
+            publicKey: bip340.getPublicKey(firstPrivateKey)),
+        relays: const ['wss://enabled.example'],
+        onIdle: () async {
+          expect(ndk.requests.active, isEmpty);
+          idleCalls++;
+        },
+      );
+      unawaited(client.start());
+    });
+    await _advance(clock, Duration.zero);
+    final attempts = ndk.requests._nextId;
+    clock.run((_) => unawaited(client.setPassiveListeningEnabled(false)));
+    await _advance(clock, Duration.zero);
+    for (var i = 0; i < 600; i++) {
+      clock.run((_) {
+        client.setNetworkAvailable(i.isEven);
+        unawaited(client.updateResponseRelays({'wss://changed.example'}));
+      });
+      await _advance(clock, const Duration(seconds: 1));
+    }
+    expect(ndk.requests.active, isEmpty);
+    expect(ndk.requests._nextId, attempts);
+    expect(idleCalls, 1);
+    expect(clock.nonPeriodicTimerCount, 0);
+    ndk.requests.closeImmediately = false;
+    clock.run((_) {
+      client.setNetworkAvailable(true);
+      unawaited(client.setPassiveListeningEnabled(true));
+    });
+    await _advance(clock, Duration.zero);
+    expect(ndk.requests.active.values.single.$1, {'wss://changed.example'});
+    clock.run((_) => unawaited(client.stop()));
+    await _advance(clock, Duration.zero);
+    await ndk.destroy();
+  });
+
+  test('offline pause closes live listener before cleanup callback', () async {
+    final ndk = _TestNdk();
+    var idleCalls = 0;
+    final client = BitblikRpcClient(
+      ndk: ndk,
+      signer: Bip340EventSigner(
+          privateKey: firstPrivateKey,
+          publicKey: bip340.getPublicKey(firstPrivateKey)),
+      relays: const ['wss://enabled.example'],
+      onIdle: () async {
+        expect(ndk.requests.active, isEmpty);
+        idleCalls++;
+        throw StateError('cleanup failed');
+      },
+    );
+    addTearDown(() async {
+      await client.stop();
+      await ndk.destroy();
+    });
+    await client.start();
+    client.setNetworkAvailable(false);
+    await client.setPassiveListeningEnabled(false);
+    expect(ndk.requests.active, isEmpty);
+    expect(idleCalls, 1);
+    client.setNetworkAvailable(true);
+    await client.updateResponseRelays({'wss://changed.example'});
+    expect(ndk.requests.active, isEmpty);
+    expect(idleCalls, 1);
+  });
+
+  test('paused explicit request waits for listener and closes it after reply',
+      () async {
+    final ndk = _TestNdk();
+    ndk.requests.readiness = Completer<void>();
+    var idleCalls = 0;
+    final signer = Bip340EventSigner(
+        privateKey: firstPrivateKey,
+        publicKey: bip340.getPublicKey(firstPrivateKey));
+    final client = BitblikRpcClient(
+      ndk: ndk,
+      signer: signer,
+      relays: const ['wss://enabled.example'],
+      onIdle: () async {
+        expect(ndk.requests.active, isEmpty);
+        idleCalls++;
+      },
+    );
+    addTearDown(() async {
+      await client.stop();
+      await ndk.destroy();
+    });
+    await client.setPassiveListeningEnabled(false);
+    await client.start();
+    expect(ndk.requests._nextId, 0);
+    final result = client.send(
+      const NostrRequest(method: 'get_info', params: {}, id: 'paused-send'),
+      bip340.getPublicKey(secondPrivateKey),
+      relays: const ['wss://request.example'],
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    expect(ndk.broadcast.firstRequest.isCompleted, isFalse);
+    expect(ndk.requests.active.values.single.$1, {'wss://request.example'});
+    ndk.requests.readiness!.complete();
+    await ndk.broadcast.firstRequest.future;
+    ndk.requests.deliver(
+      'wss://request.example',
+      await ProtocolCodec.encryptResponse(
+        response: const NostrResponse(id: 'paused-send', result: {}),
+        senderPrivateKeyHex: secondPrivateKey,
+        senderPubkeyHex: bip340.getPublicKey(secondPrivateKey),
+        recipientPubkey: signer.getPublicKey(),
+      ),
+    );
+    expect((await result).isSuccess, isTrue);
+    await client.setPassiveListeningEnabled(false);
+    expect(ndk.requests.active, isEmpty);
+    expect(idleCalls, 2);
+  });
+
+  test('pause preserves pending concurrent requests on separate routes',
+      () async {
+    final ndk = _TestNdk();
+    final signer = Bip340EventSigner(
+        privateKey: firstPrivateKey,
+        publicKey: bip340.getPublicKey(firstPrivateKey));
+    final client = BitblikRpcClient(
+      ndk: ndk,
+      signer: signer,
+      relays: const ['wss://enabled.example'],
+    );
+    addTearDown(() async {
+      await client.stop();
+      await ndk.destroy();
+    });
+    await client.start();
+    final first = client.send(
+      const NostrRequest(method: 'get_info', params: {}, id: 'first-paused'),
+      bip340.getPublicKey(secondPrivateKey),
+      relays: const ['wss://first.example'],
+    );
+    final second = client.send(
+      const NostrRequest(method: 'get_info', params: {}, id: 'second-paused'),
+      bip340.getPublicKey(secondPrivateKey),
+      relays: const ['wss://second.example'],
+    );
+    await ndk.broadcast.twoRequests.future;
+    await client.setPassiveListeningEnabled(false);
+    await client.updateResponseRelays({'wss://unneeded.example'});
+    for (final (id, route, result) in [
+      ('first-paused', 'wss://first.example', first),
+      ('second-paused', 'wss://second.example', second),
+    ]) {
+      ndk.requests.deliver(
+        route,
+        await ProtocolCodec.encryptResponse(
+          response: NostrResponse(id: id, result: const {}),
+          senderPrivateKeyHex: secondPrivateKey,
+          senderPubkeyHex: bip340.getPublicKey(secondPrivateKey),
+          recipientPubkey: signer.getPublicKey(),
+        ),
+      );
+      expect((await result).isSuccess, isTrue);
+      await client.setPassiveListeningEnabled(false);
+    }
+    expect(ndk.requests.active, isEmpty);
+    await client.setPassiveListeningEnabled(true);
+    expect(ndk.requests.active.values.single.$1, {'wss://unneeded.example'});
+  });
+
+  test('paused request timeout removes temporary listener without retry',
+      () async {
+    final ndk = _TestNdk();
+    final client = BitblikRpcClient(
+      ndk: ndk,
+      signer: Bip340EventSigner(
+          privateKey: firstPrivateKey,
+          publicKey: bip340.getPublicKey(firstPrivateKey)),
+      relays: const ['wss://enabled.example'],
+      timeout: const Duration(milliseconds: 20),
+    );
+    addTearDown(() async {
+      await client.stop();
+      await ndk.destroy();
+    });
+    await client.setPassiveListeningEnabled(false);
+    await client.start();
+    await expectLater(
+      client.send(
+        const NostrRequest(
+            method: 'get_info', params: {}, id: 'paused-timeout'),
+        bip340.getPublicKey(secondPrivateKey),
+      ),
+      throwsA(isA<RpcTimeoutException>()),
+    );
+    await client.setPassiveListeningEnabled(false);
+    expect(ndk.requests.active, isEmpty);
+    final attempts = ndk.requests._nextId;
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    expect(ndk.requests._nextId, attempts);
+  });
+
+  test('passive pause survives stop/start and signer rebind', () async {
+    final ndk = _TestNdk();
+    final client = BitblikRpcClient(
+      ndk: ndk,
+      signer: Bip340EventSigner(
+          privateKey: firstPrivateKey,
+          publicKey: bip340.getPublicKey(firstPrivateKey)),
+      relays: const ['wss://enabled.example'],
+    );
+    addTearDown(() async {
+      await client.stop();
+      await ndk.destroy();
+    });
+    await client.start();
+    await client.setPassiveListeningEnabled(false);
+    await client.stop();
+    await client.start();
+    await client.rebindSigner(Bip340EventSigner(
+        privateKey: secondPrivateKey,
+        publicKey: bip340.getPublicKey(secondPrivateKey)));
+    expect(client.signer.getPublicKey(), bip340.getPublicKey(secondPrivateKey));
+    expect(ndk.requests.active, isEmpty);
+    expect(ndk.requests._nextId, 1);
+    await client.setPassiveListeningEnabled(true);
+    expect(ndk.requests.active.length, 1);
+  });
+
   test('cold start waits for reply subscription before publishing', () async {
     final ndk = _TestNdk();
     ndk.requests.readiness = Completer<void>();
@@ -37,6 +273,8 @@ void main() {
     expect(ndk.broadcast.firstRequest.isCompleted, isFalse);
     ndk.requests.readiness!.complete();
     await ndk.broadcast.firstRequest.future;
+    expect(ndk.broadcast.retryDelivery, isFalse,
+        reason: 'RPCs must never enter durable retry queues');
     ndk.requests.deliver(
         'wss://enabled.example',
         await ProtocolCodec.encryptResponse(
@@ -512,6 +750,7 @@ class _TestRequests implements Requests {
 class _TestBroadcast implements Broadcast {
   Future<List<RelayBroadcastResponse>>? done;
   bool accept = true;
+  bool? retryDelivery;
   List<String> lastRelays = [];
   final firstRequest = Completer<void>();
   final twoRequests = Completer<void>();
@@ -524,6 +763,7 @@ class _TestBroadcast implements Broadcast {
       final relays =
           invocation.namedArguments[#specificRelays] as Iterable<String>;
       lastRelays = relays.toList();
+      retryDelivery = invocation.namedArguments[#retryDelivery] as bool?;
       if (++_count == 1) firstRequest.complete();
       if (_count == 2) twoRequests.complete();
       return NdkBroadcastResponse(

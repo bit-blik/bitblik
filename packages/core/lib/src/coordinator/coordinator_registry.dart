@@ -53,6 +53,11 @@ class CoordinatorRegistry {
   /// Headless consumers can omit this to retain unrestricted refreshes.
   final bool Function()? shouldRefreshStatistics;
 
+  /// Called after a discovery batch releases its query subscriptions.
+  /// Hosts may release unused connections here when running in the background.
+  /// Cleanup failures never replace discovery results.
+  final Future<void> Function()? onNetworkWorkCompleted;
+
   /// Discovery relays — used ONLY to find coordinators (their kind
   /// [kKindCoordinatorInfo] and kind [kKindRelayList] events). All
   /// per-coordinator communication is routed to each coordinator's own
@@ -117,6 +122,7 @@ class CoordinatorRegistry {
     required this.store,
     required this.relays,
     this.shouldRefreshStatistics,
+    this.onNetworkWorkCompleted,
     this.discoveryPubkeyHex = kBitblikPubkeyHex,
     this.activePaymentSystemId = 'blik',
     this.probeStaleAfter = const Duration(seconds: 60),
@@ -128,6 +134,30 @@ class CoordinatorRegistry {
   }
 
   Duration get _queryTimeout => rpcClient.timeout + kRelayRequestGrace;
+
+  Stream<Nip01Event> _discoveryEvents(
+      NdkResponse response, Duration timeout) async* {
+    try {
+      yield* response.stream
+          .timeout(timeout, onTimeout: (sink) => sink.close());
+    } finally {
+      // Cancelling a response stream does not close its NDK relay request.
+      // Release it at our shorter discovery deadline, including early exits.
+      try {
+        await ndk.requests.closeSubscription(response.requestId);
+      } catch (error) {
+        Logger.log.w(() => 'Discovery query cleanup failed: $error');
+      }
+    }
+  }
+
+  Future<void> _networkWorkCompleted() async {
+    try {
+      await onNetworkWorkCompleted?.call();
+    } catch (error) {
+      Logger.log.w(() => 'Discovery connection cleanup failed: $error');
+    }
+  }
 
   /// Re-point discovery at a different project identity (hex pubkey), e.g. when
   /// the active payment system changes. No-op when unchanged. The next
@@ -185,10 +215,8 @@ class CoordinatorRegistry {
         explicitRelays: _bootstrapRelays,
         cacheRead: false,
       );
-      await for (final event in response.stream.timeout(
-        _streamQueryTimeout,
-        onTimeout: (sink) => sink.close(),
-      )) {
+      await for (final event
+          in _discoveryEvents(response, _streamQueryTimeout)) {
         if (_normalize(event.pubKey) != _normalize(discoveryPubkeyHex)) {
           continue;
         }
@@ -227,6 +255,8 @@ class CoordinatorRegistry {
       } catch (_) {
         // Best-effort only. If network is unavailable, fall back to the stored
         // state and let the next discovery refresh apply the hard mute filter.
+      } finally {
+        await _networkWorkCompleted();
       }
     }());
   }
@@ -318,10 +348,8 @@ class CoordinatorRegistry {
         cacheRead: false,
       );
       final discovered = <String>{};
-      await for (final event in response.stream.timeout(
-        _streamQueryTimeout,
-        onTimeout: (sink) => sink.close(),
-      )) {
+      await for (final event
+          in _discoveryEvents(response, _streamQueryTimeout)) {
         final eventPubkey = _normalize(event.pubKey);
         if (_mutedPubkeys.contains(eventPubkey)) continue;
         if (CoordinatorInfo.fromNostrEvent(event).paymentSystem !=
@@ -378,6 +406,7 @@ class CoordinatorRegistry {
           _coldStartState!.phase != CoordinatorColdStartPhase.completed) {
         _clearColdStartState();
       }
+      await _networkWorkCompleted();
       _discoveryInFlight = null;
       completer.complete();
     }
@@ -401,10 +430,7 @@ class CoordinatorRegistry {
       cacheRead: false,
     );
     final profiles = <String, Nip01Event>{};
-    await for (final event in response.stream.timeout(
-      _queryTimeout,
-      onTimeout: (sink) => sink.close(),
-    )) {
+    await for (final event in _discoveryEvents(response, _queryTimeout)) {
       if (event.kind != Metadata.kKind) continue;
       final cur = profiles[event.pubKey];
       if (cur == null || event.createdAt > cur.createdAt) {
@@ -1118,10 +1144,7 @@ class CoordinatorRegistry {
         explicitRelays: muteListRelays,
         cacheRead: false,
       );
-      await for (final event in response.stream.timeout(
-        _queryTimeout,
-        onTimeout: (sink) => sink.close(),
-      )) {
+      await for (final event in _discoveryEvents(response, _queryTimeout)) {
         if (_normalize(event.pubKey) != _normalize(discoveryPubkeyHex)) {
           continue;
         }
@@ -1339,10 +1362,8 @@ class CoordinatorRegistry {
     );
     final newestByPubkey = <String, Nip01Event>{};
     try {
-      await for (final event in response.stream.timeout(
-        _streamQueryTimeout,
-        onTimeout: (sink) => sink.close(),
-      )) {
+      await for (final event
+          in _discoveryEvents(response, _streamQueryTimeout)) {
         final hex = _normalize(event.pubKey);
         if (!pubkeys.contains(hex)) continue;
         final cur = newestByPubkey[hex];

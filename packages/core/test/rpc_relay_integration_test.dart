@@ -19,6 +19,7 @@ class LocalRelay {
   final subscribed = Completer<void>();
   final sockets = <WebSocket>[];
   var events = 0;
+  final eventIds = <String>[];
   var eventsBeforeSubscription = 0;
   LocalRelay(this.server, {required this.reply}) {
     server.listen((request) async {
@@ -39,6 +40,7 @@ class LocalRelay {
           subscriptions.remove(message[1]);
         } else if (message[0] == 'EVENT') {
           events++;
+          eventIds.add((message[1] as Map)['id'] as String);
           if (subscriptions.isEmpty) eventsBeforeSubscription++;
           if (!reply) return; // Deliberately never ACK this relay's broadcast.
           final event = Nip01EventModel.fromJson(
@@ -76,6 +78,54 @@ class LocalRelay {
 }
 
 void main() {
+  test('timed-out RPC is never persisted or retried after missing relay ACK',
+      () async {
+    final silent =
+        LocalRelay(await HttpServer.bind('127.0.0.1', 0), reply: false);
+    final cache = MemCacheManager();
+    final ndk = Ndk(NdkConfig(
+      cache: cache,
+      eventVerifier: Bip340EventVerifier(),
+      bootstrapRelays: const [],
+      pendingDeliveryRetryInterval: const Duration(milliseconds: 100),
+    ));
+    const clientKey =
+        '0000000000000000000000000000000000000000000000000000000000000001';
+    ndk.accounts.loginPrivateKey(
+        privkey: clientKey, pubkey: bip340.getPublicKey(clientKey));
+    final client = BitblikRpcClient(
+      ndk: ndk,
+      signer: Bip340EventSigner(
+          privateKey: clientKey, publicKey: bip340.getPublicKey(clientKey)),
+      relays: [silent.url],
+      timeout: const Duration(milliseconds: 20),
+    );
+    addTearDown(() async {
+      await client.stop();
+      await ndk.destroy();
+      await silent.close();
+    });
+    await client.start();
+    await silent.subscribed.future.timeout(const Duration(seconds: 3));
+    await expectLater(
+      client.send(
+        const NostrRequest(method: 'get_info', params: {}, id: 'bounded'),
+        bip340.getPublicKey(coordinatorKey),
+      ),
+      throwsA(isA<RpcTimeoutException>()),
+    );
+    expect(silent.events, 1);
+    final eventId = silent.eventIds.single;
+    expect(await cache.loadEventDeliveryRecord(eventId), isNull);
+    expect(await cache.loadRelayDeliveryTargets(eventId: eventId), isEmpty);
+    expect(await cache.loadEvent(eventId), isNull);
+    // Leave the real retry scheduler running beyond its first delivery retry
+    // backoff. A missing ACK must not resurrect an already-timed-out request.
+    await Future<void>.delayed(const Duration(seconds: 6));
+    expect(silent.events, 1);
+    expect(await ndk.broadcast.loadPendingDeliveries(), isEmpty);
+  }, timeout: const Timeout(Duration(seconds: 20)));
+
   test('real NDK sends REQ first without requiring live EOSE or all ACKs',
       () async {
     final primary =

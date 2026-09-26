@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:ndk/domain_layer/entities/cashu/cashu_user_seedphrase.dart';
@@ -95,6 +96,7 @@ class NostrService {
   int _offerStatusGeneration = 0;
   Future<void> _offerSubscriptionUpdates = Future.value();
   Timer? _idleConnectionCleanup;
+  Timer? _backgroundDiagnosticsTimer;
   int _dmInboxLeases = 0;
   final _dmMessageController = StreamController<Nip17Message>.broadcast();
   final Map<String, Nip17Message> _dmMessagesByRumorId = {};
@@ -169,6 +171,9 @@ class NostrService {
       rpcClient: _rpcClient!,
       store: CoordinatorPrefsStore(),
       shouldRefreshStatistics: () => !_backgrounded,
+      onNetworkWorkCompleted: () async {
+        if (_backgrounded) await _ndk?.relays.closeIdleConnections();
+      },
       relays: _relayUrls,
     );
     await _coordinatorRegistry!.init();
@@ -242,6 +247,12 @@ class NostrService {
       }
     }
     final cacheManager = await createNostrCacheManager();
+    if (const bool.fromEnvironment('BATTERY_DIAGNOSTICS')) {
+      await _logDeliveryCacheDiagnostics(
+        cacheOverride: cacheManager,
+        stage: 'beforeStartup',
+      );
+    }
     // await SembastCacheManager.create(
     //           databasePath: (await getApplicationDocumentsDirectory()).path,
     //         )
@@ -267,6 +278,9 @@ class NostrService {
         walletsRepo: FlutterSecureStorageWalletsRepo(),
         eventVerifier: eventVerifier,
         bootstrapRelays: _relayUrls,
+        // Keep event streams live without ten-second radio wakeups per socket.
+        webSocketPingInterval: const Duration(seconds: 60),
+        webSocketReconnectMaximumStep: 7,
         logLevel: false && kDebugMode ? LogLevel.debug : LogLevel.warning,
         cashuUserSeedphrase: CashuUserSeedphrase(seedPhrase: cashuSeedPhrase),
       ),
@@ -280,6 +294,7 @@ class NostrService {
     // Wallet API is pinned with our lifecycle patch.
     // ignore: experimental_member_use
     _ndk!.wallets.setBackgrounded(_backgrounded);
+    await _ndk!.nwc.setBackgrounded(_backgrounded);
 
     await IsolateManager.instance.ready;
 
@@ -354,8 +369,12 @@ class NostrService {
       relays: _relayUrls,
       subscriptionName: 'client-responses',
       clientId: clientId,
+      onIdle: () async {
+        if (_backgrounded) await _ndk?.relays.closeIdleConnections();
+      },
     );
     _rpcClient!.setNetworkAvailable(_networkAvailable);
+    await _rpcClient!.setPassiveListeningEnabled(!_backgrounded);
     await _rpcClient!.start();
     Logger.log.i(() => '👂 Subscribed to coordinator responses');
   }
@@ -372,16 +391,26 @@ class NostrService {
   }) {
     _backgrounded = backgrounded;
     _idleConnectionCleanup?.cancel();
+    _backgroundDiagnosticsTimer?.cancel();
+    if (backgrounded && const bool.fromEnvironment('BATTERY_DIAGNOSTICS')) {
+      _backgroundDiagnosticsTimer = Timer(const Duration(minutes: 2), () {
+        _logBackgroundDiagnostics();
+        unawaited(_logDeliveryCacheDiagnostics());
+      });
+    }
     if (backgrounded) {
       // One follow-up after existing short queries settle; never a polling loop.
       _idleConnectionCleanup = Timer(const Duration(seconds: 30), () {
         if (_backgrounded) {
           unawaited(
-            _ndk?.relays.closeIdleConnections().catchError((Object error) {
-              Logger.log.w(
-                () => 'Could not release idle relays: ${error.runtimeType}',
-              );
-            }),
+            _ndk?.relays
+                .closeIdleConnections()
+                .catchError((Object error) {
+                  Logger.log.w(
+                    () => 'Could not release idle relays: ${error.runtimeType}',
+                  );
+                })
+                .whenComplete(_logBackgroundDiagnostics),
           );
         }
       });
@@ -391,6 +420,8 @@ class NostrService {
     _ndk?.wallets.setBackgrounded(backgrounded);
     final update = _lifecycleUpdate.then((_) async {
       if (!_isInitialized) return;
+      await _rpcClient?.setPassiveListeningEnabled(!_backgrounded);
+      await _ndk?.nwc.setBackgrounded(_backgrounded);
       if (_backgrounded) {
         try {
           await _dmInboxStartInFlight;
@@ -414,9 +445,79 @@ class NostrService {
         );
       }
       if (_backgrounded) await _ndk?.relays.closeIdleConnections();
+      _logBackgroundDiagnostics();
     });
     _lifecycleUpdate = update.catchError((Object _) {});
     return update;
+  }
+
+  // Opt-in, one-shot diagnostics for release-device battery investigations.
+  // No keys, event contents, wallet identifiers or relay addresses are logged.
+  Future<void> _logDeliveryCacheDiagnostics({
+    CacheManager? cacheOverride,
+    String stage = 'background',
+  }) async {
+    if (!const bool.fromEnvironment('BATTERY_DIAGNOSTICS')) return;
+    final cache = cacheOverride ?? _ndk?.config.cache;
+    if (cache == null) return;
+    final watch = Stopwatch()..start();
+    try {
+      final records = await cache.loadEventDeliveryRecords();
+      final targets = await cache.loadRelayDeliveryTargets();
+      final kinds = <int, int>{};
+      final states = <String, int>{};
+      for (final record in records) {
+        final encoded = record.serializedEventJson;
+        if (encoded == null) continue;
+        final kind = (jsonDecode(encoded) as Map<String, dynamic>)['kind'];
+        if (kind is int)
+          kinds.update(kind, (count) => count + 1, ifAbsent: () => 1);
+      }
+      for (final target in targets) {
+        states.update(
+          target.state.name,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+      }
+      final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final futureRetries = targets
+          .where((target) => (target.nextRetryAt ?? 0) > now)
+          .length;
+      Logger.log.w(
+        () =>
+            'BATTERY stage=$stage deliveryRecords=${records.length} '
+            'deliveryTargets=${targets.length} kinds=$kinds states=$states '
+            'futureRetries=$futureRetries '
+            'cacheReadMs=${watch.elapsedMilliseconds}',
+      );
+    } catch (error) {
+      Logger.log.w(() => 'BATTERY cache probe failed: ${error.runtimeType}');
+    }
+  }
+
+  void _logBackgroundDiagnostics() {
+    if (!const bool.fromEnvironment('BATTERY_DIAGNOSTICS')) return;
+    final state = _ndk?.relays.globalState;
+    if (state == null) return;
+    final requests = state.inFlightRequests.values
+        .map((request) {
+          final kinds = request.request.filters
+              .expand((filter) => filter.kinds ?? <int>[])
+              .toSet();
+          return '${request.isSubscription ? "sub" : "query"}:$kinds'
+              '/pending=${request.pendingConnections}'
+              '/relays=${request.requests.length}'
+              '/closed=${request.networkController.isClosed}';
+        })
+        .join(';');
+    Logger.log.w(
+      () =>
+          'BATTERY background=$_backgrounded '
+          'offersSuspended=$_offersSuspended '
+          'connections=${state.relays.length} '
+          'broadcasts=${state.inFlightBroadcasts.length} requests=[$requests]',
+    );
   }
 
   /// Starts the shared NIP-17 inbox used by mounted dispute conversations.
@@ -1464,6 +1565,7 @@ class NostrService {
   /// Dispose resources
   Future<void> dispose() async {
     _idleConnectionCleanup?.cancel();
+    _backgroundDiagnosticsTimer?.cancel();
     _offerSubscriptionRequested = false;
     _offersSuspended = true;
     _offerStatusGeneration++;

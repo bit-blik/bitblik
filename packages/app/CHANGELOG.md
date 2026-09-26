@@ -1,3 +1,6 @@
+## [0.11.2] - 2026-09-27
+- fix: background service battery usage (even less)
+
 ## [0.11.1] - 2026-09-25
 - fix: background service battery usage
 

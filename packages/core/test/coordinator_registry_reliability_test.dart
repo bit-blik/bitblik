@@ -268,6 +268,9 @@ void main() {
 
   test('cancelled history preserves stats and retries immediately on resume',
       () async {
+    // Initial discovery now closes its own requests; count this scan's cleanup.
+    await pumpEventQueue();
+    final previouslyClosed = ndk.requests.closedQueries;
     var foreground = true;
     final key = registry.all.first.pubkeyHex;
     ndk.requests.statsStream = (filter) async* {
@@ -291,7 +294,7 @@ void main() {
     expect(record.networkFinishedCount, 7);
     expect(record.lastFinishedCountUpdate, isNull);
     expect(ndk.requests.statsQueries, 1);
-    expect(ndk.requests.closedQueries, 1);
+    expect(ndk.requests.closedQueries, previouslyClosed + 1);
 
     foreground = true;
     ndk.requests.statsStream = null;

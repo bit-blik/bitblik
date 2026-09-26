@@ -68,6 +68,8 @@ class BitblikRpcClient {
   int _subscriptionFailures = 0;
   bool _stopped = false;
   bool _networkAvailable = true;
+  bool _passiveListeningEnabled = true;
+  bool _idleNotified = false;
   Future<void>? _rebindInFlight;
   Future<void> _responseRelayUpdates = Future.value();
   final Map<String, List<String>> _activeRequestRelays = {};
@@ -87,6 +89,11 @@ class BitblikRpcClient {
   /// takes precedence over this default.
   final String? clientId;
 
+  /// Called after disabled, idle response listeners have been fully removed.
+  /// May release unused relay connections; must not call back into this client.
+  /// Failures are logged without changing RPC results.
+  final Future<void> Function()? onIdle;
+
   BitblikRpcClient({
     required this.ndk,
     required EventSigner signer,
@@ -94,6 +101,7 @@ class BitblikRpcClient {
     this.timeout = const Duration(seconds: 5),
     this.subscriptionName = 'bitblik-rpc-responses',
     this.clientId,
+    this.onIdle,
   }) : _signer = signer;
 
   /// Subscribe to incoming responses. Must be called before [send].
@@ -101,6 +109,21 @@ class BitblikRpcClient {
     _stopped = false;
     await _syncResponseRelays();
   }
+
+  /// Suspend unsolicited response listening while retaining configured routes.
+  /// Explicit requests still open and pin their response paths before publishing.
+  /// Existing requests finish normally; their final cleanup closes the listener.
+  /// The setting survives [start] and [rebindSigner].
+  Future<void> setPassiveListeningEnabled(bool enabled) async {
+    _passiveListeningEnabled = enabled;
+    if (enabled) _idleNotified = false;
+    await _syncResponseRelays();
+  }
+
+  Set<String> get _effectiveResponseRelays => {
+        if (_passiveListeningEnabled) ..._configuredResponseRelays,
+        for (final relays in _activeRequestRelays.values) ...relays,
+      };
 
   /// OS reachability hint; do not wake retry timers while networking is absent.
   /// Existing requests keep their normal timeout/response semantics.
@@ -157,6 +180,7 @@ class BitblikRpcClient {
   }
 
   Future<void> _openSubscription(List<String> relays) async {
+    _idleNotified = false;
     final filter = Filter(
       kinds: [kKindCoordinatorResponse],
       pTags: [signer.getPublicKey()],
@@ -203,10 +227,7 @@ class BitblikRpcClient {
   }
 
   void _scheduleSubscriptionRetry() {
-    if (_stopped ||
-        !_networkAvailable ||
-        (_configuredResponseRelays.isEmpty &&
-            _activeRequestRelays.values.every((relays) => relays.isEmpty))) {
+    if (_stopped || !_networkAvailable || _effectiveResponseRelays.isEmpty) {
       return;
     }
     _subscriptionRetry?.cancel();
@@ -231,8 +252,8 @@ class BitblikRpcClient {
 
   /// Re-point the response subscription at [relays] (the union of the relays
   /// of all coordinators we expect to hear from). No-op when the set is
-  /// unchanged. Falls back to the bootstrap [relays] when [relays] is empty so
-  /// the client is never left without a subscription.
+  /// unchanged. Falls back to the bootstrap [relays] when [relays] is empty.
+  /// While passive listening is disabled, only active requests need listeners.
   Future<void> updateResponseRelays(Set<String> relays) async {
     _configuredResponseRelays =
         relays.isEmpty ? this.relays.toSet() : Set.of(relays);
@@ -248,12 +269,8 @@ class BitblikRpcClient {
   }
 
   Future<void> _applyResponseRelays() async {
-    if (!_networkAvailable) return;
     if (_stopped) return;
-    final target = <String>{
-      ..._configuredResponseRelays,
-      for (final relays in _activeRequestRelays.values) ...relays,
-    };
+    final target = _effectiveResponseRelays;
     if (target.isEmpty) {
       _subscriptionRetry?.cancel();
       _subscriptionRetry = null;
@@ -264,8 +281,21 @@ class BitblikRpcClient {
       _responseRelays = [];
       if (previous != null) _retiredSubscriptions.add(previous.requestId);
       await _closeRetiredSubscriptions();
+      if (!_passiveListeningEnabled &&
+          _activeRequestRelays.isEmpty &&
+          _retiredSubscriptions.isEmpty &&
+          !_idleNotified) {
+        _idleNotified = true;
+        try {
+          await onIdle?.call();
+        } catch (error) {
+          Logger.log.w(() => 'RPC idle cleanup failed: $error');
+        }
+      }
       return;
     }
+    // Teardown above must work offline too. Only opening needs connectivity.
+    if (!_networkAvailable) return;
     final current = _responseRelays.toSet();
     if (_subscription == null &&
         _subscriptionRetry?.isActive == true &&
@@ -301,7 +331,7 @@ class BitblikRpcClient {
   }
 
   Future<void> _closeRetiredSubscriptions() async {
-    if (_pending.isNotEmpty) return;
+    if (_activeRequestRelays.isNotEmpty) return;
     for (final id in _retiredSubscriptions.toList()) {
       await _listeners.remove(id)?.cancel();
       await ndk.requests.closeSubscription(id);
@@ -395,6 +425,7 @@ class BitblikRpcClient {
     // Pin before awaiting subscription changes. Registry updates may narrow
     // configured relays to enabled coordinators during a bulk health check.
     _activeRequestRelays[id] = broadcastRelays;
+    _idleNotified = false;
 
     try {
       stage = 'response subscription';
@@ -425,6 +456,9 @@ class BitblikRpcClient {
         specificRelays: broadcastRelays,
         timeout: remaining(),
         saveToCache: false,
+        // One-shot RPCs have their own deadline and must not enroll in durable
+        // retry bookkeeping; saveToCache alone does not disable enrollment.
+        retryDelivery: false,
       );
       // NDK's stream reports each relay result; its future additionally waits
       // for every relay and delivery bookkeeping. Health needs early evidence.

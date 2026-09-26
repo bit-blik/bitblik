@@ -1,6 +1,6 @@
 name: bitblik_cli
 description: Command-line interface for BitBlik.
-version: 0.11.1
+version: 0.11.2
 resolution: workspace
 publish_to: none
 
