@@ -35,6 +35,8 @@ class TestRequests implements Requests {
   bool fail = false;
   Stream<Nip01Event> Function(Filter)? statsStream;
   int closedQueries = 0;
+  final statsCacheRead = <bool?>[];
+  final statsCacheWrite = <bool?>[];
   @override
   dynamic noSuchMethod(Invocation call) {
     if (call.memberName == #query) {
@@ -43,6 +45,8 @@ class TestRequests implements Requests {
       Stream<Nip01Event> events() async* {
         if (isStats) {
           statsQueries++;
+          statsCacheRead.add(call.namedArguments[#cacheRead] as bool?);
+          statsCacheWrite.add(call.namedArguments[#cacheWrite] as bool?);
           active++;
           if (active > peak) peak = active;
           if (hold) {
@@ -264,6 +268,34 @@ void main() {
     await registry.fetchNetworkFinishedCounts(
         force: true, pubkeys: {registry.all.first.pubkeyHex});
     expect(ndk.requests.statsQueries, 1);
+  });
+
+  test('finished count ignores pending cache events before success', () async {
+    final key = registry.all.first.pubkeyHex;
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    ndk.requests.statsStream = (filter) async* {
+      for (final status in ['pending', 'success']) {
+        yield Nip01Event(
+          pubKey: key,
+          kind: kKindOffer,
+          createdAt: now,
+          tags: [
+            ['d', 'same-offer'],
+            ['s', status],
+            ['amt', status == 'success' ? '2000' : '1000'],
+            ['created_at', '$now'],
+          ],
+          content: '',
+        );
+      }
+    };
+
+    await registry.fetchNetworkFinishedCounts(pubkeys: {key});
+    final record = registry.all.firstWhere((r) => r.pubkeyHex == key);
+    expect(record.networkFinishedCount, 1);
+    expect(record.networkFinishedVolumeSats, 2000);
+    expect(ndk.requests.statsCacheRead, [false]);
+    expect(ndk.requests.statsCacheWrite, [false]);
   });
 
   test('cancelled history preserves stats and retries immediately on resume',

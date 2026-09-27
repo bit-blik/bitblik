@@ -1467,12 +1467,18 @@ class NostrService {
           until: until,
           limit: pageSize,
         ),
+        // NDK's author cache lookup does not apply tag filters. A cached
+        // pending event can otherwise occupy this offer's dedupe key before
+        // its success replacement arrives from the relay.
+        cacheRead: false,
+        cacheWrite: false,
         explicitRelays: relays,
       );
 
       var pageCount = 0;
       var oldest = until;
       await for (final event in response.stream) {
+        if (event.getFirstTag('s') != 'success') continue;
         pageCount++;
         if (event.createdAt < oldest) oldest = event.createdAt;
         final dTag = event.getDtag() ?? event.id;

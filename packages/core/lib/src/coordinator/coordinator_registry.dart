@@ -992,6 +992,10 @@ class CoordinatorRegistry {
           until: until,
           limit: pageSize,
         ),
+        // NDK's author cache lookup ignores tag filters. Only relay events
+        // can establish the current success status of an addressable offer.
+        cacheRead: false,
+        cacheWrite: false,
         explicitRelays: coordinatorRelays,
       );
 
@@ -1003,6 +1007,7 @@ class CoordinatorRegistry {
           return null;
         }
         if (event.pubKey != pubkey) continue;
+        if (event.getFirstTag('s') != 'success') continue;
         pageCount++;
         if (event.createdAt < oldest) oldest = event.createdAt;
         final dTag = event.getDtag() ?? event.id;
