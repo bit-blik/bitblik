@@ -957,14 +957,12 @@ class NostrService {
 
     final filter = Filter(kinds: [kKindOffer], dTags: [offerId], limit: 1);
 
-    // One-time fetch. Return as soon as ANY relay answers instead of draining
-    // the stream until EOSE-from-all-relays / the 10s default timeout: limit:1
-    // on an addressable kind (38383) means the first event IS the offer, and
-    // the details screen live-merges later status updates from the
-    // subscription. cacheRead:false keeps it authoritative from the relay.
+    // Return the first relay event. Cache writes must not delay delivery: NDK
+    // persists events before forwarding them to the query stream by default.
     final response = _ndk!.requests.query(
       filters: [filter],
       cacheRead: false,
+      cacheWrite: false,
       explicitRelays: _enabledCoordinatorRelays(),
     );
 

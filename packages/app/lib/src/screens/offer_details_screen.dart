@@ -352,18 +352,22 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (initialOffer) {
-          if (initialOffer == null) {
+          final listedOffer = availableOffersAsync.valueOrNull
+              ?.where((candidate) => candidate.id == widget.offerId)
+              .firstOrNull;
+          if (initialOffer == null && listedOffer == null) {
             return Center(child: Text(t.offers.errors.notFound));
           }
 
-          // Start with the initial offer from the detail provider
-          var offer = initialOffer;
+          // The live subscription can find an offer after a one-shot query
+          // times out, including when this route was opened directly.
+          var offer = initialOffer ?? listedOffer!;
 
           // Check if we have a real-time update from availableOffersProvider
           availableOffersAsync.whenData((availableOffers) {
             final updatedOffer = availableOffers.firstWhere(
               (o) => o.id == widget.offerId,
-              orElse: () => initialOffer,
+              orElse: () => offer,
             );
             // Use the updated offer if it's different
             if (updatedOffer.id == widget.offerId) {
