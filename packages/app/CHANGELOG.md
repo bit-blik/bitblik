@@ -1,4 +1,4 @@
-## [0.11.2] - 2026-09-27
+## [0.11.2] - 2026-09-28
 - fix: background service battery usage (even less)
 - fix: offer details sometimes not loading offer
 - fix: finished offers sometimes not loading
