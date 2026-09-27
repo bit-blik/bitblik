@@ -1,5 +1,7 @@
 ## [0.11.2] - 2026-09-27
 - fix: background service battery usage (even less)
+- fix: offer details sometimes not loading offer
+- fix: finished offers sometimes not loading
 
 ## [0.11.1] - 2026-09-25
 - fix: background service battery usage
