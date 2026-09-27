@@ -122,4 +122,52 @@ void main() {
       expect(find.text('321 PLN'), findsOneWidget, reason: status);
     }
   });
+
+  testWidgets('shows finished trades from success events', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final active = _offer('active', 456, OfferStatus.funded);
+    final finished = _offer('finished', 92, OfferStatus.takerPaid);
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(body: OfferListScreen()),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: ProviderScope(
+          overrides: [
+            availableOffersProvider.overrideWith(
+              (ref) => Stream.value([active]),
+            ),
+            successfulOffersStatsProvider.overrideWith(
+              (ref) async => {
+                'offers': <Offer>[finished],
+              },
+            ),
+            activeOfferProvider.overrideWith((ref) => _ActiveOffer(null)),
+            publicKeyProvider.overrideWith((ref) async => 'taker'),
+            hasReceivingWalletProvider.overrideWith(
+              (ref) => Stream.value(true),
+            ),
+            discoveredCoordinatorsProvider.overrideWith(
+              (ref) => Stream.value([]),
+            ),
+            selectedPaymentSystemProvider.overrideWith(
+              (ref) => SelectedPaymentSystemNotifier(kBlik),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Finished offers'), findsOneWidget);
+    expect(find.text('92 PLN'), findsOneWidget);
+  });
 }

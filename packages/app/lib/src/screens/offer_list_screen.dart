@@ -399,6 +399,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
     final bitcoinDisplayUnit = ref.watch(bitcoinDisplayUnitProvider);
 
     final offersAsyncValue = ref.watch(availableOffersProvider);
+    final successfulOffersAsync = ref.watch(successfulOffersStatsProvider);
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
     final myActiveOffer = ref.watch(activeOfferProvider);
     final selectedSystem = ref.watch(selectedPaymentSystemProvider);
@@ -504,7 +505,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                       Expanded(
                         child: _buildStatsSection(
                           context,
-                          ref.watch(successfulOffersStatsProvider),
+                          successfulOffersAsync,
                           t,
                           sortedCoordinators: sortedAllCoordinators,
                           selectedCoordinatorPubkey:
@@ -534,11 +535,12 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                   OfferStatus.dispute,
                   OfferStatus.refundingMaker,
                 ];
-                // Only finished offers for the payment system selected in
-                // settings (filters the coordinator dropdown too, since it is
-                // derived from these offers).
+                // The available-offers provider emits only funded/reserved
+                // offers. Finished trades come from the success-event query.
                 final finishedOffers =
-                    offers
+                    (successfulOffersAsync.valueOrNull?['offers']
+                                as List<Offer>? ??
+                            const <Offer>[])
                         .where(
                           (offer) =>
                               offer.status == OfferStatus.takerPaid &&
@@ -1315,7 +1317,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                     Expanded(
                       child: _buildStatsSection(
                         context,
-                        ref.watch(successfulOffersStatsProvider),
+                        successfulOffersAsync,
                         t,
                         currency: selectedSystem.currency,
                       ),
