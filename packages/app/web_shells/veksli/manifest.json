@@ -1,6 +1,6 @@
 {
-    "name": "Veksli",
-    "short_name": "Veksli",
+    "name": "veks.li",
+    "short_name": "veks.li",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

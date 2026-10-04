@@ -1,5 +1,6 @@
 import 'package:bitblik_core/core.dart';
 import 'package:ndk/presentation_layer/ndk.dart';
+import '../config/build_flavor.dart';
 
 export 'package:bitblik_core/core.dart' show extractBolt11Invoice;
 
@@ -13,5 +14,5 @@ Future<ReceivingPayment> createBestReceivingPayment(
   amountSats,
   coordinatorSupportsBolt12: coordinatorSupportsBolt12,
   walletId: walletId,
-  description: 'BitBlik payout',
+  description: '$buildAppName payout',
 );

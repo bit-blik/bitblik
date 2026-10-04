@@ -155,7 +155,7 @@ android {
         create("veksli") {
             dimension = "system"
             applicationId = "li.veks"
-            resValue("string", "app_name", "Veksli")
+            resValue("string", "app_name", "veks.li")
         }
     }
 }

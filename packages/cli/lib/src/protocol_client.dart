@@ -67,7 +67,7 @@ class BitblikProtocolClient {
       publicKey: bip340.getPublicKey(privateKey),
     );
 
-    final brand = paymentSystem.brandName.toLowerCase();
+    final brand = paymentSystem.brandSlug;
     _rpc = BitblikRpcClient(
       ndk: _ndk,
       signer: _signer,

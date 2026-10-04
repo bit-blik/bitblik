@@ -348,11 +348,13 @@ class NostrService {
   Future<void> _subscribeToResponses() async {
     _ensureClientSigner();
 
-    // Brand is the BUILT flavor (buildAppName, set before runApp from the
+    // Brand is the BUILT flavor (buildAppScheme, set before runApp from the
     // flavor entrypoint / appFlavor / appId), not the user's runtime
     // payment-system preference. e.g.
-    // 'app-bitblik-android/0.8.0', 'app-bitway-web-ios/0.8.0'.
-    final brand = buildAppName.toLowerCase();
+    // 'app-bitblik-android/0.8.0', 'app-bitway-web-ios/0.8.0',
+    // 'app-veksli-web/0.8.0'. The ASCII scheme, not the display name
+    // (`veks.li`), keeps the clientId format stable.
+    final brand = buildAppScheme;
     final platform = PlatformDetection.platformSlug;
     String version;
     try {

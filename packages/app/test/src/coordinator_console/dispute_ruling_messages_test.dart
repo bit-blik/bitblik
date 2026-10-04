@@ -45,4 +45,38 @@ void main() {
     expect(messages.taker, contains('ruled in your favor'));
     expect(messages.taker, contains('29800 sats'));
   });
+
+  test('maker refund request names the offer market brand', () {
+    expect(
+      rulingChatMessages(dispute, makerWins: true).maker,
+      contains('refund invoice in Bitblik.'),
+    );
+
+    final skOffer = Offer(
+      id: 'offer-sk',
+      amountSats: 30000,
+      makerFees: 11,
+      fiatAmount: 20,
+      fiatCurrency: 'EUR',
+      paymentSystemId: 'sk',
+      createdAt: DateTime.utc(2026),
+      makerPubkey: 'maker',
+      takerPubkey: 'taker',
+      coordinatorPubkey: 'coordinator',
+      status: OfferStatus.dispute,
+    );
+    final skDispute = CoordinatorDisputeCase(
+      offer: skOffer,
+      stateHistory: const [],
+      makerRefundInvoiceReady: false,
+      paymentBackendType: 'lightning',
+      paymentBackendAvailable: true,
+      makerRefundSats: 30011,
+      takerPayoutSats: 29800,
+    );
+    expect(
+      rulingChatMessages(skDispute, makerWins: true).maker,
+      contains('refund invoice in veks.li.'),
+    );
+  });
 }

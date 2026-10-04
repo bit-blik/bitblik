@@ -243,9 +243,16 @@ class PaymentSystem {
   /// translated.
   final String label;
 
-  /// App/product brand name for this market, e.g. `Bitblik`, `Bitway`. Used in
-  /// UI copy that refers to the application itself (FAQ, tips, notifications).
+  /// App/product brand name for this market, e.g. `Bitblik`, `Bitway`,
+  /// `veks.li`. Used in UI copy that refers to the application itself (FAQ,
+  /// tips, notifications). Display only — it may contain punctuation or change
+  /// with a rebrand, so never derive identifiers from it; use [brandSlug].
   final String brandName;
+
+  /// ASCII, lowercase identifier of the brand, e.g. `bitblik`, `veksli`. Names
+  /// the CLI executable and its `~/.config/<slug>` data directory and is part
+  /// of the RPC `clientId`, so keep it stable across display-name changes.
+  final String brandSlug;
 
   /// ISO 3166-1 alpha-2 country code, e.g. `PL`, `PT`, `SK`. Used as the i18n
   /// key for the localized country name.
@@ -287,6 +294,7 @@ class PaymentSystem {
     required this.id,
     required this.label,
     required this.brandName,
+    required this.brandSlug,
     required this.country,
     required this.flag,
     required this.currency,
@@ -416,6 +424,7 @@ const PaymentSystem kBlik = PaymentSystem(
   id: 'blik',
   label: 'BLIK',
   brandName: 'Bitblik',
+  brandSlug: 'bitblik',
   platformTag: 'Bitblik',
   country: 'PL',
   flag: '🇵🇱',
@@ -445,6 +454,7 @@ const PaymentSystem kMbway = PaymentSystem(
   id: 'mbway',
   label: 'MBway',
   brandName: 'Bitway',
+  brandSlug: 'bitway',
   platformTag: 'Bitway',
   logoAsset: 'assets/bitway.png',
   country: 'PT',
@@ -473,6 +483,7 @@ const PaymentSystem kTwint = PaymentSystem(
   id: 'twint',
   label: 'TWINT',
   brandName: 'Bittwint',
+  brandSlug: 'bittwint',
   platformTag: 'Bittwint',
   logoAsset: 'assets/bittwint.png',
   country: 'CH',
@@ -510,7 +521,8 @@ const InstrumentSpec _twintInstrument = InstrumentSpec(
 const PaymentSystem kSlovakia = PaymentSystem(
   id: 'sk',
   label: 'SK ATMs',
-  brandName: 'Veksli',
+  brandName: 'veks.li',
+  brandSlug: 'veksli',
   logoAsset: 'assets/veksli.png',
   platformTag: 'Bitvyber',
   country: 'SK',

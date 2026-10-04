@@ -1608,7 +1608,9 @@ class _ConversationLaneState extends State<_ConversationLane> {
                   icon: const Icon(Icons.arrow_drop_down_circle_outlined),
                   onSelected: (message) => unawaited(send(message)),
                   itemBuilder: (context) => [
-                    for (final reply in _preparedReplies)
+                    for (final reply in _preparedReplies(
+                      paymentSystemForOffer(widget.dispute.offer).brandName,
+                    ))
                       PopupMenuItem(
                         value: reply.message,
                         child: Text(reply.action),
@@ -1628,15 +1630,16 @@ class _ConversationLaneState extends State<_ConversationLane> {
   }
 }
 
-const _preparedReplies = <({String action, String message})>[
+/// Canned operator replies. [app] is the offer's market brand (e.g. `Bitblik`,
+/// `veks.li`), so the user is pointed at the app they actually use.
+List<({String action, String message})> _preparedReplies(String app) => [
   (
     action: 'Request evidence',
     message: 'Please provide clearer payment evidence.',
   ),
   (
     action: 'Request invoice',
-    message:
-        'Please submit the exact-amount Lightning payout invoice in BitBlik.',
+    message: 'Please submit the exact-amount Lightning payout invoice in $app.',
   ),
 ];
 

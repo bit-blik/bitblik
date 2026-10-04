@@ -45,7 +45,7 @@ class RulingChatNotificationResult {
       maker:
           'Dispute ruling for offer ${offer.id}: the coordinator ruled in your favor. '
           'The ruling authorizes a refund of ${dispute.makerRefundSats} sats. '
-          'Please submit the refund invoice in BitBlik.',
+          'Please submit the refund invoice in ${paymentSystemForOffer(offer).brandName}.',
       taker:
           'Dispute ruling for offer ${offer.id}: the coordinator ruled in favor of the maker. '
           'The ruling authorizes a refund of ${dispute.makerRefundSats} sats to the maker.',

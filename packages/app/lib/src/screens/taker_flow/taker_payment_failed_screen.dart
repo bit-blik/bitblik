@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
+import '../../config/build_flavor.dart';
 import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../utils/bitcoin_display.dart';
@@ -300,7 +301,7 @@ class _TakerPaymentFailedScreenState
             const SizedBox(height: 16),
             ReceivingInvoiceForm(
               amountSats: netAmountSats,
-              invoiceDescription: 'BitBlik payout retry',
+              invoiceDescription: '$buildAppName payout retry',
               coordinatorSupportsBolt12:
                   ref
                       .read(apiServiceProvider)
