@@ -21,7 +21,7 @@ String cliVersionLine(PaymentSystem paymentSystem) =>
 /// that system. Returns the process exit code.
 Future<int> runCli(List<String> args, PaymentSystem paymentSystem) async {
   activePaymentSystem = paymentSystem;
-  final exe = paymentSystem.brandName.toLowerCase();
+  final exe = paymentSystem.brandSlug;
 
   if (args.length == 1 && (args.single == '--version' || args.single == '-V')) {
     stdout.writeln(cliVersionLine(paymentSystem));

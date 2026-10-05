@@ -20,11 +20,11 @@ void main() {
     }
   });
 
-  test('Veksli flavor pins Slovak ATM branding and links', () {
+  test('veks.li flavor pins Slovak ATM branding and links', () {
     forcePaymentSystem('sk');
 
     expect(buildDefaultPaymentSystemId, 'sk');
-    expect(buildAppName, 'Veksli');
+    expect(buildAppName, 'veks.li');
     expect(buildAppScheme, 'veksli');
     expect(buildPrimaryHost, 'app.veks.li');
     expect(
@@ -33,5 +33,21 @@ void main() {
     );
     expect(buildQrLogoAsset, 'assets/veksli-icon.png');
     expect(isBuildPaymentSystemForced, isTrue);
+  });
+
+  test('each flavor keeps its own brand and an ASCII scheme', () {
+    const expected = {
+      'blik': ('BitBlik', 'bitblik'),
+      'mbway': ('BitWay', 'bitway'),
+      'twint': ('Bittwint', 'bittwint'),
+      'sk': ('veks.li', 'veksli'),
+    };
+    for (final MapEntry(key: id, value: (name, scheme)) in expected.entries) {
+      forcePaymentSystem(id);
+      expect(buildAppName, name, reason: id);
+      // buildAppScheme feeds deep links and the RPC clientId, so it must stay
+      // a plain identifier even when the display name has punctuation.
+      expect(buildAppScheme, scheme, reason: id);
+    }
   });
 }

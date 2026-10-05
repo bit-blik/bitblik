@@ -26,7 +26,7 @@ Cada banco define a validade de um código de levantamento sem cartão:
 - **Slovenská sporiteľňa: 15 minutos**
 - **VÚB: 10–60 minutos**, definidos pelo taker ao gerar o código
 
-O VÚB é o único banco em que a janela é escolhida pelo taker — de 10 a 60 minutos — ao gerar o código. O BitBlik não sabe que valor foi escolhido, por isso conta a partir do mínimo de 10 minutos. Peçam uma janela maior se o maker tiver mais caminho a fazer. A app mostra o tempo restante em contagem decrescente.
+O VÚB é o único banco em que a janela é escolhida pelo taker — de 10 a 60 minutos — ao gerar o código. O {app} não sabe que valor foi escolhido, por isso conta a partir do mínimo de 10 minutos. Peçam uma janela maior se o maker tiver mais caminho a fazer. A app mostra o tempo restante em contagem decrescente.
 
 #### Como funciona o escrow?
 

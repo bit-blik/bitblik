@@ -26,7 +26,7 @@ Each bank sets its own lifetime for a cardless-withdrawal code:
 - **Slovenská sporiteľňa: 15 minutes**
 - **VÚB: 10–60 minutes**, set by the taker when generating the code
 
-VÚB is the one bank where the taker picks the window — anywhere from 10 to 60 minutes — when generating the code. BitBlik cannot see which value they chose, so it counts down from the 10-minute floor. Ask for a longer window if the maker has further to walk. The app shows the remaining time as a countdown.
+VÚB is the one bank where the taker picks the window — anywhere from 10 to 60 minutes — when generating the code. {app} cannot see which value they chose, so it counts down from the 10-minute floor. Ask for a longer window if the maker has further to walk. The app shows the remaining time as a countdown.
 
 #### How does the escrow process work?
 

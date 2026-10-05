@@ -26,7 +26,7 @@ Každá banka má vlastnú platnosť kódu na výber bez karty:
 - **Slovenská sporiteľňa: 15 minút**
 - **VÚB: 10–60 minút**, dobu si volí taker pri generovaní kódu
 
-VÚB je jediná banka, kde si okno volí taker — od 10 do 60 minút — pri generovaní kódu. BitBlik nevie, akú hodnotu zvolil, takže odpočítava od spodnej hranice 10 minút. Ak to má maker k bankomatu ďalej, vypýtaj si dlhšie okno. Appka zobrazuje zostávajúci čas odpočtom.
+VÚB je jediná banka, kde si okno volí taker — od 10 do 60 minút — pri generovaní kódu. {app} nevie, akú hodnotu zvolil, takže odpočítava od spodnej hranice 10 minút. Ak to má maker k bankomatu ďalej, vypýtaj si dlhšie okno. Appka zobrazuje zostávajúci čas odpočtom.
 
 #### Ako funguje escrow proces?
 

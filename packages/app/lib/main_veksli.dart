@@ -1,4 +1,4 @@
-// Veksli (Slovak cardless ATM) flavor entrypoint.
+// veks.li (Slovak cardless ATM) flavor entrypoint.
 //
 // Build/run with this entrypoint so the SK ATM payment system is selected from
 // the first frame:

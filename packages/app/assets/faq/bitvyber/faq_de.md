@@ -26,7 +26,7 @@ Jede Bank legt die Lebensdauer eines kartenlosen Abhebungscodes selbst fest:
 - **Slovenská sporiteľňa: 15 Minuten**
 - **VÚB: 10–60 Minuten**, vom Taker beim Erzeugen des Codes gewählt
 
-VÚB ist die einzige Bank, bei der der Taker das Fenster wählt — 10 bis 60 Minuten — wenn er den Code erzeugt. BitBlik erfährt den gewählten Wert nicht und zählt daher ab der Untergrenze von 10 Minuten herunter. Bittet um ein längeres Fenster, wenn der Maker weiter laufen muss. Die App zeigt die verbleibende Zeit als Countdown.
+VÚB ist die einzige Bank, bei der der Taker das Fenster wählt — 10 bis 60 Minuten — wenn er den Code erzeugt. {app} erfährt den gewählten Wert nicht und zählt daher ab der Untergrenze von 10 Minuten herunter. Bittet um ein längeres Fenster, wenn der Maker weiter laufen muss. Die App zeigt die verbleibende Zeit als Countdown.
 
 #### Wie funktioniert der Escrow-Ablauf?
 
