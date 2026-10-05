@@ -143,10 +143,13 @@ offers:
   labels:
     premium: "Premia"
     premiumBadge: "+${percent}% premii"
+    discount: "Zniżka"
+    discountBadge: "-${percent}% zniżki"
 
   tooltips:
     takerFeeInfo: "Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz."
     premiumInfoTaker: "Premia oznacza, że ta oferta jest wyceniona powyżej rynku. Dla tej samej kwoty fiat maker blokuje mniej satów w fakturze hold, więc płacisz powyżej rynku i otrzymujesz mniej satów niż po kursie rynkowym. Maksymalną premię ustala koordynator."
+    discountInfoTaker: "Zniżka oznacza, że ta oferta jest wyceniona poniżej rynku. Dla tej samej kwoty fiat maker blokuje więcej satów w fakturze hold, więc otrzymujesz więcej satów niż po kursie rynkowym. Maksymalną zniżkę ustala koordynator."
     ratesFetchedAt: "Pobrano o"
     ratesSources: "Źródła średniego kursu"
   
@@ -304,6 +307,8 @@ coordinator:
     maxPremium: "Maks. premia"
     maxPremiumInfoTitle: "Premia"
     maxPremiumInfoBody: "Premia to opcjonalna marża ponad kurs rynkowy, którą wystawiający (maker) może ustawić na ofercie. Przy premii maker blokuje mniej satoshi za tę samą kwotę fiat, więc biorący (taker) płaci powyżej rynku, a maker zatrzymuje różnicę. Ta wartość to najwyższa premia dozwolona przez tego koordynatora w jego ofertach."
+    premiumRange: "Zakres premii"
+    premiumRangeInfoBody: "W tym zakresie wystawiający (maker) może ustawić premię (cena powyżej rynku) lub zniżkę (cena poniżej rynku). Przy zniżce maker blokuje więcej satoshi za tę samą kwotę fiat, więc biorący (taker) otrzymuje więcej satoshi niż po kursie rynkowym. Przy premii maker blokuje mniej satoshi i zatrzymuje różnicę."
     reservationTime: "Czas rezerwacji"
     currencies: "Waluty"
     paymentSystem: "System płatności"
@@ -440,6 +445,7 @@ maker:
       customAmount: Własna
       tapToSelect: Kliknij, aby wybrać
       premium: Premia
+      discount: "Zniżka"
     actions:
       generateInvoice: Wygeneruj Fakturę
     bank:
@@ -460,6 +466,7 @@ maker:
       feeInfo: "Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning."
       payInfo: "Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty."
       premiumInfo: "Opcjonalna premia pozwala sprzedać saty powyżej ceny rynkowej. Premia zmniejsza liczbę satów zablokowanych w fakturze hold dla tej samej kwoty fiat, więc kupujący płaci powyżej rynku, a Ty zatrzymujesz różnicę. Domyślnie wyłączona (0%). Maksymalną premię ustala wybrany koordynator."
+      discountInfo: "Opcjonalna zniżka pozwala sprzedać saty poniżej ceny rynkowej, dzięki czemu Twoja oferta jest atrakcyjniejsza dla biorących. Zniżka zwiększa liczbę satów zablokowanych w Twojej fakturze hold za tę samą kwotę fiat, więc biorący otrzymuje więcej satów niż po kursie rynkowym. Domyślnie wyłączona (0%). Maksymalną zniżkę ustala wybrany koordynator."
 
     category:
       label: "Kategoria oferty"
@@ -1184,6 +1191,7 @@ settings:
     enablePremium: Włącz premię cenową
     enablePremiumDescription: Pokaż suwak premii podczas tworzenia ofert makera.
     defaultPremium: Domyślna premia
+    defaultDiscount: "Domyślna zniżka"
     defaultPremiumDisabled: Włącz premię cenową, aby ustawić domyślną premię.
     premiumPerCoordinatorNote: "Każdy koordynator ustala własną maksymalną premię, więc Twoja domyślna wartość jest ograniczona przez koordynatora użytego do oferty."
     categoryOptions:
@@ -1329,6 +1337,7 @@ offerNotifications:
     title: Nowa oferta dostępna
     body: "${amount} ${currency} · ${sats}"
     premiumSuffix: "+${percent}% premii"
+    discountSuffix: "-${percent}% zniżki"
   categories:
     shop: Sklep
     atm: Bankomat

@@ -143,10 +143,13 @@ offers:
   labels:
     premium: "Prime"
     premiumBadge: "+${percent}% de prime"
+    discount: "Remise"
+    discountBadge: "-${percent}% de remise"
 
   tooltips:
     takerFeeInfo: "Le coordinateur facture des frais taker de ${feePercent}%. Ils incluent les frais de routage Lightning et sont déduits du montant que vous recevez."
     premiumInfoTaker: "Une prime signifie que cette offre est au-dessus du prix du marché. Pour le même montant fiat, le maker verrouille moins de sats dans la facture hold : vous payez donc au-dessus du marché et recevez moins de sats qu'au taux du marché. La prime maximale est fixée par le coordinateur."
+    discountInfoTaker: "Une remise signifie que cette offre est en dessous du prix du marché. Pour le même montant fiat, le maker verrouille plus de sats dans la facture hold : vous recevez donc plus de sats qu'au taux du marché. La remise maximale est fixée par le coordinateur."
     ratesFetchedAt: "Récupéré à"
     ratesSources: "Sources du taux moyen"
 
@@ -304,6 +307,8 @@ coordinator:
     maxPremium: "Prime max"
     maxPremiumInfoTitle: "Prime"
     maxPremiumInfoBody: "Une prime est une majoration facultative du prix au-dessus du taux du marché qu'un maker peut appliquer à une offre. Avec une prime, le maker verrouille moins de sats pour le même montant fiat : le taker paie donc au-dessus du marché et le maker garde la différence. Cette valeur est la prime la plus élevée que ce coordinateur autorise sur ses offres."
+    premiumRange: "Plage de prime"
+    premiumRangeInfoBody: "Dans cette plage, un maker peut fixer une prime (prix au-dessus du marché) ou une remise (prix en dessous du marché). Avec une remise, le maker verrouille plus de sats pour le même montant fiat : le taker reçoit donc plus de sats qu'au taux du marché. Avec une prime, il verrouille moins de sats et garde la différence."
     reservationTime: "Durée de réservation"
     currencies: "Devises"
     paymentSystem: "Système de paiement"
@@ -440,6 +445,7 @@ maker:
       customAmount: Personnalisé
       tapToSelect: Touchez pour sélectionner
       premium: Prime
+      discount: "Remise"
     actions:
       generateInvoice: Générer la facture
     bank:
@@ -460,6 +466,7 @@ maker:
       feeInfo: "Le coordinateur facture des frais maker de ${feePercent}%. Ces frais sont déduits de votre paiement Lightning."
       payInfo: "Ce calcul est basé sur des taux de change récupérés côté client. Le coordinateur calculera le montant exact, et le montant de la facture sera le montant final et exact à payer."
       premiumInfo: "Une prime facultative vous permet de vendre vos sats au-dessus du prix du marché. La prime réduit les sats verrouillés dans votre facture hold pour le même montant fiat : le taker paie donc au-dessus du marché et vous gardez la différence. Désactivée par défaut (0%). La prime maximale est fixée par le coordinateur sélectionné."
+      discountInfo: "Une remise facultative vous permet de vendre vos sats en dessous du prix du marché, pour rendre votre offre plus attrayante pour les takers. La remise augmente les sats verrouillés dans votre facture hold pour le même montant fiat : le taker reçoit donc plus de sats qu'au taux du marché. Désactivée par défaut (0%). La remise maximale est fixée par le coordinateur sélectionné."
 
     category:
       label: "Catégorie de l'offre"
@@ -1196,6 +1203,7 @@ settings:
     enablePremium: Activer la tarification avec prime
     enablePremiumDescription: Affiche le curseur de prime lors de la création d'offres maker.
     defaultPremium: Prime par défaut
+    defaultDiscount: "Remise par défaut"
     defaultPremiumDisabled: Activez la tarification avec prime pour définir une prime par défaut.
     premiumPerCoordinatorNote: "Chaque coordinateur fixe sa propre prime maximale, votre valeur par défaut est donc plafonnée par le coordinateur utilisé pour une offre."
     categoryOptions:
@@ -1345,6 +1353,7 @@ offerNotifications:
     title: Nouvelle offre disponible
     body: "${amount} ${currency} · ${sats}"
     premiumSuffix: "+${percent}% de prime"
+    discountSuffix: "-${percent}% de remise"
   categories:
     shop: Magasin
     atm: Distributeur

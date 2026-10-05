@@ -759,6 +759,8 @@ class _Translations$offers$labels$pt extends Translations$offers$labels$en {
 	// Translations
 	@override String get premium => 'Premium';
 	@override String premiumBadge({required Object percent}) => '+${percent}% premium';
+	@override String get discount => 'Desconto';
+	@override String discountBadge({required Object percent}) => '-${percent}% desconto';
 }
 
 // Path: offers.tooltips
@@ -770,6 +772,7 @@ class _Translations$offers$tooltips$pt extends Translations$offers$tooltips$en {
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'O coordenador cobra uma taxa de taker de ${feePercent}%. Inclui as taxas de encaminhamento da Lightning e é deduzida do montante que recebe.';
 	@override String get premiumInfoTaker => 'Um premium significa que esta oferta está acima do preço de mercado. Para o mesmo montante em fiat, o maker bloqueia menos sats na hold invoice, por isso paga acima do mercado e recebe menos sats do que à taxa de mercado. O premium máximo é definido pelo coordenador.';
+	@override String get discountInfoTaker => 'Um desconto significa que esta oferta está abaixo do preço de mercado. Para o mesmo montante em fiat, o maker bloqueia mais sats na hold invoice, por isso recebe mais sats do que à taxa de mercado. O desconto máximo é definido pelo coordenador.';
 	@override String get ratesFetchedAt => 'Obtido em';
 	@override String get ratesSources => 'Fontes da taxa média';
 }
@@ -1034,6 +1037,8 @@ class _Translations$coordinator$details$pt extends Translations$coordinator$deta
 	@override String get maxPremium => 'Premium máximo';
 	@override String get maxPremiumInfoTitle => 'Premium';
 	@override String get maxPremiumInfoBody => 'Um premium é uma majoração de preço opcional acima da taxa de mercado que um maker pode definir numa oferta. Com um premium, o maker bloqueia menos sats para o mesmo montante em fiat, por isso o taker paga acima do mercado e o maker fica com a diferença. Este valor é o premium máximo que este coordenador permite nas suas ofertas.';
+	@override String get premiumRange => 'Intervalo de premium';
+	@override String get premiumRangeInfoBody => 'Dentro deste intervalo, um maker pode definir um premium (preço acima do mercado) ou um desconto (preço abaixo do mercado). Com um desconto, o maker bloqueia mais sats para o mesmo montante em fiat, por isso o taker recebe mais sats do que à taxa de mercado. Com um premium, bloqueia menos sats e fica com a diferença.';
 	@override String get reservationTime => 'Tempo de reserva';
 	@override String get currencies => 'Moedas';
 	@override String get paymentSystem => 'Sistema de pagamento';
@@ -1875,6 +1880,7 @@ class _Translations$settings$offerCreation$pt extends Translations$settings$offe
 	@override String get enablePremium => 'Ativar preços premium';
 	@override String get enablePremiumDescription => 'Mostrar o seletor de premium ao criar ofertas como maker.';
 	@override String get defaultPremium => 'Premium predefinido';
+	@override String get defaultDiscount => 'Desconto predefinido';
 	@override String get defaultPremiumDisabled => 'Ative os preços premium para definir um premium predefinido.';
 	@override String get premiumPerCoordinatorNote => 'Cada coordenador define o seu próprio premium máximo, por isso o seu valor predefinido é limitado pelo coordenador usado na oferta.';
 	@override late final _Translations$settings$offerCreation$categoryOptions$pt categoryOptions = _Translations$settings$offerCreation$categoryOptions$pt._(_root);
@@ -2146,6 +2152,7 @@ class _Translations$offerNotifications$newOffer$pt extends Translations$offerNot
 	@override String get title => 'Nova oferta disponível';
 	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}';
 	@override String premiumSuffix({required Object percent}) => '+${percent}% premium';
+	@override String discountSuffix({required Object percent}) => '-${percent}% desconto';
 }
 
 // Path: offerNotifications.categories
@@ -2292,6 +2299,7 @@ class _Translations$maker$amountForm$labels$pt extends Translations$maker$amount
 	@override String get customAmount => 'Personalizado';
 	@override String get tapToSelect => 'Toque para selecionar';
 	@override String get premium => 'Premium';
+	@override String get discount => 'Desconto';
 }
 
 // Path: maker.amountForm.actions
@@ -2343,6 +2351,7 @@ class _Translations$maker$amountForm$tooltips$pt extends Translations$maker$amou
 	@override String feeInfo({required Object feePercent}) => 'O coordenador cobra uma taxa de maker de ${feePercent}%. Esta taxa é deduzida do seu pagamento Lightning.';
 	@override String get payInfo => 'Este cálculo baseia-se em taxas de câmbio obtidas no cliente. O coordenador calculará o montante exato, e o montante da invoice será o valor final e exato a pagar.';
 	@override String get premiumInfo => 'Um premium opcional permite vender os seus sats acima do preço de mercado. O premium reduz os sats bloqueados na sua hold invoice para o mesmo montante em fiat, por isso o taker paga acima do mercado e o maker fica com a diferença. Por predefinição está desligado (0%). O premium máximo é definido pelo coordenador selecionado.';
+	@override String get discountInfo => 'Um desconto opcional permite-lhe vender os seus sats abaixo do preço de mercado, tornando a sua oferta mais atrativa para os takers. O desconto aumenta os sats bloqueados na sua hold invoice para o mesmo montante em fiat, por isso o taker recebe mais sats do que à taxa de mercado. Desativado por predefinição (0%). O desconto máximo é definido pelo coordenador selecionado.';
 }
 
 // Path: maker.amountForm.category
@@ -3433,8 +3442,11 @@ extension on TranslationsPt {
 			'offers.details.consents.ecommerce' => ({required Object code}) => 'Por vários motivos — como um artigo esgotado, uma correção de pagamento em excesso, ou outros problemas do lado do comerciante — o comerciante online pode enviar automaticamente dinheiro de volta para a conta bancária associada ao ${code} que gerou. Esses fundos chegam à sua conta e não lhe pertencem. Se isto acontecer, contacte o coordenador de boa-fé e combine devolver os fundos ao maker. Ao aceitar esta oferta, aceita estes termos e compromete-se honradamente a agir com honestidade nestas situações.',
 			'offers.labels.premium' => 'Premium',
 			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% premium',
+			'offers.labels.discount' => 'Desconto',
+			'offers.labels.discountBadge' => ({required Object percent}) => '-${percent}% desconto',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'O coordenador cobra uma taxa de taker de ${feePercent}%. Inclui as taxas de encaminhamento da Lightning e é deduzida do montante que recebe.',
 			'offers.tooltips.premiumInfoTaker' => 'Um premium significa que esta oferta está acima do preço de mercado. Para o mesmo montante em fiat, o maker bloqueia menos sats na hold invoice, por isso paga acima do mercado e recebe menos sats do que à taxa de mercado. O premium máximo é definido pelo coordenador.',
+			'offers.tooltips.discountInfoTaker' => 'Um desconto significa que esta oferta está abaixo do preço de mercado. Para o mesmo montante em fiat, o maker bloqueia mais sats na hold invoice, por isso recebe mais sats do que à taxa de mercado. O desconto máximo é definido pelo coordenador.',
 			'offers.tooltips.ratesFetchedAt' => 'Obtido em',
 			'offers.tooltips.ratesSources' => 'Fontes da taxa média',
 			'offers.actions.take' => 'ACEITAR',
@@ -3547,6 +3559,8 @@ extension on TranslationsPt {
 			'coordinator.details.maxPremium' => 'Premium máximo',
 			'coordinator.details.maxPremiumInfoTitle' => 'Premium',
 			'coordinator.details.maxPremiumInfoBody' => 'Um premium é uma majoração de preço opcional acima da taxa de mercado que um maker pode definir numa oferta. Com um premium, o maker bloqueia menos sats para o mesmo montante em fiat, por isso o taker paga acima do mercado e o maker fica com a diferença. Este valor é o premium máximo que este coordenador permite nas suas ofertas.',
+			'coordinator.details.premiumRange' => 'Intervalo de premium',
+			'coordinator.details.premiumRangeInfoBody' => 'Dentro deste intervalo, um maker pode definir um premium (preço acima do mercado) ou um desconto (preço abaixo do mercado). Com um desconto, o maker bloqueia mais sats para o mesmo montante em fiat, por isso o taker recebe mais sats do que à taxa de mercado. Com um premium, bloqueia menos sats e fica com a diferença.',
 			'coordinator.details.reservationTime' => 'Tempo de reserva',
 			'coordinator.details.currencies' => 'Moedas',
 			'coordinator.details.paymentSystem' => 'Sistema de pagamento',
@@ -3657,6 +3671,7 @@ extension on TranslationsPt {
 			'maker.amountForm.labels.customAmount' => 'Personalizado',
 			'maker.amountForm.labels.tapToSelect' => 'Toque para selecionar',
 			'maker.amountForm.labels.premium' => 'Premium',
+			'maker.amountForm.labels.discount' => 'Desconto',
 			'maker.amountForm.actions.generateInvoice' => 'Gerar invoice',
 			'maker.amountForm.bank.label' => 'Banco',
 			'maker.amountForm.bank.required' => 'Escolhe um banco',
@@ -3672,6 +3687,7 @@ extension on TranslationsPt {
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'O coordenador cobra uma taxa de maker de ${feePercent}%. Esta taxa é deduzida do seu pagamento Lightning.',
 			'maker.amountForm.tooltips.payInfo' => 'Este cálculo baseia-se em taxas de câmbio obtidas no cliente. O coordenador calculará o montante exato, e o montante da invoice será o valor final e exato a pagar.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Um premium opcional permite vender os seus sats acima do preço de mercado. O premium reduz os sats bloqueados na sua hold invoice para o mesmo montante em fiat, por isso o taker paga acima do mercado e o maker fica com a diferença. Por predefinição está desligado (0%). O premium máximo é definido pelo coordenador selecionado.',
+			'maker.amountForm.tooltips.discountInfo' => 'Um desconto opcional permite-lhe vender os seus sats abaixo do preço de mercado, tornando a sua oferta mais atrativa para os takers. O desconto aumenta os sats bloqueados na sua hold invoice para o mesmo montante em fiat, por isso o taker recebe mais sats do que à taxa de mercado. Desativado por predefinição (0%). O desconto máximo é definido pelo coordenador selecionado.',
 			'maker.amountForm.category.label' => 'Categoria da oferta',
 			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => 'O ${system} não suporta esta categoria.',
 			'maker.amountForm.category.options.physicalShop' => 'Loja, café ou restaurante',
@@ -3841,6 +3857,8 @@ extension on TranslationsPt {
 			'taker.submitBlik.details.exchangeRate' => 'Taxa de câmbio',
 			'taker.submitBlik.details.takerFee' => 'Taxa do taker',
 			'taker.submitBlik.details.status' => 'Estado',
+			_ => null,
+		} ?? switch (path) {
 			'taker.submitBlik.details.youllReceive' => 'Vai receber',
 			'taker.criticalCodeDecision.title' => 'Decisão crítica',
 			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Já partilhou um código ${code} com o maker. Continuar pode substituir esse código, terminar a sua reserva e reabrir a oferta a outros takers.',
@@ -3848,8 +3866,6 @@ extension on TranslationsPt {
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Se o seu banco debitou o pagamento ${code}, NÃO continue. O maker pode ter usado o seu código e, após esta ação, o coordenador poderá já não conseguir garantir o pagamento dos seus bitcoins.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Voltar e verificar o banco',
 			'taker.criticalCodeDecision.actions.proceed' => 'NÃO fui debitado — continuar',
-			_ => null,
-		} ?? switch (path) {
 			'taker.conflict.title' => 'Confirmação do pagamento pendente',
 			'taker.conflict.headline' => 'A aguardar a confirmação do maker',
 			'taker.conflict.body' => ({required Object code}) => 'Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.',
@@ -4174,6 +4190,7 @@ extension on TranslationsPt {
 			'settings.offerCreation.enablePremium' => 'Ativar preços premium',
 			'settings.offerCreation.enablePremiumDescription' => 'Mostrar o seletor de premium ao criar ofertas como maker.',
 			'settings.offerCreation.defaultPremium' => 'Premium predefinido',
+			'settings.offerCreation.defaultDiscount' => 'Desconto predefinido',
 			'settings.offerCreation.defaultPremiumDisabled' => 'Ative os preços premium para definir um premium predefinido.',
 			'settings.offerCreation.premiumPerCoordinatorNote' => 'Cada coordenador define o seu próprio premium máximo, por isso o seu valor predefinido é limitado pelo coordenador usado na oferta.',
 			'settings.offerCreation.categoryOptions.shop' => 'Loja, café ou restaurante',
@@ -4276,6 +4293,7 @@ extension on TranslationsPt {
 			'offerNotifications.newOffer.title' => 'Nova oferta disponível',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premium',
+			'offerNotifications.newOffer.discountSuffix' => ({required Object percent}) => '-${percent}% desconto',
 			'offerNotifications.categories.shop' => 'Loja',
 			'offerNotifications.categories.atm' => 'Multibanco',
 			'offerNotifications.categories.online' => 'Online',

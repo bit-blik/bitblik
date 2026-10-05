@@ -695,6 +695,8 @@ class _Translations$offers$labels$sk extends Translations$offers$labels$en {
 	// Translations
 	@override String get premium => 'Prémia';
 	@override String premiumBadge({required Object percent}) => '+${percent}% prémia';
+	@override String get discount => 'Zľava';
+	@override String discountBadge({required Object percent}) => '-${percent}% zľava';
 }
 
 // Path: offers.tooltips
@@ -706,6 +708,7 @@ class _Translations$offers$tooltips$sk extends Translations$offers$tooltips$en {
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Koordinátor si účtuje ${feePercent}% poplatok kupujúceho. Ten zahŕňa smerovacie poplatky Lightning a odpočíta sa zo sumy, ktorú dostaneš.';
 	@override String get premiumInfoTaker => 'Prémia znamená, že táto ponuka je ocenená nad trhovou cenou. Za rovnakú sumu vo fiate predávajúci uzamkne menej sats v hold faktúre, takže platíš nad trh a dostaneš menej sats než pri trhovom kurze. Maximálnu prémiu určuje koordinátor.';
+	@override String get discountInfoTaker => 'Zľava znamená, že táto ponuka je ocenená pod trhovou cenou. Za rovnakú sumu vo fiate predávajúci uzamkne viac sats v hold faktúre, takže dostaneš viac sats než pri trhovom kurze. Maximálnu zľavu určuje koordinátor.';
 	@override String get ratesFetchedAt => 'Načítané o';
 	@override String get ratesSources => 'Zdroje priem. kurzu';
 }
@@ -970,6 +973,8 @@ class _Translations$coordinator$details$sk extends Translations$coordinator$deta
 	@override String get maxPremium => 'Max. prémia';
 	@override String get maxPremiumInfoTitle => 'Prémia';
 	@override String get maxPremiumInfoBody => 'Prémia je voliteľná prirážka nad trhový kurz, ktorú môže predávajúci nastaviť na ponuke. S prémiou predávajúci uzamkne menej sats za rovnakú sumu vo fiate, takže kupujúci platí nad trh a predávajúci si ponechá rozdiel. Táto hodnota je najvyššia prémia, ktorú tento koordinátor na svojich ponukách povoľuje.';
+	@override String get premiumRange => 'Rozsah prémie';
+	@override String get premiumRangeInfoBody => 'V tomto rozsahu môže predávajúci nastaviť prémiu (cena nad trhom) alebo zľavu (cena pod trhom). So zľavou predávajúci uzamkne viac sats za rovnakú sumu vo fiate, takže kupujúci dostane viac sats než pri trhovom kurze. S prémiou uzamkne menej sats a rozdiel si ponechá.';
 	@override String get reservationTime => 'Čas rezervácie';
 	@override String get currencies => 'Meny';
 	@override String get paymentSystem => 'Platobný systém';
@@ -1723,6 +1728,7 @@ class _Translations$settings$offerCreation$sk extends Translations$settings$offe
 	@override String get enablePremium => 'Zapnúť prémiové ceny';
 	@override String get enablePremiumDescription => 'Zobraziť posuvník prémie pri vytváraní ponúk predávajúceho.';
 	@override String get defaultPremium => 'Predvolená prémia';
+	@override String get defaultDiscount => 'Predvolená zľava';
 	@override String get defaultPremiumDisabled => 'Zapni prémiové ceny, aby si nastavil predvolenú prémiu.';
 	@override String get premiumPerCoordinatorNote => 'Každý koordinátor si nastavuje vlastnú maximálnu prémiu, takže tvoja predvolená hodnota je obmedzená koordinátorom použitým pre ponuku.';
 	@override late final _Translations$settings$offerCreation$categoryOptions$sk categoryOptions = _Translations$settings$offerCreation$categoryOptions$sk._(_root);
@@ -1994,6 +2000,7 @@ class _Translations$offerNotifications$newOffer$sk extends Translations$offerNot
 	@override String get title => 'Dostupná nová ponuka';
 	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}';
 	@override String premiumSuffix({required Object percent}) => '+${percent}% prémia';
+	@override String discountSuffix({required Object percent}) => '-${percent}% zľava';
 }
 
 // Path: offerNotifications.categories
@@ -2183,6 +2190,7 @@ class _Translations$maker$amountForm$labels$sk extends Translations$maker$amount
 	@override String get customAmount => 'Vlastná';
 	@override String get tapToSelect => 'Ťukni na výber';
 	@override String get premium => 'Prémia';
+	@override String get discount => 'Zľava';
 }
 
 // Path: maker.amountForm.actions
@@ -2217,6 +2225,7 @@ class _Translations$maker$amountForm$tooltips$sk extends Translations$maker$amou
 	@override String feeInfo({required Object feePercent}) => 'Koordinátor si účtuje ${feePercent}% poplatok predávajúceho. Tento poplatok sa odpočíta z tvojej Lightning platby.';
 	@override String get payInfo => 'Tento výpočet vychádza z výmenných kurzov načítaných na strane klienta. Koordinátor vypočíta presnú sumu a suma na faktúre bude konečná a presná suma na zaplatenie.';
 	@override String get premiumInfo => 'Voliteľná prémia ti umožňuje predať sats nad trhovú cenu. Prémia zníži počet sats uzamknutých v tvojej hold faktúre za rovnakú sumu vo fiate, takže kupujúci platí nad trh a ty si ponecháš rozdiel. Predvolene je vypnutá (0%). Maximálnu prémiu určuje vybraný koordinátor.';
+	@override String get discountInfo => 'Voliteľná zľava ti umožňuje predať sats pod trhovou cenou, aby bola tvoja ponuka pre kupujúcich atraktívnejšia. Zľava zvýši počet sats uzamknutých v tvojej hold faktúre za rovnakú sumu vo fiate, takže kupujúci dostane viac sats než pri trhovom kurze. Predvolene je vypnutá (0%). Maximálnu zľavu určuje vybraný koordinátor.';
 }
 
 // Path: maker.amountForm.category
@@ -3067,8 +3076,11 @@ extension on TranslationsSk {
 			'offers.details.consents.ecommerce' => ({required Object code}) => 'Z rôznych dôvodov — napríklad kvôli vypredanému tovaru, oprave preplatku alebo iným problémom na strane obchodníka — môže online obchodník automaticky poslať peniaze späť na bankový účet spojený s kódom ${code}, ktorý si vygeneroval. Tieto prostriedky pristanú na tvojom účte a nepatria tebe. Ak sa to stane, kontaktuj v dobrej viere koordinátora a dohodni sa na vrátení prostriedkov predávajúcemu. Prijatím tejto ponuky súhlasíš s týmito podmienkami a čestne sľubuješ, že sa v takýchto situáciách zachováš poctivo.',
 			'offers.labels.premium' => 'Prémia',
 			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% prémia',
+			'offers.labels.discount' => 'Zľava',
+			'offers.labels.discountBadge' => ({required Object percent}) => '-${percent}% zľava',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Koordinátor si účtuje ${feePercent}% poplatok kupujúceho. Ten zahŕňa smerovacie poplatky Lightning a odpočíta sa zo sumy, ktorú dostaneš.',
 			'offers.tooltips.premiumInfoTaker' => 'Prémia znamená, že táto ponuka je ocenená nad trhovou cenou. Za rovnakú sumu vo fiate predávajúci uzamkne menej sats v hold faktúre, takže platíš nad trh a dostaneš menej sats než pri trhovom kurze. Maximálnu prémiu určuje koordinátor.',
+			'offers.tooltips.discountInfoTaker' => 'Zľava znamená, že táto ponuka je ocenená pod trhovou cenou. Za rovnakú sumu vo fiate predávajúci uzamkne viac sats v hold faktúre, takže dostaneš viac sats než pri trhovom kurze. Maximálnu zľavu určuje koordinátor.',
 			'offers.tooltips.ratesFetchedAt' => 'Načítané o',
 			'offers.tooltips.ratesSources' => 'Zdroje priem. kurzu',
 			'offers.actions.take' => 'PRIJAŤ',
@@ -3181,6 +3193,8 @@ extension on TranslationsSk {
 			'coordinator.details.maxPremium' => 'Max. prémia',
 			'coordinator.details.maxPremiumInfoTitle' => 'Prémia',
 			'coordinator.details.maxPremiumInfoBody' => 'Prémia je voliteľná prirážka nad trhový kurz, ktorú môže predávajúci nastaviť na ponuke. S prémiou predávajúci uzamkne menej sats za rovnakú sumu vo fiate, takže kupujúci platí nad trh a predávajúci si ponechá rozdiel. Táto hodnota je najvyššia prémia, ktorú tento koordinátor na svojich ponukách povoľuje.',
+			'coordinator.details.premiumRange' => 'Rozsah prémie',
+			'coordinator.details.premiumRangeInfoBody' => 'V tomto rozsahu môže predávajúci nastaviť prémiu (cena nad trhom) alebo zľavu (cena pod trhom). So zľavou predávajúci uzamkne viac sats za rovnakú sumu vo fiate, takže kupujúci dostane viac sats než pri trhovom kurze. S prémiou uzamkne menej sats a rozdiel si ponechá.',
 			'coordinator.details.reservationTime' => 'Čas rezervácie',
 			'coordinator.details.currencies' => 'Meny',
 			'coordinator.details.paymentSystem' => 'Platobný systém',
@@ -3291,6 +3305,7 @@ extension on TranslationsSk {
 			'maker.amountForm.labels.customAmount' => 'Vlastná',
 			'maker.amountForm.labels.tapToSelect' => 'Ťukni na výber',
 			'maker.amountForm.labels.premium' => 'Prémia',
+			'maker.amountForm.labels.discount' => 'Zľava',
 			'maker.amountForm.actions.generateInvoice' => 'Vygenerovať faktúru',
 			'maker.amountForm.bank.label' => 'Banka',
 			'maker.amountForm.bank.required' => 'Vyber si banku',
@@ -3298,6 +3313,7 @@ extension on TranslationsSk {
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Koordinátor si účtuje ${feePercent}% poplatok predávajúceho. Tento poplatok sa odpočíta z tvojej Lightning platby.',
 			'maker.amountForm.tooltips.payInfo' => 'Tento výpočet vychádza z výmenných kurzov načítaných na strane klienta. Koordinátor vypočíta presnú sumu a suma na faktúre bude konečná a presná suma na zaplatenie.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Voliteľná prémia ti umožňuje predať sats nad trhovú cenu. Prémia zníži počet sats uzamknutých v tvojej hold faktúre za rovnakú sumu vo fiate, takže kupujúci platí nad trh a ty si ponecháš rozdiel. Predvolene je vypnutá (0%). Maximálnu prémiu určuje vybraný koordinátor.',
+			'maker.amountForm.tooltips.discountInfo' => 'Voliteľná zľava ti umožňuje predať sats pod trhovou cenou, aby bola tvoja ponuka pre kupujúcich atraktívnejšia. Zľava zvýši počet sats uzamknutých v tvojej hold faktúre za rovnakú sumu vo fiate, takže kupujúci dostane viac sats než pri trhovom kurze. Predvolene je vypnutá (0%). Maximálnu zľavu určuje vybraný koordinátor.',
 			'maker.amountForm.category.label' => 'Kategória ponuky',
 			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => '${system} nepodporuje túto kategóriu.',
 			'maker.amountForm.category.options.physicalShop' => 'Obchod, kaviareň alebo reštaurácia',
@@ -3486,6 +3502,8 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => 'Kód ${code} vypršal',
 			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'Predávajúci nedostal ${code}, takže ho nemohol použiť.',
 			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Rezervácia končí o',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.expiredSentWarning' => 'Predávajúci ešte nepotvrdil platbu. Čo chceš urobiť?',
 			'taker.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Ak to chceš skúsiť znova s novým ${code}, obnov rezerváciu.',
 			'taker.waitConfirmation.expiredInstruction2' => 'Ak už túto transakciu nechceš dokončiť, zruš rezerváciu.',
@@ -3493,8 +3511,6 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.takerCharged.title' => ({required Object code}) => 'Označil si ${code} ako strhnutý',
 			'taker.waitConfirmation.takerCharged.message' => ({required Object minutes}) => 'Predávajúci má ${minutes} min na potvrdenie platby alebo jej spochybnenie. Ak neurobí nič, platba sa automaticky potvrdí a ty dostaneš bitcoin.',
 			'taker.waitConfirmation.expiredActions.checkReportStatus' => 'Skontrolovať stav / zopakovať hlásenie',
-			_ => null,
-		} ?? switch (path) {
 			'taker.waitConfirmation.expiredActions.reportConflict' => ({required Object code}) => '${code} bol strhnutý z môjho bankového účtu',
 			'taker.waitConfirmation.expiredActions.renewReservation' => ({required Object code}) => 'Skúsiť znova s novým ${code}',
 			'taker.waitConfirmation.expiredActions.cancelReservation' => 'Zrušiť rezerváciu',
@@ -3706,6 +3722,7 @@ extension on TranslationsSk {
 			'settings.offerCreation.enablePremium' => 'Zapnúť prémiové ceny',
 			'settings.offerCreation.enablePremiumDescription' => 'Zobraziť posuvník prémie pri vytváraní ponúk predávajúceho.',
 			'settings.offerCreation.defaultPremium' => 'Predvolená prémia',
+			'settings.offerCreation.defaultDiscount' => 'Predvolená zľava',
 			'settings.offerCreation.defaultPremiumDisabled' => 'Zapni prémiové ceny, aby si nastavil predvolenú prémiu.',
 			'settings.offerCreation.premiumPerCoordinatorNote' => 'Každý koordinátor si nastavuje vlastnú maximálnu prémiu, takže tvoja predvolená hodnota je obmedzená koordinátorom použitým pre ponuku.',
 			'settings.offerCreation.categoryOptions.shop' => 'Obchod, kaviareň alebo reštaurácia',
@@ -3808,6 +3825,7 @@ extension on TranslationsSk {
 			'offerNotifications.newOffer.title' => 'Dostupná nová ponuka',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% prémia',
+			'offerNotifications.newOffer.discountSuffix' => ({required Object percent}) => '-${percent}% zľava',
 			'offerNotifications.categories.shop' => 'Obchod',
 			'offerNotifications.categories.atm' => 'Bankomat',
 			'offerNotifications.categories.online' => 'Online',
