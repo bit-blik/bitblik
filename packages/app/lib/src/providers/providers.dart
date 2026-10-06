@@ -1607,12 +1607,7 @@ final zapstoreAppUpdateControllerProvider = Provider<NAppUpdateController?>((
   final externalUpdateUrl = externalUpdateUrlForPaymentSystem(paymentSystemId);
 
   // Package updates still target the installed build, not the selected market.
-  final appIdentifier = switch (buildDefaultPaymentSystemId) {
-    'mbway' => 'me.bitway',
-    'twint' => 'app.bittwint',
-    'sk' => 'li.veks',
-    _ => 'app.bitblik',
-  };
+  final appIdentifier = buildAndroidAppId;
 
   final ndkFlutter = ref.watch(ndkFlutterProvider);
   if (ndkFlutter == null) return null;
