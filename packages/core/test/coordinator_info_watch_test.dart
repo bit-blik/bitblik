@@ -98,13 +98,15 @@ void main() {
         isFalse);
   });
 
-  test('live watch targets enabled authors and applies republished info',
-      () async {
+  test('live watch targets all known authors and applies newer info', () async {
     registry.startInfoWatch();
     expect(ndk.requests.subscriptions, hasLength(1));
     final filter = ndk.requests.subscriptions.single;
     expect(filter.kinds, [kKindCoordinatorInfo]);
-    expect(filter.authors, [enabledKey]);
+    expect(filter.authors, unorderedEquals([enabledKey, disabledKey]));
+    // No `since`: relays must replay the stored current copy so a stale
+    // persisted record is repaired even if startup discovery missed it.
+    expect(filter.since, isNull);
 
     final updated = CoordinatorInfo.fromJson({
       ...info.toJson(),
@@ -123,22 +125,25 @@ void main() {
     expect(registry.infoFor(enabledKey)?.takerFee, 0.75);
   });
 
-  test('re-targets on enable change and closes on stop', () async {
+  test('re-targets when the known set changes and closes on stop', () async {
     registry.startInfoWatch();
     // Same author/relay set: no resubscribe.
     registry.startInfoWatch();
     expect(ndk.requests.subscriptions, hasLength(1));
 
+    // Enable/disable alone does not change the author set.
     await registry.setEnabled(disabledKey, true);
+    expect(ndk.requests.subscriptions, hasLength(1));
+
+    await registry.remove(disabledKey);
     await Future<void>.delayed(Duration.zero);
     expect(ndk.requests.subscriptions, hasLength(2));
-    expect(ndk.requests.subscriptions.last.authors,
-        unorderedEquals([enabledKey, disabledKey]));
+    expect(ndk.requests.subscriptions.last.authors, [enabledKey]);
     expect(ndk.requests.closed, 1);
 
     await registry.stopInfoWatch();
     expect(ndk.requests.closed, 2);
-    await registry.setEnabled(disabledKey, false);
+    await registry.setEnabled(enabledKey, false);
     expect(ndk.requests.subscriptions, hasLength(2));
   });
 }

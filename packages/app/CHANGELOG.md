@@ -1,3 +1,6 @@
+## [0.11.4] - 2026-10-09
+- fix: stale coordinator info (fees) in browsers with outdated saved data
+
 ## [0.11.3] - 2026-10-09
 - feat: brand the Slovak flavor as veks.li
 - fix: coordinator info (fees, limits) refreshing after coordinator changes

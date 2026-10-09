@@ -1062,13 +1062,15 @@ class CoordinatorRegistry {
     );
   }
 
-  /// Keep one live subscription for the enabled coordinators' info events
+  /// Keep one live subscription for the known coordinators' info events
   /// (kind [kKindCoordinatorInfo]) on the discovery relays, so a coordinator
   /// that restarts with new fees/limits is picked up within seconds instead of
-  /// on the next periodic [discover]. Replaceable and rarely republished, so
-  /// the idle subscription is near free. Re-targeted automatically whenever
-  /// the enabled set or discovery relays change. Hosts should stop it while
-  /// backgrounded.
+  /// on the next periodic [discover]. No `since`: relays first replay the
+  /// stored current copy, which repairs a stale persisted record even when the
+  /// startup [discover] window closed before slow relays answered. Replaceable
+  /// and rarely republished, so the idle subscription is near free.
+  /// Re-targeted automatically whenever the known set or discovery relays
+  /// change. Hosts should stop it while backgrounded.
   void startInfoWatch() {
     _infoWatchWanted = true;
     _syncInfoWatch();
@@ -1083,7 +1085,6 @@ class CoordinatorRegistry {
     if (_disposed || !_infoWatchWanted) return;
     final authors = _records.values
         .where((r) =>
-            r.enabled &&
             r.paymentSystem == activePaymentSystemId &&
             !_mutedPubkeys.contains(r.pubkeyHex))
         .map((r) => r.pubkeyHex)
@@ -1100,8 +1101,6 @@ class CoordinatorRegistry {
       filter: Filter(
         kinds: [kKindCoordinatorInfo],
         authors: sortedAuthors,
-        // Current copies were just fetched by [discover]; only stream updates.
-        since: Nip01Event.secondsSinceEpoch(),
       ),
       explicitRelays: watchRelays,
       cacheRead: false,
