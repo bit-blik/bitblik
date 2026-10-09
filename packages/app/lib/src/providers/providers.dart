@@ -154,6 +154,17 @@ final coordinatorRegistryProvider = FutureProvider<CoordinatorRegistry>((
   });
   ref.onDispose(timer.cancel);
 
+  // Live coordinator-info updates (fee/limit changes after a coordinator
+  // restart) while foregrounded; dropped in background to free the socket.
+  ref.listen<bool>(appForegroundProvider, (_, foreground) {
+    if (foreground) {
+      registry.startInfoWatch();
+    } else {
+      unawaited(registry.stopInfoWatch());
+    }
+  }, fireImmediately: true);
+  ref.onDispose(() => unawaited(registry.stopInfoWatch()));
+
   return registry;
 });
 
@@ -250,8 +261,17 @@ final enabledCoordinatorsProvider =
 /// Coordinator info lookup by pubkey — reads through the registry which
 /// hydrates from cache on startup, so first call returns instantly for
 /// known coordinators.
+///
+/// Tracks the live registry record so a republished info event or a fresh
+/// `get_info` reply (e.g. after the coordinator restarts with new fees)
+/// propagates to every consumer. `select` + [CoordinatorInfo] value equality
+/// keep rebuilds to actual changes.
 final coordinatorInfoByPubkeyProvider =
     FutureProvider.family<CoordinatorInfo?, String>((ref, pubkey) async {
+      final live = ref.watch(
+        coordinatorRecordByPubkeyProvider(pubkey).select((r) => r?.info),
+      );
+      if (live != null) return live;
       final registry = await ref.watch(coordinatorRegistryProvider.future);
       final cached = registry.infoFor(pubkey);
       if (cached != null) return cached;
@@ -357,6 +377,12 @@ final coordinatorDisputeEvidenceDurationProvider =
 /// Returns Duration based on coordinator's reservationSeconds, or null if coordinator info unavailable.
 final coordinatorReservationDurationProvider =
     Provider.family<Duration?, String>((ref, coordinatorPubkey) {
+      final record = ref.watch(
+        coordinatorRecordByPubkeyProvider(coordinatorPubkey),
+      );
+      if (record?.info != null) {
+        return Duration(seconds: record!.info!.reservationSeconds);
+      }
       final coordinatorInfoAsync = ref.watch(
         coordinatorInfoByPubkeyProvider(coordinatorPubkey),
       );

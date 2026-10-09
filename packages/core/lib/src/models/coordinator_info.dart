@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:meta/meta.dart';
 import 'package:ndk/ndk.dart';
 
@@ -141,6 +143,18 @@ class CoordinatorInfo {
       bankChannelLinks: _parseBankChannelLinks(json['bank_channel_links']),
     );
   }
+
+  /// Value equality over the serialized form, so listeners (e.g. Riverpod
+  /// `select`) only rebuild when an advertised value actually changes, not
+  /// on every `get_info` probe that re-parses identical info.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CoordinatorInfo &&
+          jsonEncode(toJson()) == jsonEncode(other.toJson());
+
+  @override
+  int get hashCode => jsonEncode(toJson()).hashCode;
 
   Map<String, dynamic> toJson() {
     return {

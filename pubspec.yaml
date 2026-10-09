@@ -4,28 +4,6 @@ publish_to: none
 environment:
   sdk: ^3.11.0
 
-dependency_overrides:
-  # NIP-82, WebSocket compression control, and background battery fixes.
-  ndk:
-    git:
-      url: https://github.com/relaystr/ndk.git
-      path: packages/ndk
-      ref: eda74ae996cc5ed7a0b4da56978eaa606c9f56d1
-  ndk_flutter:
-    git:
-      url: https://github.com/relaystr/ndk.git
-      path: packages/ndk_flutter
-      ref: eda74ae996cc5ed7a0b4da56978eaa606c9f56d1
-  ndk_drift:
-    git:
-      url: https://github.com/relaystr/ndk.git
-      path: packages/drift
-      ref: eda74ae996cc5ed7a0b4da56978eaa606c9f56d1
-  ndk_objectbox:
-    git:
-      url: https://github.com/relaystr/ndk.git
-      path: packages/objectbox
-      ref: eda74ae996cc5ed7a0b4da56978eaa606c9f56d1
 workspace:
   - packages/app
   - packages/cli

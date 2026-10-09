@@ -115,6 +115,10 @@ class CoordinatorRegistry {
   final Set<String> _mutedPubkeys = {};
   CoordinatorColdStartState? _coldStartState;
   bool _coldStartDismissed = false;
+  bool _infoWatchWanted = false;
+  NdkResponse? _infoWatch;
+  StreamSubscription<Nip01Event>? _infoWatchEvents;
+  String? _infoWatchKey;
 
   CoordinatorRegistry({
     required this.ndk,
@@ -1058,8 +1062,88 @@ class CoordinatorRegistry {
     );
   }
 
+  /// Keep one live subscription for the enabled coordinators' info events
+  /// (kind [kKindCoordinatorInfo]) on the discovery relays, so a coordinator
+  /// that restarts with new fees/limits is picked up within seconds instead of
+  /// on the next periodic [discover]. Replaceable and rarely republished, so
+  /// the idle subscription is near free. Re-targeted automatically whenever
+  /// the enabled set or discovery relays change. Hosts should stop it while
+  /// backgrounded.
+  void startInfoWatch() {
+    _infoWatchWanted = true;
+    _syncInfoWatch();
+  }
+
+  Future<void> stopInfoWatch() async {
+    _infoWatchWanted = false;
+    await _closeInfoWatch();
+  }
+
+  void _syncInfoWatch() {
+    if (_disposed || !_infoWatchWanted) return;
+    final authors = _records.values
+        .where((r) =>
+            r.enabled &&
+            r.paymentSystem == activePaymentSystemId &&
+            !_mutedPubkeys.contains(r.pubkeyHex))
+        .map((r) => r.pubkeyHex)
+        .toSet();
+    final watchRelays = relays.map(normalizeRelayUrl).toSet().toList()..sort();
+    final sortedAuthors = authors.toList()..sort();
+    final key = '${sortedAuthors.join(',')}|${watchRelays.join(',')}';
+    if (key == _infoWatchKey) return;
+    unawaited(_closeInfoWatch());
+    _infoWatchKey = key;
+    if (authors.isEmpty || watchRelays.isEmpty) return;
+    final response = ndk.requests.subscription(
+      name: 'coordinator-info-live',
+      filter: Filter(
+        kinds: [kKindCoordinatorInfo],
+        authors: sortedAuthors,
+        // Current copies were just fetched by [discover]; only stream updates.
+        since: Nip01Event.secondsSinceEpoch(),
+      ),
+      explicitRelays: watchRelays,
+      cacheRead: false,
+    );
+    _infoWatch = response;
+    _infoWatchEvents = response.stream.listen(
+      (event) {
+        if (_disposed) return;
+        final hex = _normalize(event.pubKey);
+        if (!authors.contains(hex)) return;
+        final before = _records[hex]?.info;
+        _upsertFromEvent(event);
+        if (_records[hex]?.info != before) {
+          _schedulePersist();
+          _emit();
+        }
+      },
+      onError: (Object error) => Logger.log
+          .w(() => 'Coordinator info live subscription error: $error'),
+    );
+  }
+
+  Future<void> _closeInfoWatch() async {
+    final events = _infoWatchEvents;
+    final response = _infoWatch;
+    _infoWatchEvents = null;
+    _infoWatch = null;
+    _infoWatchKey = null;
+    await events?.cancel();
+    if (response != null) {
+      try {
+        await ndk.requests.closeSubscription(response.requestId);
+      } catch (_) {
+        // Best-effort; the relay drops it with the connection anyway.
+      }
+    }
+  }
+
   Future<void> dispose() async {
     _disposed = true;
+    _infoWatchWanted = false;
+    await _closeInfoWatch();
     _pendingStatsRequests.clear();
     for (final retry in _healthRetries.values) {
       retry.cancel();
@@ -1504,6 +1588,7 @@ class CoordinatorRegistry {
   void _emit() {
     if (_changes.isClosed) return;
     _changes.add(all);
+    _syncInfoWatch();
   }
 
   void _schedulePersist() {

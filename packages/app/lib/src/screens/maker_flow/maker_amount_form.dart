@@ -427,6 +427,26 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     return candidates.first;
   }
 
+  /// Keep the selected coordinator's info in step with the live registry so
+  /// fees/limits refreshed after a coordinator restart show up without the
+  /// user re-picking it. Runs during build, so it assigns without setState.
+  void _syncSelectedCoordinatorInfo(
+    AsyncValue<List<CoordinatorRecord>> coordinatorsAsync,
+  ) {
+    final pubkey = _selectedCoordinatorPubkey;
+    if (pubkey == null) return;
+    final records = coordinatorsAsync.valueOrNull;
+    if (records == null) return;
+    for (final r in records) {
+      if (r.pubkey != pubkey) continue;
+      final live = r.toCoordinatorInfo();
+      if (live != null && live != _selectedCoordinatorInfo) {
+        _selectedCoordinatorInfo = live;
+      }
+      return;
+    }
+  }
+
   Future<void> _selectCoordinator(
     CoordinatorRecord coordinator, {
     bool userInitiated = false,
@@ -2330,6 +2350,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final globalErrorMessage = ref.watch(errorProvider);
     final publicKeyAsyncValue = ref.watch(publicKeyProvider);
     final coordinatorsAsync = ref.watch(enabledCoordinatorsProvider);
+    _syncSelectedCoordinatorInfo(coordinatorsAsync);
     final t = Translations.of(context);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;

@@ -13,11 +13,7 @@ dependencies:
   crypto: ^3.0.7
   image: ^4.8.0
   meta: ^1.17.0
-  ndk:
-    git:
-      url: https://github.com/relaystr/ndk.git
-      path: packages/ndk
-      ref: feat/sample-app/cashu-restore-quote
+  ndk: ^0.11.0-dev.0
   yaml: ^3.1.3
 
 dev_dependencies:
