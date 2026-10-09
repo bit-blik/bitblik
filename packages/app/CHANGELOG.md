@@ -1,3 +1,8 @@
+## [0.11.3] - 2026-10-09
+- feat: brand the Slovak flavor as veks.li
+- fix: coordinator info (fees, limits) refreshing after coordinator changes
+- fix: show NWC wallet errors
+
 ## [0.11.2] - 2026-09-28
 - fix: background service battery usage (even less)
 - fix: offer details sometimes not loading offer
