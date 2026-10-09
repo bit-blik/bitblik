@@ -13,6 +13,7 @@ import 'package:ndk/shared/logger/logger.dart';
 
 import 'package:bitblik_core/core.dart';
 // Added
+import '../../config/build_flavor.dart';
 import '../../flow/flow_provider.dart' show flowRoute;
 import '../../providers/providers.dart';
 import '../../services/api_service_nostr.dart';
@@ -484,7 +485,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
                   amountSats,
                   coordinatorSupportsBolt12: coordinatorSupportsBolt12,
                   walletId: wallet.id,
-                  description: 'BitBlik payout',
+                  description: '$buildAppName payout',
                 );
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop(payment);
@@ -648,7 +649,7 @@ class _TakerSubmitBlikScreenState extends ConsumerState<TakerSubmitBlikScreen> {
       amountSats,
       coordinatorSupportsBolt12:
           _coordinatorInfo?.outgoingPaymentTypes.contains('bolt12') ?? false,
-      description: 'BitBlik payout',
+      description: '$buildAppName payout',
     );
   }
 

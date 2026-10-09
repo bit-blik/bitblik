@@ -26,7 +26,7 @@ Chaque banque définit la durée de vie d'un code de retrait sans carte :
 - **Slovenská sporiteľňa : 15 minutes**
 - **VÚB : 10 à 60 minutes**, choisi par le taker au moment de générer le code
 
-VÚB est la seule banque où le taker choisit la fenêtre — de 10 à 60 minutes — en générant le code. BitBlik ignore la valeur retenue et décompte donc depuis le plancher de 10 minutes. Demandez une fenêtre plus longue si le maker a plus de chemin à faire. L'appli affiche le temps restant en compte à rebours.
+VÚB est la seule banque où le taker choisit la fenêtre — de 10 à 60 minutes — en générant le code. {app} ignore la valeur retenue et décompte donc depuis le plancher de 10 minutes. Demandez une fenêtre plus longue si le maker a plus de chemin à faire. L'appli affiche le temps restant en compte à rebours.
 
 #### Comment fonctionne l'escrow ?
 

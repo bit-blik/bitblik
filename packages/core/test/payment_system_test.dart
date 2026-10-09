@@ -72,7 +72,20 @@ void main() {
       expect(kBlik.platformTag, kBlik.brandName);
       expect(kMbway.platformTag, kMbway.brandName);
       expect(kSlovakia.platformTag, 'Bitvyber');
-      expect(kSlovakia.brandName, 'Veksli');
+      expect(kSlovakia.brandName, 'veks.li');
+    });
+
+    test('brandSlug is a stable ASCII id, independent of the display brand',
+        () {
+      expect(kBlik.brandSlug, 'bitblik');
+      expect(kMbway.brandSlug, 'bitway');
+      expect(kTwint.brandSlug, 'bittwint');
+      // The SK display brand carries a dot; the slug used for the CLI binary,
+      // its config dir and the RPC clientId stays `veksli`.
+      expect(kSlovakia.brandSlug, 'veksli');
+      for (final ps in kPaymentSystems) {
+        expect(ps.brandSlug, matches(RegExp(r'^[a-z0-9]+$')), reason: ps.id);
+      }
     });
 
     test('paymentSystemById maps legacy SK ids to sk, else falls back to blik',

@@ -13,8 +13,9 @@ const String _dartDefinePaymentSystem = String.fromEnvironment(
 /// frame renders the correct brand/logo. The user's saved choice still wins.
 String buildDefaultPaymentSystemId = 'blik';
 
-/// Brand name (BitBlik / BitWay / Bittwint), follows
-/// [buildDefaultPaymentSystemId].
+/// User-facing brand name (BitBlik / BitWay / Bittwint / veks.li), follows
+/// [buildDefaultPaymentSystemId]. Display only — it may contain punctuation
+/// (`veks.li`); use [buildAppScheme] where an ASCII identifier is needed.
 String buildAppName = 'BitBlik';
 
 /// Public icon URL used for the Alby Go NWC connection prompt, per flavor.
@@ -82,7 +83,7 @@ void _apply(String id) {
   buildAppName = switch (id) {
     'mbway' => 'BitWay',
     'twint' => 'Bittwint',
-    'sk' => 'Veksli',
+    'sk' => 'veks.li',
     _ => 'BitBlik',
   };
   buildNwcIconUrl = switch (id) {

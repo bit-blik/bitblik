@@ -19,7 +19,7 @@ class OfferStore {
     final home = Platform.environment['HOME'] ??
         Platform.environment['USERPROFILE'] ??
         '.';
-    final dir = Directory('$home/.config/${ps.brandName.toLowerCase()}');
+    final dir = Directory('$home/.config/${ps.brandSlug}');
     if (!dir.existsSync()) dir.createSync(recursive: true);
     final db = await databaseFactoryIo.openDatabase('${dir.path}/offers.db');
     return OfferStore._(db);

@@ -22,7 +22,7 @@ class CoordinatorFileStore implements CoordinatorStore {
     if (home == null) {
       throw StateError('Cannot determine home directory');
     }
-    return File('$home/.config/${ps.brandName.toLowerCase()}/coordinators.json');
+    return File('$home/.config/${ps.brandSlug}/coordinators.json');
   }
 
   @override

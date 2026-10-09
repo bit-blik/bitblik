@@ -26,7 +26,7 @@ Każdy bank ustala żywotność kodu wypłaty bez karty:
 - **Slovenská sporiteľňa: 15 minut**
 - **VÚB: 10–60 minut**, czas wybiera taker przy generowaniu kodu
 
-VÚB to jedyny bank, w którym okno wybiera taker — od 10 do 60 minut — przy generowaniu kodu. BitBlik nie wie, jaką wartość wybrał, więc odlicza od dolnej granicy 10 minut. Poproś o dłuższe okno, jeśli maker ma dalej do bankomatu. Aplikacja pokazuje pozostały czas jako odliczanie.
+VÚB to jedyny bank, w którym okno wybiera taker — od 10 do 60 minut — przy generowaniu kodu. {app} nie wie, jaką wartość wybrał, więc odlicza od dolnej granicy 10 minut. Poproś o dłuższe okno, jeśli maker ma dalej do bankomatu. Aplikacja pokazuje pozostały czas jako odliczanie.
 
 #### Jak działa escrow?
 

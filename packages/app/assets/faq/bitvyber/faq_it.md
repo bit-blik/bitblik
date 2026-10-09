@@ -26,7 +26,7 @@ Ogni banca imposta la durata di un codice di prelievo senza carta:
 - **Slovenská sporiteľňa: 15 minuti**
 - **VÚB: 10–60 minuti**, scelti dal taker quando genera il codice
 
-VÚB è l'unica banca in cui la finestra la sceglie il taker — da 10 a 60 minuti — quando genera il codice. BitBlik non sa quale valore abbia scelto, quindi conta alla rovescia dal minimo di 10 minuti. Chiedete una finestra più lunga se il maker ha più strada da fare. L'app mostra il tempo residuo con un conto alla rovescia.
+VÚB è l'unica banca in cui la finestra la sceglie il taker — da 10 a 60 minuti — quando genera il codice. {app} non sa quale valore abbia scelto, quindi conta alla rovescia dal minimo di 10 minuti. Chiedete una finestra più lunga se il maker ha più strada da fare. L'app mostra il tempo residuo con un conto alla rovescia.
 
 #### Come funziona l'escrow?
 

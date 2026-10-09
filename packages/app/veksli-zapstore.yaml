@@ -1,5 +1,5 @@
 repository: https://github.com/bit-blik/veksli
-name: Veksli
+name: veks.li
 description: Pay with Bitcoin using SK ATM codes. Buy Bitcoin selling SK ATM codes.
 summary: Bitcoin SK ATM codes exchange app
 license: MIT

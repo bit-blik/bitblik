@@ -129,7 +129,7 @@ Future<int> runOfferCreate(List<String> args) async {
   final coordinatorArg = parsed['coordinator'];
   final jsonOutput = parsed.containsKey('json');
   final relays = _collectMultiFlag(args, '--relay');
-  final exe = activePaymentSystem.brandName.toLowerCase();
+  final exe = activePaymentSystem.brandSlug;
 
   // Flows where the maker supplies the payment code up front (TWINT) require
   // it at creation; flows where the taker submits it (BLIK / MB WAY) reject it.
@@ -372,10 +372,10 @@ Future<int> runOfferGetBlik(List<String> args) async {
         '${activePaymentSystem.brandName} makers do not fetch a $code code — '
         'the maker supplies it at offer creation and the taker enters it.\n'
         'Nothing to get. Wait for the taker, then: '
-        '${activePaymentSystem.brandName.toLowerCase()} offer confirm-payment');
+        '${activePaymentSystem.brandSlug} offer confirm-payment');
     return 64;
   }
-  final exe = activePaymentSystem.brandName.toLowerCase();
+  final exe = activePaymentSystem.brandSlug;
   final code = activePaymentSystem.codeLabel;
 
   // ---- Fast path: offer id + coordinator supplied, skip local store ----
@@ -1295,7 +1295,7 @@ Future<int> runOfferNewCode(List<String> args) async {
   final offerIdArg = parsed['offer'];
   final coordinatorArg = parsed['coordinator'];
   final relays = _collectMultiFlag(args, '--relay');
-  final exe = activePaymentSystem.brandName.toLowerCase();
+  final exe = activePaymentSystem.brandSlug;
 
   final flow = await MakerFlow.load();
   final event = flow.newCodeEvent;
@@ -1679,7 +1679,7 @@ Future<int?> _ensureSameMarket(
   stderr.writeln(
       'Coordinator serves ${theirs.label} (${theirs.currency}), but this is the '
       '${mine.label} (${mine.currency}) client.\n'
-      'Use the ${theirs.brandName.toLowerCase()} binary for this coordinator.');
+      'Use the ${theirs.brandSlug} binary for this coordinator.');
   return 1;
 }
 
