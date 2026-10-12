@@ -1142,9 +1142,11 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
     bool showFallback = false;
     final useSharedBitblikIosApp = usesSharedBitblikIosApp;
     final altStoreAppName = buildAltStoreAppName;
-    final sharedIosPaymentSystem = buildDefaultPaymentSystemId == 'mbway'
-        ? 'MB WAY'
-        : 'TWINT';
+    final sharedIosPaymentSystem = switch (buildDefaultPaymentSystemId) {
+      'mbway' => 'MB WAY',
+      'sk' => kSlovakia.label,
+      _ => 'TWINT',
+    };
 
     showDialog(
       context: context,
@@ -1920,8 +1922,6 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                             builder: (context) {
                               // Download links follow the build flavor (pinned at
                               // startup), not the user's runtime currency switch.
-                              final isMbway =
-                                  buildDefaultPaymentSystemId == 'mbway';
                               return Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
@@ -1956,14 +1956,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                   const SizedBox(width: 8),
                                   // Android GitHub APK button
                                   _PlatformFreeLink(
-                                    uri: Uri.parse(
-                                      isMbway
-                                          ? 'https://github.com/bit-blik/bitway/releases'
-                                          : buildDefaultPaymentSystemId ==
-                                                'twint'
-                                          ? 'https://github.com/bit-blik/bittwint/releases'
-                                          : 'https://github.com/bit-blik/bitblik/releases',
-                                    ),
+                                    uri: Uri.parse(buildGithubReleasesUrl),
                                     openInNewTab: true,
                                     builder: (context, followLink) => InkWell(
                                       onTap: followLink,
@@ -1978,14 +1971,7 @@ class _AppScaffoldState extends ConsumerState<AppScaffold> {
                                   const SizedBox(width: 8),
                                   // Android Zapstore button
                                   _PlatformFreeLink(
-                                    uri: Uri.parse(
-                                      isMbway
-                                          ? 'https://zapstore.dev/apps/me.bitway'
-                                          : buildDefaultPaymentSystemId ==
-                                                'twint'
-                                          ? 'https://zapstore.dev/apps/app.bittwint'
-                                          : 'https://zapstore.dev/apps/app.bitblik',
-                                    ),
+                                    uri: Uri.parse(buildZapstoreUrl),
                                     builder: (context, followLink) => InkWell(
                                       onTap: followLink,
                                       child: Image.asset(
