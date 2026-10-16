@@ -685,11 +685,16 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     try {
       final offerBank = _needsBank ? _selectedBankId : null;
       final offerCategory = supportsCategory ? _selectedCategory : null;
-      final satsEstimate = _satsEquivalent;
       final coordinatorInfo = _selectedCoordinatorInfo;
-      if (satsEstimate == null || coordinatorInfo == null) {
+      if (_satsEquivalent == null || coordinatorInfo == null) {
         throw const FormatException('A funding estimate is required.');
       }
+      final apiService = ref.read(apiServiceProvider);
+      // Estimate from a rate fetched now, not the one cached when the form
+      // opened: the coordinator prices the offer at this moment, and a few
+      // minutes of normal price movement can exceed the estimate tolerance.
+      final rate = await apiService.getBtcRate(_method.currency, refresh: true);
+      final satsEstimate = fiatAmount / rate * 100000000;
       final estimate = FundingEstimate(
         coordinatorPubkey: coordinatorPubkey,
         makerPubkey: makerId,
@@ -702,7 +707,6 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 .round(),
         makerFeesSats: (satsEstimate * coordinatorInfo.makerFee / 100).ceil(),
       );
-      final apiService = ref.read(apiServiceProvider);
       final result = await apiService.initiateOfferFiat(
         fiatAmount: fiatAmount,
         fiatCurrency: _method.currency,

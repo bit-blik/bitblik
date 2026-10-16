@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:bitblik_core/core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -41,8 +43,10 @@ class FundingEstimate {
     makerFeesSats: json['makerFeesSats'] as int,
   );
 
-  // 0.5%, rounded down, with a tiny rounding floor and an absolute loss cap.
-  int get toleranceSats => (totalSats ~/ 200).clamp(5, 100);
+  // 0.5%, rounded down, with a tiny rounding floor. No absolute cap: a fixed
+  // sats cap shrinks to a fraction of normal rate movement as offers grow
+  // (100 sats is 0.04% of a 200 EUR offer) and blocked honest quotes.
+  int get toleranceSats => math.max(totalSats ~/ 200, 5);
   int get feeToleranceSats =>
       makerFeesSats == 0 ? 0 : (makerFeesSats ~/ 200).clamp(1, toleranceSats);
 
