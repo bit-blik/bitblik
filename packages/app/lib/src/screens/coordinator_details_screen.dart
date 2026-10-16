@@ -11,6 +11,7 @@ import '../../i18n/gen/strings.g.dart';
 import '../providers/providers.dart';
 import '../utils/bitcoin_display.dart';
 import '../widgets/bolt12_badge.dart';
+import '../widgets/premium_info.dart';
 
 /// Details for a single coordinator, reachable by tapping its name/logo
 /// anywhere in the app. Shows metadata and — crucially — the **relays in use**
@@ -176,7 +177,19 @@ class _CoordinatorDetailsScreenState
                       record.maxAmountSats,
                     ),
                   ),
-                  if (record.maxPremium > 0)
+                  if (record.premiumRange.allowsDiscount)
+                    _infoRow(
+                      context,
+                      t.coordinator.details.premiumRange,
+                      '${formatSignedPremium(record.premiumRange.min)}% – '
+                          '${formatSignedPremium(record.premiumRange.max)}%',
+                      onInfoTap: () => _showInfoDialog(
+                        context,
+                        t.coordinator.details.premiumRange,
+                        t.coordinator.details.premiumRangeInfoBody,
+                      ),
+                    )
+                  else if (record.maxPremium > 0)
                     _infoRow(
                       context,
                       t.coordinator.details.maxPremium,

@@ -144,10 +144,13 @@ offers:
   labels:
     premium: "Premium"
     premiumBadge: "+${percent}% premium"
+    discount: "Desconto"
+    discountBadge: "-${percent}% desconto"
 
   tooltips:
     takerFeeInfo: "O coordenador cobra uma taxa de taker de ${feePercent}%. Inclui as taxas de encaminhamento da Lightning e é deduzida do montante que recebe."
     premiumInfoTaker: "Um premium significa que esta oferta está acima do preço de mercado. Para o mesmo montante em fiat, o maker bloqueia menos sats na hold invoice, por isso paga acima do mercado e recebe menos sats do que à taxa de mercado. O premium máximo é definido pelo coordenador."
+    discountInfoTaker: "Um desconto significa que esta oferta está abaixo do preço de mercado. Para o mesmo montante em fiat, o maker bloqueia mais sats na hold invoice, por isso recebe mais sats do que à taxa de mercado. O desconto máximo é definido pelo coordenador."
     ratesFetchedAt: "Obtido em"
     ratesSources: "Fontes da taxa média"
 
@@ -305,6 +308,8 @@ coordinator:
     maxPremium: "Premium máximo"
     maxPremiumInfoTitle: "Premium"
     maxPremiumInfoBody: "Um premium é uma majoração de preço opcional acima da taxa de mercado que um maker pode definir numa oferta. Com um premium, o maker bloqueia menos sats para o mesmo montante em fiat, por isso o taker paga acima do mercado e o maker fica com a diferença. Este valor é o premium máximo que este coordenador permite nas suas ofertas."
+    premiumRange: "Intervalo de premium"
+    premiumRangeInfoBody: "Dentro deste intervalo, um maker pode definir um premium (preço acima do mercado) ou um desconto (preço abaixo do mercado). Com um desconto, o maker bloqueia mais sats para o mesmo montante em fiat, por isso o taker recebe mais sats do que à taxa de mercado. Com um premium, bloqueia menos sats e fica com a diferença."
     reservationTime: "Tempo de reserva"
     currencies: "Moedas"
     paymentSystem: "Sistema de pagamento"
@@ -441,6 +446,7 @@ maker:
       customAmount: Personalizado
       tapToSelect: Toque para selecionar
       premium: Premium
+      discount: "Desconto"
     actions:
       generateInvoice: Gerar invoice
     bank:
@@ -461,6 +467,7 @@ maker:
       feeInfo: "O coordenador cobra uma taxa de maker de ${feePercent}%. Esta taxa é deduzida do seu pagamento Lightning."
       payInfo: "Este cálculo baseia-se em taxas de câmbio obtidas no cliente. O coordenador calculará o montante exato, e o montante da invoice será o valor final e exato a pagar."
       premiumInfo: "Um premium opcional permite vender os seus sats acima do preço de mercado. O premium reduz os sats bloqueados na sua hold invoice para o mesmo montante em fiat, por isso o taker paga acima do mercado e o maker fica com a diferença. Por predefinição está desligado (0%). O premium máximo é definido pelo coordenador selecionado."
+      discountInfo: "Um desconto opcional permite-lhe vender os seus sats abaixo do preço de mercado, tornando a sua oferta mais atrativa para os takers. O desconto aumenta os sats bloqueados na sua hold invoice para o mesmo montante em fiat, por isso o taker recebe mais sats do que à taxa de mercado. Desativado por predefinição (0%). O desconto máximo é definido pelo coordenador selecionado."
 
     category:
       label: "Categoria da oferta"
@@ -1199,6 +1206,7 @@ settings:
     enablePremium: Ativar preços premium
     enablePremiumDescription: Mostrar o seletor de premium ao criar ofertas como maker.
     defaultPremium: Premium predefinido
+    defaultDiscount: "Desconto predefinido"
     defaultPremiumDisabled: Ative os preços premium para definir um premium predefinido.
     premiumPerCoordinatorNote: "Cada coordenador define o seu próprio premium máximo, por isso o seu valor predefinido é limitado pelo coordenador usado na oferta."
     categoryOptions:
@@ -1344,6 +1352,7 @@ offerNotifications:
     title: Nova oferta disponível
     body: "${amount} ${currency} · ${sats}"
     premiumSuffix: "+${percent}% premium"
+    discountSuffix: "-${percent}% desconto"
   categories:
     shop: Loja
     atm: Multibanco

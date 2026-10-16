@@ -758,6 +758,8 @@ class _Translations$offers$labels$fr extends Translations$offers$labels$en {
 	// Translations
 	@override String get premium => 'Prime';
 	@override String premiumBadge({required Object percent}) => '+${percent}% de prime';
+	@override String get discount => 'Remise';
+	@override String discountBadge({required Object percent}) => '-${percent}% de remise';
 }
 
 // Path: offers.tooltips
@@ -769,6 +771,7 @@ class _Translations$offers$tooltips$fr extends Translations$offers$tooltips$en {
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Le coordinateur facture des frais taker de ${feePercent}%. Ils incluent les frais de routage Lightning et sont déduits du montant que vous recevez.';
 	@override String get premiumInfoTaker => 'Une prime signifie que cette offre est au-dessus du prix du marché. Pour le même montant fiat, le maker verrouille moins de sats dans la facture hold : vous payez donc au-dessus du marché et recevez moins de sats qu\'au taux du marché. La prime maximale est fixée par le coordinateur.';
+	@override String get discountInfoTaker => 'Une remise signifie que cette offre est en dessous du prix du marché. Pour le même montant fiat, le maker verrouille plus de sats dans la facture hold : vous recevez donc plus de sats qu\'au taux du marché. La remise maximale est fixée par le coordinateur.';
 	@override String get ratesFetchedAt => 'Récupéré à';
 	@override String get ratesSources => 'Sources du taux moyen';
 }
@@ -1033,6 +1036,8 @@ class _Translations$coordinator$details$fr extends Translations$coordinator$deta
 	@override String get maxPremium => 'Prime max';
 	@override String get maxPremiumInfoTitle => 'Prime';
 	@override String get maxPremiumInfoBody => 'Une prime est une majoration facultative du prix au-dessus du taux du marché qu\'un maker peut appliquer à une offre. Avec une prime, le maker verrouille moins de sats pour le même montant fiat : le taker paie donc au-dessus du marché et le maker garde la différence. Cette valeur est la prime la plus élevée que ce coordinateur autorise sur ses offres.';
+	@override String get premiumRange => 'Plage de prime';
+	@override String get premiumRangeInfoBody => 'Dans cette plage, un maker peut fixer une prime (prix au-dessus du marché) ou une remise (prix en dessous du marché). Avec une remise, le maker verrouille plus de sats pour le même montant fiat : le taker reçoit donc plus de sats qu\'au taux du marché. Avec une prime, il verrouille moins de sats et garde la différence.';
 	@override String get reservationTime => 'Durée de réservation';
 	@override String get currencies => 'Devises';
 	@override String get paymentSystem => 'Système de paiement';
@@ -1874,6 +1879,7 @@ class _Translations$settings$offerCreation$fr extends Translations$settings$offe
 	@override String get enablePremium => 'Activer la tarification avec prime';
 	@override String get enablePremiumDescription => 'Affiche le curseur de prime lors de la création d\'offres maker.';
 	@override String get defaultPremium => 'Prime par défaut';
+	@override String get defaultDiscount => 'Remise par défaut';
 	@override String get defaultPremiumDisabled => 'Activez la tarification avec prime pour définir une prime par défaut.';
 	@override String get premiumPerCoordinatorNote => 'Chaque coordinateur fixe sa propre prime maximale, votre valeur par défaut est donc plafonnée par le coordinateur utilisé pour une offre.';
 	@override late final _Translations$settings$offerCreation$categoryOptions$fr categoryOptions = _Translations$settings$offerCreation$categoryOptions$fr._(_root);
@@ -2145,6 +2151,7 @@ class _Translations$offerNotifications$newOffer$fr extends Translations$offerNot
 	@override String get title => 'Nouvelle offre disponible';
 	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}';
 	@override String premiumSuffix({required Object percent}) => '+${percent}% de prime';
+	@override String discountSuffix({required Object percent}) => '-${percent}% de remise';
 }
 
 // Path: offerNotifications.categories
@@ -2291,6 +2298,7 @@ class _Translations$maker$amountForm$labels$fr extends Translations$maker$amount
 	@override String get customAmount => 'Personnalisé';
 	@override String get tapToSelect => 'Touchez pour sélectionner';
 	@override String get premium => 'Prime';
+	@override String get discount => 'Remise';
 }
 
 // Path: maker.amountForm.actions
@@ -2342,6 +2350,7 @@ class _Translations$maker$amountForm$tooltips$fr extends Translations$maker$amou
 	@override String feeInfo({required Object feePercent}) => 'Le coordinateur facture des frais maker de ${feePercent}%. Ces frais sont déduits de votre paiement Lightning.';
 	@override String get payInfo => 'Ce calcul est basé sur des taux de change récupérés côté client. Le coordinateur calculera le montant exact, et le montant de la facture sera le montant final et exact à payer.';
 	@override String get premiumInfo => 'Une prime facultative vous permet de vendre vos sats au-dessus du prix du marché. La prime réduit les sats verrouillés dans votre facture hold pour le même montant fiat : le taker paie donc au-dessus du marché et vous gardez la différence. Désactivée par défaut (0%). La prime maximale est fixée par le coordinateur sélectionné.';
+	@override String get discountInfo => 'Une remise facultative vous permet de vendre vos sats en dessous du prix du marché, pour rendre votre offre plus attrayante pour les takers. La remise augmente les sats verrouillés dans votre facture hold pour le même montant fiat : le taker reçoit donc plus de sats qu\'au taux du marché. Désactivée par défaut (0%). La remise maximale est fixée par le coordinateur sélectionné.';
 }
 
 // Path: maker.amountForm.category
@@ -3431,8 +3440,11 @@ extension on TranslationsFr {
 			'offers.details.consents.ecommerce' => ({required Object code}) => 'Pour diverses raisons — article en rupture de stock, correction d\'un trop-perçu ou autres problèmes côté commerçant — le commerçant en ligne peut automatiquement renvoyer de l\'argent vers le compte bancaire lié au ${code} que vous avez généré. Ces fonds arrivent sur votre compte mais ne vous appartiennent pas. Si cela se produit, contactez le coordinateur de bonne foi et organisez la restitution des fonds au maker. En acceptant cette offre, vous acceptez ces conditions et vous engagez sur l\'honneur à agir honnêtement dans de telles situations.',
 			'offers.labels.premium' => 'Prime',
 			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% de prime',
+			'offers.labels.discount' => 'Remise',
+			'offers.labels.discountBadge' => ({required Object percent}) => '-${percent}% de remise',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Le coordinateur facture des frais taker de ${feePercent}%. Ils incluent les frais de routage Lightning et sont déduits du montant que vous recevez.',
 			'offers.tooltips.premiumInfoTaker' => 'Une prime signifie que cette offre est au-dessus du prix du marché. Pour le même montant fiat, le maker verrouille moins de sats dans la facture hold : vous payez donc au-dessus du marché et recevez moins de sats qu\'au taux du marché. La prime maximale est fixée par le coordinateur.',
+			'offers.tooltips.discountInfoTaker' => 'Une remise signifie que cette offre est en dessous du prix du marché. Pour le même montant fiat, le maker verrouille plus de sats dans la facture hold : vous recevez donc plus de sats qu\'au taux du marché. La remise maximale est fixée par le coordinateur.',
 			'offers.tooltips.ratesFetchedAt' => 'Récupéré à',
 			'offers.tooltips.ratesSources' => 'Sources du taux moyen',
 			'offers.actions.take' => 'ACCEPTER',
@@ -3545,6 +3557,8 @@ extension on TranslationsFr {
 			'coordinator.details.maxPremium' => 'Prime max',
 			'coordinator.details.maxPremiumInfoTitle' => 'Prime',
 			'coordinator.details.maxPremiumInfoBody' => 'Une prime est une majoration facultative du prix au-dessus du taux du marché qu\'un maker peut appliquer à une offre. Avec une prime, le maker verrouille moins de sats pour le même montant fiat : le taker paie donc au-dessus du marché et le maker garde la différence. Cette valeur est la prime la plus élevée que ce coordinateur autorise sur ses offres.',
+			'coordinator.details.premiumRange' => 'Plage de prime',
+			'coordinator.details.premiumRangeInfoBody' => 'Dans cette plage, un maker peut fixer une prime (prix au-dessus du marché) ou une remise (prix en dessous du marché). Avec une remise, le maker verrouille plus de sats pour le même montant fiat : le taker reçoit donc plus de sats qu\'au taux du marché. Avec une prime, il verrouille moins de sats et garde la différence.',
 			'coordinator.details.reservationTime' => 'Durée de réservation',
 			'coordinator.details.currencies' => 'Devises',
 			'coordinator.details.paymentSystem' => 'Système de paiement',
@@ -3655,6 +3669,7 @@ extension on TranslationsFr {
 			'maker.amountForm.labels.customAmount' => 'Personnalisé',
 			'maker.amountForm.labels.tapToSelect' => 'Touchez pour sélectionner',
 			'maker.amountForm.labels.premium' => 'Prime',
+			'maker.amountForm.labels.discount' => 'Remise',
 			'maker.amountForm.actions.generateInvoice' => 'Générer la facture',
 			'maker.amountForm.bank.label' => 'Banque',
 			'maker.amountForm.bank.required' => 'Veuillez choisir une banque',
@@ -3670,6 +3685,7 @@ extension on TranslationsFr {
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Le coordinateur facture des frais maker de ${feePercent}%. Ces frais sont déduits de votre paiement Lightning.',
 			'maker.amountForm.tooltips.payInfo' => 'Ce calcul est basé sur des taux de change récupérés côté client. Le coordinateur calculera le montant exact, et le montant de la facture sera le montant final et exact à payer.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Une prime facultative vous permet de vendre vos sats au-dessus du prix du marché. La prime réduit les sats verrouillés dans votre facture hold pour le même montant fiat : le taker paie donc au-dessus du marché et vous gardez la différence. Désactivée par défaut (0%). La prime maximale est fixée par le coordinateur sélectionné.',
+			'maker.amountForm.tooltips.discountInfo' => 'Une remise facultative vous permet de vendre vos sats en dessous du prix du marché, pour rendre votre offre plus attrayante pour les takers. La remise augmente les sats verrouillés dans votre facture hold pour le même montant fiat : le taker reçoit donc plus de sats qu\'au taux du marché. Désactivée par défaut (0%). La remise maximale est fixée par le coordinateur sélectionné.',
 			'maker.amountForm.category.label' => 'Catégorie de l\'offre',
 			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => '${system} ne prend pas en charge cette catégorie.',
 			'maker.amountForm.category.options.physicalShop' => 'Magasin, café ou restaurant',
@@ -3840,6 +3856,8 @@ extension on TranslationsFr {
 			'taker.submitBlik.details.takerFee' => 'Frais taker',
 			'taker.submitBlik.details.status' => 'Statut',
 			'taker.submitBlik.details.youllReceive' => 'Vous recevrez',
+			_ => null,
+		} ?? switch (path) {
 			'taker.criticalCodeDecision.title' => 'Décision critique',
 			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Vous avez déjà communiqué un code ${code} au maker. Continuer peut remplacer ce code, mettre fin à votre réservation et rouvrir l’offre à d’autres takers.',
 			'taker.criticalCodeDecision.warningTitle' => 'VOUS RISQUEZ DE PERDRE VOS FONDS',
@@ -3847,8 +3865,6 @@ extension on TranslationsFr {
 			'taker.criticalCodeDecision.actions.cancel' => 'Retourner vérifier ma banque',
 			'taker.criticalCodeDecision.actions.proceed' => 'Je n’ai PAS été débité — continuer',
 			'taker.conflict.title' => 'Confirmation du paiement en attente',
-			_ => null,
-		} ?? switch (path) {
 			'taker.conflict.headline' => 'En attente de la confirmation du maker',
 			'taker.conflict.body' => ({required Object code}) => 'Vous avez signalé que le paiement ${code} a été débité, mais le maker a indiqué qu\'il avait échoué. Ces déclarations sont contradictoires.',
 			'taker.conflict.instructions' => 'Le maker doit maintenant confirmer le résultat. S\'il confirme que le paiement a réussi, votre versement continuera. S\'il confirme l\'échec, ou si le délai expire, l\'offre passera en litige formel et le chat du litige deviendra disponible.',
@@ -4170,6 +4186,7 @@ extension on TranslationsFr {
 			'settings.offerCreation.enablePremium' => 'Activer la tarification avec prime',
 			'settings.offerCreation.enablePremiumDescription' => 'Affiche le curseur de prime lors de la création d\'offres maker.',
 			'settings.offerCreation.defaultPremium' => 'Prime par défaut',
+			'settings.offerCreation.defaultDiscount' => 'Remise par défaut',
 			'settings.offerCreation.defaultPremiumDisabled' => 'Activez la tarification avec prime pour définir une prime par défaut.',
 			'settings.offerCreation.premiumPerCoordinatorNote' => 'Chaque coordinateur fixe sa propre prime maximale, votre valeur par défaut est donc plafonnée par le coordinateur utilisé pour une offre.',
 			'settings.offerCreation.categoryOptions.shop' => 'Magasin, café ou restaurant',
@@ -4274,6 +4291,7 @@ extension on TranslationsFr {
 			'offerNotifications.newOffer.title' => 'Nouvelle offre disponible',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% de prime',
+			'offerNotifications.newOffer.discountSuffix' => ({required Object percent}) => '-${percent}% de remise',
 			'offerNotifications.categories.shop' => 'Magasin',
 			'offerNotifications.categories.atm' => 'Distributeur',
 			'offerNotifications.categories.online' => 'En ligne',
