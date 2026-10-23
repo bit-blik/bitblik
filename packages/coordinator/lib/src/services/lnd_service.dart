@@ -45,11 +45,19 @@ class LndService implements PaymentService {
   InvoicesClient? _invoicesClient;
   lnd_router.RouterClient? _routerClient; // Use aliased type
   late DotEnv _env;
+  final DateTime Function() _now;
+
+  // How long after an invoice's expiry a payment LND has no record of counts
+  // as never sent: covers a send request that was still in transit at expiry.
+  static const _expiredSendGrace = Duration(minutes: 5);
 
   LndService(
-      {LightningClient? lightningClient, lnd_router.RouterClient? routerClient})
+      {LightningClient? lightningClient,
+      lnd_router.RouterClient? routerClient,
+      DateTime Function()? now})
       : _lightningClient = lightningClient,
-        _routerClient = routerClient {
+        _routerClient = routerClient,
+        _now = now ?? DateTime.now {
     _env = DotEnv(includePlatformEnvironment: true)..load();
   }
 
@@ -340,7 +348,10 @@ class LndService implements PaymentService {
   }
 
   /// Helper to track payment status using LND's trackPaymentV2.
-  Future<PayInvoiceResult?> _trackPaymentV2(String paymentHashHex) async {
+  /// [rethrowNotFound] passes LND's "payment isn't initiated" to the caller
+  /// instead of folding it into the null "unknown" result.
+  Future<PayInvoiceResult?> _trackPaymentV2(String paymentHashHex,
+      {bool rethrowNotFound = false}) async {
     if (_routerClient == null) throw StateError('LND not connected.');
     final paymentHashBytes = _hexToBytes(paymentHashHex);
     final req = lnd_router.TrackPaymentRequest()
@@ -376,6 +387,9 @@ class LndService implements PaymentService {
           'LND: trackPaymentV2: Stream ended without definitive status.');
       return null;
     } catch (e) {
+      if (rethrowNotFound && e is GrpcError && e.code == StatusCode.notFound) {
+        rethrow;
+      }
       AppLogger.info(
           'LND: Exception in trackPaymentV2 for $paymentHashHex: $e');
       return null;
@@ -445,10 +459,38 @@ class LndService implements PaymentService {
       final hash = request.tags
           .firstWhere((tag) => tag.type == 'payment_hash')
           .data as String;
-      return await _trackPaymentV2(hash);
+      try {
+        return await _trackPaymentV2(hash, rethrowNotFound: true);
+      } on GrpcError {
+        // LND never initiated this payment. Once the invoice has expired LND
+        // refuses to send it, so nothing can be in flight and the payout has
+        // definitively failed. Left unknown, it was retried forever instead
+        // of asking the taker for a fresh invoice.
+        if (!_expiredBeyondGrace(request)) return null;
+        AppLogger.warning('LND has no payment for expired invoice $hash; '
+            'marking the payout failed.');
+        return PayInvoiceResult(
+          status: domain.PaymentStatus.FAILED,
+          paymentId: hash,
+          paymentError: 'Invoice expired before LND sent the payment.',
+        );
+      }
     } catch (e) {
       AppLogger.warning('LND outgoing reconciliation unavailable.', error: e);
       return null;
     }
+  }
+
+  bool _expiredBeyondGrace(Bolt11PaymentRequest request) {
+    var expirySeconds = 3600; // BOLT 11 default
+    for (final tag in request.tags) {
+      if (tag.type == 'expiry' && tag.data is num) {
+        expirySeconds = (tag.data as num).toInt();
+      }
+    }
+    final expiresAt = DateTime.fromMillisecondsSinceEpoch(
+        (request.timestamp.toInt() + expirySeconds) * 1000,
+        isUtc: true);
+    return _now().toUtc().isAfter(expiresAt.add(_expiredSendGrace));
   }
 }

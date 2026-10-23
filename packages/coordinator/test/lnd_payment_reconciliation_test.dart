@@ -5,6 +5,7 @@ import 'package:bitblik_coordinator/src/generated/lnd/router.pbgrpc.dart'
     as router;
 import 'package:bitblik_coordinator/src/models/payment_status.dart' as domain;
 import 'package:bitblik_coordinator/src/services/lnd_service.dart';
+import 'package:bolt11_decoder/bolt11_decoder.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:grpc/grpc.dart';
 import 'package:mockito/mockito.dart';
@@ -100,6 +101,52 @@ void main() {
       expect(rpc.submissions, 0);
     });
   }
+
+  // 2026-10-20 on the SK coordinator: auto-confirm settled a trade half an hour
+  // after the taker's invoice had expired. LND refused to send it and kept no
+  // record, every reconciliation came back unknown, and the payout was retried
+  // every 30 s instead of failing over to a fresh invoice.
+  group('LND has no record of the payment', () {
+    final req = Bolt11PaymentRequest(invoice);
+    final createdAt = req.timestamp.toInt();
+    final expirySeconds = req.tags
+        .where((tag) => tag.type == 'expiry' && tag.data is num)
+        .map((tag) => (tag.data as num).toInt())
+        .followedBy([3600]).first;
+    DateTime at(int seconds) =>
+        DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true);
+    _Router notFound() => _Router()
+      ..track =
+          Stream.error(const GrpcError.notFound("payment isn't initiated"));
+
+    final longExpired = createdAt + expirySeconds + 600;
+
+    test('an expired invoice can never be sent, so the payout failed',
+        () async {
+      final rpc = notFound();
+      final service = LndService(routerClient: rpc, now: () => at(longExpired));
+      final result = await service.reconcileOutgoingPayment(invoice: invoice);
+      expect(result?.status, domain.PaymentStatus.FAILED);
+      expect(result?.paymentError, contains('expired'));
+      expect(rpc.submissions, 0);
+    });
+
+    test('a live or just-expired invoice stays unresolved', () async {
+      for (final now in [createdAt + 60, createdAt + expirySeconds + 1]) {
+        final service =
+            LndService(routerClient: notFound(), now: () => at(now));
+        expect(
+            await service.reconcileOutgoingPayment(invoice: invoice), isNull);
+      }
+    });
+
+    test('an unreachable LND never fails an expired invoice', () async {
+      final rpc = _Router()
+        ..track = Stream.error(const GrpcError.unavailable('lnd restarting'));
+      final service = LndService(routerClient: rpc, now: () => at(longExpired));
+      expect(await service.reconcileOutgoingPayment(invoice: invoice), isNull);
+    });
+  });
 
   test('response loss followed by authoritative success returns success',
       () async {
