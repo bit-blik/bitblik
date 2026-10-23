@@ -795,6 +795,7 @@ void main() {
         amountSat: anyNamed('amountSat'),
         feeLimitSat: anyNamed('feeLimitSat'),
         paymentAttemptId: anyNamed('paymentAttemptId'),
+        onPaymentId: anyNamed('onPaymentId'),
       )).thenAnswer(
         (_) async => const PayOfferResult(
           status: PaymentStatus.SUCCEEDED,
@@ -812,8 +813,64 @@ void main() {
         amountSat: captureAnyNamed('amountSat'),
         feeLimitSat: captureAnyNamed('feeLimitSat'),
         paymentAttemptId: anyNamed('paymentAttemptId'),
+        onPaymentId: anyNamed('onPaymentId'),
       )).captured;
       expect(paymentArguments, [101, 10]);
+    });
+
+    test('a BOLT12 payment ID is stored before the backend pays', () async {
+      const offer =
+          'lno1zcss9mk8y3wkklfvevcrszlmu23kfrxh49px20665dqwmn4p72pksese';
+      final hash = 'ab' * 32;
+      when(gdb.getOfferById('p1')).thenAnswer((_) async => payoutOffer(
+            takerOffer: offer,
+            amountSats: 102,
+            takerFees: 1,
+          ));
+      stubCas();
+      when(gpay.isBolt12Available).thenReturn(true);
+      when(gpay.decodeOffer(offer: anyNamed('offer'))).thenAnswer(
+        (_) async => const Bolt12OfferInfo(
+          normalized: offer,
+          offerId:
+              '0000000000000000000000000000000000000000000000000000000000000000',
+          network: 'mainnet',
+          amountMsat: null,
+          isExpired: false,
+          isVariableAmount: true,
+        ),
+      );
+      when(gpay.reconcileOutgoingOffer(
+        offer: anyNamed('offer'),
+        paymentAttemptId: anyNamed('paymentAttemptId'),
+        paymentId: anyNamed('paymentId'),
+      )).thenAnswer((_) async => null);
+      final storedBeforePaying = <Object?>[];
+      when(gpay.payOffer(
+        offer: anyNamed('offer'),
+        amountSat: anyNamed('amountSat'),
+        feeLimitSat: anyNamed('feeLimitSat'),
+        paymentAttemptId: anyNamed('paymentAttemptId'),
+        onPaymentId: anyNamed('onPaymentId'),
+      )).thenAnswer((invocation) async {
+        final record = invocation.namedArguments[#onPaymentId]
+            as Future<void> Function(String);
+        await record(hash);
+        storedBeforePaying.addAll(verify(gdb.updateOutgoingPaymentAttempt(
+          any,
+          state: OutgoingPaymentAttemptState.unknown,
+          expectedRevision: anyNamed('expectedRevision'),
+          backendPaymentId: captureAnyNamed('backendPaymentId'),
+        )).captured);
+        return PayOfferResult(
+            status: PaymentStatus.SUCCEEDED, paymentId: hash, feeSat: 2);
+      });
+
+      await gsvc.flow.handleRpc('confirm_payment', {'offer_id': 'p1'}, maker);
+      await pumpEventQueue(times: 100);
+
+      expect(storedBeforePaying, [hash]);
+      expect(current, 'takerPaid');
     });
 
     test('submitted unknown attempt is reconciled and never resent', () async {

@@ -828,6 +828,7 @@ class LdkServerService implements PaymentService, Bolt12PaymentService {
     required int amountSat,
     int? feeLimitSat,
     required String paymentAttemptId,
+    Future<void> Function(String paymentId)? onPaymentId,
   }) async {
     if (amountSat <= 0) {
       return const PayOfferResult(
