@@ -580,6 +580,7 @@ class NostrService {
     DateTime? createdAt,
     DateTime? blikReceivedAt,
     DateTime? disputeAt,
+    String? bankId,
   }) async {
     try {
       final payload = <String, dynamic>{
@@ -599,6 +600,7 @@ class NostrService {
             : null,
         if (disputeAt != null)
           'dispute_at': disputeAt.millisecondsSinceEpoch ~/ 1000,
+        if (bankId != null && bankId.isNotEmpty) 'bank': bankId,
         'timestamp': timestamp.millisecondsSinceEpoch ~/ 1000,
       };
 

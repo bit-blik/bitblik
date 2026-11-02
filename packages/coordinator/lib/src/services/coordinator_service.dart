@@ -2046,6 +2046,10 @@ class CoordinatorService {
         reservedAt: offer.reservedAt,
         blikReceivedAt: offer.blikReceivedAt,
         disputeAt: offer.disputeAt,
+        // Only a multi-bank offer's bank changes after creation (the taker's
+        // pick on reserve, the first choice again on release). The maker's
+        // app must follow it, or it would send them to the wrong ATM.
+        bankId: offer.isMultiBank ? offer.bankId : null,
         makerPubkey: offer.makerPubkey,
         takerPubkey: offer.takerPubkey,
       );
