@@ -301,26 +301,50 @@ class CoordinatorService {
     return instrument.validityFor(instrument.bankById(offer.bankId));
   }
 
-  /// Validate the maker-chosen [bank] for a new offer in [category]. Returns the
-  /// bank id to store (null for bank-agnostic instruments). Throws when a
-  /// bank-scoped instrument is missing a valid, served bank.
-  String? _resolveOfferBank(String? bank, OfferCategory? category) {
+  /// Validate the maker-chosen banks for a new offer in [category]: the
+  /// single [bank] older clients send, or the [banks] list of a multi-bank
+  /// offer (whose first entry is the maker's first choice; [bank], when also
+  /// sent, must be in it and is moved to the front). Returns the deduplicated
+  /// ids to store — empty for bank-agnostic instruments. Throws when a
+  /// bank-scoped instrument gets no bank, or any bank is unknown or unserved.
+  List<String> _resolveOfferBanks(
+    String? bank,
+    List<String>? banks,
+    OfferCategory? category,
+  ) {
     final instrument = _instrumentForCategory(category);
-    if (!instrument.hasBanks) return null;
-    final normalized = bank?.trim();
-    if (normalized == null || normalized.isEmpty) {
+    if (!instrument.hasBanks) return const [];
+    final primary = bank?.trim();
+    final ids = <String>[
+      if (primary != null && primary.isNotEmpty) primary,
+    ];
+    for (final raw in banks ?? const <String>[]) {
+      final id = raw.trim();
+      if (id.isNotEmpty && !ids.contains(id)) ids.add(id);
+    }
+    if (ids.isEmpty) {
       throw Exception(
           'A bank is required for ${_paymentSystem.id} offers (one of: '
           '${servedBanks.join(', ')}).');
     }
-    if (instrument.bankById(normalized) == null) {
-      throw Exception('Unknown bank "$normalized" for ${_paymentSystem.id}.');
+    if (primary != null &&
+        primary.isNotEmpty &&
+        banks != null &&
+        banks.isNotEmpty &&
+        !banks.map((b) => b.trim()).contains(primary)) {
+      throw Exception('Bank "$primary" is not among the offer\'s banks '
+          '(${banks.join(', ')}).');
     }
-    if (!servedBanks.contains(normalized)) {
-      throw Exception('This coordinator does not serve bank "$normalized" '
-          '(served: ${servedBanks.join(', ')}).');
+    for (final id in ids) {
+      if (instrument.bankById(id) == null) {
+        throw Exception('Unknown bank "$id" for ${_paymentSystem.id}.');
+      }
+      if (!servedBanks.contains(id)) {
+        throw Exception('This coordinator does not serve bank "$id" '
+            '(served: ${servedBanks.join(', ')}).');
+      }
     }
-    return normalized;
+    return ids;
   }
 
   /// State-machine engine loaded from the active method's bundled flow
@@ -1317,6 +1341,10 @@ class CoordinatorService {
         // resolution (validity windows, labels) works everywhere downstream.
         paymentSystemId: _paymentSystem.id,
         bankId: pendingData['bank'] as String?,
+        bankIds: [
+          for (final id in (pendingData['banks'] as List?) ?? const [])
+            id.toString(),
+        ],
         clientVersion: pendingData['clientVersion'] as String?,
       );
       await _dbService.createOffer(offer);
@@ -1456,23 +1484,26 @@ class CoordinatorService {
   List<String> _notifyTargets(
     String general,
     Map<String, List<String>> byBank,
-    String? bankId,
+    List<String> bankIds,
   ) {
     final s = <String>{if (general.isNotEmpty) general};
-    if (bankId != null) s.addAll(byBank[bankId] ?? const []);
+    for (final bankId in bankIds) {
+      s.addAll(byBank[bankId] ?? const []);
+    }
     return s.toList();
   }
 
   Future<void> _sendOfferNotifications(Offer offer) async {
     final notificationText = _buildFundedOfferNotification(offer);
-    final bankId = offer.bankId;
+    // A multi-bank offer is announced in every accepted bank's channel.
+    final bankIds = offer.acceptedBankIds;
     final notificationFutures = <Future<void>>[];
 
     // Each messenger: send to the general channel AND the offer bank's channel
     // (both only if configured). For bank-agnostic offers, just the general one.
     if (_simplexChatExec != '') {
       for (final group in _notifyTargets(
-          _simplexGroup as String? ?? '', _simplexGroupsByBank, bankId)) {
+          _simplexGroup as String? ?? '', _simplexGroupsByBank, bankIds)) {
         notificationFutures
             .add(_sendSimpleXNotification(notificationText, group: group));
       }
@@ -1480,7 +1511,7 @@ class CoordinatorService {
 
     if (_matrixClient != null && _matrixClient!.isLogged()) {
       for (final room
-          in _notifyTargets(_matrixRoomId, _matrixRoomsByBank, bankId)) {
+          in _notifyTargets(_matrixRoomId, _matrixRoomsByBank, bankIds)) {
         notificationFutures
             .add(_sendMatrixNotification(notificationText, roomId: room));
       }
@@ -1489,9 +1520,10 @@ class CoordinatorService {
     if (_telegramService != null && _telegramService!.isConfigured) {
       // Default (null) → the service's own general chats. When the offer's bank
       // has its own chats, override with general ∪ bank so both are notified.
-      final bankChats = bankId != null
-          ? (_telegramChatIdsByBank[bankId] ?? const [])
-          : const [];
+      final bankChats = <String>{
+        for (final bankId in bankIds)
+          ...(_telegramChatIdsByBank[bankId] ?? const <String>[]),
+      };
       final chatIds = bankChats.isEmpty
           ? null
           : <String>{..._telegramGeneralChatIds, ...bankChats}.toList();
@@ -1502,7 +1534,7 @@ class CoordinatorService {
 
     if (_signalCliExec != '') {
       for (final group
-          in _notifyTargets(_signalGroupId, _signalGroupsByBank, bankId)) {
+          in _notifyTargets(_signalGroupId, _signalGroupsByBank, bankIds)) {
         notificationFutures
             .add(_sendSignalNotification(notificationText, groupId: group));
       }
@@ -2227,6 +2259,7 @@ class CoordinatorService {
     double premiumPercent = 0,
     String? blikCode,
     String? bank,
+    List<String>? banks,
     String? clientVersion,
     String? operationId,
   }) {
@@ -2239,6 +2272,7 @@ class CoordinatorService {
       premiumPercent: premiumPercent,
       blikCode: blikCode,
       bank: bank,
+      banks: banks,
       clientVersion: clientVersion,
       operationId: operationId,
       canStartInvoice: () => !timedOut && !_shuttingDown,
@@ -2263,6 +2297,7 @@ class CoordinatorService {
     double premiumPercent = 0,
     String? blikCode,
     String? bank,
+    List<String>? banks,
     String? clientVersion,
     String? operationId,
   }) async {
@@ -2280,6 +2315,9 @@ class CoordinatorService {
             'premiumPercent': premiumPercent,
             'blikCode': blikCode,
             'bank': bank,
+            // Only multi-bank intents carry the list, so single-bank
+            // fingerprints stay what older coordinators computed.
+            if (banks != null && banks.isNotEmpty) 'banks': banks,
           })))
           .toString();
       final existing = await _dbService.getOfferInitiation(
@@ -2304,21 +2342,28 @@ class CoordinatorService {
           'Unsupported category ${category.name} for ${_paymentSystem.id}');
     }
     // Resolve the payment instrument for this offer's category. Bank-scoped
-    // markets (SK ATM) require the maker to pick a served bank up front — they
-    // withdraw at that bank's ATM, so the bank is fixed for the offer.
+    // markets (SK ATM) require the maker to pick at least one served bank up
+    // front — they withdraw at that bank's ATM. A maker with several banks'
+    // ATMs nearby may accept all of them; the taker's bank then decides.
     final instrument = _instrumentForCategory(category);
-    final resolvedBank = _resolveOfferBank(bank, category);
+    final resolvedBanks = _resolveOfferBanks(bank, banks, category);
+    final resolvedBank = resolvedBanks.isEmpty ? null : resolvedBanks.first;
     // Some banks cap a single cardless withdrawal below what this coordinator's
     // sats limits allow (Prima banka: 200 EUR per code). Reject here, while the
     // amount is still fiat and nothing is locked — past this point the offer
-    // would fund normally and only fail at the ATM.
+    // would fund normally and only fail at the ATM. Every accepted bank must
+    // pay the amount out, since any of them may end up running the offer.
     final offerBankSpec = instrument.bankById(resolvedBank);
-    if (!instrument.isWithinAtmLimit(fiatAmount, bank: offerBankSpec)) {
+    for (final spec in <BankSpec?>[
+      if (resolvedBanks.isEmpty) null,
+      for (final id in resolvedBanks) instrument.bankById(id),
+    ]) {
+      if (instrument.isWithinAtmLimit(fiatAmount, bank: spec)) continue;
       // A cap can also sit on the instrument itself, so fall back to the
       // market label when the offer carries no bank.
-      final capped = offerBankSpec?.label ?? _paymentSystem.label;
+      final capped = spec?.label ?? _paymentSystem.label;
       throw Exception('$capped pays out at most '
-          '${instrument.maxAmountFor(offerBankSpec)} ${_paymentSystem.currency} '
+          '${instrument.maxAmountFor(spec)} ${_paymentSystem.currency} '
           'per cardless withdrawal; requested $fiatAmount.');
     }
     if (instrument.makerProvidesCode) {
@@ -2416,6 +2461,7 @@ class CoordinatorService {
         'blikCode': blikCode,
         'category': category?.name,
         'bank': resolvedBank,
+        if (resolvedBanks.length > 1) 'banks': resolvedBanks,
         'premiumPercent': premium,
         'clientVersion': clientVersion,
         if (operationId != null) 'operationId': operationId,
@@ -2556,6 +2602,8 @@ class CoordinatorService {
       paymentSystem: _paymentSystem.id,
       supportsTwintShopQr: _paymentSystem.id == 'twint',
       supportsOfferInitiationRecovery: true,
+      // A maker can only pick several banks where there are several to pick.
+      supportsMultiBankOffers: servedBanks.length > 1,
       banks: List<String>.from(_servedBanks),
       nostrNpub: null,
       icon: _coordinatorIconUrl.isNotEmpty ? _coordinatorIconUrl : null,
