@@ -28,11 +28,15 @@ typedef ReserveOfferResult = ({DateTime? reservedAt, Offer? offer});
 /// coordinator's full offer json when present (server truth: raw flow state,
 /// blik_received_at as the code-lifespan countdown base, updated_at), falling
 /// back to patching the listed offer for those older coordinators.
+///
+/// [bank] is the bank the taker picked for a multi-bank offer; the offer runs
+/// on it from the reservation on.
 Offer reservedOfferFromResult(
   Offer listed,
   String takerId,
-  ReserveOfferResult result,
-) {
+  ReserveOfferResult result, {
+  String? bank,
+}) {
   final remote = result.offer;
   if (remote != null) {
     var merged = remote;
@@ -55,8 +59,11 @@ Offer reservedOfferFromResult(
       merged = merged.copyWith(paymentSystemId: listed.paymentSystemId);
     }
     if ((merged.bankId == null || merged.bankId!.isEmpty) &&
-        listed.bankId != null) {
-      merged = merged.copyWith(bankId: listed.bankId);
+        (bank ?? listed.bankId) != null) {
+      merged = merged.copyWith(bankId: bank ?? listed.bankId);
+    }
+    if (merged.bankIds.isEmpty && listed.bankIds.isNotEmpty) {
+      merged = merged.copyWith(bankIds: listed.bankIds);
     }
     return merged;
   }
@@ -64,6 +71,7 @@ Offer reservedOfferFromResult(
     status: OfferStatus.reserved,
     takerPubkey: takerId,
     reservedAt: result.reservedAt,
+    bankId: bank,
   );
 }
 
@@ -791,6 +799,7 @@ class NostrService {
     double premiumPercent = 0,
     String? blikCode,
     String? bank,
+    List<String>? banks,
     String? operationId,
   }) async {
     final request = NostrRequest(
@@ -804,6 +813,9 @@ class NostrService {
         if (premiumPercent > 0) 'premium_percent': premiumPercent,
         if (blikCode != null && blikCode.isNotEmpty) 'blik_code': blikCode,
         if (bank != null && bank.isNotEmpty) 'bank': bank,
+        // Multi-bank SK offer: every bank the maker accepts, first choice
+        // first. Sent only to coordinators advertising multi_bank_v1.
+        if (banks != null && banks.length > 1) 'banks': banks,
       },
     );
 
@@ -994,11 +1006,15 @@ class NostrService {
     String? takerLightningAddress,
     String? takerInvoice,
     String? takerOffer,
+    String? bank,
   }) async {
     final request = NostrRequest(
       method: kRpcReserveOffer,
       params: {
         'offer_id': offerId,
+        // The bank whose app the taker generates the code in, for a
+        // multi-bank SK offer. The offer then runs on that bank.
+        if (bank != null && bank.isNotEmpty) 'bank': bank,
         'twint_shop_qr_v1': true,
         // Generic flows (TWINT) capture the taker's payout details at
         // reserve via the legacy `accept_taker_invoice` effect or its typed

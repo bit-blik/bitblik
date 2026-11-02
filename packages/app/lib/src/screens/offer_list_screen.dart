@@ -18,6 +18,7 @@ import '../utils/bitcoin_display.dart';
 import '../utils/category_icons.dart';
 import '../widgets/lightning_address_widget.dart';
 import '../widgets/offer_bank_badge.dart';
+import '../widgets/taker_bank_picker.dart';
 import '../widgets/premium_info.dart';
 import '../widgets/progress_indicators.dart'; // Import the progress indicators
 import 'taker_flow/taker_submit_blik_screen.dart'; // Import new screen
@@ -271,6 +272,13 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                             );
 
                             try {
+                              // Multi-bank offer: which bank's app the
+                              // code comes from (the maker's ATM).
+                              final bankChoice = await chooseTakerBank(
+                                context,
+                                offer,
+                              );
+                              if (!bankChoice.proceed) return;
                               final takerPayment =
                                   await reserveTakerInvoiceIfNeeded(ref, offer);
                               final reservation = await apiService.reserveOffer(
@@ -279,6 +287,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                 offer.coordinatorPubkey,
                                 takerInvoice: takerPayment?.bolt11,
                                 takerOffer: takerPayment?.bolt12,
+                                bank: bankChoice.bank,
                               );
 
                               if (reservation.reservedAt != null ||
@@ -288,6 +297,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                       offer,
                                       takerId,
                                       reservation,
+                                      bank: bankChoice.bank,
                                     );
 
                                 await ref
@@ -717,6 +727,18 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                     );
 
                                                 try {
+                                                  // Multi-bank offer: which
+                                                  // bank's app the code
+                                                  // comes from.
+                                                  if (!context.mounted) return;
+                                                  final bankChoice =
+                                                      await chooseTakerBank(
+                                                        context,
+                                                        offer,
+                                                      );
+                                                  if (!bankChoice.proceed) {
+                                                    return;
+                                                  }
                                                   final takerPayment =
                                                       await reserveTakerInvoiceIfNeeded(
                                                         ref,
@@ -735,6 +757,8 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                             takerOffer:
                                                                 takerPayment
                                                                     ?.bolt12,
+                                                            bank:
+                                                                bankChoice.bank,
                                                           );
 
                                                   if (reservation.reservedAt !=
@@ -746,6 +770,7 @@ class _OfferListScreenState extends ConsumerState<OfferListScreen> {
                                                           offer,
                                                           takerId,
                                                           reservation,
+                                                          bank: bankChoice.bank,
                                                         );
 
                                                     ref

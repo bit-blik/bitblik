@@ -62,7 +62,8 @@ class OfferDbService {
       premium_percent REAL,
       payment_wallet_id TEXT,
       payment_system TEXT,
-      bank TEXT
+      bank TEXT,
+      banks TEXT
     )
   ''';
 
@@ -77,7 +78,7 @@ class OfferDbService {
     final path = join(dbPath, 'offer.db');
     return await openDatabase(
       path,
-      version: 14,
+      version: 15,
       onCreate: (db, version) async {
         await db.execute(_createTableSql);
       },
@@ -171,6 +172,14 @@ class OfferDbService {
             await db.execute('ALTER TABLE $_table ADD COLUMN taker_offer TEXT');
           }
         }
+        if (oldVersion < 15) {
+          // Every bank a multi-bank SK offer accepts (comma-joined).
+          final columns = await db.rawQuery('PRAGMA table_info($_table)');
+          final hasColumn = columns.any((col) => col['name'] == 'banks');
+          if (!hasColumn) {
+            await db.execute('ALTER TABLE $_table ADD COLUMN banks TEXT');
+          }
+        }
       },
     );
   }
@@ -182,6 +191,9 @@ class OfferDbService {
           offer.toJson()
             ..remove('taker_charged_at')
             ..remove('dispute_escalation_reason');
+      // SQLite has no list type; Offer.fromJson reads the joined form back.
+      final banks = jsonData['banks'];
+      if (banks is List) jsonData['banks'] = banks.join(',');
       Logger.log.d(
         () =>
             '[OfferDbService] Upserting offer ${offer.id} status=${offer.status.name}',

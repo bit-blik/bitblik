@@ -103,6 +103,10 @@ nfc:
 # OFFERS AND TRANSACTIONS
 # =============================================================================
 offers:
+  takerBank:
+    title: "Which bank's app will you use?"
+    subtitle: "The maker can withdraw at an ATM of any of these banks. Pick the bank whose app you'll generate the code in."
+    validity: "Code valid for ${minutes} min"
   details:
     yourOffer: "Your offer:"
     selectedOffer: "Offer:"
@@ -447,6 +451,7 @@ maker:
       label: "Bank"
       required: "Please choose a bank"
       shortValidityWarning: "This bank's code is valid for only ${minutes} min — be at the ATM before you reserve."
+      multiHint: "Tick every bank with an ATM near you. The first taker from any of them gets the offer."
     twintScan:
       cardTitle: "Scan ${code} QR and amount"
       cardBody: "Point the camera at the payment screen. The app will prefill the code and, when visible, the amount."
