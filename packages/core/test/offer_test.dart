@@ -221,6 +221,80 @@ void main() {
       final offer = Offer.fromNostrEvent(event);
       expect(offer.paymentSystemId, 'sk');
       expect(offer.bankId, 'vub');
+      expect(offer.acceptedBankIds, ['vub']);
+    });
+  });
+
+  group('Offer accepted banks (multi-bank)', () {
+    Map<String, dynamic> baseJson() => {
+          'id': 'offer-multi',
+          'amount_sats': 90000,
+          'maker_fees': 10,
+          'fiat_amount': 50.0,
+          'fiat_currency': 'EUR',
+          'status': 'funded',
+          'created_at': DateTime.utc(2026, 11, 2).toIso8601String(),
+          'maker_pubkey': 'maker-pubkey',
+          'coordinator_pubkey': 'coordinator-pubkey',
+          'category': 'atm',
+          'payment_system': 'sk',
+          'bank': 'tatrabanka',
+        };
+
+    test('json carries the accepted list next to the current bank', () {
+      final offer = Offer.fromJson({
+        ...baseJson(),
+        'banks': ['tatrabanka', 'vub'],
+      });
+      expect(offer.bankId, 'tatrabanka');
+      expect(offer.acceptedBankIds, ['tatrabanka', 'vub']);
+      expect(offer.isMultiBank, isTrue);
+
+      final roundTrip = Offer.fromJson(offer.toJson());
+      expect(roundTrip.acceptedBankIds, ['tatrabanka', 'vub']);
+      expect(roundTrip.bankId, 'tatrabanka');
+    });
+
+    test('a single-bank offer emits no banks key', () {
+      final offer = Offer.fromJson(baseJson());
+      expect(offer.acceptedBankIds, ['tatrabanka']);
+      expect(offer.isMultiBank, isFalse);
+      expect(offer.toJson().containsKey('banks'), isFalse);
+    });
+
+    test('nostr event: banks tag lists every accepted bank', () {
+      final event = Nip01Event(
+        pubKey: 'coordinator-pubkey',
+        kind: 30402,
+        tags: const [
+          ['d', 'offer-multi'],
+          ['amt', '90000'],
+          ['fa', '50.0'],
+          ['f', 'EUR'],
+          ['s', 'pending'],
+          ['created_at', '1767225600'],
+          ['p', 'coordinator-pubkey'],
+          ['y', 'Bitvyber'],
+          ['category', 'atm'],
+          // Older apps read only this single tag and see a Tatra offer.
+          ['bank', 'tatrabanka'],
+          ['banks', 'tatrabanka', 'vub'],
+        ],
+        content: '',
+      );
+      final offer = Offer.fromNostrEvent(event);
+      expect(offer.bankId, 'tatrabanka');
+      expect(offer.acceptedBankIds, ['tatrabanka', 'vub']);
+    });
+
+    test('copyWith keeps the accepted list', () {
+      final offer = Offer.fromJson({
+        ...baseJson(),
+        'banks': ['tatrabanka', 'vub'],
+      });
+      final taken = offer.copyWith(bankId: 'vub', takerPubkey: 'taker');
+      expect(taken.bankId, 'vub');
+      expect(taken.acceptedBankIds, ['tatrabanka', 'vub']);
     });
   });
 
