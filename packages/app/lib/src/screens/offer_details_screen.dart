@@ -20,6 +20,7 @@ import '../widgets/lightning_address_widget.dart';
 import '../widgets/offer_bank_badge.dart';
 import '../widgets/progress_indicators.dart';
 import '../widgets/premium_info.dart';
+import '../widgets/taker_bank_picker.dart';
 
 class OfferDetailsScreen extends ConsumerStatefulWidget {
   final String offerId;
@@ -199,6 +200,13 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
     }
 
     try {
+      // Multi-bank offer: the taker says which bank's app the code comes
+      // from; the maker then withdraws at that bank's ATM.
+      final bankChoice = await chooseTakerBank(context, offer);
+      if (!bankChoice.proceed) {
+        if (mounted) setState(() => _isTaking = false);
+        return;
+      }
       // Flow-driven markets that capture the payout invoice at reserve (TWINT)
       // generate it here and send it with reserve_offer.
       final takerPayment = await reserveTakerInvoiceIfNeeded(ref, offer);
@@ -208,6 +216,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
         offer.coordinatorPubkey,
         takerInvoice: takerPayment?.bolt11,
         takerOffer: takerPayment?.bolt12,
+        bank: bankChoice.bank,
       );
       if (!mounted) return;
       if (reservation.reservedAt != null || reservation.offer != null) {
@@ -215,6 +224,7 @@ class _OfferDetailsScreenState extends ConsumerState<OfferDetailsScreen> {
           offer,
           publicKey,
           reservation,
+          bank: bankChoice.bank,
         );
         ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);
         router.go(flowRoute, extra: updatedOffer);

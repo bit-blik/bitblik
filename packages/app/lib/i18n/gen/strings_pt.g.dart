@@ -147,6 +147,7 @@ class _Translations$offers$pt extends Translations$offers$en {
 	final TranslationsPt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$offers$takerBank$pt takerBank = _Translations$offers$takerBank$pt._(_root);
 	@override late final _Translations$offers$details$pt details = _Translations$offers$details$pt._(_root);
 	@override late final _Translations$offers$labels$pt labels = _Translations$offers$labels$pt._(_root);
 	@override late final _Translations$offers$tooltips$pt tooltips = _Translations$offers$tooltips$pt._(_root);
@@ -709,6 +710,18 @@ class _Translations$nfc$errors$pt extends Translations$nfc$errors$en {
 	@override String get disabled => 'O NFC está desligado neste dispositivo';
 	@override String get unsupported => 'O NFC não está disponível neste dispositivo';
 	@override String reading({required Object details}) => 'Falha na leitura NFC: ${details}';
+}
+
+// Path: offers.takerBank
+class _Translations$offers$takerBank$pt extends Translations$offers$takerBank$en {
+	_Translations$offers$takerBank$pt._(TranslationsPt root) : this._root = root, super.internal(root);
+
+	final TranslationsPt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Em que app bancária vais gerar o código?';
+	@override String get subtitle => 'O maker pode levantar no multibanco de qualquer um destes bancos. Escolhe o banco em cuja app vais gerar o código.';
+	@override String validity({required Object minutes}) => 'Código válido por ${minutes} min';
 }
 
 // Path: offers.details
@@ -2314,6 +2327,7 @@ class _Translations$maker$amountForm$bank$pt extends Translations$maker$amountFo
 	@override String get label => 'Banco';
 	@override String get required => 'Escolhe um banco';
 	@override String shortValidityWarning({required Object minutes}) => 'O código deste banco é válido apenas ${minutes} min — está no multibanco antes de reservar.';
+	@override String get multiHint => 'Marca cada banco com um multibanco perto de ti. A oferta fica com o primeiro que a aceitar, de qualquer um deles.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -3398,6 +3412,9 @@ extension on TranslationsPt {
 			'nfc.errors.disabled' => 'O NFC está desligado neste dispositivo',
 			'nfc.errors.unsupported' => 'O NFC não está disponível neste dispositivo',
 			'nfc.errors.reading' => ({required Object details}) => 'Falha na leitura NFC: ${details}',
+			'offers.takerBank.title' => 'Em que app bancária vais gerar o código?',
+			'offers.takerBank.subtitle' => 'O maker pode levantar no multibanco de qualquer um destes bancos. Escolhe o banco em cuja app vais gerar o código.',
+			'offers.takerBank.validity' => ({required Object minutes}) => 'Código válido por ${minutes} min',
 			'offers.details.yourOffer' => 'A sua oferta:',
 			'offers.details.selectedOffer' => 'Oferta:',
 			'offers.details.activeOffer' => 'Tem uma oferta ativa:',
@@ -3661,6 +3678,7 @@ extension on TranslationsPt {
 			'maker.amountForm.bank.label' => 'Banco',
 			'maker.amountForm.bank.required' => 'Escolhe um banco',
 			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'O código deste banco é válido apenas ${minutes} min — está no multibanco antes de reservar.',
+			'maker.amountForm.bank.multiHint' => 'Marca cada banco com um multibanco perto de ti. A oferta fica com o primeiro que a aceitar, de qualquer um deles.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Ler QR ${code} e montante',
 			'maker.amountForm.twintScan.cardBody' => 'Aponte a câmara para o ecrã de pagamento. A app preencherá automaticamente o código e, quando visível, o montante.',
 			'maker.amountForm.twintScan.scanButton' => 'Ler com a câmara',
@@ -3844,12 +3862,12 @@ extension on TranslationsPt {
 			'taker.submitBlik.details.youllReceive' => 'Vai receber',
 			'taker.criticalCodeDecision.title' => 'Decisão crítica',
 			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Já partilhou um código ${code} com o maker. Continuar pode substituir esse código, terminar a sua reserva e reabrir a oferta a outros takers.',
+			_ => null,
+		} ?? switch (path) {
 			'taker.criticalCodeDecision.warningTitle' => 'PODE PERDER OS SEUS FUNDOS',
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Se o seu banco debitou o pagamento ${code}, NÃO continue. O maker pode ter usado o seu código e, após esta ação, o coordenador poderá já não conseguir garantir o pagamento dos seus bitcoins.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Voltar e verificar o banco',
 			'taker.criticalCodeDecision.actions.proceed' => 'NÃO fui debitado — continuar',
-			_ => null,
-		} ?? switch (path) {
 			'taker.conflict.title' => 'Confirmação do pagamento pendente',
 			'taker.conflict.headline' => 'A aguardar a confirmação do maker',
 			'taker.conflict.body' => ({required Object code}) => 'Reportou que o pagamento ${code} foi debitado, mas o maker reportou que não foi bem-sucedido. Estes relatos são contraditórios.',

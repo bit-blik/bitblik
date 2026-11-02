@@ -136,8 +136,56 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   /// bank is fixed for the offer's lifetime — the maker withdraws at its ATM.
   bool get _needsBank => _instrument?.hasBanks ?? false;
 
-  /// The bank the maker selected, resolved against the current instrument.
+  /// The maker's first-choice bank, resolved against the current instrument.
+  /// Older apps see a multi-bank offer under this bank alone.
   BankSpec? get _selectedBank => _instrument?.bankById(_selectedBankId);
+
+  /// First-choice bank id (the first of [_offerBankIds]).
+  String? get _selectedBankId =>
+      _offerBankIds.isEmpty ? null : _offerBankIds.first;
+
+  /// Whether the selected coordinator takes several banks per offer
+  /// (`multi_bank_v1`). Without it the picker stays single-choice: an older
+  /// coordinator would silently keep only the first bank.
+  bool get _canPickSeveralBanks =>
+      _selectedCoordinatorInfo?.supportsMultiBankOffers == true;
+
+  /// The banks this offer will accept: every ticked bank, or just the first
+  /// when the coordinator can't take more than one.
+  List<String> get _offerBankIds => _canPickSeveralBanks
+      ? _selectedBankIds
+      : _selectedBankIds.take(1).toList();
+
+  /// [_offerBankIds] resolved to their specs (unknown ids dropped).
+  List<BankSpec> get _offerBanks => banksIn(_instrument, _offerBankIds);
+
+  /// The first of the offer's banks that [fails] an amount check, wrapped so
+  /// "the instrument default failed" (no banks: tested once with a null
+  /// bank) differs from "every bank passed" (null).
+  ({BankSpec? bank})? _firstOfferBankFailing(bool Function(BankSpec?) fails) {
+    final banks = _offerBanks;
+    for (final bank in banks.isEmpty ? <BankSpec?>[null] : banks) {
+      if (fails(bank)) return (bank: bank);
+    }
+    return null;
+  }
+
+  /// Pick the default banks: a remembered multi-bank selection if it is still
+  /// valid, else the single default from [_resolveDefaultBank].
+  List<String> _resolveDefaultBanks(
+    String? remembered,
+    List<String> rememberedList,
+  ) {
+    final inst =
+        _method.instrumentFor(OfferCategory.atm) ?? _method.instrumentFor(null);
+    if (inst == null || !inst.hasBanks) return const [];
+    final valid = [
+      for (final b in banksIn(inst, rememberedList)) b.id,
+    ];
+    if (valid.length > 1) return valid;
+    final single = _resolveDefaultBank(remembered);
+    return single == null ? const [] : [single];
+  }
 
   /// Pick the default bank for a bank-scoped market: the remembered bank if it
   /// is still valid, else the first bank. Null for bank-agnostic markets.
@@ -196,9 +244,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   bool _userPickedCoordinator = false;
   OfferCategory? _selectedCategory = OfferCategory.shop;
   OfferCategory _defaultCategoryPreference = OfferCategory.shop;
-  // Bank chosen by the maker for bank-scoped markets (SK ATM). Null for
-  // bank-agnostic markets. Defaulted to the last-used / first bank.
-  String? _selectedBankId;
+  // Banks ticked by the maker for bank-scoped markets (SK ATM), first choice
+  // first. Empty for bank-agnostic markets. Defaulted to the last-used
+  // selection / first bank. Read through [_offerBankIds].
+  List<String> _selectedBankIds = const [];
   double _premiumPercent = 0; // Maker premium % above market price
   double _defaultPremiumPreference = 0;
   bool _premiumEnabled = false;
@@ -295,10 +344,14 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     try {
       final preferences = await AppPreferencesStore.load();
-      // Explicit default (offer-creation settings) wins over the last-used bank.
+      // Explicit default (offer-creation settings) wins over the last-used
+      // bank, and over a last-used multi-bank selection.
+      final defaultBank = await AppPreferencesStore.loadDefaultBank(_method.id);
+      final rememberedBanks = defaultBank == null
+          ? await AppPreferencesStore.loadLastBanks(_method.id)
+          : const <String>[];
       final rememberedBank =
-          await AppPreferencesStore.loadDefaultBank(_method.id) ??
-          await AppPreferencesStore.loadLastBank(_method.id);
+          defaultBank ?? await AppPreferencesStore.loadLastBank(_method.id);
       if (!mounted) return;
       setState(() {
         _defaultCategoryPreference = preferences.offerCreation.defaultCategory;
@@ -312,7 +365,10 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         _preferredCoordinatorPubkey =
             preferences.offerCreation.preferredCoordinatorPubkey;
         _bitcoinDisplayUnit = preferences.display.bitcoinDisplayUnit;
-        _selectedBankId = _resolveDefaultBank(rememberedBank);
+        _selectedBankIds = _resolveDefaultBanks(
+          rememberedBank,
+          rememberedBanks,
+        );
       });
 
       final rate = await apiService.getBtcRate(_method.currency);
@@ -574,14 +630,18 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     // for bank-scoped markets (SK), else the instrument default.
     final atmInstrument = _instrument;
     final isAtm = _selectedCategory == OfferCategory.atm;
-    if (currentError == null &&
-        parsedFiat != null &&
-        isAtm &&
-        atmInstrument != null &&
-        !atmInstrument.canDispenseAtmAmount(parsedFiat, bank: _selectedBank)) {
+    // A final copy, so the per-bank checks below can close over it.
+    final atmFiat = isAtm ? parsedFiat : null;
+    final notDispensing =
+        currentError == null && atmFiat != null && atmInstrument != null
+        ? _firstOfferBankFailing(
+            (bank) => !atmInstrument.canDispenseAtmAmount(atmFiat, bank: bank),
+          )
+        : null;
+    if (notDispensing != null) {
       currentError = t.exchange.errors.atmNotDispensable(
         notes:
-            '${atmInstrument.denominationsFor(_selectedBank).join(', ')} ${_method.currencySymbol}',
+            '${atmInstrument!.denominationsFor(notDispensing.bank).join(', ')} ${_method.currencySymbol}',
       );
     }
 
@@ -589,16 +649,20 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     // maximum (Prima banka: 200 EUR per code), so the amount has to clear the
     // chosen bank's limit too — otherwise the offer funds and only fails at the
     // ATM.
-    final bankLimit = atmInstrument?.maxAmountFor(_selectedBank);
-    if (currentError == null &&
-        parsedFiat != null &&
-        isAtm &&
-        atmInstrument != null &&
-        bankLimit != null &&
-        !atmInstrument.isWithinAtmLimit(parsedFiat, bank: _selectedBank)) {
+    // Every ticked bank must pay the amount out: any of them may end up
+    // running the offer.
+    final capped =
+        currentError == null && atmFiat != null && atmInstrument != null
+        ? _firstOfferBankFailing(
+            (bank) =>
+                atmInstrument.maxAmountFor(bank) != null &&
+                !atmInstrument.isWithinAtmLimit(atmFiat, bank: bank),
+          )
+        : null;
+    if (capped != null) {
       currentError = t.exchange.errors.atmOverBankLimit(
-        bank: _selectedBank?.label ?? _method.label,
-        limit: bankLimit.toString(),
+        bank: capped.bank?.label ?? _method.label,
+        limit: atmInstrument!.maxAmountFor(capped.bank).toString(),
         currency: _method.currencySymbol,
       );
     }
@@ -684,6 +748,8 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
 
     try {
       final offerBank = _needsBank ? _selectedBankId : null;
+      // Multi-bank offer: every ticked bank, first choice first.
+      final offerBanks = _needsBank ? _offerBankIds : const <String>[];
       final offerCategory = supportsCategory ? _selectedCategory : null;
       final satsEstimate = _satsEquivalent;
       final coordinatorInfo = _selectedCoordinatorInfo;
@@ -711,10 +777,12 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         premiumPercent: _premiumPercent,
         blikCode: _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
         bank: offerBank,
+        banks: offerBanks.length > 1 ? offerBanks : null,
         fundingEstimate: estimate,
       );
       if (offerBank != null) {
         await AppPreferencesStore.saveLastBank(_method.id, offerBank);
+        await AppPreferencesStore.saveLastBanks(_method.id, offerBanks);
       }
       if (!mounted) return;
       if (result.containsKey('_clientFundingEstimate') &&
@@ -741,6 +809,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
         coordinatorPubkey: coordinatorPubkey,
         paymentSystemId: _method.id,
         bankId: offerBank,
+        bankIds: offerBanks.length > 1 ? offerBanks : const [],
         category: offerCategory,
         blikCode: _method.makerProvidesCodeAtOfferCreation ? makerCode : null,
         premiumPercent:
@@ -1986,12 +2055,43 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   }
 
   /// Bank chooser for bank-scoped ATM markets (SK). Selecting a bank re-runs
-  /// amount validation (presets/denominations are per bank) and re-scales the
-  /// countdown copy shown downstream.
+  /// amount validation (presets/denominations/caps are per bank) and
+  /// re-scales the countdown copy shown downstream.
+  ///
+  /// Where the coordinator takes multi-bank offers, the chips tick on and off:
+  /// a maker standing between several banks' ATMs ticks each of them, and the
+  /// first taker from any of them gets the offer. The first ticked bank is the
+  /// first choice; the last one can't be unticked.
   Widget _buildBankPicker(Translations t) {
     final banks = _instrument?.banks ?? const <BankSpec>[];
     if (banks.isEmpty) return const SizedBox.shrink();
-    final selected = _selectedBank;
+    final several = _canPickSeveralBanks;
+    final ticked = _offerBankIds;
+    // The tightest code window among the ticked banks is the one to warn of.
+    final offerBanks = _offerBanks;
+    final shortest = offerBanks.isEmpty
+        ? null
+        : offerBanks.reduce((a, b) => a.validity <= b.validity ? a : b);
+
+    void toggle(BankSpec b) {
+      setState(() {
+        if (!several) {
+          _selectedBankIds = [b.id];
+        } else if (ticked.contains(b.id)) {
+          if (ticked.length > 1) {
+            _selectedBankIds = [
+              for (final id in ticked)
+                if (id != b.id) id,
+            ];
+          }
+        } else {
+          _selectedBankIds = [...ticked, b.id];
+        }
+      });
+      // Presets/denominations/caps changed → revalidate.
+      _validateAndRecalculate();
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: Column(
@@ -2010,28 +2110,44 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                     for (final b in banks)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 3),
-                        child: ChoiceChip(
-                          label: Text(b.label),
-                          selected: b.id == _selectedBankId,
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          labelPadding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                          ),
-                          onSelected: (_) {
-                            setState(() => _selectedBankId = b.id);
-                            // Presets/denominations changed → revalidate.
-                            _validateAndRecalculate();
-                          },
-                        ),
+                        child: several
+                            ? FilterChip(
+                                label: Text(b.label),
+                                selected: ticked.contains(b.id),
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                onSelected: (_) => toggle(b),
+                              )
+                            : ChoiceChip(
+                                label: Text(b.label),
+                                selected: b.id == _selectedBankId,
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                onSelected: (_) => toggle(b),
+                              ),
                       ),
                   ],
                 ),
               ),
             ),
           ),
-          if (selected != null && selected.validity.inMinutes <= 10) ...[
+          if (several) ...[
+            const SizedBox(height: 6),
+            Text(
+              t.maker.amountForm.bank.multiHint,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+          if (shortest != null && shortest.validity.inMinutes <= 10) ...[
             const SizedBox(height: 8),
             Row(
               children: [
@@ -2040,7 +2156,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 Expanded(
                   child: Text(
                     t.maker.amountForm.bank.shortValidityWarning(
-                      minutes: selected.validity.inMinutes,
+                      minutes: shortest.validity.inMinutes,
                     ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.amber.shade800,

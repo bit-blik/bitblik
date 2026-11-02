@@ -103,6 +103,10 @@ nfc:
 # OFFERS AND TRANSACTIONS
 # =============================================================================
 offers:
+  takerBank:
+    title: "In quale app bancaria genererai il codice?"
+    subtitle: "Il maker può prelevare al bancomat di una qualsiasi di queste banche. Scegli la banca nella cui app genererai il codice."
+    validity: "Codice valido ${minutes} min"
   details:
     yourOffer: "La tua offerta:"
     selectedOffer: "Offerta:"
@@ -447,6 +451,7 @@ maker:
       label: "Banca"
       required: "Scegli una banca"
       shortValidityWarning: "Il codice di questa banca è valido solo ${minutes} min — vai al bancomat prima di prenotare."
+      multiHint: "Seleziona ogni banca con un bancomat vicino a te. L'offerta va al primo che la accetta da una qualsiasi di esse."
     twintScan:
       cardTitle: "Scansiona QR e importo ${code}"
       cardBody: "Punta la fotocamera verso la schermata di pagamento. L'app compilerà automaticamente il codice e, quando visibile, l'importo."

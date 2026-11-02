@@ -17,7 +17,7 @@ Diese Escrow-Dienste sind ideal für größere, längerfristige Trades. {app} is
 
 #### Welche Banken werden unterstützt und wie wähle ich eine?
 
-Die Slowakei ist ein einziger Markt (**{app}**), betrieben von einem Koordinator, und umfasst **Tatra banka, Slovenská sporiteľňa und VÚB**. Der **Maker wählt die Bank beim Erstellen des Angebots** — er steht am Automaten dieser Bank, daher funktioniert der Code nur an deren Automaten. Taker sehen die Bank jedes Angebots als Abzeichen und nehmen nur Angebote für eine Bank an, deren App sie haben.
+Die Slowakei ist ein einziger Markt (**{app}**), betrieben von einem Koordinator, und umfasst **Tatra banka, Slovenská sporiteľňa und VÚB**. Der **Maker wählt die Bank beim Erstellen des Angebots** — er steht am Automaten dieser Bank, daher funktioniert der Code nur an deren Automaten. Taker sehen die Bank jedes Angebots als Abzeichen und nehmen nur Angebote für eine Bank an, deren App sie haben. Stehen Automaten mehrerer Banken in der Nähe (etwa im Einkaufszentrum), kann der Maker alle ankreuzen: Das Angebot erhält der erste Taker einer dieser Banken, er wählt beim Annehmen seine Bank, und der Maker hebt dann am Automaten dieser Bank ab.
 
 #### Wie lange ist ein Code gültig? Warum je Bank unterschiedlich?
 

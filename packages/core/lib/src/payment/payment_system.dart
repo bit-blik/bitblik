@@ -665,6 +665,20 @@ InstrumentSpec? instrumentForOffer(Offer offer) =>
 BankSpec? bankForOffer(Offer offer) =>
     instrumentForOffer(offer)?.bankById(offer.bankId);
 
+/// Every bank a taker may take [offer] with ([Offer.acceptedBankIds]), in the
+/// maker's order, resolved against the offer's market. Unknown ids are
+/// dropped; empty for bank-agnostic offers.
+List<BankSpec> banksForOffer(Offer offer) =>
+    banksIn(instrumentForOffer(offer), offer.acceptedBankIds);
+
+/// Resolve [ids] against [instrument]'s banks, keeping their order and
+/// dropping unknown ids. Lets a caller that already knows the market (the
+/// coordinator) avoid [paymentSystemForOffer]'s currency fallback.
+List<BankSpec> banksIn(InstrumentSpec? instrument, Iterable<String> ids) => [
+      for (final id in ids)
+        if (instrument?.bankById(id) case final BankSpec bank) bank,
+    ];
+
 /// The effective validity window for [offer] — the offer's bank override, else
 /// the instrument default. Falls back to [kBlik]'s window when the market has
 /// no instrument for the category (should not happen for real offers).

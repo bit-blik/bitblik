@@ -78,6 +78,7 @@ class ApiServiceNostr {
     double premiumPercent = 0,
     String? blikCode,
     String? bank,
+    List<String>? banks,
     FundingEstimate? fundingEstimate,
   }) async {
     try {
@@ -99,6 +100,7 @@ class ApiServiceNostr {
           'fiat_amount': fiatAmount, 'fiat_currency': fiatCurrency,
           'category': category?.name, 'premium_percent': premiumPercent,
           'blik_code': blikCode, 'bank': bank,
+          if (banks != null && banks.length > 1) 'banks': banks,
         },
         estimate: fundingEstimate?.toJson(),
         send: (operationId) => _nostrService.initiateOfferFiat(
@@ -109,6 +111,7 @@ class ApiServiceNostr {
           premiumPercent: premiumPercent,
           blikCode: blikCode,
           bank: bank,
+          banks: banks,
           operationId: operationId,
         ),
       );
@@ -333,6 +336,7 @@ class ApiServiceNostr {
     String? takerLightningAddress,
     String? takerInvoice,
     String? takerOffer,
+    String? bank,
   }) async {
     // Client-side guard: a maker cannot take their own offer. The public
     // NIP-69 offer event carries no maker pubkey (it falls back to the
@@ -353,6 +357,7 @@ class ApiServiceNostr {
         takerLightningAddress: takerLightningAddress,
         takerInvoice: takerInvoice,
         takerOffer: takerOffer,
+        bank: bank,
       );
     } catch (e) {
       Logger.log.e(() => 'Error calling reserveOffer: $e');

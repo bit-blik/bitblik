@@ -13,10 +13,14 @@ String formatFundedOfferNotification(
       _stringsByCountry['PL']!;
   final fiatText =
       '${offer.fiatAmount.toStringAsFixed(2)} ${offer.fiatCurrency}';
-  final bank = resolvedPaymentSystem
-      .instrumentFor(offer.category)
-      ?.bankById(offer.bankId);
-  final bankTag = bank == null ? '' : ' [${bank.label}]';
+  // Every accepted bank, so a taker reading the channel knows whether the
+  // code from their own bank's app will do ("[Tatra banka, VÚB banka]").
+  final banks = banksIn(
+    resolvedPaymentSystem.instrumentFor(offer.category),
+    offer.acceptedBankIds,
+  );
+  final bankTag =
+      banks.isEmpty ? '' : ' [${banks.map((b) => b.label).join(', ')}]';
   final categoryText = _formatCategory(offer.category, strings);
   final categorySuffix = categoryText == null ? '' : ', $categoryText';
   final premiumSuffix = offer.premiumPercent > 0

@@ -102,6 +102,10 @@ nfc:
 # OFFERS AND TRANSACTIONS
 # =============================================================================
 offers:
+  takerBank:
+    title: "Dans l'application de quelle banque générerez-vous le code ?"
+    subtitle: "Le maker peut retirer au distributeur de n'importe laquelle de ces banques. Choisissez la banque dont l'application générera le code."
+    validity: "Code valable ${minutes} min"
   details:
     yourOffer: "Votre offre :"
     selectedOffer: "Offre :"
@@ -446,6 +450,7 @@ maker:
       label: "Banque"
       required: "Veuillez choisir une banque"
       shortValidityWarning: "Le code de cette banque n'est valable que ${minutes} min — soyez au distributeur avant de réserver."
+      multiHint: "Cochez chaque banque ayant un distributeur près de vous. L'offre revient au premier preneur, quelle que soit sa banque parmi elles."
     twintScan:
       cardTitle: "Scanner le QR ${code} et le montant"
       cardBody: "Pointez la caméra vers l'écran de paiement. L'application préremplira le code et, s'il est visible, le montant."

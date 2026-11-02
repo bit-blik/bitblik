@@ -147,6 +147,7 @@ class _Translations$offers$it extends Translations$offers$en {
 	final TranslationsIt _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$offers$takerBank$it takerBank = _Translations$offers$takerBank$it._(_root);
 	@override late final _Translations$offers$details$it details = _Translations$offers$details$it._(_root);
 	@override late final _Translations$offers$labels$it labels = _Translations$offers$labels$it._(_root);
 	@override late final _Translations$offers$tooltips$it tooltips = _Translations$offers$tooltips$it._(_root);
@@ -709,6 +710,18 @@ class _Translations$nfc$errors$it extends Translations$nfc$errors$en {
 	@override String get disabled => 'NFC disattivato su questo dispositivo';
 	@override String get unsupported => 'NFC non disponibile su questo dispositivo';
 	@override String reading({required Object details}) => 'Scansione NFC non riuscita: ${details}';
+}
+
+// Path: offers.takerBank
+class _Translations$offers$takerBank$it extends Translations$offers$takerBank$en {
+	_Translations$offers$takerBank$it._(TranslationsIt root) : this._root = root, super.internal(root);
+
+	final TranslationsIt _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'In quale app bancaria genererai il codice?';
+	@override String get subtitle => 'Il maker può prelevare al bancomat di una qualsiasi di queste banche. Scegli la banca nella cui app genererai il codice.';
+	@override String validity({required Object minutes}) => 'Codice valido ${minutes} min';
 }
 
 // Path: offers.details
@@ -2313,6 +2326,7 @@ class _Translations$maker$amountForm$bank$it extends Translations$maker$amountFo
 	@override String get label => 'Banca';
 	@override String get required => 'Scegli una banca';
 	@override String shortValidityWarning({required Object minutes}) => 'Il codice di questa banca è valido solo ${minutes} min — vai al bancomat prima di prenotare.';
+	@override String get multiHint => 'Seleziona ogni banca con un bancomat vicino a te. L\'offerta va al primo che la accetta da una qualsiasi di esse.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -3375,6 +3389,9 @@ extension on TranslationsIt {
 			'nfc.errors.disabled' => 'NFC disattivato su questo dispositivo',
 			'nfc.errors.unsupported' => 'NFC non disponibile su questo dispositivo',
 			'nfc.errors.reading' => ({required Object details}) => 'Scansione NFC non riuscita: ${details}',
+			'offers.takerBank.title' => 'In quale app bancaria genererai il codice?',
+			'offers.takerBank.subtitle' => 'Il maker può prelevare al bancomat di una qualsiasi di queste banche. Scegli la banca nella cui app genererai il codice.',
+			'offers.takerBank.validity' => ({required Object minutes}) => 'Codice valido ${minutes} min',
 			'offers.details.yourOffer' => 'La tua offerta:',
 			'offers.details.selectedOffer' => 'Offerta:',
 			'offers.details.activeOffer' => 'Hai un\'offerta attiva:',
@@ -3638,6 +3655,7 @@ extension on TranslationsIt {
 			'maker.amountForm.bank.label' => 'Banca',
 			'maker.amountForm.bank.required' => 'Scegli una banca',
 			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Il codice di questa banca è valido solo ${minutes} min — vai al bancomat prima di prenotare.',
+			'maker.amountForm.bank.multiHint' => 'Seleziona ogni banca con un bancomat vicino a te. L\'offerta va al primo che la accetta da una qualsiasi di esse.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Scansiona QR e importo ${code}',
 			'maker.amountForm.twintScan.cardBody' => 'Punta la fotocamera verso la schermata di pagamento. L\'app compilerà automaticamente il codice e, quando visibile, l\'importo.',
 			'maker.amountForm.twintScan.scanButton' => 'Scansiona con la fotocamera',
@@ -3821,12 +3839,12 @@ extension on TranslationsIt {
 			'taker.conflict.feedback.reported' => 'Conflitto di pagamento segnalato. In attesa della conferma del Maker.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
 			'taker.dispute.headline' => 'Disputa formale aperta',
+			_ => null,
+		} ?? switch (path) {
 			'taker.dispute.body' => 'L\'offerta è ora in fase di revisione da parte del coordinatore. Usa la chat della disputa qui sotto per comunicare con il coordinatore e fornire le prove richieste.',
 			'twint.shop.scanTitle' => 'Scansiona il QR del negozio',
 			'twint.shop.scanInstructions' => 'Scansiona il codice QR di pagamento sul terminale del negozio. L’importo in CHF verrà letto dal codice.',
 			'twint.shop.invalidQr' => 'Questo codice QR non è un pagamento in negozio in CHF supportato. Scansiona il codice QR di pagamento sul terminale.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.shop.amountMismatch' => 'Questo codice QR ha un importo diverso. Richiedi un nuovo codice QR con l’importo originale del pagamento.',
 			'twint.shop.cameraFailed' => 'Fotocamera non disponibile. Consenti l’accesso alla fotocamera nelle impostazioni del dispositivo o del browser, poi riprova.',
 			'twint.shop.importImage' => 'Importa immagine QR',

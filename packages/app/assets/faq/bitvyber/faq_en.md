@@ -17,7 +17,7 @@ Those P2P escrow services are excellent for larger, longer-term trades. {app} is
 
 #### Which banks are supported, and how do I choose one?
 
-Slovakia is a single market (**{app}**) served by one coordinator, covering **Tatra banka, Slovenská sporiteľňa and VÚB**. The **maker chooses the bank when creating an offer** — they are the one who will stand at that bank's ATM, so the code only works at that bank's machines. Takers see each offer's bank as a badge and only take offers for a bank whose app they have.
+Slovakia is a single market (**{app}**) served by one coordinator, covering **Tatra banka, Slovenská sporiteľňa and VÚB**. The **maker chooses the bank when creating an offer** — they are the one who will stand at that bank's ATM, so the code only works at that bank's machines. Takers see each offer's bank as a badge and only take offers for a bank whose app they have. If several banks' ATMs are nearby (say, in a shopping centre), the maker can tick all of them: the first taker from any of those banks gets the offer, picks their bank when taking it, and the maker then withdraws at that bank's ATM.
 
 #### How long is a code valid? Why does it differ per bank?
 

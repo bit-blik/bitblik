@@ -125,11 +125,31 @@ class Offer {
   final String? paymentSystemId;
 
   /// Bank this offer runs on, for markets whose ATM instrument varies by bank
-  /// (Slovakia: `tatrabanka`, `slsp`, `vub`). Chosen by the maker at offer
-  /// creation — they withdraw at that bank's ATM — and fixed for the offer's
-  /// lifetime. Null for bank-agnostic markets (BLIK, MB WAY, TWINT). Resolve
-  /// the [BankSpec] via [bankForOffer].
+  /// (Slovakia: `tatrabanka`, `slsp`, `vub`). The maker withdraws at this
+  /// bank's ATM, so it drives the code length, validity and ATM map. Null for
+  /// bank-agnostic markets (BLIK, MB WAY, TWINT). Resolve the [BankSpec] via
+  /// [bankForOffer].
+  ///
+  /// For a single-bank offer this is the maker's choice for the offer's whole
+  /// lifetime. For a multi-bank offer ([bankIds] has several entries) it is
+  /// the first accepted bank while the offer is open, and the bank the taker
+  /// picked once reserved; it falls back to the first accepted bank whenever
+  /// the reservation is released.
   final String? bankId;
+
+  /// Every bank the maker accepts, in the maker's order, for a multi-bank
+  /// offer: a maker standing between several banks' ATMs lets the first taker
+  /// from any of them take the offer. Empty for single-bank and bank-agnostic
+  /// offers — read [acceptedBankIds] rather than this field.
+  final List<String> bankIds;
+
+  /// The banks a taker may generate the code at: [bankIds] for a multi-bank
+  /// offer, else just [bankId] (empty for bank-agnostic offers).
+  List<String> get acceptedBankIds =>
+      bankIds.isNotEmpty ? bankIds : [if (bankId != null) bankId!];
+
+  /// Whether takers from more than one bank can take this offer.
+  bool get isMultiBank => acceptedBankIds.length > 1;
 
   /// Client that created the offer, as `<app|cli>/<version>` (e.g. `app/0.8.0`).
   /// Recorded coordinator-side from the maker's request envelope. Intentionally
@@ -224,6 +244,7 @@ class Offer {
     this.paymentWalletId,
     this.paymentSystemId,
     this.bankId,
+    this.bankIds = const [],
     this.clientVersion,
   })  : assert(takerInvoice == null || takerOffer == null),
         assert(makerRefundInvoice == null || makerRefundOffer == null),
@@ -378,7 +399,25 @@ class Offer {
       paymentWalletId: json['payment_wallet_id'] as String?,
       paymentSystemId: json['payment_system'] as String?,
       bankId: json['bank'] as String?,
+      bankIds: _parseBankIds(json['banks']),
     );
+  }
+
+  /// Accepted-bank list from json (`banks`): a list of ids, tolerant of a
+  /// comma-joined string. Blank/duplicate entries are dropped; a list of one
+  /// collapses to empty, since a single bank is carried by `bank` alone.
+  static List<String> _parseBankIds(dynamic raw) {
+    final Iterable<dynamic> items = raw is List
+        ? raw
+        : raw is String
+            ? raw.split(',')
+            : const [];
+    final ids = <String>[];
+    for (final item in items) {
+      final id = item?.toString().trim() ?? '';
+      if (id.isNotEmpty && !ids.contains(id)) ids.add(id);
+    }
+    return ids.length > 1 ? List.unmodifiable(ids) : const [];
   }
 
   // Method to convert Offer instance back to JSON.
@@ -420,6 +459,7 @@ class Offer {
       'payment_wallet_id': paymentWalletId,
       'payment_system': paymentSystemId,
       'bank': bankId,
+      if (isMultiBank) 'banks': acceptedBankIds,
     };
   }
 
@@ -537,6 +577,7 @@ class Offer {
     String? paymentWalletId,
     String? paymentSystemId,
     String? bankId,
+    List<String>? bankIds,
     String? clientVersion,
   }) {
     return Offer(
@@ -590,6 +631,7 @@ class Offer {
       paymentWalletId: paymentWalletId ?? this.paymentWalletId,
       paymentSystemId: paymentSystemId ?? this.paymentSystemId,
       bankId: bankId ?? this.bankId,
+      bankIds: bankIds ?? this.bankIds,
       clientVersion: clientVersion ?? this.clientVersion,
     );
   }
@@ -653,8 +695,16 @@ class Offer {
       // Derive the market from the wire platform tag (`y`), e.g. `Bitvyber` →
       // `sk`. Unambiguous across the EUR markets.
       paymentSystemId: paymentSystemForPlatformTag(tagMap['y'])?.id,
-      // Bank chosen by the maker, present only for bank-scoped markets (SK).
+      // Bank the offer runs on, present only for bank-scoped markets (SK).
       bankId: (tagMap['bank'] ?? '').isEmpty ? null : tagMap['bank'],
+      // Multi-bank offers also list every accepted bank in one multi-value
+      // tag, `['banks', 'tatrabanka', 'vub']`. Older clients ignore it and
+      // see the offer under `bank` alone.
+      bankIds: _parseBankIds(event.tags
+          .firstWhere((t) => t.isNotEmpty && t[0] == 'banks',
+              orElse: () => const [])
+          .skip(1)
+          .toList()),
     );
   }
 }
