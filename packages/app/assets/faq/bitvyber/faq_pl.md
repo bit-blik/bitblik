@@ -17,7 +17,7 @@ Te usługi escrow świetnie nadają się do większych, długoterminowych transa
 
 #### Które banki są obsługiwane i jak wybrać bank?
 
-Słowacja to jeden rynek (**{app}**) obsługiwany przez jednego koordynatora, obejmujący **Tatra banka, Slovenská sporiteľňa i VÚB**. **Bank wybiera maker przy tworzeniu oferty** — to on stanie przy bankomacie danego banku, więc kod działa tylko w jego bankomatach. Takerzy widzą bank oferty jako plakietkę i biorą tylko oferty banku, którego aplikację mają.
+Słowacja to jeden rynek (**{app}**) obsługiwany przez jednego koordynatora, obejmujący **Tatra banka, Slovenská sporiteľňa i VÚB**. **Bank wybiera maker przy tworzeniu oferty** — to on stanie przy bankomacie danego banku, więc kod działa tylko w jego bankomatach. Takerzy widzą bank oferty jako plakietkę i biorą tylko oferty banku, którego aplikację mają. Jeśli w pobliżu są bankomaty kilku banków (np. w centrum handlowym), maker może zaznaczyć je wszystkie: ofertę dostaje pierwszy taker z dowolnego z nich, przy przyjęciu wybiera swój bank, a maker wypłaca w bankomacie tego banku.
 
 #### Jak długo ważny jest kod? Dlaczego różni się dla banku?
 

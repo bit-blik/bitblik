@@ -17,7 +17,7 @@ Quei servizi di escrow sono ottimi per scambi più grandi e a lungo termine. {ap
 
 #### Quali banche sono supportate e come ne scelgo una?
 
-La Slovacchia è un unico mercato (**{app}**) gestito da un coordinatore, che copre **Tatra banka, Slovenská sporiteľňa e VÚB**. Il **maker sceglie la banca quando crea l'offerta** — è lui che si troverà all'ATM di quella banca, quindi il codice funziona solo agli sportelli di essa. I taker vedono la banca di ogni offerta come un badge e prendono solo offerte di una banca di cui hanno l'app.
+La Slovacchia è un unico mercato (**{app}**) gestito da un coordinatore, che copre **Tatra banka, Slovenská sporiteľňa e VÚB**. Il **maker sceglie la banca quando crea l'offerta** — è lui che si troverà all'ATM di quella banca, quindi il codice funziona solo agli sportelli di essa. I taker vedono la banca di ogni offerta come un badge e prendono solo offerte di una banca di cui hanno l'app. Se ha vicino gli ATM di più banche (ad esempio in un centro commerciale), il maker può selezionarle tutte: l'offerta va al primo taker di una qualsiasi di esse, che sceglie la sua banca quando la prende, e il maker preleva poi all'ATM di quella banca.
 
 #### Quanto è valido un codice? Perché varia per banca?
 

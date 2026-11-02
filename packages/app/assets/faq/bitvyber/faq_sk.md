@@ -17,7 +17,7 @@ Tie escrow služby sú výborné na väčšie a dlhodobejšie obchody. {app} sl�
 
 #### Ktoré banky sú podporované a ako si vyberiem banku?
 
-Slovensko je jeden trh (**{app}**) obsluhovaný jedným koordinátorom, pokrývajúci **Tatra banku, Slovenskú sporiteľňu a VÚB**. **Banku vyberá maker pri vytváraní ponuky** — on stojí pri bankomate danej banky, takže kód funguje len v bankomatoch tej banky. Taker vidí banku ponuky ako odznak a berie len ponuky banky, ktorej appku má.
+Slovensko je jeden trh (**{app}**) obsluhovaný jedným koordinátorom, pokrývajúci **Tatra banku, Slovenskú sporiteľňu a VÚB**. **Banku vyberá maker pri vytváraní ponuky** — on stojí pri bankomate danej banky, takže kód funguje len v bankomatoch tej banky. Taker vidí banku ponuky ako odznak a berie len ponuky banky, ktorej appku má. Ak má maker poruke bankomaty viacerých bánk (napríklad v nákupnom centre), môže zaškrtnúť všetky. Ponuku dostane prvý taker z ktorejkoľvek z nich, pri prijatí zvolí svoju banku a maker potom vyberá z bankomatu tejto banky.
 
 #### Ako dlho platí kód? Prečo sa líši podľa banky?
 
