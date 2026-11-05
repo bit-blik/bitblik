@@ -1,6 +1,7 @@
 # Build context: repo root (required for Dart workspace resolution)
-# Stage 1: Build the Flutter web application
-FROM ghcr.io/gmeligio/flutter-android:3.47.0 AS build
+# Stage 1: Build the architecture-independent Flutter web application once on
+# the CI host. The runtime stage is then emitted for each target architecture.
+FROM --platform=$BUILDPLATFORM ghcr.io/gmeligio/flutter-android:3.47.0 AS build
 
 ARG APP_FLAVOR=bitblik
 ARG BUILD_MODE=release
@@ -64,9 +65,7 @@ COPY --from=build /workspace/packages/app/web/config.js /usr/share/nginx/html/co
 
 COPY packages/app/nginx.conf /etc/nginx/conf.d/default.conf
 COPY packages/app/robots.txt /usr/share/nginx/html/robots.txt
-COPY packages/app/docker-entrypoint.sh /docker-entrypoint.sh
-
-RUN chmod +x /docker-entrypoint.sh
+COPY --chmod=755 packages/app/docker-entrypoint.sh /docker-entrypoint.sh
 
 EXPOSE 80
 ENTRYPOINT ["/docker-entrypoint.sh"]
