@@ -2,6 +2,16 @@
 
 Peer-to-peer BLIK/Lightning exchange over Nostr. Makers fund a Lightning hold invoice; takers pay in BLIK; the coordinator settles atomically.
 
+## Umbrel
+
+This repository is an Umbrel Community App Store. In umbrelOS, open **App
+Store → Community App Stores**, add
+`https://github.com/bit-blik/bitblik`, then install **BitBlik**.
+
+The web client stores its Neko private key in browser storage. Export a Neko
+backup before trading. Umbrel backups do not include browser storage, and a
+different hostname or browser profile has separate storage.
+
 ## Packages
 
 | Package | Path | Description |
