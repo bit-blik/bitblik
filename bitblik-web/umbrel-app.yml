@@ -1,10 +1,10 @@
-manifestVersion: 1
+manifestVersion: 2.0
 id: bitblik-web
 storage:
   dataRoot: data
 category: bitcoin
 name: BitBlik
-version: "c426229"
+version: "0.11.4"
 tagline: Peer-to-peer BLIK and Bitcoin exchange
 icon: https://raw.githubusercontent.com/bit-blik/bitblik/main/packages/app/assets/logo.png
 description: >-
@@ -15,7 +15,8 @@ description: >-
   BitBlik exchanges Bitcoin over Lightning for BLIK codes using Nostr and
   coordinator-held Lightning hold invoices. This package runs the BitBlik web
   client; it does not run a Lightning node or coordinator.
-releaseNotes: ""
+releaseNotes: >-
+  Require HTTPS on umbrelOS so WebCrypto-backed identity storage can initialize.
 
 developer: BitBlik
 website: https://bitblik.app
@@ -26,6 +27,7 @@ support: https://github.com/bit-blik/bitblik/issues
 port: 28765
 gallery: []
 path: ""
+requiresHttps: true
 
 defaultUsername: ""
 defaultPassword: ""
