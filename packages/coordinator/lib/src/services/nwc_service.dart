@@ -556,6 +556,7 @@ class NwcService implements PaymentService, Bolt12PaymentService {
     required int amountSat,
     int? feeLimitSat,
     required String paymentAttemptId,
+    Future<void> Function(String paymentId)? onPaymentId,
   }) async {
     final connection = _nwcConnection;
     if (amountSat <= 0) {

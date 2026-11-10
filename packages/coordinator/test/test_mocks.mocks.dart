@@ -1270,6 +1270,7 @@ class MockCombinedPaymentService extends _i1.Mock
     required int? amountSat,
     int? feeLimitSat,
     required String? paymentAttemptId,
+    _i11.Future<void> Function(String)? onPaymentId,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1280,6 +1281,7 @@ class MockCombinedPaymentService extends _i1.Mock
             #amountSat: amountSat,
             #feeLimitSat: feeLimitSat,
             #paymentAttemptId: paymentAttemptId,
+            #onPaymentId: onPaymentId,
           },
         ),
         returnValue:
@@ -1293,6 +1295,7 @@ class MockCombinedPaymentService extends _i1.Mock
               #amountSat: amountSat,
               #feeLimitSat: feeLimitSat,
               #paymentAttemptId: paymentAttemptId,
+              #onPaymentId: onPaymentId,
             },
           ),
         )),
@@ -1307,6 +1310,7 @@ class MockCombinedPaymentService extends _i1.Mock
               #amountSat: amountSat,
               #feeLimitSat: feeLimitSat,
               #paymentAttemptId: paymentAttemptId,
+              #onPaymentId: onPaymentId,
             },
           ),
         )),

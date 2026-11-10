@@ -1712,6 +1712,17 @@ class CoordinatorService {
           amountSat: amountSats,
           feeLimitSat: feeLimitSat,
           paymentAttemptId: attempt.id,
+          // Stored before funds move, so reconciliation after a crash has
+          // the backend's ID to look up. The outcome is unknown from here
+          // until the backend answers or reconciliation settles it.
+          onPaymentId: (paymentId) async {
+            attempt = await _dbService.updateOutgoingPaymentAttempt(
+              attempt.id,
+              state: OutgoingPaymentAttemptState.unknown,
+              expectedRevision: attempt.revision,
+              backendPaymentId: paymentId,
+            );
+          },
         );
         submitted = _fromOfferResult(result);
       } else {

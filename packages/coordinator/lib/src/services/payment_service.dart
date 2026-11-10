@@ -75,11 +75,16 @@ abstract interface class Bolt12PaymentService {
 
   Future<Bolt12OfferInfo> decodeOffer({required String offer});
 
+  /// [onPaymentId] is for backends that learn the payment ID before they
+  /// submit (LNDK: the hash of the invoice it fetched). They await it before
+  /// any funds can move, so a crash mid-payment still leaves an ID to
+  /// reconcile; if it throws, they must not pay. Others may ignore it.
   Future<PayOfferResult> payOffer({
     required String offer,
     required int amountSat,
     int? feeLimitSat,
     required String paymentAttemptId,
+    Future<void> Function(String paymentId)? onPaymentId,
   });
 
   Future<PayOfferResult?> reconcileOutgoingOffer({
