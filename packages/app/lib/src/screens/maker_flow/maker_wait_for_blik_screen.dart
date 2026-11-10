@@ -347,13 +347,13 @@ class _MakerWaitForBlikScreenState
                         offer.makerFees,
                       ),
                     ),
-                    if (offer.premiumPercent > 0) ...[
+                    if (offer.premiumPercent != 0) ...[
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            t.offers.labels.premium,
+                            premiumLabel(t, offer.premiumPercent),
                             style: TextStyle(
                               fontSize: 16,
                               color: Theme.of(context).colorScheme.onSurface,

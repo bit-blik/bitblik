@@ -127,10 +127,13 @@ offers:
   labels:
     premium: "Prémia"
     premiumBadge: "+${percent}% prémia"
+    discount: "Zľava"
+    discountBadge: "-${percent}% zľava"
 
   tooltips:
     takerFeeInfo: "Koordinátor si účtuje ${feePercent}% poplatok kupujúceho. Ten zahŕňa smerovacie poplatky Lightning a odpočíta sa zo sumy, ktorú dostaneš."
     premiumInfoTaker: "Prémia znamená, že táto ponuka je ocenená nad trhovou cenou. Za rovnakú sumu vo fiate predávajúci uzamkne menej sats v hold faktúre, takže platíš nad trh a dostaneš menej sats než pri trhovom kurze. Maximálnu prémiu určuje koordinátor."
+    discountInfoTaker: "Zľava znamená, že táto ponuka je ocenená pod trhovou cenou. Za rovnakú sumu vo fiate predávajúci uzamkne viac sats v hold faktúre, takže dostaneš viac sats než pri trhovom kurze. Maximálnu zľavu určuje koordinátor."
     ratesFetchedAt: "Načítané o"
     ratesSources: "Zdroje priem. kurzu"
 
@@ -288,6 +291,8 @@ coordinator:
     maxPremium: "Max. prémia"
     maxPremiumInfoTitle: "Prémia"
     maxPremiumInfoBody: "Prémia je voliteľná prirážka nad trhový kurz, ktorú môže predávajúci nastaviť na ponuke. S prémiou predávajúci uzamkne menej sats za rovnakú sumu vo fiate, takže kupujúci platí nad trh a predávajúci si ponechá rozdiel. Táto hodnota je najvyššia prémia, ktorú tento koordinátor na svojich ponukách povoľuje."
+    premiumRange: "Rozsah prémie"
+    premiumRangeInfoBody: "V tomto rozsahu môže predávajúci nastaviť prémiu (cena nad trhom) alebo zľavu (cena pod trhom). So zľavou predávajúci uzamkne viac sats za rovnakú sumu vo fiate, takže kupujúci dostane viac sats než pri trhovom kurze. S prémiou uzamkne menej sats a rozdiel si ponechá."
     reservationTime: "Čas rezervácie"
     currencies: "Meny"
     paymentSystem: "Platobný systém"
@@ -424,6 +429,7 @@ maker:
       customAmount: Vlastná
       tapToSelect: Ťukni na výber
       premium: Prémia
+      discount: "Zľava"
     actions:
       generateInvoice: Vygenerovať faktúru
     bank:
@@ -435,6 +441,7 @@ maker:
       feeInfo: "Koordinátor si účtuje ${feePercent}% poplatok predávajúceho. Tento poplatok sa odpočíta z tvojej Lightning platby."
       payInfo: "Tento výpočet vychádza z výmenných kurzov načítaných na strane klienta. Koordinátor vypočíta presnú sumu a suma na faktúre bude konečná a presná suma na zaplatenie."
       premiumInfo: "Voliteľná prémia ti umožňuje predať sats nad trhovú cenu. Prémia zníži počet sats uzamknutých v tvojej hold faktúre za rovnakú sumu vo fiate, takže kupujúci platí nad trh a ty si ponecháš rozdiel. Predvolene je vypnutá (0%). Maximálnu prémiu určuje vybraný koordinátor."
+      discountInfo: "Voliteľná zľava ti umožňuje predať sats pod trhovou cenou, aby bola tvoja ponuka pre kupujúcich atraktívnejšia. Zľava zvýši počet sats uzamknutých v tvojej hold faktúre za rovnakú sumu vo fiate, takže kupujúci dostane viac sats než pri trhovom kurze. Predvolene je vypnutá (0%). Maximálnu zľavu určuje vybraný koordinátor."
 
     category:
       label: "Kategória ponuky"
@@ -1057,6 +1064,7 @@ settings:
     enablePremium: Zapnúť prémiové ceny
     enablePremiumDescription: Zobraziť posuvník prémie pri vytváraní ponúk predávajúceho.
     defaultPremium: Predvolená prémia
+    defaultDiscount: "Predvolená zľava"
     defaultPremiumDisabled: Zapni prémiové ceny, aby si nastavil predvolenú prémiu.
     premiumPerCoordinatorNote: "Každý koordinátor si nastavuje vlastnú maximálnu prémiu, takže tvoja predvolená hodnota je obmedzená koordinátorom použitým pre ponuku."
     categoryOptions:
@@ -1202,6 +1210,7 @@ offerNotifications:
     title: Dostupná nová ponuka
     body: "${amount} ${currency} · ${sats}"
     premiumSuffix: "+${percent}% prémia"
+    discountSuffix: "-${percent}% zľava"
   categories:
     shop: Obchod
     atm: Bankomat

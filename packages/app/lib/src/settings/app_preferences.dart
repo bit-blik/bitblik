@@ -318,7 +318,8 @@ class AppPreferencesStore {
 
   static double _normalizePremium(double value) {
     if (value.isNaN || value.isInfinite) return 0;
-    if (value < 0) return 0;
+    // Negative = discount. Each coordinator clamps it to its own range.
+    if (value <= -100) return 0;
     return (value * 2).round() / 2;
   }
 

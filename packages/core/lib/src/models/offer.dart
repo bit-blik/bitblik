@@ -109,7 +109,9 @@ class Offer {
 
   /// Maker premium (%) above market price. `0` means no premium. A premium
   /// reduces the sats locked in the hold invoice for the same fiat amount, so
-  /// the taker effectively pays above market.
+  /// the taker effectively pays above market. A negative value is a discount:
+  /// the maker locks more sats for the same fiat amount and the taker
+  /// receives more sats than at the market rate.
   final double premiumPercent;
 
   /// Wallet ID used by the maker to pay the hold invoice.
@@ -443,6 +445,8 @@ class Offer {
   OfferStatus get statusEnum => status;
 
   bool get hasPremium => premiumPercent > 0;
+
+  bool get hasDiscount => premiumPercent < 0;
 
   bool get isConflict => status == OfferStatus.conflict;
 
