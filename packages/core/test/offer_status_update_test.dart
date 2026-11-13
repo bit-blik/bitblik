@@ -26,6 +26,20 @@ void main() {
     expect(update.toJson().containsKey('dispute_at'), isFalse);
   });
 
+  // The maker of a multi-bank offer learns from this which bank's ATM to use.
+  test('a multi-bank offer\'s running bank round-trips', () {
+    final json = payload()..['bank'] = 'vub';
+    final update = OfferStatusUpdate.fromJson(json, 'coordinator');
+    expect(update.bankId, 'vub');
+    expect(update.toJson(), json);
+  });
+
+  test('status messages without a bank leave it null', () {
+    final update = OfferStatusUpdate.fromJson(payload(), 'coordinator');
+    expect(update.bankId, isNull);
+    expect(update.toJson().containsKey('bank'), isFalse);
+  });
+
   test('private offer details preserve dispute clock for both roles', () {
     final offer = Offer(
       id: 'dispute',

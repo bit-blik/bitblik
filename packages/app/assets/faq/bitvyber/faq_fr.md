@@ -17,7 +17,7 @@ Ces services d'escrow sont parfaits pour des trades plus importants et à plus l
 
 #### Quelles banques sont prises en charge et comment en choisir une ?
 
-La Slovaquie est un marché unique (**{app}**) exploité par un coordinateur, couvrant **Tatra banka, Slovenská sporiteľňa et VÚB**. Le **maker choisit la banque à la création de l'offre** — c'est lui qui se tiendra au distributeur de cette banque, donc le code ne fonctionne qu'aux distributeurs de celle-ci. Les takers voient la banque de chaque offre sous forme de badge et ne prennent que les offres d'une banque dont ils ont l'appli.
+La Slovaquie est un marché unique (**{app}**) exploité par un coordinateur, couvrant **Tatra banka, Slovenská sporiteľňa et VÚB**. Le **maker choisit la banque à la création de l'offre** — c'est lui qui se tiendra au distributeur de cette banque, donc le code ne fonctionne qu'aux distributeurs de celle-ci. Les takers voient la banque de chaque offre sous forme de badge et ne prennent que les offres d'une banque dont ils ont l'appli. Si des distributeurs de plusieurs banques sont proches (par exemple dans un centre commercial), le maker peut toutes les cocher : l'offre revient au premier taker de l'une d'elles, qui choisit sa banque en la prenant, et le maker retire alors au distributeur de cette banque.
 
 #### Combien de temps un code est-il valable ? Pourquoi cela varie-t-il selon la banque ?
 

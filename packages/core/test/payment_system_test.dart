@@ -397,6 +397,36 @@ void main() {
       expect(bankForOffer(decoded)!.id, 'slsp');
     });
 
+    // A maker standing between several banks' ATMs accepts any of them; the
+    // offer keeps the list, and `bankId` is the bank it currently runs on
+    // (the first accepted one until a taker picks theirs).
+    test('banksForOffer lists every accepted bank in the maker\'s order', () {
+      final multi = Offer.fromJson({
+        ...offerWith(paymentSystemId: 'sk', bankId: 'tatrabanka').toJson(),
+        'banks': ['tatrabanka', 'vub'],
+      });
+      expect(banksForOffer(multi).map((b) => b.id), ['tatrabanka', 'vub']);
+      expect(multi.isMultiBank, isTrue);
+    });
+
+    test('banksForOffer falls back to the single bank of an older offer', () {
+      final single = offerWith(paymentSystemId: 'sk', bankId: 'slsp');
+      expect(banksForOffer(single).map((b) => b.id), ['slsp']);
+      expect(single.isMultiBank, isFalse);
+    });
+
+    test('banksForOffer drops ids the market does not know', () {
+      final odd = offerWith(paymentSystemId: 'sk', bankId: 'vub')
+          .copyWith(bankIds: ['vub', 'no_such_bank']);
+      expect(banksForOffer(odd).map((b) => b.id), ['vub']);
+    });
+
+    test('banksForOffer is empty on a bank-agnostic market', () {
+      expect(
+          banksForOffer(offerWith(paymentSystemId: 'blik', currency: 'PLN')),
+          isEmpty);
+    });
+
     test('offer fromJson reads bank + payment_system', () {
       final o = Offer.fromJson({
         'id': 'x',

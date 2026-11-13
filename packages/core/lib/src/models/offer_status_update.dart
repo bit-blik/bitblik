@@ -12,6 +12,11 @@ class OfferStatusUpdate {
   final DateTime? reservedAt;
   final DateTime? blikReceivedAt;
   final DateTime? disputeAt;
+
+  /// The bank a multi-bank SK offer runs on as of this update: the taker's
+  /// pick once reserved, the maker's first choice again after a release. Null
+  /// when the offer's bank cannot change (single-bank or bank-agnostic).
+  final String? bankId;
   final DateTime timestamp;
 
   OfferStatusUpdate({
@@ -22,6 +27,7 @@ class OfferStatusUpdate {
     this.reservedAt,
     this.blikReceivedAt,
     this.disputeAt,
+    this.bankId,
     required this.coordinatorPubkey,
     required this.timestamp,
   });
@@ -52,6 +58,9 @@ class OfferStatusUpdate {
       reservedAt: parseEpochSeconds(json['reserved_at']),
       blikReceivedAt: parseEpochSeconds(json['blik_received_at']),
       disputeAt: parseEpochSeconds(json['dispute_at']),
+      bankId: (json['bank'] as String?)?.trim().isEmpty ?? true
+          ? null
+          : (json['bank'] as String).trim(),
       coordinatorPubkey: coordinatorPubkey,
       timestamp: DateTime.fromMillisecondsSinceEpoch(
         (json['timestamp'] as int) * 1000,
@@ -73,6 +82,7 @@ class OfferStatusUpdate {
         'blik_received_at': blikReceivedAt!.millisecondsSinceEpoch ~/ 1000,
       if (disputeAt != null)
         'dispute_at': disputeAt!.millisecondsSinceEpoch ~/ 1000,
+      if (bankId != null) 'bank': bankId,
       'timestamp': timestamp.millisecondsSinceEpoch ~/ 1000,
     };
   }

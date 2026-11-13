@@ -86,6 +86,10 @@ lightningAddress:
 # PONUKY A TRANSAKCIE
 # =============================================================================
 offers:
+  takerBank:
+    title: "V appke ktorej banky vygeneruješ kód?"
+    subtitle: "Maker môže vyberať z bankomatu ktorejkoľvek z týchto bánk. Vyber banku, v ktorej appke vygeneruješ kód."
+    validity: "Kód platí ${minutes} min"
   details:
     yourOffer: "Tvoja ponuka:"
     selectedOffer: "Ponuka:"
@@ -430,6 +434,7 @@ maker:
       label: "Banka"
       required: "Vyber si banku"
       shortValidityWarning: "Kód tejto banky platí len ${minutes} min — buď pri bankomate skôr, než rezervuješ."
+      multiHint: "Zaškrtni každú banku, ktorej bankomat máš poruke. Ponuku dostane prvý, kto ju zoberie z ktorejkoľvek z nich."
 
     tooltips:
       feeInfo: "Koordinátor si účtuje ${feePercent}% poplatok predávajúceho. Tento poplatok sa odpočíta z tvojej Lightning platby."

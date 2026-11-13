@@ -146,6 +146,7 @@ class _Translations$offers$de extends Translations$offers$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$offers$takerBank$de takerBank = _Translations$offers$takerBank$de._(_root);
 	@override late final _Translations$offers$details$de details = _Translations$offers$details$de._(_root);
 	@override late final _Translations$offers$labels$de labels = _Translations$offers$labels$de._(_root);
 	@override late final _Translations$offers$tooltips$de tooltips = _Translations$offers$tooltips$de._(_root);
@@ -708,6 +709,18 @@ class _Translations$nfc$errors$de extends Translations$nfc$errors$en {
 	@override String get disabled => 'NFC ist auf diesem Gerät deaktiviert';
 	@override String get unsupported => 'NFC ist auf diesem Gerät nicht verfügbar';
 	@override String reading({required Object details}) => 'NFC-Scan fehlgeschlagen: ${details}';
+}
+
+// Path: offers.takerBank
+class _Translations$offers$takerBank$de extends Translations$offers$takerBank$en {
+	_Translations$offers$takerBank$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'In der App welcher Bank erzeugst du den Code?';
+	@override String get subtitle => 'Der Maker kann am Geldautomaten jeder dieser Banken abheben. Wähle die Bank, in deren App du den Code erzeugst.';
+	@override String validity({required Object minutes}) => 'Code gültig für ${minutes} Min';
 }
 
 // Path: offers.details
@@ -2313,6 +2326,7 @@ class _Translations$maker$amountForm$bank$de extends Translations$maker$amountFo
 	@override String get label => 'Bank';
 	@override String get required => 'Bitte wähle eine Bank';
 	@override String shortValidityWarning({required Object minutes}) => 'Der Code dieser Bank ist nur ${minutes} Min gültig — sei vor dem Reservieren am Geldautomaten.';
+	@override String get multiHint => 'Wähle jede Bank, deren Geldautomat in deiner Nähe ist. Das Angebot geht an den Ersten, der es über eine dieser Banken annimmt.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -3396,6 +3410,9 @@ extension on TranslationsDe {
 			'nfc.errors.disabled' => 'NFC ist auf diesem Gerät deaktiviert',
 			'nfc.errors.unsupported' => 'NFC ist auf diesem Gerät nicht verfügbar',
 			'nfc.errors.reading' => ({required Object details}) => 'NFC-Scan fehlgeschlagen: ${details}',
+			'offers.takerBank.title' => 'In der App welcher Bank erzeugst du den Code?',
+			'offers.takerBank.subtitle' => 'Der Maker kann am Geldautomaten jeder dieser Banken abheben. Wähle die Bank, in deren App du den Code erzeugst.',
+			'offers.takerBank.validity' => ({required Object minutes}) => 'Code gültig für ${minutes} Min',
 			'offers.details.yourOffer' => 'Dein Angebot:',
 			'offers.details.selectedOffer' => 'Angebot:',
 			'offers.details.activeOffer' => 'Du hast ein aktives Angebot:',
@@ -3659,6 +3676,7 @@ extension on TranslationsDe {
 			'maker.amountForm.bank.label' => 'Bank',
 			'maker.amountForm.bank.required' => 'Bitte wähle eine Bank',
 			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Der Code dieser Bank ist nur ${minutes} Min gültig — sei vor dem Reservieren am Geldautomaten.',
+			'maker.amountForm.bank.multiHint' => 'Wähle jede Bank, deren Geldautomat in deiner Nähe ist. Das Angebot geht an den Ersten, der es über eine dieser Banken annimmt.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => '${code}-QR und Betrag scannen',
 			'maker.amountForm.twintScan.cardBody' => 'Richte die Kamera auf den Zahlungsbildschirm. Die App füllt den Code und, wenn sichtbar, den Betrag automatisch aus.',
 			'maker.amountForm.twintScan.scanButton' => 'Mit Kamera scannen',
@@ -3843,12 +3861,12 @@ extension on TranslationsDe {
 			'taker.criticalCodeDecision.title' => 'Kritische Entscheidung',
 			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Du hast dem Maker bereits einen ${code}-Code mitgeteilt. Wenn du fortfährst, kann dieser Code ersetzt, deine Reservierung beendet und das Angebot wieder für andere Taker freigegeben werden.',
 			'taker.criticalCodeDecision.warningTitle' => 'DU KANNST DEIN GELD VERLIEREN',
+			_ => null,
+		} ?? switch (path) {
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Wenn deine Bank die ${code}-Zahlung belastet hat, fahre NICHT fort. Der Maker könnte deinen Code verwendet haben, und danach kann der Koordinator deine Bitcoin-Auszahlung möglicherweise nicht mehr garantieren.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Zurück und Bankkonto prüfen',
 			'taker.criticalCodeDecision.actions.proceed' => 'Ich wurde NICHT belastet – fortfahren',
 			'taker.conflict.title' => 'Zahlungsbestätigung ausstehend',
-			_ => null,
-		} ?? switch (path) {
 			'taker.conflict.headline' => 'Warten auf die Bestätigung des Makers',
 			'taker.conflict.body' => ({required Object code}) => 'Du hast gemeldet, dass die ${code}-Zahlung belastet wurde, aber der Maker hat sie als nicht erfolgreich gemeldet. Diese Meldungen widersprechen sich.',
 			'taker.conflict.instructions' => 'Der Maker muss nun das Ergebnis bestätigen. Bestätigt er den Erfolg der Zahlung, wird deine Auszahlung fortgesetzt. Bestätigt er den Fehlschlag oder läuft der Timer ab, wechselt das Angebot in einen formellen Streitfall und der Streitfall-Chat wird verfügbar.',

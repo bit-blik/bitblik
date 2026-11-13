@@ -338,6 +338,20 @@ class DatabaseService {
       ALTER TABLE offers
       ADD COLUMN IF NOT EXISTS bank TEXT;
     ''');
+    // Multi-bank SK offers: `banks` is every bank the maker accepts
+    // (comma-joined, maker's order; NULL for a single-bank offer, whose bank
+    // is `bank` alone), and `taker_bank` is the one the taker picked when
+    // reserving. `bank` keeps the maker's first choice; the offer runs on
+    // COALESCE(taker_bank, bank). taker_bank is cleared with the other taker
+    // fields when a reservation is released.
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS banks TEXT;
+    ''');
+    await _connection!.execute('''
+      ALTER TABLE offers
+      ADD COLUMN IF NOT EXISTS taker_bank TEXT;
+    ''');
     // Composite (status, created_at DESC) serves both the status-equality
     // lookups (getOffersByStatus) AND their `ORDER BY created_at DESC LIMIT`
     // without a sort step. Leading column also answers plain `status =`/`ANY`
@@ -999,8 +1013,8 @@ class DatabaseService {
     final now = DateTime.now().toUtc();
     await _connection!.execute(
       '''
-        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, blik_code, blik_received_at, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category, premium_percent, client_version, bank)
-        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @blik_code, @blik_received_at, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category, @premium_percent, @client_version, @bank)
+        INSERT INTO offers (id, amount_sats, maker_fees, taker_fees, maker_pubkey, blik_code, blik_received_at, hold_invoice_payment_hash, hold_invoice_preimage, status, created_at, updated_at, fiat_amount, fiat_currency, category, premium_percent, client_version, bank, banks)
+        VALUES (@id, @amount_sats, @maker_fees, @taker_fees, @maker_pubkey, @blik_code, @blik_received_at, @hold_invoice_payment_hash, @hold_invoice_preimage, @status, @created_at, @updated_at, @fiat_amount, @fiat_currency, @category, @premium_percent, @client_version, @bank, @banks)
       ''',
       substitutionValues: {
         'id': offer.id,
@@ -1021,6 +1035,7 @@ class DatabaseService {
         'premium_percent': offer.premiumPercent,
         'client_version': offer.clientVersion,
         'bank': offer.bankId,
+        'banks': offer.isMultiBank ? offer.acceptedBankIds.join(',') : null,
       },
     );
     return offer.copyWith(updatedAt: now);
@@ -1130,6 +1145,7 @@ class DatabaseService {
     int? takerFees,
     int? takerInvoiceFees,
     String? failureReason,
+    String? takerBank,
     bool clearTakerFields = false,
     bool preserveCodeOnClear = false,
     StateTransitionMeta? transitionMeta,
@@ -1168,6 +1184,8 @@ class DatabaseService {
       // + stamp_code_received_at). Explicit updates below always win.
       set.addAll([
         if (takerPubkey == null) 'taker_pubkey = NULL',
+        // A multi-bank offer goes back to its maker's first-choice bank.
+        if (takerBank == null) 'taker_bank = NULL',
         if (reservedAt == null) 'reserved_at = NULL',
         // In maker-provides-code flows (preserveCodeOnClear) the code and its
         // issued-at stamp belong to the maker and survive the clear.
@@ -1182,6 +1200,7 @@ class DatabaseService {
       ]);
     }
     if (takerPubkey != null) put('taker_pubkey', 'taker_pubkey', takerPubkey);
+    if (takerBank != null) put('taker_bank', 'taker_bank', takerBank);
     if (code != null) put('blik_code', 'blik_code', code);
     if (takerInvoice != null) {
       put('taker_invoice', 'taker_invoice', takerInvoice);
@@ -1499,8 +1518,19 @@ class DatabaseService {
         return 0.0;
       }(),
       // `bank` column exists only after migration; older rows / other markets
-      // return null via the column map.
-      bankId: map.containsKey('bank') ? map['bank'] as String? : null,
+      // return null via the column map. A multi-bank offer runs on the bank
+      // its taker picked, else on the maker's first choice.
+      bankId: (map['taker_bank'] as String?) ??
+          (map.containsKey('bank') ? map['bank'] as String? : null),
+      bankIds: () {
+        final raw = map['banks'] as String?;
+        if (raw == null || raw.trim().isEmpty) return const <String>[];
+        final ids = [
+          for (final s in raw.split(','))
+            if (s.trim().isNotEmpty) s.trim(),
+        ];
+        return ids.length > 1 ? ids : const <String>[];
+      }(),
       clientVersion: map['client_version'] as String?,
     );
   }

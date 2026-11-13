@@ -80,7 +80,9 @@ Pripoj peňaženku cez **NWC** (Nostr Wallet Connect) — napr. Alby Go:
 - Taker potrebuje Lightning adresu / peňaženku na príjem sats.
 
 ### 2.4 Taker (predaj hotovosti za sats)
-1. Nájdi ponuku pre svoju banku v zozname ponúk.
+1. Nájdi ponuku pre svoju banku v zozname ponúk. Ponuka môže mať viac bánk
+   (maker ich zaškrtol viac); vtedy pri rezervácii zvolíš, v appke ktorej
+   banky kód vygeneruješ, a maker pôjde k bankomatu tejto banky.
 2. Rezervuj ju a **vo svojej bankovej appke vygeneruj „výber z bankomatu bez
    karty"** (6‑miestny kód).
 3. Kód zadaj v BitBliku (submit). Kód **odovzdávaš makerovi** — ten ho zadá v
@@ -90,10 +92,14 @@ Pripoj peňaženku cez **NWC** (Nostr Wallet Connect) — napr. Alby Go:
 
 ### 2.5 Maker (nákup hotovosti za sats)
 1. **Create offer** → suma v EUR, kategória ATM, **vyber banku**, ktorej
-   bankomat máš po ruke (Tatra banka / SLSP / VÚB / Prima banka). Banka je fixná
-   pre ponuku; prednastavené sumy sa prispôsobia bankomatovým nominálom danej
-   banky. Prima banka vydá na jeden kód najviac **200 €** — vyššiu ponuku
-   koordinátor odmietne hneď pri vytváraní.
+   bankomat máš po ruke (Tatra banka / SLSP / VÚB / Prima banka). Ak máš poruke
+   bankomaty viacerých bánk (napr. v nákupnom centre), zaškrtni všetky: ponuku
+   dostane prvý taker z ktorejkoľvek z nich a appka ti potom ukáže, ku ktorému
+   bankomatu ísť. Vyžaduje koordinátor s `multi_bank_v1`; so starším zostane
+   výber jednej banky. Prednastavené sumy sa prispôsobia bankomatovým
+   nominálom. Prima banka vydá na jeden kód najviac **200 €** — vyššiu ponuku
+   (aj keď je Prima len jedna zo zaškrtnutých bánk) koordinátor odmietne hneď
+   pri vytváraní.
 2. Zaplať **hold invoice** zo svojej Lightning peňaženky (sats sa uzamknú).
 3. Počkaj, kým taker odovzdá kód (`blikReceived`), a **vyzdvihni kód** v appke.
 4. Choď k **bankomatu danej banky**, zvoľ výber bez karty / mobilom a **zadaj

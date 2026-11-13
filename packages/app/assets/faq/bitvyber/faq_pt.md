@@ -17,7 +17,7 @@ Esses serviços de escrow são ótimos para trocas maiores e de longo prazo. O {
 
 #### Que bancos são suportados e como escolho um?
 
-A Eslováquia é um único mercado (**{app}**) operado por um coordenador, cobrindo **Tatra banka, Slovenská sporiteľňa e VÚB**. O **maker escolhe o banco ao criar a oferta** — é ele que estará no multibanco desse banco, por isso o código só funciona nas máquinas dele. Os takers veem o banco de cada oferta como um crachá e só aceitam ofertas de um banco cuja app tenham.
+A Eslováquia é um único mercado (**{app}**) operado por um coordenador, cobrindo **Tatra banka, Slovenská sporiteľňa e VÚB**. O **maker escolhe o banco ao criar a oferta** — é ele que estará no multibanco desse banco, por isso o código só funciona nas máquinas dele. Os takers veem o banco de cada oferta como um crachá e só aceitam ofertas de um banco cuja app tenham. Se houver multibancos de vários bancos por perto (por exemplo, num centro comercial), o maker pode marcá-los todos: a oferta fica com o primeiro taker de qualquer um deles, que escolhe o seu banco ao aceitá-la, e o maker levanta depois no multibanco desse banco.
 
 #### Quanto tempo é válido um código? Porque varia por banco?
 

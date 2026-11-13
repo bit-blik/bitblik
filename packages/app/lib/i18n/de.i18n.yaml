@@ -102,6 +102,10 @@ nfc:
 # OFFERS AND TRANSACTIONS
 # =============================================================================
 offers:
+  takerBank:
+    title: "In der App welcher Bank erzeugst du den Code?"
+    subtitle: "Der Maker kann am Geldautomaten jeder dieser Banken abheben. Wähle die Bank, in deren App du den Code erzeugst."
+    validity: "Code gültig für ${minutes} Min"
   details:
     yourOffer: "Dein Angebot:"
     selectedOffer: "Angebot:"
@@ -446,6 +450,7 @@ maker:
       label: "Bank"
       required: "Bitte wähle eine Bank"
       shortValidityWarning: "Der Code dieser Bank ist nur ${minutes} Min gültig — sei vor dem Reservieren am Geldautomaten."
+      multiHint: "Wähle jede Bank, deren Geldautomat in deiner Nähe ist. Das Angebot geht an den Ersten, der es über eine dieser Banken annimmt."
     twintScan:
       cardTitle: "${code}-QR und Betrag scannen"
       cardBody: "Richte die Kamera auf den Zahlungsbildschirm. Die App füllt den Code und, wenn sichtbar, den Betrag automatisch aus."

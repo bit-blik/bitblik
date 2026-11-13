@@ -45,6 +45,12 @@ class CoordinatorInfo {
   /// Absence is deliberately false for mixed-version deployments.
   final bool supportsOfferInitiationRecovery;
 
+  /// Whether a maker may offer several banks at once (`banks` on
+  /// initiate_offer) and a taker name theirs when reserving. Older
+  /// coordinators would silently keep only the first bank, so the app offers
+  /// the multi-bank choice only when this is set.
+  final bool supportsMultiBankOffers;
+
   /// The bank ids this coordinator serves within a bank-scoped market (SK ATM:
   /// a subset of `tatrabanka`, `slsp`, `vub`). Empty for bank-agnostic markets
   /// or when the coordinator serves all of the market's banks.
@@ -82,6 +88,7 @@ class CoordinatorInfo {
     required this.paymentSystem,
     this.supportsTwintShopQr = false,
     this.supportsOfferInitiationRecovery = false,
+    this.supportsMultiBankOffers = false,
     required this.nostrNpub,
     this.banks = const [],
     this.version,
@@ -134,6 +141,7 @@ class CoordinatorInfo {
           _defaultMethodId(json['currencies']),
       supportsTwintShopQr: json['twint_shop_qr_v1'] == true,
       supportsOfferInitiationRecovery: json['offer_initiation_v1'] == true,
+      supportsMultiBankOffers: json['multi_bank_v1'] == true,
       banks: _parseBanks(json['banks']),
       nostrNpub: json['nostr_npub'] as String?,
       version: json['version'] as String?,
@@ -173,6 +181,7 @@ class CoordinatorInfo {
       'payment_system': paymentSystem,
       if (supportsTwintShopQr) 'twint_shop_qr_v1': true,
       if (supportsOfferInitiationRecovery) 'offer_initiation_v1': true,
+      if (supportsMultiBankOffers) 'multi_bank_v1': true,
       if (banks.isNotEmpty) 'banks': banks,
       'nostr_npub': nostrNpub,
       if (version != null) 'version': version,
@@ -247,6 +256,7 @@ class CoordinatorInfo {
           _emptyToNull(tags['payment_system']) ?? _defaultMethodId(currencies),
       supportsTwintShopQr: tags['twint_shop_qr_v1'] == '1',
       supportsOfferInitiationRecovery: tags['offer_initiation_v1'] == '1',
+      supportsMultiBankOffers: tags['multi_bank_v1'] == '1',
       banks: banks,
       version: _emptyToNull(tags['version']),
       nostrNpub: Nip19.encodePubKey(event.pubKey),
@@ -290,6 +300,7 @@ class CoordinatorInfo {
       ['payment_system', paymentSystem],
       if (supportsTwintShopQr) ['twint_shop_qr_v1', '1'],
       if (supportsOfferInitiationRecovery) ['offer_initiation_v1', '1'],
+      if (supportsMultiBankOffers) ['multi_bank_v1', '1'],
       if (banks.isNotEmpty) ['banks', banks.join(',')],
       ['version', version ?? ''],
       ['terms_of_usage_naddr', termsOfUsageNaddr ?? ''],
