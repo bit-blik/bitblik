@@ -29,7 +29,8 @@ Future<int> runOfferList(List<String> args) async {
   List<Offer> applyBankFilter(List<Offer> offers) => bankFilter == null ||
           bankFilter.isEmpty
       ? offers
-      : offers.where((o) => o.bankId == bankFilter).toList();
+      // A multi-bank offer matches any bank it accepts.
+      : offers.where((o) => o.acceptedBankIds.contains(bankFilter)).toList();
 
   // ---- Local path (default) ----
   if (coordinatorArg == null) {
@@ -108,7 +109,7 @@ void _printOfferTable(List<Offer> offers) {
         ? '${o.coordinatorPubkey}'
         : o.coordinatorPubkey;
     final bankCol = showBank
-        ? ' ${bankForOffer(o)?.label ?? '-'} |'
+        ? ' ${o.isMultiBank && o.takerPubkey == null ? banksForOffer(o).map((b) => b.label).join(' / ') : bankForOffer(o)?.label ?? '-'} |'
         : '';
     // statusRaw, not status.name: generic flows (TWINT) carry states with no
     // OfferStatus enum value that would otherwise print as "unknown".

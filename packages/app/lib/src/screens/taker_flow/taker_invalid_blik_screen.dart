@@ -193,10 +193,16 @@ class _TakerInvalidBlikScreenState
 
                         final takerId = userPublicKey;
                         final apiService = ref.read(apiServiceProvider);
+                        // Retry with the same bank: on a multi-bank offer the
+                        // taker already picked theirs.
+                        final takerBank = offer.isMultiBank
+                            ? offer.bankId
+                            : null;
                         final reservation = await apiService.reserveOffer(
                           offer.id,
                           takerId!,
                           offer.coordinatorPubkey,
+                          bank: takerBank,
                         );
                         if (!context.mounted) return;
 
@@ -206,6 +212,7 @@ class _TakerInvalidBlikScreenState
                             offer,
                             takerId,
                             reservation,
+                            bank: takerBank,
                           );
 
                           await ref

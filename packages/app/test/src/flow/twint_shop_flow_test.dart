@@ -51,6 +51,7 @@ class _MakerApi implements ApiServiceNostr {
     double premiumPercent = 0,
     String? blikCode,
     String? bank,
+    List<String>? banks,
     FundingEstimate? fundingEstimate,
   }) async {
     submitted = {

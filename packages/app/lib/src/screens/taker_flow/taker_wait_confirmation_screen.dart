@@ -521,10 +521,14 @@ class _TakerWaitConfirmationScreenState
     final userPublicKey = await ref.read(publicKeyProvider.future);
     final takerId = userPublicKey;
     final apiService = ref.read(apiServiceProvider);
+    // Retry with the same bank: on a multi-bank offer the taker already
+    // picked theirs.
+    final takerBank = offer.isMultiBank ? offer.bankId : null;
     final reservation = await apiService.reserveOffer(
       offer.id,
       takerId!,
       offer.coordinatorPubkey,
+      bank: takerBank,
     );
 
     if (reservation.reservedAt != null || reservation.offer != null) {
@@ -532,6 +536,7 @@ class _TakerWaitConfirmationScreenState
         offer,
         takerId,
         reservation,
+        bank: takerBank,
       );
 
       await ref.read(activeOfferProvider.notifier).setActiveOffer(updatedOffer);

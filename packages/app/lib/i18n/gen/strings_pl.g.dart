@@ -147,6 +147,7 @@ class _Translations$offers$pl extends Translations$offers$en {
 	final TranslationsPl _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$offers$takerBank$pl takerBank = _Translations$offers$takerBank$pl._(_root);
 	@override late final _Translations$offers$details$pl details = _Translations$offers$details$pl._(_root);
 	@override late final _Translations$offers$labels$pl labels = _Translations$offers$labels$pl._(_root);
 	@override late final _Translations$offers$tooltips$pl tooltips = _Translations$offers$tooltips$pl._(_root);
@@ -709,6 +710,18 @@ class _Translations$nfc$errors$pl extends Translations$nfc$errors$en {
 	@override String get disabled => 'NFC jest wyłączone na tym urządzeniu';
 	@override String get unsupported => 'NFC nie jest dostępne na tym urządzeniu';
 	@override String reading({required Object details}) => 'Skanowanie NFC nie powiodło się: ${details}';
+}
+
+// Path: offers.takerBank
+class _Translations$offers$takerBank$pl extends Translations$offers$takerBank$en {
+	_Translations$offers$takerBank$pl._(TranslationsPl root) : this._root = root, super.internal(root);
+
+	final TranslationsPl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'W aplikacji którego banku wygenerujesz kod?';
+	@override String get subtitle => 'Maker może wypłacić w bankomacie każdego z tych banków. Wybierz bank, w którego aplikacji wygenerujesz kod.';
+	@override String validity({required Object minutes}) => 'Kod ważny ${minutes} min';
 }
 
 // Path: offers.details
@@ -2318,6 +2331,7 @@ class _Translations$maker$amountForm$bank$pl extends Translations$maker$amountFo
 	@override String get label => 'Bank';
 	@override String get required => 'Wybierz bank';
 	@override String shortValidityWarning({required Object minutes}) => 'Kod tego banku jest ważny tylko ${minutes} min — bądź przy bankomacie, zanim zarezerwujesz.';
+	@override String get multiHint => 'Zaznacz każdy bank, którego bankomat masz w pobliżu. Ofertę dostanie pierwsza osoba z dowolnego z nich.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -3381,6 +3395,9 @@ extension on TranslationsPl {
 			'nfc.errors.disabled' => 'NFC jest wyłączone na tym urządzeniu',
 			'nfc.errors.unsupported' => 'NFC nie jest dostępne na tym urządzeniu',
 			'nfc.errors.reading' => ({required Object details}) => 'Skanowanie NFC nie powiodło się: ${details}',
+			'offers.takerBank.title' => 'W aplikacji którego banku wygenerujesz kod?',
+			'offers.takerBank.subtitle' => 'Maker może wypłacić w bankomacie każdego z tych banków. Wybierz bank, w którego aplikacji wygenerujesz kod.',
+			'offers.takerBank.validity' => ({required Object minutes}) => 'Kod ważny ${minutes} min',
 			'offers.details.yourOffer' => 'Twoja oferta:',
 			'offers.details.selectedOffer' => 'Oferta:',
 			'offers.details.activeOffer' => 'Masz aktywną ofertę:',
@@ -3649,6 +3666,7 @@ extension on TranslationsPl {
 			'maker.amountForm.bank.label' => 'Bank',
 			'maker.amountForm.bank.required' => 'Wybierz bank',
 			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Kod tego banku jest ważny tylko ${minutes} min — bądź przy bankomacie, zanim zarezerwujesz.',
+			'maker.amountForm.bank.multiHint' => 'Zaznacz każdy bank, którego bankomat masz w pobliżu. Ofertę dostanie pierwsza osoba z dowolnego z nich.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Zeskanuj QR ${code} i kwotę',
 			'maker.amountForm.twintScan.cardBody' => 'Skieruj kamerę na ekran płatności. Aplikacja uzupełni kod oraz, jeśli będzie widoczna, także kwotę.',
 			'maker.amountForm.twintScan.scanButton' => 'Skanuj aparatem',
@@ -3827,12 +3845,12 @@ extension on TranslationsPl {
 			'taker.conflict.body' => ({required Object code}) => 'Zgłosiłeś, że płatność ${code} została pobrana, ale Maker zgłosił, że się nie powiodła. Te zgłoszenia są sprzeczne.',
 			'taker.conflict.instructions' => 'Maker musi teraz potwierdzić wynik. Jeśli potwierdzi, że płatność się powiodła, Twoja wypłata będzie kontynuowana. Jeśli potwierdzi niepowodzenie lub upłynie czas, oferta przejdzie do formalnego sporu i czat sporu stanie się dostępny.',
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'Formalny spór zostanie otwarty automatycznie za ${time}',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.actions.back' => 'Powrót do strony głównej',
 			'taker.conflict.feedback.reported' => 'Zgłoszono konflikt płatności. Oczekiwanie na potwierdzenie Makera.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
 			'taker.dispute.headline' => 'Otwarto formalny spór',
-			_ => null,
-		} ?? switch (path) {
 			'taker.dispute.body' => 'Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.',
 			'twint.shop.scanTitle' => 'Zeskanuj QR w sklepie',
 			'twint.shop.scanInstructions' => 'Zeskanuj kod QR płatności na terminalu sklepowym. Kwota w CHF zostanie odczytana z kodu.',

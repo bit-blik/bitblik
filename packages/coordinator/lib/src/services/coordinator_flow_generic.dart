@@ -25,6 +25,9 @@ class OfferWriteSpec {
   /// persisted to `taker_invoice_fees`.
   int? takerInvoiceFees;
   String? failureReason;
+
+  /// Bank the taker picked when reserving a multi-bank offer (`taker_bank`).
+  String? takerBank;
   OutgoingPaymentAttempt? paymentAttempt;
   bool clearTakerFields = false;
   bool preserveCodeOnClear = false;
@@ -598,6 +601,7 @@ class GenericOfferFlow {
       takerFees: w.takerFees,
       takerInvoiceFees: w.takerInvoiceFees,
       failureReason: w.failureReason,
+      takerBank: w.takerBank,
       clearTakerFields: w.clearTakerFields,
       preserveCodeOnClear: w.preserveCodeOnClear,
       transitionMeta: StateTransitionMeta(

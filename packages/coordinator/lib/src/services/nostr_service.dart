@@ -580,6 +580,7 @@ class NostrService {
     DateTime? createdAt,
     DateTime? blikReceivedAt,
     DateTime? disputeAt,
+    String? bankId,
   }) async {
     try {
       final payload = <String, dynamic>{
@@ -599,6 +600,7 @@ class NostrService {
             : null,
         if (disputeAt != null)
           'dispute_at': disputeAt.millisecondsSinceEpoch ~/ 1000,
+        if (bankId != null && bankId.isNotEmpty) 'bank': bankId,
         'timestamp': timestamp.millisecondsSinceEpoch ~/ 1000,
       };
 
@@ -768,6 +770,12 @@ class NostrService {
           final fiatCurrency = params['fiat_currency'] as String?;
           final blikCode = params['blik_code'] as String?;
           final bank = params['bank'] as String?;
+          // Multi-bank SK offer: every bank the maker accepts (first = their
+          // first choice). Older clients send `bank` alone.
+          final banksRaw = params['banks'];
+          final banks = banksRaw is List
+              ? [for (final b in banksRaw) b.toString()]
+              : null;
 
           return await _coordinatorService.initiateOfferFiat(
             fiatAmount: fiatAmount,
@@ -777,6 +785,7 @@ class NostrService {
             premiumPercent: premiumPercent,
             blikCode: blikCode,
             bank: bank,
+            banks: banks,
             clientVersion: clientVersion,
             // Legacy clients still gain same-request replay protection.
             // New clients can retain operation_id across fresh RPC envelopes.
@@ -1269,9 +1278,13 @@ class NostrService {
             ],
           if (offer.category != null) ['category', offer.category!.name],
           // Bank the maker will withdraw at, for bank-scoped markets (SK). Lets
-          // takers filter the feed to banks whose app they hold.
+          // takers filter the feed to banks whose app they hold. On a
+          // multi-bank offer this is the maker's first choice until a taker
+          // picks theirs — all an older client needs to take it correctly.
           if (offer.bankId != null && offer.bankId!.isNotEmpty)
             ['bank', offer.bankId!],
+          // Every bank a multi-bank offer accepts, maker's order.
+          if (offer.isMultiBank) ['banks', ...offer.acceptedBankIds],
           if (offer.takerFees != null && offer.takerFees! > 0)
             ['taker_fees', offer.takerFees.toString()],
           if (offer.makerFees > 0) ['maker_fees', offer.makerFees.toString()],

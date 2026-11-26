@@ -165,6 +165,7 @@ class Translations$offers$en {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final Translations$offers$takerBank$en takerBank = Translations$offers$takerBank$en.internal(_root);
 	late final Translations$offers$details$en details = Translations$offers$details$en.internal(_root);
 	late final Translations$offers$labels$en labels = Translations$offers$labels$en.internal(_root);
 	late final Translations$offers$tooltips$en tooltips = Translations$offers$tooltips$en.internal(_root);
@@ -950,6 +951,24 @@ class Translations$nfc$errors$en {
 
 	/// en: 'NFC scan failed: ${details}'
 	String reading({required Object details}) => 'NFC scan failed: ${details}';
+}
+
+// Path: offers.takerBank
+class Translations$offers$takerBank$en {
+	Translations$offers$takerBank$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Which bank's app will you use?'
+	String get title => 'Which bank\'s app will you use?';
+
+	/// en: 'The maker can withdraw at an ATM of any of these banks. Pick the bank whose app you'll generate the code in.'
+	String get subtitle => 'The maker can withdraw at an ATM of any of these banks. Pick the bank whose app you\'ll generate the code in.';
+
+	/// en: 'Code valid for ${minutes} min'
+	String validity({required Object minutes}) => 'Code valid for ${minutes} min';
 }
 
 // Path: offers.details
@@ -3888,6 +3907,9 @@ class Translations$maker$amountForm$bank$en {
 
 	/// en: 'This bank's code is valid for only ${minutes} min — be at the ATM before you reserve.'
 	String shortValidityWarning({required Object minutes}) => 'This bank\'s code is valid for only ${minutes} min — be at the ATM before you reserve.';
+
+	/// en: 'Tick every bank with an ATM near you. The first taker from any of them gets the offer.'
+	String get multiHint => 'Tick every bank with an ATM near you. The first taker from any of them gets the offer.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -5958,6 +5980,9 @@ extension on Translations {
 			'nfc.errors.disabled' => 'NFC is turned off on this device',
 			'nfc.errors.unsupported' => 'NFC is not available on this device',
 			'nfc.errors.reading' => ({required Object details}) => 'NFC scan failed: ${details}',
+			'offers.takerBank.title' => 'Which bank\'s app will you use?',
+			'offers.takerBank.subtitle' => 'The maker can withdraw at an ATM of any of these banks. Pick the bank whose app you\'ll generate the code in.',
+			'offers.takerBank.validity' => ({required Object minutes}) => 'Code valid for ${minutes} min',
 			'offers.details.yourOffer' => 'Your offer:',
 			'offers.details.selectedOffer' => 'Offer:',
 			'offers.details.activeOffer' => 'You have an active offer:',
@@ -6227,6 +6252,7 @@ extension on Translations {
 			'maker.amountForm.bank.label' => 'Bank',
 			'maker.amountForm.bank.required' => 'Please choose a bank',
 			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'This bank\'s code is valid for only ${minutes} min — be at the ATM before you reserve.',
+			'maker.amountForm.bank.multiHint' => 'Tick every bank with an ATM near you. The first taker from any of them gets the offer.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Scan ${code} QR and amount',
 			'maker.amountForm.twintScan.cardBody' => 'Point the camera at the payment screen. The app will prefill the code and, when visible, the amount.',
 			'maker.amountForm.twintScan.scanButton' => 'Scan with camera',
@@ -6404,12 +6430,12 @@ extension on Translations {
 			'taker.submitBlik.errors.fetchedIdMismatch' => ({required Object fetchedId, required Object initialId}) => 'Fetched active offer ID (${fetchedId}) does not match initial offer ID (${initialId}). State mismatch?',
 			'taker.submitBlik.errors.paymentHashMissing' => 'Offer payment hash missing after fetch.',
 			'taker.submitBlik.details.requestedAmount' => ({required Object code}) => 'Requested ${code} amount',
+			_ => null,
+		} ?? switch (path) {
 			'taker.submitBlik.details.exchangeRate' => 'Exchange Rate',
 			'taker.submitBlik.details.takerFee' => 'Taker fee',
 			'taker.submitBlik.details.status' => 'Status',
 			'taker.submitBlik.details.youllReceive' => 'You\'ll receive',
-			_ => null,
-		} ?? switch (path) {
 			'taker.waitConfirmation.title' => 'Waiting for Maker',
 			'taker.waitConfirmation.statusLabel' => ({required Object status}) => 'Offer status: ${status}',
 			'taker.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'Waiting for Maker confirmation: ${seconds} s',
@@ -6918,12 +6944,12 @@ extension on Translations {
 			'nwc.errors.disconnecting' => ({required Object details}) => 'Error disconnecting NWC: ${details}',
 			'nwc.errors.invalid' => 'Invalid NWC connection string',
 			'nwc.errors.required' => 'NWC connection string is required',
+			_ => null,
+		} ?? switch (path) {
 			'nwc.errors.loadingBalance' => 'Failed to load wallet balance',
 			'nwc.errors.loadingBudget' => 'Failed to load wallet budget',
 			'nwc.time.minutes' => ({required Object count}) => '${count}m',
 			'nwc.time.hours' => ({required Object count}) => '${count}h',
-			_ => null,
-		} ?? switch (path) {
 			'nwc.time.days' => ({required Object count}) => '${count}d',
 			'nwc.time.justNow' => 'just now',
 			'nekoManagement.title' => 'Neko',

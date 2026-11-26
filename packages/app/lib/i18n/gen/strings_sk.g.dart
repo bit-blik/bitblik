@@ -133,6 +133,7 @@ class _Translations$offers$sk extends Translations$offers$en {
 	final TranslationsSk _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$offers$takerBank$sk takerBank = _Translations$offers$takerBank$sk._(_root);
 	@override late final _Translations$offers$details$sk details = _Translations$offers$details$sk._(_root);
 	@override late final _Translations$offers$labels$sk labels = _Translations$offers$labels$sk._(_root);
 	@override late final _Translations$offers$tooltips$sk tooltips = _Translations$offers$tooltips$sk._(_root);
@@ -645,6 +646,18 @@ class _Translations$lightningAddress$errors$sk extends Translations$lightningAdd
 	// Translations
 	@override String saving({required Object details}) => 'Chyba pri ukladaní adresy: ${details}';
 	@override String loading({required Object details}) => 'Chyba pri načítaní Lightning adresy: ${details}';
+}
+
+// Path: offers.takerBank
+class _Translations$offers$takerBank$sk extends Translations$offers$takerBank$en {
+	_Translations$offers$takerBank$sk._(TranslationsSk root) : this._root = root, super.internal(root);
+
+	final TranslationsSk _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'V appke ktorej banky vygeneruješ kód?';
+	@override String get subtitle => 'Maker môže vyberať z bankomatu ktorejkoľvek z týchto bánk. Vyber banku, v ktorej appke vygeneruješ kód.';
+	@override String validity({required Object minutes}) => 'Kód platí ${minutes} min';
 }
 
 // Path: offers.details
@@ -2213,6 +2226,7 @@ class _Translations$maker$amountForm$bank$sk extends Translations$maker$amountFo
 	@override String get label => 'Banka';
 	@override String get required => 'Vyber si banku';
 	@override String shortValidityWarning({required Object minutes}) => 'Kód tejto banky platí len ${minutes} min — buď pri bankomate skôr, než rezervuješ.';
+	@override String get multiHint => 'Zaškrtni každú banku, ktorej bankomat máš poruke. Ponuku dostane prvý, kto ju zoberie z ktorejkoľvek z nich.';
 }
 
 // Path: maker.amountForm.tooltips
@@ -3041,6 +3055,9 @@ extension on TranslationsSk {
 			'lightningAddress.feedback.valid' => 'Platná Lightning adresa',
 			'lightningAddress.errors.saving' => ({required Object details}) => 'Chyba pri ukladaní adresy: ${details}',
 			'lightningAddress.errors.loading' => ({required Object details}) => 'Chyba pri načítaní Lightning adresy: ${details}',
+			'offers.takerBank.title' => 'V appke ktorej banky vygeneruješ kód?',
+			'offers.takerBank.subtitle' => 'Maker môže vyberať z bankomatu ktorejkoľvek z týchto bánk. Vyber banku, v ktorej appke vygeneruješ kód.',
+			'offers.takerBank.validity' => ({required Object minutes}) => 'Kód platí ${minutes} min',
 			'offers.details.yourOffer' => 'Tvoja ponuka:',
 			'offers.details.selectedOffer' => 'Ponuka:',
 			'offers.details.activeOffer' => 'Máš aktívnu ponuku:',
@@ -3310,6 +3327,7 @@ extension on TranslationsSk {
 			'maker.amountForm.bank.label' => 'Banka',
 			'maker.amountForm.bank.required' => 'Vyber si banku',
 			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Kód tejto banky platí len ${minutes} min — buď pri bankomate skôr, než rezervuješ.',
+			'maker.amountForm.bank.multiHint' => 'Zaškrtni každú banku, ktorej bankomat máš poruke. Ponuku dostane prvý, kto ju zoberie z ktorejkoľvek z nich.',
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Koordinátor si účtuje ${feePercent}% poplatok predávajúceho. Tento poplatok sa odpočíta z tvojej Lightning platby.',
 			'maker.amountForm.tooltips.payInfo' => 'Tento výpočet vychádza z výmenných kurzov načítaných na strane klienta. Koordinátor vypočíta presnú sumu a suma na faktúre bude konečná a presná suma na zaplatenie.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Voliteľná prémia ti umožňuje predať sats nad trhovú cenu. Prémia zníži počet sats uzamknutých v tvojej hold faktúre za rovnakú sumu vo fiate, takže kupujúci platí nad trh a ty si ponecháš rozdiel. Predvolene je vypnutá (0%). Maximálnu prémiu určuje vybraný koordinátor.',
@@ -3498,12 +3516,12 @@ extension on TranslationsSk {
 			'taker.waitConfirmation.timerExpiredMessage' => ({required Object code, required Object minutes}) => 'Čas platnosti ${code} (${minutes}m) uplynul. Čaká sa, kým predávajúci potvrdí alebo označí kód ako neplatný.',
 			'taker.waitConfirmation.timerExpiredActions' => ({required Object code, required Object minutes}) => 'Čas platnosti ${code} (${minutes}m) uplynul, ale predávajúci nedostal ${code}. Môžeš poslať nový ${code} alebo zrušiť.',
 			'taker.waitConfirmation.resendBlikButton' => ({required Object code}) => 'Poslať nový kód ${code}',
+			_ => null,
+		} ?? switch (path) {
 			'taker.waitConfirmation.navigatedHome' => 'Presmerované domov.',
 			'taker.waitConfirmation.expiredTitle' => ({required Object code}) => 'Kód ${code} vypršal',
 			'taker.waitConfirmation.expiredWarning' => ({required Object code}) => 'Predávajúci nedostal ${code}, takže ho nemohol použiť.',
 			'taker.waitConfirmation.expiredRelistCountdownLabel' => 'Rezervácia končí o',
-			_ => null,
-		} ?? switch (path) {
 			'taker.waitConfirmation.expiredSentWarning' => 'Predávajúci ešte nepotvrdil platbu. Čo chceš urobiť?',
 			'taker.waitConfirmation.expiredInstruction1' => ({required Object code}) => 'Ak to chceš skúsiť znova s novým ${code}, obnov rezerváciu.',
 			'taker.waitConfirmation.expiredInstruction2' => 'Ak už túto transakciu nechceš dokončiť, zruš rezerváciu.',

@@ -212,7 +212,12 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
         category: offer.category,
         coordinatorPubkey: offer.coordinatorPubkey,
         premiumPercent: offer.premiumPercent,
-        bank: offer.bankId,
+        // Re-list on the same banks: the first choice, plus the rest of a
+        // multi-bank offer. Whatever a past taker picked no longer applies.
+        bank: offer.acceptedBankIds.isEmpty
+            ? offer.bankId
+            : offer.acceptedBankIds.first,
+        banks: offer.isMultiBank ? offer.acceptedBankIds : null,
       );
       final paymentHash = result['paymentHash'] as String;
       ref.read(holdInvoiceProvider.notifier).state = result['holdInvoice'];
@@ -236,7 +241,10 @@ class _MakerWaitTakerScreenState extends ConsumerState<MakerWaitTakerScreen> {
               makerPubkey: makerId,
               coordinatorPubkey: offer.coordinatorPubkey,
               paymentSystemId: offer.paymentSystemId,
-              bankId: offer.bankId,
+              bankId: offer.acceptedBankIds.isEmpty
+                  ? offer.bankId
+                  : offer.acceptedBankIds.first,
+              bankIds: offer.isMultiBank ? offer.acceptedBankIds : const [],
               category: offer.category,
               premiumPercent:
                   (result['premiumPercent'] as num?)?.toDouble() ??

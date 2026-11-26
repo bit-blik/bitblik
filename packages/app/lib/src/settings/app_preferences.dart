@@ -290,6 +290,47 @@ class AppPreferencesStore {
     await prefs.setString(_lastBankKey(marketId), bankId);
   }
 
+  static String _lastBanksKey(String marketId) =>
+      'offer_creation_last_banks_$marketId';
+
+  /// Every bank the maker accepted on their last multi-bank offer for
+  /// [marketId], first choice first. Empty when the last offer had one bank
+  /// (see [loadLastBank]) or none was ever chosen.
+  static Future<List<String>> loadLastBanks(String marketId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_lastBanksKey(marketId)) ?? const [];
+  }
+
+  /// Remember the maker's bank selection: [bankIds] with several entries is a
+  /// multi-bank selection; a single one clears it back to [loadLastBank].
+  static Future<void> saveLastBanks(
+    String marketId,
+    List<String> bankIds,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (bankIds.length > 1) {
+      await prefs.setStringList(_lastBanksKey(marketId), bankIds);
+    } else {
+      await prefs.remove(_lastBanksKey(marketId));
+    }
+  }
+
+  static String _lastTakerBankKey(String marketId) =>
+      'taker_last_bank_$marketId';
+
+  /// The bank a taker last generated a code in when taking a multi-bank
+  /// offer on [marketId], to mark it in the bank chooser. Null if never.
+  static Future<String?> loadLastTakerBank(String marketId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getString(_lastTakerBankKey(marketId));
+    return (v == null || v.isEmpty) ? null : v;
+  }
+
+  static Future<void> saveLastTakerBank(String marketId, String bankId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastTakerBankKey(marketId), bankId);
+  }
+
   /// An explicit default bank for [marketId] set in offer-creation settings.
   /// When set it takes precedence over the last-used bank for the new-offer
   /// picker. Null when the user hasn't pinned one.

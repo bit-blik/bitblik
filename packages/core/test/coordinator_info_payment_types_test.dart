@@ -71,6 +71,27 @@ void main() {
     }
   });
 
+  // Without the flag an older coordinator would keep only the first bank of a
+  // multi-bank offer, so the app must see it absent as false.
+  test('multi-bank offers require explicit capability and round trip', () {
+    for (final advertised in [null, false, true, 'true']) {
+      final info =
+          CoordinatorInfo.fromJson(baseJson()..['multi_bank_v1'] = advertised);
+      final enabled = advertised == true;
+      expect(info.supportsMultiBankOffers, enabled);
+      expect(CoordinatorInfo.fromJson(info.toJson()).supportsMultiBankOffers,
+          enabled);
+      expect(
+          CoordinatorInfo.fromNostrEvent(Nip01Event(
+                  pubKey: 'a' * 64,
+                  kind: kKindCoordinatorInfo,
+                  tags: info.toNostrTags(),
+                  content: ''))
+              .supportsMultiBankOffers,
+          enabled);
+    }
+  });
+
   test('coordinator record exposes capabilities with legacy fallback', () {
     const legacy = CoordinatorRecord(pubkeyHex: 'legacy');
     expect(legacy.outgoingPaymentTypes, ['bolt11']);

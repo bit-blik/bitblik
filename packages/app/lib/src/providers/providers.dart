@@ -1193,6 +1193,9 @@ class ActiveOfferNotifier extends StateNotifier<Offer?> {
       // of resetting the 2-min timer on the blikSentToMaker transition.
       blikReceivedAt: update.blikReceivedAt?.toLocal(),
       disputeAt: update.disputeAt?.toLocal(),
+      // A multi-bank offer runs on the bank its taker picked: the maker must
+      // withdraw at that bank's ATM, with that bank's code window.
+      bankId: update.bankId,
       updatedAt: update.timestamp.toLocal(),
     );
     final myPubkey = _ref.read(keyServiceProvider).publicKeyHex;

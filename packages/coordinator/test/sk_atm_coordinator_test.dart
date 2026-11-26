@@ -115,6 +115,11 @@ void main() {
       final info = await svc.getCoordinatorInfo();
       expect(info.paymentSystem, 'sk');
     });
+
+    test('coordinator info advertises multi-bank offers', () async {
+      final info = await svc.getCoordinatorInfo();
+      expect(info.supportsMultiBankOffers, isTrue);
+    });
   });
 
   group('offer creation requires a valid, served bank', () {
@@ -186,6 +191,47 @@ void main() {
       expect(
         atm.isWithinAtmLimit(300, bank: atm.bankById('primabanka')),
         isFalse,
+      );
+    });
+
+    test('an unknown bank in a multi-bank list is rejected', () {
+      expect(
+        () => svc.initiateOfferFiat(
+          fiatAmount: 50,
+          makerId: maker,
+          category: OfferCategory.atm,
+          banks: ['tatrabanka', 'does_not_exist'],
+        ),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message', contains('does_not_exist'))),
+      );
+    });
+
+    // Any accepted bank may end up running the offer, so each one has to be
+    // able to pay the amount out.
+    test('every accepted bank must pay the amount out', () {
+      expect(
+        () => svc.initiateOfferFiat(
+          fiatAmount: 300,
+          makerId: maker,
+          category: OfferCategory.atm,
+          banks: ['slsp', 'primabanka'],
+        ),
+        throwsA(isA<Exception>().having((e) => e.toString(), 'message',
+            allOf(contains('Prima banka'), contains('200')))),
+      );
+    });
+
+    test('a first-choice bank outside the list is rejected', () {
+      expect(
+        () => svc.initiateOfferFiat(
+          fiatAmount: 50,
+          makerId: maker,
+          category: OfferCategory.atm,
+          bank: 'slsp',
+          banks: ['tatrabanka', 'vub'],
+        ),
+        throwsA(isA<Exception>()),
       );
     });
   });
@@ -413,6 +459,169 @@ void main() {
 
     test('VÚB offer carries the bank label', () async {
       expect(await notificationForBank('vub'), contains('VÚB'));
+    });
+
+    // A maker between a Tatra and a VÚB ATM accepts both: the offer is stored
+    // with the whole list (first choice first) and the announcement names both
+    // banks, so takers of either know the offer is theirs to take.
+    test('multi-bank offer stores the list and names every bank', () async {
+      final init = await svc.initiateOfferFiat(
+        fiatAmount: 20,
+        makerId: maker,
+        category: OfferCategory.atm,
+        banks: ['tatrabanka', 'vub'],
+      );
+      invoiceUpdates.add(InvoiceUpdate(
+        status: InvoiceStatus.ACCEPTED,
+        paymentHash: init['paymentHash'] as String,
+      ));
+      await invoiceUpdates.close();
+      await Future<void>.delayed(Duration.zero);
+
+      final stored =
+          verify(db.createOffer(captureAny)).captured.single as Offer;
+      expect(stored.bankId, 'tatrabanka');
+      expect(stored.acceptedBankIds, ['tatrabanka', 'vub']);
+      expect(telegram.lastMessage, contains('[Tatra banka, VÚB banka]'));
+    });
+  });
+
+  // ─── multi-bank: the first taker from any accepted bank wins ─────────────
+  group('reserving a multi-bank offer', () {
+    late MockDatabaseService db;
+    late CoordinatorService svc;
+    late String status;
+    String? takerBank;
+    String? takerPubkey;
+    late List<String> acceptedBanks;
+
+    Offer offer() => Offer(
+          stateRevision: _stateRevision,
+          id: 'sk-multi',
+          amountSats: 1550,
+          makerFees: 0,
+          takerFees: 50,
+          status: OfferStatus.unknown,
+          statusRaw: status,
+          fiatAmount: 50,
+          fiatCurrency: 'EUR',
+          category: OfferCategory.atm,
+          paymentSystemId: 'sk',
+          bankId: takerBank ?? acceptedBanks.first,
+          bankIds: acceptedBanks.length > 1 ? acceptedBanks : const [],
+          createdAt: DateTime.now().toUtc(),
+          makerPubkey: maker,
+          coordinatorPubkey: 'coord',
+          takerPubkey: takerPubkey,
+          holdInvoicePaymentHash: 'hash',
+          holdInvoicePreimage: 'preimage',
+        );
+
+    setUp(() async {
+      db = MockDatabaseService();
+      svc = CoordinatorService(
+        db,
+        paymentServiceForTest: MockPaymentService(),
+        clock: const Clock(),
+        telegramServiceForTest: _FakeTelegramService(),
+        paymentSystemIdForTest: 'sk',
+      );
+      await svc.init();
+
+      status = 'funded';
+      takerBank = null;
+      takerPubkey = null;
+      acceptedBanks = ['tatrabanka', 'vub'];
+
+      when(db.getOfferById('sk-multi')).thenAnswer((_) async => offer());
+      when(db.updateOfferRawStatusIfCurrent(
+        any,
+        any,
+        expectedCurrentStatuses: anyNamed('expectedCurrentStatuses'),
+        expectedStateRevision: anyNamed('expectedStateRevision'),
+        expectedPaymentAttempt: anyNamed('expectedPaymentAttempt'),
+        expectedTakerPubkey: anyNamed('expectedTakerPubkey'),
+        takerPubkey: anyNamed('takerPubkey'),
+        reservedAt: anyNamed('reservedAt'),
+        takerChargedAt: anyNamed('takerChargedAt'),
+        makerConfirmedAt: anyNamed('makerConfirmedAt'),
+        settledAt: anyNamed('settledAt'),
+        takerPaidAt: anyNamed('takerPaidAt'),
+        takerInvoice: anyNamed('takerInvoice'),
+        code: anyNamed('code'),
+        codeReceivedAt: anyNamed('codeReceivedAt'),
+        disputeAt: anyNamed('disputeAt'),
+        takerFees: anyNamed('takerFees'),
+        takerInvoiceFees: anyNamed('takerInvoiceFees'),
+        failureReason: anyNamed('failureReason'),
+        takerBank: anyNamed('takerBank'),
+        clearTakerFields: anyNamed('clearTakerFields'),
+        preserveCodeOnClear: anyNamed('preserveCodeOnClear'),
+        transitionMeta: anyNamed('transitionMeta'),
+      )).thenAnswer((inv) async {
+        if (inv.namedArguments[#expectedStateRevision] != null &&
+            inv.namedArguments[#expectedStateRevision] != _stateRevision)
+          return false;
+        _stateRevision++;
+        status = inv.positionalArguments[1] as String;
+        if (inv.namedArguments[#clearTakerFields] == true) {
+          takerBank = null;
+          takerPubkey = null;
+        }
+        takerBank = inv.namedArguments[#takerBank] as String? ?? takerBank;
+        takerPubkey =
+            inv.namedArguments[#takerPubkey] as String? ?? takerPubkey;
+        return true;
+      });
+    });
+
+    test('the taker\'s bank becomes the bank the offer runs on', () async {
+      await svc.flow
+          .handleRpc('reserve_offer', {'offer_id': 'sk-multi', 'bank': 'vub'},
+              taker);
+      expect(status, 'reserved');
+      expect(takerBank, 'vub');
+      // From here on the offer runs on VÚB: its 10-minute code window.
+      expect(validityForOffer(offer()), const Duration(minutes: 10));
+    });
+
+    // An older app only ever saw the offer's first bank (`bank` tag) and sends
+    // none — it gets exactly the offer it was shown.
+    test('a taker that names no bank gets the maker\'s first choice', () async {
+      await svc.flow.handleRpc('reserve_offer', {'offer_id': 'sk-multi'}, taker);
+      expect(status, 'reserved');
+      expect(takerBank, isNull);
+      expect(offer().bankId, 'tatrabanka');
+    });
+
+    test('a bank the maker did not accept is refused', () async {
+      await expectLater(
+        svc.flow.handleRpc(
+            'reserve_offer', {'offer_id': 'sk-multi', 'bank': 'slsp'}, taker),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message', contains('does not accept bank'))),
+      );
+      expect(status, 'funded');
+    });
+
+    test('releasing the reservation hands the offer back to every bank',
+        () async {
+      await svc.flow.handleRpc(
+          'reserve_offer', {'offer_id': 'sk-multi', 'bank': 'vub'}, taker);
+      await svc.flow
+          .handleRpc('cancel_reservation', {'offer_id': 'sk-multi'}, taker);
+      expect(status, 'funded');
+      expect(takerBank, isNull);
+      expect(offer().bankId, 'tatrabanka');
+    });
+
+    test('a single-bank offer accepts its own bank and stores nothing extra',
+        () async {
+      acceptedBanks = ['slsp'];
+      await svc.flow.handleRpc(
+          'reserve_offer', {'offer_id': 'sk-multi', 'bank': 'slsp'}, taker);
+      expect(status, 'reserved');
+      expect(takerBank, isNull);
     });
   });
 

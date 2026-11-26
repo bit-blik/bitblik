@@ -146,6 +146,7 @@ class _Translations$offers$de extends Translations$offers$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$offers$takerBank$de takerBank = _Translations$offers$takerBank$de._(_root);
 	@override late final _Translations$offers$details$de details = _Translations$offers$details$de._(_root);
 	@override late final _Translations$offers$labels$de labels = _Translations$offers$labels$de._(_root);
 	@override late final _Translations$offers$tooltips$de tooltips = _Translations$offers$tooltips$de._(_root);
@@ -708,6 +709,18 @@ class _Translations$nfc$errors$de extends Translations$nfc$errors$en {
 	@override String get disabled => 'NFC ist auf diesem Gerät deaktiviert';
 	@override String get unsupported => 'NFC ist auf diesem Gerät nicht verfügbar';
 	@override String reading({required Object details}) => 'NFC-Scan fehlgeschlagen: ${details}';
+}
+
+// Path: offers.takerBank
+class _Translations$offers$takerBank$de extends Translations$offers$takerBank$en {
+	_Translations$offers$takerBank$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'In der App welcher Bank erzeugst du den Code?';
+	@override String get subtitle => 'Der Maker kann am Geldautomaten jeder dieser Banken abheben. Wähle die Bank, in deren App du den Code erzeugst.';
+	@override String validity({required Object minutes}) => 'Code gültig für ${minutes} Min';
 }
 
 // Path: offers.details
@@ -2321,6 +2334,7 @@ class _Translations$maker$amountForm$bank$de extends Translations$maker$amountFo
 	@override String get label => 'Bank';
 	@override String get required => 'Bitte wähle eine Bank';
 	@override String shortValidityWarning({required Object minutes}) => 'Der Code dieser Bank ist nur ${minutes} Min gültig — sei vor dem Reservieren am Geldautomaten.';
+	@override String get multiHint => 'Wähle jede Bank, deren Geldautomat in deiner Nähe ist. Das Angebot geht an den Ersten, der es über eine dieser Banken annimmt.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -3405,6 +3419,9 @@ extension on TranslationsDe {
 			'nfc.errors.disabled' => 'NFC ist auf diesem Gerät deaktiviert',
 			'nfc.errors.unsupported' => 'NFC ist auf diesem Gerät nicht verfügbar',
 			'nfc.errors.reading' => ({required Object details}) => 'NFC-Scan fehlgeschlagen: ${details}',
+			'offers.takerBank.title' => 'In der App welcher Bank erzeugst du den Code?',
+			'offers.takerBank.subtitle' => 'Der Maker kann am Geldautomaten jeder dieser Banken abheben. Wähle die Bank, in deren App du den Code erzeugst.',
+			'offers.takerBank.validity' => ({required Object minutes}) => 'Code gültig für ${minutes} Min',
 			'offers.details.yourOffer' => 'Dein Angebot:',
 			'offers.details.selectedOffer' => 'Angebot:',
 			'offers.details.activeOffer' => 'Du hast ein aktives Angebot:',
@@ -3674,6 +3691,7 @@ extension on TranslationsDe {
 			'maker.amountForm.bank.label' => 'Bank',
 			'maker.amountForm.bank.required' => 'Bitte wähle eine Bank',
 			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Der Code dieser Bank ist nur ${minutes} Min gültig — sei vor dem Reservieren am Geldautomaten.',
+			'maker.amountForm.bank.multiHint' => 'Wähle jede Bank, deren Geldautomat in deiner Nähe ist. Das Angebot geht an den Ersten, der es über eine dieser Banken annimmt.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => '${code}-QR und Betrag scannen',
 			'maker.amountForm.twintScan.cardBody' => 'Richte die Kamera auf den Zahlungsbildschirm. Die App füllt den Code und, wenn sichtbar, den Betrag automatisch aus.',
 			'maker.amountForm.twintScan.scanButton' => 'Mit Kamera scannen',
@@ -3852,12 +3870,12 @@ extension on TranslationsDe {
 			'taker.submitBlik.errors.fetchedIdMismatch' => ({required Object fetchedId, required Object initialId}) => 'Abgerufene aktive Angebots-ID (${fetchedId}) stimmt nicht mit der ursprünglichen Angebots-ID (${initialId}) überein. Zustandskonflikt?',
 			'taker.submitBlik.errors.paymentHashMissing' => 'Payment-Hash des Angebots fehlt nach dem Abruf.',
 			'taker.submitBlik.details.requestedAmount' => ({required Object code}) => 'Angeforderter ${code}-Betrag',
+			_ => null,
+		} ?? switch (path) {
 			'taker.submitBlik.details.exchangeRate' => 'Wechselkurs',
 			'taker.submitBlik.details.takerFee' => 'Taker-Gebühr',
 			'taker.submitBlik.details.status' => 'Status',
 			'taker.submitBlik.details.youllReceive' => 'Du erhältst',
-			_ => null,
-		} ?? switch (path) {
 			'taker.criticalCodeDecision.title' => 'Kritische Entscheidung',
 			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Du hast dem Maker bereits einen ${code}-Code mitgeteilt. Wenn du fortfährst, kann dieser Code ersetzt, deine Reservierung beendet und das Angebot wieder für andere Taker freigegeben werden.',
 			'taker.criticalCodeDecision.warningTitle' => 'DU KANNST DEIN GELD VERLIEREN',

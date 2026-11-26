@@ -146,6 +146,7 @@ class _Translations$offers$fr extends Translations$offers$en {
 	final TranslationsFr _root; // ignore: unused_field
 
 	// Translations
+	@override late final _Translations$offers$takerBank$fr takerBank = _Translations$offers$takerBank$fr._(_root);
 	@override late final _Translations$offers$details$fr details = _Translations$offers$details$fr._(_root);
 	@override late final _Translations$offers$labels$fr labels = _Translations$offers$labels$fr._(_root);
 	@override late final _Translations$offers$tooltips$fr tooltips = _Translations$offers$tooltips$fr._(_root);
@@ -708,6 +709,18 @@ class _Translations$nfc$errors$fr extends Translations$nfc$errors$en {
 	@override String get disabled => 'Le NFC est désactivé sur cet appareil';
 	@override String get unsupported => 'Le NFC n\'est pas disponible sur cet appareil';
 	@override String reading({required Object details}) => 'Échec du scan NFC : ${details}';
+}
+
+// Path: offers.takerBank
+class _Translations$offers$takerBank$fr extends Translations$offers$takerBank$en {
+	_Translations$offers$takerBank$fr._(TranslationsFr root) : this._root = root, super.internal(root);
+
+	final TranslationsFr _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Dans l\'application de quelle banque générerez-vous le code ?';
+	@override String get subtitle => 'Le maker peut retirer au distributeur de n\'importe laquelle de ces banques. Choisissez la banque dont l\'application générera le code.';
+	@override String validity({required Object minutes}) => 'Code valable ${minutes} min';
 }
 
 // Path: offers.details
@@ -2321,6 +2334,7 @@ class _Translations$maker$amountForm$bank$fr extends Translations$maker$amountFo
 	@override String get label => 'Banque';
 	@override String get required => 'Veuillez choisir une banque';
 	@override String shortValidityWarning({required Object minutes}) => 'Le code de cette banque n\'est valable que ${minutes} min — soyez au distributeur avant de réserver.';
+	@override String get multiHint => 'Cochez chaque banque ayant un distributeur près de vous. L\'offre revient au premier preneur, quelle que soit sa banque parmi elles.';
 }
 
 // Path: maker.amountForm.twintScan
@@ -3405,6 +3419,9 @@ extension on TranslationsFr {
 			'nfc.errors.disabled' => 'Le NFC est désactivé sur cet appareil',
 			'nfc.errors.unsupported' => 'Le NFC n\'est pas disponible sur cet appareil',
 			'nfc.errors.reading' => ({required Object details}) => 'Échec du scan NFC : ${details}',
+			'offers.takerBank.title' => 'Dans l\'application de quelle banque générerez-vous le code ?',
+			'offers.takerBank.subtitle' => 'Le maker peut retirer au distributeur de n\'importe laquelle de ces banques. Choisissez la banque dont l\'application générera le code.',
+			'offers.takerBank.validity' => ({required Object minutes}) => 'Code valable ${minutes} min',
 			'offers.details.yourOffer' => 'Votre offre :',
 			'offers.details.selectedOffer' => 'Offre :',
 			'offers.details.activeOffer' => 'Vous avez une offre active :',
@@ -3674,6 +3691,7 @@ extension on TranslationsFr {
 			'maker.amountForm.bank.label' => 'Banque',
 			'maker.amountForm.bank.required' => 'Veuillez choisir une banque',
 			'maker.amountForm.bank.shortValidityWarning' => ({required Object minutes}) => 'Le code de cette banque n\'est valable que ${minutes} min — soyez au distributeur avant de réserver.',
+			'maker.amountForm.bank.multiHint' => 'Cochez chaque banque ayant un distributeur près de vous. L\'offre revient au premier preneur, quelle que soit sa banque parmi elles.',
 			'maker.amountForm.twintScan.cardTitle' => ({required Object code}) => 'Scanner le QR ${code} et le montant',
 			'maker.amountForm.twintScan.cardBody' => 'Pointez la caméra vers l\'écran de paiement. L\'application préremplira le code et, s\'il est visible, le montant.',
 			'maker.amountForm.twintScan.scanButton' => 'Scanner avec la caméra',
@@ -3852,12 +3870,12 @@ extension on TranslationsFr {
 			'taker.submitBlik.errors.fetchedIdMismatch' => ({required Object fetchedId, required Object initialId}) => 'L\'ID de l\'offre active récupérée (${fetchedId}) ne correspond pas à l\'ID initial (${initialId}). Incohérence d\'état ?',
 			'taker.submitBlik.errors.paymentHashMissing' => 'Hash de paiement de l\'offre manquant après récupération.',
 			'taker.submitBlik.details.requestedAmount' => ({required Object code}) => 'Montant ${code} demandé',
+			_ => null,
+		} ?? switch (path) {
 			'taker.submitBlik.details.exchangeRate' => 'Taux de change',
 			'taker.submitBlik.details.takerFee' => 'Frais taker',
 			'taker.submitBlik.details.status' => 'Statut',
 			'taker.submitBlik.details.youllReceive' => 'Vous recevrez',
-			_ => null,
-		} ?? switch (path) {
 			'taker.criticalCodeDecision.title' => 'Décision critique',
 			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Vous avez déjà communiqué un code ${code} au maker. Continuer peut remplacer ce code, mettre fin à votre réservation et rouvrir l’offre à d’autres takers.',
 			'taker.criticalCodeDecision.warningTitle' => 'VOUS RISQUEZ DE PERDRE VOS FONDS',

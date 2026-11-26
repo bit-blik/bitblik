@@ -3,7 +3,12 @@ import 'package:bitblik_core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Offer skOffer({String? bankId}) => Offer(
+Offer skOffer({
+  String? bankId,
+  List<String> bankIds = const [],
+  String? takerPubkey,
+}) =>
+    Offer(
       id: 'o1',
       amountSats: 90000,
       makerFees: 0,
@@ -16,6 +21,8 @@ Offer skOffer({String? bankId}) => Offer(
       coordinatorPubkey: 'c',
       paymentSystemId: 'sk',
       bankId: bankId,
+      bankIds: bankIds,
+      takerPubkey: takerPubkey,
     );
 
 Future<void> pump(WidgetTester tester, Offer offer) async {
@@ -50,5 +57,34 @@ void main() {
     expect(find.textContaining('min'), findsNothing);
     expect(find.byIcon(Icons.timer_outlined), findsNothing);
     expect(find.byIcon(Icons.account_balance), findsOneWidget);
+  });
+
+  // An open multi-bank offer shows every bank, so a VÚB taker spots it even
+  // though Tatra banka is the maker's first choice.
+  testWidgets('an open multi-bank offer shows a chip per accepted bank',
+      (tester) async {
+    await pump(
+      tester,
+      skOffer(bankId: 'tatrabanka', bankIds: ['tatrabanka', 'vub']),
+    );
+    expect(find.textContaining('Tatra banka'), findsOneWidget);
+    expect(find.textContaining('VÚB banka · 10 min'), findsOneWidget);
+    expect(find.byIcon(Icons.account_balance), findsOneWidget);
+    expect(find.byIcon(Icons.timer_outlined), findsOneWidget);
+  });
+
+  // Once taken, only the bank the taker picked matters.
+  testWidgets('a taken multi-bank offer shows only the bank it runs on',
+      (tester) async {
+    await pump(
+      tester,
+      skOffer(
+        bankId: 'vub',
+        bankIds: ['tatrabanka', 'vub'],
+        takerPubkey: 'taker',
+      ),
+    );
+    expect(find.textContaining('VÚB banka'), findsOneWidget);
+    expect(find.textContaining('Tatra banka'), findsNothing);
   });
 }
