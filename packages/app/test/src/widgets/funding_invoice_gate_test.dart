@@ -55,8 +55,12 @@ FundingEstimate _estimate({int total = 1498, int fees = 10}) => FundingEstimate(
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('amount tolerance is symmetric, bounded, and never compounded', () {
-    for (final (amount, tolerance) in [(100, 5), (10000, 50), (1000000, 100)]) {
+  test('amount tolerance is symmetric, proportional, never compounded', () {
+    for (final (amount, tolerance) in [
+      (100, 5),
+      (10000, 50),
+      (1000000, 5000),
+    ]) {
       final estimate = _estimate(total: amount);
       expect(estimate.toleranceSats, tolerance);
       for (final delta in [-tolerance, 0, tolerance]) {
@@ -78,6 +82,52 @@ void main() {
       () => estimate.requireMatches(_offer('', sats: 10090)),
       throwsFormatException,
     );
+  });
+
+  test('normal rate drift on a real-size quote is not blocked', () {
+    // 200 EUR at 73,500 EUR/BTC with a 0.25% maker fee, priced the way the
+    // coordinator prices it. The client's rate comes from the same public
+    // sources but a moment apart, so a few tenths of a percent is normal.
+    const fiat = 200.0;
+    const feePercent = 0.25;
+    const coordinatorRate = 73500.0;
+    final base = (fiat / coordinatorRate * 100000000).round();
+    final coordinatorFees = OfferQuote.makerFeeSats(base, feePercent);
+    final quote = _offer(
+      '',
+      sats: base,
+      fees: coordinatorFees,
+      fiat: fiat,
+      currency: 'EUR',
+    );
+
+    FundingEstimate estimateAt(double drift) {
+      final sats = fiat / (coordinatorRate * (1 + drift)) * 100000000;
+      return FundingEstimate(
+        coordinatorPubkey: 'coordinator',
+        makerPubkey: 'maker',
+        fiatAmount: fiat,
+        fiatCurrency: 'EUR',
+        premiumPercent: 0,
+        totalSats: (sats + sats * feePercent / 100).round(),
+        makerFeesSats: (sats * feePercent / 100).ceil(),
+      );
+    }
+
+    for (final drift in [-0.003, 0.003]) {
+      expect(
+        () => estimateAt(drift).requireMatches(quote),
+        returnsNormally,
+        reason: 'drift $drift',
+      );
+    }
+    for (final drift in [-0.01, 0.01]) {
+      expect(
+        () => estimateAt(drift).requireMatches(quote),
+        throwsFormatException,
+        reason: 'drift $drift',
+      );
+    }
   });
 
   test(

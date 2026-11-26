@@ -203,12 +203,16 @@ class ApiServiceNostr {
     return null;
   }
 
-  Future<double> getBtcRate(String currency) async {
-    final cachedRate = MemoryCache.instance.read<double>(
-      _btcRateCacheKey(currency),
-    );
-    if (cachedRate != null) {
-      return cachedRate;
+  /// [refresh] skips the five-minute cache, for amounts that must match what
+  /// a coordinator quotes at this moment rather than when a screen opened.
+  Future<double> getBtcRate(String currency, {bool refresh = false}) async {
+    if (!refresh) {
+      final cachedRate = MemoryCache.instance.read<double>(
+        _btcRateCacheKey(currency),
+      );
+      if (cachedRate != null) {
+        return cachedRate;
+      }
     }
 
     await _fetchAndCacheAllSources(currency);
