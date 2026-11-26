@@ -143,10 +143,13 @@ offers:
   labels:
     premium: "Premium"
     premiumBadge: "+${percent}% Premium"
+    discount: "Rabatt"
+    discountBadge: "-${percent}% Rabatt"
 
   tooltips:
     takerFeeInfo: "Der Koordinator erhebt eine Taker-Gebühr von ${feePercent}%. Diese enthält Lightning-Routing-Gebühren und wird vom Betrag abgezogen, den du erhältst."
     premiumInfoTaker: "Ein Premium bedeutet, dass dieses Angebot über dem Marktpreis liegt. Für denselben Fiat-Betrag sperrt der Maker weniger Sats in der Hold-Invoice, du zahlst also über Marktpreis und erhältst weniger Sats als zum Marktkurs. Das maximale Premium wird vom Koordinator festgelegt."
+    discountInfoTaker: "Ein Rabatt bedeutet, dass dieses Angebot unter dem Marktpreis liegt. Für denselben Fiat-Betrag sperrt der Maker mehr Sats in der Hold-Invoice, du erhältst also mehr Sats als zum Marktkurs. Der maximale Rabatt wird vom Koordinator festgelegt."
     ratesFetchedAt: "Abgerufen um"
     ratesSources: "Durchschn. Kursquellen"
 
@@ -304,6 +307,8 @@ coordinator:
     maxPremium: "Max. Premium"
     maxPremiumInfoTitle: "Premium"
     maxPremiumInfoBody: "Ein Premium ist ein optionaler Preisaufschlag über dem Marktkurs, den ein Maker auf ein Angebot setzen kann. Mit einem Premium sperrt der Maker weniger Sats für denselben Fiat-Betrag, sodass der Taker über Marktpreis zahlt und der Maker die Differenz behält. Dieser Wert ist das höchste Premium, das dieser Koordinator für seine Angebote erlaubt."
+    premiumRange: "Premium-Spanne"
+    premiumRangeInfoBody: "Innerhalb dieser Spanne kann ein Maker ein Premium (Preis über Markt) oder einen Rabatt (Preis unter Markt) festlegen. Mit einem Rabatt sperrt der Maker mehr Sats für denselben Fiat-Betrag, sodass der Taker mehr Sats als zum Marktkurs erhält. Mit einem Premium sperrt er weniger Sats und behält die Differenz."
     reservationTime: "Reservierungszeit"
     currencies: "Währungen"
     paymentSystem: "Zahlungssystem"
@@ -440,6 +445,7 @@ maker:
       customAmount: Benutzerdefiniert
       tapToSelect: Zum Auswählen tippen
       premium: Premium
+      discount: "Rabatt"
     actions:
       generateInvoice: Invoice erstellen
     bank:
@@ -460,6 +466,7 @@ maker:
       feeInfo: "Der Koordinator erhebt eine Maker-Gebühr von ${feePercent}%. Diese Gebühr wird von deiner Lightning-Zahlung abgezogen."
       payInfo: "Diese Berechnung basiert auf clientseitig abgerufenen Wechselkursen. Der Koordinator berechnet den genauen Betrag, und der Invoice-Betrag ist der endgültige und exakte Zahlbetrag."
       premiumInfo: "Mit einem optionalen Premium kannst du deine Sats über dem Marktpreis verkaufen. Das Premium reduziert die in deiner Hold-Invoice gesperrten Sats für denselben Fiat-Betrag, sodass der Taker über Marktpreis zahlt und du die Differenz behältst. Standardmäßig deaktiviert (0%). Das maximale Premium wird vom gewählten Koordinator festgelegt."
+      discountInfo: "Mit einem optionalen Rabatt verkaufst du deine Sats unter Marktpreis, damit dein Angebot für Taker attraktiver ist. Der Rabatt erhöht die in deiner Hold-Invoice gesperrten Sats für denselben Fiat-Betrag, sodass der Taker mehr Sats als zum Marktkurs erhält. Standardmäßig aus (0%). Den maximalen Rabatt legt der gewählte Koordinator fest."
 
     category:
       label: "Angebotskategorie"
@@ -1196,6 +1203,7 @@ settings:
     enablePremium: Premium-Preise aktivieren
     enablePremiumDescription: Zeigt den Premium-Regler beim Erstellen von Maker-Angeboten an.
     defaultPremium: Standard-Premium
+    defaultDiscount: "Standard-Rabatt"
     defaultPremiumDisabled: Aktiviere Premium-Preise, um ein Standard-Premium festzulegen.
     premiumPerCoordinatorNote: "Jeder Koordinator legt sein eigenes maximales Premium fest, dein Standardwert wird daher durch den für ein Angebot verwendeten Koordinator begrenzt."
     categoryOptions:
@@ -1345,6 +1353,7 @@ offerNotifications:
     title: Neues Angebot verfügbar
     body: "${amount} ${currency} · ${sats}"
     premiumSuffix: "+${percent}% Premium"
+    discountSuffix: "-${percent}% Rabatt"
   categories:
     shop: Geschäft
     atm: Geldautomat

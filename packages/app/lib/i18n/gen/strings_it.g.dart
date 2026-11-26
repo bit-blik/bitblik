@@ -759,6 +759,8 @@ class _Translations$offers$labels$it extends Translations$offers$labels$en {
 	// Translations
 	@override String get premium => 'Premio';
 	@override String premiumBadge({required Object percent}) => '+${percent}% premio';
+	@override String get discount => 'Sconto';
+	@override String discountBadge({required Object percent}) => '-${percent}% sconto';
 }
 
 // Path: offers.tooltips
@@ -770,6 +772,7 @@ class _Translations$offers$tooltips$it extends Translations$offers$tooltips$en {
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi';
 	@override String get premiumInfoTaker => 'Un premio significa che questa offerta è prezzata sopra il mercato. Per lo stesso importo fiat, il maker blocca meno sat nella fattura hold, quindi paghi sopra il mercato e ricevi meno sat rispetto al tasso di mercato. Il premio massimo è impostato dal coordinatore.';
+	@override String get discountInfoTaker => 'Uno sconto significa che questa offerta è prezzata sotto il mercato. Per lo stesso importo fiat, il maker blocca più sat nella fattura hold, quindi ricevi più sat rispetto al tasso di mercato. Lo sconto massimo è impostato dal coordinatore.';
 	@override String get ratesFetchedAt => 'Recuperato alle';
 	@override String get ratesSources => 'Fonti tasso medio';
 }
@@ -1034,6 +1037,8 @@ class _Translations$coordinator$details$it extends Translations$coordinator$deta
 	@override String get maxPremium => 'Premio max';
 	@override String get maxPremiumInfoTitle => 'Premio';
 	@override String get maxPremiumInfoBody => 'Il premio è un sovrapprezzo opzionale rispetto al tasso di mercato che un maker può impostare su un\'offerta. Con un premio, il maker blocca meno satoshi per lo stesso importo in fiat, quindi il taker paga sopra il mercato e il maker trattiene la differenza. Questo valore è il premio massimo che questo coordinatore consente sulle sue offerte.';
+	@override String get premiumRange => 'Intervallo del premio';
+	@override String get premiumRangeInfoBody => 'In questo intervallo un maker può impostare un premio (prezzo sopra il mercato) o uno sconto (prezzo sotto il mercato). Con uno sconto, il maker blocca più satoshi per lo stesso importo in fiat, quindi il taker riceve più satoshi rispetto al tasso di mercato. Con un premio, blocca meno satoshi e trattiene la differenza.';
 	@override String get reservationTime => 'Tempo di prenotazione';
 	@override String get currencies => 'Valute';
 	@override String get paymentSystem => 'Sistema di pagamento';
@@ -1874,6 +1879,7 @@ class _Translations$settings$offerCreation$it extends Translations$settings$offe
 	@override String get enablePremium => 'Abilita premio di prezzo';
 	@override String get enablePremiumDescription => 'Mostra il cursore del premio durante la creazione delle offerte maker.';
 	@override String get defaultPremium => 'Premio predefinito';
+	@override String get defaultDiscount => 'Sconto predefinito';
 	@override String get defaultPremiumDisabled => 'Abilita il premio di prezzo per impostare un premio predefinito.';
 	@override String get premiumPerCoordinatorNote => 'Ogni coordinatore imposta il proprio premio massimo, quindi il tuo valore predefinito è limitato dal coordinatore usato per un\'offerta.';
 	@override late final _Translations$settings$offerCreation$categoryOptions$it categoryOptions = _Translations$settings$offerCreation$categoryOptions$it._(_root);
@@ -2145,6 +2151,7 @@ class _Translations$offerNotifications$newOffer$it extends Translations$offerNot
 	@override String get title => 'Nuova offerta disponibile';
 	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}';
 	@override String premiumSuffix({required Object percent}) => '+${percent}% premio';
+	@override String discountSuffix({required Object percent}) => '-${percent}% sconto';
 }
 
 // Path: offerNotifications.categories
@@ -2291,6 +2298,7 @@ class _Translations$maker$amountForm$labels$it extends Translations$maker$amount
 	@override String get customAmount => 'Personalizzato';
 	@override String get tapToSelect => 'Tocca per selezionare';
 	@override String get premium => 'Premio';
+	@override String get discount => 'Sconto';
 }
 
 // Path: maker.amountForm.actions
@@ -2342,6 +2350,7 @@ class _Translations$maker$amountForm$tooltips$it extends Translations$maker$amou
 	@override String feeInfo({required Object feePercent}) => 'Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning.';
 	@override String get payInfo => 'Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l\'importo esatto, e l\'importo della fattura sarà quello finale e definitivo da pagare.';
 	@override String get premiumInfo => 'Un premio opzionale ti permette di vendere i tuoi sat sopra il prezzo di mercato. Il premio riduce i sat bloccati nella tua fattura hold per lo stesso importo fiat, così il taker paga sopra il mercato e tu trattieni la differenza. Predefinito disattivato (0%). Il premio massimo è impostato dal coordinatore selezionato.';
+	@override String get discountInfo => 'Uno sconto opzionale ti permette di vendere i tuoi sat sotto il prezzo di mercato, rendendo la tua offerta più interessante per i taker. Lo sconto aumenta i sat bloccati nella tua fattura hold per lo stesso importo fiat, quindi il taker riceve più sat rispetto al tasso di mercato. Predefinito disattivato (0%). Lo sconto massimo è impostato dal coordinatore selezionato.';
 }
 
 // Path: maker.amountForm.category
@@ -3410,8 +3419,11 @@ extension on TranslationsIt {
 			'offers.details.consents.ecommerce' => ({required Object code}) => 'Per vari motivi — come articolo esaurito, correzione di un sovrapprezzo o altri problemi lato commerciante — il commerciante online potrebbe automaticamente restituire denaro sul conto bancario collegato al ${code} che hai generato. Quei fondi arrivano sul tuo conto e non ti appartengono. Se succede, contatta il coordinatore in buona fede e organizza la restituzione dei fondi al maker. Accettando questa offerta, accetti questi termini e giuri solennemente di agire onestamente in tali situazioni.',
 			'offers.labels.premium' => 'Premio',
 			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% premio',
+			'offers.labels.discount' => 'Sconto',
+			'offers.labels.discountBadge' => ({required Object percent}) => '-${percent}% sconto',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Il coordinatore applica una commissione taker del ${feePercent}%. Questo include le commissioni di routing Lightning ed è detratto dall\'importo che ricevi',
 			'offers.tooltips.premiumInfoTaker' => 'Un premio significa che questa offerta è prezzata sopra il mercato. Per lo stesso importo fiat, il maker blocca meno sat nella fattura hold, quindi paghi sopra il mercato e ricevi meno sat rispetto al tasso di mercato. Il premio massimo è impostato dal coordinatore.',
+			'offers.tooltips.discountInfoTaker' => 'Uno sconto significa che questa offerta è prezzata sotto il mercato. Per lo stesso importo fiat, il maker blocca più sat nella fattura hold, quindi ricevi più sat rispetto al tasso di mercato. Lo sconto massimo è impostato dal coordinatore.',
 			'offers.tooltips.ratesFetchedAt' => 'Recuperato alle',
 			'offers.tooltips.ratesSources' => 'Fonti tasso medio',
 			'offers.actions.take' => 'ACCETTA',
@@ -3524,6 +3536,8 @@ extension on TranslationsIt {
 			'coordinator.details.maxPremium' => 'Premio max',
 			'coordinator.details.maxPremiumInfoTitle' => 'Premio',
 			'coordinator.details.maxPremiumInfoBody' => 'Il premio è un sovrapprezzo opzionale rispetto al tasso di mercato che un maker può impostare su un\'offerta. Con un premio, il maker blocca meno satoshi per lo stesso importo in fiat, quindi il taker paga sopra il mercato e il maker trattiene la differenza. Questo valore è il premio massimo che questo coordinatore consente sulle sue offerte.',
+			'coordinator.details.premiumRange' => 'Intervallo del premio',
+			'coordinator.details.premiumRangeInfoBody' => 'In questo intervallo un maker può impostare un premio (prezzo sopra il mercato) o uno sconto (prezzo sotto il mercato). Con uno sconto, il maker blocca più satoshi per lo stesso importo in fiat, quindi il taker riceve più satoshi rispetto al tasso di mercato. Con un premio, blocca meno satoshi e trattiene la differenza.',
 			'coordinator.details.reservationTime' => 'Tempo di prenotazione',
 			'coordinator.details.currencies' => 'Valute',
 			'coordinator.details.paymentSystem' => 'Sistema di pagamento',
@@ -3634,6 +3648,7 @@ extension on TranslationsIt {
 			'maker.amountForm.labels.customAmount' => 'Personalizzato',
 			'maker.amountForm.labels.tapToSelect' => 'Tocca per selezionare',
 			'maker.amountForm.labels.premium' => 'Premio',
+			'maker.amountForm.labels.discount' => 'Sconto',
 			'maker.amountForm.actions.generateInvoice' => 'Genera Fattura',
 			'maker.amountForm.bank.label' => 'Banca',
 			'maker.amountForm.bank.required' => 'Scegli una banca',
@@ -3649,6 +3664,7 @@ extension on TranslationsIt {
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Il coordinatore applica una commissione maker del ${feePercent}%. Questa commissione viene detratta dal tuo pagamento Lightning.',
 			'maker.amountForm.tooltips.payInfo' => 'Questo calcolo si basa sui tassi di cambio recuperati dal client. Il coordinatore calcolerà l\'importo esatto, e l\'importo della fattura sarà quello finale e definitivo da pagare.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Un premio opzionale ti permette di vendere i tuoi sat sopra il prezzo di mercato. Il premio riduce i sat bloccati nella tua fattura hold per lo stesso importo fiat, così il taker paga sopra il mercato e tu trattieni la differenza. Predefinito disattivato (0%). Il premio massimo è impostato dal coordinatore selezionato.',
+			'maker.amountForm.tooltips.discountInfo' => 'Uno sconto opzionale ti permette di vendere i tuoi sat sotto il prezzo di mercato, rendendo la tua offerta più interessante per i taker. Lo sconto aumenta i sat bloccati nella tua fattura hold per lo stesso importo fiat, quindi il taker riceve più sat rispetto al tasso di mercato. Predefinito disattivato (0%). Lo sconto massimo è impostato dal coordinatore selezionato.',
 			'maker.amountForm.category.label' => 'Categoria offerta',
 			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => '${system} non supporta questa categoria.',
 			'maker.amountForm.category.options.physicalShop' => 'Negozio, caffè o ristorante',
@@ -3818,6 +3834,8 @@ extension on TranslationsIt {
 			'taker.conflict.instructions' => 'Il Maker deve ora confermare l\'esito. Se conferma che il pagamento è riuscito, il tuo pagamento proseguirà. Se conferma che non è riuscito, o se il timer scade, l\'offerta passerà a una disputa formale e la chat della disputa diventerà disponibile.',
 			'taker.conflict.timeoutLabel' => ({required Object time}) => 'La disputa formale si aprirà automaticamente tra ${time}',
 			'taker.conflict.actions.back' => 'Torna alla Home',
+			_ => null,
+		} ?? switch (path) {
 			'taker.conflict.feedback.reported' => 'Conflitto di pagamento segnalato. In attesa della conferma del Maker.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Errore nella segnalazione del conflitto: ${details}',
 			'taker.dispute.headline' => 'Disputa formale aperta',
@@ -3825,8 +3843,6 @@ extension on TranslationsIt {
 			'twint.shop.scanTitle' => 'Scansiona il QR del negozio',
 			'twint.shop.scanInstructions' => 'Scansiona il codice QR di pagamento sul terminale del negozio. L’importo in CHF verrà letto dal codice.',
 			'twint.shop.invalidQr' => 'Questo codice QR non è un pagamento in negozio in CHF supportato. Scansiona il codice QR di pagamento sul terminale.',
-			_ => null,
-		} ?? switch (path) {
 			'twint.shop.amountMismatch' => 'Questo codice QR ha un importo diverso. Richiedi un nuovo codice QR con l’importo originale del pagamento.',
 			'twint.shop.cameraFailed' => 'Fotocamera non disponibile. Consenti l’accesso alla fotocamera nelle impostazioni del dispositivo o del browser, poi riprova.',
 			'twint.shop.importImage' => 'Importa immagine QR',
@@ -4138,6 +4154,7 @@ extension on TranslationsIt {
 			'settings.offerCreation.enablePremium' => 'Abilita premio di prezzo',
 			'settings.offerCreation.enablePremiumDescription' => 'Mostra il cursore del premio durante la creazione delle offerte maker.',
 			'settings.offerCreation.defaultPremium' => 'Premio predefinito',
+			'settings.offerCreation.defaultDiscount' => 'Sconto predefinito',
 			'settings.offerCreation.defaultPremiumDisabled' => 'Abilita il premio di prezzo per impostare un premio predefinito.',
 			'settings.offerCreation.premiumPerCoordinatorNote' => 'Ogni coordinatore imposta il proprio premio massimo, quindi il tuo valore predefinito è limitato dal coordinatore usato per un\'offerta.',
 			'settings.offerCreation.categoryOptions.shop' => 'Negozio, caffè o ristorante',
@@ -4240,6 +4257,7 @@ extension on TranslationsIt {
 			'offerNotifications.newOffer.title' => 'Nuova offerta disponibile',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premio',
+			'offerNotifications.newOffer.discountSuffix' => ({required Object percent}) => '-${percent}% sconto',
 			'offerNotifications.categories.shop' => 'Negozio',
 			'offerNotifications.categories.atm' => 'ATM',
 			'offerNotifications.categories.online' => 'Online',

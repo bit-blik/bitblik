@@ -758,6 +758,8 @@ class _Translations$offers$labels$pl extends Translations$offers$labels$en {
 	// Translations
 	@override String get premium => 'Premia';
 	@override String premiumBadge({required Object percent}) => '+${percent}% premii';
+	@override String get discount => 'Zniżka';
+	@override String discountBadge({required Object percent}) => '-${percent}% zniżki';
 }
 
 // Path: offers.tooltips
@@ -769,6 +771,7 @@ class _Translations$offers$tooltips$pl extends Translations$offers$tooltips$en {
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.';
 	@override String get premiumInfoTaker => 'Premia oznacza, że ta oferta jest wyceniona powyżej rynku. Dla tej samej kwoty fiat maker blokuje mniej satów w fakturze hold, więc płacisz powyżej rynku i otrzymujesz mniej satów niż po kursie rynkowym. Maksymalną premię ustala koordynator.';
+	@override String get discountInfoTaker => 'Zniżka oznacza, że ta oferta jest wyceniona poniżej rynku. Dla tej samej kwoty fiat maker blokuje więcej satów w fakturze hold, więc otrzymujesz więcej satów niż po kursie rynkowym. Maksymalną zniżkę ustala koordynator.';
 	@override String get ratesFetchedAt => 'Pobrano o';
 	@override String get ratesSources => 'Źródła średniego kursu';
 }
@@ -1033,6 +1036,8 @@ class _Translations$coordinator$details$pl extends Translations$coordinator$deta
 	@override String get maxPremium => 'Maks. premia';
 	@override String get maxPremiumInfoTitle => 'Premia';
 	@override String get maxPremiumInfoBody => 'Premia to opcjonalna marża ponad kurs rynkowy, którą wystawiający (maker) może ustawić na ofercie. Przy premii maker blokuje mniej satoshi za tę samą kwotę fiat, więc biorący (taker) płaci powyżej rynku, a maker zatrzymuje różnicę. Ta wartość to najwyższa premia dozwolona przez tego koordynatora w jego ofertach.';
+	@override String get premiumRange => 'Zakres premii';
+	@override String get premiumRangeInfoBody => 'W tym zakresie wystawiający (maker) może ustawić premię (cena powyżej rynku) lub zniżkę (cena poniżej rynku). Przy zniżce maker blokuje więcej satoshi za tę samą kwotę fiat, więc biorący (taker) otrzymuje więcej satoshi niż po kursie rynkowym. Przy premii maker blokuje mniej satoshi i zatrzymuje różnicę.';
 	@override String get reservationTime => 'Czas rezerwacji';
 	@override String get currencies => 'Waluty';
 	@override String get paymentSystem => 'System płatności';
@@ -1871,6 +1876,7 @@ class _Translations$settings$offerCreation$pl extends Translations$settings$offe
 	@override String get enablePremium => 'Włącz premię cenową';
 	@override String get enablePremiumDescription => 'Pokaż suwak premii podczas tworzenia ofert makera.';
 	@override String get defaultPremium => 'Domyślna premia';
+	@override String get defaultDiscount => 'Domyślna zniżka';
 	@override String get defaultPremiumDisabled => 'Włącz premię cenową, aby ustawić domyślną premię.';
 	@override String get premiumPerCoordinatorNote => 'Każdy koordynator ustala własną maksymalną premię, więc Twoja domyślna wartość jest ograniczona przez koordynatora użytego do oferty.';
 	@override late final _Translations$settings$offerCreation$categoryOptions$pl categoryOptions = _Translations$settings$offerCreation$categoryOptions$pl._(_root);
@@ -2142,6 +2148,7 @@ class _Translations$offerNotifications$newOffer$pl extends Translations$offerNot
 	@override String get title => 'Nowa oferta dostępna';
 	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}';
 	@override String premiumSuffix({required Object percent}) => '+${percent}% premii';
+	@override String discountSuffix({required Object percent}) => '-${percent}% zniżki';
 }
 
 // Path: offerNotifications.categories
@@ -2288,6 +2295,7 @@ class _Translations$maker$amountForm$labels$pl extends Translations$maker$amount
 	@override String get customAmount => 'Własna';
 	@override String get tapToSelect => 'Kliknij, aby wybrać';
 	@override String get premium => 'Premia';
+	@override String get discount => 'Zniżka';
 }
 
 // Path: maker.amountForm.actions
@@ -2339,6 +2347,7 @@ class _Translations$maker$amountForm$tooltips$pl extends Translations$maker$amou
 	@override String feeInfo({required Object feePercent}) => 'Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning.';
 	@override String get payInfo => 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.';
 	@override String get premiumInfo => 'Opcjonalna premia pozwala sprzedać saty powyżej ceny rynkowej. Premia zmniejsza liczbę satów zablokowanych w fakturze hold dla tej samej kwoty fiat, więc kupujący płaci powyżej rynku, a Ty zatrzymujesz różnicę. Domyślnie wyłączona (0%). Maksymalną premię ustala wybrany koordynator.';
+	@override String get discountInfo => 'Opcjonalna zniżka pozwala sprzedać saty poniżej ceny rynkowej, dzięki czemu Twoja oferta jest atrakcyjniejsza dla biorących. Zniżka zwiększa liczbę satów zablokowanych w Twojej fakturze hold za tę samą kwotę fiat, więc biorący otrzymuje więcej satów niż po kursie rynkowym. Domyślnie wyłączona (0%). Maksymalną zniżkę ustala wybrany koordynator.';
 }
 
 // Path: maker.amountForm.category
@@ -3406,8 +3415,11 @@ extension on TranslationsPl {
 			'offers.details.consents.ecommerce' => ({required Object code}) => 'Z różnych powodów — takich jak brak towaru, korekta nadpłaty lub inne problemy po stronie sprzedawcy — internetowy sprzedawca może automatycznie odesłać pieniądze na konto bankowe powiązane z wygenerowanym przez Ciebie kodem ${code}. Te środki trafiają na Twoje konto i nie należą do Ciebie. Jeśli tak się stanie, skontaktuj się w dobrej wierze z koordynatorem i umów się na zwrot środków makerowi. Biorąc tę ofertę, akceptujesz te warunki i uroczyście przysięgasz postępować uczciwie w takich sytuacjach.',
 			'offers.labels.premium' => 'Premia',
 			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% premii',
+			'offers.labels.discount' => 'Zniżka',
+			'offers.labels.discountBadge' => ({required Object percent}) => '-${percent}% zniżki',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Koordynator pobiera ${feePercent}% opłaty dla kupującego. To obejmuje opłaty za routing Lightning i jest potrącane z kwoty, którą otrzymujesz.',
 			'offers.tooltips.premiumInfoTaker' => 'Premia oznacza, że ta oferta jest wyceniona powyżej rynku. Dla tej samej kwoty fiat maker blokuje mniej satów w fakturze hold, więc płacisz powyżej rynku i otrzymujesz mniej satów niż po kursie rynkowym. Maksymalną premię ustala koordynator.',
+			'offers.tooltips.discountInfoTaker' => 'Zniżka oznacza, że ta oferta jest wyceniona poniżej rynku. Dla tej samej kwoty fiat maker blokuje więcej satów w fakturze hold, więc otrzymujesz więcej satów niż po kursie rynkowym. Maksymalną zniżkę ustala koordynator.',
 			'offers.tooltips.ratesFetchedAt' => 'Pobrano o',
 			'offers.tooltips.ratesSources' => 'Źródła średniego kursu',
 			'offers.actions.take' => 'WEŹ',
@@ -3520,6 +3532,8 @@ extension on TranslationsPl {
 			'coordinator.details.maxPremium' => 'Maks. premia',
 			'coordinator.details.maxPremiumInfoTitle' => 'Premia',
 			'coordinator.details.maxPremiumInfoBody' => 'Premia to opcjonalna marża ponad kurs rynkowy, którą wystawiający (maker) może ustawić na ofercie. Przy premii maker blokuje mniej satoshi za tę samą kwotę fiat, więc biorący (taker) płaci powyżej rynku, a maker zatrzymuje różnicę. Ta wartość to najwyższa premia dozwolona przez tego koordynatora w jego ofertach.',
+			'coordinator.details.premiumRange' => 'Zakres premii',
+			'coordinator.details.premiumRangeInfoBody' => 'W tym zakresie wystawiający (maker) może ustawić premię (cena powyżej rynku) lub zniżkę (cena poniżej rynku). Przy zniżce maker blokuje więcej satoshi za tę samą kwotę fiat, więc biorący (taker) otrzymuje więcej satoshi niż po kursie rynkowym. Przy premii maker blokuje mniej satoshi i zatrzymuje różnicę.',
 			'coordinator.details.reservationTime' => 'Czas rezerwacji',
 			'coordinator.details.currencies' => 'Waluty',
 			'coordinator.details.paymentSystem' => 'System płatności',
@@ -3630,6 +3644,7 @@ extension on TranslationsPl {
 			'maker.amountForm.labels.customAmount' => 'Własna',
 			'maker.amountForm.labels.tapToSelect' => 'Kliknij, aby wybrać',
 			'maker.amountForm.labels.premium' => 'Premia',
+			'maker.amountForm.labels.discount' => 'Zniżka',
 			'maker.amountForm.actions.generateInvoice' => 'Wygeneruj Fakturę',
 			'maker.amountForm.bank.label' => 'Bank',
 			'maker.amountForm.bank.required' => 'Wybierz bank',
@@ -3645,6 +3660,7 @@ extension on TranslationsPl {
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Koordynator pobiera od twórcy opłatę w wysokości ${feePercent}%. Ta opłata jest odejmowana od Twojej płatności Lightning.',
 			'maker.amountForm.tooltips.payInfo' => 'Ta kalkulacja jest oparta na kursach wymiany pobranych po stronie klienta. Koordynator obliczy dokładną kwotę, a kwota faktury będzie ostateczną i dokładną kwotą do zapłaty.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Opcjonalna premia pozwala sprzedać saty powyżej ceny rynkowej. Premia zmniejsza liczbę satów zablokowanych w fakturze hold dla tej samej kwoty fiat, więc kupujący płaci powyżej rynku, a Ty zatrzymujesz różnicę. Domyślnie wyłączona (0%). Maksymalną premię ustala wybrany koordynator.',
+			'maker.amountForm.tooltips.discountInfo' => 'Opcjonalna zniżka pozwala sprzedać saty poniżej ceny rynkowej, dzięki czemu Twoja oferta jest atrakcyjniejsza dla biorących. Zniżka zwiększa liczbę satów zablokowanych w Twojej fakturze hold za tę samą kwotę fiat, więc biorący otrzymuje więcej satów niż po kursie rynkowym. Domyślnie wyłączona (0%). Maksymalną zniżkę ustala wybrany koordynator.',
 			'maker.amountForm.category.label' => 'Kategoria oferty',
 			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => '${system} nie obsługuje tej kategorii.',
 			'maker.amountForm.category.options.physicalShop' => 'Sklep, kawiarnia lub restauracja',
@@ -3815,6 +3831,8 @@ extension on TranslationsPl {
 			'taker.conflict.feedback.reported' => 'Zgłoszono konflikt płatności. Oczekiwanie na potwierdzenie Makera.',
 			'taker.conflict.errors.reporting' => ({required Object details}) => 'Błąd zgłaszania konfliktu: ${details}',
 			'taker.dispute.headline' => 'Otwarto formalny spór',
+			_ => null,
+		} ?? switch (path) {
 			'taker.dispute.body' => 'Oferta jest teraz rozpatrywana przez koordynatora. Użyj poniższego czatu sporu, aby komunikować się z koordynatorem i przekazać wymagane dowody.',
 			'twint.shop.scanTitle' => 'Zeskanuj QR w sklepie',
 			'twint.shop.scanInstructions' => 'Zeskanuj kod QR płatności na terminalu sklepowym. Kwota w CHF zostanie odczytana z kodu.',
@@ -3822,8 +3840,6 @@ extension on TranslationsPl {
 			'twint.shop.amountMismatch' => 'Ten kod QR ma inną kwotę. Poproś o nowy kod QR z pierwotną kwotą płatności.',
 			'twint.shop.cameraFailed' => 'Kamera niedostępna. Zezwól na dostęp do kamery w ustawieniach urządzenia lub przeglądarki i spróbuj ponownie.',
 			'twint.shop.importImage' => 'Importuj obraz QR',
-			_ => null,
-		} ?? switch (path) {
 			'twint.shop.imageFailed' => 'Nie udało się odczytać obsługiwanego sklepowego kodu QR CHF z tego obrazu. Wybierz inny obraz.',
 			'twint.shop.scanned' => 'Kod QR sklepu zeskanowany. Sprawdź kwotę CHF przed zasileniem oferty.',
 			'twint.shop.rescan' => 'Zeskanuj inny kod QR',
@@ -4132,6 +4148,7 @@ extension on TranslationsPl {
 			'settings.offerCreation.enablePremium' => 'Włącz premię cenową',
 			'settings.offerCreation.enablePremiumDescription' => 'Pokaż suwak premii podczas tworzenia ofert makera.',
 			'settings.offerCreation.defaultPremium' => 'Domyślna premia',
+			'settings.offerCreation.defaultDiscount' => 'Domyślna zniżka',
 			'settings.offerCreation.defaultPremiumDisabled' => 'Włącz premię cenową, aby ustawić domyślną premię.',
 			'settings.offerCreation.premiumPerCoordinatorNote' => 'Każdy koordynator ustala własną maksymalną premię, więc Twoja domyślna wartość jest ograniczona przez koordynatora użytego do oferty.',
 			'settings.offerCreation.categoryOptions.shop' => 'Sklep, kawiarnia lub restauracja',
@@ -4234,6 +4251,7 @@ extension on TranslationsPl {
 			'offerNotifications.newOffer.title' => 'Nowa oferta dostępna',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premii',
+			'offerNotifications.newOffer.discountSuffix' => ({required Object percent}) => '-${percent}% zniżki',
 			'offerNotifications.categories.shop' => 'Sklep',
 			'offerNotifications.categories.atm' => 'Bankomat',
 			'offerNotifications.categories.online' => 'Online',

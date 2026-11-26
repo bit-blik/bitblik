@@ -144,10 +144,13 @@ offers:
   labels:
     premium: "Premium"
     premiumBadge: "+${percent}% premium"
+    discount: "Discount"
+    discountBadge: "-${percent}% discount"
 
   tooltips:
     takerFeeInfo: "Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive."
     premiumInfoTaker: "A premium means this offer is priced above market. For the same fiat amount, the maker locks fewer sats in the hold invoice, so you pay above market and receive fewer sats than at the market rate. The maximum premium is set by the coordinator."
+    discountInfoTaker: "A discount means this offer is priced below market. For the same fiat amount, the maker locks more sats in the hold invoice, so you receive more sats than at the market rate. The maximum discount is set by the coordinator."
     ratesFetchedAt: "Fetched at"
     ratesSources: "Avg. rate sources"
   
@@ -305,6 +308,8 @@ coordinator:
     maxPremium: "Max premium"
     maxPremiumInfoTitle: "Premium"
     maxPremiumInfoBody: "A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers."
+    premiumRange: "Premium range"
+    premiumRangeInfoBody: "Within this range a maker can set a premium (price above market) or a discount (price below market). With a discount, the maker locks more sats for the same fiat amount, so the taker receives more sats than at the market rate. With a premium, the maker locks fewer sats and keeps the difference."
     reservationTime: "Reservation time"
     currencies: "Currencies"
     paymentSystem: "Payment system"
@@ -441,6 +446,7 @@ maker:
       customAmount: Custom
       tapToSelect: Tap to select
       premium: Premium
+      discount: "Discount"
     actions:
       generateInvoice: Generate Invoice
     bank:
@@ -461,6 +467,7 @@ maker:
       feeInfo: "Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment."
       payInfo: "This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay."
       premiumInfo: "An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator."
+      discountInfo: "An optional discount lets you sell your sats below market price, making your offer more attractive to takers. The discount increases the sats locked in your hold invoice for the same fiat amount, so the taker receives more sats than at the market rate. Default is off (0%). The maximum discount is set by the selected coordinator."
 
     category:
       label: "Offer category"
@@ -1357,6 +1364,7 @@ settings:
     enablePremium: Enable premium pricing
     enablePremiumDescription: Show the premium slider when creating maker offers.
     defaultPremium: Default premium
+    defaultDiscount: "Default discount"
     defaultPremiumDisabled: Enable premium pricing to set a default premium.
     premiumPerCoordinatorNote: "Each coordinator sets its own maximum premium, so your default is capped by the coordinator used for an offer."
     categoryOptions:
@@ -1502,6 +1510,7 @@ offerNotifications:
     title: New offer available
     body: "${amount} ${currency} · ${sats}"
     premiumSuffix: "+${percent}% premium"
+    discountSuffix: "-${percent}% discount"
   categories:
     shop: Shop
     atm: ATM
