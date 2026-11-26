@@ -60,6 +60,24 @@ Choose one or configure several for fallback:
 
 Copy your `admin.macaroon` and `tls.cert` files from your LND.
 
+BOLT12 payouts (taker `lno1…` offers) need an [LNDK](https://github.com/lndk-org/lndk)
+daemon next to LND, because LND has no offer flow of its own. LNDK releases up to
+v0.3.0 do not work with LND 0.21+; use a build with native onion message support
+(lndk-org/lndk#266). Without `LNDK_HOST` the coordinator stays BOLT11-only.
+
+```yaml
+  LNDK_HOST: host.docker.internal   # must be in LNDK's tls_ip
+  LNDK_PORT: 7000
+  LNDK_CERT_PATH: /app/lndk-tls-cert.pem       # <lndk data_dir>/tls-cert.pem
+  LNDK_MACAROON_PATH: /app/lndk.macaroon       # optional, defaults to the LND macaroon
+```
+
+LNDK pays with the macaroon its client sends, so `LNDK_MACAROON_PATH` can point
+at a macaroon limited to what LNDK calls instead of the admin one. The
+coordinator makes no LNDK call at startup: an LNDK outage only fails BOLT12
+payouts. Before paying, it stores the hash of the invoice LNDK fetched on the
+payment attempt and reconciles from LND's payment database by that hash.
+
 #### NWC
 
 generate a new NWC connection with supported permission `make_hold_invoice` and paste it to the `NWC_URI` field in the `docker-compose.yml`

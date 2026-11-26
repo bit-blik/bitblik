@@ -394,7 +394,8 @@ void main() {
               offer: anyNamed('offer'),
               amountSat: anyNamed('amountSat'),
               feeLimitSat: anyNamed('feeLimitSat'),
-              paymentAttemptId: anyNamed('paymentAttemptId')))
+              paymentAttemptId: anyNamed('paymentAttemptId'),
+              onPaymentId: anyNamed('onPaymentId')))
           .thenAnswer((_) async =>
               PayOfferResult(status: PaymentStatus.SUCCEEDED, feeSat: 1));
     }
@@ -429,7 +430,8 @@ void main() {
                 offer: bolt12,
                 amountSat: 1500,
                 feeLimitSat: anyNamed('feeLimitSat'),
-                paymentAttemptId: anyNamed('paymentAttemptId')))
+                paymentAttemptId: anyNamed('paymentAttemptId'),
+                onPaymentId: anyNamed('onPaymentId')))
             .called(1);
         verifyNever(payment.payInvoice(
             invoice: anyNamed('invoice'),
@@ -524,7 +526,8 @@ void main() {
             offer: anyNamed('offer'),
             amountSat: anyNamed('amountSat'),
             feeLimitSat: anyNamed('feeLimitSat'),
-            paymentAttemptId: anyNamed('paymentAttemptId')));
+            paymentAttemptId: anyNamed('paymentAttemptId'),
+            onPaymentId: anyNamed('onPaymentId')));
       });
     }
 

@@ -15,14 +15,18 @@ import '../models/invoice_update.dart';
 import '../models/create_hold_invoice_result.dart';
 import '../models/invoice_details.dart'; // Added import
 import '../models/pay_invoice_result.dart';
+import '../models/pay_offer_result.dart';
+import '../models/bolt12_offer_info.dart';
 import '../models/payment_status.dart' as domain;
 import '../logging/app_logger.dart';
+import 'lndk_bolt12_backend.dart';
 
 // Import generated LND gRPC files (adjust paths/names if necessary)
 import '../generated/lnd/lightning.pbgrpc.dart';
 import '../generated/lnd/invoices.pbgrpc.dart';
 import '../generated/lnd/router.pbgrpc.dart'
     as lnd_router; // Alias for LND router client and types
+import '../generated/lndk/lndkrpc.pbgrpc.dart' as lndk;
 // Removed unnecessary import: ../generated/lnd/router.pb.dart
 
 // Top-level helper to convert hex string to Uint8List
@@ -39,17 +43,26 @@ Uint8List _hexToBytes(String hex) {
   return Uint8List.fromList(bytes);
 }
 
-class LndService implements PaymentService {
+String _bytesToHex(List<int> bytes) =>
+    bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+
+class LndService implements PaymentService, Bolt12PaymentService {
   ClientChannel? _channel;
   LightningClient? _lightningClient;
   InvoicesClient? _invoicesClient;
   lnd_router.RouterClient? _routerClient; // Use aliased type
+  // BOLT12 payouts through an LNDK sidecar; null unless LNDK_HOST is set.
+  ClientChannel? _lndkChannel;
+  LndkBolt12Backend? _bolt12;
   late DotEnv _env;
 
   LndService(
-      {LightningClient? lightningClient, lnd_router.RouterClient? routerClient})
+      {LightningClient? lightningClient,
+      lnd_router.RouterClient? routerClient,
+      LndkBolt12Backend? bolt12})
       : _lightningClient = lightningClient,
-        _routerClient = routerClient {
+        _routerClient = routerClient,
+        _bolt12 = bolt12 {
     _env = DotEnv(includePlatformEnvironment: true)..load();
   }
 
@@ -111,6 +124,7 @@ class LndService implements PaymentService {
       final info = await _lightningClient!.getInfo(GetInfoRequest());
       AppLogger.info(
           'Connected to LND node: ${info.identityPubkey} (alias: ${info.alias})');
+      await _connectLndk(info, macaroonHex);
     } catch (e) {
       AppLogger.info('Error connecting to LND: $e');
       await disconnect(); // Clean up channel if connection test fails
@@ -118,8 +132,53 @@ class LndService implements PaymentService {
     }
   }
 
+  /// Sets up BOLT12 payouts when LNDK_HOST names an LNDK daemon. No RPC is
+  /// made here: an LNDK outage must not stop LND from serving BOLT11, it only
+  /// fails BOLT12 payouts until LNDK is back.
+  Future<void> _connectLndk(GetInfoResponse info, String lndMacaroonHex) async {
+    final host = (_env['LNDK_HOST'] ?? '').trim();
+    if (host.isEmpty) return;
+    final network = info.chains.isEmpty ? '' : info.chains.first.network;
+    if (network.isEmpty) {
+      AppLogger.warning('LNDK_HOST is set but LND reported no network; '
+          'BOLT12 payouts stay off.');
+      return;
+    }
+    final port = int.parse(_env['LNDK_PORT'] ?? '7000');
+    final certPath = _env['LNDK_CERT_PATH'] ?? 'lndk-tls-cert.pem';
+    final macaroonPath = _env['LNDK_MACAROON_PATH'];
+    // LNDK calls LND with the macaroon its client sends, so by default the
+    // coordinator reuses its own LND macaroon.
+    final macaroonHex = macaroonPath == null || macaroonPath.isEmpty
+        ? lndMacaroonHex
+        : _bytesToHex(await File(macaroonPath).readAsBytes());
+    _lndkChannel = ClientChannel(
+      host,
+      port: port,
+      options: ChannelOptions(
+        credentials: ChannelCredentials.secure(
+          certificates: await File(certPath).readAsBytes(),
+          authority: host,
+        ),
+      ),
+    );
+    _bolt12 = LndkBolt12Backend(
+      offers: lndk.OffersClient(_lndkChannel!,
+          options: CallOptions(
+            metadata: {'macaroon': macaroonHex},
+            timeout: const Duration(minutes: 3),
+          )),
+      router: _routerClient!,
+      network: network,
+    );
+    AppLogger.info('BOLT12 payouts enabled through LNDK at $host:$port.');
+  }
+
   @override
   Future<void> disconnect() async {
+    await _lndkChannel?.shutdown();
+    _lndkChannel = null;
+    _bolt12 = null;
     await _channel?.shutdown();
     _channel = null;
     _lightningClient = null;
@@ -451,4 +510,46 @@ class LndService implements PaymentService {
       return null;
     }
   }
+
+  @override
+  bool get isBolt12Available => _bolt12 != null;
+
+  @override
+  Future<Bolt12OfferInfo> decodeOffer({required String offer}) async {
+    final bolt12 = _bolt12;
+    if (bolt12 == null) throw StateError('LNDK BOLT12 is not configured.');
+    return bolt12.decodeOffer(offer);
+  }
+
+  @override
+  Future<PayOfferResult> payOffer({
+    required String offer,
+    required int amountSat,
+    int? feeLimitSat,
+    required String paymentAttemptId,
+    Future<void> Function(String paymentId)? onPaymentId,
+  }) async {
+    final bolt12 = _bolt12;
+    if (bolt12 == null) {
+      return const PayOfferResult(
+        status: domain.PaymentStatus.FAILED,
+        paymentError: 'LNDK BOLT12 is not configured.',
+      );
+    }
+    return bolt12.payOffer(
+      offer: offer,
+      amountSat: amountSat,
+      feeLimitSat: feeLimitSat,
+      paymentAttemptId: paymentAttemptId,
+      onPaymentId: onPaymentId,
+    );
+  }
+
+  @override
+  Future<PayOfferResult?> reconcileOutgoingOffer({
+    required String offer,
+    required String paymentAttemptId,
+    String? paymentId,
+  }) async =>
+      _bolt12?.reconcile(offer: offer, paymentId: paymentId);
 }
