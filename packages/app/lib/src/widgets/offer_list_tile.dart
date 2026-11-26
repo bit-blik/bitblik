@@ -163,7 +163,7 @@ class OfferListTile extends ConsumerWidget {
                         '$fiatLabel ${offer.fiatCurrency}',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      if (showPremium && offer.premiumPercent > 0) ...[
+                      if (showPremium && offer.premiumPercent != 0) ...[
                         const SizedBox(width: 6),
                         PremiumChip(
                           premiumPercent: offer.premiumPercent,

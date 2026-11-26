@@ -167,14 +167,14 @@ class _MakerSuccessScreenState extends ConsumerState<MakerSuccessScreen> {
                                   offer.makerFees,
                                 ),
                               ),
-                              if (offer.premiumPercent > 0) ...[
+                              if (offer.premiumPercent != 0) ...[
                                 const SizedBox(height: 8),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      t.offers.labels.premium,
+                                      premiumLabel(t, offer.premiumPercent),
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey,

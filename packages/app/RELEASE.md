@@ -7,7 +7,7 @@
 
 ## iOS
 
-- in macos do `flutter build ipa`
+- in macos do `flutter build ipa -t lib/main_bitblik.dart`
 
 - submit to app store connect using transporter or xcode
 

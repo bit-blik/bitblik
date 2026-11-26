@@ -23,6 +23,7 @@ export 'src/payment/nwc_321_client.dart';
 export 'src/protocol/bitblik_rpc_client.dart';
 export 'src/protocol/subscription_readiness.dart';
 export 'src/quote/offer_quote.dart';
+export 'src/quote/premium_range.dart';
 export 'src/protocol/protocol_codec.dart';
 export 'src/protocol/rpc_envelope.dart';
 

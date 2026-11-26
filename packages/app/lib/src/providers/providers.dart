@@ -1636,12 +1636,7 @@ final zapstoreAppUpdateControllerProvider = Provider<NAppUpdateController?>((
   final externalUpdateUrl = externalUpdateUrlForPaymentSystem(paymentSystemId);
 
   // Package updates still target the installed build, not the selected market.
-  final appIdentifier = switch (buildDefaultPaymentSystemId) {
-    'mbway' => 'me.bitway',
-    'twint' => 'app.bittwint',
-    'sk' => 'li.veks',
-    _ => 'app.bitblik',
-  };
+  final appIdentifier = buildAndroidAppId;
 
   final ndkFlutter = ref.watch(ndkFlutterProvider);
   if (ndkFlutter == null) return null;
@@ -2406,11 +2401,14 @@ class AppLifecycleNotifier with WidgetsBindingObserver {
         sats: formattedSats,
       );
       if (categoryStr.isNotEmpty) body += ' · $categoryStr';
-      if (offer.premiumPercent > 0) {
+      if (offer.premiumPercent != 0) {
         final premiumStr = offer.premiumPercent
+            .abs()
             .toStringAsFixed(1)
             .replaceAll(RegExp(r'\.0$'), '');
-        body += ' · ${strings.newOffer.premiumSuffix(percent: premiumStr)}';
+        body += offer.premiumPercent > 0
+            ? ' · ${strings.newOffer.premiumSuffix(percent: premiumStr)}'
+            : ' · ${strings.newOffer.discountSuffix(percent: premiumStr)}';
       }
       NotificationService().showNewOffer(
         id: 20,

@@ -771,6 +771,8 @@ class _Translations$offers$labels$de extends Translations$offers$labels$en {
 	// Translations
 	@override String get premium => 'Premium';
 	@override String premiumBadge({required Object percent}) => '+${percent}% Premium';
+	@override String get discount => 'Rabatt';
+	@override String discountBadge({required Object percent}) => '-${percent}% Rabatt';
 }
 
 // Path: offers.tooltips
@@ -782,6 +784,7 @@ class _Translations$offers$tooltips$de extends Translations$offers$tooltips$en {
 	// Translations
 	@override String takerFeeInfo({required Object feePercent}) => 'Der Koordinator erhebt eine Taker-Gebühr von ${feePercent}%. Diese enthält Lightning-Routing-Gebühren und wird vom Betrag abgezogen, den du erhältst.';
 	@override String get premiumInfoTaker => 'Ein Premium bedeutet, dass dieses Angebot über dem Marktpreis liegt. Für denselben Fiat-Betrag sperrt der Maker weniger Sats in der Hold-Invoice, du zahlst also über Marktpreis und erhältst weniger Sats als zum Marktkurs. Das maximale Premium wird vom Koordinator festgelegt.';
+	@override String get discountInfoTaker => 'Ein Rabatt bedeutet, dass dieses Angebot unter dem Marktpreis liegt. Für denselben Fiat-Betrag sperrt der Maker mehr Sats in der Hold-Invoice, du erhältst also mehr Sats als zum Marktkurs. Der maximale Rabatt wird vom Koordinator festgelegt.';
 	@override String get ratesFetchedAt => 'Abgerufen um';
 	@override String get ratesSources => 'Durchschn. Kursquellen';
 }
@@ -1046,6 +1049,8 @@ class _Translations$coordinator$details$de extends Translations$coordinator$deta
 	@override String get maxPremium => 'Max. Premium';
 	@override String get maxPremiumInfoTitle => 'Premium';
 	@override String get maxPremiumInfoBody => 'Ein Premium ist ein optionaler Preisaufschlag über dem Marktkurs, den ein Maker auf ein Angebot setzen kann. Mit einem Premium sperrt der Maker weniger Sats für denselben Fiat-Betrag, sodass der Taker über Marktpreis zahlt und der Maker die Differenz behält. Dieser Wert ist das höchste Premium, das dieser Koordinator für seine Angebote erlaubt.';
+	@override String get premiumRange => 'Premium-Spanne';
+	@override String get premiumRangeInfoBody => 'Innerhalb dieser Spanne kann ein Maker ein Premium (Preis über Markt) oder einen Rabatt (Preis unter Markt) festlegen. Mit einem Rabatt sperrt der Maker mehr Sats für denselben Fiat-Betrag, sodass der Taker mehr Sats als zum Marktkurs erhält. Mit einem Premium sperrt er weniger Sats und behält die Differenz.';
 	@override String get reservationTime => 'Reservierungszeit';
 	@override String get currencies => 'Währungen';
 	@override String get paymentSystem => 'Zahlungssystem';
@@ -1887,6 +1892,7 @@ class _Translations$settings$offerCreation$de extends Translations$settings$offe
 	@override String get enablePremium => 'Premium-Preise aktivieren';
 	@override String get enablePremiumDescription => 'Zeigt den Premium-Regler beim Erstellen von Maker-Angeboten an.';
 	@override String get defaultPremium => 'Standard-Premium';
+	@override String get defaultDiscount => 'Standard-Rabatt';
 	@override String get defaultPremiumDisabled => 'Aktiviere Premium-Preise, um ein Standard-Premium festzulegen.';
 	@override String get premiumPerCoordinatorNote => 'Jeder Koordinator legt sein eigenes maximales Premium fest, dein Standardwert wird daher durch den für ein Angebot verwendeten Koordinator begrenzt.';
 	@override late final _Translations$settings$offerCreation$categoryOptions$de categoryOptions = _Translations$settings$offerCreation$categoryOptions$de._(_root);
@@ -2158,6 +2164,7 @@ class _Translations$offerNotifications$newOffer$de extends Translations$offerNot
 	@override String get title => 'Neues Angebot verfügbar';
 	@override String body({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}';
 	@override String premiumSuffix({required Object percent}) => '+${percent}% Premium';
+	@override String discountSuffix({required Object percent}) => '-${percent}% Rabatt';
 }
 
 // Path: offerNotifications.categories
@@ -2304,6 +2311,7 @@ class _Translations$maker$amountForm$labels$de extends Translations$maker$amount
 	@override String get customAmount => 'Benutzerdefiniert';
 	@override String get tapToSelect => 'Zum Auswählen tippen';
 	@override String get premium => 'Premium';
+	@override String get discount => 'Rabatt';
 }
 
 // Path: maker.amountForm.actions
@@ -2356,6 +2364,7 @@ class _Translations$maker$amountForm$tooltips$de extends Translations$maker$amou
 	@override String feeInfo({required Object feePercent}) => 'Der Koordinator erhebt eine Maker-Gebühr von ${feePercent}%. Diese Gebühr wird von deiner Lightning-Zahlung abgezogen.';
 	@override String get payInfo => 'Diese Berechnung basiert auf clientseitig abgerufenen Wechselkursen. Der Koordinator berechnet den genauen Betrag, und der Invoice-Betrag ist der endgültige und exakte Zahlbetrag.';
 	@override String get premiumInfo => 'Mit einem optionalen Premium kannst du deine Sats über dem Marktpreis verkaufen. Das Premium reduziert die in deiner Hold-Invoice gesperrten Sats für denselben Fiat-Betrag, sodass der Taker über Marktpreis zahlt und du die Differenz behältst. Standardmäßig deaktiviert (0%). Das maximale Premium wird vom gewählten Koordinator festgelegt.';
+	@override String get discountInfo => 'Mit einem optionalen Rabatt verkaufst du deine Sats unter Marktpreis, damit dein Angebot für Taker attraktiver ist. Der Rabatt erhöht die in deiner Hold-Invoice gesperrten Sats für denselben Fiat-Betrag, sodass der Taker mehr Sats als zum Marktkurs erhält. Standardmäßig aus (0%). Den maximalen Rabatt legt der gewählte Koordinator fest.';
 }
 
 // Path: maker.amountForm.category
@@ -3448,8 +3457,11 @@ extension on TranslationsDe {
 			'offers.details.consents.ecommerce' => ({required Object code}) => 'Aus verschiedenen Gründen — etwa ein ausverkaufter Artikel, eine Korrektur einer Überzahlung oder andere Probleme auf Händlerseite — kann der Online-Händler automatisch Geld auf das Bankkonto zurücksenden, das mit dem von dir generierten ${code} verknüpft ist. Diese Gelder landen auf deinem Konto und gehören nicht dir. Falls dies passiert, kontaktiere den Koordinator in gutem Glauben und vereinbare die Rückgabe der Gelder an den Maker. Mit der Annahme dieses Angebots akzeptierst du diese Bedingungen und verpflichtest dich ehrenhaft, in solchen Situationen ehrlich zu handeln.',
 			'offers.labels.premium' => 'Premium',
 			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% Premium',
+			'offers.labels.discount' => 'Rabatt',
+			'offers.labels.discountBadge' => ({required Object percent}) => '-${percent}% Rabatt',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Der Koordinator erhebt eine Taker-Gebühr von ${feePercent}%. Diese enthält Lightning-Routing-Gebühren und wird vom Betrag abgezogen, den du erhältst.',
 			'offers.tooltips.premiumInfoTaker' => 'Ein Premium bedeutet, dass dieses Angebot über dem Marktpreis liegt. Für denselben Fiat-Betrag sperrt der Maker weniger Sats in der Hold-Invoice, du zahlst also über Marktpreis und erhältst weniger Sats als zum Marktkurs. Das maximale Premium wird vom Koordinator festgelegt.',
+			'offers.tooltips.discountInfoTaker' => 'Ein Rabatt bedeutet, dass dieses Angebot unter dem Marktpreis liegt. Für denselben Fiat-Betrag sperrt der Maker mehr Sats in der Hold-Invoice, du erhältst also mehr Sats als zum Marktkurs. Der maximale Rabatt wird vom Koordinator festgelegt.',
 			'offers.tooltips.ratesFetchedAt' => 'Abgerufen um',
 			'offers.tooltips.ratesSources' => 'Durchschn. Kursquellen',
 			'offers.actions.take' => 'ANNEHMEN',
@@ -3562,6 +3574,8 @@ extension on TranslationsDe {
 			'coordinator.details.maxPremium' => 'Max. Premium',
 			'coordinator.details.maxPremiumInfoTitle' => 'Premium',
 			'coordinator.details.maxPremiumInfoBody' => 'Ein Premium ist ein optionaler Preisaufschlag über dem Marktkurs, den ein Maker auf ein Angebot setzen kann. Mit einem Premium sperrt der Maker weniger Sats für denselben Fiat-Betrag, sodass der Taker über Marktpreis zahlt und der Maker die Differenz behält. Dieser Wert ist das höchste Premium, das dieser Koordinator für seine Angebote erlaubt.',
+			'coordinator.details.premiumRange' => 'Premium-Spanne',
+			'coordinator.details.premiumRangeInfoBody' => 'Innerhalb dieser Spanne kann ein Maker ein Premium (Preis über Markt) oder einen Rabatt (Preis unter Markt) festlegen. Mit einem Rabatt sperrt der Maker mehr Sats für denselben Fiat-Betrag, sodass der Taker mehr Sats als zum Marktkurs erhält. Mit einem Premium sperrt er weniger Sats und behält die Differenz.',
 			'coordinator.details.reservationTime' => 'Reservierungszeit',
 			'coordinator.details.currencies' => 'Währungen',
 			'coordinator.details.paymentSystem' => 'Zahlungssystem',
@@ -3672,6 +3686,7 @@ extension on TranslationsDe {
 			'maker.amountForm.labels.customAmount' => 'Benutzerdefiniert',
 			'maker.amountForm.labels.tapToSelect' => 'Zum Auswählen tippen',
 			'maker.amountForm.labels.premium' => 'Premium',
+			'maker.amountForm.labels.discount' => 'Rabatt',
 			'maker.amountForm.actions.generateInvoice' => 'Invoice erstellen',
 			'maker.amountForm.bank.label' => 'Bank',
 			'maker.amountForm.bank.required' => 'Bitte wähle eine Bank',
@@ -3688,6 +3703,7 @@ extension on TranslationsDe {
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Der Koordinator erhebt eine Maker-Gebühr von ${feePercent}%. Diese Gebühr wird von deiner Lightning-Zahlung abgezogen.',
 			'maker.amountForm.tooltips.payInfo' => 'Diese Berechnung basiert auf clientseitig abgerufenen Wechselkursen. Der Koordinator berechnet den genauen Betrag, und der Invoice-Betrag ist der endgültige und exakte Zahlbetrag.',
 			'maker.amountForm.tooltips.premiumInfo' => 'Mit einem optionalen Premium kannst du deine Sats über dem Marktpreis verkaufen. Das Premium reduziert die in deiner Hold-Invoice gesperrten Sats für denselben Fiat-Betrag, sodass der Taker über Marktpreis zahlt und du die Differenz behältst. Standardmäßig deaktiviert (0%). Das maximale Premium wird vom gewählten Koordinator festgelegt.',
+			'maker.amountForm.tooltips.discountInfo' => 'Mit einem optionalen Rabatt verkaufst du deine Sats unter Marktpreis, damit dein Angebot für Taker attraktiver ist. Der Rabatt erhöht die in deiner Hold-Invoice gesperrten Sats für denselben Fiat-Betrag, sodass der Taker mehr Sats als zum Marktkurs erhält. Standardmäßig aus (0%). Den maximalen Rabatt legt der gewählte Koordinator fest.',
 			'maker.amountForm.category.label' => 'Angebotskategorie',
 			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => '${system} unterstützt diese Kategorie nicht.',
 			'maker.amountForm.category.options.physicalShop' => 'Geschäft, Café oder Restaurant',
@@ -3854,6 +3870,8 @@ extension on TranslationsDe {
 			'taker.submitBlik.errors.fetchedIdMismatch' => ({required Object fetchedId, required Object initialId}) => 'Abgerufene aktive Angebots-ID (${fetchedId}) stimmt nicht mit der ursprünglichen Angebots-ID (${initialId}) überein. Zustandskonflikt?',
 			'taker.submitBlik.errors.paymentHashMissing' => 'Payment-Hash des Angebots fehlt nach dem Abruf.',
 			'taker.submitBlik.details.requestedAmount' => ({required Object code}) => 'Angeforderter ${code}-Betrag',
+			_ => null,
+		} ?? switch (path) {
 			'taker.submitBlik.details.exchangeRate' => 'Wechselkurs',
 			'taker.submitBlik.details.takerFee' => 'Taker-Gebühr',
 			'taker.submitBlik.details.status' => 'Status',
@@ -3861,8 +3879,6 @@ extension on TranslationsDe {
 			'taker.criticalCodeDecision.title' => 'Kritische Entscheidung',
 			'taker.criticalCodeDecision.explanation' => ({required Object code}) => 'Du hast dem Maker bereits einen ${code}-Code mitgeteilt. Wenn du fortfährst, kann dieser Code ersetzt, deine Reservierung beendet und das Angebot wieder für andere Taker freigegeben werden.',
 			'taker.criticalCodeDecision.warningTitle' => 'DU KANNST DEIN GELD VERLIEREN',
-			_ => null,
-		} ?? switch (path) {
 			'taker.criticalCodeDecision.warningBody' => ({required Object code}) => 'Wenn deine Bank die ${code}-Zahlung belastet hat, fahre NICHT fort. Der Maker könnte deinen Code verwendet haben, und danach kann der Koordinator deine Bitcoin-Auszahlung möglicherweise nicht mehr garantieren.',
 			'taker.criticalCodeDecision.actions.cancel' => 'Zurück und Bankkonto prüfen',
 			'taker.criticalCodeDecision.actions.proceed' => 'Ich wurde NICHT belastet – fortfahren',
@@ -4188,6 +4204,7 @@ extension on TranslationsDe {
 			'settings.offerCreation.enablePremium' => 'Premium-Preise aktivieren',
 			'settings.offerCreation.enablePremiumDescription' => 'Zeigt den Premium-Regler beim Erstellen von Maker-Angeboten an.',
 			'settings.offerCreation.defaultPremium' => 'Standard-Premium',
+			'settings.offerCreation.defaultDiscount' => 'Standard-Rabatt',
 			'settings.offerCreation.defaultPremiumDisabled' => 'Aktiviere Premium-Preise, um ein Standard-Premium festzulegen.',
 			'settings.offerCreation.premiumPerCoordinatorNote' => 'Jeder Koordinator legt sein eigenes maximales Premium fest, dein Standardwert wird daher durch den für ein Angebot verwendeten Koordinator begrenzt.',
 			'settings.offerCreation.categoryOptions.shop' => 'Geschäft, Café oder Restaurant',
@@ -4292,6 +4309,7 @@ extension on TranslationsDe {
 			'offerNotifications.newOffer.title' => 'Neues Angebot verfügbar',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% Premium',
+			'offerNotifications.newOffer.discountSuffix' => ({required Object percent}) => '-${percent}% Rabatt',
 			'offerNotifications.categories.shop' => 'Geschäft',
 			'offerNotifications.categories.atm' => 'Geldautomat',
 			'offerNotifications.categories.online' => 'Online',

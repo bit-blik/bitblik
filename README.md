@@ -2,6 +2,18 @@
 
 Peer-to-peer BLIK/Lightning exchange over Nostr. Makers fund a Lightning hold invoice; takers pay in BLIK; the coordinator settles atomically.
 
+> **Disclaimer:** BitBlik is an independent open-source project. It is not affiliated with, endorsed by, or sponsored by Polski Standard Płatności S.A. BLIK is a registered trademark of Polski Standard Płatności S.A., used here only to describe compatibility with BLIK payment codes.
+
+## Umbrel
+
+This repository is an Umbrel Community App Store. In umbrelOS, open **App
+Store → Community App Stores**, add
+`https://github.com/bit-blik/bitblik`, then install **BitBlik**.
+
+The web client stores its Neko private key in browser storage. Export a Neko
+backup before trading. Umbrel backups do not include browser storage, and a
+different hostname or browser profile has separate storage.
+
 ## Packages
 
 | Package | Path | Description |

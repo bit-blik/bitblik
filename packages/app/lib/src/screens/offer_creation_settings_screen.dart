@@ -103,16 +103,20 @@ class _OfferCreationSettingsScreenState
     return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
   }
 
-  /// Upper bound for the default-premium slider: the highest max premium
-  /// advertised across every coordinator that supports premium. Falls back to
-  /// 10% when none advertise one. The actual cap applied to an offer is the
-  /// selected coordinator's own max, which may be lower.
-  double _maxPremium(List<CoordinatorRecord> coordinators) {
+  /// Bounds for the default-premium slider. Upper: the highest max premium
+  /// advertised across every coordinator that supports premium, falling back
+  /// to 10% when none advertise one. Lower: the deepest discount any
+  /// coordinator allows, else 0. The range actually applied to an offer is the
+  /// selected coordinator's own, which may be narrower.
+  PremiumRange _premiumBounds(List<CoordinatorRecord> coordinators) {
+    double min = 0;
     double max = 0;
     for (final coordinator in coordinators) {
-      if (coordinator.maxPremium > max) max = coordinator.maxPremium;
+      final range = coordinator.premiumRange;
+      if (range.max > max) max = range.max;
+      if (range.min < min) min = range.min;
     }
-    return max > 0 ? max : 10.0;
+    return PremiumRange.sanitized(min: min, max: max > 0 ? max : 10.0);
   }
 
   Future<void> _showBankPicker(Translations t) async {
@@ -290,7 +294,7 @@ class _OfferCreationSettingsScreenState
                     settings.preferredCoordinatorPubkey,
                   );
                   final isAutomatic = preferred == null && !isCheapest;
-                  final maxPremium = _maxPremium(coordinators);
+                  final premiumBounds = _premiumBounds(coordinators);
                   final ps = ref.read(selectedPaymentSystemProvider);
                   // Coerce the stored default to a category this market actually
                   // supports (e.g. the global default `shop` for an ATM-only
@@ -362,7 +366,7 @@ class _OfferCreationSettingsScreenState
                         },
                       ),
                       if (settings.premiumEnabled)
-                        _premiumSlider(t, settings, maxPremium),
+                        _premiumSlider(t, settings, premiumBounds),
                       ListTile(
                         leading:
                             isAutomatic
@@ -398,9 +402,10 @@ class _OfferCreationSettingsScreenState
   Widget _premiumSlider(
     Translations t,
     OfferCreationPreferences settings,
-    double maxPremium,
+    PremiumRange bounds,
   ) {
-    final value = settings.defaultPremiumPercent.clamp(0.0, maxPremium);
+    final value = bounds.clamp(settings.defaultPremiumPercent);
+    final accent = premiumAccentColor(value, neutral: kPremiumColor);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       child: Column(
@@ -411,7 +416,9 @@ class _OfferCreationSettingsScreenState
               const Icon(Icons.percent, color: Colors.grey),
               const SizedBox(width: 12),
               Text(
-                t.settings.offerCreation.defaultPremium,
+                value < 0
+                    ? t.settings.offerCreation.defaultDiscount
+                    : t.settings.offerCreation.defaultPremium,
                 style: const TextStyle(fontSize: 16),
               ),
               const Spacer(),
@@ -420,26 +427,27 @@ class _OfferCreationSettingsScreenState
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: value > 0 ? const Color(0xFFFF007F) : Colors.grey,
+                  color: premiumAccentColor(value),
                 ),
               ),
             ],
           ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFFF007F),
-              thumbColor: const Color(0xFFFF007F),
-              overlayColor: const Color(0x33FF007F),
+              activeTrackColor: accent,
+              thumbColor: accent,
+              overlayColor: accent.withValues(alpha: 0.2),
             ),
             child: Slider(
               value: value,
-              min: 0,
-              max: maxPremium,
-              divisions: (maxPremium / 0.5).round().clamp(1, 1000),
+              min: bounds.min,
+              max: bounds.max,
+              divisions:
+                  ((bounds.max - bounds.min) / 0.5).round().clamp(1, 1000),
               label: '${_formatPremium(value)}%',
               onChanged: (next) {
                 // Snap to 0.5 steps.
-                final snapped = (next * 2).round() / 2;
+                final snapped = bounds.clamp((next * 2).round() / 2);
                 _save(settings.copyWith(defaultPremiumPercent: snapped));
               },
             ),

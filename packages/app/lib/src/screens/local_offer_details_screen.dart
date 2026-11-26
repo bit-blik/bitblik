@@ -225,10 +225,10 @@ class _OfferDetailsBody extends ConsumerWidget {
                     ),
                   ),
                 ],
-                if (offer.premiumPercent > 0) ...[
+                if (offer.premiumPercent != 0) ...[
                   const Divider(height: 16),
                   _WidgetRow(
-                    label: t.offers.labels.premium,
+                    label: premiumLabel(t, offer.premiumPercent),
                     child: PremiumChip(
                       premiumPercent: offer.premiumPercent,
                       viewerRole: premiumViewerRole,

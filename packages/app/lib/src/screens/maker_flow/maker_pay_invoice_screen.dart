@@ -1365,7 +1365,7 @@ class _MakerPayInvoiceScreenState extends ConsumerState<MakerPayInvoiceScreen> {
                               ?.copyWith(color: Colors.grey[700], fontSize: 14),
                           textAlign: TextAlign.center,
                         ),
-                        if (offer.premiumPercent > 0) ...[
+                        if (offer.premiumPercent != 0) ...[
                           const SizedBox(height: 8),
                           PremiumChip(premiumPercent: offer.premiumPercent),
                         ],

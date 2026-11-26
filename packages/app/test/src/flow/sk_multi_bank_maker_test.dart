@@ -15,7 +15,8 @@ class _MakerApi implements ApiServiceNostr {
   Map<String, dynamic>? submitted;
 
   @override
-  Future<double> getBtcRate(String currency) async => 50000;
+  Future<double> getBtcRate(String currency, {bool refresh = false}) async =>
+      50000;
 
   @override
   Future<Map<String, dynamic>> initiateOfferFiat({

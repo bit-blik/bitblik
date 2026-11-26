@@ -51,11 +51,29 @@ String get buildPrimaryHost => switch (buildDefaultPaymentSystemId) {
     'npub1k3g092rlzvn7nftz3jte9pkx63zp705nh78r6hjpjm55fjg7r2cqx8stj3.nsite.lol',
 };
 
-/// Bitway and Bittwint await Apple approval. Their iOS users install the
-/// shared BitBlik app, then select their country and payment system in-app.
+/// Android application id of this build, which is also its Zapstore app id.
+String get buildAndroidAppId => switch (buildDefaultPaymentSystemId) {
+  'mbway' => 'me.bitway',
+  'twint' => 'app.bittwint',
+  'sk' => 'li.veks',
+  _ => 'app.bitblik',
+};
+
+/// Zapstore listing of this build's Android app.
+String get buildZapstoreUrl => 'https://zapstore.dev/apps/$buildAndroidAppId';
+
+/// GitHub releases carrying this build's APKs: one bit-blik repo per flavor,
+/// named after [buildAppScheme].
+String get buildGithubReleasesUrl =>
+    'https://github.com/bit-blik/$buildAppScheme/releases';
+
+/// Bitway and Bittwint await Apple approval, and veks.li has no iOS build yet.
+/// Their iOS users install the shared BitBlik app, then select their country
+/// and payment system in-app.
 bool get usesSharedBitblikIosApp =>
     buildDefaultPaymentSystemId == 'mbway' ||
-    buildDefaultPaymentSystemId == 'twint';
+    buildDefaultPaymentSystemId == 'twint' ||
+    buildDefaultPaymentSystemId == 'sk';
 
 String get buildAltStoreSourceUrl =>
     'https://${usesSharedBitblikIosApp ? 'bitblik.app' : buildPrimaryHost}/.well-known/sources/alt-store-source.json';

@@ -17,6 +17,7 @@ import '../../services/api_service_nostr.dart';
 import '../../services/funding_payment.dart';
 import '../../settings/app_preferences.dart';
 import '../../widgets/bolt12_badge.dart';
+import '../../widgets/premium_info.dart';
 import '../coordinator_details_screen.dart';
 import 'twint_code_scanner_screen.dart';
 
@@ -179,9 +180,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     final inst =
         _method.instrumentFor(OfferCategory.atm) ?? _method.instrumentFor(null);
     if (inst == null || !inst.hasBanks) return const [];
-    final valid = [
-      for (final b in banksIn(inst, rememberedList)) b.id,
-    ];
+    final valid = [for (final b in banksIn(inst, rememberedList)) b.id];
     if (valid.length > 1) return valid;
     final single = _resolveDefaultBank(remembered);
     return single == null ? const [] : [single];
@@ -248,7 +247,7 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
   // first. Empty for bank-agnostic markets. Defaulted to the last-used
   // selection / first bank. Read through [_offerBankIds].
   List<String> _selectedBankIds = const [];
-  double _premiumPercent = 0; // Maker premium % above market price
+  double _premiumPercent = 0; // Maker premium % (negative = discount)
   double _defaultPremiumPreference = 0;
   bool _premiumEnabled = false;
   bool _userAdjustedPremium = false;
@@ -531,15 +530,15 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
               : supported.first;
         }
       }
-      // Clamp premium to the newly selected coordinator's advertised max.
-      final maxPremium = coordinator.maxPremium;
-      if (!_premiumEnabled || maxPremium <= 0) {
-        _premiumPercent = 0;
-      } else if (!_userAdjustedPremium && _premiumPercent <= 0) {
-        _premiumPercent = _defaultPremiumPreference.clamp(0, maxPremium);
-      } else if (_premiumPercent > maxPremium) {
-        _premiumPercent = maxPremium;
-      }
+      // Clamp premium (or discount) to the newly selected coordinator's
+      // advertised range.
+      _premiumPercent = resolvePremiumForCoordinator(
+        premiumEnabled: _premiumEnabled,
+        range: coordinator.premiumRange,
+        userAdjusted: _userAdjustedPremium,
+        current: _premiumPercent,
+        defaultPreference: _defaultPremiumPreference,
+      );
     });
 
     // Load terms acceptance from SharedPreferences
@@ -751,11 +750,16 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
       // Multi-bank offer: every ticked bank, first choice first.
       final offerBanks = _needsBank ? _offerBankIds : const <String>[];
       final offerCategory = supportsCategory ? _selectedCategory : null;
-      final satsEstimate = _satsEquivalent;
       final coordinatorInfo = _selectedCoordinatorInfo;
-      if (satsEstimate == null || coordinatorInfo == null) {
+      if (_satsEquivalent == null || coordinatorInfo == null) {
         throw const FormatException('A funding estimate is required.');
       }
+      final apiService = ref.read(apiServiceProvider);
+      // Estimate from a rate fetched now, not the one cached when the form
+      // opened: the coordinator prices the offer at this moment, and a few
+      // minutes of normal price movement can exceed the estimate tolerance.
+      final rate = await apiService.getBtcRate(_method.currency, refresh: true);
+      final satsEstimate = fiatAmount / rate * 100000000;
       final estimate = FundingEstimate(
         coordinatorPubkey: coordinatorPubkey,
         makerPubkey: makerId,
@@ -768,7 +772,6 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                 .round(),
         makerFeesSats: (satsEstimate * coordinatorInfo.makerFee / 100).ceil(),
       );
-      final apiService = ref.read(apiServiceProvider);
       final result = await apiService.initiateOfferFiat(
         fiatAmount: fiatAmount,
         fiatCurrency: _method.currency,
@@ -3018,10 +3021,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                         },
                       ),
 
-                    // Premium row + slider (only when coordinator allows it)
+                    // Premium/discount row + slider (only when coordinator
+                    // allows either)
                     if (_premiumEnabled &&
                         _selectedCoordinatorInfo != null &&
-                        _selectedCoordinatorInfo!.maxPremiumPercent > 0) ...[
+                        _premiumRange.isOffered) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6.0),
                         child: Row(
@@ -3032,7 +3036,9 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    t.maker.amountForm.labels.premium,
+                                    _premiumPercent < 0
+                                        ? t.maker.amountForm.labels.discount
+                                        : t.maker.amountForm.labels.premium,
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400,
@@ -3052,9 +3058,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             Expanded(
                               child: SliderTheme(
                                 data: SliderTheme.of(context).copyWith(
-                                  activeTrackColor: const Color(0xFFFF007F),
-                                  thumbColor: const Color(0xFFFF007F),
-                                  overlayColor: const Color(0x33FF007F),
+                                  activeTrackColor: _premiumAccent,
+                                  thumbColor: _premiumAccent,
+                                  overlayColor: _premiumAccent.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   trackHeight: 2,
                                   overlayShape: SliderComponentShape.noOverlay,
                                 ),
@@ -3063,26 +3071,23 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                                 child: SizedBox(
                                   height: 28,
                                   child: Slider(
-                                    value: _premiumPercent.clamp(
-                                      0,
-                                      _selectedCoordinatorInfo!
-                                          .maxPremiumPercent,
-                                    ),
-                                    min: 0,
-                                    max: _selectedCoordinatorInfo!
-                                        .maxPremiumPercent,
+                                    value: _premiumRange.clamp(_premiumPercent),
+                                    min: _premiumRange.min,
+                                    max: _premiumRange.max,
                                     divisions:
-                                        (_selectedCoordinatorInfo!
-                                                    .maxPremiumPercent /
+                                        ((_premiumRange.max -
+                                                    _premiumRange.min) /
                                                 0.5)
-                                            .round(),
+                                            .round()
+                                            .clamp(1, 1000),
                                     label:
-                                        '${_formatPremium(_premiumPercent)}%',
+                                        '${formatSignedPremium(_premiumPercent)}%',
                                     onChanged: (value) {
                                       setState(() {
                                         // Snap to 0.5 steps.
-                                        _premiumPercent =
-                                            (value * 2).round() / 2;
+                                        _premiumPercent = _premiumRange.clamp(
+                                          (value * 2).round() / 2,
+                                        );
                                         _userAdjustedPremium = true;
                                       });
                                     },
@@ -3092,13 +3097,11 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              '${_formatPremium(_premiumPercent)}%',
+                              '${formatSignedPremium(_premiumPercent)}%',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: _premiumPercent > 0
-                                    ? const Color(0xFFFF007F)
-                                    : Colors.grey,
+                                color: premiumAccentColor(_premiumPercent),
                               ),
                             ),
                           ],
@@ -3289,27 +3292,16 @@ class _MakerAmountFormState extends ConsumerState<MakerAmountForm> {
     );
   }
 
-  /// Trim trailing ".0" so 5.0 -> "5" but 2.5 stays "2.5".
-  String _formatPremium(double premium) {
-    final s = premium.toStringAsFixed(1);
-    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
-  }
+  /// Premium range of the selected coordinator (market price only if none).
+  PremiumRange get _premiumRange =>
+      _selectedCoordinatorInfo?.premiumRange ?? PremiumRange.none;
+
+  /// Slider accent: pink for a premium, green for a discount.
+  Color get _premiumAccent =>
+      premiumAccentColor(_premiumPercent, neutral: kPremiumColor);
 
   void _showPremiumInfoDialog() {
-    final t = Translations.of(context);
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.maker.amountForm.labels.premium),
-        content: Text(t.maker.amountForm.tooltips.premiumInfo),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(t.common.buttons.close),
-          ),
-        ],
-      ),
-    );
+    showPremiumInfoDialog(context, premiumPercent: _premiumPercent);
   }
 
   /// Formats a number with spaces as thousand separators

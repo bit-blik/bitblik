@@ -1080,6 +1080,12 @@ class Translations$offers$labels$en {
 
 	/// en: '+${percent}% premium'
 	String premiumBadge({required Object percent}) => '+${percent}% premium';
+
+	/// en: 'Discount'
+	String get discount => 'Discount';
+
+	/// en: '-${percent}% discount'
+	String discountBadge({required Object percent}) => '-${percent}% discount';
 }
 
 // Path: offers.tooltips
@@ -1095,6 +1101,9 @@ class Translations$offers$tooltips$en {
 
 	/// en: 'A premium means this offer is priced above market. For the same fiat amount, the maker locks fewer sats in the hold invoice, so you pay above market and receive fewer sats than at the market rate. The maximum premium is set by the coordinator.'
 	String get premiumInfoTaker => 'A premium means this offer is priced above market. For the same fiat amount, the maker locks fewer sats in the hold invoice, so you pay above market and receive fewer sats than at the market rate. The maximum premium is set by the coordinator.';
+
+	/// en: 'A discount means this offer is priced below market. For the same fiat amount, the maker locks more sats in the hold invoice, so you receive more sats than at the market rate. The maximum discount is set by the coordinator.'
+	String get discountInfoTaker => 'A discount means this offer is priced below market. For the same fiat amount, the maker locks more sats in the hold invoice, so you receive more sats than at the market rate. The maximum discount is set by the coordinator.';
 
 	/// en: 'Fetched at'
 	String get ratesFetchedAt => 'Fetched at';
@@ -1581,6 +1590,12 @@ class Translations$coordinator$details$en {
 
 	/// en: 'A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers.'
 	String get maxPremiumInfoBody => 'A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers.';
+
+	/// en: 'Premium range'
+	String get premiumRange => 'Premium range';
+
+	/// en: 'Within this range a maker can set a premium (price above market) or a discount (price below market). With a discount, the maker locks more sats for the same fiat amount, so the taker receives more sats than at the market rate. With a premium, the maker locks fewer sats and keeps the difference.'
+	String get premiumRangeInfoBody => 'Within this range a maker can set a premium (price above market) or a discount (price below market). With a discount, the maker locks more sats for the same fiat amount, so the taker receives more sats than at the market rate. With a premium, the maker locks fewer sats and keeps the difference.';
 
 	/// en: 'Reservation time'
 	String get reservationTime => 'Reservation time';
@@ -3184,6 +3199,9 @@ class Translations$settings$offerCreation$en {
 	/// en: 'Default premium'
 	String get defaultPremium => 'Default premium';
 
+	/// en: 'Default discount'
+	String get defaultDiscount => 'Default discount';
+
 	/// en: 'Enable premium pricing to set a default premium.'
 	String get defaultPremiumDisabled => 'Enable premium pricing to set a default premium.';
 
@@ -3613,6 +3631,9 @@ class Translations$offerNotifications$newOffer$en {
 
 	/// en: '+${percent}% premium'
 	String premiumSuffix({required Object percent}) => '+${percent}% premium';
+
+	/// en: '-${percent}% discount'
+	String discountSuffix({required Object percent}) => '-${percent}% discount';
 }
 
 // Path: offerNotifications.categories
@@ -3853,6 +3874,9 @@ class Translations$maker$amountForm$labels$en {
 
 	/// en: 'Premium'
 	String get premium => 'Premium';
+
+	/// en: 'Discount'
+	String get discount => 'Discount';
 }
 
 // Path: maker.amountForm.actions
@@ -3937,6 +3961,9 @@ class Translations$maker$amountForm$tooltips$en {
 
 	/// en: 'An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator.'
 	String get premiumInfo => 'An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator.';
+
+	/// en: 'An optional discount lets you sell your sats below market price, making your offer more attractive to takers. The discount increases the sats locked in your hold invoice for the same fiat amount, so the taker receives more sats than at the market rate. Default is off (0%). The maximum discount is set by the selected coordinator.'
+	String get discountInfo => 'An optional discount lets you sell your sats below market price, making your offer more attractive to takers. The discount increases the sats locked in your hold invoice for the same fiat amount, so the taker receives more sats than at the market rate. Default is off (0%). The maximum discount is set by the selected coordinator.';
 }
 
 // Path: maker.amountForm.category
@@ -5991,8 +6018,11 @@ extension on Translations {
 			'offers.details.consents.ecommerce' => ({required Object code}) => 'For various reasons — such as an out-of-stock item, overpayment correction, or other merchant-side issues — the online merchant may automatically send money back to the bank account linked to the ${code} you generated. Those funds land in your account and are not yours to keep. If this happens, contact the coordinator in good faith and arrange to return the funds to the maker. By taking this offer you accept these terms and honorably swear to act honestly in such situations.',
 			'offers.labels.premium' => 'Premium',
 			'offers.labels.premiumBadge' => ({required Object percent}) => '+${percent}% premium',
+			'offers.labels.discount' => 'Discount',
+			'offers.labels.discountBadge' => ({required Object percent}) => '-${percent}% discount',
 			'offers.tooltips.takerFeeInfo' => ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% taker fee. This includes Lightning routing fees and is deducted from the amount you receive.',
 			'offers.tooltips.premiumInfoTaker' => 'A premium means this offer is priced above market. For the same fiat amount, the maker locks fewer sats in the hold invoice, so you pay above market and receive fewer sats than at the market rate. The maximum premium is set by the coordinator.',
+			'offers.tooltips.discountInfoTaker' => 'A discount means this offer is priced below market. For the same fiat amount, the maker locks more sats in the hold invoice, so you receive more sats than at the market rate. The maximum discount is set by the coordinator.',
 			'offers.tooltips.ratesFetchedAt' => 'Fetched at',
 			'offers.tooltips.ratesSources' => 'Avg. rate sources',
 			'offers.actions.take' => 'TAKE',
@@ -6105,6 +6135,8 @@ extension on Translations {
 			'coordinator.details.maxPremium' => 'Max premium',
 			'coordinator.details.maxPremiumInfoTitle' => 'Premium',
 			'coordinator.details.maxPremiumInfoBody' => 'A premium is an optional price markup above the market rate that a maker can set on an offer. With a premium, the maker locks fewer sats for the same fiat amount, so the taker pays above market and the maker keeps the difference. This value is the highest premium this coordinator allows on its offers.',
+			'coordinator.details.premiumRange' => 'Premium range',
+			'coordinator.details.premiumRangeInfoBody' => 'Within this range a maker can set a premium (price above market) or a discount (price below market). With a discount, the maker locks more sats for the same fiat amount, so the taker receives more sats than at the market rate. With a premium, the maker locks fewer sats and keeps the difference.',
 			'coordinator.details.reservationTime' => 'Reservation time',
 			'coordinator.details.currencies' => 'Currencies',
 			'coordinator.details.paymentSystem' => 'Payment system',
@@ -6215,6 +6247,7 @@ extension on Translations {
 			'maker.amountForm.labels.customAmount' => 'Custom',
 			'maker.amountForm.labels.tapToSelect' => 'Tap to select',
 			'maker.amountForm.labels.premium' => 'Premium',
+			'maker.amountForm.labels.discount' => 'Discount',
 			'maker.amountForm.actions.generateInvoice' => 'Generate Invoice',
 			'maker.amountForm.bank.label' => 'Bank',
 			'maker.amountForm.bank.required' => 'Please choose a bank',
@@ -6231,6 +6264,7 @@ extension on Translations {
 			'maker.amountForm.tooltips.feeInfo' => ({required Object feePercent}) => 'Coordinator charges a ${feePercent}% maker fee. This fee is deducted from your Lightning payment.',
 			'maker.amountForm.tooltips.payInfo' => 'This calculation is based on client-side fetched exchange rates. The coordinator will calculate the exact amount, and the invoice amount will be the final and exact amount to pay.',
 			'maker.amountForm.tooltips.premiumInfo' => 'An optional premium lets you sell your sats above market price. The premium reduces the sats locked in your hold invoice for the same fiat amount, so the taker pays above market and you keep the difference. Default is off (0%). The maximum premium is set by the selected coordinator.',
+			'maker.amountForm.tooltips.discountInfo' => 'An optional discount lets you sell your sats below market price, making your offer more attractive to takers. The discount increases the sats locked in your hold invoice for the same fiat amount, so the taker receives more sats than at the market rate. Default is off (0%). The maximum discount is set by the selected coordinator.',
 			'maker.amountForm.category.label' => 'Offer category',
 			'maker.amountForm.category.unsupportedForSystem' => ({required Object system}) => '${system} does not support this category.',
 			'maker.amountForm.category.options.physicalShop' => 'Shop, café or restaurant',
@@ -6396,6 +6430,8 @@ extension on Translations {
 			'taker.submitBlik.errors.fetchedIdMismatch' => ({required Object fetchedId, required Object initialId}) => 'Fetched active offer ID (${fetchedId}) does not match initial offer ID (${initialId}). State mismatch?',
 			'taker.submitBlik.errors.paymentHashMissing' => 'Offer payment hash missing after fetch.',
 			'taker.submitBlik.details.requestedAmount' => ({required Object code}) => 'Requested ${code} amount',
+			_ => null,
+		} ?? switch (path) {
 			'taker.submitBlik.details.exchangeRate' => 'Exchange Rate',
 			'taker.submitBlik.details.takerFee' => 'Taker fee',
 			'taker.submitBlik.details.status' => 'Status',
@@ -6403,8 +6439,6 @@ extension on Translations {
 			'taker.waitConfirmation.title' => 'Waiting for Maker',
 			'taker.waitConfirmation.statusLabel' => ({required Object status}) => 'Offer status: ${status}',
 			'taker.waitConfirmation.waitingMaker' => ({required Object seconds}) => 'Waiting for Maker confirmation: ${seconds} s',
-			_ => null,
-		} ?? switch (path) {
 			'taker.waitConfirmation.waitingMakerConfirmation' => ({required Object code, required Object seconds}) => 'Waiting for Maker to confirm ${code} is correct. Time remaining: ${seconds}s',
 			'taker.waitConfirmation.importantNotice' => ({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: Make sure you only accept ${code} confirmation for ${amount} ${currency}',
 			'taker.waitConfirmation.importantBlikAmountConfirmation' => ({required Object code, required Object amount, required Object currency}) => 'VERY IMPORTANT: In your banking app, ensure you are confirming a ${code} payment for exactly ${amount} ${currency}.',
@@ -6836,6 +6870,7 @@ extension on Translations {
 			'settings.offerCreation.enablePremium' => 'Enable premium pricing',
 			'settings.offerCreation.enablePremiumDescription' => 'Show the premium slider when creating maker offers.',
 			'settings.offerCreation.defaultPremium' => 'Default premium',
+			'settings.offerCreation.defaultDiscount' => 'Default discount',
 			'settings.offerCreation.defaultPremiumDisabled' => 'Enable premium pricing to set a default premium.',
 			'settings.offerCreation.premiumPerCoordinatorNote' => 'Each coordinator sets its own maximum premium, so your default is capped by the coordinator used for an offer.',
 			'settings.offerCreation.categoryOptions.shop' => 'Shop, café or restaurant',
@@ -6909,6 +6944,8 @@ extension on Translations {
 			'nwc.errors.disconnecting' => ({required Object details}) => 'Error disconnecting NWC: ${details}',
 			'nwc.errors.invalid' => 'Invalid NWC connection string',
 			'nwc.errors.required' => 'NWC connection string is required',
+			_ => null,
+		} ?? switch (path) {
 			'nwc.errors.loadingBalance' => 'Failed to load wallet balance',
 			'nwc.errors.loadingBudget' => 'Failed to load wallet budget',
 			'nwc.time.minutes' => ({required Object count}) => '${count}m',
@@ -6917,8 +6954,6 @@ extension on Translations {
 			'nwc.time.justNow' => 'just now',
 			'nekoManagement.title' => 'Neko',
 			'relays.title' => 'Relays',
-			_ => null,
-		} ?? switch (path) {
 			'relays.coordinatorRelays' => 'Coordinator relays',
 			'relays.discoveryRelays' => 'Discovery relays',
 			'relays.status.connected' => 'Connected',
@@ -6940,6 +6975,7 @@ extension on Translations {
 			'offerNotifications.newOffer.title' => 'New offer available',
 			'offerNotifications.newOffer.body' => ({required Object amount, required Object currency, required Object sats}) => '${amount} ${currency} · ${sats}',
 			'offerNotifications.newOffer.premiumSuffix' => ({required Object percent}) => '+${percent}% premium',
+			'offerNotifications.newOffer.discountSuffix' => ({required Object percent}) => '-${percent}% discount',
 			'offerNotifications.categories.shop' => 'Shop',
 			'offerNotifications.categories.atm' => 'ATM',
 			'offerNotifications.categories.online' => 'Online',

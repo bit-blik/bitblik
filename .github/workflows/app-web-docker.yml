@@ -62,6 +62,7 @@ jobs:
             type=raw,value=${{ matrix.flavor }}-${{ matrix.build_mode }}
             type=raw,value=${{ matrix.flavor }}-${{ matrix.build_mode }}-${{ github.sha }}
             type=ref,event=branch,prefix=${{ matrix.flavor }}-,suffix=-${{ matrix.build_mode }}
+            type=semver,pattern={{version}}-${{ matrix.flavor }}
             type=semver,pattern={{version}}-${{ matrix.flavor }}-${{ matrix.build_mode }}
 
       - name: Build and push Web Docker image (${{ matrix.flavor }} / ${{ matrix.build_mode }})
@@ -70,6 +71,7 @@ jobs:
           context: .
           file: ./packages/app/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |

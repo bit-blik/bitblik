@@ -25,7 +25,9 @@ String formatFundedOfferNotification(
   final categorySuffix = categoryText == null ? '' : ', $categoryText';
   final premiumSuffix = offer.premiumPercent > 0
       ? ', +${_formatPremium(offer.premiumPercent)}% ${strings.premium}'
-      : '';
+      : offer.premiumPercent < 0
+          ? ', -${_formatPremium(-offer.premiumPercent)}% ${strings.discount}'
+          : '';
   final domain = frontendDomain
       .trim()
       .replaceFirst(RegExp(r'^https?://'), '')
@@ -39,6 +41,7 @@ String formatFundedOfferNotification(
 class _OfferNotificationStrings {
   final String newOffer;
   final String premium;
+  final String discount;
   final String shop;
   final String atm;
   final String online;
@@ -46,6 +49,7 @@ class _OfferNotificationStrings {
   const _OfferNotificationStrings({
     required this.newOffer,
     required this.premium,
+    required this.discount,
     required this.shop,
     required this.atm,
     required this.online,
@@ -56,6 +60,7 @@ const Map<String, _OfferNotificationStrings> _stringsByCountry = {
   'PL': _OfferNotificationStrings(
     newOffer: 'New offer/Nowa oferta',
     premium: 'premium/premia',
+    discount: 'discount/zniżka',
     shop: 'Shop/Sklep',
     atm: 'ATM/Bankomat',
     online: 'Online',
@@ -63,6 +68,7 @@ const Map<String, _OfferNotificationStrings> _stringsByCountry = {
   'PT': _OfferNotificationStrings(
     newOffer: 'New offer/Nova oferta',
     premium: 'premium',
+    discount: 'discount/desconto',
     shop: 'Shop/Loja',
     atm: 'ATM/Multibanco',
     online: 'Online',
@@ -70,6 +76,7 @@ const Map<String, _OfferNotificationStrings> _stringsByCountry = {
   'CH': _OfferNotificationStrings(
     newOffer: 'New offer/Neues Angebot',
     premium: 'premium/Premium',
+    discount: 'discount/Rabatt',
     shop: 'Shop/Geschäft',
     atm: 'ATM/Bancomat',
     online: 'Online',
@@ -77,6 +84,7 @@ const Map<String, _OfferNotificationStrings> _stringsByCountry = {
   'SK': _OfferNotificationStrings(
     newOffer: 'New offer/Nová ponuka',
     premium: 'premium/prémia',
+    discount: 'discount/zľava',
     shop: 'Shop/Obchod',
     atm: 'ATM/Bankomat',
     online: 'Online',
