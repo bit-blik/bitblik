@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:bitblik/src/services/offer_initiation_recovery.dart';
@@ -33,6 +34,7 @@ void main() {
   late Map<String, dynamic> lookupResult;
   late List<String?> operationIds;
   late Completer<void> lookupStarted;
+  late DateTime clock;
   const params = {
     'fiat_amount': 20.0,
     'fiat_currency': 'PLN',
@@ -78,6 +80,7 @@ void main() {
   OfferInitiationRecovery controller(OfferInitiationStore target) =>
       OfferInitiationRecovery(
         store: target,
+        now: () => clock,
         lookup: (coordinator, id) async {
           reads++;
           if (!lookupStarted.isCompleted) lookupStarted.complete();
@@ -117,6 +120,7 @@ void main() {
     lookupResult = {'status': 'ready', 'result': result};
     operationIds = [];
     lookupStarted = Completer<void>();
+    clock = DateTime.utc(2026, 11, 10, 12);
     recovery = controller(store);
   });
   tearDown(() async {
@@ -371,4 +375,135 @@ void main() {
       expect(sends, 0);
     },
   );
+
+  group('stale unanswered attempts', () {
+    Future<void> lostReply() async {
+      sendError = TimeoutException('reply lost');
+      await expectLater(initiate(), throwsA(isA<UncertainOfferInitiation>()));
+      sendError = null;
+    }
+
+    test('not_found within 10 minutes keeps the guard', () async {
+      await lostReply();
+      clock = clock.add(const Duration(minutes: 9, seconds: 59));
+      lookupResult = {'status': 'not_found'};
+      await expectLater(initiate(), throwsA(isA<UncertainOfferInitiation>()));
+      expect(sends, 1);
+      expect(reads, 1);
+      expect(await store.read('maker'), isNotNull);
+    });
+
+    for (final status in ['not_found', 'pending']) {
+      test('$status after 10 minutes releases it for a fresh request', () async {
+        await lostReply();
+        final first = operationIds.single;
+        clock = clock.add(OfferInitiationRecovery.abandonAfter);
+        lookupResult = {'status': status};
+        final response = await initiate();
+        expect(response['holdInvoice'], 'test-invoice');
+        expect(sends, 2);
+        expect(reads, 1);
+        expect(operationIds.last, isNot(first));
+        expect((await store.read('maker'))!.operationId, operationIds.last);
+      });
+    }
+
+    test('ready after 10 minutes returns the original invoice', () async {
+      await lostReply();
+      clock = clock.add(const Duration(hours: 1));
+      final response = await initiate();
+      expect(response['holdInvoice'], 'test-invoice');
+      expect(response['_clientFundingEstimate'], estimate.toJson());
+      expect(sends, 1);
+      expect(reads, 1, reason: 'the staleness lookup is reused');
+    });
+
+    test('unreachable coordinator keeps the guard until 27 hours', () async {
+      await lostReply();
+      lookupError = TimeoutException('coordinator down');
+      clock = clock.add(const Duration(hours: 26));
+      await expectLater(initiate(), throwsA(isA<UncertainOfferInitiation>()));
+      expect(reads, 1, reason: 'a failed lookup is not repeated in one call');
+      expect(sends, 1);
+      clock = clock.add(const Duration(hours: 1));
+      expect((await initiate())['holdInvoice'], 'test-invoice');
+      expect(sends, 2);
+      expect(reads, 1, reason: 'past 27 hours no lookup is needed');
+    });
+
+    test('changed details replace an attempt that got no invoice', () async {
+      await lostReply();
+      clock = clock.add(OfferInitiationRecovery.abandonAfter);
+      lookupResult = {'status': 'not_found'};
+      await initiate(input: {...params, 'fiat_amount': 30.0});
+      expect(sends, 2);
+      expect((await store.read('maker'))!.params['fiat_amount'], 30.0);
+    });
+
+    test('changed coordinator replaces an attempt that got no invoice', () async {
+      await lostReply();
+      clock = clock.add(OfferInitiationRecovery.abandonAfter);
+      lookupResult = {'status': 'not_found'};
+      await initiate(coordinator: 'other');
+      expect(sends, 2);
+      expect((await store.read('maker'))!.coordinator, 'other');
+    });
+
+    test('changed details cannot replace an attempt with an invoice', () async {
+      await lostReply();
+      clock = clock.add(OfferInitiationRecovery.abandonAfter);
+      await expectLater(
+        initiate(input: {...params, 'fiat_amount': 30.0}),
+        throwsA(isA<UncertainOfferInitiation>()),
+      );
+      expect(sends, 1);
+      expect(reads, 1);
+      expect(await store.read('maker'), isNotNull);
+    });
+
+    test('a received invoice is never released by age', () async {
+      await initiate();
+      clock = clock.add(const Duration(days: 3));
+      lookupResult = {'status': 'not_found'};
+      expect((await initiate())['holdInvoice'], 'test-invoice');
+      expect(sends, 1);
+      expect(reads, 0);
+      expect(
+        await store.abandonUnanswered((await store.read('maker'))!),
+        isFalse,
+      );
+      expect(await store.read('maker'), isNotNull);
+    });
+
+    test('rows from older app versions start aging when first seen', () async {
+      await lostReply();
+      await db.update('offer_initiations', {'created_at': null});
+      clock = clock.add(const Duration(days: 3));
+      lookupResult = {'status': 'not_found'};
+      await expectLater(initiate(), throwsA(isA<UncertainOfferInitiation>()));
+      expect(sends, 1);
+      clock = clock.add(OfferInitiationRecovery.abandonAfter);
+      await initiate();
+      expect(sends, 2);
+    });
+
+    test('a table from an older version gains created_at, rows kept', () async {
+      await db.execute('''CREATE TABLE offer_initiations (
+        maker TEXT PRIMARY KEY, coordinator TEXT NOT NULL,
+        operation_id TEXT NOT NULL, params TEXT NOT NULL,
+        estimate TEXT, result TEXT)''');
+      await db.insert('offer_initiations', {
+        'maker': 'maker',
+        'coordinator': 'coordinator',
+        'operation_id': 'legacy',
+        'params': jsonEncode(params),
+      });
+      final row = await store.read('maker');
+      expect(row!.operationId, 'legacy');
+      expect(row.createdAt, isNull);
+      final columns = await db.rawQuery('PRAGMA table_info(offer_initiations)');
+      expect(columns.map((c) => c['name']), contains('created_at'));
+      await OfferInitiationStore(() async => db).read('maker');
+    });
+  });
 }
